@@ -1,5 +1,5 @@
-#ifndef WEBPP_WEBPP_H
-#define WEBPP_WEBPP_H
+#ifndef WEBPP_ROUTER_H
+#define WEBPP_ROUTER_H
 
 #include <vector>
 #include <functional>
@@ -12,7 +12,6 @@ class route {
     using method = std::string;
     using path = std::string;
 
-  private:
     method m_method;
     path m_path;
 };
@@ -28,4 +27,4 @@ public:
 };
 
 
-#endif // WEBPP_WEBPP_H
+#endif // WEBPP_ROUTER_H
