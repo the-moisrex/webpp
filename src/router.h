@@ -8,7 +8,13 @@
 namespace webpp {
 
 class route {
+  public:
+    using method = std::string;
+    using path = std::string;
 
+  private:
+    method m_method;
+    path m_path;
 };
 
 class router {
@@ -16,11 +22,7 @@ class router {
 public:
   using callback = ::std::function<void()>;
   using middleware = ::std::function<void()>;
-  using method = ::std::string;
-  router& use(method _method, route new_route, callback _callback, ::std::vector<middleware> _middlewares={});
-  router& get(route new_route, callback _callback, ::std::vector<middleware> _middlewares={});
-  router& post(route new_route, callback _callback, ::std::vector<middleware> _middlewares={});
-  router& del(route new_route, callback _callback, ::std::vector<middleware> _middlewares={});
+  router& use(route new_route, callback _callback, ::std::vector<middleware> _middlewares={});
 };
 
 };
