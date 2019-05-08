@@ -1,6 +1,6 @@
-#include "../webpp.h"
+#include <gtest/gtest.h>
 
-auto main() -> int {
-  webpp::app app;
-  return app.run();
+int main(int argc, char **argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
