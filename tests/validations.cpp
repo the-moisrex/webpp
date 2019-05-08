@@ -12,8 +12,6 @@ TEST(ValidationsTest, EmptyFunction) {
   EXPECT_TRUE(webpp::is::empty(str));
   str = "not empty";
   EXPECT_FALSE(webpp::is::empty(str));
-
-  EXPECT_TRUE(webpp::is::xxxx());
 }
 
 TEST(ValidationsTest, ContainsFunctions) {
