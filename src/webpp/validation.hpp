@@ -74,7 +74,7 @@ bool contains_value(Container<T1, T2, Args...> const& container,
  * @param c the character to check
  * @return true if c is a whitespace
  */
-bool whitespace(char const c) {
+bool whitespace(char const& c) {
   return c == ' ' || c == '\n' || c == '\r' || c == '\t' || c == '\f' ||
          c == '\v';
 }
@@ -158,10 +158,22 @@ bool email(std::string const& str) noexcept {
   return std::regex_match(str, pattern);
 }
 
-bool FQDN(std::string const& str) noexcept;
 bool phone(std::string const& str) noexcept;
+bool FQDN(std::string const& str) noexcept;
 bool url(std::string const& str) noexcept;
-bool ipv4(std::string const& str) noexcept;
+
+/**
+ * @brief checks if the specified str is an ipv4
+ * @param str
+ * @return true if str is a valid ipv4
+ */
+bool ipv4(std::string const& str) noexcept {
+  static const std::regex pattern{
+      "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]"
+      "?[0-9][0-9]?)$"};
+  return std::regex_match(str, pattern);
+}
+
 bool ipv6(std::string const& str) noexcept;
 bool ip(std::string const& str) noexcept;
 bool ip_range(std::string const& str) noexcept;
