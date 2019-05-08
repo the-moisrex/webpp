@@ -68,9 +68,42 @@ bool contains_value(Container<T1, T2, Args...> const& container,
   return false;
 }
 
-bool trimmed(std::string const& str) noexcept;
-bool rtrimmed(std::string const& str) noexcept;
-bool ltrimmed(std::string const& str) noexcept;
+/**
+ * @brief check if the specified character is a whitespace
+ * @param c the character to check
+ * @return true if c is a whitespace
+ */
+bool whitespace(char const c) {
+  return c == ' ' || c == '\n' || c == '\r' || c == '\t' || c == '\f' ||
+         c == '\v';
+}
+
+/**
+ * @brief check if str is right trimmed
+ * @param str
+ * @return true if there's no whitespaces in the right side of input
+ */
+bool rtrimmed(std::string const& str) noexcept {
+  return !whitespace(*str.rbegin());
+}
+
+/**
+ * @brief check if str is left trimmed
+ * @param str
+ * @return true if there's no whitespaces in the left side of input
+ */
+bool ltrimmed(std::string const& str) noexcept {
+  return !whitespace(str[0]);
+}
+
+/**
+ * @brief check if str is right and left trimmed
+ * @param str
+ * @return true if there's no whitespaces in the right and left side of input
+ */
+bool trimmed(std::string const& str) noexcept {
+  return ltrimmed(str) && rtrimmed(str);
+}
 
 bool FQDN(std::string const& str) noexcept;
 
