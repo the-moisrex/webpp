@@ -107,7 +107,34 @@ bool trimmed(std::string const& str) noexcept {
 
 bool FQDN(std::string const& str) noexcept;
 
-bool number(std::string const& str) noexcept;
+/**
+ * @brief check if the specified character is a valid number or not
+ * @param character
+ * @return true if the specified input is an integer
+ */
+bool number(char const& c) noexcept {
+  return c >= '0' && c <= '9';
+}
+
+/**
+ * @brief check if the specified string is a number (including floating points)
+ * @param str
+ * @return true if the specified string is a number
+ */
+bool number(std::string const& str) noexcept {
+  bool is_first = true;
+  for (auto const& c : str) {
+    if (!number(c)) {
+      if (is_first && c == '.') {
+        is_first = false;
+        continue;
+      }
+      return false;
+    }
+  }
+  return true;
+}
+
 bool integer(std::string const& str) noexcept;
 bool email(std::string const& str) noexcept;
 bool phone(std::string const& str) noexcept;
