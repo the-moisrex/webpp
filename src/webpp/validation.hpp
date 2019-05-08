@@ -2,6 +2,7 @@
 #define VALIDATION_H
 
 #include <algorithm>
+#include <regex>
 #include <string>
 
 namespace webpp {
@@ -145,8 +146,19 @@ bool integer(std::string const& str) noexcept {
   return true;
 }
 
+/**
+ * @brief check if the specified str is an email or not
+ * @param str
+ * @return true if the specified str is an email
+ */
+bool email(std::string const& str) noexcept {
+  static const std::regex pattern{
+      "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*("
+      "\\.[A-Za-z]{2,})$;"};
+  return std::regex_match(str, pattern);
+}
+
 bool FQDN(std::string const& str) noexcept;
-bool email(std::string const& str) noexcept;
 bool phone(std::string const& str) noexcept;
 bool url(std::string const& str) noexcept;
 bool ipv4(std::string const& str) noexcept;
