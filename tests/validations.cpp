@@ -1,15 +1,30 @@
-#include "../src/validation.h"
 #include <gtest/gtest.h>
+#include <map>
+#include <set>
 #include <string>
+#include <vector>
+#include <webpp/validation.h>
 
-using namespace webpp::is;
-using namespace std;
-
-TEST(ValidationTest, DoesIsEmptyWork) {
-  EXPECT_TRUE(empty(""));
-  EXPECT_FALSE(empty("not empty"));
-  string str = "";
-  EXPECT_TRUE(empty(str));
+TEST(ValidationsTest, EmptyFunction) {
+  EXPECT_TRUE(webpp::is::empty(""));
+  EXPECT_FALSE(webpp::is::empty("not empty"));
+  std::string str = "";
+  EXPECT_TRUE(webpp::is::empty(str));
   str = "not empty";
-  EXPECT_FALSE(empty(str));
+  EXPECT_FALSE(webpp::is::empty(str));
+
+  EXPECT_TRUE(webpp::is::xxxx());
+}
+
+TEST(ValidationsTest, ContainsFunctions) {
+  std::map<int, std::string> data;
+  data[0] = "hello world";
+  data[10] = "testing";
+
+  //  EXPECT_TRUE(webpp::is::contains_key(data, 10));
+  //  EXPECT_TRUE(webpp::is::contains_value(data, std::string("hello world")));
+  //  EXPECT_FALSE(webpp::is::contains_key(data, 100));
+  //  EXPECT_FALSE(
+  //      webpp::is::contains_value(data, std::string("it's not gonna be
+  //      there")));
 }

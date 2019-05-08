@@ -7,8 +7,10 @@ file(GLOB TEST_SOURCES *.cpp)
 include_directories(${GTEST_INCLUDE_DIRS} ${GMOCK_INCLUDE_DIRS})
 add_executable(${PROJECT_NAME}test ${TEST_SOURCES})
 add_test(${PROJECT_NAME}test ${PROJECT_NAME}test)
+add_dependencies(${PROJECT_NAME}test ${PROJECT_NAME})
+#target_include_directories("${PROJECT_NAME}test" PUBLIC "../src")
 target_link_libraries(${PROJECT_NAME}test
-    ${PROJECT_NAME}
-    gtest
-    gmock
+    PUBLIC ${PROJECT_NAME}
+    PUBLIC gtest
+    PUBLIC gmock
 )
