@@ -7,7 +7,6 @@ namespace webpp {
 
 namespace is {
 
-bool xxxx() noexcept;
 /**
  * @brief check if the string is empty or not
  * @return true if the string is empty
