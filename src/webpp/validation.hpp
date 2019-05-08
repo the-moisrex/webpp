@@ -154,11 +154,18 @@ bool integer(std::string const& str) noexcept {
 bool email(std::string const& str) noexcept {
   static const std::regex pattern{
       "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*("
-      "\\.[A-Za-z]{2,})$;"};
+      "\\.[A-Za-z]{2,})$"};
   return std::regex_match(str, pattern);
 }
 
-bool phone(std::string const& str) noexcept;
+// bool phone(std::string const& str) noexcept {
+//  static const std::regex pattern{
+//      "^(?:(?:\\+?1\\s*(?:[.-]\\s*)?)?(?:\\(\\s*([2-9]1[02-9]|[2-9][02-8]1|[2-"
+//      "9][02-8][02-9])\\s*\\)|([2-9]1[02-9]|[2-9][02-8]1|[2-9][02-8][02-9]))"
+//      "\\s*(?:[.-]\\s*)?)?([2-9]1[02-9]|[2-9][02-9]1|[2-9][02-9]{2})\\s*(?:[.-]"
+//      "\\s*)?([0-9]{4})(?:\\s*(?:#|x\\.?|ext\\.?|extension)\\s*(\\d+))?$"};
+//  return std::regex_match(str, pattern);
+//}
 bool FQDN(std::string const& str) noexcept;
 bool url(std::string const& str) noexcept;
 
