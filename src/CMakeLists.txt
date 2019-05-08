@@ -1,10 +1,17 @@
 file(GLOB LIB_SOURCES webpp/*.cpp)
+file(GLOB LIB_HEADERS webpp/*.h)
+file(GLOB LIB_HEADER_ONLY_SOURCES webpp/*.hpp)
 
 if(SHARED)
-  add_library(${PROJECT_NAME} SHARED ${LIB_SOURCES})
+  add_library(${PROJECT_NAME} SHARED ${LIB_SOURCES} ${LIB_HEADER_ONLY_SOURCES})
 else()
-  add_library(${PROJECT_NAME} STATIC ${LIB_SOURCES})
+  add_library(${PROJECT_NAME} STATIC ${LIB_SOURCES} ${LIB_HEADER_ONLY_SOURCES})
 endif()
 
-target_include_directories(${PROJECT_NAME} INTERFACE "./")
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+install(FILES ${LIB_HEADERS} DESTINATION include/webpp)
+set_target_properties(${PROJECT_NAME} PROPERTIES
+  VERSION 1.0.0
+  SOVERSION 1
+)

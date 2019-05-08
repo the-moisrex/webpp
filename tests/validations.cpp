@@ -3,7 +3,7 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <webpp/validation.h>
+#include <webpp/validation.hpp>
 
 TEST(ValidationsTest, EmptyFunction) {
   EXPECT_TRUE(webpp::is::empty(""));
@@ -19,10 +19,9 @@ TEST(ValidationsTest, ContainsFunctions) {
   data[0] = "hello world";
   data[10] = "testing";
 
-  //  EXPECT_TRUE(webpp::is::contains_key(data, 10));
-  //  EXPECT_TRUE(webpp::is::contains_value(data, std::string("hello world")));
-  //  EXPECT_FALSE(webpp::is::contains_key(data, 100));
-  //  EXPECT_FALSE(
-  //      webpp::is::contains_value(data, std::string("it's not gonna be
-  //      there")));
+  EXPECT_TRUE(webpp::is::contains_key(data, 10));
+  EXPECT_TRUE(webpp::is::contains_value(data, std::string("hello world")));
+  EXPECT_FALSE(webpp::is::contains_key(data, 100));
+  EXPECT_FALSE(
+      webpp::is::contains_value(data, std::string("it's not gonna be there")));
 }
