@@ -7,6 +7,7 @@ namespace webpp {
 
 namespace is {
 
+bool xxxx() noexcept;
 /**
  * @brief check if the string is empty or not
  * @return true if the string is empty
@@ -37,16 +38,16 @@ bool contains(std::initializer_list<T> const &container,
 /**
  * @brief check if the container contains key
  */
-template <template <typename, typename> class Container, typename T1,
-          typename T2>
-bool contains_key(Container<T1, T2> const &container, T1 const &key) noexcept;
+template <template <class, class...> class Container, class T1, class... Args>
+bool contains_key(Container<T1, Args...> const &container,
+                  T1 const &key) noexcept;
 
 /**
  * @brief check if the container contains the value
  */
-template <template <typename, typename> class Container, typename T1,
-          typename T2>
-bool contains_value(Container<T1, T2> const &container,
+template <template <class, class, class...> class Container, class T1, class T2,
+          class... Args>
+bool contains_value(Container<T1, T2, Args...> const &container,
                     T2 const &value) noexcept;
 
 bool trimmed(std::string const &str) noexcept;
