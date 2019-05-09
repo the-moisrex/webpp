@@ -1,10 +1,18 @@
 #include <boost/program_options.hpp>
+#include <functional>
 #include <iostream>
+#include <tuple>
 
-auto main(int argc, char const** argv) -> int {
-
+void check_args(
+    const int argc, char const* const* const argv,
+    std::vector<std::pair<
+        std::string,
+        std::function<
+            void(boost::program_options::options_description const&)>>> const&
+        actions,
+    std::function<void(boost::program_options::options_description)> const&
+        default_action) {
     using namespace boost::program_options;
-    using namespace std;
 
     options_description desc("webpp cli");
     desc.add_options()(
@@ -15,13 +23,29 @@ auto main(int argc, char const** argv) -> int {
     store(command_line_parser(argc, argv).options(desc).run(), wm);
     notify(wm);
 
-    if (wm.count("help")) {
-        cout << desc << endl;
-        return EXIT_SUCCESS;
+    for (auto const& action : actions) {
+        if (wm.count(action.first)) {
+            action.second(desc);
+            return;
+        }
     }
 
-    // default action
+    // running default action
+    default_action(desc);
+}
+
+void print_help(boost::program_options::options_description const& desc) {
+    using namespace std;
     cout << desc << endl;
+}
+
+void create_template(boost::program_options::options_description const& desc) {}
+
+auto main(int argc, char const** argv) -> int {
+    using namespace std;
+
+    check_args(argc, argv, {{"help", print_help}, {"create", create_template}},
+               print_help);
 
     return EXIT_SUCCESS;
 }
