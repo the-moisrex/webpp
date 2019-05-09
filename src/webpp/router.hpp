@@ -9,11 +9,13 @@ namespace webpp {
 
     class route {
       public:
-        using method = std::string;
-        using path = std::string;
+        bool active = false;
+        ::std::string method;
+        ::std::string slug;
+        ::std::vector<route> subroutes;
 
-        method m_method;
-        path m_path;
+        route(::std::string method, ::std::string slug)
+            : method(method), slug(slug) {}
     };
 
     class router {
