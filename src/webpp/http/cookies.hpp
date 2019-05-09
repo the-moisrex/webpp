@@ -7,11 +7,11 @@ namespace webpp {
 
     class cookie {
       private:
-        std::string name = "";
-        std::string value = "";
-        std::string comment = "";
-        std::string domain = "";
-        std::string path = "/";
+        ::std::string name = "";
+        ::std::string value = "";
+        ::std::string comment = "";
+        ::std::string domain = "";
+        ::std::string path = "/";
         unsigned long max_age;
         bool secure = false;
 
