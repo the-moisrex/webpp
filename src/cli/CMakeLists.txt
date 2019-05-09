@@ -3,10 +3,10 @@ file(GLOB LIB_HEADERS *.h)
 
 set(EXEC_NAME ${PROJECT_NAME}-bin)
 
-find_package(Boost REQUIRED system filesystem thread)
+find_package(Boost COMPONENTS program_options REQUIRED)
 
 add_executable(${EXEC_NAME} ${LIB_SOURCES})
-target_link_libraries(${EXEC_NAME} 
+target_link_libraries(${EXEC_NAME}
 	PRIVATE ${PROJECT_NAME}
 	PRIVATE ${Boost_LIBRARIES}
 )
