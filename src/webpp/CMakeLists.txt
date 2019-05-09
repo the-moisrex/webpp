@@ -2,6 +2,8 @@ file(GLOB LIB_SOURCES *.cpp)
 file(GLOB LIB_HEADERS *.h)
 file(GLOB LIB_HEADER_ONLY_SOURCES *.hpp)
 
+enable_testing()
+
 if(SHARED)
   add_library(${PROJECT_NAME} SHARED ${LIB_SOURCES} ${LIB_HEADER_ONLY_SOURCES})
 else()
