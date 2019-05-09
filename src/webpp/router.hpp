@@ -7,24 +7,24 @@
 
 namespace webpp {
 
-class route {
-public:
-  using method = std::string;
-  using path = std::string;
+    class route {
+      public:
+        using method = std::string;
+        using path = std::string;
 
-  method m_method;
-  path m_path;
-};
+        method m_method;
+        path m_path;
+    };
 
-class router {
-  ::std::vector<route> m_routes;
+    class router {
+        ::std::vector<route> m_routes;
 
-public:
-  using callback = ::std::function<void()>;
-  using middleware = ::std::function<void()>;
-  router &use(route new_route, callback _callback,
-              ::std::vector<middleware> _middlewares = {});
-};
+      public:
+        using callback = ::std::function<void()>;
+        using middleware = ::std::function<void()>;
+        router& use(route new_route, callback _callback,
+                    ::std::vector<middleware> _middlewares = {});
+    };
 
 }; // namespace webpp
 

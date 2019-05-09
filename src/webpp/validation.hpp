@@ -150,6 +150,7 @@ namespace webpp {
          * @return true if the specified str is an email
          */
         bool email(std::string const& str) noexcept {
+            // TODO: Try not using regular expression, it's slow
             static const std::regex pattern{
                 "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-"
                 "z0-9]+)*(\\.[A-Za-z]{2,})$"};
