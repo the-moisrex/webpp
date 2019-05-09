@@ -10,7 +10,7 @@ else()
   add_library(${PROJECT_NAME} STATIC ${LIB_SOURCES} ${LIB_HEADER_ONLY_SOURCES})
 endif()
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/src)
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 install(FILES ${LIB_HEADERS} DESTINATION include/webpp)
 set_target_properties(${PROJECT_NAME} PROPERTIES

@@ -1,13 +1,15 @@
 file(GLOB LIB_SOURCES *.cpp)
 file(GLOB LIB_HEADERS *.h)
 
-set(EXEEC_NAME webpp)
+set(EXEC_NAME ${PROJECT_NAME}-bin)
 
 find_package(Boost REQUIRED system filesystem thread)
 
 add_executable(${EXEC_NAME} ${LIB_SOURCES})
 target_link_libraries(${EXEC_NAME} 
-	PUBLIC ${PROJECT_NAME}
-	PUBLIC ${Boost_LIBRARIES}
+	PRIVATE ${PROJECT_NAME}
+	PRIVATE ${Boost_LIBRARIES}
 )
-install(${EXEC_NAME} DESTINATION bin)
+# now we rename resman-bin executable to resman using target properties
+set_target_properties(${EXEC_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
+install(TARGETS ${EXEC_NAME} DESTINATION bin)
