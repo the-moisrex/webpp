@@ -1,6 +1,6 @@
-file(GLOB LIB_SOURCES webpp/*.cpp)
-file(GLOB LIB_HEADERS webpp/*.h)
-file(GLOB LIB_HEADER_ONLY_SOURCES webpp/*.hpp)
+file(GLOB LIB_SOURCES *.cpp)
+file(GLOB LIB_HEADERS *.h)
+file(GLOB LIB_HEADER_ONLY_SOURCES *.hpp)
 
 if(SHARED)
   add_library(${PROJECT_NAME} SHARED ${LIB_SOURCES} ${LIB_HEADER_ONLY_SOURCES})
