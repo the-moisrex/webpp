@@ -14,7 +14,7 @@ void check_args(
         default_action) {
     using namespace boost::program_options;
 
-    options_description desc("webpp cli");
+    options_description desc("Program options");
     desc.add_options()(
         "help,h", bool_switch()->default_value(false)->implicit_value(true),
         "print this help");
