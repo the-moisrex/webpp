@@ -16,6 +16,8 @@ void check_args(
 
     options_description desc("Program options");
     desc.add_options()(
+        "update,u", bool_switch()->default_value(false)->implicit_value(true),
+        "update the databases")(
         "help,h", bool_switch()->default_value(false)->implicit_value(true),
         "print this help");
 
@@ -39,12 +41,21 @@ void print_help(boost::program_options::options_description const& desc) {
     cout << desc << endl;
 }
 
-void create_template(boost::program_options::options_description const& desc) {}
+void create_template(boost::program_options::options_description const& desc) {
+    // TODO: complete me
+}
+
+void update_db(boost::program_options::options_description const& desc) {
+    // TODO: complete me
+}
 
 auto main(int argc, char const** argv) -> int {
     using namespace std;
 
-    check_args(argc, argv, {{"help", print_help}, {"create", create_template}},
+    check_args(argc, argv,
+               {{"help", print_help},
+                {"create", create_template},
+                {"update", update_db}},
                print_help);
 
     return EXIT_SUCCESS;
