@@ -1,16 +1,15 @@
 #ifndef WEBPP_WEBPP_H
 #define WEBPP_WEBPP_H
 
-#include "router.h"
+#include "router.hpp"
 
 namespace webpp {
 
-class app {
-  router m_router;
-
-public:
-  void run();
-};
+    template <class T>
+    class app {
+      private:
+      public:
+    };
 
 }; // namespace webpp
 
