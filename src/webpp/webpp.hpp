@@ -6,7 +6,7 @@
 namespace webpp {
 
     template <class T>
-    class app {
+    class webpp {
       private:
       public:
     };
