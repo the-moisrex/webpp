@@ -1,17 +1,34 @@
 #ifndef HEADERS_HPP
 #define HEADERS_HPP
 
+#include "cookies.hpp"
 #include <map>
 #include <string>
 
 namespace webpp {
-    class headers {
+    class headers : public std::multimap<std::string, std::string> {
       private:
-        std::map<std::string, std::string> data;
+        webpp::cookies _cookies;
 
       public:
-        void setHeader(std::string name, std::string value) noexcept;
-        std::string getHeader(std::string const& name) const noexcept;
+        inline decltype(_cookies) const& cookies() const noexcept {
+            return _cookies;
+        }
+
+        void remove_cookies() noexcept {
+            _cookies.clear();
+            for (auto it = begin(); it != end();) {
+                if (it->first == "set-cookie" || it->first == "cookie")
+                    it = erase(it);
+                else
+                    ++it;
+            }
+        }
+
+        void replace_cookies(webpp::cookies __cookies) noexcept {
+            remove_cookies();
+            _cookies = std::move(__cookies);
+        }
     };
 } // namespace webpp
 

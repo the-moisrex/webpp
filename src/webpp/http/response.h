@@ -3,18 +3,17 @@
 
 #include <string>
 
-namespace  {
+namespace {
 
-        class response {
-            private:
-            public:
-                response() = default;
+    class response {
+      private:
+      public:
+        response() = default;
 
-                response* body(std::string const & body) noexcept;
-                response* body(std::string &&body) noexcept;
-                std::istream& body() noexcept;
+        response* body(std::string const& body) noexcept;
+        response* body(std::string&& body) noexcept;
+        std::istream& body() noexcept;
+    };
 
-        };
-
-}
+} // namespace
 #endif // RESPONSE_H
