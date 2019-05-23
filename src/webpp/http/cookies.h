@@ -122,14 +122,15 @@ namespace webpp {
 
         inline cookie& remove() noexcept {
             // TODO
+            expires();
             return *this;
         }
 
-        inline decltype (_encrypted) encrypted() const noexcept {
+        inline decltype(_encrypted) encrypted() const noexcept {
             return _encrypted;
         }
 
-        inline cookie& encrypted(decltype (_encrypted) __encrypted) noexcept {
+        inline cookie& encrypted(decltype(_encrypted) __encrypted) noexcept {
             _encrypted = __encrypted;
             return *this;
         }
