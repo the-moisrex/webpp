@@ -25,6 +25,8 @@
  *    https://github.com/oktal/pistache/blob/master/src/common/cookie.cc
  *
  *  Cgicc:
+ *    https://github.com/cmakified/cgicc/blob/master/cgicc/HTTPCookie.h
+ *    https://github.com/cmakified/cgicc/blob/master/cgicc/HTTPCookie.cpp
  */
 
 #include <string>
@@ -114,6 +116,11 @@ namespace webpp {
 
         inline cookie& path(std::string&& __path) noexcept {
             _path = std::move(__path);
+            return *this;
+        }
+
+        inline cookie& remove() noexcept {
+            // TODO
             return *this;
         }
 
