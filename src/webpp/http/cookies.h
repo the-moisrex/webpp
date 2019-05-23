@@ -145,7 +145,7 @@ namespace webpp {
                 // set the expire date one year before now:
                 expires(system_clock::now() -
                         duration<int, std::ratio<60 * 60 * 24 * 365>>(1));
-            } else {
+            } else if (remove()) {
                 // set the expire date one year from now:
                 expires(system_clock::now() +
                         duration<int, std::ratio<60 * 60 * 24 * 365>>(1));
@@ -188,6 +188,7 @@ namespace webpp {
             swap(first._max_age, second._max_age);
             swap(first._secure, second._secure);
             swap(first._host_only, second._host_only);
+            swap(first._expires, second._expires);
         }
     };
 
