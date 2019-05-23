@@ -124,6 +124,8 @@ namespace webpp {
             return *this;
         }
 
+        decltype(_value) encrypted_value() const noexcept;
+
         friend void swap(cookie& first, cookie& second) noexcept {
             using std::swap;
             swap(first._name, second._name);
