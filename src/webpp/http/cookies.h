@@ -124,11 +124,34 @@ namespace webpp {
             return *this;
         }
 
-        inline cookie& remove() noexcept {
-            // set the expire date one year before now:
-            expires(
-                std::chrono::system_clock::now() -
-                std::chrono::duration<int, std::ratio<60 * 60 * 24 * 365>>(1));
+        inline cookie& max_age(decltype(_max_age)&& __max_age) noexcept {
+            _max_age = std::move(__max_age);
+            return *this;
+        }
+
+        inline cookie& max_age(decltype(_max_age) const& __max_age) noexcept {
+            _max_age = __max_age;
+            return *this;
+        }
+
+        inline bool remove() const noexcept {
+            using namespace std::chrono;
+            return _expires < system_clock::now();
+        }
+
+        inline cookie& remove(bool __remove) noexcept {
+            using namespace std::chrono;
+            if (__remove) {
+                // set the expire date one year before now:
+                expires(system_clock::now() -
+                        duration<int, std::ratio<60 * 60 * 24 * 365>>(1));
+            } else {
+                // set the expire date one year from now:
+                expires(system_clock::now() +
+                        duration<int, std::ratio<60 * 60 * 24 * 365>>(1));
+            }
+            // remove max-age if it exists because we're going with expires
+            max_age(0);
             return *this;
         }
 
