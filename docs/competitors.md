@@ -21,6 +21,7 @@
 [Crow GitHub](https://github.com/ipkn/crow)
 
 cons:
+
 . old and not maintained
 
 
@@ -28,7 +29,34 @@ cons:
 [Wt Website](https://www.webtoolkit.eu/wt)
 
 cons:
+
 . Widget based (It might be good if I combined it with themepiler idea of mine)
+
+
+### Qt
+[Tutorial](http://stefanfrings.de/qtwebapp/tutorial/index.html)
+
+
+
+### Tufao
+[Tufao GitHub](https://github.com/vinipsmaker/tufao)
+It's Qt based
+
+
+### micurest
+[GitHub](https://github.com/hutorny/micurest)
+I think the source code is wired. I should look into it more to see if it's good for me or not.
+
+
+### libhttpserver
+[GitHub](https://github.com/etr/libhttpserver)
+
+
+### cpp-jwt
+[GitHub](https://github.com/arun11299/cpp-jwt)
+Not exactly my competitors. But it has good stuff in it that I might need.
+
+
 
 -------------------------------------------------------------------------------
 
@@ -44,7 +72,15 @@ cons:
 [Tutorial](https://www.gnu.org/software/cgicc/doc/cgicc_tutorial.html)
 
 pros:
+
 . easy to understand the code
 
 cons:
+
 . old and too simple
+
+
+
+## Find more
+[List of libraries](https://en.cppreference.com/w/cpp/links/libs)
+
