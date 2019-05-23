@@ -44,6 +44,7 @@ namespace webpp {
         unsigned long _max_age;
         bool _secure = false;
         bool _host_only = false;
+        bool _encrypted = false;
 
       public:
         /**
@@ -121,6 +122,15 @@ namespace webpp {
 
         inline cookie& remove() noexcept {
             // TODO
+            return *this;
+        }
+
+        inline decltype (_encrypted) encrypted() const noexcept {
+            return _encrypted;
+        }
+
+        inline cookie& encrypted(decltype (_encrypted) __encrypted) noexcept {
+            _encrypted = __encrypted;
             return *this;
         }
 
