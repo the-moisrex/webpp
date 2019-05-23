@@ -44,7 +44,9 @@ namespace webpp {
         std::string _comment = "";
         std::string _domain = "";
         std::string _path = "/";
-        std::chrono::time_point<std::chrono::system_clock> _expires;
+        std::chrono::time_point<std::chrono::system_clock> _expires =
+            std::chrono::system_clock::now() -
+            std::chrono::duration<int, std::ratio<60 * 60 * 24 * 365>>();
         unsigned long _max_age;
         bool _secure = false;
         bool _host_only = false;
@@ -56,6 +58,8 @@ namespace webpp {
          */
         cookie() = default;
         cookie(std::string source) noexcept;
+        cookie(std::string name, std::string value) noexcept
+            : _name{name}, _value{value} {}
 
         inline decltype(_name) const& name() const noexcept { return _name; }
         inline decltype(_value) const& value() const noexcept { return _value; }
