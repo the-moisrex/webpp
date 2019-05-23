@@ -11,6 +11,8 @@
  *    https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie
  *  Cookie:
  *    https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cookie
+ *  Date Format:
+ *    https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Date
  *
  *
  * -----------------------------------------------------------------------------
@@ -29,6 +31,7 @@
  *    https://github.com/cmakified/cgicc/blob/master/cgicc/HTTPCookie.cpp
  */
 
+#include <chrono>
 #include <string>
 #include <unordered_set>
 
@@ -41,6 +44,7 @@ namespace webpp {
         std::string _comment = "";
         std::string _domain = "";
         std::string _path = "/";
+        std::chrono::time_point<std::chrono::system_clock> _expires;
         unsigned long _max_age;
         bool _secure = false;
         bool _host_only = false;
@@ -121,8 +125,22 @@ namespace webpp {
         }
 
         inline cookie& remove() noexcept {
-            // TODO
-            expires();
+            // set the expire date one year before now:
+            expires(
+                std::chrono::system_clock::now() -
+                std::chrono::duration<int, std::ratio<60 * 60 * 24 * 365>>(1));
+            return *this;
+        }
+
+        inline decltype(_expires) expires() const noexcept { return _expires; }
+
+        inline cookie& expires(decltype(_expires)&& __expires) noexcept {
+            _expires = std::move(__expires);
+            return *this;
+        }
+
+        inline cookie& expires(decltype(_expires) const& __expires) noexcept {
+            _expires = __expires;
             return *this;
         }
 
