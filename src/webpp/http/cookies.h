@@ -32,6 +32,7 @@
  */
 
 #include <chrono>
+#include <map>
 #include <string>
 #include <unordered_set>
 
@@ -40,6 +41,7 @@ namespace webpp {
     class cookie {
       public:
         enum class same_site_value { NONE, LAX, STRICT };
+        std::map<std::string, std::string> attrs;
 
       private:
         std::string _name = "";
