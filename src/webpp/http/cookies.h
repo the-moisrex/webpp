@@ -38,6 +38,9 @@
 namespace webpp {
 
     class cookie {
+      public:
+        enum class same_site_value { NONE, LAX, STRICT };
+
       private:
         std::string _name = "";
         std::string _value = "";
@@ -51,6 +54,8 @@ namespace webpp {
         bool _secure = false;
         bool _host_only = false;
         bool _encrypted = false;
+        bool _prefix = false;
+        same_site_value _same_site = same_site_value::NONE;
 
       public:
         /**
@@ -77,6 +82,15 @@ namespace webpp {
         }
         inline decltype(_host_only) const& host_only() const noexcept {
             return _host_only;
+        }
+        inline decltype(_prefix) const& prefix() const noexcept {
+            return _prefix;
+        }
+        inline decltype(_expires) const& expires() const noexcept {
+            return _expires;
+        }
+        inline decltype(_same_site) const& same_site() const noexcept {
+            return _same_site;
         }
 
         inline cookie& name(std::string const& __name) noexcept {
@@ -137,6 +151,26 @@ namespace webpp {
             _max_age = __max_age;
             return *this;
         }
+        inline cookie& prefix(decltype(_prefix) const& __prefix) noexcept {
+            _prefix = __prefix;
+            return *this;
+        }
+
+        inline cookie& prefix(decltype(_prefix)&& __prefix) noexcept {
+            _prefix = std::move(__prefix);
+            return *this;
+        }
+
+        inline cookie& same_site(decltype(_same_site)&& __same_site) noexcept {
+            _same_site = std::move(__same_site);
+            return *this;
+        }
+
+        inline cookie& smae_site(decltype(_same_site)
+                                     const& __same_site) noexcept {
+            _same_site = __same_site;
+            return *this;
+        }
 
         inline bool remove() const noexcept {
             using namespace std::chrono;
@@ -159,8 +193,6 @@ namespace webpp {
             return *this;
         }
 
-        inline decltype(_expires) expires() const noexcept { return _expires; }
-
         inline cookie& expires(decltype(_expires)&& __expires) noexcept {
             _expires = std::move(__expires);
             return *this;
@@ -181,6 +213,9 @@ namespace webpp {
         }
 
         decltype(_value) encrypted_value() const noexcept;
+
+        std::ostream& operator<<(std::ostream& out) const noexcept;
+        std::string render() const noexcept;
 
         friend inline void swap(cookie& first, cookie& second) noexcept {
             using std::swap;
