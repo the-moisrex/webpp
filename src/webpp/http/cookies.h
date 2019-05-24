@@ -95,16 +95,7 @@ namespace webpp {
             return _same_site;
         }
 
-        inline cookie& name(std::string const& __name) noexcept {
-            _name = __name;
-            return *this;
-        }
-
-        inline cookie& name(std::string&& __name) noexcept {
-            _name = std::move(__name);
-            return *this;
-        }
-
+        inline cookie& name(std::string __name) noexcept;
         inline cookie& value(std::string __value) noexcept;
 
         inline cookie& comment(std::string const& __comment) noexcept {

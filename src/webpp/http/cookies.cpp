@@ -2,6 +2,12 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <sstream>
 
+webpp::cookie& webpp::cookie::name(std::string __name) noexcept {
+    boost::algorithm::trim(__name);
+    _name = std::move(__name);
+    return *this;
+}
+
 webpp::cookie& webpp::cookie::value(std::string __value) noexcept {
     boost::algorithm::trim(__value);
     _value = std::move(__value);
