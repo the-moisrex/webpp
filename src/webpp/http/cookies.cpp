@@ -1,5 +1,12 @@
 #include "cookies.h"
+#include <boost/algorithm/string/trim.hpp>
 #include <sstream>
+
+webpp::cookie& webpp::cookie::value(std::string __value) noexcept {
+    boost::algorithm::trim(__value);
+    _value = std::move(__value);
+    return *this;
+}
 
 std::ostream& webpp::cookie::operator<<(std::ostream& out) const noexcept {
     if (_prefix) {
