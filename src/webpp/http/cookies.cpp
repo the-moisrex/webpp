@@ -39,6 +39,11 @@ std::ostream& webpp::cookie::operator<<(std::ostream& out) const noexcept {
         if (_same_site != same_site_value::NONE)
             out << "; SameSite="
                 << (_same_site == same_site_value::STRICT ? "Strict" : "Lax");
+
+        // TODO: encode value and check the key here:
+        if (!attrs.empty())
+            for (auto const& attr : attrs)
+                out << "; " << attr.first << "=" << attr.second;
     }
     return out;
 }
