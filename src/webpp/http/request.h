@@ -11,14 +11,19 @@ namespace webpp {
 
       public:
         request() = default;
-        request(headers request_headers) noexcept;
+        request(webpp::headers request_headers) noexcept;
 
         inline webpp::headers const& headers() const noexcept {
             return request_headers;
         }
 
+        /**
+         * @brief header
+         * @details this method might return multiple elements.
+         * @param key
+         */
         inline auto header(std::string const& key) const noexcept {
-            return request_headers[key];
+            return request_headers.find(key);
         }
     };
 } // namespace webpp
