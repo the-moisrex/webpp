@@ -1,6 +1,13 @@
 #include "cookies.h"
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/container_hash/hash.hpp>
+#include <functional>
 #include <sstream>
+
+webpp::cookie::cookie(std::string __name, std::string __value) noexcept {
+    name(std::move(__name));
+    value(std::move(__value));
+}
 
 webpp::cookie& webpp::cookie::name(std::string __name) noexcept {
     boost::algorithm::trim(__name);
@@ -68,8 +75,57 @@ std::ostream& webpp::cookie::operator<<(std::ostream& out) const noexcept {
     return out;
 }
 
+bool webpp::cookie::operator==(const webpp::cookie& c) const noexcept {
+    return _name == c._name && _value == c._value && _prefix == c._prefix &&
+           _encrypted == c._encrypted && _secure == c._secure &&
+           _host_only == c._host_only && _same_site == c._same_site &&
+           _comment == c._comment && _expires == c._expires &&
+           _path == c._path && _domain == c._domain && attrs == c.attrs;
+}
+
+bool webpp::cookie::operator<(const webpp::cookie& c) const noexcept {
+    return _expires < c._expires;
+}
+
+bool webpp::cookie::operator>(const webpp::cookie& c) const noexcept {
+    return _expires > c._expires;
+}
+
+bool webpp::cookie::operator<=(const webpp::cookie& c) const noexcept {
+    return _expires <= c._expires;
+}
+
+bool webpp::cookie::operator>=(const webpp::cookie& c) const noexcept {
+    return _expires >= c._expires;
+}
+
 std::string webpp::cookie::render() const noexcept {
     std::ostringstream os;
     this->operator<<(os);
     return os.str();
+}
+
+webpp::cookie_hash::result_type webpp::cookie_hash::
+operator()(const webpp::cookie_hash::argument_type& c) const noexcept {
+    webpp::cookie_hash::result_type seed;
+    boost::hash_combine(seed, c._name);
+    boost::hash_combine(seed, c._value);
+    boost::hash_combine(seed, c._domain);
+    boost::hash_combine(seed, c._path);
+    //    boost::hash_combine(seed, c._prefix);
+    //    boost::hash_combine(seed, c._secure);
+    //    boost::hash_combine(
+    //        seed, (std::chrono::system_clock::now() - c._expires).count());
+    //    boost::hash_combine(seed, c._max_age);
+    //    boost::hash_combine(seed, c._same_site);
+    //    boost::hash_combine(seed, c._comment);
+    //    boost::hash_combine(seed, c._host_only);
+    //    boost::hash_combine(seed, c._encrypted);
+    return seed;
+}
+
+bool webpp::cookie_equals::operator()(const webpp::cookie& lhs,
+                                      const webpp::cookie& rhs) const noexcept {
+    return lhs.name() == rhs.name() && lhs.domain() == rhs.domain() &&
+           lhs.path() == rhs.path();
 }
