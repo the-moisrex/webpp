@@ -33,27 +33,28 @@
 
 #include <chrono>
 #include <map>
+#include <memory>
 #include <string>
 #include <unordered_set>
 
 namespace webpp {
 
     struct cookie_hash;
+    class cookies;
 
     class cookie {
       public:
         enum class same_site_value { NONE, LAX, STRICT };
         std::map<std::string, std::string> attrs;
+        using date_t = std::chrono::time_point<std::chrono::system_clock>;
 
       private:
-        std::string _name = "";
-        std::string _value = "";
-        std::string _comment = "";
-        std::string _domain = "";
-        std::string _path = "";
-        std::chrono::time_point<std::chrono::system_clock> _expires =
-            std::chrono::system_clock::now() +
-            std::chrono::duration<int, std::ratio<60 * 60 * 24 * 365>>();
+        std::string _name;
+        std::string _value;
+        std::string _comment;
+        std::string _domain;
+        std::string _path;
+        std::unique_ptr<date_t> _expires;
         unsigned long _max_age;
         bool _secure = false;
         bool _host_only = false;
@@ -89,9 +90,7 @@ namespace webpp {
         inline decltype(_prefix) const& prefix() const noexcept {
             return _prefix;
         }
-        inline decltype(_expires) const& expires() const noexcept {
-            return _expires;
-        }
+        inline date_t const& expires() const noexcept { return *_expires; }
         inline decltype(_same_site) const& same_site() const noexcept {
             return _same_site;
         }
@@ -161,7 +160,7 @@ namespace webpp {
 
         inline bool remove() const noexcept {
             using namespace std::chrono;
-            return _expires < system_clock::now();
+            return *_expires < system_clock::now();
         }
 
         inline cookie& remove(bool __remove) noexcept {
@@ -180,23 +179,19 @@ namespace webpp {
             return *this;
         }
 
-        inline cookie& expires(decltype(_expires)&& __expires) noexcept {
-            _expires = std::move(__expires);
-            return *this;
-        }
-
-        inline cookie& expires(decltype(_expires) const& __expires) noexcept {
-            _expires = __expires;
+        inline cookie& expires(date_t __expires) noexcept {
+            _expires.reset(new date_t{std::move(__expires)});
             return *this;
         }
 
         /**
          * @brief sets exipiration time relative to now.
          */
-        template <typename D>
+        template <typename D, typename T>
         inline cookie&
-        expires_in(std::chrono::duration<D> const& __dur) noexcept {
-            _expires = std::chrono::system_clock::now() + __dur;
+        expires_in(std::chrono::duration<D, T> const& __dur) noexcept {
+            _expires.reset(
+                new date_t{std::chrono::system_clock::now() + __dur});
             return *this;
         }
 
@@ -236,6 +231,7 @@ namespace webpp {
         }
 
         friend struct cookie_hash;
+        friend class cookies;
     };
 
     // hash function of std::unordered_set<webpp::cookie>
@@ -249,8 +245,12 @@ namespace webpp {
         bool operator()(const cookie& lhs, const cookie& rhs) const noexcept;
     };
 
-    using cookies =
-        std::unordered_set<webpp::cookie, cookie_hash, cookie_equals>;
+    class cookies
+        : public std::unordered_set<webpp::cookie, cookie_hash, cookie_equals> {
+
+      public:
+        const_iterator find(decltype(cookie::_name) const& name) const noexcept;
+    };
 
 } // namespace webpp
 

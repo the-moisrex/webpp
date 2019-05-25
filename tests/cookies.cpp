@@ -35,10 +35,42 @@ TEST(Cookies, CookieJar) {
         << "cookies with the same name should be replaced with the older ones";
 
     cookies jar2;
-    jar.emplace("one", "value");
-    jar.emplace("two", "value");
-    jar.emplace(" one ", "value 2"); // this should replace the other one
+    jar2.emplace("one", "value 1");
+    jar2.emplace("two", "value 2");
+    jar2.emplace(" one ", "value 1-2"); // this should replace the other one
 
     EXPECT_TRUE(jar2.size() == 2)
         << "The order that cookies get added to cookie jar does not matter";
+
+    jar2.emplace("two", "value 2-2");
+
+    EXPECT_TRUE(jar2.size() == 2)
+        << "Cookie jar should have the same size when we're emplacing a cookie "
+           "with the same name";
+
+    auto found = jar2.find("two");
+    EXPECT_TRUE(found->name() == "two");
+    EXPECT_TRUE(found->value() == "value 2-2")
+        << "The value we found is not the same as the value it should have "
+           "(found: "
+        << found->value() << "; expected: "
+        << "value 2-2"
+        << ").";
+
+    for (auto const& a : jar2) {
+        auto found = jar2.find(a.name());
+        EXPECT_TRUE(found->value() == a.value())
+            << "Checking all the values in the cookie jar (cookie name: "
+            << a.name() << "=" << a.value() << "; found: " << found->name()
+            << "=" << found->value() << ")";
+    }
+}
+
+TEST(Cookie, CookieExpirationDate) {
+    using namespace webpp;
+
+    cookie c;
+    c.name("name").value("value");
+    c.expires_in(std::chrono::minutes(1));
+    EXPECT_TRUE(c.expires().time_since_epoch().count() > 0);
 }
