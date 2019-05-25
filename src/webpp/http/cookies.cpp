@@ -1,4 +1,5 @@
 #include "cookies.h"
+#include <algorithm>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/container_hash/hash.hpp>
 #include <functional>
@@ -43,8 +44,8 @@ std::ostream& webpp::cookie::operator<<(std::ostream& out) const noexcept {
         if (!_path.empty())
             out << "; Path=" << _path;
 
-        if (_expires == std::chrono::system_clock::now()) {
-            std::time_t expires_c = system_clock::to_time_t(_expires);
+        if (_expires) {
+            std::time_t expires_c = system_clock::to_time_t(*_expires);
             std::tm expires_tm = *std::localtime(&expires_c);
             char buff[30];
             // FIXME: check time zone and see if it's ok
@@ -107,15 +108,15 @@ std::string webpp::cookie::render() const noexcept {
 
 webpp::cookie_hash::result_type webpp::cookie_hash::
 operator()(const webpp::cookie_hash::argument_type& c) const noexcept {
-    webpp::cookie_hash::result_type seed;
+    webpp::cookie_hash::result_type seed = 0;
     boost::hash_combine(seed, c._name);
-    boost::hash_combine(seed, c._value);
     boost::hash_combine(seed, c._domain);
     boost::hash_combine(seed, c._path);
+    //    boost::hash_combine(seed, c._value);
     //    boost::hash_combine(seed, c._prefix);
     //    boost::hash_combine(seed, c._secure);
-    //    boost::hash_combine(
-    //        seed, (std::chrono::system_clock::now() - c._expires).count());
+    //    if (c._expires)
+    //        boost::hash_combine(seed, c._expires->time_since_epoch().count());
     //    boost::hash_combine(seed, c._max_age);
     //    boost::hash_combine(seed, c._same_site);
     //    boost::hash_combine(seed, c._comment);
@@ -128,4 +129,10 @@ bool webpp::cookie_equals::operator()(const webpp::cookie& lhs,
                                       const webpp::cookie& rhs) const noexcept {
     return lhs.name() == rhs.name() && lhs.domain() == rhs.domain() &&
            lhs.path() == rhs.path();
+}
+
+webpp::cookies::const_iterator
+webpp::cookies::find(std::string const& name) const noexcept {
+    return std::find_if(this->cbegin(), this->cend(),
+                        [&](auto const& a) { return a.name() == name; });
 }
