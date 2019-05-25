@@ -15,6 +15,7 @@ webpp::cookie& webpp::cookie::value(std::string __value) noexcept {
 }
 
 std::ostream& webpp::cookie::operator<<(std::ostream& out) const noexcept {
+    using namespace std::chrono;
     if (_prefix) {
         if (_secure)
             out << "__Secure-";
@@ -36,8 +37,14 @@ std::ostream& webpp::cookie::operator<<(std::ostream& out) const noexcept {
             out << "; Path=" << _path;
 
         if (_expires == std::chrono::system_clock::now()) {
-            // FIXME: you know what's wrong with it. just fix it
-            out << "; Expires=" << _expires;
+            std::time_t expires_c = system_clock::to_time_t(_expires);
+            std::tm expires_tm = *std::localtime(&expires_c);
+            char buff[30];
+            // FIXME: check time zone and see if it's ok
+            //            setlocale(LC_ALL, "en_US.UTF-8");
+            if (strftime(buff, sizeof buff, "%a, %d %b %Y %H:%M:%S GMT",
+                         &expires_tm))
+                out << "; Expires=" << buff;
         }
 
         if (_secure)
