@@ -5,9 +5,60 @@
 #include <functional>
 #include <sstream>
 
+webpp::cookie::cookie(const webpp::cookie& c) noexcept
+    : attrs{c.attrs}, _name{c._name}, _value{c._value}, _domain{c._domain},
+      _path{c._path},
+      _expires(c._expires ? std::make_unique<date_t>(*c._expires) : nullptr),
+      _max_age{c._max_age}, _same_site{c._same_site}, _secure{c._secure},
+      _host_only{c._host_only},
+      _encrypted{c._encrypted}, _prefix{c._prefix}, _comment{c._comment} {}
+
+webpp::cookie::cookie(webpp::cookie&& c) noexcept
+    : attrs{std::move(c.attrs)}, _name{std::move(c._name)}, _value{std::move(
+                                                                c._value)},
+      _domain{std::move(c._domain)}, _path{std::move(c._path)},
+      _expires(std::move(c._expires)), _max_age{std::move(c._max_age)},
+      _same_site{std::move(c._same_site)}, _secure{std::move(c._secure)},
+      _host_only{std::move(c._host_only)}, _encrypted{std::move(c._encrypted)},
+      _prefix{std::move(c._prefix)}, _comment{std::move(c._comment)} {}
+
 webpp::cookie::cookie(std::string __name, std::string __value) noexcept {
     name(std::move(__name));
     value(std::move(__value));
+}
+
+webpp::cookie& webpp::cookie::operator=(const webpp::cookie& c) noexcept {
+    attrs = c.attrs;
+    _name = c._name;
+    _value = c._value;
+    _domain = c._domain;
+    _path = c._path;
+    _expires.reset(new date_t{*c._expires});
+    _max_age = c._max_age;
+    _same_site = c._same_site;
+    _secure = c._secure;
+    _host_only = c._host_only;
+    _encrypted = c._encrypted;
+    _prefix = c._prefix;
+    _comment = c._comment;
+    return *this;
+}
+
+webpp::cookie& webpp::cookie::operator=(webpp::cookie&& c) noexcept {
+    attrs = std::move(c.attrs);
+    _name = std::move(c._name);
+    _value = std::move(c._value);
+    _domain = std::move(c._domain);
+    _path = std::move(c._path);
+    _expires = std::move(c._expires);
+    _max_age = std::move(c._max_age);
+    _same_site = std::move(c._same_site);
+    _secure = std::move(c._secure);
+    _host_only = std::move(c._host_only);
+    _encrypted = std::move(c._encrypted);
+    _prefix = std::move(c._prefix);
+    _comment = std::move(c._comment);
+    return *this;
 }
 
 webpp::cookie& webpp::cookie::name(std::string __name) noexcept {
@@ -109,9 +160,12 @@ std::string webpp::cookie::render() const noexcept {
 webpp::cookie_hash::result_type webpp::cookie_hash::
 operator()(const webpp::cookie_hash::argument_type& c) const noexcept {
     webpp::cookie_hash::result_type seed = 0;
-    boost::hash_combine(seed, c._name);
-    boost::hash_combine(seed, c._domain);
-    boost::hash_combine(seed, c._path);
+    if (!c._name.empty())
+        boost::hash_combine(seed, c._name);
+    if (!c._domain.empty())
+        boost::hash_combine(seed, c._domain);
+    if (!c._path.empty())
+        boost::hash_combine(seed, c._path);
     //    boost::hash_combine(seed, c._value);
     //    boost::hash_combine(seed, c._prefix);
     //    boost::hash_combine(seed, c._secure);
