@@ -50,6 +50,13 @@ TEST(Cookies, CookieJar) {
     jar2.insert(cookie("one", "value 1-4"));
     cookie c("one", "value 1-5");
     jar2.insert(c);
+    jar2.insert(jar2.begin(), c);
+    jar2.insert(jar2.begin(), cookie("one", "value 1-6"));
+    cookies jar3;
+    jar3.emplace("one", "value 1-7");
+    jar3.emplace("two", "value 2-3");
+    jar2.insert(jar3.begin(), jar3.end());
+    jar2.insert({cookie("one", "value 1-8"), cookie("two", "value 2-4")});
 
     EXPECT_TRUE(jar2.size() == 2)
         << "Cookie jar should have the same size when we're emplacing a cookie "
@@ -57,11 +64,11 @@ TEST(Cookies, CookieJar) {
 
     auto found = jar2.find("two");
     EXPECT_TRUE(found->name() == "two");
-    EXPECT_TRUE(found->value() == "value 2-2")
+    EXPECT_TRUE(found->value() == "value 2-4")
         << "The value we found is not the same as the value it should have "
            "(found: "
         << found->value() << "; expected: "
-        << "value 2-2"
+        << "value 2-4"
         << ").";
 
     for (auto const& a : jar2) {

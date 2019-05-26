@@ -73,6 +73,9 @@ webpp::cookie& webpp::cookie::value(std::string __value) noexcept {
     return *this;
 }
 
+decltype(webpp::cookie::_value) webpp::cookie::encrypted_value() const
+    noexcept {}
+
 std::ostream& webpp::cookie::operator<<(std::ostream& out) const noexcept {
     using namespace std::chrono;
     if (_prefix) {
@@ -160,12 +163,9 @@ std::string webpp::cookie::render() const noexcept {
 webpp::cookie_hash::result_type webpp::cookie_hash::
 operator()(const webpp::cookie_hash::argument_type& c) const noexcept {
     webpp::cookie_hash::result_type seed = 0;
-    if (!c._name.empty())
-        boost::hash_combine(seed, c._name);
-    if (!c._domain.empty())
-        boost::hash_combine(seed, c._domain);
-    if (!c._path.empty())
-        boost::hash_combine(seed, c._path);
+    boost::hash_combine(seed, c._name);
+    boost::hash_combine(seed, c._domain);
+    boost::hash_combine(seed, c._path);
     //    boost::hash_combine(seed, c._value);
     //    boost::hash_combine(seed, c._prefix);
     //    boost::hash_combine(seed, c._secure);

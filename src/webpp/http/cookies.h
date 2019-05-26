@@ -261,8 +261,7 @@ namespace webpp {
         const_iterator find(decltype(cookie::_name) const& name) const noexcept;
 
         template <typename Name, class... Args>
-        std::pair<iterator, bool> emplace(Name&& name,
-                                          Args&&... args) noexcept {
+        std::pair<iterator, bool> emplace(Name&& name, Args&&... args) {
             auto found = find(name);
             if (found != cend())
                 erase(found);
@@ -280,33 +279,59 @@ namespace webpp {
                 hint, std::forward<Name>(name), std::forward<Args>(args)...);
         }
 
-        std::pair<iterator, bool> insert(const value_type& value) noexcept {
+        std::pair<iterator, bool> insert(const value_type& value) {
             auto found = find(value.name());
             if (found != cend())
                 erase(found);
             return static_cast<super*>(this)->insert(value);
         }
 
-        std::pair<iterator, bool> insert(value_type&& value) noexcept {
+        std::pair<iterator, bool> insert(value_type&& value) {
             auto found = find(value.name());
             if (found != cend())
                 erase(found);
             return static_cast<super*>(this)->insert(std::move(value));
         }
 
-        iterator insert(const_iterator hint, const value_type& value) noexcept {
+        iterator insert(const_iterator hint, const value_type& value) {
             auto found = find(value.name());
             if (found != cend())
                 erase(found);
             return static_cast<super*>(this)->insert(hint, value);
         }
 
-        iterator insert(const_iterator hint, value_type&& value) noexcept {
+        iterator insert(const_iterator hint, value_type&& value) {
             auto found = find(value.name());
             if (found != cend())
                 erase(found);
             return static_cast<super*>(this)->insert(hint, std::move(value));
         }
+
+        template <class InputIt>
+        void insert(InputIt first, InputIt last) {
+            for (auto it = first; it != last;) {
+                auto found = find(it->name());
+                if (found != cend())
+                    erase(found);
+                else
+                    ++it;
+            }
+            return static_cast<super*>(this)->insert(first, last);
+        }
+
+        void insert(std::initializer_list<value_type> ilist) {
+            for (auto it = ilist.begin(); it != ilist.end(); it++) {
+                auto found = find(it->name());
+                if (found != cend())
+                    erase(found);
+            }
+            return static_cast<super*>(this)->insert(ilist);
+        }
+
+#if __cplusplus > 201402L
+//        insert_return_type insert(node_type&& nh) {}
+//        iterator insert(const_iterator hint, node_type&& nh) {}
+#endif // C++17
     };
 
 } // namespace webpp
