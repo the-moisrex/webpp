@@ -44,6 +44,13 @@ TEST(Cookies, CookieJar) {
 
     jar2.emplace("two", "value 2-2");
 
+    // These all should be replaced with the first one; so the size should not
+    // be increased here
+    jar2.emplace_hint(jar2.begin(), "one", "value 1-3");
+    jar2.insert(cookie("one", "value 1-4"));
+    cookie c("one", "value 1-5");
+    jar2.insert(c);
+
     EXPECT_TRUE(jar2.size() == 2)
         << "Cookie jar should have the same size when we're emplacing a cookie "
            "with the same name";

@@ -51,24 +51,29 @@ namespace webpp {
       private:
         std::string _name;
         std::string _value;
-        std::string _comment;
         std::string _domain;
         std::string _path;
         std::unique_ptr<date_t> _expires;
         unsigned long _max_age;
+        same_site_value _same_site = same_site_value::NONE;
         bool _secure = false;
         bool _host_only = false;
         bool _encrypted = false;
         bool _prefix = false;
-        same_site_value _same_site = same_site_value::NONE;
+        std::string _comment;
 
       public:
         /**
          * empty cookie
          */
         cookie() = default;
+        cookie(const cookie&) noexcept;
+        cookie(cookie&&) noexcept;
         cookie(std::string source) noexcept;
         cookie(std::string __name, std::string __value) noexcept;
+
+        cookie& operator=(const cookie&) noexcept;
+        cookie& operator=(cookie&&) noexcept;
 
         inline decltype(_name) const& name() const noexcept { return _name; }
         inline decltype(_value) const& value() const noexcept { return _value; }
@@ -248,8 +253,60 @@ namespace webpp {
     class cookies
         : public std::unordered_set<webpp::cookie, cookie_hash, cookie_equals> {
 
+      private:
+        using super =
+            std::unordered_set<webpp::cookie, cookie_hash, cookie_equals>;
+
       public:
         const_iterator find(decltype(cookie::_name) const& name) const noexcept;
+
+        template <typename Name, class... Args>
+        std::pair<iterator, bool> emplace(Name&& name,
+                                          Args&&... args) noexcept {
+            auto found = find(name);
+            if (found != cend())
+                erase(found);
+            return static_cast<super*>(this)->emplace(
+                std::forward<Name>(name), std::forward<Args>(args)...);
+        }
+
+        template <typename Name, class... Args>
+        iterator emplace_hint(const_iterator hint, Name&& name,
+                              Args&&... args) noexcept {
+            auto found = find(name);
+            if (found != cend())
+                erase(found);
+            return static_cast<super*>(this)->emplace_hint(
+                hint, std::forward<Name>(name), std::forward<Args>(args)...);
+        }
+
+        std::pair<iterator, bool> insert(const value_type& value) noexcept {
+            auto found = find(value.name());
+            if (found != cend())
+                erase(found);
+            return static_cast<super*>(this)->insert(value);
+        }
+
+        std::pair<iterator, bool> insert(value_type&& value) noexcept {
+            auto found = find(value.name());
+            if (found != cend())
+                erase(found);
+            return static_cast<super*>(this)->insert(std::move(value));
+        }
+
+        iterator insert(const_iterator hint, const value_type& value) noexcept {
+            auto found = find(value.name());
+            if (found != cend())
+                erase(found);
+            return static_cast<super*>(this)->insert(hint, value);
+        }
+
+        iterator insert(const_iterator hint, value_type&& value) noexcept {
+            auto found = find(value.name());
+            if (found != cend())
+                erase(found);
+            return static_cast<super*>(this)->insert(hint, std::move(value));
+        }
     };
 
 } // namespace webpp
