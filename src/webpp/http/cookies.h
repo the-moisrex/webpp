@@ -35,12 +35,12 @@
  *
  * -----------------------------------------------------------------------------
  * TODO:
- *    . Encryption for the cookie name
- *    . Decryptions
- *    . Pre Defaults in the cookie jar
- *    . Implement "Cookie2:" and "Set-Cookie2:" obsolete headers
- *    . Add *_if methods in cookies
- *    . Add customization of cookies in the cookie jar. e.g:
+ *    [ ] Encryption for the cookie name
+ *    [ ] Decryptions
+ *    [ ] Pre Defaults in the cookie jar
+ *    [ ] Implement "Cookie2:" and "Set-Cookie2:" obsolete headers
+ *    [X] Add *_if methods in cookies
+ *    [X] Add customization of cookies in the cookie jar. e.g:
  *         encrypted("cookiename", true)
  */
 
