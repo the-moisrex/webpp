@@ -160,8 +160,13 @@ std::string webpp::cookie::render() const noexcept {
     return os.str();
 }
 
+bool webpp::cookie::same_as(const webpp::cookie& c) const noexcept {
+    return _name == c._name && _path == c._path && c._domain == _domain;
+}
+
 webpp::cookie_hash::result_type webpp::cookie_hash::
 operator()(const webpp::cookie_hash::argument_type& c) const noexcept {
+    // change the "same_as" method too if you ever touch this function
     webpp::cookie_hash::result_type seed = 0;
     boost::hash_combine(seed, c._name);
     boost::hash_combine(seed, c._domain);
@@ -187,6 +192,12 @@ bool webpp::cookie_equals::operator()(const webpp::cookie& lhs,
 
 webpp::cookies::const_iterator
 webpp::cookies::find(std::string const& name) const noexcept {
-    return std::find_if(this->cbegin(), this->cend(),
+    return std::find_if(cbegin(), cend(),
                         [&](auto const& a) { return a.name() == name; });
+}
+
+webpp::cookies::const_iterator
+webpp::cookies::find(const webpp::cookie& c) const noexcept {
+    return std::find_if(cbegin(), cend(),
+                        [&](auto const& a) { return a.same_as(c); });
 }

@@ -2,7 +2,7 @@
 #include <iostream>
 #include <webpp/http/cookies.h>
 
-TEST(Cookies, CookiesCreation) {
+TEST(Cookie, CookiesCreation) {
     webpp::cookie cookie;
     cookie.name("   test   ").value("  value  ");
     EXPECT_TRUE(cookie.name() == "test");
@@ -10,6 +10,16 @@ TEST(Cookies, CookiesCreation) {
     EXPECT_TRUE(webpp::cookie("  test  ", "  value ").name() ==
                 webpp::cookie("test", "value").name())
         << "cookies should be trimmed";
+}
+
+// TODO: fill here
+TEST(Cookie, CookieExpirationDate) {
+    using namespace webpp;
+
+    cookie c;
+    c.name("name").value("value");
+    c.expires_in(std::chrono::minutes(1));
+    EXPECT_TRUE(c.expires().time_since_epoch().count() > 0);
 }
 
 TEST(Cookies, CookiesHash) {
@@ -80,11 +90,50 @@ TEST(Cookies, CookieJar) {
     }
 }
 
-TEST(Cookie, CookieExpirationDate) {
+TEST(Cookies, CookieJarUniqeness) {
     using namespace webpp;
 
-    cookie c;
-    c.name("name").value("value");
-    c.expires_in(std::chrono::minutes(1));
-    EXPECT_TRUE(c.expires().time_since_epoch().count() > 0);
+    cookies cs;
+    cs.insert(cookie().name("one").value("test").domain("google.com"));
+    cs.insert(cookie().name("one").value("test").domain("bing.com"));
+
+    EXPECT_TRUE(cs.size() == 2)
+        << "Different domains should not be considered the same";
+
+    cs.insert(cookie().name("one").value("test").domain("google.com"));
+    cs.insert(cookie().name("one").value("test").domain("bing.com"));
+
+    EXPECT_TRUE(cs.size() == 2)
+        << "Inserting already inserted cookies that are 'same_as' the other "
+           "one should be ignored";
+
+    // now we check if changing the name, path, or domain to a new value that
+    // already exists will remove the value or not
+    cs.insert(
+        cookie().name("two").value("test").domain("bing.com").comment("hello"));
+    EXPECT_TRUE(cs.size() == 3);
+    cs.name("two", "one");
+
+    EXPECT_TRUE(cs.size() == 2)
+        << "One of the cookies should now be removed so the whole cookie jar "
+           "have unique cookies";
+    EXPECT_TRUE(cs.find("one")->commnet() == "hello")
+        << "The old cookie should be removed instead of the new one. The new "
+           "cookie should be replace the old one while renaming.";
+
+    auto p = cs.insert(cookie()
+                           .name("one")
+                           .value("test")
+                           .domain("duckduckgo.com")
+                           .comment("hello"));
+    EXPECT_TRUE(cs.size() == 3);
+    cs.domain(p.first, "google.com");
+
+    EXPECT_TRUE(cs.size() == 2)
+        << "One of the cookies should now be removed so the whole cookie jar "
+           "have unique cookies";
+    EXPECT_TRUE(cs.find("one")->commnet() == "hello")
+        << "The old cookie should be removed instead of the new one. The new "
+           "cookie should be replace the old one in the changing the domain "
+           "process.";
 }
