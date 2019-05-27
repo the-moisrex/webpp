@@ -42,6 +42,8 @@
  *    [X] Add *_if methods in cookies
  *    [X] Add customization of cookies in the cookie jar. e.g:
  *         encrypted("cookiename", true)
+ *    [ ] Move the definitions of the cookie jar into cookies.cpp file
+ *    [ ] Consider renaming "cookies" to "cookie_jar"
  */
 
 #include <chrono>
