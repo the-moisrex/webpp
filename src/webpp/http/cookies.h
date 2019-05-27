@@ -44,6 +44,7 @@
  *         encrypted("cookiename", true)
  *    [ ] Move the definitions of the cookie jar into cookies.cpp file
  *    [ ] Consider renaming "cookies" to "cookie_jar"
+ *    [ ] Add doxygen documentations/comments to the declations
  */
 
 #include <chrono>
