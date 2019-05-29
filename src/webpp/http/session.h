@@ -7,6 +7,7 @@
  *    - [ ] Flash data
  *    - [ ] Long live data
  *    - [ ] Timed data
+ *    - [ ] Route specific sessions
  *
  *
  * Possible Client Adapters to implement:
