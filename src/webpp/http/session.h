@@ -18,12 +18,13 @@
  *
  *
  * Possible Server Adapters to implement:
- *    - [ ] In predefined file
- *    - [ ] In cutsom file
+ *    - [ ] In a folder
+ *    - [ ] In predefined file (your own thing)
+ *    - [ ] In cutsom file (json, xml, Excel, ...)
  *    - [ ] In memory (for long lived versions of builds like FastCGI)
- *    - [ ] In cookies
- *    - [ ] In predefined database
- *    - [ ] In custom database
+ *    - [ ] In cookies (encrypted or plain text)
+ *    - [ ] In predefined database (sqlite)
+ *    - [ ] In custom database (User configured database)
  */
 
 namespace webpp {
