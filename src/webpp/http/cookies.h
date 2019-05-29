@@ -45,6 +45,8 @@
  *    [X] Move the definitions of the cookie jar into cookies.cpp file
  *    [ ] Consider renaming "cookies" to "cookie_jar"
  *    [ ] Add doxygen documentations/comments to the declations
+ *    [ ] Does user's browser support cookies
+ *    [ ] Does user's browser support cookies but now it's disabled
  */
 
 #include <chrono>
