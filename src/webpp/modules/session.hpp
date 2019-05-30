@@ -28,9 +28,14 @@
  *    - [ ] In custom database (User configured database)
  */
 
+#include "session/client-adapter/cookie_adapter.h"
+#include "session/server-adapter/memory_adapter.h"
+
 namespace webpp {
 
-    template <class Adapter>
+    template <class ServerAdapter = webpp::memory_adapter,
+              class ClientAdapter = webpp::cookie_adapter,
+              class CacheServerAdapter = webpp::memory_adapter>
     class session {
       public:
         session();
