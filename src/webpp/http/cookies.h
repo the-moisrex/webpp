@@ -1,3 +1,5 @@
+#include <memory>
+
 #ifndef WEBPP_COOKIES_H
 #define WEBPP_COOKIES_H
 
@@ -88,7 +90,7 @@ namespace webpp {
         mutable domain_t _domain;
         mutable path_t _path;
         mutable expires_t _expires;
-        mutable max_age_t _max_age;
+        mutable max_age_t _max_age = 0;
         mutable same_site_t _same_site = same_site_value::NONE;
         mutable secure_t _secure = false;
         mutable host_only_t _host_only = false;
@@ -103,6 +105,7 @@ namespace webpp {
         cookie() = default;
         cookie(const cookie&) noexcept;
         cookie(cookie&&) noexcept;
+        // TODO: implement this:
         cookie(std::string source) noexcept;
         cookie(std::string __name, std::string __value) noexcept;
 
@@ -167,33 +170,28 @@ namespace webpp {
             return *this;
         }
 
-        inline cookie& max_age(decltype(_max_age)&& __max_age) noexcept {
-            _max_age = std::move(__max_age);
-            return *this;
-        }
-
-        inline cookie& max_age(decltype(_max_age) const& __max_age) noexcept {
+        inline cookie& max_age(decltype(_max_age) __max_age) noexcept {
             _max_age = __max_age;
             return *this;
         }
 
         inline cookie& prefix(decltype(_prefix) __prefix) noexcept {
-            _prefix = std::move(__prefix);
+            _prefix = __prefix;
             return *this;
         }
 
         inline cookie& same_site(decltype(_same_site) __same_site) noexcept {
-            _same_site = std::move(__same_site);
+            _same_site = __same_site;
             return *this;
         }
 
         inline cookie& secure(decltype(_secure) __secure) noexcept {
-            _secure = std::move(__secure);
+            _secure = __secure;
             return *this;
         }
 
         inline cookie& host_only(decltype(_host_only) __host_only) noexcept {
-            _host_only = std::move(__host_only);
+            _host_only = __host_only;
             return *this;
         }
 
@@ -219,7 +217,7 @@ namespace webpp {
         }
 
         inline cookie& expires(date_t __expires) noexcept {
-            _expires.reset(new date_t{std::move(__expires)});
+            _expires = std::make_unique<date_t>(__expires);
             return *this;
         }
 
@@ -229,8 +227,8 @@ namespace webpp {
         template <typename D, typename T>
         inline cookie&
         expires_in(std::chrono::duration<D, T> const& __dur) noexcept {
-            _expires.reset(
-                new date_t{std::chrono::system_clock::now() + __dur});
+            _expires = std::make_unique<date_t>(
+                date_t{std::chrono::system_clock::now() + __dur});
             return *this;
         }
 
@@ -520,9 +518,7 @@ namespace webpp {
         cookies& max_age(condition const& _condition,
                          cookie::max_age_t const& _max_age) noexcept;
         cookies& max_age(const_iterator const& it,
-                         cookie::max_age_t&& _max_age) noexcept;
-        cookies& max_age(const_iterator const& it,
-                         cookie::max_age_t const& _max_age) noexcept;
+                         cookie::max_age_t _max_age) noexcept;
         cookies& value(cookie::value_t const& _value) noexcept;
         cookies& value(cookie::name_t const& _name,
                        cookie::value_t const& _value) noexcept;
