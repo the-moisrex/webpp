@@ -141,85 +141,32 @@ namespace webpp {
         cookie& name(std::string __name) noexcept;
         cookie& value(std::string __value) noexcept;
 
-        inline cookie& comment(std::string const& __comment) noexcept {
-            _comment = __comment;
-            return *this;
-        }
+        cookie& comment(std::string const& __comment) noexcept;
 
-        inline cookie& comment(std::string&& __comment) noexcept {
-            _comment = std::move(__comment);
-            return *this;
-        }
+        cookie& comment(std::string&& __comment) noexcept;
 
-        inline cookie& domain(std::string const& __domain) noexcept {
-            _domain = __domain;
-            return *this;
-        }
-        inline cookie& domain(std::string&& __domain) noexcept {
-            _domain = std::move(__domain);
-            return *this;
-        }
+        cookie& domain(std::string const& __domain) noexcept;
+        cookie& domain(std::string&& __domain) noexcept;
 
-        inline cookie& path(std::string const& __path) noexcept {
-            _path = __path;
-            return *this;
-        }
+        cookie& path(std::string const& __path) noexcept;
 
-        inline cookie& path(std::string&& __path) noexcept {
-            _path = std::move(__path);
-            return *this;
-        }
+        cookie& path(std::string&& __path) noexcept;
 
-        inline cookie& max_age(decltype(_max_age) __max_age) noexcept {
-            _max_age = __max_age;
-            return *this;
-        }
+        cookie& max_age(decltype(_max_age) __max_age) noexcept;
 
-        inline cookie& prefix(decltype(_prefix) __prefix) noexcept {
-            _prefix = __prefix;
-            return *this;
-        }
+        cookie& prefix(decltype(_prefix) __prefix) noexcept;
 
-        inline cookie& same_site(decltype(_same_site) __same_site) noexcept {
-            _same_site = __same_site;
-            return *this;
-        }
+        cookie& same_site(decltype(_same_site) __same_site) noexcept;
 
-        inline cookie& secure(decltype(_secure) __secure) noexcept {
-            _secure = __secure;
-            return *this;
-        }
+        cookie& secure(decltype(_secure) __secure) noexcept;
 
-        inline cookie& host_only(decltype(_host_only) __host_only) noexcept {
-            _host_only = __host_only;
-            return *this;
-        }
+        cookie& host_only(decltype(_host_only) __host_only) noexcept;
 
-        inline bool remove() const noexcept {
-            using namespace std::chrono;
-            return *_expires < system_clock::now();
-        }
+        bool remove() const noexcept;
 
-        inline cookie& remove(bool __remove) noexcept {
-            using namespace std::chrono;
-            if (__remove) {
-                // set the expire date one year before now:
-                expires(system_clock::now() -
-                        duration<int, std::ratio<60 * 60 * 24 * 365>>(1));
-            } else if (remove()) {
-                // set the expire date one year from now:
-                expires(system_clock::now() +
-                        duration<int, std::ratio<60 * 60 * 24 * 365>>(1));
-            }
-            // remove max-age if it exists because we're going with expires
-            max_age(0);
-            return *this;
-        }
+        cookie& remove(bool __remove) noexcept;
 
-        inline cookie& expires(date_t __expires) noexcept {
-            _expires = std::make_unique<date_t>(__expires);
-            return *this;
-        }
+        cookie& expires(date_t __expires) noexcept;
 
         /**
          * @brief sets exipiration time relative to now.
@@ -241,10 +188,7 @@ namespace webpp {
          * @param __encrypted
          * @return
          */
-        inline cookie& encrypted(decltype(_encrypted) __encrypted) noexcept {
-            _encrypted = __encrypted;
-            return *this;
-        }
+        cookie& encrypted(decltype(_encrypted) __encrypted) noexcept;
 
         /**
          * @brief decryptable encryption
@@ -268,21 +212,7 @@ namespace webpp {
          */
         bool same_as(cookie const& c) const noexcept;
 
-        friend inline void swap(cookie& first, cookie& second) noexcept {
-            using std::swap;
-            swap(first._name, second._name);
-            swap(first._value, second._value);
-            swap(first._comment, second._comment);
-            swap(first._domain, second._domain);
-            swap(first._path, second._path);
-            swap(first._max_age, second._max_age);
-            swap(first._secure, second._secure);
-            swap(first._host_only, second._host_only);
-            swap(first._expires, second._expires);
-            swap(first._encrypted, second._encrypted);
-            swap(first._prefix, second._prefix);
-            swap(first._same_site, second._same_site);
-        }
+        friend inline void swap(cookie& first, cookie& second) noexcept;
 
         friend struct cookie_hash;
         friend class cookies;
