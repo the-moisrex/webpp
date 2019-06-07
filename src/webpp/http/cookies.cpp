@@ -169,6 +169,96 @@ std::string webpp::cookie::render() const noexcept {
 bool webpp::cookie::same_as(const webpp::cookie& c) const noexcept {
     return _name == c._name && _path == c._path && c._domain == _domain;
 }
+webpp::cookie& webpp::cookie::remove(bool __remove) noexcept {
+    using namespace std::chrono;
+    if (__remove) {
+        // set the expire date one year before now:
+        expires(system_clock::now() -
+                duration<int, std::ratio<60 * 60 * 24 * 365>>(1));
+    } else if (remove()) {
+        // set the expire date one year from now:
+        expires(system_clock::now() +
+                duration<int, std::ratio<60 * 60 * 24 * 365>>(1));
+    }
+    // remove max-age if it exists because we're going with expires
+    max_age(0);
+    return *this;
+}
+webpp::cookie&
+webpp::cookie::expires(webpp::cookie::date_t __expires) noexcept {
+    _expires = std::make_unique<date_t>(__expires);
+    return *this;
+}
+bool webpp::cookie::remove() const noexcept {
+    using namespace std::chrono;
+    return *_expires < system_clock::now();
+}
+webpp::cookie&
+webpp::cookie::host_only(decltype(_host_only) __host_only) noexcept {
+    _host_only = __host_only;
+    return *this;
+}
+webpp::cookie& webpp::cookie::secure(decltype(_secure) __secure) noexcept {
+    _secure = __secure;
+    return *this;
+}
+webpp::cookie&
+webpp::cookie::same_site(decltype(_same_site) __same_site) noexcept {
+    _same_site = __same_site;
+    return *this;
+}
+webpp::cookie& webpp::cookie::prefix(decltype(_prefix) __prefix) noexcept {
+    _prefix = __prefix;
+    return *this;
+}
+webpp::cookie& webpp::cookie::max_age(decltype(_max_age) __max_age) noexcept {
+    _max_age = __max_age;
+    return *this;
+}
+webpp::cookie& webpp::cookie::path(std::string&& __path) noexcept {
+    _path = std::move(__path);
+    return *this;
+}
+webpp::cookie& webpp::cookie::path(std::string const& __path) noexcept {
+    _path = __path;
+    return *this;
+}
+webpp::cookie& webpp::cookie::domain(std::string&& __domain) noexcept {
+    _domain = std::move(__domain);
+    return *this;
+}
+webpp::cookie& webpp::cookie::domain(std::string const& __domain) noexcept {
+    _domain = __domain;
+    return *this;
+}
+webpp::cookie& webpp::cookie::comment(std::string&& __comment) noexcept {
+    _comment = std::move(__comment);
+    return *this;
+}
+webpp::cookie& webpp::cookie::comment(std::string const& __comment) noexcept {
+    _comment = __comment;
+    return *this;
+}
+webpp::cookie&
+webpp::cookie::encrypted(decltype(_encrypted) __encrypted) noexcept {
+    _encrypted = __encrypted;
+    return *this;
+}
+void webpp::swap(webpp::cookie& first, webpp::cookie& second) noexcept {
+    using std::swap;
+    swap(first._name, second._name);
+    swap(first._value, second._value);
+    swap(first._comment, second._comment);
+    swap(first._domain, second._domain);
+    swap(first._path, second._path);
+    swap(first._max_age, second._max_age);
+    swap(first._secure, second._secure);
+    swap(first._host_only, second._host_only);
+    swap(first._expires, second._expires);
+    swap(first._encrypted, second._encrypted);
+    swap(first._prefix, second._prefix);
+    swap(first._same_site, second._same_site);
+}
 
 webpp::cookie_hash::result_type webpp::cookie_hash::
 operator()(const webpp::cookie_hash::argument_type& c) const noexcept {
