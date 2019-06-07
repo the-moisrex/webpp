@@ -6,4 +6,7 @@
 **/*~
 build/
 .vscode/
+.idea/
+.project
+cmake-build-debug/
 
