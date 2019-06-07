@@ -1,4 +1,3 @@
-#include <memory>
 
 #ifndef WEBPP_COOKIES_H
 #define WEBPP_COOKIES_H
