@@ -1,3 +1,9 @@
+#include <memory>
+
+#include <memory>
+
+#include <memory>
+
 #include "cookies.h"
 #include <algorithm>
 #include <boost/algorithm/string/trim.hpp>
@@ -17,10 +23,10 @@ webpp::cookie::cookie(webpp::cookie&& c) noexcept
     : attrs{std::move(c.attrs)}, _name{std::move(c._name)}, _value{std::move(
                                                                 c._value)},
       _domain{std::move(c._domain)}, _path{std::move(c._path)},
-      _expires(std::move(c._expires)), _max_age{std::move(c._max_age)},
-      _same_site{std::move(c._same_site)}, _secure{std::move(c._secure)},
-      _host_only{std::move(c._host_only)}, _encrypted{std::move(c._encrypted)},
-      _prefix{std::move(c._prefix)}, _comment{std::move(c._comment)} {}
+      _expires(std::move(c._expires)), _max_age{c._max_age},
+      _same_site{c._same_site}, _secure{c._secure},
+      _host_only{c._host_only}, _encrypted{c._encrypted},
+      _prefix{c._prefix}, _comment{std::move(c._comment)} {}
 
 webpp::cookie::cookie(std::string __name, std::string __value) noexcept {
     name(std::move(__name));
@@ -33,7 +39,7 @@ webpp::cookie& webpp::cookie::operator=(const webpp::cookie& c) noexcept {
     _value = c._value;
     _domain = c._domain;
     _path = c._path;
-    _expires.reset(new date_t{*c._expires});
+    _expires = std::make_unique<date_t>(*c._expires);
     _max_age = c._max_age;
     _same_site = c._same_site;
     _secure = c._secure;
@@ -51,12 +57,12 @@ webpp::cookie& webpp::cookie::operator=(webpp::cookie&& c) noexcept {
     _domain = std::move(c._domain);
     _path = std::move(c._path);
     _expires = std::move(c._expires);
-    _max_age = std::move(c._max_age);
-    _same_site = std::move(c._same_site);
-    _secure = std::move(c._secure);
-    _host_only = std::move(c._host_only);
-    _encrypted = std::move(c._encrypted);
-    _prefix = std::move(c._prefix);
+    _max_age = c._max_age;
+    _same_site = c._same_site;
+    _secure = c._secure;
+    _host_only = c._host_only;
+    _encrypted = c._encrypted;
+    _prefix = c._prefix;
     _comment = std::move(c._comment);
     return *this;
 }
@@ -267,8 +273,8 @@ webpp::cookies::iterator webpp::cookies::insert(const_iterator hint,
 }
 
 void webpp::cookies::insert(std::initializer_list<value_type> ilist) {
-    for (auto it = ilist.begin(); it != ilist.end(); it++) {
-        auto found = find(*it);
+    for (const auto & it : ilist) {
+        auto found = find(it);
         if (found != cend())
             erase(found);
     }
@@ -296,7 +302,7 @@ webpp::cookies::encrypted(cookie::name_t const& _name,
 webpp::cookies&
 webpp::cookies::encrypted(const_iterator const& it,
                           cookie::encrypted_t _encrypted) noexcept {
-    it->_encrypted = std::move(_encrypted);
+    it->_encrypted = _encrypted;
     return *this;
 }
 
@@ -320,7 +326,7 @@ webpp::cookies::secure(cookie::name_t const& _name,
 }
 webpp::cookies& webpp::cookies::secure(const_iterator const& it,
                                        cookie::secure_t _secure) noexcept {
-    it->_secure = std::move(_secure);
+    it->_secure = _secure;
     return *this;
 }
 
@@ -348,7 +354,7 @@ webpp::cookies::host_only(cookie::name_t const& _name,
 webpp::cookies&
 webpp::cookies::host_only(const_iterator const& it,
                           cookie::host_only_t _host_only) noexcept {
-    it->_host_only = std::move(_host_only);
+    it->_host_only = _host_only;
     return *this;
 }
 
@@ -375,7 +381,7 @@ webpp::cookies::prefix(condition const& _condition,
 
 webpp::cookies& webpp::cookies::prefix(const_iterator const& it,
                                        cookie::prefix_t _prefix) noexcept {
-    it->_prefix = std::move(_prefix);
+    it->_prefix = _prefix;
     return *this;
 }
 
@@ -429,14 +435,14 @@ webpp::cookies::same_site(condition const& _condition,
 webpp::cookies&
 webpp::cookies::same_site(const_iterator const& it,
                           cookie::same_site_t _same_site) noexcept {
-    it->_same_site = std::move(_same_site);
+    it->_same_site = _same_site;
     return *this;
 }
 
 webpp::cookies&
 webpp::cookies::expires(cookie::date_t const& _expires) noexcept {
     for (auto& c : *this)
-        c._expires.reset(new cookie::date_t{_expires});
+        c._expires = std::make_unique<cookie::date_t>(_expires);
     return *this;
 }
 
@@ -460,7 +466,7 @@ webpp::cookies::expires(condition const& _condition,
 
 webpp::cookies& webpp::cookies::expires(const_iterator const& it,
                                         cookie::date_t&& _expires) noexcept {
-    it->_expires.reset(new cookie::date_t{_expires});
+    it->_expires = std::make_unique<cookie::date_t>(_expires);
     return *this;
 }
 
@@ -490,15 +496,9 @@ webpp::cookies::max_age(condition const& _condition,
 }
 
 webpp::cookies& webpp::cookies::max_age(const_iterator const& it,
-                                        cookie::max_age_t&& _max_age) noexcept {
-    it->_max_age = std::move(_max_age);
+                                        cookie::max_age_t _max_age) noexcept {
+    it->_max_age = _max_age;
     return *this;
-}
-
-webpp::cookies&
-webpp::cookies::max_age(const_iterator const& it,
-                        cookie::max_age_t const& _max_age) noexcept {
-    return max_age(it, cookie::max_age_t(_max_age));
 }
 
 webpp::cookies& webpp::cookies::value(cookie::value_t const& _value) noexcept {
