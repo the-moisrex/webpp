@@ -211,9 +211,23 @@ namespace webpp {
          */
         bool same_as(cookie const& c) const noexcept;
 
-        friend inline void swap(cookie& first, cookie& second) noexcept;
+        friend inline void swap(cookie& first, cookie& second) noexcept {
+            using std::swap;
+            swap(first._name, second._name);
+            swap(first._value, second._value);
+            swap(first._comment, second._comment);
+            swap(first._domain, second._domain);
+            swap(first._path, second._path);
+            swap(first._max_age, second._max_age);
+            swap(first._secure, second._secure);
+            swap(first._host_only, second._host_only);
+            swap(first._expires, second._expires);
+            swap(first._encrypted, second._encrypted);
+            swap(first._prefix, second._prefix);
+            swap(first._same_site, second._same_site);
+        }
 
-        friend struct cookie_hash;
+            friend struct cookie_hash;
         friend class cookies;
     };
 
