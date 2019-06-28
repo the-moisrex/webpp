@@ -1,5 +1,34 @@
 # Competitors
 
+### Benchmarks:
+[Benchmarks and other competetors](https://www.techempower.com/benchmarks/)
+
+### Cutelyst! The Qt Web Framework
+[Home Page](https://cutelyst.org)
+[Github](https://github.com/cutelyst/cutelyst)
+
+
+### CPPSP - C++ server pages
+[Github](https://github.com/xaxaxa/cppsp/)
+[Home Page](http://xa.us.to/cppsp)
+
+
+### Ulib
+[Home Page](https://stefanocasazza.github.io/ULib/)
+[Github](https://github.com/stefanocasazza/ULib)
+
+
+### Silocon
+[Home Page](http://siliconframework.org)
+
+
+### TreeFrog
+[Home Page](http://www.treefrogframework.org)
+[Github](https://github.com/treefrogframework/treefrog-framework)
+
+* Good documentation
+* Qt power
+
 ### Drogon
 [Drogon GitHub](https://github.com/an-tao/drogon)
 
