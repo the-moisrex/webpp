@@ -3,6 +3,8 @@
 
 #include "../router.hpp"
 #include "../http/headers.hpp"
+#include "../http/body.h"
+#include <string>
 
 namespace webpp {
 
@@ -10,8 +12,9 @@ namespace webpp {
       private:
       public:
         cgi();
-        char const* header(char const* const) const noexcept;
+        char const* header(std::string h) const noexcept;
         ::webpp::headers headers() const noexcept;
+        ::webpp::body body() const noexcept;
         char const* server_addr() const noexcept;
         int server_port() const noexcept;
         char const* remote_addr() const noexcept;
@@ -20,8 +23,11 @@ namespace webpp {
         char const* scheme() const noexcept;
         char const* server_protcol() const noexcept;
         char const* method() const noexcept;
+        char const* request_uri() const noexcept;
+        
         void run(::webpp::router const& _router) noexcept;
         char const* env(char const* const &name) const noexcept;
+        size_t read(char* data, size_t length) const;
     };
 
 } // namespace webpp

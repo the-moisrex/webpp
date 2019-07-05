@@ -2,8 +2,10 @@
 #include <iostream>
 #include "../http/request.h"
 #include <cstdlib>
+#include <cctype>
+#include <algorithm>
+#include <functional>
 
-using namespace std;
 using namespace webpp;
 
 //    AUTH_PASSWORD
@@ -63,11 +65,11 @@ char const* cgi::remote_addr() const noexcept {
 }
 
 int cgi::remote_port() const noexcept {
-  return atoi(env("REMOTE_PORT"));
+  return atoi(env("REMOTE_PORT")); // default value: 0
 }
 
 int cgi::server_port() const noexcept {
-  return atoi(env("SERVER_PORT"));
+  return atoi(env("SERVER_PORT")); // default value: 0
 }
 
 char const* cgi::server_addr() const noexcept {
@@ -78,6 +80,16 @@ char const* cgi::server_name() const noexcept {
   return env("SERVER_NAME");
 }
 
+char const* cgi::request_uri() const noexcept {
+  return env("REQUEST_URI");
+}
+
+char const* cgi::header(std::string str) const noexcept {
+  std::transform(str.begin(), str.end(), str.begin(), static_cast<int(*)(int)>(&std::toupper));
+  str.insert(0, "HTTP_");
+  return env(str.c_str());
+}
+
 void cgi::run(const router& _router) noexcept {
     webpp::request<webpp::cgi> req(this);
     auto res = _router.run(req);
@@ -85,4 +97,14 @@ void cgi::run(const router& _router) noexcept {
       std::cout << header.attr() << ": " << header.value() << "\r\n";
     }
     std::cout << "\r\n" << res.body();
+}
+
+::webpp::body body() const noexcept {
+  ::webpp::body<webpp::cgi> data { this };
+  return data;
+}
+
+size_t cgi::read(char* data, size_t length) const {
+  std::cin.read(data, length);
+  return std::cin.gcount();
 }
