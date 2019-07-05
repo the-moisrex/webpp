@@ -15,3 +15,6 @@ time 1562323458
 old [description:"learn more about fcgi" entry:"1562323388" modified:"1562323388" status:"pending" uuid:"a62e1a95-9a63-4157-993a-a19e117a1998"]
 new [description:"learn more about fcgi" entry:"1562323388" modified:"1562323458" project:"interfaces" status:"pending" uuid:"a62e1a95-9a63-4157-993a-a19e117a1998"]
 ---
+time 1562330997
+new [description:"you may need to change the response::body to be able to handle streams not just strings" entry:"1562330997" modified:"1562330997" project:"response" status:"pending" uuid:"5c442841-6bb9-44f0-8b35-56f32f9a9e09"]
+---

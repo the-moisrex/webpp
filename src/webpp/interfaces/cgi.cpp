@@ -1,4 +1,5 @@
 #include "cgi.h"
+#include <iostream>
 #include "../http/request.h"
 #include <cstdlib>
 
@@ -52,5 +53,9 @@ cgi::cgi() {}
 
 void cgi::run(const router& _router) noexcept {
     webpp::request<webpp::cgi> req(this);
-    _router.run(req);
+    auto res = _router.run(req);
+    for (auto const &header : res.headers()) {
+      std::cout << header.attr() << ": " << header.value() << "\r\n";
+    }
+    std::cout << "\r\n" << res.body();
 }

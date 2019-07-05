@@ -31,26 +31,56 @@
 
 namespace webpp {
 
+    template <class Interface>
     class request {
       private:
-        webpp::headers request_headers;
+        Interface* _interface = nullptr; // the interface lives longer than this class
 
       public:
-        request() = default;
-        request(webpp::headers request_headers) noexcept;
+        request(Interface* interface) noexcept;
 
-        inline webpp::headers const& headers() const noexcept {
-            return request_headers;
+        char const* method() const noexcept {
+          return interface->method();
         }
 
         /**
-         * @brief header
-         * @details this method might return multiple elements.
-         * @param key
+         * @brief returns the request scheme (http/https/...)
          */
-        inline auto header(std::string const& key) const noexcept {
-            return request_headers.find(key);
+        char const* scheme() const noexcept {
+          return interface->scheme();
         }
+
+        /**
+         * @brief returns something like "HTTP/1.1" or ...
+         */
+        char const* server_protocol() const noexcept {
+          return interface->server_protocol();
+        }
+
+        char const* query() const noexcept {
+          return interface->query();
+        }
+        
+        int remote_port() const noexcept {
+          return interface->remote_port();
+        }
+
+        char const* std::string server_name() const noexcept {
+          return interface->server_name();
+        }
+
+        char const* remote_addr() const noexcept {
+          return interface->remote_addr();
+        }
+
+        char const* header(char const* const name) const noexcept {
+          return interface->header(name);
+        }
+
+        webpp::headers headers() const noexcept {
+          return interface->headers();
+        }
+
     };
 } // namespace webpp
 
