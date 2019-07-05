@@ -227,7 +227,7 @@ namespace webpp {
             swap(first._same_site, second._same_site);
         }
 
-            friend struct cookie_hash;
+        friend struct cookie_hash;
         friend class cookies;
     };
 
