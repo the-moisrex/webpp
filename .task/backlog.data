@@ -3,3 +3,4 @@
 {"description":"learn more about fcgi","entry":"20190705T104308Z","modified":"20190705T104308Z","status":"pending","uuid":"a62e1a95-9a63-4157-993a-a19e117a1998"}
 {"description":"implement cgi and make sure it builds","entry":"20190705T104135Z","modified":"20190705T104400Z","project":"interfaces","status":"pending","uuid":"f33319c0-0160-4435-98ec-04b8388c1bae"}
 {"description":"learn more about fcgi","entry":"20190705T104308Z","modified":"20190705T104418Z","project":"interfaces","status":"pending","uuid":"a62e1a95-9a63-4157-993a-a19e117a1998"}
+{"description":"you may need to change the response::body to be able to handle streams not just strings","entry":"20190705T124957Z","modified":"20190705T124957Z","project":"response","status":"pending","uuid":"5c442841-6bb9-44f0-8b35-56f32f9a9e09"}

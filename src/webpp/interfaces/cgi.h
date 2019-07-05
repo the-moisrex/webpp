@@ -2,6 +2,7 @@
 #define WEBPP_CGI_H
 
 #include "../router.hpp"
+#include "../http/headers.hpp"
 
 namespace webpp {
 
@@ -9,6 +10,14 @@ namespace webpp {
       private:
       public:
         cgi();
+        char const* header(char const* const) const noexcept;
+        ::webpp::headers headers() const noexcept;
+        char const* remote_addr() const noexcept;
+        char const* remote_port() const noexcept;
+        char const* server_name() const noexcept;
+        char const* scheme() const noexcept;
+        char const* server_protcol() const noexcept;
+        char const* method() const noexcept;
         void run(::webpp::router const& _router) noexcept;
         char const* env(char const* const& name = nullptr) const noexcept;
     };
