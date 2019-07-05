@@ -51,6 +51,33 @@ using namespace webpp;
 
 cgi::cgi() {}
 
+char const* cgi::env(char const*const &name) const noexcept {
+  auto a = std::getenv(name);
+  if (!a)
+    return "";
+  return a;
+}
+
+char const* cgi::remote_addr() const noexcept {
+  return env("REMOTE_ADDR");
+}
+
+int cgi::remote_port() const noexcept {
+  return atoi(env("REMOTE_PORT"));
+}
+
+int cgi::server_port() const noexcept {
+  return atoi(env("SERVER_PORT"));
+}
+
+char const* cgi::server_addr() const noexcept {
+  return env("SERVER_ADDR");
+}
+
+char const* cgi::server_name() const noexcept {
+  return env("SERVER_NAME");
+}
+
 void cgi::run(const router& _router) noexcept {
     webpp::request<webpp::cgi> req(this);
     auto res = _router.run(req);
