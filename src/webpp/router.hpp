@@ -1,6 +1,7 @@
 #ifndef WEBPP_ROUTER_H
 #define WEBPP_ROUTER_H
 
+#include "http/request.h"
 #include <algorithm>
 #include <functional>
 #include <memory>
@@ -67,6 +68,8 @@ namespace webpp {
         std::vector<std::shared_ptr<route>> root_routes;
 
       public:
+        template <class Interface>
+        void run(::webpp::request<Interface> const& req);
     };
 
 }; // namespace webpp

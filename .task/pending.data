@@ -1,1 +1,3 @@
 [description:"learn more about sessions" entry:"1560691992" modified:"1560691992" project:"sessions" status:"pending" uuid:"01baaddf-ce26-4def-b50e-8bb657b536cd"]
+[description:"implement cgi and make sure it builds" entry:"1562323295" modified:"1562323440" project:"interfaces" status:"pending" uuid:"f33319c0-0160-4435-98ec-04b8388c1bae"]
+[description:"learn more about fcgi" entry:"1562323388" modified:"1562323458" project:"interfaces" status:"pending" uuid:"a62e1a95-9a63-4157-993a-a19e117a1998"]
