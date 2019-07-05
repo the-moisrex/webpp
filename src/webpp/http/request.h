@@ -2,6 +2,7 @@
 #define WEBPP_REQUEST_H
 
 #include "headers.hpp"
+#include "body.h"
 
 /**
  *
@@ -40,45 +41,61 @@ namespace webpp {
         request(Interface* interface) noexcept;
 
         char const* method() const noexcept {
-          return interface->method();
+          return _interface->method();
         }
 
         /**
          * @brief returns the request scheme (http/https/...)
          */
         char const* scheme() const noexcept {
-          return interface->scheme();
+          return _interface->scheme();
         }
 
         /**
          * @brief returns something like "HTTP/1.1" or ...
          */
         char const* server_protocol() const noexcept {
-          return interface->server_protocol();
+          return _interface->server_protocol();
         }
 
         char const* query() const noexcept {
-          return interface->query();
+          return _interface->query();
         }
         
         int remote_port() const noexcept {
-          return interface->remote_port();
+          return _interface->remote_port();
         }
 
-        char const* std::string server_name() const noexcept {
-          return interface->server_name();
+        int server_port() const noexcept {
+          return _interface->server_port();
+        }
+
+        char const* server_addr() const noexcept {
+          return _interface->server_addr();
         }
 
         char const* remote_addr() const noexcept {
-          return interface->remote_addr();
+          return _interface->remote_addr();
+        }
+
+        char const* server_name() const noexcept {
+          return _interface->server_name();
+        }
+
+        char const* request_uri() const noexcept {
+          return _interface->request_uri();
         }
 
         char const* header(char const* const name) const noexcept {
-          return interface->header(name);
+          return _interface->header(name);
         }
 
         webpp::headers headers() const noexcept {
-          return interface->headers();
+          return _interface->headers();
+        }
+
+        webpp::body body() const noexcept {
+          return _interface->body();
         }
 
     };
