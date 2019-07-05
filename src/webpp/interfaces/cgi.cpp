@@ -1,4 +1,5 @@
 #include "cgi.h"
+#include "../http/request.h"
 #include <cstdlib>
 
 using namespace std;
@@ -48,3 +49,8 @@ using namespace webpp;
 //    WEB_SERVER_API
 
 cgi::cgi() {}
+
+void cgi::run(const router& _router) noexcept {
+    webpp::request<webpp::cgi> req(this);
+    _router.run(req);
+}
