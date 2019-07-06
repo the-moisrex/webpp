@@ -2,3 +2,4 @@
 [description:"implement cgi and make sure it builds" entry:"1562323295" modified:"1562323440" project:"interfaces" status:"pending" uuid:"f33319c0-0160-4435-98ec-04b8388c1bae"]
 [description:"learn more about fcgi" entry:"1562323388" modified:"1562323458" project:"interfaces" status:"pending" uuid:"a62e1a95-9a63-4157-993a-a19e117a1998"]
 [description:"you may need to change the response::body to be able to handle streams not just strings" entry:"1562330997" modified:"1562330997" project:"response" status:"pending" uuid:"5c442841-6bb9-44f0-8b35-56f32f9a9e09"]
+[description:"make use of string_view and other c++17 features" entry:"1562446839" modified:"1562446839" status:"pending" uuid:"b135fe53-2a6d-4f19-82a2-70745e8ab95d"]
