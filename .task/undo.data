@@ -18,3 +18,6 @@ new [description:"learn more about fcgi" entry:"1562323388" modified:"1562323458
 time 1562330997
 new [description:"you may need to change the response::body to be able to handle streams not just strings" entry:"1562330997" modified:"1562330997" project:"response" status:"pending" uuid:"5c442841-6bb9-44f0-8b35-56f32f9a9e09"]
 ---
+time 1562446839
+new [description:"make use of string_view and other c++17 features" entry:"1562446839" modified:"1562446839" status:"pending" uuid:"b135fe53-2a6d-4f19-82a2-70745e8ab95d"]
+---
