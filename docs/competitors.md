@@ -29,6 +29,10 @@
 * Good documentation
 * Qt power
 
+### libmicrohttpd
+[GNU](https://www.gnu.org/software/libmicrohttpd/)
+[Tutorial](https://www.gnu.org/software/libmicrohttpd/tutorial.html)
+
 ### Drogon
 [Drogon GitHub](https://github.com/an-tao/drogon)
 
