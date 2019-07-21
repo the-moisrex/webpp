@@ -5,3 +5,5 @@
 {"description":"learn more about fcgi","entry":"20190705T104308Z","modified":"20190705T104418Z","project":"interfaces","status":"pending","uuid":"a62e1a95-9a63-4157-993a-a19e117a1998"}
 {"description":"you may need to change the response::body to be able to handle streams not just strings","entry":"20190705T124957Z","modified":"20190705T124957Z","project":"response","status":"pending","uuid":"5c442841-6bb9-44f0-8b35-56f32f9a9e09"}
 {"description":"make use of string_view and other c++17 features","entry":"20190706T210039Z","modified":"20190706T210039Z","status":"pending","uuid":"b135fe53-2a6d-4f19-82a2-70745e8ab95d"}
+{"description":"make use of string_view and other c++17 features","end":"20190721T122706Z","entry":"20190706T210039Z","modified":"20190721T122706Z","status":"completed","uuid":"b135fe53-2a6d-4f19-82a2-70745e8ab95d"}
+{"description":"create an example","entry":"20190721T124552Z","modified":"20190721T124552Z","project":"examples","status":"pending","uuid":"98ac6eaf-b224-4394-b477-f8da4d9ff5ce"}

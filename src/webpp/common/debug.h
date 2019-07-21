@@ -4,5 +4,9 @@
 #define WEBPP_DEBUG_H
 
 
+#ifdef DEBUG
+#else
+#endif
+
 
 #endif // WEBPP_DEBUG_H
