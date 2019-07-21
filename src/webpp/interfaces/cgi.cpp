@@ -53,8 +53,8 @@ using namespace webpp;
 
 cgi::cgi() {}
 
-char const* cgi::env(char const*const &name) const noexcept {
-  auto a = std::getenv(name);
+char const* cgi::env(std::string_view name) const noexcept {
+  auto a = std::getenv(name.c_str());
   if (!a)
     return "";
   return a;
@@ -84,7 +84,7 @@ char const* cgi::request_uri() const noexcept {
   return env("REQUEST_URI");
 }
 
-char const* cgi::header(std::string str) const noexcept {
+char const* cgi::header(std::string_view str) const noexcept {
   std::transform(str.begin(), str.end(), str.begin(), static_cast<int(*)(int)>(&std::toupper));
   str.insert(0, "HTTP_");
   return env(str.c_str());

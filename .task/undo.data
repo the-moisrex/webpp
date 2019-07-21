@@ -21,3 +21,10 @@ new [description:"you may need to change the response::body to be able to handle
 time 1562446839
 new [description:"make use of string_view and other c++17 features" entry:"1562446839" modified:"1562446839" status:"pending" uuid:"b135fe53-2a6d-4f19-82a2-70745e8ab95d"]
 ---
+time 1563712026
+old [description:"make use of string_view and other c++17 features" entry:"1562446839" modified:"1562446839" status:"pending" uuid:"b135fe53-2a6d-4f19-82a2-70745e8ab95d"]
+new [description:"make use of string_view and other c++17 features" end:"1563712026" entry:"1562446839" modified:"1563712026" status:"completed" uuid:"b135fe53-2a6d-4f19-82a2-70745e8ab95d"]
+---
+time 1563713152
+new [description:"create an example" entry:"1563713152" modified:"1563713152" project:"examples" status:"pending" uuid:"98ac6eaf-b224-4394-b477-f8da4d9ff5ce"]
+---

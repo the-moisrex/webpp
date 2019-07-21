@@ -4,6 +4,7 @@
 #include "../router.hpp"
 #include "../http/headers.hpp"
 #include "../http/body.h"
+#include "../std/string_view.h"
 #include <string>
 
 namespace webpp {
@@ -26,7 +27,7 @@ namespace webpp {
         char const* request_uri() const noexcept;
         
         void run(::webpp::router const& _router) noexcept;
-        char const* env(char const* const &name) const noexcept;
+        char const* env(std::string_view name) const noexcept;
         size_t read(char* data, size_t length) const;
     };
 
