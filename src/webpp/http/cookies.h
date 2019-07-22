@@ -50,11 +50,11 @@
  *    [ ] Does user's browser support cookies but now it's disabled
  */
 
+#include "../std/string_view.h"
 #include <chrono>
 #include <functional>
 #include <map>
 #include <memory>
-#include <string>
 #include <unordered_set>
 
 namespace webpp {
@@ -65,13 +65,13 @@ namespace webpp {
     class cookie {
       public:
         enum class same_site_value { NONE, LAX, STRICT };
-        std::map<std::string, std::string> attrs;
+        std::map<std::string_view, std::string_view> attrs;
         using date_t = std::chrono::time_point<std::chrono::system_clock>;
 
-        using name_t = std::string;
-        using value_t = std::string;
-        using domain_t = std::string;
-        using path_t = std::string;
+        using name_t = std::string_view;
+        using value_t = std::string_view;
+        using domain_t = std::string_view;
+        using path_t = std::string_view;
         using expires_t = std::unique_ptr<date_t>;
         using max_age_t = unsigned long;
         using same_site_t = same_site_value;
@@ -79,7 +79,7 @@ namespace webpp {
         using host_only_t = bool;
         using prefix_t = bool;
         using encrypted_t = bool;
-        using comment_t = std::string;
+        using comment_t = std::string_view;
 
       private:
         // I made them mutable because the cookies class wants to change them
@@ -500,6 +500,8 @@ namespace webpp {
         /**
          * @brief Change ever cookie's name to the specified value
          * @param _name
+         * @return
+         * @return
          * @return
          */
         cookies& name(cookie::name_t const& _name) noexcept;
