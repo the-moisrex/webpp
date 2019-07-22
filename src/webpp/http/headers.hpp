@@ -1,19 +1,19 @@
 #ifndef HEADERS_HPP
 #define HEADERS_HPP
 
+#include "../std/string_view.h"
 #include "cookies.h"
 #include <map>
 #include <string>
 
 namespace webpp {
-    class headers : public std::multimap<std::string, std::string> {
+    class headers {
       private:
+        std::multimap<std::string_view, std::string_view> data;
         webpp::cookies _cookies;
 
       public:
-        inline decltype(_cookies) const& cookies() const noexcept {
-            return _cookies;
-        }
+        decltype(_cookies) const& cookies() const noexcept { return _cookies; }
 
         void remove_cookies() noexcept {
             _cookies.clear();
