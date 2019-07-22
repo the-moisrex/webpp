@@ -31,3 +31,6 @@ new [description:"create an example" entry:"1563713152" modified:"1563713152" pr
 time 1563795602
 new [description:"remove one of hpp or h file extensions and use the other one" entry:"1563795602" modified:"1563795602" status:"pending" uuid:"703da0be-f638-4614-91be-3850cebbb144"]
 ---
+time 1563806570
+new [description:"implement half-lazy loading of images\/... stuff" entry:"1563806570" modified:"1563806570" project:"performance" status:"pending" uuid:"027c5ba8-5180-48b3-90ba-e7e6ec3df841"]
+---
