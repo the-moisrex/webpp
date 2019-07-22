@@ -1,10 +1,10 @@
 #include "cgi.h"
-#include <iostream>
 #include "../http/request.h"
-#include <cstdlib>
-#include <cctype>
 #include <algorithm>
+#include <cctype>
+#include <cstdlib>
 #include <functional>
+#include <iostream>
 
 using namespace webpp;
 
@@ -54,57 +54,50 @@ using namespace webpp;
 cgi::cgi() {}
 
 char const* cgi::env(std::string_view name) const noexcept {
-  auto a = std::getenv(name.c_str());
-  if (!a)
-    return "";
-  return a;
+    auto a = std::getenv(name.c_str());
+    if (!a)
+        return "";
+    return a;
 }
 
-char const* cgi::remote_addr() const noexcept {
-  return env("REMOTE_ADDR");
-}
+char const* cgi::remote_addr() const noexcept { return env("REMOTE_ADDR"); }
 
 int cgi::remote_port() const noexcept {
-  return atoi(env("REMOTE_PORT")); // default value: 0
+    return atoi(env("REMOTE_PORT")); // default value: 0
 }
 
 int cgi::server_port() const noexcept {
-  return atoi(env("SERVER_PORT")); // default value: 0
+    return atoi(env("SERVER_PORT")); // default value: 0
 }
 
-char const* cgi::server_addr() const noexcept {
-  return env("SERVER_ADDR");
-}
+char const* cgi::server_addr() const noexcept { return env("SERVER_ADDR"); }
 
-char const* cgi::server_name() const noexcept {
-  return env("SERVER_NAME");
-}
+char const* cgi::server_name() const noexcept { return env("SERVER_NAME"); }
 
-char const* cgi::request_uri() const noexcept {
-  return env("REQUEST_URI");
-}
+char const* cgi::request_uri() const noexcept { return env("REQUEST_URI"); }
 
-char const* cgi::header(std::string_view str) const noexcept {
-  std::transform(str.begin(), str.end(), str.begin(), static_cast<int(*)(int)>(&std::toupper));
-  str.insert(0, "HTTP_");
-  return env(str.c_str());
+char const* cgi::header(std::string str) const noexcept {
+    std::transform(str.begin(), str.end(), str.begin(),
+                   static_cast<int (*)(int)>(&std::toupper));
+    str.insert(0, "HTTP_");
+    return env(str.c_str());
 }
 
 void cgi::run(const router& _router) noexcept {
     webpp::request<webpp::cgi> req(this);
     auto res = _router.run(req);
-    for (auto const &header : res.headers()) {
-      std::cout << header.attr() << ": " << header.value() << "\r\n";
+    for (auto const& header : res.headers()) {
+        std::cout << header.attr() << ": " << header.value() << "\r\n";
     }
     std::cout << "\r\n" << res.body();
 }
 
 ::webpp::body body() const noexcept {
-  ::webpp::body<webpp::cgi> data { this };
-  return data;
+    ::webpp::body<webpp::cgi> data{this};
+    return data;
 }
 
 size_t cgi::read(char* data, size_t length) const {
-  std::cin.read(data, length);
-  return std::cin.gcount();
+    std::cin.read(data, length);
+    return std::cin.gcount();
 }
