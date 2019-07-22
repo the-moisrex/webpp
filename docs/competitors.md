@@ -1,5 +1,8 @@
 # Competitors
 
+### Cefeika
+[Github](https://github.com/dmitigr/cefeika)
+
 ### Benchmarks:
 [Benchmarks and other competetors](https://www.techempower.com/benchmarks/)
 
