@@ -34,3 +34,12 @@ new [description:"remove one of hpp or h file extensions and use the other one" 
 time 1563806570
 new [description:"implement half-lazy loading of images\/... stuff" entry:"1563806570" modified:"1563806570" project:"performance" status:"pending" uuid:"027c5ba8-5180-48b3-90ba-e7e6ec3df841"]
 ---
+time 1563822038
+new [description:"make cmake do magin" entry:"1563822038" modified:"1563822038" project:"cmake" status:"pending" uuid:"f52a16ef-4e4e-43e6-bd17-5b9558cfc4a7"]
+---
+time 1563822100
+new [description:"use components like cefeika" entry:"1563822100" modified:"1563822100" project:"cmake" status:"pending" uuid:"74af12bd-563b-45bf-87e6-937666878e5b"]
+---
+time 1563827999
+new [description:"learn more: http:\/\/www.yolinux.com\/TUTORIALS\/LibraryArchives-StaticAndDynamic.html" entry:"1563827999" modified:"1563827999" status:"pending" uuid:"3f3a2322-d418-4bc1-8634-eed3a501a233"]
+---
