@@ -4,25 +4,24 @@
 #define WEBPP_META_H
 
 #if __cplusplus >= 199711L
-#  define(CXX98)
+#define CXX98
 #endif
 
 #if __cplusplus >= 201103L
-#  define(CXX11)
+#define CXX11
 #endif
 
 #if __cplusplus >= 201402L
-#  define(CXX14)
+#define CXX14
 #endif
 
 #if __cplusplus >= 201703L
-#  define(CXX17)
+#define CXX17
 #endif
 
 // TODO: change this in the yaer 2020
 #if __cplusplus > 201703L
-#  define(CXX20)
+#define CXX20
 #endif
 
-
-#endif //WEBPP_META_H
+#endif // WEBPP_META_H

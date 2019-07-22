@@ -9,3 +9,6 @@
 {"description":"create an example","entry":"20190721T124552Z","modified":"20190721T124552Z","project":"examples","status":"pending","uuid":"98ac6eaf-b224-4394-b477-f8da4d9ff5ce"}
 {"description":"remove one of hpp or h file extensions and use the other one","entry":"20190722T114002Z","modified":"20190722T114002Z","status":"pending","uuid":"703da0be-f638-4614-91be-3850cebbb144"}
 {"description":"implement half-lazy loading of images\/... stuff","entry":"20190722T144250Z","modified":"20190722T144250Z","project":"performance","status":"pending","uuid":"027c5ba8-5180-48b3-90ba-e7e6ec3df841"}
+{"description":"make cmake do magin","entry":"20190722T190038Z","modified":"20190722T190038Z","project":"cmake","status":"pending","uuid":"f52a16ef-4e4e-43e6-bd17-5b9558cfc4a7"}
+{"description":"use components like cefeika","entry":"20190722T190140Z","modified":"20190722T190140Z","project":"cmake","status":"pending","uuid":"74af12bd-563b-45bf-87e6-937666878e5b"}
+{"description":"learn more: http:\/\/www.yolinux.com\/TUTORIALS\/LibraryArchives-StaticAndDynamic.html","entry":"20190722T203959Z","modified":"20190722T203959Z","status":"pending","uuid":"3f3a2322-d418-4bc1-8634-eed3a501a233"}
