@@ -1,19 +1,51 @@
 #ifndef RESPONSE_H
 #define RESPONSE_H
 
+#include "body.h"
+#include "headers.hpp"
+#include <memory>
 #include <string>
 
-namespace {
+namespace webpp {
 
+    template <typename Interface>
     class response {
+      public:
+        using body_type = webpp::body<Interface>;
+        using header_type = webpp::header<Interface>;
+
       private:
+        std::unique_ptr<body_type> _body = nullptr;
+
       public:
         response() = default;
 
-        response* body(std::string const& body) noexcept;
-        response* body(std::string&& body) noexcept;
-        std::istream& body() noexcept;
+        /**
+         * @brief set the body of the response
+         * @param __body
+         * @return itself
+         */
+        response* body(body_type&& __body) noexcept {
+            _body = std::move(__body);
+            return this;
+        }
+
+        /**
+         * @brief set the body of the response
+         * @param __body
+         * @return itself
+         */
+        response* body(body_type const& __body) noexcept {
+            _body = __body;
+            return this;
+        }
+
+        /**
+         * @brief get the body of response
+         * @return a pointer to the body
+         */
+        auto& body() & noexcept { return _body; }
     };
 
-} // namespace
+} // namespace webpp
 #endif // RESPONSE_H

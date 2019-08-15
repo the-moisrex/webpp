@@ -18,6 +18,10 @@ namespace webpp {
         Interface _interface;
 
       public:
+        body(Interface const& __interface) noexcept : _interface(__interface) {}
+        body(Interface&& __interface) noexcept
+            : _interface(std::move(__interface)) {}
+
         void* const& json() const;
 
         /**
@@ -26,6 +30,11 @@ namespace webpp {
          */
         std::string_view string() const;
         std::istream const& stream() const;
+
+        std::ostream& operator<<(std::ostream& __stream) noexcept {
+            // TODO: fill here
+            return __stream;
+        }
 
         /**
          * Perfect forwarding the read method.
