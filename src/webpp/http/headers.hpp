@@ -7,19 +7,22 @@
 #include <string>
 
 namespace webpp {
+
+    template <typename Interface>
     class headers {
       private:
         std::multimap<std::string_view, std::string_view> data;
         webpp::cookies _cookies;
 
       public:
-        decltype(_cookies) const& cookies() const noexcept { return _cookies; }
+        auto& cookies() noexcept { return _cookies; }
+        auto const& cookies() const noexcept { return _cookies; }
 
         void remove_cookies() noexcept {
             _cookies.clear();
-            for (auto it = begin(); it != end();) {
+            for (auto it = data.begin(); it != data.end();) {
                 if (it->first == "set-cookie" || it->first == "cookie")
-                    it = erase(it);
+                    it = data.erase(it);
                 else
                     ++it;
             }
@@ -29,6 +32,8 @@ namespace webpp {
             remove_cookies();
             _cookies = std::move(__cookies);
         }
+
+        int status_code() const noexcept {}
     };
 } // namespace webpp
 
