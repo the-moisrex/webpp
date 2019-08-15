@@ -53,16 +53,13 @@ using namespace webpp;
 
 cgi::cgi() {}
 
-std::string_view cgi::env(std::string_view name) const noexcept {
-    auto a = std::getenv(name.c_str());
-    if (!a)
-        return "";
-    return a;
+char const* cgi::env(char const* const name) const noexcept {
+    if (auto a = std::getenv(name))
+        return a;
+    return "";
 }
 
-std::string_view cgi::remote_addr() const noexcept {
-    return env("REMOTE_ADDR");
-}
+char const* cgi::remote_addr() const noexcept { return env("REMOTE_ADDR"); }
 
 int cgi::remote_port() const noexcept {
     return atoi(env("REMOTE_PORT")); // default value: 0
@@ -72,19 +69,13 @@ int cgi::server_port() const noexcept {
     return atoi(env("SERVER_PORT")); // default value: 0
 }
 
-std::string_view cgi::server_addr() const noexcept {
-    return env("SERVER_ADDR");
-}
+char const* cgi::server_addr() const noexcept { return env("SERVER_ADDR"); }
 
-std::string_view cgi::server_name() const noexcept {
-    return env("SERVER_NAME");
-}
+char const* cgi::server_name() const noexcept { return env("SERVER_NAME"); }
 
-std::string_view cgi::request_uri() const noexcept {
-    return env("REQUEST_URI");
-}
+char const* cgi::request_uri() const noexcept { return env("REQUEST_URI"); }
 
-std::string_view cgi::header(std::string str) const noexcept {
+char const* cgi::header(std::string str) const noexcept {
     std::transform(str.begin(), str.end(), str.begin(),
                    static_cast<int (*)(int)>(&std::toupper));
     str.insert(0, "HTTP_");
@@ -101,7 +92,7 @@ void cgi::run(const router& _router) noexcept {
 }
 
 cgi::body_type cgi::body() noexcept {
-    body_type data{*this};
+    static body_type data = std::make_shared<webpp::body<cgi>>(*this);
     return data;
 }
 
