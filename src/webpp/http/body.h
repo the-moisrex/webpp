@@ -2,6 +2,7 @@
 #define WEBPP_BODY_H
 
 #include "../std/string_view.h"
+#include <memory>
 #include <string>
 
 /**
@@ -15,7 +16,7 @@ namespace webpp {
     template <class Interface>
     class body {
       private:
-        Interface _interface;
+        std::shared_ptr<Interface> _interface;
 
       public:
         body(Interface const& __interface) noexcept : _interface(__interface) {}

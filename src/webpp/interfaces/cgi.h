@@ -11,27 +11,27 @@ namespace webpp {
 
     class cgi {
       public:
-        using header_type = webpp::headers<cgi>;
-        using body_type = webpp::body<cgi>;
+        using header_type = std::shared_ptr<webpp::headers<cgi>>;
+        using body_type = std::shared_ptr<webpp::body<cgi>>;
 
       private:
       public:
         cgi();
-        std::string_view header(std::string h) const noexcept;
+        char const* header(std::string h) const noexcept;
         header_type headers() noexcept;
         body_type body() noexcept;
-        std::string_view server_addr() const noexcept;
+        char const* server_addr() const noexcept;
         int server_port() const noexcept;
-        std::string_view remote_addr() const noexcept;
+        char const* remote_addr() const noexcept;
         int remote_port() const noexcept;
-        std::string_view server_name() const noexcept;
-        std::string_view scheme() const noexcept;
-        std::string_view server_protcol() const noexcept;
-        std::string_view method() const noexcept;
-        std::string_view request_uri() const noexcept;
+        char const* server_name() const noexcept;
+        char const* scheme() const noexcept;
+        char const* server_protcol() const noexcept;
+        char const* method() const noexcept;
+        char const* request_uri() const noexcept;
 
         void run(::webpp::router const& _router) noexcept;
-        std::string_view env(std::string_view name) const noexcept;
+        char const* env(char const* const name) const noexcept;
         size_t read(char* data, size_t length) const;
     };
 
