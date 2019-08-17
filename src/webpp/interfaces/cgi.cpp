@@ -96,7 +96,7 @@ cgi::body_type cgi::body() noexcept {
     return data;
 }
 
-size_t cgi::read(char* data, size_t length) const {
+std::streamsize cgi::read(char* data, std::streamsize length) const {
     std::cin.read(data, length);
     return std::cin.gcount();
 }
