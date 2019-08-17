@@ -1,7 +1,7 @@
 #ifndef WEBPP_WEBPP_H
 #define WEBPP_WEBPP_H
 
-#include "router.hpp"
+#include "router.h"
 
 namespace webpp {
 

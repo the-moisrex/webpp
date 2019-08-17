@@ -2,8 +2,8 @@
 #define WEBPP_CGI_H
 
 #include "../http/body.h"
-#include "../http/headers.hpp"
-#include "../router.hpp"
+#include "../http/headers.h"
+#include "../router.h"
 #include "../std/string_view.h"
 #include <string>
 
