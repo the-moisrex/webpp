@@ -30,7 +30,7 @@ namespace webpp {
          * @return string_view
          */
         std::string_view string() const;
-        std::istream const& stream() const;
+        std::istream& stream() const;
 
         std::ostream& operator<<(std::ostream& __stream) noexcept {
             // TODO: fill here

@@ -83,7 +83,8 @@ char const* cgi::header(std::string str) const noexcept {
 }
 
 void cgi::run(router& _router) noexcept {
-    webpp::request<webpp::cgi> req(this);
+    auto self = std::make_shared<cgi>(this);
+    webpp::request<webpp::cgi> req(self);
     _router.run(req);
     std::cout.sync_with_stdio(false); // TODO: write tests for this part
     for (auto const& header : _router.headers()) {
@@ -101,3 +102,5 @@ std::streamsize cgi::read(char* data, std::streamsize length) const {
     std::cin.read(data, length);
     return std::cin.gcount();
 }
+
+void cgi::write(std::ostream& stream) { std::cout << stream; }
