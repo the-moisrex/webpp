@@ -16,7 +16,7 @@ namespace webpp {
 
       private:
       public:
-        cgi();
+        cgi() = default;
         char const* header(std::string h) const noexcept;
         header_type headers() noexcept;
         body_type body() noexcept;
@@ -34,6 +34,7 @@ namespace webpp {
         char const* env(char const* const name) const noexcept;
         std::streamsize read(char* data, std::streamsize length) const;
         void write(std::ostream& stream);
+        void write(char const* data, std::streamsize length);
     };
 
 } // namespace webpp

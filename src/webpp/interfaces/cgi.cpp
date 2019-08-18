@@ -51,7 +51,6 @@ using namespace webpp;
 //    SERVER_SOFTWARE
 //    WEB_SERVER_API
 
-cgi::cgi() {}
 
 char const* cgi::env(char const* const name) const noexcept {
     if (auto a = std::getenv(name))
@@ -85,12 +84,12 @@ char const* cgi::header(std::string str) const noexcept {
 void cgi::run(router& _router) noexcept {
     auto self = std::make_shared<cgi>(this);
     webpp::request<webpp::cgi> req(self);
-    _router.run(req);
-    std::cout.sync_with_stdio(false); // TODO: write tests for this part
-    for (auto const& header : _router.headers()) {
+    auto res = _router.run(req);
+    std::ios_base::sync_with_stdio(false); // TODO: write tests for this part
+    for (auto const& header : res.headers()) {
         std::cout << header.attr() << ": " << header.value() << "\r\n";
     }
-    std::cout << "\r\n" << _router.body();
+    std::cout << "\r\n" << res.body();
 }
 
 cgi::body_type cgi::body() noexcept {
@@ -103,4 +102,12 @@ std::streamsize cgi::read(char* data, std::streamsize length) const {
     return std::cin.gcount();
 }
 
-void cgi::write(std::ostream& stream) { std::cout << stream; }
+void cgi::write(std::ostream& stream) {
+
+    // I think ostream is not readable so we cannot do this:
+    // https://stackoverflow.com/questions/15629886/how-to-write-ostringstream-directly-to-cout
+    std::cout << stream.rdbuf(); // TODO: test this, I don't trust myself :)
+}
+void cgi::write(char const* data, std::streamsize length){
+    std::cout.write(data, length);
+}
