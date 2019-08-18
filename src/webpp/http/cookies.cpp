@@ -24,9 +24,9 @@ webpp::cookie::cookie(webpp::cookie&& c) noexcept
                                                                 c._value)},
       _domain{std::move(c._domain)}, _path{std::move(c._path)},
       _expires(std::move(c._expires)), _max_age{c._max_age},
-      _same_site{c._same_site}, _secure{c._secure},
-      _host_only{c._host_only}, _encrypted{c._encrypted},
-      _prefix{c._prefix}, _comment{std::move(c._comment)} {}
+      _same_site{c._same_site}, _secure{c._secure}, _host_only{c._host_only},
+      _encrypted{c._encrypted}, _prefix{c._prefix}, _comment{std::move(
+                                                        c._comment)} {}
 
 webpp::cookie::cookie(std::string __name, std::string __value) noexcept {
     name(std::move(__name));
@@ -271,20 +271,20 @@ bool webpp::cookie_equals::operator()(const webpp::cookie& lhs,
            lhs.path() == rhs.path();
 }
 
-webpp::cookies::const_iterator
-webpp::cookies::find(std::string const& name) const noexcept {
+webpp::cookie_jar::const_iterator
+webpp::cookie_jar::find(std::string const& name) const noexcept {
     return std::find_if(cbegin(), cend(),
                         [&](auto const& a) { return a.name() == name; });
 }
 
-webpp::cookies::const_iterator
-webpp::cookies::find(const webpp::cookie& c) const noexcept {
+webpp::cookie_jar::const_iterator
+webpp::cookie_jar::find(const webpp::cookie& c) const noexcept {
     return std::find_if(cbegin(), cend(),
                         [&](auto const& a) { return a.same_as(c); });
 }
 
-void webpp::cookies::make_unique(
-    const webpp::cookies::const_iterator& dont_touch,
+void webpp::cookie_jar::make_unique(
+    const webpp::cookie_jar::const_iterator& dont_touch,
     std::function<bool(cookie const&)> const& check) noexcept {
     for (auto it = begin(); it != end(); it++)
         if (check(*it) && dont_touch != it && dont_touch->same_as(*it)) {
@@ -293,15 +293,15 @@ void webpp::cookies::make_unique(
         }
 }
 
-void webpp::cookies::change_if(
-    webpp::cookies::condition const& if_statement,
+void webpp::cookie_jar::change_if(
+    webpp::cookie_jar::condition const& if_statement,
     std::function<void(iterator&)> const& change) noexcept {
     for (auto it = begin(); it != end(); it++)
         if (if_statement(*it))
             change(it);
 }
 
-void webpp::cookies::change_if(
+void webpp::cookie_jar::change_if(
     cookie::name_t const& _name,
     std::function<void(iterator&)> const& change) noexcept {
     for (auto it = begin(); it != end(); it++)
@@ -309,46 +309,46 @@ void webpp::cookies::change_if(
             change(it);
 }
 
-void webpp::cookies::change_all(
+void webpp::cookie_jar::change_all(
     std::function<void(iterator&)> const& change) noexcept {
     for (auto it = begin(); it != end(); it++)
         change(it);
 }
 
-std::pair<webpp::cookies::iterator, bool>
-webpp::cookies::insert(const value_type& value) {
+std::pair<webpp::cookie_jar::iterator, bool>
+webpp::cookie_jar::insert(const value_type& value) {
     auto found = find(value);
     if (found != cend())
         erase(found);
     return static_cast<super*>(this)->insert(value);
 }
 
-std::pair<webpp::cookies::iterator, bool>
-webpp::cookies::insert(value_type&& value) {
+std::pair<webpp::cookie_jar::iterator, bool>
+webpp::cookie_jar::insert(value_type&& value) {
     auto found = find(value);
     if (found != cend())
         erase(found);
     return static_cast<super*>(this)->insert(std::move(value));
 }
 
-webpp::cookies::iterator webpp::cookies::insert(const_iterator hint,
-                                                const value_type& value) {
+webpp::cookie_jar::iterator webpp::cookie_jar::insert(const_iterator hint,
+                                                      const value_type& value) {
     auto found = find(value);
     if (found != cend())
         erase(found);
     return static_cast<super*>(this)->insert(hint, value);
 }
 
-webpp::cookies::iterator webpp::cookies::insert(const_iterator hint,
-                                                value_type&& value) {
+webpp::cookie_jar::iterator webpp::cookie_jar::insert(const_iterator hint,
+                                                      value_type&& value) {
     auto found = find(value);
     if (found != cend())
         erase(found);
     return static_cast<super*>(this)->insert(hint, std::move(value));
 }
 
-void webpp::cookies::insert(std::initializer_list<value_type> ilist) {
-    for (const auto & it : ilist) {
+void webpp::cookie_jar::insert(std::initializer_list<value_type> ilist) {
+    for (const auto& it : ilist) {
         auto found = find(it);
         if (found != cend())
             erase(found);
@@ -356,256 +356,266 @@ void webpp::cookies::insert(std::initializer_list<value_type> ilist) {
     return static_cast<super*>(this)->insert(ilist);
 }
 
-webpp::cookies&
-webpp::cookies::encrypted(cookie::encrypted_t const& _encrypted) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::encrypted(cookie::encrypted_t const& _encrypted) noexcept {
     for (auto& c : *this)
         c._encrypted = _encrypted;
     return *this;
 }
-webpp::cookies&
-webpp::cookies::encrypted(condition const& _condition,
-                          cookie::encrypted_t const& _encrypted) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::encrypted(condition const& _condition,
+                             cookie::encrypted_t const& _encrypted) noexcept {
     change_if(_condition, [&](auto& it) { it->_encrypted = _encrypted; });
     return *this;
 }
-webpp::cookies&
-webpp::cookies::encrypted(cookie::name_t const& _name,
-                          cookie::encrypted_t const& _encrypted) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::encrypted(cookie::name_t const& _name,
+                             cookie::encrypted_t const& _encrypted) noexcept {
     change_if(_name, [&](auto& it) { it->_encrypted = _encrypted; });
     return *this;
 }
-webpp::cookies&
-webpp::cookies::encrypted(const_iterator const& it,
-                          cookie::encrypted_t _encrypted) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::encrypted(const_iterator const& it,
+                             cookie::encrypted_t _encrypted) noexcept {
     it->_encrypted = _encrypted;
     return *this;
 }
 
-webpp::cookies&
-webpp::cookies::secure(cookie::secure_t const& _secure) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::secure(cookie::secure_t const& _secure) noexcept {
     for (auto& c : *this)
         c._secure = _secure;
     return *this;
 }
-webpp::cookies&
-webpp::cookies::secure(condition const& _condition,
-                       cookie::secure_t const& _secure) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::secure(condition const& _condition,
+                          cookie::secure_t const& _secure) noexcept {
     change_if(_condition, [&](auto& it) { it->_secure = _secure; });
     return *this;
 }
-webpp::cookies&
-webpp::cookies::secure(cookie::name_t const& _name,
-                       cookie::secure_t const& _secure) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::secure(cookie::name_t const& _name,
+                          cookie::secure_t const& _secure) noexcept {
     change_if(_name, [&](auto& it) { it->_secure = _secure; });
     return *this;
 }
-webpp::cookies& webpp::cookies::secure(const_iterator const& it,
-                                       cookie::secure_t _secure) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::secure(const_iterator const& it,
+                          cookie::secure_t _secure) noexcept {
     it->_secure = _secure;
     return *this;
 }
 
-webpp::cookies&
-webpp::cookies::host_only(cookie::host_only_t const& _host_only) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::host_only(cookie::host_only_t const& _host_only) noexcept {
     for (auto& c : *this)
         c._host_only = _host_only;
     return *this;
 }
 
-webpp::cookies&
-webpp::cookies::host_only(condition const& _condition,
-                          cookie::host_only_t const& _host_only) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::host_only(condition const& _condition,
+                             cookie::host_only_t const& _host_only) noexcept {
     change_if(_condition, [&](auto& it) { it->_host_only = _host_only; });
     return *this;
 }
 
-webpp::cookies&
-webpp::cookies::host_only(cookie::name_t const& _name,
-                          cookie::host_only_t const& _host_only) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::host_only(cookie::name_t const& _name,
+                             cookie::host_only_t const& _host_only) noexcept {
     change_if(_name, [&](auto& it) { it->_host_only = _host_only; });
     return *this;
 }
 
-webpp::cookies&
-webpp::cookies::host_only(const_iterator const& it,
-                          cookie::host_only_t _host_only) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::host_only(const_iterator const& it,
+                             cookie::host_only_t _host_only) noexcept {
     it->_host_only = _host_only;
     return *this;
 }
 
-webpp::cookies&
-webpp::cookies::prefix(cookie::prefix_t const& _prefix) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::prefix(cookie::prefix_t const& _prefix) noexcept {
     for (auto& c : *this)
         c._prefix = _prefix;
     return *this;
 }
 
-webpp::cookies&
-webpp::cookies::prefix(cookie::name_t const& _name,
-                       cookie::prefix_t const& _prefix) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::prefix(cookie::name_t const& _name,
+                          cookie::prefix_t const& _prefix) noexcept {
     change_if(_name, [&](auto& it) { it->_prefix = _prefix; });
     return *this;
 }
 
-webpp::cookies&
-webpp::cookies::prefix(condition const& _condition,
-                       cookie::prefix_t const& _prefix) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::prefix(condition const& _condition,
+                          cookie::prefix_t const& _prefix) noexcept {
     change_if(_condition, [&](auto& it) { it->_prefix = _prefix; });
     return *this;
 }
 
-webpp::cookies& webpp::cookies::prefix(const_iterator const& it,
-                                       cookie::prefix_t _prefix) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::prefix(const_iterator const& it,
+                          cookie::prefix_t _prefix) noexcept {
     it->_prefix = _prefix;
     return *this;
 }
 
-webpp::cookies&
-webpp::cookies::comment(cookie::comment_t const& _comment) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::comment(cookie::comment_t const& _comment) noexcept {
     for (auto& c : *this)
         c._comment = _comment;
     return *this;
 }
-webpp::cookies&
-webpp::cookies::comment(condition const& _condition,
-                        cookie::comment_t const& _comment) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::comment(condition const& _condition,
+                           cookie::comment_t const& _comment) noexcept {
     change_if(_condition, [&](auto& it) { it->_comment = _comment; });
     return *this;
 }
-webpp::cookies&
-webpp::cookies::comment(cookie::name_t const& _name,
-                        cookie::comment_t const& _comment) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::comment(cookie::name_t const& _name,
+                           cookie::comment_t const& _comment) noexcept {
     change_if(_name, [&](auto& it) { it->_comment = _comment; });
     return *this;
 }
-webpp::cookies& webpp::cookies::comment(const_iterator const& it,
-                                        cookie::comment_t&& _comment) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::comment(const_iterator const& it,
+                           cookie::comment_t&& _comment) noexcept {
     it->_comment = std::move(_comment);
     return *this;
 }
-webpp::cookies&
-webpp::cookies::comment(const_iterator const& it,
-                        cookie::comment_t const& _comment) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::comment(const_iterator const& it,
+                           cookie::comment_t const& _comment) noexcept {
     return comment(it, cookie::comment_t{_comment});
 }
 
-webpp::cookies&
-webpp::cookies::same_site(cookie::same_site_t const& _same_site) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::same_site(cookie::same_site_t const& _same_site) noexcept {
     for (auto& c : *this)
         c._same_site = _same_site;
     return *this;
 }
-webpp::cookies&
-webpp::cookies::same_site(cookie::name_t const& _name,
-                          cookie::same_site_t const& _same_site) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::same_site(cookie::name_t const& _name,
+                             cookie::same_site_t const& _same_site) noexcept {
     change_if(_name, [&](auto& it) { it->_same_site = _same_site; });
     return *this;
 }
-webpp::cookies&
-webpp::cookies::same_site(condition const& _condition,
-                          cookie::same_site_t const& _same_site) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::same_site(condition const& _condition,
+                             cookie::same_site_t const& _same_site) noexcept {
     change_if(_condition, [&](auto& it) { it->_same_site = _same_site; });
     return *this;
 }
-webpp::cookies&
-webpp::cookies::same_site(const_iterator const& it,
-                          cookie::same_site_t _same_site) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::same_site(const_iterator const& it,
+                             cookie::same_site_t _same_site) noexcept {
     it->_same_site = _same_site;
     return *this;
 }
 
-webpp::cookies&
-webpp::cookies::expires(cookie::date_t const& _expires) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::expires(cookie::date_t const& _expires) noexcept {
     for (auto& c : *this)
         c._expires = std::make_unique<cookie::date_t>(_expires);
     return *this;
 }
 
-webpp::cookies&
-webpp::cookies::expires(cookie::name_t const& _name,
-                        cookie::date_t const& _expires) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::expires(cookie::name_t const& _name,
+                           cookie::date_t const& _expires) noexcept {
     change_if(_name, [&](auto& it) {
         it->_expires.reset(new cookie::date_t{_expires});
     });
     return *this;
 }
 
-webpp::cookies&
-webpp::cookies::expires(condition const& _condition,
-                        cookie::date_t const& _expires) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::expires(condition const& _condition,
+                           cookie::date_t const& _expires) noexcept {
     change_if(_condition, [&](auto& it) {
         it->_expires.reset(new cookie::date_t{_expires});
     });
     return *this;
 }
 
-webpp::cookies& webpp::cookies::expires(const_iterator const& it,
-                                        cookie::date_t&& _expires) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::expires(const_iterator const& it,
+                           cookie::date_t&& _expires) noexcept {
     it->_expires = std::make_unique<cookie::date_t>(_expires);
     return *this;
 }
 
-webpp::cookies&
-webpp::cookies::expires(const_iterator const& it,
-                        cookie::date_t const& _expires) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::expires(const_iterator const& it,
+                           cookie::date_t const& _expires) noexcept {
     return expires(it, cookie::date_t(_expires));
 }
 
-webpp::cookies&
-webpp::cookies::max_age(cookie::max_age_t const& _max_age) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::max_age(cookie::max_age_t const& _max_age) noexcept {
     for (auto& c : *this)
         c._max_age = _max_age;
     return *this;
 }
-webpp::cookies&
-webpp::cookies::max_age(cookie::name_t const& _name,
-                        cookie::max_age_t const& _max_age) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::max_age(cookie::name_t const& _name,
+                           cookie::max_age_t const& _max_age) noexcept {
     change_if(_name, [&](auto& it) { it->_max_age = _max_age; });
     return *this;
 }
-webpp::cookies&
-webpp::cookies::max_age(condition const& _condition,
-                        cookie::max_age_t const& _max_age) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::max_age(condition const& _condition,
+                           cookie::max_age_t const& _max_age) noexcept {
     change_if(_condition, [&](auto& it) { it->_max_age = _max_age; });
     return *this;
 }
 
-webpp::cookies& webpp::cookies::max_age(const_iterator const& it,
-                                        cookie::max_age_t _max_age) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::max_age(const_iterator const& it,
+                           cookie::max_age_t _max_age) noexcept {
     it->_max_age = _max_age;
     return *this;
 }
 
-webpp::cookies& webpp::cookies::value(cookie::value_t const& _value) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::value(cookie::value_t const& _value) noexcept {
     for (auto& c : *this)
         c._value = _value;
     return *this;
 }
 
-webpp::cookies& webpp::cookies::value(cookie::name_t const& _name,
-                                      cookie::value_t const& _value) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::value(cookie::name_t const& _name,
+                         cookie::value_t const& _value) noexcept {
     change_if(_name, [&](auto& it) { it->_value = _value; });
     return *this;
 }
 
-webpp::cookies& webpp::cookies::value(const_iterator const& it,
-                                      cookie::value_t const& _value) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::value(const_iterator const& it,
+                         cookie::value_t const& _value) noexcept {
     return value(it, cookie::value_t(_value));
 }
 
-webpp::cookies& webpp::cookies::value(const_iterator const& it,
-                                      cookie::value_t&& _value) noexcept {
+webpp::cookie_jar& webpp::cookie_jar::value(const_iterator const& it,
+                                            cookie::value_t&& _value) noexcept {
     it->_value = std::move(_value);
     return *this;
 }
 
-webpp::cookies& webpp::cookies::value(condition const& _condition,
-                                      cookie::value_t const& _value) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::value(condition const& _condition,
+                         cookie::value_t const& _value) noexcept {
     change_if(_condition, [&](auto& it) { it->_value = _value; });
     return *this;
 }
 
-webpp::cookies& webpp::cookies::path(cookie::path_t const& _path) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::path(cookie::path_t const& _path) noexcept {
     change_all([&](auto& it) {
         it->_path = _path;
         make_unique(it, [&](auto const& c) { return c._path == _path; });
@@ -613,8 +623,9 @@ webpp::cookies& webpp::cookies::path(cookie::path_t const& _path) noexcept {
     return *this;
 }
 
-webpp::cookies& webpp::cookies::path(cookie::name_t const& _name,
-                                     cookie::path_t const& _path) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::path(cookie::name_t const& _name,
+                        cookie::path_t const& _path) noexcept {
     change_if(_name, [&](auto& it) {
         it->_path = _path;
         make_unique(it, [&](auto const& c) { return c._path == _path; });
@@ -622,8 +633,9 @@ webpp::cookies& webpp::cookies::path(cookie::name_t const& _name,
     return *this;
 }
 
-webpp::cookies& webpp::cookies::path(condition const& _condition,
-                                     cookie::path_t const& _path) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::path(condition const& _condition,
+                        cookie::path_t const& _path) noexcept {
     change_if(_condition, [&](auto& it) {
         it->_path = _path;
         make_unique(it, [&](auto const& c) { return c._path == _path; });
@@ -631,20 +643,21 @@ webpp::cookies& webpp::cookies::path(condition const& _condition,
     return *this;
 }
 
-webpp::cookies& webpp::cookies::path(const_iterator const& it,
-                                     cookie::path_t&& _path) noexcept {
+webpp::cookie_jar& webpp::cookie_jar::path(const_iterator const& it,
+                                           cookie::path_t&& _path) noexcept {
     it->_path = _path;
     make_unique(it, [&](auto const& c) { return c._path == it->_path; });
     return *this;
 }
 
-webpp::cookies& webpp::cookies::path(const_iterator const& it,
-                                     cookie::path_t const& _path) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::path(const_iterator const& it,
+                        cookie::path_t const& _path) noexcept {
     return path(it, cookie::path_t(_path));
 }
 
-webpp::cookies&
-webpp::cookies::domain(cookie::domain_t const& _domain) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::domain(cookie::domain_t const& _domain) noexcept {
     change_all([&](auto& it) {
         it->_domain = _domain;
         make_unique(it, [&](auto const& c) { return c._domain == _domain; });
@@ -652,9 +665,9 @@ webpp::cookies::domain(cookie::domain_t const& _domain) noexcept {
     return *this;
 }
 
-webpp::cookies&
-webpp::cookies::domain(cookie::name_t const& _name,
-                       cookie::domain_t const& new_domain) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::domain(cookie::name_t const& _name,
+                          cookie::domain_t const& new_domain) noexcept {
     change_if(_name, [&](auto& it) {
         it->_domain = new_domain;
         make_unique(it, [&](auto const& c) { return c._domain == new_domain; });
@@ -662,27 +675,29 @@ webpp::cookies::domain(cookie::name_t const& _name,
     return *this;
 }
 
-webpp::cookies& webpp::cookies::domain(const_iterator const& it,
-                                       cookie::domain_t&& new_domain) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::domain(const_iterator const& it,
+                          cookie::domain_t&& new_domain) noexcept {
     it->_domain = std::move(new_domain);
     make_unique(it, [&](auto const& c) { return c._domain == it->_domain; });
     return *this;
 }
 
-webpp::cookies&
-webpp::cookies::domain(const_iterator const& it,
-                       cookie::domain_t const& new_domain) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::domain(const_iterator const& it,
+                          cookie::domain_t const& new_domain) noexcept {
     return domain(it, cookie::domain_t(new_domain));
 }
 
-webpp::cookies&
-webpp::cookies::domain(condition const& _condition,
-                       cookie::domain_t const& new_domain) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::domain(condition const& _condition,
+                          cookie::domain_t const& new_domain) noexcept {
     change_if(_condition, [&](auto& it) { it->_domain = new_domain; });
     return *this;
 }
 
-webpp::cookies& webpp::cookies::name(cookie::name_t const& _name) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::name(cookie::name_t const& _name) noexcept {
     change_all([&](auto& it) {
         it->_name = _name;
         make_unique(it, [&](auto const& c) { return c._name == _name; });
@@ -690,8 +705,9 @@ webpp::cookies& webpp::cookies::name(cookie::name_t const& _name) noexcept {
     return *this;
 }
 
-webpp::cookies& webpp::cookies::name(cookie::name_t const& old_name,
-                                     cookie::name_t const& new_name) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::name(cookie::name_t const& old_name,
+                        cookie::name_t const& new_name) noexcept {
     change_if(old_name, [&](auto& it) {
         it->_name = new_name;
         make_unique(it, [&](auto const& c) { return c._name == new_name; });
@@ -699,20 +715,22 @@ webpp::cookies& webpp::cookies::name(cookie::name_t const& old_name,
     return *this;
 }
 
-webpp::cookies& webpp::cookies::name(const_iterator const& it,
-                                     cookie::name_t&& new_name) noexcept {
+webpp::cookie_jar& webpp::cookie_jar::name(const_iterator const& it,
+                                           cookie::name_t&& new_name) noexcept {
     it->_name = std::move(new_name);
     make_unique(it, [&](auto const& c) { return c._name == it->_name; });
     return *this;
 }
 
-webpp::cookies& webpp::cookies::name(const_iterator const& it,
-                                     cookie::name_t const& new_name) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::name(const_iterator const& it,
+                        cookie::name_t const& new_name) noexcept {
     return name(it, cookie::name_t(new_name));
 }
 
-webpp::cookies& webpp::cookies::name(condition const& _condition,
-                                     cookie::name_t const& new_name) noexcept {
+webpp::cookie_jar&
+webpp::cookie_jar::name(condition const& _condition,
+                        cookie::name_t const& new_name) noexcept {
     change_if(_condition, [&](auto& it) {
         it->_name = new_name;
         make_unique(it, [&](auto const& c) { return c._name == new_name; });

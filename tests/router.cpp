@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <webpp/router.hpp>
+#include <webpp/router.h>
 
 // TEST(Router, RouterCreation) {
 //    // in main we would have something like this:
