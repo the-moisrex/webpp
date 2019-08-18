@@ -1,5 +1,5 @@
-#ifndef HEADERS_HPP
-#define HEADERS_HPP
+#ifndef WEBPP_HEADERS_HPP
+#define WEBPP_HEADERS_HPP
 
 #include "../std/string_view.h"
 #include "cookies.h"
@@ -9,15 +9,31 @@
 namespace webpp {
 
     template <typename Interface>
-    class headers {
+    class header {
       private:
-        std::multimap<std::string_view, std::string_view> data;
-        webpp::cookies _cookies;
+        int _status_code = 200;
+        std::shared_ptr<Interface> interface;
+        mutable std::multimap<std::string_view, std::string_view> data;
+        mutable webpp::cookie_jar _cookies;
 
       public:
+        header(std::shared_ptr<Interface> _interface) : interface(_interface) {}
+
+        /**
+         * @brief get cookies
+         * @return
+         */
         auto& cookies() noexcept { return _cookies; }
+
+        /**
+         * @brief get cookies
+         * @return
+         */
         auto const& cookies() const noexcept { return _cookies; }
 
+        /**
+         * @brief remove cookies in the cookie jar
+         */
         void remove_cookies() noexcept {
             _cookies.clear();
             for (auto it = data.begin(); it != data.end();) {
@@ -28,13 +44,37 @@ namespace webpp {
             }
         }
 
-        void replace_cookies(webpp::cookies __cookies) noexcept {
+        /**
+         * @brief replace cookies in the cookie_jar
+         * @param cookie_jar
+         */
+        void replace_cookies(webpp::cookie_jar&& __cookies) noexcept {
             remove_cookies();
             _cookies = std::move(__cookies);
         }
 
-        int status_code() const noexcept {}
+        /**
+         * @brief replace cookies in the cookie_jar
+         * @param cookie_jar
+         */
+        void replace_cookies(webpp::cookie_jar const& __cookies) noexcept {
+            remove_cookies();
+            _cookies = __cookies;
+        }
+
+        /**
+         * @brief get status code
+         */
+        auto status_code() const noexcept { return _status_code; }
+
+        /**
+         * @brief set status code
+         * @param status_code
+         */
+        void status_code(decltype(_status_code) __status_code) noexcept {
+            _status_code = __status_code;
+        }
     };
 } // namespace webpp
 
-#endif // HEADERS_HPP
+#endif // WEBPP_HEADERS_HPP

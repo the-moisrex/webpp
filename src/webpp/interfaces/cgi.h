@@ -2,7 +2,7 @@
 #define WEBPP_CGI_H
 
 #include "../http/body.h"
-#include "../http/headers.h"
+#include "../http/header.h"
 #include "../router.h"
 #include "../std/string_view.h"
 #include <string>
@@ -11,7 +11,7 @@ namespace webpp {
 
     class cgi {
       public:
-        using header_type = std::shared_ptr<webpp::headers<cgi>>;
+        using header_type = std::shared_ptr<webpp::header<cgi>>;
         using body_type = std::shared_ptr<webpp::body<cgi>>;
 
       private:
@@ -30,7 +30,7 @@ namespace webpp {
         char const* method() const noexcept;
         char const* request_uri() const noexcept;
 
-        void run(::webpp::router const& _router) noexcept;
+        void run(::webpp::router& _router) noexcept;
         char const* env(char const* const name) const noexcept;
         std::streamsize read(char* data, std::streamsize length) const;
     };

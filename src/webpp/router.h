@@ -69,7 +69,7 @@ namespace webpp {
 
       public:
         template <class Interface>
-        void run(::webpp::request<Interface> const& req);
+        void run(::webpp::request<Interface>& req);
     };
 
 }; // namespace webpp

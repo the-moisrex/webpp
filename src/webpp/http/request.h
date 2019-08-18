@@ -2,7 +2,7 @@
 #define WEBPP_REQUEST_H
 
 #include "body.h"
-#include "headers.h"
+#include "header.h"
 
 /**
  *
@@ -35,57 +35,46 @@ namespace webpp {
     template <class Interface>
     class request {
       private:
-        Interface* _interface =
-            nullptr; // the interface lives longer than this class
+        std::shared_ptr<Interface> interface;
 
       public:
-        request(Interface* interface) noexcept;
+        request(std::shared_ptr<Interface> _interface) noexcept
+            : interface(_interface) {}
 
-        char const* method() const noexcept { return _interface->method(); }
+        auto method() const noexcept { return interface->method(); }
 
         /**
          * @brief returns the request scheme (http/https/...)
          */
-        char const* scheme() const noexcept { return _interface->scheme(); }
+        auto scheme() const noexcept { return interface->scheme(); }
 
         /**
          * @brief returns something like "HTTP/1.1" or ...
          */
-        char const* server_protocol() const noexcept {
-            return _interface->server_protocol();
+        auto server_protocol() const noexcept {
+            return interface->server_protocol();
         }
 
-        char const* query() const noexcept { return _interface->query(); }
+        auto query() const noexcept { return interface->query(); }
 
-        int remote_port() const noexcept { return _interface->remote_port(); }
+        auto remote_port() const noexcept { return interface->remote_port(); }
 
-        int server_port() const noexcept { return _interface->server_port(); }
+        auto server_port() const noexcept { return interface->server_port(); }
 
-        char const* server_addr() const noexcept {
-            return _interface->server_addr();
+        auto server_addr() const noexcept { return interface->server_addr(); }
+
+        auto remote_addr() const noexcept { return interface->remote_addr(); }
+
+        auto server_name() const noexcept { return interface->server_name(); }
+
+        auto request_uri() const noexcept { return interface->request_uri(); }
+
+        auto header(char const* const name) const noexcept {
+            return interface->header(name);
         }
 
-        char const* remote_addr() const noexcept {
-            return _interface->remote_addr();
-        }
-
-        char const* server_name() const noexcept {
-            return _interface->server_name();
-        }
-
-        char const* request_uri() const noexcept {
-            return _interface->request_uri();
-        }
-
-        char const* header(char const* const name) const noexcept {
-            return _interface->header(name);
-        }
-
-        webpp::headers headers() const noexcept {
-            return _interface->headers();
-        }
-
-        webpp::body body() const noexcept { return _interface->body(); }
+        auto headers() const noexcept { return interface->headers(); }
+        auto body() const noexcept { return interface->body(); }
     };
 } // namespace webpp
 

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <iostream>
-#include <webpp/http/cookies.h>
+#include <webpp/http/cookie_jar.h>
 
 TEST(Cookie, CookiesCreation) {
     webpp::cookie cookie;
@@ -36,7 +36,7 @@ TEST(Cookies, CookiesHash) {
 TEST(Cookies, CookieJar) {
     using namespace webpp;
 
-    cookies jar;
+    cookie_jar jar;
     jar.emplace("one", "value");
     jar.emplace(" one ", "value 2"); // this should replace the other one
     jar.emplace("two", "value");
@@ -44,7 +44,7 @@ TEST(Cookies, CookieJar) {
     EXPECT_TRUE(jar.size() == 2)
         << "cookies with the same name should be replaced with the older ones";
 
-    cookies jar2;
+    cookie_jar jar2;
     jar2.emplace("one", "value 1");
     jar2.emplace("two", "value 2");
     jar2.emplace(" one ", "value 1-2"); // this should replace the other one
@@ -62,7 +62,7 @@ TEST(Cookies, CookieJar) {
     jar2.insert(c);
     jar2.insert(jar2.begin(), c);
     jar2.insert(jar2.begin(), cookie("one", "value 1-6"));
-    cookies jar3;
+    cookie_jar jar3;
     jar3.emplace("one", "value 1-7");
     jar3.emplace("two", "value 2-3");
     jar2.insert(jar3.begin(), jar3.end());
@@ -93,7 +93,7 @@ TEST(Cookies, CookieJar) {
 TEST(Cookies, CookieJarUniqeness) {
     using namespace webpp;
 
-    cookies cs;
+    cookie_jar cs;
     cs.insert(cookie().name("one").value("test").domain("google.com"));
     cs.insert(cookie().name("one").value("test").domain("bing.com"));
 

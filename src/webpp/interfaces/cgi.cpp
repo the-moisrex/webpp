@@ -82,13 +82,14 @@ char const* cgi::header(std::string str) const noexcept {
     return env(str.c_str());
 }
 
-void cgi::run(const router& _router) noexcept {
+void cgi::run(router& _router) noexcept {
     webpp::request<webpp::cgi> req(this);
-    auto res = _router.run(req);
-    for (auto const& header : res.headers()) {
+    _router.run(req);
+    std::cout.sync_with_stdio(false); // TODO: write tests for this part
+    for (auto const& header : _router.headers()) {
         std::cout << header.attr() << ": " << header.value() << "\r\n";
     }
-    std::cout << "\r\n" << res.body();
+    std::cout << "\r\n" << _router.body();
 }
 
 cgi::body_type cgi::body() noexcept {
