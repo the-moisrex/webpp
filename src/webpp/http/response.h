@@ -15,8 +15,8 @@ namespace webpp {
         using header_type = webpp::header<Interface>;
 
       private:
-        mutable std::unique_ptr<body_type> _body = nullptr;
-        mutable std::unique_ptr<header_type> _header = nullptr;
+        std::unique_ptr<body_type> _body = nullptr;
+        std::unique_ptr<header_type> _header = nullptr;
         std::shared_ptr<Interface> interface;
 
       public:
