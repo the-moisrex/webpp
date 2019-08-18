@@ -33,6 +33,7 @@ namespace webpp {
         void run(::webpp::router& _router) noexcept;
         char const* env(char const* const name) const noexcept;
         std::streamsize read(char* data, std::streamsize length) const;
+        void write(std::ostream& stream);
     };
 
 } // namespace webpp
