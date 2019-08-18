@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <regex>
 
 namespace webpp {
 
@@ -40,7 +41,7 @@ namespace webpp {
         bool is_blocked() const noexcept;
 
         /**
-         * @brief returnes other email domains of the same email providers that
+         * @brief returns other email domains of the same email providers that
          * are in the database
          * @return a series of domain names in a vector
          */
