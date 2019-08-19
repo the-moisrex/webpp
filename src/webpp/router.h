@@ -22,7 +22,60 @@ namespace webpp {
 
     using matcher_t = std::function<bool(std::string_view)>;
     using method_t = std::string;
-    using migration_t = std::function<void()>;
+
+    /**
+     * This class stands for any migration type. I made this a class and not
+     * just a std::function type so that the developers can use it's
+     * constructors to use other type of functions.
+     * @tparam Interface
+     */
+    template <typename Interface>
+    class migration_t {
+      public:
+        using func_t = std::function<response<Interface>(request<Interface> const&)>;
+
+        // func: response(request)
+        explicit migration_t(func_t f) noexcept : func(std::move(f)) {}
+
+
+        // func: void(request)
+        explicit migration_t(std::function<void(request<Interface> const&)> const &f) noexcept : func([&] (auto const& req) {
+            f(req);
+            return ::webpp::response<Interface>();
+        }) {}
+
+
+        // func: void(void)
+        explicit migration_t(std::function<void(void)> const &f) noexcept : func([&] (auto const& req) {
+          f();
+          return ::webpp::response<Interface>();
+        }) {}
+
+
+        // func: void(request, response)
+        explicit migration_t(std::function<void(request<Interface> const&, response<Interface>&)> const &f) noexcept : func([&] (auto const& req) {
+          auto res = ::webpp::response<Interface>();
+          f(req, res);
+          return res;
+        }) {}
+
+
+        // func: response(request, response)
+        // TODO: it's redundant, think about it's usage more
+        explicit migration_t(std::function<response<Interface>(request<Interface> const&, response<Interface>&)> const &f) noexcept : func([&] (auto const& req) {
+          auto res = ::webpp::response<Interface>();
+          return f(req, res);
+        }) {}
+
+        // TODO: add more constructors here
+
+        response<Interface> operator()(request<Interface> const& req) const noexcept {
+            return func(req);
+        }
+
+      private:
+         func_t func;
+    };
 
     enum class migration_place {
         BEFORE_EVERYTHING,
@@ -70,17 +123,18 @@ namespace webpp {
     /**
      * @brief This route class contains one single root route and it's children
      */
+    template <typename Interface>
     class route {
 
       private:
         matcher_t _matcher;
-        std::multimap<migration_place, migration_t> _migrations;
+        std::multimap<migration_place, migration_t<Interface>> _migrations;
         method_t _method;
         bool active = true;
 
       public:
 
-        route(method_t __method, matcher_t __matcher, migration_t _what_to_do)
+        route(method_t __method, matcher_t __matcher, migration_t<Interface> _what_to_do)
             : _method(std::move(__method)), _matcher(std::move(__matcher))
         {
             _migrations.emplace(migration_place::NORMAL, std::move(_what_to_do));
@@ -124,11 +178,11 @@ namespace webpp {
 
     };
 
+    template <typename Interface>
     class router {
-        std::vector<route> routes;
+        std::vector<route<Interface>> routes;
 
       public:
-        template <typename Interface>
         response<Interface> run(request<Interface>& req) {
             auto the_route = find_route(req);
             response<Interface> res;
