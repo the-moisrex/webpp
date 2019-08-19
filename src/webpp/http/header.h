@@ -8,28 +8,52 @@
 
 namespace webpp {
 
+    /**
+     * The classes header and body are the "owners of data".
+     * That means these classes will own (use std::string/... and not references
+     * and pointers) the data they have.
+     *
+     * And they also use other "views of data" classes like cookie classes so
+     * they can provide shaped and meaningful data to the developers.
+     *
+     * This class will only contain what's the same in both request and response
+     * classes; the rest, is up to those classes.
+     */
     template <typename Interface>
-    class header {
+    class headers {
       private:
-        int _status_code = 200;
         std::shared_ptr<Interface> interface;
-        mutable std::multimap<std::string_view, std::string_view> data;
+        mutable std::multimap<std::string, std::string> data;
         mutable webpp::cookie_jar _cookies;
 
+        /**
+         * @brief this method will reload the cookies's cache.
+         */
+        void reload_cookies() const noexcept {
+            // TODO
+        }
+
       public:
-        header(std::shared_ptr<Interface> _interface) : interface(_interface) {}
+        headers(std::shared_ptr<Interface> _interface)
+            : interface(_interface) {}
 
         /**
          * @brief get cookies
          * @return
          */
-        auto& cookies() noexcept { return _cookies; }
+        auto& cookies() noexcept {
+            reload_cookies();
+            return _cookies;
+        }
 
         /**
          * @brief get cookies
          * @return
          */
-        auto const& cookies() const noexcept { return _cookies; }
+        auto const& cookies() const noexcept {
+            reload_cookies();
+            return _cookies;
+        }
 
         /**
          * @brief remove cookies in the cookie jar
@@ -60,19 +84,6 @@ namespace webpp {
         void replace_cookies(webpp::cookie_jar const& __cookies) noexcept {
             remove_cookies();
             _cookies = __cookies;
-        }
-
-        /**
-         * @brief get status code
-         */
-        auto status_code() const noexcept { return _status_code; }
-
-        /**
-         * @brief set status code
-         * @param status_code
-         */
-        void status_code(decltype(_status_code) __status_code) noexcept {
-            _status_code = __status_code;
         }
     };
 } // namespace webpp

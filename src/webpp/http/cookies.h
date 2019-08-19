@@ -62,12 +62,32 @@ namespace webpp {
     struct cookie_hash;
     class cookie_jar;
 
+    template <typename Interface>
+    class headers;
+
+    /**
+     * Cookie classes are "views of data" type of classes. That means these
+     * classes will not own their own data and they are just a reperesentation
+     * of data which makes the life of the developers more comfortable.
+     *
+     * Here, the header classes (which are "owners of data") will have the data
+     * these classes need and they provide full access to their data to these
+     * classes so they can read and write structured and meaningful data to
+     * them.
+     *
+     * The cookie class can be instansiated by the developer and also the header
+     * classes; and also this class will be used in both requests and responses.
+     * This makes this class very hard to obtain because it also should be just
+     * a reperesentation of data and not the owner of the data; so the
+     * cookie_jar class has to imedeately write this data to the header data and
+     * change the pointers/remove the whole cookie class that the developer
+     * created.
+     */
     class cookie {
       public:
         enum class same_site_value { NONE, LAX, STRICT };
-        std::map<std::string_view, std::string_view> attrs;
-        using date_t = std::chrono::time_point<std::chrono::system_clock>;
 
+        using date_t = std::chrono::time_point<std::chrono::system_clock>;
         using name_t = std::string_view;
         using value_t = std::string_view;
         using domain_t = std::string_view;
@@ -81,27 +101,28 @@ namespace webpp {
         using encrypted_t = bool;
         using comment_t = std::string_view;
 
+        std::map<std::string, std::string> attrs;
+
       private:
         // I made them mutable because the cookies class wants to change them
         // manually and the cookies class is not a mutable container
-        mutable name_t _name;
-        mutable value_t _value;
-        mutable domain_t _domain;
-        mutable path_t _path;
-        mutable expires_t _expires;
-        mutable max_age_t _max_age = 0;
-        mutable same_site_t _same_site = same_site_value::NONE;
-        mutable secure_t _secure = false;
-        mutable host_only_t _host_only = false;
-        mutable encrypted_t _encrypted = false;
-        mutable prefix_t _prefix = false;
-        mutable comment_t _comment;
+        name_t _name;
+        value_t _value;
+        domain_t _domain;
+        path_t _path;
+        expires_t _expires;
+        max_age_t _max_age = 0;
+        same_site_t _same_site = same_site_value::NONE;
+        secure_t _secure = false;
+        host_only_t _host_only = false;
+        encrypted_t _encrypted = false;
+        prefix_t _prefix = false;
+        comment_t _comment;
 
       public:
         /**
          * empty cookie
          */
-        cookie() = default;
         cookie(const cookie&) noexcept;
         cookie(cookie&&) noexcept;
         // TODO: implement this:
@@ -127,14 +148,12 @@ namespace webpp {
         cookie& value(std::string __value) noexcept;
 
         cookie& comment(std::string const& __comment) noexcept;
-
         cookie& comment(std::string&& __comment) noexcept;
 
         cookie& domain(std::string const& __domain) noexcept;
         cookie& domain(std::string&& __domain) noexcept;
 
         cookie& path(std::string const& __path) noexcept;
-
         cookie& path(std::string&& __path) noexcept;
 
         cookie& max_age(decltype(_max_age) __max_age) noexcept;
@@ -148,7 +167,6 @@ namespace webpp {
         cookie& host_only(decltype(_host_only) __host_only) noexcept;
 
         bool remove() const noexcept;
-
         cookie& remove(bool __remove) noexcept;
 
         cookie& expires(date_t __expires) noexcept;
@@ -230,6 +248,12 @@ namespace webpp {
 
     /**
      * @brief The cookies class (it's a cookie jar for cookies)
+     * This class should only be created by header classes (owners of data)
+     *
+     * This class will be used by both response and request header classes; and
+     * since the cookie class cannot hold its data for a long time, this class
+     * has to put new cookies into the header classes before the string_views's
+     * in cookie class go out of scope.
      */
     class cookie_jar
         : public std::unordered_set<webpp::cookie, cookie_hash, cookie_equals> {
