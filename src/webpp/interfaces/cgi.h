@@ -11,7 +11,7 @@ namespace webpp {
 
     class cgi {
       public:
-        using header_type = std::shared_ptr<webpp::header<cgi>>;
+        using header_type = std::shared_ptr<webpp::headers<cgi>>;
         using body_type = std::shared_ptr<webpp::body<cgi>>;
 
       private:

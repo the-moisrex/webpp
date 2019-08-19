@@ -12,9 +12,10 @@ namespace webpp {
     class response {
       public:
         using body_type = webpp::body<Interface>;
-        using header_type = webpp::header<Interface>;
+        using header_type = webpp::headers<Interface>;
 
       private:
+        int _status_code = 200;
         std::unique_ptr<body_type> _body = nullptr;
         std::unique_ptr<header_type> _header = nullptr;
         std::shared_ptr<Interface> interface;
@@ -63,6 +64,19 @@ namespace webpp {
          * @return a pointer to the body
          */
         auto& body() & noexcept { return _body; }
+
+        /**
+         * @brief get status code
+         */
+        auto status_code() const noexcept { return _status_code; }
+
+        /**
+         * @brief set status code
+         * @param status_code
+         */
+        void status_code(decltype(_status_code) __status_code) noexcept {
+            _status_code = __status_code;
+        }
     };
 
 } // namespace webpp
