@@ -21,32 +21,56 @@
 namespace webpp {
 
     using matcher_t = std::function<bool(std::string_view)>;
-    using migration_t = std::function<void(std::ostream&)>;
     using method_t = std::string;
+    using migration_t = std::function<void()>;
 
     enum class migration_place {
-        BEFORE_EVERYTHING, AFTER_EVERYTHING,
-        END_OF_HEADER, BEFORE_BODY
+        BEFORE_EVERYTHING,
+        NORMAL,
+        END_OF_HEADER,
+        BEFORE_BODY,
+        AFTER_EVERYTHING,
     };
 
     namespace matchers {
-        class path {
-          private:
+
+        struct path {
             std::string slug;
 
-          public:
-            path(std::string slug) : slug(std::move(slug)) {}
-            bool operator()(std::string const& slug) {
-                return slug == this->slug;
+            bool operator()(std::string_view _slug) const noexcept {
+                return _slug == path::slug;
             }
+
+            bool operator()(path const &_path) const noexcept {
+                return _path == *this;
+            }
+
+            bool operator==(std::string_view _slug) const noexcept {
+                return _slug == path::slug;
+            }
+
+            bool operator==(path const &_path) const noexcept {
+                return _path.slug == path::slug;
+            }
+
+            bool operator!=(path const&_path) const noexcept  {
+                return _path.slug != path::slug;
+            }
+
+            bool operator!=(std::string_view _slug) const noexcept {
+                return _slug != path::slug;
+            }
+
         };
+
+        // TODO: overload operators here
+
     } // namespace matchers
 
     /**
      * @brief This route class contains one single root route and it's children
      */
     class route {
-    public:
 
       private:
         matcher_t _matcher;
@@ -56,9 +80,12 @@ namespace webpp {
 
       public:
 
-        route(method_t __method, matcher_t __matcher)
+        route(method_t __method, matcher_t __matcher, migration_t _what_to_do)
             : _method(std::move(__method)), _matcher(std::move(__matcher))
-        {}
+        {
+            _migrations.emplace(migration_place::NORMAL, std::move(_what_to_do));
+        }
+
 
         inline bool is_active() const noexcept {
             return active && !_migrations.empty();
