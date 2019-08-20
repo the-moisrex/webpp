@@ -62,9 +62,6 @@ namespace webpp {
     struct cookie_hash;
     class cookie_jar;
 
-    template <typename Interface>
-    class headers;
-
     /**
      * Cookie classes are "views of data" type of classes. That means these
      * classes will not own their own data and they are just a reperesentation
@@ -104,8 +101,6 @@ namespace webpp {
         std::map<std::string, std::string> attrs;
 
       private:
-        // I made them mutable because the cookies class wants to change them
-        // manually and the cookies class is not a mutable container
         name_t _name;
         value_t _value;
         domain_t _domain;
@@ -126,8 +121,8 @@ namespace webpp {
         cookie(const cookie&) noexcept;
         cookie(cookie&&) noexcept;
         // TODO: implement this:
-        cookie(std::string source) noexcept;
-        cookie(std::string __name, std::string __value) noexcept;
+        cookie(std::string_view source) noexcept;
+        cookie(name_t __name, value_t __value) noexcept;
 
         cookie& operator=(const cookie&) noexcept;
         cookie& operator=(cookie&&) noexcept;
@@ -143,33 +138,20 @@ namespace webpp {
         inline auto const& expires() const noexcept { return *_expires; }
         inline auto const& same_site() const noexcept { return _same_site; }
         inline auto const& path() const noexcept { return _path; }
+        inline auto const& encrypted() const noexcept { return _encrypted; }
 
-        cookie& name(std::string __name) noexcept;
-        cookie& value(std::string __value) noexcept;
-
-        cookie& comment(std::string const& __comment) noexcept;
-        cookie& comment(std::string&& __comment) noexcept;
-
-        cookie& domain(std::string const& __domain) noexcept;
-        cookie& domain(std::string&& __domain) noexcept;
-
-        cookie& path(std::string const& __path) noexcept;
-        cookie& path(std::string&& __path) noexcept;
-
-        cookie& max_age(decltype(_max_age) __max_age) noexcept;
-
-        cookie& prefix(decltype(_prefix) __prefix) noexcept;
-
-        cookie& same_site(decltype(_same_site) __same_site) noexcept;
-
-        cookie& secure(decltype(_secure) __secure) noexcept;
-
-        cookie& host_only(decltype(_host_only) __host_only) noexcept;
-
-        bool remove() const noexcept;
-        cookie& remove(bool __remove) noexcept;
-
+        cookie& name(name_t _name) noexcept;
+        cookie& value(value_t __value) noexcept;
+        cookie& comment(comment_t __comment) noexcept;
+        cookie& domain(domain_t __domain) noexcept;
+        cookie& path(path_t __path) noexcept;
+        cookie& max_age(max_age_t __max_age) noexcept;
+        cookie& prefix(prefix_t __prefix) noexcept;
+        cookie& same_site(same_site_t __same_site) noexcept;
+        cookie& secure(secure_t __secure) noexcept;
+        cookie& host_only(host_only_t __host_only) noexcept;
         cookie& expires(date_t __expires) noexcept;
+        cookie& remove(bool __remove = true) noexcept;
 
         /**
          * @brief sets exipiration time relative to now.
@@ -182,21 +164,17 @@ namespace webpp {
             return *this;
         }
 
-        inline decltype(_encrypted) encrypted() const noexcept {
-            return _encrypted;
-        }
-
         /**
          * @brief encrypt the value
          * @param __encrypted
          * @return
          */
-        cookie& encrypted(decltype(_encrypted) __encrypted) noexcept;
+        cookie& encrypted(encrypted_t __encrypted) noexcept;
 
         /**
          * @brief decryptable encryption
          */
-        decltype(_value) encrypted_value() const noexcept;
+        value_t encrypted_value() const noexcept;
 
         std::ostream& operator<<(std::ostream& out) const noexcept;
         bool operator==(cookie const& c) const noexcept;
@@ -314,6 +292,8 @@ namespace webpp {
         void change_all(std::function<void(iterator&)> const& change) noexcept;
 
       public:
+        using super::unordered_set; // constructors
+
         const_iterator find(cookie::name_t const& name) const noexcept;
         const_iterator find(cookie const& c) const noexcept;
 

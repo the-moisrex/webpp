@@ -1,6 +1,7 @@
 #ifndef WEBPP_HEADERS_HPP
 #define WEBPP_HEADERS_HPP
 
+#include "../common/meta.h"
 #include "../std/string_view.h"
 #include "cookies.h"
 #include <map>
@@ -8,6 +9,7 @@
 
 namespace webpp {
 
+    enum class header_type { RESPONSE, REQUEST };
     /**
      * The classes header and body are the "owners of data".
      * That means these classes will own (use std::string/... and not references
@@ -19,8 +21,10 @@ namespace webpp {
      * This class will only contain what's the same in both request and response
      * classes; the rest, is up to those classes.
      */
-    template <typename Interface>
+    template <typename Interface,
+              header_type HeaderType = header_type::RESPONSE>
     class headers {
+      public:
       private:
         std::shared_ptr<Interface> interface;
         mutable std::multimap<std::string, std::string> data;
@@ -28,9 +32,38 @@ namespace webpp {
 
         /**
          * @brief this method will reload the cookies's cache.
+         * This method is used internally in order to make sure the developer is
+         * not paying anything to parse cookies while he/she is not using
+         * cookies.
          */
         void reload_cookies() const noexcept {
-            // TODO
+
+            _cookies.clear();
+
+#ifdef CXX17
+            if constexpr (HeaderType == header_type::RESPONSE) {
+#else
+            if (HeaderType == header_type::RESPONSE) {
+#endif
+
+                for (auto const& head : data) {
+                    auto attr = head.first;
+                    auto value = head.second;
+                    if ("set-cookie" == attr) {
+                        _cookies.emplace(value);
+                    }
+                }
+
+            } else {
+
+                for (auto const& head : data) {
+                    auto attr = head.first;
+                    auto value = head.second;
+                    if (attr == "cookie") {
+                        _cookies.emplace(value);
+                    }
+                }
+            }
         }
 
       public:
@@ -86,6 +119,16 @@ namespace webpp {
             _cookies = __cookies;
         }
     };
+
+    template <typename Interface>
+    class headers<Interface, header_type::RESPONSE> {
+        void reload_cookies() const noexcept;
+    };
+
+    template <typename Interface>
+    void headers<Interface, header_type::RESPONSE>::reload_cookies() const
+        noexcept {}
+
 } // namespace webpp
 
 #endif // WEBPP_HEADERS_HPP
