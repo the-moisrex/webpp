@@ -82,7 +82,9 @@ cookie& cookie::value(cookie::value_t __value) noexcept {
     return *this;
 }
 
-decltype(cookie::_value) cookie::encrypted_value() const noexcept {}
+cookie::value_t cookie::encrypted_value() const noexcept {
+    // TODO
+}
 
 std::ostream& cookie::operator<<(std::ostream& out) const noexcept {
     using namespace std::chrono;
@@ -171,13 +173,14 @@ std::string cookie::render() const noexcept {
 bool cookie::same_as(const cookie& c) const noexcept {
     return _name == c._name && _path == c._path && c._domain == _domain;
 }
+
 cookie& cookie::remove(bool __remove) noexcept {
     using namespace std::chrono;
     if (__remove) {
         // set the expire date one year before now:
         expires(system_clock::now() -
                 duration<int, std::ratio<60 * 60 * 24 * 365>>(1));
-    } else if (remove()) {
+    } else if (is_removed()) {
         // set the expire date one year from now:
         expires(system_clock::now() +
                 duration<int, std::ratio<60 * 60 * 24 * 365>>(1));
@@ -186,59 +189,58 @@ cookie& cookie::remove(bool __remove) noexcept {
     max_age(0);
     return *this;
 }
+
 cookie& cookie::expires(cookie::date_t __expires) noexcept {
     _expires = std::make_unique<date_t>(__expires);
     return *this;
 }
-bool cookie::remove() const noexcept {
+
+bool cookie::is_removed() const noexcept {
     using namespace std::chrono;
     return *_expires < system_clock::now();
 }
-cookie& cookie::host_only(decltype(_host_only) __host_only) noexcept {
+
+cookie& cookie::host_only(cookie::host_only_t __host_only) noexcept {
     _host_only = __host_only;
     return *this;
 }
-cookie& cookie::secure(decltype(_secure) __secure) noexcept {
+
+cookie& cookie::secure(cookie::secure_t __secure) noexcept {
     _secure = __secure;
     return *this;
 }
-cookie& cookie::same_site(decltype(_same_site) __same_site) noexcept {
+
+cookie& cookie::same_site(cookie::same_site_t __same_site) noexcept {
     _same_site = __same_site;
     return *this;
 }
-cookie& cookie::prefix(decltype(_prefix) __prefix) noexcept {
+
+cookie& cookie::prefix(cookie::prefix_t __prefix) noexcept {
     _prefix = __prefix;
     return *this;
 }
-cookie& cookie::max_age(decltype(_max_age) __max_age) noexcept {
+
+cookie& cookie::max_age(cookie::max_age_t __max_age) noexcept {
     _max_age = __max_age;
     return *this;
 }
-cookie& cookie::path(std::string&& __path) noexcept {
+
+cookie& cookie::path(cookie::path_t __path) noexcept {
     _path = std::move(__path);
     return *this;
 }
-cookie& cookie::path(std::string const& __path) noexcept {
-    _path = __path;
-    return *this;
-}
-cookie& cookie::domain(std::string&& __domain) noexcept {
+
+cookie& cookie::domain(cookie::domain_t __domain) noexcept {
     _domain = std::move(__domain);
     return *this;
 }
-cookie& cookie::domain(std::string const& __domain) noexcept {
-    _domain = __domain;
-    return *this;
-}
-cookie& cookie::comment(std::string&& __comment) noexcept {
+
+cookie& cookie::comment(cookie::comment_t __comment) noexcept {
     _comment = std::move(__comment);
     return *this;
 }
-cookie& cookie::comment(std::string const& __comment) noexcept {
-    _comment = __comment;
-    return *this;
-}
-cookie& cookie::encrypted(decltype(_encrypted) __encrypted) noexcept {
+
+cookie& cookie::encrypted(cookie::encrypted_t __encrypted) noexcept {
     _encrypted = __encrypted;
     return *this;
 }

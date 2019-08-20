@@ -152,6 +152,7 @@ namespace webpp {
         cookie& host_only(host_only_t __host_only) noexcept;
         cookie& expires(date_t __expires) noexcept;
         cookie& remove(bool __remove = true) noexcept;
+        bool is_removed() const noexcept;
 
         /**
          * @brief sets exipiration time relative to now.
