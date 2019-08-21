@@ -7,11 +7,14 @@ set(TEST_NAME ${PROJECT_NAME}test)
 
 include_directories(${GTEST_INCLUDE_DIRS} ${GMOCK_INCLUDE_DIRS})
 add_executable(${TEST_NAME} ${TEST_SOURCES})
-add_test(${TEST_NAME} ${TEST_NAME})
-#target_include_directories(${TEST_NAME} PUBLIC "../src")
+
+target_include_directories(${TEST_NAME} PRIVATE "../")
+
 target_link_libraries(${TEST_NAME}
     PUBLIC ${PROJECT_NAME}
     PUBLIC gtest
     PUBLIC gtest_main
     PUBLIC gmock
 )
+
+add_test(${TEST_NAME} ${TEST_NAME})
