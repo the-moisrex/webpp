@@ -75,6 +75,7 @@ namespace webpp {
         bool whitespace(char const& c) {
             return c == ' ' || c == '\n' || c == '\r' || c == '\t' ||
                    c == '\f' || c == '\v';
+            // TODO: consider using std::isspace
         }
 
         /**
