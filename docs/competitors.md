@@ -1,5 +1,10 @@
 # Competitors
 
+### Excalibur
+[Youtube live codings](https://www.youtube.com/watch?v=DAQF4u--ou0&list=PLbtjxiXev6lrSovYDdI2xHVcw8Gk2J3Zw)
+[GitHub](https://github.com/rhymu8354/Excalibur)
+[This guy's GitHub](https://github.com/rhymu8354)
+
 ### Cefeika
 [Github](https://github.com/dmitigr/cefeika)
 
