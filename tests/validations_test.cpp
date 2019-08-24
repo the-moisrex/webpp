@@ -34,7 +34,7 @@ TEST(ValidationsTest, TrimmedFunctions) {
     EXPECT_TRUE(ltrimmed("left trimmed "));
 }
 
-TEST(ValidationsTest, IPFunctions) {
+TEST(ValidationsTest, IPv4Functions) {
     EXPECT_TRUE(ipv4("255.255.255.255"));
     EXPECT_FALSE(ipv4("256.1.1.1"));
     EXPECT_TRUE(ipv4("127.0.0.1"));
@@ -42,6 +42,35 @@ TEST(ValidationsTest, IPFunctions) {
     EXPECT_TRUE(ipv4("192.168.0.0"));
     EXPECT_FALSE(ipv4("192.168.1.256"));
     EXPECT_TRUE(ipv4("192.168.0.255"));
+}
+
+TEST(ValidationTest, IPv6Functions) {
+    auto valids = {"0102:0304:0506:0708:090a:0b0c:0d0e:0f00",
+                   "0102:0304:0506:0708:090a:0B0C:0d0E:0F00",
+                   "fd11::abcd:e0e0:d10e:0001",
+                   "fd11:1234:5678:abcd::abcd:e0e0:d10e:1000",
+                   "ff03::0b",
+                   "::",
+                   "64:ff9b::100.200.15.4",
+                   "2001:db8::abc:def1:127.0.0.1"};
+
+    auto invalids = {"2001:db8::a::b",
+                     "2001:db8::abcd:efgh",
+                     "1:2:3:4:5:6:7:8:9",
+                     "2001:db8::abc:def12:1:2",
+                     "64:ff9b::123.231.0.257",
+                     "64:ff9b::1.22.33",
+                     "64:ff9b::1.22.33.44.5",
+                     ".",
+                     ":.",
+                     "::.",
+                     ":f:0:0:c:0:f:f:."};
+
+    for (auto const& item : valids)
+        EXPECT_TRUE(ipv6(item)) << item;
+
+    for (auto const& item : invalids)
+        EXPECT_FALSE(ipv6(item)) << item;
 }
 
 TEST(ValidationsTest, EmailFunction) {

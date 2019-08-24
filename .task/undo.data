@@ -43,3 +43,6 @@ new [description:"use components like cefeika" entry:"1563822100" modified:"1563
 time 1563827999
 new [description:"learn more: http:\/\/www.yolinux.com\/TUTORIALS\/LibraryArchives-StaticAndDynamic.html" entry:"1563827999" modified:"1563827999" status:"pending" uuid:"3f3a2322-d418-4bc1-8634-eed3a501a233"]
 ---
+time 1566658136
+new [description:"you may want to add a hopefully constexpr ipv4,6 and other net related stuff. consider openthread implementations" entry:"1566658136" modified:"1566658136" project:"net" status:"pending" uuid:"3e3a543b-e973-44a3-8353-2c7a89e8eaa6"]
+---
