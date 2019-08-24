@@ -282,15 +282,24 @@ namespace webpp {
 
     constexpr auto LOWER_ALPHA = charset<'a', 'z'>();
     constexpr auto UPPER_ALPHA = charset<'A', 'Z'>();
+
+    /**
+     * This is the character set containing just the alphabetic characters
+     * from the ASCII character set.
+     */
     constexpr auto ALPHA = charset(LOWER_ALPHA, UPPER_ALPHA);
 
+    /**
+     * This is the character set containing just numbers.
+     */
     constexpr auto DIGIT = charset<'0', '9'>();
 
+    /**
+     * This is the character set containing just the characters allowed
+     * in a hexadecimal digit.
+     */
     constexpr auto HEXDIG =
         charset(DIGIT, charset<'A', 'F'>(), charset<'a', 'f'>());
-
-    constexpr auto UNRESERVED =
-        charset(ALPHA, DIGIT, charset('-', '.', '_', '~'));
 
 } // namespace webpp
 #endif // CHARSET_H
