@@ -3,7 +3,7 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <webpp/validators/validators.hpp>
+#include <webpp/validators/validators.h>
 
 using namespace webpp::is;
 using namespace std;
@@ -51,4 +51,14 @@ TEST(ValidationsTest, EmailFunction) {
         << "moisrex.test@gmail.com should be valid";
     EXPECT_FALSE(email("not an.email@123.com"))
         << "spaces are not allowd in emails";
+}
+
+TEST(ValidationsTest, NumberFunctions) {
+    for (char i = '0'; i <= '9'; i++)
+        EXPECT_TRUE(digit(i));
+    for (char i = 'a'; i <= 'z'; i++)
+        EXPECT_FALSE(digit('c'));
+
+    EXPECT_TRUE(digit("123"));
+    EXPECT_FALSE(digit("1.3"));
 }
