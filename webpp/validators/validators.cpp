@@ -66,7 +66,7 @@ constexpr bool is::ipv4(const std::string_view& address) noexcept {
     for (auto c : address) {
         switch (state) {
         case 0: { // not in an octet yet
-            if (DIGIT.contains(c)) {
+            if (is::digit(c)) {
                 octetBuffer.push_back(c);
                 state = 1;
             } else {
@@ -84,7 +84,7 @@ constexpr bool is::ipv4(const std::string_view& address) noexcept {
                 }
                 octetBuffer.clear();
                 state = 0;
-            } else if (DIGIT.contains(c)) {
+            } else if (is::digit(c)) {
                 octetBuffer.push_back(c);
             } else {
                 return false;
@@ -103,6 +103,10 @@ constexpr bool is::ipv4(const std::string_view& address) noexcept {
 }
 
 constexpr bool is::ipv6(std::string_view const& address) noexcept {
+    // I don't think this way is the best way too. but it's lots of code.
+    // So I'll just wait for free time to make it better.
+    // TODO
+
     enum class ValidationState {
         NO_GROUPS_YET,
         COLON_BUT_NO_GROUPS_YET,
@@ -148,7 +152,7 @@ constexpr bool is::ipv6(std::string_view const& address) noexcept {
         } break;
 
         case ValidationState::AFTER_COLON_EXPECT_GROUP_OR_IPV4: {
-            if (DIGIT.contains(c)) {
+            if (is::digit(c)) {
                 potentialIpv4AddressStart = position;
                 if (++numDigits > 4) {
                     return false;
@@ -186,7 +190,7 @@ constexpr bool is::ipv6(std::string_view const& address) noexcept {
             } else if (c == '.') {
                 ipv4AddressEncountered = true;
                 break;
-            } else if (DIGIT.contains(c)) {
+            } else if (is::digit(c)) {
                 if (++numDigits > 4) {
                     return false;
                 }
@@ -208,7 +212,7 @@ constexpr bool is::ipv6(std::string_view const& address) noexcept {
                     doubleColonEncountered = true;
                     state = ValidationState::AFTER_COLON_EXPECT_GROUP_OR_IPV4;
                 }
-            } else if (DIGIT.contains(c)) {
+            } else if (is::digit(c)) {
                 potentialIpv4AddressStart = position;
                 ++numDigits;
                 state = ValidationState::IN_GROUP_COULD_BE_IPV4;
