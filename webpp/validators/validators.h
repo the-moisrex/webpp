@@ -121,11 +121,25 @@ namespace webpp {
             return c >= '0' && c <= '9';
         }
 
+        /**
+         * @brief is all the characters in the specified string digits
+         * @param str
+         * @return true/false
+         */
         constexpr inline bool digit(std::string_view const& str) noexcept {
             for (auto const& c : str)
                 if (!digit(c))
                     return false;
             return true;
+        }
+
+        /**
+         * @brief is a number or a dot
+         * @param c
+         * @return
+         */
+        constexpr inline bool number(char const& c) noexcept {
+            return digit(c) || '.';
         }
 
         /**
@@ -149,15 +163,63 @@ namespace webpp {
         }
 
         /**
-         * @brief check if the specified string is an integer
+         * @brief check if a character is lowercase
+         * @param c
+         * @return
+         */
+        constexpr inline bool lowercase(char const& c) noexcept {
+            return c >= 'a' && c <= 'z';
+        }
+
+        /**
+         * @brief checks if a string is completely lowercase or not
+         * @param str
+         * @return
+         */
+        constexpr inline bool lowercase(std::string_view const& str) noexcept {
+            for (auto const& c : str)
+                if (!lowercase(c))
+                    return false;
+            return true;
+        }
+
+        /**
+         * @brief checks if a character is uppercase or not
+         * @param c
+         * @return
+         */
+        constexpr inline bool uppercase(char const& c) noexcept {
+            return c >= 'A' && c <= 'Z';
+        }
+
+        /**
+         * @brief checks if a string is uppercase or not
+         * @param str
+         * @return
+         */
+        constexpr inline bool uppercase(std::string_view const& str) noexcept {
+            for (auto const& c : str)
+                if (!uppercase(c))
+                    return false;
+            return true;
+        }
+
+        /**
+         * @brief the same as digit function
+         * @param str
+         * @return true if the specified string is an integer
+         */
+        constexpr inline bool integer(char const& str) noexcept {
+            return digit(str);
+        }
+
+        /**
+         * @brief the same as digit function
          * @param str
          * @return true if the specified string is an integer
          */
         constexpr inline bool integer(std::string_view const& str) noexcept {
-            for (auto const& c : str)
-                if (!digit(c))
-                    return false;
-            return true;
+            return digit(str);
         }
 
         /**
@@ -173,8 +235,8 @@ namespace webpp {
             return std::regex_match(str, pattern);
         }
 
-        bool FQDN(std::string_view const& str) noexcept;
-        bool url(std::string_view const& str) noexcept;
+        constexpr bool FQDN(std::string_view const& str) noexcept;
+        constexpr bool url(std::string_view const& str) noexcept;
 
         /**
          * @brief checks if the specified str is an ipv4
@@ -183,22 +245,44 @@ namespace webpp {
          */
         constexpr bool ipv4(std::string_view const& str) noexcept;
 
-        bool ipv6(std::string_view const& str) noexcept;
-        bool ip(std::string_view const& str) noexcept;
-        bool ip_range(std::string_view const& str) noexcept;
-        bool ipv4_range(std::string_view const& str) noexcept;
-        bool ipv6_range(std::string_view const& str) noexcept;
-        // bool isImage(something) noexcept;
-        bool color(std::string_view const& str) noexcept;
-        bool hex_color(std::string_view const& str) noexcept;
-        bool name_color(std::string_view const& str) noexcept;
-        bool mimetype(std::string_view const& str) noexcept;
-        bool UUID(std::string_view const& str) noexcept;
-        bool port(std::string_view const& str) noexcept;
-        bool mongoid(std::string_view const& str) noexcept;
-        bool lowercase(std::string_view const& str) noexcept;
-        bool uppercase(std::string_view const& str) noexcept;
+        /**
+         * This function checks to make sure the given address
+         * is a valid IPv6 address according to the rules in
+         * RFC 3986 (https://tools.ietf.org/html/rfc3986).
+         *
+         * @param[in] address
+         *     This is the IPv6 address to validate.
+         *
+         * @return
+         *     An indication of whether or not the given address
+         *     is a valid IPv6 address is returned.
+         */
+        constexpr bool ipv6(std::string_view const& str) noexcept;
 
+        /**
+         * @brief check if the specified string is an ipv4 or ipv6
+         * @param str
+         * @return true if str is ipv4 or ipv6
+         */
+        constexpr inline bool ip(std::string_view const& str) noexcept {
+            return ipv4(str) || ipv6(str);
+        }
+
+        constexpr bool ip_range(std::string_view const& str) noexcept;
+        constexpr bool ipv4_range(std::string_view const& str) noexcept;
+        constexpr bool ipv6_range(std::string_view const& str) noexcept;
+        // bool isImage(something) noexcept;
+        constexpr bool hex_color(std::string_view const& str) noexcept;
+        constexpr bool name_color(std::string_view const& str) noexcept;
+
+        constexpr inline bool color(std::string_view const& str) noexcept {
+            return hex_color(str) || name_color(str);
+        }
+
+        constexpr bool mimetype(std::string_view const& str) noexcept;
+        constexpr bool UUID(std::string_view const& str) noexcept;
+        constexpr bool port(std::string_view const& str) noexcept;
+        constexpr bool mongoid(std::string_view const& str) noexcept;
         // you may want to change the string to a date of some sort or add both
         bool today(std::string_view const& str) noexcept;
         bool tomorrow(std::string_view const& str) noexcept;
