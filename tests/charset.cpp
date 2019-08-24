@@ -4,7 +4,7 @@
 using namespace webpp;
 
 TEST(CharsetTest, CharsetCreation) {
-    constexpr charset chars('a', 'z');
+    constexpr auto chars = charset('a', 'z');
     EXPECT_TRUE(chars.contains('a'));
     EXPECT_TRUE(chars.contains('b'));
     EXPECT_TRUE(chars.contains('z'));
