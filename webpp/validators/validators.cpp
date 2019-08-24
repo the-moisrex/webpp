@@ -30,18 +30,6 @@ constexpr inline bool is_ipv4_octet(std::string_view const& octetString) {
     return (octet <= 255);
 }
 
-/**
- * This function checks to make sure the given address
- * is a valid IPv6 address according to the rules in
- * RFC 3986 (https://tools.ietf.org/html/rfc3986).
- *
- * @param[in] address
- *     This is the IPv6 address to validate.
- *
- * @return
- *     An indication of whether or not the given address
- *     is a valid IPv6 address is returned.
- */
 constexpr bool is::ipv4(const std::string_view& address) noexcept {
 #define mohammad_implementation
 #undef stackoverflow_implemenation
@@ -114,19 +102,7 @@ constexpr bool is::ipv4(const std::string_view& address) noexcept {
 #endif
 }
 
-/**
- * This function checks to make sure the given address
- * is a valid IPv6 address according to the rules in
- * RFC 3986 (https://tools.ietf.org/html/rfc3986).
- *
- * @param[in] address
- *     This is the IPv6 address to validate.
- *
- * @return
- *     An indication of whether or not the given address
- *     is a valid IPv6 address is returned.
- */
-bool ValidateIpv6Address(const std::string& address) {
+constexpr bool is::ipv6(std::string_view const& address) noexcept {
     enum class ValidationState {
         NO_GROUPS_YET,
         COLON_BUT_NO_GROUPS_YET,
@@ -146,7 +122,7 @@ bool ValidateIpv6Address(const std::string& address) {
         case ValidationState::NO_GROUPS_YET: {
             if (c == ':') {
                 state = ValidationState::COLON_BUT_NO_GROUPS_YET;
-            } else if (DIGIT.contains(c)) {
+            } else if (is::digit(c)) {
                 potentialIpv4AddressStart = position;
                 numDigits = 1;
                 state = ValidationState::IN_GROUP_COULD_BE_IPV4;
@@ -262,7 +238,7 @@ bool ValidateIpv6Address(const std::string& address) {
         return false;
     }
     if (ipv4AddressEncountered) {
-        if (!ValidateIpv4Adress(address.substr(potentialIpv4AddressStart))) {
+        if (!is::ipv4(address.substr(potentialIpv4AddressStart))) {
             return false;
         }
         numGroups += 2;
