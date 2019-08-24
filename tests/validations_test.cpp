@@ -76,13 +76,8 @@ TEST(ValidationTest, IPv6Functions) {
                      "::.",
                      ":f:0:0:c:0:f:f:."};
 
-    for (auto const& item : valids)
-        EXPECT_TRUE(ipv6(item)) << item;
-
-    for (auto const& item : invalids)
-        EXPECT_FALSE(ipv6(item)) << item;
-
     for (auto const& item : valids) {
+        EXPECT_TRUE(ipv6(item)) << item;
         std::string ip = item;
         std::string ip2 = item;
         std::string ip3 = item;
@@ -95,6 +90,7 @@ TEST(ValidationTest, IPv6Functions) {
     }
 
     for (auto const& item : invalids) {
+        EXPECT_FALSE(ipv6(item)) << item;
         std::string ip = item;
         ip.append("/64");
         EXPECT_FALSE(ipv6_prefix(ip));

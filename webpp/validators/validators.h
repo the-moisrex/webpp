@@ -2,6 +2,7 @@
 #define VALIDATION_H
 
 #include "../std/string_view.h"
+#include "../utils/casts.h"
 #include "../utils/charset.h"
 #include <algorithm>
 #include <regex>
@@ -254,8 +255,7 @@ namespace webpp {
         template <std::size_t N>
         constexpr inline bool
         ipv4_prefix(std::string_view const& str,
-                    charset_t<N> const& devider_chars = charset_t<2>(
-                        std::initializer_list<char>{':', '/'})) noexcept {
+                    charset_t<N> const& devider_chars) noexcept {
             if (auto found = std::find_if(
                     std::rbegin(str), std::rend(str),
                     [&](const auto& c) { return devider_chars.contains(c); });
@@ -264,11 +264,18 @@ namespace webpp {
                 if (!ipv4(str.substr(0, index)))
                     return false;
                 if (auto prefix = str.substr(index + 1); is::digit(prefix)) {
-                    return prefix >= 0 && prefix <= 32;
+                    auto _prefix = to_uint(prefix);
+                    return _prefix >= 0 && _prefix <= 32;
                 }
                 return false;
             }
             return false;
+        }
+
+        constexpr inline bool
+        ipv4_prefix(std::string_view const& str) noexcept {
+            return ipv4_prefix(
+                str, charset_t<2>(std::initializer_list<char>{':', '/'}));
         }
 
         /**
@@ -286,10 +293,8 @@ namespace webpp {
         constexpr bool ipv6(std::string_view const& str) noexcept;
 
         template <std::size_t N>
-        constexpr bool
-        ipv6_prefix(std::string_view const& str,
-                    charset_t<N> const& devider_chars = charset_t<1>(
-                        std::initializer_list<char>{'/'})) noexcept {
+        constexpr bool ipv6_prefix(std::string_view const& str,
+                                   charset_t<N> const& devider_chars) noexcept {
             if (auto found = std::find_if(
                     std::rbegin(str), std::rend(str),
                     [&](const auto& c) { return devider_chars.contains(c); });
@@ -298,11 +303,17 @@ namespace webpp {
                 if (!ipv4(str.substr(0, index)))
                     return false;
                 if (auto prefix = str.substr(index + 1); is::digit(prefix)) {
-                    return prefix >= 0 && prefix <= 128;
+                    int _prefix = to_uint(prefix);
+                    return _prefix >= 0 && _prefix <= 128;
                 }
                 return false;
             }
             return false;
+        }
+
+        constexpr bool ipv6_prefix(std::string_view const& str) noexcept {
+            return ipv6_prefix(str,
+                               charset_t<1>(std::initializer_list<char>{'/'}));
         }
 
         /**
