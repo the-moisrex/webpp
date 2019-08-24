@@ -251,7 +251,7 @@ namespace webpp {
          * is valid or not.
          * @example 192.168.0.1/24, 192.168.0.1:24
          */
-        template <std::size_t N = 2>
+        template <std::size_t N>
         constexpr inline bool
         ipv4_prefix(std::string_view const& str,
                     charset_t<N> const& devider_chars = charset_t<2>(
@@ -284,6 +284,26 @@ namespace webpp {
          *     is a valid IPv6 address is returned.
          */
         constexpr bool ipv6(std::string_view const& str) noexcept;
+
+        template <std::size_t N>
+        constexpr bool
+        ipv6_prefix(std::string_view const& str,
+                    charset_t<N> const& devider_chars = charset_t<1>(
+                        std::initializer_list<char>{'/'})) noexcept {
+            if (auto found = std::find_if(
+                    std::rbegin(str), std::rend(str),
+                    [&](const auto& c) { return devider_chars.contains(c); });
+                found != std::rend(str)) {
+                auto index = std::distance(std::begin(str), found.base()) - 1;
+                if (!ipv4(str.substr(0, index)))
+                    return false;
+                if (auto prefix = str.substr(index + 1); is::digit(prefix)) {
+                    return prefix >= 0 && prefix <= 128;
+                }
+                return false;
+            }
+            return false;
+        }
 
         /**
          * @brief check if the specified string is an ipv4 or ipv6

@@ -51,7 +51,7 @@ TEST(ValidationsTest, IPv4Functions) {
     EXPECT_FALSE(ipv4_prefix("false_ip/24"));
     EXPECT_FALSE(ipv4_prefix("192.168.1.3/40"));
     EXPECT_FALSE(ipv4_prefix("192.168.1.3/false_prefix"));
-    EXPECT_TRUE(ipv4_prefix("192.168.1.2-24", charset_t<1>('-')));
+    EXPECT_TRUE(ipv4_prefix("192.168.1.2-24", webpp::charset_t<1>('-')));
 }
 
 TEST(ValidationTest, IPv6Functions) {
@@ -81,6 +81,24 @@ TEST(ValidationTest, IPv6Functions) {
 
     for (auto const& item : invalids)
         EXPECT_FALSE(ipv6(item)) << item;
+
+    for (auto const& item : valids) {
+        std::string ip = item;
+        std::string ip2 = item;
+        std::string ip3 = item;
+        ip.append("/64");
+        EXPECT_TRUE(ipv6_prefix(ip));
+        ip2.append("/something bad");
+        EXPECT_FALSE(ipv6_prefix(ip2));
+        ip3.append("-128");
+        EXPECT_TRUE(ipv6_prefix(ip3, webpp::charset_t<1>('-')));
+    }
+
+    for (auto const& item : invalids) {
+        std::string ip = item;
+        ip.append("/64");
+        EXPECT_FALSE(ipv6_prefix(ip));
+    }
 }
 
 TEST(ValidationsTest, EmailFunction) {
