@@ -3,6 +3,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <webpp/utils/charset.h>
 #include <webpp/validators/validators.h>
 
 using namespace webpp::is;
@@ -42,6 +43,15 @@ TEST(ValidationsTest, IPv4Functions) {
     EXPECT_TRUE(ipv4("192.168.0.0"));
     EXPECT_FALSE(ipv4("192.168.1.256"));
     EXPECT_TRUE(ipv4("192.168.0.255"));
+
+    EXPECT_TRUE(ipv4_prefix("192.168.1.2:24"));
+    EXPECT_TRUE(ipv4_prefix("192.168.1.2:16"));
+    EXPECT_TRUE(ipv4_prefix("192.168.1.2:0"));
+    EXPECT_TRUE(ipv4_prefix("192.168.1.2/24"));
+    EXPECT_FALSE(ipv4_prefix("false_ip/24"));
+    EXPECT_FALSE(ipv4_prefix("192.168.1.3/40"));
+    EXPECT_FALSE(ipv4_prefix("192.168.1.3/false_prefix"));
+    EXPECT_TRUE(ipv4_prefix("192.168.1.2-24", charset_t<1>('-')));
 }
 
 TEST(ValidationTest, IPv6Functions) {

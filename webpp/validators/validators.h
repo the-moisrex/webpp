@@ -2,6 +2,7 @@
 #define VALIDATION_H
 
 #include "../std/string_view.h"
+#include "../utils/charset.h"
 #include <algorithm>
 #include <regex>
 
@@ -244,6 +245,31 @@ namespace webpp {
          * @return true if str is a valid ipv4
          */
         constexpr bool ipv4(std::string_view const& str) noexcept;
+
+        /**
+         * @brief this function template will check if the ipv4 with it's prefix
+         * is valid or not.
+         * @example 192.168.0.1/24, 192.168.0.1:24
+         */
+        template <std::size_t N = 2>
+        constexpr inline bool
+        ipv4_prefix(std::string_view const& str,
+                    charset_t<N> const& devider_chars = charset_t<2>(
+                        std::initializer_list<char>{':', '/'})) noexcept {
+            if (auto found = std::find_if(
+                    std::rbegin(str), std::rend(str),
+                    [&](const auto& c) { return devider_chars.contains(c); });
+                found != std::rend(str)) {
+                auto index = std::distance(std::begin(str), found.base()) - 1;
+                if (!ipv4(str.substr(0, index)))
+                    return false;
+                if (auto prefix = str.substr(index + 1); is::digit(prefix)) {
+                    return prefix >= 0 && prefix <= 32;
+                }
+                return false;
+            }
+            return false;
+        }
 
         /**
          * This function checks to make sure the given address
