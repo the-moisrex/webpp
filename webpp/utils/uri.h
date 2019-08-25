@@ -2,11 +2,132 @@
 #define URI_H
 
 #include "../std/string_view.h"
+#include "charset.h"
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace webpp {
+
+    /**
+     * Most URIs will never change in their life time (at least in webpp
+     * project) and they mostly used to get details of the URL we have as a
+     * string; so I decided that probabely half of the calculations can be done
+     * at compile time; so fo that point, I reimplemented the URI class with
+     * constexpr and string_view in mind.
+     *
+     */
+    template <typename StringType>
+    class uri_t {
+      private:
+        StringType data;
+
+      public:
+        constexpr uri_t() noexcept = default;
+        ~uri_t() noexcept = default;
+
+        // parse from string
+        constexpr uri_t(std::string_view const& u) noexcept = default;
+
+        constexpr uri_t(uri_t const& u) noexcept = default;
+        constexpr uri_t(uri_t&& u) noexcept = default;
+
+        // assignment operators
+        constexpr void operator=(uri_t const& u) noexcept = default;
+        constexpr void operator=(uri_t&& u) noexcept = default;
+
+        constexpr bool operator==(const uri_t& u) const noexcept;
+        constexpr bool operator!=(const uri_t& u) const noexcept;
+
+        /**
+         * @brief check if the specified uri has a scheme or not
+         */
+        constexpr bool has_scheme() const noexcept { return scheme() == ""; }
+
+        /**
+         * @brief scheme
+         * @return get scheme
+         */
+        constexpr std::string_view scheme() const noexcept {
+            /**
+             * This is the character set corresponds to the second part
+             * of the "scheme" syntax
+             * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
+             */
+            constexpr auto SCHEME_NOT_FIRST =
+                charset(ALPHA, DIGIT, webpp::charset('+', '-', '.'));
+
+            std::string_view _data =
+                data; // to make sure we have string_view not a string or any
+                      // other thing that we'r not going to work with in this
+                      // method
+
+            if (const auto schemeEnd = _data.find(':');
+                schemeEnd != std::string_view::npos) {
+                auto _scheme = _data.substr(0, schemeEnd);
+                if (!ALPHA.contains(_scheme[0]))
+                    return "";
+                if (!_scheme.substr(1).find_first_not_of(
+                        SCHEME_NOT_FIRST.string_view()))
+                    return "";
+                return _scheme;
+            }
+            return "";
+        }
+
+        uri_t& scheme(std::string_view const& _scheme) noexcept;
+
+        constexpr std::string_view user_info() const noexcept;
+        uri_t& user_info(std::string_view const&) noexcept;
+
+        /**
+         * @brief clears the user info if exists
+         * @return
+         */
+        uri_t& clear_user_info() noexcept;
+
+        constexpr bool has_host() const noexcept;
+        constexpr std::string_view host() const noexcept;
+        uri_t& host(std::string_view const&) noexcept;
+
+        /**
+         * @brief port number of the uri;
+         * @return port number
+         * @default 80
+         */
+        constexpr unsigned int port() const noexcept;
+        constexpr bool has_port() const noexcept;
+        uri_t& port(unsigned int) noexcept;
+
+        /**
+         * @brief clear the port number from the uri and defaults to 80
+         * @return self
+         */
+        uri_t& clear_port() noexcept;
+
+        /**
+         * @brief get the path as the specified type
+         * @details this method will returns a vector/list/... of
+         * string/string_views
+         * this method does not just response to the fact that Container should
+         * be an std container, but if string/string_view is presented as a
+         * container, it will reutrn the whole path.
+         */
+        template <typename Container = std::vector<std::string_view>>
+        constexpr Container path() const noexcept;
+
+        uri_t& path(std::string_view const&) noexcept;
+
+        template <typename Container>
+        uri_t& path(const Container&) noexcept;
+
+        constexpr bool has_query() const noexcept;
+        constexpr std::string_view query() const noexcept;
+        uri_t& query(std::string_view const&) noexcept;
+    };
+
+    using const_uri = uri_t<std::string_view>;
+    using uri = uri_t<std::string>;
 
     /**
      * This class represents a Uniform Resource Identifier (URI),
