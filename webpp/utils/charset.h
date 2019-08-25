@@ -204,6 +204,10 @@ namespace webpp {
         }
 
         constexpr auto size() const noexcept { return chars.size(); }
+
+        constexpr std::string_view string_view() const noexcept {
+            return chars;
+        }
     };
     /*
     template <typename T>
