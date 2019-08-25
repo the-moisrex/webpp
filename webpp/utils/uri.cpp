@@ -22,8 +22,6 @@
 
 using namespace webpp;
 
-//////////////////////////////////////////////////////////////////////////////
-
 /**
  * This is the character set corresponds to the "unreserved" syntax
  * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
@@ -36,14 +34,6 @@ constexpr auto UNRESERVED = charset(ALPHA, DIGIT, charset('-', '.', '_', '~'));
  */
 constexpr auto SUB_DELIMS =
     webpp::charset('!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
-
-/**
- * This is the character set corresponds to the second part
- * of the "scheme" syntax
- * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
- */
-constexpr auto SCHEME_NOT_FIRST =
-    webpp::charset(ALPHA, DIGIT, webpp::charset('+', '-', '.'));
 
 /**
  * This is the character set corresponds to the "pchar" syntax
@@ -112,15 +102,15 @@ constexpr auto IPV_FUTURE_LAST_PART =
  *     An indication of whether or not the given candidate string
  *     passes the test is returned.
  */
-bool FailsMatch(const std::string& candidate,
-                std::function<bool(char, bool)> stillPassing) {
-    for (const auto c : candidate) {
-        if (!stillPassing(c, false)) {
-            return true;
-        }
-    }
-    return !stillPassing(' ', true);
-}
+// bool FailsMatch(const std::string& candidate,
+//                std::function<bool(char, bool)> stillPassing) {
+//    for (const auto c : candidate) {
+//        if (!stillPassing(c, false)) {
+//            return true;
+//        }
+//    }
+//    return !stillPassing(' ', true);
+//}
 
 /**
  * This function returns a strategy function that
@@ -132,23 +122,23 @@ bool FailsMatch(const std::string& candidate,
  *      FailsMatch function to test a scheme to make sure
  *      it is legal according to the standard is returned.
  */
-std::function<bool(char, bool)> LegalSchemeCheckStrategy() {
-    auto isFirstCharacter = std::make_shared<bool>(true);
-    return [isFirstCharacter](char c, bool end) {
-        if (end) {
-            return !*isFirstCharacter;
-        } else {
-            bool check;
-            if (*isFirstCharacter) {
-                check = ALPHA.contains(c);
-            } else {
-                check = SCHEME_NOT_FIRST.contains(c);
-            }
-            *isFirstCharacter = false;
-            return check;
-        }
-    };
-}
+// std::function<bool(char, bool)> LegalSchemeCheckStrategy() {
+//    auto isFirstCharacter = std::make_shared<bool>(true);
+//    return [isFirstCharacter](char c, bool end) {
+//        if (end) {
+//            return !*isFirstCharacter;
+//        } else {
+//            bool check;
+//            if (*isFirstCharacter) {
+//                check = ALPHA.contains(c);
+//            } else {
+//                check = SCHEME_NOT_FIRST.contains(c);
+//            }
+//            *isFirstCharacter = false;
+//            return check;
+//        }
+//    };
+//}
 
 /**
  * This method checks and decodes the given URI element.
@@ -575,30 +565,30 @@ struct Uri::Impl {
      *     An indication of whether or not the given input string
      *     was successfully parsed is returned.
      */
-    bool ParseScheme(const std::string& uriString, std::string& rest) {
-        // Limit our search so we don't scan into the authority
-        // or path elements, because these may have the colon
-        // character as well, which we might misinterpret
-        // as the scheme delimiter.
-        auto authorityOrPathDelimiterStart = uriString.find('/');
-        if (authorityOrPathDelimiterStart == std::string::npos) {
-            authorityOrPathDelimiterStart = uriString.length();
-        }
-        const auto schemeEnd =
-            uriString.substr(0, authorityOrPathDelimiterStart).find(':');
-        if (schemeEnd == std::string::npos) {
-            scheme.clear();
-            rest = uriString;
-        } else {
-            scheme = uriString.substr(0, schemeEnd);
-            if (FailsMatch(scheme, LegalSchemeCheckStrategy())) {
-                return false;
-            }
-            scheme = SystemAbstractions::ToLower(scheme);
-            rest = uriString.substr(schemeEnd + 1);
-        }
-        return true;
-    }
+    //    bool ParseScheme(const std::string& uriString, std::string& rest) {
+    //        // Limit our search so we don't scan into the authority
+    //        // or path elements, because these may have the colon
+    //        // character as well, which we might misinterpret
+    //        // as the scheme delimiter.
+    //        auto authorityOrPathDelimiterStart = uriString.find('/');
+    //        if (authorityOrPathDelimiterStart == std::string::npos) {
+    //            authorityOrPathDelimiterStart = uriString.length();
+    //        }
+    //        const auto schemeEnd =
+    //            uriString.substr(0, authorityOrPathDelimiterStart).find(':');
+    //        if (schemeEnd == std::string::npos) {
+    //            scheme.clear();
+    //            rest = uriString;
+    //        } else {
+    //            scheme = uriString.substr(0, schemeEnd);
+    //            if (FailsMatch(scheme, LegalSchemeCheckStrategy())) {
+    //                return false;
+    //            }
+    //            scheme = SystemAbstractions::ToLower(scheme);
+    //            rest = uriString.substr(schemeEnd + 1);
+    //        }
+    //        return true;
+    //    }
 
     /**
      * This method takes the part of an unparsed URI consisting

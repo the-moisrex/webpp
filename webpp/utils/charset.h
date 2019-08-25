@@ -163,7 +163,7 @@ namespace webpp {
             // static_assert(((0 + ... + NN) > N), "Sum of csets is grather than
             // charset's container");
             auto csets_tupled = std::make_tuple(csets...);
-            for_each_tuple(csets_tupled, [&, i = 0](auto const& t) mutable {
+            for_each_tuple(csets_tupled, [&, i = 0u](auto const& t) mutable {
                 for (auto const& c : t.chars) {
                     if (!contains(c))
                         chars[i++] = c;
@@ -206,7 +206,7 @@ namespace webpp {
         constexpr auto size() const noexcept { return chars.size(); }
 
         constexpr std::string_view string_view() const noexcept {
-            return chars;
+            return std::string_view(chars.data(), N);
         }
     };
     /*

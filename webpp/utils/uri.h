@@ -3,7 +3,9 @@
 
 #include "../std/string_view.h"
 #include "charset.h"
+#include "strings.h"
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -16,18 +18,70 @@ namespace webpp {
      * at compile time; so fo that point, I reimplemented the URI class with
      * constexpr and string_view in mind.
      *
+     * RFC: https://tools.ietf.org/html/rfc3986
+     *
+     *    foo://example.com:8042/over/there?name=ferret#nose
+     *    \_/   \______________/\_________/ \_________/ \__/
+     *     |           |            |            |        |
+     *  scheme     authority       path        query   fragment
+     *     |   _____________________|__
+     *    / \ /                        \
+     *    urn:example:animal:ferret:nose
+     *
      */
     template <typename StringType>
     class uri_t {
       private:
         StringType data;
 
+        constexpr std::string_view
+        percentifier(std::string_view const& encoded) {
+            for (const auto c : originalSegment) {
+                if (decodingPec) {
+                    if (!pecDecoder.NextEncodedCharacter(c)) {
+                        return false;
+                    }
+                    if (pecDecoder.Done()) {
+                        decodingPec = false;
+                        element.push_back(
+                            (char)pecDecoder.GetDecodedCharacter());
+                    }
+                } else if (c == '%') {
+                    decodingPec = true;
+                    pecDecoder = Uri::PercentEncodedCharacterDecoder();
+                } else {
+                    if (allowedCharacters.Contains(c)) {
+                        element.push_back(c);
+                    } else {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        void check_modifiable() {
+            if constexpr (std::is_same<StringType, std::string_view>::value) {
+                throw std::logic_error(
+                    "You cannot change a string_view thus you will not be able "
+                    "to run non-const methods of uri_t class");
+            }
+            if constexpr (std::is_const<StringType>::value) {
+                throw std::logic_error(
+                    "You cannot change a const string thus you are not able to "
+                    "run non-const methods of uri_t class");
+            }
+        }
+
       public:
         constexpr uri_t() noexcept = default;
         ~uri_t() noexcept = default;
 
-        // parse from string
-        constexpr uri_t(std::string_view const& u) noexcept = default;
+        /**
+         * @brief parse from string, it will trim the spaces for generality too
+         * @param string_view reperesentaion of a URI
+         */
+        constexpr uri_t(std::string_view const& u) noexcept
+            : data(trim_copy(u)) {}
 
         constexpr uri_t(uri_t const& u) noexcept = default;
         constexpr uri_t(uri_t&& u) noexcept = default;
@@ -75,9 +129,56 @@ namespace webpp {
             return "";
         }
 
-        uri_t& scheme(std::string_view const& _scheme) noexcept;
+        /**
+         * @brief set scheme
+         * @param _scheme
+         * @throws logic_error if uri is const
+         * @return
+         */
+        uri_t& scheme(std::string const& _scheme) noexcept {
+            check_modifiable();
+            data = _scheme + data.substr(data.find(':'));
+        }
 
-        constexpr std::string_view user_info() const noexcept;
+        constexpr std::string_view has_user_info() const noexcept {
+            return user_info() == "";
+        }
+
+        constexpr std::string_view user_info() const noexcept {
+            std::string_view _data = data;
+
+            if (auto authority_start = _data.find("//");
+                authority_start != std::string_view::npos) {
+                authority_start +=
+                    2; // we already know what those chars are (//)
+
+                // finding path so we won't go out of scope:
+                auto path_start = _data.find('/');
+                if (path_start == std::string_view::npos)
+                    path_start = _data.size();
+
+                if (auto delim = _data.find("@", authority_start, path_start);
+                    delim != std::string_view::npos &&
+                    delim != authority_start) {
+                    return std::string_view(_data.data() + authority_start,
+                                            delim - authority_start);
+                }
+            }
+            return ""; // there's no user info in the uri
+
+            const auto userInfoDelimiter = authorityString.find('@');
+            std::string hostPortString;
+            userInfo.clear();
+            if (userInfoDelimiter == std::string::npos) {
+                hostPortString = authorityString;
+            } else {
+                userInfo = authorityString.substr(0, userInfoDelimiter);
+                if (!DecodeElement(userInfo, USER_INFO_NOT_PCT_ENCODED)) {
+                    return false;
+                }
+                hostPortString = authorityString.substr(userInfoDelimiter + 1);
+            }
+        }
         uri_t& user_info(std::string_view const&) noexcept;
 
         /**
@@ -126,7 +227,7 @@ namespace webpp {
         uri_t& query(std::string_view const&) noexcept;
     };
 
-    using const_uri = uri_t<std::string_view>;
+    using const_uri = uri_t<const std::string_view>;
     using uri = uri_t<std::string>;
 
     /**
