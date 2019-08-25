@@ -167,8 +167,9 @@ std::function<bool(char, bool)> LegalSchemeCheckStrategy() {
  *     An indication of whether or not the element
  *     passed all checks and was decoded successfully is returned.
  */
+template <std::size_t N>
 bool DecodeElement(std::string& element,
-                   const webpp::charset& allowedCharacters) {
+                   const webpp::charset_t<N>& allowedCharacters) {
     const auto originalSegment = std::move(element);
     element.clear();
     bool decodingPec = false;
@@ -208,9 +209,9 @@ bool DecodeElement(std::string& element,
  */
 char MakeHexDigit(unsigned int value) {
     if (value < 10) {
-        return (char)(value + '0');
+        return static_cast<char>(value + '0');
     } else {
-        return (char)(value - 10 + 'A');
+        return static_cast<char>(value - 10 + 'A');
     }
 }
 
@@ -231,16 +232,19 @@ char MakeHexDigit(unsigned int value) {
  * @return
  *     The encoded element is returned.
  */
+template <std::size_t N>
 std::string EncodeElement(const std::string& element,
-                          const webpp::charset& allowedCharacters) {
+                          const webpp::charset_t<N>& allowedCharacters) {
     std::string encodedElement;
-    for (uint8_t c : element) {
-        if (allowedCharacters.Contains(c)) {
+    for (auto c : element) {
+        if (allowedCharacters.contains(c)) {
             encodedElement.push_back(c);
         } else {
             encodedElement.push_back('%');
-            encodedElement.push_back(MakeHexDigit((unsigned int)c >> 4));
-            encodedElement.push_back(MakeHexDigit((unsigned int)c & 0x0F));
+            encodedElement.push_back(
+                MakeHexDigit(static_cast<unsigned int>(c) >> 4));
+            encodedElement.push_back(
+                MakeHexDigit(static_cast<unsigned int>(c) & 0x0F));
         }
     }
     return encodedElement;
@@ -260,8 +264,6 @@ std::string EncodeElement(const std::string& element,
 bool DecodeQueryOrFragment(std::string& queryOrFragment) {
     return DecodeElement(queryOrFragment, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
 }
-
-} // namespace
 
 namespace Uri {
     /**
