@@ -23,19 +23,6 @@
 using namespace webpp;
 
 /**
- * This is the character set corresponds to the "unreserved" syntax
- * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
- */
-constexpr auto UNRESERVED = charset(ALPHA, DIGIT, charset('-', '.', '_', '~'));
-
-/**
- * This is the character set corresponds to the "sub-delims" syntax
- * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
- */
-constexpr auto SUB_DELIMS =
-    webpp::charset('!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
-
-/**
  * This is the character set corresponds to the "pchar" syntax
  * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
  * leaving out "pct-encoded".
