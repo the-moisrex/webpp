@@ -192,19 +192,6 @@ namespace webpp {
                 }
             }
             return ""; // there's no user info in the uri
-
-            const auto userInfoDelimiter = authorityString.find('@');
-            std::string hostPortString;
-            userInfo.clear();
-            if (userInfoDelimiter == std::string::npos) {
-                hostPortString = authorityString;
-            } else {
-                userInfo = authorityString.substr(0, userInfoDelimiter);
-                if (!DecodeElement(userInfo, USER_INFO_NOT_PCT_ENCODED)) {
-                    return false;
-                }
-                hostPortString = authorityString.substr(userInfoDelimiter + 1);
-            }
         }
         std::optional<std::string> user_info_decoded() const noexcept {
 
