@@ -34,29 +34,56 @@ namespace webpp {
       private:
         StringType data;
 
-        constexpr std::string_view
-        percentifier(std::string_view const& encoded) {
-            for (const auto c : originalSegment) {
-                if (decodingPec) {
-                    if (!pecDecoder.NextEncodedCharacter(c)) {
-                        return false;
+        template <std::size_t N>
+        std::optional<std::string> decode(std::string_view const& encoded_str,
+                                          charset_t<N> const& allowed_chars) {
+            /**
+             * This is the character set containing just the upper-case
+             * letters 'A' through 'F', used in upper-case hexadecimal.
+             */
+            constexpr auto HEX_UPPER = charset<'A', 'F'>();
+
+            /**
+             * This is the character set containing just the lower-case
+             * letters 'a' through 'f', used in lower-case hexadecimal.
+             */
+            const auto HEX_LOWER = charset<'a', 'f'>();
+
+            int digits_left = 2;
+            char decoded_char = 0;
+            bool decoding = false;
+            std::string res;
+            for (const auto c : encoded_str) {
+                if (digits_left) {
+                    decoded_char <<= 4;
+                    if (DIGIT.contains(c)) {
+                        decoded_char += c - '0';
+                    } else if (HEX_UPPER.contains(c)) {
+                        decoded_char += c - 'A' + 10;
+                    } else if (HEX_LOWER.contains(c)) {
+                        decoded_char += c - 'a' + 10;
+                    } else {
+                        return {}; // not a encrypted well
                     }
-                    if (pecDecoder.Done()) {
-                        decodingPec = false;
-                        element.push_back(
-                            (char)pecDecoder.GetDecodedCharacter());
+                    --digits_left;
+
+                    if (digits_left == 0) {
+                        decoding = false;
+                        res.push_back(decoded_char);
                     }
                 } else if (c == '%') {
-                    decodingPec = true;
-                    pecDecoder = Uri::PercentEncodedCharacterDecoder();
+                    decoding = true;
+
+                    // reseting:
+                    digits_left = 2;
+                    decoded_char = 0;
                 } else {
-                    if (allowedCharacters.Contains(c)) {
-                        element.push_back(c);
-                    } else {
-                        return false;
-                    }
+                    if (!allowed_chars.contains(c))
+                        return {}; // bad chars
+                    res.push_back(c);
                 }
             }
+            return std::move(res);
         }
 
         void check_modifiable() {
@@ -178,6 +205,32 @@ namespace webpp {
                 }
                 hostPortString = authorityString.substr(userInfoDelimiter + 1);
             }
+        }
+        std::optional<std::string> user_info_decoded() const noexcept {
+
+            /**
+             * This is the character set corresponds to the "unreserved" syntax
+             * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
+             */
+            constexpr auto UNRESERVED =
+                charset(ALPHA, DIGIT, charset('-', '.', '_', '~'));
+
+            /**
+             * This is the character set corresponds to the "sub-delims" syntax
+             * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
+             */
+            constexpr auto SUB_DELIMS = webpp::charset(
+                '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
+
+            /**
+             * This is the character set corresponds to the "userinfo" syntax
+             * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
+             * leaving out "pct-encoded".
+             */
+            constexpr auto USER_INFO_NOT_PCT_ENCODED =
+                webpp::charset(UNRESERVED, SUB_DELIMS, webpp::charset(':'));
+
+            return decode(user_info(), USER_INFO_NOT_PCT_ENCODED);
         }
         uri_t& user_info(std::string_view const&) noexcept;
 
