@@ -16,7 +16,7 @@ namespace webpp {
      * @brief this function will decode parts of uri
      */
     template <std::size_t N>
-    std::optional<std::string> uri_decode(std::string_view const& encoded_str,
+    std::optional<std::string> decode_uri_component(std::string_view const& encoded_str,
                                         charset_t<N> const& allowed_chars) {
         /**
             * This is the character set containing just the upper-case
@@ -249,7 +249,7 @@ namespace webpp {
             constexpr auto USER_INFO_NOT_PCT_ENCODED =
                 webpp::charset(UNRESERVED, SUB_DELIMS, webpp::charset(':'));
 
-            return uri_decode(info.value(), USER_INFO_NOT_PCT_ENCODED);
+            return decode_uri_component (info.value(), USER_INFO_NOT_PCT_ENCODED);
         }
         
         /**
