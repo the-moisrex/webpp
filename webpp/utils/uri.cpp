@@ -186,13 +186,13 @@ constexpr auto IPV_FUTURE_LAST_PART =
  * @return
  *     The hex digit corresponding to the given value is returned.
  */
-char MakeHexDigit(unsigned int value) {
-    if (value < 10) {
-        return static_cast<char>(value + '0');
-    } else {
-        return static_cast<char>(value - 10 + 'A');
-    }
-}
+// char MakeHexDigit(unsigned int value) {
+//     if (value < 10) {
+//         return static_cast<char>(value + '0');
+//     } else {
+//         return static_cast<char>(value - 10 + 'A');
+//     }
+// }
 
 /**
  * This method encodes the given URI element.
@@ -211,23 +211,23 @@ char MakeHexDigit(unsigned int value) {
  * @return
  *     The encoded element is returned.
  */
-template <std::size_t N>
-std::string EncodeElement(const std::string& element,
-                          const webpp::charset_t<N>& allowedCharacters) {
-    std::string encodedElement;
-    for (auto c : element) {
-        if (allowedCharacters.contains(c)) {
-            encodedElement.push_back(c);
-        } else {
-            encodedElement.push_back('%');
-            encodedElement.push_back(
-                MakeHexDigit(static_cast<unsigned int>(c) >> 4));
-            encodedElement.push_back(
-                MakeHexDigit(static_cast<unsigned int>(c) & 0x0F));
-        }
-    }
-    return encodedElement;
-}
+// template <std::size_t N>
+// std::string EncodeElement(const std::string& element,
+//                           const webpp::charset_t<N>& allowedCharacters) {
+//     std::string encodedElement;
+//     for (auto c : element) {
+//         if (allowedCharacters.contains(c)) {
+//             encodedElement.push_back(c);
+//         } else {
+//             encodedElement.push_back('%');
+//             encodedElement.push_back(
+//                 MakeHexDigit(static_cast<unsigned int>(c) >> 4));
+//             encodedElement.push_back(
+//                 MakeHexDigit(static_cast<unsigned int>(c) & 0x0F));
+//         }
+//     }
+//     return encodedElement;
+// }
 
 /**
  * This method checks and decodes the given query or fragment.
