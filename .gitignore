@@ -11,4 +11,6 @@ build/
 .idea/
 .project
 cmake-build-debug/
+.kdev4
+webpp.kdev4
 

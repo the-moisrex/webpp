@@ -98,7 +98,7 @@ namespace webpp {
                     "run non-const methods of uri_t class");
             }
         }
-
+        
       public:
         constexpr uri_t() noexcept = default;
         ~uri_t() noexcept = default;
@@ -123,13 +123,13 @@ namespace webpp {
         /**
          * @brief check if the specified uri has a scheme or not
          */
-        constexpr bool has_scheme() const noexcept { return scheme() == ""; }
+        constexpr bool has_scheme() const noexcept { return scheme(); }
 
         /**
          * @brief scheme
          * @return get scheme
          */
-        constexpr std::string_view scheme() const noexcept {
+        constexpr std::optional<std::string_view> scheme() const noexcept {
             /**
              * This is the character set corresponds to the second part
              * of the "scheme" syntax
@@ -147,13 +147,13 @@ namespace webpp {
                 schemeEnd != std::string_view::npos) {
                 auto _scheme = _data.substr(0, schemeEnd);
                 if (!ALPHA.contains(_scheme[0]))
-                    return "";
+                    return {};
                 if (!_scheme.substr(1).find_first_not_of(
                         SCHEME_NOT_FIRST.string_view()))
-                    return "";
+                    return {};
                 return _scheme;
             }
-            return "";
+            return {};
         }
 
         /**
@@ -167,11 +167,9 @@ namespace webpp {
             data = _scheme + data.substr(data.find(':'));
         }
 
-        constexpr std::string_view has_user_info() const noexcept {
-            return user_info() == "";
-        }
-
-        constexpr std::string_view user_info() const noexcept {
+        constexpr std::pair<std::string::iterator, std::size_t> 
+                user_info_span() const noexcept 
+        {
             std::string_view _data = data;
 
             if (auto authority_start = _data.find("//");
@@ -187,12 +185,34 @@ namespace webpp {
                 if (auto delim = _data.find("@", authority_start, path_start);
                     delim != std::string_view::npos &&
                     delim != authority_start) {
-                    return std::string_view(_data.data() + authority_start,
+                    return std::make_pair(data.begin() + authority_start,
                                             delim - authority_start);
                 }
             }
-            return ""; // there's no user info in the uri
+            return std::make_pair(data.end(), 0); // there's no user info in the uri
         }
+
+        /**
+         * @brief checks if the uri has user info or not
+         */
+        constexpr bool has_user_info() const noexcept {
+            return !*user_info_span().first;
+        }
+
+        /**
+         * @brief get the user info or an empty value
+         */
+        constexpr std::optional<std::string_view> user_info() const noexcept {
+            auto points = user_info_span();
+            if (!*points.first)
+                return {}; // there is no user info in the uri
+            return std::string_view(points.first, points.second);
+        }
+        
+        
+        /**
+         * @brief decode user_info and return it as a string
+         */
         std::optional<std::string> user_info_decoded() const noexcept {
 
             /**
@@ -225,7 +245,11 @@ namespace webpp {
          * @brief clears the user info if exists
          * @return
          */
-        uri_t& clear_user_info() noexcept;
+        uri_t& clear_user_info() noexcept {
+            check_modifiable();
+            
+            
+        }
 
         constexpr bool has_host() const noexcept;
         constexpr std::string_view host() const noexcept;
