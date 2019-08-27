@@ -162,9 +162,13 @@ namespace webpp {
          * @throws logic_error if uri is const
          * @return
          */
-        uri_t& scheme(std::string const& _scheme) noexcept {
+        uri_t& scheme(std::string_view const& _scheme) {
             check_modifiable();
-            data = _scheme + data.substr(data.find(':'));
+            if (auto slashes_point = data.find("//"); std::string::npos != slashes_point) {
+                data = std::string(_scheme.substr(0, _scheme.find(':'))) + ":" + data.substr(slashes_point);
+            } else {
+                throw std::invalid_argument("URI has an invalid syntax; thus we're unable to set the specified scheme.");
+            }
         }
 
         constexpr std::pair<std::string::iterator, std::size_t> 
@@ -196,7 +200,7 @@ namespace webpp {
          * @brief checks if the uri has user info or not
          */
         constexpr bool has_user_info() const noexcept {
-            return !*user_info_span().first;
+            return user_info_span().first != data.end();
         }
 
         /**
@@ -204,9 +208,9 @@ namespace webpp {
          */
         constexpr std::optional<std::string_view> user_info() const noexcept {
             auto points = user_info_span();
-            if (!*points.first)
+            if (points.first == data.end())
                 return {}; // there is no user info in the uri
-            return std::string_view(points.first, points.second);
+            return std::string_view(points.first.base(), points.second);
         }
         
         
@@ -214,6 +218,10 @@ namespace webpp {
          * @brief decode user_info and return it as a string
          */
         std::optional<std::string> user_info_decoded() const noexcept {
+            
+            auto info = user_info();
+            if (!info)
+                return {};
 
             /**
              * This is the character set corresponds to the "unreserved" syntax
@@ -237,9 +245,28 @@ namespace webpp {
             constexpr auto USER_INFO_NOT_PCT_ENCODED =
                 webpp::charset(UNRESERVED, SUB_DELIMS, webpp::charset(':'));
 
-            return decode(user_info(), USER_INFO_NOT_PCT_ENCODED);
+            return decode(info.value(), USER_INFO_NOT_PCT_ENCODED);
         }
-        uri_t& user_info(std::string_view const&) noexcept;
+        uri_t& user_info(std::string_view const& info) {
+            check_modifiable();
+            auto points = user_info_span();
+            std::string_view _data = data;
+            if (points.first == data.end()) {
+                // there's no user info so we have to find the place and it ourselves
+                
+                if (auto slashes_point = _data.find("//"); slashes_point != std::string_view::npos) {
+                    data = data.substr(0, slashes_point + 2) + info + _data.substr(slashes_point + 2);
+                } else {
+                    throw std::invalid_argument("The specified URI is not in a correct shape so we're no able to add user info to it.");
+                }
+            } else {
+                // we have already know where it is and we only have to replace it
+                
+                auto user_info_start = std::distance(data.begin(), points.first);
+                auto user_info_end = std::distance(data.begin(), points.second);
+                data = _data.substr(0, user_info_start) + info + _data.substr(user_info_end);
+            }
+        }
 
         /**
          * @brief clears the user info if exists
@@ -247,7 +274,12 @@ namespace webpp {
          */
         uri_t& clear_user_info() noexcept {
             check_modifiable();
+            auto points = user_info_span();
+            if (points.first == data.end())
+                return; // there's no user_info thus we don't need to change anything
             
+            // removing the user_info from the data + the "@" after it
+            data.erase(std::remove(points.first, points.first + points.second + 1), data.end());
             
         }
 
