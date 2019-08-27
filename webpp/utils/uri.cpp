@@ -146,35 +146,35 @@ constexpr auto IPV_FUTURE_LAST_PART =
  *     An indication of whether or not the element
  *     passed all checks and was decoded successfully is returned.
  */
-template <std::size_t N>
-bool DecodeElement(std::string& element,
-                   const webpp::charset_t<N>& allowedCharacters) {
-    const auto originalSegment = std::move(element);
-    element.clear();
-    bool decodingPec = false;
-    Uri::PercentEncodedCharacterDecoder pecDecoder;
-    for (const auto c : originalSegment) {
-        if (decodingPec) {
-            if (!pecDecoder.NextEncodedCharacter(c)) {
-                return false;
-            }
-            if (pecDecoder.Done()) {
-                decodingPec = false;
-                element.push_back((char)pecDecoder.GetDecodedCharacter());
-            }
-        } else if (c == '%') {
-            decodingPec = true;
-            pecDecoder = Uri::PercentEncodedCharacterDecoder();
-        } else {
-            if (allowedCharacters.Contains(c)) {
-                element.push_back(c);
-            } else {
-                return false;
-            }
-        }
-    }
-    return true;
-}
+// template <std::size_t N>
+// bool DecodeElement(std::string& element,
+//                    const webpp::charset_t<N>& allowedCharacters) {
+//     const auto originalSegment = std::move(element);
+//     element.clear();
+//     bool decodingPec = false;
+//     Uri::PercentEncodedCharacterDecoder pecDecoder;
+//     for (const auto c : originalSegment) {
+//         if (decodingPec) {
+//             if (!pecDecoder.NextEncodedCharacter(c)) {
+//                 return false;
+//             }
+//             if (pecDecoder.Done()) {
+//                 decodingPec = false;
+//                 element.push_back((char)pecDecoder.GetDecodedCharacter());
+//             }
+//         } else if (c == '%') {
+//             decodingPec = true;
+//             pecDecoder = Uri::PercentEncodedCharacterDecoder();
+//         } else {
+//             if (allowedCharacters.Contains(c)) {
+//                 element.push_back(c);
+//             } else {
+//                 return false;
+//             }
+//         }
+//     }
+//     return true;
+// }
 
 /**
  * This function returns the hex digit that corresponds

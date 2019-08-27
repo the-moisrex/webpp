@@ -11,6 +11,62 @@
 
 namespace webpp {
 
+    
+    /**
+     * @brief this function will decode parts of uri
+     */
+    template <std::size_t N>
+    std::optional<std::string> uri_decode(std::string_view const& encoded_str,
+                                        charset_t<N> const& allowed_chars) {
+        /**
+            * This is the character set containing just the upper-case
+            * letters 'A' through 'F', used in upper-case hexadecimal.
+            */
+        constexpr auto HEX_UPPER = charset<'A', 'F'>();
+
+        /**
+            * This is the character set containing just the lower-case
+            * letters 'a' through 'f', used in lower-case hexadecimal.
+            */
+        const auto HEX_LOWER = charset<'a', 'f'>();
+
+        int digits_left = 2;
+        char decoded_char = 0;
+        bool decoding = false;
+        std::string res;
+        for (const auto c : encoded_str) {
+            if (digits_left) {
+                decoded_char <<= 4;
+                if (DIGIT.contains(c)) {
+                    decoded_char += c - '0';
+                } else if (HEX_UPPER.contains(c)) {
+                    decoded_char += c - 'A' + 10;
+                } else if (HEX_LOWER.contains(c)) {
+                    decoded_char += c - 'a' + 10;
+                } else {
+                    return std::nullopt; // not a encrypted well
+                }
+                --digits_left;
+
+                if (digits_left == 0) {
+                    decoding = false;
+                    res.push_back(decoded_char);
+                }
+            } else if (c == '%') {
+                decoding = true;
+
+                // reseting:
+                digits_left = 2;
+                decoded_char = 0;
+            } else {
+                if (!allowed_chars.contains(c))
+                    return std::nullopt; // bad chars
+                res.push_back(c);
+            }
+        }
+        return std::move(res);
+    }
+
     /**
      * Most URIs will never change in their life time (at least in webpp
      * project) and they mostly used to get details of the URL we have as a
@@ -33,58 +89,6 @@ namespace webpp {
     class uri_t {
       private:
         StringType data;
-
-        template <std::size_t N>
-        std::optional<std::string> decode(std::string_view const& encoded_str,
-                                          charset_t<N> const& allowed_chars) {
-            /**
-             * This is the character set containing just the upper-case
-             * letters 'A' through 'F', used in upper-case hexadecimal.
-             */
-            constexpr auto HEX_UPPER = charset<'A', 'F'>();
-
-            /**
-             * This is the character set containing just the lower-case
-             * letters 'a' through 'f', used in lower-case hexadecimal.
-             */
-            const auto HEX_LOWER = charset<'a', 'f'>();
-
-            int digits_left = 2;
-            char decoded_char = 0;
-            bool decoding = false;
-            std::string res;
-            for (const auto c : encoded_str) {
-                if (digits_left) {
-                    decoded_char <<= 4;
-                    if (DIGIT.contains(c)) {
-                        decoded_char += c - '0';
-                    } else if (HEX_UPPER.contains(c)) {
-                        decoded_char += c - 'A' + 10;
-                    } else if (HEX_LOWER.contains(c)) {
-                        decoded_char += c - 'a' + 10;
-                    } else {
-                        return {}; // not a encrypted well
-                    }
-                    --digits_left;
-
-                    if (digits_left == 0) {
-                        decoding = false;
-                        res.push_back(decoded_char);
-                    }
-                } else if (c == '%') {
-                    decoding = true;
-
-                    // reseting:
-                    digits_left = 2;
-                    decoded_char = 0;
-                } else {
-                    if (!allowed_chars.contains(c))
-                        return {}; // bad chars
-                    res.push_back(c);
-                }
-            }
-            return std::move(res);
-        }
 
         void check_modifiable() {
             if constexpr (std::is_same<StringType, std::string_view>::value) {
@@ -147,13 +151,13 @@ namespace webpp {
                 schemeEnd != std::string_view::npos) {
                 auto _scheme = _data.substr(0, schemeEnd);
                 if (!ALPHA.contains(_scheme[0]))
-                    return {};
+                    return std::nullopt;
                 if (!_scheme.substr(1).find_first_not_of(
                         SCHEME_NOT_FIRST.string_view()))
-                    return {};
+                    return std::nullopt;
                 return _scheme;
             }
-            return {};
+            return std::nullopt;
         }
 
         /**
@@ -209,7 +213,7 @@ namespace webpp {
         constexpr std::optional<std::string_view> user_info() const noexcept {
             auto points = user_info_span();
             if (points.first == data.end())
-                return {}; // there is no user info in the uri
+                return std::nullopt; // there is no user info in the uri
             return std::string_view(points.first.base(), points.second);
         }
         
@@ -221,7 +225,7 @@ namespace webpp {
             
             auto info = user_info();
             if (!info)
-                return {};
+                return std::nullopt;
 
             /**
              * This is the character set corresponds to the "unreserved" syntax
@@ -245,8 +249,12 @@ namespace webpp {
             constexpr auto USER_INFO_NOT_PCT_ENCODED =
                 webpp::charset(UNRESERVED, SUB_DELIMS, webpp::charset(':'));
 
-            return decode(info.value(), USER_INFO_NOT_PCT_ENCODED);
+            return uri_decode(info.value(), USER_INFO_NOT_PCT_ENCODED);
         }
+        
+        /**
+         * @brief set the user info if it's possible
+         */
         uri_t& user_info(std::string_view const& info) {
             check_modifiable();
             auto points = user_info_span();
@@ -255,7 +263,7 @@ namespace webpp {
                 // there's no user info so we have to find the place and it ourselves
                 
                 if (auto slashes_point = _data.find("//"); slashes_point != std::string_view::npos) {
-                    data = data.substr(0, slashes_point + 2) + info + _data.substr(slashes_point + 2);
+                    data = data.substr(0, slashes_point + 2) + uri_encode(info) + _data.substr(slashes_point + 2);
                 } else {
                     throw std::invalid_argument("The specified URI is not in a correct shape so we're no able to add user info to it.");
                 }
@@ -283,8 +291,18 @@ namespace webpp {
             
         }
 
-        constexpr bool has_host() const noexcept;
-        constexpr std::string_view host() const noexcept;
+        constexpr std::pair<std::string::iterator, std::size_t> host_span() const noexcept {
+            
+        }
+        
+        /**
+         * @brief this method will check if the hostname/ip exists in the uri or not.
+         * @return true if it find a hostname/ip in the uri
+         */
+        constexpr bool has_host() const noexcept {
+            return host_span().first != data.end();
+        }
+        constexpr std::optional<std::string_view> host() const noexcept;
         uri_t& host(std::string_view const&) noexcept;
 
         /**
