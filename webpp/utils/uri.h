@@ -362,7 +362,6 @@ namespace webpp {
             
             // removing the user_info from the data + the "@" after it
             data.erase(std::remove(points.first, points.first + points.second + 1), data.end());
-            
         }
 
         constexpr std::pair<std::string::iterator, std::size_t> host_span() const noexcept {
@@ -376,7 +375,20 @@ namespace webpp {
         constexpr bool has_host() const noexcept {
             return host_span().first != data.end();
         }
-        constexpr std::optional<std::string_view> host() const noexcept;
+        
+        /**
+         * @brief return the hostname/ip if it exists in the uri.
+         */
+        constexpr std::optional<std::string_view> host() const noexcept {
+            if (auto info = host_span(); info.first != data.end())
+                return std::string_view(info.first.base(), info.second);
+            return std::nullopt;
+        }
+        
+        
+        /**
+         * @brief set the hostname/ip in the uri if possible
+         */
         uri_t& host(std::string_view const&) noexcept;
 
         /**
