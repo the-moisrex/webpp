@@ -15,21 +15,11 @@ namespace webpp {
     
     /**
      * @brief this function will decode parts of uri
+     * @details this function is almost the same as "decodeURIComponent" in javascript
      */
     template <std::size_t N>
     std::optional<std::string> decode_uri_component(std::string_view const& encoded_str,
                                         charset_t<N> const& allowed_chars) noexcept {
-        /**
-            * This is the character set containing just the upper-case
-            * letters 'A' through 'F', used in upper-case hexadecimal.
-            */
-        constexpr auto HEX_UPPER = charset<'A', 'F'>();
-
-        /**
-            * This is the character set containing just the lower-case
-            * letters 'a' through 'f', used in lower-case hexadecimal.
-            */
-        const auto HEX_LOWER = charset<'a', 'f'>();
 
         int digits_left = 2;
         char decoded_char = 0;
@@ -38,14 +28,14 @@ namespace webpp {
         for (const auto c : encoded_str) {
             if (digits_left) {
                 decoded_char <<= 4;
-                if (DIGIT.contains(c)) {
+                if (c >= '0' && c <= '9') { // DIGITS
                     decoded_char += c - '0';
-                } else if (HEX_UPPER.contains(c)) {
+                } else if (c >= 'A' && c <= 'F') { // UPPER_HEX
                     decoded_char += c - 'A' + 10;
-                } else if (HEX_LOWER.contains(c)) {
+                } else if (c >= 'a' && c <= 'f') { // LOWER_HEX
                     decoded_char += c - 'a' + 10;
                 } else {
-                    return std::nullopt; // not a encrypted well
+                    return std::nullopt; // not encrypted well
                 }
                 --digits_left;
 
@@ -68,19 +58,57 @@ namespace webpp {
         return std::move(res);
     }
     
+
+    
+    
     /**
-     * @brief this function is supposed to be the same as decodeURIComponent in javascript
-     */
-    auto decode_uri(std::string_view const& encoded_str) noexcept {
-        constexpr auto URI_ALLOWED_CHARACTERS = charset(
-            ALPHA,
-            DIGIT,
-            charset_t<20>{ ';', ',', '/', '?', ':', '@', '&', '=', '+', '$', '-',
-                '_', '.', '!', '~', '*', '\'', '(', ')', '#' }
-        );
-        return decode_uri_component<URI_ALLOWED_CHARACTERS.size()>(encoded_str, URI_ALLOWED_CHARACTERS);
+    * This method encodes the given URI element.
+    * What we are calling a "URI element" is any part of the URI
+    * which is a sequence of characters that:
+    * - may be percent-encoded
+    * - if not percent-encoded, are in a restricted set of characters
+    *
+    * @param[in] element
+    *     This is the element to encode.
+    *
+    * @param[in] allowedCharacters
+    *     This is the set of characters that do not need to
+    *     be percent-encoded.
+    *
+    * @return
+    *     The encoded element is returned.
+    * 
+    * 
+    * @details this function is almost the same as "encodeURIComponent" in javascript
+    */
+    template <std::size_t N>
+    std::string encode_uri_component(const std::string_view& element,
+                            const webpp::charset_t<N>& allowedCharacters) {
+        constexpr auto make_hex_digit = [] (unsigned int value) {
+            if (value < 10) {
+                return static_cast<char>(value + '0');
+            } else {
+                return static_cast<char>(value - 10 + 'A');
+            }
+        };
+        
+        std::string encodedElement;
+        for (auto c : element) {
+            if (allowedCharacters.contains(c)) {
+                encodedElement.push_back(c);
+            } else {
+                encodedElement.push_back('%');
+                encodedElement.push_back(
+                    make_hex_digit(static_cast<unsigned int>(c) >> 4));
+                encodedElement.push_back(
+                    make_hex_digit(static_cast<unsigned int>(c) & 0x0F));
+            }
+        }
+        return encodedElement;
     }
 
+    
+    
     /**
      * Most URIs will never change in their life time (at least in webpp
      * project) and they mostly used to get details of the URL we have as a
@@ -101,6 +129,40 @@ namespace webpp {
      */
     template <typename StringType>
     class uri_t {
+    public:
+        
+        /**
+        * source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI
+        */
+        static constexpr auto ALLOWED_CHARACTERS_IN_URI = charset(
+            ALPHA,
+            DIGIT,
+            charset_t<20>{ ';', ',', '/', '?', ':', '@', '&', '=', '+', '$',
+                '-', '_', '.', '!', '~', '*', '\'', '(', ')', '#' }
+        );
+
+        /**
+            * This is the character set corresponds to the "unreserved" syntax
+            * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
+            */
+        static constexpr auto UNRESERVED =
+            charset(ALPHA, DIGIT, charset('-', '.', '_', '~'));
+
+        /**
+            * This is the character set corresponds to the "sub-delims" syntax
+            * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
+            */
+        static constexpr auto SUB_DELIMS = webpp::charset(
+            '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
+
+        /**
+            * This is the character set corresponds to the "userinfo" syntax
+            * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
+            * leaving out "pct-encoded".
+            */
+        static constexpr auto USER_INFO_NOT_PCT_ENCODED =
+            webpp::charset(UNRESERVED, SUB_DELIMS, webpp::charset(':'));
+        
       private:
         StringType data;
 
@@ -138,6 +200,22 @@ namespace webpp {
         constexpr bool operator==(const uri_t& u) const noexcept;
         constexpr bool operator!=(const uri_t& u) const noexcept;
 
+        /**
+         * @brief this function is the same as "encodeURI" in javascript
+         */
+        std::string encoded_uri() noexcept {
+            return encode_uri_component<ALLOWED_CHARACTERS_IN_URI.size()>(std::string_view(data), ALLOWED_CHARACTERS_IN_URI);
+        }
+        
+        /**
+         * @brief this function is the same as "decodeURI" in javascript
+         * @return this function will return an optional<string> object. it will be nullopt when the uri is not valid and has invalid characters
+         */
+        std::optional<std::string> decoded_uri() noexcept {
+            return decode_uri_component<ALLOWED_CHARACTERS_IN_URI.size()>(std::string_view(data), ALLOWED_CHARACTERS_IN_URI);
+        }
+        
+        
         /**
          * @brief check if the specified uri has a scheme or not
          */
@@ -189,6 +267,10 @@ namespace webpp {
             }
         }
 
+        /**
+         * @brief this function will return the the scope that user info is placed in the uri
+         * @return pair<string::iterator pos, size_t length>
+         */
         constexpr std::pair<std::string::iterator, std::size_t> 
                 user_info_span() const noexcept 
         {
@@ -241,28 +323,6 @@ namespace webpp {
             if (!info)
                 return std::nullopt;
 
-            /**
-             * This is the character set corresponds to the "unreserved" syntax
-             * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
-             */
-            constexpr auto UNRESERVED =
-                charset(ALPHA, DIGIT, charset('-', '.', '_', '~'));
-
-            /**
-             * This is the character set corresponds to the "sub-delims" syntax
-             * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
-             */
-            constexpr auto SUB_DELIMS = webpp::charset(
-                '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
-
-            /**
-             * This is the character set corresponds to the "userinfo" syntax
-             * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
-             * leaving out "pct-encoded".
-             */
-            constexpr auto USER_INFO_NOT_PCT_ENCODED =
-                webpp::charset(UNRESERVED, SUB_DELIMS, webpp::charset(':'));
-
             return decode_uri_component (info.value(), USER_INFO_NOT_PCT_ENCODED);
         }
         
@@ -277,7 +337,7 @@ namespace webpp {
                 // there's no user info so we have to find the place and it ourselves
                 
                 if (auto slashes_point = _data.find("//"); slashes_point != std::string_view::npos) {
-                    data = data.substr(0, slashes_point + 2) + uri_encode(info) + _data.substr(slashes_point + 2);
+                    data = data.substr(0, slashes_point + 2) + encode_uri_component(info, USER_INFO_NOT_PCT_ENCODED) + _data.substr(slashes_point + 2);
                 } else {
                     throw std::invalid_argument("The specified URI is not in a correct shape so we're no able to add user info to it.");
                 }
