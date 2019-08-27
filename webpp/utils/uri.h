@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace webpp {
 
@@ -17,7 +18,7 @@ namespace webpp {
      */
     template <std::size_t N>
     std::optional<std::string> decode_uri_component(std::string_view const& encoded_str,
-                                        charset_t<N> const& allowed_chars) {
+                                        charset_t<N> const& allowed_chars) noexcept {
         /**
             * This is the character set containing just the upper-case
             * letters 'A' through 'F', used in upper-case hexadecimal.
@@ -65,6 +66,19 @@ namespace webpp {
             }
         }
         return std::move(res);
+    }
+    
+    /**
+     * @brief this function is supposed to be the same as decodeURIComponent in javascript
+     */
+    auto decode_uri(std::string_view const& encoded_str) noexcept {
+        constexpr auto URI_ALLOWED_CHARACTERS = charset(
+            ALPHA,
+            DIGIT,
+            charset_t<20>{ ';', ',', '/', '?', ':', '@', '&', '=', '+', '$', '-',
+                '_', '.', '!', '~', '*', '\'', '(', ')', '#' }
+        );
+        return decode_uri_component<URI_ALLOWED_CHARACTERS.size()>(encoded_str, URI_ALLOWED_CHARACTERS);
     }
 
     /**
