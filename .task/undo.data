@@ -46,3 +46,7 @@ new [description:"learn more: http:\/\/www.yolinux.com\/TUTORIALS\/LibraryArchiv
 time 1566658136
 new [description:"you may want to add a hopefully constexpr ipv4,6 and other net related stuff. consider openthread implementations" entry:"1566658136" modified:"1566658136" project:"net" status:"pending" uuid:"3e3a543b-e973-44a3-8353-2c7a89e8eaa6"]
 ---
+time 1567029648
+old [description:"remove one of hpp or h file extensions and use the other one" entry:"1563795602" modified:"1563795602" status:"pending" uuid:"703da0be-f638-4614-91be-3850cebbb144"]
+new [description:"remove one of hpp or h file extensions and use the other one" end:"1567029648" entry:"1563795602" modified:"1567029648" status:"completed" uuid:"703da0be-f638-4614-91be-3850cebbb144"]
+---

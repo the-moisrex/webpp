@@ -1,1 +1,2 @@
+[description:"remove one of hpp or h file extensions and use the other one" end:"1567029648" entry:"1563795602" modified:"1567029648" status:"completed" uuid:"703da0be-f638-4614-91be-3850cebbb144"]
 [description:"make use of string_view and other c++17 features" end:"1563712026" entry:"1562446839" modified:"1563712026" status:"completed" uuid:"b135fe53-2a6d-4f19-82a2-70745e8ab95d"]
