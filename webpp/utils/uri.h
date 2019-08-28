@@ -455,15 +455,15 @@ namespace webpp {
             bool hostIsRegName = false;
             for (const auto& c : _data) {
                 switch (state) {
-                case state_t::FIRST_CHARACTER: {
-                    if (c == '[') {
-                        state = state_t::IP_LITERAL;
-                        break;
-                    } else {
-                        state = state_t::NOT_IP_LITERAL;
-                        hostIsRegName = true;
-                    }
-                }
+                    //                case state_t::FIRST_CHARACTER: {
+                    //                    if (c == '[') {
+                    //                        state = state_t::IP_LITERAL;
+                    //                        break;
+                    //                    } else {
+                    //                        state = state_t::NOT_IP_LITERAL;
+                    //                        hostIsRegName = true;
+                    //                    }
+                    //                }
 
                 case state_t::NOT_IP_LITERAL: {
                     if (c == '%') {
