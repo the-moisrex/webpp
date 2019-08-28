@@ -433,8 +433,24 @@ namespace webpp {
 
             auto _data = host_port_view();
 
+            if (_data.starts_with('[')) {                  // IP Literal
+                if (_data.size() > 2 && _data[1] == 'v') { // IPv Future Number
+                    host.push_back(c);
+                    state = state_t::IPV_FUTURE_NUMBER;
+
+                } else { // IPv6
+                    if (auto ipv6_view = _data.substr(1, _data.find(']'));
+                        is::ipv6(ipv6_view)) {
+                        return const_ipv6(ipv6_view);
+                    } else {
+                        // TODO: what the heck should I do here? throw error or
+                        // return shit?
+                    }
+                }
+            } else { // Not IP Literal
+            }
+
             // Next, parsing host and port from authority and path.
-            std::string portString;
             state_t state = state_t::FIRST_CHARACTER;
             bool hostIsRegName = false;
             for (const auto& c : _data) {
@@ -474,26 +490,26 @@ namespace webpp {
                     }
                 } break;
 
-                case state_t::IP_LITERAL: {
-                    if (c == 'v') {
-                        host.push_back(c);
-                        state = state_t::IPV_FUTURE_NUMBER;
-                        break;
-                    } else {
-                        state = state_t::IPV6_ADDRESS;
-                    }
-                }
+                    //                case state_t::IP_LITERAL: {
+                    //                    if (c == 'v') {
+                    //                        host.push_back(c);
+                    //                        state =
+                    //                        state_t::IPV_FUTURE_NUMBER; break;
+                    //                    } else {
+                    //                        state = state_t::IPV6_ADDRESS;
+                    //                    }
+                    //                }
 
-                case state_t::IPV6_ADDRESS: {
-                    if (c == ']') {
-                        if (!ValidateIpv6Address(host)) {
-                            return false;
-                        }
-                        state = state_t::GARBAGE_CHECK;
-                    } else {
-                        host.push_back(c);
-                    }
-                } break;
+                    //                case state_t::IPV6_ADDRESS: {
+                    //                    if (c == ']') {
+                    //                        if (!ValidateIpv6Address(host)) {
+                    //                            return false;
+                    //                        }
+                    //                        state = state_t::GARBAGE_CHECK;
+                    //                    } else {
+                    //                        host.push_back(c);
+                    //                    }
+                    //                } break;
 
                 case state_t::IPV_FUTURE_NUMBER: {
                     if (c == '.') {
@@ -514,19 +530,20 @@ namespace webpp {
                     }
                 } break;
 
-                case state_t::GARBAGE_CHECK: {
-                    // illegal to have anything else, unless it's a colon,
-                    // in which case it's a port delimiter
-                    if (c == ':') {
-                        state = state_t::PORT;
-                    } else {
-                        return false;
-                    }
-                } break;
+                    //                case state_t::GARBAGE_CHECK: {
+                    //                    // illegal to have anything else,
+                    //                    unless it's a colon,
+                    //                    // in which case it's a port delimiter
+                    //                    if (c == ':') {
+                    //                        state = state_t::PORT;
+                    //                    } else {
+                    //                        return false;
+                    //                    }
+                    //                } break;
 
-                case state_t::PORT: {
-                    portString.push_back(c);
-                } break;
+                    //                case state_t::PORT: {
+                    //                    portString.push_back(c);
+                    //                } break;
                 }
             }
             if ((state != state_t::FIRST_CHARACTER) &&
