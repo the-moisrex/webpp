@@ -407,7 +407,8 @@ namespace webpp {
             return "";
         }
 
-        constexpr std::string_view host_span() const noexcept {
+        constexpr std::variant<const_ipv4, const_ipv6, std::string_view>
+        host() const noexcept {
             /**
              * These are the various states for the state machine
              * implemented below to correctly split up and validate the URI
