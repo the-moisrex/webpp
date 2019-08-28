@@ -9,6 +9,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace webpp {
@@ -270,6 +271,7 @@ namespace webpp {
                     "URI has an invalid syntax; thus we're unable to set the "
                     "specified scheme.");
             }
+            return *this;
         }
 
         /**
@@ -353,6 +355,7 @@ namespace webpp {
                         "no able to add user info to it.");
                 }
             }
+            return *this;
         }
 
         /**
@@ -628,6 +631,7 @@ namespace webpp {
                     "The URI doesn't seem to have a host; so adding port "
                     "number is not possible.");
             }
+            return *this;
         }
 
         /**
@@ -648,6 +652,7 @@ namespace webpp {
                         data.substr(0, port_start + 1) + data.substr(port_end);
                 }
             }
+            return *this;
         }
 
         /**
@@ -669,6 +674,15 @@ namespace webpp {
         constexpr bool has_query() const noexcept;
         constexpr std::string_view query() const noexcept;
         uri_t& query(std::string_view const&) noexcept;
+
+        /**
+         * @details This method applies the "remove_dot_segments" routine talked
+         * about in RFC 3986 (https://tools.ietf.org/html/rfc3986) to the path
+         * segments of the URI, in order to normalize the path
+         * (apply and remove "." and ".." segments).
+         */
+        uri_t& normalize_path() { return *this; }
+
     }; // namespace webpp
 
     using const_uri = uri_t<const std::string_view>;
@@ -864,14 +878,6 @@ namespace webpp {
          *     This is returned if there is no "fragment" element in the URI.
          */
         std::string GetFragment() const;
-
-        /**
-         * This method applies the "remove_dot_segments" routine talked about
-         * in RFC 3986 (https://tools.ietf.org/html/rfc3986) to the path
-         * segments of the URI, in order to normalize the path
-         * (apply and remove "." and ".." segments).
-         */
-        void NormalizePath();
 
         /**
          * This method resolves the given relative reference, based on the given
