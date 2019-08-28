@@ -270,51 +270,36 @@ namespace webpp {
         }
 
         /**
-         * @brief this function will return the the scope that user info is
-         * placed in the uri
-         * @return pair<string::iterator pos, size_t length>
+         * @brief checks if the uri has user info or not
          */
-        constexpr std::pair<std::string::iterator, std::size_t>
-        user_info_span() const noexcept {
+        constexpr bool has_user_info() const noexcept { return user_info(); }
+
+        /**
+         * @brief get the user info or an empty value
+         */
+        constexpr std::optional<std::string_view> user_info() const noexcept {
             std::string_view _data = data;
 
             if (auto authority_start = _data.find("//");
                 authority_start != std::string_view::npos) {
 
                 // we already know what those chars are (//)
-                authority_start += 2;
+                _data.remove_prefix(authority_start + 2);
 
                 // finding path so we won't go out of scope:
-                auto path_start = _data.find('/');
-                if (path_start == std::string_view::npos)
-                    path_start = _data.size();
+                if (auto path_start = _data.find('/');
+                    path_start == std::string_view::npos)
+                    _data.remove_suffix(_data.size() - path_start);
 
-                if (auto delim = _data.find("@", authority_start, path_start);
-                    delim != std::string_view::npos &&
-                    delim != authority_start) {
-                    return std::make_pair(data.begin() + authority_start,
-                                          delim - authority_start);
+                if (auto delim = _data.find("@");
+                    delim != std::string_view::npos) {
+                    _data.remove_suffix(_data.size() - delim);
+                    return _data;
                 }
             }
-            return std::make_pair(data.end(),
-                                  0); // there's no user info in the uri
-        }
 
-        /**
-         * @brief checks if the uri has user info or not
-         */
-        constexpr bool has_user_info() const noexcept {
-            return user_info_span().first != data.end();
-        }
-
-        /**
-         * @brief get the user info or an empty value
-         */
-        constexpr std::optional<std::string_view> user_info() const noexcept {
-            auto points = user_info_span();
-            if (points.first == data.end())
-                return std::nullopt; // there is no user info in the uri
-            return std::string_view(points.first.base(), points.second);
+            // there's no user info in the uri
+            return std::nullopt;
         }
 
         /**
@@ -335,9 +320,19 @@ namespace webpp {
          */
         uri_t& user_info(std::string_view const& info) {
             check_modifiable();
-            auto points = user_info_span();
             std::string_view _data = data;
-            if (points.first == data.end()) {
+            if (auto _user_info = user_info()) {
+                // we have already know where it is and we only have to replace
+                // it
+
+                auto user_info_start =
+                    std::distance(data.cbegin().base(), _user_info.data());
+                auto user_info_end =
+                    std::distance(data.cbegin().base(), _user_info.data());
+                data = _data.substr(0, user_info_start) + info +
+                       _data.substr(user_info_end);
+            } else {
+
                 // there's no user info so we have to find the place and it
                 // ourselves
 
@@ -352,15 +347,6 @@ namespace webpp {
                         "The specified URI is not in a correct shape so we're "
                         "no able to add user info to it.");
                 }
-            } else {
-                // we have already know where it is and we only have to replace
-                // it
-
-                auto user_info_start =
-                    std::distance(data.begin(), points.first);
-                auto user_info_end = std::distance(data.begin(), points.second);
-                data = _data.substr(0, user_info_start) + info +
-                       _data.substr(user_info_end);
             }
         }
 
@@ -370,15 +356,18 @@ namespace webpp {
          */
         uri_t& clear_user_info() noexcept {
             check_modifiable();
-            auto points = user_info_span();
-            if (points.first == data.end())
-                return; // there's no user_info thus we don't need to change
-                        // anything
+            if (auto _user_info = user_info()) {
 
-            // removing the user_info from the data + the "@" after it
-            data.erase(
-                std::remove(points.first, points.first + points.second + 1),
-                data.end());
+                auto user_info_start =
+                    std::distance(data.cbegin().base(), _user_info.data());
+                auto user_info_end =
+                    std::distance(data.cbegin().base(), _user_info.data());
+
+                // removing the user_info from the data + the "@" after it
+                data.erase(std::remove(data.begin() + user_info_start,
+                                       data.begin() + user_info_end + 1),
+                           data.end());
+            }
         }
 
         /**
