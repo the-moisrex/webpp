@@ -13,3 +13,4 @@
 {"description":"use components like cefeika","entry":"20190722T190140Z","modified":"20190722T190140Z","project":"cmake","status":"pending","uuid":"74af12bd-563b-45bf-87e6-937666878e5b"}
 {"description":"learn more: http:\/\/www.yolinux.com\/TUTORIALS\/LibraryArchives-StaticAndDynamic.html","entry":"20190722T203959Z","modified":"20190722T203959Z","status":"pending","uuid":"3f3a2322-d418-4bc1-8634-eed3a501a233"}
 {"description":"you may want to add a hopefully constexpr ipv4,6 and other net related stuff. consider openthread implementations","entry":"20190824T144856Z","modified":"20190824T144856Z","project":"net","status":"pending","uuid":"3e3a543b-e973-44a3-8353-2c7a89e8eaa6"}
+{"description":"remove one of hpp or h file extensions and use the other one","end":"20190828T220048Z","entry":"20190722T114002Z","modified":"20190828T220048Z","status":"completed","uuid":"703da0be-f638-4614-91be-3850cebbb144"}
