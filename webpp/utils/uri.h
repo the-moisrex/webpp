@@ -365,7 +365,151 @@ namespace webpp {
         }
 
         constexpr std::pair<std::string::iterator, std::size_t> host_span() const noexcept {
-            
+            /**
+             * These are the various states for the state machine
+             * implemented below to correctly split up and validate the URI
+             * substring containing the host and potentially a port number
+             * as well.
+             */
+            enum class HostParsingState {
+                FIRST_CHARACTER,
+                NOT_IP_LITERAL,
+                PERCENT_ENCODED_CHARACTER,
+                IP_LITERAL,
+                IPV6_ADDRESS,
+                IPV_FUTURE_NUMBER,
+                IPV_FUTURE_BODY,
+                GARBAGE_CHECK,
+                PORT,
+            };
+
+
+            std::string_view _data = data;
+
+            // Next, parsing host and port from authority and path.
+            std::string portString;
+            HostParsingState hostParsingState = HostParsingState::FIRST_CHARACTER;
+            bool hostIsRegName = false;
+            for (const auto &c : _data) {
+                switch (hostParsingState) {
+                case HostParsingState::FIRST_CHARACTER: {
+                    if (c == '[') {
+                        hostParsingState = HostParsingState::IP_LITERAL;
+                        break;
+                    } else {
+                        hostParsingState = HostParsingState::NOT_IP_LITERAL;
+                        hostIsRegName = true;
+                    }
+                }
+
+                case HostParsingState::NOT_IP_LITERAL: {
+                    if (c == '%') {
+                        pecDecoder = PercentEncodedCharacterDecoder();
+                        hostParsingState =
+                            HostParsingState::PERCENT_ENCODED_CHARACTER;
+                    } else if (c == ':') {
+                        hostParsingState = HostParsingState::PORT;
+                    } else {
+                        if (REG_NAME_NOT_PCT_ENCODED.Contains(c)) {
+                            host.push_back(c);
+                        } else {
+                            return false;
+                        }
+                    }
+                } break;
+
+                case HostParsingState::PERCENT_ENCODED_CHARACTER: {
+                    if (!pecDecoder.NextEncodedCharacter(c)) {
+                        return false;
+                    }
+                    if (pecDecoder.Done()) {
+                        hostParsingState = HostParsingState::NOT_IP_LITERAL;
+                        host.push_back((char)pecDecoder.GetDecodedCharacter());
+                    }
+                } break;
+
+                case HostParsingState::IP_LITERAL: {
+                    if (c == 'v') {
+                        host.push_back(c);
+                        hostParsingState = HostParsingState::IPV_FUTURE_NUMBER;
+                        break;
+                    } else {
+                        hostParsingState = HostParsingState::IPV6_ADDRESS;
+                    }
+                }
+
+                case HostParsingState::IPV6_ADDRESS: {
+                    if (c == ']') {
+                        if (!ValidateIpv6Address(host)) {
+                            return false;
+                        }
+                        hostParsingState = HostParsingState::GARBAGE_CHECK;
+                    } else {
+                        host.push_back(c);
+                    }
+                } break;
+
+                case HostParsingState::IPV_FUTURE_NUMBER: {
+                    if (c == '.') {
+                        hostParsingState = HostParsingState::IPV_FUTURE_BODY;
+                    } else if (!HEXDIG.Contains(c)) {
+                        return false;
+                    }
+                    host.push_back(c);
+                } break;
+
+                case HostParsingState::IPV_FUTURE_BODY: {
+                    if (c == ']') {
+                        hostParsingState = HostParsingState::GARBAGE_CHECK;
+                    } else if (!IPV_FUTURE_LAST_PART.Contains(c)) {
+                        return false;
+                    } else {
+                        host.push_back(c);
+                    }
+                } break;
+
+                case HostParsingState::GARBAGE_CHECK: {
+                    // illegal to have anything else, unless it's a colon,
+                    // in which case it's a port delimiter
+                    if (c == ':') {
+                        hostParsingState = HostParsingState::PORT;
+                    } else {
+                        return false;
+                    }
+                } break;
+
+                case HostParsingState::PORT: {
+                    portString.push_back(c);
+                } break;
+                }
+            }
+            if ((hostParsingState != HostParsingState::FIRST_CHARACTER) &&
+                (hostParsingState != HostParsingState::NOT_IP_LITERAL) &&
+                (hostParsingState != HostParsingState::GARBAGE_CHECK) &&
+                (hostParsingState != HostParsingState::PORT)) {
+                // truncated or ended early
+                return false;
+            }
+            if (hostIsRegName) {
+                host = SystemAbstractions::ToLower(host);
+            }
+            if (portString.empty()) {
+                hasPort = false;
+            } else {
+                intmax_t portAsInt;
+                if (SystemAbstractions::ToInteger(portString, portAsInt) !=
+                    SystemAbstractions::ToIntegerResult::Success) {
+                    return false;
+                }
+                if ((portAsInt < 0) ||
+                    (portAsInt > (decltype(portAsInt))
+                                     std::numeric_limits<decltype(port)>::max())) {
+                    return false;
+                }
+                port = (decltype(port))portAsInt;
+                hasPort = true;
+            }
+
         }
         
         /**
