@@ -8,3 +8,7 @@
 [description:"use components like cefeika" entry:"1563822100" modified:"1563822100" project:"cmake" status:"pending" uuid:"74af12bd-563b-45bf-87e6-937666878e5b"]
 [description:"learn more: http:\/\/www.yolinux.com\/TUTORIALS\/LibraryArchives-StaticAndDynamic.html" entry:"1563827999" modified:"1563827999" status:"pending" uuid:"3f3a2322-d418-4bc1-8634-eed3a501a233"]
 [description:"you may want to add a hopefully constexpr ipv4,6 and other net related stuff. consider openthread implementations" entry:"1566658136" modified:"1566658136" project:"net" status:"pending" uuid:"3e3a543b-e973-44a3-8353-2c7a89e8eaa6"]
+[description:"implement const_ipv4" entry:"1567029724" modified:"1567029782" project:"net" status:"pending" uuid:"a72340c5-cbac-4d19-b466-59440157856b"]
+[description:"implement ipv4 non-const" entry:"1567029735" modified:"1567029801" project:"net" status:"pending" uuid:"f5439530-8ecc-44d0-92eb-cc6b7017634a"]
+[description:"implement const_ipv6" entry:"1567029746" modified:"1567029820" project:"net" status:"pending" uuid:"f17fc6a8-c96f-4542-84ac-b4ec48bbf65f"]
+[description:"implement ipv6 non-const" entry:"1567029756" modified:"1567029833" project:"net" status:"pending" uuid:"808d672b-3fbc-4286-9e76-af7900ed2923"]
