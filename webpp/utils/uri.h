@@ -4,6 +4,7 @@
 #include "../std/string_view.h"
 #include "../validators/validators.h"
 #include "charset.h"
+#include "ip.h"
 #include "strings.h"
 #include <functional>
 #include <memory>
