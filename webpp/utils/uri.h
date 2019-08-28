@@ -2,6 +2,7 @@
 #define WEBPP_URI_H
 
 #include "../std/string_view.h"
+#include "../validators/validators.h"
 #include "charset.h"
 #include "strings.h"
 #include <functional>
@@ -263,6 +264,8 @@ namespace webpp {
                 data = std::string(_scheme.substr(0, _scheme.find(':'))) + ":" +
                        data.substr(slashes_point);
             } else {
+                // TODO: you still could do something here other than throwing
+                // stuff to the user's face
                 throw std::invalid_argument(
                     "URI has an invalid syntax; thus we're unable to set the "
                     "specified scheme.");
@@ -343,6 +346,8 @@ namespace webpp {
                         encode_uri_component(info, USER_INFO_NOT_PCT_ENCODED) +
                         "@" + _data.substr(slashes_point + 2);
                 } else {
+                    // TODO: you still can do some stuff here other than
+                    // throwing stuff at the users' face
                     throw std::invalid_argument(
                         "The specified URI is not in a correct shape so we're "
                         "no able to add user info to it.");
@@ -402,8 +407,7 @@ namespace webpp {
             return "";
         }
 
-        constexpr std::pair<std::string::iterator, std::size_t>
-        host_span() const noexcept {
+        constexpr std::string_view host_span() const noexcept {
             /**
              * These are the various states for the state machine
              * implemented below to correctly split up and validate the URI
@@ -421,6 +425,8 @@ namespace webpp {
                 GARBAGE_CHECK,
                 PORT,
             };
+
+            auto _data = host_port_view();
 
             // Next, parsing host and port from authority and path.
             std::string portString;
@@ -574,15 +580,74 @@ namespace webpp {
          * @return port number
          * @default 80
          */
-        constexpr unsigned int port() const noexcept;
-        constexpr bool has_port() const noexcept;
-        uri_t& port(unsigned int) noexcept;
+        constexpr unsigned int port() const noexcept {
+            if (auto host_port = host_port_view(); host_port != "") {
+                if (auto colon = host_port.rfind(':');
+                    colon != std::string_view::npos) {
+                    auto port = host_port.substr(colon + 1);
+                    if (is::digit(port))
+                        return atoi(port);
+                }
+            }
+            return 80;
+        }
+
+        constexpr bool has_port() const noexcept {
+            if (auto host_port = host_port_view(); host_port != "") {
+                if (auto colon = host_port.rfind(':');
+                    colon != std::string_view::npos) {
+                    return is::digit(host_port.substr(colon + 1));
+                }
+            }
+            return false;
+        }
+        uri_t& port(unsigned int new_port) {
+            if (auto host_port = host_port_view(); host_port != "") {
+                if (auto colon = host_port.rfind(':');
+                    colon != std::string_view::npos) {
+                    // now we just have to replace the port number
+                    auto port_start = std::distance(data.cbegin().base(),
+                                                    host_port.cbegin().base()) +
+                                      colon + 1;
+                    auto port_end = std::distance(data.cbegin().base(),
+                                                  host_port.cend().base());
+                    data = data.substr(0, port_start + 1) +
+                           std::to_string(new_port) + data.substr(port_end);
+                } else {
+                    // now we have to create the port ourselves
+                    auto port_start = std::distance(data.cbegin().base(),
+                                                    host_port.cend().base());
+                    data = data.substr(0, port_start) + ':' +
+                           std::to_string(new_port) + data.substr(port_start);
+                }
+            } else {
+                // TODO: I think we still can do something here other than
+                // throwing stuff at the users' face
+                throw std::invalid_argument(
+                    "The URI doesn't seem to have a host; so adding port "
+                    "number is not possible.");
+            }
+        }
 
         /**
          * @brief clear the port number from the uri and defaults to 80
          * @return self
          */
-        uri_t& clear_port() noexcept;
+        uri_t& clear_port() noexcept {
+            if (auto host_port = host_port_view(); host_port != "") {
+                if (auto colon = host_port.rfind(':');
+                    colon != std::string_view::npos) {
+                    // now we just have to replace the port number
+                    auto port_start = std::distance(data.cbegin().base(),
+                                                    host_port.cbegin().base()) +
+                                      colon;
+                    auto port_end = std::distance(data.cbegin().base(),
+                                                  host_port.cend().base());
+                    data =
+                        data.substr(0, port_start + 1) + data.substr(port_end);
+                }
+            }
+        }
 
         /**
          * @brief get the path as the specified type
@@ -603,7 +668,7 @@ namespace webpp {
         constexpr bool has_query() const noexcept;
         constexpr std::string_view query() const noexcept;
         uri_t& query(std::string_view const&) noexcept;
-    };
+    }; // namespace webpp
 
     using const_uri = uri_t<const std::string_view>;
     using uri = uri_t<std::string>;
