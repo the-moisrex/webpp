@@ -1,25 +1,26 @@
-#ifndef URI_H
-#define URI_H
+#ifndef WEBPP_URI_H
+#define WEBPP_URI_H
 
 #include "../std/string_view.h"
 #include "charset.h"
 #include "strings.h"
+#include <functional>
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <functional>
 
 namespace webpp {
 
-    
     /**
      * @brief this function will decode parts of uri
-     * @details this function is almost the same as "decodeURIComponent" in javascript
+     * @details this function is almost the same as "decodeURIComponent" in
+     * javascript
      */
     template <std::size_t N>
-    std::optional<std::string> decode_uri_component(std::string_view const& encoded_str,
-                                        charset_t<N> const& allowed_chars) noexcept {
+    std::optional<std::string>
+    decode_uri_component(std::string_view const& encoded_str,
+                         charset_t<N> const& allowed_chars) noexcept {
 
         int digits_left = 2;
         char decoded_char = 0;
@@ -57,41 +58,40 @@ namespace webpp {
         }
         return std::move(res);
     }
-    
 
-    
-    
     /**
-    * This method encodes the given URI element.
-    * What we are calling a "URI element" is any part of the URI
-    * which is a sequence of characters that:
-    * - may be percent-encoded
-    * - if not percent-encoded, are in a restricted set of characters
-    *
-    * @param[in] element
-    *     This is the element to encode.
-    *
-    * @param[in] allowedCharacters
-    *     This is the set of characters that do not need to
-    *     be percent-encoded.
-    *
-    * @return
-    *     The encoded element is returned.
-    * 
-    * 
-    * @details this function is almost the same as "encodeURIComponent" in javascript
-    */
+     * This method encodes the given URI element.
+     * What we are calling a "URI element" is any part of the URI
+     * which is a sequence of characters that:
+     * - may be percent-encoded
+     * - if not percent-encoded, are in a restricted set of characters
+     *
+     * @param[in] element
+     *     This is the element to encode.
+     *
+     * @param[in] allowedCharacters
+     *     This is the set of characters that do not need to
+     *     be percent-encoded.
+     *
+     * @return
+     *     The encoded element is returned.
+     *
+     *
+     * @details this function is almost the same as "encodeURIComponent" in
+     * javascript
+     */
     template <std::size_t N>
-    std::string encode_uri_component(const std::string_view& element,
-                            const webpp::charset_t<N>& allowedCharacters) {
-        constexpr auto make_hex_digit = [] (unsigned int value) {
+    std::string
+    encode_uri_component(const std::string_view& element,
+                         const webpp::charset_t<N>& allowedCharacters) {
+        constexpr auto make_hex_digit = [](unsigned int value) {
             if (value < 10) {
                 return static_cast<char>(value + '0');
             } else {
                 return static_cast<char>(value - 10 + 'A');
             }
         };
-        
+
         std::string encodedElement;
         for (auto c : element) {
             if (allowedCharacters.contains(c)) {
@@ -107,8 +107,6 @@ namespace webpp {
         return encodedElement;
     }
 
-    
-    
     /**
      * Most URIs will never change in their life time (at least in webpp
      * project) and they mostly used to get details of the URL we have as a
@@ -129,40 +127,38 @@ namespace webpp {
      */
     template <typename StringType>
     class uri_t {
-    public:
-        
+      public:
         /**
-        * source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI
-        */
+         * source:
+         * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI
+         */
         static constexpr auto ALLOWED_CHARACTERS_IN_URI = charset(
-            ALPHA,
-            DIGIT,
-            charset_t<20>{ ';', ',', '/', '?', ':', '@', '&', '=', '+', '$',
-                '-', '_', '.', '!', '~', '*', '\'', '(', ')', '#' }
-        );
+            ALPHA, DIGIT,
+            charset_t<20>{';', ',', '/', '?', ':', '@', '&',  '=', '+', '$',
+                          '-', '_', '.', '!', '~', '*', '\'', '(', ')', '#'});
 
         /**
-            * This is the character set corresponds to the "unreserved" syntax
-            * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
-            */
+         * This is the character set corresponds to the "unreserved" syntax
+         * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
+         */
         static constexpr auto UNRESERVED =
             charset(ALPHA, DIGIT, charset('-', '.', '_', '~'));
 
         /**
-            * This is the character set corresponds to the "sub-delims" syntax
-            * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
-            */
+         * This is the character set corresponds to the "sub-delims" syntax
+         * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
+         */
         static constexpr auto SUB_DELIMS = webpp::charset(
             '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
 
         /**
-            * This is the character set corresponds to the "userinfo" syntax
-            * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
-            * leaving out "pct-encoded".
-            */
+         * This is the character set corresponds to the "userinfo" syntax
+         * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
+         * leaving out "pct-encoded".
+         */
         static constexpr auto USER_INFO_NOT_PCT_ENCODED =
             webpp::charset(UNRESERVED, SUB_DELIMS, webpp::charset(':'));
-        
+
       private:
         StringType data;
 
@@ -178,7 +174,7 @@ namespace webpp {
                     "run non-const methods of uri_t class");
             }
         }
-        
+
       public:
         constexpr uri_t() noexcept = default;
         ~uri_t() noexcept = default;
@@ -204,18 +200,20 @@ namespace webpp {
          * @brief this function is the same as "encodeURI" in javascript
          */
         std::string encoded_uri() noexcept {
-            return encode_uri_component<ALLOWED_CHARACTERS_IN_URI.size()>(std::string_view(data), ALLOWED_CHARACTERS_IN_URI);
+            return encode_uri_component<ALLOWED_CHARACTERS_IN_URI.size()>(
+                std::string_view(data), ALLOWED_CHARACTERS_IN_URI);
         }
-        
+
         /**
          * @brief this function is the same as "decodeURI" in javascript
-         * @return this function will return an optional<string> object. it will be nullopt when the uri is not valid and has invalid characters
+         * @return this function will return an optional<string> object. it will
+         * be nullopt when the uri is not valid and has invalid characters
          */
         std::optional<std::string> decoded_uri() noexcept {
-            return decode_uri_component<ALLOWED_CHARACTERS_IN_URI.size()>(std::string_view(data), ALLOWED_CHARACTERS_IN_URI);
+            return decode_uri_component<ALLOWED_CHARACTERS_IN_URI.size()>(
+                std::string_view(data), ALLOWED_CHARACTERS_IN_URI);
         }
-        
-        
+
         /**
          * @brief check if the specified uri has a scheme or not
          */
@@ -260,26 +258,31 @@ namespace webpp {
          */
         uri_t& scheme(std::string_view const& _scheme) {
             check_modifiable();
-            if (auto slashes_point = data.find("//"); std::string::npos != slashes_point) {
-                data = std::string(_scheme.substr(0, _scheme.find(':'))) + ":" + data.substr(slashes_point);
+            if (auto slashes_point = data.find("//");
+                std::string::npos != slashes_point) {
+                data = std::string(_scheme.substr(0, _scheme.find(':'))) + ":" +
+                       data.substr(slashes_point);
             } else {
-                throw std::invalid_argument("URI has an invalid syntax; thus we're unable to set the specified scheme.");
+                throw std::invalid_argument(
+                    "URI has an invalid syntax; thus we're unable to set the "
+                    "specified scheme.");
             }
         }
 
         /**
-         * @brief this function will return the the scope that user info is placed in the uri
+         * @brief this function will return the the scope that user info is
+         * placed in the uri
          * @return pair<string::iterator pos, size_t length>
          */
-        constexpr std::pair<std::string::iterator, std::size_t> 
-                user_info_span() const noexcept 
-        {
+        constexpr std::pair<std::string::iterator, std::size_t>
+        user_info_span() const noexcept {
             std::string_view _data = data;
 
             if (auto authority_start = _data.find("//");
                 authority_start != std::string_view::npos) {
-                authority_start +=
-                    2; // we already know what those chars are (//)
+
+                // we already know what those chars are (//)
+                authority_start += 2;
 
                 // finding path so we won't go out of scope:
                 auto path_start = _data.find('/');
@@ -290,10 +293,11 @@ namespace webpp {
                     delim != std::string_view::npos &&
                     delim != authority_start) {
                     return std::make_pair(data.begin() + authority_start,
-                                            delim - authority_start);
+                                          delim - authority_start);
                 }
             }
-            return std::make_pair(data.end(), 0); // there's no user info in the uri
+            return std::make_pair(data.end(),
+                                  0); // there's no user info in the uri
         }
 
         /**
@@ -312,20 +316,20 @@ namespace webpp {
                 return std::nullopt; // there is no user info in the uri
             return std::string_view(points.first.base(), points.second);
         }
-        
-        
+
         /**
          * @brief decode user_info and return it as a string
          */
         std::optional<std::string> user_info_decoded() const noexcept {
-            
+
             auto info = user_info();
             if (!info)
                 return std::nullopt;
 
-            return decode_uri_component (info.value(), USER_INFO_NOT_PCT_ENCODED);
+            return decode_uri_component(info.value(),
+                                        USER_INFO_NOT_PCT_ENCODED);
         }
-        
+
         /**
          * @brief set the user info if it's possible
          */
@@ -334,19 +338,29 @@ namespace webpp {
             auto points = user_info_span();
             std::string_view _data = data;
             if (points.first == data.end()) {
-                // there's no user info so we have to find the place and it ourselves
-                
-                if (auto slashes_point = _data.find("//"); slashes_point != std::string_view::npos) {
-                    data = data.substr(0, slashes_point + 2) + encode_uri_component(info, USER_INFO_NOT_PCT_ENCODED) + _data.substr(slashes_point + 2);
+                // there's no user info so we have to find the place and it
+                // ourselves
+
+                if (auto slashes_point = _data.find("//");
+                    slashes_point != std::string_view::npos) {
+                    data =
+                        data.substr(0, slashes_point + 2) +
+                        encode_uri_component(info, USER_INFO_NOT_PCT_ENCODED) +
+                        "@" + _data.substr(slashes_point + 2);
                 } else {
-                    throw std::invalid_argument("The specified URI is not in a correct shape so we're no able to add user info to it.");
+                    throw std::invalid_argument(
+                        "The specified URI is not in a correct shape so we're "
+                        "no able to add user info to it.");
                 }
             } else {
-                // we have already know where it is and we only have to replace it
-                
-                auto user_info_start = std::distance(data.begin(), points.first);
+                // we have already know where it is and we only have to replace
+                // it
+
+                auto user_info_start =
+                    std::distance(data.begin(), points.first);
                 auto user_info_end = std::distance(data.begin(), points.second);
-                data = _data.substr(0, user_info_start) + info + _data.substr(user_info_end);
+                data = _data.substr(0, user_info_start) + info +
+                       _data.substr(user_info_end);
             }
         }
 
@@ -358,20 +372,56 @@ namespace webpp {
             check_modifiable();
             auto points = user_info_span();
             if (points.first == data.end())
-                return; // there's no user_info thus we don't need to change anything
-            
+                return; // there's no user_info thus we don't need to change
+                        // anything
+
             // removing the user_info from the data + the "@" after it
-            data.erase(std::remove(points.first, points.first + points.second + 1), data.end());
+            data.erase(
+                std::remove(points.first, points.first + points.second + 1),
+                data.end());
         }
 
-        constexpr std::pair<std::string::iterator, std::size_t> host_span() const noexcept {
+        /**
+         * @brief this function will return a string_view of the host and it's
+         * port if exists
+         */
+        constexpr std::string_view host_port_view() const noexcept {
+            std::string_view _data = data; // host and the rest of uri
+            if (auto authority_part = _data.find("//");
+                authority_part != std::string_view::npos) {
+
+                // remove // from the string
+                _data.remove_prefix(authority_part + 2);
+
+                if (auto _path = _data.find('/');
+                    _path != std::string_view::npos) {
+                    // removing the path from the string
+                    _data.remove_suffix(_data.size() - _path);
+                }
+
+                if (auto _user_info_point = _data.find('@');
+                    _user_info_point != std::string_view::npos) {
+                    // we know where the user info is placed, so we use that as
+                    // a starting point for the rest of search
+                    _data.remove_prefix(_user_info_point + 1);
+                }
+
+                return _data;
+            }
+
+            // it's a path and doesn't have a host
+            return "";
+        }
+
+        constexpr std::pair<std::string::iterator, std::size_t>
+        host_span() const noexcept {
             /**
              * These are the various states for the state machine
              * implemented below to correctly split up and validate the URI
              * substring containing the host and potentially a port number
              * as well.
              */
-            enum class HostParsingState {
+            enum class state_t {
                 FIRST_CHARACTER,
                 NOT_IP_LITERAL,
                 PERCENT_ENCODED_CHARACTER,
@@ -383,34 +433,30 @@ namespace webpp {
                 PORT,
             };
 
-
-            std::string_view _data = data;
-
             // Next, parsing host and port from authority and path.
             std::string portString;
-            HostParsingState hostParsingState = HostParsingState::FIRST_CHARACTER;
+            state_t state = state_t::FIRST_CHARACTER;
             bool hostIsRegName = false;
-            for (const auto &c : _data) {
-                switch (hostParsingState) {
-                case HostParsingState::FIRST_CHARACTER: {
+            for (const auto& c : _data) {
+                switch (state) {
+                case state_t::FIRST_CHARACTER: {
                     if (c == '[') {
-                        hostParsingState = HostParsingState::IP_LITERAL;
+                        state = state_t::IP_LITERAL;
                         break;
                     } else {
-                        hostParsingState = HostParsingState::NOT_IP_LITERAL;
+                        state = state_t::NOT_IP_LITERAL;
                         hostIsRegName = true;
                     }
                 }
 
-                case HostParsingState::NOT_IP_LITERAL: {
+                case state_t::NOT_IP_LITERAL: {
                     if (c == '%') {
                         pecDecoder = PercentEncodedCharacterDecoder();
-                        hostParsingState =
-                            HostParsingState::PERCENT_ENCODED_CHARACTER;
+                        state = state_t::PERCENT_ENCODED_CHARACTER;
                     } else if (c == ':') {
-                        hostParsingState = HostParsingState::PORT;
+                        state = state_t::PORT;
                     } else {
-                        if (REG_NAME_NOT_PCT_ENCODED.Contains(c)) {
+                        if (REG_NAME_NOT_PCT_ENCODED.contains(c)) {
                             host.push_back(c);
                         } else {
                             return false;
@@ -418,49 +464,49 @@ namespace webpp {
                     }
                 } break;
 
-                case HostParsingState::PERCENT_ENCODED_CHARACTER: {
+                case state_t::PERCENT_ENCODED_CHARACTER: {
                     if (!pecDecoder.NextEncodedCharacter(c)) {
                         return false;
                     }
                     if (pecDecoder.Done()) {
-                        hostParsingState = HostParsingState::NOT_IP_LITERAL;
+                        state = state_t::NOT_IP_LITERAL;
                         host.push_back((char)pecDecoder.GetDecodedCharacter());
                     }
                 } break;
 
-                case HostParsingState::IP_LITERAL: {
+                case state_t::IP_LITERAL: {
                     if (c == 'v') {
                         host.push_back(c);
-                        hostParsingState = HostParsingState::IPV_FUTURE_NUMBER;
+                        state = state_t::IPV_FUTURE_NUMBER;
                         break;
                     } else {
-                        hostParsingState = HostParsingState::IPV6_ADDRESS;
+                        state = state_t::IPV6_ADDRESS;
                     }
                 }
 
-                case HostParsingState::IPV6_ADDRESS: {
+                case state_t::IPV6_ADDRESS: {
                     if (c == ']') {
                         if (!ValidateIpv6Address(host)) {
                             return false;
                         }
-                        hostParsingState = HostParsingState::GARBAGE_CHECK;
+                        state = state_t::GARBAGE_CHECK;
                     } else {
                         host.push_back(c);
                     }
                 } break;
 
-                case HostParsingState::IPV_FUTURE_NUMBER: {
+                case state_t::IPV_FUTURE_NUMBER: {
                     if (c == '.') {
-                        hostParsingState = HostParsingState::IPV_FUTURE_BODY;
-                    } else if (!HEXDIG.Contains(c)) {
+                        state = state_t::IPV_FUTURE_BODY;
+                    } else if (!HEXDIG.contains(c)) {
                         return false;
                     }
                     host.push_back(c);
                 } break;
 
-                case HostParsingState::IPV_FUTURE_BODY: {
+                case state_t::IPV_FUTURE_BODY: {
                     if (c == ']') {
-                        hostParsingState = HostParsingState::GARBAGE_CHECK;
+                        state = state_t::GARBAGE_CHECK;
                     } else if (!IPV_FUTURE_LAST_PART.Contains(c)) {
                         return false;
                     } else {
@@ -468,25 +514,24 @@ namespace webpp {
                     }
                 } break;
 
-                case HostParsingState::GARBAGE_CHECK: {
+                case state_t::GARBAGE_CHECK: {
                     // illegal to have anything else, unless it's a colon,
                     // in which case it's a port delimiter
                     if (c == ':') {
-                        hostParsingState = HostParsingState::PORT;
+                        state = state_t::PORT;
                     } else {
                         return false;
                     }
                 } break;
 
-                case HostParsingState::PORT: {
+                case state_t::PORT: {
                     portString.push_back(c);
                 } break;
                 }
             }
-            if ((hostParsingState != HostParsingState::FIRST_CHARACTER) &&
-                (hostParsingState != HostParsingState::NOT_IP_LITERAL) &&
-                (hostParsingState != HostParsingState::GARBAGE_CHECK) &&
-                (hostParsingState != HostParsingState::PORT)) {
+            if ((state != state_t::FIRST_CHARACTER) &&
+                (state != state_t::NOT_IP_LITERAL) &&
+                (state != state_t::GARBAGE_CHECK) && (state != state_t::PORT)) {
                 // truncated or ended early
                 return false;
             }
@@ -502,24 +547,25 @@ namespace webpp {
                     return false;
                 }
                 if ((portAsInt < 0) ||
-                    (portAsInt > (decltype(portAsInt))
-                                     std::numeric_limits<decltype(port)>::max())) {
+                    (portAsInt >
+                     (decltype(portAsInt))
+                         std::numeric_limits<decltype(port)>::max())) {
                     return false;
                 }
-                port = (decltype(port))portAsInt;
+                port = static_cast<decltype(port)>(portAsInt);
                 hasPort = true;
             }
-
         }
-        
+
         /**
-         * @brief this method will check if the hostname/ip exists in the uri or not.
+         * @brief this method will check if the hostname/ip exists in the uri or
+         * not.
          * @return true if it find a hostname/ip in the uri
          */
         constexpr bool has_host() const noexcept {
-            return host_span().first != data.end();
+            return host_port_view() != "";
         }
-        
+
         /**
          * @brief return the hostname/ip if it exists in the uri.
          */
@@ -528,8 +574,7 @@ namespace webpp {
                 return std::string_view(info.first.base(), info.second);
             return std::nullopt;
         }
-        
-        
+
         /**
          * @brief set the hostname/ip in the uri if possible
          */
@@ -883,4 +928,4 @@ namespace webpp {
 
 } // namespace webpp
 
-#endif // URI_H
+#endif // WEBPP_URI_H
