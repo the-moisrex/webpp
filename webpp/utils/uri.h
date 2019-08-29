@@ -438,6 +438,9 @@ namespace webpp {
         host() const noexcept {
             auto _data = host_port_view();
 
+            if (_data == "")
+                return "";
+
             /* IP future versions can be specified like this:
              * (RFC 3986)
              *
@@ -465,7 +468,11 @@ namespace webpp {
                             return _data.substr(1,
                                                 ipvf_end); // returning the ipvf
                                                            // and it's version
+                        } else {
+                            return "";
                         }
+                    } else {
+                        return "";
                     }
 
                 } else { // IPv6
@@ -486,6 +493,10 @@ namespace webpp {
 
                 // TODO: we have our answer but we will check for the
                 // correctness of the hostname now
+                // FIXME: I think it's wrong
+                if (!charset(REG_NAME_NOT_PCT_ENCODED, charset('%'))
+                         .contains(hostname))
+                    return "";
 
                 return hostname; // URI still may not be valid
             }
@@ -556,22 +567,53 @@ namespace webpp {
          * @return true if it find a hostname/ip in the uri
          */
         constexpr bool has_host() const noexcept {
-            return host_port_view() != "";
-        }
-
-        /**
-         * @brief return the hostname/ip if it exists in the uri.
-         */
-        constexpr std::optional<std::string_view> host() const noexcept {
-            if (auto info = host_span(); info.first != data.end())
-                return std::string_view(info.first.base(), info.second);
-            return std::nullopt;
+            if (auto h = host(); std::holds_alternative<std::string_view>(h)) {
+                return h == "";
+            }
+            return true;
         }
 
         /**
          * @brief set the hostname/ip in the uri if possible
          */
-        uri_t& host(std::string_view const&) noexcept {}
+        uri_t& host(std::string_view const& new_host) noexcept {
+
+            auto new_host_encoded =
+                encode_uri_component(new_host, REG_NAME_NOT_PCT_ENCODED);
+
+            std::size_t host_start, host_end;
+
+            if (auto _host = host_port_view(); _host != "") {
+                // we know where it is, let's just replace it
+                host_start = std::distance(data.cbegin().base(), _host.data());
+                auto _port_start = _host.rfind(':');
+                host_end = std::distance(
+                    data.cbegin().base(),
+                    _host.data() + (_port_start == std::string_view::npos
+                                        ? 0
+                                        : _port_start));
+
+            } else {
+                // check if we have double slash scheme
+
+                std::string_view _data = data;
+                auto const _path = path();
+                auto path_start =
+                    _path != ""
+                        ? std::string_view::npos
+                        : std::distance(data.cbegin().base(), _path.data());
+                if (auto _s = _data.find("//", 0, path_start);
+                    _s != std::string_view::npos) {
+                    host_start = host_end = _s + 2;
+                } else {
+                    // there's no double slashes, so we insert one
+                    data = "//" + data;
+                    host_start = host_end = 2;
+                }
+            }
+            data = data.substr(0, host_start) + new_host_encoded +
+                   data.substr(host_end);
+        }
 
         /**
          * @brief port number of the uri;
