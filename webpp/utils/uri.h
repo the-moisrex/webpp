@@ -39,7 +39,7 @@ namespace webpp {
                 } else if (c >= 'a' && c <= 'f') { // LOWER_HEX
                     decoded_char += c - 'a' + 10;
                 } else {
-                    return std::nullopt; // not encrypted well
+                    return std::nullopt; // not encoded well
                 }
                 --digits_left;
 
@@ -160,6 +160,14 @@ namespace webpp {
          * leaving out "pct-encoded".
          */
         static constexpr auto USER_INFO_NOT_PCT_ENCODED =
+            webpp::charset(UNRESERVED, SUB_DELIMS, webpp::charset(':'));
+
+        /**
+         * This is the character set corresponds to the last part of
+         * the "IPvFuture" syntax
+         * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
+         */
+        static constexpr auto IPV_FUTURE_LAST_PART =
             webpp::charset(UNRESERVED, SUB_DELIMS, webpp::charset(':'));
 
       private:
@@ -413,30 +421,35 @@ namespace webpp {
 
         constexpr std::variant<const_ipv4, const_ipv6, std::string_view>
         host() const noexcept {
-            /**
-             * These are the various states for the state machine
-             * implemented below to correctly split up and validate the URI
-             * substring containing the host and potentially a port number
-             * as well.
-             */
-            enum class state_t {
-                FIRST_CHARACTER,
-                NOT_IP_LITERAL,
-                PERCENT_ENCODED_CHARACTER,
-                IP_LITERAL,
-                IPV6_ADDRESS,
-                IPV_FUTURE_NUMBER,
-                IPV_FUTURE_BODY,
-                GARBAGE_CHECK,
-                PORT,
-            };
-
             auto _data = host_port_view();
 
+            /* IP future versions can be specified like this:
+             * (RFC 3986)
+             *
+             * IP-literal = "[" ( IPv6address / IPvFuture  ) "]"
+             * IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
+             */
             if (_data.starts_with('[')) {                  // IP Literal
                 if (_data.size() > 2 && _data[1] == 'v') { // IPv Future Number
-                    host.push_back(c);
-                    state = state_t::IPV_FUTURE_NUMBER;
+                    if (auto dot_delim = _data.find('.');
+                        dot_delim != std::string_view::npos) {
+
+                        auto ipvf_version = _data.substr(2, dot_delim);
+                        if (!HEXDIG.contains(ipvf_version)) {
+                            // ERROR
+                        }
+
+                        if (auto ipvf_end = _data.find(']');
+                            ipvf_end != std::string_view::npos) {
+                            auto ipvf = _data.substr(dot_delim + 1, ipvf_end);
+                            if (!IPV_FUTURE_LAST_PART.contains(ipvf)) {
+                                // ERROR
+                            }
+                            return _data.substr(1,
+                                                ipvf_end); // returning the ipvf
+                                                           // and it's version
+                        }
+                    }
 
                 } else { // IPv6
                     if (auto ipv6_view = _data.substr(1, _data.find(']'));
@@ -444,14 +457,13 @@ namespace webpp {
                         return const_ipv6(ipv6_view);
                     } else {
                         // TODO: what the heck should I do here? throw error or
-                        // return shit?
+                        // return stuff?
                     }
                 }
             } else { // Not IP Literal
             }
 
             // Next, parsing host and port from authority and path.
-            state_t state = state_t::FIRST_CHARACTER;
             bool hostIsRegName = false;
             for (const auto& c : _data) {
                 switch (state) {
@@ -511,24 +523,25 @@ namespace webpp {
                     //                    }
                     //                } break;
 
-                case state_t::IPV_FUTURE_NUMBER: {
-                    if (c == '.') {
-                        state = state_t::IPV_FUTURE_BODY;
-                    } else if (!HEXDIG.contains(c)) {
-                        return false;
-                    }
-                    host.push_back(c);
-                } break;
+                    //                case state_t::IPV_FUTURE_NUMBER: {
+                    //                    if (c == '.') {
+                    //                        state = state_t::IPV_FUTURE_BODY;
+                    //                    } else if (!HEXDIG.contains(c)) {
+                    //                        return false;
+                    //                    }
+                    //                    host.push_back(c);
+                    //                } break;
 
-                case state_t::IPV_FUTURE_BODY: {
-                    if (c == ']') {
-                        state = state_t::GARBAGE_CHECK;
-                    } else if (!IPV_FUTURE_LAST_PART.Contains(c)) {
-                        return false;
-                    } else {
-                        host.push_back(c);
-                    }
-                } break;
+                    //                case state_t::IPV_FUTURE_BODY: {
+                    //                    if (c == ']') {
+                    //                        state = state_t::GARBAGE_CHECK;
+                    //                    } else if
+                    //                    (!IPV_FUTURE_LAST_PART.Contains(c)) {
+                    //                        return false;
+                    //                    } else {
+                    //                        host.push_back(c);
+                    //                    }
+                    //                } break;
 
                     //                case state_t::GARBAGE_CHECK: {
                     //                    // illegal to have anything else,
