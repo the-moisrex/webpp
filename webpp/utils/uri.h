@@ -170,6 +170,14 @@ namespace webpp {
         static constexpr auto IPV_FUTURE_LAST_PART =
             webpp::charset(UNRESERVED, SUB_DELIMS, webpp::charset(':'));
 
+        /**
+         * This is the character set corresponds to the "reg-name" syntax
+         * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
+         * leaving out "pct-encoded".
+         */
+        static constexpr auto REG_NAME_NOT_PCT_ENCODED =
+            webpp::charset(UNRESERVED, SUB_DELIMS);
+
       private:
         StringType data;
 
@@ -419,6 +427,13 @@ namespace webpp {
             return "";
         }
 
+        /**
+         * @brief returns const_ipv4/const_ipv6/hostname; if the URI doesn't
+         * include a valid ip/hostname you'll get an empty string. this method
+         * will only return the hostname/ip if it's in the correct format and
+         * doesn't include invalid symtax.
+         * @return
+         */
         constexpr std::variant<const_ipv4, const_ipv6, std::string_view>
         host() const noexcept {
             auto _data = host_port_view();
@@ -436,14 +451,16 @@ namespace webpp {
 
                         auto ipvf_version = _data.substr(2, dot_delim);
                         if (!HEXDIG.contains(ipvf_version)) {
-                            // ERROR
+                            // ERROR: uri is not valid
+                            return "";
                         }
 
                         if (auto ipvf_end = _data.find(']');
                             ipvf_end != std::string_view::npos) {
                             auto ipvf = _data.substr(dot_delim + 1, ipvf_end);
                             if (!IPV_FUTURE_LAST_PART.contains(ipvf)) {
-                                // ERROR
+                                // ERROR: uri is not valid
+                                return "";
                             }
                             return _data.substr(1,
                                                 ipvf_end); // returning the ipvf
@@ -458,133 +475,79 @@ namespace webpp {
                     } else {
                         // TODO: what the heck should I do here? throw error or
                         // return stuff?
+                        return ""; // URI is not valid
                     }
                 }
             } else { // Not IP Literal
+                auto hostname = _data.substr(0, _data.find(':'));
+                // we're not going to decode hostname here. We'll do this in
+                // another method because this function is constexpr and will
+                // only return const stuff
+
+                // TODO: we have our answer but we will check for the
+                // correctness of the hostname now
+
+                return hostname; // URI still may not be valid
             }
+        }
 
-            // Next, parsing host and port from authority and path.
-            bool hostIsRegName = false;
-            for (const auto& c : _data) {
-                switch (state) {
-                    //                case state_t::FIRST_CHARACTER: {
-                    //                    if (c == '[') {
-                    //                        state = state_t::IP_LITERAL;
-                    //                        break;
-                    //                    } else {
-                    //                        state = state_t::NOT_IP_LITERAL;
-                    //                        hostIsRegName = true;
-                    //                    }
-                    //                }
+        /**
+         * @brief get the hostname/ipv4/ipv6 from the URI. if the URI doesn't
+         * include a hostname/ip or its hostname/ip is not in a valid shape, it
+         * will return an empty string
+         * @return string/ipv4/ipv6
+         * @default empty string
+         */
+        std::variant<ipv4, ipv6, std::string> host_decoded() const noexcept {
+            const auto the_host = host();
+            return std::visit([](auto&& the_host) -> decltype(auto) {
+                using the_host_t = std::decay_t<decltype(the_host)>;
+                if constexpr (std::is_same<the_host_t,
+                                           std::string_view>::value) {
+                    auto hostname_decoded = decode_uri_component(
+                        the_host, REG_NAME_NOT_PCT_ENCODED);
+                    return hostname_decoded.value_or("");
 
-                case state_t::NOT_IP_LITERAL: {
-                    if (c == '%') {
-                        pecDecoder = PercentEncodedCharacterDecoder();
-                        state = state_t::PERCENT_ENCODED_CHARACTER;
-                    } else if (c == ':') {
-                        state = state_t::PORT;
-                    } else {
-                        if (REG_NAME_NOT_PCT_ENCODED.contains(c)) {
-                            host.push_back(c);
-                        } else {
-                            return false;
-                        }
-                    }
-                } break;
-
-                case state_t::PERCENT_ENCODED_CHARACTER: {
-                    if (!pecDecoder.NextEncodedCharacter(c)) {
-                        return false;
-                    }
-                    if (pecDecoder.Done()) {
-                        state = state_t::NOT_IP_LITERAL;
-                        host.push_back((char)pecDecoder.GetDecodedCharacter());
-                    }
-                } break;
-
-                    //                case state_t::IP_LITERAL: {
-                    //                    if (c == 'v') {
-                    //                        host.push_back(c);
-                    //                        state =
-                    //                        state_t::IPV_FUTURE_NUMBER; break;
-                    //                    } else {
-                    //                        state = state_t::IPV6_ADDRESS;
-                    //                    }
-                    //                }
-
-                    //                case state_t::IPV6_ADDRESS: {
-                    //                    if (c == ']') {
-                    //                        if (!ValidateIpv6Address(host)) {
-                    //                            return false;
-                    //                        }
-                    //                        state = state_t::GARBAGE_CHECK;
-                    //                    } else {
-                    //                        host.push_back(c);
-                    //                    }
-                    //                } break;
-
-                    //                case state_t::IPV_FUTURE_NUMBER: {
-                    //                    if (c == '.') {
-                    //                        state = state_t::IPV_FUTURE_BODY;
-                    //                    } else if (!HEXDIG.contains(c)) {
-                    //                        return false;
-                    //                    }
-                    //                    host.push_back(c);
-                    //                } break;
-
-                    //                case state_t::IPV_FUTURE_BODY: {
-                    //                    if (c == ']') {
-                    //                        state = state_t::GARBAGE_CHECK;
-                    //                    } else if
-                    //                    (!IPV_FUTURE_LAST_PART.Contains(c)) {
-                    //                        return false;
-                    //                    } else {
-                    //                        host.push_back(c);
-                    //                    }
-                    //                } break;
-
-                    //                case state_t::GARBAGE_CHECK: {
-                    //                    // illegal to have anything else,
-                    //                    unless it's a colon,
-                    //                    // in which case it's a port delimiter
-                    //                    if (c == ':') {
-                    //                        state = state_t::PORT;
-                    //                    } else {
-                    //                        return false;
-                    //                    }
-                    //                } break;
-
-                    //                case state_t::PORT: {
-                    //                    portString.push_back(c);
-                    //                } break;
+                } else if constexpr (std::is_same<the_host_t,
+                                                  const_ipv4>::value) {
+                    // convert to non-const ipv4
+                    return ipv4(the_host);
+                } else if constexpr (std::is_same<the_host_t,
+                                                  const_ipv6>::value) {
+                    // convert to non-const ipv6
+                    return ipv6(the_host);
+                } else {
+                    return "";
                 }
-            }
-            if ((state != state_t::FIRST_CHARACTER) &&
-                (state != state_t::NOT_IP_LITERAL) &&
-                (state != state_t::GARBAGE_CHECK) && (state != state_t::PORT)) {
-                // truncated or ended early
-                return false;
-            }
-            if (hostIsRegName) {
-                host = SystemAbstractions::ToLower(host);
-            }
-            if (portString.empty()) {
-                hasPort = false;
-            } else {
-                intmax_t portAsInt;
-                if (SystemAbstractions::ToInteger(portString, portAsInt) !=
-                    SystemAbstractions::ToIntegerResult::Success) {
-                    return false;
+            });
+        }
+
+        /**
+         * @brief get the decoded version of hostname/ip of the uri or an empty
+         * string if the specified URI does not include a hostname/ip or its
+         * hostname has the wrong character encodings.
+         * @return string
+         */
+        std::string host_decoded_str() const noexcept {
+            const auto the_host = host();
+            return visit([](auto&& the_host) -> decltype(auto) {
+                using the_host_t = std::decay_t<decltype(the_host)>;
+                if constexpr (std::is_same<the_host_t, std::string>(the_host)) {
+                    if (auto hostname_decoded = decode_uri_component(
+                            the_host, REG_NAME_NOT_PCT_ENCODED)) {
+                        return hostname_decoded;
+                    }
+                    return ""; // not a valid host
+                } else if constexpr (std::is_same<the_host_t, const_ipv4>(
+                                         the_host)) {
+                    return the_host.str();
+                } else if constexpr (std::is_same<the_host_t, const_ipv6>(
+                                         the_host)) {
+                    return the_host.str();
+                } else {
+                    return ""; // there's no host?!
                 }
-                if ((portAsInt < 0) ||
-                    (portAsInt >
-                     (decltype(portAsInt))
-                         std::numeric_limits<decltype(port)>::max())) {
-                    return false;
-                }
-                port = static_cast<decltype(port)>(portAsInt);
-                hasPort = true;
-            }
+            });
         }
 
         /**
@@ -608,7 +571,7 @@ namespace webpp {
         /**
          * @brief set the hostname/ip in the uri if possible
          */
-        uri_t& host(std::string_view const&) noexcept;
+        uri_t& host(std::string_view const&) noexcept {}
 
         /**
          * @brief port number of the uri;
