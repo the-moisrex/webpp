@@ -318,6 +318,59 @@ namespace webpp {
             return ipv4(str) || ipv6(str);
         }
 
+        /**
+         * @brief checks if an string is a valid host based on RFC3986
+         * (https://tools.ietf.org/html/rfc3986)
+         * @param str
+         * @return
+         */
+        constexpr bool host(std::string_view const& str) noexcept {
+            /**
+             * This is the character set corresponds to the last part of
+             * the "IPvFuture" syntax
+             * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
+             */
+            constexpr auto IPV_FUTURE_LAST_PART =
+                webpp::charset(UNRESERVED, SUB_DELIMS, webpp::charset(':'));
+
+            /**
+             * This is the character set corresponds to the "reg-name" syntax
+             * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
+             * leaving out "pct-encoded".
+             */
+            constexpr auto REG_NAME_NOT_PCT_ENCODED =
+                webpp::charset(UNRESERVED, SUB_DELIMS);
+
+            if (str.empty())
+                return false;
+            if (str.starts_with('[') && str.ends_with(']')) {
+                if (str[1] == 'v') { // future ip
+                    if (auto dot_delim = _data.find('.');
+                        dot_delim != std::string_view::npos) {
+
+                        auto ipvf_version = str.substr(2, dot_delim);
+                        if (!HEXDIG.contains(ipvf_version)) {
+                            // ERROR: uri is not valid
+                            return false;
+                        }
+
+                        auto ipvf = _data.substr(dot_delim + 1, str.size() - 1);
+                        return IPV_FUTURE_LAST_PART.contains(ipvf);
+                    }
+
+                } else { // ipv6
+                    return is::ipv6(str.substr(1, str.size() - 1));
+                }
+            } else if (is::digit(str[0]) && is::ipv4(str)) { // ipv4
+                return true;
+            } else {
+                return charset(REG_NAME_NOT_PCT_ENCODED, charset('%'))
+                    .contains(str);
+            }
+
+            return false;
+        }
+
         constexpr bool ip_range(std::string_view const& str) noexcept;
         constexpr bool ipv4_range(std::string_view const& str) noexcept;
         constexpr bool ipv6_range(std::string_view const& str) noexcept;
