@@ -59,22 +59,6 @@ constexpr auto USER_INFO_NOT_PCT_ENCODED =
     webpp::charset(UNRESERVED, SUB_DELIMS, webpp::charset(':'));
 
 /**
- * This is the character set corresponds to the "reg-name" syntax
- * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
- * leaving out "pct-encoded".
- */
-constexpr auto REG_NAME_NOT_PCT_ENCODED =
-    webpp::charset(UNRESERVED, SUB_DELIMS);
-
-/**
- * This is the character set corresponds to the last part of
- * the "IPvFuture" syntax
- * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
- */
-constexpr auto IPV_FUTURE_LAST_PART =
-    webpp::charset(UNRESERVED, SUB_DELIMS, webpp::charset(':'));
-
-/**
  * This function takes a given "stillPassing" strategy
  * and invokes it on the sequence of characters in the given
  * string, to check if the string passes or not.

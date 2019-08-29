@@ -11,6 +11,8 @@ namespace webpp {
 
     using const_ipv4 = ipv4_t;
     using const_ipv6 = ipv6_t;
+    using ipv4 = ipv4_t;
+    using ipv6 = ipv6_t;
 
 } // namespace webpp
 

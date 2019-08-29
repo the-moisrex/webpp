@@ -9,13 +9,13 @@
  * © 2019 by Mohammad Bahoosh (made it constexpr)
  */
 
+#include "../std/string_view.h"
 #include <algorithm>
 #include <array>
 #include <initializer_list>
 #include <tuple>
 #include <type_traits>
 #include <utility>
-#include "../std/string_view.h"
 
 namespace webpp {
 
@@ -203,6 +203,18 @@ namespace webpp {
                 if (cc == c)
                     return true;
             return false;
+        }
+
+        /**
+         * @brief checks if all the chars in the _cs is in the chars list or not
+         * @param _cs
+         * @return
+         */
+        constexpr bool contains(std::string_view _cs) const noexcept {
+            for (auto const& c : _cs)
+                if (!contains(c))
+                    return false;
+            return true;
         }
 
         constexpr auto size() const noexcept { return chars.size(); }
