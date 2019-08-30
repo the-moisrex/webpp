@@ -231,7 +231,7 @@ bool DecodeQueryOrFragment(std::string& queryOrFragment) {
 /**
  * This contains the private properties of a Uri instance.
  */
-struct Uri::Impl {
+struct Impl {
     // Properties
 
     /**
