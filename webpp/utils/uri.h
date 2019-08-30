@@ -128,8 +128,7 @@ namespace webpp {
      *    urn:example:animal:ferret:nose
      *
      */
-    template <typename StringType>
-    class uri_t {
+    class uri {
       public:
         /**
          * source:
@@ -139,6 +138,13 @@ namespace webpp {
             ALPHA, DIGIT,
             charset_t<20>{';', ',', '/', '?', ':', '@', '&',  '=', '+', '$',
                           '-', '_', '.', '!', '~', '*', '\'', '(', ')', '#'});
+        /**
+         * This is the character set corresponds to the second part
+         * of the "scheme" syntax
+         * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
+         */
+        static constexpr auto SCHEME_NOT_FIRST =
+            charset(ALPHA, DIGIT, webpp::charset('+', '-', '.'));
 
         /**
          * This is the character set corresponds to the "unreserved" syntax
@@ -178,42 +184,202 @@ namespace webpp {
         static constexpr auto REG_NAME_NOT_PCT_ENCODED =
             webpp::charset(UNRESERVED, SUB_DELIMS);
 
-      private:
-        StringType data;
+        struct uri_segments {
 
-        void check_modifiable() {
-            if constexpr (std::is_same<StringType, std::string_view>::value) {
-                throw std::logic_error(
-                    "You cannot change a string_view thus you will not be able "
-                    "to run non-const methods of uri_t class");
-            }
-            if constexpr (std::is_const<StringType>::value) {
-                throw std::logic_error(
-                    "You cannot change a const string thus you are not able to "
-                    "run non-const methods of uri_t class");
-            }
-        }
+            /**
+             * This is the "scheme" element of the URI.
+             */
+            std::string scheme;
+
+            /**
+             * This is the "UserInfo" element of the URI.
+             */
+            std::string user_info;
+
+            /**
+             * This is the "host" element of the URI.
+             */
+            std::string host;
+
+            /**
+             * This is the "path" element of the URI,
+             * as a sequence of segments.
+             */
+            std::vector<std::string> path;
+
+            /**
+             * This is the "query" element of the URI,
+             * if it has one.
+             */
+            std::string query;
+
+            /**
+             * This is the "fragment" element of the URI,
+             * if it has one.
+             */
+            std::string fragment;
+
+            /**
+             * This is the port number element of the URI.
+             */
+            uint16_t port;
+
+            bool has_scheme = false;
+            bool has_user_info = false;
+            bool has_host = false;
+            bool has_query = false;
+            bool has_fragment = false;
+            bool has_port = false;
+        };
+
+        using uri_data_t = std::variant<std::string_view, uri_segments>;
+
+      private:
+        uri_data_t data;
 
       public:
-        constexpr uri_t() noexcept = default;
-        ~uri_t() noexcept = default;
+        constexpr uri() noexcept = default;
+        ~uri() noexcept = default;
 
         /**
          * @brief parse from string, it will trim the spaces for generality too
          * @param string_view reperesentaion of a URI
          */
-        constexpr uri_t(std::string_view const& u) noexcept
+        constexpr uri(std::string_view const& u) noexcept
             : data(trim_copy(u)) {}
 
-        constexpr uri_t(uri_t const& u) noexcept = default;
-        constexpr uri_t(uri_t&& u) noexcept = default;
+        constexpr uri(uri const& u) noexcept = default;
+        constexpr uri(uri&& u) noexcept = default;
 
         // assignment operators
-        constexpr void operator=(uri_t const& u) noexcept = default;
-        constexpr void operator=(uri_t&& u) noexcept = default;
+        constexpr uri& operator=(uri const& u) noexcept = default;
+        constexpr uri& operator=(uri&& u) noexcept = default;
 
-        constexpr bool operator==(const uri_t& u) const noexcept;
-        constexpr bool operator!=(const uri_t& u) const noexcept;
+        constexpr bool operator==(const uri& u) const noexcept;
+        constexpr bool operator!=(const uri& u) const noexcept;
+
+        uri& parse() {
+            if (std::holds_alternative<std::string_view>(data)) {
+                auto _data = std::get<std::string_view>(data);
+
+                uri_segments segs{};
+
+                std::size_t path_start = std::string_view::npos;
+                std::size_t port_start = std::string_view::npos;
+
+                // extracting scheme
+                if (const auto schemeEnd = _data.find(':');
+                    schemeEnd != std::string_view::npos) {
+                    auto _scheme = _data.substr(0, schemeEnd);
+                    if (ALPHA.contains(_scheme[0]) &&
+                        _scheme.substr(1).find_first_not_of(
+                            SCHEME_NOT_FIRST.string_view())) {
+                        segs.scheme = _scheme;
+                        _data.remove_prefix(schemeEnd);
+                    }
+                }
+
+                if (auto authority_start = _data.find("//");
+                    authority_start != std::string_view::npos) {
+
+                    // finding path so we won't go out of scope:
+                    if (path_start = _data.find('/', 2);
+                        path_start == std::string_view::npos)
+                        _data.remove_suffix(_data.size() - path_start);
+
+                    // extracting user info
+                    if (auto delim =
+                            _data.find("@", authority_start + 2,
+                                       path_start - authority_start + 2);
+                        delim != std::string_view::npos) {
+
+                        segs.user_info = _data.substr(authority_start + 2,
+                                                      _data.size() - delim);
+                        _data.remove_prefix(delim + 1);
+                    }
+
+                    // extracting host
+
+                    /* IP future versions can be specified like this:
+                     * (RFC 3986)
+                     *
+                     * IP-literal = "[" ( IPv6address / IPvFuture  ) "]"
+                     * IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims
+                     * / ":" )
+                     */
+                    if (_data.starts_with('[')) { // IP Literal
+                        if (_data.size() > 2 &&
+                            _data[1] == 'v') { // IPv Future Number
+                            if (auto dot_delim = _data.find('.');
+                                dot_delim != std::string_view::npos) {
+
+                                auto ipvf_version = _data.substr(2, dot_delim);
+                                if (HEXDIG.contains(ipvf_version)) {
+
+                                    if (auto ipvf_end = _data.find(']');
+                                        ipvf_end != std::string_view::npos) {
+                                        auto ipvf = _data.substr(dot_delim + 1,
+                                                                 ipvf_end);
+                                        if (IPV_FUTURE_LAST_PART.contains(
+                                                ipvf)) {
+                                            segs.host = _data.substr(
+                                                1,
+                                                ipvf_end); // returning the ipvf
+                                                           // and it's version
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (_data.size() >= 5) { // IPv6
+
+                            if (auto ipv6_end = _data.find(']');
+                                ipv6_end != std::string_view::npos) {
+
+                                if (auto ipv6_view = _data.substr(1, ipv6_end);
+                                    is::ipv6(ipv6_view)) {
+                                    // TODO: probabely use std::variant<ipv6,
+                                    // ipv4, string>
+                                    segs.host = ipv6_view;
+                                    _data.remove_prefix(ipv6_end + 1);
+                                }
+                            }
+                        }
+                    } else { // Not IP Literal
+                        port_start = _data.find(":", 0, path_start);
+                        auto port_or_hostname_start =
+                            port_start != std::string_view::npos ? port_start
+                                                                 : path_start;
+                        auto hostname = _data.substr(0, port_or_hostname_start);
+                        // we're not going to decode hostname here. We'll do
+                        // this in another method because this function is
+                        // constexpr and will only return const stuff
+
+                        // TODO: we have our answer but we will check for the
+                        // correctness of the hostname now
+                        // FIXME: I think it's wrong
+                        if (charset(REG_NAME_NOT_PCT_ENCODED, charset('%'))
+                                .contains(hostname)) {
+                            segs.host = hostname;
+                            _data.remove_prefix(port_or_hostname_start);
+                        }
+                    }
+                }
+
+                // extracting port
+                if (auto colon = _data.find(':');
+                    colon != std::string_view::npos) {
+                    auto port_end =
+                        _data.find_first_not_of(DIGIT.string_view());
+                    auto port = _data.substr(colon + 1, port_end);
+                    if (is::digit(port)) {
+                        segs.port = atoi(port);
+                        _data.remove_prefix(port_end);
+                    }
+                }
+
+                data = segs;
+            }
+        }
 
         /**
          * @brief this function is the same as "encodeURI" in javascript
@@ -243,29 +409,7 @@ namespace webpp {
          * @return get scheme
          */
         constexpr std::optional<std::string_view> scheme() const noexcept {
-            /**
-             * This is the character set corresponds to the second part
-             * of the "scheme" syntax
-             * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
-             */
-            constexpr auto SCHEME_NOT_FIRST =
-                charset(ALPHA, DIGIT, webpp::charset('+', '-', '.'));
 
-            std::string_view _data =
-                data; // to make sure we have string_view not a string or any
-                      // other thing that we'r not going to work with in this
-                      // method
-
-            if (const auto schemeEnd = _data.find(':');
-                schemeEnd != std::string_view::npos) {
-                auto _scheme = _data.substr(0, schemeEnd);
-                if (!ALPHA.contains(_scheme[0]))
-                    return std::nullopt;
-                if (!_scheme.substr(1).find_first_not_of(
-                        SCHEME_NOT_FIRST.string_view()))
-                    return std::nullopt;
-                return _scheme;
-            }
             return std::nullopt;
         }
 
@@ -275,7 +419,7 @@ namespace webpp {
          * @throws logic_error if uri is const
          * @return
          */
-        uri_t& scheme(std::string_view const& _scheme) {
+        uri& scheme(std::string_view const& _scheme) {
             check_modifiable();
             if (auto slashes_point = data.find("//");
                 std::string::npos != slashes_point) {
@@ -302,24 +446,6 @@ namespace webpp {
         constexpr std::optional<std::string_view> user_info() const noexcept {
             std::string_view _data = data;
 
-            if (auto authority_start = _data.find("//");
-                authority_start != std::string_view::npos) {
-
-                // we already know what those chars are (//)
-                _data.remove_prefix(authority_start + 2);
-
-                // finding path so we won't go out of scope:
-                if (auto path_start = _data.find('/');
-                    path_start == std::string_view::npos)
-                    _data.remove_suffix(_data.size() - path_start);
-
-                if (auto delim = _data.find("@");
-                    delim != std::string_view::npos) {
-                    _data.remove_suffix(_data.size() - delim);
-                    return _data;
-                }
-            }
-
             // there's no user info in the uri
             return std::nullopt;
         }
@@ -340,7 +466,7 @@ namespace webpp {
         /**
          * @brief set the user info if it's possible
          */
-        uri_t& user_info(std::string_view const& info) {
+        uri& user_info(std::string_view const& info) {
             check_modifiable();
             std::string_view _data = data;
             if (auto _user_info = user_info()) {
@@ -379,7 +505,7 @@ namespace webpp {
          * @brief clears the user info if exists
          * @return
          */
-        uri_t& clear_user_info() noexcept {
+        uri& clear_user_info() noexcept {
             check_modifiable();
             if (auto _user_info = user_info()) {
 
@@ -440,66 +566,6 @@ namespace webpp {
 
             if (_data == "")
                 return "";
-
-            /* IP future versions can be specified like this:
-             * (RFC 3986)
-             *
-             * IP-literal = "[" ( IPv6address / IPvFuture  ) "]"
-             * IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
-             */
-            if (_data.starts_with('[')) {                  // IP Literal
-                if (_data.size() > 2 && _data[1] == 'v') { // IPv Future Number
-                    if (auto dot_delim = _data.find('.');
-                        dot_delim != std::string_view::npos) {
-
-                        auto ipvf_version = _data.substr(2, dot_delim);
-                        if (!HEXDIG.contains(ipvf_version)) {
-                            // ERROR: uri is not valid
-                            return "";
-                        }
-
-                        if (auto ipvf_end = _data.find(']');
-                            ipvf_end != std::string_view::npos) {
-                            auto ipvf = _data.substr(dot_delim + 1, ipvf_end);
-                            if (!IPV_FUTURE_LAST_PART.contains(ipvf)) {
-                                // ERROR: uri is not valid
-                                return "";
-                            }
-                            return _data.substr(1,
-                                                ipvf_end); // returning the ipvf
-                                                           // and it's version
-                        } else {
-                            return "";
-                        }
-                    } else {
-                        return "";
-                    }
-
-                } else { // IPv6
-                    if (auto ipv6_view = _data.substr(1, _data.find(']'));
-                        is::ipv6(ipv6_view)) {
-                        return const_ipv6(ipv6_view);
-                    } else {
-                        // TODO: what the heck should I do here? throw error or
-                        // return stuff?
-                        return ""; // URI is not valid
-                    }
-                }
-            } else { // Not IP Literal
-                auto hostname = _data.substr(0, _data.find(':'));
-                // we're not going to decode hostname here. We'll do this in
-                // another method because this function is constexpr and will
-                // only return const stuff
-
-                // TODO: we have our answer but we will check for the
-                // correctness of the hostname now
-                // FIXME: I think it's wrong
-                if (!charset(REG_NAME_NOT_PCT_ENCODED, charset('%'))
-                         .contains(hostname))
-                    return "";
-
-                return hostname; // URI still may not be valid
-            }
         }
 
         /**
@@ -576,7 +642,7 @@ namespace webpp {
         /**
          * @brief set the hostname/ip in the uri if possible
          */
-        uri_t& host(std::string_view const& new_host) noexcept {
+        uri& host(std::string_view const& new_host) noexcept {
 
             auto new_host_encoded =
                 encode_uri_component(new_host, REG_NAME_NOT_PCT_ENCODED);
@@ -641,7 +707,7 @@ namespace webpp {
             }
             return false;
         }
-        uri_t& port(unsigned int new_port) {
+        uri& port(unsigned int new_port) {
             if (auto host_port = host_port_view(); host_port != "") {
                 if (auto colon = host_port.rfind(':');
                     colon != std::string_view::npos) {
@@ -674,7 +740,7 @@ namespace webpp {
          * @brief clear the port number from the uri and defaults to 80
          * @return self
          */
-        uri_t& clear_port() noexcept {
+        uri& clear_port() noexcept {
             if (auto host_port = host_port_view(); host_port != "") {
                 if (auto colon = host_port.rfind(':');
                     colon != std::string_view::npos) {
@@ -702,14 +768,14 @@ namespace webpp {
         template <typename Container = std::vector<std::string_view>>
         constexpr Container path() const noexcept;
 
-        uri_t& path(std::string_view const&) noexcept;
+        uri& path(std::string_view const&) noexcept;
 
         template <typename Container>
-        uri_t& path(const Container&) noexcept;
+        uri& path(const Container&) noexcept;
 
         constexpr bool has_query() const noexcept;
         constexpr std::string_view query() const noexcept;
-        uri_t& query(std::string_view const&) noexcept;
+        uri& query(std::string_view const&) noexcept;
 
         /**
          * @details This method applies the "remove_dot_segments" routine talked
@@ -717,12 +783,9 @@ namespace webpp {
          * segments of the URI, in order to normalize the path
          * (apply and remove "." and ".." segments).
          */
-        uri_t& normalize_path() { return *this; }
+        uri& normalize_path() { return *this; }
 
     }; // namespace webpp
-
-    using const_uri = uri_t<const std::string_view>;
-    using uri = uri_t<std::string>;
 
     /**
      * This class represents a Uniform Resource Identifier (URI),
