@@ -32,3 +32,5 @@
 {"description":"extract path","end":"20190831T131632Z","entry":"20190831T123521Z","modified":"20190831T131634Z","project":"net","status":"completed","uuid":"f8a9427c-d743-4583-8e59-6e27a217f6db"}
 {"description":"extract queries","end":"20190831T131634Z","entry":"20190831T123532Z","modified":"20190831T131634Z","project":"net","status":"completed","uuid":"5873280d-46b0-42f0-a92c-4807952c3898"}
 {"description":"extract segments","end":"20190831T131634Z","entry":"20190831T123543Z","modified":"20190831T131634Z","project":"net","status":"completed","uuid":"64e83144-c45d-4a51-9776-efdda08809ce"}
+{"description":"watch tutorial named Pluralsight Web Performance","entry":"20190831T141125Z","modified":"20190831T141125Z","status":"pending","uuid":"cd287d23-e515-486a-9ea9-ef97fe5c0c73"}
+{"description":"watch WebRTC tutorials","entry":"20190831T141331Z","modified":"20190831T141331Z","project":"webrtc","status":"pending","uuid":"97244640-b8a5-4fac-851f-96ce8253745b"}
