@@ -28,3 +28,4 @@
 {"description":"extract queries","entry":"20190831T123532Z","modified":"20190831T123532Z","project":"net","status":"pending","uuid":"5873280d-46b0-42f0-a92c-4807952c3898"}
 {"description":"extract segments","entry":"20190831T123543Z","modified":"20190831T123543Z","project":"net","status":"pending","uuid":"64e83144-c45d-4a51-9776-efdda08809ce"}
 {"description":"write tests for uri","entry":"20190831T123554Z","modified":"20190831T123554Z","project":"net","status":"pending","uuid":"d90c51bd-e411-496f-bfa3-f625ce28beab"}
+{"description":"write string conversions for string_view","entry":"20190831T125659Z","modified":"20190831T125659Z","status":"pending","uuid":"2f0f82cf-b400-4987-aa8c-2a1ea6e90ff7"}
