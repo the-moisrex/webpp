@@ -14,3 +14,7 @@
 [description:"implement ipv6 non-const" entry:"1567029756" modified:"1567029833" project:"net" status:"pending" uuid:"808d672b-3fbc-4286-9e76-af7900ed2923"]
 [description:"implement parser in uri" entry:"1567254814" modified:"1567254814" project:"net" status:"pending" uuid:"5aebe96a-281a-4d13-86eb-ec38e4437a4a"]
 [description:"implement parser for const uri" entry:"1567254833" modified:"1567254833" project:"net" status:"pending" uuid:"e2b4b022-7baf-460b-8787-3599a407c0bb"]
+[description:"extract path" entry:"1567254921" modified:"1567254921" project:"net" status:"pending" uuid:"f8a9427c-d743-4583-8e59-6e27a217f6db"]
+[description:"extract queries" entry:"1567254932" modified:"1567254932" project:"net" status:"pending" uuid:"5873280d-46b0-42f0-a92c-4807952c3898"]
+[description:"extract segments" entry:"1567254943" modified:"1567254943" project:"net" status:"pending" uuid:"64e83144-c45d-4a51-9776-efdda08809ce"]
+[description:"write tests for uri" entry:"1567254954" modified:"1567254954" project:"net" status:"pending" uuid:"d90c51bd-e411-496f-bfa3-f625ce28beab"]
