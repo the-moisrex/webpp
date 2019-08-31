@@ -78,3 +78,9 @@ time 1567029833
 old [description:"implement ipv6 non-const" entry:"1567029756" modified:"1567029756" status:"pending" uuid:"808d672b-3fbc-4286-9e76-af7900ed2923"]
 new [description:"implement ipv6 non-const" entry:"1567029756" modified:"1567029833" project:"net" status:"pending" uuid:"808d672b-3fbc-4286-9e76-af7900ed2923"]
 ---
+time 1567254814
+new [description:"implement parser in uri" entry:"1567254814" modified:"1567254814" project:"net" status:"pending" uuid:"5aebe96a-281a-4d13-86eb-ec38e4437a4a"]
+---
+time 1567254833
+new [description:"implement parser for const uri" entry:"1567254833" modified:"1567254833" project:"net" status:"pending" uuid:"e2b4b022-7baf-460b-8787-3599a407c0bb"]
+---
