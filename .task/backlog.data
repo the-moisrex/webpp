@@ -24,3 +24,7 @@
 {"description":"implement ipv6 non-const","entry":"20190828T220236Z","modified":"20190828T220353Z","project":"net","status":"pending","uuid":"808d672b-3fbc-4286-9e76-af7900ed2923"}
 {"description":"implement parser in uri","entry":"20190831T123334Z","modified":"20190831T123334Z","project":"net","status":"pending","uuid":"5aebe96a-281a-4d13-86eb-ec38e4437a4a"}
 {"description":"implement parser for const uri","entry":"20190831T123353Z","modified":"20190831T123353Z","project":"net","status":"pending","uuid":"e2b4b022-7baf-460b-8787-3599a407c0bb"}
+{"description":"extract path","entry":"20190831T123521Z","modified":"20190831T123521Z","project":"net","status":"pending","uuid":"f8a9427c-d743-4583-8e59-6e27a217f6db"}
+{"description":"extract queries","entry":"20190831T123532Z","modified":"20190831T123532Z","project":"net","status":"pending","uuid":"5873280d-46b0-42f0-a92c-4807952c3898"}
+{"description":"extract segments","entry":"20190831T123543Z","modified":"20190831T123543Z","project":"net","status":"pending","uuid":"64e83144-c45d-4a51-9776-efdda08809ce"}
+{"description":"write tests for uri","entry":"20190831T123554Z","modified":"20190831T123554Z","project":"net","status":"pending","uuid":"d90c51bd-e411-496f-bfa3-f625ce28beab"}

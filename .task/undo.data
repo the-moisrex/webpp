@@ -84,3 +84,15 @@ new [description:"implement parser in uri" entry:"1567254814" modified:"15672548
 time 1567254833
 new [description:"implement parser for const uri" entry:"1567254833" modified:"1567254833" project:"net" status:"pending" uuid:"e2b4b022-7baf-460b-8787-3599a407c0bb"]
 ---
+time 1567254921
+new [description:"extract path" entry:"1567254921" modified:"1567254921" project:"net" status:"pending" uuid:"f8a9427c-d743-4583-8e59-6e27a217f6db"]
+---
+time 1567254932
+new [description:"extract queries" entry:"1567254932" modified:"1567254932" project:"net" status:"pending" uuid:"5873280d-46b0-42f0-a92c-4807952c3898"]
+---
+time 1567254943
+new [description:"extract segments" entry:"1567254943" modified:"1567254943" project:"net" status:"pending" uuid:"64e83144-c45d-4a51-9776-efdda08809ce"]
+---
+time 1567254954
+new [description:"write tests for uri" entry:"1567254954" modified:"1567254954" project:"net" status:"pending" uuid:"d90c51bd-e411-496f-bfa3-f625ce28beab"]
+---
