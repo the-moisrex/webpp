@@ -1,2 +1,5 @@
+[description:"extract path" end:"1567257392" entry:"1567254921" modified:"1567257394" project:"net" status:"completed" uuid:"f8a9427c-d743-4583-8e59-6e27a217f6db"]
+[description:"extract queries" end:"1567257394" entry:"1567254932" modified:"1567257394" project:"net" status:"completed" uuid:"5873280d-46b0-42f0-a92c-4807952c3898"]
+[description:"extract segments" end:"1567257394" entry:"1567254943" modified:"1567257394" project:"net" status:"completed" uuid:"64e83144-c45d-4a51-9776-efdda08809ce"]
 [description:"remove one of hpp or h file extensions and use the other one" end:"1567029648" entry:"1563795602" modified:"1567029648" status:"completed" uuid:"703da0be-f638-4614-91be-3850cebbb144"]
 [description:"make use of string_view and other c++17 features" end:"1563712026" entry:"1562446839" modified:"1563712026" status:"completed" uuid:"b135fe53-2a6d-4f19-82a2-70745e8ab95d"]
