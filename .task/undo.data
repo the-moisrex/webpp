@@ -99,3 +99,15 @@ new [description:"write tests for uri" entry:"1567254954" modified:"1567254954" 
 time 1567256219
 new [description:"write string conversions for string_view" entry:"1567256219" modified:"1567256219" status:"pending" uuid:"2f0f82cf-b400-4987-aa8c-2a1ea6e90ff7"]
 ---
+time 1567257394
+old [description:"extract path" entry:"1567254921" modified:"1567254921" project:"net" status:"pending" uuid:"f8a9427c-d743-4583-8e59-6e27a217f6db"]
+new [description:"extract path" end:"1567257392" entry:"1567254921" modified:"1567257394" project:"net" status:"completed" uuid:"f8a9427c-d743-4583-8e59-6e27a217f6db"]
+---
+time 1567257394
+old [description:"extract queries" entry:"1567254932" modified:"1567254932" project:"net" status:"pending" uuid:"5873280d-46b0-42f0-a92c-4807952c3898"]
+new [description:"extract queries" end:"1567257394" entry:"1567254932" modified:"1567257394" project:"net" status:"completed" uuid:"5873280d-46b0-42f0-a92c-4807952c3898"]
+---
+time 1567257394
+old [description:"extract segments" entry:"1567254943" modified:"1567254943" project:"net" status:"pending" uuid:"64e83144-c45d-4a51-9776-efdda08809ce"]
+new [description:"extract segments" end:"1567257394" entry:"1567254943" modified:"1567257394" project:"net" status:"completed" uuid:"64e83144-c45d-4a51-9776-efdda08809ce"]
+---
