@@ -111,3 +111,9 @@ time 1567257394
 old [description:"extract segments" entry:"1567254943" modified:"1567254943" project:"net" status:"pending" uuid:"64e83144-c45d-4a51-9776-efdda08809ce"]
 new [description:"extract segments" end:"1567257394" entry:"1567254943" modified:"1567257394" project:"net" status:"completed" uuid:"64e83144-c45d-4a51-9776-efdda08809ce"]
 ---
+time 1567260685
+new [description:"watch tutorial named Pluralsight Web Performance" entry:"1567260685" modified:"1567260685" status:"pending" uuid:"cd287d23-e515-486a-9ea9-ef97fe5c0c73"]
+---
+time 1567260811
+new [description:"watch WebRTC tutorials" entry:"1567260811" modified:"1567260811" project:"webrtc" status:"pending" uuid:"97244640-b8a5-4fac-851f-96ce8253745b"]
+---

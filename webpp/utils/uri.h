@@ -26,7 +26,7 @@ namespace webpp {
                          charset_t<N> const& allowed_chars) noexcept {
 
         int digits_left = 2;
-        char decoded_char = 0;
+        unsigned char decoded_char = 0;
         bool decoding = false;
         std::string res;
         for (const auto c : encoded_str) {
@@ -50,7 +50,7 @@ namespace webpp {
             } else if (c == '%') {
                 decoding = true;
 
-                // reseting:
+                // resetting:
                 digits_left = 2;
                 decoded_char = 0;
             } else {
@@ -184,55 +184,49 @@ namespace webpp {
         static constexpr auto REG_NAME_NOT_PCT_ENCODED =
             webpp::charset(UNRESERVED, SUB_DELIMS);
 
+        template <typename T>
         struct uri_segments {
 
             /**
              * This is the "scheme" element of the URI.
              */
-            std::string scheme;
+            T scheme;
 
             /**
              * This is the "UserInfo" element of the URI.
              */
-            std::string user_info;
+            T user_info;
 
             /**
              * This is the "host" element of the URI.
              */
-            std::string host;
+            T host;
 
             /**
              * This is the "path" element of the URI,
              * as a sequence of segments.
              */
-            std::vector<std::string> path;
+            T path;
 
             /**
              * This is the "query" element of the URI,
              * if it has one.
              */
-            std::string query;
+            T query;
 
             /**
              * This is the "fragment" element of the URI,
              * if it has one.
              */
-            std::string fragment;
+            T fragment;
 
             /**
              * This is the port number element of the URI.
              */
-            uint16_t port;
-
-            bool has_scheme = false;
-            bool has_user_info = false;
-            bool has_host = false;
-            bool has_query = false;
-            bool has_fragment = false;
-            bool has_port = false;
+            T port;
         };
 
-        using uri_data_t = std::variant<std::string_view, uri_segments>;
+        using uri_data_t = std::variant<std::string_view, uri_segments<std::string_view>, uri_segments<std::string>>;
 
       private:
         uri_data_t data;
@@ -243,7 +237,7 @@ namespace webpp {
 
         /**
          * @brief parse from string, it will trim the spaces for generality too
-         * @param string_view reperesentaion of a URI
+         * @param string_view URI string
          */
         constexpr uri(std::string_view const& u) noexcept
             : data(trim_copy(u)) {}
@@ -258,11 +252,12 @@ namespace webpp {
         constexpr bool operator==(const uri& u) const noexcept;
         constexpr bool operator!=(const uri& u) const noexcept;
 
+        template <typename T>
         uri& parse() {
             if (std::holds_alternative<std::string_view>(data)) {
                 auto _data = std::get<std::string_view>(data);
 
-                uri_segments segs{};
+                uri_segments<T> segs{};
 
                 std::size_t path_start = std::string_view::npos;
                 std::size_t port_start = std::string_view::npos;
@@ -372,10 +367,35 @@ namespace webpp {
                         _data.find_first_not_of(DIGIT.string_view());
                     auto port = _data.substr(colon + 1, port_end);
                     if (is::digit(port)) {
-                        segs.port = atoi(port);
+                        segs.port = port;
                         _data.remove_prefix(port_end);
                     }
                 }
+
+
+                // extracting path
+                if (_data.starts_with('/')) {
+                    // it's the query_start actually
+                    auto path_end = _data.find('?');
+                    if (path_end == std::string_view::npos)
+                        path_end = _data.find('#'); // it's hash start
+
+                    segs.path = _data.substr(0, path_end);
+                    _data.remove_prefix(path_end);
+                }
+
+                // extracting queries
+                if (_data.starts_with('?')) {
+                    auto hash_start = _data.find('#');
+                    segs.query = _data.substr(1, hash_start);
+                    _data.remove_prefix(hash_start);
+                }
+
+                // extracting hash segment
+                if (_data.starts_with('#')) {
+                    segs.fragment = _data;
+                }
+
 
                 data = segs;
             }
@@ -409,8 +429,6 @@ namespace webpp {
          * @return get scheme
          */
         constexpr std::optional<std::string_view> scheme() const noexcept {
-
-            return std::nullopt;
         }
 
         /**
