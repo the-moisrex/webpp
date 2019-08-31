@@ -10,6 +10,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -229,35 +230,19 @@ namespace webpp {
         using uri_data_t = std::variant<std::string_view, uri_segments<std::string_view>, uri_segments<std::string>>;
 
       private:
-        uri_data_t data;
+        mutable uri_data_t data;
 
-      public:
-        constexpr uri() noexcept = default;
-        ~uri() noexcept = default;
+        void parse(int index) const noexcept {
 
-        /**
-         * @brief parse from string, it will trim the spaces for generality too
-         * @param string_view URI string
-         */
-        constexpr uri(std::string_view const& u) noexcept
-            : data(trim_copy(u)) {}
+            auto data_index = data.index();
+            if (index == data_index)
+                return;
 
-        constexpr uri(uri const& u) noexcept = default;
-        constexpr uri(uri&& u) noexcept = default;
-
-        // assignment operators
-        constexpr uri& operator=(uri const& u) noexcept = default;
-        constexpr uri& operator=(uri&& u) noexcept = default;
-
-        constexpr bool operator==(const uri& u) const noexcept;
-        constexpr bool operator!=(const uri& u) const noexcept;
-
-        template <typename T>
-        uri& parse() {
-            if (std::holds_alternative<std::string_view>(data)) {
+            // holds string_view but we need uri_segment<string_view> or uri_segment<string>
+            if (index >= 1 && data_index == 0) {
                 auto _data = std::get<std::string_view>(data);
 
-                uri_segments<T> segs{};
+                uri_segments<std::string_view> segs{};
 
                 std::size_t path_start = std::string_view::npos;
                 std::size_t port_start = std::string_view::npos;
@@ -399,7 +384,57 @@ namespace webpp {
 
                 data = segs;
             }
+
+
+            // holds uri_segments<string_view> but we need uri_segment<string>
+            if (index >= 2 && data_index == 1) {
+                uri_segments<std::string> segs;
+                auto _data = std::get<uri_segments<std::string_view>>(data);
+                segs.scheme = _data.scheme;
+                segs.host = _data.host;
+                segs.fragment = _data.fragment;
+                segs.path = _data.path;
+                segs.user_info = _data.user_info;
+                segs.port = _data.port;
+                segs.query = _data.query;
+                data = std::move(segs);
+            }
         }
+
+
+        template <typename ReturnType, typename D>
+        std::optional<ReturnType> get_value(std::function<ReturnType(uri_segments<D> const&)> const &func) const noexcept {
+            constexpr auto index = std::is_same<ReturnType, uri_segments<std::string_view>>::value ? 1 : (std::is_same<ReturnType, uri_segments<std::string>>::value ? 2 : 0);
+            parse(index);
+            if (std::holds_alternative<std::string_view>(data))
+                return std::nullopt;
+            if constexpr (std::is_same<ReturnType, std::string_view>::value && std::is_same<D, std::string>::value) {
+                auto const res = func(data);
+                return res.empty() ? std::nullopt : std::make_optional(std::move(res));
+            }
+        }
+
+      public:
+        constexpr uri() noexcept = default;
+        ~uri() noexcept = default;
+
+        /**
+         * @brief parse from string, it will trim the spaces for generality too
+         * @param string_view URI string
+         */
+        constexpr uri(std::string_view const& u) noexcept
+            : data(trim_copy(u)) {}
+
+        constexpr uri(uri const& u) noexcept = default;
+        constexpr uri(uri&& u) noexcept = default;
+
+        // assignment operators
+        constexpr uri& operator=(uri const& u) noexcept = default;
+        constexpr uri& operator=(uri&& u) noexcept = default;
+
+        constexpr bool operator==(const uri& u) const noexcept;
+        constexpr bool operator!=(const uri& u) const noexcept;
+
 
         /**
          * @brief this function is the same as "encodeURI" in javascript
@@ -422,13 +457,16 @@ namespace webpp {
         /**
          * @brief check if the specified uri has a scheme or not
          */
-        constexpr bool has_scheme() const noexcept { return scheme(); }
+        constexpr bool has_scheme() const noexcept { return scheme().has_value(); }
 
         /**
          * @brief scheme
          * @return get scheme
          */
         constexpr std::optional<std::string_view> scheme() const noexcept {
+            return get_value<std::string_view, std::string_view>([](auto const & _data) {
+                return _data.scheme;
+            });
         }
 
         /**
