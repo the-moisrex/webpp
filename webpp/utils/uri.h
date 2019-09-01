@@ -713,6 +713,15 @@ namespace webpp {
         }
 
         /**
+         * @brief clear host part from URI
+         * @return
+         */
+        uri& clear_host() noexcept {
+            set_value([](auto& _data) { _data.host = ""; });
+            return *this;
+        }
+
+        /**
          * @brief port number of the uri;
          * @return port number
          * @default 80

@@ -21,24 +21,6 @@
 #include <vector>
 
 using namespace webpp;
-
-/**
- * This is the character set corresponds to the "pchar" syntax
- * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
- * leaving out "pct-encoded".
- */
-constexpr auto PCHAR_NOT_PCT_ENCODED =
-    webpp::charset(UNRESERVED, SUB_DELIMS, webpp::charset_t<2>{{':', '@'}});
-
-/**
- * This is the character set corresponds to the "query" syntax
- * and the "fragment" syntax
- * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
- * leaving out "pct-encoded".
- */
-constexpr auto QUERY_OR_FRAGMENT_NOT_PCT_ENCODED =
-    webpp::charset(PCHAR_NOT_PCT_ENCODED, webpp::charset_t<2>{{'/', '?'}});
-
 /**
  * This is the character set almost corresponds to the "query" syntax
  * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
