@@ -3,6 +3,7 @@
 
 #include "../std/string_view.h"
 #include "../validators/validators.h"
+#include "casts.h"
 #include "charset.h"
 #include "ip.h"
 #include "strings.h"
@@ -15,6 +16,17 @@
 #include <vector>
 
 namespace webpp {
+
+    namespace is {
+        /**
+         * @brief check if scheme is correct or not
+         * @param _scheme
+         * @return
+         */
+        constexpr bool scheme(std::string_view const& _scheme) noexcept {
+            return ALPHA.contains(_scheme);
+        };
+    } // namespace is
 
     /**
      * @brief this function will decode parts of uri
@@ -46,7 +58,7 @@ namespace webpp {
 
                 if (digits_left == 0) {
                     decoding = false;
-                    res.push_back(decoded_char);
+                    res.push_back(static_cast<char>(decoded_char));
                 }
             } else if (c == '%') {
                 decoding = true;
@@ -227,18 +239,21 @@ namespace webpp {
             T port;
         };
 
-        using uri_data_t = std::variant<std::string_view, uri_segments<std::string_view>, uri_segments<std::string>>;
+        using uri_data_t =
+            std::variant<std::string_view, uri_segments<std::string_view>,
+                         uri_segments<std::string>>;
 
       private:
         mutable uri_data_t data;
 
-        void parse(int index) const noexcept {
+        void parse(std::size_t index) const noexcept {
 
             auto data_index = data.index();
             if (index == data_index)
                 return;
 
-            // holds string_view but we need uri_segment<string_view> or uri_segment<string>
+            // holds string_view but we need uri_segment<string_view> or
+            // uri_segment<string>
             if (index >= 1 && data_index == 0) {
                 auto _data = std::get<std::string_view>(data);
 
@@ -357,7 +372,6 @@ namespace webpp {
                     }
                 }
 
-
                 // extracting path
                 if (_data.starts_with('/')) {
                     // it's the query_start actually
@@ -381,10 +395,8 @@ namespace webpp {
                     segs.fragment = _data;
                 }
 
-
                 data = segs;
             }
-
 
             // holds uri_segments<string_view> but we need uri_segment<string>
             if (index >= 2 && data_index == 1) {
@@ -401,16 +413,31 @@ namespace webpp {
             }
         }
 
-
-        template <typename ReturnType, typename D>
-        std::optional<ReturnType> get_value(std::function<ReturnType(uri_segments<D> const&)> const &func) const noexcept {
-            constexpr auto index = std::is_same<ReturnType, uri_segments<std::string_view>>::value ? 1 : (std::is_same<ReturnType, uri_segments<std::string>>::value ? 2 : 0);
+        template <typename ReturnType>
+        std::optional<ReturnType> get_value(
+            std::function<ReturnType(uri_segments<ReturnType> const&)> const&
+                func) const noexcept {
+            constexpr auto index =
+                std::is_same<ReturnType, uri_segments<std::string_view>>::value
+                    ? 1
+                    : (std::is_same<ReturnType,
+                                    uri_segments<std::string>>::value
+                           ? 2
+                           : 0);
             parse(index);
-            if (std::holds_alternative<std::string_view>(data))
-                return std::nullopt;
-            if constexpr (std::is_same<ReturnType, std::string_view>::value && std::is_same<D, std::string>::value) {
-                auto const res = func(data);
-                return res.empty() ? std::nullopt : std::make_optional(std::move(res));
+            if (std::holds_alternative<uri_segments<ReturnType>>(data)) {
+                ReturnType res = func(std::get<uri_segments<ReturnType>>(data));
+                return res.empty() ? std::nullopt
+                                   : std::make_optional(std::move(res));
+            }
+            return std::nullopt;
+        }
+
+        void set_value(std::function<void(uri_segments<std::string>&)> const&
+                           func) noexcept {
+            parse(2);
+            if (auto _data = std::get_if<uri_segments<std::string>>(&data)) {
+                func(*_data);
             }
         }
 
@@ -435,7 +462,6 @@ namespace webpp {
         constexpr bool operator==(const uri& u) const noexcept;
         constexpr bool operator!=(const uri& u) const noexcept;
 
-
         /**
          * @brief this function is the same as "encodeURI" in javascript
          */
@@ -457,16 +483,17 @@ namespace webpp {
         /**
          * @brief check if the specified uri has a scheme or not
          */
-        constexpr bool has_scheme() const noexcept { return scheme().has_value(); }
+        constexpr bool has_scheme() const noexcept {
+            return scheme().has_value();
+        }
 
         /**
          * @brief scheme
          * @return get scheme
          */
         constexpr std::optional<std::string_view> scheme() const noexcept {
-            return get_value<std::string_view, std::string_view>([](auto const & _data) {
-                return _data.scheme;
-            });
+            return get_value<std::string_view>(
+                [](auto const& _data) { return _data.scheme; });
         }
 
         /**
@@ -476,41 +503,42 @@ namespace webpp {
          * @return
          */
         uri& scheme(std::string_view const& _scheme) {
-            check_modifiable();
-            if (auto slashes_point = data.find("//");
-                std::string::npos != slashes_point) {
-                data = std::string(_scheme.substr(0, _scheme.find(':'))) + ":" +
-                       data.substr(slashes_point);
-            } else {
-                // TODO: you still could do something here other than throwing
-                // stuff to the user's face
+            if (!is::scheme(_scheme))
                 throw std::invalid_argument(
-                    "URI has an invalid syntax; thus we're unable to set the "
-                    "specified scheme.");
-            }
+                    "The specified scheme is not valid");
+
+            set_value([&](auto& _data) { _data.scheme = _scheme; });
+            return *this;
+        }
+
+        /**
+         * @brief clear scheme from uri
+         * @return
+         */
+        uri& clear_scheme() noexcept {
+            set_value([](auto& _data) { _data.scheme = ""; });
             return *this;
         }
 
         /**
          * @brief checks if the uri has user info or not
          */
-        constexpr bool has_user_info() const noexcept { return user_info(); }
+        constexpr bool has_user_info() const noexcept {
+            return user_info().has_value();
+        }
 
         /**
          * @brief get the user info or an empty value
          */
         constexpr std::optional<std::string_view> user_info() const noexcept {
-            std::string_view _data = data;
-
-            // there's no user info in the uri
-            return std::nullopt;
+            return get_value<std::string_view>(
+                [](auto const& _data) { return _data.user_info; });
         }
 
         /**
          * @brief decode user_info and return it as a string
          */
         std::optional<std::string> user_info_decoded() const noexcept {
-
             auto info = user_info();
             if (!info)
                 return std::nullopt;
@@ -519,41 +547,17 @@ namespace webpp {
                                         USER_INFO_NOT_PCT_ENCODED);
         }
 
+        std::string user_info_decoded_str() const noexcept {
+            return user_info_decoded().value_or("");
+        }
+
         /**
          * @brief set the user info if it's possible
          */
-        uri& user_info(std::string_view const& info) {
-            check_modifiable();
-            std::string_view _data = data;
-            if (auto _user_info = user_info()) {
-                // we have already know where it is and we only have to replace
-                // it
-
-                auto user_info_start =
-                    std::distance(data.cbegin().base(), _user_info.data());
-                auto user_info_end =
-                    std::distance(data.cbegin().base(), _user_info.data());
-                data = _data.substr(0, user_info_start) + info +
-                       _data.substr(user_info_end);
-            } else {
-
-                // there's no user info so we have to find the place and it
-                // ourselves
-
-                if (auto slashes_point = _data.find("//");
-                    slashes_point != std::string_view::npos) {
-                    data =
-                        data.substr(0, slashes_point + 2) +
-                        encode_uri_component(info, USER_INFO_NOT_PCT_ENCODED) +
-                        "@" + _data.substr(slashes_point + 2);
-                } else {
-                    // TODO: you still can do some stuff here other than
-                    // throwing stuff at the users' face
-                    throw std::invalid_argument(
-                        "The specified URI is not in a correct shape so we're "
-                        "no able to add user info to it.");
-                }
-            }
+        uri& user_info(std::string_view const& info) noexcept {
+            auto encoded_info =
+                encode_uri_component(info, USER_INFO_NOT_PCT_ENCODED);
+            set_value([&](auto& _data) { _data.user_info = encoded_info; });
             return *this;
         }
 
@@ -562,51 +566,50 @@ namespace webpp {
          * @return
          */
         uri& clear_user_info() noexcept {
-            check_modifiable();
-            if (auto _user_info = user_info()) {
-
-                auto user_info_start =
-                    std::distance(data.cbegin().base(), _user_info.data());
-                auto user_info_end =
-                    std::distance(data.cbegin().base(), _user_info.data());
-
-                // removing the user_info from the data + the "@" after it
-                data.erase(std::remove(data.begin() + user_info_start,
-                                       data.begin() + user_info_end + 1),
-                           data.end());
-            }
+            set_value([](auto& _data) { _data.user_info = ""; });
+            return *this;
         }
 
         /**
          * @brief this function will return a string_view of the host and it's
          * port if exists
          */
-        constexpr std::string_view host_port_view() const noexcept {
-            std::string_view _data = data; // host and the rest of uri
-            if (auto authority_part = _data.find("//");
-                authority_part != std::string_view::npos) {
+        //        constexpr std::string_view host_port_view() const noexcept {
+        //            std::string_view _data = data; // host and the rest of uri
+        //            if (auto authority_part = _data.find("//");
+        //                authority_part != std::string_view::npos) {
 
-                // remove // from the string
-                _data.remove_prefix(authority_part + 2);
+        //                // remove // from the string
+        //                _data.remove_prefix(authority_part + 2);
 
-                if (auto _path = _data.find('/');
-                    _path != std::string_view::npos) {
-                    // removing the path from the string
-                    _data.remove_suffix(_data.size() - _path);
-                }
+        //                if (auto _path = _data.find('/');
+        //                    _path != std::string_view::npos) {
+        //                    // removing the path from the string
+        //                    _data.remove_suffix(_data.size() - _path);
+        //                }
 
-                if (auto _user_info_point = _data.find('@');
-                    _user_info_point != std::string_view::npos) {
-                    // we know where the user info is placed, so we use that as
-                    // a starting point for the rest of search
-                    _data.remove_prefix(_user_info_point + 1);
-                }
+        //                if (auto _user_info_point = _data.find('@');
+        //                    _user_info_point != std::string_view::npos) {
+        //                    // we know where the user info is placed, so we
+        //                    use that as
+        //                    // a starting point for the rest of search
+        //                    _data.remove_prefix(_user_info_point + 1);
+        //                }
 
-                return _data;
-            }
+        //                return _data;
+        //            }
 
-            // it's a path and doesn't have a host
-            return "";
+        //            // it's a path and doesn't have a host
+        //            return "";
+        //        }
+
+        /**
+         * @brief return host as an optional<string_view>
+         * @return optional<string_view>
+         */
+        constexpr std::optional<std::string_view> host_string() const noexcept {
+            return get_value<std::string_view>(
+                [](auto const& _data) { return _data.host; });
         }
 
         /**
@@ -616,12 +619,16 @@ namespace webpp {
          * doesn't include invalid symtax.
          * @return
          */
-        constexpr std::variant<const_ipv4, const_ipv6, std::string_view>
+        constexpr std::optional<std::variant<ipv4, ipv6, std::string_view>>
         host() const noexcept {
-            auto _data = host_port_view();
-
-            if (_data == "")
-                return "";
+            auto host_string_view = get_value<std::string_view>(
+                [](auto const& _data) { return _data.host; });
+            if (!host_string_view)
+                return std::nullopt;
+            if (is::ipv4(host_string_view.value()))
+                return std::make_optional(ipv4(host_string_view.value()));
+            if (is::ipv6(host_string_view.value()))
+                return std::make_optional(ipv6(host_string_view.value()));
         }
 
         /**
@@ -631,28 +638,23 @@ namespace webpp {
          * @return string/ipv4/ipv6
          * @default empty string
          */
-        std::variant<ipv4, ipv6, std::string> host_decoded() const noexcept {
+        std::optional<std::variant<ipv4, ipv6, std::string>>
+        host_decoded() const noexcept {
             const auto the_host = host();
-            return std::visit([](auto&& the_host) -> decltype(auto) {
-                using the_host_t = std::decay_t<decltype(the_host)>;
-                if constexpr (std::is_same<the_host_t,
-                                           std::string_view>::value) {
-                    auto hostname_decoded = decode_uri_component(
-                        the_host, REG_NAME_NOT_PCT_ENCODED);
-                    return hostname_decoded.value_or("");
+            if (!the_host)
+                return std::nullopt;
 
-                } else if constexpr (std::is_same<the_host_t,
-                                                  const_ipv4>::value) {
-                    // convert to non-const ipv4
-                    return ipv4(the_host);
-                } else if constexpr (std::is_same<the_host_t,
-                                                  const_ipv6>::value) {
-                    // convert to non-const ipv6
-                    return ipv6(the_host);
-                } else {
-                    return "";
-                }
-            });
+            if (std::holds_alternative<std::string>(the_host.value())) {
+                auto string_host =
+                    std::string(std::get<std::string_view>(the_host.value()));
+                return decode_uri_component(string_host,
+                                            REG_NAME_NOT_PCT_ENCODED);
+            }
+
+            if (std::holds_alternative<ipv4>(the_host.value()))
+                return std::make_optional(std::get<ipv4>(the_host.value()));
+
+            return std::make_optional(std::get<ipv6>(the_host.value()));
         }
 
         /**
@@ -662,25 +664,13 @@ namespace webpp {
          * @return string
          */
         std::string host_decoded_str() const noexcept {
-            const auto the_host = host();
-            return visit([](auto&& the_host) -> decltype(auto) {
-                using the_host_t = std::decay_t<decltype(the_host)>;
-                if constexpr (std::is_same<the_host_t, std::string>(the_host)) {
-                    if (auto hostname_decoded = decode_uri_component(
-                            the_host, REG_NAME_NOT_PCT_ENCODED)) {
-                        return hostname_decoded;
-                    }
-                    return ""; // not a valid host
-                } else if constexpr (std::is_same<the_host_t, const_ipv4>(
-                                         the_host)) {
-                    return the_host.str();
-                } else if constexpr (std::is_same<the_host_t, const_ipv6>(
-                                         the_host)) {
-                    return the_host.str();
-                } else {
-                    return ""; // there's no host?!
-                }
-            });
+            if (auto _host = get_value<std::string>(
+                    [](auto const& _data) { return _data.host; })) {
+                if (auto decoded = decode_uri_component(
+                        _host.value(), REG_NAME_NOT_PCT_ENCODED))
+                    return decoded.value();
+            }
+            return "";
         }
 
         /**
@@ -689,52 +679,19 @@ namespace webpp {
          * @return true if it find a hostname/ip in the uri
          */
         constexpr bool has_host() const noexcept {
-            if (auto h = host(); std::holds_alternative<std::string_view>(h)) {
-                return h == "";
-            }
-            return true;
+            return host_string().has_value();
         }
 
         /**
          * @brief set the hostname/ip in the uri if possible
          */
         uri& host(std::string_view const& new_host) noexcept {
-
-            auto new_host_encoded =
-                encode_uri_component(new_host, REG_NAME_NOT_PCT_ENCODED);
-
-            std::size_t host_start, host_end;
-
-            if (auto _host = host_port_view(); _host != "") {
-                // we know where it is, let's just replace it
-                host_start = std::distance(data.cbegin().base(), _host.data());
-                auto _port_start = _host.rfind(':');
-                host_end = std::distance(
-                    data.cbegin().base(),
-                    _host.data() + (_port_start == std::string_view::npos
-                                        ? 0
-                                        : _port_start));
-
-            } else {
-                // check if we have double slash scheme
-
-                std::string_view _data = data;
-                auto const _path = path();
-                auto path_start =
-                    _path != ""
-                        ? std::string_view::npos
-                        : std::distance(data.cbegin().base(), _path.data());
-                if (auto _s = _data.find("//", 0, path_start);
-                    _s != std::string_view::npos) {
-                    host_start = host_end = _s + 2;
-                } else {
-                    // there's no double slashes, so we insert one
-                    data = "//" + data;
-                    host_start = host_end = 2;
-                }
-            }
-            data = data.substr(0, host_start) + new_host_encoded +
-                   data.substr(host_end);
+            set_value([&](auto& _data) {
+                auto new_host_encoded =
+                    encode_uri_component(new_host, REG_NAME_NOT_PCT_ENCODED);
+                _data.host = new_host_encoded;
+            });
+            return *this;
         }
 
         /**
@@ -742,53 +699,33 @@ namespace webpp {
          * @return port number
          * @default 80
          */
-        constexpr unsigned int port() const noexcept {
-            if (auto host_port = host_port_view(); host_port != "") {
-                if (auto colon = host_port.rfind(':');
-                    colon != std::string_view::npos) {
-                    auto port = host_port.substr(colon + 1);
-                    if (is::digit(port))
-                        return atoi(port);
-                }
+        constexpr uint16_t port() const noexcept {
+            if (auto port_str = get_value<std::string_view>(
+                    [](auto const& _data) { return _data.port; })) {
+                return static_cast<uint16_t>(to_uint(port_str.value()));
             }
             return 80;
         }
 
+        /**
+         * @brief checks if the uri has explicitly specified a port number or
+         * not
+         * @return bool
+         */
         constexpr bool has_port() const noexcept {
-            if (auto host_port = host_port_view(); host_port != "") {
-                if (auto colon = host_port.rfind(':');
-                    colon != std::string_view::npos) {
-                    return is::digit(host_port.substr(colon + 1));
-                }
-            }
-            return false;
+            return get_value<std::string_view>(
+                       [](auto const& _data) { return _data.port; })
+                .has_value();
         }
-        uri& port(unsigned int new_port) {
-            if (auto host_port = host_port_view(); host_port != "") {
-                if (auto colon = host_port.rfind(':');
-                    colon != std::string_view::npos) {
-                    // now we just have to replace the port number
-                    auto port_start = std::distance(data.cbegin().base(),
-                                                    host_port.cbegin().base()) +
-                                      colon + 1;
-                    auto port_end = std::distance(data.cbegin().base(),
-                                                  host_port.cend().base());
-                    data = data.substr(0, port_start + 1) +
-                           std::to_string(new_port) + data.substr(port_end);
-                } else {
-                    // now we have to create the port ourselves
-                    auto port_start = std::distance(data.cbegin().base(),
-                                                    host_port.cend().base());
-                    data = data.substr(0, port_start) + ':' +
-                           std::to_string(new_port) + data.substr(port_start);
-                }
-            } else {
-                // TODO: I think we still can do something here other than
-                // throwing stuff at the users' face
-                throw std::invalid_argument(
-                    "The URI doesn't seem to have a host; so adding port "
-                    "number is not possible.");
-            }
+
+        /**
+         * @brief set port
+         * @param new_port
+         * @return
+         */
+        uri& port(uint16_t new_port) noexcept {
+            set_value(
+                [&](auto& _data) { _data.port = std::to_string(new_port); });
             return *this;
         }
 
@@ -797,20 +734,17 @@ namespace webpp {
          * @return self
          */
         uri& clear_port() noexcept {
-            if (auto host_port = host_port_view(); host_port != "") {
-                if (auto colon = host_port.rfind(':');
-                    colon != std::string_view::npos) {
-                    // now we just have to replace the port number
-                    auto port_start = std::distance(data.cbegin().base(),
-                                                    host_port.cbegin().base()) +
-                                      colon;
-                    auto port_end = std::distance(data.cbegin().base(),
-                                                  host_port.cend().base());
-                    data =
-                        data.substr(0, port_start + 1) + data.substr(port_end);
-                }
-            }
+            set_value([&](auto& _data) { _data.port = ""; });
             return *this;
+        }
+
+        /**
+         * @brief get path in non-decoded, string format
+         * @return
+         */
+        constexpr std::optional<std::string_view> path() const noexcept {
+            return get_value<std::string_view>(
+                [](auto const& _data) { return _data.path; });
         }
 
         /**
@@ -822,7 +756,12 @@ namespace webpp {
          * container, it will reutrn the whole path.
          */
         template <typename Container = std::vector<std::string_view>>
-        constexpr Container path() const noexcept;
+        constexpr Container path() const noexcept {
+            if (auto path_str = path()) {
+                // TODO
+            }
+            return {}; // empty path
+        }
 
         uri& path(std::string_view const&) noexcept;
 
