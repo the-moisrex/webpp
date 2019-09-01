@@ -197,6 +197,24 @@ namespace webpp {
         static constexpr auto REG_NAME_NOT_PCT_ENCODED =
             webpp::charset(UNRESERVED, SUB_DELIMS);
 
+        /**
+         * This is the character set corresponds to the "pchar" syntax
+         * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
+         * leaving out "pct-encoded".
+         */
+        static constexpr auto PCHAR_NOT_PCT_ENCODED = webpp::charset(
+            UNRESERVED, SUB_DELIMS, webpp::charset_t<2>{{':', '@'}});
+
+        /**
+         * This is the character set corresponds to the "query" syntax
+         * and the "fragment" syntax
+         * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
+         * leaving out "pct-encoded".
+         */
+        static constexpr auto QUERY_OR_FRAGMENT_NOT_PCT_ENCODED =
+            webpp::charset(PCHAR_NOT_PCT_ENCODED,
+                           webpp::charset_t<2>{{'/', '?'}});
+
         template <typename T>
         struct uri_segments {
 
@@ -748,6 +766,18 @@ namespace webpp {
         }
 
         /**
+         * @brief decoded path as a string
+         * @return
+         */
+        std::optional<std::string> path_decoded() const noexcept {
+            if (auto _path = path()) {
+                return decode_uri_component(
+                    _path.value(), charset(PCHAR_NOT_PCT_ENCODED, '/'));
+            }
+            return std::nullopt;
+        }
+
+        /**
          * @brief get the path as the specified type
          * @details this method will returns a vector/list/... of
          * string/string_views
@@ -756,21 +786,83 @@ namespace webpp {
          * container, it will reutrn the whole path.
          */
         template <typename Container = std::vector<std::string_view>>
-        constexpr Container path() const noexcept {
+        constexpr Container path_structured() const noexcept {
             if (auto path_str = path()) {
-                // TODO
+                Container container;
+                auto _path = path_str.value();
+                std::size_t slash_start = 0;
+                do {
+                    slash_start = _path.find('/');
+                    container.push_back(_path.substr(0, slash_start));
+                    _path.remove_prefix(slash_start + 1);
+                } while (!_path.empty());
+                return container;
             }
             return {}; // empty path
         }
 
-        uri& path(std::string_view const&) noexcept;
+        /**
+         * @brief this one will return a container containing decoded strings of
+         * the path.
+         * @attention do not use string_view or any alternatives for this method
+         * as this method should own its data.
+         */
+        template <typename Container = std::vector<std::string>>
+        Container path_structured_decoded() const noexcept {
+            Container container;
+            for (auto const& slug : path_structured()) {
+                container.push_back(
+                    decode_uri_component(slug, PCHAR_NOT_PCT_ENCODED));
+            }
+            return container;
+        }
 
+        /**
+         * @brief set the path for the uri
+         * @param _path
+         * @return
+         */
+        uri& path(std::string_view const& _path) noexcept {
+            set_value([&](auto& _data) {
+                auto encoded_path = encode_uri_component(
+                    _path, charset(PCHAR_NOT_PCT_ENCODED, '/'));
+                _data.path = encoded_path;
+            });
+            return *this;
+        }
+
+        /**
+         * @brief set path
+         */
         template <typename Container>
-        uri& path(const Container&) noexcept;
+        uri& path(const Container& _path) noexcept {
+            std::ostringstream joined_path;
+            copy(_path.cbegin(), _path.cend() - 1,
+                 std::ostream_iterator<std::string>(joined_path, "/"));
+            joined_path << *_path.crbegin();
+            return path(joined_path);
+        }
 
-        constexpr bool has_query() const noexcept;
-        constexpr std::string_view query() const noexcept;
-        uri& query(std::string_view const&) noexcept;
+        /**
+         * @brief checks if the uri has query or not
+         * @return
+         */
+        constexpr bool has_query() const noexcept {
+            return query().has_value();
+        }
+
+        constexpr std::optional<std::string_view> query() const noexcept {
+            return get_value<std::string_view>(
+                [](auto const& _data) { return _data.query; });
+        }
+
+        uri& query(std::string_view const& _query) noexcept {
+            set_value([&](auto& _data) {
+                _data.query = encode_uri_component(
+                    _query, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
+            });
+            return *this;
+        }
 
         /**
          * @details This method applies the "remove_dot_segments" routine talked
