@@ -1077,32 +1077,6 @@ namespace webpp {
         Uri Resolve(const Uri& relativeReference) const;
 
         /**
-         * This method removes the query element from the URI.
-         */
-        void ClearQuery();
-
-        /**
-         * This method sets the query element of the URI.
-         *
-         * @param[in] query
-         *     This is the query to set for the URI.
-         */
-        void SetQuery(const std::string& query);
-
-        /**
-         * This method removes the fragment element from the URI.
-         */
-        void ClearFragment();
-
-        /**
-         * This method sets the fragment element of the URI.
-         *
-         * @param[in] fragment
-         *     This is the fragment to set for the URI.
-         */
-        void SetFragment(const std::string& fragment);
-
-        /**
          * This method constructs and returns the string
          * rendering of the URI, according to the rules
          * in RFC 3986 (https://tools.ietf.org/html/rfc3986).
