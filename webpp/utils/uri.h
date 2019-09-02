@@ -477,8 +477,23 @@ namespace webpp {
         constexpr uri& operator=(uri const& u) noexcept = default;
         constexpr uri& operator=(uri&& u) noexcept = default;
 
-        constexpr bool operator==(const uri& u) const noexcept;
-        constexpr bool operator!=(const uri& u) const noexcept;
+        constexpr bool operator==(const uri& other) const noexcept {
+
+            // comparing strings directly so we don't have to parse them first
+            if (std::holds_alternative<std::string_view>(data) &&
+                std::holds_alternative<std::string_view>(other.data)) {
+                return std::get<std::string_view>(data) ==
+                       std::get<std::string_view>(other.data);
+            }
+            return scheme() == other.scheme() &&
+                   user_info() == other.user_info() &&
+                   host_string() == other.host_string() &&
+                   port() == other.port() && path() == other.path() &&
+                   query() == other.query() && fragment() == other.fragment();
+        }
+        constexpr bool operator!=(const uri& other) const noexcept {
+            return !operator==(other);
+        }
 
         /**
          * @brief this function is the same as "encodeURI" in javascript
