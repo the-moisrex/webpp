@@ -117,3 +117,6 @@ new [description:"watch tutorial named Pluralsight Web Performance" entry:"15672
 time 1567260811
 new [description:"watch WebRTC tutorials" entry:"1567260811" modified:"1567260811" project:"webrtc" status:"pending" uuid:"97244640-b8a5-4fac-851f-96ce8253745b"]
 ---
+time 1567456538
+new [description:"implement wsgi" entry:"1567456538" modified:"1567456538" project:"interfaces" status:"pending" uuid:"50dff47e-c030-4fb4-b333-693b9af714d6"]
+---
