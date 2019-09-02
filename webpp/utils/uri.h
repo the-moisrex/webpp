@@ -589,39 +589,6 @@ namespace webpp {
         }
 
         /**
-         * @brief this function will return a string_view of the host and it's
-         * port if exists
-         */
-        //        constexpr std::string_view host_port_view() const noexcept {
-        //            std::string_view _data = data; // host and the rest of uri
-        //            if (auto authority_part = _data.find("//");
-        //                authority_part != std::string_view::npos) {
-
-        //                // remove // from the string
-        //                _data.remove_prefix(authority_part + 2);
-
-        //                if (auto _path = _data.find('/');
-        //                    _path != std::string_view::npos) {
-        //                    // removing the path from the string
-        //                    _data.remove_suffix(_data.size() - _path);
-        //                }
-
-        //                if (auto _user_info_point = _data.find('@');
-        //                    _user_info_point != std::string_view::npos) {
-        //                    // we know where the user info is placed, so we
-        //                    use that as
-        //                    // a starting point for the rest of search
-        //                    _data.remove_prefix(_user_info_point + 1);
-        //                }
-
-        //                return _data;
-        //            }
-
-        //            // it's a path and doesn't have a host
-        //            return "";
-        //        }
-
-        /**
          * @brief return host as an optional<string_view>
          * @return optional<string_view>
          */
@@ -764,6 +731,12 @@ namespace webpp {
             set_value([&](auto& _data) { _data.port = ""; });
             return *this;
         }
+
+        /**
+         * @brief check if the URI has a path or not
+         * @return
+         */
+        constexpr bool has_path() const noexcept { return path().has_value(); }
 
         /**
          * @brief get path in non-decoded, string format
@@ -981,6 +954,87 @@ namespace webpp {
             return *this;
         }
 
+        /**
+         * @brief checks if the URI is a relative reference
+         * @return
+         */
+        constexpr bool is_relative_reference() const noexcept {
+            return !has_scheme();
+        }
+
+        /**
+         * This method resolves the given relative reference, based on the given
+         * base URI, returning the resolved target URI.
+         *
+         * @param[in] relative_uri
+         *     This describes how to get to the target starting at the base.
+         *
+         * @return
+         *     The resolved target URI is returned.
+         *
+         * @note
+         *     It only makes sense to call this method on an absolute URI
+         *     (in which I mean, the base URI should be absolute,
+         *     as in IsRelativeReference() should return false).
+         */
+        uri resolve(const uri& relative_uri) const noexcept {
+            // Resolve the reference by following the algorithm
+            // from section 5.2.2 in
+            // RFC 3986 (https://tools.ietf.org/html/rfc3986).
+            uri target;
+            if (relative_uri.scheme()) {
+                target = relative_uri;
+                target.normalize_path();
+            } else {
+                target.set_value([&](uri_segments<std::string>& _data) {
+                    _data.scheme = scheme().value_or("");
+                    _data.fragment = relative_uri.fragment().value_or("");
+                    if (relative_uri.host()) {
+                        _data.host = relative_uri.host_string().value_or("");
+                        _data.port = std::to_string(relative_uri.port());
+                        _data.user_info = relative_uri.user_info().value_or("");
+                        _data.path = relative_uri.path().value_or("");
+                        _data.query = relative_uri.query().value_or("");
+                        target.normalize_path();
+                    } else {
+                        _data.host = host_string().value_or("");
+                        _data.user_info = user_info().value_or("");
+                        _data.port = std::to_string(port());
+                        if (!relative_uri.has_path()) {
+                            _data.path = path().value();
+                            _data.query = relative_uri.query().value_or(
+                                query().value_or(""));
+                        } else {
+                            _data.query = relative_uri.query().value_or("");
+                            // RFC describes this as:
+                            // "if (R.path starts-with "/") then"
+                            if (relative_uri.is_absolute()) {
+                                _data.path = relative_uri.path().value_or("");
+                                target.normalize_path();
+                            } else {
+                                // RFC describes this as:
+                                // "T.path = merge(Base.path, R.path);"
+                                _data.path = path().value_or("");
+                                auto target_path = target.path_structured();
+                                auto relative_uri_path =
+                                    relative_uri.path_structured();
+                                if (target_path.size() > 1) {
+                                    target_path.pop_back();
+                                }
+                                std::copy(relative_uri_path.cbegin(),
+                                          relative_uri_path.cend(),
+                                          std::back_inserter(target_path));
+                                target.path(target_path);
+                                target.normalize_path();
+                            }
+                        }
+                    }
+                });
+            }
+
+            return target;
+        }
+
     }; // namespace webpp
 
     /**
@@ -1040,30 +1094,10 @@ namespace webpp {
          */
 
         /**
-         * This method returns an indication of whether or not
-         * the URI is a relative reference.
-         *
-         * @return
-         *     An indication of whether or not the URI is a
-         *     relative reference is returned.
-         */
-        bool IsRelativeReference() const;
-
-        /**
-         * This method returns an indication of whether or not
-         * the URI contains a relative path.
-         *
-         * @return
-         *     An indication of whether or not the URI contains a
-         *     relative path is returned.
-         */
-        bool ContainsRelativePath() const;
-
-        /**
          * This method resolves the given relative reference, based on the given
          * base URI, returning the resolved target URI.
          *
-         * @param[in] relativeReference
+         * @param[in] relative_uri
          *     This describes how to get to the target starting at the base.
          *
          * @return
@@ -1074,7 +1108,7 @@ namespace webpp {
          *     (in which I mean, the base URI should be absolute,
          *     as in IsRelativeReference() should return false).
          */
-        Uri Resolve(const Uri& relativeReference) const;
+        Uri Resolve(const Uri& relative_uri) const;
 
         /**
          * This method constructs and returns the string
