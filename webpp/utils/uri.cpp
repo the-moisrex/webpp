@@ -735,24 +735,6 @@ Uri& Uri::operator=(Uri&&) noexcept = default;
 
 Uri::Uri() : impl_(new Impl) {}
 
-bool Uri::operator==(const Uri& other) const {
-    return ((impl_->scheme == other.impl_->scheme) &&
-            (impl_->userInfo == other.impl_->userInfo) &&
-            (impl_->host == other.impl_->host) &&
-            ((!impl_->hasPort && !other.impl_->hasPort) ||
-             ((impl_->hasPort && other.impl_->hasPort) &&
-              (impl_->port == other.impl_->port))) &&
-            (impl_->path == other.impl_->path) &&
-            ((!impl_->hasQuery && !other.impl_->hasQuery) ||
-             ((impl_->hasQuery && other.impl_->hasQuery) &&
-              (impl_->query == other.impl_->query))) &&
-            ((!impl_->hasFragment && !other.impl_->hasFragment) ||
-             ((impl_->hasFragment && other.impl_->hasFragment) &&
-              (impl_->fragment == other.impl_->fragment))));
-}
-
-bool Uri::operator!=(const Uri& other) const { return !(*this == other); }
-
 bool Uri::ParseFromString(const std::string& uriString) {
     std::string rest;
     if (!impl_->ParseScheme(uriString, rest)) {
@@ -777,113 +759,9 @@ bool Uri::ParseFromString(const std::string& uriString) {
     return impl_->ParseQuery(rest);
 }
 
-std::string Uri::GetScheme() const { return impl_->scheme; }
-
-std::string Uri::GetUserInfo() const { return impl_->userInfo; }
-
-std::string Uri::GetHost() const { return impl_->host; }
-
-std::vector<std::string> Uri::GetPath() const { return impl_->path; }
-
-bool Uri::HasPort() const { return impl_->hasPort; }
-
-uint16_t Uri::GetPort() const { return impl_->port; }
-
 bool Uri::IsRelativeReference() const { return impl_->scheme.empty(); }
 
 bool Uri::ContainsRelativePath() const { return !impl_->IsPathAbsolute(); }
-
-bool Uri::HasQuery() const { return impl_->hasQuery; }
-
-std::string Uri::GetQuery() const { return impl_->query; }
-
-bool Uri::HasFragment() const { return impl_->hasFragment; }
-
-std::string Uri::GetFragment() const { return impl_->fragment; }
-
-void Uri::NormalizePath() { impl_->NormalizePath(); }
-
-Uri Uri::Resolve(const Uri& relativeReference) const {
-    // Resolve the reference by following the algorithm
-    // from section 5.2.2 in
-    // RFC 3986 (https://tools.ietf.org/html/rfc3986).
-    Uri target;
-    if (!relativeReference.impl_->scheme.empty()) {
-        target.impl_->CopyScheme(relativeReference);
-        target.impl_->CopyAuthority(relativeReference);
-        target.impl_->CopyAndNormalizePath(relativeReference);
-        target.impl_->CopyQuery(relativeReference);
-    } else {
-        if (!relativeReference.impl_->host.empty()) {
-            target.impl_->CopyAuthority(relativeReference);
-            target.impl_->CopyAndNormalizePath(relativeReference);
-            target.impl_->CopyQuery(relativeReference);
-        } else {
-            if (relativeReference.impl_->path.empty()) {
-                target.impl_->path = impl_->path;
-                if (!relativeReference.impl_->query.empty()) {
-                    target.impl_->CopyQuery(relativeReference);
-                } else {
-                    target.impl_->CopyQuery(*this);
-                }
-            } else {
-                // RFC describes this as:
-                // "if (R.path starts-with "/") then"
-                if (relativeReference.impl_->IsPathAbsolute()) {
-                    target.impl_->CopyAndNormalizePath(relativeReference);
-                } else {
-                    // RFC describes this as:
-                    // "T.path = merge(Base.path, R.path);"
-                    target.impl_->CopyPath(*this);
-                    if (target.impl_->path.size() > 1) {
-                        target.impl_->path.pop_back();
-                    }
-                    std::copy(relativeReference.impl_->path.begin(),
-                              relativeReference.impl_->path.end(),
-                              std::back_inserter(target.impl_->path));
-                    target.NormalizePath();
-                }
-                target.impl_->CopyQuery(relativeReference);
-            }
-            target.impl_->CopyAuthority(*this);
-        }
-        target.impl_->CopyScheme(*this);
-    }
-    target.impl_->CopyFragment(relativeReference);
-    return target;
-}
-
-void Uri::SetScheme(const std::string& scheme) { impl_->scheme = scheme; }
-
-void Uri::SetUserInfo(const std::string& userinfo) {
-    impl_->userInfo = userinfo;
-}
-
-void Uri::SetHost(const std::string& host) { impl_->host = host; }
-
-void Uri::SetPort(uint16_t port) {
-    impl_->port = port;
-    impl_->hasPort = true;
-}
-
-void Uri::ClearPort() { impl_->hasPort = false; }
-
-void Uri::SetPath(const std::vector<std::string>& path) { impl_->path = path; }
-
-void Uri::ClearQuery() { impl_->hasQuery = false; }
-
-void Uri::SetQuery(const std::string& query) {
-    impl_->query = query;
-    impl_->hasQuery = true;
-}
-
-void Uri::ClearFragment() { impl_->hasFragment = false; }
-
-void Uri::SetFragment(const std::string& fragment) {
-    impl_->fragment = fragment;
-    impl_->hasFragment = true;
-}
-
 std::string Uri::GenerateString() const {
     std::ostringstream buffer;
     if (!impl_->scheme.empty()) {
