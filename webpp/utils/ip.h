@@ -16,9 +16,17 @@ namespace webpp {
         mutable std::variant<uint32_t, std::string_view> data;
 
         constexpr uint32_t parse(std::string_view const& _data) const noexcept {
-            auto first_dot = _data.find('.');
-            auto second_dot = _data.find('.', first_dot);
-            auto third_dot = _data.find('.', second_dot);
+            std::size_t first_dot = 0;
+            std::size_t len = _data.size();
+            while (_data[first_dot] != '.' && first_dot != len)
+                first_dot++;
+            std::size_t second_dot = first_dot;
+            while (_data[second_dot] != '.' && second_dot != len)
+                second_dot++;
+            std::size_t third_dot = second_dot;
+            while (_data[third_dot] != '.' && third_dot != len)
+                third_dot++;
+
             //            if (first_dot == std::string_view::npos ||
             //                second_dot == std::string_view::npos ||
             //                third_dot == std::string_view::npos)
