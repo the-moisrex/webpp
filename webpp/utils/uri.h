@@ -1068,64 +1068,6 @@ namespace webpp {
         // Public methods
       public:
         /**
-         * This is the default constructor.
-         */
-        Uri();
-
-        /**
-         * This is the equality comparison operator for the class.
-         *
-         * @param[in] other
-         *     This is the other URI to which to compare this URI.
-         *
-         * @return
-         *     An indication of whether or not the two URIs are
-         *     equal is returned.
-         */
-        bool operator==(const Uri& other) const;
-
-        /**
-         * This is the inequality comparison operator for the class.
-         *
-         * @param[in] other
-         *     This is the other URI to which to compare this URI.
-         *
-         * @return
-         *     An indication of whether or not the two URIs are
-         *     not equal is returned.
-         */
-        bool operator!=(const Uri& other) const;
-
-        /**
-         * This method builds the URI from the elements parsed
-         * from the given string rendering of a URI.
-         *
-         * @param[in] uriString
-         *     This is the string rendering of the URI to parse.
-         *
-         * @return
-         *     An indication of whether or not the URI was
-         *     parsed successfully is returned.
-         */
-
-        /**
-         * This method resolves the given relative reference, based on the given
-         * base URI, returning the resolved target URI.
-         *
-         * @param[in] relative_uri
-         *     This describes how to get to the target starting at the base.
-         *
-         * @return
-         *     The resolved target URI is returned.
-         *
-         * @note
-         *     It only makes sense to call this method on an absolute URI
-         *     (in which I mean, the base URI should be absolute,
-         *     as in IsRelativeReference() should return false).
-         */
-        Uri Resolve(const Uri& relative_uri) const;
-
-        /**
          * This method constructs and returns the string
          * rendering of the URI, according to the rules
          * in RFC 3986 (https://tools.ietf.org/html/rfc3986).

@@ -1,36 +1,65 @@
-#ifndef CASTS_H
-#define CASTS_H
+#ifndef WEBPP_CASTS_H
+#define WEBPP_CASTS_H
 
 #include "../std/string_view.h"
-#include "../validators/validators.h"
-#include <cmath>
 
 namespace webpp {
 
-    /**
-     * @brief to int; this function will not throw any exceptions
-     * @param str
-     * @return
-     */
-    constexpr inline unsigned int
-    to_uint(std::string_view const& str) noexcept {
-        unsigned int s = 0;
-        auto len = str.size();
-        for (std::size_t i = 0; i < len; i++)
-            s += static_cast<unsigned int>(str[len - i - 1] - '0') *
-                 static_cast<unsigned int>(std::pow(10, i));
-        return s;
+    template <typename T, bool is_signed = true>
+    constexpr inline T to(std::string_view const& str) noexcept {
+        T ret = 0;
+        if constexpr (is_signed) {
+            bool minus = false;
+            for (auto const& i : str) {
+                if (i == '-') {
+                    minus = true;
+                    continue;
+                }
+                ret *= 10;
+                ret += static_cast<T>(i - '0');
+            }
+        } else {
+            for (auto const& i : str) {
+                ret *= 10;
+                ret += static_cast<T>(i - '0');
+            }
+        }
+        return ret;
     }
 
-    constexpr inline uint8_t to_uint8(std::string_view const& str) noexcept {
-        uint8_t s = 0;
-        auto len = str.size();
-        for (std::size_t i = 0; i < len; i++)
-            s += static_cast<uint8_t>(str[len - i - 1] - '0') *
-                 static_cast<uint8_t>(std::pow(10, i));
-        return s;
+    constexpr auto to_int(std::string_view const& str) noexcept {
+        return to<int, true>(str);
+    }
+
+    constexpr auto to_int8(std::string_view const& str) noexcept {
+        return to<int8_t, true>(str);
+    }
+
+    constexpr auto to_int16(std::string_view const& str) noexcept {
+        return to<int16_t, true>(str);
+    }
+    constexpr auto to_int32(std::string_view const& str) noexcept {
+        return to<int32_t, true>(str);
+    }
+    constexpr auto to_int64(std::string_view const& str) noexcept {
+        return to<int64_t, true>(str);
+    }
+    constexpr auto to_uint(std::string_view const& str) noexcept {
+        return to<unsigned int, true>(str);
+    }
+    constexpr auto to_uint8(std::string_view const& str) noexcept {
+        return to<uint8_t, false>(str);
+    }
+    constexpr auto to_uint16(std::string_view const& str) noexcept {
+        return to<uint16_t, false>(str);
+    }
+    constexpr auto to_uint32(std::string_view const& str) noexcept {
+        return to<uint32_t, false>(str);
+    }
+    constexpr auto to_uint64(std::string_view const& str) noexcept {
+        return to<uint64_t, false>(str);
     }
 
 } // namespace webpp
 
-#endif // CASTS_H
+#endif // WEBPP_CASTS_H
