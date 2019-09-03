@@ -22,6 +22,15 @@ namespace webpp {
         return s;
     }
 
+    constexpr inline uint8_t to_uint8(std::string_view const& str) noexcept {
+        uint8_t s = 0;
+        auto len = str.size();
+        for (std::size_t i = 0; i < len; i++)
+            s += static_cast<uint8_t>(str[len - i - 1] - '0') *
+                 static_cast<uint8_t>(std::pow(10, i));
+        return s;
+    }
+
 } // namespace webpp
 
 #endif // CASTS_H
