@@ -231,6 +231,11 @@ namespace webpp {
          * @return
          */
         constexpr bool is_public() const noexcept { return !is_private(); }
+
+        std::string geographic_location() const noexcept {
+            // TODO: find a way to get this info
+            return "";
+        }
     };
 
     class ipv6 {};
