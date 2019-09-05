@@ -138,3 +138,19 @@ time 1567682509
 old [description:"watch tutorial named Pluralsight Web Performance" entry:"1567260685" modified:"1567260685" status:"pending" uuid:"cd287d23-e515-486a-9ea9-ef97fe5c0c73"]
 new [description:"watch tutorial named Pluralsight Web Performance" entry:"1567260685" modified:"1567682509" project:"performance" status:"pending" uuid:"cd287d23-e515-486a-9ea9-ef97fe5c0c73"]
 ---
+time 1567682618
+new [description:"move ipv4 and ipv6 implementations to the cpp files if necessary" entry:"1567682618" modified:"1567682618" project:"net" status:"pending" uuid:"5ad078c7-1157-4458-b2bd-a71e101dca51"]
+---
+time 1567682643
+new [description:"add header only to the build options" entry:"1567682643" modified:"1567682643" project:"cmake" status:"pending" uuid:"c0a20808-ee41-46a5-ad2a-b1526f92792f"]
+---
+time 1567682669
+old [description:"make cmake do magin" entry:"1563822038" modified:"1563822038" project:"cmake" status:"pending" uuid:"f52a16ef-4e4e-43e6-bd17-5b9558cfc4a7"]
+new [description:"make cmake do magic" entry:"1563822038" modified:"1567682669" project:"cmake" status:"pending" uuid:"f52a16ef-4e4e-43e6-bd17-5b9558cfc4a7"]
+---
+time 1567682703
+new [description:"consider cpp modules" entry:"1567682703" modified:"1567682703" project:"cmake" status:"pending" uuid:"210768fc-66bf-4b8f-ae3f-9a45a94aece2"]
+---
+time 1567682749
+new [description:"add different packages for distribution" entry:"1567682749" modified:"1567682749" project:"cmake" status:"pending" uuid:"b1f3cc30-ce9f-4d63-bc73-6de5e9293282"]
+---
