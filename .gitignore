@@ -13,4 +13,4 @@ build/
 cmake-build-debug/
 .kdev4
 webpp.kdev4
-
+*.plist
