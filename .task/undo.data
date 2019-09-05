@@ -171,3 +171,6 @@ new [description:"write benchmarks for every part of the framework" entry:"15676
 time 1567683339
 new [description:"consider help functions for webassembly" entry:"1567683339" modified:"1567683339" project:"ams" status:"pending" uuid:"3d857976-c05a-41a9-8e25-fee0ba2991fa"]
 ---
+time 1567683585
+new [description:"implement property class" entry:"1567683585" modified:"1567683585" project:"utils" status:"pending" uuid:"b8f032b9-5023-40b3-9c87-c4fca77eefff"]
+---
