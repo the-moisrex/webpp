@@ -7,7 +7,6 @@
 #include <sstream>
 #include <string>
 #include <variant>
-// TODO: this whole file is a big todo
 
 namespace webpp {
 
@@ -237,8 +236,6 @@ namespace webpp {
             return "";
         }
     };
-
-    class ipv6 {};
 
 } // namespace webpp
 
