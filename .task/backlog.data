@@ -35,3 +35,8 @@
 {"description":"watch tutorial named Pluralsight Web Performance","entry":"20190831T141125Z","modified":"20190831T141125Z","status":"pending","uuid":"cd287d23-e515-486a-9ea9-ef97fe5c0c73"}
 {"description":"watch WebRTC tutorials","entry":"20190831T141331Z","modified":"20190831T141331Z","project":"webrtc","status":"pending","uuid":"97244640-b8a5-4fac-851f-96ce8253745b"}
 {"description":"implement wsgi","entry":"20190902T203538Z","modified":"20190902T203538Z","project":"interfaces","status":"pending","uuid":"50dff47e-c030-4fb4-b333-693b9af714d6"}
+{"description":"check for memory usage and use allocators if needed","entry":"20190905T111941Z","modified":"20190905T111941Z","project":"performance","status":"pending","uuid":"04e7db86-699d-40ef-9ef7-8b00adf4974d"}
+{"description":"write performance tests with google framework","entry":"20190905T112043Z","modified":"20190905T112043Z","project":"performance","status":"pending","uuid":"15d4e821-1ed8-4bda-bfc2-6fbe21b9dbbd"}
+{"description":"implement const_ipv4","end":"20190905T112105Z","entry":"20190828T220204Z","modified":"20190905T112105Z","project":"net","status":"completed","uuid":"a72340c5-cbac-4d19-b466-59440157856b"}
+{"description":"implement ipv4 non-const","end":"20190905T112115Z","entry":"20190828T220215Z","modified":"20190905T112115Z","project":"net","status":"completed","uuid":"f5439530-8ecc-44d0-92eb-cc6b7017634a"}
+{"description":"watch tutorial named Pluralsight Web Performance","entry":"20190831T141125Z","modified":"20190905T112149Z","project":"performance","status":"pending","uuid":"cd287d23-e515-486a-9ea9-ef97fe5c0c73"}
