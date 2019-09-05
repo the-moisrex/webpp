@@ -168,3 +168,6 @@ time 1567683056
 old [description:"write performance tests with google framework" entry:"1567682443" modified:"1567682443" project:"performance" status:"pending" uuid:"15d4e821-1ed8-4bda-bfc2-6fbe21b9dbbd"]
 new [description:"write benchmarks for every part of the framework" entry:"1567682443" modified:"1567683056" project:"performance" status:"pending" uuid:"15d4e821-1ed8-4bda-bfc2-6fbe21b9dbbd"]
 ---
+time 1567683339
+new [description:"consider help functions for webassembly" entry:"1567683339" modified:"1567683339" project:"ams" status:"pending" uuid:"3d857976-c05a-41a9-8e25-fee0ba2991fa"]
+---

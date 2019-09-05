@@ -49,3 +49,4 @@
 {"description":"write tests for ipv6","entry":"20190905T112740Z","modified":"20190905T112740Z","project":"net","status":"pending","uuid":"92edcdb2-73e2-4f22-8e2c-b5a37ad501cf"}
 {"description":"you may want to add a hopefully constexpr ipv4,6 and other net related stuff. consider openthread implementations","end":"20190905T112859Z","entry":"20190824T144856Z","modified":"20190905T112859Z","project":"net","status":"completed","uuid":"3e3a543b-e973-44a3-8353-2c7a89e8eaa6"}
 {"description":"write benchmarks for every part of the framework","entry":"20190905T112043Z","modified":"20190905T113056Z","project":"performance","status":"pending","uuid":"15d4e821-1ed8-4bda-bfc2-6fbe21b9dbbd"}
+{"description":"consider help functions for webassembly","entry":"20190905T113539Z","modified":"20190905T113539Z","project":"ams","status":"pending","uuid":"3d857976-c05a-41a9-8e25-fee0ba2991fa"}

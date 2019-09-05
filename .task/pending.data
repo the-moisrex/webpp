@@ -24,3 +24,4 @@
 [description:"add different packages for distribution" entry:"1567682749" modified:"1567682749" project:"cmake" status:"pending" uuid:"b1f3cc30-ce9f-4d63-bc73-6de5e9293282"]
 [description:"write tests for ipv4" entry:"1567682849" modified:"1567682849" project:"net" status:"pending" uuid:"52246528-63d3-46b1-a36f-1b230d3c70c0"]
 [description:"write tests for ipv6" entry:"1567682860" modified:"1567682860" project:"net" status:"pending" uuid:"92edcdb2-73e2-4f22-8e2c-b5a37ad501cf"]
+[description:"consider help functions for webassembly" entry:"1567683339" modified:"1567683339" project:"ams" status:"pending" uuid:"3d857976-c05a-41a9-8e25-fee0ba2991fa"]
