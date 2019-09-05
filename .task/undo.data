@@ -120,3 +120,21 @@ new [description:"watch WebRTC tutorials" entry:"1567260811" modified:"156726081
 time 1567456538
 new [description:"implement wsgi" entry:"1567456538" modified:"1567456538" project:"interfaces" status:"pending" uuid:"50dff47e-c030-4fb4-b333-693b9af714d6"]
 ---
+time 1567682381
+new [description:"check for memory usage and use allocators if needed" entry:"1567682381" modified:"1567682381" project:"performance" status:"pending" uuid:"04e7db86-699d-40ef-9ef7-8b00adf4974d"]
+---
+time 1567682443
+new [description:"write performance tests with google framework" entry:"1567682443" modified:"1567682443" project:"performance" status:"pending" uuid:"15d4e821-1ed8-4bda-bfc2-6fbe21b9dbbd"]
+---
+time 1567682465
+old [description:"implement const_ipv4" entry:"1567029724" modified:"1567029782" project:"net" status:"pending" uuid:"a72340c5-cbac-4d19-b466-59440157856b"]
+new [description:"implement const_ipv4" end:"1567682465" entry:"1567029724" modified:"1567682465" project:"net" status:"completed" uuid:"a72340c5-cbac-4d19-b466-59440157856b"]
+---
+time 1567682475
+old [description:"implement ipv4 non-const" entry:"1567029735" modified:"1567029801" project:"net" status:"pending" uuid:"f5439530-8ecc-44d0-92eb-cc6b7017634a"]
+new [description:"implement ipv4 non-const" end:"1567682475" entry:"1567029735" modified:"1567682475" project:"net" status:"completed" uuid:"f5439530-8ecc-44d0-92eb-cc6b7017634a"]
+---
+time 1567682509
+old [description:"watch tutorial named Pluralsight Web Performance" entry:"1567260685" modified:"1567260685" status:"pending" uuid:"cd287d23-e515-486a-9ea9-ef97fe5c0c73"]
+new [description:"watch tutorial named Pluralsight Web Performance" entry:"1567260685" modified:"1567682509" project:"performance" status:"pending" uuid:"cd287d23-e515-486a-9ea9-ef97fe5c0c73"]
+---
