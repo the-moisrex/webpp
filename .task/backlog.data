@@ -45,3 +45,7 @@
 {"description":"make cmake do magic","entry":"20190722T190038Z","modified":"20190905T112429Z","project":"cmake","status":"pending","uuid":"f52a16ef-4e4e-43e6-bd17-5b9558cfc4a7"}
 {"description":"consider cpp modules","entry":"20190905T112503Z","modified":"20190905T112503Z","project":"cmake","status":"pending","uuid":"210768fc-66bf-4b8f-ae3f-9a45a94aece2"}
 {"description":"add different packages for distribution","entry":"20190905T112549Z","modified":"20190905T112549Z","project":"cmake","status":"pending","uuid":"b1f3cc30-ce9f-4d63-bc73-6de5e9293282"}
+{"description":"write tests for ipv4","entry":"20190905T112729Z","modified":"20190905T112729Z","project":"net","status":"pending","uuid":"52246528-63d3-46b1-a36f-1b230d3c70c0"}
+{"description":"write tests for ipv6","entry":"20190905T112740Z","modified":"20190905T112740Z","project":"net","status":"pending","uuid":"92edcdb2-73e2-4f22-8e2c-b5a37ad501cf"}
+{"description":"you may want to add a hopefully constexpr ipv4,6 and other net related stuff. consider openthread implementations","end":"20190905T112859Z","entry":"20190824T144856Z","modified":"20190905T112859Z","project":"net","status":"completed","uuid":"3e3a543b-e973-44a3-8353-2c7a89e8eaa6"}
+{"description":"write benchmarks for every part of the framework","entry":"20190905T112043Z","modified":"20190905T113056Z","project":"performance","status":"pending","uuid":"15d4e821-1ed8-4bda-bfc2-6fbe21b9dbbd"}

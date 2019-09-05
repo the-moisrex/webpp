@@ -154,3 +154,17 @@ new [description:"consider cpp modules" entry:"1567682703" modified:"1567682703"
 time 1567682749
 new [description:"add different packages for distribution" entry:"1567682749" modified:"1567682749" project:"cmake" status:"pending" uuid:"b1f3cc30-ce9f-4d63-bc73-6de5e9293282"]
 ---
+time 1567682849
+new [description:"write tests for ipv4" entry:"1567682849" modified:"1567682849" project:"net" status:"pending" uuid:"52246528-63d3-46b1-a36f-1b230d3c70c0"]
+---
+time 1567682860
+new [description:"write tests for ipv6" entry:"1567682860" modified:"1567682860" project:"net" status:"pending" uuid:"92edcdb2-73e2-4f22-8e2c-b5a37ad501cf"]
+---
+time 1567682939
+old [description:"you may want to add a hopefully constexpr ipv4,6 and other net related stuff. consider openthread implementations" entry:"1566658136" modified:"1566658136" project:"net" status:"pending" uuid:"3e3a543b-e973-44a3-8353-2c7a89e8eaa6"]
+new [description:"you may want to add a hopefully constexpr ipv4,6 and other net related stuff. consider openthread implementations" end:"1567682939" entry:"1566658136" modified:"1567682939" project:"net" status:"completed" uuid:"3e3a543b-e973-44a3-8353-2c7a89e8eaa6"]
+---
+time 1567683056
+old [description:"write performance tests with google framework" entry:"1567682443" modified:"1567682443" project:"performance" status:"pending" uuid:"15d4e821-1ed8-4bda-bfc2-6fbe21b9dbbd"]
+new [description:"write benchmarks for every part of the framework" entry:"1567682443" modified:"1567683056" project:"performance" status:"pending" uuid:"15d4e821-1ed8-4bda-bfc2-6fbe21b9dbbd"]
+---
