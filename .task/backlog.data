@@ -40,3 +40,8 @@
 {"description":"implement const_ipv4","end":"20190905T112105Z","entry":"20190828T220204Z","modified":"20190905T112105Z","project":"net","status":"completed","uuid":"a72340c5-cbac-4d19-b466-59440157856b"}
 {"description":"implement ipv4 non-const","end":"20190905T112115Z","entry":"20190828T220215Z","modified":"20190905T112115Z","project":"net","status":"completed","uuid":"f5439530-8ecc-44d0-92eb-cc6b7017634a"}
 {"description":"watch tutorial named Pluralsight Web Performance","entry":"20190831T141125Z","modified":"20190905T112149Z","project":"performance","status":"pending","uuid":"cd287d23-e515-486a-9ea9-ef97fe5c0c73"}
+{"description":"move ipv4 and ipv6 implementations to the cpp files if necessary","entry":"20190905T112338Z","modified":"20190905T112338Z","project":"net","status":"pending","uuid":"5ad078c7-1157-4458-b2bd-a71e101dca51"}
+{"description":"add header only to the build options","entry":"20190905T112403Z","modified":"20190905T112403Z","project":"cmake","status":"pending","uuid":"c0a20808-ee41-46a5-ad2a-b1526f92792f"}
+{"description":"make cmake do magic","entry":"20190722T190038Z","modified":"20190905T112429Z","project":"cmake","status":"pending","uuid":"f52a16ef-4e4e-43e6-bd17-5b9558cfc4a7"}
+{"description":"consider cpp modules","entry":"20190905T112503Z","modified":"20190905T112503Z","project":"cmake","status":"pending","uuid":"210768fc-66bf-4b8f-ae3f-9a45a94aece2"}
+{"description":"add different packages for distribution","entry":"20190905T112549Z","modified":"20190905T112549Z","project":"cmake","status":"pending","uuid":"b1f3cc30-ce9f-4d63-bc73-6de5e9293282"}
