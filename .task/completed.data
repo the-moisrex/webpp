@@ -1,3 +1,4 @@
+[description:"you may want to add a hopefully constexpr ipv4,6 and other net related stuff. consider openthread implementations" end:"1567682939" entry:"1566658136" modified:"1567682939" project:"net" status:"completed" uuid:"3e3a543b-e973-44a3-8353-2c7a89e8eaa6"]
 [description:"implement ipv4 non-const" end:"1567682475" entry:"1567029735" modified:"1567682475" project:"net" status:"completed" uuid:"f5439530-8ecc-44d0-92eb-cc6b7017634a"]
 [description:"implement const_ipv4" end:"1567682465" entry:"1567029724" modified:"1567682465" project:"net" status:"completed" uuid:"a72340c5-cbac-4d19-b466-59440157856b"]
 [description:"extract path" end:"1567257392" entry:"1567254921" modified:"1567257394" project:"net" status:"completed" uuid:"f8a9427c-d743-4583-8e59-6e27a217f6db"]
