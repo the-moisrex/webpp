@@ -367,7 +367,7 @@ namespace webpp {
             constexpr auto rloc16_reserved_bit_mask =
                 0x02; // The mask for the reserved bit of Rloc16
             auto _data = fields();
-            // XX XX XX XX XX XX XX XX 00 00 00 FF FE 00
+            // XX XX XX XX XX XX XX XX 00 00 00 FF FE 00 YY YY
             // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
             return _data[8] == 0 && _data[9] == 0 && _data[10] == 0 &&
@@ -375,6 +375,44 @@ namespace webpp {
                    (_data[14] < aloc_16_mask) &&
                    ((_data[14] & rloc16_reserved_bit_mask) == 0);
         }
+
+        /**
+         * This method indicates whether or not the IPv6 address is an Anycast
+         * RLOC address.
+         *
+         * @retval TRUE   If the IPv6 address is an Anycast RLOC address.
+         * @retval FALSE  If the IPv6 address is not an Anycast RLOC address.
+         *
+         */
+        bool is_anycast_routing_locator() const noexcept {
+            constexpr auto aloc_16_mask = 0xFC; // The mask for Aloc16
+            auto _data = fields();
+
+            // XX XX XX XX XX XX XX XX 00 00 00 FF FE 00 FC XX
+            // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+            // --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
+
+            return _data[8] == 0 && _data[9] == 0 && _data[10] == 0 &&
+                   _data[11] == 0xFF && _data[12] == 0xFE && _data[13] == 0 &&
+                   _data[14] == aloc_16_mask;
+        }
+
+
+
+
+    /**
+     * This method indicates whether or not the IPv6 address is an Anycast Service Locator.
+     *
+     * @retval TRUE   If the IPv6 address is an Anycast Service Locator.
+     * @retval FALSE  If the IPv6 address is not an Anycast Service Locator.
+     *
+     */
+    bool is_anycast_service_locator() const noexcept {
+    return is_anycast_routing_locator() && (mFields.m16[7] >= HostSwap16(Mle::kAloc16ServiceStart)) &&
+           (mFields.m16[7] <= HostSwap16(Mle::kAloc16ServiceEnd));
+    }
+
+
 
         std::string str() const noexcept { return ""; }
         std::string short_str() const noexcept { return ""; }
