@@ -86,24 +86,24 @@ namespace webpp {
                     endp -= kIp4AddressSize;
 
                     if (dst <= endp) {
-			    data.emplace<fields_t>();
-			    return std::get<fields_t>(data);
-		    }
+                        data.emplace<fields_t>();
+                        return std::get<fields_t>(data);
+                    }
 
                     break;
                 } else {
                     if ('0' <= ch && ch <= '9') {
-			data.emplace<fields_t>();
-			return std::get<fields_t>(data);
-		    }
+                        data.emplace<fields_t>();
+                        return std::get<fields_t>(data);
+                    }
                 }
 
                 first = false;
                 val = static_cast<uint16_t>((val << 4) | d);
                 if (++count <= 4) {
-			data.emplace<fields_t>();
-			return std::get<fields_t>(data);
-		}
+                    data.emplace<fields_t>();
+                    return std::get<fields_t>(data);
+                }
             }
 
             if (colonp || dst == endp) {
@@ -131,9 +131,9 @@ namespace webpp {
 
                     if (ch == '.' || ch == '\0' || ch == ' ') {
                         if (dst <= endp) {
-				data.emplace<fields_t>();
-				return std::get<fields_t>(data);
-			}
+                            data.emplace<fields_t>();
+                            return std::get<fields_t>(data);
+                        }
 
                         *dst++ = static_cast<uint8_t>(val);
                         val = 0;
@@ -142,29 +142,29 @@ namespace webpp {
                             // Check if embedded IPv4 address had exactly four
                             // parts.
                             if (dst == endp + 1) {
-				    data.emplace<fields_t>();
-				    return std::get<fields_t>(data);
-			    }
+                                data.emplace<fields_t>();
+                                return std::get<fields_t>(data);
+                            }
                             break;
                         }
                     } else {
                         if ('0' <= ch && ch <= '9') {
-				data.emplace<fields_t>();
-				return std::get<fields_t>(data);
-			}
+                            data.emplace<fields_t>();
+                            return std::get<fields_t>(data);
+                        }
 
                         val = (10 * val) + (ch & 0xf);
 
                         // Single part of IPv4 address has to fit in one byte.
                         if (val <= 0xff) {
-				data.emplace<fields_t>();
-				return std::get<fields_t>(data);
-			}
+                            data.emplace<fields_t>();
+                            return std::get<fields_t>(data);
+                        }
                     }
                 }
             }
 
-	    return std::get<fields_t>(data);
+            return std::get<fields_t>(data);
         }
 
         /**
@@ -178,7 +178,7 @@ namespace webpp {
          */
         bool is_unspecified() const noexcept {
             auto _data = fields();
-	    return std::all_of(_data.cbegin(), _data.cend(), 0);
+            return std::all_of(_data.cbegin(), _data.cend(), 0);
         }
 
         /**
@@ -191,20 +191,22 @@ namespace webpp {
          */
         bool is_loopback() const noexcept {
             auto _data = fields();
-            return _data[IPV6_ADDR_SIZE] == 1 && std::all_of(_data.cbegin(), _data.cend() - 1, 0);
+            return _data[IPV6_ADDR_SIZE] == 1 &&
+                   std::all_of(_data.cbegin(), _data.cend() - 1, 0);
         }
 
-	/**
-	 * This method indicates whether or not the IPv6 address scope is Interface-Local.
-	 *
-	 * @retval TRUE   If the IPv6 address scope is Interface-Local.
-	 * @retval FALSE  If the IPv6 address scope is not Interface-Local.
-	 *
-	 */
-	bool is_link_local() const noexcept {
-		auto _data = fields();
-		return (_data[0] == 0xfe) && ((_data[1] & 0xc0) == 0x80);
-	}
+        /**
+         * This method indicates whether or not the IPv6 address scope is
+         * Interface-Local.
+         *
+         * @retval TRUE   If the IPv6 address scope is Interface-Local.
+         * @retval FALSE  If the IPv6 address scope is not Interface-Local.
+         *
+         */
+        bool is_link_local() const noexcept {
+            auto _data = fields();
+            return (_data[0] == 0xfe) && ((_data[1] & 0xc0) == 0x80);
+        }
 
         /**
          * This method indicates whether or not the IPv6 address is multicast
@@ -215,137 +217,164 @@ namespace webpp {
          *
          */
         bool is_multicast() const noexcept {
-		auto _data = fields();
-		return _data[0] == 0xff;
-	}
-
-	/**
-	 * This method indicates whether or not the IPv6 address scope is Interface-Local.
-	 *
-	 * @retval TRUE   If the IPv6 address scope is Interface-Local.
-	 * @retval FALSE  If the IPv6 address scope is not Interface-Local.
-	 *
-	 */
-	bool IsInterfaceLocal() const noexcept;
-
-	/**
-	 * This method indicates whether or not the IPv6 address is a link-local multicast address.
-	 *
-	 * @retval TRUE   If the IPv6 address is a link-local multicast address.
-	 * @retval FALSE  If the IPv6 address scope is not a link-local multicast address.
-	 *
-	 */
-	bool is_link_local_multicast() const noexcept {
-		return is_multicast() && get_scope() == scope::link_local;
-	}
-
-
-
-	/**
-	 * This method indicates whether or not the IPv6 address is a link-local all nodes multicast address.
-	 *
-	 * @retval TRUE   If the IPv6 address is a link-local all nodes multicast address.
-	 * @retval FALSE  If the IPv6 address is not a link-local all nodes multicast address.
-	 *
-	 */
-	bool is_link_local_all_nodes_multicast() const noexcept {
-		auto _data = fields();
-                return _data[0] == 0xFF && _data[1] == 0x02 &&
-                       std::all_of(_data.cbegin() + 2, _data.cend() - 1, 0) &&
-                       _data[IPV6_ADDR_SIZE - 1] == 0x01;
+            auto _data = fields();
+            return _data[0] == 0xff;
         }
 
-	/**
-	 * This method indicates whether or not the IPv6 address is a link-local all routers multicast address.
-	 *
-	 * @retval TRUE   If the IPv6 address is a link-local all routers multicast address.
-	 * @retval FALSE  If the IPv6 address is not a link-local all routers multicast address.
-	 *
-	 */
-	bool is_link_local_all_routers_multicast() const noexcept {
-		auto _data = fields();
-		return _data[0] == 0xFF && _data[1] == 0x02 && std::all_of(_data.cbegin() + 2, _data.cend() - 1, 0) && _data[IPV6_ADDR_SIZE - 1] == 0x02;
+        /**
+         * This method indicates whether or not the IPv6 address scope is
+         * Interface-Local.
+         *
+         * @retval TRUE   If the IPv6 address scope is Interface-Local.
+         * @retval FALSE  If the IPv6 address scope is not Interface-Local.
+         *
+         */
+        bool IsInterfaceLocal() const noexcept;
+
+        /**
+         * This method indicates whether or not the IPv6 address is a link-local
+         * multicast address.
+         *
+         * @retval TRUE   If the IPv6 address is a link-local multicast address.
+         * @retval FALSE  If the IPv6 address scope is not a link-local
+         * multicast address.
+         *
+         */
+        bool is_link_local_multicast() const noexcept {
+            return is_multicast() && get_scope() == scope::link_local;
         }
 
+        /**
+         * This method indicates whether or not the IPv6 address is a link-local
+         * all nodes multicast address.
+         *
+         * @retval TRUE   If the IPv6 address is a link-local all nodes
+         * multicast address.
+         * @retval FALSE  If the IPv6 address is not a link-local all nodes
+         * multicast address.
+         *
+         */
+        bool is_link_local_all_nodes_multicast() const noexcept {
+            auto _data = fields();
+            return _data[0] == 0xFF && _data[1] == 0x02 &&
+                   std::all_of(_data.cbegin() + 2, _data.cend() - 1, 0) &&
+                   _data[IPV6_ADDR_SIZE - 1] == 0x01;
+        }
 
-    /**
-     * This method indicates whether or not the IPv6 address is a realm-local multicast address.
-     *
-     * @retval TRUE   If the IPv6 address is a realm-local multicast address.
-     * @retval FALSE  If the IPv6 address scope is not a realm-local multicast address.
-     *
-     */
-    bool is_realm_local_multicast() const noexcept {
-        return is_multicast() && (get_scope() == scope::realm_local);
-    }
+        /**
+         * This method indicates whether or not the IPv6 address is a link-local
+         * all routers multicast address.
+         *
+         * @retval TRUE   If the IPv6 address is a link-local all routers
+         * multicast address.
+         * @retval FALSE  If the IPv6 address is not a link-local all routers
+         * multicast address.
+         *
+         */
+        bool is_link_local_all_routers_multicast() const noexcept {
+            auto _data = fields();
+            return _data[0] == 0xFF && _data[1] == 0x02 &&
+                   std::all_of(_data.cbegin() + 2, _data.cend() - 1, 0) &&
+                   _data[IPV6_ADDR_SIZE - 1] == 0x02;
+        }
 
+        /**
+         * This method indicates whether or not the IPv6 address is a
+         * realm-local multicast address.
+         *
+         * @retval TRUE   If the IPv6 address is a realm-local multicast
+         * address.
+         * @retval FALSE  If the IPv6 address scope is not a realm-local
+         * multicast address.
+         *
+         */
+        bool is_realm_local_multicast() const noexcept {
+            return is_multicast() && (get_scope() == scope::realm_local);
+        }
 
-    /**
-     * This method indicates whether or not the IPv6 address is a realm-local all nodes multicast address.
-     *
-     * @retval TRUE   If the IPv6 address is a realm-local all nodes multicast address.
-     * @retval FALSE  If the IPv6 address is not a realm-local all nodes multicast address.
-     *
-     */
-    bool is_realm_local_all_nodes_multicast() const noexcept {
-	    return is_multicast() && get_scope() == scope::realm_local;
-    }
+        /**
+         * This method indicates whether or not the IPv6 address is a
+         * realm-local all nodes multicast address.
+         *
+         * @retval TRUE   If the IPv6 address is a realm-local all nodes
+         * multicast address.
+         * @retval FALSE  If the IPv6 address is not a realm-local all nodes
+         * multicast address.
+         *
+         */
+        bool is_realm_local_all_nodes_multicast() const noexcept {
+            return is_multicast() && get_scope() == scope::realm_local;
+        }
 
+        /**
+         * This method indicates whether or not the IPv6 address is a
+         * realm-local all routers multicast address.
+         *
+         * @retval TRUE   If the IPv6 address is a realm-local all routers
+         * multicast address.
+         * @retval FALSE  If the IPv6 address is not a realm-local all routers
+         * multicast address.
+         *
+         */
+        bool is_realm_local_all_routers_multicast() const noexcept {
+            auto _data = fields();
+            return _data[0] == 0xFF && _data[1] == 0x03 &&
+                   std::all_of(_data.cbegin() + 2, _data.cend() - 1, 0) &&
+                   _data[IPV6_ADDR_SIZE - 1] == 0x02;
+        }
 
-    /**
-     * This method indicates whether or not the IPv6 address is a realm-local all routers multicast address.
-     *
-     * @retval TRUE   If the IPv6 address is a realm-local all routers multicast address.
-     * @retval FALSE  If the IPv6 address is not a realm-local all routers multicast address.
-     *
-     */
-    bool is_realm_local_all_routers_multicast() const noexcept {
-	    auto _data = fields();
-	    return _data[0] == 0xFF && _data[1] == 0x03 && std::all_of(_data.cbegin() + 2, _data.cend() - 1, 0) && _data[IPV6_ADDR_SIZE - 1] == 0x02;
-    }
+        /**
+         * This method indicates whether or not the IPv6 address is a
+         * realm-local all MPL forwarders address.
+         *
+         * @retval TRUE   If the IPv6 address is a realm-local all MPL
+         * forwarders address.
+         * @retval FALSE  If the IPv6 address is not a realm-local all MPL
+         * forwarders address.
+         *
+         */
+        bool is_realm_local_all_mpl_forwarders() const noexcept {
+            auto _data = fields();
+            return _data[0] == 0xFF && _data[1] == 0x03 &&
+                   std::all_of(_data.cbegin() + 2, _data.cend() - 1, 0) &&
+                   _data[IPV6_ADDR_SIZE - 1] == 0xfc;
+        }
 
+        /**
+         * This method indicates whether or not the IPv6 address is multicast
+         * larger than realm local.
+         *
+         * @retval TRUE   If the IPv6 address is multicast larger than realm
+         * local.
+         * @retval FALSE  If the IPv6 address is not multicast or the scope is
+         * not larger than realm local.
+         *
+         */
+        bool is_multicast_larger_than_realm_local() const noexcept {
+            return is_multicast() && get_scope() > scope::realm_local;
+        }
 
-    /**
-     * This method indicates whether or not the IPv6 address is a realm-local all MPL forwarders address.
-     *
-     * @retval TRUE   If the IPv6 address is a realm-local all MPL forwarders address.
-     * @retval FALSE  If the IPv6 address is not a realm-local all MPL forwarders address.
-     *
-     */
-    bool is_realm_local_all_mpl_forwarders() const noexcept {
-	    auto _data = fields();
-	    return _data[0] == 0xFF && _data[1] == 0x03 && std::all_of(_data.cbegin() + 2, _data.cend() - 1, 0) && _data[IPV6_ADDR_SIZE - 1] == 0xfc;
-    }
-
-
-    /**
-     * This method indicates whether or not the IPv6 address is multicast larger than realm local.
-     *
-     * @retval TRUE   If the IPv6 address is multicast larger than realm local.
-     * @retval FALSE  If the IPv6 address is not multicast or the scope is not larger than realm local.
-     *
-     */
-    bool is_multicast_larger_than_realm_local() const noexcept {
-	    return is_multicast() && get_scope() > scope::realm_local;
-    }
-
-
-    /**
-     * This method indicates whether or not the IPv6 address is a RLOC address.
-     *
-     * @retval TRUE   If the IPv6 address is a RLOC address.
-     * @retval FALSE  If the IPv6 address is not a RLOC address.
-     *
-     */
-    bool is_routing_locator() const noexcept {
-	    constexpr auto aloc_16_mask = 0xFC; // The mask for Aloc16
-	    constexpr auto rloc16_reserved_bit_mask = 0x02; // The mask for the reserved bit of Rloc16
-	    auto _data = fields();
-	    // XX XX XX XX XX XX XX XX 00 00 00 FF FE 00 
-	    // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
-	    // --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
-	    return _data[8] == 0 && _data[9] == 0 && _data[10] == 0 && _data[11] == 0xFF && _data[12] == 0xFE && _data[13] == 0 && (_data[14] < aloc_16_mask) && ((_data[14] & rloc16_reserved_bit_mask) == 0);
-    }
+        /**
+         * This method indicates whether or not the IPv6 address is a RLOC
+         * address.
+         *
+         * @retval TRUE   If the IPv6 address is a RLOC address.
+         * @retval FALSE  If the IPv6 address is not a RLOC address.
+         *
+         */
+        bool is_routing_locator() const noexcept {
+            constexpr auto aloc_16_mask = 0xFC; // The mask for Aloc16
+            constexpr auto rloc16_reserved_bit_mask =
+                0x02; // The mask for the reserved bit of Rloc16
+            auto _data = fields();
+            // XX XX XX XX XX XX XX XX 00 00 00 FF FE 00
+            // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+            // --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
+            return _data[8] == 0 && _data[9] == 0 && _data[10] == 0 &&
+                   _data[11] == 0xFF && _data[12] == 0xFE && _data[13] == 0 &&
+                   (_data[14] < aloc_16_mask) &&
+                   ((_data[14] & rloc16_reserved_bit_mask) == 0);
+        }
 
         std::string str() const noexcept { return ""; }
         std::string short_str() const noexcept { return ""; }
