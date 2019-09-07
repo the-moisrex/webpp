@@ -85,17 +85,25 @@ namespace webpp {
                     // Do not count bytes of the embedded IPv4 address.
                     endp -= kIp4AddressSize;
 
-                    VerifyOrExit(dst <= endp, error = OT_ERROR_PARSE);
+                    if (dst <= endp) {
+			    data.emplace<fields_t>();
+			    return std::get<fields_t>(data);
+		    }
 
                     break;
                 } else {
-                    VerifyOrExit('0' <= ch && ch <= '9',
-                                 error = OT_ERROR_PARSE);
+                    if ('0' <= ch && ch <= '9') {
+			data.emplace<fields_t>();
+			return std::get<fields_t>(data);
+		    }
                 }
 
                 first = false;
                 val = static_cast<uint16_t>((val << 4) | d);
-                VerifyOrExit(++count <= 4, error = OT_ERROR_PARSE);
+                if (++count <= 4) {
+			data.emplace<fields_t>();
+			return std::get<fields_t>(data);
+		}
             }
 
             if (colonp || dst == endp) {
@@ -122,7 +130,10 @@ namespace webpp {
                     ch = *colonc++;
 
                     if (ch == '.' || ch == '\0' || ch == ' ') {
-                        VerifyOrExit(dst <= endp, error = OT_ERROR_PARSE);
+                        if (dst <= endp) {
+				data.emplace<fields_t>();
+				return std::get<fields_t>(data);
+			}
 
                         *dst++ = static_cast<uint8_t>(val);
                         val = 0;
@@ -130,24 +141,30 @@ namespace webpp {
                         if (ch == '\0' || ch == ' ') {
                             // Check if embedded IPv4 address had exactly four
                             // parts.
-                            VerifyOrExit(dst == endp + 1,
-                                         error = OT_ERROR_PARSE);
+                            if (dst == endp + 1) {
+				    data.emplace<fields_t>();
+				    return std::get<fields_t>(data);
+			    }
                             break;
                         }
                     } else {
-                        VerifyOrExit('0' <= ch && ch <= '9',
-                                     error = OT_ERROR_PARSE);
+                        if ('0' <= ch && ch <= '9') {
+				data.emplace<fields_t>();
+				return std::get<fields_t>(data);
+			}
 
                         val = (10 * val) + (ch & 0xf);
 
                         // Single part of IPv4 address has to fit in one byte.
-                        VerifyOrExit(val <= 0xff, error = OT_ERROR_PARSE);
+                        if (val <= 0xff) {
+				data.emplace<fields_t>();
+				return std::get<fields_t>(data);
+			}
                     }
                 }
             }
 
-        exit:
-            return error;
+	    return std::get<fields_t>(data);
         }
 
         /**
