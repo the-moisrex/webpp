@@ -397,22 +397,23 @@ namespace webpp {
                    _data[14] == aloc_16_mask;
         }
 
-
-
-
-    /**
-     * This method indicates whether or not the IPv6 address is an Anycast Service Locator.
-     *
-     * @retval TRUE   If the IPv6 address is an Anycast Service Locator.
-     * @retval FALSE  If the IPv6 address is not an Anycast Service Locator.
-     *
-     */
-    bool is_anycast_service_locator() const noexcept {
-    return is_anycast_routing_locator() && (mFields.m16[7] >= HostSwap16(Mle::kAloc16ServiceStart)) &&
-           (mFields.m16[7] <= HostSwap16(Mle::kAloc16ServiceEnd));
-    }
-
-
+        /**
+         * This method indicates whether or not the IPv6 address is an Anycast
+         * Service Locator.
+         *
+         * @retval TRUE   If the IPv6 address is an Anycast Service Locator.
+         * @retval FALSE  If the IPv6 address is not an Anycast Service Locator.
+         *
+         */
+        bool is_anycast_service_locator() const noexcept {
+            constexpr auto aloc8_service_start = 0x10;
+            constexpr auto aloc8_service_end = 0x2f;
+            auto _data = fields();
+            return is_anycast_routing_locator() &&
+                   (_data[IPV6_ADDR_SIZE - 2] == 0xfc) &&
+                   (_data[IPV6_ADDR_SIZE - 1] >= aloc8_service_start) &&
+                   (_data[IPV6_ADDR_SIZE - 1] <= aloc8_service_end);
+        }
 
         std::string str() const noexcept { return ""; }
         std::string short_str() const noexcept { return ""; }
