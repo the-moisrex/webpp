@@ -186,13 +186,13 @@ namespace webpp {
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
 
-            auto _data = octets();
+            auto _octets = octets();
             octets16_t ndata = {};
             constexpr std::size_t len = ndata.size();
             using t = uint16_t;
             for (std::size_t i = 0; i < len; i++) {
-                ndata[i] = static_cast<t>(_data[i * 2 + 0]) << (16 - 8 * 1);
-                ndata[i] |= static_cast<t>(_data[i * 2 + 1]) << (16 - 8 * 2);
+                ndata[i] = static_cast<t>(_octets[i * 2 + 0]) << (16 - 8 * 1);
+                ndata[i] |= static_cast<t>(_octets[i * 2 + 1]) << (16 - 8 * 2);
             }
             return ndata;
         }
@@ -207,15 +207,15 @@ namespace webpp {
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
 
-            auto _data = octets();
+            auto _octets = octets();
             octets32_t ndata = {};
             constexpr std::size_t len = ndata.size();
             using t = uint32_t;
             for (std::size_t i = 0; i < len; i++) {
-                ndata[i] = static_cast<t>(_data[i * 2 + 0]) << (32 - 8 * 1);
-                ndata[i] |= static_cast<t>(_data[i * 2 + 1]) << (32 - 8 * 2);
-                ndata[i] |= static_cast<t>(_data[i * 2 + 2]) << (32 - 8 * 3);
-                ndata[i] |= static_cast<t>(_data[i * 2 + 3]) << (32 - 8 * 4);
+                ndata[i] = static_cast<t>(_octets[i * 2 + 0]) << (32 - 8 * 1);
+                ndata[i] |= static_cast<t>(_octets[i * 2 + 1]) << (32 - 8 * 2);
+                ndata[i] |= static_cast<t>(_octets[i * 2 + 2]) << (32 - 8 * 3);
+                ndata[i] |= static_cast<t>(_octets[i * 2 + 3]) << (32 - 8 * 4);
             }
             return ndata;
         }
@@ -230,19 +230,19 @@ namespace webpp {
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
 
-            auto _data = octets();
+            auto _octets = octets();
             octets64_t ndata = {};
             constexpr std::size_t len = ndata.size();
             using t = uint64_t;
             for (std::size_t i = 0; i < len; i++) {
-                ndata[i] = static_cast<t>(_data[i * 2 + 0]) << (64 - 8 * 1);
-                ndata[i] |= static_cast<t>(_data[i * 2 + 1]) << (64 - 8 * 2);
-                ndata[i] |= static_cast<t>(_data[i * 2 + 2]) << (64 - 8 * 3);
-                ndata[i] |= static_cast<t>(_data[i * 2 + 3]) << (64 - 8 * 4);
-                ndata[i] |= static_cast<t>(_data[i * 2 + 4]) << (64 - 8 * 5);
-                ndata[i] |= static_cast<t>(_data[i * 2 + 5]) << (64 - 8 * 6);
-                ndata[i] |= static_cast<t>(_data[i * 2 + 6]) << (64 - 8 * 7);
-                ndata[i] |= static_cast<t>(_data[i * 2 + 7]) << (64 - 8 * 8);
+                ndata[i] = static_cast<t>(_octets[i * 2 + 0]) << (64 - 8 * 1);
+                ndata[i] |= static_cast<t>(_octets[i * 2 + 1]) << (64 - 8 * 2);
+                ndata[i] |= static_cast<t>(_octets[i * 2 + 2]) << (64 - 8 * 3);
+                ndata[i] |= static_cast<t>(_octets[i * 2 + 3]) << (64 - 8 * 4);
+                ndata[i] |= static_cast<t>(_octets[i * 2 + 4]) << (64 - 8 * 5);
+                ndata[i] |= static_cast<t>(_octets[i * 2 + 5]) << (64 - 8 * 6);
+                ndata[i] |= static_cast<t>(_octets[i * 2 + 6]) << (64 - 8 * 7);
+                ndata[i] |= static_cast<t>(_octets[i * 2 + 7]) << (64 - 8 * 8);
             }
             return ndata;
         }
@@ -257,8 +257,8 @@ namespace webpp {
          *
          */
         bool is_unspecified() const noexcept {
-            auto _data = octets();
-            return std::all_of(_data.cbegin(), _data.cend(), 0);
+            auto _octets = octets();
+            return std::all_of(_octets.cbegin(), _octets.cend(), 0);
         }
 
         /**
@@ -270,9 +270,9 @@ namespace webpp {
          *
          */
         bool is_loopback() const noexcept {
-            auto _data = octets();
-            return _data[IPV6_ADDR_SIZE] == 1 &&
-                   std::all_of(_data.cbegin(), _data.cend() - 1, 0);
+            auto _octets = octets();
+            return _octets[IPV6_ADDR_SIZE] == 1 &&
+                   std::all_of(_octets.cbegin(), _octets.cend() - 1, 0);
         }
 
         /**
@@ -284,8 +284,8 @@ namespace webpp {
          *
          */
         bool is_link_local() const noexcept {
-            auto _data = octets();
-            return (_data[0] == 0xfe) && ((_data[1] & 0xc0) == 0x80);
+            auto _octets = octets();
+            return (_octets[0] == 0xfe) && ((_octets[1] & 0xc0) == 0x80);
         }
 
         /**
@@ -297,8 +297,8 @@ namespace webpp {
          *
          */
         bool is_multicast() const noexcept {
-            auto _data = octets();
-            return _data[0] == 0xff;
+            auto _octets = octets();
+            return _octets[0] == 0xff;
         }
 
         /**
@@ -335,10 +335,10 @@ namespace webpp {
          *
          */
         bool is_link_local_all_nodes_multicast() const noexcept {
-            auto _data = octets();
-            return _data[0] == 0xFF && _data[1] == 0x02 &&
-                   std::all_of(_data.cbegin() + 2, _data.cend() - 1, 0) &&
-                   _data[IPV6_ADDR_SIZE - 1] == 0x01;
+            auto _octets = octets();
+            return _octets[0] == 0xFF && _octets[1] == 0x02 &&
+                   std::all_of(_octets.cbegin() + 2, _octets.cend() - 1, 0) &&
+                   _octets[IPV6_ADDR_SIZE - 1] == 0x01;
         }
 
         /**
@@ -352,10 +352,10 @@ namespace webpp {
          *
          */
         bool is_link_local_all_routers_multicast() const noexcept {
-            auto _data = octets();
-            return _data[0] == 0xFF && _data[1] == 0x02 &&
-                   std::all_of(_data.cbegin() + 2, _data.cend() - 1, 0) &&
-                   _data[IPV6_ADDR_SIZE - 1] == 0x02;
+            auto _octets = octets();
+            return _octets[0] == 0xFF && _octets[1] == 0x02 &&
+                   std::all_of(_octets.cbegin() + 2, _octets.cend() - 1, 0) &&
+                   _octets[IPV6_ADDR_SIZE - 1] == 0x02;
         }
 
         /**
@@ -397,10 +397,10 @@ namespace webpp {
          *
          */
         bool is_realm_local_all_routers_multicast() const noexcept {
-            auto _data = octets();
-            return _data[0] == 0xFF && _data[1] == 0x03 &&
-                   std::all_of(_data.cbegin() + 2, _data.cend() - 1, 0) &&
-                   _data[IPV6_ADDR_SIZE - 1] == 0x02;
+            auto _octets = octets();
+            return _octets[0] == 0xFF && _octets[1] == 0x03 &&
+                   std::all_of(_octets.cbegin() + 2, _octets.cend() - 1, 0) &&
+                   _octets[IPV6_ADDR_SIZE - 1] == 0x02;
         }
 
         /**
@@ -414,10 +414,10 @@ namespace webpp {
          *
          */
         bool is_realm_local_all_mpl_forwarders() const noexcept {
-            auto _data = octets();
-            return _data[0] == 0xFF && _data[1] == 0x03 &&
-                   std::all_of(_data.cbegin() + 2, _data.cend() - 1, 0) &&
-                   _data[IPV6_ADDR_SIZE - 1] == 0xfc;
+            auto _octets = octets();
+            return _octets[0] == 0xFF && _octets[1] == 0x03 &&
+                   std::all_of(_octets.cbegin() + 2, _octets.cend() - 1, 0) &&
+                   _octets[IPV6_ADDR_SIZE - 1] == 0xfc;
         }
 
         /**
@@ -446,14 +446,14 @@ namespace webpp {
             constexpr auto aloc_16_mask = 0xFC; // The mask for Aloc16
             constexpr auto rloc16_reserved_bit_mask =
                 0x02; // The mask for the reserved bit of Rloc16
-            auto _data = octets();
+            auto _octets = octets();
             // XX XX XX XX XX XX XX XX 00 00 00 FF FE 00 YY YY
             // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
-            return _data[8] == 0 && _data[9] == 0 && _data[10] == 0 &&
-                   _data[11] == 0xFF && _data[12] == 0xFE && _data[13] == 0 &&
-                   (_data[14] < aloc_16_mask) &&
-                   ((_data[14] & rloc16_reserved_bit_mask) == 0);
+            return _octets[8] == 0 && _octets[9] == 0 && _octets[10] == 0 &&
+                   _octets[11] == 0xFF && _octets[12] == 0xFE && _octets[13] == 0 &&
+                   (_octets[14] < aloc_16_mask) &&
+                   ((_octets[14] & rloc16_reserved_bit_mask) == 0);
         }
 
         /**
@@ -466,15 +466,15 @@ namespace webpp {
          */
         bool is_anycast_routing_locator() const noexcept {
             constexpr auto aloc_16_mask = 0xFC; // The mask for Aloc16
-            auto _data = octets();
+            auto _octets = octets();
 
             // XX XX XX XX XX XX XX XX 00 00 00 FF FE 00 FC XX
             // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
 
-            return _data[8] == 0 && _data[9] == 0 && _data[10] == 0 &&
-                   _data[11] == 0xFF && _data[12] == 0xFE && _data[13] == 0 &&
-                   _data[14] == aloc_16_mask;
+            return _octets[8] == 0 && _octets[9] == 0 && _octets[10] == 0 &&
+                   _octets[11] == 0xFF && _octets[12] == 0xFE && _octets[13] == 0 &&
+                   _octets[14] == aloc_16_mask;
         }
 
         /**
@@ -488,11 +488,11 @@ namespace webpp {
         bool is_anycast_service_locator() const noexcept {
             constexpr auto aloc8_service_start = 0x10;
             constexpr auto aloc8_service_end = 0x2f;
-            auto _data = octets();
+            auto _octets = octets();
             return is_anycast_routing_locator() &&
-                   (_data[IPV6_ADDR_SIZE - 2] == 0xfc) &&
-                   (_data[IPV6_ADDR_SIZE - 1] >= aloc8_service_start) &&
-                   (_data[IPV6_ADDR_SIZE - 1] <= aloc8_service_end);
+                   (_octets[IPV6_ADDR_SIZE - 2] == 0xfc) &&
+                   (_octets[IPV6_ADDR_SIZE - 1] >= aloc8_service_start) &&
+                   (_octets[IPV6_ADDR_SIZE - 1] <= aloc8_service_end);
         }
 
         std::string str() const noexcept { return ""; }
