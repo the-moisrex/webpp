@@ -451,8 +451,8 @@ namespace webpp {
             // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
             return _octets[8] == 0 && _octets[9] == 0 && _octets[10] == 0 &&
-                   _octets[11] == 0xFF && _octets[12] == 0xFE && _octets[13] == 0 &&
-                   (_octets[14] < aloc_16_mask) &&
+                   _octets[11] == 0xFF && _octets[12] == 0xFE &&
+                   _octets[13] == 0 && (_octets[14] < aloc_16_mask) &&
                    ((_octets[14] & rloc16_reserved_bit_mask) == 0);
         }
 
@@ -473,8 +473,8 @@ namespace webpp {
             // --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
 
             return _octets[8] == 0 && _octets[9] == 0 && _octets[10] == 0 &&
-                   _octets[11] == 0xFF && _octets[12] == 0xFE && _octets[13] == 0 &&
-                   _octets[14] == aloc_16_mask;
+                   _octets[11] == 0xFF && _octets[12] == 0xFE &&
+                   _octets[13] == 0 && _octets[14] == aloc_16_mask;
         }
 
         /**
