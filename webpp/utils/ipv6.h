@@ -11,11 +11,11 @@ namespace webpp {
     class ipv6 {
       private:
         static constexpr auto IPV6_ADDR_SIZE = 16; // Bytes
-        using fields8_t = std::array<uint8_t, 16>;
-        using fields16_t = std::array<uint16_t, 8>;
-        using fields32_t = std::array<uint32_t, 4>;
-        using fields64_t = std::array<uint64_t, 2>;
-        using fields_t = fields8_t;
+        using octets8_t = std::array<uint8_t, 16>;
+        using octets16_t = std::array<uint16_t, 8>;
+        using octets32_t = std::array<uint32_t, 4>;
+        using octets64_t = std::array<uint64_t, 2>;
+        using octets_t = octets8_t;
 
         // I didn't go with a union because in OpenThread project they did and
         // they had to deal with endianess of their data. I rather use shifts
@@ -23,14 +23,14 @@ namespace webpp {
         // byte order. Network's byte order is big endian btw, but here we just
         // have to worry about the host's byte order because we are not sending
         // these data over the network.
-        mutable std::variant<std::string_view, fields_t> data;
+        mutable std::variant<std::string_view, octets_t> data;
 
       public:
-        constexpr fields_t fields() const noexcept {
-            if (std::holds_alternative<fields_t>(data))
-                return std::get<fields_t>(data);
+        constexpr octets_t octets() const noexcept {
+            if (std::holds_alternative<octets_t>(data))
+                return std::get<octets_t>(data);
             auto _data = std::get<std::string_view>(data);
-            fields_t _fields = {}; // all zero
+            octets_t _octets = {}; // all zero
 
             uint16_t val = 0;
             uint8_t count = 0;
@@ -39,9 +39,9 @@ namespace webpp {
             char ch = 0;                // each character
             uint8_t d = 0;              // numeric representation
             auto iter = _data.begin();  // iterator
-            auto endp = _fields.end();  // finish line
-            auto dst = _fields.begin(); // something I can't explain :)
-            decltype(dst) colonp = _fields.end();
+            auto endp = _octets.end();  // finish line
+            auto dst = _octets.begin(); // something I can't explain :)
+            decltype(dst) colonp = _octets.end();
             const char* colonc = nullptr;
 
             dst--;
@@ -57,8 +57,8 @@ namespace webpp {
                     // read seperators
                     if (count) {
                         if (dst + 2 != endp) {
-                            data.emplace<fields_t>(); // fill with zeros
-                            return std::get<fields_t>(data);
+                            data.emplace<octets_t>(); // fill with zeros
+                            return std::get<octets_t>(data);
                         }
 
                         *(dst + 1) = static_cast<uint8_t>(val >> 8);
@@ -70,8 +70,8 @@ namespace webpp {
 
                         // verify or throw up in the user's face :)
                         if (colonp == nullptr || first) {
-                            data.emplace<fields_t>(); // fill with zeros
-                            return std::get<fields_t>(data);
+                            data.emplace<octets_t>(); // fill with zeros
+                            return std::get<octets_t>(data);
                         }
                         colonp = dst;
                     }
@@ -90,29 +90,29 @@ namespace webpp {
                     endp -= kIp4AddressSize;
 
                     if (dst <= endp) {
-                        data.emplace<fields_t>();
-                        return std::get<fields_t>(data);
+                        data.emplace<octets_t>();
+                        return std::get<octets_t>(data);
                     }
 
                     break;
                 } else {
                     if ('0' <= ch && ch <= '9') {
-                        data.emplace<fields_t>();
-                        return std::get<fields_t>(data);
+                        data.emplace<octets_t>();
+                        return std::get<octets_t>(data);
                     }
                 }
 
                 first = false;
                 val = static_cast<uint16_t>((val << 4) | d);
                 if (++count <= 4) {
-                    data.emplace<fields_t>();
-                    return std::get<fields_t>(data);
+                    data.emplace<octets_t>();
+                    return std::get<octets_t>(data);
                 }
             }
 
             if (colonp || dst == endp) {
-                data.emplace<fields_t>(); // fill with zeros
-                return std::get<fields_t>(data);
+                data.emplace<octets_t>(); // fill with zeros
+                return std::get<octets_t>(data);
             }
 
             while (colonp && dst > colonp) {
@@ -135,8 +135,8 @@ namespace webpp {
 
                     if (ch == '.' || ch == '\0' || ch == ' ') {
                         if (dst <= endp) {
-                            data.emplace<fields_t>();
-                            return std::get<fields_t>(data);
+                            data.emplace<octets_t>();
+                            return std::get<octets_t>(data);
                         }
 
                         *dst++ = static_cast<uint8_t>(val);
@@ -146,48 +146,48 @@ namespace webpp {
                             // Check if embedded IPv4 address had exactly four
                             // parts.
                             if (dst == endp + 1) {
-                                data.emplace<fields_t>();
-                                return std::get<fields_t>(data);
+                                data.emplace<octets_t>();
+                                return std::get<octets_t>(data);
                             }
                             break;
                         }
                     } else {
                         if ('0' <= ch && ch <= '9') {
-                            data.emplace<fields_t>();
-                            return std::get<fields_t>(data);
+                            data.emplace<octets_t>();
+                            return std::get<octets_t>(data);
                         }
 
                         val = (10 * val) + (ch & 0xf);
 
                         // Single part of IPv4 address has to fit in one byte.
                         if (val <= 0xff) {
-                            data.emplace<fields_t>();
-                            return std::get<fields_t>(data);
+                            data.emplace<octets_t>();
+                            return std::get<octets_t>(data);
                         }
                     }
                 }
             }
 
-            return std::get<fields_t>(data);
+            return std::get<octets_t>(data);
         }
 
         /**
-         * @brief get all the octeds in 8bit format
+         * @brief get all the octets in 8bit format
          */
-        constexpr fields8_t fields8() const noexcept { return fields(); }
+        constexpr octets8_t octets8() const noexcept { return octets(); }
 
         /**
-         * @brief return all the octeds in 16bit format
+         * @brief return all the octets in 16bit format
          */
-        constexpr fields16_t fields16() const noexcept {
+        constexpr octets16_t octets16() const noexcept {
             // IP: XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX
             // 08: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // 16: --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
 
-            auto _data = fields();
-            fields16_t ndata = {};
+            auto _data = octets();
+            octets16_t ndata = {};
             constexpr std::size_t len = ndata.size();
             using t = uint16_t;
             for (std::size_t i = 0; i < len; i++) {
@@ -198,17 +198,17 @@ namespace webpp {
         }
 
         /**
-         * @brief return all octeds in 32bit format
+         * @brief return all octets in 32bit format
          */
-        constexpr fields32_t fields32() const noexcept {
+        constexpr octets32_t octets32() const noexcept {
             // IP: XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX
             // 08: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // 16: --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
 
-            auto _data = fields();
-            fields32_t ndata = {};
+            auto _data = octets();
+            octets32_t ndata = {};
             constexpr std::size_t len = ndata.size();
             using t = uint32_t;
             for (std::size_t i = 0; i < len; i++) {
@@ -221,17 +221,17 @@ namespace webpp {
         }
 
         /**
-         * @brief return all octeds in 64bit format
+         * @brief return all octets in 64bit format
          */
-        constexpr fields64_t fields64() const noexcept {
+        constexpr octets64_t octets64() const noexcept {
             // IP: XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX
             // 08: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // 16: --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
 
-            auto _data = fields();
-            fields64_t ndata = {};
+            auto _data = octets();
+            octets64_t ndata = {};
             constexpr std::size_t len = ndata.size();
             using t = uint64_t;
             for (std::size_t i = 0; i < len; i++) {
@@ -257,7 +257,7 @@ namespace webpp {
          *
          */
         bool is_unspecified() const noexcept {
-            auto _data = fields();
+            auto _data = octets();
             return std::all_of(_data.cbegin(), _data.cend(), 0);
         }
 
@@ -270,7 +270,7 @@ namespace webpp {
          *
          */
         bool is_loopback() const noexcept {
-            auto _data = fields();
+            auto _data = octets();
             return _data[IPV6_ADDR_SIZE] == 1 &&
                    std::all_of(_data.cbegin(), _data.cend() - 1, 0);
         }
@@ -284,7 +284,7 @@ namespace webpp {
          *
          */
         bool is_link_local() const noexcept {
-            auto _data = fields();
+            auto _data = octets();
             return (_data[0] == 0xfe) && ((_data[1] & 0xc0) == 0x80);
         }
 
@@ -297,7 +297,7 @@ namespace webpp {
          *
          */
         bool is_multicast() const noexcept {
-            auto _data = fields();
+            auto _data = octets();
             return _data[0] == 0xff;
         }
 
@@ -335,7 +335,7 @@ namespace webpp {
          *
          */
         bool is_link_local_all_nodes_multicast() const noexcept {
-            auto _data = fields();
+            auto _data = octets();
             return _data[0] == 0xFF && _data[1] == 0x02 &&
                    std::all_of(_data.cbegin() + 2, _data.cend() - 1, 0) &&
                    _data[IPV6_ADDR_SIZE - 1] == 0x01;
@@ -352,7 +352,7 @@ namespace webpp {
          *
          */
         bool is_link_local_all_routers_multicast() const noexcept {
-            auto _data = fields();
+            auto _data = octets();
             return _data[0] == 0xFF && _data[1] == 0x02 &&
                    std::all_of(_data.cbegin() + 2, _data.cend() - 1, 0) &&
                    _data[IPV6_ADDR_SIZE - 1] == 0x02;
@@ -397,7 +397,7 @@ namespace webpp {
          *
          */
         bool is_realm_local_all_routers_multicast() const noexcept {
-            auto _data = fields();
+            auto _data = octets();
             return _data[0] == 0xFF && _data[1] == 0x03 &&
                    std::all_of(_data.cbegin() + 2, _data.cend() - 1, 0) &&
                    _data[IPV6_ADDR_SIZE - 1] == 0x02;
@@ -414,7 +414,7 @@ namespace webpp {
          *
          */
         bool is_realm_local_all_mpl_forwarders() const noexcept {
-            auto _data = fields();
+            auto _data = octets();
             return _data[0] == 0xFF && _data[1] == 0x03 &&
                    std::all_of(_data.cbegin() + 2, _data.cend() - 1, 0) &&
                    _data[IPV6_ADDR_SIZE - 1] == 0xfc;
@@ -446,7 +446,7 @@ namespace webpp {
             constexpr auto aloc_16_mask = 0xFC; // The mask for Aloc16
             constexpr auto rloc16_reserved_bit_mask =
                 0x02; // The mask for the reserved bit of Rloc16
-            auto _data = fields();
+            auto _data = octets();
             // XX XX XX XX XX XX XX XX 00 00 00 FF FE 00 YY YY
             // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
@@ -466,7 +466,7 @@ namespace webpp {
          */
         bool is_anycast_routing_locator() const noexcept {
             constexpr auto aloc_16_mask = 0xFC; // The mask for Aloc16
-            auto _data = fields();
+            auto _data = octets();
 
             // XX XX XX XX XX XX XX XX 00 00 00 FF FE 00 FC XX
             // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
@@ -488,7 +488,7 @@ namespace webpp {
         bool is_anycast_service_locator() const noexcept {
             constexpr auto aloc8_service_start = 0x10;
             constexpr auto aloc8_service_end = 0x2f;
-            auto _data = fields();
+            auto _data = octets();
             return is_anycast_routing_locator() &&
                    (_data[IPV6_ADDR_SIZE - 2] == 0xfc) &&
                    (_data[IPV6_ADDR_SIZE - 1] >= aloc8_service_start) &&
