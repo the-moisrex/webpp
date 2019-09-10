@@ -125,11 +125,11 @@ namespace webpp {
          */
         std::string str() const noexcept {
             if (std::holds_alternative<uint32_t>(data)) {
-                auto _octeds = octeds();
+                auto _octets = octets();
                 std::ostringstream s;
-                s << std::move(_octeds[0]) << '.' << std::move(_octeds[1])
-                  << '.' << std::move(_octeds[2]) << '.'
-                  << std::move(_octeds[3]);
+                s << std::move(_octets[0]) << '.' << std::move(_octets[1])
+                  << '.' << std::move(_octets[2]) << '.'
+                  << std::move(_octets[3]);
                 return s.str();
             }
             return std::string(std::get<std::string_view>(data));
@@ -147,10 +147,10 @@ namespace webpp {
         }
 
         /**
-         * @brief get the 4 octeds of the ip address
+         * @brief get the 4 octets of the ip address
          * @return
          */
-        constexpr std::array<uint8_t, 4> octeds() const noexcept {
+        constexpr std::array<uint8_t, 4> octets() const noexcept {
             uint32_t _data = integer();
             return std::array<uint8_t, 4>(
                 {static_cast<uint8_t>(_data >> 24),
