@@ -11,7 +11,11 @@ namespace webpp {
     class ipv6 {
       private:
         static constexpr auto IPV6_ADDR_SIZE = 16; // Bytes
-        using fields_t = std::array<uint8_t, IPV6_ADDR_SIZE>;
+        using fields8_t = std::array<uint8_t, 16>;
+        using fields16_t = std::array<uint16_t, 8>;
+        using fields32_t = std::array<uint32_t, 4>;
+        using fields64_t = std::array<uint64_t, 2>;
+        using fields_t = fields8_t;
 
         // I didn't go with a union because in OpenThread project they did and
         // they had to deal with endianess of their data. I rather use shifts
@@ -165,6 +169,82 @@ namespace webpp {
             }
 
             return std::get<fields_t>(data);
+        }
+
+        /**
+         * @brief get all the octeds in 8bit format
+         */
+        constexpr fields8_t fields8() const noexcept { return fields(); }
+
+        /**
+         * @brief return all the octeds in 16bit format
+         */
+        constexpr fields16_t fields16() const noexcept {
+            // IP: XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX
+            // 08: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+            // 16: --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
+            // 32: -----0----- -----1----- -----2----- -----3-----
+            // 64: -----------0----------- -----------1-----------
+
+            auto _data = fields();
+            fields16_t ndata = {};
+            constexpr std::size_t len = ndata.size();
+            using t = uint16_t;
+            for (std::size_t i = 0; i < len; i++) {
+                ndata[i] = static_cast<t>(_data[i * 2 + 0]) << (16 - 8 * 1);
+                ndata[i] |= static_cast<t>(_data[i * 2 + 1]) << (16 - 8 * 2);
+            }
+            return ndata;
+        }
+
+        /**
+         * @brief return all octeds in 32bit format
+         */
+        constexpr fields32_t fields32() const noexcept {
+            // IP: XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX
+            // 08: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+            // 16: --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
+            // 32: -----0----- -----1----- -----2----- -----3-----
+            // 64: -----------0----------- -----------1-----------
+
+            auto _data = fields();
+            fields32_t ndata = {};
+            constexpr std::size_t len = ndata.size();
+            using t = uint32_t;
+            for (std::size_t i = 0; i < len; i++) {
+                ndata[i] = static_cast<t>(_data[i * 2 + 0]) << (32 - 8 * 1);
+                ndata[i] |= static_cast<t>(_data[i * 2 + 1]) << (32 - 8 * 2);
+                ndata[i] |= static_cast<t>(_data[i * 2 + 2]) << (32 - 8 * 3);
+                ndata[i] |= static_cast<t>(_data[i * 2 + 3]) << (32 - 8 * 4);
+            }
+            return ndata;
+        }
+
+        /**
+         * @brief return all octeds in 64bit format
+         */
+        constexpr fields64_t fields64() const noexcept {
+            // IP: XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX
+            // 08: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+            // 16: --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
+            // 32: -----0----- -----1----- -----2----- -----3-----
+            // 64: -----------0----------- -----------1-----------
+
+            auto _data = fields();
+            fields64_t ndata = {};
+            constexpr std::size_t len = ndata.size();
+            using t = uint64_t;
+            for (std::size_t i = 0; i < len; i++) {
+                ndata[i] = static_cast<t>(_data[i * 2 + 0]) << (64 - 8 * 1);
+                ndata[i] |= static_cast<t>(_data[i * 2 + 1]) << (64 - 8 * 2);
+                ndata[i] |= static_cast<t>(_data[i * 2 + 2]) << (64 - 8 * 3);
+                ndata[i] |= static_cast<t>(_data[i * 2 + 3]) << (64 - 8 * 4);
+                ndata[i] |= static_cast<t>(_data[i * 2 + 4]) << (64 - 8 * 5);
+                ndata[i] |= static_cast<t>(_data[i * 2 + 5]) << (64 - 8 * 6);
+                ndata[i] |= static_cast<t>(_data[i * 2 + 6]) << (64 - 8 * 7);
+                ndata[i] |= static_cast<t>(_data[i * 2 + 7]) << (64 - 8 * 8);
+            }
+            return ndata;
         }
 
         /**
