@@ -2,9 +2,12 @@
 #define WEBPP_IPV6_H
 
 #include "../std/string_view.h"
+#include <algorithm>
 #include <array>
+#include <sstream>
 #include <string>
 #include <variant>
+#include <vector>
 
 namespace webpp {
 
@@ -536,8 +539,79 @@ namespace webpp {
                    std::all_of(_octets.cbegin() + 9, _octets.cend() - 1, 0xFF);
         }
 
-        std::string str() const noexcept { return ""; }
-        std::string short_str() const noexcept { return ""; }
+        /**
+         * This method indicates whether or not the IPv6 address contains
+         * Reserved IPv6 IID (RFC 5453),
+         *
+         * @retval TRUE   If the IPv6 address contains a reserved IPv6 IID.
+         * @retval FALSE  If the IPv6 address does not contain a reserved IPv6
+         * IID.
+         *
+         */
+        bool is_iid_reserved() const noexcept {
+            return is_subnet_router_anycast() || is_reserved_subnet_anycast() ||
+                   is_anycast_routing_locator();
+        }
+
+	/**
+	 * @brief long string representation of the ip
+	 */
+        std::string str() const noexcept {
+            char buffer[40] = {};
+            auto _octets = octets16();
+            sprintf(buffer, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x",
+                    _octets[0], _octets[1], _octets[2], _octets[3], _octets[4],
+                    _octets[5], _octets[6], _octets[7]);
+            buffer[39] = '\0';
+            return std::string(buffer);
+        }
+
+        /**
+         * @brief return the short string representation of ip version 6
+         */
+        std::string short_str() const noexcept {
+            auto _octets = octets16();
+
+            // finding all of the ranges that are zero filled
+            std::vector<std::pair<decltype(_octets)::const_iterator,
+                                  decltype(_octets)::const_iterator>>
+                ranges;
+            decltype(_octets)::const_iterator start, finish = _octets.cbegin();
+            do {
+                start = std::adjacent_find(finish, _octets.cend(),
+                                           [](auto const& a, auto const& b) {
+                                               return (0 == a) && (0 == b);
+                                           });
+                finish = std::find_if_not(start, _octets.cend(),
+                                          [](auto const& a) { return a == 0; });
+                if (start != _octets.cend())
+                    ranges.emplace_back(start, finish);
+            } while (finish != _octets.cend());
+
+            // finding the range with the max zeros
+            auto max_range =
+                std::max_element(ranges.cbegin(), ranges.cend(),
+                                 [](auto const& a, auto const& b) {
+                                     return std::distance(a.first, a.second) <
+                                            std::distance(b.first, b.second);
+                                 });
+
+            // generating short string representation of the ip version 6
+            std::ostringstream ostr;
+            ostr << std::hex;
+            for (auto it = _octets.cbegin(); it != max_range->first; it++) {
+                ostr << *it;
+                if (_octets.cbegin() == it)
+                    ostr << ':';
+            }
+            if (max_range != ranges.cend()) {
+                ostr << ':';
+                for (auto it = max_range->second; it != _octets.cend(); it++) {
+                    ostr << *it;
+                }
+            }
+            return ostr.str();
+        }
     };
 
 } // namespace webpp
