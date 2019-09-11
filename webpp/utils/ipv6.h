@@ -553,9 +553,9 @@ namespace webpp {
                    is_anycast_routing_locator();
         }
 
-	/**
-	 * @brief long string representation of the ip
-	 */
+        /**
+         * @brief long string representation of the ip
+         */
         std::string str() const noexcept {
             char buffer[40] = {};
             auto _octets = octets16();
