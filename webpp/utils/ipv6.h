@@ -515,6 +515,27 @@ namespace webpp {
             return std::all_of(_octets.cbegin() + 8, _octets.cend(), 0);
         }
 
+        /**
+         * This method indicates whether or not the IPv6 address is Reserved
+         * Subnet Anycast (RFC 2526),
+         *
+         * @retval TRUE   If the IPv6 address is a Reserved Subnet Anycast
+         * address.
+         * @retval FALSE  If the IPv6 address is not a Reserved Subnet Anycast
+         * address.
+         *
+         */
+        bool is_reserved_subnet_anycast() const noexcept {
+            // IP: XX XX XX XX XX XX XX XX FD FF FF FF FF FF FF 80
+            // 08: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+            // 16: --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
+            // 32: -----0----- -----1----- -----2----- -----3-----
+            // 64: -----------0----------- -----------1-----------
+            auto _octets = octets8();
+            return _octets[8] == 0xFD && _octets[15] == 0x80 &&
+                   std::all_of(_octets.cbegin() + 9, _octets.cend() - 1, 0xFF);
+        }
+
         std::string str() const noexcept { return ""; }
         std::string short_str() const noexcept { return ""; }
     };
