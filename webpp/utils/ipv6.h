@@ -495,6 +495,26 @@ namespace webpp {
                    (_octets[IPV6_ADDR_SIZE - 1] <= aloc8_service_end);
         }
 
+        /**
+         * This method indicates whether or not the IPv6 address is
+         * Subnet-Router Anycast (RFC 4291),
+         *
+         * @retval TRUE   If the IPv6 address is a Subnet-Router Anycast
+         * address.
+         * @retval FALSE  If the IPv6 address is not a Subnet-Router Anycast
+         * address.
+         *
+         */
+        bool is_subnet_router_anycast() const noexcept {
+            // IP: XX XX XX XX XX XX XX XX 00 00 00 00 00 00 00 00
+            // 08: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+            // 16: --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
+            // 32: -----0----- -----1----- -----2----- -----3-----
+            // 64: -----------0----------- -----------1-----------
+            auto _octets = octets();
+            return std::all_of(_octets.cbegin() + 8, _octets.cend(), 0);
+        }
+
         std::string str() const noexcept { return ""; }
         std::string short_str() const noexcept { return ""; }
     };
