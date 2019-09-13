@@ -201,8 +201,10 @@ namespace webpp {
             constexpr std::size_t len = ndata.size();
             using t = uint16_t;
             for (std::size_t i = 0; i < len; i++) {
-                ndata[i] = static_cast<t>(_octets[i * 2 + 0]) << (16 - 8 * 1);
-                ndata[i] |= static_cast<t>(_octets[i * 2 + 1]) << (16 - 8 * 2);
+                ndata[i] = static_cast<t>(_octets[i * 2u + 0u])
+                           << (16u - 8u * 1u);
+                ndata[i] |= static_cast<t>(_octets[i * 2u + 1u])
+                            << (16u - 8u * 2u);
             }
             return ndata;
         }
@@ -222,10 +224,14 @@ namespace webpp {
             constexpr std::size_t len = ndata.size();
             using t = uint32_t;
             for (std::size_t i = 0; i < len; i++) {
-                ndata[i] = static_cast<t>(_octets[i * 2 + 0]) << (32 - 8 * 1);
-                ndata[i] |= static_cast<t>(_octets[i * 2 + 1]) << (32 - 8 * 2);
-                ndata[i] |= static_cast<t>(_octets[i * 2 + 2]) << (32 - 8 * 3);
-                ndata[i] |= static_cast<t>(_octets[i * 2 + 3]) << (32 - 8 * 4);
+                ndata[i] = static_cast<t>(_octets[i * 2u + 0u])
+                           << (32u - 8u * 1u);
+                ndata[i] |= static_cast<t>(_octets[i * 2u + 1u])
+                            << (32u - 8u * 2u);
+                ndata[i] |= static_cast<t>(_octets[i * 2u + 2u])
+                            << (32u - 8u * 3u);
+                ndata[i] |= static_cast<t>(_octets[i * 2u + 3u])
+                            << (32u - 8u * 4u);
             }
             return ndata;
         }
@@ -245,14 +251,22 @@ namespace webpp {
             constexpr std::size_t len = ndata.size();
             using t = uint64_t;
             for (std::size_t i = 0; i < len; i++) {
-                ndata[i] = static_cast<t>(_octets[i * 2 + 0]) << (64 - 8 * 1);
-                ndata[i] |= static_cast<t>(_octets[i * 2 + 1]) << (64 - 8 * 2);
-                ndata[i] |= static_cast<t>(_octets[i * 2 + 2]) << (64 - 8 * 3);
-                ndata[i] |= static_cast<t>(_octets[i * 2 + 3]) << (64 - 8 * 4);
-                ndata[i] |= static_cast<t>(_octets[i * 2 + 4]) << (64 - 8 * 5);
-                ndata[i] |= static_cast<t>(_octets[i * 2 + 5]) << (64 - 8 * 6);
-                ndata[i] |= static_cast<t>(_octets[i * 2 + 6]) << (64 - 8 * 7);
-                ndata[i] |= static_cast<t>(_octets[i * 2 + 7]) << (64 - 8 * 8);
+                ndata[i] = static_cast<t>(_octets[i * 2u + 0u])
+                           << (64u - 8u * 1u);
+                ndata[i] |= static_cast<t>(_octets[i * 2u + 1u])
+                            << (64u - 8u * 2u);
+                ndata[i] |= static_cast<t>(_octets[i * 2u + 2u])
+                            << (64u - 8u * 3u);
+                ndata[i] |= static_cast<t>(_octets[i * 2u + 3u])
+                            << (64u - 8u * 4u);
+                ndata[i] |= static_cast<t>(_octets[i * 2u + 4u])
+                            << (64u - 8u * 5u);
+                ndata[i] |= static_cast<t>(_octets[i * 2u + 5u])
+                            << (64u - 8u * 6u);
+                ndata[i] |= static_cast<t>(_octets[i * 2u + 6u])
+                            << (64u - 8u * 7u);
+                ndata[i] |= static_cast<t>(_octets[i * 2u + 7u])
+                            << (64u - 8u * 8u);
             }
             return ndata;
         }
@@ -295,7 +309,7 @@ namespace webpp {
          */
         bool is_link_local() const noexcept {
             auto _octets = octets();
-            return (_octets[0] == 0xfe) && ((_octets[1] & 0xc0) == 0x80);
+            return (_octets[0] == 0xfeu) && ((_octets[1] & 0xc0u) == 0x80u);
         }
 
         /**
@@ -453,9 +467,9 @@ namespace webpp {
          *
          */
         bool is_routing_locator() const noexcept {
-            constexpr auto aloc_16_mask = 0xFC; // The mask for Aloc16
+            constexpr auto aloc_16_mask = 0xFCu; // The mask for Aloc16
             constexpr auto rloc16_reserved_bit_mask =
-                0x02; // The mask for the reserved bit of Rloc16
+                0x02u; // The mask for the reserved bit of Rloc16
             auto _octets = octets();
             // XX XX XX XX XX XX XX XX 00 00 00 FF FE 00 YY YY
             // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
