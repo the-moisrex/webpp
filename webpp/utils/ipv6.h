@@ -12,7 +12,7 @@
 namespace webpp {
 
     class ipv6 {
-      private:
+      public:
         static constexpr auto IPV6_ADDR_SIZE = 16u; // Bytes
         using octets8_t = std::array<uint8_t, 16u>;
         using octets16_t = std::array<uint16_t, 8u>;
@@ -20,8 +20,23 @@ namespace webpp {
         using octets64_t = std::array<uint64_t, 2u>;
         using octets_t = octets8_t;
 
+        /**
+         * IPv6 Address Scopes
+         */
+        enum class scope {
+            node_local = 0u,      // Node-Local scope
+            interface_local = 1u, // Interface-Local scope
+            link_local = 2u,      // Link-Local scope
+            realm_local = 3u,     // Realm-Local scope
+            admin_local = 4u,     // Admin-Local scope
+            site_local = 5u,      // Site-Local scope
+            org_local = 8u,       // Organization-Local scope
+            global = 14u,         // Global scope
+        };
+
+      private:
         // I didn't go with a union because in OpenThread project they did and
-        // they had to deal with endianess of their data. I rather use shifts
+        // they had to deal with endianness of their data. I rather use shifts
         // and host's byte order instead of getting my hands dirty with host's
         // byte order. Network's byte order is big endian btw, but here we just
         // have to worry about the host's byte order because we are not sending
@@ -338,6 +353,21 @@ namespace webpp {
         }
 
         /**
+         * This method returns the IPv6 address scope.
+         * @returns The IPv6 address scope.
+         */
+        uint8_t get_scope() const noexcept {
+            if (is_multicast()) {
+                return octets8()[1] & 0xfu;
+            } else if (is_link_local()) {
+                return static_cast<uint8_t>(scope::link_local);
+            } else if (is_loopback()) {
+                return static_cast<uint8_t>(scope::node_local);
+            }
+            return static_cast<uint8_t>(scope::global);
+        }
+
+        /**
          * This method indicates whether or not the IPv6 address is the
          * Unspecified Address.
          * Unspecified IPv6 Address == ::0
@@ -411,7 +441,8 @@ namespace webpp {
          *
          */
         bool is_link_local_multicast() const noexcept {
-            return is_multicast() && get_scope() == scope::link_local;
+            return is_multicast() &&
+                   get_scope() == static_cast<uint8_t>(scope::link_local);
         }
 
         /**
@@ -459,7 +490,8 @@ namespace webpp {
          *
          */
         bool is_realm_local_multicast() const noexcept {
-            return is_multicast() && (get_scope() == scope::realm_local);
+            return is_multicast() &&
+                   (get_scope() == static_cast<uint8_t>(scope::realm_local));
         }
 
         /**
@@ -473,7 +505,8 @@ namespace webpp {
          *
          */
         bool is_realm_local_all_nodes_multicast() const noexcept {
-            return is_multicast() && get_scope() == scope::realm_local;
+            return is_multicast() &&
+                   get_scope() == static_cast<uint8_t>(scope::realm_local);
         }
 
         /**
@@ -521,7 +554,8 @@ namespace webpp {
          *
          */
         bool is_multicast_larger_than_realm_local() const noexcept {
-            return is_multicast() && get_scope() > scope::realm_local;
+            return is_multicast() &&
+                   get_scope() > static_cast<uint8_t>(scope::realm_local);
         }
 
         /**
