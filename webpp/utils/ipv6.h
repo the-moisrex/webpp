@@ -13,11 +13,11 @@ namespace webpp {
 
     class ipv6 {
       private:
-        static constexpr auto IPV6_ADDR_SIZE = 16; // Bytes
-        using octets8_t = std::array<uint8_t, 16>;
-        using octets16_t = std::array<uint16_t, 8>;
-        using octets32_t = std::array<uint32_t, 4>;
-        using octets64_t = std::array<uint64_t, 2>;
+        static constexpr auto IPV6_ADDR_SIZE = 16u; // Bytes
+        using octets8_t = std::array<uint8_t, 16u>;
+        using octets16_t = std::array<uint16_t, 8u>;
+        using octets32_t = std::array<uint32_t, 4u>;
+        using octets64_t = std::array<uint64_t, 2u>;
         using octets_t = octets8_t;
 
         // I didn't go with a union because in OpenThread project they did and
@@ -28,7 +28,73 @@ namespace webpp {
         // these data over the network.
         mutable std::variant<std::string_view, octets_t> data;
 
+        /**
+         * converts 16/32/64/... bit arrays to 8bit
+         * @tparam OCTET
+         * @param _octets
+         * @return octets8_t so I could put it in the "data"
+         */
+        template <typename OCTET>
+        static constexpr octets8_t to_octets8_t(OCTET const& _octets) noexcept {
+            octets8_t _data;
+            auto _octets_it = _octets.cbegin();
+            auto _data_it = _data.begin();
+            auto each_octet_size = _data.size() / _octets.size();
+            for (; _octets_it != _octets.cend(); ++_octets_it) {
+                for (std::size_t i = 0u; i < each_octet_size; i++)
+                    *_data_it++ =
+                        static_cast<uint8_t>(*_octets_it >> (i * 8u) | 0xFFu);
+            }
+            return _data;
+        }
+
       public:
+        constexpr explicit ipv6(std::string_view const& str) noexcept
+            : data(str) {
+            // todo: check ipv6
+        }
+        constexpr explicit ipv6(octets8_t const& _octets) noexcept
+            : data(_octets) {}
+        constexpr explicit ipv6(octets16_t const& _octets) noexcept
+            : data(to_octets8_t(_octets)) {}
+        constexpr explicit ipv6(octets32_t const& _octets) noexcept
+            : data(to_octets8_t(_octets)) {}
+        constexpr explicit ipv6(octets64_t const& _octets) noexcept
+            : data(to_octets8_t(_octets)) {}
+        constexpr ipv6(ipv6 const& ip) noexcept = default;
+        constexpr ipv6(ipv6&& ip) noexcept = default;
+
+        ipv6& operator=(ipv6 const& ip) noexcept {
+            data = ip.data;
+            return *this;
+        }
+
+        ipv6& operator=(std::string_view const& str) noexcept {
+            // TODO: check ipv6
+            data = str;
+            return *this;
+        }
+
+        ipv6& operator=(octets8_t const& _octets) noexcept {
+            data = _octets;
+            return *this;
+        }
+
+        ipv6& operator=(octets16_t const& _octets) noexcept {
+            data = to_octets8_t(_octets);
+            return *this;
+        }
+
+        ipv6& operator=(octets32_t const& _octets) noexcept {
+            data = to_octets8_t(_octets);
+            return *this;
+        }
+
+        ipv6& operator=(octets64_t const& _octets) noexcept {
+            data = to_octets8_t(_octets);
+            return *this;
+        }
+
         /**
          * @brief get the octets in 8bit format
          * @return the octets in 8bit format
