@@ -67,7 +67,7 @@ namespace webpp {
         }
 
       public:
-        headers(std::shared_ptr<Interface> _interface)
+        explicit headers(std::shared_ptr<Interface> _interface)
             : interface(_interface) {}
 
         /**

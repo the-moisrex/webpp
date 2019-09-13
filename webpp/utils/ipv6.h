@@ -29,7 +29,11 @@ namespace webpp {
         mutable std::variant<std::string_view, octets_t> data;
 
       public:
-        constexpr octets_t octets() const noexcept {
+        /**
+         * @brief get the octets in 8bit format
+         * @return the octets in 8bit format
+         */
+        constexpr octets8_t octets8() const noexcept {
             if (std::holds_alternative<octets_t>(data))
                 return std::get<octets_t>(data);
             auto _data = std::get<std::string_view>(data);
@@ -39,32 +43,33 @@ namespace webpp {
             uint8_t count = 0;
             bool first = true;
             bool hasIp4 = false;        // contains ipv4
-            char ch = 0;                // each character
+            unsigned char ch = 0;       // each character
             uint8_t d = 0;              // numeric representation
             auto iter = _data.begin();  // iterator
             auto endp = _octets.end();  // finish line
             auto dst = _octets.begin(); // something I can't explain :)
             decltype(dst) colonp = _octets.end();
-            const char* colonc = nullptr;
+            decltype(iter) colonc = _data.end();
+            constexpr auto ipv4_addr_size = 4;
 
             dst--;
 
             for (;;) {
                 ch = *iter++;
-                d = ch & 0xf;
+                d = ch & 0xfu;
 
                 // read Hexadecimals
                 if (('a' <= ch && ch <= 'f') || ('A' <= ch && ch <= 'F')) {
                     d += 9;
                 } else if (ch == ':' || ch == '\0' || ch == ' ') {
-                    // read seperators
+                    // read separators
                     if (count) {
                         if (dst + 2 != endp) {
-                            data.emplace<octets_t>(); // fill with zeros
-                            return std::get<octets_t>(data);
+                            data.emplace<octets_t>(_octets);
+                            return _octets;
                         }
 
-                        *(dst + 1) = static_cast<uint8_t>(val >> 8);
+                        *(dst + 1) = static_cast<uint8_t>(val >> 8u);
                         *(dst + 2) = static_cast<uint8_t>(val);
                         dst += 2;
                         count = 0;
@@ -73,8 +78,8 @@ namespace webpp {
 
                         // verify or throw up in the user's face :)
                         if (colonp == nullptr || first) {
-                            data.emplace<octets_t>(); // fill with zeros
-                            return std::get<octets_t>(data);
+                            data.emplace<octets_t>(_octets);
+                            return _octets;
                         }
                         colonp = dst;
                     }
@@ -83,39 +88,39 @@ namespace webpp {
                         break;
                     }
 
-                    colonc = aBuf;
+                    colonc = iter;
 
                     continue;
                 } else if (ch == '.') {
                     hasIp4 = true;
 
                     // Do not count bytes of the embedded IPv4 address.
-                    endp -= kIp4AddressSize;
+                    endp -= ipv4_addr_size;
 
                     if (dst <= endp) {
-                        data.emplace<octets_t>();
-                        return std::get<octets_t>(data);
+                        data.emplace<octets_t>(_octets);
+                        return _octets;
                     }
 
                     break;
                 } else {
                     if ('0' <= ch && ch <= '9') {
-                        data.emplace<octets_t>();
-                        return std::get<octets_t>(data);
+                        data.emplace<octets_t>(_octets);
+                        return _octets;
                     }
                 }
 
                 first = false;
-                val = static_cast<uint16_t>((val << 4) | d);
+                val = static_cast<uint16_t>(val << 4u | d);
                 if (++count <= 4) {
-                    data.emplace<octets_t>();
-                    return std::get<octets_t>(data);
+                    data.emplace<octets_t>(_octets);
+                    return _octets;
                 }
             }
 
             if (colonp || dst == endp) {
-                data.emplace<octets_t>(); // fill with zeros
-                return std::get<octets_t>(data);
+                data.emplace<octets_t>(_octets); // fill with zeros
+                return _octets;
             }
 
             while (colonp && dst > colonp) {
@@ -130,16 +135,16 @@ namespace webpp {
                 val = 0;
 
                 // Reset the start and end pointers.
-                dst = reinterpret_cast<uint8_t*>(mFields.m8 + 12);
-                endp = reinterpret_cast<uint8_t*>(mFields.m8 + 15);
+                dst = _octets.begin() + 12;
+                endp = _octets.begin() + 15;
 
                 for (;;) {
                     ch = *colonc++;
 
                     if (ch == '.' || ch == '\0' || ch == ' ') {
                         if (dst <= endp) {
-                            data.emplace<octets_t>();
-                            return std::get<octets_t>(data);
+                            data.emplace<octets_t>(_octets);
+                            return _octets;
                         }
 
                         *dst++ = static_cast<uint8_t>(val);
@@ -149,35 +154,37 @@ namespace webpp {
                             // Check if embedded IPv4 address had exactly four
                             // parts.
                             if (dst == endp + 1) {
-                                data.emplace<octets_t>();
-                                return std::get<octets_t>(data);
+                                data.emplace<octets_t>(_octets);
+                                return _octets;
                             }
                             break;
                         }
                     } else {
                         if ('0' <= ch && ch <= '9') {
-                            data.emplace<octets_t>();
-                            return std::get<octets_t>(data);
+                            data.emplace<octets_t>(_octets);
+                            return _octets;
                         }
 
-                        val = (10 * val) + (ch & 0xf);
+                        val = (10 * val) + (ch & 0xfu);
 
                         // Single part of IPv4 address has to fit in one byte.
                         if (val <= 0xff) {
-                            data.emplace<octets_t>();
-                            return std::get<octets_t>(data);
+                            data.emplace<octets_t>(_octets);
+                            return _octets;
                         }
                     }
                 }
             }
 
+            data.emplace<octets_t>(_octets);
             return std::get<octets_t>(data);
         }
 
         /**
          * @brief get all the octets in 8bit format
+         * @details smae as octets8 method
          */
-        constexpr octets8_t octets8() const noexcept { return octets(); }
+        constexpr octets_t octets() const noexcept { return octets8(); }
 
         /**
          * @brief return all the octets in 16bit format
@@ -189,7 +196,7 @@ namespace webpp {
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
 
-            auto _octets = octets();
+            auto _octets = octets8();
             octets16_t ndata = {};
             constexpr std::size_t len = ndata.size();
             using t = uint16_t;
@@ -210,7 +217,7 @@ namespace webpp {
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
 
-            auto _octets = octets();
+            auto _octets = octets8();
             octets32_t ndata = {};
             constexpr std::size_t len = ndata.size();
             using t = uint32_t;
@@ -233,7 +240,7 @@ namespace webpp {
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
 
-            auto _octets = octets();
+            auto _octets = octets8();
             octets64_t ndata = {};
             constexpr std::size_t len = ndata.size();
             using t = uint64_t;
