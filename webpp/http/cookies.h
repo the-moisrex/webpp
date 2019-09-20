@@ -101,18 +101,18 @@ namespace webpp {
         std::map<std::string, std::string> attrs;
 
       private:
-        name_t _name;
-        value_t _value;
-        domain_t _domain;
-        path_t _path;
-        expires_t _expires;
-        max_age_t _max_age = 0;
-        same_site_t _same_site = same_site_value::NONE;
-        secure_t _secure = false;
-        host_only_t _host_only = false;
-        encrypted_t _encrypted = false;
-        prefix_t _prefix = false;
-        comment_t _comment;
+        mutable name_t _name;
+        mutable value_t _value;
+        mutable domain_t _domain;
+        mutable path_t _path;
+        mutable expires_t _expires;
+        mutable max_age_t _max_age = 0;
+        mutable same_site_t _same_site = same_site_value::NONE;
+        mutable secure_t _secure = false;
+        mutable host_only_t _host_only = false;
+        mutable encrypted_t _encrypted = false;
+        mutable prefix_t _prefix = false;
+        mutable comment_t _comment;
 
       public:
         /**

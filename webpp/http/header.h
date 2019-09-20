@@ -24,10 +24,11 @@ namespace webpp {
     template <typename Interface,
               header_type HeaderType = header_type::RESPONSE>
     class headers {
-      public:
       private:
+        using headers_t = std::multimap<std::string, std::string>;
+
         std::shared_ptr<Interface> interface;
-        mutable std::multimap<std::string, std::string> data;
+        mutable headers_t data;
         mutable webpp::cookie_jar _cookies;
 
         /**
@@ -40,12 +41,7 @@ namespace webpp {
 
             _cookies.clear();
 
-#ifdef CXX17
             if constexpr (HeaderType == header_type::RESPONSE) {
-#else
-            if (HeaderType == header_type::RESPONSE) {
-#endif
-
                 for (auto const& head : data) {
                     auto attr = head.first;
                     auto value = head.second;
@@ -67,6 +63,13 @@ namespace webpp {
         }
 
       public:
+        // TODO: consider using custom iterators instead of multimap's
+
+        using iterator = headers_t::iterator;
+        using const_iterator = headers_t ::const_iterator;
+        using reverse_iterator = headers_t::reverse_iterator;
+        using const_reverse_iterator = headers_t::const_reverse_iterator;
+
         explicit headers(std::shared_ptr<Interface> _interface)
             : interface(_interface) {}
 
@@ -118,6 +121,32 @@ namespace webpp {
             remove_cookies();
             _cookies = __cookies;
         }
+
+        iterator begin() noexcept { return data.begin(); }
+
+        const_iterator begin() const noexcept { return data.begin(); }
+
+        const_iterator cbegin() const noexcept { return data.cbegin(); }
+
+        iterator end() noexcept { return data.end(); }
+
+        const_iterator end() const noexcept { return data.end(); }
+
+        const_iterator cend() const noexcept { return data.cend(); }
+
+        reverse_iterator rbegin() noexcept { return data.rbegin(); }
+
+        const_reverse_iterator rbegin() const noexcept { return data.rbegin(); }
+
+        reverse_iterator rend() noexcept { return data.rend(); }
+
+        const_reverse_iterator rend() const noexcept { return data.rend(); }
+
+        const_reverse_iterator crbegin() const noexcept {
+            return data.crbegin();
+        }
+
+        const_reverse_iterator crend() const noexcept { return data.crend(); }
     };
 
     template <typename Interface>

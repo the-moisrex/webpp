@@ -1,9 +1,9 @@
 #ifndef WEBPP_BODY_H
 #define WEBPP_BODY_H
 
-#include "../std/string_view.h"
 #include <memory>
 #include <string>
+#include <string_view>
 
 /**
  * This class will not load, cache, or parse the body until the user needs it.
@@ -47,6 +47,12 @@ namespace webpp {
 
         // TODO: add more methods for the images and stuff
     };
+
+    template <typename Interface>
+    std::ostream& operator<<(std::ostream& out, const body<Interface>& _body) {
+        out << _body.string();
+        return out;
+    }
 
 }; // namespace webpp
 

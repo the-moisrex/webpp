@@ -7,10 +7,7 @@
  */
 
 #include "charset.h"
-//#include "PercentEncodedCharacterDecoder.hpp"
-
 #include "uri.h"
-//#include <SystemAbstractions/StringExtensions.hpp>
 #include <algorithm>
 #include <functional>
 #include <inttypes.h>
