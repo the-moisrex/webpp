@@ -15,7 +15,7 @@ namespace webpp {
         mutable std::variant<uint32_t, std::string_view> data;
 
         constexpr uint32_t parse(std::string_view const& _data) const noexcept {
-            std::size_t first_dot = 0;
+            std::size_t first_dot = 0u;
             std::size_t len = _data.size();
             while (_data[first_dot] != '.' && first_dot != len)
                 first_dot++;
@@ -31,17 +31,17 @@ namespace webpp {
             //                third_dot == std::string_view::npos)
             //                throw std::invalid_argument("ill formed IPv4
             //                address.");
-            return parse({to_uint8(_data.substr(0, first_dot)),
-                          to_uint8(_data.substr(first_dot + 1, second_dot)),
-                          to_uint8(_data.substr(second_dot + 1, third_dot)),
-                          to_uint8(_data.substr(third_dot + 1))});
+            return parse({to_uint8(_data.substr(0u, first_dot)),
+                          to_uint8(_data.substr(first_dot + 1u, second_dot)),
+                          to_uint8(_data.substr(second_dot + 1u, third_dot)),
+                          to_uint8(_data.substr(third_dot + 1u))});
         }
 
-        constexpr uint32_t parse(std::array<uint8_t, 4> const& ip) const
+        constexpr uint32_t parse(std::array<uint8_t, 4u> const& ip) const
             noexcept {
-            return static_cast<uint32_t>(ip[0] << 24) |
-                   static_cast<uint32_t>(ip[1] << 16) |
-                   static_cast<uint32_t>(ip[2] << 8) |
+            return static_cast<uint32_t>(ip[0] << 24u) |
+                   static_cast<uint32_t>(ip[1] << 16u) |
+                   static_cast<uint32_t>(ip[2] << 8u) |
                    static_cast<uint32_t>(ip[3]);
         }
 
@@ -50,23 +50,14 @@ namespace webpp {
             : data(ip) {}
         constexpr explicit ipv4(std::string_view&& ip) noexcept
             : data(parse(ip)) {}
-        constexpr explicit ipv4(ipv4 const& ip) noexcept : data(ip.data) {}
-        constexpr explicit ipv4(ipv4&& ip) noexcept
-            : data(std::move(ip.data)) {}
+        constexpr ipv4(ipv4 const& ip) = default;
+        constexpr ipv4(ipv4&& ip) = default;
         constexpr explicit ipv4(uint32_t const& ip) noexcept : data(ip) {}
         constexpr explicit ipv4(std::array<uint8_t, 4> const& ip) noexcept
             : data(parse(ip)) {}
 
-        ipv4& operator=(ipv4 const& ip) noexcept {
-            data = ip.data;
-            return *this;
-        }
-
-        ipv4& operator=(ipv4&& ip) noexcept {
-            if (ip.data != data)
-                data = std::move(ip.data);
-            return *this;
-        }
+        ipv4& operator=(ipv4 const& ip) = default;
+        ipv4& operator=(ipv4&& ip) = default;
 
         ipv4& operator=(std::string_view const& ip) noexcept {
             data = ip;
@@ -127,9 +118,8 @@ namespace webpp {
             if (std::holds_alternative<uint32_t>(data)) {
                 auto _octets = octets();
                 std::ostringstream s;
-                s << std::move(_octets[0]) << '.' << std::move(_octets[1])
-                  << '.' << std::move(_octets[2]) << '.'
-                  << std::move(_octets[3]);
+                s << _octets[0] << '.' << _octets[1] << '.' << _octets[2] << '.'
+                  << _octets[3];
                 return s.str();
             }
             return std::string(std::get<std::string_view>(data));
@@ -150,12 +140,12 @@ namespace webpp {
          * @brief get the 4 octets of the ip address
          * @return
          */
-        constexpr std::array<uint8_t, 4> octets() const noexcept {
+        constexpr std::array<uint8_t, 4u> octets() const noexcept {
             uint32_t _data = integer();
-            return std::array<uint8_t, 4>(
-                {static_cast<uint8_t>(_data >> 24),
-                 static_cast<uint8_t>(_data >> 16 & 0x0FFu),
-                 static_cast<uint8_t>(_data >> 8 & 0x0FFu),
+            return std::array<uint8_t, 4u>(
+                {static_cast<uint8_t>(_data >> 24u),
+                 static_cast<uint8_t>(_data >> 16u & 0x0FFu),
+                 static_cast<uint8_t>(_data >> 8u & 0x0FFu),
                  static_cast<uint8_t>(_data & 0x0FFu)});
         }
 
@@ -205,9 +195,9 @@ namespace webpp {
          */
         constexpr unsigned int to_prefix() const noexcept {
             uint32_t val = integer();
-            unsigned int prefix = 0;
-            for (; val != 0; prefix++)
-                val <<= 1;
+            unsigned int prefix = 0u;
+            for (; val != 0u; prefix++)
+                val <<= 1u;
             return prefix;
         }
 
