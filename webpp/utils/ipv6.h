@@ -35,6 +35,8 @@ namespace webpp {
         };
 
       private:
+        static constexpr auto interface_identifier_offset = 8u;
+
         // I didn't go with a union because in OpenThread project they did and
         // they had to deal with endianness of their data. I rather use shifts
         // and host's byte order instead of getting my hands dirty with host's
@@ -679,8 +681,15 @@ namespace webpp {
          * @returns A pointer to the Interface Identifier.
          */
         auto iid() noexcept {
-            constexpr auto interface_identifier_offset = 8u;
             return octets8().begin() + interface_identifier_offset;
+        }
+
+        /**
+         * This method returns a pointer to the Interface Identifier.
+         * @returns A pointer to the Interface Identifier.
+         */
+        const auto iid() const noexcept {
+            return octets8().cbegin() + interface_identifier_offset;
         }
 
         /**
