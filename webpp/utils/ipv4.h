@@ -217,10 +217,12 @@ namespace webpp {
          * @return
          */
         constexpr bool is_private() const noexcept {
-            constexpr ipv4 class_C({192, 168, 0, 0});
-            constexpr ipv4 class_B_start({172, 16, 0, 0});
-            constexpr ipv4 class_B_finish({172, 31, 255, 255});
-            constexpr ipv4 class_A({10, 0, 0, 0});
+            constexpr ipv4 class_C(std::array<uint8_t, 4u>{192, 168, 0, 0});
+            constexpr ipv4 class_B_start(
+                std::array<uint8_t, 4u>{172, 16, 0, 0});
+            constexpr ipv4 class_B_finish(
+                std::array<uint8_t, 4u>{172, 31, 255, 255});
+            constexpr ipv4 class_A(std::array<uint8_t, 4u>{10, 0, 0, 0});
             return in_subnet(class_C, 16) ||
                    in_range(class_B_start, class_B_finish) ||
                    in_subnet(class_A, 8);
@@ -241,13 +243,6 @@ namespace webpp {
             return _data == 0;
         }
 
-        /**
-         * @brief checks if the specified string is valid ipv4 or not
-         * @return true if it's valid
-         */
-        constexpr bool is_valid() const noexcept {
-            // TODO
-        }
 
         std::string geographic_location() const noexcept {
             // TODO: find a way to get this info
