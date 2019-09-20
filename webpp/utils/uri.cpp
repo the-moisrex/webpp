@@ -722,18 +722,7 @@ struct Impl {
     }
 }
 
-Uri::~Uri() noexcept = default;
-Uri::Uri(const Uri& other) : impl_(new Impl) { *this = other; }
-Uri::Uri(Uri&&) noexcept = default;
-Uri& Uri::operator=(const Uri& other) {
-    if (this != &other) {
-        *impl_ = *other.impl_;
-    }
-    return *this;
-}
-Uri& Uri::operator=(Uri&&) noexcept = default;
 
-Uri::Uri() : impl_(new Impl) {}
 
 bool Uri::ParseFromString(const std::string& uriString) {
     std::string rest;

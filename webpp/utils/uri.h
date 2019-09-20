@@ -5,7 +5,8 @@
 #include "../validators/validators.h"
 #include "casts.h"
 #include "charset.h"
-#include "ip.h"
+#include "ipv4.h"
+#include "ipv6.h"
 #include "strings.h"
 #include <functional>
 #include <memory>
@@ -25,7 +26,8 @@ namespace webpp {
          */
         constexpr bool scheme(std::string_view const& _scheme) noexcept {
             return ALPHA.contains(_scheme);
-        };
+        }
+
     } // namespace is
 
     /**
@@ -40,6 +42,8 @@ namespace webpp {
 
         int digits_left = 2;
         unsigned char decoded_char = 0;
+        // FIXME: decoding is assigned but never used; check if the algorithm is
+        // correct
         bool decoding = false;
         std::string res;
         for (const auto c : encoded_str) {
@@ -350,7 +354,7 @@ namespace webpp {
 
                                 if (auto ipv6_view = _data.substr(1, ipv6_end);
                                     is::ipv6(ipv6_view)) {
-                                    // TODO: probabely use std::variant<ipv6,
+                                    // TODO: probably use std::variant<ipv6,
                                     // ipv4, string>
                                     segs.host = ipv6_view;
                                     _data.remove_prefix(ipv6_end + 1);
@@ -470,12 +474,12 @@ namespace webpp {
         constexpr uri(std::string_view const& u) noexcept
             : data(trim_copy(u)) {}
 
-        constexpr uri(uri const& u) noexcept = default;
-        constexpr uri(uri&& u) noexcept = default;
+        uri(uri const&) = default;
+        uri(uri&&) = default;
 
         // assignment operators
-        constexpr uri& operator=(uri const& u) noexcept = default;
-        constexpr uri& operator=(uri&& u) noexcept = default;
+        uri& operator=(uri const& u) noexcept = default;
+        uri& operator=(uri&& u) noexcept = default;
 
         constexpr bool operator==(const uri& other) const noexcept {
 
