@@ -243,11 +243,13 @@ namespace webpp {
             return _data == 0;
         }
 
-
-        std::string geographic_location() const noexcept {
-            // TODO: find a way to get this info
-            return "";
-        }
+        /**
+         * TODO: implement this thing
+         * @brief get the geographical location of the ip address based on
+         * predefined rules
+         * @return cordinates or string location
+         */
+        std::string geographic_location() const noexcept;
     };
 
 } // namespace webpp

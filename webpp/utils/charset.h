@@ -141,16 +141,13 @@ namespace webpp {
                 chars[i] = '\0';
         }
 
-        template <typename... T, typename = char>
-        constexpr charset_t(T... t) noexcept : chars{t...} {}
+        //        template <typename... T, typename = char>
+        //        constexpr charset_t(T... t) noexcept : chars{t...} {}
 
-        /*
-            constexpr charset_t(std::initializer_list<char> cset) noexcept
-                : chars{ cset }
+        constexpr charset_t(std::initializer_list<char> cset) noexcept
             {
-                // std::copy(cset.begin(), cset.end(), chars.begin());
-            }
-        */
+            std::copy(cset.begin(), cset.end(), chars.begin());
+        }
 
         /**
          * This constructs a character set that contains all the
@@ -230,9 +227,8 @@ namespace webpp {
     }
     */
 
-    template <typename... Char, typename = char>
-    constexpr auto charset(Char const&... cset) noexcept {
-        return charset_t<sizeof...(cset)>(cset...);
+    constexpr auto charset(std::initializer_list<char> const& cset) noexcept {
+        return charset_t<sizeof(cset)>(cset);
     }
 
     template <std::size_t... N>

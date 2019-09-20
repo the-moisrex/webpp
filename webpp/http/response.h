@@ -16,8 +16,8 @@ namespace webpp {
 
       private:
         int _status_code = 200;
-        std::unique_ptr<body_type> _body = nullptr;
-        std::unique_ptr<header_type> _header = nullptr;
+        body_type _body;
+        header_type _header;
         std::shared_ptr<Interface> interface;
 
       public:

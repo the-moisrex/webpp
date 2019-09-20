@@ -1,15 +1,11 @@
-#include <memory>
-
-#include <memory>
-
-#include <memory>
-
-#include "../std/string_view.h"
 #include "cookies.h"
+#include "../utils/strings.h"
 #include <algorithm>
 #include <boost/container_hash/hash.hpp>
 #include <functional>
+#include <memory>
 #include <sstream>
+#include <string_view>
 
 using namespace webpp;
 
@@ -271,7 +267,7 @@ bool cookie_equals::operator()(const cookie& lhs, const cookie& rhs) const
            lhs.path() == rhs.path();
 }
 
-cookie_jar::const_iterator cookie_jar::find(std::string const& name) const
+cookie_jar::const_iterator cookie_jar::find(cookie::name_t const& name) const
     noexcept {
     return std::find_if(cbegin(), cend(),
                         [&](auto const& a) { return a.name() == name; });

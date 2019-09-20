@@ -81,13 +81,13 @@ char const* cgi::header(std::string str) const noexcept {
     return env(str.c_str());
 }
 
-void cgi::run(router& _router) noexcept {
+void cgi::run(router<cgi>& _router) noexcept {
     auto self = std::make_shared<cgi>(this);
     webpp::request<webpp::cgi> req(self);
     auto res = _router.run(req);
     std::ios_base::sync_with_stdio(false); // TODO: write tests for this part
-    for (auto const& header : res.headers()) {
-        std::cout << header.attr() << ": " << header.value() << "\r\n";
+    for (auto const& [attr, value] : res.headers()) {
+        std::cout << attr << ": " << value << "\r\n";
     }
     std::cout << "\r\n" << res.body();
 }
