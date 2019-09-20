@@ -738,6 +738,33 @@ namespace webpp {
         }
 
         /**
+         * This method converts the IPv6 Interface Identifier to an IEEE
+         * 802.15.4 Extended Address.
+         * @param[out]  aExtAddress  A reference to the extended address.
+         */
+        void ToExtAddress(Mac::ExtAddress& aExtAddress) const {
+            // TODO
+        }
+
+        /**
+         * This method converts the IPv6 Interface Identifier to an IEEE
+         * 802.15.4 MAC Address.
+         * @param[out]  aMacAddress  A reference to the MAC address.
+         */
+        void ToExtAddress(Mac::Address& aMacAddress) const {
+            // TODO
+        }
+
+        /**
+         * This method returns the number of IPv6 prefix bits that match.
+         * @param[in]  aOther  The IPv6 address to match against.
+         * @returns The number of IPv6 prefix bits that match.
+         */
+        uint8_t PrefixMatch(const otIp6Address& aOther) const {
+            // TODO
+        }
+
+        /**
          * @brief checks if the specified ip is valid or not
          * @return true if it is an unspecified ip address.
          */
