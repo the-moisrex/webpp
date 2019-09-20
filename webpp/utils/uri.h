@@ -478,8 +478,8 @@ namespace webpp {
         uri(uri&&) = default;
 
         // assignment operators
-        uri& operator=(uri const& u) noexcept = default;
-        uri& operator=(uri&& u) noexcept = default;
+        uri& operator=(uri const& u) = default;
+        uri& operator=(uri&& u) = default;
 
         constexpr bool operator==(const uri& other) const noexcept {
 
@@ -504,7 +504,7 @@ namespace webpp {
          */
         std::string encoded_uri() noexcept {
             return encode_uri_component<ALLOWED_CHARACTERS_IN_URI.size()>(
-                std::string_view(data), ALLOWED_CHARACTERS_IN_URI);
+                str(), ALLOWED_CHARACTERS_IN_URI);
         }
 
         /**
@@ -514,7 +514,7 @@ namespace webpp {
          */
         std::optional<std::string> decoded_uri() noexcept {
             return decode_uri_component<ALLOWED_CHARACTERS_IN_URI.size()>(
-                std::string_view(data), ALLOWED_CHARACTERS_IN_URI);
+                str(), ALLOWED_CHARACTERS_IN_URI);
         }
 
         /**
@@ -979,6 +979,10 @@ namespace webpp {
          */
         constexpr bool is_relative_reference() const noexcept {
             return !has_scheme();
+        }
+
+        std::string str() const noexcept {
+            // TODO
         }
 
         /**
