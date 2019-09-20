@@ -51,3 +51,4 @@
 {"description":"write benchmarks for every part of the framework","entry":"20190905T112043Z","modified":"20190905T113056Z","project":"performance","status":"pending","uuid":"15d4e821-1ed8-4bda-bfc2-6fbe21b9dbbd"}
 {"description":"consider help functions for webassembly","entry":"20190905T113539Z","modified":"20190905T113539Z","project":"ams","status":"pending","uuid":"3d857976-c05a-41a9-8e25-fee0ba2991fa"}
 {"description":"implement property class","entry":"20190905T113945Z","modified":"20190905T113945Z","project":"utils","status":"pending","uuid":"b8f032b9-5023-40b3-9c87-c4fca77eefff"}
+{"description":"add mac address class","entry":"20190920T011211Z","modified":"20190920T011211Z","project":"net","status":"pending","uuid":"32c5f500-7702-4cb6-b2db-67686b7093d7"}

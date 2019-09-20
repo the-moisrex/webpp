@@ -174,3 +174,6 @@ new [description:"consider help functions for webassembly" entry:"1567683339" mo
 time 1567683585
 new [description:"implement property class" entry:"1567683585" modified:"1567683585" project:"utils" status:"pending" uuid:"b8f032b9-5023-40b3-9c87-c4fca77eefff"]
 ---
+time 1568941931
+new [description:"add mac address class" entry:"1568941931" modified:"1568941931" project:"net" status:"pending" uuid:"32c5f500-7702-4cb6-b2db-67686b7093d7"]
+---
