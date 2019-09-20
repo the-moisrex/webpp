@@ -675,6 +675,12 @@ namespace webpp {
         }
 
         /**
+         * @brief checks if the specified ip is valid or not
+         * @return true if it is an unspecified ip address.
+         */
+        bool is_valid() const noexcept { return !is_unspecified(); }
+
+        /**
          * @brief long string representation of the ip
          */
         std::string str() const noexcept {
