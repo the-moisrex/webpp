@@ -1,11 +1,11 @@
 #ifndef WEBPP_IP_H
 #define WEBPP_IP_H
 
-#include "../std/string_view.h"
 #include "casts.h"
 #include <array>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <variant>
 
 namespace webpp {
@@ -48,9 +48,10 @@ namespace webpp {
       public:
         constexpr explicit ipv4(std::string_view const& ip) noexcept
             : data(ip) {}
-        constexpr explicit ipv4(std::string_view&& ip) noexcept
-            : data(parse(ip)) {}
         constexpr ipv4(ipv4 const& ip) = default;
+        constexpr ipv4(uint8_t octet1, uint8_t octet2, uint8_t octet3,
+                       uint8_t octet4) noexcept
+            : data(parse({octet1, octet2, octet3, octet4})) {}
         constexpr ipv4(ipv4&& ip) = default;
         constexpr explicit ipv4(uint32_t const& ip) noexcept : data(ip) {}
         constexpr explicit ipv4(std::array<uint8_t, 4> const& ip) noexcept
@@ -108,6 +109,16 @@ namespace webpp {
             stream >> str;
             ip = str;
             return stream;
+        }
+
+        /**
+         * @brief Make sure the string_view is parsed
+         */
+        ipv4& parsed() noexcept {
+            if (std::holds_alternative<std::string_view>(data)) {
+                data = parse(std::get<std::string_view>(data));
+            }
+            return *this;
         }
 
         /**
@@ -220,6 +231,23 @@ namespace webpp {
          * @return
          */
         constexpr bool is_public() const noexcept { return !is_private(); }
+
+        /**
+         * @brief check if all the octets are zero or not
+         * @return true if all the octets are zero
+         */
+        constexpr bool is_all_zero() const noexcept {
+            auto _data = integer();
+            return _data == 0;
+        }
+
+        /**
+         * @brief checks if the specified string is valid ipv4 or not
+         * @return true if it's valid
+         */
+        constexpr bool is_valid() const noexcept {
+            // TODO
+        }
 
         std::string geographic_location() const noexcept {
             // TODO: find a way to get this info
