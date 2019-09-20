@@ -356,7 +356,7 @@ namespace webpp {
          * This method returns the IPv6 address scope.
          * @returns The IPv6 address scope.
          */
-        uint8_t get_scope() const noexcept {
+        uint8_t scope() const noexcept {
             if (is_multicast()) {
                 return octets8()[1] & 0xfu;
             } else if (is_link_local()) {
@@ -442,7 +442,7 @@ namespace webpp {
          */
         bool is_link_local_multicast() const noexcept {
             return is_multicast() &&
-                   get_scope() == static_cast<uint8_t>(scope::link_local);
+                   scope() == static_cast<uint8_t>(scope::link_local);
         }
 
         /**
@@ -491,7 +491,7 @@ namespace webpp {
          */
         bool is_realm_local_multicast() const noexcept {
             return is_multicast() &&
-                   (get_scope() == static_cast<uint8_t>(scope::realm_local));
+                   (scope() == static_cast<uint8_t>(scope::realm_local));
         }
 
         /**
@@ -506,7 +506,7 @@ namespace webpp {
          */
         bool is_realm_local_all_nodes_multicast() const noexcept {
             return is_multicast() &&
-                   get_scope() == static_cast<uint8_t>(scope::realm_local);
+                   scope() == static_cast<uint8_t>(scope::realm_local);
         }
 
         /**
@@ -555,7 +555,7 @@ namespace webpp {
          */
         bool is_multicast_larger_than_realm_local() const noexcept {
             return is_multicast() &&
-                   get_scope() > static_cast<uint8_t>(scope::realm_local);
+                   scope() > static_cast<uint8_t>(scope::realm_local);
         }
 
         /**
