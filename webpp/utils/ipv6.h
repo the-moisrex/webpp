@@ -675,6 +675,15 @@ namespace webpp {
         }
 
         /**
+         * This method returns a pointer to the Interface Identifier.
+         * @returns A pointer to the Interface Identifier.
+         */
+        auto iid() noexcept {
+            constexpr auto interface_identifier_offset = 8u;
+            return octets8().begin() + interface_identifier_offset;
+        }
+
+        /**
          * @brief checks if the specified ip is valid or not
          * @return true if it is an unspecified ip address.
          */
