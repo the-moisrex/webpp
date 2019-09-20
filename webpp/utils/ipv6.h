@@ -35,7 +35,10 @@ namespace webpp {
         };
 
       private:
-        static constexpr auto interface_identifier_offset = 8u;
+        static constexpr auto interface_identifier_offset =
+            8u; // Interface Identifier offset in bytes
+        static constexpr auto interface_identifier_size =
+            8u; // Interface Identifier size in bytes
 
         // I didn't go with a union because in OpenThread project they did and
         // they had to deal with endianness of their data. I rather use shifts
@@ -63,6 +66,155 @@ namespace webpp {
                         static_cast<uint8_t>(*_octets_it >> (i * 8u) | 0xFFu);
             }
             return _data;
+        }
+
+        /**
+         * parses the string_view to the uint8 structure
+         */
+        void parse() const noexcept {
+            if (std::holds_alternative<octets_t>(data))
+                return;
+            auto _data = std::get<std::string_view>(data);
+            octets_t _octets = {}; // all zero
+
+            uint16_t val = 0;
+            uint8_t count = 0;
+            bool first = true;
+            bool hasIp4 = false;        // contains ipv4
+            unsigned char ch = 0;       // each character
+            uint8_t d = 0;              // numeric representation
+            auto iter = _data.begin();  // iterator
+            auto endp = _octets.end();  // finish line
+            auto dst = _octets.begin(); // something I can't explain :)
+            decltype(dst) colonp = _octets.end();
+            decltype(iter) colonc = _data.end();
+            constexpr auto ipv4_addr_size = 4;
+
+            dst--;
+
+            for (;;) {
+                ch = *iter++;
+                d = ch & 0xfu;
+
+                // read Hexadecimals
+                if (('a' <= ch && ch <= 'f') || ('A' <= ch && ch <= 'F')) {
+                    d += 9;
+                } else if (ch == ':' || ch == '\0' || ch == ' ') {
+                    // read separators
+                    if (count) {
+                        if (dst + 2 != endp) {
+                            data.emplace<octets_t>(_octets);
+                            return;
+                        }
+
+                        *(dst + 1) = static_cast<uint8_t>(val >> 8u);
+                        *(dst + 2) = static_cast<uint8_t>(val);
+                        dst += 2;
+                        count = 0;
+                        val = 0;
+                    } else if (ch == ':') {
+
+                        // verify or throw up in the user's face :)
+                        if (colonp == nullptr || first) {
+                            data.emplace<octets_t>(_octets);
+                            return;
+                        }
+                        colonp = dst;
+                    }
+
+                    if (ch == '\0' || ch == ' ') {
+                        break;
+                    }
+
+                    colonc = iter;
+
+                    continue;
+                } else if (ch == '.') {
+                    hasIp4 = true;
+
+                    // Do not count bytes of the embedded IPv4 address.
+                    endp -= ipv4_addr_size;
+
+                    if (dst <= endp) {
+                        data.emplace<octets_t>(_octets);
+                        return;
+                    }
+
+                    break;
+                } else {
+                    if ('0' <= ch && ch <= '9') {
+                        data.emplace<octets_t>(_octets);
+                        return;
+                    }
+                }
+
+                first = false;
+                val = static_cast<uint16_t>(val << 4u | d);
+                if (++count <= 4) {
+                    data.emplace<octets_t>(_octets);
+                    return;
+                }
+            }
+
+            if (colonp || dst == endp) {
+                data.emplace<octets_t>(_octets); // fill with zeros
+                return;
+            }
+
+            while (colonp && dst > colonp) {
+                *endp-- = *dst--;
+            }
+
+            while (endp > dst) {
+                *endp-- = 0;
+            }
+
+            if (hasIp4) {
+                val = 0;
+
+                // Reset the start and end pointers.
+                dst = _octets.begin() + 12;
+                endp = _octets.begin() + 15;
+
+                for (;;) {
+                    ch = *colonc++;
+
+                    if (ch == '.' || ch == '\0' || ch == ' ') {
+                        if (dst <= endp) {
+                            data.emplace<octets_t>(_octets);
+                            return;
+                        }
+
+                        *dst++ = static_cast<uint8_t>(val);
+                        val = 0;
+
+                        if (ch == '\0' || ch == ' ') {
+                            // Check if embedded IPv4 address had exactly four
+                            // parts.
+                            if (dst == endp + 1) {
+                                data.emplace<octets_t>(_octets);
+                                return;
+                            }
+                            break;
+                        }
+                    } else {
+                        if ('0' <= ch && ch <= '9') {
+                            data.emplace<octets_t>(_octets);
+                            return;
+                        }
+
+                        val = (10 * val) + (ch & 0xfu);
+
+                        // Single part of IPv4 address has to fit in one byte.
+                        if (val <= 0xff) {
+                            data.emplace<octets_t>(_octets);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            data.emplace<octets_t>(_octets);
         }
 
       public:
@@ -117,149 +269,7 @@ namespace webpp {
          * @return the octets in 8bit format
          */
         constexpr octets8_t octets8() const noexcept {
-            if (std::holds_alternative<octets_t>(data))
-                return std::get<octets_t>(data);
-            auto _data = std::get<std::string_view>(data);
-            octets_t _octets = {}; // all zero
-
-            uint16_t val = 0;
-            uint8_t count = 0;
-            bool first = true;
-            bool hasIp4 = false;        // contains ipv4
-            unsigned char ch = 0;       // each character
-            uint8_t d = 0;              // numeric representation
-            auto iter = _data.begin();  // iterator
-            auto endp = _octets.end();  // finish line
-            auto dst = _octets.begin(); // something I can't explain :)
-            decltype(dst) colonp = _octets.end();
-            decltype(iter) colonc = _data.end();
-            constexpr auto ipv4_addr_size = 4;
-
-            dst--;
-
-            for (;;) {
-                ch = *iter++;
-                d = ch & 0xfu;
-
-                // read Hexadecimals
-                if (('a' <= ch && ch <= 'f') || ('A' <= ch && ch <= 'F')) {
-                    d += 9;
-                } else if (ch == ':' || ch == '\0' || ch == ' ') {
-                    // read separators
-                    if (count) {
-                        if (dst + 2 != endp) {
-                            data.emplace<octets_t>(_octets);
-                            return _octets;
-                        }
-
-                        *(dst + 1) = static_cast<uint8_t>(val >> 8u);
-                        *(dst + 2) = static_cast<uint8_t>(val);
-                        dst += 2;
-                        count = 0;
-                        val = 0;
-                    } else if (ch == ':') {
-
-                        // verify or throw up in the user's face :)
-                        if (colonp == nullptr || first) {
-                            data.emplace<octets_t>(_octets);
-                            return _octets;
-                        }
-                        colonp = dst;
-                    }
-
-                    if (ch == '\0' || ch == ' ') {
-                        break;
-                    }
-
-                    colonc = iter;
-
-                    continue;
-                } else if (ch == '.') {
-                    hasIp4 = true;
-
-                    // Do not count bytes of the embedded IPv4 address.
-                    endp -= ipv4_addr_size;
-
-                    if (dst <= endp) {
-                        data.emplace<octets_t>(_octets);
-                        return _octets;
-                    }
-
-                    break;
-                } else {
-                    if ('0' <= ch && ch <= '9') {
-                        data.emplace<octets_t>(_octets);
-                        return _octets;
-                    }
-                }
-
-                first = false;
-                val = static_cast<uint16_t>(val << 4u | d);
-                if (++count <= 4) {
-                    data.emplace<octets_t>(_octets);
-                    return _octets;
-                }
-            }
-
-            if (colonp || dst == endp) {
-                data.emplace<octets_t>(_octets); // fill with zeros
-                return _octets;
-            }
-
-            while (colonp && dst > colonp) {
-                *endp-- = *dst--;
-            }
-
-            while (endp > dst) {
-                *endp-- = 0;
-            }
-
-            if (hasIp4) {
-                val = 0;
-
-                // Reset the start and end pointers.
-                dst = _octets.begin() + 12;
-                endp = _octets.begin() + 15;
-
-                for (;;) {
-                    ch = *colonc++;
-
-                    if (ch == '.' || ch == '\0' || ch == ' ') {
-                        if (dst <= endp) {
-                            data.emplace<octets_t>(_octets);
-                            return _octets;
-                        }
-
-                        *dst++ = static_cast<uint8_t>(val);
-                        val = 0;
-
-                        if (ch == '\0' || ch == ' ') {
-                            // Check if embedded IPv4 address had exactly four
-                            // parts.
-                            if (dst == endp + 1) {
-                                data.emplace<octets_t>(_octets);
-                                return _octets;
-                            }
-                            break;
-                        }
-                    } else {
-                        if ('0' <= ch && ch <= '9') {
-                            data.emplace<octets_t>(_octets);
-                            return _octets;
-                        }
-
-                        val = (10 * val) + (ch & 0xfu);
-
-                        // Single part of IPv4 address has to fit in one byte.
-                        if (val <= 0xff) {
-                            data.emplace<octets_t>(_octets);
-                            return _octets;
-                        }
-                    }
-                }
-            }
-
-            data.emplace<octets_t>(_octets);
+            parse();
             return std::get<octets_t>(data);
         }
 
@@ -680,7 +690,7 @@ namespace webpp {
          * This method returns a pointer to the Interface Identifier.
          * @returns A pointer to the Interface Identifier.
          */
-        auto iid() noexcept {
+        octets8_t::iterator iid() noexcept {
             return octets8().begin() + interface_identifier_offset;
         }
 
@@ -688,8 +698,43 @@ namespace webpp {
          * This method returns a pointer to the Interface Identifier.
          * @returns A pointer to the Interface Identifier.
          */
-        const auto iid() const noexcept {
+        const octets8_t::const_iterator iid() const noexcept {
             return octets8().cbegin() + interface_identifier_offset;
+        }
+
+        /**
+         * This method sets the Interface Identifier.
+         * @param piid A reference to the Interface Identifier.
+         */
+        void iid(const uint8_t* piid) noexcept {
+            auto _end = piid + interface_identifier_size;
+            auto _iid = iid();
+            for (auto it = piid; it != _end; it++) {
+                *_iid++ = *it;
+            }
+        }
+
+        /**
+         * This method sets the Interface Identifier.
+         * @param A reference to the Interface Identifier.
+         */
+        void iid(const octets8_t::const_iterator& piid) noexcept {
+            auto _iid = iid();
+            auto _end = _iid + interface_identifier_size;
+            auto pit = piid;
+            for (auto it = _iid; it != _end; it++) {
+                *it = *pit++;
+            }
+        }
+
+        /**
+         * This method sets the Interface Identifier.
+         *
+         * @param[in]  aExtAddress  A reference to the extended address.
+         *
+         */
+        void SetIid(const Mac::ExtAddress& aExtAddress) {
+            // TODO
         }
 
         /**
