@@ -16,7 +16,6 @@ TEST(IPv4Tests, Methods) {
     EXPECT_TRUE(ip.is_private());
     EXPECT_FALSE(ip.is_public());
     EXPECT_FALSE(ip.is_all_zero());
-    EXPECT_TRUE(ip.is_valid());
     EXPECT_EQ(ip.str(), "192.168.1.1");
 
     auto octets = ip.octets();
