@@ -50,7 +50,7 @@
  *    [ ] Does user's browser support cookies but now it's disabled
  */
 
-#include "../std/string_view.h"
+#include <string_view>
 #include <chrono>
 #include <functional>
 #include <map>
@@ -341,10 +341,8 @@ namespace webpp {
             return static_cast<super*>(this)->insert(first, last);
         }
 
-#if __cplusplus > 201402L
 //        insert_return_type insert(node_type&& nh) {}
 //        iterator insert(const_iterator hint, node_type&& nh) {}
-#endif // C++17
 
         /**
          * @brief mark all cookies as encrypted
