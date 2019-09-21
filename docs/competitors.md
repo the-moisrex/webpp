@@ -1,5 +1,14 @@
 # Competitors
 
+## HTTP 2.0
+[HTTP 2.0 implementations](https://github.com/http2/http2-spec/wiki/Implementations)
+
+
+## Libraries
+
+### nghttp2
+[Website](https://nghttp2.org)
+
 ### Excalibur
 [Youtube live codings](https://www.youtube.com/watch?v=DAQF4u--ou0&list=PLbtjxiXev6lrSovYDdI2xHVcw8Gk2J3Zw)
 [GitHub](https://github.com/rhymu8354/Excalibur)
