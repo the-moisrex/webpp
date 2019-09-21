@@ -16,12 +16,22 @@ namespace webpp {
     template <class Interface>
     class body {
       private:
-        std::shared_ptr<Interface> interface;
+        std::shared_ptr<Interface> _interface;
 
       public:
-        body(Interface const& __interface) noexcept : interface(__interface) {}
+        body() noexcept : _interface(std::make_shared<Interface>()) {}
+        body(std::shared_ptr<Interface> const& __interface) noexcept
+            : _interface(__interface) {}
+        body(Interface const& __interface) noexcept
+            : _interface(std::make_shared<Interface>(__interface)) {}
         body(Interface&& __interface) noexcept
-            : interface(std::move(__interface)) {}
+            : _interface(std::make_shared<Interface>(std::move(__interface))) {}
+
+        /**
+         * Get the interface
+         * @return interface
+         */
+        auto interface() noexcept { return _interface; }
 
         void* const& json() const;
 
@@ -42,7 +52,7 @@ namespace webpp {
          */
         template <typename... T>
         auto read(T&&... data) const {
-            return interface.read(std::forward<T>(data)...);
+            return _interface.read(std::forward<T>(data)...);
         }
 
         // TODO: add more methods for the images and stuff

@@ -82,14 +82,14 @@ char const* cgi::header(std::string str) const noexcept {
 }
 
 void cgi::run(router<cgi>& _router) noexcept {
-    auto self = std::make_shared<cgi>(this);
-    webpp::request<webpp::cgi> req(self);
-    auto res = _router.run(req);
-    std::ios_base::sync_with_stdio(false); // TODO: write tests for this part
-    for (auto const& [attr, value] : res.headers()) {
-        std::cout << attr << ": " << value << "\r\n";
-    }
-    std::cout << "\r\n" << res.body();
+    //    auto self = std::make_shared<cgi>(this);
+    //    webpp::request<webpp::cgi> req(self);
+    //    auto res = _router.run(req);
+    //    std::ios_base::sync_with_stdio(false); // TODO: write tests for this
+    //    part for (auto const& [attr, value] : res.headers()) {
+    //        std::cout << attr << ": " << value << "\r\n";
+    //    }
+    //    std::cout << "\r\n" << res.body();
 }
 
 cgi::body_type cgi::body() noexcept {
