@@ -1,11 +1,11 @@
 #ifndef WEBPP_HEADERS_HPP
 #define WEBPP_HEADERS_HPP
 
-#include "../common/meta.h"
-#include "../std/string_view.h"
+#include <string_view>
 #include "cookies.h"
 #include <map>
 #include <string>
+#include <memory>
 
 namespace webpp {
 
@@ -149,14 +149,6 @@ namespace webpp {
         const_reverse_iterator crend() const noexcept { return data.crend(); }
     };
 
-    template <typename Interface>
-    class headers<Interface, header_type::RESPONSE> {
-        void reload_cookies() const noexcept;
-    };
-
-    template <typename Interface>
-    void headers<Interface, header_type::RESPONSE>::reload_cookies() const
-        noexcept {}
 
 } // namespace webpp
 
