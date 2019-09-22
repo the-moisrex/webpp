@@ -71,7 +71,7 @@ namespace webpp {
         /**
          * parses the string_view to the uint8 structure
          */
-        void parse() const noexcept {
+        constexpr void parse() const noexcept {
             if (std::holds_alternative<octets_t>(data))
                 return;
             auto _data = std::get<std::string_view>(data);
