@@ -470,8 +470,7 @@ namespace webpp {
          * @brief parse from string, it will trim the spaces for generality too
          * @param string_view URI string
          */
-        constexpr uri(std::string_view const& u) noexcept
-            : data(trim_copy(u)) {}
+        uri(std::string_view const& u) noexcept : data(trim_copy(u)) {}
 
         uri(uri const&) = default;
         uri(uri&&) = default;
