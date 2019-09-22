@@ -435,23 +435,21 @@ namespace webpp {
         }
 
         template <typename ReturnType>
-        std::optional<ReturnType> get_value(
+        constexpr std::optional<ReturnType> get_value(
             std::function<ReturnType(uri_segments<ReturnType> const&)> const&
                 func) const noexcept {
+            using namespace std;
             constexpr auto index =
-                std::is_same<ReturnType, uri_segments<std::string_view>>::value
+                is_same<ReturnType, uri_segments<std::string_view>>::value
                     ? 1
-                    : (std::is_same<ReturnType,
-                                    uri_segments<std::string>>::value
-                           ? 2
-                           : 0);
+                    : (is_same<ReturnType, uri_segments<string>>::value ? 2
+                                                                        : 0);
             parse(index);
-            if (std::holds_alternative<uri_segments<ReturnType>>(data)) {
-                ReturnType res = func(std::get<uri_segments<ReturnType>>(data));
-                return res.empty() ? std::nullopt
-                                   : std::make_optional(std::move(res));
+            if (holds_alternative<uri_segments<ReturnType>>(data)) {
+                ReturnType res = func(get<uri_segments<ReturnType>>(data));
+                return res.empty() ? nullopt : make_optional(std::move(res));
             }
-            return std::nullopt;
+            return nullopt;
         }
 
         void set_value(std::function<void(uri_segments<std::string>&)> const&
