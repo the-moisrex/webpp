@@ -161,20 +161,20 @@ namespace webpp {
          * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
          */
         static constexpr auto SCHEME_NOT_FIRST =
-            charset(ALPHA, DIGIT, webpp::charset('+', '-', '.'));
+            charset(ALPHA, DIGIT, charset_t<3>{'+', '-', '.'});
 
         /**
          * This is the character set corresponds to the "unreserved" syntax
          * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
          */
         static constexpr auto UNRESERVED =
-            charset(ALPHA, DIGIT, charset('-', '.', '_', '~'));
+            charset(ALPHA, DIGIT, charset_t<4>{'-', '.', '_', '~'});
 
         /**
          * This is the character set corresponds to the "sub-delims" syntax
          * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
          */
-        static constexpr auto SUB_DELIMS = webpp::charset(
+        static constexpr auto SUB_DELIMS = charset_t<11>(
             '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
 
         /**
@@ -183,7 +183,7 @@ namespace webpp {
          * leaving out "pct-encoded".
          */
         static constexpr auto USER_INFO_NOT_PCT_ENCODED =
-            webpp::charset(UNRESERVED, SUB_DELIMS, webpp::charset(':'));
+            charset(UNRESERVED, SUB_DELIMS, charset_t<1>{':'});
 
         /**
          * This is the character set corresponds to the last part of
@@ -191,7 +191,7 @@ namespace webpp {
          * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
          */
         static constexpr auto IPV_FUTURE_LAST_PART =
-            webpp::charset(UNRESERVED, SUB_DELIMS, webpp::charset(':'));
+            charset(UNRESERVED, SUB_DELIMS, charset_t<1>{':'});
 
         /**
          * This is the character set corresponds to the "reg-name" syntax
@@ -199,15 +199,15 @@ namespace webpp {
          * leaving out "pct-encoded".
          */
         static constexpr auto REG_NAME_NOT_PCT_ENCODED =
-            webpp::charset(UNRESERVED, SUB_DELIMS);
+            charset(UNRESERVED, SUB_DELIMS);
 
         /**
          * This is the character set corresponds to the "pchar" syntax
          * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
          * leaving out "pct-encoded".
          */
-        static constexpr auto PCHAR_NOT_PCT_ENCODED = webpp::charset(
-            UNRESERVED, SUB_DELIMS, webpp::charset_t<2>{{':', '@'}});
+        static constexpr auto PCHAR_NOT_PCT_ENCODED =
+            charset(UNRESERVED, SUB_DELIMS, webpp::charset_t<2>{':', '@'});
 
         /**
          * This is the character set corresponds to the "query" syntax
@@ -216,8 +216,7 @@ namespace webpp {
          * leaving out "pct-encoded".
          */
         static constexpr auto QUERY_OR_FRAGMENT_NOT_PCT_ENCODED =
-            webpp::charset(PCHAR_NOT_PCT_ENCODED,
-                           webpp::charset_t<2>{{'/', '?'}});
+            charset(PCHAR_NOT_PCT_ENCODED, charset_t<2>{{'/', '?'}});
 
         template <typename T>
         struct uri_segments {

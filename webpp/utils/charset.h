@@ -105,7 +105,7 @@ namespace webpp {
         /**
          * This is the default constructor.
          */
-        constexpr charset_t() = default;
+        constexpr charset_t() noexcept : chars{} {}
 
         /**
          * This constructs a character set that contains
@@ -114,40 +114,16 @@ namespace webpp {
          * @param[in] c
          *     This is the only character to put in the set.
          */
-        constexpr charset_t(char c) noexcept : chars{c} {}
+        constexpr explicit charset_t(char c) noexcept : chars{c} {}
 
-        /**
-         * This constructs a character set that contains all the
-         * characters between the given "first" and "last"
-         * characters, inclusive.
-         *
-         * @param[in] first
-         *     This is the first of the range of characters
-         *     to put in the set.
-         *
-         * @param[in] last
-         *     This is the last of the range of characters
-         *     to put in the set.
-         */
-        constexpr charset_t(char first, char last) noexcept : chars{} {
-            std::size_t i = 0;
-            for (char c = first; c < last + 1; ++c) {
-                if (!contains(c))
-                    chars[i++] = c;
-            }
+        template <typename... T, typename = char>
+        constexpr charset_t(T... t) noexcept : chars{t...} {}
 
-            // filling the rest with null char
-            for (; i < N; i++)
-                chars[i] = '\0';
-        }
-
-        //        template <typename... T, typename = char>
-        //        constexpr charset_t(T... t) noexcept : chars{t...} {}
-
-        constexpr charset_t(std::initializer_list<char> cset) noexcept
-            {
+        /*
+        explicit charset_t(std::initializer_list<char> cset) noexcept {
             std::copy(cset.begin(), cset.end(), chars.begin());
         }
+         */
 
         /**
          * This constructs a character set that contains all the
@@ -159,7 +135,7 @@ namespace webpp {
 
         template <std::size_t... NN>
         constexpr charset_t(const charset_t<NN>&... csets) noexcept : chars{} {
-            // static_assert(((0 + ... + NN) > N), "Sum of csets is grather than
+            // static_assert(((0 + ... + NN) > N), "Sum of csets is greater than
             // charset's container");
             auto csets_tupled = std::make_tuple(csets...);
             for_each_tuple(csets_tupled, [&, i = 0u](auto const& t) mutable {
@@ -179,9 +155,9 @@ namespace webpp {
             // for (; i < N; i++) chars[i] = '\0';
         }
 
-        constexpr charset_t(decltype(chars) const& _chars) noexcept
+        constexpr explicit charset_t(decltype(chars) const& _chars) noexcept
             : chars(_chars) {}
-        constexpr charset_t(decltype(chars)&& _chars) noexcept
+        constexpr explicit charset_t(decltype(chars)&& _chars) noexcept
             : chars(std::move(_chars)) {}
 
         /**
@@ -227,8 +203,13 @@ namespace webpp {
     }
     */
 
-    constexpr auto charset(std::initializer_list<char> const& cset) noexcept {
-        return charset_t<sizeof(cset)>(cset);
+    //    auto charset(std::initializer_list<char> const& cset) noexcept {
+    //        return charset_t<cset.size()>(cset);
+    //    }
+
+    template <typename... Char, typename = char>
+    constexpr auto charset(Char... chars) noexcept {
+        return charset_t<sizeof...(chars)>{chars...};
     }
 
     template <std::size_t... N>
@@ -247,6 +228,36 @@ namespace webpp {
     constexpr auto charset(charset_t<N> const& cset) noexcept {
         return charset_impl(cset, Indeces{});
     }
+
+    template <std::size_t N, char... I>
+    constexpr auto charset(char first,
+                           std::integer_sequence<char, I...>) noexcept {
+        return charset_t<N>{(first + I)...};
+    }
+
+    /**
+     * This constructs a character set that contains all the
+     * characters between the given "first" and "last"
+     * characters, inclusive.
+     *
+     * @param[in] first
+     *     This is the first of the range of characters
+     *     to put in the set.
+     *
+     * @param[in] last
+     *     This is the last of the range of characters
+     *     to put in the set.
+     */
+    template <char First, char Last>
+    constexpr auto charset() noexcept {
+        constexpr auto the_size = static_cast<std::size_t>(Last) -
+                                  static_cast<std::size_t>(First) + 1;
+        return charset<the_size>(First,
+                                 std::make_integer_sequence<char, the_size>{});
+    }
+
+    // TODO: add non-constexpr (or constexpr if you can) charset(first, last) as
+    // well
 
     /*
     struct charset_t_impl {
@@ -288,11 +299,6 @@ namespace webpp {
         return charset_<N>(std::make_index_sequence<N>{}, cset...);
     }
     */
-
-    template <char First, char Last>
-    constexpr auto charset() noexcept {
-        return charset_t<Last - First + 1>(First, Last);
-    }
 
     constexpr auto LOWER_ALPHA = charset<'a', 'z'>();
     constexpr auto UPPER_ALPHA = charset<'A', 'Z'>();
