@@ -327,12 +327,26 @@ namespace webpp {
          */
         constexpr bool host(std::string_view const& str) noexcept {
             /**
+             * This is the character set corresponds to the "unreserved" syntax
+             * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
+             */
+            constexpr auto UNRESERVED =
+                charset(ALPHA, DIGIT, charset_t<4>{'-', '.', '_', '~'});
+
+            /**
+             * This is the character set corresponds to the "sub-delims" syntax
+             * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
+             */
+            constexpr charset_t<11> SUB_DELIMS{'!', '$', '&', '\'', '(', ')',
+                                               '*', '+', ',', ';',  '='};
+
+            /**
              * This is the character set corresponds to the last part of
              * the "IPvFuture" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
             constexpr auto IPV_FUTURE_LAST_PART =
-                webpp::charset(UNRESERVED, SUB_DELIMS, webpp::charset(':'));
+                charset(UNRESERVED, SUB_DELIMS, charset_t<1>{':'});
 
             /**
              * This is the character set corresponds to the "reg-name" syntax
@@ -340,7 +354,7 @@ namespace webpp {
              * leaving out "pct-encoded".
              */
             constexpr auto REG_NAME_NOT_PCT_ENCODED =
-                webpp::charset(UNRESERVED, SUB_DELIMS);
+                charset(UNRESERVED, SUB_DELIMS);
 
             if (str.empty())
                 return false;
