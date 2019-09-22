@@ -116,8 +116,10 @@ namespace webpp {
          */
         constexpr explicit charset_t(char c) noexcept : chars{c} {}
 
-        template <typename... T, typename = char>
-        constexpr charset_t(T... t) noexcept : chars{t...} {}
+        template <typename... Char,
+                  typename = typename std::enable_if<
+                      (true && ... && std::is_same_v<Char, char>), void>::type>
+        constexpr charset_t(Char... t) noexcept : chars{t...} {}
 
         /*
         explicit charset_t(std::initializer_list<char> cset) noexcept {
@@ -207,10 +209,15 @@ namespace webpp {
     //        return charset_t<cset.size()>(cset);
     //    }
 
+    /**
+     * Constructing a charset with chars
+     * God C++ really needs C++20's concepts; WTF
+     * @return charset_t
+     */
     template <
         typename... Char,
         typename = typename std::enable_if<
-            (true && ... && std::is_convertible_v<Char, char>), void>::type>
+                  (true && ... && std::is_same_v<Char, char>), void>::type>
     constexpr auto charset(Char... chars) noexcept {
         return charset_t<sizeof...(chars)>{chars...};
     }
