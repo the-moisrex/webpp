@@ -207,7 +207,10 @@ namespace webpp {
     //        return charset_t<cset.size()>(cset);
     //    }
 
-    template <typename... Char, typename = char>
+    template <
+        typename... Char,
+        typename = typename std::enable_if<
+            (true && ... && std::is_convertible_v<Char, char>), void>::type>
     constexpr auto charset(Char... chars) noexcept {
         return charset_t<sizeof...(chars)>{chars...};
     }
@@ -232,7 +235,7 @@ namespace webpp {
     template <std::size_t N, char... I>
     constexpr auto charset(char first,
                            std::integer_sequence<char, I...>) noexcept {
-        return charset_t<N>{(first + I)...};
+        return charset_t<N>{static_cast<char>(first + I)...};
     }
 
     /**
