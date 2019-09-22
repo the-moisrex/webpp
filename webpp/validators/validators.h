@@ -268,8 +268,7 @@ namespace webpp {
         }
 
         constexpr bool ipv4_prefix(std::string_view const& str) noexcept {
-            return ipv4_prefix(
-                str, charset_t<2>(std::initializer_list<char>{':', '/'}));
+            return ipv4_prefix(str, charset_t<2>{':', '/'});
         }
 
         /**
@@ -306,8 +305,7 @@ namespace webpp {
         }
 
         constexpr bool ipv6_prefix(std::string_view const& str) noexcept {
-            return ipv6_prefix(str,
-                               charset_t<1>(std::initializer_list<char>{'/'}));
+            return ipv6_prefix(str, charset_t<1>('/'));
         }
 
         /**
