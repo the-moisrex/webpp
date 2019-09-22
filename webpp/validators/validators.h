@@ -358,7 +358,7 @@ namespace webpp {
                 return false;
             if (str.starts_with('[') && str.ends_with(']')) {
                 if (str[1] == 'v') { // future ip
-                    if (auto dot_delim = _data.find('.');
+                    if (auto dot_delim = str.find('.');
                         dot_delim != std::string_view::npos) {
 
                         auto ipvf_version = str.substr(2, dot_delim);
@@ -367,7 +367,7 @@ namespace webpp {
                             return false;
                         }
 
-                        auto ipvf = _data.substr(dot_delim + 1, str.size() - 1);
+                        auto ipvf = str.substr(dot_delim + 1, str.size() - 1);
                         return IPV_FUTURE_LAST_PART.contains(ipvf);
                     }
 
