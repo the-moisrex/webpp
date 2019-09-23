@@ -898,9 +898,32 @@ namespace webpp {
             return *this;
         }
 
-        uri& query(
-            std::initializer_list<std::string_view> const& _queries) noexcept {
-            // TODO
+        /**
+         *
+         * @param queries
+         * @return
+         */
+        template <typename Map>
+        uri& query(Map const& _queries) noexcept {
+            static_assert(std::is_convertible_v<typename Map::key_type,
+                                                std::string_view> &&
+                              std::is_convertible_v<typename Map::mapped_type,
+                                                    std::string_view>,
+                          "The specified map is not valid");
+            std::string _query_data;
+            bool first = true;
+            for (auto it = _queries.cbegin(); it != _queries.cend(); it++) {
+                auto name = encode_uri_component(
+                    it->first, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
+                auto value = encode_uri_component(
+                    it->second, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
+                if (name.empty()) // when name is empty, we just don't care
+                    continue;
+                _query_data = name + (value.empty() ? "" : ("=" + value)) +
+                              (std::next(it) != _queries.cend() ? "&" : "");
+            }
+            set_value([&](auto& _data) { _data.query = _query_data; });
+            return *this;
         }
 
         /**
