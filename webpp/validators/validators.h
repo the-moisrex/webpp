@@ -391,7 +391,7 @@ namespace webpp {
         constexpr bool query(std::string_view str) noexcept {
             if (str.starts_with('?')) {
                 str.remove_prefix(1); // remove the question mark
-
+                // TODO
             }
             return false; // it's not a valid query
         }
