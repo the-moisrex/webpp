@@ -384,6 +384,18 @@ namespace webpp {
             return false;
         }
 
+        /*
+         * Check if the specified string is a query (in URI) or not
+         * @return bool true if it's a query
+         */
+        constexpr bool query(std::string_view str) noexcept {
+            if (str.starts_with('?')) {
+                str.remove_prefix(1); // remove the question mark
+
+            }
+            return false; // it's not a valid query
+        }
+
         constexpr bool ip_range(std::string_view const& str) noexcept;
         constexpr bool ipv4_range(std::string_view const& str) noexcept;
         constexpr bool ipv6_range(std::string_view const& str) noexcept;
