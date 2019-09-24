@@ -389,11 +389,37 @@ namespace webpp {
          * @return bool true if it's a query
          */
         constexpr bool query(std::string_view str) noexcept {
-            if (str.starts_with('?')) {
-                str.remove_prefix(1); // remove the question mark
-                // TODO
-            }
-            return false; // it's not a valid query
+            /**
+             * This is the character set corresponds to the "unreserved" syntax
+             * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
+             */
+            constexpr auto UNRESERVED =
+                charset(ALPHA, DIGIT, charset_t<4>{'-', '.', '_', '~'});
+
+            /**
+             * This is the character set corresponds to the "sub-delims" syntax
+             * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
+             */
+            constexpr auto SUB_DELIMS = charset_t<11>(
+                '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
+            /**
+             * This is the character set corresponds to the "pchar" syntax
+             * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
+             * leaving out "pct-encoded".
+             */
+            constexpr auto PCHAR_NOT_PCT_ENCODED =
+                charset(UNRESERVED, SUB_DELIMS, webpp::charset_t<2>{':', '@'});
+
+            /**
+             * This is the character set corresponds to the "query" syntax
+             * and the "fragment" syntax
+             * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
+             * leaving out "pct-encoded".
+             */
+            constexpr auto QUERY_OR_FRAGMENT_NOT_PCT_ENCODED =
+                charset(PCHAR_NOT_PCT_ENCODED, charset_t<2>{{'/', '?'}});
+
+            return QUERY_OR_FRAGMENT_NOT_PCT_ENCODED.contains(str);
         }
 
         constexpr bool ip_range(std::string_view const& str) noexcept;
