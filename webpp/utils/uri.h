@@ -280,8 +280,8 @@ namespace webpp {
 
                 uri_segments<std::string_view> segs{};
 
-                std::size_t path_start = std::string_view::npos;
-                std::size_t port_start = std::string_view::npos;
+                std::size_t path_start;
+                std::size_t port_start;
 
                 // extracting scheme
                 if (const auto schemeEnd = _data.find(':');
@@ -452,8 +452,12 @@ namespace webpp {
             return nullopt;
         }
 
-        void set_value(std::function<void(uri_segments<std::string>&)> const&
-                           func) noexcept {
+        /**
+         * Set a specific value with a function
+         * @param func = void func(uri_segments<std::string>&)
+         */
+        template <typename Callable>
+        void set_value(Callable const& func) noexcept {
             parse(2);
             if (auto _data = std::get_if<uri_segments<std::string>>(&data)) {
                 func(*_data);
