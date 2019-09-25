@@ -128,9 +128,12 @@ namespace webpp {
     }
 
     /**
+     * This class represents a Uniform Resource Identifier (URI),
+     * as defined in RFC 3986 (https://tools.ietf.org/html/rfc3986).
+     *
      * Most URIs will never change in their life time (at least in webpp
      * project) and they mostly used to get details of the URL we have as a
-     * string; so I decided that probabely half of the calculations can be done
+     * string; so I decided that probably half of the calculations can be done
      * at compile time; so fo that point, I reimplemented the URI class with
      * constexpr and string_view in mind.
      *
@@ -1047,8 +1050,28 @@ namespace webpp {
             return !has_scheme();
         }
 
+        /**
+         * Get the string representation of the uri
+         * @return string
+         */
         std::string str() const noexcept {
+            if (std::holds_alternative<std::string_view>(data))
+                return std::string(std::get<std::string_view>(data));
+            std::string _uri;
+            if (std::holds_alternative<uri_segments<std::string_view>>(data)) {
+                auto _data = std::get<uri_segments<std::string_view>>(data);
+                if (!_data.scheme.empty()) {
+                    _uri.append(_data.scheme);
+                    _uri.append(":");
+                }
+                if (!_data.host.empty())
+                    _uri.append("//");
+                if (!_data.host.empty())
+                    _uri.append(_data.host);
+            }
+            auto _data = std::get<uri_segments<std::string>>(data);
             // TODO
+            return _uri;
         }
 
         /**
@@ -1125,36 +1148,6 @@ namespace webpp {
         }
 
     }; // namespace webpp
-
-    /**
-     * This class represents a Uniform Resource Identifier (URI),
-     * as defined in RFC 3986 (https://tools.ietf.org/html/rfc3986).
-     */
-    class Uri {
-        // Lifecycle management
-      public:
-        ~Uri() noexcept;
-
-        Uri(const Uri& other);
-
-        Uri(Uri&&) noexcept;
-
-        Uri& operator=(const Uri& other);
-
-        Uri& operator=(Uri&&) noexcept;
-
-        // Public methods
-      public:
-        /**
-         * This method constructs and returns the string
-         * rendering of the URI, according to the rules
-         * in RFC 3986 (https://tools.ietf.org/html/rfc3986).
-         *
-         * @return
-         *     The string rendering of the URI is returned.
-         */
-        std::string GenerateString() const;
-    };
 
 } // namespace webpp
 
