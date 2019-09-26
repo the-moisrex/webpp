@@ -971,7 +971,7 @@ namespace webpp {
                     last_and_sep = and_sep;
                     if (name.empty()) // a name should not be empty
                         continue;
-                    std::string value = "";
+                    std::string value;
                     if (and_sep !=
                         std::string_view::npos) { // we have a value as well
                         value = _query.substr(eq_sep + 1, and_sep);
@@ -1051,27 +1051,72 @@ namespace webpp {
         }
 
         /**
+         * This method resturns an indication of whether or not the URI includes
+         * any element that is part of the authority URI.
+         * @return bool
+         */
+        constexpr bool has_authority() const noexcept {
+            return has_host() || has_user_info() || has_port();
+        }
+
+        /**
          * Get the string representation of the uri
          * @return string
          */
         std::string str() const noexcept {
             if (std::holds_alternative<std::string_view>(data))
                 return std::string(std::get<std::string_view>(data));
-            std::string _uri;
-            if (std::holds_alternative<uri_segments<std::string_view>>(data)) {
-                auto _data = std::get<uri_segments<std::string_view>>(data);
+            std::ostringstream buff;
+
+            auto __do_it = [&](auto& _data) {
+                // scheme
                 if (!_data.scheme.empty()) {
-                    _uri.append(_data.scheme);
-                    _uri.append(":");
+                    buff << _data.scheme << ':';
                 }
-                if (!_data.host.empty())
-                    _uri.append("//");
-                if (!_data.host.empty())
-                    _uri.append(_data.host);
+                if (has_authority()) {
+                    buff << "//";
+
+                    // user-info
+                    if (!_data.user_info.empty())
+                        buff << _data.user_info << '@';
+
+                    // host
+                    if (!_data.host.empty()) {
+
+                        // ipv6 hostname
+                        if (is::ipv6(_data.host))
+                            buff << '[' << _data.host << ']';
+                        else // any other type of hostname
+                            buff << _data.host;
+                    }
+
+                    // port
+                    if (!_data.port.empty()) {
+                        buff << ':' << port();
+                    }
+                }
+
+                // path
+                if (!_data.path.empty())
+                    buff << '/' << _data.path; // TODO: check if this part is ok
+
+                // query
+                if (!_data.query.empty())
+                    buff << '?' << _data.query;
+
+                // fragment
+                if (!_data.fragment.empty())
+                    buff << '#' << _data.fragment;
+            };
+
+            // handling string and string_view is the same
+            if (std::holds_alternative<uri_segments<std::string_view>>(data)) {
+                __do_it(std::get<uri_segments<std::string_view>>(data));
+            } else {
+                __do_it(std::get<uri_segments<std::string>>(data));
             }
-            auto _data = std::get<uri_segments<std::string>>(data);
-            // TODO
-            return _uri;
+
+            return buff.str();
         }
 
         /**
