@@ -390,7 +390,8 @@ namespace webpp {
          */
         bool is_unspecified() const noexcept {
             auto _octets = octets();
-            return std::all_of(_octets.cbegin(), _octets.cend(), 0);
+            return std::all_of(_octets.cbegin(), _octets.cend(),
+                               [](auto const& o) { return o == 0; });
         }
 
         /**
@@ -404,7 +405,8 @@ namespace webpp {
         bool is_loopback() const noexcept {
             auto _octets = octets();
             return _octets[IPV6_ADDR_SIZE] == 1 &&
-                   std::all_of(_octets.cbegin(), _octets.cend() - 1, 0);
+                   std::all_of(_octets.cbegin(), _octets.cend() - 1,
+                               [](auto const& o) { return 0 == o; });
         }
 
         /**
@@ -470,7 +472,8 @@ namespace webpp {
         bool is_link_local_all_nodes_multicast() const noexcept {
             auto _octets = octets();
             return _octets[0] == 0xFF && _octets[1] == 0x02 &&
-                   std::all_of(_octets.cbegin() + 2, _octets.cend() - 1, 0) &&
+                   std::all_of(_octets.cbegin() + 2, _octets.cend() - 1,
+                               [](auto const& o) { return 0 == o; }) &&
                    _octets[IPV6_ADDR_SIZE - 1] == 0x01;
         }
 
@@ -487,7 +490,8 @@ namespace webpp {
         bool is_link_local_all_routers_multicast() const noexcept {
             auto _octets = octets();
             return _octets[0] == 0xFF && _octets[1] == 0x02 &&
-                   std::all_of(_octets.cbegin() + 2, _octets.cend() - 1, 0) &&
+                   std::all_of(_octets.cbegin() + 2, _octets.cend() - 1,
+                               [](auto const& o) { return 0 == o; }) &&
                    _octets[IPV6_ADDR_SIZE - 1] == 0x02;
         }
 
@@ -534,7 +538,8 @@ namespace webpp {
         bool is_realm_local_all_routers_multicast() const noexcept {
             auto _octets = octets();
             return _octets[0] == 0xFF && _octets[1] == 0x03 &&
-                   std::all_of(_octets.cbegin() + 2, _octets.cend() - 1, 0) &&
+                   std::all_of(_octets.cbegin() + 2, _octets.cend() - 1,
+                               [](auto const& o) { return 0 == o; }) &&
                    _octets[IPV6_ADDR_SIZE - 1] == 0x02;
         }
 
@@ -551,7 +556,8 @@ namespace webpp {
         bool is_realm_local_all_mpl_forwarders() const noexcept {
             auto _octets = octets();
             return _octets[0] == 0xFF && _octets[1] == 0x03 &&
-                   std::all_of(_octets.cbegin() + 2, _octets.cend() - 1, 0) &&
+                   std::all_of(_octets.cbegin() + 2, _octets.cend() - 1,
+                               [](auto const& o) { return 0 == o; }) &&
                    _octets[IPV6_ADDR_SIZE - 1] == 0xfc;
         }
 
@@ -648,7 +654,8 @@ namespace webpp {
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
             auto _octets = octets();
-            return std::all_of(_octets.cbegin() + 8, _octets.cend(), 0);
+            return std::all_of(_octets.cbegin() + 8, _octets.cend(),
+                               [](auto const& o) { return 0 == o; });
         }
 
         /**
@@ -669,7 +676,8 @@ namespace webpp {
             // 64: -----------0----------- -----------1-----------
             auto _octets = octets8();
             return _octets[8] == 0xFD && _octets[15] == 0x80 &&
-                   std::all_of(_octets.cbegin() + 9, _octets.cend() - 1, 0xFF);
+                   std::all_of(_octets.cbegin() + 9, _octets.cend() - 1,
+                               [](auto const& o) { return 0xFF == o; });
         }
 
         /**
@@ -834,7 +842,7 @@ namespace webpp {
             }
             return ostr.str();
         }
-    };
+    }; // namespace webpp
 
 } // namespace webpp
 

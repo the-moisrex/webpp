@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
 #include <iostream>
-#include <webpp/http/cookie_jar.h>
+#include <webpp/http/cookies.h>
 
 TEST(Cookie, CookiesCreation) {
-    webpp::cookie cookie;
-    cookie.name("   test   ").value("  value  ");
-    EXPECT_TRUE(cookie.name() == "test");
-    EXPECT_TRUE(cookie.value() == "value");
+    webpp::cookie c;
+    c.name("   test   ").value("  value  ");
+    EXPECT_TRUE(c.name() == "test");
+    EXPECT_TRUE(c.value() == "value");
     EXPECT_TRUE(webpp::cookie("  test  ", "  value ").name() ==
                 webpp::cookie("test", "value").name())
         << "cookies should be trimmed";
