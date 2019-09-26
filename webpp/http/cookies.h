@@ -118,6 +118,7 @@ namespace webpp {
         /**
          * empty cookie
          */
+        cookie() noexcept;
         cookie(const cookie&) noexcept;
         cookie(cookie&&) noexcept;
         // TODO: implement this:

@@ -24,7 +24,6 @@ void check_args(
         "cmd", value<std::string>()->default_value("help")->required(),
         "The command")("cmd_opts",
                        value<std::vector<std::string>>()
-                           ->default_value(std::vector<std::string>())
                            ->multitoken(),
                        "The command options.");
 
