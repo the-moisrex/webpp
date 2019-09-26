@@ -233,10 +233,7 @@ namespace webpp {
         constexpr ipv6(ipv6 const& ip) noexcept = default;
         constexpr ipv6(ipv6&& ip) noexcept = default;
 
-        ipv6& operator=(ipv6 const& ip) noexcept {
-            data = ip.data;
-            return *this;
-        }
+        ipv6& operator=(ipv6 const& ip) noexcept = default;
 
         ipv6& operator=(std::string_view const& str) noexcept {
             // TODO: check ipv6
@@ -294,10 +291,9 @@ namespace webpp {
             constexpr std::size_t len = ndata.size();
             using t = uint16_t;
             for (std::size_t i = 0; i < len; i++) {
-                ndata[i] = static_cast<t>(_octets[i * 2u + 0u])
-                           << (16u - 8u * 1u);
-                ndata[i] |= static_cast<t>(_octets[i * 2u + 1u])
-                            << (16u - 8u * 2u);
+                ndata[i] =
+                    (static_cast<t>(_octets[i * 2u + 0u]) << (16u - 8u * 1u)) |
+                    (static_cast<t>(_octets[i * 2u + 1u]) << (16u - 8u * 2u));
             }
             return ndata;
         }
@@ -317,14 +313,11 @@ namespace webpp {
             constexpr std::size_t len = ndata.size();
             using t = uint32_t;
             for (std::size_t i = 0; i < len; i++) {
-                ndata[i] = static_cast<t>(_octets[i * 2u + 0u])
-                           << (32u - 8u * 1u);
-                ndata[i] |= static_cast<t>(_octets[i * 2u + 1u])
-                            << (32u - 8u * 2u);
-                ndata[i] |= static_cast<t>(_octets[i * 2u + 2u])
-                            << (32u - 8u * 3u);
-                ndata[i] |= static_cast<t>(_octets[i * 2u + 3u])
-                            << (32u - 8u * 4u);
+                ndata[i] =
+                    (static_cast<t>(_octets[i * 2u + 0u]) << (32u - 8u * 1u)) |
+                    (static_cast<t>(_octets[i * 2u + 1u]) << (32u - 8u * 2u)) |
+                    (static_cast<t>(_octets[i * 2u + 2u]) << (32u - 8u * 3u)) |
+                    (static_cast<t>(_octets[i * 2u + 3u]) << (32u - 8u * 4u));
             }
             return ndata;
         }
@@ -344,22 +337,15 @@ namespace webpp {
             constexpr std::size_t len = ndata.size();
             using t = uint64_t;
             for (std::size_t i = 0; i < len; i++) {
-                ndata[i] = static_cast<t>(_octets[i * 2u + 0u])
-                           << (64u - 8u * 1u);
-                ndata[i] |= static_cast<t>(_octets[i * 2u + 1u])
-                            << (64u - 8u * 2u);
-                ndata[i] |= static_cast<t>(_octets[i * 2u + 2u])
-                            << (64u - 8u * 3u);
-                ndata[i] |= static_cast<t>(_octets[i * 2u + 3u])
-                            << (64u - 8u * 4u);
-                ndata[i] |= static_cast<t>(_octets[i * 2u + 4u])
-                            << (64u - 8u * 5u);
-                ndata[i] |= static_cast<t>(_octets[i * 2u + 5u])
-                            << (64u - 8u * 6u);
-                ndata[i] |= static_cast<t>(_octets[i * 2u + 6u])
-                            << (64u - 8u * 7u);
-                ndata[i] |= static_cast<t>(_octets[i * 2u + 7u])
-                            << (64u - 8u * 8u);
+                ndata[i] =
+                    (static_cast<t>(_octets[i * 2u + 0u]) << (64u - 8u * 1u)) |
+                    (static_cast<t>(_octets[i * 2u + 1u]) << (64u - 8u * 2u)) |
+                    (static_cast<t>(_octets[i * 2u + 2u]) << (64u - 8u * 3u)) |
+                    (static_cast<t>(_octets[i * 2u + 3u]) << (64u - 8u * 4u)) |
+                    (static_cast<t>(_octets[i * 2u + 4u]) << (64u - 8u * 5u)) |
+                    (static_cast<t>(_octets[i * 2u + 5u]) << (64u - 8u * 6u)) |
+                    (static_cast<t>(_octets[i * 2u + 6u]) << (64u - 8u * 7u)) |
+                    (static_cast<t>(_octets[i * 2u + 7u]) << (64u - 8u * 8u));
             }
             return ndata;
         }
@@ -368,7 +354,7 @@ namespace webpp {
          * This method returns the IPv6 address scope.
          * @returns The IPv6 address scope.
          */
-        uint8_t scope() const noexcept {
+        constexpr uint8_t scope() const noexcept {
             if (is_multicast()) {
                 return octets8()[1] & 0xfu;
             } else if (is_link_local()) {
@@ -388,10 +374,16 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address is not the Unspecified Address.
          *
          */
-        bool is_unspecified() const noexcept {
-            auto _octets = octets();
-            return std::all_of(_octets.cbegin(), _octets.cend(),
-                               [](auto const& o) { return o == 0; });
+        constexpr bool is_unspecified() const noexcept {
+            auto _octets = octets8();
+            return (_octets[0] == 0) && (_octets[1] == 0) &&
+                   (_octets[2] == 0) && (_octets[3] == 0) &&
+                   (_octets[4] == 0) && (_octets[5] == 0) &&
+                   (_octets[6] == 0) && (_octets[7] == 0) &&
+                   (_octets[8] == 0) && (_octets[9] == 0) &&
+                   (_octets[10] == 0) && (_octets[11] == 0) &&
+                   (_octets[12] == 0) && (_octets[13] == 0) &&
+                   (_octets[14] == 0) && (_octets[15] == 0);
         }
 
         /**
@@ -402,11 +394,16 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address is not the Loopback Address.
          *
          */
-        bool is_loopback() const noexcept {
-            auto _octets = octets();
-            return _octets[IPV6_ADDR_SIZE] == 1 &&
-                   std::all_of(_octets.cbegin(), _octets.cend() - 1,
-                               [](auto const& o) { return 0 == o; });
+        constexpr bool is_loopback() const noexcept {
+            auto _octets = octets8();
+            return (_octets[0] == 0) && (_octets[1] == 0) &&
+                   (_octets[2] == 0) && (_octets[3] == 0) &&
+                   (_octets[4] == 0) && (_octets[5] == 0) &&
+                   (_octets[6] == 0) && (_octets[7] == 0) &&
+                   (_octets[8] == 0) && (_octets[9] == 0) &&
+                   (_octets[10] == 0) && (_octets[11] == 0) &&
+                   (_octets[12] == 0) && (_octets[13] == 0) &&
+                   (_octets[14] == 0) && (_octets[15] == 1);
         }
 
         /**
@@ -417,7 +414,7 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address scope is not Interface-Local.
          *
          */
-        bool is_link_local() const noexcept {
+        constexpr bool is_link_local() const noexcept {
             auto _octets = octets();
             return (_octets[0] == 0xfeu) && ((_octets[1] & 0xc0u) == 0x80u);
         }
@@ -430,9 +427,9 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address scope is not a multicast address.
          *
          */
-        bool is_multicast() const noexcept {
+        constexpr bool is_multicast() const noexcept {
             auto _octets = octets();
-            return _octets[0] == 0xff;
+            return _octets[0] == 0xffu;
         }
 
         /**
@@ -446,6 +443,29 @@ namespace webpp {
         bool IsInterfaceLocal() const noexcept;
 
         /**
+         * Determine whether the address is site local
+         * @return bool
+         */
+        constexpr bool is_site_local() const noexcept {
+            auto _octets = octets8();
+            return (_octets[0] == 0xfeu) && ((_octets[1] & 0xc0u) == 0xc0u);
+        }
+
+        /**
+         * Determine whether the address is a mapped IPv4 address
+         * @return bool
+         */
+        constexpr bool is_v4_mapped() const noexcept {
+            auto _octets = octets8();
+            return (_octets[0] == 0) && (_octets[1] == 0) &&
+                   (_octets[2] == 0) && (_octets[3] == 0) &&
+                   (_octets[4] == 0) && (_octets[5] == 0) &&
+                   (_octets[6] == 0) && (_octets[7] == 0) &&
+                   (_octets[8] == 0) && (_octets[9] == 0) &&
+                   (_octets[10] == 0xff) && (_octets[11] == 0xff);
+        }
+
+        /**
          * This method indicates whether or not the IPv6 address is a link-local
          * multicast address.
          *
@@ -454,7 +474,7 @@ namespace webpp {
          * multicast address.
          *
          */
-        bool is_link_local_multicast() const noexcept {
+        constexpr bool is_link_local_multicast() const noexcept {
             return is_multicast() &&
                    scope() == static_cast<uint8_t>(scope::link_local);
         }
@@ -469,12 +489,16 @@ namespace webpp {
          * multicast address.
          *
          */
-        bool is_link_local_all_nodes_multicast() const noexcept {
-            auto _octets = octets();
-            return _octets[0] == 0xFF && _octets[1] == 0x02 &&
-                   std::all_of(_octets.cbegin() + 2, _octets.cend() - 1,
-                               [](auto const& o) { return 0 == o; }) &&
-                   _octets[IPV6_ADDR_SIZE - 1] == 0x01;
+        constexpr bool is_link_local_all_nodes_multicast() const noexcept {
+            auto _octets = octets8();
+            return _octets[0] == 0xFFu && _octets[1] == 0x02u &&
+                   (_octets[2] == 0) && (_octets[3] == 0) &&
+                   (_octets[4] == 0) && (_octets[5] == 0) &&
+                   (_octets[6] == 0) && (_octets[7] == 0) &&
+                   (_octets[8] == 0) && (_octets[9] == 0) &&
+                   (_octets[10] == 0) && (_octets[11] == 0) &&
+                   (_octets[12] == 0) && (_octets[13] == 0) &&
+                   (_octets[14] == 0) && (_octets[15] == 0x01u);
         }
 
         /**
@@ -487,12 +511,16 @@ namespace webpp {
          * multicast address.
          *
          */
-        bool is_link_local_all_routers_multicast() const noexcept {
+        constexpr bool is_link_local_all_routers_multicast() const noexcept {
             auto _octets = octets();
-            return _octets[0] == 0xFF && _octets[1] == 0x02 &&
-                   std::all_of(_octets.cbegin() + 2, _octets.cend() - 1,
-                               [](auto const& o) { return 0 == o; }) &&
-                   _octets[IPV6_ADDR_SIZE - 1] == 0x02;
+            return _octets[0] == 0xFFu && _octets[1] == 0x02u &&
+                   (_octets[2] == 0) && (_octets[3] == 0) &&
+                   (_octets[4] == 0) && (_octets[5] == 0) &&
+                   (_octets[6] == 0) && (_octets[7] == 0) &&
+                   (_octets[8] == 0) && (_octets[9] == 0) &&
+                   (_octets[10] == 0) && (_octets[11] == 0) &&
+                   (_octets[12] == 0) && (_octets[13] == 0) &&
+                   (_octets[14] == 0) && (_octets[15] == 0x02u);
         }
 
         /**
@@ -505,7 +533,7 @@ namespace webpp {
          * multicast address.
          *
          */
-        bool is_realm_local_multicast() const noexcept {
+        constexpr bool is_realm_local_multicast() const noexcept {
             return is_multicast() &&
                    (scope() == static_cast<uint8_t>(scope::realm_local));
         }
@@ -520,7 +548,7 @@ namespace webpp {
          * multicast address.
          *
          */
-        bool is_realm_local_all_nodes_multicast() const noexcept {
+        constexpr bool is_realm_local_all_nodes_multicast() const noexcept {
             return is_multicast() &&
                    scope() == static_cast<uint8_t>(scope::realm_local);
         }
@@ -535,12 +563,16 @@ namespace webpp {
          * multicast address.
          *
          */
-        bool is_realm_local_all_routers_multicast() const noexcept {
+        constexpr bool is_realm_local_all_routers_multicast() const noexcept {
             auto _octets = octets();
-            return _octets[0] == 0xFF && _octets[1] == 0x03 &&
-                   std::all_of(_octets.cbegin() + 2, _octets.cend() - 1,
-                               [](auto const& o) { return 0 == o; }) &&
-                   _octets[IPV6_ADDR_SIZE - 1] == 0x02;
+            return _octets[0] == 0xFFu && _octets[1] == 0x03u &&
+                   (_octets[2] == 0) && (_octets[3] == 0) &&
+                   (_octets[4] == 0) && (_octets[5] == 0) &&
+                   (_octets[6] == 0) && (_octets[7] == 0) &&
+                   (_octets[8] == 0) && (_octets[9] == 0) &&
+                   (_octets[10] == 0) && (_octets[11] == 0) &&
+                   (_octets[12] == 0) && (_octets[13] == 0) &&
+                   (_octets[14] == 0) && (_octets[15] == 0x02u);
         }
 
         /**
@@ -553,12 +585,16 @@ namespace webpp {
          * forwarders address.
          *
          */
-        bool is_realm_local_all_mpl_forwarders() const noexcept {
-            auto _octets = octets();
-            return _octets[0] == 0xFF && _octets[1] == 0x03 &&
-                   std::all_of(_octets.cbegin() + 2, _octets.cend() - 1,
-                               [](auto const& o) { return 0 == o; }) &&
-                   _octets[IPV6_ADDR_SIZE - 1] == 0xfc;
+        constexpr bool is_realm_local_all_mpl_forwarders() const noexcept {
+            auto _octets = octets8();
+            return _octets[0] == 0xFFu && _octets[1] == 0x03u &&
+                   (_octets[2] == 0) && (_octets[3] == 0) &&
+                   (_octets[4] == 0) && (_octets[5] == 0) &&
+                   (_octets[6] == 0) && (_octets[7] == 0) &&
+                   (_octets[8] == 0) && (_octets[9] == 0) &&
+                   (_octets[10] == 0) && (_octets[11] == 0) &&
+                   (_octets[12] == 0) && (_octets[13] == 0) &&
+                   (_octets[14] == 0) && (_octets[15] == 0xfcu);
         }
 
         /**
@@ -571,7 +607,7 @@ namespace webpp {
          * not larger than realm local.
          *
          */
-        bool is_multicast_larger_than_realm_local() const noexcept {
+        constexpr bool is_multicast_larger_than_realm_local() const noexcept {
             return is_multicast() &&
                    scope() > static_cast<uint8_t>(scope::realm_local);
         }
@@ -584,7 +620,7 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address is not a RLOC address.
          *
          */
-        bool is_routing_locator() const noexcept {
+        constexpr bool is_routing_locator() const noexcept {
             constexpr auto aloc_16_mask = 0xFCu; // The mask for Aloc16
             constexpr auto rloc16_reserved_bit_mask =
                 0x02u; // The mask for the reserved bit of Rloc16
@@ -606,7 +642,7 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address is not an Anycast RLOC address.
          *
          */
-        bool is_anycast_routing_locator() const noexcept {
+        constexpr bool is_anycast_routing_locator() const noexcept {
             constexpr auto aloc_16_mask = 0xFC; // The mask for Aloc16
             auto _octets = octets();
 
@@ -627,7 +663,7 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address is not an Anycast Service Locator.
          *
          */
-        bool is_anycast_service_locator() const noexcept {
+        constexpr bool is_anycast_service_locator() const noexcept {
             constexpr auto aloc8_service_start = 0x10;
             constexpr auto aloc8_service_end = 0x2f;
             auto _octets = octets();
@@ -647,15 +683,17 @@ namespace webpp {
          * address.
          *
          */
-        bool is_subnet_router_anycast() const noexcept {
+        constexpr bool is_subnet_router_anycast() const noexcept {
             // IP: XX XX XX XX XX XX XX XX 00 00 00 00 00 00 00 00
             // 08: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // 16: --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
             auto _octets = octets();
-            return std::all_of(_octets.cbegin() + 8, _octets.cend(),
-                               [](auto const& o) { return 0 == o; });
+            return (_octets[8] == 0) && (_octets[9] == 0) &&
+                   (_octets[10] == 0) && (_octets[11] == 0) &&
+                   (_octets[12] == 0) && (_octets[13] == 0) &&
+                   (_octets[14] == 0) && (_octets[15] == 0);
         }
 
         /**
@@ -668,7 +706,7 @@ namespace webpp {
          * address.
          *
          */
-        bool is_reserved_subnet_anycast() const noexcept {
+        constexpr bool is_reserved_subnet_anycast() const noexcept {
             // IP: XX XX XX XX XX XX XX XX FD FF FF FF FF FF FF 80
             // 08: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // 16: --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
@@ -676,8 +714,9 @@ namespace webpp {
             // 64: -----------0----------- -----------1-----------
             auto _octets = octets8();
             return _octets[8] == 0xFD && _octets[15] == 0x80 &&
-                   std::all_of(_octets.cbegin() + 9, _octets.cend() - 1,
-                               [](auto const& o) { return 0xFF == o; });
+                   (_octets[9] == 0xFFu) && (_octets[10] == 0xFFu) &&
+                   (_octets[11] == 0xFFu) && (_octets[12] == 0xFFu) &&
+                   (_octets[13] == 0xFFu) && (_octets[14] == 0xFFu);
         }
 
         /**
@@ -689,7 +728,7 @@ namespace webpp {
          * IID.
          *
          */
-        bool is_iid_reserved() const noexcept {
+        constexpr bool is_iid_reserved() const noexcept {
             return is_subnet_router_anycast() || is_reserved_subnet_anycast() ||
                    is_anycast_routing_locator();
         }
@@ -781,7 +820,7 @@ namespace webpp {
          * @brief checks if the specified ip is valid or not
          * @return true if it is an unspecified ip address.
          */
-        bool is_valid() const noexcept { return !is_unspecified(); }
+        constexpr bool is_valid() const noexcept { return !is_unspecified(); }
 
         /**
          * @brief long string representation of the ip

@@ -283,7 +283,9 @@ namespace webpp {
          *     An indication of whether or not the given address
          *     is a valid IPv6 address is returned.
          */
-        constexpr bool ipv6(std::string_view const& str) noexcept;
+        constexpr bool ipv6(std::string_view const& str) noexcept {
+            // TODO
+        }
 
         template <std::size_t N>
         constexpr bool ipv6_prefix(std::string_view const& str,
