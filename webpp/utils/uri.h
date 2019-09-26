@@ -655,7 +655,7 @@ namespace webpp {
             if (!the_host)
                 return std::nullopt;
 
-            if (std::holds_alternative<std::string>(the_host.value())) {
+            if (std::holds_alternative<std::string_view>(the_host.value())) {
                 auto string_host =
                     std::string(std::get<std::string_view>(the_host.value()));
                 return decode_uri_component(string_host,
@@ -827,6 +827,24 @@ namespace webpp {
         }
 
         /**
+         * @brief set path
+         */
+        template <typename Container>
+        uri& path(const Container& _path) noexcept {
+            return path(_path.cbegin(), _path.cend());
+        }
+
+        template <typename Iter>
+        uri& path(const Iter& _start, const Iter& _end) noexcept {
+            std::ostringstream joined_path;
+            // TODO: check if we need std::string here
+            copy(_start, _end - 1,
+                 std::ostream_iterator<std::string_view>(joined_path, "/"));
+            joined_path << *std::prev(_end);
+            return path(std::string_view(joined_path.str()));
+        }
+
+        /**
          * @brief set the path for the uri
          * @param _path
          * @return
@@ -839,19 +857,6 @@ namespace webpp {
             });
             return *this;
         }
-
-        /**
-         * @brief set path
-         */
-        template <typename Container>
-        uri& path(const Container& _path) noexcept {
-            std::ostringstream joined_path;
-            copy(_path.cbegin(), _path.cend() - 1,
-                 std::ostream_iterator<std::string>(joined_path, "/"));
-            joined_path << *_path.crbegin();
-            return path(joined_path);
-        }
-
         /**
          * @brief clear path from the URI
          * @return

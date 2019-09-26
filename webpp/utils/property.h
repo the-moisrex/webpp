@@ -64,8 +64,8 @@ namespace webpp {
 
     };
 
-    template <typename T, typename S>
-    constexpr auto& operator<<(S& s, property<T> const& t) {
+    template <typename T>
+    constexpr auto& operator<<(std::ostream& s, property<T> const& t) {
         s << t.value();
         return s;
     }
