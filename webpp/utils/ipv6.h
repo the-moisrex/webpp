@@ -415,7 +415,7 @@ namespace webpp {
          *
          */
         constexpr bool is_link_local() const noexcept {
-            auto _octets = octets();
+            auto _octets = octets8();
             return (_octets[0] == 0xfeu) && ((_octets[1] & 0xc0u) == 0x80u);
         }
 
@@ -428,8 +428,53 @@ namespace webpp {
          *
          */
         constexpr bool is_multicast() const noexcept {
-            auto _octets = octets();
+            auto _octets = octets8();
             return _octets[0] == 0xffu;
+        }
+
+        /**
+         * Determine whether the address is a global multicast address
+         * @return bool
+         */
+        constexpr bool is_multicast_global() const noexcept {
+            auto _octets = octets8();
+            return ((_octets[0] == 0xffu) && ((_octets[1] & 0x0fu) == 0x0eu));
+        }
+
+        /**
+         * Determine whether the address is a link-local multicast address
+         * @return bool
+         */
+        constexpr bool is_multicast_link_local() const noexcept {
+            auto _octets = octets8();
+            return ((_octets[0] == 0xffu) && ((_octets[1] & 0x0fu) == 0x02u));
+        }
+
+        /**
+         * Determine whether the address is a node-local multicast address
+         * @return bool
+         */
+        constexpr bool is_multicast_node_local() const noexcept {
+            auto _octets = octets8();
+            return ((_octets[0] == 0xffu) && ((_octets[1] & 0x0fu) == 0x01u));
+        }
+
+        /**
+         * Determine whether the address is a org-local multicast address
+         * @return bool
+         */
+        constexpr bool is_multicast_org_local() const noexcept {
+            auto _octets = octets8();
+            return ((_octets[0] == 0xffu) && ((_octets[1] & 0x0fu) == 0x08u));
+        }
+
+        /**
+         * Determine whether the address is a site-local multicast address
+         * @return bool
+         */
+        constexpr bool is_multicast_site_local() const noexcept {
+            auto _octets = octets8();
+            return ((_octets[0] == 0xffu) && ((_octets[1] & 0x0fu) == 0x05u));
         }
 
         /**
