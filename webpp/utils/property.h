@@ -58,14 +58,10 @@ namespace webpp {
         }
 
         template <typename S>
-        constexpr bool operator==(S const& s) noexcept {
+        constexpr bool operator==(S const& s) const noexcept {
             return data == s;
         }
 
-        template <typename TT, typename S>
-        friend constexpr bool operator==(S const& s, property<TT> const& p) noexcept {
-            return p.data == s;
-        }
     };
 
     template <typename T, typename S>
@@ -74,6 +70,10 @@ namespace webpp {
         return s;
     }
 
+    template <typename TT, typename S>
+    constexpr bool operator==(S const& s, property<TT> const& p) noexcept {
+        return p.value() == s;
+    }
 
 } // namespace webpp
 
