@@ -220,6 +220,17 @@ namespace webpp {
         }
 
         /**
+         * Check if the specifed string is an integer and can be hold inside
+         * uint8_t; which means it's between 0 and 255
+         * @param str
+         * @return bool
+         */
+        constexpr bool uint8(std::string_view const& str) noexcept {
+            return !str.empty() && str.size() <= 3 && digit(str) &&
+                   to_uint(str) <= 255;
+        }
+
+        /**
          * Check if the char is a hexadecimal character
          * @param char
          * @return bool
@@ -456,19 +467,44 @@ namespace webpp {
          * @return
          */
         constexpr bool hex_color(std::string_view const& str) noexcept {
+            if (!str.starts_with('#'))
+                return false;
             switch (str.size()) {
-            case 3:
-            case 6:
-            case 8:
-                return is::hex(str);
+            case 3 + 1:
+            case 6 + 1:
+            case 8 + 1:
+                return is::hex(str.substr(1));
             default:
                 return false;
             }
         }
-        constexpr bool name_color(std::string_view const& str) noexcept;
 
-        constexpr bool color(std::string_view const& str) noexcept {
-            return hex_color(str) || name_color(str);
+        /**
+         * Check if the specified string is an RGB color
+         * @param str
+         * @return
+         */
+        bool rgb_color(std::string_view str) noexcept;
+
+        bool rgba_color(std::string_view str) noexcept;
+
+        /**
+         * Check if the specified string is a valid HTML color
+         * @param str
+         * @return bool
+         */
+        bool name_color(std::string str) noexcept;
+
+        /**
+         * Check if the specified string is a valid string representation of a
+         * color or not.
+         * @param str
+         * @return bool
+         */
+        bool color(std::string_view const& str) noexcept {
+            return hex_color(str) || name_color(std::string(str)) ||
+                   rgb_color(str) || rgba_color(str) || hsl_color(str) ||
+                   hsla_color(str);
         }
 
         constexpr bool mimetype(std::string_view const& str) noexcept;
