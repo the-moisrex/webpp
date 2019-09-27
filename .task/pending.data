@@ -27,3 +27,4 @@
 [description:"consider help functions for webassembly" entry:"1567683339" modified:"1567683339" project:"ams" status:"pending" uuid:"3d857976-c05a-41a9-8e25-fee0ba2991fa"]
 [description:"implement property class" entry:"1567683585" modified:"1567683585" project:"utils" status:"pending" uuid:"b8f032b9-5023-40b3-9c87-c4fca77eefff"]
 [description:"add mac address class" entry:"1568941931" modified:"1568941931" project:"net" status:"pending" uuid:"32c5f500-7702-4cb6-b2db-67686b7093d7"]
+[description:"put the validations in their own file" entry:"1569625600" modified:"1569625600" status:"pending" uuid:"ba590250-5f26-4769-a23c-307c80416a98"]

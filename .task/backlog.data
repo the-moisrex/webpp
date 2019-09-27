@@ -52,3 +52,4 @@
 {"description":"consider help functions for webassembly","entry":"20190905T113539Z","modified":"20190905T113539Z","project":"ams","status":"pending","uuid":"3d857976-c05a-41a9-8e25-fee0ba2991fa"}
 {"description":"implement property class","entry":"20190905T113945Z","modified":"20190905T113945Z","project":"utils","status":"pending","uuid":"b8f032b9-5023-40b3-9c87-c4fca77eefff"}
 {"description":"add mac address class","entry":"20190920T011211Z","modified":"20190920T011211Z","project":"net","status":"pending","uuid":"32c5f500-7702-4cb6-b2db-67686b7093d7"}
+{"description":"put the validations in their own file","entry":"20190927T230640Z","modified":"20190927T230640Z","status":"pending","uuid":"ba590250-5f26-4769-a23c-307c80416a98"}
