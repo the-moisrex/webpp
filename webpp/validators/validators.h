@@ -220,6 +220,29 @@ namespace webpp {
         }
 
         /**
+         * Check if the char is a hexadecimal character
+         * @param char
+         * @return bool
+         */
+        constexpr bool hex(char const& t) noexcept {
+            return (t >= '0' && t <= '9') || (t >= 'a' && t <= 'f') ||
+                   (t >= 'A' && t <= 'F');
+        }
+
+        /**
+         * check if all of the characters in the string is a hexadecimal
+         * character
+         * @param str
+         * @return bool
+         */
+        constexpr bool hex(std::string_view const& str) noexcept {
+            for (auto const& c : str)
+                if (!hex(c))
+                    return false;
+            return true;
+        }
+
+        /**
          * @brief check if the specified str is an email or not
          * @param str
          * @return true if the specified str is an email
@@ -283,9 +306,7 @@ namespace webpp {
          *     An indication of whether or not the given address
          *     is a valid IPv6 address is returned.
          */
-        constexpr bool ipv6(std::string_view const& str) noexcept {
-            // TODO
-        }
+        constexpr bool ipv6(std::string_view const& str) noexcept;
 
         template <std::size_t N>
         constexpr bool ipv6_prefix(std::string_view const& str,
@@ -428,7 +449,22 @@ namespace webpp {
         constexpr bool ipv4_range(std::string_view const& str) noexcept;
         constexpr bool ipv6_range(std::string_view const& str) noexcept;
         // bool isImage(something) noexcept;
-        constexpr bool hex_color(std::string_view const& str) noexcept;
+
+        /**
+         * Check if the specified string is a hexadecimal color
+         * @param str
+         * @return
+         */
+        constexpr bool hex_color(std::string_view const& str) noexcept {
+            switch (str.size()) {
+            case 3:
+            case 6:
+            case 8:
+                return is::hex(str);
+            default:
+                return false;
+            }
+        }
         constexpr bool name_color(std::string_view const& str) noexcept;
 
         constexpr bool color(std::string_view const& str) noexcept {
