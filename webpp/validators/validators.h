@@ -275,7 +275,18 @@ namespace webpp {
          * @param str
          * @return true if str is a valid ipv4
          */
-        constexpr bool ipv4(std::string_view const& str) noexcept;
+        constexpr bool ipv4(std::string_view str) noexcept {
+            std::size_t next_dot = 0;
+            for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
+                next_dot = str.find('.');
+                auto octet_str = str.substr(0, next_dot);
+                if (octet_str.size() > 3 || !is::digit(octet_str) ||
+                    to_uint(octet_str) > 255)
+                    return false;
+                str.remove_prefix(octet_str.size() + (octet_index != 3));
+            }
+            return str.empty();
+        }
 
         /**
          * @brief this function template will check if the ipv4 with it's prefix
@@ -486,7 +497,26 @@ namespace webpp {
          */
         bool rgb_color(std::string_view str) noexcept;
 
+        /**
+         * Check if the specified string is a RGBA HTML color
+         * @param str
+         * @return bool
+         */
         bool rgba_color(std::string_view str) noexcept;
+
+        /**
+         * Check if the specified string is a valid HSL color or not
+         * @param str
+         * @return bool
+         */
+        bool hsl_color(std::string_view str) noexcept;
+
+        /**
+         * Check if the specified string is a valid HSLA color or not
+         * @param str
+         * @return bool
+         */
+        bool hsla_color(std::string_view str) noexcept;
 
         /**
          * Check if the specified string is a valid HTML color

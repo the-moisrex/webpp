@@ -612,6 +612,8 @@ bool is::name_color(std::string str) noexcept {
 }
 
 bool is::rgb_color(std::string_view sstr) noexcept {
+    // TODO: there are better ways to do it, check performance
+
     constexpr auto numbers = "0123456789";
 
     trim(sstr);
@@ -644,4 +646,12 @@ bool is::rgb_color(std::string_view sstr) noexcept {
     sstr.remove_prefix(it);
     ltrim(sstr);
     return sstr.empty();
+}
+
+bool is::rgba_color(std::string_view str) noexcept {
+    // TODO: there are better ways to do it, check performance
+
+    constexpr auto numbers = "0123456789";
+
+    return true; // TODO: I'm just gonna make it compilable
 }
