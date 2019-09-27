@@ -177,3 +177,6 @@ new [description:"implement property class" entry:"1567683585" modified:"1567683
 time 1568941931
 new [description:"add mac address class" entry:"1568941931" modified:"1568941931" project:"net" status:"pending" uuid:"32c5f500-7702-4cb6-b2db-67686b7093d7"]
 ---
+time 1569625600
+new [description:"put the validations in their own file" entry:"1569625600" modified:"1569625600" status:"pending" uuid:"ba590250-5f26-4769-a23c-307c80416a98"]
+---
