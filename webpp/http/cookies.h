@@ -50,11 +50,12 @@
  *    [ ] Does user's browser support cookies but now it's disabled
  */
 
-#include <string_view>
+#include "../utils/strings.h"
 #include <chrono>
 #include <functional>
 #include <map>
 #include <memory>
+#include <string_view>
 #include <unordered_set>
 
 namespace webpp {
@@ -126,7 +127,7 @@ namespace webpp {
         // TODO: implement this:
         explicit cookie(std::string_view source) noexcept;
         cookie(name_t __name, value_t __value) noexcept
-            : _name(__name), _value(__value) {}
+            : _name(trim_copy(__name)), _value(trim_copy(__value)) {}
 
         cookie& operator=(const cookie& c) = default;
         cookie& operator=(cookie&& c) noexcept = default;

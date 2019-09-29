@@ -5,11 +5,14 @@
 TEST(Cookie, CookiesCreation) {
     webpp::cookie c;
     c.name("   test   ").value("  value  ");
-    EXPECT_TRUE(c.name() == "test");
-    EXPECT_TRUE(c.value() == "value");
-    EXPECT_TRUE(webpp::cookie("  test  ", "  value ").name() ==
-                webpp::cookie("test", "value").name())
+    EXPECT_EQ(c.name(), "test");
+    EXPECT_EQ(c.value(), "value");
+    EXPECT_EQ(webpp::cookie("  test  ", "  value ").name(),
+              webpp::cookie("test", "value").name())
         << "cookies should be trimmed";
+    EXPECT_EQ(webpp::cookie("  test  ", "  value  ").name(),
+              webpp::cookie().name("  test  ").name())
+        << "name should trim it too.";
 }
 
 // TODO: fill here
@@ -111,13 +114,13 @@ TEST(Cookies, CookieJarUniqeness) {
     // already exists will remove the value or not
     cs.insert(
         cookie().name("two").value("test").domain("bing.com").comment("hello"));
-    EXPECT_TRUE(cs.size() == 3);
+    EXPECT_EQ(cs.size(), 3);
     cs.name("two", "one");
 
-    EXPECT_TRUE(cs.size() == 2)
+    EXPECT_EQ(cs.size(), 2)
         << "One of the cookies should now be removed so the whole cookie jar "
            "have unique cookies";
-    EXPECT_TRUE(cs.find("one")->comment() == "hello")
+    EXPECT_EQ(cs.find("two")->comment(), "hello")
         << "The old cookie should be removed instead of the new one. The new "
            "cookie should be replace the old one while renaming.";
 
@@ -126,13 +129,13 @@ TEST(Cookies, CookieJarUniqeness) {
                            .value("test")
                            .domain("duckduckgo.com")
                            .comment("hello"));
-    EXPECT_TRUE(cs.size() == 3);
+    EXPECT_EQ(cs.size(), 3);
     cs.domain(p.first, "google.com");
 
-    EXPECT_TRUE(cs.size() == 2)
+    EXPECT_EQ(cs.size(), 2)
         << "One of the cookies should now be removed so the whole cookie jar "
            "have unique cookies";
-    EXPECT_TRUE(cs.find("one")->comment() == "hello")
+    EXPECT_EQ(cs.find("one")->comment(), "hello")
         << "The old cookie should be removed instead of the new one. The new "
            "cookie should be replace the old one in the changing the domain "
            "process.";
