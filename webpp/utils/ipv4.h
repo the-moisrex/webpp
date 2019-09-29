@@ -186,8 +186,8 @@ namespace webpp {
             noexcept {
             auto uint_val = integer();
             auto uint_ip = ip.integer();
-            uint_val &= 0xFFFFFFFFu >> (32u - prefix);
-            uint_ip &= 0xFFFFFFFFu >> (32u - prefix);
+            uint_val &= 0xFFFFFFFFu << (32u - prefix);
+            uint_ip &= 0xFFFFFFFFu << (32u - prefix);
             return uint_val == uint_ip;
         }
 
