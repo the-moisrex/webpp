@@ -7,7 +7,7 @@ using namespace webpp;
 TEST(IPv4Tests, Creation) {
     constexpr ipv4 one{192, 168, 1, 1};
     ipv4 two("192.168.1.1");
-    EXPECT_EQ(one, two);
+    EXPECT_EQ(one, two) << "one is: " << one.str() << "; two is: " << two.str();
     EXPECT_EQ(one.integer(), two.integer());
 }
 

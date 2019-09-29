@@ -120,7 +120,7 @@ TEST(Cookies, CookieJarUniqeness) {
     EXPECT_EQ(cs.size(), 2)
         << "One of the cookies should now be removed so the whole cookie jar "
            "have unique cookies";
-    EXPECT_EQ(cs.find("two")->comment(), "hello")
+    EXPECT_EQ(cs.find("one")->comment(), "hello")
         << "The old cookie should be removed instead of the new one. The new "
            "cookie should be replace the old one while renaming.";
 

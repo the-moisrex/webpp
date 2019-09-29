@@ -88,10 +88,10 @@ namespace webpp {
         // TODO: consider using "variant<string, string_view>" instead of
         // string_view
         using date_t = std::chrono::time_point<std::chrono::system_clock>;
-        using name_t = std::string_view;
-        using value_t = std::string_view;
-        using domain_t = std::string_view;
-        using path_t = std::string_view;
+        using name_t = std::string;
+        using value_t = std::string;
+        using domain_t = std::string;
+        using path_t = std::string;
         using expires_t = std::optional<date_t>;
         using max_age_t = unsigned long;
         using same_site_t = same_site_value;
@@ -99,7 +99,7 @@ namespace webpp {
         using host_only_t = bool;
         using prefix_t = bool;
         using encrypted_t = bool;
-        using comment_t = std::string_view;
+        using comment_t = std::string;
 
         std::map<std::string, std::string> attrs;
 
