@@ -7,26 +7,25 @@
 #include <webpp/validators/validators.h>
 
 using namespace webpp::is;
-using namespace std;
 
 TEST(ValidationsTest, EmptyFunction) {
     EXPECT_TRUE(empty(""));
     EXPECT_FALSE(empty("not empty"));
-    string str = "";
+    std::string str;
     EXPECT_TRUE(empty(str));
     str = "not empty";
     EXPECT_FALSE(empty(str));
 }
 
 TEST(ValidationsTest, ContainsFunctions) {
-    map<int, string> data;
+    std::map<int, std::string> data;
     data[0] = "hello world";
     data[10] = "testing";
 
     EXPECT_TRUE(contains_key(data, 10));
-    EXPECT_TRUE(contains_value(data, string("hello world")));
+    EXPECT_TRUE(contains_value(data, std::string("hello world")));
     EXPECT_FALSE(contains_key(data, 100));
-    EXPECT_FALSE(contains_value(data, string("it's not gonna be there")));
+    EXPECT_FALSE(contains_value(data, std::string("it's not gonna be there")));
 }
 
 TEST(ValidationsTest, TrimmedFunctions) {
@@ -107,10 +106,10 @@ TEST(ValidationsTest, HostFunction) {
     auto invalids = {"260.1.2.3", "&^%&^%$&^%&^%$&^%$#@%$#@@!~#!@"};
 
     for (auto const& item : valids) {
-        EXPECT_TRUE(host(item));
+        EXPECT_TRUE(host(item)) << "item is: " << item;
     }
     for (auto const& item : invalids) {
-        EXPECT_FALSE(host(item));
+        EXPECT_FALSE(host(item)) << "item is: " << item;
     }
 }
 
