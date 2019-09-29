@@ -117,7 +117,7 @@ TEST(Cookies, CookieJarUniqeness) {
     EXPECT_TRUE(cs.size() == 2)
         << "One of the cookies should now be removed so the whole cookie jar "
            "have unique cookies";
-    EXPECT_TRUE(cs.find("one")->commnet() == "hello")
+    EXPECT_TRUE(cs.find("one")->comment() == "hello")
         << "The old cookie should be removed instead of the new one. The new "
            "cookie should be replace the old one while renaming.";
 
@@ -132,7 +132,7 @@ TEST(Cookies, CookieJarUniqeness) {
     EXPECT_TRUE(cs.size() == 2)
         << "One of the cookies should now be removed so the whole cookie jar "
            "have unique cookies";
-    EXPECT_TRUE(cs.find("one")->commnet() == "hello")
+    EXPECT_TRUE(cs.find("one")->comment() == "hello")
         << "The old cookie should be removed instead of the new one. The new "
            "cookie should be replace the old one in the changing the domain "
            "process.";

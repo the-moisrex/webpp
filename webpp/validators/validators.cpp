@@ -406,3 +406,18 @@ bool is::rgba_color(std::string_view str) noexcept {
 
     return true; // TODO: I'm just gonna make it compilable
 }
+
+bool is::email(std::string_view const& str) noexcept {
+    // TODO: Do not use regular expression, it's slow
+    // TODO: make this function constexpr
+    static const std::regex pattern{
+        "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-"
+        "z0-9]+)*(\\.[A-Za-z]{2,})$"};
+    return std::regex_match(std::string(str), pattern);
+}
+
+bool is::color(std::string_view const& str) noexcept {
+    return hex_color(str) || name_color(std::string(str)) || rgb_color(str) ||
+           rgba_color(str) || hsl_color(str);
+}
+bool is::hsla_color(std::string_view str) noexcept { return hsl_color(str); }

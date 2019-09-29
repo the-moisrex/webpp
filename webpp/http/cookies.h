@@ -37,7 +37,7 @@
  * -----------------------------------------------------------------------------
  * TODO:
  *    [ ] Encryption for the cookie name
- *    [ ] Decryptions
+ *    [ ] Decryption
  *    [ ] Pre Defaults in the cookie jar
  *    [ ] Implement "Cookie2:" and "Set-Cookie2:" obsolete headers
  *    [X] Add *_if methods in cookies
@@ -64,7 +64,7 @@ namespace webpp {
 
     /**
      * Cookie classes are "views of data" type of classes. That means these
-     * classes will not own their own data and they are just a reperesentation
+     * classes will not own their own data and they are just a representation
      * of data which makes the life of the developers more comfortable.
      *
      * Here, the header classes (which are "owners of data") will have the data
@@ -72,24 +72,26 @@ namespace webpp {
      * classes so they can read and write structured and meaningful data to
      * them.
      *
-     * The cookie class can be instansiated by the developer and also the header
+     * The cookie class can be instantiated by the developer and also the header
      * classes; and also this class will be used in both requests and responses.
      * This makes this class very hard to obtain because it also should be just
-     * a reperesentation of data and not the owner of the data; so the
-     * cookie_jar class has to imedeately write this data to the header data and
-     * change the pointers/remove the whole cookie class that the developer
+     * a representation of data and not the owner of the data; so the
+     * cookie_jar class has to immediately write this data to the header data
+     * and change the pointers/remove the whole cookie class that the developer
      * created.
      */
     class cookie {
       public:
         enum class same_site_value { NONE, LAX, STRICT };
 
+        // TODO: consider using "variant<string, string_view>" instead of
+        // string_view
         using date_t = std::chrono::time_point<std::chrono::system_clock>;
         using name_t = std::string_view;
         using value_t = std::string_view;
         using domain_t = std::string_view;
         using path_t = std::string_view;
-        using expires_t = std::unique_ptr<date_t>;
+        using expires_t = std::optional<date_t>;
         using max_age_t = unsigned long;
         using same_site_t = same_site_value;
         using secure_t = bool;
@@ -118,19 +120,20 @@ namespace webpp {
         /**
          * empty cookie
          */
-        cookie() noexcept;
-        cookie(const cookie&) noexcept;
-        cookie(cookie&&) noexcept;
+        cookie() noexcept = default;
+        cookie(const cookie& c) = default;
+        cookie(cookie&& c) noexcept = default;
         // TODO: implement this:
         explicit cookie(std::string_view source) noexcept;
-        cookie(name_t __name, value_t __value) noexcept;
+        cookie(name_t __name, value_t __value) noexcept
+            : _name(__name), _value(__value) {}
 
-        cookie& operator=(const cookie&) noexcept;
-        cookie& operator=(cookie&&) noexcept;
+        cookie& operator=(const cookie& c) = default;
+        cookie& operator=(cookie&& c) noexcept = default;
 
         inline auto const& name() const noexcept { return _name; }
         inline auto const& value() const noexcept { return _value; }
-        inline auto const& commnet() const noexcept { return _comment; }
+        inline auto const& comment() const noexcept { return _comment; }
         inline auto const& domain() const noexcept { return _domain; }
         inline auto const& max_age() const noexcept { return _max_age; }
         inline auto const& secure() const noexcept { return _secure; }
@@ -161,8 +164,7 @@ namespace webpp {
         template <typename D, typename T>
         inline cookie&
         expires_in(std::chrono::duration<D, T> const& __dur) noexcept {
-            _expires = std::make_unique<date_t>(
-                date_t{std::chrono::system_clock::now() + __dur});
+            _expires = std::chrono::system_clock::now() + __dur;
             return *this;
         }
 

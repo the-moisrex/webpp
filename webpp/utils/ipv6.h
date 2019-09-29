@@ -55,8 +55,8 @@ namespace webpp {
          * @return octets8_t so I could put it in the "data"
          */
         template <typename OCTET>
-        static constexpr octets8_t to_octets8_t(OCTET const& _octets) noexcept {
-            octets8_t _data;
+        static constexpr octets_t to_octets_t(OCTET const& _octets) noexcept {
+            octets_t _data = {};
             auto _octets_it = _octets.cbegin();
             auto _data_it = _data.begin();
             auto each_octet_size = _data.size() / _octets.size();
@@ -225,11 +225,12 @@ namespace webpp {
         constexpr explicit ipv6(octets8_t const& _octets) noexcept
             : data(_octets) {}
         constexpr explicit ipv6(octets16_t const& _octets) noexcept
-            : data(to_octets8_t(_octets)) {}
+            : data{to_octets_t(_octets)} {}
+
         constexpr explicit ipv6(octets32_t const& _octets) noexcept
-            : data(to_octets8_t(_octets)) {}
+            : data{to_octets_t(_octets)} {}
         constexpr explicit ipv6(octets64_t const& _octets) noexcept
-            : data(to_octets8_t(_octets)) {}
+            : data{to_octets_t(_octets)} {}
         constexpr ipv6(ipv6 const& ip) noexcept = default;
         constexpr ipv6(ipv6&& ip) noexcept = default;
 
@@ -247,17 +248,17 @@ namespace webpp {
         }
 
         ipv6& operator=(octets16_t const& _octets) noexcept {
-            data = to_octets8_t(_octets);
+            data = to_octets_t(_octets);
             return *this;
         }
 
         ipv6& operator=(octets32_t const& _octets) noexcept {
-            data = to_octets8_t(_octets);
+            data = to_octets_t(_octets);
             return *this;
         }
 
         ipv6& operator=(octets64_t const& _octets) noexcept {
-            data = to_octets8_t(_octets);
+            data = to_octets_t(_octets);
             return *this;
         }
 
