@@ -11,5 +11,5 @@ target_link_libraries(${EXEC_NAME}
   PRIVATE ${Boost_LIBRARIES}
 )
 # now we rename resman-bin executable to resman using target properties
-set_target_properties(${EXEC_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
+set_target_properties(${EXEC_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME}.exe)
 install(TARGETS ${EXEC_NAME} DESTINATION bin)

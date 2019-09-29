@@ -19,10 +19,10 @@ namespace webpp {
             std::size_t len = _data.size();
             while (_data[first_dot] != '.' && first_dot != len)
                 first_dot++;
-            std::size_t second_dot = first_dot;
+            std::size_t second_dot = first_dot + 1;
             while (_data[second_dot] != '.' && second_dot != len)
                 second_dot++;
-            std::size_t third_dot = second_dot;
+            std::size_t third_dot = second_dot + 1;
             while (_data[third_dot] != '.' && third_dot != len)
                 third_dot++;
 
@@ -32,8 +32,10 @@ namespace webpp {
             //                throw std::invalid_argument("ill formed IPv4
             //                address.");
             return parse({to_uint8(_data.substr(0u, first_dot)),
-                          to_uint8(_data.substr(first_dot + 1u, second_dot)),
-                          to_uint8(_data.substr(second_dot + 1u, third_dot)),
+                          to_uint8(_data.substr(first_dot + 1u,
+                                                second_dot - first_dot - 1)),
+                          to_uint8(_data.substr(second_dot + 1u,
+                                                third_dot - second_dot - 1)),
                           to_uint8(_data.substr(third_dot + 1u))});
         }
 
@@ -129,8 +131,10 @@ namespace webpp {
             if (std::holds_alternative<uint32_t>(data)) {
                 auto _octets = octets();
                 std::ostringstream s;
-                s << _octets[0] << '.' << _octets[1] << '.' << _octets[2] << '.'
-                  << _octets[3];
+                s << static_cast<unsigned int>(_octets[0]) << '.'
+                  << static_cast<unsigned int>(_octets[1]) << '.'
+                  << static_cast<unsigned int>(_octets[2]) << '.'
+                  << static_cast<unsigned int>(_octets[3]);
                 return s.str();
             }
             return std::string(std::get<std::string_view>(data));
