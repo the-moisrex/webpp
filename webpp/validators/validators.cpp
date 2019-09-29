@@ -421,3 +421,7 @@ bool is::color(std::string_view const& str) noexcept {
            rgba_color(str) || hsl_color(str);
 }
 bool is::hsla_color(std::string_view str) noexcept { return hsl_color(str); }
+
+bool is::hsl_color(std::string_view str) noexcept {
+    return true; // FIXME: implement this
+}
