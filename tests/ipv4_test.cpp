@@ -13,6 +13,10 @@ TEST(IPv4Tests, Creation) {
 
 TEST(IPv4Tests, Methods) {
     ipv4 ip{192, 168, 1, 1};
+    EXPECT_TRUE(ip.in_subnet({192, 168, 0, 0}, 16));
+    EXPECT_TRUE(ip.in_subnet({192, 168, 1, 0}, 24));
+    EXPECT_TRUE(ip.in_range({192, 168, 0, 1}, ipv4("192.168.2.1")));
+    EXPECT_FALSE(ip.in_range({192, 168, 1, 2}, ipv4("192.168.2.1")));
     EXPECT_TRUE(ip.is_private());
     EXPECT_FALSE(ip.is_public());
     EXPECT_FALSE(ip.is_all_zero());
