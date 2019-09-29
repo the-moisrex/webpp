@@ -8,7 +8,7 @@
 #include <string_view>
 
 using namespace webpp;
-
+/*
 cookie::cookie(const cookie& c) noexcept
     : attrs{c.attrs}, _name{c._name}, _value{c._value}, _domain{c._domain},
       _path{c._path},
@@ -65,6 +65,7 @@ cookie& cookie::operator=(cookie&& c) noexcept {
     _comment = std::move(c._comment);
     return *this;
 }
+*/
 
 cookie& cookie::name(cookie::name_t __name) noexcept {
     trim(__name);
@@ -187,7 +188,7 @@ cookie& cookie::remove(bool __remove) noexcept {
 }
 
 cookie& cookie::expires(cookie::date_t __expires) noexcept {
-    _expires = std::make_unique<date_t>(__expires);
+    _expires = __expires;
     return *this;
 }
 
@@ -497,29 +498,25 @@ cookie_jar& cookie_jar::same_site(const_iterator const& it,
 
 cookie_jar& cookie_jar::expires(cookie::date_t const& _expires) noexcept {
     for (auto& c : *this)
-        c._expires = std::make_unique<cookie::date_t>(_expires);
+        c._expires = _expires;
     return *this;
 }
 
 cookie_jar& cookie_jar::expires(cookie::name_t const& _name,
                                 cookie::date_t const& _expires) noexcept {
-    change_if(_name, [&](auto& it) {
-        it->_expires.reset(new cookie::date_t{_expires});
-    });
+    change_if(_name, [&](auto& it) { it->_expires = _expires; });
     return *this;
 }
 
 cookie_jar& cookie_jar::expires(condition const& _condition,
                                 cookie::date_t const& _expires) noexcept {
-    change_if(_condition, [&](auto& it) {
-        it->_expires.reset(new cookie::date_t{_expires});
-    });
+    change_if(_condition, [&](auto& it) { it->_expires = _expires; });
     return *this;
 }
 
 cookie_jar& cookie_jar::expires(const_iterator const& it,
                                 cookie::date_t&& _expires) noexcept {
-    it->_expires = std::make_unique<cookie::date_t>(_expires);
+    it->_expires = _expires;
     return *this;
 }
 

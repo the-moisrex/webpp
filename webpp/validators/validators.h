@@ -1,5 +1,5 @@
-#ifndef VALIDATION_H
-#define VALIDATION_H
+#ifndef WEBPP_VALIDATION_H
+#define WEBPP_VALIDATION_H
 
 #include "../std/string_view.h"
 #include "../utils/casts.h"
@@ -258,14 +258,7 @@ namespace webpp {
          * @param str
          * @return true if the specified str is an email
          */
-        bool email(std::string_view const& str) noexcept {
-            // TODO: Do not use regular expression, it's slow
-            // TODO: make this function constexpr
-            static const std::regex pattern{
-                "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-"
-                "z0-9]+)*(\\.[A-Za-z]{2,})$"};
-            return std::regex_match(std::string(str), pattern);
-        }
+        bool email(std::string_view const& str) noexcept;
 
         constexpr bool FQDN(std::string_view const& str) noexcept;
         constexpr bool url(std::string_view const& str) noexcept;
@@ -659,7 +652,7 @@ namespace webpp {
         bool rgba_color(std::string_view str) noexcept;
 
         /**
-         * Check if the specified string is a valid HSL color or not
+         * Check if the specified string is a valid HSL and HSLA color or not
          * @param str
          * @return bool
          */
@@ -667,6 +660,9 @@ namespace webpp {
 
         /**
          * Check if the specified string is a valid HSLA color or not
+         * It's just an alias for hsl_color. Read more about the reason here:
+         * https://developer.mozilla.org/en-US/docs/Web/CSS/color_value#hsl()
+         *
          * @param str
          * @return bool
          */
@@ -685,11 +681,7 @@ namespace webpp {
          * @param str
          * @return bool
          */
-        bool color(std::string_view const& str) noexcept {
-            return hex_color(str) || name_color(std::string(str)) ||
-                   rgb_color(str) || rgba_color(str) || hsl_color(str) ||
-                   hsla_color(str);
-        }
+        bool color(std::string_view const& str) noexcept;
 
         constexpr bool mimetype(std::string_view const& str) noexcept;
         constexpr bool UUID(std::string_view const& str) noexcept;
@@ -722,4 +714,4 @@ namespace webpp {
     } // namespace is
 } // namespace webpp
 
-#endif // VALIDATION_H
+#endif // WEBPP_VALIDATION_H
