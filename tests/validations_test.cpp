@@ -37,6 +37,7 @@ TEST(ValidationsTest, TrimmedFunctions) {
 TEST(ValidationsTest, IPv4Functions) {
     EXPECT_TRUE(ipv4("255.255.255.255"));
     EXPECT_FALSE(ipv4("256.1.1.1"));
+    EXPECT_FALSE(ipv4("260.1.2.3"));
     EXPECT_TRUE(ipv4("127.0.0.1"));
     EXPECT_TRUE(ipv4("0.0.0.0"));
     EXPECT_TRUE(ipv4("192.168.0.0"));
@@ -125,7 +126,7 @@ TEST(ValidationsTest, HostFunction) {
         "localhost",       "one.com", "example.notcom", "192.168.0.1",
         "255.255.255.255", "[::1]",   "127.0.0.1",
     };
-    auto invalids = {"260.1.2.3", "&^%&^%$&^%&^%$&^%$#@%$#@@!~#!@"};
+    auto invalids = {"&^%&^%$&^%&^%$&^%$#@%$#@@!~#!@"};
 
     for (auto const& item : valids) {
         EXPECT_TRUE(host(item)) << "item is: " << item;
