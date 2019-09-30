@@ -115,6 +115,7 @@ TEST(Cookies, CookieJarUniqeness) {
     cs.insert(
         cookie().name("two").value("test").domain("bing.com").comment("hello"));
     EXPECT_EQ(cs.size(), 3);
+    EXPECT_EQ(cs.find("two")->comment(), "hello");
     cs.name("two", "one");
 
     EXPECT_EQ(cs.size(), 2)
@@ -130,7 +131,9 @@ TEST(Cookies, CookieJarUniqeness) {
                            .domain("duckduckgo.com")
                            .comment("hello"));
     EXPECT_EQ(cs.size(), 3);
+    EXPECT_EQ(p.first->domain(), "duckduckgo.com");
     cs.domain(p.first, "google.com");
+    EXPECT_EQ(p.first->domain(), "google.com");
 
     EXPECT_EQ(cs.size(), 2)
         << "One of the cookies should now be removed so the whole cookie jar "
@@ -139,4 +142,9 @@ TEST(Cookies, CookieJarUniqeness) {
         << "The old cookie should be removed instead of the new one. The new "
            "cookie should be replace the old one in the changing the domain "
            "process.";
+}
+
+
+TEST(Cookies, CookiesEncryption) {
+    // TODO
 }
