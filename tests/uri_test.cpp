@@ -20,4 +20,13 @@ TEST(URITests, Creation) {
     uri ipv4_host("https://192.168.1.1");
     EXPECT_TRUE(is::ipv4(ipv4_host.host_string().value_or("")));
     EXPECT_EQ(ipv4_host.scheme().value_or(""), "https");
+
+    uri local_file("file:///home/test/folder/file.txt");
+    EXPECT_TRUE(local_file.has_path());
+    EXPECT_TRUE(local_file.has_scheme());
+    EXPECT_FALSE(local_file.has_authority());
+    EXPECT_FALSE(local_file.has_host());
+    EXPECT_EQ(local_file.host_string().value_or(""), "file");
+    auto path = local_file.path_structured_decoded();
+    EXPECT_EQ(path.size(), 5);
 }

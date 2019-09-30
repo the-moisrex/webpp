@@ -1,5 +1,5 @@
-#ifndef WEBPP_URI_H
-#define WEBPP_URI_H
+#ifndef WEBPP_URI_TEST_H
+#define WEBPP_URI_TEST_H
 
 #include "../std/string_view.h"
 #include "../validators/validators.h"
@@ -1201,4 +1201,4 @@ namespace webpp {
 
 } // namespace webpp
 
-#endif // WEBPP_URI_H
+#endif //WEBPP_URI_TEST_H
