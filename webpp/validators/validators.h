@@ -321,181 +321,69 @@ namespace webpp {
          *     An indication of whether or not the given address
          *     is a valid IPv6 address is returned.
          */
-        constexpr bool ipv6(std::string_view const& address) noexcept {
-            // FIXME: I don't think this way is the best way too.
-            //  but it's lots of code. So I'll just wait for free time to make
-            //  it better.
+        constexpr bool ipv6(std::string_view address) noexcept {
+            bool encountered_double_colons = false;
+            std::size_t index = 0;
 
-            enum class ValidationState {
-                NO_GROUPS_YET,
-                COLON_BUT_NO_GROUPS_YET,
-                AFTER_COLON_EXPECT_GROUP_OR_IPV4,
-                IN_GROUP_NOT_IPV4,
-                IN_GROUP_COULD_BE_IPV4,
-                COLON_AFTER_GROUP,
-            } state = ValidationState::NO_GROUPS_YET;
-            size_t numGroups = 0;
-            size_t numDigits = 0;
-            bool doubleColonEncountered = false;
-            size_t potentialIpv4AddressStart = 0;
-            size_t position = 0;
-            bool ipv4AddressEncountered = false;
-            for (auto c : address) {
-                switch (state) {
-                case ValidationState::NO_GROUPS_YET: {
-                    if (c == ':') {
-                        state = ValidationState::COLON_BUT_NO_GROUPS_YET;
-                    } else if (is::digit(c)) {
-                        potentialIpv4AddressStart = position;
-                        numDigits = 1;
-                        state = ValidationState::IN_GROUP_COULD_BE_IPV4;
-                    } else if (HEXDIG.contains(c)) {
-                        numDigits = 1;
-                        state = ValidationState::IN_GROUP_NOT_IPV4;
-                    } else {
-                        return false;
-                    }
-                } break;
+            while (index < 8u && !address.empty()) {
+                auto next_colon = address.find(':');
+                auto octet = address.substr(0, next_colon);
+                if (octet.empty()) {
 
-                case ValidationState::COLON_BUT_NO_GROUPS_YET: {
-                    if (c == ':') {
-                        if (doubleColonEncountered) {
-                            return false;
-                        } else {
-                            doubleColonEncountered = true;
-                            state = ValidationState::
-                                AFTER_COLON_EXPECT_GROUP_OR_IPV4;
-                        }
-                    } else {
+                    // ip cannon have two double colon semantics (the first one
+                    // and the last one is ok)
+                    if (!address.empty() && encountered_double_colons)
                         return false;
-                    }
-                } break;
 
-                case ValidationState::AFTER_COLON_EXPECT_GROUP_OR_IPV4: {
-                    if (is::digit(c)) {
-                        potentialIpv4AddressStart = position;
-                        if (++numDigits > 4) {
+                    if (index == 0) {
+                        if (!address.starts_with("::")) {
                             return false;
                         }
-                        state = ValidationState::IN_GROUP_COULD_BE_IPV4;
-                    } else if (HEXDIG.contains(c)) {
-                        if (++numDigits > 4) {
-                            return false;
-                        }
-                        state = ValidationState::IN_GROUP_NOT_IPV4;
-                    } else {
-                        return false;
+                        address.remove_prefix(1);
                     }
-                } break;
-
-                case ValidationState::IN_GROUP_NOT_IPV4: {
-                    if (c == ':') {
-                        numDigits = 0;
-                        ++numGroups;
-                        state = ValidationState::COLON_AFTER_GROUP;
-                    } else if (HEXDIG.contains(c)) {
-                        if (++numDigits > 4) {
-                            return false;
-                        }
-                    } else {
+                    encountered_double_colons = true;
+                } else if (octet.size() > 4) {
+                    if (ipv4(octet)) {
+                        // ipv4 inside ipv6 address should be the last octet
+                        return octet.size() == address.size();
+                    } else
                         return false;
-                    }
-                } break;
-
-                case ValidationState::IN_GROUP_COULD_BE_IPV4: {
-                    if (c == ':') {
-                        numDigits = 0;
-                        ++numGroups;
-                        state =
-                            ValidationState::AFTER_COLON_EXPECT_GROUP_OR_IPV4;
-                    } else if (c == '.') {
-                        ipv4AddressEncountered = true;
-                        break;
-                    } else if (is::digit(c)) {
-                        if (++numDigits > 4) {
-                            return false;
-                        }
-                    } else if (HEXDIG.contains(c)) {
-                        if (++numDigits > 4) {
-                            return false;
-                        }
-                        state = ValidationState::IN_GROUP_NOT_IPV4;
-                    } else {
-                        return false;
-                    }
-                } break;
-
-                case ValidationState::COLON_AFTER_GROUP: {
-                    if (c == ':') {
-                        if (doubleColonEncountered) {
-                            return false;
-                        } else {
-                            doubleColonEncountered = true;
-                            state = ValidationState::
-                                AFTER_COLON_EXPECT_GROUP_OR_IPV4;
-                        }
-                    } else if (is::digit(c)) {
-                        potentialIpv4AddressStart = position;
-                        ++numDigits;
-                        state = ValidationState::IN_GROUP_COULD_BE_IPV4;
-                    } else if (HEXDIG.contains(c)) {
-                        ++numDigits;
-                        state = ValidationState::IN_GROUP_NOT_IPV4;
-                    } else {
-                        return false;
-                    }
-                } break;
-                }
-                if (ipv4AddressEncountered) {
-                    break;
-                }
-                ++position;
-            }
-            if ((state == ValidationState::IN_GROUP_NOT_IPV4) ||
-                (state == ValidationState::IN_GROUP_COULD_BE_IPV4)) {
-                // count trailing group
-                ++numGroups;
-            }
-            if ((position == address.length()) &&
-                ((state == ValidationState::COLON_BUT_NO_GROUPS_YET) ||
-                 (state == ValidationState::AFTER_COLON_EXPECT_GROUP_OR_IPV4) ||
-                 (state == ValidationState::COLON_AFTER_GROUP))) { // trailing
-                // single colon
-                return false;
-            }
-            if (ipv4AddressEncountered) {
-                if (!is::ipv4(address.substr(potentialIpv4AddressStart))) {
+                } else if (!is::hex(octet)) {
                     return false;
                 }
-                numGroups += 2;
+                if (next_colon != std::string_view::npos)
+                    address.remove_prefix(next_colon + 1);
+                else
+                    address.remove_prefix(octet.size());
+                index++;
             }
-            if (doubleColonEncountered) {
-                // A double colon matches one or more groups (of 0).
-                return (numGroups <= 7);
-            } else {
-                return (numGroups == 8);
-            }
+
+            return address.empty() &&
+                   ((!encountered_double_colons && index == 8u) ||
+                    encountered_double_colons);
         }
 
         template <std::size_t N = 1>
-        constexpr bool ipv6_prefix(std::string_view const& str,
+        constexpr bool ipv6_prefix(
+            std::string_view const& str,
             charset_t<N> const& devider_chars = charset_t<1>('/')) noexcept {
             if (auto found = std::find_if(
                     std::rbegin(str), std::rend(str),
                     [&](const auto& c) { return devider_chars.contains(c); });
                 found != std::rend(str)) {
                 auto index = std::distance(std::begin(str), found.base()) - 1;
-                if (!ipv4(str.substr(0, index)))
-                    return false;
                 if (auto prefix = str.substr(index + 1); is::digit(prefix)) {
                     int _prefix = to_uint(prefix);
-                    return _prefix >= 0 && _prefix <= 128;
+                    if (!(_prefix >= 0 && _prefix <= 128))
+                        return false;
+                } else {
+                    return false;
                 }
-                return false;
+                if (ipv6(str.substr(0, index)))
+                    return true;
             }
             return false;
         }
-
 
         /**
          * @brief check if the specified string is an ipv4 or ipv6
