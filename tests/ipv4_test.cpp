@@ -9,6 +9,8 @@ TEST(IPv4Tests, Creation) {
     ipv4 two("192.168.1.1");
     EXPECT_EQ(one, two) << "one is: " << one.str() << "; two is: " << two.str();
     EXPECT_EQ(one.integer(), two.integer());
+    EXPECT_EQ(one.str(), two.str());
+    EXPECT_FALSE(one.is_all_zero());
 }
 
 TEST(IPv4Tests, Methods) {

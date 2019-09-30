@@ -279,38 +279,6 @@ cookie_jar::const_iterator cookie_jar::find(const cookie& c) const noexcept {
                         [&](auto const& a) { return a.same_as(c); });
 }
 
-void cookie_jar::make_unique(
-    const cookie_jar::const_iterator& dont_touch,
-    std::function<bool(cookie const&)> const& check) noexcept {
-    for (auto it = begin(); it != end(); it++)
-        if (check(*it) && dont_touch != it && dont_touch->same_as(*it)) {
-            erase(it);
-            break;
-        }
-}
-
-void cookie_jar::change_if(
-    cookie_jar::condition const& if_statement,
-    std::function<void(iterator&)> const& change) noexcept {
-    for (auto it = begin(); it != end(); it++)
-        if (if_statement(*it))
-            change(it);
-}
-
-void cookie_jar::change_if(
-    cookie::name_t const& _name,
-    std::function<void(iterator&)> const& change) noexcept {
-    for (auto it = begin(); it != end(); it++)
-        if (it->_name == _name)
-            change(it);
-}
-
-void cookie_jar::change_all(
-    std::function<void(iterator&)> const& change) noexcept {
-    for (auto it = begin(); it != end(); it++)
-        change(it);
-}
-
 std::pair<cookie_jar::iterator, bool>
 cookie_jar::insert(const value_type& value) {
     auto found = find(value);
@@ -649,27 +617,26 @@ cookie_jar& cookie_jar::domain(condition const& _condition,
     return *this;
 }
 
-cookie_jar& cookie_jar::name(cookie::name_t const& _name) noexcept {
-    change_all([&](auto& it) {
-        it->_name = _name;
-        make_unique(it, [&](auto const& c) { return c._name == _name; });
-    });
+cookie_jar& cookie_jar::name(cookie::name_t const& __name) noexcept {
+    if (auto first = begin(); first != end()) {
+        first->_name = __name;
+        erase(std::next(first), end()); // remove the rest
+    }
     return *this;
 }
 
 cookie_jar& cookie_jar::name(cookie::name_t const& old_name,
                              cookie::name_t const& new_name) noexcept {
-    change_if(old_name, [&](auto& it) {
-        it->_name = new_name;
-        make_unique(it, [&](auto const& c) { return c._name == new_name; });
-    });
+    erase(find(new_name));
+    if (auto found = find(old_name); found != end())
+        found->_name = new_name;
     return *this;
 }
 
 cookie_jar& cookie_jar::name(const_iterator const& it,
                              cookie::name_t&& new_name) noexcept {
+    erase(find(new_name));
     it->_name = std::move(new_name);
-    make_unique(it, [&](auto const& c) { return c._name == it->_name; });
     return *this;
 }
 
@@ -680,9 +647,9 @@ cookie_jar& cookie_jar::name(const_iterator const& it,
 
 cookie_jar& cookie_jar::name(condition const& _condition,
                              cookie::name_t const& new_name) noexcept {
-    change_if(_condition, [&](auto& it) {
-        it->_name = new_name;
-        make_unique(it, [&](auto const& c) { return c._name == new_name; });
-    });
+    erase(find(new_name));
+    if (auto found = std::find_if(begin(), end(), _condition); found != end()) {
+        found->_name = new_name;
+    }
     return *this;
 }

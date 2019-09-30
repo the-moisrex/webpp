@@ -279,22 +279,48 @@ namespace webpp {
          * in the cookie jar
          * @param check
          */
-        void
-        make_unique(const const_iterator& dont_touch,
-                    std::function<bool(cookie const&)> const& check) noexcept;
+        template <typename T>
+        void make_unique(const const_iterator& dont_touch,
+                         T const& check) noexcept {
+            for (auto it = begin(); it != end(); it++) {
+                if (check(*it) && dont_touch != it &&
+                    dont_touch->same_as(*it)) {
+                    erase(it);
+                    break;
+                }
+            }
+        }
 
         /**
          * @brief change every cookie if meats some condition
          * @param if_statement
+         * @param change = std::function<void(iterator&)>
+         */
+        template <typename T>
+        void change_if(condition const& if_statement,
+                       T const& change) noexcept {
+            for (auto it = begin(); it != end(); it++)
+                if (if_statement(*it))
+                    change(it);
+        }
+
+        /**
+         * Change every cookie named something
+         * @param _name
          * @param change
          */
-        void change_if(condition const& if_statement,
-                       std::function<void(iterator&)> const& change) noexcept;
+        template <typename T>
+        void change_if(cookie::name_t const& _name, T const& change) noexcept {
+            for (auto it = begin(); it != end(); it++)
+                if (it->_name == _name)
+                    change(it);
+        }
 
-        void change_if(cookie::name_t const& _name,
-                       std::function<void(iterator&)> const& change) noexcept;
-
-        void change_all(std::function<void(iterator&)> const& change) noexcept;
+        template <typename T>
+        void change_all(T const& change) noexcept {
+            for (auto it = begin(); it != end(); it++)
+                change(it);
+        }
 
       public:
         using super::unordered_set; // constructors
@@ -345,8 +371,8 @@ namespace webpp {
             return static_cast<super*>(this)->insert(first, last);
         }
 
-//        insert_return_type insert(node_type&& nh) {}
-//        iterator insert(const_iterator hint, node_type&& nh) {}
+        //        insert_return_type insert(node_type&& nh) {}
+        //        iterator insert(const_iterator hint, node_type&& nh) {}
 
         /**
          * @brief mark all cookies as encrypted
@@ -520,6 +546,7 @@ namespace webpp {
          */
         cookie_jar& name(condition const& _condition,
                          cookie::name_t const& new_name) noexcept;
+
     };
 
 } // namespace webpp
