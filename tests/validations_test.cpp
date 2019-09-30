@@ -81,7 +81,7 @@ TEST(ValidationTest, IPv6Functions) {
         std::string ip2 = item;
         std::string ip3 = item;
         ip.append("/64");
-        EXPECT_TRUE(ipv6_prefix(ip));
+        EXPECT_TRUE(ipv6_prefix(ip)) << "ip has a prefix: " << ip;
         ip2.append("/something bad");
         EXPECT_FALSE(ipv6_prefix(ip2));
         ip3.append("-128");
@@ -119,7 +119,7 @@ TEST(ValidationsTest, EmailFunction) {
     EXPECT_TRUE(email("moisrex.test@gmail.com"))
         << "moisrex.test@gmail.com should be valid";
     EXPECT_FALSE(email("not an.email@123.com"))
-        << "spaces are not allowd in emails";
+        << "spaces are not allowed in emails";
 }
 
 TEST(ValidationsTest, NumberFunctions) {
