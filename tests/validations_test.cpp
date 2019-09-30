@@ -88,6 +88,7 @@ TEST(ValidationTest, IPv6Functions) {
                      "64:ff9b::1.22.33",
                      "64:ff9b::1.22.33.44.5",
                      ".",
+                     "",
                      "127.1.1.1",
                      ":.",
                      "::.",
@@ -107,7 +108,7 @@ TEST(ValidationTest, IPv6Functions) {
         EXPECT_FALSE(ipv6_prefix(ip2));
         ip3.append("-128");
         EXPECT_TRUE(ipv6_prefix(ip3, webpp::charset_t<1>('-')));
-        EXPECT_TRUE(host("[" + ip + "]"));
+        EXPECT_TRUE(host("[" + std::string(item) + "]")) << "ip: " << item;
     }
 
     for (auto const& item : invalids) {
@@ -115,7 +116,7 @@ TEST(ValidationTest, IPv6Functions) {
         std::string ip = item;
         ip.append("/64");
         EXPECT_FALSE(ipv6_prefix(ip));
-        EXPECT_FALSE(host("[" + ip + "]"));
+        EXPECT_FALSE(host("[" + std::string(item) + "]")) << "ip: " << item;
     }
 }
 

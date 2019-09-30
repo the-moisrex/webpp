@@ -446,12 +446,12 @@ namespace webpp {
                             return false;
                         }
 
-                        auto ipvf = str.substr(dot_delim + 1, str.size() - 1);
+                        auto ipvf = str.substr(dot_delim + 1, str.size() - 2);
                         return IPV_FUTURE_LAST_PART.contains(ipvf);
                     }
 
                 } else { // ipv6
-                    return is::ipv6(str.substr(1, str.size() - 1));
+                    return is::ipv6(str.substr(1, str.size() - 2));
                 }
             } else if (is::digit(str[0]) && is::ipv4(str)) { // ipv4
                 return true;
