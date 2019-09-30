@@ -345,7 +345,9 @@ namespace webpp {
                 } else if (octet.size() > 4) {
                     if (ipv4(octet)) {
                         // ipv4 inside ipv6 address should be the last octet
-                        return octet.size() == address.size();
+                        return octet.size() == address.size() &&
+                               ((!encountered_double_colons && index == 8u) ||
+                                encountered_double_colons);
                     } else
                         return false;
                 } else if (!is::hex(octet)) {

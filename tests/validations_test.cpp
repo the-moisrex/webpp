@@ -88,6 +88,7 @@ TEST(ValidationTest, IPv6Functions) {
                      "64:ff9b::1.22.33",
                      "64:ff9b::1.22.33.44.5",
                      ".",
+                     "127.1.1.1",
                      ":.",
                      "::.",
                      ":0304:0506:0708:090a:0b0c:0d0e:0f00",
@@ -95,6 +96,8 @@ TEST(ValidationTest, IPv6Functions) {
 
     for (auto const& item : valids) {
         EXPECT_TRUE(ipv6(item)) << item;
+        EXPECT_FALSE(ipv4(item)) << item;
+        EXPECT_TRUE(ip(item)) << item;
         std::string ip = item;
         std::string ip2 = item;
         std::string ip3 = item;
