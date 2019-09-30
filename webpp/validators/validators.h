@@ -477,9 +477,9 @@ namespace webpp {
             }
         }
 
-        template <std::size_t N>
+        template <std::size_t N = 1>
         constexpr bool ipv6_prefix(std::string_view const& str,
-                                   charset_t<N> const& devider_chars) noexcept {
+            charset_t<N> const& devider_chars = charset_t<1>('/')) noexcept {
             if (auto found = std::find_if(
                     std::rbegin(str), std::rend(str),
                     [&](const auto& c) { return devider_chars.contains(c); });
@@ -496,9 +496,6 @@ namespace webpp {
             return false;
         }
 
-        constexpr bool ipv6_prefix(std::string_view const& str) noexcept {
-            return ipv6_prefix(str, charset_t<1>('/'));
-        }
 
         /**
          * @brief check if the specified string is an ipv4 or ipv6
