@@ -138,7 +138,7 @@ namespace webpp {
          * @return
          */
         constexpr bool number(char const& c) noexcept {
-            return digit(c) || '.';
+            return digit(c) || c == '.';
         }
 
         /**
@@ -148,6 +148,8 @@ namespace webpp {
          * @return true if the specified string is a number
          */
         constexpr bool number(std::string_view const& str) noexcept {
+            if (str.empty())
+                return false;
             bool is_first = true;
             for (auto const& c : str) {
                 if (!digit(c)) {
