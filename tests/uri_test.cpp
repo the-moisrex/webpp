@@ -29,4 +29,9 @@ TEST(URITests, Creation) {
     EXPECT_EQ(local_file.host_string().value_or(""), "file");
     auto path = local_file.path_structured_decoded();
     EXPECT_EQ(path.size(), 5);
+    EXPECT_EQ(path.at(0), "");
+    EXPECT_EQ(path.at(1), "home");
+    EXPECT_EQ(path.at(2), "test");
+    EXPECT_EQ(path.at(3), "folder");
+    EXPECT_EQ(path.at(4), "file.txt");
 }
