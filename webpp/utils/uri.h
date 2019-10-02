@@ -270,6 +270,13 @@ namespace webpp {
       private:
         mutable uri_data_t data;
 
+        /**
+         * Parse the uri
+         * @param index
+         *    - 0: string_view
+         *    - 1: uri_segments<string_view>
+         *    - 2: uri_segments<string>
+         */
         void parse(std::size_t index) const noexcept {
 
             auto data_index = data.index();
@@ -341,10 +348,10 @@ namespace webpp {
                                                                  ipvf_end);
                                         if (IPV_FUTURE_LAST_PART.contains(
                                                 ipvf)) {
-                                            segs.host = _data.substr(
-                                                1,
-                                                ipvf_end); // returning the ipvf
-                                            // and it's version
+                                            // returning the ipvf and it's
+                                            // version
+                                            segs.host =
+                                                _data.substr(1, ipvf_end);
                                         }
                                     }
                                 }
@@ -437,6 +444,12 @@ namespace webpp {
             }
         }
 
+        /**
+         * Get value
+         * @tparam ReturnType
+         * @param func
+         * @return optional<ReturnType>
+         */
         template <typename ReturnType>
         constexpr std::optional<ReturnType>
         get_value(ReturnType func(uri_segments<ReturnType> const&)) const
@@ -821,7 +834,8 @@ namespace webpp {
             Container container;
             for (auto const& slug : path_structured()) {
                 container.push_back(
-                    decode_uri_component(slug, PCHAR_NOT_PCT_ENCODED));
+                    decode_uri_component(slug, PCHAR_NOT_PCT_ENCODED)
+                        .value_or((typename Container::value_type)(slug)));
             }
             return container;
         }
@@ -1201,4 +1215,4 @@ namespace webpp {
 
 } // namespace webpp
 
-#endif //WEBPP_URI_TEST_H
+#endif // WEBPP_URI_TEST_H
