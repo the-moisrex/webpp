@@ -455,12 +455,13 @@ namespace webpp {
         get_value(ReturnType func(uri_segments<ReturnType> const&)) const
             noexcept {
             using namespace std;
-            constexpr auto index =
-                is_same<ReturnType, uri_segments<std::string_view>>::value
-                    ? 1
-                    : (is_same<ReturnType, uri_segments<string>>::value ? 2
-                                                                        : 0);
-            parse(index);
+            if constexpr (is_same_v<ReturnType, string_view>) {
+                parse(1);
+            } else if constexpr (is_same_v<ReturnType, string>) {
+                parse(2);
+            } else {
+                parse(0);
+            }
             if (holds_alternative<uri_segments<ReturnType>>(data)) {
                 ReturnType res = func(get<uri_segments<ReturnType>>(data));
                 return res.empty() ? nullopt : make_optional(std::move(res));
@@ -489,7 +490,7 @@ namespace webpp {
          * @brief parse from string, it will trim the spaces for generality too
          * @param string_view URI string
          */
-        uri(std::string_view const& u) noexcept : data(trim_copy(u)) {}
+        explicit uri(std::string_view const& u) noexcept : data(trim_copy(u)) {}
 
         uri(uri const&) = default;
 
@@ -640,7 +641,7 @@ namespace webpp {
          * @brief returns const_ipv4/const_ipv6/hostname; if the URI doesn't
          * include a valid ip/hostname you'll get an empty string. this method
          * will only return the hostname/ip if it's in the correct format and
-         * doesn't include invalid symtax.
+         * doesn't include invalid syntax.
          * @return
          */
         constexpr std::optional<std::variant<ipv4, ipv6, std::string_view>>
@@ -805,7 +806,7 @@ namespace webpp {
          * string/string_views
          * this method does not just response to the fact that Container should
          * be an std container, but if string/string_view is presented as a
-         * container, it will reutrn the whole path.
+         * container, it will return the whole path.
          */
         template <typename Container = std::vector<std::string_view>>
         constexpr Container path_structured() const noexcept {
