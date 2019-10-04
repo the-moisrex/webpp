@@ -26,7 +26,8 @@ TEST(URITests, Creation) {
     EXPECT_TRUE(local_file.has_scheme());
     EXPECT_FALSE(local_file.has_authority());
     EXPECT_FALSE(local_file.has_host());
-    EXPECT_EQ(local_file.host_string().value_or(""), "file");
+    EXPECT_EQ(local_file.scheme().value_or(""), "file");
+    EXPECT_EQ(local_file.host_decoded_str(), "");
     auto path = local_file.path_structured_decoded();
     EXPECT_EQ(path.size(), 5);
     EXPECT_EQ(path.at(0), "");

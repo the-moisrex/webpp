@@ -371,6 +371,7 @@ namespace webpp {
                             }
                         }
                     } else { // Not IP Literal
+                        _data.remove_prefix(authority_start + 2);
                         port_start = _data.find(":", 0, path_start);
                         auto port_or_hostname_start =
                             port_start != std::string_view::npos ? port_start
@@ -455,13 +456,9 @@ namespace webpp {
         get_value(ReturnType func(uri_segments<ReturnType> const&)) const
             noexcept {
             using namespace std;
-            if constexpr (is_same_v<ReturnType, string_view>) {
-                parse(1);
-            } else if constexpr (is_same_v<ReturnType, string>) {
-                parse(2);
-            } else {
-                parse(0);
-            }
+            parse(is_same_v<ReturnType, string_view>
+                      ? 1
+                      : is_same_v<ReturnType, string> ? 2 : 0);
             if (holds_alternative<uri_segments<ReturnType>>(data)) {
                 ReturnType res = func(get<uri_segments<ReturnType>>(data));
                 return res.empty() ? nullopt : make_optional(std::move(res));
@@ -817,7 +814,10 @@ namespace webpp {
                 do {
                     slash_start = _path.find('/');
                     container.push_back(_path.substr(0, slash_start));
-                    _path.remove_prefix(slash_start + 1);
+                    if (slash_start != std::string_view::npos)
+                        _path.remove_prefix(slash_start + 1);
+                    else
+                        _path.remove_prefix(_path.size());
                 } while (!_path.empty());
                 return container;
             }
