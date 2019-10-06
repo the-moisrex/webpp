@@ -290,8 +290,6 @@ namespace webpp {
 
                 uri_segments<std::string_view> segs{};
 
-                std::size_t path_start;
-                std::size_t port_start;
 
                 // extracting scheme
                 if (const auto schemeEnd = _data.find(':');
@@ -307,20 +305,23 @@ namespace webpp {
 
                 if (auto authority_start = _data.find("//");
                     authority_start != std::string_view::npos) {
+                    _data.remove_prefix(authority_start + 2);
+
+                    std::size_t path_start = _data.find('/');
+                    std::size_t port_start = _data.find(":", 0, path_start);
 
                     // finding path so we won't go out of scope:
-                    if (path_start = _data.find('/', 2);
-                        path_start == std::string_view::npos)
-                        _data.remove_suffix(_data.size() - path_start);
+                    //                    if (path_start = _data.find('/');
+                    //                        path_start ==
+                    //                        std::string_view::npos)
+                    //                        _data.remove_suffix(_data.size() -
+                    //                        path_start);
 
                     // extracting user info
-                    if (auto delim =
-                            _data.find("@", authority_start + 2,
-                                       path_start - authority_start + 2);
+                    if (auto delim = _data.find("@", 0, path_start);
                         delim != std::string_view::npos) {
 
-                        segs.user_info = _data.substr(authority_start + 2,
-                                                      _data.size() - delim);
+                        segs.user_info = _data.substr(0, _data.size() - delim);
                         _data.remove_prefix(delim + 1);
                     }
 
@@ -371,12 +372,10 @@ namespace webpp {
                             }
                         }
                     } else { // Not IP Literal
-                        _data.remove_prefix(authority_start + 2);
-                        port_start = _data.find(":", 0, path_start);
-                        auto port_or_hostname_start =
+                        auto port_or_path_start =
                             port_start != std::string_view::npos ? port_start
                                                                  : path_start;
-                        auto hostname = _data.substr(0, port_or_hostname_start);
+                        auto hostname = _data.substr(0, port_or_path_start);
                         // we're not going to decode hostname here. We'll do
                         // this in another method because this function is
                         // constexpr and will only return const stuff
@@ -384,20 +383,18 @@ namespace webpp {
                         // TODO: we have our answer but we will check for the
                         // correctness of the hostname now
                         // FIXME: I think it's wrong
-                        if (charset(REG_NAME_NOT_PCT_ENCODED, charset('%'))
-                                .contains(hostname)) {
+                        constexpr auto HOSTNAME_CHARS =
+                            charset(REG_NAME_NOT_PCT_ENCODED, charset('%'));
+                        if (HOSTNAME_CHARS.contains(hostname)) {
                             segs.host = hostname;
-                            _data.remove_prefix(port_or_hostname_start);
+                            _data.remove_prefix(port_or_path_start);
                         }
                     }
-                }
 
-                // extracting port
-                if (auto colon = _data.find(':');
-                    colon != std::string_view::npos) {
+                    // extracting port
                     auto port_end =
                         _data.find_first_not_of(DIGIT.string_view());
-                    auto port = _data.substr(colon + 1, port_end);
+                    auto port = _data.substr(port_start + 1, port_end);
                     if (is::digit(port)) {
                         segs.port = port;
                         _data.remove_prefix(port_end);
@@ -1071,7 +1068,7 @@ namespace webpp {
         }
 
         /**
-         * This method resturns an indication of whether or not the URI includes
+         * This method returns an indication of whether or not the URI includes
          * any element that is part of the authority URI.
          * @return bool
          */
