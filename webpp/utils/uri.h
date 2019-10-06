@@ -355,8 +355,12 @@ namespace webpp {
                                             // returning the ipvf and it's
                                             // version
                                             segs.host =
-                                                _data.substr(1, ipvf_end);
+                                                _data.substr(1, ipvf_end + 1);
                                         }
+                                    } else {
+                                        // totally not a URI
+                                        data = segs;
+                                        return;
                                     }
                                 }
                             }
@@ -372,6 +376,9 @@ namespace webpp {
                                     segs.host = ipv6_view;
                                     _data.remove_prefix(ipv6_end + 1);
                                 }
+                            } else {
+                                data = segs;
+                                return; // totally not a valid URI
                             }
                         }
                     } else { // Not IP Literal
@@ -389,7 +396,12 @@ namespace webpp {
                             charset(REG_NAME_NOT_PCT_ENCODED, charset('%'));
                         if (HOSTNAME_CHARS.contains(hostname)) {
                             segs.host = hostname;
-                            _data.remove_prefix(port_or_path_start);
+                            if (port_or_path_start != std::string_view::npos)
+                                _data.remove_prefix(port_or_path_start);
+                            else {
+                                data = segs;
+                                return;
+                            }
                         }
                     }
 
@@ -413,14 +425,24 @@ namespace webpp {
                         path_end = _data.find('#'); // it's hash start
 
                     segs.path = _data.substr(0, path_end);
-                    _data.remove_prefix(path_end);
+                    if (path_end != std::string_view::npos) {
+                        _data.remove_prefix(path_end);
+                    } else {
+                        data = segs;
+                        return; // we have reached the end of the string
+                    }
                 }
 
                 // extracting queries
                 if (_data.starts_with('?')) {
                     auto hash_start = _data.find('#');
                     segs.query = _data.substr(1, hash_start);
-                    _data.remove_prefix(hash_start);
+                    if (hash_start != std::string_view::npos) {
+                        _data.remove_prefix(hash_start);
+                    } else {
+                        data = segs;
+                        return; // we've reached the end of the string
+                    }
                 }
 
                 // extracting hash segment
