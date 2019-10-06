@@ -7,6 +7,8 @@ TEST(URITests, Creation) {
     uri u("http://example.com/");
     EXPECT_TRUE(u.has_scheme());
     EXPECT_TRUE(u.has_host());
+    EXPECT_EQ(u.str(), "http://example.com/");
+    EXPECT_EQ(u.host_string().value_or(""), "example.com");
     EXPECT_TRUE(is::host(u.str()));
     EXPECT_TRUE(u.has_authority());
     EXPECT_TRUE(u.has_path()) << "the path is '/'";
