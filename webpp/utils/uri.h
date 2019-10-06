@@ -290,7 +290,6 @@ namespace webpp {
 
                 uri_segments<std::string_view> segs{};
 
-
                 // extracting scheme
                 if (const auto schemeEnd = _data.find(':');
                     schemeEnd != std::string_view::npos) {
@@ -303,12 +302,14 @@ namespace webpp {
                     }
                 }
 
-                if (auto authority_start = _data.find("//");
-                    authority_start != std::string_view::npos) {
+                auto authority_start = _data.find("//");
+                auto path_start = _data.find('/', authority_start + 2);
+                if (authority_start != std::string_view::npos &&
+                    path_start != 0) {
                     _data.remove_prefix(authority_start + 2);
+                    path_start -= authority_start + 2;
 
-                    std::size_t path_start = _data.find('/');
-                    std::size_t port_start = _data.find(":", 0, path_start);
+                    auto port_start = _data.find(":", 0, path_start);
 
                     // finding path so we won't go out of scope:
                     //                    if (path_start = _data.find('/');
@@ -391,12 +392,14 @@ namespace webpp {
                     }
 
                     // extracting port
-                    auto port_end =
-                        _data.find_first_not_of(DIGIT.string_view());
-                    auto port = _data.substr(port_start + 1, port_end);
-                    if (is::digit(port)) {
-                        segs.port = port;
-                        _data.remove_prefix(port_end);
+                    if (port_start != std::string_view::npos) {
+                        auto port_end =
+                            _data.find_first_not_of(DIGIT.string_view());
+                        auto port = _data.substr(port_start + 1, port_end);
+                        if (is::digit(port)) {
+                            segs.port = port;
+                            _data.remove_prefix(port_end);
+                        }
                     }
                 }
 
