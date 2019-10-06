@@ -380,9 +380,8 @@ namespace webpp {
                         // this in another method because this function is
                         // constexpr and will only return const stuff
 
-                        // TODO: we have our answer but we will check for the
+                        // we have our answer but we will check for the
                         // correctness of the hostname now
-                        // FIXME: I think it's wrong
                         constexpr auto HOSTNAME_CHARS =
                             charset(REG_NAME_NOT_PCT_ENCODED, charset('%'));
                         if (HOSTNAME_CHARS.contains(hostname)) {
@@ -1115,7 +1114,7 @@ namespace webpp {
 
                 // path
                 if (!_data.path.empty())
-                    buff << '/' << _data.path; // TODO: check if this part is ok
+                    buff << _data.path;
 
                 // query
                 if (!_data.query.empty())
