@@ -303,11 +303,13 @@ namespace webpp {
                 }
 
                 auto authority_start = _data.find("//");
-                auto path_start = _data.find('/', authority_start + 2);
+                if (authority_start != std::string_view::npos) {
+                    _data.remove_prefix(authority_start + 2);
+                }
+                auto path_start = _data.find('/');
+
                 if (authority_start != std::string_view::npos &&
                     path_start != 0) {
-                    _data.remove_prefix(authority_start + 2);
-                    path_start -= authority_start + 2;
 
                     auto port_start = _data.find(":", 0, path_start);
 
