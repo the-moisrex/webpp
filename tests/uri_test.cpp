@@ -21,8 +21,11 @@ TEST(URITests, Creation) {
     u.clear_scheme();
     EXPECT_FALSE(u.has_scheme());
     EXPECT_EQ(u.scheme().value_or(""), "");
-    EXPECT_EQ(u.str(), "//example.com/");
     EXPECT_TRUE(u.has_authority());
+    EXPECT_TRUE(u.has_host());
+    EXPECT_TRUE(u.has_path());
+    EXPECT_FALSE(u.has_port());
+    EXPECT_EQ(u.str(), "//example.com/");
 
     uri ipv4_host("https://192.168.1.1");
     EXPECT_TRUE(is::ipv4(ipv4_host.host_string().value_or("")));
