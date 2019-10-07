@@ -528,6 +528,28 @@ namespace webpp {
 
         uri& operator=(uri&& u) = default;
 
+        uri& operator=(std::string const& u) noexcept {
+            data = trim_copy(u);
+            return *this;
+        }
+
+        uri& operator=(std::string&& u) noexcept {
+            data = trim_copy(std::move(u));
+            return *this;
+        }
+
+        template <typename StringType>
+        uri& operator=(uri_segments<StringType> const& u) noexcept {
+            data = u;
+            return *this;
+        }
+
+        template <typename StringType>
+        uri& operator=(uri_segments<StringType>&& u) noexcept {
+            data = std::move(u);
+            return *this;
+        }
+
         bool operator==(const uri& other) const noexcept {
 
             // comparing strings directly so we don't have to parse them first
@@ -674,6 +696,7 @@ namespace webpp {
                 return std::make_optional(ipv4(host_string_view.value()));
             if (is::ipv6(host_string_view.value()))
                 return std::make_optional(ipv6(host_string_view.value()));
+            return std::nullopt;
         }
 
         /**
