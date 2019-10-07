@@ -53,4 +53,21 @@ TEST(URITests, Creation) {
     EXPECT_EQ(path.at(2), "test");
     EXPECT_EQ(path.at(3), "folder");
     EXPECT_EQ(path.at(4), "file.txt");
+
+    std::string uri_str =
+        "//[::1]:8080/folder/file.md?name=value&name2=value2#str";
+    u = uri_str;
+    EXPECT_EQ(u.str(), uri_str);
+    EXPECT_FALSE(u.has_scheme());
+    EXPECT_TRUE(u.has_host());
+    EXPECT_TRUE(u.has_port());
+    EXPECT_TRUE(u.has_authority());
+    EXPECT_TRUE(u.has_path());
+    EXPECT_TRUE(u.has_query());
+    EXPECT_TRUE(u.has_fragment());
+    EXPECT_EQ(u.fragment_str(), "str");
+    EXPECT_EQ(u.path().value_or(""), "/folder/file.md");
+    EXPECT_EQ(u.host_string().value_or(""), "[::1]");
+    EXPECT_EQ(u.port(), 8080);
+    EXPECT_TRUE(std::holds_alternative<ipv6>(u.host().value()));
 }
