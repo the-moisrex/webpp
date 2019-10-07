@@ -24,7 +24,7 @@ namespace webpp {
          * @param _scheme
          * @return
          */
-        constexpr bool scheme(std::string_view const& _scheme) noexcept {
+        bool scheme(std::string_view const& _scheme) noexcept {
             return ALPHA.contains(_scheme);
         }
 
@@ -104,7 +104,7 @@ namespace webpp {
     std::string
     encode_uri_component(const std::string_view& element,
                          const webpp::charset_t<N>& allowedCharacters) {
-        constexpr auto make_hex_digit = [](unsigned int value) {
+        auto make_hex_digit = [](unsigned int value) {
             if (value < 10) {
                 return static_cast<char>(value + '0');
             } else {
@@ -135,7 +135,7 @@ namespace webpp {
      * project) and they mostly used to get details of the URL we have as a
      * string; so I decided that probably half of the calculations can be done
      * at compile time; so fo that point, I reimplemented the URI class with
-     * constexpr and string_view in mind.
+     *  and string_view in mind.
      *
      * RFC: https://tools.ietf.org/html/rfc3986
      *
@@ -388,11 +388,11 @@ namespace webpp {
                         auto hostname = _data.substr(0, port_or_path_start);
                         // we're not going to decode hostname here. We'll do
                         // this in another method because this function is
-                        // constexpr and will only return const stuff
+                        //  and will only return const stuff
 
                         // we have our answer but we will check for the
                         // correctness of the hostname now
-                        constexpr auto HOSTNAME_CHARS =
+                        auto HOSTNAME_CHARS =
                             charset(REG_NAME_NOT_PCT_ENCODED, charset('%'));
                         if (HOSTNAME_CHARS.contains(hostname)) {
                             segs.host = hostname;
@@ -457,14 +457,14 @@ namespace webpp {
             if (index >= 2 && data_index == 1) {
                 uri_segments<std::string> segs;
                 auto _data = std::get<uri_segments<std::string_view>>(data);
-                segs.scheme = _data.scheme;
-                segs.host = _data.host;
-                segs.fragment = _data.fragment;
-                segs.path = _data.path;
-                segs.user_info = _data.user_info;
-                segs.port = _data.port;
-                segs.query = _data.query;
-                data = std::move(segs);
+                segs.scheme = std::string(_data.scheme);
+                segs.host = std::string(_data.host);
+                segs.fragment = std::string(_data.fragment);
+                segs.path = std::string(_data.path);
+                segs.user_info = std::string(_data.user_info);
+                segs.port = std::string(_data.port);
+                segs.query = std::string(_data.query);
+                data = segs;
             }
         }
 
@@ -474,19 +474,21 @@ namespace webpp {
          * @param func
          * @return optional<ReturnType>
          */
-        template <typename ReturnType>
-        constexpr std::optional<ReturnType>
-        get_value(ReturnType func(uri_segments<ReturnType> const&)) const
-            noexcept {
+        std::optional<std::string_view> get_value(std::string_view func(
+            uri_segments<std::string_view> const&)) const noexcept {
             using namespace std;
-            parse(is_same_v<ReturnType, string_view>
-                      ? 1
-                      : is_same_v<ReturnType, string> ? 2 : 0);
-            if (holds_alternative<uri_segments<ReturnType>>(data)) {
-                ReturnType res = func(get<uri_segments<ReturnType>>(data));
-                return res.empty() ? nullopt : make_optional(std::move(res));
+            parse(1);
+            if (holds_alternative<uri_segments<string_view>>(data)) {
+                std::string_view res =
+                    func(get<uri_segments<std::string_view>>(data));
+                return res.empty() ? nullopt : make_optional(res);
+            } else {
+                auto _data = get<uri_segments<std::string>>(data);
+                std::string_view res =
+                    func({_data.scheme, _data.user_info, _data.host, _data.port,
+                          _data.path, _data.query, _data.fragment});
+                return res.empty() ? nullopt : make_optional(res);
             }
-            return nullopt;
         }
 
         /**
@@ -495,14 +497,19 @@ namespace webpp {
          */
         template <typename Callable>
         void set_value(Callable const& func) noexcept {
+            bool __host = has_host();
+            bool __scheme = has_scheme();
             parse(2);
-            if (auto _data = std::get_if<uri_segments<std::string>>(&data)) {
-                func(*_data);
-            }
+            auto& _data = std::get<uri_segments<std::string>>(data);
+            bool ___host = has_host();
+            bool ___scheme = has_scheme();
+            func(_data);
+
+            assert(has_host() == __host);
         }
 
       public:
-        constexpr uri() noexcept = default;
+        uri() noexcept = default;
 
         ~uri() noexcept = default;
 
@@ -521,7 +528,7 @@ namespace webpp {
 
         uri& operator=(uri&& u) = default;
 
-        constexpr bool operator==(const uri& other) const noexcept {
+        bool operator==(const uri& other) const noexcept {
 
             // comparing strings directly so we don't have to parse them first
             if (std::holds_alternative<std::string_view>(data) &&
@@ -536,7 +543,7 @@ namespace webpp {
                    query() == other.query() && fragment() == other.fragment();
         }
 
-        constexpr bool operator!=(const uri& other) const noexcept {
+        bool operator!=(const uri& other) const noexcept {
             return !operator==(other);
         }
 
@@ -561,17 +568,14 @@ namespace webpp {
         /**
          * @brief check if the specified uri has a scheme or not
          */
-        constexpr bool has_scheme() const noexcept {
-            return scheme().has_value();
-        }
+        bool has_scheme() const noexcept { return scheme().has_value(); }
 
         /**
          * @brief scheme
          * @return get scheme
          */
-        constexpr std::optional<std::string_view> scheme() const noexcept {
-            return get_value<std::string_view>(
-                [](auto const& _data) { return _data.scheme; });
+        std::optional<std::string_view> scheme() const noexcept {
+            return get_value([](auto const& _data) { return _data.scheme; });
         }
 
         /**
@@ -601,16 +605,13 @@ namespace webpp {
         /**
          * @brief checks if the uri has user info or not
          */
-        constexpr bool has_user_info() const noexcept {
-            return user_info().has_value();
-        }
+        bool has_user_info() const noexcept { return user_info().has_value(); }
 
         /**
          * @brief get the user info or an empty value
          */
-        constexpr std::optional<std::string_view> user_info() const noexcept {
-            return get_value<std::string_view>(
-                [](auto const& _data) { return _data.user_info; });
+        std::optional<std::string_view> user_info() const noexcept {
+            return get_value([](auto const& _data) { return _data.user_info; });
         }
 
         /**
@@ -652,9 +653,8 @@ namespace webpp {
          * @brief return host as an optional<string_view>
          * @return optional<string_view>
          */
-        constexpr std::optional<std::string_view> host_string() const noexcept {
-            return get_value<std::string_view>(
-                [](auto const& _data) { return _data.host; });
+        std::optional<std::string_view> host_string() const noexcept {
+            return get_value([](auto const& _data) { return _data.host; });
         }
 
         /**
@@ -664,10 +664,10 @@ namespace webpp {
          * doesn't include invalid syntax.
          * @return
          */
-        constexpr std::optional<std::variant<ipv4, ipv6, std::string_view>>
-        host() const noexcept {
-            auto host_string_view = get_value<std::string_view>(
-                [](auto const& _data) { return _data.host; });
+        std::optional<std::variant<ipv4, ipv6, std::string_view>> host() const
+            noexcept {
+            auto host_string_view =
+                get_value([](auto const& _data) { return _data.host; });
             if (!host_string_view)
                 return std::nullopt;
             if (is::ipv4(host_string_view.value()))
@@ -709,8 +709,8 @@ namespace webpp {
          * @return string
          */
         std::string host_decoded_str() const noexcept {
-            if (auto _host = get_value<std::string>(
-                    [](auto const& _data) { return _data.host; })) {
+            if (auto _host =
+                    get_value([](auto const& _data) { return _data.host; })) {
                 if (auto decoded = decode_uri_component(
                         _host.value(), REG_NAME_NOT_PCT_ENCODED))
                     return decoded.value();
@@ -723,9 +723,7 @@ namespace webpp {
          * not.
          * @return true if it find a hostname/ip in the uri
          */
-        constexpr bool has_host() const noexcept {
-            return host_string().has_value();
-        }
+        bool has_host() const noexcept { return host_string().has_value(); }
 
         /**
          * @brief set the hostname/ip in the uri if possible
@@ -753,9 +751,9 @@ namespace webpp {
          * @return port number
          * @default 80
          */
-        constexpr uint16_t port() const noexcept {
-            if (auto port_str = get_value<std::string_view>(
-                    [](auto const& _data) { return _data.port; })) {
+        uint16_t port() const noexcept {
+            if (auto port_str =
+                    get_value([](auto const& _data) { return _data.port; })) {
                 return static_cast<uint16_t>(to_uint(port_str.value()));
             }
             return 80;
@@ -766,9 +764,8 @@ namespace webpp {
          * not
          * @return bool
          */
-        constexpr bool has_port() const noexcept {
-            return get_value<std::string_view>(
-                       [](auto const& _data) { return _data.port; })
+        bool has_port() const noexcept {
+            return get_value([](auto const& _data) { return _data.port; })
                 .has_value();
         }
 
@@ -796,15 +793,14 @@ namespace webpp {
          * @brief check if the URI has a path or not
          * @return
          */
-        constexpr bool has_path() const noexcept { return path().has_value(); }
+        bool has_path() const noexcept { return path().has_value(); }
 
         /**
          * @brief get path in non-decoded, string format
          * @return
          */
-        constexpr std::optional<std::string_view> path() const noexcept {
-            return get_value<std::string_view>(
-                [](auto const& _data) { return _data.path; });
+        std::optional<std::string_view> path() const noexcept {
+            return get_value([](auto const& _data) { return _data.path; });
         }
 
         /**
@@ -829,7 +825,7 @@ namespace webpp {
          * container, it will return the whole path.
          */
         template <typename Container = std::vector<std::string_view>>
-        constexpr Container path_structured() const noexcept {
+        Container path_structured() const noexcept {
             if (auto path_str = path()) {
                 Container container;
                 auto _path = path_str.value();
@@ -908,7 +904,7 @@ namespace webpp {
          * @brief checks if the path is an absolute path or relative path
          * @return
          */
-        constexpr bool is_absolute() const noexcept {
+        bool is_absolute() const noexcept {
             return path().value_or("/").starts_with('/');
         }
 
@@ -916,19 +912,16 @@ namespace webpp {
          * @brief checks if the path is a relative path or an absolute one
          * @return
          */
-        constexpr bool is_relative() const noexcept { return !is_absolute(); }
+        bool is_relative() const noexcept { return !is_absolute(); }
 
         /**
          * @brief checks if the uri has query or not
          * @return
          */
-        constexpr bool has_query() const noexcept {
-            return query().has_value();
-        }
+        bool has_query() const noexcept { return query().has_value(); }
 
-        constexpr std::optional<std::string_view> query() const noexcept {
-            return get_value<std::string_view>(
-                [](auto const& _data) { return _data.query; });
+        std::optional<std::string_view> query() const noexcept {
+            return get_value([](auto const& _data) { return _data.query; });
         }
 
         /**
@@ -1055,16 +1048,15 @@ namespace webpp {
         /**
          * @brief get fragment
          */
-        constexpr std::optional<std::string_view> fragment() const noexcept {
-            return get_value<std::string_view>(
-                [](auto const& _data) { return _data.fragment; });
+        std::optional<std::string_view> fragment() const noexcept {
+            return get_value([](auto const& _data) { return _data.fragment; });
         }
 
         /**
          * @brief get fragment in string format
          * @return
          */
-        constexpr std::string_view fragment_str() const noexcept {
+        std::string_view fragment_str() const noexcept {
             return fragment().value_or("");
         }
 
@@ -1072,9 +1064,7 @@ namespace webpp {
          * @brief an indication of whether the URI has fragment or not.
          * @return
          */
-        constexpr bool has_fragment() const noexcept {
-            return fragment().has_value();
-        }
+        bool has_fragment() const noexcept { return fragment().has_value(); }
 
         /**
          * @brief clear the fragment part of the uri
@@ -1089,16 +1079,14 @@ namespace webpp {
          * @brief checks if the URI is a relative reference
          * @return
          */
-        constexpr bool is_relative_reference() const noexcept {
-            return !has_scheme();
-        }
+        bool is_relative_reference() const noexcept { return !has_scheme(); }
 
         /**
          * This method returns an indication of whether or not the URI includes
          * any element that is part of the authority URI.
          * @return bool
          */
-        constexpr bool has_authority() const noexcept {
+        bool has_authority() const noexcept {
             return has_host() || has_user_info() || has_port();
         }
 
