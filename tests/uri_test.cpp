@@ -54,6 +54,10 @@ TEST(URITests, Creation) {
     EXPECT_EQ(path.at(3), "folder");
     EXPECT_EQ(path.at(4), "file.txt");
 
+}
+
+TEST(URITests, IPv6HostName) {
+    uri u;
     std::string uri_str =
         "//[::1]:8080/folder/file.md?name=value&name2=value2#str";
     u = uri_str;

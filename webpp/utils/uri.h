@@ -517,7 +517,7 @@ namespace webpp {
          * @brief parse from string, it will trim the spaces for generality too
          * @param string_view URI string
          */
-        explicit uri(std::string_view const& u) noexcept : data(trim_copy(u)) {}
+        explicit uri(std::string_view const& u) noexcept : data(u) {}
 
         uri(uri const&) = default;
 
@@ -528,24 +528,31 @@ namespace webpp {
 
         uri& operator=(uri&& u) = default;
 
-        uri& operator=(std::string const& u) noexcept {
-            data = trim_copy(u);
+        uri& operator=(std::string_view u) noexcept {
+            data = u;
             return *this;
         }
 
         uri& operator=(std::string&& u) noexcept {
-            data = trim_copy(std::move(u));
+            data = std::string_view(u);
+            parse(2);
             return *this;
         }
 
         template <typename StringType>
         uri& operator=(uri_segments<StringType> const& u) noexcept {
+            static_assert(std::is_same_v<StringType, std::string_view> ||
+                              std::is_same_v<StringType, std::string>,
+                          "The specified string type is not supported.");
             data = u;
             return *this;
         }
 
         template <typename StringType>
         uri& operator=(uri_segments<StringType>&& u) noexcept {
+            static_assert(std::is_same_v<StringType, std::string_view> ||
+                              std::is_same_v<StringType, std::string>,
+                          "The specified string type is not supported.");
             data = std::move(u);
             return *this;
         }
@@ -563,6 +570,29 @@ namespace webpp {
                    host_string() == other.host_string() &&
                    port() == other.port() && path() == other.path() &&
                    query() == other.query() && fragment() == other.fragment();
+        }
+
+        bool operator==(std::string_view const& u) const noexcept {
+            return str() == u;
+        }
+
+        bool operator!=(std::string_view const& u) const noexcept {
+            return !operator==(u);
+        }
+
+        template <typename StringType>
+        bool operator==(uri_segments<StringType> const& u) const noexcept {
+            static_assert(std::is_same_v<StringType, std::string_view> ||
+                              std::is_same_v<StringType, std::string>,
+                          "The specified string type is not supported.");
+            return std::holds_alternative<uri_segments<StringType>>(data)
+                       ? (data == u)
+                       : (uri(u) == *this);
+        }
+
+        template <typename StringType>
+        bool operator!=(uri_segments<StringType> const& u) const noexcept {
+            return !operator==(u);
         }
 
         bool operator!=(const uri& other) const noexcept {
@@ -1164,6 +1194,7 @@ namespace webpp {
             };
 
             // handling string and string_view is the same
+            parse(1);
             if (std::holds_alternative<uri_segments<std::string_view>>(data)) {
                 __do_it(std::get<uri_segments<std::string_view>>(data));
             } else {
