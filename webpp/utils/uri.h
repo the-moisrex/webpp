@@ -578,7 +578,7 @@ namespace webpp {
         /**
          * @brief checks if the uri has user info or not
          */
-        bool has_user_info() const noexcept { return user_info().empty(); }
+        bool has_user_info() const noexcept { return !user_info().empty(); }
 
         /**
          * @brief get the user info or an empty value
@@ -595,14 +595,13 @@ namespace webpp {
             return decode_uri_component(user_info(), USER_INFO_NOT_PCT_ENCODED);
         }
 
-
         /**
          * @brief set the user info if it's possible
          */
         uri& user_info(std::string_view const& info) noexcept {
-            auto encoded_info =
-                encode_uri_component(info, USER_INFO_NOT_PCT_ENCODED);
-            set_value([&](auto& _data) { _data.user_info = encoded_info; });
+            parse();
+            replace_value(_user_info, encode_uri_component(
+                                          info, USER_INFO_NOT_PCT_ENCODED));
             return *this;
         }
 
@@ -611,7 +610,8 @@ namespace webpp {
          * @return
          */
         uri& clear_user_info() noexcept {
-            set_value([](auto& _data) { _data.user_info = ""; });
+            parse();
+            replace_value(_user_info, {});
             return *this;
         }
 
@@ -619,8 +619,9 @@ namespace webpp {
          * @brief return host as an optional<string_view>
          * @return optional<string_view>
          */
-        std::optional<std::string_view> host_string() const noexcept {
-            return get_value([](auto const& _data) { return _data.host; });
+        std::string_view const& host() const noexcept {
+            parse();
+            return _host;
         }
 
         /**
@@ -630,17 +631,14 @@ namespace webpp {
          * doesn't include invalid syntax.
          * @return
          */
-        std::optional<std::variant<ipv4, ipv6, std::string_view>> host() const
+        std::variant<ipv4, ipv6, std::string_view> host_structured() const
             noexcept {
-            auto host_string_view =
-                get_value([](auto const& _data) { return _data.host; });
-            if (!host_string_view)
-                return std::nullopt;
-            if (is::ipv4(host_string_view.value()))
-                return std::make_optional(ipv4(host_string_view.value()));
-            if (is::ipv6(host_string_view.value()))
-                return std::make_optional(ipv6(host_string_view.value()));
-            return std::nullopt;
+            parse();
+            if (is::ipv4(_host))
+                return ipv4(_host);
+            if (is::ipv6(_host))
+                return ipv6(_host);
+            return _host;
         }
 
         /**
@@ -650,23 +648,15 @@ namespace webpp {
          * @return string/ipv4/ipv6
          * @default empty string
          */
-        std::optional<std::variant<ipv4, ipv6, std::string>>
-        host_decoded() const noexcept {
-            const auto the_host = host();
-            if (!the_host)
-                return std::nullopt;
-
-            if (std::holds_alternative<std::string_view>(the_host.value())) {
-                auto string_host =
-                    std::string(std::get<std::string_view>(the_host.value()));
-                return decode_uri_component(string_host,
-                                            REG_NAME_NOT_PCT_ENCODED);
-            }
-
-            if (std::holds_alternative<ipv4>(the_host.value()))
-                return std::make_optional(std::get<ipv4>(the_host.value()));
-
-            return std::make_optional(std::get<ipv6>(the_host.value()));
+        std::variant<ipv4, ipv6, std::string> host_decoded_structured() const
+            noexcept {
+            if (auto _host_structured = host_structured();
+                std::holds_alternative<std::string_view>(_host_structured))
+                return decode_uri_component(
+                    std::get<std::string_view>(_host_structured),
+                    REG_NAME_NOT_PCT_ENCODED);
+            else
+                return _host_structured;
         }
 
         /**
@@ -675,14 +665,9 @@ namespace webpp {
          * hostname has the wrong character encodings.
          * @return string
          */
-        std::string host_decoded_str() const noexcept {
-            if (auto _host =
-                    get_value([](auto const& _data) { return _data.host; })) {
-                if (auto decoded = decode_uri_component(
-                        _host.value(), REG_NAME_NOT_PCT_ENCODED))
-                    return decoded.value();
-            }
-            return "";
+        auto host_decoded() const noexcept {
+            return decode_uri_component(
+                        host(), REG_NAME_NOT_PCT_ENCODED));
         }
 
         /**
@@ -690,17 +675,15 @@ namespace webpp {
          * not.
          * @return true if it find a hostname/ip in the uri
          */
-        bool has_host() const noexcept { return host_string().has_value(); }
+        bool has_host() const noexcept { return host().empty(); }
 
         /**
          * @brief set the hostname/ip in the uri if possible
          */
         uri& host(std::string_view const& new_host) noexcept {
-            set_value([&](auto& _data) {
-                auto new_host_encoded =
-                    encode_uri_component(new_host, REG_NAME_NOT_PCT_ENCODED);
-                _data.host = new_host_encoded;
-            });
+            parse();
+            replace_value(_host, encode_uri_component(
+                                     new_host, REG_NAME_NOT_PCT_ENCODED));
             return *this;
         }
 
@@ -708,22 +691,27 @@ namespace webpp {
          * @brief clear host part from URI
          * @return
          */
-        uri& clear_host() noexcept {
-            set_value([](auto& _data) { _data.host = ""; });
-            return *this;
-        }
+        uri& clear_host() noexcept { return host({}); }
 
         /**
          * @brief port number of the uri;
          * @return port number
          * @default 80
          */
-        uint16_t port() const noexcept {
-            if (auto port_str =
-                    get_value([](auto const& _data) { return _data.port; })) {
-                return static_cast<uint16_t>(to_uint(port_str.value()));
+        uint16_t port_uint16() const noexcept {
+            if (has_port()) {
+                return static_cast<uint16_t>(to_uint(_port));
             }
-            return 80;
+            return 80u;
+        }
+
+        /**
+         * Get the port in a string_view format; there's no default value.
+         * @return string_view
+         */
+        std::string_view const& port() const noexcept {
+            parse();
+            return _port;
         }
 
         /**
@@ -731,10 +719,7 @@ namespace webpp {
          * not
          * @return bool
          */
-        bool has_port() const noexcept {
-            return get_value([](auto const& _data) { return _data.port; })
-                .has_value();
-        }
+        bool has_port() const noexcept { return !port().empty(); }
 
         /**
          * @brief set port
@@ -742,8 +727,12 @@ namespace webpp {
          * @return
          */
         uri& port(uint16_t new_port) noexcept {
-            set_value(
-                [&](auto& _data) { _data.port = std::to_string(new_port); });
+            return port(std::to_string(new_port));
+        }
+
+        uri& port(std::string_view const& new_port) noexcept {
+            parse();
+            replace_value(_port, new_port);
             return *this;
         }
 
@@ -751,36 +740,30 @@ namespace webpp {
          * @brief clear the port number from the uri and defaults to 80
          * @return self
          */
-        uri& clear_port() noexcept {
-            set_value([&](auto& _data) { _data.port = ""; });
-            return *this;
-        }
+        uri& clear_port() noexcept { return port({}); }
 
         /**
          * @brief check if the URI has a path or not
          * @return
          */
-        bool has_path() const noexcept { return path().has_value(); }
+        bool has_path() const noexcept { return !path().empty(); }
 
         /**
          * @brief get path in non-decoded, string format
          * @return
          */
-        std::optional<std::string_view> path() const noexcept {
-            return get_value([](auto const& _data) { return _data.path; });
+        std::string_view const& path() const noexcept {
+            parse();
+            return _path;
         }
 
         /**
          * @brief decoded path as a string
          * @return
          */
-        std::optional<std::string> path_decoded() const noexcept {
-            if (auto _path = path()) {
-                return decode_uri_component(
-                    _path.value(),
-                    charset(PCHAR_NOT_PCT_ENCODED, charset('/')));
-            }
-            return std::nullopt;
+        auto path_decoded() const noexcept {
+            return decode_uri_component(
+                _path, charset(PCHAR_NOT_PCT_ENCODED, charset('/')));
         }
 
         /**
@@ -793,21 +776,17 @@ namespace webpp {
          */
         template <typename Container = std::vector<std::string_view>>
         Container path_structured() const noexcept {
-            if (auto path_str = path()) {
-                Container container;
-                auto _path = path_str.value();
-                std::size_t slash_start = 0;
-                do {
-                    slash_start = _path.find('/');
-                    container.push_back(_path.substr(0, slash_start));
-                    if (slash_start != std::string_view::npos)
-                        _path.remove_prefix(slash_start + 1);
-                    else
-                        _path.remove_prefix(_path.size());
-                } while (!_path.empty());
-                return container;
-            }
-            return {}; // empty path
+            Container container;
+            std::size_t slash_start = 0;
+            do {
+                slash_start = _path.find('/');
+                container.push_back(_path.substr(0, slash_start));
+                if (slash_start != std::string_view::npos)
+                    _path.remove_prefix(slash_start + 1);
+                else
+                    _path.remove_prefix(_path.size());
+            } while (!_path.empty());
+            return container;
         }
 
         /**
@@ -831,10 +810,20 @@ namespace webpp {
          * @brief set path
          */
         template <typename Container>
-        uri& path(const Container& _path) noexcept {
-            return path(_path.cbegin(), _path.cend());
+        uri& path(const Container& __path) noexcept {
+            static_assert(
+                std::is_convertible_v<Container::value_type, std::string_view>,
+                "the specified container is not valid");
+            return path(__path.cbegin(), __path.cend());
         }
 
+        /**
+         * Set path by begin and end of an iterator
+         * @tparam Iter
+         * @param _start
+         * @param _end
+         * @return
+         */
         template <typename Iter>
         uri& path(const Iter& _start, const Iter& _end) noexcept {
             std::ostringstream joined_path;
@@ -850,30 +839,24 @@ namespace webpp {
          * @param _path
          * @return
          */
-        uri& path(std::string_view const& _path) noexcept {
-            set_value([&](auto& _data) {
-                auto encoded_path = encode_uri_component(
-                    _path, charset(PCHAR_NOT_PCT_ENCODED, charset('/')));
-                _data.path = encoded_path;
-            });
+        uri& path(std::string_view const& __path) noexcept {
+            parse();
+            replace_value(_path, encode_uri_component(
+                                     __path, charset(PCHAR_NOT_PCT_ENCODED,
+                                                     charset('/'))));
             return *this;
         }
         /**
          * @brief clear path from the URI
          * @return
          */
-        uri& clear_path() noexcept {
-            set_value([](auto& _data) { _data.path = ""; });
-            return *this;
-        }
+        uri& clear_path() noexcept { return path(std::string_view{}); }
 
         /**
          * @brief checks if the path is an absolute path or relative path
          * @return
          */
-        bool is_absolute() const noexcept {
-            return path().value_or("/").starts_with('/');
-        }
+        bool is_absolute() const noexcept { return path().starts_with('/'); }
 
         /**
          * @brief checks if the path is a relative path or an absolute one
@@ -887,8 +870,9 @@ namespace webpp {
          */
         bool has_query() const noexcept { return query().has_value(); }
 
-        std::optional<std::string_view> query() const noexcept {
-            return get_value([](auto const& _data) { return _data.query; });
+        std::string_view const& query() const noexcept {
+            parse();
+            return _query;
         }
 
         /**
