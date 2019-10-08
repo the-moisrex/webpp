@@ -811,9 +811,9 @@ namespace webpp {
          */
         template <typename Container>
         uri& path(const Container& __path) noexcept {
-            static_assert(
-                std::is_convertible_v<Container::value_type, std::string_view>,
-                "the specified container is not valid");
+            static_assert(std::is_convertible_v<typename Container::value_type,
+                                                std::string_view>,
+                          "the specified container is not valid");
             return path(__path.cbegin(), __path.cend());
         }
 
@@ -880,15 +880,15 @@ namespace webpp {
          * @param _query
          * @return
          */
-        uri& query(std::string_view const& _query) {
-            if (!is::query(_query))
+        uri& query(std::string_view const& __query) {
+            if (!is::query(__query))
                 throw std::invalid_argument(
                     "The specified string is not a valid query");
 
-            set_value([&](auto& _data) {
-                _data.query = encode_uri_component(
-                    _query, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
-            });
+            parse();
+            replace_value(_query,
+                          encode_uri_component(
+                              __query, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED));
             return *this;
         }
 
