@@ -148,6 +148,7 @@ namespace webpp {
      *    urn:example:animal:ferret:nose
      *
      */
+    template <typename StringType = std::string_view>
     class uri {
       public:
         /**
@@ -221,295 +222,254 @@ namespace webpp {
         static constexpr auto QUERY_OR_FRAGMENT_NOT_PCT_ENCODED =
             charset(PCHAR_NOT_PCT_ENCODED, charset_t<2>{{'/', '?'}});
 
-        template <typename T>
-        struct uri_segments {
-
-            /**
-             * This is the "scheme" element of the URI.
-             */
-            T scheme;
-
-            /**
-             * This is the "UserInfo" element of the URI.
-             */
-            T user_info;
-
-            /**
-             * This is the "host" element of the URI.
-             */
-            T host;
-
-            /**
-             * This is the port number element of the URI.
-             */
-            T port;
-
-            /**
-             * This is the "path" element of the URI,
-             * as a sequence of segments.
-             */
-            T path;
-
-            /**
-             * This is the "query" element of the URI,
-             * if it has one.
-             */
-            T query;
-
-            /**
-             * This is the "fragment" element of the URI,
-             * if it has one.
-             */
-            T fragment;
-        };
-
-        using uri_data_t =
-            std::variant<std::string_view, uri_segments<std::string_view>,
-                         uri_segments<std::string>>;
-
       private:
-        mutable uri_data_t data;
+        /**
+         * This is the whole url (if we need to own the uri ourselves)
+         */
+        StringType data;
+
+        static_assert(std::is_same_v<StringType, std::string> ||
+                          std::is_same_v<StringType, std::string_view>,
+                      "The specified string type for URI is not supported.");
+
+        /**
+         * This is the "scheme" element of the URI.
+         */
+        mutable std::string_view _scheme;
+
+        /**
+         * This is the "UserInfo" element of the URI.
+         */
+        mutable std::string_view _user_info;
+
+        /**
+         * This is the "host" element of the URI.
+         */
+        mutable std::string_view _host;
+
+        /**
+         * This is the port number element of the URI.
+         */
+        mutable std::string_view _port;
+
+        /**
+         * This is the "path" element of the URI,
+         * as a sequence of segments.
+         */
+        mutable std::string_view _path;
+
+        /**
+         * This is the "query" element of the URI,
+         * if it has one.
+         */
+        mutable std::string_view _query;
+
+        /**
+         * This is the "fragment" element of the URI,
+         * if it has one.
+         */
+        mutable std::string_view _fragment;
 
         /**
          * Parse the uri
-         * @param index
-         *    - 0: string_view
-         *    - 1: uri_segments<string_view>
-         *    - 2: uri_segments<string>
          */
-        void parse(std::size_t index) const noexcept {
+        void parse(std::string_view _data) const noexcept {
 
-            auto data_index = data.index();
-            if (index == data_index)
+            if (parsed())
                 return;
 
-            // holds string_view but we need uri_segment<string_view> or
-            // uri_segment<string>
-            if (index >= 1 && data_index == 0) {
-                auto _data = std::get<std::string_view>(data);
+            // extracting scheme
+            if (const auto schemeEnd = _data.find(':');
+                schemeEnd != std::string_view::npos) {
+                auto __scheme = _data.substr(0, schemeEnd);
+                if (ALPHA.contains(__scheme[0]) &&
+                    __scheme.substr(1).find_first_not_of(
+                        SCHEME_NOT_FIRST.string_view())) {
+                    _scheme = _scheme;
+                    _data.remove_prefix(schemeEnd);
+                }
+            }
 
-                uri_segments<std::string_view> segs{};
+            auto authority_start = _data.find("//");
+            if (authority_start != std::string_view::npos) {
+                _data.remove_prefix(authority_start + 2);
+            }
+            auto path_start = _data.find('/');
 
-                // extracting scheme
-                if (const auto schemeEnd = _data.find(':');
-                    schemeEnd != std::string_view::npos) {
-                    auto _scheme = _data.substr(0, schemeEnd);
-                    if (ALPHA.contains(_scheme[0]) &&
-                        _scheme.substr(1).find_first_not_of(
-                            SCHEME_NOT_FIRST.string_view())) {
-                        segs.scheme = _scheme;
-                        _data.remove_prefix(schemeEnd);
-                    }
+            if (authority_start != std::string_view::npos && path_start != 0) {
+
+                auto port_start = _data.find(":", 0, path_start);
+
+                // extracting user info
+                if (auto delim = _data.find("@", 0, path_start);
+                    delim != std::string_view::npos) {
+
+                    _user_info = _data.substr(0, _data.size() - delim);
+                    _data.remove_prefix(delim + 1);
                 }
 
-                auto authority_start = _data.find("//");
-                if (authority_start != std::string_view::npos) {
-                    _data.remove_prefix(authority_start + 2);
-                }
-                auto path_start = _data.find('/');
+                // extracting host
 
-                if (authority_start != std::string_view::npos &&
-                    path_start != 0) {
+                /* IP future versions can be specified like this:
+                 * (RFC 3986)
+                 *
+                 * IP-literal = "[" ( IPv6address / IPvFuture  ) "]"
+                 * IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims
+                 * / ":" )
+                 */
+                if (_data.starts_with('[')) { // IP Literal
+                    if (_data.size() > 2 &&
+                        _data[1] == 'v') { // IPv Future Number
+                        if (auto dot_delim = _data.find('.');
+                            dot_delim != std::string_view::npos) {
 
-                    auto port_start = _data.find(":", 0, path_start);
+                            auto ipvf_version = _data.substr(2, dot_delim);
+                            if (HEXDIG.contains(ipvf_version)) {
 
-                    // finding path so we won't go out of scope:
-                    //                    if (path_start = _data.find('/');
-                    //                        path_start ==
-                    //                        std::string_view::npos)
-                    //                        _data.remove_suffix(_data.size() -
-                    //                        path_start);
-
-                    // extracting user info
-                    if (auto delim = _data.find("@", 0, path_start);
-                        delim != std::string_view::npos) {
-
-                        segs.user_info = _data.substr(0, _data.size() - delim);
-                        _data.remove_prefix(delim + 1);
-                    }
-
-                    // extracting host
-
-                    /* IP future versions can be specified like this:
-                     * (RFC 3986)
-                     *
-                     * IP-literal = "[" ( IPv6address / IPvFuture  ) "]"
-                     * IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims
-                     * / ":" )
-                     */
-                    if (_data.starts_with('[')) { // IP Literal
-                        if (_data.size() > 2 &&
-                            _data[1] == 'v') { // IPv Future Number
-                            if (auto dot_delim = _data.find('.');
-                                dot_delim != std::string_view::npos) {
-
-                                auto ipvf_version = _data.substr(2, dot_delim);
-                                if (HEXDIG.contains(ipvf_version)) {
-
-                                    if (auto ipvf_end = _data.find(']');
-                                        ipvf_end != std::string_view::npos) {
-                                        auto ipvf = _data.substr(dot_delim + 1,
-                                                                 ipvf_end);
-                                        if (IPV_FUTURE_LAST_PART.contains(
-                                                ipvf)) {
-                                            // returning the ipvf and it's
-                                            // version
-                                            segs.host =
-                                                _data.substr(1, ipvf_end + 1);
-                                        }
-                                    } else {
-                                        // totally not a URI
-                                        data = segs;
-                                        return;
+                                if (auto ipvf_end = _data.find(']');
+                                    ipvf_end != std::string_view::npos) {
+                                    auto ipvf =
+                                        _data.substr(dot_delim + 1, ipvf_end);
+                                    if (IPV_FUTURE_LAST_PART.contains(ipvf)) {
+                                        // returning the ipvf and it's
+                                        // version
+                                        _host = _data.substr(1, ipvf_end + 1);
                                     }
+                                } else {
+                                    // totally not a URI
+                                    return;
                                 }
                             }
-                        } else if (_data.size() >= 5) { // IPv6
+                        }
+                    } else if (_data.size() >= 5) { // IPv6
 
-                            if (auto ipv6_end = _data.find(']');
-                                ipv6_end != std::string_view::npos) {
+                        if (auto ipv6_end = _data.find(']');
+                            ipv6_end != std::string_view::npos) {
 
-                                if (auto ipv6_view = _data.substr(1, ipv6_end);
-                                    is::ipv6(ipv6_view)) {
-                                    // TODO: probably use std::variant<ipv6,
-                                    // ipv4, string>
-                                    segs.host = ipv6_view;
-                                    _data.remove_prefix(ipv6_end + 1);
-                                }
-                            } else {
-                                data = segs;
-                                return; // totally not a valid URI
+                            if (auto ipv6_view = _data.substr(1, ipv6_end);
+                                is::ipv6(ipv6_view)) {
+                                // TODO: probably use std::variant<ipv6,
+                                // ipv4, string>
+                                _host = ipv6_view;
+                                _data.remove_prefix(ipv6_end + 1);
                             }
-                        }
-                    } else { // Not IP Literal
-                        auto port_or_path_start =
-                            port_start != std::string_view::npos ? port_start
-                                                                 : path_start;
-                        auto hostname = _data.substr(0, port_or_path_start);
-                        // we're not going to decode hostname here. We'll do
-                        // this in another method because this function is
-                        //  and will only return const stuff
-
-                        // we have our answer but we will check for the
-                        // correctness of the hostname now
-                        auto HOSTNAME_CHARS =
-                            charset(REG_NAME_NOT_PCT_ENCODED, charset('%'));
-                        if (HOSTNAME_CHARS.contains(hostname)) {
-                            segs.host = hostname;
-                            if (port_or_path_start != std::string_view::npos)
-                                _data.remove_prefix(port_or_path_start);
-                            else {
-                                data = segs;
-                                return;
-                            }
+                        } else {
+                            return; // totally not a valid URI
                         }
                     }
+                } else { // Not IP Literal
+                    auto port_or_path_start =
+                        port_start != std::string_view::npos ? port_start
+                                                             : path_start;
+                    auto hostname = _data.substr(0, port_or_path_start);
+                    // we're not going to decode hostname here. We'll do
+                    // this in another method because this function is
+                    //  and will only return const stuff
 
-                    // extracting port
-                    if (port_start != std::string_view::npos) {
-                        auto port_end =
-                            _data.find_first_not_of(DIGIT.string_view());
-                        auto port = _data.substr(port_start + 1, port_end);
-                        if (is::digit(port)) {
-                            segs.port = port;
-                            _data.remove_prefix(port_end);
+                    // we have our answer but we will check for the
+                    // correctness of the hostname now
+                    auto HOSTNAME_CHARS =
+                        charset(REG_NAME_NOT_PCT_ENCODED, charset('%'));
+                    if (HOSTNAME_CHARS.contains(hostname)) {
+                        _host = hostname;
+                        if (port_or_path_start != std::string_view::npos)
+                            _data.remove_prefix(port_or_path_start);
+                        else {
+                            return;
                         }
                     }
                 }
 
-                // extracting path
-                if (_data.starts_with('/')) {
-                    // it's the query_start actually
-                    auto path_end = _data.find('?');
-                    if (path_end == std::string_view::npos)
-                        path_end = _data.find('#'); // it's hash start
-
-                    segs.path = _data.substr(0, path_end);
-                    if (path_end != std::string_view::npos) {
-                        _data.remove_prefix(path_end);
-                    } else {
-                        data = segs;
-                        return; // we have reached the end of the string
-                    }
+                // extracting port
+                if (port_start != std::string_view::npos) {
+                    auto port_end =
+                        _data.find_first_not_of(DIGIT.string_view());
+                    _port = _data.substr(port_start + 1, port_end);
+                    _data.remove_prefix(port_end);
                 }
-
-                // extracting queries
-                if (_data.starts_with('?')) {
-                    auto hash_start = _data.find('#');
-                    segs.query = _data.substr(1, hash_start);
-                    if (hash_start != std::string_view::npos) {
-                        _data.remove_prefix(hash_start);
-                    } else {
-                        data = segs;
-                        return; // we've reached the end of the string
-                    }
-                }
-
-                // extracting hash segment
-                if (_data.starts_with('#')) {
-                    segs.fragment = _data;
-                }
-
-                data = segs;
             }
 
-            // holds uri_segments<string_view> but we need uri_segment<string>
-            if (index >= 2 && data_index == 1) {
-                uri_segments<std::string> segs;
-                auto _data = std::get<uri_segments<std::string_view>>(data);
-                segs.scheme = std::string(_data.scheme);
-                segs.host = std::string(_data.host);
-                segs.fragment = std::string(_data.fragment);
-                segs.path = std::string(_data.path);
-                segs.user_info = std::string(_data.user_info);
-                segs.port = std::string(_data.port);
-                segs.query = std::string(_data.query);
-                data = segs;
+            // extracting path
+            if (_data.starts_with('/')) {
+                // it's the query_start actually
+                auto path_end = _data.find('?');
+                if (path_end == std::string_view::npos)
+                    path_end = _data.find('#'); // it's hash start
+
+                _path = _data.substr(0, path_end);
+                if (path_end != std::string_view::npos) {
+                    _data.remove_prefix(path_end);
+                } else {
+                    return; // we have reached the end of the string
+                }
             }
+
+            // extracting queries
+            if (_data.starts_with('?')) {
+                auto hash_start = _data.find('#');
+                _query = _data.substr(1, hash_start);
+                if (hash_start != std::string_view::npos) {
+                    _data.remove_prefix(hash_start);
+                } else {
+                    return; // we've reached the end of the string
+                }
+            }
+
+            // extracting hash segment
+            if (_data.starts_with('#')) {
+                _fragment = _data;
+            }
+        }
+        void parse() const noexcept { parse(data); }
+
+        /**
+         * Check if the uri is already parsed or not
+         * @return
+         */
+        inline bool parsed() const noexcept {
+            return !_scheme.empty() || !_user_info.empty() || !_host.empty() ||
+                   !_port.empty() || !_path.empty() || !_query.empty() ||
+                   !_fragment.empty();
         }
 
         /**
-         * Get value
-         * @tparam ReturnType
-         * @param func
-         * @return optional<ReturnType>
+         * Remove the cache and make sure calling the functions will cause
+         * re-parsing the uri.
          */
-        std::optional<std::string_view> get_value(std::string_view func(
-            uri_segments<std::string_view> const&)) const noexcept {
-            using namespace std;
-            parse(1);
-            if (holds_alternative<uri_segments<string_view>>(data)) {
-                std::string_view res =
-                    func(get<uri_segments<std::string_view>>(data));
-                return res.empty() ? nullopt : make_optional(res);
-            } else {
-                auto _data = get<uri_segments<std::string>>(data);
-                std::string_view res =
-                    func({_data.scheme, _data.user_info, _data.host, _data.port,
-                          _data.path, _data.query, _data.fragment});
-                return res.empty() ? nullopt : make_optional(res);
-            }
+        inline void unparse() const noexcept {
+            _scheme = {};
+            _user_info = {};
+            _host = {};
+            _port = {};
+            _path = {};
+            _query = {};
+            _fragment = {};
         }
 
         /**
-         * Set a specific value with a function
-         * @param func = void func(uri_segments<std::string>&)
+         * Replace one of _scheme, _user_info, _host, _port, _path, _query, and
+         * _fragment string_views with the replacement value.
+         * @param point
+         * @param replacement
          */
-        template <typename Callable>
-        void set_value(Callable const& func) noexcept {
-            bool __host = has_host();
-            bool __scheme = has_scheme();
-            parse(2);
-            auto& _data = std::get<uri_segments<std::string>>(data);
-            bool ___host = has_host();
-            bool ___scheme = has_scheme();
-            func(_data);
-
-            assert(has_host() == __host);
+        void replace_value(std::string_view const& point,
+                           std::string_view const& replacement) noexcept {
+            static_assert(std::is_same_v<StringType, std::string>,
+                          "You cannot change a const_uri (string_view is not "
+                          "modifiable)");
+            auto start_point = point.data() - data[0];
+            data = data.substr(0, start_point) + replacement +
+                   data.substr(start_point + point.size());
+            unparse();
         }
 
       public:
-        uri() noexcept = default;
+        uri() noexcept {
+            static_assert(
+                std::is_same_v<StringType, std::string_view>,
+                "There's no point using string_view with empty value as a "
+                "const uri. Consider using uri<std::string>() instead.");
+        }
 
         ~uri() noexcept = default;
 
@@ -519,57 +479,35 @@ namespace webpp {
          */
         explicit uri(std::string_view const& u) noexcept : data(u) {}
 
+        /**
+         * If the user uses this
+         * @param u
+         */
+        explicit uri(StringType&& u) noexcept : data(std::move(u)) {}
+
         uri(uri const&) = default;
 
-        uri(uri&&) = default;
+        uri(uri&&) noexcept = default;
 
         // assignment operators
         uri& operator=(uri const& u) = default;
 
-        uri& operator=(uri&& u) = default;
+        uri& operator=(uri&& u) noexcept = default;
 
-        uri& operator=(std::string_view u) noexcept {
+        uri& operator=(std::string_view const& u) noexcept {
             data = u;
+            unparse();
             return *this;
         }
 
-        uri& operator=(std::string&& u) noexcept {
-            data = std::string_view(u);
-            parse(2);
-            return *this;
-        }
-
-        template <typename StringType>
-        uri& operator=(uri_segments<StringType> const& u) noexcept {
-            static_assert(std::is_same_v<StringType, std::string_view> ||
-                              std::is_same_v<StringType, std::string>,
-                          "The specified string type is not supported.");
-            data = u;
-            return *this;
-        }
-
-        template <typename StringType>
-        uri& operator=(uri_segments<StringType>&& u) noexcept {
-            static_assert(std::is_same_v<StringType, std::string_view> ||
-                              std::is_same_v<StringType, std::string>,
-                          "The specified string type is not supported.");
+        uri& operator=(StringType&& u) noexcept {
             data = std::move(u);
+            unparse();
             return *this;
         }
 
         bool operator==(const uri& other) const noexcept {
-
-            // comparing strings directly so we don't have to parse them first
-            if (std::holds_alternative<std::string_view>(data) &&
-                std::holds_alternative<std::string_view>(other.data)) {
-                return std::get<std::string_view>(data) ==
-                       std::get<std::string_view>(other.data);
-            }
-            return scheme() == other.scheme() &&
-                   user_info() == other.user_info() &&
-                   host_string() == other.host_string() &&
-                   port() == other.port() && path() == other.path() &&
-                   query() == other.query() && fragment() == other.fragment();
+            return str() == other.str();
         }
 
         bool operator==(std::string_view const& u) const noexcept {
@@ -577,21 +515,6 @@ namespace webpp {
         }
 
         bool operator!=(std::string_view const& u) const noexcept {
-            return !operator==(u);
-        }
-
-        template <typename StringType>
-        bool operator==(uri_segments<StringType> const& u) const noexcept {
-            static_assert(std::is_same_v<StringType, std::string_view> ||
-                              std::is_same_v<StringType, std::string>,
-                          "The specified string type is not supported.");
-            return std::holds_alternative<uri_segments<StringType>>(data)
-                       ? (data == u)
-                       : (uri(u) == *this);
-        }
-
-        template <typename StringType>
-        bool operator!=(uri_segments<StringType> const& u) const noexcept {
             return !operator==(u);
         }
 
@@ -620,14 +543,15 @@ namespace webpp {
         /**
          * @brief check if the specified uri has a scheme or not
          */
-        bool has_scheme() const noexcept { return scheme().has_value(); }
+        bool has_scheme() const noexcept { return scheme().empty(); }
 
         /**
          * @brief scheme
          * @return get scheme
          */
-        std::optional<std::string_view> scheme() const noexcept {
-            return get_value([](auto const& _data) { return _data.scheme; });
+        std::string_view const& scheme() const noexcept {
+            parse();
+            return _scheme;
         }
 
         /**
@@ -636,12 +560,12 @@ namespace webpp {
          * @throws logic_error if uri is const
          * @return
          */
-        uri& scheme(std::string_view const& _scheme) {
-            if (!is::scheme(_scheme))
+        uri& scheme(std::string_view const& __scheme) {
+            if (!is::scheme(__scheme))
                 throw std::invalid_argument(
                     "The specified scheme is not valid");
-
-            set_value([&](auto& _data) { _data.scheme = _scheme; });
+            parse();
+            replace_value(_scheme, __scheme);
             return *this;
         }
 
@@ -649,38 +573,28 @@ namespace webpp {
          * @brief clear scheme from uri
          * @return
          */
-        uri& clear_scheme() noexcept {
-            set_value([](auto& _data) { _data.scheme = ""; });
-            return *this;
-        }
+        uri& clear_scheme() noexcept { return scheme({}); }
 
         /**
          * @brief checks if the uri has user info or not
          */
-        bool has_user_info() const noexcept { return user_info().has_value(); }
+        bool has_user_info() const noexcept { return user_info().empty(); }
 
         /**
          * @brief get the user info or an empty value
          */
-        std::optional<std::string_view> user_info() const noexcept {
-            return get_value([](auto const& _data) { return _data.user_info; });
+        std::string_view const& user_info() const noexcept {
+            parse();
+            return _user_info;
         }
 
         /**
          * @brief decode user_info and return it as a string
          */
-        std::optional<std::string> user_info_decoded() const noexcept {
-            auto info = user_info();
-            if (!info)
-                return std::nullopt;
-
-            return decode_uri_component(info.value(),
-                                        USER_INFO_NOT_PCT_ENCODED);
+        auto user_info_decoded() const noexcept {
+            return decode_uri_component(user_info(), USER_INFO_NOT_PCT_ENCODED);
         }
 
-        std::string user_info_decoded_str() const noexcept {
-            return user_info_decoded().value_or("");
-        }
 
         /**
          * @brief set the user info if it's possible
