@@ -285,7 +285,7 @@ namespace webpp {
                 if (ALPHA.contains(__scheme[0]) &&
                     __scheme.substr(1).find_first_not_of(
                         SCHEME_NOT_FIRST.string_view())) {
-                    _scheme = _scheme;
+                    _scheme = __scheme;
                     _data.remove_prefix(schemeEnd);
                 }
             }
@@ -452,14 +452,13 @@ namespace webpp {
          * @param point
          * @param replacement
          */
-        void replace_value(std::string_view const& point,
+        void replace_value(std::size_t start, std::size_t len,
                            std::string_view const& replacement) noexcept {
             static_assert(std::is_same_v<StringType, std::string>,
                           "You cannot change a const_uri (string_view is not "
                           "modifiable)");
-            auto start_point = point.data() - data[0];
-            data = data.substr(0, start_point) + replacement +
-                   data.substr(start_point + point.size());
+            data =
+                data.substr(0, start) + replacement + data.substr(start + len);
             unparse();
         }
 
@@ -477,7 +476,7 @@ namespace webpp {
          * @brief parse from string, it will trim the spaces for generality too
          * @param string_view URI string
          */
-        explicit uri(std::string_view const& u) noexcept : data(u) {}
+        explicit uri(StringType const& u) noexcept : data(u) {}
 
         /**
          * If the user uses this
@@ -535,7 +534,7 @@ namespace webpp {
          * @return this function will return an optional<string> object. it will
          * be nullopt when the uri is not valid and has invalid characters
          */
-        std::optional<std::string> decoded_uri() noexcept {
+        auto decoded_uri() noexcept {
             return decode_uri_component<ALLOWED_CHARACTERS_IN_URI.size()>(
                 str(), ALLOWED_CHARACTERS_IN_URI);
         }
@@ -565,7 +564,36 @@ namespace webpp {
                 throw std::invalid_argument(
                     "The specified scheme is not valid");
             parse();
-            replace_value(_scheme, __scheme);
+            std::stringstream scheme_string;
+            if (!__scheme.empty()) {
+                scheme_string << __scheme;
+                scheme_string << ':';
+            }
+            std::size_t len = 0;
+            if (!_scheme.empty()) {
+                len = __scheme.size();
+            } else if (const auto schemeEnd = data.find(':');
+                       schemeEnd != std::string_view::npos) {
+                auto ___scheme = data.substr(0, schemeEnd);
+                if (ALPHA.contains(__scheme[0]) &&
+                    ___scheme.substr(1).find_first_not_of(
+                        SCHEME_NOT_FIRST.string_view())) {
+                    len = schemeEnd;
+                }
+            } else if (const auto scheme_start = data.find("//");
+                       scheme_start != std::string_view::npos) {
+                auto ___scheme = data.substr(0, scheme_start);
+                if (ALPHA.contains(__scheme[0]) &&
+                    ___scheme.substr(1).find_first_not_of(
+                        SCHEME_NOT_FIRST.string_view())) {
+                    len = scheme_start;
+                }
+            } else {
+                if (!__scheme.empty())
+                    scheme_string << "//";
+            }
+
+            replace_value(0, len, scheme_string.str());
             return *this;
         }
 
@@ -867,7 +895,7 @@ namespace webpp {
          * @brief checks if the uri has query or not
          * @return
          */
-        bool has_query() const noexcept { return query().has_value(); }
+        bool has_query() const noexcept { return !query().empty(); }
 
         std::string_view const& query() const noexcept {
             parse();
@@ -1035,8 +1063,13 @@ namespace webpp {
          * @return string
          */
         std::string str() const noexcept {
-            if (!parsed())
-                return data;
+            if (!parsed()) {
+                if constexpr (std::is_same_v<StringType, std::string_view>) {
+                    return std::string(data);
+                } else {
+                    return data;
+                }
+            }
 
             std::ostringstream buff;
 
@@ -1157,8 +1190,10 @@ namespace webpp {
 
             return target;
         }
+    };
 
-    }; // namespace webpp
+    using const_uri = uri<std::string_view>;
+    using ref_uri = uri<std::string>;
 
 } // namespace webpp
 
