@@ -666,8 +666,7 @@ namespace webpp {
          * @return string
          */
         auto host_decoded() const noexcept {
-            return decode_uri_component(
-                        host(), REG_NAME_NOT_PCT_ENCODED));
+            return decode_uri_component(host(), REG_NAME_NOT_PCT_ENCODED);
         }
 
         /**
@@ -916,7 +915,8 @@ namespace webpp {
                 _query_data = name + (value.empty() ? "" : ("=" + value)) +
                               (std::next(it) != _queries.cend() ? "&" : "");
             }
-            set_value([&](auto& _data) { _data.query = _query_data; });
+            parse();
+            replace_value(_query, _query_data);
             return *this;
         }
 
@@ -924,17 +924,14 @@ namespace webpp {
          * @brief clear the query section of the URI
          * @return
          */
-        uri& clear_query() noexcept {
-            set_value([](auto& _data) { _data.query = ""; });
-            return *this;
-        }
+        uri& clear_query() noexcept { return query({}); }
 
         /**
          * Get the query in a decoded string format
          * @return optional<string>
          */
-        std::optional<std::string> query_decoded() const noexcept {
-            return decode_uri_component(query().value_or(""),
+        auto query_decoded() const noexcept {
+            return decode_uri_component(query(),
                                         QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
         }
 
@@ -945,33 +942,31 @@ namespace webpp {
          */
         std::map<std::string, std::string> query_structured() const noexcept {
             std::map<std::string, std::string> q_structured;
-            if (auto _query_ = query()) {
-                auto _query = _query_.value();
-                std::size_t last_and_sep = 0;
-                do {
-                    auto and_sep =
-                        _query.find('&', last_and_sep); // find the delimiter
-                    auto eq_sep =
-                        _query.find("=", last_and_sep, and_sep - last_and_sep);
-                    auto name = _query.substr(last_and_sep + 1,
-                                              std::min(eq_sep, and_sep));
-                    last_and_sep = and_sep;
-                    if (name.empty()) // a name should not be empty
-                        continue;
-                    std::string value;
-                    if (and_sep !=
-                        std::string_view::npos) { // we have a value as well
-                        value = _query.substr(eq_sep + 1, and_sep);
-                    }
-                    auto d_name = decode_uri_component(
-                        name, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
-                    if (d_name)
-                        q_structured[d_name.value()] =
-                            decode_uri_component(
-                                value, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED)
-                                .value_or("");
-                } while (last_and_sep != std::string_view::npos);
-            }
+            std::size_t last_and_sep = 0;
+            parse();
+            do {
+                auto and_sep =
+                    _query.find('&', last_and_sep); // find the delimiter
+                auto eq_sep =
+                    _query.find("=", last_and_sep, and_sep - last_and_sep);
+                auto name =
+                    _query.substr(last_and_sep + 1, std::min(eq_sep, and_sep));
+                last_and_sep = and_sep;
+                if (name.empty()) // a name should not be empty
+                    continue;
+                std::string value;
+                if (and_sep !=
+                    std::string_view::npos) { // we have a value as well
+                    value = _query.substr(eq_sep + 1, and_sep);
+                }
+                auto d_name = decode_uri_component(
+                    name, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
+                if (d_name)
+                    q_structured[d_name.value()] =
+                        decode_uri_component(value,
+                                             QUERY_OR_FRAGMENT_NOT_PCT_ENCODED)
+                            .value_or("");
+            } while (last_and_sep != std::string_view::npos);
             return q_structured;
         }
 
@@ -981,11 +976,12 @@ namespace webpp {
          * @return
          */
         bool is_normalized() const noexcept {
-            auto _path = path_structured();
-            for (auto const& p : _path)
-                if (p == "." || p == "..")
-                    return true;
-            return false;
+            auto __path = path_structured();
+            return __path.cend() != std::find_if(__path.cbegin(), __path.cend(),
+                                                 [](auto const& p) {
+                                                     return p == '.' ||
+                                                            p == "..";
+                                                 });
         }
 
         /**
@@ -994,37 +990,30 @@ namespace webpp {
          * segments of the URI, in order to normalize the path
          * (apply and remove "." and ".." segments).
          */
-        uri& normalize_path() noexcept { return *this; }
+        uri& normalize_path() noexcept {
+            // TODO
+            return *this;
+        }
 
         /**
          * @brief get fragment
          */
-        std::optional<std::string_view> fragment() const noexcept {
-            return get_value([](auto const& _data) { return _data.fragment; });
-        }
-
-        /**
-         * @brief get fragment in string format
-         * @return
-         */
-        std::string_view fragment_str() const noexcept {
-            return fragment().value_or("");
+        std::string_view const& fragment() const noexcept {
+            parse();
+            return _fragment;
         }
 
         /**
          * @brief an indication of whether the URI has fragment or not.
          * @return
          */
-        bool has_fragment() const noexcept { return fragment().has_value(); }
+        bool has_fragment() const noexcept { return !fragment().empty(); }
 
         /**
          * @brief clear the fragment part of the uri
          * @return
          */
-        uri& clear_fragment() noexcept {
-            set_value([](auto& _data) { _data.fragment = ""; });
-            return *this;
-        }
+        uri& clear_fragment() noexcept { return fragment({}); }
 
         /**
          * @brief checks if the URI is a relative reference
@@ -1046,58 +1035,53 @@ namespace webpp {
          * @return string
          */
         std::string str() const noexcept {
-            if (std::holds_alternative<std::string_view>(data))
-                return std::string(std::get<std::string_view>(data));
+            if (!parsed())
+                return data;
+
             std::ostringstream buff;
 
-            auto __do_it = [&](auto& _data) {
-                // scheme
-                if (!_data.scheme.empty()) {
-                    buff << _data.scheme << ':';
-                }
-                if (has_authority()) {
-                    buff << "//";
+            parse();
 
-                    // user-info
-                    if (!_data.user_info.empty())
-                        buff << _data.user_info << '@';
-
-                    // host
-                    if (!_data.host.empty()) {
-
-                        // ipv6 hostname
-                        if (is::ipv6(_data.host))
-                            buff << '[' << _data.host << ']';
-                        else // any other type of hostname
-                            buff << _data.host;
-                    }
-
-                    // port
-                    if (!_data.port.empty()) {
-                        buff << ':' << port();
-                    }
-                }
-
-                // path
-                if (!_data.path.empty())
-                    buff << _data.path;
-
-                // query
-                if (!_data.query.empty())
-                    buff << '?' << _data.query;
-
-                // fragment
-                if (!_data.fragment.empty())
-                    buff << '#' << _data.fragment;
-            };
-
-            // handling string and string_view is the same
-            parse(1);
-            if (std::holds_alternative<uri_segments<std::string_view>>(data)) {
-                __do_it(std::get<uri_segments<std::string_view>>(data));
-            } else {
-                __do_it(std::get<uri_segments<std::string>>(data));
+            // scheme
+            if (!_scheme.empty()) {
+                buff << _scheme << ':';
             }
+            if (has_authority()) {
+                buff << "//";
+
+                // user-info
+                if (!_user_info.empty())
+                    buff << _user_info << '@';
+
+                // host
+                if (!_host.empty()) {
+
+                    // ipv6 hostname
+                    if (is::ipv6(_host))
+                        buff << '[' << _host << ']';
+                    else // any other type of hostname
+                        buff << _host;
+                }
+
+                // port
+                if (!_port.empty()) {
+                    buff << ':' << port();
+                }
+            }
+
+            // path
+            if (!_path.empty())
+                buff << _path;
+            else if (!_query.empty() || !_fragment.empty())
+                buff << '/';
+
+            // query
+            if (!_query.empty())
+                buff << '?' << _query;
+
+            // fragment
+            if (!_fragment.empty())
+                buff << '#' << _fragment;
 
             return buff.str();
         }
@@ -1126,50 +1110,49 @@ namespace webpp {
                 target = relative_uri;
                 target.normalize_path();
             } else {
-                target.set_value([&](uri_segments<std::string>& _data) {
-                    _data.scheme = scheme().value_or("");
-                    _data.fragment = relative_uri.fragment().value_or("");
-                    if (relative_uri.host()) {
-                        _data.host = relative_uri.host_string().value_or("");
-                        _data.port = std::to_string(relative_uri.port());
-                        _data.user_info = relative_uri.user_info().value_or("");
-                        _data.path = relative_uri.path().value_or("");
-                        _data.query = relative_uri.query().value_or("");
-                        target.normalize_path();
+                target._scheme = _scheme;
+                target._fragment = relative_uri.fragment().value_or("");
+                if (relative_uri.has_host()) {
+                    target.host(relative_uri._host);
+                    target.port(relative_uri._port);
+                    target.user_info(relative_uri._user_info);
+                    target.path(relative_uri._path);
+                    target.query(relative_uri._query);
+                    target.normalize_path();
+                } else {
+                    target._host = _host;
+                    target._user_info = _user_info;
+                    target._port = _port;
+                    if (!relative_uri.has_path()) {
+                        target.path(_path);
+                        target.query(relative_uri.has_query()
+                                         ? relative_uri._query
+                                         : _query);
                     } else {
-                        _data.host = host_string().value_or("");
-                        _data.user_info = user_info().value_or("");
-                        _data.port = std::to_string(port());
-                        if (!relative_uri.has_path()) {
-                            _data.path = path().value();
-                            _data.query = relative_uri.query().value_or(
-                                query().value_or(""));
+                        target.query(relative_uri._query);
+                        // RFC describes this as:
+                        // "if (R.path starts-with "/") then"
+                        if (relative_uri.is_absolute()) {
+                            target.path(relative_uri._path);
+                            target.normalize_path();
                         } else {
-                            _data.query = relative_uri.query().value_or("");
                             // RFC describes this as:
-                            // "if (R.path starts-with "/") then"
-                            if (relative_uri.is_absolute()) {
-                                _data.path = relative_uri.path().value_or("");
-                                target.normalize_path();
-                            } else {
-                                // RFC describes this as:
-                                // "T.path = merge(Base.path, R.path);"
-                                _data.path = path().value_or("");
-                                auto target_path = target.path_structured();
-                                auto relative_uri_path =
-                                    relative_uri.path_structured();
-                                if (target_path.size() > 1) {
-                                    target_path.pop_back();
-                                }
-                                std::copy(relative_uri_path.cbegin(),
-                                          relative_uri_path.cend(),
-                                          std::back_inserter(target_path));
-                                target.path(target_path);
-                                target.normalize_path();
+                            // "T.path = merge(Base.path, R.path);"
+                            target.path(_path);
+                            auto target_path = target.path_structured();
+                            auto relative_uri_path =
+                                relative_uri.path_structured();
+                            if (target_path.size() > 1) {
+                                target_path.pop_back();
                             }
+                            std::copy(relative_uri_path.cbegin(),
+                                      relative_uri_path.cend(),
+                                      std::back_inserter(target_path));
+                            target.path(target_path);
+                            target.normalize_path();
                         }
                     }
-                });
+                }
             }
 
             return target;
