@@ -4,7 +4,7 @@
 using namespace webpp;
 
 TEST(URITests, Creation) {
-    uri u("http://example.com/");
+    ref_uri u("http://example.com/");
     EXPECT_TRUE(u.has_scheme());
     EXPECT_TRUE(u.has_host());
     EXPECT_EQ(u.str(), "http://example.com/");
@@ -28,7 +28,7 @@ TEST(URITests, Creation) {
     EXPECT_EQ(u.str(), "//example.com/");
     EXPECT_TRUE(u.is_normalized());
 
-    uri ipv4_host("https://192.168.1.1");
+    const_uri ipv4_host("https://192.168.1.1");
     EXPECT_TRUE(is::ipv4(ipv4_host.host()));
     EXPECT_EQ(ipv4_host.scheme(), "https");
     EXPECT_FALSE(ipv4_host.has_path());
@@ -38,7 +38,7 @@ TEST(URITests, Creation) {
     EXPECT_TRUE(ipv4_host.has_host());
     EXPECT_EQ(ipv4_host.host(), "192.168.1.1");
 
-    uri local_file("file:///home/test/folder/file.txt");
+    ref_uri local_file("file:///home/test/folder/file.txt");
     EXPECT_EQ(local_file.path(), "/home/test/folder/file.txt");
     EXPECT_TRUE(local_file.has_path());
     EXPECT_TRUE(local_file.has_scheme());
@@ -77,7 +77,8 @@ TEST(URITests, IPv6HostName) {
     EXPECT_EQ(u.fragment(), "str");
     EXPECT_EQ(u.path(), "/folder/file.md");
     EXPECT_EQ(u.host(), "[::1]");
-    EXPECT_EQ(u.port(), 8080);
+    EXPECT_EQ(u.port_uint16(), 8080);
+    EXPECT_EQ(u.port(), "8080");
     EXPECT_TRUE(std::holds_alternative<ipv6>(u.host_structured()));
     u.clear_path();
     EXPECT_EQ(u.str(), "//[::1]:8080/?name=value&name2=value2#str");
