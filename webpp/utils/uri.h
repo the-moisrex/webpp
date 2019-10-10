@@ -147,6 +147,7 @@ namespace webpp {
      *    / \ /                        \
      *    urn:example:animal:ferret:nose
      *
+     *  [protocol"://"[username[":"password]"@"]hostname[":"port]"/"?][path]["?"querystring]["#"fragment]
      */
     template <typename StringType = std::string_view>
     class uri {
@@ -227,68 +228,77 @@ namespace webpp {
          * This is the whole url (if we need to own the uri ourselves)
          */
         StringType data;
+        std::array<std::size_t, 7> pieces{
+            std::string_view::npos, std::string_view::npos,
+            std::string_view::npos, std::string_view::npos,
+            std::string_view::npos, std::string_view::npos,
+            std::string_view::npos};
 
         static_assert(std::is_same_v<StringType, std::string> ||
                           std::is_same_v<StringType, std::string_view>,
                       "The specified string type for URI is not supported.");
 
-        /**
-         * This is the "scheme" element of the URI.
-         */
-        mutable std::string_view _scheme;
+        constexpr static auto scheme_end = 0, authority_start = 1,
+                              user_info_end = 2, port_start = 3, port_end = 4,
+                              authority_end = 4, path_start = 4,
+                              query_start = 5, fragment_start = 6;
 
-        /**
-         * This is the "UserInfo" element of the URI.
-         */
-        mutable std::string_view _user_info;
+        //        /**
+        //         * This is the "scheme" element of the URI.
+        //         */
+        //        mutable std::string_view _scheme;
+        //
+        //        /**
+        //         * This is the "UserInfo" element of the URI.
+        //         */
+        //        mutable std::string_view _user_info;
+        //
+        //        /**
+        //         * This is the "host" element of the URI.
+        //         */
+        //        mutable std::string_view _host;
+        //
+        //        /**
+        //         * This is the port number element of the URI.
+        //         */
+        //        mutable std::string_view _port;
+        //
+        //        /**
+        //         * This is the "path" element of the URI,
+        //         * as a sequence of segments.
+        //         */
+        //        mutable std::string_view _path;
+        //
+        //        /**
+        //         * This is the "query" element of the URI,
+        //         * if it has one.
+        //         */
+        //        mutable std::string_view _query;
+        //
+        //        /**
+        //         * This is the "fragment" element of the URI,
+        //         * if it has one.
+        //         */
+        //        mutable std::string_view _fragment;
 
-        /**
-         * This is the "host" element of the URI.
-         */
-        mutable std::string_view _host;
-
-        /**
-         * This is the port number element of the URI.
-         */
-        mutable std::string_view _port;
-
-        /**
-         * This is the "path" element of the URI,
-         * as a sequence of segments.
-         */
-        mutable std::string_view _path;
-
-        /**
-         * This is the "query" element of the URI,
-         * if it has one.
-         */
-        mutable std::string_view _query;
-
-        /**
-         * This is the "fragment" element of the URI,
-         * if it has one.
-         */
-        mutable std::string_view _fragment;
-
-        /**
-         * Parse the uri
-         */
-        void parse(std::string_view _data) const noexcept {
-
-            if (parsed())
-                return;
+        void parse_scheme(std::string_view& _data) const noexcept {
+            if (pieces[_scheme] == std::string_view::npos)
+                return; // It's already parsed
 
             // extracting scheme
-            if (const auto schemeEnd = _data.find(':');
-                schemeEnd != std::string_view::npos) {
-                auto __scheme = _data.substr(0, schemeEnd);
+            if (const auto scheme_end = _data.find(':');
+                scheme_end != std::string_view::npos) {
+                auto __scheme = _data.substr(0, scheme_end);
                 if (ALPHA.contains(__scheme[0]) &&
                     __scheme.substr(1).find_first_not_of(
                         SCHEME_NOT_FIRST.string_view())) {
-                    _scheme = __scheme;
-                    _data.remove_prefix(schemeEnd);
+                    pieces[_scheme] = scheme_end;
+                    _data.remove_prefix(scheme_end);
                 }
             }
+        }
+
+        void parse_authority(std::string_view& _data) const noexcept {
 
             auto authority_start = _data.find("//");
             if (authority_start != std::string_view::npos) {
@@ -304,7 +314,7 @@ namespace webpp {
                 if (auto delim = _data.find("@", 0, path_start);
                     delim != std::string_view::npos) {
 
-                    _user_info = _data.substr(0, _data.size() - delim);
+                    pieces[_user_info] = delim;
                     _data.remove_prefix(delim + 1);
                 }
 
@@ -388,6 +398,15 @@ namespace webpp {
                     _data.remove_prefix(port_end);
                 }
             }
+        }
+
+        /**
+         * Parse the uri
+         */
+        void parse(std::string_view _data) const noexcept {
+
+            if (parsed())
+                return;
 
             // extracting path
             if (_data.starts_with('/')) {
@@ -437,13 +456,8 @@ namespace webpp {
          * re-parsing the uri.
          */
         inline void unparse() const noexcept {
-            _scheme = {};
-            _user_info = {};
-            _host = {};
-            _port = {};
-            _path = {};
-            _query = {};
-            _fragment = {};
+            _scheme = _user_info = _host = _port = _path = _query = _fragment =
+                std::string_view::npos;
         }
 
         /**
