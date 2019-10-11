@@ -30,3 +30,43 @@ TEST(IPv4Tests, Methods) {
     EXPECT_EQ(octets[2], 1);
     EXPECT_EQ(octets[3], 1);
 }
+
+TEST(IPv4Tests, Validation) {
+    auto valid_ipv4s = {"0.0.0.0", "192.168.1.1", "255.255.255.255"};
+
+    auto invalid_ipv4s = {
+        "10.168.0001.100", "0.0.0.256",      "256.255.255.255",
+        "256.0.0.0",       "192.168. 224.0", "192.168.224.0 1",
+    };
+
+    for (auto const& _ip : valid_ipv4s) {
+        EXPECT_TRUE(webpp::is::ipv4(_ip));
+        EXPECT_TRUE(ipv4(_ip).is_valid());
+    }
+
+    for (auto const& _ip : invalid_ipv4s) {
+        EXPECT_FALSE(webpp::is::ipv4(_ip));
+        EXPECT_FALSE(ipv4(_ip).is_valid());
+    }
+}
+
+TEST(IPv6Tests, CIDR) {
+    auto valid_ipv4s = {"192.168.1.1/12", "192.168.1.1/32"};
+    auto invalid_ipv4s = {"192.168.1.1/", "192.168.1.1/12.34", "192.168.1.1/01",
+                          "192.168.1.1/33"};
+
+    for (auto const& _ip : valid_ipv4s) {
+        EXPECT_TRUE(webpp::is::ipv6(_ip)) << _ip;
+        EXPECT_TRUE(ipv4(_ip).is_valid()) << _ip;
+        EXPECT_TRUE(ipv4(_ip).has_prefix()) << _ip;
+        EXPECT_GE(ipv4(_ip).prefix(), 0) << _ip;
+        EXPECT_LE(ipv4(_ip).prefix(), 32) << _ip;
+    }
+
+    for (auto const& _ip : invalid_ipv4s) {
+        EXPECT_FALSE(webpp::is::ipv6(_ip)) << _ip;
+        EXPECT_FALSE(ipv4(_ip).is_valid()) << _ip;
+        EXPECT_FALSE(ipv4(_ip).has_prefix()) << _ip;
+        // TODO: check cidr(prefix) method
+    }
+}

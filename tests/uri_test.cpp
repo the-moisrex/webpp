@@ -116,6 +116,63 @@ TEST(URITests, WieredURIs) {
 }
 
 TEST(URITests, URN) {
+    auto valid_urns = {
+        "urn:isbn:0451450523",
+        "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66",
+        "urn:publishing:book",
+        "urn:isbn:0451450523",
+        "urn:isan:0000-0000-2CEA-0000-1-0000-0000-Y",
+        "urn:ISSN:0167-6423",
+        "urn:ietf:rfc:2648",
+        "urn:mpeg:mpeg7:schema:2001",
+        "urn:oid:2.16.840",
+        "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66",
+        "urn:nbn:de:bvb:19-146642",
+        "urn:lex:eu:council:directive:2010-03-09;2010-19-UE",
+        "urn:lsid:zoobank.org:pub:CDC8D258-8F57-41DC-B560-247E17D3DC8C",
+        "urn:mpeg:mpeg7:schema:2001urn:isbn:0451450523",
+        "urn:sha1:YNCKHTQCWBTRNJIV4WNAE52SJUQCZO5C",
+        "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66"};
+
+    // these are valid urls but they shouldn't be considers part of urn
+    auto valid_urls = {"mailto:someone@example.com",
+                       "http://foo.com/blah_blah",
+                       "http://foo.com/blah_blah/",
+                       "http://foo.com/blah_blah_(wikipedia)",
+                       "http://foo.com/blah_blah_(wikipedia)_(again)",
+                       "http://www.example.com/wpstyle/?p=364",
+                       "https://www.example.com/foo/?bar=baz&inga=42&quux",
+                       "http://✪df.ws/123",
+                       "http://userid:password@example.com:8080",
+                       "http://userid:password@example.com:8080/",
+                       "http://userid@example.com",
+                       "http://userid@example.com/",
+                       "http://userid@example.com:8080",
+                       "http://userid@example.com:8080/",
+                       "http://userid:password@example.com",
+                       "http://userid:password@example.com/",
+                       "http://142.42.1.1/",
+                       "http://142.42.1.1:8080/",
+                       "http://➡.ws/䨹",
+                       "http://⌘.ws",
+                       "http://⌘.ws/",
+                       "http://foo.com/blah_(wikipedia)#cite-1",
+                       "http://foo.com/blah_(wikipedia)_blah#cite-1",
+                       "http://foo.com/unicode_(✪)_in_parens",
+                       "http://foo.com/(something)?after=parens",
+                       "http://☺.damowmow.com/",
+                       "http://code.google.com/events/#&product=browser",
+                       "http://j.mp",
+                       "ftp://foo.bar/baz",
+                       "http://foo.bar/?q=Test%20URL-encoded%20stuff",
+                       "http://مثال.إختبار",
+                       "http://例子.测试",
+                       "http://उदाहरण.परीक्षा",
+                       "http://-.~_!$&()*+,;=:%40:80%2f::::::@example.com",
+                       "http://1337.net",
+                       "http://a.b-c.de",
+                       "http://223.255.255.254"};
+
     const_uri a("urn:example:a123,z456");
     const_uri b = "URN:example:a123,z456";
     const_uri c = "urn:EXAMPLE:a123,z456";

@@ -228,85 +228,86 @@ namespace webpp {
          * This is the whole url (if we need to own the uri ourselves)
          */
         StringType data;
-        std::array<std::size_t, 7> pieces{
-            std::string_view::npos, std::string_view::npos,
-            std::string_view::npos, std::string_view::npos,
-            std::string_view::npos, std::string_view::npos,
-            std::string_view::npos};
 
         static_assert(std::is_same_v<StringType, std::string> ||
                           std::is_same_v<StringType, std::string_view>,
                       "The specified string type for URI is not supported.");
 
-        constexpr static auto scheme_end = 0, authority_start = 1,
-                              user_info_end = 2, port_start = 3, port_end = 4,
-                              authority_end = 4, path_start = 4,
-                              query_start = 5, fragment_start = 6;
+        mutable std::size_t scheme_end = std::string_view : npos,
+                            authority_start = std::string_view::npos,
+                            user_info_end = std::string_view::npos,
+                            port_start = std::string_view::npos,
+                            authority_end = std::string_view::npos,
+                            query_start = std::string_view::npos,
+                            fragment_start = std::string_view::npos;
 
-        //        /**
-        //         * This is the "scheme" element of the URI.
-        //         */
-        //        mutable std::string_view _scheme;
-        //
-        //        /**
-        //         * This is the "UserInfo" element of the URI.
-        //         */
-        //        mutable std::string_view _user_info;
-        //
-        //        /**
-        //         * This is the "host" element of the URI.
-        //         */
-        //        mutable std::string_view _host;
-        //
-        //        /**
-        //         * This is the port number element of the URI.
-        //         */
-        //        mutable std::string_view _port;
-        //
-        //        /**
-        //         * This is the "path" element of the URI,
-        //         * as a sequence of segments.
-        //         */
-        //        mutable std::string_view _path;
-        //
-        //        /**
-        //         * This is the "query" element of the URI,
-        //         * if it has one.
-        //         */
-        //        mutable std::string_view _query;
-        //
-        //        /**
-        //         * This is the "fragment" element of the URI,
-        //         * if it has one.
-        //         */
-        //        mutable std::string_view _fragment;
+        /**
+         * scheme    :    start=0       end=[0]
+         * user_info :    start=[1]     end=[2]
+         * host      :    start=[2|1]   end=[3|4|...]
+         * port      :    start=[3]     end=[4]
+         * path      :    start=[4]     end=[5]
+         * query     :    start=[5]     end=[6]
+         * fragment  :    start=[6]     end=[...]
+         *
+         * port_end == authority_end == path_start
+         */
 
-        void parse_scheme(std::string_view& _data) const noexcept {
-            if (pieces[_scheme] == std::string_view::npos)
+        /**
+         * parse the scheme
+         */
+        void parse_scheme() const noexcept {
+            if (scheme_end != std::string_view::npos)
                 return; // It's already parsed
 
+            auto _data = (std::is_same_v<StringType, std::string_view>
+                              ? data
+                              : std::string_view(data));
             // extracting scheme
-            if (const auto scheme_end = _data.find(':');
-                scheme_end != std::string_view::npos) {
-                auto __scheme = _data.substr(0, scheme_end);
+            if (_data.starts_with("//")) {
+                authority_start = 2;
+                scheme_end = data.size(); // so we don't have to check again
+                return;
+            } else if (const auto colon = _data.find(':');
+                       colon != std::string_view::npos) {
+                auto __scheme = _data.substr(0, colon);
                 if (ALPHA.contains(__scheme[0]) &&
                     __scheme.substr(1).find_first_not_of(
                         SCHEME_NOT_FIRST.string_view())) {
-                    pieces[_scheme] = scheme_end;
-                    _data.remove_prefix(scheme_end);
+                    scheme_end = colon;
+
+                    if (_data.substr(colon + 2, 2) == "//") {
+                        authority_start = colon + 2;
+                    } else {
+                        // it should be a URN or an invalid URI at this point
+                    }
+                    return;
                 }
             }
+
+            scheme_end = authority_start = data.size();
         }
 
-        void parse_authority(std::string_view& _data) const noexcept {
+        /**
+         * parsing the authority parts of the uri
+         */
+        void parse_authority_full() const noexcept {
 
-            auto authority_start = _data.find("//");
-            if (authority_start != std::string_view::npos) {
-                _data.remove_prefix(authority_start + 2);
+            parse_scheme();
+            parse_path();
+
+            auto _data = (std::is_same_v<StringType, std::string_view>
+                              ? data
+                              : std::string_view(data))
+                             .substr(authority_start, authority_end);
+
+            auto _authority_start = data.find("//");
+            if (_authority_start != std::string_view::npos) {
+                _data.remove_prefix(_authority_start + 2);
             }
             auto path_start = _data.find('/');
 
-            if (authority_start != std::string_view::npos && path_start != 0) {
+            if (_authority_start != std::string_view::npos && path_start != 0) {
 
                 auto port_start = _data.find(":", 0, path_start);
 
@@ -398,6 +399,35 @@ namespace webpp {
                     _data.remove_prefix(port_end);
                 }
             }
+        }
+
+        /**
+         * parse fragment (it finds fragment_start)
+         */
+        void parse_fragment() const noexcept {
+            if (fragment_start != std::string_view::npos)
+                return; // It's already parsed
+
+            auto _data = (std::is_same_v<StringType, std::string_view>
+                              ? data
+                              : std::string_view(data));
+
+            fragment_start = _data.find("#");
+            if (fragment_start == std::string_view::npos) {
+                fragment_start = data.size();
+            }
+        }
+
+        /**
+         * parse query; it ensures that query_start and fragment_start are
+         * changed
+         */
+        void parse_query() const noexcept {
+            parse_fragment();
+
+            auto _data = (std::is_same_v<StringType, std::string_view>
+                              ? data
+                              : std::string_view(data));
         }
 
         /**
@@ -1203,6 +1233,43 @@ namespace webpp {
             }
 
             return target;
+        }
+
+        /**
+         * Check if the specified URI is in fact a URN
+         *
+         * URN syntax based on https://tools.ietf.org/html/rfc8141#section-2
+         *
+         *      namestring    = assigned-name
+         *                      [ rq-components ]
+         *                      [ "#" f-component ]
+         *      assigned-name = "urn" ":" NID ":" NSS
+         *      NID           = (alphanum) 0*30(ldh) (alphanum)
+         *      ldh           = alphanum / "-"
+         *      NSS           = pchar *(pchar / "/")
+         *      rq-components = [ "?+" r-component ]
+         *                      [ "?=" q-component ]
+         *      r-component   = pchar *( pchar / "/" / "?" )
+         *      q-component   = pchar *( pchar / "/" / "?" )
+         *      f-component   = fragment
+         *
+         */
+        bool is_urn() const noexcept {
+            // TODO
+        }
+
+        /**
+         * Check if the specified URI is in fact a URL
+         */
+        bool is_url() const noexcept {
+            // TODO
+        }
+
+        /**
+         * Check if the specified string is a valid URI or not
+         */
+        bool is_valid() const noexcept {
+            // TODO
         }
     };
 
