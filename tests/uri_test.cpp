@@ -134,6 +134,19 @@ TEST(URITests, URN) {
         "urn:sha1:YNCKHTQCWBTRNJIV4WNAE52SJUQCZO5C",
         "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66"};
 
+    const_uri a("urn:example:a123,z456");
+    const_uri b = "URN:example:a123,z456";
+    const_uri c = "urn:EXAMPLE:a123,z456";
+
+    EXPECT_EQ(a, b);
+    EXPECT_EQ(a, c);
+    EXPECT_EQ(b, c);
+    EXPECT_TRUE(a.is_urn());
+    EXPECT_TRUE(b.is_urn());
+    EXPECT_TRUE(c.is_urn());
+}
+
+TEST(URITests, URL) {
     // these are valid urls but they shouldn't be considers part of urn
     auto valid_urls = {"mailto:someone@example.com",
                        "http://foo.com/blah_blah",
@@ -173,14 +186,59 @@ TEST(URITests, URN) {
                        "http://a.b-c.de",
                        "http://223.255.255.254"};
 
-    const_uri a("urn:example:a123,z456");
-    const_uri b = "URN:example:a123,z456";
-    const_uri c = "urn:EXAMPLE:a123,z456";
+    // these strings are not a valid URL (doesn't mean they are not a valid URI)
+    // I'm kinda not sure about some of these; specially those with IP addresses
+    auto invalid_urls = {"http://",
+                         "http://.",
+                         "http://..",
+                         "http://../",
+                         "http://?",
+                         "http://??",
+                         "http://??/",
+                         "http://#",
+                         "http://##",
+                         "http://##/",
+                         "http://foo.bar?q=Spaces should be encoded",
+                         "//",
+                         "//a",
+                         "///a",
+                         "///",
+                         "http:///a",
+                         "foo.com",
+                         "rdar://1234",
+                         "h://test",
+                         "http:// shouldfail.com",
+                         ":// should fail",
+                         "http://foo.bar/foo(bar)baz quux",
+                         "ftps://foo.bar/",
+                         "http://-error-.invalid/",
+                         "http://a.b--c.de/",
+                         "http://-a.b.co",
+                         "http://a.b-.co",
+                         "http://0.0.0.0",
+                         "http://10.1.1.0",
+                         "http://10.1.1.255",
+                         "http://224.1.1.1",
+                         "http://1.1.1.1.1",
+                         "http://123.123.123",
+                         "http://3628126748",
+                         "http://.www.foo.bar/",
+                         "http://www.foo.bar./",
+                         "http://.www.foo.bar./",
+                         "http://10.1.1.1",
+                         "http://10.1.1.254"};
 
-    EXPECT_EQ(a, b);
-    EXPECT_EQ(a, c);
-    EXPECT_EQ(b, c);
-    EXPECT_TRUE(a.is_urn());
-    EXPECT_TRUE(b.is_urn());
-    EXPECT_TRUE(c.is_urn());
+    for (auto const& u : valid_urls) {
+        auto a = const_uri(u);
+        EXPECT_TRUE(a.is_valid()) << u; // It's a valid URI
+        EXPECT_TRUE(a.is_url()) << u;   // it's a valid URL too
+        EXPECT_FALSE(a.is_urn()) << u;  // it shouldn't be a URN
+    }
+
+    for (auto const& u : valid_urls) {
+        auto a = const_uri(u);
+        // It might be a valid URI
+        EXPECT_FALSE(a.is_url()) << u; // it's a valid URL too
+        EXPECT_FALSE(a.is_urn()) << u; // it shouldn't be a URN
+    }
 }
