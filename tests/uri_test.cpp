@@ -242,3 +242,18 @@ TEST(URITests, URL) {
         EXPECT_FALSE(a.is_urn()) << u; // it shouldn't be a URN
     }
 }
+
+TEST(URITests, Set) {
+    EXPECT_EQ(uri().scheme("ftp").str(), "ftp:");
+    EXPECT_EQ(uri("mailto:someone@example.com").scheme("somethingelse").str(),
+              "somethingelse:someone@example.com");
+
+    // TODO: should this be allowd even???
+    EXPECT_EQ(uri("urn:mpeg:mpeg7:schema:2001urn:isbn:0451450523")
+                  .scheme("ftp")
+                  .str(),
+              "ftp:mpeg:mpeg7:schema:2001urn:isbn:0451450523");
+
+    EXPECT_EQ(uri("http://example.com/").scheme("ftp").str(),
+              "ftp://example.com/");
+}

@@ -233,7 +233,7 @@ namespace webpp {
                           std::is_same_v<StringType, std::string_view>,
                       "The specified string type for URI is not supported.");
 
-        mutable std::size_t scheme_end = std::string_view : npos,
+        mutable std::size_t scheme_end = std::string_view::npos,
                             authority_start = std::string_view::npos,
                             user_info_end = std::string_view::npos,
                             port_start = std::string_view::npos,
@@ -255,6 +255,7 @@ namespace webpp {
 
         /**
          * parse the scheme
+         * this method will fill the "authority_start" and "scheme_end" vars
          */
         void parse_scheme() const noexcept {
             if (scheme_end != std::string_view::npos)
@@ -280,12 +281,98 @@ namespace webpp {
                         authority_start = colon + 2;
                     } else {
                         // it should be a URN or an invalid URI at this point
+                        authority_start = data.size();
                     }
                     return;
                 }
             }
 
             scheme_end = authority_start = data.size();
+        }
+
+        /**
+         * parse user info
+         */
+        void parse_user_info() const noexcept {
+            if (user_info_end != std::string_view::npos)
+                return; // It's already parsed
+
+            parse_scheme(); // to get "authority_start"
+
+            if (authority_start == data.size()) {
+                user_info_end = data.size();
+                return; // there's no user_info_end without authority_start
+            }
+
+            parse_path(); // to get "authority_end"
+
+            auto _data = (std::is_same_v<StringType, std::string_view>
+                              ? data
+                              : std::string_view(data));
+
+            user_info_end = _data.find('@', authority_start,
+                                       authority_end - authority_start);
+            if (user_info_end == std::string_view::npos) {
+                user_info_end = data.size();
+            }
+        }
+
+        /**
+         * parse path
+         * this will make sure that the "authority_end" variable is filled
+         */
+        void parse_path() const noexcept {
+            if (authority_end != std::string_view::npos)
+                return; // It's already parsed
+
+            parse_scheme(); // to get "authority_start"
+            parse_query();  // to get "query_start"
+
+            auto _data = (std::is_same_v<StringType, std::string_view>
+                              ? data
+                              : std::string_view(data));
+
+            auto starting_point =
+                authority_start != data.size()
+                    ? authority_start
+                    : (scheme_end != data.size() &&
+                               scheme_end != std::string_view::npos
+                           ? scheme_end
+                           : 0);
+            authority_end = _data.find('/', starting_point, query_start);
+            if (authority_end == std::string_view::npos) {
+                authority_end = data.size();
+            }
+        }
+
+        /**
+         * parse port
+         * this makes sure that the "port_start" variable is filled
+         */
+        void parse_port() const noexcept {
+            if (port_start != std::string_view::npos)
+                return; // It's already parsed
+
+            parse_user_info(); // to get "authority_start" and "user_info_end"
+
+            if (authority_start == data.size()) {
+                port_start = data.size();
+                return; // there's no user_info_end without authority_start
+            }
+
+            parse_path(); // to get "authority_end"
+
+            auto _data = (std::is_same_v<StringType, std::string_view>
+                              ? data
+                              : std::string_view(data));
+
+            auto starting_point =
+                user_info_end != data.size() ? user_info_end : authority_start;
+            port_start = _data.find(':', starting_point,
+                                    authority_end - authority_start);
+            if (port_start == std::string_view::npos) {
+                port_start = data.size(); // there's no port
+            }
         }
 
         /**
@@ -412,7 +499,7 @@ namespace webpp {
                               ? data
                               : std::string_view(data));
 
-            fragment_start = _data.find("#");
+            fragment_start = _data.find('#');
             if (fragment_start == std::string_view::npos) {
                 fragment_start = data.size();
             }
@@ -428,6 +515,10 @@ namespace webpp {
             auto _data = (std::is_same_v<StringType, std::string_view>
                               ? data
                               : std::string_view(data));
+            query_start = _data.find('?', 0, fragment_start);
+            if (query_start == std::string_view::npos) {
+                query_start = data.size();
+            }
         }
 
         /**
@@ -472,22 +563,13 @@ namespace webpp {
         void parse() const noexcept { parse(data); }
 
         /**
-         * Check if the uri is already parsed or not
-         * @return
-         */
-        inline bool parsed() const noexcept {
-            return !_scheme.empty() || !_user_info.empty() || !_host.empty() ||
-                   !_port.empty() || !_path.empty() || !_query.empty() ||
-                   !_fragment.empty();
-        }
-
-        /**
          * Remove the cache and make sure calling the functions will cause
          * re-parsing the uri.
          */
         inline void unparse() const noexcept {
-            _scheme = _user_info = _host = _port = _path = _query = _fragment =
-                std::string_view::npos;
+            scheme_end = authority_start = user_info_end = port_start =
+                authority_end = query_start = fragment_start =
+                    std::string_view::npos;
         }
 
         /**
@@ -504,6 +586,7 @@ namespace webpp {
             data =
                 data.substr(0, start) + replacement + data.substr(start + len);
             unparse();
+            // TODO: you may want to not unparse everything
         }
 
       public:
@@ -586,15 +669,18 @@ namespace webpp {
         /**
          * @brief check if the specified uri has a scheme or not
          */
-        bool has_scheme() const noexcept { return scheme().empty(); }
+        bool has_scheme() const noexcept {
+            parse_scheme();
+            return scheme_end == data.size();
+        }
 
         /**
          * @brief scheme
          * @return get scheme
          */
-        std::string_view const& scheme() const noexcept {
-            parse();
-            return _scheme;
+        std::string_view scheme() const noexcept {
+            parse_scheme();
+            return std::string_view(data, 0, scheme_end);
         }
 
         /**
@@ -607,37 +693,23 @@ namespace webpp {
             if (!is::scheme(__scheme))
                 throw std::invalid_argument(
                     "The specified scheme is not valid");
-            parse();
-            std::stringstream scheme_string;
-            if (!__scheme.empty()) {
-                scheme_string << __scheme;
-                scheme_string << ':';
-            }
-            std::size_t len = 0;
-            if (!_scheme.empty()) {
-                len = __scheme.size();
-            } else if (const auto schemeEnd = data.find(':');
-                       schemeEnd != std::string_view::npos) {
-                auto ___scheme = data.substr(0, schemeEnd);
-                if (ALPHA.contains(__scheme[0]) &&
-                    ___scheme.substr(1).find_first_not_of(
-                        SCHEME_NOT_FIRST.string_view())) {
-                    len = schemeEnd;
-                }
-            } else if (const auto scheme_start = data.find("//");
-                       scheme_start != std::string_view::npos) {
-                auto ___scheme = data.substr(0, scheme_start);
-                if (ALPHA.contains(__scheme[0]) &&
-                    ___scheme.substr(1).find_first_not_of(
-                        SCHEME_NOT_FIRST.string_view())) {
-                    len = scheme_start;
-                }
+            parse_scheme();
+            if (scheme_end != data.size()) {
+                replace_value(0, scheme_end, __scheme);
             } else {
-                if (!__scheme.empty())
-                    scheme_string << "//";
+                // the URI doesn't have a scheme now, we have to put it in the
+                // right place
+                if (authority_start != data.size()) {
+                    replace_value(0, 0,
+                                  std::string(__scheme) + ':' +
+                                      (std::string_view(data).starts_with("//")
+                                           ? ""
+                                           : "//"));
+                } else {
+                    // It's a URN (or URN like URI)
+                    replace_value(0, 0, std::string(__scheme) + ':');
+                }
             }
-
-            replace_value(0, len, scheme_string.str());
             return *this;
         }
 
