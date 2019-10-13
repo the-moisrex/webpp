@@ -813,6 +813,9 @@ namespace webpp {
 
             std::size_t start, len;
 
+            // you know I could do this in one line of code, but I did this
+            // because I don't want you to curse me :)
+
             // we have authority_start, let's check user_info and port too
             if (user_info_end == data.size()) {
                 // there's no user info
@@ -848,12 +851,12 @@ namespace webpp {
          */
         std::variant<ipv4, ipv6, std::string_view> host_structured() const
             noexcept {
-            parse();
+            auto _host = host();
             if (is::ipv4(_host))
                 return ipv4(_host);
             if (is::ipv6(_host))
                 return ipv6(_host);
-            return _host;
+            return std::string(_host);
         }
 
         /**
