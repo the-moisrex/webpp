@@ -522,6 +522,15 @@ namespace webpp {
         }
 
         /**
+         * parse the host
+         */
+        void parse_host() const noexcept {
+            parse_user_info(); // to get "authority_start" and "user_info_end"
+            parse_port(); // to get "port_start" and hopefully "authority_end"
+            parse_path(); // to make sure we have "authority_end"
+        }
+
+        /**
          * Parse the uri
          */
         void parse(std::string_view _data) const noexcept {
@@ -680,14 +689,15 @@ namespace webpp {
          */
         std::string_view scheme() const noexcept {
             parse_scheme();
-            return std::string_view(data, 0, scheme_end);
+            return scheme_end == data.size()
+                       ? std::string_view()
+                       : std::string_view(data, 0, scheme_end);
         }
 
         /**
          * @brief set scheme
          * @param _scheme
          * @throws logic_error if uri is const
-         * @return
          */
         uri& scheme(std::string_view const& __scheme) {
             if (!is::scheme(__scheme))
@@ -715,21 +725,28 @@ namespace webpp {
 
         /**
          * @brief clear scheme from uri
-         * @return
          */
         uri& clear_scheme() noexcept { return scheme({}); }
 
         /**
          * @brief checks if the uri has user info or not
          */
-        bool has_user_info() const noexcept { return !user_info().empty(); }
+        bool has_user_info() const noexcept {
+            parse_user_info();
+            return user_info_end != data.size() &&
+                   authority_start != data.size();
+        }
 
         /**
          * @brief get the user info or an empty value
          */
-        std::string_view const& user_info() const noexcept {
-            parse();
-            return _user_info;
+        std::string_view user_info() const noexcept {
+            parse_user_info();
+            return (user_info_end == data.size() ||
+                    authority_start == data.size())
+                       ? std::string_view()
+                       : std::string_view(data, authority_start,
+                                          user_info_end - authority_start);
         }
 
         /**
@@ -743,29 +760,83 @@ namespace webpp {
          * @brief set the user info if it's possible
          */
         uri& user_info(std::string_view const& info) noexcept {
-            parse();
-            replace_value(_user_info, encode_uri_component(
-                                          info, USER_INFO_NOT_PCT_ENCODED));
+            parse_user_info();
+            auto encoded_info =
+                encode_uri_component(info, USER_INFO_NOT_PCT_ENCODED);
+            if (user_info_end == data.size() ||
+                authority_start == data.size()) {
+                // the URI already has user info, I just have to replace it
+                replace_value(authority_start, user_info_end - authority_start,
+                              encoded_info);
+            } else {
+                // I don't know where is it, let's find it
+
+                if (authority_start == data.size()) {
+                    // this URI doesn't have authority in it, but I'm going to
+                    // insert authority into it because the user is obviously
+                    // demanding it; of course after this, the URI won't be a
+                    // valid URI until the user sets at lease scheme too.
+
+                    parse_scheme(); // to get "scheme_end"
+                    if (scheme_end == data.size()) {
+                        // there's no scheme either
+                        replace_value(0, 0,
+                                      std::string("//") + encoded_info + "@");
+                    } else {
+                        // there's scheme and we have to put it after that
+                        replace_value(scheme_end + 1, 0,
+                                      std::string("//") + encoded_info + "@");
+                    }
+                } else {
+                    // there's authority start but there's no user_info_end
+                    replace_value(authority_start, 0, encoded_info + "@");
+                }
+            }
             return *this;
         }
 
         /**
          * @brief clears the user info if exists
-         * @return
          */
-        uri& clear_user_info() noexcept {
-            parse();
-            replace_value(_user_info, {});
-            return *this;
-        }
+        uri& clear_user_info() noexcept { return user_info({}); }
 
         /**
-         * @brief return host as an optional<string_view>
-         * @return optional<string_view>
+         * @brief return host as an string_view
+         * @return string_view
          */
-        std::string_view const& host() const noexcept {
-            parse();
-            return _host;
+        std::string_view host() const noexcept {
+            parse_host();
+            if (authority_start == data.size()) {
+                // there will not be a host without the authority_start
+                return {};
+            }
+
+            std::size_t start, len;
+
+            // we have authority_start, let's check user_info and port too
+            if (user_info_end == data.size()) {
+                // there's no user info
+                start = authority_start;
+            } else {
+                // there's a user info
+                start = user_info_end;
+            }
+
+            if (port_start != data.size()) {
+                // but there's a port
+                len = port_start - authority_start;
+            } else {
+                // there's no port either
+                if (authority_end != data.size()) {
+                    // there's a path
+                    len = authority_end - authority_start;
+                } else {
+                    // there's no path either
+                    len = data.size() - 1; // till the end
+                }
+            }
+
+            return std::string_view(data, start, len);
         }
 
         /**
@@ -786,24 +857,6 @@ namespace webpp {
         }
 
         /**
-         * @brief get the hostname/ipv4/ipv6 from the URI. if the URI doesn't
-         * include a hostname/ip or its hostname/ip is not in a valid shape, it
-         * will return an empty string
-         * @return string/ipv4/ipv6
-         * @default empty string
-         */
-        std::variant<ipv4, ipv6, std::string> host_decoded_structured() const
-            noexcept {
-            if (auto _host_structured = host_structured();
-                std::holds_alternative<std::string_view>(_host_structured))
-                return decode_uri_component(
-                    std::get<std::string_view>(_host_structured),
-                    REG_NAME_NOT_PCT_ENCODED);
-            else
-                return _host_structured;
-        }
-
-        /**
          * @brief get the decoded version of hostname/ip of the uri or an empty
          * string if the specified URI does not include a hostname/ip or its
          * hostname has the wrong character encodings.
@@ -818,16 +871,37 @@ namespace webpp {
          * not.
          * @return true if it find a hostname/ip in the uri
          */
-        bool has_host() const noexcept { return host().empty(); }
+        bool has_host() const noexcept { return !host().empty(); }
 
         /**
          * @brief set the hostname/ip in the uri if possible
          */
         uri& host(std::string_view const& new_host) noexcept {
-            parse();
-            replace_value(_host, encode_uri_component(
-                                     new_host, REG_NAME_NOT_PCT_ENCODED));
+            parse_host();
+
+            // todo: are you sure it can handle punycode as well?
+            auto encoded_host =
+                encode_uri_component(new_host, REG_NAME_NOT_PCT_ENCODED);
+
             return *this;
+        }
+
+        /**
+         * @brief get the hostname/ipv4/ipv6 from the URI. if the URI doesn't
+         * include a hostname/ip or its hostname/ip is not in a valid shape, it
+         * will return an empty string
+         * @return string/ipv4/ipv6
+         * @default empty string
+         */
+        std::variant<ipv4, ipv6, std::string> host_structured_decoded() const
+            noexcept {
+            if (auto _host_structured = host_structured();
+                std::holds_alternative<std::string_view>(_host_structured))
+                return decode_uri_component(
+                    std::get<std::string_view>(_host_structured),
+                    REG_NAME_NOT_PCT_ENCODED);
+            else
+                return _host_structured;
         }
 
         /**
