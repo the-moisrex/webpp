@@ -886,6 +886,49 @@ namespace webpp {
             auto encoded_host =
                 encode_uri_component(new_host, REG_NAME_NOT_PCT_ENCODED);
 
+            if (authority_start == data.size()) {
+                // there's no authority start
+                if (scheme_end == data.size()) {
+                    // there's no scheme either, so we just have to add to the
+                    // begining of the string
+                    replace_value(0, 0, std::string("//") + encoded_host);
+                } else {
+                    // there's a scheme
+                    replace_value(scheme_end, 0,
+                                  std::string("//") + encoded_host);
+                }
+            }
+
+            std::size_t start, len;
+
+            // you know I could do this in one line of code, but I did this
+            // because I don't want you to curse me :)
+
+            // we have authority_start, let's check user_info and port too
+            if (user_info_end == data.size()) {
+                // there's no user info
+                start = authority_start;
+            } else {
+                // there's a user info
+                start = user_info_end;
+            }
+
+            if (port_start != data.size()) {
+                // but there's a port
+                len = port_start - authority_start;
+            } else {
+                // there's no port either
+                if (authority_end != data.size()) {
+                    // there's a path
+                    len = authority_end - authority_start;
+                } else {
+                    // there's no path either
+                    len = data.size() - 1; // till the end
+                }
+            }
+
+            replace_value(start, len, encoded_host);
+
             return *this;
         }
 
@@ -913,6 +956,17 @@ namespace webpp {
          */
         uri& clear_host() noexcept { return host({}); }
 
+        uint16_t default_port() const noexcept {
+            auto _scheme = scheme();
+            if (_scheme == "http") {
+                return 80u;
+            }
+            if (_scheme == "https")
+                return 443;
+            // TODO: add more protocols here
+            return 0u;
+        }
+
         /**
          * @brief port number of the uri;
          * @return port number
@@ -920,9 +974,9 @@ namespace webpp {
          */
         uint16_t port_uint16() const noexcept {
             if (has_port()) {
-                return static_cast<uint16_t>(to_uint(_port));
+                return static_cast<uint16_t>(to_uint(port()));
             }
-            return 80u;
+            return default_port();
         }
 
         /**
