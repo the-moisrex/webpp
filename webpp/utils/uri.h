@@ -1082,15 +1082,21 @@ namespace webpp {
          * @brief check if the URI has a path or not
          * @return
          */
-        bool has_path() const noexcept { return !path().empty(); }
+        bool has_path() const noexcept {
+            parse_path();
+            return authority_end != data.size() && data[authority_end] == '/';
+        }
 
         /**
          * @brief get path in non-decoded, string format
          * @return
          */
-        std::string_view const& path() const noexcept {
-            parse();
-            return _path;
+        std::string_view path() const noexcept {
+            if (!has_path())
+                return {};
+            return std::string_view(data, authority_end,
+                                    std::min(query_start, fragment_start) -
+                                        authority_end);
         }
 
         /**
