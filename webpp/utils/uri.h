@@ -958,11 +958,19 @@ namespace webpp {
 
         uint16_t default_port() const noexcept {
             auto _scheme = scheme();
-            if (_scheme == "http") {
+            if (_scheme == "http")
                 return 80u;
-            }
             if (_scheme == "https")
-                return 443;
+                return 443u;
+            if (_scheme == "ftp")
+                return 21u;
+            if (_scheme == "ssh")
+                return 22u;
+            if (_scheme == "telnet")
+                return 23u;
+            if (_scheme == "ftps")
+                return 990u;
+
             // TODO: add more protocols here
             return 0u;
         }
@@ -983,9 +991,19 @@ namespace webpp {
          * Get the port in a string_view format; there's no default value.
          * @return string_view
          */
-        std::string_view const& port() const noexcept {
-            parse();
-            return _port;
+        std::string_view port() const noexcept {
+            parse_port();
+
+            // there's no port
+            if (port_start == data.size())
+                return {};
+
+            // don't worry authority_end will be the end of the string anyway
+            return std::string_view(data, port_start + 1,
+                                    (authority_end == data.size()
+                                         ? authority_end - 1
+                                         : authority_end) -
+                                        (port_start + 1));
         }
 
         /**
@@ -993,7 +1011,10 @@ namespace webpp {
          * not
          * @return bool
          */
-        bool has_port() const noexcept { return !port().empty(); }
+        bool has_port() const noexcept {
+            parse_port();
+            return port_start == data.size();
+        }
 
         /**
          * @brief set port
@@ -1004,9 +1025,50 @@ namespace webpp {
             return port(std::to_string(new_port));
         }
 
-        uri& port(std::string_view const& new_port) noexcept {
-            parse();
-            replace_value(_port, new_port);
+        /**
+         * Set new port value
+         * @param new_port
+         */
+        uri& port(std::string_view new_port) noexcept {
+            if (new_port.starts_with(':'))
+                new_port.remove_prefix(1);
+            if (!is::digit(new_port))
+                throw std::invalid_argument("The specified port is not valid");
+            parse_port();
+            if (port_start == data.size()) {
+                // there's no port, I have to insert it myself:
+                parse_host();
+
+                if (authority_end != data.size()) {
+                    // found it at the end of the line
+                    replace_value(authority_end, 0,
+                                  ":" + std::string(new_port));
+                } else if (user_info_end != data.size()) {
+                    // there's authority and there might be a host
+                    replace_value(user_info_end + 1, user_info_end + 1,
+                                  ":" + std::string(new_port));
+                } else if (authority_start != data.size()) {
+                    // there's a authority_start at least
+                    replace_value(authority_start + 1, 0,
+                                  ":" + std::string(new_port));
+                } else {
+                    // there's no authority at all.
+                    if (scheme_end == data.size()) {
+                        // there's no scheme either
+                        replace_value(0, 0, "//:" + std::string(new_port));
+                    } else {
+                        // there's scheme
+                        replace_value(scheme_end + 1, 0,
+                                      "//:" + std::string(new_port));
+                    }
+                }
+            } else {
+                // there's a port and we are going to just replace it
+                replace_value(port_start + 1,
+                              authority_end == data.size() ? authority_end - 1
+                                                           : authority_end,
+                              new_port);
+            }
             return *this;
         }
 
