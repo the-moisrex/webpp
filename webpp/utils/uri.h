@@ -531,47 +531,6 @@ namespace webpp {
         }
 
         /**
-         * Parse the uri
-         */
-        void parse(std::string_view _data) const noexcept {
-
-            if (parsed())
-                return;
-
-            // extracting path
-            if (_data.starts_with('/')) {
-                // it's the query_start actually
-                auto path_end = _data.find('?');
-                if (path_end == std::string_view::npos)
-                    path_end = _data.find('#'); // it's hash start
-
-                _path = _data.substr(0, path_end);
-                if (path_end != std::string_view::npos) {
-                    _data.remove_prefix(path_end);
-                } else {
-                    return; // we have reached the end of the string
-                }
-            }
-
-            // extracting queries
-            if (_data.starts_with('?')) {
-                auto hash_start = _data.find('#');
-                _query = _data.substr(1, hash_start);
-                if (hash_start != std::string_view::npos) {
-                    _data.remove_prefix(hash_start);
-                } else {
-                    return; // we've reached the end of the string
-                }
-            }
-
-            // extracting hash segment
-            if (_data.starts_with('#')) {
-                _fragment = _data;
-            }
-        }
-        void parse() const noexcept { parse(data); }
-
-        /**
          * Remove the cache and make sure calling the functions will cause
          * re-parsing the uri.
          */
@@ -1105,7 +1064,7 @@ namespace webpp {
          */
         auto path_decoded() const noexcept {
             return decode_uri_component(
-                _path, charset(PCHAR_NOT_PCT_ENCODED, charset('/')));
+                path(), charset(PCHAR_NOT_PCT_ENCODED, charset('/')));
         }
 
         /**
@@ -1118,6 +1077,9 @@ namespace webpp {
          */
         template <typename Container = std::vector<std::string_view>>
         Container path_structured() const noexcept {
+            auto _path = path();
+            if (_path.empty())
+                return {};
             Container container;
             std::size_t slash_start = 0;
             do {
@@ -1182,10 +1144,14 @@ namespace webpp {
          * @return
          */
         uri& path(std::string_view const& __path) noexcept {
-            parse();
-            replace_value(_path, encode_uri_component(
-                                     __path, charset(PCHAR_NOT_PCT_ENCODED,
-                                                     charset('/'))));
+            parse_path();
+            auto _encoded_path =
+                (__path.starts_with('/') ? "" : "/") +
+                encode_uri_component(
+                    __path, charset(PCHAR_NOT_PCT_ENCODED, charset('/')));
+
+            replace_value(authority_end, query_start - authority_end,
+                          _encoded_path);
             return *this;
         }
         /**
@@ -1210,11 +1176,16 @@ namespace webpp {
          * @brief checks if the uri has query or not
          * @return
          */
-        bool has_query() const noexcept { return !query().empty(); }
+        bool has_query() const noexcept {
+            parse_query();
+            return query_start != data.size();
+        }
 
-        std::string_view const& query() const noexcept {
-            parse();
-            return _query;
+        std::string_view query() const noexcept {
+            parse_query();
+            if (query_start == data.size())
+                return {};
+            return {data, query_start, fragment_start};
         }
 
         /**
@@ -1227,10 +1198,50 @@ namespace webpp {
                 throw std::invalid_argument(
                     "The specified string is not a valid query");
 
-            parse();
-            replace_value(_query,
-                          encode_uri_component(
-                              __query, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED));
+            auto encoded_query =
+                (__query.starts_with('?') ? "" : "?") +
+                encode_uri_component(__query,
+                                     QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
+
+            parse_query();
+
+            if (query_start != data.size()) {
+                // we don't have a query
+                if (fragment_start != data.size()) {
+                    replace_value(fragment_start, 0, encoded_query);
+                } else {
+                    parse_path();
+                    if (authority_end == data.size()) {
+                        // we don't even have authority_end
+                        parse_scheme();
+                        if (authority_start == data.size()) {
+                            // there's no authority_start
+                            if (scheme_end == data.size()) {
+                                // it's an empty string
+                                replace_value(0, 0, "///" + encoded_query);
+                            } else {
+                                replace_value(scheme_end, 0,
+                                              "/" + encoded_query);
+                            }
+                        } else {
+                            replace_value(authority_start, 0,
+                                          "/" + encoded_query);
+                        }
+                    } else {
+                        // we have authority_end
+                        if (data[authority_end] == '/') {
+                            replace_value(authority_end + 1, 0, encoded_query);
+                        } else {
+                            replace_value(authority_end + 1, 0,
+                                          "/" + encoded_query);
+                        }
+                    }
+                }
+            } else {
+                // we have query
+                replace_value(query_start, fragment_start - query_start,
+                              encoded_query);
+            }
             return *this;
         }
 
@@ -1258,8 +1269,7 @@ namespace webpp {
                 _query_data = name + (value.empty() ? "" : ("=" + value)) +
                               (std::next(it) != _queries.cend() ? "&" : "");
             }
-            parse();
-            replace_value(_query, _query_data);
+            query(_query_data);
             return *this;
         }
 
