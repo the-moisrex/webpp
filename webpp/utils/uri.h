@@ -1185,7 +1185,7 @@ namespace webpp {
             parse_query();
             if (query_start == data.size())
                 return {};
-            return {data, query_start, fragment_start};
+            return {data, query_start + 1, fragment_start - query_start - 1};
         }
 
         /**
@@ -1352,15 +1352,18 @@ namespace webpp {
          * @brief get fragment
          */
         std::string_view const& fragment() const noexcept {
-            parse();
-            return _fragment;
+            parse_fragment();
+            return {data, fragment_start + 1};
         }
 
         /**
          * @brief an indication of whether the URI has fragment or not.
          * @return
          */
-        bool has_fragment() const noexcept { return !fragment().empty(); }
+        bool has_fragment() const noexcept {
+            parse_fragment();
+            return fragment_start == data.size();
+        }
 
         /**
          * @brief clear the fragment part of the uri
