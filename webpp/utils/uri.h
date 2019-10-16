@@ -1390,62 +1390,7 @@ namespace webpp {
          * Get the string representation of the uri
          * @return string
          */
-        std::string str() const noexcept {
-            if (!parsed()) {
-                if constexpr (std::is_same_v<StringType, std::string_view>) {
-                    return std::string(data);
-                } else {
-                    return data;
-                }
-            }
-
-            std::ostringstream buff;
-
-            parse();
-
-            // scheme
-            if (!_scheme.empty()) {
-                buff << _scheme << ':';
-            }
-            if (has_authority()) {
-                buff << "//";
-
-                // user-info
-                if (!_user_info.empty())
-                    buff << _user_info << '@';
-
-                // host
-                if (!_host.empty()) {
-
-                    // ipv6 hostname
-                    if (is::ipv6(_host))
-                        buff << '[' << _host << ']';
-                    else // any other type of hostname
-                        buff << _host;
-                }
-
-                // port
-                if (!_port.empty()) {
-                    buff << ':' << port();
-                }
-            }
-
-            // path
-            if (!_path.empty())
-                buff << _path;
-            else if (!_query.empty() || !_fragment.empty())
-                buff << '/';
-
-            // query
-            if (!_query.empty())
-                buff << '?' << _query;
-
-            // fragment
-            if (!_fragment.empty())
-                buff << '#' << _fragment;
-
-            return buff.str();
-        }
+        StringType const& str() const noexcept { return data; }
 
         /**
          * This method resolves the given relative reference, based on the given
