@@ -1296,7 +1296,7 @@ namespace webpp {
         std::map<std::string, std::string> query_structured() const noexcept {
             std::map<std::string, std::string> q_structured;
             std::size_t last_and_sep = 0;
-            parse();
+            auto _query = query();
             do {
                 auto and_sep =
                     _query.find('&', last_and_sep); // find the delimiter
