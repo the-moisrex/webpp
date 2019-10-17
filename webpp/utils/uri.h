@@ -1486,22 +1486,18 @@ namespace webpp {
          *
          */
         bool is_urn() const noexcept {
-            // TODO
+            return scheme() == "urn" && authority_start == data.size();
         }
 
         /**
          * Check if the specified URI is in fact a URL
          */
-        bool is_url() const noexcept {
-            // TODO
-        }
+        bool is_url() const noexcept { return has_host(); }
 
         /**
          * Check if the specified string is a valid URI or not
          */
-        bool is_valid() const noexcept {
-            // TODO
-        }
+        bool is_valid() const noexcept { return is_url() || is_urn(); }
     };
 
     using const_uri = uri<std::string_view>;
