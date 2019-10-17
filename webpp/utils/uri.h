@@ -588,7 +588,7 @@ namespace webpp {
 
         uri& operator=(uri&& u) noexcept = default;
 
-        uri& operator=(std::string_view const& u) noexcept {
+        uri& operator=(StringType const& u) noexcept {
             data = u;
             unparse();
             return *this;
@@ -712,7 +712,8 @@ namespace webpp {
          * @brief decode user_info and return it as a string
          */
         auto user_info_decoded() const noexcept {
-            return decode_uri_component(user_info(), USER_INFO_NOT_PCT_ENCODED);
+            return decode_uri_component(user_info(),
+                                        USERG_INFO_NOT_PCT_ENCODED);
         }
 
         /**
@@ -1503,20 +1504,30 @@ namespace webpp {
          * Check if the user info has a username in it or not
          * @return bool
          */
-        bool has_username() const noexcept {}
+        bool has_username() const noexcept {
+            return user_info_end != data.size();
+        }
 
         /**
          * Get the username in the user info if it exists or otherwise an empty
          * string view
          * @return
          */
-        std::string_view username() const noexcept {}
+        std::string_view username() const noexcept {
+            auto _userinfo = user_info();
+            if (auto colon = _userinfo.find(':');
+                colon != std::string_view::npos)
+                _userinfo.remove_suffix(_userinfo.size() - colon);
+            return _userinfo;
+        }
 
         /**
          * Get the decoded version of the username if it exists
          * @return
          */
-        std::string username_decoded() const noexcept {}
+        std::string username_decoded() const noexcept {
+            return decode_uri_component(username(), USER_INFO_NOT_PCT_ENCODED);
+        }
 
         /**
          * An indication of whether or not the user info has a password
@@ -1539,6 +1550,14 @@ namespace webpp {
 
     using const_uri = uri<std::string_view>;
     using ref_uri = uri<std::string>;
+
+    bool operator==(ref_uri const& one, const_uri const& two) noexcept {
+        return one.operator==(two.str());
+    }
+
+    bool operator==(const_uri const& one, ref_uri const& two) noexcept {
+        return one.operator==(two.str());
+    }
 
 } // namespace webpp
 

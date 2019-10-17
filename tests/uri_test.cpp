@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <string>
 #include <webpp/utils/uri.h>
 
 using namespace webpp;
@@ -113,6 +114,14 @@ TEST(URITests, WieredURIs) {
     for (auto const& _uri : _uris) {
         EXPECT_TRUE(const_uri(_uri).is_valid());
     }
+
+    uri not_port = "http://username:password@domain.tld/path/file.ext";
+    EXPECT_FALSE(not_port.has_port());
+    EXPECT_TRUE(not_port.has_username());
+    EXPECT_TRUE(not_port.has_password());
+    EXPECT_EQ(not_port.username(), "username");
+    EXPECT_EQ(not_port.password(), "password");
+    EXPECT_EQ(not_port.port_uint16(), 80u);
 }
 
 TEST(URITests, URN) {
@@ -134,9 +143,15 @@ TEST(URITests, URN) {
         "urn:sha1:YNCKHTQCWBTRNJIV4WNAE52SJUQCZO5C",
         "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66"};
 
+    for (auto const& _urn : valid_urns) {
+        EXPECT_TRUE(uri(_urn).is_valid());
+        EXPECT_TRUE(uri(_urn).is_urn());
+        EXPECT_FALSE(uri(_urn).is_url());
+    }
+
     const_uri a("urn:example:a123,z456");
-    const_uri b = "URN:example:a123,z456";
-    const_uri c = "urn:EXAMPLE:a123,z456";
+    uri b = "URN:example:a123,z456";
+    ref_uri c{"urn:EXAMPLE:a123,z456"};
 
     EXPECT_EQ(a, b);
     EXPECT_EQ(a, c);
