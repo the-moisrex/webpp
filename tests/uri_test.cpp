@@ -194,7 +194,7 @@ TEST(URITests, URL) {
                          "http://../",
                          "http://?",
                          "http://??",
-                         "http://??/",
+                         "http://?\?/",
                          "http://#",
                          "http://##",
                          "http://##/",
@@ -235,7 +235,7 @@ TEST(URITests, URL) {
         EXPECT_FALSE(a.is_urn()) << u;  // it shouldn't be a URN
     }
 
-    for (auto const& u : valid_urls) {
+    for (auto const& u : invalid_urls) {
         auto a = const_uri(u);
         // It might be a valid URI
         EXPECT_FALSE(a.is_url()) << u; // it's a valid URL too

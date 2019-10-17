@@ -1498,6 +1498,43 @@ namespace webpp {
          * Check if the specified string is a valid URI or not
          */
         bool is_valid() const noexcept { return is_url() || is_urn(); }
+
+        /**
+         * Check if the user info has a username in it or not
+         * @return bool
+         */
+        bool has_username() const noexcept {}
+
+        /**
+         * Get the username in the user info if it exists or otherwise an empty
+         * string view
+         * @return
+         */
+        std::string_view username() const noexcept {}
+
+        /**
+         * Get the decoded version of the username if it exists
+         * @return
+         */
+        std::string username_decoded() const noexcept {}
+
+        /**
+         * An indication of whether or not the user info has a password
+         * @return
+         */
+        bool has_password() const noexcept {}
+
+        /**
+         * The password in the user info
+         * @return
+         */
+        std::string_view password() const noexcept {}
+
+        /**
+         * The decoded version of the password
+         * @return
+         */
+        std::string password_decoded() const noexcept {}
     };
 
     using const_uri = uri<std::string_view>;

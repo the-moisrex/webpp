@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <webpp/utils/ipv6.h>
+#include <webpp/validators/validators.h>
 
 using namespace webpp;
 

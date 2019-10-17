@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <string_view>
 #include <webpp/utils/ipv4.h>
+#include <webpp/validators/validators.h>
 
 using namespace webpp;
 
