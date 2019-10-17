@@ -1412,28 +1412,30 @@ namespace webpp {
             // from section 5.2.2 in
             // RFC 3986 (https://tools.ietf.org/html/rfc3986).
             uri target;
-            if (relative_uri.scheme()) {
+            if (relative_uri.has_scheme()) {
                 target = relative_uri;
                 target.normalize_path();
             } else {
-                target._scheme = _scheme;
-                target._fragment = relative_uri.fragment().value_or("");
+                target.scheme(scheme());
+                target.fragment(relative_uri.fragment());
                 if (relative_uri.has_host()) {
-                    target.host(relative_uri._host);
-                    target.port(relative_uri._port);
-                    target.user_info(relative_uri._user_info);
-                    target.path(relative_uri._path);
-                    target.query(relative_uri._query);
+                    target.host(relative_uri.host());
+                    target.port(relative_uri.port());
+                    target.user_info(relative_uri.user_info());
+                    target.path(relative_uri.path());
+                    target.query(relative_uri.query());
                     target.normalize_path();
                 } else {
-                    target._host = _host;
-                    target._user_info = _user_info;
-                    target._port = _port;
+                    target.host(host());
+                    target.user_info(user_info());
+                    target.port(port());
                     if (!relative_uri.has_path()) {
-                        target.path(_path);
-                        target.query(relative_uri.has_query()
-                                         ? relative_uri._query
-                                         : _query);
+                        target.path(path());
+                        if (relative_uri.has_query()) {
+                            target.query(relative_uri.query());
+                        } else {
+                            target.query(query());
+                        }
                     } else {
                         target.query(relative_uri._query);
                         // RFC describes this as:
@@ -1444,7 +1446,7 @@ namespace webpp {
                         } else {
                             // RFC describes this as:
                             // "T.path = merge(Base.path, R.path);"
-                            target.path(_path);
+                            target.path(path());
                             auto target_path = target.path_structured();
                             auto relative_uri_path =
                                 relative_uri.path_structured();
