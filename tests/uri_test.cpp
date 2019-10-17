@@ -173,7 +173,7 @@ TEST(URITests, URL) {
                        "http://foo.com/blah_(wikipedia)_blah#cite-1",
                        "http://foo.com/unicode_(✪)_in_parens",
                        "http://foo.com/(something)?after=parens",
-                       "http://☺.damowmow.com/",
+                       "http://☺.ha-ha.com/",
                        "http://code.google.com/events/#&product=browser",
                        "http://j.mp",
                        "ftp://foo.bar/baz",
@@ -207,7 +207,7 @@ TEST(URITests, URL) {
                          "foo.com",
                          "rdar://1234",
                          "h://test",
-                         "http:// shouldfail.com",
+                         "http:// should-fail.com",
                          ":// should fail",
                          "http://foo.bar/foo(bar)baz quux",
                          "ftps://foo.bar/",
@@ -245,10 +245,10 @@ TEST(URITests, URL) {
 
 TEST(URITests, Set) {
     EXPECT_EQ(uri().scheme("ftp").str(), "ftp:");
-    EXPECT_EQ(uri("mailto:someone@example.com").scheme("somethingelse").str(),
-              "somethingelse:someone@example.com");
+    EXPECT_EQ(uri("mailto:someone@example.com").scheme("something_else").str(),
+              "something_else:someone@example.com");
 
-    // TODO: should this be allowd even???
+    // TODO: should this be allowed even???
     EXPECT_EQ(uri("urn:mpeg:mpeg7:schema:2001urn:isbn:0451450523")
                   .scheme("ftp")
                   .str(),
