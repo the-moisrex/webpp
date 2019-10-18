@@ -10,6 +10,35 @@
 
 namespace webpp {
 
+    /**
+     * @brief considers this ip as a subnet and converts it into a int
+     * prefix
+     */
+    constexpr uint8_t to_prefix(uint32_t octets) noexcept {
+        uint8_t prefix = 0u;
+        for (; octets != 0u; prefix++)
+            octets <<= 1u;
+        return prefix;
+    }
+
+    constexpr uint8_t to_prefix(std::array<uint32_t, 4> octets) noexcept {}
+
+    /**
+     * Convert a prefix to a subnet
+     * @param prefix
+     * @return bool
+     */
+    constexpr std::array<uint8_t, 4> to_subnet_array(uint8_t prefix) noexcept {}
+
+    /**
+     * Convert a prefix to a subnet
+     * @param prefix
+     * @return bool
+     */
+    constexpr uint32_t to_subnet(uint8_t prefix) noexcept {}
+
+    constexpr uint32_t to_ipv4_int(std::string_view) noexcept {}
+
     class ipv4 {
       private:
         mutable uint32_t data = 0u;   // all bits are used
@@ -26,25 +55,58 @@ namespace webpp {
             std::size_t len = _data.size();
             while (_data[first_dot] != '.' && first_dot != len)
                 first_dot++;
+
+            auto octet_1 = _data.substr(0u, first_dot);
+            if (first_dot == len || !is::digit(octet_1)) {
+                _valid = false;
+                return;
+            }
+
             std::size_t second_dot = first_dot + 1;
             while (_data[second_dot] != '.' && second_dot != len)
                 second_dot++;
+
+            auto octet_2 =
+                _data.substr(first_dot + 1u, second_dot - (first_dot + 1));
+            if (second_dot == len || !is::digit(octet_2)) {
+                _valid = false;
+                return;
+            }
+
             std::size_t third_dot = second_dot + 1;
             while (_data[third_dot] != '.' && third_dot != len)
                 third_dot++;
 
-            if (first_dot == std::string_view::npos ||
-                second_dot == std::string_view::npos ||
-                third_dot == std::string_view::npos) {
+            auto octet_3 =
+                _data.substr(second_dot + 1u, third_dot - (second_dot + 1));
+            if (third_dot == len || !is::digit(octet_3)) {
                 _valid = false;
                 return; // parsing failed.
             }
-            data = parse({to_uint8(_data.substr(0u, first_dot)),
-                          to_uint8(_data.substr(first_dot + 1u,
-                                                second_dot - first_dot - 1)),
-                          to_uint8(_data.substr(second_dot + 1u,
-                                                third_dot - second_dot - 1)),
-                          to_uint8(_data.substr(third_dot + 1u))});
+
+            std::size_t slash = third_dot + 1;
+            while (_data[slash] != '/' && slash != len)
+                slash++;
+
+            auto octet_4 =
+                _data.substr(third_dot + 1u, slash - (third_dot + 1));
+
+            if (!is::digit(octet_4)) {
+                _valid = false;
+                return;
+            }
+
+            if (slash != len) {
+                auto prefix_str = _data.substr(slash);
+                if (!is::digit(prefix_str)) {
+                    _valid = false;
+                    return;
+                }
+                _prefix = to_uint8(prefix_str);
+            }
+
+            data = parse({to_uint8(octet_1), to_uint8(octet_2),
+                          to_uint8(octet_3), to_uint8(octet_4)});
             _valid = true;
         }
 
@@ -57,21 +119,65 @@ namespace webpp {
         }
 
       public:
+        constexpr ipv4(ipv4 const& ip) = default;
+
+        constexpr ipv4(ipv4&& ip) = default;
+
         constexpr explicit ipv4(std::string_view const& ip) noexcept {
             parse(ip);
         }
-        constexpr ipv4(ipv4 const& ip) = default;
+
+        constexpr ipv4(std::string_view const& ip,
+                       std::string_view const& subnet) noexcept {
+            parse(ip);
+            if (is::subnet(subnet)) {
+                _prefix = to_prefix(subnet);
+            }
+        }
+
+        constexpr ipv4(std::string_view const& ip,
+                       std::array<uint8_t, 4> const& subnet) noexcept {
+            parse(ip);
+            _prefix = to_prefix(subnet);
+        }
+
+        constexpr ipv4(std::string_view const& ip, uint8_t __prefix) noexcept
+            : _prefix(__prefix) {
+            parse(ip);
+        }
+
         constexpr ipv4(uint8_t octet1, uint8_t octet2, uint8_t octet3,
                        uint8_t octet4, uint8_t prefix = 255) noexcept
             : data(parse({octet1, octet2, octet3, octet4})), _valid(true),
               _prefix(prefix > 32 ? 255 : prefix) {}
-        constexpr ipv4(ipv4&& ip) = default;
-        constexpr explicit ipv4(uint32_t const& ip,
-                                uint8_t prefix = 255) noexcept
+
+        constexpr ipv4(uint8_t octet1, uint8_t octet2, uint8_t octet3,
+                       uint8_t octet4, std::string_view const& subnet) noexcept
+            : data(parse({octet1, octet2, octet3, octet4})),
+              _valid(is::subnet(subnet)),
+              _prefix(_valid ? to_prefix(subnet) : 255) {}
+
+        constexpr ipv4(uint32_t const& ip, uint8_t prefix = 255) noexcept
             : data(ip), _valid(true), _prefix(prefix > 32 ? 255 : prefix) {}
+
+        constexpr ipv4(uint32_t const& ip, std::string_view subnet) noexcept
+            : data(ip), _valid(is::subnet(subnet)),
+              _prefix(_valid ? to_prefix(subnet) : 255) {}
+
         constexpr explicit ipv4(std::array<uint8_t, 4> const& ip,
                                 uint8_t prefix = 255) noexcept
-            : data(parse(ip)), _prefix(prefix > 32 ? 255 : prefix) {}
+            : data(parse(ip)), _valid(true),
+              _prefix(prefix > 32 ? 255 : prefix) {}
+
+        constexpr explicit ipv4(std::array<uint8_t, 4> const& ip,
+                                std::string_view const& subnet) noexcept
+            : data(parse(ip)), _valid(is::subnet(subnet)),
+              _prefix(_valid ? to_prefix(subnet) : 255) {}
+
+        constexpr explicit ipv4(std::array<uint8_t, 4> const& ip,
+                                std::array<uint8_t, 4> const& subnet) noexcept
+            : data(parse(ip)), _valid(is::subnet(subnet)),
+              _prefix(_valid ? to_prefix(subnet) : 255) {}
 
         ipv4& operator=(ipv4 const& ip) = default;
         ipv4& operator=(ipv4&& ip) = default;
@@ -87,6 +193,36 @@ namespace webpp {
             _valid = true;
             _prefix = 255;
             return *this;
+        }
+
+        constexpr bool operator==(std::array<uint8_t, 4> const& other) const
+            noexcept {
+            return data == parse(other);
+        }
+
+        constexpr bool operator!=(std::array<uint8_t, 4> const& other) const
+            noexcept {
+            return data != parse(other);
+        }
+
+        constexpr bool operator<(std::array<uint8_t, 4> const& other) const
+            noexcept {
+            return data < parse(other);
+        }
+
+        constexpr bool operator>(std::array<uint8_t, 4> const& other) const
+            noexcept {
+            return data > parse(other);
+        }
+
+        constexpr bool operator<=(std::array<uint8_t, 4> const& other) const
+            noexcept {
+            return data <= parse(other);
+        }
+
+        constexpr bool operator>=(std::array<uint8_t, 4> const& other) const
+            noexcept {
+            return data >= parse(other);
         }
 
         constexpr bool operator==(ipv4 const& other) const noexcept {
@@ -246,19 +382,6 @@ namespace webpp {
         }
 
         /**
-         * @brief considers this ip as a subnet and converts it into a int
-         * prefix
-         * @return
-         */
-        constexpr unsigned int to_prefix() const noexcept {
-            uint32_t val = integer();
-            unsigned int prefix = 0u;
-            for (; val != 0u; prefix++)
-                val <<= 1u;
-            return prefix;
-        }
-
-        /**
          * Get the prefix you specified in the constructor
          * @return
          */
@@ -304,6 +427,24 @@ namespace webpp {
         constexpr bool is_valid() const noexcept { return _valid; }
 
         /**
+         * Check if the ip has a prefix
+         * @return bool
+         */
+        constexpr bool has_prefix() const noexcept { return _prefix == 255; }
+
+        /**
+         * Set prefix for the ip
+         * @param prefix
+         * @return
+         */
+        ipv4& prefix(uint8_t __prefix) noexcept {
+            _prefix = __prefix > 32 ? 255 : __prefix;
+            return *this;
+        }
+
+        ipv4& subnet(std::array<uint8_t> const& _subnet) noexcept {}
+
+        /**
          * TODO: implement this thing
          * @brief get the geographical location of the ip address based on
          * predefined rules
@@ -311,6 +452,74 @@ namespace webpp {
          */
         std::string geographic_location() const noexcept;
     };
+
+    bool operator==(uint32_t const& one, ipv4 const& two) { return two == one; }
+
+    bool operator!=(uint32_t const& one, ipv4 const& two) { return two == one; }
+
+    bool operator<(uint32_t const& one, ipv4 const& two) {
+        return one < two.integer();
+    }
+
+    bool operator>(uint32_t const& one, ipv4 const& two) {
+        return one > two.integer();
+    }
+
+    bool operator<=(uint32_t const& one, ipv4 const& two) {
+        return one <= two.integer();
+    }
+
+    bool operator>=(uint32_t const& one, ipv4 const& two) {
+        return one >= two.integer();
+    }
+
+    bool operator==(std::string_view const& one, ipv4 const& two) {
+        return two == one;
+    }
+
+    bool operator!=(std::string_view const& one, ipv4 const& two) {
+        return two != one;
+    }
+
+    bool operator<(std::string_view const& one, ipv4 const& two) {
+        return ipv4(one) < two;
+    }
+
+    bool operator>(std::string_view const& one, ipv4 const& two) {
+        return ipv4(one) > two;
+    }
+
+    bool operator<=(std::string_view const& one, ipv4 const& two) {
+        return ipv4(one) <= two;
+    }
+
+    bool operator>=(std::string_view const& one, ipv4 const& two) {
+        return ipv4(one) >= two;
+    }
+
+    bool operator==(std::array<uint8_t, 4> const& one, ipv4 const& two) {
+        return two == one;
+    }
+
+    bool operator!=(std::array<uint8_t, 4> const& one, ipv4 const& two) {
+        return two != one;
+    }
+
+    bool operator<(std::array<uint8_t, 4> const& one, ipv4 const& two) {
+        return ipv4(one) < two;
+    }
+
+    bool operator>(std::array<uint8_t, 4> const& one, ipv4 const& two) {
+        return ipv4(one) > two;
+    }
+
+    bool operator<=(std::array<uint8_t, 4> const& one, ipv4 const& two) {
+        return ipv4(one) <= two;
+    }
+
+    bool operator>=(std::array<uint8_t, 4> const& one, ipv4 const& two) {
+        return ipv4(one) >= two;
+    }
 
 } // namespace webpp
 
