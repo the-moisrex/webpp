@@ -712,8 +712,7 @@ namespace webpp {
          * @brief decode user_info and return it as a string
          */
         auto user_info_decoded() const noexcept {
-            return decode_uri_component(user_info(),
-                                        USERG_INFO_NOT_PCT_ENCODED);
+            return decode_uri_component(user_info(), USER_INFO_NOT_PCT_ENCODED);
         }
 
         /**
