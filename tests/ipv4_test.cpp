@@ -43,11 +43,17 @@ TEST(IPv4Tests, Validation) {
     for (auto const& _ip : valid_ipv4s) {
         EXPECT_TRUE(webpp::is::ipv4(_ip));
         EXPECT_TRUE(ipv4(_ip).is_valid());
+        ipv4 ip = _ip;
+        (void)ip.integer(); // just to make sure it's parsed
+        EXPECT_TRUE(ip.is_valid());
     }
 
     for (auto const& _ip : invalid_ipv4s) {
         EXPECT_FALSE(webpp::is::ipv4(_ip));
         EXPECT_FALSE(ipv4(_ip).is_valid());
+        ipv4 ip = _ip;
+        (void)ip.integer(); // just to make sure it's parsed
+        EXPECT_FALSE(ip.is_valid());
     }
 }
 
