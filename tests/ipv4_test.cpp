@@ -1,3 +1,4 @@
+#include <array>
 #include <gtest/gtest.h>
 #include <string_view>
 #include <webpp/utils/ipv4.h>
@@ -15,6 +16,7 @@ TEST(IPv4Tests, FreeFunctions) {
     EXPECT_EQ(to_prefix(0xFF'00'FF'00u), 8);
     EXPECT_EQ(to_subnet(24), 0xFF'FF'FF'00);
     EXPECT_EQ(to_subnet(8), 0xFF'00'00'00);
+    EXPECT_EQ(to_subnet_array(8), std::array<uint8_t, 4>{255, 0, 0, 0});
 }
 
 TEST(IPv4Tests, Creation) {

@@ -40,19 +40,25 @@ namespace webpp {
      * @param prefix
      * @return bool
      */
-    constexpr std::array<uint8_t, 4> to_subnet_array(uint8_t prefix) noexcept {}
-
-    /**
-     * Convert a prefix to a subnet
-     * @param prefix
-     * @return bool
-     */
     constexpr uint32_t to_subnet(uint8_t prefix) noexcept {
         uint32_t subnet = 0u;
         for (; prefix != 0; prefix--) {
             subnet &= 1u << prefix;
         }
         return subnet;
+    }
+
+    /**
+     * Convert a prefix to a subnet
+     * @param prefix
+     * @return bool
+     */
+    constexpr std::array<uint8_t, 4> to_subnet_array(uint8_t prefix) noexcept {
+        auto subnet = to_subnet(prefix);
+        return {static_cast<uint8_t>(subnet >> 24u & 0xFFu),
+                static_cast<uint8_t>(subnet >> 16u & 0xFFu),
+                static_cast<uint8_t>(subnet >> 8u & 0xFFu),
+                static_cast<uint8_t>(subnet & 0xFFu)};
     }
 
     constexpr uint32_t to_ipv4_int(std::string_view) noexcept {}
