@@ -36,12 +36,6 @@ namespace webpp {
     }
 
     /**
-     * Convert string to prefix
-     * @param octets
-     */
-    constexpr uint8_t to_prefix(std::string_view const& octets) noexcept {}
-
-    /**
      * Convert a prefix to a subnet
      * @param prefix
      * @return bool
@@ -537,6 +531,14 @@ namespace webpp {
 
     bool operator>=(std::array<uint8_t, 4> const& one, ipv4 const& two) {
         return ipv4(one) >= two;
+    }
+
+    /**
+     * Convert string to prefix
+     * @param octets
+     */
+    constexpr uint8_t to_prefix(std::string_view const& octets) noexcept {
+        return to_prefix(ipv4(octets).integer());
     }
 
 } // namespace webpp
