@@ -47,7 +47,13 @@ namespace webpp {
      * @param prefix
      * @return bool
      */
-    constexpr uint32_t to_subnet(uint8_t prefix) noexcept {}
+    constexpr uint32_t to_subnet(uint8_t prefix) noexcept {
+        uint32_t subnet = 0u;
+        for (; prefix != 0; prefix--) {
+            subnet &= 1u << prefix;
+        }
+        return subnet;
+    }
 
     constexpr uint32_t to_ipv4_int(std::string_view) noexcept {}
 
