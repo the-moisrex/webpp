@@ -16,12 +16,30 @@ namespace webpp {
      */
     constexpr uint8_t to_prefix(uint32_t octets) noexcept {
         uint8_t prefix = 0u;
-        for (; octets != 0u; prefix++)
-            octets <<= 1u;
+        for (uint32_t mask = 0x80'00'00'00u; mask != 0u; mask <<= 1u)
+            if ((octets & mask) == mask)
+                prefix++;
+            else
+                return prefix;
         return prefix;
     }
 
-    constexpr uint8_t to_prefix(std::array<uint32_t, 4> octets) noexcept {}
+    constexpr uint8_t to_prefix(std::array<uint8_t, 4> octets) noexcept {
+        uint8_t prefix = 0u;
+        for (auto const& octet : octets)
+            for (uint8_t mask = 0b1000'0000; mask != 0u; mask <<= 1u)
+                if ((octet & mask) == mask)
+                    prefix++;
+                else
+                    return prefix;
+        return prefix;
+    }
+
+    /**
+     * Convert string to prefix
+     * @param octets
+     */
+    constexpr uint8_t to_prefix(std::string_view const& octets) noexcept {}
 
     /**
      * Convert a prefix to a subnet
