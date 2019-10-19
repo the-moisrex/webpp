@@ -5,6 +5,16 @@
 
 using namespace webpp;
 
+TEST(IPv4Tests, FreeFunctions) {
+    EXPECT_EQ(to_prefix("255.255.255.0"), 24);
+    EXPECT_EQ(to_prefix("255.255.255.128"), 25);
+    EXPECT_EQ(to_prefix("0.255.255.128"), 0);
+    EXPECT_EQ(to_prefix({255, 255, 255, 128}), 25);
+    EXPECT_EQ(to_prefix({0, 255, 255, 128}), 0);
+    EXPECT_EQ(to_prefix(0xFF'FF'FF'00u), 24);
+    EXPECT_EQ(to_prefix(0xFF'00'FF'00u), 8);
+}
+
 TEST(IPv4Tests, Creation) {
     constexpr ipv4 one{192, 168, 1, 1};
     ipv4 two("192.168.1.1");
