@@ -79,10 +79,10 @@ old [description:"implement ipv6 non-const" entry:"1567029756" modified:"1567029
 new [description:"implement ipv6 non-const" entry:"1567029756" modified:"1567029833" project:"net" status:"pending" uuid:"808d672b-3fbc-4286-9e76-af7900ed2923"]
 ---
 time 1567254814
-new [description:"implement parser in uri" entry:"1567254814" modified:"1567254814" project:"net" status:"pending" uuid:"5aebe96a-281a-4d13-86eb-ec38e4437a4a"]
+new [description:"implement parser in basic_uri" entry:"1567254814" modified:"1567254814" project:"net" status:"pending" uuid:"5aebe96a-281a-4d13-86eb-ec38e4437a4a"]
 ---
 time 1567254833
-new [description:"implement parser for const uri" entry:"1567254833" modified:"1567254833" project:"net" status:"pending" uuid:"e2b4b022-7baf-460b-8787-3599a407c0bb"]
+new [description:"implement parser for const basic_uri" entry:"1567254833" modified:"1567254833" project:"net" status:"pending" uuid:"e2b4b022-7baf-460b-8787-3599a407c0bb"]
 ---
 time 1567254921
 new [description:"extract path" entry:"1567254921" modified:"1567254921" project:"net" status:"pending" uuid:"f8a9427c-d743-4583-8e59-6e27a217f6db"]
@@ -94,7 +94,7 @@ time 1567254943
 new [description:"extract segments" entry:"1567254943" modified:"1567254943" project:"net" status:"pending" uuid:"64e83144-c45d-4a51-9776-efdda08809ce"]
 ---
 time 1567254954
-new [description:"write tests for uri" entry:"1567254954" modified:"1567254954" project:"net" status:"pending" uuid:"d90c51bd-e411-496f-bfa3-f625ce28beab"]
+new [description:"write tests for basic_uri" entry:"1567254954" modified:"1567254954" project:"net" status:"pending" uuid:"d90c51bd-e411-496f-bfa3-f625ce28beab"]
 ---
 time 1567256219
 new [description:"write string conversions for string_view" entry:"1567256219" modified:"1567256219" status:"pending" uuid:"2f0f82cf-b400-4987-aa8c-2a1ea6e90ff7"]

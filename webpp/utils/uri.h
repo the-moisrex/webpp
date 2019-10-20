@@ -119,9 +119,9 @@ namespace webpp {
             } else {
                 encodedElement.push_back('%');
                 encodedElement.push_back(
-                    make_hex_digit(static_cast<unsigned int>(c) >> 4));
+                    make_hex_digit(static_cast<unsigned int>(c) >> 4u));
                 encodedElement.push_back(
-                    make_hex_digit(static_cast<unsigned int>(c) & 0x0F));
+                    make_hex_digit(static_cast<unsigned int>(c) & 0x0Fu));
             }
         }
         return encodedElement;
@@ -149,8 +149,21 @@ namespace webpp {
      *
      *  [protocol"://"[username[":"password]"@"]hostname[":"port]"/"?][path]["?"querystring]["#"fragment]
      */
-    template <typename StringType = std::string_view>
-    class uri {
+    template <typename StringTypeRaw = std::string>
+    class basic_uri {
+
+        using StringType = std::conditional_t<
+            std::is_empty_v<StringTypeRaw>, std::string,
+            std::conditional_t<
+                std::is_array_v<StringTypeRaw> ||
+                    std::is_convertible_v<StringTypeRaw, char const* const> ||
+                    std::is_const_v<StringTypeRaw>,
+                std::string_view, StringTypeRaw>>;
+
+        static_assert(std::is_same_v<StringType, std::string> ||
+                          std::is_same_v<StringType, std::string_view>,
+                      "The specified string type for URI is not supported.");
+
       public:
         /**
          * source:
@@ -221,17 +234,13 @@ namespace webpp {
          * leaving out "pct-encoded".
          */
         static constexpr auto QUERY_OR_FRAGMENT_NOT_PCT_ENCODED =
-            charset(PCHAR_NOT_PCT_ENCODED, charset_t<2>{{'/', '?'}});
+            charset(PCHAR_NOT_PCT_ENCODED, charset_t<2>{'/', '?'});
 
       private:
         /**
          * This is the whole url (if we need to own the uri ourselves)
          */
         StringType data;
-
-        static_assert(std::is_same_v<StringType, std::string> ||
-                          std::is_same_v<StringType, std::string_view>,
-                      "The specified string type for URI is not supported.");
 
         mutable std::size_t scheme_end = std::string_view::npos,
                             authority_start = std::string_view::npos,
@@ -310,7 +319,7 @@ namespace webpp {
                               ? data
                               : std::string_view(data));
 
-            user_info_end = _data.find('@', authority_start,
+            user_info_end = _data.find("@", authority_start,
                                        authority_end - authority_start);
             if (user_info_end == std::string_view::npos) {
                 user_info_end = data.size();
@@ -339,7 +348,7 @@ namespace webpp {
                                scheme_end != std::string_view::npos
                            ? scheme_end
                            : 0);
-            authority_end = _data.find('/', starting_point, query_start);
+            authority_end = _data.find("/", starting_point, query_start);
             if (authority_end == std::string_view::npos) {
                 authority_end = data.size();
             }
@@ -368,7 +377,7 @@ namespace webpp {
 
             auto starting_point =
                 user_info_end != data.size() ? user_info_end : authority_start;
-            port_start = _data.find(':', starting_point,
+            port_start = _data.find(":", starting_point,
                                     authority_end - authority_start);
             if (port_start == std::string_view::npos) {
                 port_start = data.size(); // there's no port
@@ -376,7 +385,7 @@ namespace webpp {
         }
 
         //        /**
-        //         * parsing the authority parts of the uri
+        //         * parsing the authority parts of the basic_uri
         //         */
         //        void parse_authority_full() const noexcept {
         //
@@ -531,7 +540,7 @@ namespace webpp {
             auto _data = (std::is_same_v<StringType, std::string_view>
                               ? data
                               : std::string_view(data));
-            query_start = _data.find('?', 0, fragment_start);
+            query_start = _data.find("?", 0, fragment_start);
             if (query_start == std::string_view::npos) {
                 query_start = data.size();
             }
@@ -567,56 +576,58 @@ namespace webpp {
             static_assert(std::is_same_v<StringType, std::string>,
                           "You cannot change a const_uri (string_view is not "
                           "modifiable)");
-            data =
-                data.substr(0, start) + replacement + data.substr(start + len);
+            data = data.substr(0, start);
+            data.append(replacement);
+            data.append(data.substr(start + len));
             unparse();
             // TODO: you may want to not unparse everything
         }
 
       public:
-        uri() noexcept {
+        basic_uri() noexcept {
             static_assert(
-                std::is_same_v<StringType, std::string_view>,
+                std::is_same_v<StringType, std::string>,
                 "There's no point using string_view with empty value as a "
-                "const uri. Consider using uri<std::string>() instead.");
+                "const basic_uri. Consider using basic_uri<std::string>() "
+                "instead.");
         }
 
-        ~uri() noexcept = default;
+        ~basic_uri() noexcept = default;
 
         /**
          * @brief parse from string, it will trim the spaces for generality too
          * @param string_view URI string
          */
-        explicit uri(StringType const& u) noexcept : data(u) {}
+        explicit basic_uri(StringType const& u) noexcept : data(u) {}
 
         /**
          * If the user uses this
          * @param u
          */
-        explicit uri(StringType&& u) noexcept : data(std::move(u)) {}
+        explicit basic_uri(StringType&& u) noexcept : data(std::move(u)) {}
 
-        uri(uri const&) = default;
+        basic_uri(basic_uri const&) = default;
 
-        uri(uri&&) noexcept = default;
+        basic_uri(basic_uri&&) noexcept = default;
 
         // assignment operators
-        uri& operator=(uri const& u) = default;
+        basic_uri& operator=(basic_uri const& u) = default;
 
-        uri& operator=(uri&& u) noexcept = default;
+        basic_uri& operator=(basic_uri&& u) noexcept = default;
 
-        uri& operator=(StringType const& u) noexcept {
+        basic_uri& operator=(StringType const& u) noexcept {
             data = u;
             unparse();
             return *this;
         }
 
-        uri& operator=(StringType&& u) noexcept {
+        basic_uri& operator=(StringType&& u) noexcept {
             data = std::move(u);
             unparse();
             return *this;
         }
 
-        bool operator==(const uri& other) const noexcept {
+        bool operator==(const basic_uri& other) const noexcept {
             return str() == other.str();
         }
 
@@ -628,8 +639,24 @@ namespace webpp {
             return !operator==(u);
         }
 
-        bool operator!=(const uri& other) const noexcept {
+        bool operator!=(const basic_uri& other) const noexcept {
             return !operator==(other);
+        }
+
+        /**
+         * Get a part of the uri
+         * @param start
+         * @param len
+         * @return std::string_view
+         */
+        std::string_view
+        substr(std::size_t const& start = 0,
+               std::size_t const& len = std::string_view::npos) const noexcept {
+            if constexpr (std::is_same_v<StringType, std::string_view>) {
+                return data.substr(start, len);
+            } else {
+                return std::string_view(data).substr(start, len);
+            }
         }
 
         /**
@@ -664,9 +691,8 @@ namespace webpp {
          */
         std::string_view scheme() const noexcept {
             parse_scheme();
-            return scheme_end == data.size()
-                       ? std::string_view()
-                       : std::string_view(data, 0, scheme_end);
+            return scheme_end == data.size() ? std::string_view()
+                                             : substr(0, scheme_end);
         }
 
         /**
@@ -674,7 +700,7 @@ namespace webpp {
          * @param _scheme
          * @throws logic_error if uri is const
          */
-        uri& scheme(std::string_view const& __scheme) {
+        basic_uri& scheme(std::string_view const& __scheme) {
             if (!is::scheme(__scheme))
                 throw std::invalid_argument(
                     "The specified scheme is not valid");
@@ -701,7 +727,7 @@ namespace webpp {
         /**
          * @brief clear scheme from uri
          */
-        uri& clear_scheme() noexcept { return scheme({}); }
+        basic_uri& clear_scheme() noexcept { return scheme({}); }
 
         /**
          * @brief checks if the uri has user info or not
@@ -720,8 +746,8 @@ namespace webpp {
             return (user_info_end == data.size() ||
                     authority_start == data.size())
                        ? std::string_view()
-                       : std::string_view(data, authority_start,
-                                          user_info_end - authority_start);
+                       : substr(authority_start,
+                                user_info_end - authority_start);
         }
 
         /**
@@ -734,7 +760,7 @@ namespace webpp {
         /**
          * @brief set the user info if it's possible
          */
-        uri& user_info(std::string_view const& info) noexcept {
+        basic_uri& user_info(std::string_view const& info) noexcept {
             parse_user_info();
             auto encoded_info =
                 encode_uri_component(info, USER_INFO_NOT_PCT_ENCODED);
@@ -773,7 +799,7 @@ namespace webpp {
         /**
          * @brief clears the user info if exists
          */
-        uri& clear_user_info() noexcept { return user_info({}); }
+        basic_uri& clear_user_info() noexcept { return user_info({}); }
 
         /**
          * @brief return host as an string_view
@@ -814,7 +840,7 @@ namespace webpp {
                 }
             }
 
-            return std::string_view(data, start, len);
+            return substr(start, len);
         }
 
         /**
@@ -831,7 +857,7 @@ namespace webpp {
                 return ipv4(_host);
             if (is::ipv6(_host))
                 return ipv6(_host);
-            return std::string(_host);
+            return _host;
         }
 
         /**
@@ -854,7 +880,7 @@ namespace webpp {
         /**
          * @brief set the hostname/ip in the uri if possible
          */
-        uri& host(std::string_view const& new_host) noexcept {
+        basic_uri& host(std::string_view const& new_host) noexcept {
             parse_host();
 
             // todo: are you sure it can handle punycode as well?
@@ -929,7 +955,7 @@ namespace webpp {
          * @brief clear host part from URI
          * @return
          */
-        uri& clear_host() noexcept { return host({}); }
+        basic_uri& clear_host() noexcept { return host({}); }
 
         uint16_t default_port() const noexcept {
             auto _scheme = scheme();
@@ -974,11 +1000,10 @@ namespace webpp {
                 return {};
 
             // don't worry authority_end will be the end of the string anyway
-            return std::string_view(data, port_start + 1,
-                                    (authority_end == data.size()
-                                         ? authority_end - 1
-                                         : authority_end) -
-                                        (port_start + 1));
+            return substr(port_start + 1,
+                          (authority_end == data.size() ? authority_end - 1
+                                                        : authority_end) -
+                              (port_start + 1));
         }
 
         /**
@@ -996,7 +1021,7 @@ namespace webpp {
          * @param new_port
          * @return
          */
-        uri& port(uint16_t new_port) noexcept {
+        basic_uri& port(uint16_t new_port) noexcept {
             return port(std::to_string(new_port));
         }
 
@@ -1004,7 +1029,7 @@ namespace webpp {
          * Set new port value
          * @param new_port
          */
-        uri& port(std::string_view new_port) noexcept {
+        basic_uri& port(std::string_view new_port) noexcept {
             if (new_port.starts_with(':'))
                 new_port.remove_prefix(1);
             if (!is::digit(new_port))
@@ -1051,7 +1076,7 @@ namespace webpp {
          * @brief clear the port number from the uri and defaults to 80
          * @return self
          */
-        uri& clear_port() noexcept { return port({}); }
+        basic_uri& clear_port() noexcept { return port({}); }
 
         /**
          * @brief check if the URI has a path or not
@@ -1069,9 +1094,8 @@ namespace webpp {
         std::string_view path() const noexcept {
             if (!has_path())
                 return {};
-            return std::string_view(data, authority_end,
-                                    std::min(query_start, fragment_start) -
-                                        authority_end);
+            return substr(authority_end, std::min(query_start, fragment_start) -
+                                             authority_end);
         }
 
         /**
@@ -1130,7 +1154,7 @@ namespace webpp {
          * @brief set path
          */
         template <typename Container>
-        uri& path(const Container& __path) noexcept {
+        basic_uri& path(const Container& __path) noexcept {
             static_assert(std::is_convertible_v<typename Container::value_type,
                                                 std::string_view>,
                           "the specified container is not valid");
@@ -1145,7 +1169,7 @@ namespace webpp {
          * @return
          */
         template <typename Iter>
-        uri& path(const Iter& _start, const Iter& _end) noexcept {
+        basic_uri& path(const Iter& _start, const Iter& _end) noexcept {
             std::ostringstream joined_path;
             // TODO: check if we need std::string here
             copy(_start, _end - 1,
@@ -1159,7 +1183,7 @@ namespace webpp {
          * @param _path
          * @return
          */
-        uri& path(std::string_view const& __path) noexcept {
+        basic_uri& path(std::string_view const& __path) noexcept {
             parse_path();
             auto _encoded_path =
                 (__path.starts_with('/') ? "" : "/") +
@@ -1174,7 +1198,7 @@ namespace webpp {
          * @brief clear path from the URI
          * @return
          */
-        uri& clear_path() noexcept { return path(std::string_view{}); }
+        basic_uri& clear_path() noexcept { return path(std::string_view{}); }
 
         /**
          * @brief checks if the path is an absolute path or relative path
@@ -1201,7 +1225,7 @@ namespace webpp {
             parse_query();
             if (query_start == data.size())
                 return {};
-            return {data, query_start + 1, fragment_start - query_start - 1};
+            return substr(query_start + 1, fragment_start - query_start - 1);
         }
 
         /**
@@ -1209,7 +1233,7 @@ namespace webpp {
          * @param _query
          * @return
          */
-        uri& query(std::string_view const& __query) {
+        basic_uri& query(std::string_view const& __query) {
             if (!is::query(__query))
                 throw std::invalid_argument(
                     "The specified string is not a valid query");
@@ -1267,7 +1291,7 @@ namespace webpp {
          * @return
          */
         template <typename Map>
-        uri& query(Map const& _queries) noexcept {
+        basic_uri& query(Map const& _queries) noexcept {
             static_assert(std::is_convertible_v<typename Map::key_type,
                                                 std::string_view> &&
                               std::is_convertible_v<typename Map::mapped_type,
@@ -1293,7 +1317,7 @@ namespace webpp {
          * @brief clear the query section of the URI
          * @return
          */
-        uri& clear_query() noexcept { return query({}); }
+        basic_uri& clear_query() noexcept { return query({}); }
 
         /**
          * Get the query in a decoded string format
@@ -1348,7 +1372,7 @@ namespace webpp {
             auto __path = path_structured();
             return __path.cend() != std::find_if(__path.cbegin(), __path.cend(),
                                                  [](auto const& p) {
-                                                     return p == '.' ||
+                                                     return p == "." ||
                                                             p == "..";
                                                  });
         }
@@ -1359,7 +1383,7 @@ namespace webpp {
          * segments of the URI, in order to normalize the path
          * (apply and remove "." and ".." segments).
          */
-        uri& normalize_path() noexcept {
+        basic_uri& normalize_path() noexcept {
             // TODO
             return *this;
         }
@@ -1367,9 +1391,9 @@ namespace webpp {
         /**
          * @brief get fragment
          */
-        std::string_view const& fragment() const noexcept {
+        std::string_view fragment() const noexcept {
             parse_fragment();
-            return {data, fragment_start + 1};
+            return substr(fragment_start + 1);
         }
 
         /**
@@ -1385,7 +1409,7 @@ namespace webpp {
          * @brief clear the fragment part of the uri
          * @return
          */
-        uri& clear_fragment() noexcept { return fragment({}); }
+        basic_uri& clear_fragment() noexcept { return fragment({}); }
 
         /**
          * @brief checks if the URI is a relative reference
@@ -1423,11 +1447,11 @@ namespace webpp {
          *     (in which I mean, the base URI should be absolute,
          *     as in IsRelativeReference() should return false).
          */
-        uri resolve(const uri& relative_uri) const noexcept {
+        basic_uri resolve(const basic_uri& relative_uri) const noexcept {
             // Resolve the reference by following the algorithm
             // from section 5.2.2 in
             // RFC 3986 (https://tools.ietf.org/html/rfc3986).
-            uri target;
+            basic_uri target;
             if (relative_uri.has_scheme()) {
                 target = relative_uri;
                 target.normalize_path();
@@ -1574,14 +1598,14 @@ namespace webpp {
         }
     };
 
-    using const_uri = uri<std::string_view>;
-    using ref_uri = uri<std::string>;
+    using const_uri = basic_uri<std::string_view>;
+    using uri = basic_uri<std::string>;
 
-    bool operator==(ref_uri const& one, const_uri const& two) noexcept {
+    bool operator==(uri const& one, const_uri const& two) noexcept {
         return one.operator==(two.str());
     }
 
-    bool operator==(const_uri const& one, ref_uri const& two) noexcept {
+    bool operator==(const_uri const& one, uri const& two) noexcept {
         return one.operator==(two.str());
     }
 

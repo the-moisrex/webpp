@@ -75,7 +75,7 @@ TEST(IPv4Tests, Validation) {
     }
 }
 
-TEST(IPv6Tests, CIDR) {
+TEST(IPv4Tests, CIDR) {
     auto valid_ipv4s = {"192.168.1.1/12", "192.168.1.1/32"};
     auto invalid_ipv4s = {"192.168.1.1/", "192.168.1.1/12.34", "192.168.1.1/01",
                           "192.168.1.1/33"};

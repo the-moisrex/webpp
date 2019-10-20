@@ -5,7 +5,7 @@
 using namespace webpp;
 
 TEST(URITests, Creation) {
-    ref_uri u("http://example.com/");
+    uri u("http://example.com/");
     EXPECT_TRUE(u.has_scheme());
     EXPECT_TRUE(u.has_host());
     EXPECT_EQ(u.str(), "http://example.com/");
@@ -39,7 +39,7 @@ TEST(URITests, Creation) {
     EXPECT_TRUE(ipv4_host.has_host());
     EXPECT_EQ(ipv4_host.host(), "192.168.1.1");
 
-    ref_uri local_file("file:///home/test/folder/file.txt");
+    uri local_file("file:///home/test/folder/file.txt");
     EXPECT_EQ(local_file.path(), "/home/test/folder/file.txt");
     EXPECT_TRUE(local_file.has_path());
     EXPECT_TRUE(local_file.has_scheme());
@@ -150,8 +150,8 @@ TEST(URITests, URN) {
     }
 
     const_uri a("urn:example:a123,z456");
-    uri b = "URN:example:a123,z456";
-    ref_uri c{"urn:EXAMPLE:a123,z456"};
+    uri b{"URN:example:a123,z456"};
+    uri c{"urn:EXAMPLE:a123,z456"};
 
     EXPECT_EQ(a, b);
     EXPECT_EQ(a, c);
