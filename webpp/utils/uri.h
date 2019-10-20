@@ -375,118 +375,134 @@ namespace webpp {
             }
         }
 
-        /**
-         * parsing the authority parts of the uri
-         */
-        void parse_authority_full() const noexcept {
-
-            parse_scheme();
-            parse_path();
-
-            auto _data = (std::is_same_v<StringType, std::string_view>
-                              ? data
-                              : std::string_view(data))
-                             .substr(authority_start, authority_end);
-
-            auto _authority_start = data.find("//");
-            if (_authority_start != std::string_view::npos) {
-                _data.remove_prefix(_authority_start + 2);
-            }
-            auto path_start = _data.find('/');
-
-            if (_authority_start != std::string_view::npos && path_start != 0) {
-
-                auto port_start = _data.find(":", 0, path_start);
-
-                // extracting user info
-                if (auto delim = _data.find("@", 0, path_start);
-                    delim != std::string_view::npos) {
-
-                    pieces[_user_info] = delim;
-                    _data.remove_prefix(delim + 1);
-                }
-
-                // extracting host
-
-                /* IP future versions can be specified like this:
-                 * (RFC 3986)
-                 *
-                 * IP-literal = "[" ( IPv6address / IPvFuture  ) "]"
-                 * IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims
-                 * / ":" )
-                 */
-                if (_data.starts_with('[')) { // IP Literal
-                    if (_data.size() > 2 &&
-                        _data[1] == 'v') { // IPv Future Number
-                        if (auto dot_delim = _data.find('.');
-                            dot_delim != std::string_view::npos) {
-
-                            auto ipvf_version = _data.substr(2, dot_delim);
-                            if (HEXDIG.contains(ipvf_version)) {
-
-                                if (auto ipvf_end = _data.find(']');
-                                    ipvf_end != std::string_view::npos) {
-                                    auto ipvf =
-                                        _data.substr(dot_delim + 1, ipvf_end);
-                                    if (IPV_FUTURE_LAST_PART.contains(ipvf)) {
-                                        // returning the ipvf and it's
-                                        // version
-                                        _host = _data.substr(1, ipvf_end + 1);
-                                    }
-                                } else {
-                                    // totally not a URI
-                                    return;
-                                }
-                            }
-                        }
-                    } else if (_data.size() >= 5) { // IPv6
-
-                        if (auto ipv6_end = _data.find(']');
-                            ipv6_end != std::string_view::npos) {
-
-                            if (auto ipv6_view = _data.substr(1, ipv6_end);
-                                is::ipv6(ipv6_view)) {
-                                // TODO: probably use std::variant<ipv6,
-                                // ipv4, string>
-                                _host = ipv6_view;
-                                _data.remove_prefix(ipv6_end + 1);
-                            }
-                        } else {
-                            return; // totally not a valid URI
-                        }
-                    }
-                } else { // Not IP Literal
-                    auto port_or_path_start =
-                        port_start != std::string_view::npos ? port_start
-                                                             : path_start;
-                    auto hostname = _data.substr(0, port_or_path_start);
-                    // we're not going to decode hostname here. We'll do
-                    // this in another method because this function is
-                    //  and will only return const stuff
-
-                    // we have our answer but we will check for the
-                    // correctness of the hostname now
-                    auto HOSTNAME_CHARS =
-                        charset(REG_NAME_NOT_PCT_ENCODED, charset('%'));
-                    if (HOSTNAME_CHARS.contains(hostname)) {
-                        _host = hostname;
-                        if (port_or_path_start != std::string_view::npos)
-                            _data.remove_prefix(port_or_path_start);
-                        else {
-                            return;
-                        }
-                    }
-                }
-
-                // extracting port
-                if (port_start != std::string_view::npos) {
-                    auto port_end =
-                        _data.find_first_not_of(DIGIT.string_view());
-                    _port = _data.substr(port_start + 1, port_end);
-                    _data.remove_prefix(port_end);
-                }
-            }
-        }
+        //        /**
+        //         * parsing the authority parts of the uri
+        //         */
+        //        void parse_authority_full() const noexcept {
+        //
+        //            parse_scheme();
+        //            parse_path();
+        //
+        //            auto _data = (std::is_same_v<StringType, std::string_view>
+        //                              ? data
+        //                              : std::string_view(data))
+        //                             .substr(authority_start, authority_end);
+        //
+        //            auto _authority_start = data.find("//");
+        //            if (_authority_start != std::string_view::npos) {
+        //                _data.remove_prefix(_authority_start + 2);
+        //            }
+        //            auto path_start = _data.find('/');
+        //
+        //            if (_authority_start != std::string_view::npos &&
+        //            path_start != 0) {
+        //
+        //                auto port_start = _data.find(":", 0, path_start);
+        //
+        //                // extracting user info
+        //                if (auto delim = _data.find("@", 0, path_start);
+        //                    delim != std::string_view::npos) {
+        //
+        //                    pieces[_user_info] = delim;
+        //                    _data.remove_prefix(delim + 1);
+        //                }
+        //
+        //                // extracting host
+        //
+        //                /* IP future versions can be specified like this:
+        //                 * (RFC 3986)
+        //                 *
+        //                 * IP-literal = "[" ( IPv6address / IPvFuture  ) "]"
+        //                 * IPvFuture = "v" 1*HEXDIG "." 1*( unreserved /
+        //                 sub-delims
+        //                 * / ":" )
+        //                 */
+        //                if (_data.starts_with('[')) { // IP Literal
+        //                    if (_data.size() > 2 &&
+        //                        _data[1] == 'v') { // IPv Future Number
+        //                        if (auto dot_delim = _data.find('.');
+        //                            dot_delim != std::string_view::npos) {
+        //
+        //                            auto ipvf_version = _data.substr(2,
+        //                            dot_delim); if
+        //                            (HEXDIG.contains(ipvf_version)) {
+        //
+        //                                if (auto ipvf_end = _data.find(']');
+        //                                    ipvf_end !=
+        //                                    std::string_view::npos) { auto
+        //                                    ipvf =
+        //                                        _data.substr(dot_delim + 1,
+        //                                        ipvf_end);
+        //                                    if
+        //                                    (IPV_FUTURE_LAST_PART.contains(ipvf))
+        //                                    {
+        //                                        // returning the ipvf and it's
+        //                                        // version
+        //                                        _host = _data.substr(1,
+        //                                        ipvf_end + 1);
+        //                                    }
+        //                                } else {
+        //                                    // totally not a URI
+        //                                    return;
+        //                                }
+        //                            }
+        //                        }
+        //                    } else if (_data.size() >= 5) { // IPv6
+        //
+        //                        if (auto ipv6_end = _data.find(']');
+        //                            ipv6_end != std::string_view::npos) {
+        //
+        //                            if (auto ipv6_view = _data.substr(1,
+        //                            ipv6_end);
+        //                                is::ipv6(ipv6_view)) {
+        //                                // TODO: probably use
+        //                                std::variant<ipv6,
+        //                                // ipv4, string>
+        //                                _host = ipv6_view;
+        //                                _data.remove_prefix(ipv6_end + 1);
+        //                            }
+        //                        } else {
+        //                            return; // totally not a valid URI
+        //                        }
+        //                    }
+        //                } else { // Not IP Literal
+        //                    auto port_or_path_start =
+        //                        port_start != std::string_view::npos ?
+        //                        port_start
+        //                                                             :
+        //                                                             path_start;
+        //                    auto hostname = _data.substr(0,
+        //                    port_or_path_start);
+        //                    // we're not going to decode hostname here. We'll
+        //                    do
+        //                    // this in another method because this function is
+        //                    //  and will only return const stuff
+        //
+        //                    // we have our answer but we will check for the
+        //                    // correctness of the hostname now
+        //                    auto HOSTNAME_CHARS =
+        //                        charset(REG_NAME_NOT_PCT_ENCODED,
+        //                        charset('%'));
+        //                    if (HOSTNAME_CHARS.contains(hostname)) {
+        //                        _host = hostname;
+        //                        if (port_or_path_start !=
+        //                        std::string_view::npos)
+        //                            _data.remove_prefix(port_or_path_start);
+        //                        else {
+        //                            return;
+        //                        }
+        //                    }
+        //                }
+        //
+        //                // extracting port
+        //                if (port_start != std::string_view::npos) {
+        //                    auto port_end =
+        //                        _data.find_first_not_of(DIGIT.string_view());
+        //                    _port = _data.substr(port_start + 1, port_end);
+        //                    _data.remove_prefix(port_end);
+        //                }
+        //            }
+        //        }
 
         /**
          * parse fragment (it finds fragment_start)

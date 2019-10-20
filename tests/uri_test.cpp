@@ -115,7 +115,7 @@ TEST(URITests, WieredURIs) {
         EXPECT_TRUE(const_uri(_uri).is_valid());
     }
 
-    uri not_port = "http://username:password@domain.tld/path/file.ext";
+    uri not_port{"http://username:password@domain.tld/path/file.ext"};
     EXPECT_FALSE(not_port.has_port());
     EXPECT_TRUE(not_port.has_username());
     EXPECT_TRUE(not_port.has_password());
