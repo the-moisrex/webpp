@@ -193,8 +193,7 @@ namespace webpp {
 
         constexpr ipv4(ipv4&& ip) = default;
 
-        constexpr explicit ipv4(std::string_view const& ip) noexcept {
-            parse(ip);
+        constexpr ipv4(std::string_view const& ip) noexcept { parse(ip);
         }
 
         constexpr ipv4(std::string_view const& ip,
@@ -236,19 +235,19 @@ namespace webpp {
             _prefix = _valid ? to_prefix(subnet) : 255;
         }
 
-        constexpr explicit ipv4(std::array<uint8_t, 4> const& ip,
-                                uint8_t prefix = 255) noexcept
+        constexpr ipv4(std::array<uint8_t, 4> const& ip,
+                       uint8_t prefix = 255) noexcept
             : data(parse(ip)), _valid(true),
               _prefix(prefix > 32 ? 255 : prefix) {}
 
-        constexpr explicit ipv4(std::array<uint8_t, 4> const& ip,
-                                std::string_view const& subnet) noexcept
+        constexpr ipv4(std::array<uint8_t, 4> const& ip,
+                       std::string_view const& subnet) noexcept
             : data(parse(ip)), _valid(is::subnet(subnet)) {
             _prefix = _valid ? to_prefix(subnet) : 255;
         }
 
-        constexpr explicit ipv4(std::array<uint8_t, 4> const& ip,
-                                std::array<uint8_t, 4> const& subnet) noexcept
+        constexpr ipv4(std::array<uint8_t, 4> const& ip,
+                       std::array<uint8_t, 4> const& subnet) noexcept
             : data(parse(ip)), _valid(is::subnet(subnet)) {
             _prefix = _valid ? to_prefix(subnet) : 255;
         }
@@ -428,38 +427,50 @@ namespace webpp {
         }
 
         /**
-         * @brief checks if the ip in this class is in the specified subnet or
-         * not regardless of the the prefix that is specified in the ctor
-         * @param ip
-         * @param prefix
-         * @return
-         */
-        constexpr bool is_in_subnet(ipv4 const& ip, unsigned int _prefix) const
-            noexcept {
-            auto uint_val = integer();
-            auto uint_ip = ip.integer();
-            uint_val &= 0xFFFFFFFFu << (32u - _prefix);
-            uint_ip &= 0xFFFFFFFFu << (32u - _prefix);
-            return uint_val == uint_ip;
-        }
-
-        /**
-         * @brief checks if the ip in this class is in the specified subnet or
-         * not regardless of the prefix that is specified in the ctor
-         * @param ip
-         * @param subnet_mask
-         * @return
-         */
-        constexpr bool is_in_subnet(ipv4 const& ip,
-                                    ipv4 const& subnet_mask) const noexcept {
-            return is_in_subnet(ip, subnet_mask.to_prefix());
-        }
-
-        /**
          * Get the prefix you specified in the constructor
          * @return
          */
         constexpr auto prefix() const noexcept { return _prefix; }
+
+        /**
+         * Change the prefix of the ip
+         * @param __prefix
+         */
+        ipv4& prefix(uint8_t __prefix) noexcept {
+            _prefix = __prefix > 32 ? 255 : __prefix;
+            return *this;
+        }
+
+        /**
+         * Set prefix with a subnet string
+         * @param _subnet
+         */
+        ipv4& prefix(std::string_view const& _subnet) noexcept {
+            return prefix(to_prefix(_subnet));
+        }
+
+        /**
+         * Set prefix with a subnet array
+         * @param _subnet
+         */
+        ipv4& prefix(std::array<uint8_t, 4> const& _subnet) noexcept {
+            return prefix(to_prefix(_subnet));
+        }
+
+        /**
+         * @brief checks if the ip in this class is in the specified subnet or
+         * not regardless of the the prefix that is specified in the ctor
+         * @param ip
+         * @param prefix
+         * @return bool
+         */
+        constexpr bool is_in_subnet(ipv4 const& ip) const noexcept {
+            auto uint_val = integer();
+            auto uint_ip = ip.integer();
+            uint_val &= 0xFFFFFFFFu << (32u - ip.prefix());
+            uint_ip &= 0xFFFFFFFFu << (32u - ip.prefix());
+            return uint_val == uint_ip;
+        }
 
         /**
          * @brief checks if the ip is in private range or not regardless of the
