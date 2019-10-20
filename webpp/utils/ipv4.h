@@ -224,15 +224,17 @@ namespace webpp {
         constexpr ipv4(uint8_t octet1, uint8_t octet2, uint8_t octet3,
                        uint8_t octet4, std::string_view const& subnet) noexcept
             : data(parse({octet1, octet2, octet3, octet4})),
-              _valid(is::subnet(subnet)),
-              _prefix(_valid ? to_prefix(subnet) : 255) {}
+              _valid(is::subnet(subnet)) {
+            _prefix = _valid ? to_prefix(subnet) : 255;
+        }
 
         constexpr ipv4(uint32_t const& ip, uint8_t prefix = 255) noexcept
             : data(ip), _valid(true), _prefix(prefix > 32 ? 255 : prefix) {}
 
         constexpr ipv4(uint32_t const& ip, std::string_view subnet) noexcept
-            : data(ip), _valid(is::subnet(subnet)),
-              _prefix(_valid ? to_prefix(subnet) : 255) {}
+            : data(ip), _valid(is::subnet(subnet)) {
+            _prefix = _valid ? to_prefix(subnet) : 255;
+        }
 
         constexpr explicit ipv4(std::array<uint8_t, 4> const& ip,
                                 uint8_t prefix = 255) noexcept
@@ -241,13 +243,15 @@ namespace webpp {
 
         constexpr explicit ipv4(std::array<uint8_t, 4> const& ip,
                                 std::string_view const& subnet) noexcept
-            : data(parse(ip)), _valid(is::subnet(subnet)),
-              _prefix(_valid ? to_prefix(subnet) : 255) {}
+            : data(parse(ip)), _valid(is::subnet(subnet)) {
+            _prefix = _valid ? to_prefix(subnet) : 255;
+        }
 
         constexpr explicit ipv4(std::array<uint8_t, 4> const& ip,
                                 std::array<uint8_t, 4> const& subnet) noexcept
-            : data(parse(ip)), _valid(is::subnet(subnet)),
-              _prefix(_valid ? to_prefix(subnet) : 255) {}
+            : data(parse(ip)), _valid(is::subnet(subnet)) {
+            _prefix = _valid ? to_prefix(subnet) : 255;
+        }
 
         ipv4& operator=(ipv4 const& ip) = default;
         ipv4& operator=(ipv4&& ip) = default;
