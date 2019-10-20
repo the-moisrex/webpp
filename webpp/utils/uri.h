@@ -1397,7 +1397,7 @@ namespace webpp {
          */
         bool has_fragment() const noexcept {
             parse_fragment();
-            return fragment_start == data.size();
+            return fragment_start != data.size();
         }
 
         /**
