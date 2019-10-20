@@ -193,7 +193,11 @@ namespace webpp {
 
         constexpr ipv4(ipv4&& ip) = default;
 
-        constexpr ipv4(std::string_view const& ip) noexcept { parse(ip); }
+        constexpr explicit ipv4(std::string_view const& ip) noexcept {
+            parse(ip);
+        }
+
+        constexpr explicit ipv4(char const* const ip) noexcept { parse(ip); }
 
         constexpr ipv4(std::string_view const& ip,
                        std::string_view const& subnet) noexcept {
@@ -226,10 +230,12 @@ namespace webpp {
             _prefix = _valid ? to_prefix(subnet) : 255;
         }
 
-        constexpr ipv4(uint32_t const& ip, uint8_t prefix = 255) noexcept
+        constexpr explicit ipv4(uint32_t const& ip,
+                                uint8_t prefix = 255) noexcept
             : data(ip), _valid(true), _prefix(prefix > 32 ? 255 : prefix) {}
 
-        constexpr ipv4(uint32_t const& ip, std::string_view subnet) noexcept
+        constexpr explicit ipv4(uint32_t const& ip,
+                                std::string_view subnet) noexcept
             : data(ip), _valid(is::subnet(subnet)) {
             _prefix = _valid ? to_prefix(subnet) : 255;
         }
@@ -250,6 +256,12 @@ namespace webpp {
             : data(parse(ip)), _valid(is::subnet(subnet)) {
             _prefix = _valid ? to_prefix(subnet) : 255;
         }
+
+        explicit operator std::string() { return str(); }
+
+        explicit operator const char*() { return str().c_str(); }
+
+        explicit operator uint32_t() { return integer(); }
 
         ipv4& operator=(ipv4 const& ip) = default;
         ipv4& operator=(ipv4&& ip) = default;

@@ -16,8 +16,11 @@ TEST(IPv4Tests, FreeFunctions) {
     EXPECT_EQ(to_prefix(0xFF'00'FF'00u), 8);
     EXPECT_EQ(to_subnet(24), 0xFF'FF'FF'00);
     EXPECT_EQ(to_subnet(8), 0xFF'00'00'00);
-    EXPECT_EQ(to_subnet_array(8), std::array<uint8_t, 4>{255, 0, 0, 0});
-    EXPECT_EQ(to_subnet_array(25), std::array<uint8_t, 4>{255, 255, 255, 128});
+
+    auto a = std::array<uint8_t, 4>({255, 0, 0, 0});
+    auto b = std::array<uint8_t, 4>({255, 255, 255, 128});
+    EXPECT_EQ(to_subnet_array(8), a);
+    EXPECT_EQ(to_subnet_array(25), b);
 }
 
 TEST(IPv4Tests, Creation) {
