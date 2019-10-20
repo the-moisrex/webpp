@@ -68,7 +68,7 @@ TEST(URITests, IPv6HostName) {
         "//[::1]:8080/folder/file.md?name=value&name2=value2#str";
     u = uri_str;
     EXPECT_EQ(u.str(), uri_str);
-    EXPECT_FALSE(u.has_scheme());
+    EXPECT_FALSE(u.has_scheme()) << "scheme: " << u.scheme();
     EXPECT_TRUE(u.has_host());
     EXPECT_TRUE(u.has_port());
     EXPECT_TRUE(u.has_authority());

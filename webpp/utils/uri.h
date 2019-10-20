@@ -682,7 +682,7 @@ namespace webpp {
          */
         bool has_scheme() const noexcept {
             parse_scheme();
-            return scheme_end == data.size();
+            return scheme_end != data.size() || scheme_end == 0;
         }
 
         /**
