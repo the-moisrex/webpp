@@ -36,6 +36,54 @@ namespace webpp {
     }
 
     /**
+     * Convert string to prefix
+     * @param octets
+     */
+    constexpr uint8_t to_prefix(std::string_view const& _data) noexcept {
+        if (_data.size() > 15 || _data.size() < 7) {
+            return 0u;
+        }
+        std::size_t first_dot = 0u;
+        std::size_t len = _data.size();
+        while (_data[first_dot] != '.' && first_dot != len)
+            first_dot++;
+
+        auto octet_1 = _data.substr(0u, first_dot);
+        if (first_dot == len || !is::digit(octet_1)) {
+            return 0u;
+        }
+
+        std::size_t second_dot = first_dot + 1;
+        while (_data[second_dot] != '.' && second_dot != len)
+            second_dot++;
+
+        auto octet_2 =
+            _data.substr(first_dot + 1u, second_dot - (first_dot + 1));
+        if (second_dot == len || !is::digit(octet_2)) {
+            return 0u;
+        }
+
+        std::size_t third_dot = second_dot + 1;
+        while (_data[third_dot] != '.' && third_dot != len)
+            third_dot++;
+
+        auto octet_3 =
+            _data.substr(second_dot + 1u, third_dot - (second_dot + 1));
+        if (third_dot == len || !is::digit(octet_3)) {
+            return 0u; // parsing failed.
+        }
+
+        auto octet_4 = _data.substr(third_dot + 1u);
+
+        if (!is::digit(octet_4)) {
+            return 0u;
+        }
+
+        return to_prefix({to_uint8(octet_1), to_uint8(octet_2),
+                          to_uint8(octet_3), to_uint8(octet_4)});
+    }
+
+    /**
      * Convert a prefix to a subnet
      * @param prefix
      * @return bool
@@ -60,8 +108,6 @@ namespace webpp {
                 static_cast<uint8_t>(subnet >> 8u & 0xFFu),
                 static_cast<uint8_t>(subnet & 0xFFu)};
     }
-
-    constexpr uint32_t to_ipv4_int(std::string_view) noexcept {}
 
     class ipv4 {
       private:
@@ -543,14 +589,6 @@ namespace webpp {
 
     bool operator>=(std::array<uint8_t, 4> const& one, ipv4 const& two) {
         return ipv4(one) >= two;
-    }
-
-    /**
-     * Convert string to prefix
-     * @param octets
-     */
-    constexpr uint8_t to_prefix(std::string_view const& octets) noexcept {
-        return to_prefix(ipv4(octets).integer());
     }
 
 } // namespace webpp
