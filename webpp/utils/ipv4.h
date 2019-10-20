@@ -457,6 +457,20 @@ namespace webpp {
         }
 
         /**
+         * Remove prefix from the ip address
+         */
+        ipv4& clear_prefix() noexcept { return prefix(255); }
+
+        template <typename Integer>
+        constexpr bool octet(Integer o) noexcept {
+            constexpr auto mask = static_cast<Integer>(1)
+                                  << ((sizeof(Integer) * 8) - 1);
+            while ((o & mask) == mask)
+                o <<= 1;
+            return o == 0;
+        }
+
+        /**
          * @brief checks if the ip in this class is in the specified subnet or
          * not regardless of the the prefix that is specified in the ctor
          * @param ip
@@ -498,10 +512,7 @@ namespace webpp {
          * @brief check if all the octets are zero or not
          * @return true if all the octets are zero
          */
-        constexpr bool is_all_zero() const noexcept {
-            auto _data = integer();
-            return _data == 0;
-        }
+        constexpr bool is_zero() const noexcept { return data == 0; }
 
         /**
          * Check if the ip you specified is valid or not (the ctor will not
@@ -509,24 +520,6 @@ namespace webpp {
          * @return bool
          */
         constexpr bool is_valid() const noexcept { return _valid; }
-
-        /**
-         * Check if the ip has a prefix
-         * @return bool
-         */
-        constexpr bool has_prefix() const noexcept { return _prefix == 255; }
-
-        /**
-         * Set prefix for the ip
-         * @param prefix
-         * @return
-         */
-        ipv4& prefix(uint8_t __prefix) noexcept {
-            _prefix = __prefix > 32 ? 255 : __prefix;
-            return *this;
-        }
-
-        ipv4& subnet(std::array<uint8_t> const& _subnet) noexcept {}
 
         /**
          * TODO: implement this thing
