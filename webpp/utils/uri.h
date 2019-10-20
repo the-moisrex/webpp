@@ -1015,7 +1015,7 @@ namespace webpp {
          */
         bool has_port() const noexcept {
             parse_port();
-            return port_start == data.size();
+            return port_start != data.size();
         }
 
         /**
