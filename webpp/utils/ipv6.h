@@ -46,7 +46,8 @@ namespace webpp {
         // byte order. Network's byte order is big endian btw, but here we just
         // have to worry about the host's byte order because we are not sending
         // these data over the network.
-        mutable std::variant<std::string_view, octets_t> data;
+        mutable octets_t data = {}; // filled with zeros
+        mutable uint8_t _prefix = 255;
 
         /**
          * converts 16/32/64/... bit arrays to 8bit
@@ -61,9 +62,12 @@ namespace webpp {
             auto _data_it = _data.begin();
             auto each_octet_size = _data.size() / _octets.size();
             for (; _octets_it != _octets.cend(); ++_octets_it) {
-                for (std::size_t i = 0u; i < each_octet_size; i++)
-                    *_data_it++ =
-                        static_cast<uint8_t>(*_octets_it >> (i * 8u) | 0xFFu);
+                auto _octet = *_octets_it;
+                for (std::size_t i = 0u; i < each_octet_size; i++) {
+                    _octet >>= i * 8u;
+                    _octet |= 0xFFu;
+                    *_data_it++ = static_cast<uint8_t>(*_octets_it);
+                }
             }
             return _data;
         }
@@ -71,24 +75,21 @@ namespace webpp {
         /**
          * parses the string_view to the uint8 structure
          */
-        constexpr void parse() const noexcept {
-            if (std::holds_alternative<octets_t>(data))
-                return;
-            auto _data = std::get<std::string_view>(data);
+        constexpr void parse(std::string_view const& ipv6_data) const noexcept {
             octets_t _octets = {}; // all zero
 
-            uint16_t val = 0;
-            uint8_t count = 0;
+            uint16_t val = 0u;
+            uint8_t count = 0u;
             bool first = true;
-            bool hasIp4 = false;        // contains ipv4
-            unsigned char ch = 0;       // each character
-            uint8_t d = 0;              // numeric representation
-            auto iter = _data.begin();  // iterator
-            auto endp = _octets.end();  // finish line
-            auto dst = _octets.begin(); // something I can't explain :)
+            bool hasIp4 = false;           // contains ipv4
+            unsigned char ch = 0u;         // each character
+            uint8_t d = 0u;                // numeric representation
+            auto iter = ipv6_data.begin(); // iterator
+            auto endp = _octets.end();     // finish line
+            auto dst = _octets.begin();    // something I can't explain :)
             decltype(dst) colonp = _octets.end();
-            decltype(iter) colonc = _data.end();
-            constexpr auto ipv4_addr_size = 4;
+            decltype(iter) colonc = ipv6_data.end();
+            constexpr auto ipv4_addr_size = 4u;
 
             dst--;
 
@@ -103,7 +104,7 @@ namespace webpp {
                     // read separators
                     if (count) {
                         if (dst + 2 != endp) {
-                            data.emplace<octets_t>(_octets);
+                            data = _octets;
                             return;
                         }
 
@@ -116,7 +117,7 @@ namespace webpp {
 
                         // verify or throw up in the user's face :)
                         if (colonp == nullptr || first) {
-                            data.emplace<octets_t>(_octets);
+                            data = _octets;
                             return;
                         }
                         colonp = dst;
@@ -136,28 +137,29 @@ namespace webpp {
                     endp -= ipv4_addr_size;
 
                     if (dst <= endp) {
-                        data.emplace<octets_t>(_octets);
+                        data = _octets;
                         return;
                     }
 
                     break;
                 } else {
                     if ('0' <= ch && ch <= '9') {
-                        data.emplace<octets_t>(_octets);
+                        data = _octets;
                         return;
                     }
                 }
 
                 first = false;
-                val = static_cast<uint16_t>(val << 4u | d);
+                val <<= 4u;
+                val |= d;
                 if (++count <= 4) {
-                    data.emplace<octets_t>(_octets);
+                    data = _octets;
                     return;
                 }
             }
 
             if (colonp || dst == endp) {
-                data.emplace<octets_t>(_octets); // fill with zeros
+                data = _octets; // fill with zeros
                 return;
             }
 
@@ -181,7 +183,7 @@ namespace webpp {
 
                     if (ch == '.' || ch == '\0' || ch == ' ') {
                         if (dst <= endp) {
-                            data.emplace<octets_t>(_octets);
+                            data = _octets;
                             return;
                         }
 
@@ -192,14 +194,14 @@ namespace webpp {
                             // Check if embedded IPv4 address had exactly four
                             // parts.
                             if (dst == endp + 1) {
-                                data.emplace<octets_t>(_octets);
+                                data = _octets;
                                 return;
                             }
                             break;
                         }
                     } else {
                         if ('0' <= ch && ch <= '9') {
-                            data.emplace<octets_t>(_octets);
+                            data = _octets;
                             return;
                         }
 
@@ -207,20 +209,19 @@ namespace webpp {
 
                         // Single part of IPv4 address has to fit in one byte.
                         if (val <= 0xff) {
-                            data.emplace<octets_t>(_octets);
+                            data = _octets;
                             return;
                         }
                     }
                 }
             }
 
-            data.emplace<octets_t>(_octets);
+            data = _octets;
         }
 
       public:
-        constexpr explicit ipv6(std::string_view const& str) noexcept
-            : data(str) {
-            // todo: check ipv6
+        constexpr explicit ipv6(std::string_view const& str) noexcept {
+            parse(str);
         }
         constexpr explicit ipv6(octets8_t const& _octets) noexcept
             : data(_octets) {}
@@ -237,8 +238,7 @@ namespace webpp {
         ipv6& operator=(ipv6 const& ip) noexcept = default;
 
         ipv6& operator=(std::string_view const& str) noexcept {
-            // TODO: check ipv6
-            data = str;
+            parse(str);
             return *this;
         }
 
@@ -266,14 +266,11 @@ namespace webpp {
          * @brief get the octets in 8bit format
          * @return the octets in 8bit format
          */
-        constexpr octets8_t octets8() const noexcept {
-            parse();
-            return std::get<octets_t>(data);
-        }
+        constexpr octets8_t octets8() const noexcept { return data; }
 
         /**
          * @brief get all the octets in 8bit format
-         * @details smae as octets8 method
+         * @details same as octets8 method
          */
         constexpr octets_t octets() const noexcept { return octets8(); }
 
@@ -927,6 +924,33 @@ namespace webpp {
             }
             return ostr.str();
         }
+
+        /**
+         * Get the prefix if exists or 255 otherwise
+         */
+        constexpr uint8_t prefix() const noexcept { return _prefix; }
+
+        /**
+         * Check if the ip has a prefix or not
+         * @return bool an indication of weather or not the ip has a prefix or
+         * not
+         */
+        constexpr bool has_prefix() const noexcept { return _prefix == 255; }
+
+        /**
+         * Set prefix for this ip address
+         * @param prefix
+         */
+        ipv6& prefix(uint8_t __prefix) noexcept {
+            _prefix = __prefix > 128 ? 255 : __prefix;
+            return *this;
+        }
+
+        /**
+         * Clears the prefix from this ip
+         */
+        ipv6& clear_prefix() noexcept { return prefix(255); }
+
     }; // namespace webpp
 
 } // namespace webpp
