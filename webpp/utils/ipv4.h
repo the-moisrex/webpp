@@ -193,8 +193,7 @@ namespace webpp {
 
         constexpr ipv4(ipv4&& ip) = default;
 
-        constexpr ipv4(std::string_view const& ip) noexcept { parse(ip);
-        }
+        constexpr ipv4(std::string_view const& ip) noexcept { parse(ip); }
 
         constexpr ipv4(std::string_view const& ip,
                        std::string_view const& subnet) noexcept {
@@ -478,15 +477,15 @@ namespace webpp {
          * @return
          */
         constexpr bool is_private() const noexcept {
-            constexpr ipv4 class_C(std::array<uint8_t, 4u>{192, 168, 0, 0});
+            constexpr ipv4 class_C(std::array<uint8_t, 4u>{192, 168, 0, 0}, 16);
             constexpr ipv4 class_B_start(
                 std::array<uint8_t, 4u>{172, 16, 0, 0});
             constexpr ipv4 class_B_finish(
                 std::array<uint8_t, 4u>{172, 31, 255, 255});
-            constexpr ipv4 class_A(std::array<uint8_t, 4u>{10, 0, 0, 0});
-            return is_in_subnet(class_C, 16) ||
+            constexpr ipv4 class_A(std::array<uint8_t, 4u>{10, 0, 0, 0}, 8);
+            return is_in_subnet(class_C) ||
                    in_range(class_B_start, class_B_finish) ||
-                   is_in_subnet(class_A, 8);
+                   is_in_subnet(class_A);
         }
 
         /**
