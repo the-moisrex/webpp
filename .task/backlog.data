@@ -22,12 +22,12 @@
 {"description":"implement ipv4 non-const","entry":"20190828T220215Z","modified":"20190828T220321Z","project":"net","status":"pending","uuid":"f5439530-8ecc-44d0-92eb-cc6b7017634a"}
 {"description":"implement const_ipv6","entry":"20190828T220226Z","modified":"20190828T220340Z","project":"net","status":"pending","uuid":"f17fc6a8-c96f-4542-84ac-b4ec48bbf65f"}
 {"description":"implement ipv6 non-const","entry":"20190828T220236Z","modified":"20190828T220353Z","project":"net","status":"pending","uuid":"808d672b-3fbc-4286-9e76-af7900ed2923"}
-{"description":"implement parser in uri","entry":"20190831T123334Z","modified":"20190831T123334Z","project":"net","status":"pending","uuid":"5aebe96a-281a-4d13-86eb-ec38e4437a4a"}
-{"description":"implement parser for const uri","entry":"20190831T123353Z","modified":"20190831T123353Z","project":"net","status":"pending","uuid":"e2b4b022-7baf-460b-8787-3599a407c0bb"}
+{"description":"implement parser in basic_uri","entry":"20190831T123334Z","modified":"20190831T123334Z","project":"net","status":"pending","uuid":"5aebe96a-281a-4d13-86eb-ec38e4437a4a"}
+{"description":"implement parser for const basic_uri","entry":"20190831T123353Z","modified":"20190831T123353Z","project":"net","status":"pending","uuid":"e2b4b022-7baf-460b-8787-3599a407c0bb"}
 {"description":"extract path","entry":"20190831T123521Z","modified":"20190831T123521Z","project":"net","status":"pending","uuid":"f8a9427c-d743-4583-8e59-6e27a217f6db"}
 {"description":"extract queries","entry":"20190831T123532Z","modified":"20190831T123532Z","project":"net","status":"pending","uuid":"5873280d-46b0-42f0-a92c-4807952c3898"}
 {"description":"extract segments","entry":"20190831T123543Z","modified":"20190831T123543Z","project":"net","status":"pending","uuid":"64e83144-c45d-4a51-9776-efdda08809ce"}
-{"description":"write tests for uri","entry":"20190831T123554Z","modified":"20190831T123554Z","project":"net","status":"pending","uuid":"d90c51bd-e411-496f-bfa3-f625ce28beab"}
+{"description":"write tests for basic_uri","entry":"20190831T123554Z","modified":"20190831T123554Z","project":"net","status":"pending","uuid":"d90c51bd-e411-496f-bfa3-f625ce28beab"}
 {"description":"write string conversions for string_view","entry":"20190831T125659Z","modified":"20190831T125659Z","status":"pending","uuid":"2f0f82cf-b400-4987-aa8c-2a1ea6e90ff7"}
 {"description":"extract path","end":"20190831T131632Z","entry":"20190831T123521Z","modified":"20190831T131634Z","project":"net","status":"completed","uuid":"f8a9427c-d743-4583-8e59-6e27a217f6db"}
 {"description":"extract queries","end":"20190831T131634Z","entry":"20190831T123532Z","modified":"20190831T131634Z","project":"net","status":"completed","uuid":"5873280d-46b0-42f0-a92c-4807952c3898"}

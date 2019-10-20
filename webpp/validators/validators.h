@@ -499,7 +499,7 @@ namespace webpp {
 
                         auto ipvf_version = str.substr(2, dot_delim);
                         if (!HEXDIG.contains(ipvf_version)) {
-                            // ERROR: uri is not valid
+                            // ERROR: basic_uri is not valid
                             return false;
                         }
 

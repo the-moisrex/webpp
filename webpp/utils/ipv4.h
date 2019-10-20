@@ -540,71 +540,81 @@ namespace webpp {
         std::string geographic_location() const noexcept;
     };
 
-    bool operator==(uint32_t const& one, ipv4 const& two) { return two == one; }
+    constexpr bool operator==(uint32_t const& one, ipv4 const& two) {
+        return two == one;
+    }
 
-    bool operator!=(uint32_t const& one, ipv4 const& two) { return two == one; }
+    constexpr bool operator!=(uint32_t const& one, ipv4 const& two) {
+        return two == one;
+    }
 
-    bool operator<(uint32_t const& one, ipv4 const& two) {
+    constexpr bool operator<(uint32_t const& one, ipv4 const& two) {
         return one < two.integer();
     }
 
-    bool operator>(uint32_t const& one, ipv4 const& two) {
+    constexpr bool operator>(uint32_t const& one, ipv4 const& two) {
         return one > two.integer();
     }
 
-    bool operator<=(uint32_t const& one, ipv4 const& two) {
+    constexpr bool operator<=(uint32_t const& one, ipv4 const& two) {
         return one <= two.integer();
     }
 
-    bool operator>=(uint32_t const& one, ipv4 const& two) {
+    constexpr bool operator>=(uint32_t const& one, ipv4 const& two) {
         return one >= two.integer();
     }
 
-    bool operator==(std::string_view const& one, ipv4 const& two) {
+    constexpr bool operator==(std::string_view const& one, ipv4 const& two) {
         return two == one;
     }
 
-    bool operator!=(std::string_view const& one, ipv4 const& two) {
+    constexpr bool operator!=(std::string_view const& one, ipv4 const& two) {
         return two != one;
     }
 
-    bool operator<(std::string_view const& one, ipv4 const& two) {
+    constexpr bool operator<(std::string_view const& one, ipv4 const& two) {
         return ipv4(one) < two;
     }
 
-    bool operator>(std::string_view const& one, ipv4 const& two) {
+    constexpr bool operator>(std::string_view const& one, ipv4 const& two) {
         return ipv4(one) > two;
     }
 
-    bool operator<=(std::string_view const& one, ipv4 const& two) {
+    constexpr bool operator<=(std::string_view const& one, ipv4 const& two) {
         return ipv4(one) <= two;
     }
 
-    bool operator>=(std::string_view const& one, ipv4 const& two) {
+    constexpr bool operator>=(std::string_view const& one, ipv4 const& two) {
         return ipv4(one) >= two;
     }
 
-    bool operator==(std::array<uint8_t, 4> const& one, ipv4 const& two) {
+    constexpr bool operator==(std::array<uint8_t, 4> const& one,
+                              ipv4 const& two) {
         return two == one;
     }
 
-    bool operator!=(std::array<uint8_t, 4> const& one, ipv4 const& two) {
+    constexpr bool operator!=(std::array<uint8_t, 4> const& one,
+                              ipv4 const& two) {
         return two != one;
     }
 
-    bool operator<(std::array<uint8_t, 4> const& one, ipv4 const& two) {
+    constexpr bool operator<(std::array<uint8_t, 4> const& one,
+                             ipv4 const& two) {
         return ipv4(one) < two;
     }
 
-    bool operator>(std::array<uint8_t, 4> const& one, ipv4 const& two) {
+    constexpr bool operator>(std::array<uint8_t, 4> const& one,
+                             ipv4 const& two) {
         return ipv4(one) > two;
     }
 
-    bool operator<=(std::array<uint8_t, 4> const& one, ipv4 const& two) {
+    constexpr bool operator<=(std::array<uint8_t, 4> const& one,
+                              ipv4 const& two) {
         return ipv4(one) <= two;
     }
 
-    bool operator>=(std::array<uint8_t, 4> const& one, ipv4 const& two) {
+    constexpr bool operator>=(std::array<uint8_t, 4> const& one,
+                              ipv4 const& two) {
         return ipv4(one) >= two;
     }
 
