@@ -220,18 +220,27 @@ namespace webpp {
         }
 
       public:
-        constexpr explicit ipv6(std::string_view const& str) noexcept {
+        constexpr explicit ipv6(std::string_view const& str,
+                                uint8_t __prefix = 255) noexcept {
             parse(str);
+            prefix(__prefix);
         }
-        constexpr explicit ipv6(octets8_t const& _octets) noexcept
-            : data(_octets) {}
-        constexpr explicit ipv6(octets16_t const& _octets) noexcept
-            : data{to_octets_t(_octets)} {}
+        constexpr explicit ipv6(octets8_t const& _octets,
+                                uint8_t __prefix = 255) noexcept
+            : data(_octets), _prefix(__prefix > 128 ? 255 : __prefix) {}
+        constexpr explicit ipv6(octets16_t const& _octets,
+                                uint8_t __prefix = 255) noexcept
+            : data{to_octets_t(_octets)},
+              _prefix(__prefix > 128 ? 255 : __prefix) {}
 
-        constexpr explicit ipv6(octets32_t const& _octets) noexcept
-            : data{to_octets_t(_octets)} {}
-        constexpr explicit ipv6(octets64_t const& _octets) noexcept
-            : data{to_octets_t(_octets)} {}
+        constexpr explicit ipv6(octets32_t const& _octets,
+                                uint8_t __prefix = 255) noexcept
+            : data{to_octets_t(_octets)},
+              _prefix(__prefix > 128 ? 255 : __prefix) {}
+        constexpr explicit ipv6(octets64_t const& _octets,
+                                uint8_t __prefix = 255) noexcept
+            : data{to_octets_t(_octets)},
+              _prefix(__prefix > 128 ? 255 : __prefix) {}
         constexpr ipv6(ipv6 const& ip) noexcept = default;
         constexpr ipv6(ipv6&& ip) noexcept = default;
 
@@ -239,28 +248,45 @@ namespace webpp {
 
         ipv6& operator=(std::string_view const& str) noexcept {
             parse(str);
+            _prefix = 255;
             return *this;
         }
 
         ipv6& operator=(octets8_t const& _octets) noexcept {
             data = _octets;
+            _prefix = 255;
             return *this;
         }
 
         ipv6& operator=(octets16_t const& _octets) noexcept {
             data = to_octets_t(_octets);
+            _prefix = 255;
             return *this;
         }
 
         ipv6& operator=(octets32_t const& _octets) noexcept {
             data = to_octets_t(_octets);
+            _prefix = 255;
             return *this;
         }
 
         ipv6& operator=(octets64_t const& _octets) noexcept {
             data = to_octets_t(_octets);
+            _prefix = 255;
             return *this;
         }
+
+        explicit operator octets8_t() { return octets8(); }
+
+        explicit operator octets16_t() { return octets16(); }
+
+        explicit operator octets32_t() { return octets32(); }
+
+        explicit operator octets64_t() { return octets64(); }
+
+        explicit operator const char*() { return short_str().c_str(); }
+
+        explicit operator std::string() { return short_str(); }
 
         /**
          * @brief get the octets in 8bit format
