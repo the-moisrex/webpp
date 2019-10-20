@@ -72,7 +72,7 @@ TEST(URITests, IPv6HostName) {
     EXPECT_TRUE(u.has_host());
     EXPECT_TRUE(u.has_port());
     EXPECT_TRUE(u.has_authority());
-    EXPECT_TRUE(u.has_path());
+    EXPECT_TRUE(u.has_path()) << "path: " << u.path();
     EXPECT_TRUE(u.has_query());
     EXPECT_TRUE(u.has_fragment());
     EXPECT_EQ(u.fragment(), "str");

@@ -270,9 +270,8 @@ namespace webpp {
             if (scheme_end != std::string_view::npos)
                 return; // It's already parsed
 
-            auto _data = (std::is_same_v<StringType, std::string_view>
-                              ? data
-                              : std::string_view(data));
+            auto _data = this->string_view();
+
             // extracting scheme
             if (_data.starts_with("//")) {
                 authority_start = 2;
@@ -319,8 +318,9 @@ namespace webpp {
                               ? data
                               : std::string_view(data));
 
-            user_info_end = _data.find("@", authority_start,
-                                       authority_end - authority_start);
+            user_info_end =
+                _data.substr(authority_start, authority_end - authority_start)
+                    .find('@');
             if (user_info_end == std::string_view::npos) {
                 user_info_end = data.size();
             }
@@ -337,9 +337,7 @@ namespace webpp {
             parse_scheme(); // to get "authority_start"
             parse_query();  // to get "query_start"
 
-            auto _data = (std::is_same_v<StringType, std::string_view>
-                              ? data
-                              : std::string_view(data));
+            auto _data = this->string_view();
 
             auto starting_point =
                 authority_start != data.size()
@@ -348,7 +346,7 @@ namespace webpp {
                                scheme_end != std::string_view::npos
                            ? scheme_end
                            : 0);
-            authority_end = _data.find("/", starting_point, query_start);
+            authority_end = _data.substr(starting_point, query_start).find('/');
             if (authority_end == std::string_view::npos) {
                 authority_end = data.size();
             }
@@ -371,9 +369,7 @@ namespace webpp {
 
             parse_path(); // to get "authority_end"
 
-            auto _data = (std::is_same_v<StringType, std::string_view>
-                              ? data
-                              : std::string_view(data));
+            auto _data = this->string_view();
 
             auto starting_point =
                 user_info_end != data.size() ? user_info_end : authority_start;
@@ -520,9 +516,7 @@ namespace webpp {
             if (fragment_start != std::string_view::npos)
                 return; // It's already parsed
 
-            auto _data = (std::is_same_v<StringType, std::string_view>
-                              ? data
-                              : std::string_view(data));
+            auto _data = this->string_view();
 
             fragment_start = _data.find('#');
             if (fragment_start == std::string_view::npos) {
@@ -535,12 +529,13 @@ namespace webpp {
          * changed
          */
         void parse_query() const noexcept {
+            if (query_start != std::string_view::npos)
+                return; // there's nothing to do
+
             parse_fragment();
 
-            auto _data = (std::is_same_v<StringType, std::string_view>
-                              ? data
-                              : std::string_view(data));
-            query_start = _data.find("?", 0, fragment_start);
+            auto _data = this->string_view();
+            query_start = _data.substr(0, fragment_start).find('?');
             if (query_start == std::string_view::npos) {
                 query_start = data.size();
             }
@@ -578,7 +573,7 @@ namespace webpp {
                           "modifiable)");
             data = data.substr(0, start);
             data.append(replacement);
-            data.append(data.substr(start + len));
+            data.append(data.substr(std::min(data.size(), start + len)));
             unparse();
             // TODO: you may want to not unparse everything
         }
@@ -1084,7 +1079,7 @@ namespace webpp {
          */
         bool has_path() const noexcept {
             parse_path();
-            return authority_end != data.size() && data[authority_end] == '/';
+            return authority_end != data.size();
         }
 
         /**
@@ -1431,6 +1426,18 @@ namespace webpp {
          * @return string
          */
         StringType const& str() const noexcept { return data; }
+
+        /**
+         * Get a string_view version of the uri
+         * @return std::string_view
+         */
+        std::string_view string_view() const noexcept {
+            if constexpr (std::is_same_v<StringType, std::string_view>) {
+                return data;
+            } else {
+                return std::string_view(data);
+            }
+        }
 
         /**
          * This method resolves the given relative reference, based on the given
