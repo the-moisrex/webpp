@@ -1548,19 +1548,30 @@ namespace webpp {
          * An indication of whether or not the user info has a password
          * @return
          */
-        bool has_password() const noexcept {}
+        bool has_password() const noexcept {
+            return user_info().find(':') != std::string_view::npos;
+        }
 
         /**
          * The password in the user info
          * @return
          */
-        std::string_view password() const noexcept {}
+        std::string_view password() const noexcept {
+            auto _user_info = user_info();
+            if (auto found = _user_info.find(':');
+                found != std::string_view::npos) {
+                return _user_info.substr(found + 1);
+            }
+            return {};
+        }
 
         /**
          * The decoded version of the password
          * @return
          */
-        std::string password_decoded() const noexcept {}
+        std::string password_decoded() const noexcept {
+            return decode_uri_component(password(), USER_INFO_NOT_PCT_ENCODED);
+        }
     };
 
     using const_uri = uri<std::string_view>;
