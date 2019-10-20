@@ -26,7 +26,7 @@ TEST(IPv4Tests, Creation) {
     EXPECT_EQ(one, two) << "one is: " << one.str() << "; two is: " << two.str();
     EXPECT_EQ(one.integer(), two.integer());
     EXPECT_EQ(one.str(), two.str());
-    EXPECT_FALSE(one.is_all_zero());
+    EXPECT_FALSE(one.is_zero());
 }
 
 TEST(IPv4Tests, Methods) {
@@ -37,7 +37,7 @@ TEST(IPv4Tests, Methods) {
     EXPECT_FALSE(ip.in_range({192, 168, 1, 2}, ipv4("192.168.2.1")));
     EXPECT_TRUE(ip.is_private());
     EXPECT_FALSE(ip.is_public());
-    EXPECT_FALSE(ip.is_all_zero());
+    EXPECT_FALSE(ip.is_zero());
     EXPECT_EQ(ip.str(), "192.168.1.1");
 
     auto octets = ip.octets();
