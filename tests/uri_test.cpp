@@ -76,7 +76,7 @@ TEST(URITests, IPv6HostName) {
     EXPECT_TRUE(u.has_query());
     EXPECT_TRUE(u.has_fragment());
     EXPECT_EQ(u.fragment(), "str");
-    EXPECT_EQ(u.path(), "/folder/file.md");
+    EXPECT_EQ(u.path(), "/folder/file.md") << "path: " << u.path();
     EXPECT_EQ(u.host(), "[::1]");
     EXPECT_EQ(u.port_uint16(), 8080);
     EXPECT_EQ(u.port(), "8080");

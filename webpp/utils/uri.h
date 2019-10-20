@@ -323,6 +323,8 @@ namespace webpp {
                     .find('@');
             if (user_info_end == std::string_view::npos) {
                 user_info_end = data.size();
+            } else {
+                user_info_end += authority_start;
             }
         }
 
@@ -349,6 +351,8 @@ namespace webpp {
             authority_end = _data.substr(starting_point, query_start).find('/');
             if (authority_end == std::string_view::npos) {
                 authority_end = data.size();
+            } else {
+                authority_end += starting_point;
             }
         }
 
@@ -377,6 +381,8 @@ namespace webpp {
                                     authority_end - authority_start);
             if (port_start == std::string_view::npos) {
                 port_start = data.size(); // there's no port
+            } else {
+                port_start += starting_point;
             }
         }
 
