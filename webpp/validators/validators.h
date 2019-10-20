@@ -266,6 +266,21 @@ namespace webpp {
         constexpr bool url(std::string_view const& str) noexcept;
 
         /**
+         * Check if the specified Integer is an octet of a subnet mask
+         * @tparam Integer
+         * @param o
+         * @return
+         */
+        template <typename Integer>
+        constexpr bool subnet_octet(Integer o) noexcept {
+            constexpr auto mask = static_cast<Integer>(1)
+                                  << ((sizeof(Integer) * 8) - 1);
+            while ((o & mask) == mask)
+                o <<= 1;
+            return o == 0;
+        }
+
+        /**
          * @brief checks if the specified str is an ipv4
          * @param str
          * @return true if str is a valid ipv4
@@ -281,6 +296,41 @@ namespace webpp {
                 str.remove_prefix(octet_str.size() + (octet_index != 3));
             }
             return str.empty();
+        }
+
+        /**
+         * Check if the specified string is a valid ipv4 subnet mask or not
+         * @param str
+         * @return bool an indication weather or not the specified string is a
+         * valid ipv4 subnet mask or not
+         */
+        constexpr bool subnet(std::string_view str) noexcept {
+            std::size_t next_dot = 0;
+            for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
+                next_dot = str.find('.');
+                auto octet_str = str.substr(0, next_dot);
+                if (octet_str.size() > 3 || !is::digit(octet_str)) {
+                    return false;
+                }
+                if (auto octet_int = to_uint(octet_str);
+                    octet_int > 255 || subnet_octet(octet_int))
+                    return false;
+                str.remove_prefix(octet_str.size() + (octet_index != 3));
+            }
+            return str.empty();
+        }
+
+        /**
+         * Check if the specified input is a valid subnet ipv4 mask or not
+         * @param octets
+         * @return bool an indication weather or not the specified input is a
+         * valid ipv4 subnet mask or not
+         */
+        constexpr bool subnet(std::array<uint8_t, 4> const& octets) noexcept {
+            for (auto const& octet : octets)
+                if (!subnet_octet(octet))
+                    return false;
+            return true;
         }
 
         /**
@@ -307,6 +357,11 @@ namespace webpp {
             return false;
         }
 
+        /**
+         * Check if the specified string is a ipv4 plus prefix or not
+         * @param str
+         * @return
+         */
         constexpr bool ipv4_prefix(std::string_view const& str) noexcept {
             return ipv4_prefix(str, charset_t<2>{':', '/'});
         }
