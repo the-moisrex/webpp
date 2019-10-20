@@ -461,14 +461,12 @@ namespace webpp {
          */
         ipv4& clear_prefix() noexcept { return prefix(255); }
 
-        template <typename Integer>
-        constexpr bool octet(Integer o) noexcept {
-            constexpr auto mask = static_cast<Integer>(1)
-                                  << ((sizeof(Integer) * 8) - 1);
-            while ((o & mask) == mask)
-                o <<= 1;
-            return o == 0;
-        }
+        /**
+         * Check if the ip contains a prefix or not
+         * @return bool an indication on weather or not the ip contains a prefix
+         * or not
+         */
+        constexpr bool has_prefix() const noexcept { return _prefix != 255; }
 
         /**
          * @brief checks if the ip in this class is in the specified subnet or
