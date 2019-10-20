@@ -377,8 +377,9 @@ namespace webpp {
 
             auto starting_point =
                 user_info_end != data.size() ? user_info_end : authority_start;
-            port_start = _data.find(":", starting_point,
-                                    authority_end - authority_start);
+            port_start =
+                _data.substr(starting_point, authority_end - authority_start)
+                    .find(':');
             if (port_start == std::string_view::npos) {
                 port_start = data.size(); // there's no port
             } else {
