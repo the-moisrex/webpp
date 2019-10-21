@@ -286,7 +286,7 @@ namespace webpp {
                     scheme_end = colon;
 
                     if (_data.substr(colon + 1, 2) == "//") {
-                        authority_start = colon + 2;
+                        authority_start = colon + 3;
                     } else {
                         // it should be a URN or an invalid URI at this point
                         authority_start = data.size();
