@@ -89,11 +89,7 @@ namespace webpp {
      * @return bool
      */
     constexpr uint32_t to_subnet(uint8_t prefix) noexcept {
-        uint32_t subnet = 0u;
-        for (; prefix != 0; prefix--) {
-            subnet &= 1u << prefix;
-        }
-        return subnet;
+        return 0xFF'FF'FF'FFu << (32u - prefix);
     }
 
     /**
