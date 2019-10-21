@@ -348,7 +348,9 @@ namespace webpp {
                                scheme_end != std::string_view::npos
                            ? scheme_end
                            : 0);
-            authority_end = _data.substr(starting_point, query_start).find('/');
+            authority_end =
+                _data.substr(starting_point, query_start - starting_point)
+                    .find('/');
             if (authority_end == std::string_view::npos) {
                 authority_end = data.size();
             } else {
@@ -378,12 +380,17 @@ namespace webpp {
             auto starting_point =
                 user_info_end != data.size() ? user_info_end : authority_start;
             port_start =
-                _data.substr(starting_point, authority_end - authority_start)
-                    .find(':');
+                _data.substr(starting_point, authority_end - starting_point)
+                    .find_last_of(':');
             if (port_start == std::string_view::npos) {
                 port_start = data.size(); // there's no port
             } else {
                 port_start += starting_point;
+            }
+            auto str_view =
+                _data.substr(port_start + 1, authority_end - (port_start + 1));
+            if (!is::digit(str_view)) {
+                port_start = data.size();
             }
         }
 
@@ -830,12 +837,12 @@ namespace webpp {
 
             if (port_start != data.size()) {
                 // but there's a port
-                len = port_start - authority_start;
+                len = port_start - start;
             } else {
                 // there's no port either
                 if (authority_end != data.size()) {
                     // there's a path
-                    len = authority_end - authority_start;
+                    len = authority_end - start;
                 } else {
                     // there's no path either
                     len = data.size() - 1; // till the end
