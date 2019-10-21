@@ -97,7 +97,7 @@ TEST(URITests, WieredURIs) {
     EXPECT_NE(u1.host(), "");
     EXPECT_TRUE(u1.has_path());
     EXPECT_EQ(u1.path(), "/rfc/rfc1808.txt") << "path: " << u1.path();
-    EXPECT_TRUE(u1.is_urn());
+    EXPECT_TRUE(u1.is_url());
     EXPECT_TRUE(u1.is_valid());
     EXPECT_FALSE(u1.is_urn());
 
@@ -117,7 +117,7 @@ TEST(URITests, WieredURIs) {
         "ftp://ftp.is.co.za/rfc/rfc1808.txt",
         "http://www.ietf.org/rfc/rfc2396.txt#header1",
         "ldap://[2001:db8::7]/c=GB?objectClass=one&objectClass=two",
-        "mailto:[email protected]",
+        "mailto:example@email.com",
         "news:comp.infosystems.www.servers.unix",
         "tel:+1-816-555-1212",
         "telnet://192.0.2.16:80/",
