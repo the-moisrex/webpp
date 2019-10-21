@@ -60,7 +60,8 @@ TEST(IPv4Tests, Validation) {
 
     for (auto const& _ip : valid_ipv4s) {
         EXPECT_TRUE(webpp::is::ipv4(_ip));
-        EXPECT_TRUE(ipv4(_ip).is_valid());
+        EXPECT_TRUE(ipv4(_ip).is_valid())
+            << "ip: " << _ip << "; compiled ip: " << ipv4(_ip);
         ipv4 ip{_ip};
         (void)ip.integer(); // just to make sure it's parsed
         EXPECT_TRUE(ip.is_valid());
