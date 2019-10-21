@@ -185,7 +185,11 @@ namespace webpp {
                     return;
                 }
                 auto __prefix = to_uint(prefix_str);
-                _prefix = __prefix > 255 ? 255 : static_cast<uint8_t>(__prefix);
+                if (__prefix > 32) {
+                    _valid = false;
+                    return;
+                }
+                _prefix = static_cast<uint8_t>(__prefix);
             }
 
             auto oc1 = to_uint(octet_1);
