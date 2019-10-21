@@ -87,6 +87,18 @@ TEST(URITests, IPv6HostName) {
 }
 
 TEST(URITests, WieredURIs) {
+
+    const_uri u1("ftp://ftp.is.co.za/rfc/rfc1808.txt");
+    EXPECT_TRUE(u1.has_host());
+    EXPECT_TRUE(u1.has_scheme());
+    EXPECT_EQ(u1.scheme(), "ftp");
+    EXPECT_EQ(u1.host(), "ftp.is.co.za");
+    EXPECT_TRUE(u1.has_path());
+    EXPECT_EQ(u1.path(), "/rfc/rfc1888.txt");
+    EXPECT_TRUE(u1.is_urn());
+    EXPECT_TRUE(u1.is_valid());
+    EXPECT_FALSE(u1.is_urn());
+
     // some examples from https://rosettacode.org/wiki/URL_parser
     auto _uris = {
         "ftp://ftp.is.co.za/rfc/rfc1808.txt",
@@ -113,7 +125,7 @@ TEST(URITests, WieredURIs) {
         "http://example.com/?a=1&b=2+2&c=3&c=4&d=%65%6e%63%6F%64%65%64"};
 
     for (auto const& _uri : _uris) {
-        EXPECT_TRUE(const_uri(_uri).is_valid());
+        EXPECT_TRUE(const_uri(_uri).is_valid()) << "uri: " << _uri;
     }
 
     uri not_port{"http://username:password@domain.tld/path/file.ext"};
