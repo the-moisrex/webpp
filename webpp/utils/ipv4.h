@@ -166,7 +166,7 @@ namespace webpp {
             }
 
             if (slash != len) {
-                auto prefix_str = _data.substr(slash);
+                auto prefix_str = _data.substr(slash + 1);
                 if (!is::digit(prefix_str)) {
                     _valid = false;
                     return;
