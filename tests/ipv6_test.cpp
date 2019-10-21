@@ -6,6 +6,12 @@ using namespace webpp;
 
 TEST(IPv6Tests, Creation) {}
 
+TEST(IPv6Tests, StrTests) {
+    EXPECT_EQ(ipv6("::").short_str(), "::");
+    EXPECT_EQ(ipv6("::1").short_str(), "::1");
+    EXPECT_EQ(ipv6("::f0:1").short_str(), "::f0:1");
+}
+
 TEST(IPv6Tests, Validation) {
     auto valid_ipv6s = {"0000:0000:0000:0000:0000:0000:0000:0000", "fe00::1",
                         "fe80::217:f2ff:fe07:ed62",
@@ -23,7 +29,8 @@ TEST(IPv6Tests, Validation) {
 
     for (auto const& _ip : valid_ipv6s) {
         EXPECT_EQ(ipv6(ipv6(_ip).short_str()), ipv6(_ip))
-            << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).short_str();
+            << "ip: " << _ip << "\ncompiled ip: " << ipv6(_ip).short_str()
+            << "\nlong ip: " << ipv6(_ip).str();
         EXPECT_TRUE(webpp::is::ipv6(_ip))
             << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).short_str();
         EXPECT_TRUE(ipv6(_ip).is_valid())

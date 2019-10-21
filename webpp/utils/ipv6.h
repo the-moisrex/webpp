@@ -926,43 +926,50 @@ namespace webpp {
             auto _octets = octets16();
 
             // finding all of the ranges that are zero filled
-            std::vector<std::pair<decltype(_octets)::const_iterator,
-                                  decltype(_octets)::const_iterator>>
-                ranges;
-            decltype(_octets)::const_iterator start, finish = _octets.cbegin();
+            decltype(_octets)::const_iterator range_start = _octets.cend(),
+                                              range_end = _octets.cend(), start,
+                                              finish = _octets.cbegin();
             do {
-                start = std::adjacent_find(finish, _octets.cend(),
-                                           [](auto const& a, auto const& b) {
-                                               return (0 == a) && (0 == b);
-                                           });
-                finish = std::find_if_not(start, _octets.cend(),
-                                          [](auto const& a) { return a == 0; });
-                if (start != _octets.cend())
-                    ranges.emplace_back(start, finish);
+                start = std::find(finish, _octets.cend(), 0u);
+                if (start == _octets.cend()) {
+                    break;
+                }
+                finish = std::find_if(start, _octets.cend(),
+                                      [](auto const& a) { return a != 0; });
+                if (range_start == _octets.cend() ||
+                    std::distance(start, finish) >
+                        std::distance(range_start, range_end)) {
+                    range_start = start;
+                    range_end = finish;
+                }
             } while (finish != _octets.cend());
-
-            // finding the range with the max zeros
-            auto max_range =
-                std::max_element(ranges.cbegin(), ranges.cend(),
-                                 [](auto const& a, auto const& b) {
-                                     return std::distance(a.first, a.second) <
-                                            std::distance(b.first, b.second);
-                                 });
 
             // generating short string representation of the ip version 6
             std::ostringstream ostr;
             ostr << std::hex;
-            for (auto it = _octets.cbegin(); it != max_range->first; it++) {
+
+            auto it = _octets.cbegin();
+
+            // [0, range_start)
+            while (it != range_start) {
                 ostr << *it;
-                if (_octets.cbegin() == it)
+                if (++it != range_start)
                     ostr << ':';
             }
-            if (max_range != ranges.cend()) {
-                ostr << ':';
-                for (auto it = max_range->second; it != _octets.cend(); it++) {
-                    ostr << *it;
-                }
+
+            // [range_start, range_end)
+            if (it != range_end) {
+                ostr << "::";
+                it = range_end;
             }
+
+            // [range_end, end)
+            while (it != _octets.cend()) {
+                ostr << *it;
+                if (++it != _octets.cend())
+                    ostr << ':';
+            }
+
             return ostr.str();
         }
 
