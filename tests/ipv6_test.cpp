@@ -22,13 +22,17 @@ TEST(IPv6Tests, Validation) {
                           "3ffe:b00::1::a"};
 
     for (auto const& _ip : valid_ipv6s) {
-        EXPECT_TRUE(webpp::is::ipv6(_ip)) << _ip;
-        EXPECT_TRUE(ipv6(_ip).is_valid()) << _ip;
+        EXPECT_TRUE(webpp::is::ipv6(_ip))
+            << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).short_str();
+        EXPECT_TRUE(ipv6(_ip).is_valid())
+            << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).short_str();
     }
 
     for (auto const& _ip : invalid_ipv6s) {
-        EXPECT_FALSE(webpp::is::ipv6(_ip)) << _ip;
-        EXPECT_FALSE(ipv6(_ip).is_valid()) << _ip;
+        EXPECT_FALSE(webpp::is::ipv6(_ip))
+            << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).short_str();
+        EXPECT_FALSE(ipv6(_ip).is_valid())
+            << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).short_str();
     }
 }
 

@@ -906,6 +906,7 @@ namespace webpp {
 
         /**
          * @brief return the short string representation of ip version 6
+         * TODO: all zero ip prints in a wrong format
          */
         std::string short_str() const noexcept {
             auto _octets = octets16();
