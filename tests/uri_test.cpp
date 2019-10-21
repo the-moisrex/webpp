@@ -93,6 +93,8 @@ TEST(URITests, WieredURIs) {
     EXPECT_TRUE(u1.has_scheme());
     EXPECT_EQ(u1.scheme(), "ftp");
     EXPECT_EQ(u1.host(), "ftp.is.co.za");
+    EXPECT_FALSE(u1.host().empty());
+    EXPECT_NE(u1.host(), "");
     EXPECT_TRUE(u1.has_path());
     EXPECT_EQ(u1.path(), "/rfc/rfc1888.txt");
     EXPECT_TRUE(u1.is_urn());

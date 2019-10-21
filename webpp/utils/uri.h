@@ -285,7 +285,7 @@ namespace webpp {
                         SCHEME_NOT_FIRST.string_view())) {
                     scheme_end = colon;
 
-                    if (_data.substr(colon + 2, 2) == "//") {
+                    if (_data.substr(colon + 1, 2) == "//") {
                         authority_start = colon + 2;
                     } else {
                         // it should be a URN or an invalid URI at this point
@@ -662,6 +662,8 @@ namespace webpp {
         std::string_view
         substr(std::size_t const& start = 0,
                std::size_t const& len = std::string_view::npos) const noexcept {
+            if (len == 0)
+                return {};
             if constexpr (std::is_same_v<StringType, std::string_view>) {
                 return data.substr(start, len);
             } else {
@@ -901,7 +903,7 @@ namespace webpp {
                 // there's no authority start
                 if (scheme_end == data.size()) {
                     // there's no scheme either, so we just have to add to the
-                    // begining of the string
+                    // beginning of the string
                     replace_value(0, 0, std::string("//") + encoded_host);
                 } else {
                     // there's a scheme
@@ -926,12 +928,12 @@ namespace webpp {
 
             if (port_start != data.size()) {
                 // but there's a port
-                len = port_start - authority_start;
+                len = port_start - start;
             } else {
                 // there's no port either
                 if (authority_end != data.size()) {
                     // there's a path
-                    len = authority_end - authority_start;
+                    len = authority_end - start;
                 } else {
                     // there's no path either
                     len = data.size() - 1; // till the end
