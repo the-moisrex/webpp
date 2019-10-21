@@ -1562,7 +1562,10 @@ namespace webpp {
         /**
          * Check if the specified string is a valid URI or not
          */
-        bool is_valid() const noexcept { return is_url() || is_urn(); }
+        bool is_valid() const noexcept {
+            return has_scheme() || has_authority() || has_path() ||
+                   has_fragment();
+        }
 
         /**
          * Check if the user info has a username in it or not
