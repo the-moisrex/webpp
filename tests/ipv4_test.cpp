@@ -68,7 +68,8 @@ TEST(IPv4Tests, Validation) {
 
     for (auto const& _ip : invalid_ipv4s) {
         EXPECT_FALSE(webpp::is::ipv4(_ip));
-        EXPECT_FALSE(ipv4(_ip).is_valid());
+        EXPECT_FALSE(ipv4(_ip).is_valid())
+            << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).str();
         ipv4 ip{_ip};
         (void)ip.integer(); // just to make sure it's parsed
         EXPECT_FALSE(ip.is_valid());
@@ -81,7 +82,7 @@ TEST(IPv4Tests, CIDR) {
                           "192.168.1.1/33"};
 
     for (auto const& _ip : valid_ipv4s) {
-        EXPECT_TRUE(webpp::is::ipv6(_ip)) << _ip;
+        EXPECT_TRUE(webpp::is::ipv4(_ip)) << _ip;
         EXPECT_TRUE(ipv4(_ip).is_valid()) << _ip;
         EXPECT_TRUE(ipv4(_ip).has_prefix()) << _ip;
         EXPECT_GE(ipv4(_ip).prefix(), 0) << _ip;
