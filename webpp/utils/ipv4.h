@@ -124,7 +124,7 @@ namespace webpp {
 
             auto octet_1 = _data.substr(0u, first_dot);
             if (first_dot == len || octet_1.empty() || octet_1.size() > 3 ||
-                !is::digit(octet_1)) {
+                octet_1.starts_with('0') || !is::digit(octet_1)) {
                 _valid = false;
                 return;
             }
@@ -136,7 +136,7 @@ namespace webpp {
             auto octet_2 =
                 _data.substr(first_dot + 1u, second_dot - (first_dot + 1));
             if (second_dot == len || octet_2.empty() || octet_2.size() > 3 ||
-                !is::digit(octet_2)) {
+                octet_2.starts_with('0') || !is::digit(octet_2)) {
                 _valid = false;
                 return;
             }
@@ -148,7 +148,7 @@ namespace webpp {
             auto octet_3 =
                 _data.substr(second_dot + 1u, third_dot - (second_dot + 1));
             if (third_dot == len || octet_3.empty() || octet_3.size() > 3 ||
-                !is::digit(octet_3)) {
+                octet_3.starts_with('0') || !is::digit(octet_3)) {
                 _valid = false;
                 return; // parsing failed.
             }
@@ -160,14 +160,16 @@ namespace webpp {
             auto octet_4 =
                 _data.substr(third_dot + 1u, slash - (third_dot + 1));
 
-            if (octet_4.empty() || octet_4.size() > 3 || !is::digit(octet_4)) {
+            if (octet_4.empty() || octet_4.size() > 3 ||
+                octet_4.starts_with('0') || !is::digit(octet_4)) {
                 _valid = false;
                 return;
             }
 
             if (slash != len) {
                 auto prefix_str = _data.substr(slash + 1);
-                if (!is::digit(prefix_str)) {
+                if (prefix_str.empty() || prefix_str.starts_with('0') ||
+                    !is::digit(prefix_str)) {
                     _valid = false;
                     return;
                 }
