@@ -92,7 +92,7 @@ TEST(URITests, WieredURIs) {
     EXPECT_TRUE(u1.has_host());
     EXPECT_TRUE(u1.has_scheme());
     EXPECT_EQ(u1.scheme(), "ftp");
-    EXPECT_EQ(u1.host(), "ftp.is.co.za");
+    EXPECT_EQ(u1.host(), "ftp.is.co.za") << "host: " << u1.host();
     EXPECT_FALSE(u1.host().empty());
     EXPECT_NE(u1.host(), "");
     EXPECT_TRUE(u1.has_path());
