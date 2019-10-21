@@ -22,6 +22,8 @@ TEST(IPv6Tests, Validation) {
                           "3ffe:b00::1::a"};
 
     for (auto const& _ip : valid_ipv6s) {
+        EXPECT_EQ(ipv6(ipv6(_ip).short_str()), ipv6(_ip))
+            << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).short_str();
         EXPECT_TRUE(webpp::is::ipv6(_ip))
             << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).short_str();
         EXPECT_TRUE(ipv6(_ip).is_valid())

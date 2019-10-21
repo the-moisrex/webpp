@@ -276,6 +276,16 @@ namespace webpp {
             return *this;
         }
 
+        bool operator==(ipv6 const& other) const noexcept {
+            return data == other.data && _prefix == other._prefix;
+        }
+
+        bool operator!=(ipv6 const& other) const noexcept {
+            return !operator==(other);
+        }
+
+        // TODO: add other operators
+
         explicit operator octets8_t() { return octets8(); }
 
         explicit operator octets16_t() { return octets16(); }
