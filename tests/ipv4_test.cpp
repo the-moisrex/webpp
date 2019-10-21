@@ -82,8 +82,9 @@ TEST(IPv4Tests, CIDR) {
                           "192.168.1.1/33"};
 
     for (auto const& _ip : valid_ipv4s) {
-        EXPECT_TRUE(webpp::is::ipv4(_ip)) << _ip;
-        EXPECT_TRUE(ipv4(_ip).is_valid()) << _ip;
+        EXPECT_TRUE(webpp::is::ipv4_prefix(_ip)) << _ip;
+        EXPECT_TRUE(ipv4(_ip).is_valid())
+            << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).str();
         EXPECT_TRUE(ipv4(_ip).has_prefix()) << _ip;
         EXPECT_GE(ipv4(_ip).prefix(), 0) << _ip;
         EXPECT_LE(ipv4(_ip).prefix(), 32) << _ip;
