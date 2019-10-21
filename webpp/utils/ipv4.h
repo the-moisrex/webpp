@@ -16,7 +16,7 @@ namespace webpp {
      */
     constexpr uint8_t to_prefix(uint32_t octets) noexcept {
         uint8_t prefix = 0u;
-        for (uint32_t mask = 0x80'00'00'00u; mask != 0u; mask <<= 1u)
+        for (uint32_t mask = 0x80'00'00'00u; mask != 0u; mask >>= 1u)
             if ((octets & mask) == mask)
                 prefix++;
             else
