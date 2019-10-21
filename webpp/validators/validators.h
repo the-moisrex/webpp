@@ -382,6 +382,15 @@ namespace webpp {
             bool encountered_double_colons = false;
             std::size_t index = 0;
 
+            if (address.starts_with('[')) {
+                if (address.ends_with(']')) {
+                    address.remove_suffix(1);
+                    address.remove_prefix(1);
+                } else {
+                    return false;
+                }
+            }
+
             while (index < 8u && !address.empty()) {
                 auto next_colon = address.find(':');
                 auto octet = address.substr(0, next_colon);
