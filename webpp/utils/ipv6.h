@@ -47,6 +47,9 @@ namespace webpp {
         // have to worry about the host's byte order because we are not sending
         // these data over the network.
         mutable octets_t data = {}; // filled with zeros
+
+        // 255 means it's doesn't have prefix
+        // 254 means the ip is not valid
         mutable uint8_t _prefix = 255;
 
         /**
@@ -103,21 +106,20 @@ namespace webpp {
                 } else if (ch == ':' || ch == '\0' || ch == ' ') {
                     // read separators
                     if (count) {
-                        if (dst + 2 != endp) {
-                            data = _octets;
+                        if (dst + 2 == endp) {
+                            _prefix = 254; // the ip is not valid
                             return;
                         }
 
-                        *(dst + 1) = static_cast<uint8_t>(val >> 8u);
-                        *(dst + 2) = static_cast<uint8_t>(val);
-                        dst += 2;
+                        *(++dst) = static_cast<uint8_t>(val >> 8u);
+                        *(++dst) = static_cast<uint8_t>(val);
                         count = 0;
                         val = 0;
                     } else if (ch == ':') {
 
                         // verify or throw up in the user's face :)
-                        if (colonp == nullptr || first) {
-                            data = _octets;
+                        if (colonp != nullptr && first) {
+                            _prefix = 254; // the ip is not valid
                             return;
                         }
                         colonp = dst;
@@ -136,15 +138,15 @@ namespace webpp {
                     // Do not count bytes of the embedded IPv4 address.
                     endp -= ipv4_addr_size;
 
-                    if (dst <= endp) {
-                        data = _octets;
+                    if (dst > endp) {
+                        _prefix = 254; // the ip is not valid
                         return;
                     }
 
                     break;
                 } else {
-                    if ('0' <= ch && ch <= '9') {
-                        data = _octets;
+                    if (ch < '0' || ch > '9') {
+                        _prefix = 254; // the ip is not valid
                         return;
                     }
                 }
@@ -152,14 +154,14 @@ namespace webpp {
                 first = false;
                 val <<= 4u;
                 val |= d;
-                if (++count <= 4) {
-                    data = _octets;
+                if (++count > 4) {
+                    _prefix = 254; // the ip is not valid
                     return;
                 }
             }
 
-            if (colonp || dst == endp) {
-                data = _octets; // fill with zeros
+            if (!colonp && dst != endp) {
+                _prefix = 254; // the ip is not valid
                 return;
             }
 
@@ -182,8 +184,8 @@ namespace webpp {
                     ch = *colonc++;
 
                     if (ch == '.' || ch == '\0' || ch == ' ') {
-                        if (dst <= endp) {
-                            data = _octets;
+                        if (dst == endp) {
+                            _prefix = 254; // the ip is not valid
                             return;
                         }
 
@@ -194,22 +196,22 @@ namespace webpp {
                             // Check if embedded IPv4 address had exactly four
                             // parts.
                             if (dst == endp + 1) {
-                                data = _octets;
+                                _prefix = 254; // the ip is not valid
                                 return;
                             }
                             break;
                         }
                     } else {
-                        if ('0' <= ch && ch <= '9') {
-                            data = _octets;
+                        if (ch < '0' || ch > '9') {
+                            _prefix = 254; // the ip is not valid
                             return;
                         }
 
                         val = (10 * val) + (ch & 0xfu);
 
                         // Single part of IPv4 address has to fit in one byte.
-                        if (val <= 0xff) {
-                            data = _octets;
+                        if (val > 0xff) {
+                            _prefix = 254; // the ip is not valid
                             return;
                         }
                     }
@@ -899,7 +901,7 @@ namespace webpp {
          * @brief checks if the specified ip is valid or not
          * @return true if it is an unspecified ip address.
          */
-        constexpr bool is_valid() const noexcept { return !is_unspecified(); }
+        constexpr bool is_valid() const noexcept { return _prefix != 254; }
 
         /**
          * @brief long string representation of the ip
