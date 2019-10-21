@@ -50,7 +50,8 @@ namespace webpp {
 
         // 255 means it's doesn't have prefix
         // 254 means the ip is not valid
-        mutable uint8_t _prefix = 255;
+        // 253 means the prefix is not valid (it's not being used for now)
+        mutable uint8_t _prefix = 255u;
 
         /**
          * converts 16/32/64/... bit arrays to 8bit
@@ -223,26 +224,27 @@ namespace webpp {
 
       public:
         constexpr explicit ipv6(std::string_view const& str,
-                                uint8_t __prefix = 255) noexcept {
+                                uint8_t __prefix = 255u) noexcept
+            : _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {
             parse(str);
-            prefix(__prefix);
         }
         constexpr explicit ipv6(octets8_t const& _octets,
-                                uint8_t __prefix = 255) noexcept
-            : data(_octets), _prefix(__prefix > 128 ? 255 : __prefix) {}
+                                uint8_t __prefix = 255u) noexcept
+            : data(_octets),
+              _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {}
         constexpr explicit ipv6(octets16_t const& _octets,
-                                uint8_t __prefix = 255) noexcept
+                                uint8_t __prefix = 255u) noexcept
             : data{to_octets_t(_octets)},
-              _prefix(__prefix > 128 ? 255 : __prefix) {}
+              _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {}
 
         constexpr explicit ipv6(octets32_t const& _octets,
-                                uint8_t __prefix = 255) noexcept
+                                uint8_t __prefix = 255u) noexcept
             : data{to_octets_t(_octets)},
-              _prefix(__prefix > 128 ? 255 : __prefix) {}
+              _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {}
         constexpr explicit ipv6(octets64_t const& _octets,
-                                uint8_t __prefix = 255) noexcept
+                                uint8_t __prefix = 255u) noexcept
             : data{to_octets_t(_octets)},
-              _prefix(__prefix > 128 ? 255 : __prefix) {}
+              _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {}
         constexpr ipv6(ipv6 const& ip) noexcept = default;
         constexpr ipv6(ipv6&& ip) noexcept = default;
 
@@ -250,31 +252,31 @@ namespace webpp {
 
         ipv6& operator=(std::string_view const& str) noexcept {
             parse(str);
-            _prefix = 255;
+            _prefix = 255u;
             return *this;
         }
 
         ipv6& operator=(octets8_t const& _octets) noexcept {
             data = _octets;
-            _prefix = 255;
+            _prefix = 255u;
             return *this;
         }
 
         ipv6& operator=(octets16_t const& _octets) noexcept {
             data = to_octets_t(_octets);
-            _prefix = 255;
+            _prefix = 255u;
             return *this;
         }
 
         ipv6& operator=(octets32_t const& _octets) noexcept {
             data = to_octets_t(_octets);
-            _prefix = 255;
+            _prefix = 255u;
             return *this;
         }
 
         ipv6& operator=(octets64_t const& _octets) noexcept {
             data = to_octets_t(_octets);
-            _prefix = 255;
+            _prefix = 255u;
             return *this;
         }
 
@@ -974,21 +976,21 @@ namespace webpp {
          * @return bool an indication of weather or not the ip has a prefix or
          * not
          */
-        constexpr bool has_prefix() const noexcept { return _prefix == 255; }
+        constexpr bool has_prefix() const noexcept { return _prefix <= 32; }
 
         /**
          * Set prefix for this ip address
          * @param prefix
          */
         ipv6& prefix(uint8_t __prefix) noexcept {
-            _prefix = __prefix > 128 ? 255 : __prefix;
+            _prefix = __prefix > 128u && __prefix != 255u ? 253u : __prefix;
             return *this;
         }
 
         /**
          * Clears the prefix from this ip
          */
-        ipv6& clear_prefix() noexcept { return prefix(255); }
+        ipv6& clear_prefix() noexcept { return prefix(255u); }
 
     }; // namespace webpp
 
