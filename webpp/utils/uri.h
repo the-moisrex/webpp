@@ -585,9 +585,10 @@ namespace webpp {
             static_assert(std::is_same_v<StringType, std::string>,
                           "You cannot change a const_uri (string_view is not "
                           "modifiable)");
-            data = data.substr(0, start);
-            data.append(replacement);
-            data.append(data.substr(std::min(data.size(), start + len)));
+            std::stringstream _data;
+            _data << data.substr(0, start) << replacement
+                  << data.substr(std::min(data.size(), start + len));
+            data = _data.str();
             unparse();
             // TODO: you may want to not unparse everything
         }
