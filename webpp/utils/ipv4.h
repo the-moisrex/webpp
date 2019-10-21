@@ -108,7 +108,7 @@ namespace webpp {
     class ipv4 {
       private:
         mutable uint32_t data = 0u;   // all bits are used
-        mutable uint8_t _prefix = 0u; // use 255 as the false value
+        mutable uint8_t _prefix = 255u; // use 255 as the false value
         mutable bool _valid = false;
         // FIXME: there's a padding, you might wanna use it
 
@@ -189,11 +189,14 @@ namespace webpp {
 
         constexpr ipv4(ipv4&& ip) = default;
 
-        constexpr explicit ipv4(std::string_view const& ip) noexcept {
+        constexpr explicit ipv4(std::string_view const& ip) noexcept
+            : _prefix(255) {
             parse(ip);
         }
 
-        constexpr explicit ipv4(char const* const ip) noexcept { parse(ip); }
+        constexpr explicit ipv4(char const* const ip) noexcept : _prefix(255) {
+            parse(ip);
+        }
 
         constexpr ipv4(std::string_view const& ip,
                        std::string_view const& subnet) noexcept {
