@@ -119,7 +119,7 @@ namespace webpp {
                     } else if (ch == ':') {
 
                         // verify or throw up in the user's face :)
-                        if (colonp != nullptr && first) {
+                        if (colonp != _octets.cend() && !first) {
                             _prefix = 254; // the ip is not valid
                             return;
                         }
@@ -170,9 +170,9 @@ namespace webpp {
                 *endp-- = *dst--;
             }
 
-            while (endp > dst) {
-                *endp-- = 0;
-            }
+            //            while (endp > dst) {
+            //                *endp-- = 0;
+            //            }
 
             if (hasIp4) {
                 val = 0;
