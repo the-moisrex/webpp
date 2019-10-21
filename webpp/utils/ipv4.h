@@ -123,7 +123,7 @@ namespace webpp {
                 first_dot++;
 
             auto octet_1 = _data.substr(0u, first_dot);
-            if (first_dot == len || octet_1.size() == 0 || octet_1.size() > 3 ||
+            if (first_dot == len || octet_1.empty() || octet_1.size() > 3 ||
                 !is::digit(octet_1)) {
                 _valid = false;
                 return;
@@ -135,8 +135,8 @@ namespace webpp {
 
             auto octet_2 =
                 _data.substr(first_dot + 1u, second_dot - (first_dot + 1));
-            if (second_dot == len || octet_2.size() == 0 ||
-                octet_2.size() > 3 || !is::digit(octet_2)) {
+            if (second_dot == len || octet_2.empty() || octet_2.size() > 3 ||
+                !is::digit(octet_2)) {
                 _valid = false;
                 return;
             }
@@ -147,7 +147,7 @@ namespace webpp {
 
             auto octet_3 =
                 _data.substr(second_dot + 1u, third_dot - (second_dot + 1));
-            if (third_dot == len || octet_3.size() == 0 || octet_3.size() > 3 ||
+            if (third_dot == len || octet_3.empty() || octet_3.size() > 3 ||
                 !is::digit(octet_3)) {
                 _valid = false;
                 return; // parsing failed.
@@ -160,8 +160,7 @@ namespace webpp {
             auto octet_4 =
                 _data.substr(third_dot + 1u, slash - (third_dot + 1));
 
-            if (octet_4.size() == 0 || octet_4.size() > 3 ||
-                !is::digit(octet_4)) {
+            if (octet_4.empty() || octet_4.size() > 3 || !is::digit(octet_4)) {
                 _valid = false;
                 return;
             }
@@ -172,7 +171,8 @@ namespace webpp {
                     _valid = false;
                     return;
                 }
-                _prefix = to_uint8(prefix_str);
+                auto __prefix = to_uint(prefix_str);
+                _prefix = __prefix > 255 ? 255 : static_cast<uint8_t>(__prefix);
             }
 
             auto oc1 = to_uint(octet_1);
@@ -180,7 +180,7 @@ namespace webpp {
             auto oc3 = to_uint(octet_3);
             auto oc4 = to_uint(octet_4);
 
-            if (oc1 > 255 || oc2 > 255 | oc3 > 255 | oc4 > 255) {
+            if (oc1 > 255 || oc2 > 255 || oc3 > 255 || oc4 > 255) {
                 _valid = false;
                 return;
             }
