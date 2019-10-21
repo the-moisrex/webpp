@@ -348,6 +348,7 @@ namespace webpp {
                                scheme_end != std::string_view::npos
                            ? scheme_end
                            : 0);
+            starting_point++;
             authority_end =
                 _data.substr(starting_point, query_start - starting_point)
                     .find('/');
@@ -386,11 +387,11 @@ namespace webpp {
                 port_start = data.size(); // there's no port
             } else {
                 port_start += starting_point;
-            }
-            auto str_view =
-                _data.substr(port_start + 1, authority_end - (port_start + 1));
-            if (!is::digit(str_view)) {
-                port_start = data.size();
+                auto str_view = _data.substr(port_start + 1,
+                                             authority_end - (port_start + 1));
+                if (!is::digit(str_view)) {
+                    port_start = data.size();
+                }
             }
         }
 
