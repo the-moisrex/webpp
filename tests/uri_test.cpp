@@ -96,7 +96,7 @@ TEST(URITests, WieredURIs) {
     EXPECT_FALSE(u1.host().empty());
     EXPECT_NE(u1.host(), "");
     EXPECT_TRUE(u1.has_path());
-    EXPECT_EQ(u1.path(), "/rfc/rfc1888.txt");
+    EXPECT_EQ(u1.path(), "/rfc/rfc1808.txt") << "path: " << u1.path();
     EXPECT_TRUE(u1.is_urn());
     EXPECT_TRUE(u1.is_valid());
     EXPECT_FALSE(u1.is_urn());
