@@ -107,7 +107,7 @@ namespace webpp {
 
     class ipv4 {
       private:
-        mutable uint32_t data = 0u;   // all bits are used
+        mutable uint32_t data = 0u;     // all bits are used
         mutable uint8_t _prefix = 255u; // use 255 as the false value
         mutable bool _valid = false;
         // FIXME: there's a padding, you might wanna use it
@@ -123,7 +123,8 @@ namespace webpp {
                 first_dot++;
 
             auto octet_1 = _data.substr(0u, first_dot);
-            if (first_dot == len || !is::digit(octet_1)) {
+            if (first_dot == len || octet_1.size() == 0 || octet_1.size() > 3 ||
+                !is::digit(octet_1)) {
                 _valid = false;
                 return;
             }
@@ -134,7 +135,8 @@ namespace webpp {
 
             auto octet_2 =
                 _data.substr(first_dot + 1u, second_dot - (first_dot + 1));
-            if (second_dot == len || !is::digit(octet_2)) {
+            if (second_dot == len || octet_2.size() == 0 ||
+                octet_2.size() > 3 || !is::digit(octet_2)) {
                 _valid = false;
                 return;
             }
@@ -145,7 +147,8 @@ namespace webpp {
 
             auto octet_3 =
                 _data.substr(second_dot + 1u, third_dot - (second_dot + 1));
-            if (third_dot == len || !is::digit(octet_3)) {
+            if (third_dot == len || octet_3.size() == 0 || octet_3.size() > 3 ||
+                !is::digit(octet_3)) {
                 _valid = false;
                 return; // parsing failed.
             }
@@ -157,7 +160,8 @@ namespace webpp {
             auto octet_4 =
                 _data.substr(third_dot + 1u, slash - (third_dot + 1));
 
-            if (!is::digit(octet_4)) {
+            if (octet_4.size() == 0 || octet_4.size() > 3 ||
+                !is::digit(octet_4)) {
                 _valid = false;
                 return;
             }
@@ -171,8 +175,19 @@ namespace webpp {
                 _prefix = to_uint8(prefix_str);
             }
 
-            data = parse({to_uint8(octet_1), to_uint8(octet_2),
-                          to_uint8(octet_3), to_uint8(octet_4)});
+            auto oc1 = to_uint(octet_1);
+            auto oc2 = to_uint(octet_2);
+            auto oc3 = to_uint(octet_3);
+            auto oc4 = to_uint(octet_4);
+
+            if (oc1 > 255 || oc2 > 255 | oc3 > 255 | oc4 > 255) {
+                _valid = false;
+                return;
+            }
+
+            data =
+                parse({static_cast<uint8_t>(oc1), static_cast<uint8_t>(oc2),
+                       static_cast<uint8_t>(oc3), static_cast<uint8_t>(oc3)});
             _valid = true;
         }
 
