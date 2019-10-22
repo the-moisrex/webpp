@@ -84,6 +84,11 @@ namespace webpp {
         constexpr void parse(std::string_view ipv6_data) const noexcept {
             constexpr auto hexes = HEXDIG.string_view();
 
+            if (ipv6_data.empty()) {
+                _prefix = 254u;
+                return;
+            }
+
             data = {}; // all zero
             auto it = data.begin();
             auto double_colon_point = data.end();
