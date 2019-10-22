@@ -13,6 +13,14 @@ TEST(IPv6Tests, Creation) {
     EXPECT_FALSE(ip2.is_unspecified());
     EXPECT_TRUE(ip2.is_valid());
     EXPECT_FALSE(ip2.has_prefix());
+
+    ipv6 ip3("fe00::1");
+    EXPECT_TRUE(ip3.is_valid());
+    EXPECT_FALSE(ip3.is_unspecified());
+
+    ipv6 ip4("2001:db8:0:85a3::ac1f:8001");
+    EXPECT_TRUE(ip4.is_valid());
+    EXPECT_EQ("2001:0db8:0000:85a3:0000:0000:ac1f:8001", ip4.str());
 }
 
 TEST(IPv6Tests, Validation) {
@@ -33,7 +41,8 @@ TEST(IPv6Tests, Validation) {
     for (auto const& _ip : valid_ipv6s) {
         EXPECT_EQ(ipv6(ipv6(_ip).short_str()), ipv6(_ip))
             << "ip: " << _ip << "\ncompiled ip: " << ipv6(_ip).short_str()
-            << "\nlong ip: " << ipv6(_ip).str();
+            << "\nlong ip: " << ipv6(_ip).str()
+            << "\nshort long ip: " << ipv6(ipv6(_ip).short_str()).str();
         EXPECT_TRUE(webpp::is::ipv6(_ip))
             << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).short_str();
         EXPECT_TRUE(ipv6(_ip).is_valid())
