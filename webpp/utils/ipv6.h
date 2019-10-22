@@ -2,6 +2,8 @@
 #define WEBPP_IPV6_H
 
 #include "../std/string_view.h"
+#include "../validators/validators.h"
+#include "ipv4.h"
 #include <algorithm>
 #include <array>
 #include <sstream>
@@ -79,147 +81,93 @@ namespace webpp {
         /**
          * parses the string_view to the uint8 structure
          */
-        constexpr void parse(std::string_view const& ipv6_data) const noexcept {
-            octets_t _octets = {}; // all zero
+        constexpr void parse(std::string_view ipv6_data) const noexcept {
+            constexpr auto hexes = HEXDIG.string_view();
 
-            uint16_t val = 0u;
-            uint8_t count = 0u;
-            bool first = true;
-            bool hasIp4 = false;           // contains ipv4
-            unsigned char ch = 0u;         // each character
-            uint8_t d = 0u;                // numeric representation
-            auto iter = ipv6_data.begin(); // iterator
-            auto endp = _octets.end();     // finish line
-            auto dst = _octets.begin();    // something I can't explain :)
-            decltype(dst) colonp = _octets.end();
-            decltype(iter) colonc = ipv6_data.end();
-            constexpr auto ipv4_addr_size = 4u;
+            data = {}; // all zero
+            auto it = data.begin();
+            auto double_colon_point = data.end();
 
-            dst--;
-
-            for (;;) {
-                ch = *iter++;
-                d = ch & 0xfu;
-
-                // read Hexadecimals
-                if (('a' <= ch && ch <= 'f') || ('A' <= ch && ch <= 'F')) {
-                    d += 9;
-                } else if (ch == ':' || ch == '\0' || ch == ' ') {
-                    // read separators
-                    if (count) {
-                        if (dst + 2 == endp) {
-                            _prefix = 254; // the ip is not valid
-                            return;
-                        }
-
-                        *(++dst) = static_cast<uint8_t>(val >> 8u);
-                        *(++dst) = static_cast<uint8_t>(val);
-                        count = 0;
-                        val = 0;
-                    } else if (ch == ':') {
-
-                        // verify or throw up in the user's face :)
-                        if (colonp != _octets.cend() && !first) {
-                            _prefix = 254; // the ip is not valid
-                            return;
-                        }
-                        colonp = dst;
-                    }
-
-                    if (ch == '\0' || ch == ' ') {
-                        break;
-                    }
-
-                    colonc = iter;
-
-                    continue;
-                } else if (ch == '.') {
-                    hasIp4 = true;
-
-                    // Do not count bytes of the embedded IPv4 address.
-                    endp -= ipv4_addr_size;
-
-                    if (dst > endp) {
-                        _prefix = 254; // the ip is not valid
-                        return;
-                    }
-
-                    break;
-                } else {
-                    if (ch < '0' || ch > '9') {
-                        _prefix = 254; // the ip is not valid
-                        return;
-                    }
-                }
-
-                first = false;
-                val <<= 4u;
-                val |= d;
-                if (++count > 4) {
-                    _prefix = 254; // the ip is not valid
+            do {
+                if (it == data.cend()) {
+                    _prefix = 254u; // the ip has too many octets
                     return;
                 }
-            }
+                auto colon = ipv6_data.find_first_not_of(hexes);
+                if (colon == std::string_view::npos ||
+                    ipv6_data[colon] == ':') {
+                    // it's an octet
+                    switch (colon) {
+                    case 4:
+                        *(it++) = std::stoul(
+                            std::string(ipv6_data.substr(0, 2)), nullptr, 16);
+                        *(it++) = std::stoul(
+                            std::string(ipv6_data.substr(2, 2)), nullptr, 16);
+                        break;
+                    case 3:
+                        *(it++) = std::stoul(
+                            std::string(ipv6_data.substr(0, 1)), nullptr, 16);
+                        *(it++) = std::stoul(
+                            std::string(ipv6_data.substr(1, 2)), nullptr, 16);
+                        break;
+                    case 2:
+                    case 1:
+                        *(it++) =
+                            std::stoul(std::string(ipv6_data.substr(0, colon)),
+                                       nullptr, 16);
+                        break;
+                    case 0:
+                        // we've reached the double colon rule
+                        if (double_colon_point != data.end()) {
+                            _prefix = 254u; // we can't have two double colons
+                            return;
+                        } else {
+                            double_colon_point = it;
+                            ipv6_data.remove_prefix(1);
+                        }
+                        break;
+                    default:
+                        _prefix = 254u; // the ip is invalid
+                        return;
+                    }
+                } else if (ipv6_data[colon] == '.') {
+                    // we found an ipv4 address
+                    ipv4 ip(ipv6_data);
+                    if (!ip.is_valid()) {
+                        _prefix = 254u; // the ip is not valid
+                        return;
+                    }
+                    for (auto const& octet : ip.octets())
+                        *(it++) = octet;
+                    break;
+                } else if (ipv6_data[colon] == '/') {
+                    // we have a prefix
+                    auto prefix_str = ipv6_data.substr(colon + 1);
+                    if (!is::digit(prefix_str)) {
+                        _prefix = 253u; // the prefix is invalid
+                        break;          // let's not go all crazy just yet
+                    }
+                    auto __prefix = std::stoul(std::string(prefix_str));
+                    _prefix = __prefix > 128u
+                                  ? 253u
+                                  : static_cast<decltype(_prefix)>(__prefix);
+                } else {
+                    _prefix = 254u; // the ip is not valid
+                    return;
+                }
+                ipv6_data.remove_prefix(colon);
+            } while (!ipv6_data.empty());
 
-            if (!colonp && dst != endp) {
-                _prefix = 254; // the ip is not valid
+            if (double_colon_point != data.end() && it != data.end()) {
+                // XXXX XXXX XXXX XXXX YYYY YYYY 0000 0000
+                //                    ^         ^
+                //               double colon   it
+                // shift the values to the last
+                std::rotate(double_colon_point, it, data.end());
+            } else if (it != data.end()) {
+                _prefix = 254u; // the string does not contain the whole ip
                 return;
             }
-
-            while (colonp && dst > colonp) {
-                *endp-- = *dst--;
-            }
-
-            //            while (endp > dst) {
-            //                *endp-- = 0;
-            //            }
-
-            if (hasIp4) {
-                val = 0;
-
-                // Reset the start and end pointers.
-                dst = _octets.begin() + 12;
-                endp = _octets.begin() + 15;
-
-                for (;;) {
-                    ch = *colonc++;
-
-                    if (ch == '.' || ch == '\0' || ch == ' ') {
-                        if (dst == endp) {
-                            _prefix = 254; // the ip is not valid
-                            return;
-                        }
-
-                        *dst++ = static_cast<uint8_t>(val);
-                        val = 0;
-
-                        if (ch == '\0' || ch == ' ') {
-                            // Check if embedded IPv4 address had exactly four
-                            // parts.
-                            if (dst == endp + 1) {
-                                _prefix = 254; // the ip is not valid
-                                return;
-                            }
-                            break;
-                        }
-                    } else {
-                        if (ch < '0' || ch > '9') {
-                            _prefix = 254; // the ip is not valid
-                            return;
-                        }
-
-                        val = (10 * val) + (ch & 0xfu);
-
-                        // Single part of IPv4 address has to fit in one byte.
-                        if (val > 0xff) {
-                            _prefix = 254; // the ip is not valid
-                            return;
-                        }
-                    }
-                }
-            }
-
-            data = _octets;
         }
 
       public:
@@ -990,6 +938,9 @@ namespace webpp {
          * @param prefix
          */
         ipv6& prefix(uint8_t __prefix) noexcept {
+            if (__prefix == 254u) {
+                data = {}; // reset the ip if it was not valid
+            }
             _prefix = __prefix > 128u && __prefix != 255u ? 253u : __prefix;
             return *this;
         }

@@ -4,13 +4,6 @@
 
 using namespace webpp;
 
-TEST(IPv6Tests, Creation) {}
-
-TEST(IPv6Tests, StrTests) {
-    EXPECT_EQ(ipv6("::").short_str(), "::");
-    EXPECT_EQ(ipv6("::1").short_str(), "::1");
-    EXPECT_EQ(ipv6("::f0:1").short_str(), "::f0:1");
-}
 
 TEST(IPv6Tests, Validation) {
     auto valid_ipv6s = {"0000:0000:0000:0000:0000:0000:0000:0000", "fe00::1",
@@ -76,4 +69,10 @@ TEST(IPv6Tests, CIDR) {
         EXPECT_FALSE(ipv6(_ip).has_prefix()) << _ip;
         // TODO: check cidr(prefix) method
     }
+}
+
+TEST(IPv6Tests, StrTests) {
+    EXPECT_EQ(ipv6("::").short_str(), "::");
+    EXPECT_EQ(ipv6("::1").short_str(), "::1");
+    EXPECT_EQ(ipv6("::f0:1").short_str(), "::f0:1");
 }
