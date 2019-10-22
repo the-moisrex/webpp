@@ -425,7 +425,7 @@ namespace webpp {
          * @brief get string representation of the ip
          * @return
          */
-        std::string str() const noexcept {
+        [[nodiscard]] std::string str() const noexcept {
             auto _octets = octets();
             std::ostringstream s;
             s << static_cast<unsigned int>(_octets[0]) << '.'
@@ -439,13 +439,16 @@ namespace webpp {
          * @brief get the integer representation of the ip address
          * @return
          */
-        constexpr uint32_t integer() const noexcept { return data; }
+        [[nodiscard]] constexpr uint32_t integer() const noexcept {
+            return data;
+        }
 
         /**
          * @brief get the 4 octets of the ip address
          * @return
          */
-        constexpr std::array<uint8_t, 4u> octets() const noexcept {
+        [[nodiscard]] constexpr std::array<uint8_t, 4u> octets() const
+            noexcept {
             uint32_t _data = integer();
             return std::array<uint8_t, 4u>(
                 {static_cast<uint8_t>(_data >> 24u),
@@ -460,7 +463,8 @@ namespace webpp {
          * @param finish
          * @return
          */
-        constexpr bool in_range(ipv4 const& start, ipv4 const& finish) const
+        [[nodiscard]] constexpr bool in_range(ipv4 const& start,
+                                              ipv4 const& finish) const
             noexcept {
             return *this >= start && *this <= finish;
         }
@@ -469,7 +473,7 @@ namespace webpp {
          * Get the prefix you specified in the constructor
          * @return
          */
-        constexpr auto prefix() const noexcept { return _prefix; }
+        [[nodiscard]] constexpr auto prefix() const noexcept { return _prefix; }
 
         /**
          * Change the prefix of the ip
@@ -506,13 +510,15 @@ namespace webpp {
          * @return bool an indication on weather or not the ip contains a prefix
          * or not
          */
-        constexpr bool has_prefix() const noexcept { return _prefix <= 32; }
+        [[nodiscard]] constexpr bool has_prefix() const noexcept {
+            return _prefix <= 32;
+        }
 
         /**
          * Check if the specified subnet or prefix was valid or not
          * @return bool
          */
-        constexpr bool has_valid_prefix() const noexcept {
+        [[nodiscard]] constexpr bool has_valid_prefix() const noexcept {
             return _prefix != 253u;
         }
 
@@ -523,7 +529,8 @@ namespace webpp {
          * @param prefix
          * @return bool
          */
-        constexpr bool is_in_subnet(ipv4 const& ip) const noexcept {
+        [[nodiscard]] constexpr bool is_in_subnet(ipv4 const& ip) const
+            noexcept {
             auto uint_val = integer();
             auto uint_ip = ip.integer();
             uint_val &= 0xFFFFFFFFu << (32u - ip.prefix());
@@ -536,7 +543,7 @@ namespace webpp {
          * prefix
          * @return
          */
-        constexpr bool is_private() const noexcept {
+        [[nodiscard]] constexpr bool is_private() const noexcept {
             constexpr ipv4 class_C(std::array<uint8_t, 4u>{192, 168, 0, 0}, 16);
             constexpr ipv4 class_B_start(
                 std::array<uint8_t, 4u>{172, 16, 0, 0});
@@ -552,20 +559,26 @@ namespace webpp {
          * @brief checks if the ip address is in public range or not
          * @return
          */
-        constexpr bool is_public() const noexcept { return !is_private(); }
+        [[nodiscard]] constexpr bool is_public() const noexcept {
+            return !is_private();
+        }
 
         /**
          * @brief check if all the octets are zero or not
          * @return true if all the octets are zero
          */
-        constexpr bool is_zero() const noexcept { return data == 0; }
+        [[nodiscard]] constexpr bool is_zero() const noexcept {
+            return data == 0;
+        }
 
         /**
          * Check if the ip you specified is valid or not (the ctor will not
          * throw an error if the specified string is not a valid ipv4 address)
          * @return bool
          */
-        constexpr bool is_valid() const noexcept { return _prefix != 254u; }
+        [[nodiscard]] constexpr bool is_valid() const noexcept {
+            return _prefix != 254u;
+        }
 
         /**
          * TODO: implement this thing
@@ -573,7 +586,7 @@ namespace webpp {
          * predefined rules
          * @return coordinates or string location
          */
-        std::string geographic_location() const noexcept;
+        [[nodiscard]] std::string geographic_location() const noexcept;
     };
 
     constexpr bool operator==(uint32_t const& one, ipv4 const& two) {
