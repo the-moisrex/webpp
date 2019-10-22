@@ -89,13 +89,14 @@ namespace webpp {
             auto double_colon_point = data.end();
 
             do {
-                if (it == data.cend()) {
+                if (it == data.cend() && !ipv6_data.starts_with('/')) {
                     _prefix = 254u; // the ip has too many octets
                     return;
                 }
                 auto colon = ipv6_data.find_first_not_of(hexes);
                 if (colon == std::string_view::npos ||
-                    ipv6_data[colon] == ':') {
+                    ipv6_data[colon] == ':' ||
+                    (colon != 0 && ipv6_data[colon] == '/')) {
                     // it's an octet
                     switch (colon == std::string_view::npos ? ipv6_data.size()
                                                             : colon) {
@@ -132,6 +133,8 @@ namespace webpp {
                         _prefix = 254u; // the ip is invalid
                         return;
                     }
+                    if (ipv6_data[colon] == '/')
+                        colon--;
                 } else if (ipv6_data[colon] == '.') {
                     // we found an ipv4 address
                     ipv4 ip(ipv6_data);
@@ -153,7 +156,7 @@ namespace webpp {
                     _prefix = __prefix > 128u
                                   ? 253u
                                   : static_cast<decltype(_prefix)>(__prefix);
-                    ipv6_data.remove_prefix(prefix_str.size());
+                    ipv6_data.remove_prefix(prefix_str.size() + 1);
                     if (!ipv6_data.empty()) {
                         _prefix = 254u; // there can't be more stuff in the ip
                                         // from now on
