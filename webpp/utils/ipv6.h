@@ -113,7 +113,7 @@ namespace webpp {
                         break;
                     case 2:
                     case 1:
-                        *(it++) =
+                        *((++it)++) =
                             std::stoul(std::string(ipv6_data.substr(0, colon)),
                                        nullptr, 16);
                         break;
@@ -124,9 +124,10 @@ namespace webpp {
                             return;
                         } else {
                             double_colon_point = it;
-                            ipv6_data.remove_prefix(2);
-                            continue;
+                            if (it == data.begin())
+                                ipv6_data.remove_prefix(1);
                         }
+                        break;
                     default:
                         _prefix = 254u; // the ip is invalid
                         return;
@@ -157,7 +158,7 @@ namespace webpp {
                     return;
                 }
                 if (colon != std::string_view::npos)
-                    ipv6_data.remove_prefix(colon);
+                    ipv6_data.remove_prefix(colon + 1);
                 else
                     break;
             } while (!ipv6_data.empty());
