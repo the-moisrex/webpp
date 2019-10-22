@@ -153,13 +153,18 @@ namespace webpp {
                         break;          // let's not go all crazy just yet
                     }
                     auto __prefix = std::stoul(std::string(prefix_str));
+                    // if (prefix_str.starts_with('0') && __prefix != 0) {
+                    //     // there can't be a leading zero in the prefix string
+                    //     _prefix = 253u;
+                    //     return;
+                    // }
                     _prefix = __prefix > 128u
                                   ? 253u
                                   : static_cast<decltype(_prefix)>(__prefix);
                     ipv6_data.remove_prefix(prefix_str.size() + 1);
                     if (!ipv6_data.empty()) {
                         _prefix = 254u; // there can't be more stuff in the ip
-                                        // from now on
+                                        // from now on.
                         return;
                     }
                     break; // there's nothing in the loop for us anymore
