@@ -440,7 +440,8 @@ namespace webpp {
                     [&](const auto& c) { return devider_chars.contains(c); });
                 found != std::rend(str)) {
                 auto index = std::distance(std::begin(str), found.base()) - 1;
-                if (auto prefix = str.substr(index + 1); is::digit(prefix)) {
+                if (auto prefix = str.substr(index + 1);
+                    !prefix.empty() && is::digit(prefix)) {
                     int _prefix = to_uint(prefix);
                     if (!(_prefix >= 0 && _prefix <= 128))
                         return false;
