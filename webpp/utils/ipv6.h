@@ -62,7 +62,8 @@ namespace webpp {
          * @return octets8_t so I could put it in the "data"
          */
         template <typename OCTET>
-        static constexpr octets_t to_octets_t(OCTET const& _octets) noexcept {
+        [[nodiscard]] static constexpr octets_t
+        to_octets_t(OCTET const& _octets) noexcept {
             octets_t _data = {};
             auto _octets_it = _octets.cbegin();
             auto _data_it = _data.begin();
@@ -279,18 +280,22 @@ namespace webpp {
          * @brief get the octets in 8bit format
          * @return the octets in 8bit format
          */
-        constexpr octets8_t octets8() const noexcept { return data; }
+        [[nodiscard]] constexpr octets8_t octets8() const noexcept {
+            return data;
+        }
 
         /**
          * @brief get all the octets in 8bit format
          * @details same as octets8 method
          */
-        constexpr octets_t octets() const noexcept { return octets8(); }
+        [[nodiscard]] constexpr octets_t octets() const noexcept {
+            return octets8();
+        }
 
         /**
          * @brief return all the octets in 16bit format
          */
-        constexpr octets16_t octets16() const noexcept {
+        [[nodiscard]] constexpr octets16_t octets16() const noexcept {
             // IP: XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX
             // 08: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // 16: --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
@@ -312,7 +317,7 @@ namespace webpp {
         /**
          * @brief return all octets in 32bit format
          */
-        constexpr octets32_t octets32() const noexcept {
+        [[nodiscard]] constexpr octets32_t octets32() const noexcept {
             // IP: XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX
             // 08: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // 16: --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
@@ -336,7 +341,7 @@ namespace webpp {
         /**
          * @brief return all octets in 64bit format
          */
-        constexpr octets64_t octets64() const noexcept {
+        [[nodiscard]] constexpr octets64_t octets64() const noexcept {
             // IP: XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX
             // 08: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // 16: --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
@@ -365,7 +370,7 @@ namespace webpp {
          * This method returns the IPv6 address scope.
          * @returns The IPv6 address scope.
          */
-        constexpr uint8_t scope() const noexcept {
+        [[nodiscard]] constexpr uint8_t scope() const noexcept {
             if (is_multicast()) {
                 return octets8()[1] & 0xfu;
             } else if (is_link_local()) {
@@ -385,7 +390,7 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address is not the Unspecified Address.
          *
          */
-        constexpr bool is_unspecified() const noexcept {
+        [[nodiscard]] constexpr bool is_unspecified() const noexcept {
             auto _octets = octets8();
             return (_octets[0] == 0) && (_octets[1] == 0) &&
                    (_octets[2] == 0) && (_octets[3] == 0) &&
@@ -405,7 +410,7 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address is not the Loopback Address.
          *
          */
-        constexpr bool is_loopback() const noexcept {
+        [[nodiscard]] constexpr bool is_loopback() const noexcept {
             auto _octets = octets8();
             return (_octets[0] == 0) && (_octets[1] == 0) &&
                    (_octets[2] == 0) && (_octets[3] == 0) &&
@@ -425,7 +430,7 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address scope is not Interface-Local.
          *
          */
-        constexpr bool is_link_local() const noexcept {
+        [[nodiscard]] constexpr bool is_link_local() const noexcept {
             auto _octets = octets8();
             return (_octets[0] == 0xfeu) && ((_octets[1] & 0xc0u) == 0x80u);
         }
@@ -438,7 +443,7 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address scope is not a multicast address.
          *
          */
-        constexpr bool is_multicast() const noexcept {
+        [[nodiscard]] constexpr bool is_multicast() const noexcept {
             auto _octets = octets8();
             return _octets[0] == 0xffu;
         }
@@ -447,7 +452,7 @@ namespace webpp {
          * Determine whether the address is a global multicast address
          * @return bool
          */
-        constexpr bool is_multicast_global() const noexcept {
+        [[nodiscard]] constexpr bool is_multicast_global() const noexcept {
             auto _octets = octets8();
             return ((_octets[0] == 0xffu) && ((_octets[1] & 0x0fu) == 0x0eu));
         }
@@ -456,7 +461,7 @@ namespace webpp {
          * Determine whether the address is a link-local multicast address
          * @return bool
          */
-        constexpr bool is_multicast_link_local() const noexcept {
+        [[nodiscard]] constexpr bool is_multicast_link_local() const noexcept {
             auto _octets = octets8();
             return ((_octets[0] == 0xffu) && ((_octets[1] & 0x0fu) == 0x02u));
         }
@@ -465,7 +470,7 @@ namespace webpp {
          * Determine whether the address is a node-local multicast address
          * @return bool
          */
-        constexpr bool is_multicast_node_local() const noexcept {
+        [[nodiscard]] constexpr bool is_multicast_node_local() const noexcept {
             auto _octets = octets8();
             return ((_octets[0] == 0xffu) && ((_octets[1] & 0x0fu) == 0x01u));
         }
@@ -474,7 +479,7 @@ namespace webpp {
          * Determine whether the address is a org-local multicast address
          * @return bool
          */
-        constexpr bool is_multicast_org_local() const noexcept {
+        [[nodiscard]] constexpr bool is_multicast_org_local() const noexcept {
             auto _octets = octets8();
             return ((_octets[0] == 0xffu) && ((_octets[1] & 0x0fu) == 0x08u));
         }
@@ -483,7 +488,7 @@ namespace webpp {
          * Determine whether the address is a site-local multicast address
          * @return bool
          */
-        constexpr bool is_multicast_site_local() const noexcept {
+        [[nodiscard]] constexpr bool is_multicast_site_local() const noexcept {
             auto _octets = octets8();
             return ((_octets[0] == 0xffu) && ((_octets[1] & 0x0fu) == 0x05u));
         }
@@ -496,13 +501,13 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address scope is not Interface-Local.
          *
          */
-        bool IsInterfaceLocal() const noexcept;
+        [[nodiscard]] constexpr bool IsInterfaceLocal() const noexcept;
 
         /**
          * Determine whether the address is site local
          * @return bool
          */
-        constexpr bool is_site_local() const noexcept {
+        [[nodiscard]] constexpr bool is_site_local() const noexcept {
             auto _octets = octets8();
             return (_octets[0] == 0xfeu) && ((_octets[1] & 0xc0u) == 0xc0u);
         }
@@ -511,7 +516,7 @@ namespace webpp {
          * Determine whether the address is a mapped IPv4 address
          * @return bool
          */
-        constexpr bool is_v4_mapped() const noexcept {
+        [[nodiscard]] constexpr bool is_v4_mapped() const noexcept {
             auto _octets = octets8();
             return (_octets[0] == 0) && (_octets[1] == 0) &&
                    (_octets[2] == 0) && (_octets[3] == 0) &&
@@ -530,7 +535,7 @@ namespace webpp {
          * multicast address.
          *
          */
-        constexpr bool is_link_local_multicast() const noexcept {
+        [[nodiscard]] constexpr bool is_link_local_multicast() const noexcept {
             return is_multicast() &&
                    scope() == static_cast<uint8_t>(scope::link_local);
         }
@@ -545,7 +550,8 @@ namespace webpp {
          * multicast address.
          *
          */
-        constexpr bool is_link_local_all_nodes_multicast() const noexcept {
+        [[nodiscard]] constexpr bool is_link_local_all_nodes_multicast() const
+            noexcept {
             auto _octets = octets8();
             return _octets[0] == 0xFFu && _octets[1] == 0x02u &&
                    (_octets[2] == 0) && (_octets[3] == 0) &&
@@ -567,7 +573,8 @@ namespace webpp {
          * multicast address.
          *
          */
-        constexpr bool is_link_local_all_routers_multicast() const noexcept {
+        [[nodiscard]] constexpr bool is_link_local_all_routers_multicast() const
+            noexcept {
             auto _octets = octets();
             return _octets[0] == 0xFFu && _octets[1] == 0x02u &&
                    (_octets[2] == 0) && (_octets[3] == 0) &&
@@ -589,7 +596,7 @@ namespace webpp {
          * multicast address.
          *
          */
-        constexpr bool is_realm_local_multicast() const noexcept {
+        [[nodiscard]] constexpr bool is_realm_local_multicast() const noexcept {
             return is_multicast() &&
                    (scope() == static_cast<uint8_t>(scope::realm_local));
         }
@@ -604,7 +611,8 @@ namespace webpp {
          * multicast address.
          *
          */
-        constexpr bool is_realm_local_all_nodes_multicast() const noexcept {
+        [[nodiscard]] constexpr bool is_realm_local_all_nodes_multicast() const
+            noexcept {
             return is_multicast() &&
                    scope() == static_cast<uint8_t>(scope::realm_local);
         }
@@ -619,7 +627,8 @@ namespace webpp {
          * multicast address.
          *
          */
-        constexpr bool is_realm_local_all_routers_multicast() const noexcept {
+        [[nodiscard]] constexpr bool
+        is_realm_local_all_routers_multicast() const noexcept {
             auto _octets = octets();
             return _octets[0] == 0xFFu && _octets[1] == 0x03u &&
                    (_octets[2] == 0) && (_octets[3] == 0) &&
@@ -641,7 +650,8 @@ namespace webpp {
          * forwarders address.
          *
          */
-        constexpr bool is_realm_local_all_mpl_forwarders() const noexcept {
+        [[nodiscard]] constexpr bool is_realm_local_all_mpl_forwarders() const
+            noexcept {
             auto _octets = octets8();
             return _octets[0] == 0xFFu && _octets[1] == 0x03u &&
                    (_octets[2] == 0) && (_octets[3] == 0) &&
@@ -663,7 +673,8 @@ namespace webpp {
          * not larger than realm local.
          *
          */
-        constexpr bool is_multicast_larger_than_realm_local() const noexcept {
+        [[nodiscard]] constexpr bool
+        is_multicast_larger_than_realm_local() const noexcept {
             return is_multicast() &&
                    scope() > static_cast<uint8_t>(scope::realm_local);
         }
@@ -676,7 +687,7 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address is not a RLOC address.
          *
          */
-        constexpr bool is_routing_locator() const noexcept {
+        [[nodiscard]] constexpr bool is_routing_locator() const noexcept {
             constexpr auto aloc_16_mask = 0xFCu; // The mask for Aloc16
             constexpr auto rloc16_reserved_bit_mask =
                 0x02u; // The mask for the reserved bit of Rloc16
@@ -698,7 +709,8 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address is not an Anycast RLOC address.
          *
          */
-        constexpr bool is_anycast_routing_locator() const noexcept {
+        [[nodiscard]] constexpr bool is_anycast_routing_locator() const
+            noexcept {
             constexpr auto aloc_16_mask = 0xFC; // The mask for Aloc16
             auto _octets = octets();
 
@@ -719,7 +731,8 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address is not an Anycast Service Locator.
          *
          */
-        constexpr bool is_anycast_service_locator() const noexcept {
+        [[nodiscard]] constexpr bool is_anycast_service_locator() const
+            noexcept {
             constexpr auto aloc8_service_start = 0x10;
             constexpr auto aloc8_service_end = 0x2f;
             auto _octets = octets();
@@ -739,7 +752,7 @@ namespace webpp {
          * address.
          *
          */
-        constexpr bool is_subnet_router_anycast() const noexcept {
+        [[nodiscard]] constexpr bool is_subnet_router_anycast() const noexcept {
             // IP: XX XX XX XX XX XX XX XX 00 00 00 00 00 00 00 00
             // 08: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // 16: --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
@@ -762,7 +775,8 @@ namespace webpp {
          * address.
          *
          */
-        constexpr bool is_reserved_subnet_anycast() const noexcept {
+        [[nodiscard]] constexpr bool is_reserved_subnet_anycast() const
+            noexcept {
             // IP: XX XX XX XX XX XX XX XX FD FF FF FF FF FF FF 80
             // 08: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // 16: --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
@@ -784,7 +798,7 @@ namespace webpp {
          * IID.
          *
          */
-        constexpr bool is_iid_reserved() const noexcept {
+        [[nodiscard]] constexpr bool is_iid_reserved() const noexcept {
             return is_subnet_router_anycast() || is_reserved_subnet_anycast() ||
                    is_anycast_routing_locator();
         }
@@ -876,7 +890,7 @@ namespace webpp {
          * @brief checks if the specified ip is valid or not
          * @return true if it is an unspecified ip address.
          */
-        constexpr bool is_valid() const noexcept {
+        [[nodiscard]] constexpr bool is_valid() const noexcept {
             return _prefix != 254 && _prefix != 253;
         }
 
@@ -951,14 +965,18 @@ namespace webpp {
         /**
          * Get the prefix if exists or 255 otherwise
          */
-        constexpr uint8_t prefix() const noexcept { return _prefix; }
+        [[nodiscard]] constexpr uint8_t prefix() const noexcept {
+            return _prefix;
+        }
 
         /**
          * Check if the ip has a prefix or not
          * @return bool an indication of weather or not the ip has a prefix or
          * not
          */
-        constexpr bool has_prefix() const noexcept { return _prefix <= 128; }
+        [[nodiscard]] constexpr bool has_prefix() const noexcept {
+            return _prefix <= 128;
+        }
 
         /**
          * Set prefix for this ip address
