@@ -866,7 +866,9 @@ namespace webpp {
          * @brief checks if the specified ip is valid or not
          * @return true if it is an unspecified ip address.
          */
-        constexpr bool is_valid() const noexcept { return _prefix != 254; }
+        constexpr bool is_valid() const noexcept {
+            return _prefix != 254 && _prefix != 253;
+        }
 
         /**
          * @brief long string representation of the ip

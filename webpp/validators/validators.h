@@ -126,12 +126,10 @@ namespace webpp {
          * @return true/false
          */
         constexpr bool digit(std::string_view const& str) noexcept {
-            if (str.empty())
-                return false;
             for (auto const& c : str)
                 if (!digit(c))
                     return false;
-            return true;
+            return !str.empty();
         }
 
         /**
