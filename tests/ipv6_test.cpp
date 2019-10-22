@@ -36,7 +36,19 @@ TEST(IPv6Tests, Validation) {
                           "3ffe:0b00:0000:0001:0000:0000:000a",
                           "FF02:0000:0000:0000:0000:0000:0000:0000:0001",
                           "::1111:2222:3333:4444:5555:6666::",
-                          "3ffe:b00::1::a"};
+                          "3ffe:b00::1::a",
+                          "invalid",
+                          "this is not valid",
+                          "this:is:not:valid",
+                          "",
+                          ":",
+                          "/",
+                          "/1",
+                          "/01",
+                          "1/1",
+                          ":::",
+                          ":::/12",
+                          "::1:1:2::"};
 
     for (auto const& _ip : valid_ipv6s) {
         EXPECT_EQ(ipv6(ipv6(_ip).short_str()), ipv6(_ip))
