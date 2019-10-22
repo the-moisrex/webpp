@@ -33,7 +33,8 @@ TEST(URITests, Creation) {
     EXPECT_EQ(u.str(), "///");
     u.host("eg2.com");
     EXPECT_TRUE(u.has_host());
-    EXPECT_EQ(u.host(), "//eg2.com/") << "host is: " << u.host();
+    EXPECT_EQ(u.host(), "eg2.com") << "host is: " << u.host();
+    EXPECT_EQ(u.str(), "//eg2.com//") << "host is: " << u.str();
     u.scheme("https:");
     EXPECT_TRUE(u.has_scheme());
     EXPECT_EQ(u.str(), "https://eg2.com/");
