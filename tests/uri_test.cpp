@@ -28,6 +28,18 @@ TEST(URITests, Creation) {
     EXPECT_FALSE(u.has_port());
     EXPECT_EQ(u.str(), "//example.com/");
     EXPECT_TRUE(u.is_normalized());
+    u.clear_host();
+    EXPECT_FALSE(u.has_host());
+    EXPECT_EQ(u.str(), "///");
+    u.host("eg2.com");
+    EXPECT_TRUE(u.has_host());
+    EXPECT_EQ(u.host(), "//eg2.com/") << "host is: " << u.host();
+    u.scheme("https:");
+    EXPECT_TRUE(u.has_scheme());
+    EXPECT_EQ(u.str(), "https://eg2.com/");
+    u.scheme("http");
+    EXPECT_TRUE(u.has_scheme());
+    EXPECT_EQ(u.str(), "http://eg2.com/");
 
     const_uri ipv4_host("https://192.168.1.1");
     EXPECT_TRUE(is::ipv4(ipv4_host.host()));
