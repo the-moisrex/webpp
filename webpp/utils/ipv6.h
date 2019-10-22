@@ -946,7 +946,7 @@ namespace webpp {
          * @return bool an indication of weather or not the ip has a prefix or
          * not
          */
-        constexpr bool has_prefix() const noexcept { return _prefix <= 32; }
+        constexpr bool has_prefix() const noexcept { return _prefix <= 128; }
 
         /**
          * Set prefix for this ip address
