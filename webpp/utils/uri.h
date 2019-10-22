@@ -723,15 +723,17 @@ namespace webpp {
             } else {
                 // the URI doesn't have a scheme now, we have to put it in the
                 // right place
+                auto scheme_colon =
+                    __scheme.empty() ? "" : std::string(__scheme) + ':';
                 if (authority_start != data.size()) {
                     replace_value(0, 0,
-                                  std::string(__scheme) + ':' +
+                                  scheme_colon +
                                       (std::string_view(data).starts_with("//")
                                            ? ""
                                            : "//"));
                 } else {
                     // It's a URN (or URN like URI)
-                    replace_value(0, 0, std::string(__scheme) + ':');
+                    replace_value(0, 0, scheme_colon);
                 }
             }
             return *this;
