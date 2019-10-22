@@ -8,6 +8,7 @@ namespace webpp {
     template <typename T, bool is_signed = true>
     constexpr inline T to(std::string_view const& str) noexcept {
         T ret = 0;
+        // todo: minus is not used!!
         if constexpr (is_signed) {
             bool minus = false;
             for (auto const& i : str) {
