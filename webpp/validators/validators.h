@@ -15,7 +15,8 @@ namespace webpp {
          * @brief check if the string is empty or not
          * @return true if the string is empty
          */
-        constexpr bool empty(std::string_view const& str) noexcept {
+        [[nodiscard]] constexpr bool
+        empty(std::string_view const& str) noexcept {
             return str.empty();
         }
 
@@ -23,7 +24,8 @@ namespace webpp {
          * @brief check if these two are equal
          */
         template <typename T1, typename T2>
-        constexpr bool equals(T1 const& first, T2 const& second) noexcept {
+        [[nodiscard]] constexpr bool equals(T1 const& first,
+                                            T2 const& second) noexcept {
             return first == second;
         }
 
@@ -33,8 +35,9 @@ namespace webpp {
          * @param seed
          * @return true if it does contain it
          */
-        constexpr bool contains(std::string_view const& str,
-                                std::string_view const& seed) noexcept {
+        [[nodiscard]] constexpr bool
+        contains(std::string_view const& str,
+                 std::string_view const& seed) noexcept {
             return str.find(seed) == std::string::npos;
         }
 
@@ -42,8 +45,9 @@ namespace webpp {
          * @brief check if the container contains value
          */
         template <typename T>
-        constexpr bool contains(std::initializer_list<T> const& container,
-                                T const& value) noexcept {
+        [[nodiscard]] constexpr bool
+        contains(std::initializer_list<T> const& container,
+                 T const& value) noexcept {
             return std::find(std::cbegin(container), std::cend(container),
                              value) != std::cend(container);
         }
@@ -53,8 +57,9 @@ namespace webpp {
          */
         template <template <class, class...> class Container, class T1,
                   class... Args>
-        constexpr bool contains_key(Container<T1, Args...> const& container,
-                                    T1 const& key) noexcept {
+        [[nodiscard]] constexpr bool
+        contains_key(Container<T1, Args...> const& container,
+                     T1 const& key) noexcept {
             return container.find(key) != std::end(container);
         }
 
@@ -63,7 +68,7 @@ namespace webpp {
          */
         template <template <class, class, class...> class Container, class T1,
                   class T2, class... Args>
-        constexpr bool
+        [[nodiscard]] constexpr bool
         contains_value(Container<T1, T2, Args...> const& container,
                        T2 const& value) noexcept {
             for (auto pair : container)
@@ -77,7 +82,7 @@ namespace webpp {
          * @param c the character to check
          * @return true if c is a whitespace
          */
-        constexpr bool whitespace(char const& c) noexcept {
+        [[nodiscard]] constexpr bool whitespace(char const& c) noexcept {
             return c == ' ' || c == '\n' || c == '\r' || c == '\t' ||
                    c == '\f' || c == '\v';
             // TODO: consider using std::isspace
@@ -88,7 +93,8 @@ namespace webpp {
          * @param str
          * @return true if there's no whitespaces in the right side of input
          */
-        constexpr bool rtrimmed(std::string_view const& str) noexcept {
+        [[nodiscard]] constexpr bool
+        rtrimmed(std::string_view const& str) noexcept {
             return !whitespace(*str.rbegin());
         }
 
@@ -97,7 +103,8 @@ namespace webpp {
          * @param str
          * @return true if there's no whitespaces in the left side of input
          */
-        constexpr bool ltrimmed(std::string_view const& str) noexcept {
+        [[nodiscard]] constexpr bool
+        ltrimmed(std::string_view const& str) noexcept {
             return !whitespace(str[0]);
         }
 
@@ -107,7 +114,8 @@ namespace webpp {
          * @return true if there's no whitespaces in the right and left side of
          * input
          */
-        constexpr bool trimmed(std::string_view const& str) noexcept {
+        [[nodiscard]] constexpr bool
+        trimmed(std::string_view const& str) noexcept {
             return ltrimmed(str) && rtrimmed(str);
         }
 
@@ -116,7 +124,7 @@ namespace webpp {
          * @param character
          * @return true if the specified input is an integer
          */
-        constexpr bool digit(char const& c) noexcept {
+        [[nodiscard]] constexpr bool digit(char const& c) noexcept {
             return c >= '0' && c <= '9';
         }
 
@@ -125,7 +133,8 @@ namespace webpp {
          * @param str
          * @return true/false
          */
-        constexpr bool digit(std::string_view const& str) noexcept {
+        [[nodiscard]] constexpr bool
+        digit(std::string_view const& str) noexcept {
             for (auto const& c : str)
                 if (!digit(c))
                     return false;
@@ -137,7 +146,7 @@ namespace webpp {
          * @param c
          * @return
          */
-        constexpr bool number(char const& c) noexcept {
+        [[nodiscard]] constexpr bool number(char const& c) noexcept {
             return digit(c) || c == '.';
         }
 
@@ -147,9 +156,8 @@ namespace webpp {
          * @param str
          * @return true if the specified string is a number
          */
-        constexpr bool number(std::string_view const& str) noexcept {
-            if (str.empty())
-                return false;
+        [[nodiscard]] constexpr bool
+        number(std::string_view const& str) noexcept {
             bool is_first = true;
             for (auto const& c : str) {
                 if (!digit(c)) {
@@ -160,7 +168,7 @@ namespace webpp {
                     return false;
                 }
             }
-            return true;
+            return !str.empty();
         }
 
         /**
@@ -168,7 +176,7 @@ namespace webpp {
          * @param c
          * @return
          */
-        constexpr bool lowercase(char const& c) noexcept {
+        [[nodiscard]] constexpr bool lowercase(char const& c) noexcept {
             return c >= 'a' && c <= 'z';
         }
 
@@ -177,7 +185,8 @@ namespace webpp {
          * @param str
          * @return
          */
-        constexpr bool lowercase(std::string_view const& str) noexcept {
+        [[nodiscard]] constexpr bool
+        lowercase(std::string_view const& str) noexcept {
             for (auto const& c : str)
                 if (!lowercase(c))
                     return false;
@@ -189,7 +198,7 @@ namespace webpp {
          * @param c
          * @return
          */
-        constexpr bool uppercase(char const& c) noexcept {
+        [[nodiscard]] constexpr bool uppercase(char const& c) noexcept {
             return c >= 'A' && c <= 'Z';
         }
 
@@ -198,7 +207,8 @@ namespace webpp {
          * @param str
          * @return
          */
-        constexpr bool uppercase(std::string_view const& str) noexcept {
+        [[nodiscard]] constexpr bool
+        uppercase(std::string_view const& str) noexcept {
             for (auto const& c : str)
                 if (!uppercase(c))
                     return false;
@@ -210,14 +220,17 @@ namespace webpp {
          * @param str
          * @return true if the specified string is an integer
          */
-        constexpr bool integer(char const& str) noexcept { return digit(str); }
+        [[nodiscard]] constexpr bool integer(char const& str) noexcept {
+            return digit(str);
+        }
 
         /**
          * @brief the same as digit function
          * @param str
          * @return true if the specified string is an integer
          */
-        constexpr bool integer(std::string_view const& str) noexcept {
+        [[nodiscard]] constexpr bool
+        integer(std::string_view const& str) noexcept {
             return digit(str);
         }
 
@@ -227,7 +240,8 @@ namespace webpp {
          * @param str
          * @return bool
          */
-        constexpr bool uint8(std::string_view const& str) noexcept {
+        [[nodiscard]] constexpr bool
+        uint8(std::string_view const& str) noexcept {
             return !str.empty() && str.size() <= 3 && digit(str) &&
                    to_uint(str) <= 255;
         }
@@ -237,7 +251,7 @@ namespace webpp {
          * @param char
          * @return bool
          */
-        constexpr bool hex(char const& t) noexcept {
+        [[nodiscard]] constexpr bool hex(char const& t) noexcept {
             return (t >= '0' && t <= '9') || (t >= 'a' && t <= 'f') ||
                    (t >= 'A' && t <= 'F');
         }
@@ -248,11 +262,11 @@ namespace webpp {
          * @param str
          * @return bool
          */
-        constexpr bool hex(std::string_view const& str) noexcept {
+        [[nodiscard]] constexpr bool hex(std::string_view const& str) noexcept {
             for (auto const& c : str)
                 if (!hex(c))
                     return false;
-            return true;
+            return !str.empty();
         }
 
         /**
@@ -260,10 +274,10 @@ namespace webpp {
          * @param str
          * @return true if the specified str is an email
          */
-        bool email(std::string_view const& str) noexcept;
+        [[nodiscard]] bool email(std::string_view const& str) noexcept;
 
-        constexpr bool FQDN(std::string_view const& str) noexcept;
-        constexpr bool url(std::string_view const& str) noexcept;
+        [[nodiscard]] constexpr bool FQDN(std::string_view const& str) noexcept;
+        [[nodiscard]] constexpr bool url(std::string_view const& str) noexcept;
 
         /**
          * Check if the specified Integer is an octet of a subnet mask
@@ -272,7 +286,7 @@ namespace webpp {
          * @return
          */
         template <typename Integer>
-        constexpr bool subnet_octet(Integer o) noexcept {
+        [[nodiscard]] constexpr bool subnet_octet(Integer o) noexcept {
             constexpr auto mask = static_cast<Integer>(1)
                                   << ((sizeof(Integer) * 8) - 1);
             while ((o & mask) == mask)
@@ -285,7 +299,7 @@ namespace webpp {
          * @param str
          * @return true if str is a valid ipv4
          */
-        constexpr bool ipv4(std::string_view str) noexcept {
+        [[nodiscard]] constexpr bool ipv4(std::string_view str) noexcept {
             std::size_t next_dot = 0;
             for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
                 next_dot = str.find('.');
@@ -304,7 +318,7 @@ namespace webpp {
          * @return bool an indication weather or not the specified string is a
          * valid ipv4 subnet mask or not
          */
-        constexpr bool subnet(std::string_view str) noexcept {
+        [[nodiscard]] constexpr bool subnet(std::string_view str) noexcept {
             std::size_t next_dot = 0;
             for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
                 next_dot = str.find('.');
@@ -326,7 +340,8 @@ namespace webpp {
          * @return bool an indication weather or not the specified input is a
          * valid ipv4 subnet mask or not
          */
-        constexpr bool subnet(std::array<uint8_t, 4> const& octets) noexcept {
+        [[nodiscard]] constexpr bool
+        subnet(std::array<uint8_t, 4> const& octets) noexcept {
             for (auto const& octet : octets)
                 if (!subnet_octet(octet))
                     return false;
@@ -339,8 +354,9 @@ namespace webpp {
          * @example 192.168.0.1/24, 192.168.0.1:24
          */
         template <std::size_t N>
-        constexpr bool ipv4_prefix(std::string_view const& str,
-                                   charset_t<N> const& devider_chars) noexcept {
+        [[nodiscard]] constexpr bool
+        ipv4_prefix(std::string_view const& str,
+                    charset_t<N> const& devider_chars) noexcept {
             if (auto found = std::find_if(
                     std::rbegin(str), std::rend(str),
                     [&](const auto& c) { return devider_chars.contains(c); });
@@ -362,7 +378,8 @@ namespace webpp {
          * @param str
          * @return
          */
-        constexpr bool ipv4_prefix(std::string_view const& str) noexcept {
+        [[nodiscard]] constexpr bool
+        ipv4_prefix(std::string_view const& str) noexcept {
             return ipv4_prefix(str, charset_t<2>{':', '/'});
         }
 
@@ -378,7 +395,7 @@ namespace webpp {
          *     An indication of whether or not the given address
          *     is a valid IPv6 address is returned.
          */
-        constexpr bool ipv6(std::string_view address) noexcept {
+        [[nodiscard]] constexpr bool ipv6(std::string_view address) noexcept {
             bool encountered_double_colons = false;
             std::size_t index = 0;
 
@@ -432,7 +449,7 @@ namespace webpp {
         }
 
         template <std::size_t N = 1>
-        constexpr bool ipv6_prefix(
+        [[nodiscard]] constexpr bool ipv6_prefix(
             std::string_view const& str,
             charset_t<N> const& devider_chars = charset_t<1>('/')) noexcept {
             if (auto found = std::find_if(
@@ -458,7 +475,7 @@ namespace webpp {
          * @param str
          * @return true if str is ipv4 or ipv6
          */
-        constexpr bool ip(std::string_view const& str) noexcept {
+        [[nodiscard]] constexpr bool ip(std::string_view const& str) noexcept {
             return ipv4(str) || ipv6(str);
         }
 
@@ -468,7 +485,8 @@ namespace webpp {
          * @param str
          * @return
          */
-        constexpr bool host(std::string_view const& str) noexcept {
+        [[nodiscard]] constexpr bool
+        host(std::string_view const& str) noexcept {
             /**
              * This is the character set corresponds to the "unreserved" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
@@ -533,7 +551,7 @@ namespace webpp {
          * Check if the specified string is a query (in URI) or not
          * @return bool true if it's a query
          */
-        constexpr bool query(std::string_view str) noexcept {
+        [[nodiscard]] constexpr bool query(std::string_view str) noexcept {
             /**
              * This is the character set corresponds to the "unreserved" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
@@ -567,9 +585,12 @@ namespace webpp {
             return QUERY_OR_FRAGMENT_NOT_PCT_ENCODED.contains(str);
         }
 
-        constexpr bool ip_range(std::string_view const& str) noexcept;
-        constexpr bool ipv4_range(std::string_view const& str) noexcept;
-        constexpr bool ipv6_range(std::string_view const& str) noexcept;
+        [[nodiscard]] constexpr bool
+        ip_range(std::string_view const& str) noexcept;
+        [[nodiscard]] constexpr bool
+        ipv4_range(std::string_view const& str) noexcept;
+        [[nodiscard]] constexpr bool
+        ipv6_range(std::string_view const& str) noexcept;
         // bool isImage(something) noexcept;
 
         /**
@@ -577,7 +598,8 @@ namespace webpp {
          * @param str
          * @return
          */
-        constexpr bool hex_color(std::string_view const& str) noexcept {
+        [[nodiscard]] constexpr bool
+        hex_color(std::string_view const& str) noexcept {
             if (!str.starts_with('#'))
                 return false;
             switch (str.size()) {
@@ -595,21 +617,21 @@ namespace webpp {
          * @param str
          * @return
          */
-        bool rgb_color(std::string_view str) noexcept;
+        [[nodiscard]] bool rgb_color(std::string_view str) noexcept;
 
         /**
          * Check if the specified string is a RGBA HTML color
          * @param str
          * @return bool
          */
-        bool rgba_color(std::string_view str) noexcept;
+        [[nodiscard]] bool rgba_color(std::string_view str) noexcept;
 
         /**
          * Check if the specified string is a valid HSL and HSLA color or not
          * @param str
          * @return bool
          */
-        bool hsl_color(std::string_view str) noexcept;
+        [[nodiscard]] bool hsl_color(std::string_view str) noexcept;
 
         /**
          * Check if the specified string is a valid HSLA color or not
@@ -619,14 +641,14 @@ namespace webpp {
          * @param str
          * @return bool
          */
-        bool hsla_color(std::string_view str) noexcept;
+        [[nodiscard]] bool hsla_color(std::string_view str) noexcept;
 
         /**
          * Check if the specified string is a valid HTML color
          * @param str
          * @return bool
          */
-        bool name_color(std::string str) noexcept;
+        [[nodiscard]] bool name_color(std::string str) noexcept;
 
         /**
          * Check if the specified string is a valid string representation of a
@@ -634,36 +656,39 @@ namespace webpp {
          * @param str
          * @return bool
          */
-        bool color(std::string_view const& str) noexcept;
+        [[nodiscard]] bool color(std::string_view const& str) noexcept;
 
-        constexpr bool mimetype(std::string_view const& str) noexcept;
-        constexpr bool UUID(std::string_view const& str) noexcept;
-        constexpr bool port(std::string_view const& str) noexcept;
-        constexpr bool mongoid(std::string_view const& str) noexcept;
+        [[nodiscard]] constexpr bool
+        mimetype(std::string_view const& str) noexcept;
+        [[nodiscard]] constexpr bool UUID(std::string_view const& str) noexcept;
+        [[nodiscard]] constexpr bool port(std::string_view const& str) noexcept;
+        [[nodiscard]] constexpr bool
+        mongoid(std::string_view const& str) noexcept;
         // you may want to change the string to a date of some sort or add both
-        bool today(std::string_view const& str) noexcept;
-        bool tomorrow(std::string_view const& str) noexcept;
-        bool yesterday(std::string_view const& str) noexcept;
-        bool this_year(std::string_view const& str) noexcept;
-        bool next_year(std::string_view const& str) noexcept;
-        bool prev_year(std::string_view const& str) noexcept;
-        bool this_month(std::string_view const& str) noexcept;
-        bool next_month(std::string_view const& str) noexcept;
-        bool prev_month(std::string_view const& str) noexcept;
-        bool this_week(std::string_view const& str) noexcept;
-        bool next_week(std::string_view const& str) noexcept;
-        bool prev_week(std::string_view const& str) noexcept;
-        bool between(std::string_view const& str, std::string_view const& from,
-                     std::string_view const& after) noexcept;
-        bool after(std::string_view const& str,
-                   std::string_view const& pointintime) noexcept;
-        bool before(std::string_view const& str,
-                    std::string_view const& pointintime) noexcept;
+        [[nodiscard]] bool today(std::string_view const& str) noexcept;
+        [[nodiscard]] bool tomorrow(std::string_view const& str) noexcept;
+        [[nodiscard]] bool yesterday(std::string_view const& str) noexcept;
+        [[nodiscard]] bool this_year(std::string_view const& str) noexcept;
+        [[nodiscard]] bool next_year(std::string_view const& str) noexcept;
+        [[nodiscard]] bool prev_year(std::string_view const& str) noexcept;
+        [[nodiscard]] bool this_month(std::string_view const& str) noexcept;
+        [[nodiscard]] bool next_month(std::string_view const& str) noexcept;
+        [[nodiscard]] bool prev_month(std::string_view const& str) noexcept;
+        [[nodiscard]] bool this_week(std::string_view const& str) noexcept;
+        [[nodiscard]] bool next_week(std::string_view const& str) noexcept;
+        [[nodiscard]] bool prev_week(std::string_view const& str) noexcept;
+        [[nodiscard]] bool between(std::string_view const& str,
+                                   std::string_view const& from,
+                                   std::string_view const& after) noexcept;
+        [[nodiscard]] bool after(std::string_view const& str,
+                                 std::string_view const& pointintime) noexcept;
+        [[nodiscard]] bool before(std::string_view const& str,
+                                  std::string_view const& pointintime) noexcept;
 
-        bool base64(std::string_view const& str) noexcept;
-        bool escaped(std::string_view const& str) noexcept;
+        [[nodiscard]] bool base64(std::string_view const& str) noexcept;
+        [[nodiscard]] bool escaped(std::string_view const& str) noexcept;
 
-        bool username(std::string_view const& str) noexcept;
+        [[nodiscard]] bool username(std::string_view const& str) noexcept;
     } // namespace is
 } // namespace webpp
 
