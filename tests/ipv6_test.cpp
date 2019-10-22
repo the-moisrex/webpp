@@ -4,6 +4,16 @@
 
 using namespace webpp;
 
+TEST(IPv6Tests, Creation) {
+    ipv6 ip1{"::"};
+    EXPECT_TRUE(ip1.is_valid());
+    EXPECT_TRUE(ip1.is_unspecified());
+
+    ipv6 ip2{"::1"};
+    EXPECT_FALSE(ip2.is_unspecified());
+    EXPECT_TRUE(ip2.is_valid());
+    EXPECT_FALSE(ip2.has_prefix());
+}
 
 TEST(IPv6Tests, Validation) {
     auto valid_ipv6s = {"0000:0000:0000:0000:0000:0000:0000:0000", "fe00::1",
