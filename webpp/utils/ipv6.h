@@ -153,6 +153,13 @@ namespace webpp {
                     _prefix = __prefix > 128u
                                   ? 253u
                                   : static_cast<decltype(_prefix)>(__prefix);
+                    ipv6_data.remove_prefix(prefix_str.size());
+                    if (!ipv6_data.empty()) {
+                        _prefix = 254u; // there can't be more stuff in the ip
+                                        // from now on
+                        return;
+                    }
+                    break; // there's nothing in the loop for us anymore
                 } else {
                     _prefix = 254u; // the ip is not valid
                     return;

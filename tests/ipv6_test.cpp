@@ -75,7 +75,8 @@ TEST(IPv6Tests, CIDR) {
                           "0000:0000:0000:0000:0000:0000:0000:0000/130"};
 
     for (auto const& _ip : valid_ipv6s) {
-        EXPECT_TRUE(webpp::is::ipv6(_ip)) << _ip;
+        EXPECT_FALSE(webpp::is::ipv6(_ip)) << _ip;
+        EXPECT_TRUE(webpp::is::ipv6_prefix(_ip)) << _ip;
         EXPECT_TRUE(ipv6(_ip).is_valid()) << _ip;
         EXPECT_TRUE(ipv6(_ip).has_prefix()) << _ip;
         EXPECT_GE(ipv6(_ip).prefix(), 0) << _ip;
@@ -84,6 +85,7 @@ TEST(IPv6Tests, CIDR) {
 
     for (auto const& _ip : invalid_ipv6s) {
         EXPECT_FALSE(webpp::is::ipv6(_ip)) << _ip;
+        EXPECT_FALSE(webpp::is::ipv6_prefix(_ip)) << _ip;
         EXPECT_FALSE(ipv6(_ip).is_valid()) << _ip;
         EXPECT_FALSE(ipv6(_ip).has_prefix()) << _ip;
         // TODO: check cidr(prefix) method
