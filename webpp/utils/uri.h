@@ -719,7 +719,13 @@ namespace webpp {
                     "The specified scheme is not valid");
             parse_scheme();
             if (scheme_end != data.size()) {
-                replace_value(0, scheme_end, __scheme);
+                replace_value(0,
+                              __scheme.empty() &&
+                                      data.size() > scheme_end + 1 &&
+                                      data[scheme_end] == ':'
+                                  ? scheme_end + 1
+                                  : scheme_end,
+                              __scheme);
             } else {
                 // the URI doesn't have a scheme now, we have to put it in the
                 // right place
