@@ -31,12 +31,15 @@ TEST(URITests, Creation) {
     u.clear_host();
     EXPECT_FALSE(u.has_host());
     EXPECT_EQ(u.str(), "///");
+    u.path("folder/file");
     u.host("eg2.com");
     EXPECT_TRUE(u.has_host());
+    EXPECT_TRUE(u.has_path());
     EXPECT_EQ(u.host(), "eg2.com") << "host is: " << u.host();
-    EXPECT_EQ(u.str(), "//eg2.com//") << "host is: " << u.str();
+    EXPECT_EQ(u.str(), "//eg2.com/folder/file") << "str is: " << u.str();
     u.scheme("https:");
     EXPECT_TRUE(u.has_scheme());
+    u.clear_path();
     EXPECT_EQ(u.str(), "https://eg2.com/");
     u.scheme("http");
     EXPECT_TRUE(u.has_scheme());
