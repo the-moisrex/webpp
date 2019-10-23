@@ -1174,7 +1174,10 @@ namespace webpp {
         /**
          * @brief set path
          */
-        template <typename Container>
+        template <
+            typename Container,
+            typename = std::enable_if_t<std::negation_v<std::is_convertible_v<
+                Container::value_type, std::string_view>>>>
         basic_uri& path(const Container& __path) noexcept {
             static_assert(std::is_convertible_v<typename Container::value_type,
                                                 std::string_view>,
@@ -1487,7 +1490,8 @@ namespace webpp {
          *     (in which I mean, the base URI should be absolute,
          *     as in IsRelativeReference() should return false).
          */
-        basic_uri resolve(const basic_uri& relative_uri) const noexcept {
+        [[nodiscard]] basic_uri resolve(const basic_uri& relative_uri) const
+            noexcept {
             // Resolve the reference by following the algorithm
             // from section 5.2.2 in
             // RFC 3986 (https://tools.ietf.org/html/rfc3986).
