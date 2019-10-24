@@ -1003,14 +1003,16 @@ namespace webpp {
             if (_host.empty() || is_ip())
                 return {};
             std::vector<std::string_view> subs;
-            do {
+            for (;;) {
                 auto dot = _host.find('.');
                 auto sub = _host.substr(0, dot);
                 if (!sub.empty()) {
                     subs.emplace_back(std::move(sub));
-                    _host.remove_prefix(sub.size() + 1);
+                    _host.remove_prefix(sub.size());
+                } else {
+                    break;
                 }
-            } while (!_host.empty());
+            }
             return subs;
         }
 
