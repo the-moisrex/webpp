@@ -308,6 +308,7 @@ TEST(URITests, Set) {
 TEST(URITests, Domains) {
     uri u("http://coded.by.moisrex.localhost/path/to/something");
     EXPECT_TRUE(u.has_host());
+    EXPECT_EQ("coded.by.moisrex.localhost", u.host());
     EXPECT_TRUE(u.has_subdomains());
     EXPECT_TRUE(u.has_top_level_domain());
     EXPECT_TRUE(u.has_second_level_domain());
