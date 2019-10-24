@@ -1649,19 +1649,6 @@ namespace webpp {
         }
 
         /**
-         * Check if the uri has a TLD or not
-         */
-        [[nodiscard]] bool has_tld() const noexcept { return !tld.empty(); }
-
-        /**
-         * Get TLD
-         */
-        [[nodiscard]] std::string_view tld() const noexcept {
-            auto _host = host();
-            // TODO
-        }
-
-        /**
          * Check if the user info has a username in it or not
          * @return bool
          */
