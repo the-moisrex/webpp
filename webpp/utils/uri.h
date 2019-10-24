@@ -1062,7 +1062,7 @@ namespace webpp {
             auto last_dot = _host.find_last_of('.');
             if (last_dot == std::string_view::npos)
                 return {};
-            auto bef_last_dot = _host.find_last_of(".", 0, last_dot);
+            auto bef_last_dot = _host.find_last_of('.', last_dot);
             auto start =
                 bef_last_dot == std::string_view::npos ? 0 : bef_last_dot + 1;
             auto sld = _host.substr(start, last_dot - start);
@@ -1083,7 +1083,7 @@ namespace webpp {
             auto last_dot = _host.find_last_of('.');
             if (last_dot == std::string_view::npos)
                 return *this;
-            auto bef_last_dot = _host.find_last_of(".", 0, last_dot);
+            auto bef_last_dot = _host.find_last_of('.', last_dot);
             auto start =
                 bef_last_dot == std::string_view::npos ? 0 : bef_last_dot + 1;
             if (!sld.empty())
@@ -1123,7 +1123,7 @@ namespace webpp {
             auto last_dot = _host.find_last_of('.');
             if (last_dot == std::string_view::npos)
                 return {};
-            auto bef_last_dot = _host.find_last_of(".", 0, last_dot);
+            auto bef_last_dot = _host.find_last_of('.', last_dot);
             if (bef_last_dot == std::string_view::npos)
                 return {};
             return _host.substr(0, bef_last_dot);
@@ -1142,7 +1142,7 @@ namespace webpp {
             auto last_dot = _host.find_last_of('.');
             if (last_dot == std::string_view::npos)
                 return *this;
-            auto bef_last_dot = _host.find_last_of(".", 0, last_dot);
+            auto bef_last_dot = _host.find_last_of('.', last_dot);
             if (bef_last_dot == std::string_view::npos)
                 return *this;
             if (sds.empty()) // special check for when we want to remove the SDS
