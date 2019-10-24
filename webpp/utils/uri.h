@@ -979,12 +979,29 @@ namespace webpp {
         basic_uri& clear_host() noexcept { return host({}); }
 
         /**
+         * Check if the specified host is an IP address or not
+         * This method check if the specified host is a IPv4 Address or has a
+         * valid syntax for either IPv6 or Future version of IP addresses which
+         * also starts with "[" and ends with "]" with an unknown syntax (as of
+         * writing this code obviousely)
+         * @return an indication of weather or not the specified Hostname is a
+         * valid IP address or not
+         */
+        [[nodiscard]] bool is_ip() const noexcept {
+            auto _host = host();
+            return is::ipv4(_host) ||
+                   (_host.starts_with('[') && _host.ends_with(']'));
+        }
+
+        /**
          * Get the host and split it by dot separator. TLD (Top Level Domain)
          * will be the last one and Second Level Domain will be the one before
          * that and the rest will be subdomains.
          */
         [[nodiscard]] std::vector<std::string_view> domains() const noexcept {
             auto _host = host();
+            if (_host.empty() || is_ip())
+                return {};
             std::vector<std::string_view> subs;
             do {
                 auto dot = _host.find('.');
@@ -1002,7 +1019,7 @@ namespace webpp {
          */
         [[nodiscard]] std::string_view top_level_domain() const noexcept {
             auto _host = host();
-            if (_host.empty())
+            if (_host.empty() || is_ip())
                 return {};
             auto dot = _host.find_last_of('.');
             return _host.substr(dot != std::string_view::npos ? dot + 1 : 0);
@@ -1015,13 +1032,14 @@ namespace webpp {
          */
         basic_uri& top_level_domain(std::string_view const& tld) noexcept {
             auto _host = host();
-            if (_host.empty()) {
+            if (_host.empty() || is_ip()) {
                 // I've already written that code. Yay, I'm so happy
                 static_cast<void>(host(tld));
             } else {
                 auto dot = _host.find_last_of('.');
                 auto start = dot != std::string_view::npos ? dot + 1 : 0;
-                replace_value(start, _host.size() - start, tld);
+                static_cast<void>(host(std::string(_host.substr(0, start)) +
+                                       std::string(tld)));
             }
             return *this;
         }
@@ -1039,7 +1057,7 @@ namespace webpp {
          */
         [[nodiscard]] std::string_view second_level_domain() const noexcept {
             auto _host = host();
-            if (_host.empty())
+            if (_host.empty() || is_ip())
                 return {};
             auto last_dot = _host.find_last_of('.');
             if (last_dot == std::string_view::npos)
@@ -1059,7 +1077,7 @@ namespace webpp {
          */
         basic_uri& second_level_domain(std::string_view const& sld) noexcept {
             auto _host = host();
-            if (_host.empty())
+            if (_host.empty() || is_ip())
                 return *this;
 
             auto last_dot = _host.find_last_of('.');
@@ -1068,7 +1086,8 @@ namespace webpp {
             auto bef_last_dot = _host.find_last_of(".", 0, last_dot);
             auto start =
                 bef_last_dot == std::string_view::npos ? 0 : bef_last_dot + 1;
-            replace_value(start, last_dot - start, sld);
+            static_cast<void>(host(std::string(_host.substr(0, start)) +
+                                   std::string(sld) + _host.substr(last_dot)));
             return *this;
         }
 
@@ -1086,7 +1105,7 @@ namespace webpp {
          */
         [[nodiscard]] std::string_view subdomains() const noexcept {
             auto _host = host();
-            if (_host.empty())
+            if (_host.empty() || is_ip())
                 return {};
             auto last_dot = _host.find_last_of('.');
             if (last_dot == std::string_view::npos)
@@ -1095,6 +1114,27 @@ namespace webpp {
             if (bef_last_dot == std::string_view::npos)
                 return {};
             return _host.substr(0, bef_last_dot);
+        }
+
+        /**
+         * Set the sub-domain part of the host name
+         * Attention: this method will only work if Top Level Domain and Second
+         * Level Domain already exists
+         * @param sds
+         */
+        basic_uri& subdomains(std::string_view const& sds) noexcept {
+            auto _host = host();
+            if (_host.empty() || is_ip())
+                return *this;
+            auto last_dot = _host.find_last_of('.');
+            if (last_dot == std::string_view::npos)
+                return *this;
+            auto bef_last_dot = _host.find_last_of(".", 0, last_dot);
+            if (bef_last_dot == std::string_view::npos)
+                return *this;
+            static_cast<void>(
+                host(std::string(sds) + _host.substr(bef_last_dot)));
+            return *this;
         }
 
         /**
