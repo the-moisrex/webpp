@@ -1002,8 +1002,28 @@ namespace webpp {
          */
         [[nodiscard]] std::string_view top_level_domain() const noexcept {
             auto _host = host();
+            if (_host.empty())
+                return {};
             auto dot = _host.find_last_of('.');
-            return _host.substr(dot != std::string_view::npos ? dot + 1 : dot);
+            return _host.substr(dot != std::string_view::npos ? dot + 1 : 0);
+        }
+
+        /**
+         * Set the TLD (Top Level Domain) in the uri
+         * @param tld
+         * @return
+         */
+        basic_uri& top_level_domain(std::string_view const& tld) noexcept {
+            auto _host = host();
+            if (_host.empty()) {
+                // I've already written that code. Yay, I'm so happy
+                static_cast<void>(host(tld));
+            } else {
+                auto dot = _host.find_last_of('.');
+                auto start = dot != std::string_view::npos ? dot + 1 : 0;
+                replace_value(start, _host.size() - start, tld);
+            }
+            return *this;
         }
 
         /**
@@ -1019,6 +1039,8 @@ namespace webpp {
          */
         [[nodiscard]] std::string_view second_level_domain() const noexcept {
             auto _host = host();
+            if (_host.empty())
+                return {};
             auto last_dot = _host.find_last_of('.');
             if (last_dot == std::string_view::npos)
                 return {};
@@ -1043,6 +1065,8 @@ namespace webpp {
          */
         [[nodiscard]] std::string_view subdomains() const noexcept {
             auto _host = host();
+            if (_host.empty())
+                return {};
             auto last_dot = _host.find_last_of('.');
             if (last_dot == std::string_view::npos)
                 return {};
