@@ -314,6 +314,12 @@ TEST(URITests, Domains) {
     EXPECT_EQ("coded.by", u.subdomains());
     EXPECT_EQ("moisrex", u.second_level_domain());
     EXPECT_EQ("localhost", u.top_level_domain());
+    auto domains = u.domains();
+    EXPECT_EQ(domains.size(), 4);
+    EXPECT_EQ("coded", domains[0]);
+    EXPECT_EQ("by", domains[1]);
+    EXPECT_EQ("moisrex", domains[2]);
+    EXPECT_EQ("localhost", domains[3]);
     u.top_level_domain("dev");
     EXPECT_TRUE(u.has_host());
     EXPECT_TRUE(u.has_path());

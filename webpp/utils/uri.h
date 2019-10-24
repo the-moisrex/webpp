@@ -983,7 +983,7 @@ namespace webpp {
          * will be the last one and Second Level Domain will be the one before
          * that and the rest will be subdomains.
          */
-        [[nodiscard]] std::vector<std::string_view> domain() const noexcept {
+        [[nodiscard]] std::vector<std::string_view> domains() const noexcept {
             auto _host = host();
             std::vector<std::string_view> subs;
             do {
