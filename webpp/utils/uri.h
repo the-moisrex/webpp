@@ -1007,6 +1007,14 @@ namespace webpp {
         }
 
         /**
+         * Check if the specified uri has a top level domain (TLD) or not
+         * @return an indication of weather or not the URI has TLD or not
+         */
+        [[nodiscard]] bool has_top_level_domain() const noexcept {
+            return !top_level_domain().empty();
+        }
+
+        /**
          * Get the second level domain out of the host
          */
         [[nodiscard]] std::string_view second_level_domain() const noexcept {
@@ -1022,6 +1030,14 @@ namespace webpp {
         }
 
         /**
+         * Check if the specified uri has a second level domain or not.
+         * @return An indication of weather or not the URI has SLD or not
+         */
+        [[nodiscard]] bool has_second_level_domain() const noexcept {
+            return !second_level_domain().empty();
+        }
+
+        /**
          * Get the sub-domain (with sub-sub-...-sub-domain)
          * @return
          */
@@ -1034,6 +1050,15 @@ namespace webpp {
             if (bef_last_dot == std::string_view::npos)
                 return {};
             return _host.substr(0, bef_last_dot);
+        }
+
+        /**
+         * Check if the specified uri has at least one sub-domain or not
+         * @return an indication of weather or not the URI has subdomains or not
+         * TODO: we could be smarter here
+         */
+        [[nodiscard]] bool has_subdomains() const noexcept {
+            return !subdomains().empty();
         }
 
         /**
