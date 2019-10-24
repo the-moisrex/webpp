@@ -304,3 +304,30 @@ TEST(URITests, Set) {
     EXPECT_EQ(uri("http://example.com/").scheme("ftp").str(),
               "ftp://example.com/");
 }
+
+TEST(URITests, Domains) {
+    uri u("http://coded.by.moisrex.localhost/path/to/something");
+    EXPECT_TRUE(u.has_host());
+    EXPECT_EQ("coded.by", u.subdomains());
+    EXPECT_EQ("moisrex", u.second_level_domain());
+    EXPECT_EQ("localhost", u.top_level_domain());
+    u.top_level_domain("dev");
+    EXPECT_TRUE(u.has_host());
+    EXPECT_TRUE(u.has_path());
+    EXPECT_EQ("coded.by", u.subdomains());
+    EXPECT_EQ("moisrex", u.second_level_domain());
+    EXPECT_EQ("dev", u.top_level_domain());
+    u.second_level_domain("god");
+    EXPECT_EQ("god", u.second_level_domain());
+    EXPECT_EQ("moisrex", u.second_level_domain());
+    EXPECT_EQ("dev", u.top_level_domain());
+    EXPECT_TRUE(u.has_host());
+    EXPECT_TRUE(u.has_path());
+    EXPECT_TRUE(u.has_scheme());
+    EXPECT_EQ(u.scheme(), "http");
+    u.clear_subdomains();
+    EXPECT_FALSE(u.has_subdomains());
+    EXPECT_TRUE(u.has_host());
+    EXPECT_EQ("god.dev", u.host());
+    EXPECT_EQ("god", u.second_level_domain());
+}
