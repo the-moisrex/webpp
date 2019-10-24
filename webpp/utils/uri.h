@@ -983,7 +983,7 @@ namespace webpp {
          * This method check if the specified host is a IPv4 Address or has a
          * valid syntax for either IPv6 or Future version of IP addresses which
          * also starts with "[" and ends with "]" with an unknown syntax (as of
-         * writing this code obviousely)
+         * writing this code obv)
          * @return an indication of weather or not the specified Hostname is a
          * valid IP address or not
          */
