@@ -1089,7 +1089,7 @@ namespace webpp {
             if (!sld.empty())
                 static_cast<void>(host(std::string(_host.substr(0, start)) +
                                        std::string(sld) +
-                                       _host.substr(last_dot)));
+                                       std::string(_host.substr(last_dot))));
             else
                 static_cast<void>(
                     host(std::string(sld) + _host.substr(last_dot)));
