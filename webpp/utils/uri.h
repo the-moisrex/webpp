@@ -1147,14 +1147,14 @@ namespace webpp {
                 return *this;
             if (sds.empty()) // special check for when we want to remove the SDS
                 bef_last_dot++;
-            static_cast<void>(
-                host(std::string(sds) + _host.substr(bef_last_dot)));
+            static_cast<void>(host(std::string(sds) +
+                                   std::string(_host.substr(bef_last_dot))));
             return *this;
         }
 
         /**
          * Remove the sub-domains if exists. This method should not have
-         * concequences if there's no sub-domain
+         * side-effects if there's no sub-domain
          */
         basic_uri& clear_subdomains() noexcept { return subdomains({}); }
 
