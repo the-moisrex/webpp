@@ -339,6 +339,49 @@ TEST(URITests, Domains) {
     EXPECT_TRUE(u.has_host());
     EXPECT_EQ("god.dev", u.host());
     EXPECT_EQ("god", u.second_level_domain());
+    u.clear_second_level_domain();
+    EXPECT_FALSE(u.has_second_level_domain());
+    EXPECT_EQ("dev", u.host());
+    u.subdomains("should.not.work");
+    EXPECT_FALSE(u.has_second_level_domain());
+    EXPECT_FALSE(u.has_subdomains());
+    EXPECT_EQ("dev", u.host());
+    u.second_level_domain("subdomain.cool");
+    EXPECT_TRUE(u.has_second_level_domain());
+    EXPECT_TRUE(u.has_subdomains());
+    EXPECT_EQ("cool", u.second_level_domain());
+    EXPECT_EQ("subdomain", u.subdomains());
+    u.subdomains("sub");
+    EXPECT_TRUE(u.has_second_level_domain());
+    EXPECT_TRUE(u.has_subdomains());
+    EXPECT_EQ("sub.cool.dev", u.host());
+    u.clear_second_level_domain();
+    EXPECT_FALSE(u.has_second_level_domain());
+    EXPECT_EQ("dev", u.host());
 
-    // TODO add tests for ip version 4
+    // tests for ip version 4
+    u.host("192.168.1.1");
+    EXPECT_EQ("192.168.1.1", u.host());
+    EXPECT_TRUE(u.is_ip());
+    EXPECT_FALSE(u.has_second_level_domain());
+    EXPECT_FALSE(u.has_subdomains());
+    EXPECT_FALSE(u.has_top_level_domain());
+    u.top_level_domain("com");
+    EXPECT_EQ("192.168.1.1", u.host());
+    EXPECT_TRUE(u.is_ip());
+    EXPECT_FALSE(u.has_second_level_domain());
+    EXPECT_FALSE(u.has_subdomains());
+    EXPECT_FALSE(u.has_top_level_domain());
+    u.second_level_domain("com");
+    EXPECT_EQ("192.168.1.1", u.host());
+    EXPECT_TRUE(u.is_ip());
+    EXPECT_FALSE(u.has_second_level_domain());
+    EXPECT_FALSE(u.has_subdomains());
+    EXPECT_FALSE(u.has_top_level_domain());
+    u.subdomains("com");
+    EXPECT_EQ("192.168.1.1", u.host());
+    EXPECT_TRUE(u.is_ip());
+    EXPECT_FALSE(u.has_second_level_domain());
+    EXPECT_FALSE(u.has_subdomains());
+    EXPECT_FALSE(u.has_top_level_domain());
 }

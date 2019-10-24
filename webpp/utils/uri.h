@@ -1086,9 +1086,22 @@ namespace webpp {
             auto bef_last_dot = _host.find_last_of(".", 0, last_dot);
             auto start =
                 bef_last_dot == std::string_view::npos ? 0 : bef_last_dot + 1;
-            static_cast<void>(host(std::string(_host.substr(0, start)) +
-                                   std::string(sld) + _host.substr(last_dot)));
+            if (!sld.empty())
+                static_cast<void>(host(std::string(_host.substr(0, start)) +
+                                       std::string(sld) +
+                                       _host.substr(last_dot)));
+            else
+                static_cast<void>(
+                    host(std::string(sld) + _host.substr(last_dot)));
             return *this;
+        }
+
+        /**
+         * This method will remove the Second Level Domain and also any
+         * Sub-Domains if there are any.
+         */
+        basic_uri& clear_second_level_domain() noexcept {
+            return second_level_domain({});
         }
 
         /**
