@@ -1045,10 +1045,31 @@ namespace webpp {
             if (last_dot == std::string_view::npos)
                 return {};
             auto bef_last_dot = _host.find_last_of(".", 0, last_dot);
-            auto sld = _host.substr(
-                bef_last_dot == std::string_view::npos ? 0 : bef_last_dot + 1,
-                last_dot);
+            auto start =
+                bef_last_dot == std::string_view::npos ? 0 : bef_last_dot + 1;
+            auto sld = _host.substr(start, last_dot - start);
             return sld;
+        }
+
+        /**
+         * Set the second level domain to the specified string.
+         * Attention: this method will only work if Top Level Domain already
+         * exists
+         * @param sld
+         */
+        basic_uri& second_level_domain(std::string_view const& sld) noexcept {
+            auto _host = host();
+            if (_host.empty())
+                return *this;
+
+            auto last_dot = _host.find_last_of('.');
+            if (last_dot == std::string_view::npos)
+                return *this;
+            auto bef_last_dot = _host.find_last_of(".", 0, last_dot);
+            auto start =
+                bef_last_dot == std::string_view::npos ? 0 : bef_last_dot + 1;
+            replace_value(start, last_dot - start, sld);
+            return *this;
         }
 
         /**
