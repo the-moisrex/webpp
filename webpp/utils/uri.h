@@ -1062,7 +1062,7 @@ namespace webpp {
             auto last_dot = _host.find_last_of('.');
             if (last_dot == std::string_view::npos)
                 return {};
-            auto bef_last_dot = _host.find_last_of('.', last_dot);
+            auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
             auto start =
                 bef_last_dot == std::string_view::npos ? 0 : bef_last_dot + 1;
             auto sld = _host.substr(start, last_dot - start);
@@ -1083,7 +1083,7 @@ namespace webpp {
             auto last_dot = _host.find_last_of('.');
             if (last_dot == std::string_view::npos)
                 return *this;
-            auto bef_last_dot = _host.find_last_of('.', last_dot);
+            auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
             auto start =
                 bef_last_dot == std::string_view::npos ? 0 : bef_last_dot + 1;
             if (!sld.empty())
