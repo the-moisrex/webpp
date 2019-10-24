@@ -1123,7 +1123,7 @@ namespace webpp {
             auto last_dot = _host.find_last_of('.');
             if (last_dot == std::string_view::npos)
                 return {};
-            auto bef_last_dot = _host.find_last_of('.', last_dot);
+            auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
             if (bef_last_dot == std::string_view::npos)
                 return {};
             return _host.substr(0, bef_last_dot);
@@ -1142,7 +1142,7 @@ namespace webpp {
             auto last_dot = _host.find_last_of('.');
             if (last_dot == std::string_view::npos)
                 return *this;
-            auto bef_last_dot = _host.find_last_of('.', last_dot);
+            auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
             if (bef_last_dot == std::string_view::npos)
                 return *this;
             if (sds.empty()) // special check for when we want to remove the SDS
