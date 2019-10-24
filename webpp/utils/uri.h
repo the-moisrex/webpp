@@ -978,6 +978,68 @@ namespace webpp {
          */
         basic_uri& clear_host() noexcept { return host({}); }
 
+        /**
+         * Get the host and split it by dot separator. TLD (Top Level Domain)
+         * will be the last one and Second Level Domain will be the one before
+         * that and the rest will be subdomains.
+         */
+        [[nodiscard]] std::vector<std::string_view> domain() const noexcept {
+            auto _host = host();
+            std::vector<std::string_view> subs;
+            do {
+                auto dot = _host.find('.');
+                auto sub = _host.substr(0, dot);
+                if (!sub.empty()) {
+                    subs.emplace_back(std::move(sub));
+                    _host.remove_prefix(sub.size() + 1);
+                }
+            } while (!_host.empty());
+            return subs;
+        }
+
+        /**
+         * Get the TLD (top level domain) or sometimes called extension
+         */
+        [[nodiscard]] std::string_view top_level_domain() const noexcept {
+            auto _host = host();
+            auto dot = _host.find_last_of('.');
+            return _host.substr(dot != std::string_view::npos ? dot + 1 : dot);
+        }
+
+        /**
+         * Get the second level domain out of the host
+         */
+        [[nodiscard]] std::string_view second_level_domain() const noexcept {
+            auto _host = host();
+            auto last_dot = _host.find_last_of('.');
+            if (last_dot == std::string_view::npos)
+                return {};
+            auto bef_last_dot = _host.find_last_of(".", 0, last_dot);
+            auto sld = _host.substr(
+                bef_last_dot == std::string_view::npos ? 0 : bef_last_dot + 1,
+                last_dot);
+            return sld;
+        }
+
+        /**
+         * Get the sub-domain (with sub-sub-...-sub-domain)
+         * @return
+         */
+        [[nodiscard]] std::string_view subdomains() const noexcept {
+            auto _host = host();
+            auto last_dot = _host.find_last_of('.');
+            if (last_dot == std::string_view::npos)
+                return {};
+            auto bef_last_dot = _host.find_last_of(".", 0, last_dot);
+            if (bef_last_dot == std::string_view::npos)
+                return {};
+            return _host.substr(0, bef_last_dot);
+        }
+
+        /**
+         * Get the default port for the specified scheme
+         * TODO: make this function a free function
+         */
         [[nodiscard]] uint16_t default_port() const noexcept {
             auto _scheme = scheme();
             if (_scheme == "http")
@@ -1584,6 +1646,19 @@ namespace webpp {
         [[nodiscard]] bool is_valid() const noexcept {
             return has_scheme() || has_authority() || has_path() ||
                    has_fragment();
+        }
+
+        /**
+         * Check if the uri has a TLD or not
+         */
+        [[nodiscard]] bool has_tld() const noexcept { return !tld.empty(); }
+
+        /**
+         * Get TLD
+         */
+        [[nodiscard]] std::string_view tld() const noexcept {
+            auto _host = host();
+            // TODO
         }
 
         /**
