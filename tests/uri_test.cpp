@@ -339,4 +339,6 @@ TEST(URITests, Domains) {
     EXPECT_TRUE(u.has_host());
     EXPECT_EQ("god.dev", u.host());
     EXPECT_EQ("god", u.second_level_domain());
+
+    // TODO add tests for ip version 4
 }
