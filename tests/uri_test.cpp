@@ -243,7 +243,21 @@ TEST(URITests, URL) {
                        "http://-.~_!$&()*+,;=:%40:80%2f::::::@example.com",
                        "http://1337.net",
                        "http://a.b-c.de",
-                       "http://223.255.255.254"};
+                       "http://223.255.255.254",
+                       "http://0.0.0.0",
+                       "http://10.1.1.0",
+                       "http://10.1.1.255",
+                       "http://224.1.1.1",
+                       "http://1.1.1.1.1",
+                       "http://123.123.123",
+                       "http://3628126748",
+                       "http://10.1.1.1",
+                       "http://10.1.1.254",
+                       "ftps://foo.bar/",
+                       "http://-error-.invalid/",
+                       "http://a.b--c.de/",
+                       "http://-a.b.co",
+                       "http://a.b-.co"};
 
     // these strings are not a valid URL (doesn't mean they are not a valid URI)
     // I'm kinda not sure about some of these; specially those with IP addresses
@@ -269,23 +283,9 @@ TEST(URITests, URL) {
                          "http:// should-fail.com",
                          ":// should fail",
                          "http://foo.bar/foo(bar)baz quux",
-                         "ftps://foo.bar/",
-                         "http://-error-.invalid/",
-                         "http://a.b--c.de/",
-                         "http://-a.b.co",
-                         "http://a.b-.co",
-                         "http://0.0.0.0",
-                         "http://10.1.1.0",
-                         "http://10.1.1.255",
-                         "http://224.1.1.1",
-                         "http://1.1.1.1.1",
-                         "http://123.123.123",
-                         "http://3628126748",
                          "http://.www.foo.bar/",
                          "http://www.foo.bar./",
-                         "http://.www.foo.bar./",
-                         "http://10.1.1.1",
-                         "http://10.1.1.254"};
+                         "http://.www.foo.bar./"};
 
     for (auto const& u : valid_urls) {
         auto a = const_uri(u);
@@ -400,6 +400,6 @@ TEST(URITests, Domains) {
 
 TEST(URITests, EnDecoded) {
     // TODO
-    uri u{"سلام.com"};
+    uri u{"http://سلام.com"};
     EXPECT_TRUE(u.is_valid());
 }
