@@ -713,7 +713,9 @@ namespace webpp {
          * @param _scheme
          * @throws logic_error if uri is const
          */
-        basic_uri& scheme(std::string_view const& __scheme) {
+        basic_uri& scheme(std::string_view __scheme) {
+            if (__scheme.ends_with(':'))
+                __scheme.remove_suffix(1);
             if (!is::scheme(__scheme))
                 throw std::invalid_argument(
                     "The specified scheme is not valid");
@@ -933,7 +935,11 @@ namespace webpp {
             // we have authority_start, let's check user_info and port too
             if (user_info_end == data.size()) {
                 // there's no user info
-                start = authority_start;
+                if (scheme_end == data.size()) {
+                    start = 0;
+                } else {
+                    start = authority_start;
+                }
             } else {
                 // there's a user info
                 start = user_info_end;
