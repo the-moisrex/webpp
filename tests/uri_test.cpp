@@ -329,7 +329,6 @@ TEST(URITests, Domains) {
     EXPECT_EQ("dev", u.top_level_domain());
     u.second_level_domain("god");
     EXPECT_EQ("god", u.second_level_domain());
-    EXPECT_EQ("moisrex", u.second_level_domain());
     EXPECT_EQ("dev", u.top_level_domain());
     EXPECT_TRUE(u.has_host());
     EXPECT_TRUE(u.has_path());
