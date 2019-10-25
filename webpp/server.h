@@ -9,7 +9,7 @@ namespace webpp {
     class server {
       protected:
         std::shared_ptr<Interface> _interface;
-        webpp::router<Interface> _router;
+        router<Interface> _router;
 
       public:
         server(Interface const& inerface) noexcept;
