@@ -585,6 +585,8 @@ namespace webpp {
             static_assert(std::is_same_v<StringType, std::string>,
                           "You cannot change a const_uri (string_view is not "
                           "modifiable)");
+            if (start == std::string_view::npos || len == 0)
+                return;
             std::stringstream _data;
             _data << data.substr(0, start) << replacement
                   << data.substr(std::min(data.size(), start + len));
@@ -926,7 +928,7 @@ namespace webpp {
                 }
             }
 
-            std::size_t start, len;
+            std::size_t start, finish;
 
             // you know I could do this in one line of code, but I did this
             // because I don't want you to curse me :)
@@ -949,19 +951,19 @@ namespace webpp {
 
             if (port_start != data.size()) {
                 // but there's a port
-                len = port_start - start;
+                finish = port_start;
             } else {
                 // there's no port either
                 if (authority_end != data.size()) {
                     // there's a path
-                    len = authority_end - start;
+                    finish = authority_end - start;
                 } else {
                     // there's no path either
-                    len = data.size() - 1; // till the end
+                    finish = data.size() - 1 - start; // till the end
                 }
             }
 
-            replace_value(start, len, encoded_host);
+            replace_value(start, finish - start, encoded_host);
 
             return *this;
         }
