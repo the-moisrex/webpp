@@ -5,6 +5,9 @@
 using namespace webpp;
 
 TEST(URITests, Creation) {
+
+    // using set and get methods twice in a row should not affect the outcome
+
     uri u("http://example.com/");
     EXPECT_TRUE(u.has_scheme());
     EXPECT_TRUE(u.has_host());
@@ -20,6 +23,7 @@ TEST(URITests, Creation) {
     EXPECT_EQ(u.path_structured().size(), 1);
     EXPECT_EQ(u.scheme(), "http");
     u.clear_scheme();
+    u.clear_scheme();
     EXPECT_FALSE(u.has_scheme());
     EXPECT_EQ(u.scheme(), "");
     EXPECT_TRUE(u.has_authority());
@@ -29,6 +33,7 @@ TEST(URITests, Creation) {
     EXPECT_EQ(u.str(), "//example.com/");
     EXPECT_TRUE(u.is_normalized());
     u.clear_host();
+    u.clear_host();
     EXPECT_FALSE(u.has_host());
     EXPECT_EQ(u.host(), "");
     EXPECT_EQ(u.str(), "/");
@@ -36,14 +41,18 @@ TEST(URITests, Creation) {
     EXPECT_EQ(u.str(), "/folder/file");
     u.path("folder/file");
     u.host("eg2.com");
+    u.host("eg2.com");
     EXPECT_TRUE(u.has_host());
     EXPECT_TRUE(u.has_path());
     EXPECT_EQ(u.host(), "eg2.com") << "host is: " << u.host();
     EXPECT_EQ(u.str(), "//eg2.com/folder/file") << "str is: " << u.str();
     u.scheme("https:");
+    u.scheme("https:");
     EXPECT_TRUE(u.has_scheme());
     u.clear_path();
+    u.clear_path();
     EXPECT_EQ(u.str(), "https://eg2.com/");
+    u.scheme("http");
     u.scheme("http");
     EXPECT_TRUE(u.has_scheme());
     EXPECT_EQ(u.str(), "http://eg2.com/");

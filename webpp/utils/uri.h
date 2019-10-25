@@ -343,10 +343,10 @@ namespace webpp {
 
             auto starting_point =
                 authority_start != data.size()
-                    ? authority_start + 1
+                    ? authority_start
                     : (scheme_end != data.size() &&
                                scheme_end != std::string_view::npos
-                           ? scheme_end + 1
+                           ? scheme_end
                            : 0);
             authority_end =
                 _data.substr(starting_point, query_start - starting_point)
