@@ -1083,18 +1083,27 @@ namespace webpp {
                 return *this;
 
             auto last_dot = _host.find_last_of('.');
-            if (last_dot == std::string_view::npos)
-                return *this;
-            auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
-            auto start =
-                bef_last_dot == std::string_view::npos ? 0 : bef_last_dot + 1;
-            if (!sld.empty())
-                static_cast<void>(host(std::string(_host.substr(0, start)) +
-                                       std::string(sld) +
-                                       std::string(_host.substr(last_dot))));
-            else
-                static_cast<void>(
-                    host(std::string(_host.substr(last_dot + 1))));
+            if (last_dot == std::string_view::npos) {
+                // we have to insert it at the beginning of the host string
+
+                // there's nothing to do it's empty
+                if (!sld.empty()) {
+                    static_cast<void>(
+                        host(std::string(sld) + '.' + std::string(_host)));
+                }
+            } else {
+                auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
+                auto start = bef_last_dot == std::string_view::npos
+                                 ? 0
+                                 : bef_last_dot + 1;
+                if (!sld.empty())
+                    static_cast<void>(host(
+                        std::string(_host.substr(0, start)) + std::string(sld) +
+                        std::string(_host.substr(last_dot))));
+                else
+                    static_cast<void>(
+                        host(std::string(_host.substr(last_dot + 1))));
+            }
             return *this;
         }
 
