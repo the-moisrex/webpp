@@ -1,5 +1,5 @@
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef WEBPP_SERVER_H
+#define WEBPP_SERVER_H
 
 #include "router.h"
 
@@ -77,7 +77,7 @@ namespace webpp {
 
         int run() noexcept {
             // we leave the action to the interface itself because it may need
-            // or may not need multithreading.
+            // or may not need multi-threading.
             try {
                 _interface.run(_router);
             } catch (...) { // TODO: add more handling stuff here
@@ -89,4 +89,4 @@ namespace webpp {
 
 }; // namespace webpp
 
-#endif // SERVER_H
+#endif // WEBPP_SERVER_H
