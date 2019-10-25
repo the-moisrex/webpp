@@ -320,7 +320,7 @@ namespace webpp {
 
             user_info_end =
                 _data.substr(authority_start, authority_end - authority_start)
-                    .find('@');
+                    .find_first_of('@');
             if (user_info_end == std::string_view::npos) {
                 user_info_end = data.size();
             } else {
@@ -532,7 +532,7 @@ namespace webpp {
 
             auto _data = this->string_view();
 
-            fragment_start = _data.find('#');
+            fragment_start = _data.find_first_of('#');
             if (fragment_start == std::string_view::npos) {
                 fragment_start = data.size();
             }
@@ -549,7 +549,7 @@ namespace webpp {
             parse_fragment();
 
             auto _data = this->string_view();
-            query_start = _data.substr(0, fragment_start).find('?');
+            query_start = _data.substr(0, fragment_start).find_first_of('?');
             if (query_start == std::string_view::npos) {
                 query_start = data.size();
             }
