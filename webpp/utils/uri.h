@@ -575,21 +575,20 @@ namespace webpp {
         }
 
         /**
-         * Replace one of _scheme, _user_info, _host, _port, _path, _query, and
-         * _fragment string_views with the replacement value.
-         * @param point
-         * @param replacement
+         * Replace the specified part with the specified replacement
          */
         void replace_value(std::size_t start, std::size_t len,
                            std::string_view const& replacement) noexcept {
             static_assert(std::is_same_v<StringType, std::string>,
                           "You cannot change a const_uri (string_view is not "
                           "modifiable)");
-            if (start == std::string_view::npos || len == 0)
+            if (start == std::string_view::npos ||
+                len == std::string_view::npos ||
+                (len == 0 && replacement.empty()))
                 return;
             std::stringstream _data;
-            _data << data.substr(0, start) << replacement
-                  << data.substr(std::min(data.size(), start + len));
+            _data << substr(0, start) << replacement
+                  << substr(std::min(data.size(), start + len));
             data = _data.str();
             unparse();
             // TODO: you may want to not unparse everything
@@ -921,10 +920,12 @@ namespace webpp {
                     // there's no scheme either, so we just have to add to the
                     // beginning of the string
                     replace_value(0, 0, std::string("//") + encoded_host);
+                    return *this;
                 } else {
                     // there's a scheme
                     replace_value(scheme_end, 0,
                                   std::string("//") + encoded_host);
+                    return *this;
                 }
             }
 

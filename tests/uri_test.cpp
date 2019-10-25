@@ -40,6 +40,7 @@ TEST(URITests, Creation) {
     u.path("folder/file");
     EXPECT_EQ(u.str(), "/folder/file");
     u.path("folder/file");
+    EXPECT_FALSE(u.has_host());
     u.host("eg2.com");
     u.host("eg2.com");
     EXPECT_TRUE(u.has_host());
