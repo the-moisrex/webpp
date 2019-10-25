@@ -957,10 +957,10 @@ namespace webpp {
                 // there's no port either
                 if (authority_end != data.size()) {
                     // there's a path
-                    finish = authority_end - start;
+                    finish = authority_end;
                 } else {
                     // there's no path either
-                    finish = data.size() - 1 - start; // till the end
+                    finish = data.size() - 1; // till the end
                 }
             }
 
