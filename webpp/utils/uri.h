@@ -998,20 +998,20 @@ namespace webpp {
          * will be the last one and Second Level Domain will be the one before
          * that and the rest will be subdomains.
          */
-        [[nodiscard]] std::vector<std::string_view> domains() const noexcept {
+        [[nodiscard]] std::vector<std::string> domains() const noexcept {
             auto _host = host();
             if (_host.empty() || is_ip())
                 return {};
-            std::vector<std::string_view> subs;
+            std::vector<std::string> subs;
             for (;;) {
                 auto dot = _host.find('.');
                 auto sub = _host.substr(0, dot);
-                if (!sub.empty()) {
-                    subs.emplace_back(std::move(sub));
-                    _host.remove_prefix(sub.size());
-                } else {
+                if (sub.empty())
                     break;
-                }
+                subs.emplace_back(std::move(sub));
+                if (dot == std::string_view::npos)
+                    break;
+                _host.remove_prefix(dot + 1);
             }
             return subs;
         }
