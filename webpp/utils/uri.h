@@ -1093,8 +1093,8 @@ namespace webpp {
                                        std::string(sld) +
                                        std::string(_host.substr(last_dot))));
             else
-                static_cast<void>(host(std::string(sld) +
-                                       std::string(_host.substr(last_dot))));
+                static_cast<void>(
+                    host(std::string(_host.substr(last_dot + 1))));
             return *this;
         }
 
