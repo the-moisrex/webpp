@@ -916,6 +916,11 @@ namespace webpp {
 
             if (authority_start == data.size()) {
                 // there's no authority start
+
+                if (encoded_host.empty())
+                    return *this; // there's nothing to do here. It's already
+                                  // what the user wants
+
                 if (scheme_end == data.size()) {
                     // there's no scheme either, so we just have to add to the
                     // beginning of the string
