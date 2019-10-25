@@ -343,15 +343,14 @@ namespace webpp {
 
             auto starting_point =
                 authority_start != data.size()
-                    ? authority_start
+                    ? authority_start + 1
                     : (scheme_end != data.size() &&
                                scheme_end != std::string_view::npos
-                           ? scheme_end
+                           ? scheme_end + 1
                            : 0);
-            starting_point++;
             authority_end =
                 _data.substr(starting_point, query_start - starting_point)
-                    .find('/');
+                    .find_first_of('/');
             if (authority_end == std::string_view::npos) {
                 authority_end = data.size();
             } else {
