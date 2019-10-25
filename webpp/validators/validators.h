@@ -474,6 +474,7 @@ namespace webpp {
          * @brief check if the specified string is an ipv4 or ipv6
          * @param str
          * @return true if str is ipv4 or ipv6
+         * TODO: start supporting IPvF (IP version Future)
          */
         [[nodiscard]] constexpr bool ip(std::string_view const& str) noexcept {
             return ipv4(str) || ipv6(str);
