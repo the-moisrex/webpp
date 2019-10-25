@@ -31,7 +31,7 @@ TEST(URITests, Creation) {
     u.clear_host();
     EXPECT_FALSE(u.has_host());
     EXPECT_EQ(u.host(), "");
-    EXPECT_EQ(u.str(), "///");
+    EXPECT_EQ(u.str(), "/");
     u.path("folder/file");
     u.host("eg2.com");
     EXPECT_TRUE(u.has_host());
@@ -384,4 +384,10 @@ TEST(URITests, Domains) {
     EXPECT_FALSE(u.has_second_level_domain());
     EXPECT_FALSE(u.has_subdomains());
     EXPECT_FALSE(u.has_top_level_domain());
+}
+
+TEST(URITests, EnDecoded) {
+    // TODO
+    uri u{"سلام.com"};
+    EXPECT_TRUE(u.is_valid());
 }
