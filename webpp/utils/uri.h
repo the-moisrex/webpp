@@ -937,6 +937,9 @@ namespace webpp {
                 // there's no user info
                 if (scheme_end == data.size()) {
                     start = 0;
+                    if (!new_host.empty() && !encoded_host.starts_with("//")) {
+                        encoded_host = "//" + encoded_host;
+                    }
                 } else {
                     start = authority_start;
                 }

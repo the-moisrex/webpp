@@ -33,6 +33,8 @@ TEST(URITests, Creation) {
     EXPECT_EQ(u.host(), "");
     EXPECT_EQ(u.str(), "/");
     u.path("folder/file");
+    EXPECT_EQ(u.str(), "/folder/file");
+    u.path("folder/file");
     u.host("eg2.com");
     EXPECT_TRUE(u.has_host());
     EXPECT_TRUE(u.has_path());
