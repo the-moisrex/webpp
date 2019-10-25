@@ -905,8 +905,12 @@ namespace webpp {
             parse_host();
 
             // todo: are you sure it can handle punycode as well?
-            auto encoded_host =
+            std::string encoded_host =
                 encode_uri_component(new_host, REG_NAME_NOT_PCT_ENCODED);
+            if ((!new_host.starts_with('[') || !new_host.ends_with(']')) &&
+                is::ipv6(new_host)) {
+                encoded_host = '[' + encoded_host + ']';
+            }
 
             if (authority_start == data.size()) {
                 // there's no authority start
@@ -1034,10 +1038,12 @@ namespace webpp {
          */
         basic_uri& top_level_domain(std::string_view const& tld) noexcept {
             auto _host = host();
-            if (_host.empty() || is_ip()) {
+            if (_host.empty()) {
                 // I've already written that code. Yay, I'm so happy
                 static_cast<void>(host(tld));
-            } else {
+            } else if (!is_ip() && !is::ip(tld)) {
+                // cannot put an ip address as a tld, user should use set host
+                // instead of this method.
                 auto dot = _host.find_last_of('.');
                 auto start = dot != std::string_view::npos ? dot + 1 : 0;
                 static_cast<void>(host(std::string(_host.substr(0, start)) +
