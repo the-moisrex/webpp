@@ -8,22 +8,18 @@
 
 namespace webpp {
 
-    template <typename Interface>
     class response {
       public:
-        using body_type = webpp::body<Interface>;
-        using header_type = webpp::headers<Interface>;
+        using body_type = webpp::body;
+        using header_type = webpp::headers;
 
       private:
         int _status_code = 200;
         body_type _body;
         header_type _header;
-        std::shared_ptr<Interface> interface;
 
       public:
         response() = default;
-        response(std::shared_ptr<Interface> _interface)
-            : interface(_interface) {}
 
         response& headers(header_type&& __header) noexcept {
             _header = std::move(__header);

@@ -43,33 +43,31 @@ namespace webpp {
     template <typename Interface>
     class migration_t {
       public:
-        using func_t =
-            std::function<response<Interface>(request<Interface> const&)>;
+        using func_t = std::function<response(request const&)>;
 
         // func: response(request)
         explicit migration_t(func_t f) noexcept : func(std::move(f)) {}
 
         // func: void(request)
         explicit migration_t(
-            std::function<void(request<Interface> const&)> const& f) noexcept
+            std::function<void(request const&)> const& f) noexcept
             : func([&](auto const& req) {
                   f(req);
-                  return ::webpp::response<Interface>();
+                  return ::webpp::request();
               }) {}
 
         // func: void(void)
         explicit migration_t(std::function<void(void)> const& f) noexcept
             : func([&](auto const& /* req */) {
                   f();
-                  return ::webpp::response<Interface>();
+                  return ::webpp::request();
               }) {}
 
         // func: void(request, response)
         explicit migration_t(
-            std::function<void(request<Interface> const&,
-                               response<Interface>&)> const& f) noexcept
+            std::function<void(request const&, request&)> const& f) noexcept
             : func([&](auto const& req) {
-                  auto res = ::webpp::response<Interface>();
+                  auto res = ::webpp::request();
                   f(req, res);
                   return res;
               }) {}
@@ -77,18 +75,15 @@ namespace webpp {
         // func: response(request, response)
         // TODO: it's redundant, think about it's usage more
         explicit migration_t(
-            std::function<response<Interface>(request<Interface> const&,
-                                              response<Interface>&)> const&
-                f) noexcept
+            std::function<request(request const&, request&)> const& f) noexcept
             : func([&](auto const& req) {
-                  auto res = ::webpp::response<Interface>();
+                  auto res = ::webpp::request();
                   return f(req, res);
               }) {}
 
         // TODO: add more constructors here; and try to use std::bind
 
-        response<Interface> operator()(request<Interface> const& req) const
-            noexcept {
+        request operator()(request const& req) const noexcept {
             return func(req);
         }
 
@@ -133,7 +128,6 @@ namespace webpp {
     /**
      * @brief This route class contains one single root route and it's children
      */
-    template <typename Interface>
     class route {
 
       private:
@@ -196,9 +190,9 @@ namespace webpp {
         std::vector<route<Interface>> routes;
 
       public:
-        response<Interface> run(request<Interface>& req) {
+        request run(request& req) {
             // auto the_route = find_route(req);
-            // response<Interface> res;
+            // request res;
             // return res;
         }
 

@@ -11,7 +11,7 @@
  * - [ ] The INTERFACE:
  *       Because otherwise, the interface class itself has to instantiate this
  *       class and copy/move all the data over to here. So in that situation
- *       the interface has to process all the funcionalities that this class
+ *       the interface has to process all the functionalities that this class
  *       can provide. But that's not what we want because there will be a lot of
  *       things that the user may not need in order to create and pass a
  *       response.
@@ -25,21 +25,17 @@
  * The user has access to this class. This class should be accessed as a const
  * variable since the user should not be able to make any changes here. Every
  * action that the user has to make should be in the "response" class or other
- * relative calsses that finally end up in that class. This class is only for
+ * relative classes that finally end up in that class. This class is only for
  * giving informations that the user or other modules need.
  *
  */
 
 namespace webpp {
 
-    template <class Interface>
     class request {
       private:
-        std::shared_ptr<Interface> interface;
 
       public:
-        request(std::shared_ptr<Interface> _interface) noexcept
-            : interface(_interface) {}
 
         auto method() const noexcept { return interface->method(); }
 
