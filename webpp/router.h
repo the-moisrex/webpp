@@ -237,10 +237,11 @@ namespace webpp {
 
         template <typename... Args>
         auto& head(Args&&... args) noexcept {
-            return use(
-                "HEAD",
-                std::forward<Args>(
-                    args)...); // TODO: somehow prevent the body from printing
+            // TODO: somehow prevent the body from printing (it should be
+            // implemented in the interfaces and not here; because of the
+            // multi-threading stuff and generally it's low level stuff that it
+            // has to do)
+            return use("HEAD", std::forward<Args>(args)...);
         }
 
         /**
