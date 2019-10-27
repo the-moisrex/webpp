@@ -21,13 +21,11 @@ namespace webpp {
      * This class will only contain what's the same in both request and response
      * classes; the rest, is up to those classes.
      */
-    template <typename Interface,
-              header_type HeaderType = header_type::RESPONSE>
+    template <header_type HeaderType = header_type::RESPONSE>
     class headers {
       private:
         using headers_t = std::multimap<std::string, std::string>;
 
-        std::shared_ptr<Interface> interface;
         mutable headers_t data;
         mutable webpp::cookie_jar _cookies;
 
@@ -70,8 +68,6 @@ namespace webpp {
         using reverse_iterator = headers_t::reverse_iterator;
         using const_reverse_iterator = headers_t::const_reverse_iterator;
 
-        explicit headers(std::shared_ptr<Interface> _interface)
-            : interface(_interface) {}
 
         /**
          * @brief get cookies
