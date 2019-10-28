@@ -8,8 +8,8 @@ namespace webpp {
     template <class Interface>
     class server {
       protected:
-        std::shared_ptr<Interface> _interface;
-        router<Interface> _router;
+        Interface _interface;
+        router _router;
 
       public:
         server(Interface const& inerface) noexcept;
@@ -19,7 +19,7 @@ namespace webpp {
          * Set router
          * @param router
          */
-        server& router(webpp::router<Interface> const& r) noexcept {
+        server& router(webpp::router const& r) noexcept {
             _router = r;
             return *this;
         }
@@ -28,8 +28,8 @@ namespace webpp {
          * Set router
          * @param router
          */
-        server& router(webpp::router<Interface>&& r) noexcept {
-            _router = std::make_shared<Interface>(std::move(r));
+        server& router(webpp::router&& r) noexcept {
+            _router = std::move(r);
             return *this;
         }
 
@@ -37,7 +37,7 @@ namespace webpp {
          * Get the router
          * @return router
          */
-        const auto router() const noexcept { return _router; }
+        const auto& router() const noexcept { return _router; }
 
         /**
          * Get the router
@@ -67,7 +67,7 @@ namespace webpp {
          * Get interface
          * @return interface
          */
-        const auto interface() const noexcept { return _interface; }
+        const auto& interface() const noexcept { return _interface; }
 
         /**
          * Get interface

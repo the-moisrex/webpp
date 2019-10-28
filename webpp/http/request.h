@@ -65,7 +65,7 @@ namespace webpp {
 
         auto request_uri() const noexcept { return interface->request_uri(); }
 
-        auto header(char const* const name) const noexcept {
+        auto header(std::string_view const& name) const noexcept {
             return interface->header(name);
         }
 

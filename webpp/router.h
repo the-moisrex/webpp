@@ -185,9 +185,8 @@ namespace webpp {
      *
      * @param Interface
      */
-    template <typename Interface>
     class router {
-        std::vector<route<Interface>> routes;
+        std::vector<route> routes;
 
       public:
         request run(request& req) {
@@ -242,7 +241,7 @@ namespace webpp {
          * Add a migration to all routes
          */
         void add_migration(
-            migration_t<Interface> const&,
+            migration_t const&,
             migration_place place = migration_place::AFTER_EVERYTHING) noexcept;
     };
 

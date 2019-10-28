@@ -9,7 +9,6 @@
 
 namespace webpp {
 
-    enum class header_type { RESPONSE, REQUEST };
     /**
      * The classes header and body are the "owners of data".
      * That means these classes will own (use std::string/... and not references
@@ -21,7 +20,6 @@ namespace webpp {
      * This class will only contain what's the same in both request and response
      * classes; the rest, is up to those classes.
      */
-    template <header_type HeaderType = header_type::RESPONSE>
     class headers {
       private:
         using headers_t = std::multimap<std::string, std::string>;
