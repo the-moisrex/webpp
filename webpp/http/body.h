@@ -13,25 +13,11 @@
  */
 namespace webpp {
 
-    template <class Interface>
     class body {
       private:
-        std::shared_ptr<Interface> _interface;
 
       public:
-        body() noexcept : _interface(std::make_shared<Interface>()) {}
-        body(std::shared_ptr<Interface> const& __interface) noexcept
-            : _interface(__interface) {}
-        body(Interface const& __interface) noexcept
-            : _interface(std::make_shared<Interface>(__interface)) {}
-        body(Interface&& __interface) noexcept
-            : _interface(std::make_shared<Interface>(std::move(__interface))) {}
 
-        /**
-         * Get the interface
-         * @return interface
-         */
-        auto interface() noexcept { return _interface; }
 
         void* const& json() const;
 
@@ -58,8 +44,7 @@ namespace webpp {
         // TODO: add more methods for the images and stuff
     };
 
-    template <typename Interface>
-    std::ostream& operator<<(std::ostream& out, const body<Interface>& _body) {
+    std::ostream& operator<<(std::ostream& out, const body& _body) {
         out << _body.string();
         return out;
     }
