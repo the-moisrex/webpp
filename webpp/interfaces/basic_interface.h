@@ -15,10 +15,18 @@ namespace webpp {
      */
     class basic_interface {
       protected:
+        router _router;
+
         /**
          * There will be no more requests. Finish the program
          */
         void done() noexcept { exit(EXIT_SUCCESS); }
+
+        /**
+         * Run a request through chains of routes
+         * @param req
+         */
+        void run_request(request& req) noexcept { _router.run(req); }
 
       public:
     };
