@@ -5,12 +5,12 @@
 #include "../http/header.h"
 #include "../router.h"
 #include "../std/string_view.h"
+#include "basic_interface.h"
 #include <string>
 
 namespace webpp {
 
-    class cgi {
-      private:
+    class cgi : public basic_interface {
       public:
         cgi() = default;
         //        char const* header(std::string h) const noexcept;
@@ -27,7 +27,7 @@ namespace webpp {
         //        char const* request_uri() const noexcept;
 
         void run(router& _router) noexcept;
-        char const* env(std::string_view const& name) const noexcept;
+        //        char const* env(std::string_view const& name) const noexcept;
         std::streamsize read(char* data, std::streamsize length) const;
         void write(std::ostream& stream);
         void write(char const* data, std::streamsize length);

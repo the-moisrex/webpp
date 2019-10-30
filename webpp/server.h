@@ -5,85 +5,22 @@
 
 namespace webpp {
 
-    template <class Interface>
-    class server {
-      protected:
-        Interface _interface;
-        router _router;
+    template <typename Interface>
+    class server : Interface {
+
+        // TODO: write some template meta codes here to verify the interface
 
       public:
-        server(Interface const& inerface) noexcept;
-        server() noexcept;
+        using Interface::Interface;
 
+      private:
         /**
-         * Set router
-         * @param router
+         * This method will generate the request
          */
-        server& router(webpp::router const& r) noexcept {
-            _router = r;
-            return *this;
-        }
+        request create_request() noexcept {
+            request req;
 
-        /**
-         * Set router
-         * @param router
-         */
-        server& router(webpp::router&& r) noexcept {
-            _router = std::move(r);
-            return *this;
-        }
-
-        /**
-         * Get the router
-         * @return router
-         */
-        const auto& router() const noexcept { return _router; }
-
-        /**
-         * Get the router
-         * @return router
-         */
-        auto router() noexcept { return _router; }
-
-        /**
-         * Set the interface
-         * @param interface
-         */
-        server& interface(Interface const& i) noexcept {
-            _interface = i;
-            return *this;
-        }
-
-        /**
-         * Set the interface
-         * @param interface
-         */
-        server& interface(Interface&& i) noexcept {
-            _interface = std::move(i);
-            return *this;
-        }
-
-        /**
-         * Get interface
-         * @return interface
-         */
-        const auto& interface() const noexcept { return _interface; }
-
-        /**
-         * Get interface
-         * @return interface
-         */
-        auto interface() noexcept { return _interface; }
-
-        int run() noexcept {
-            // we leave the action to the interface itself because it may need
-            // or may not need multi-threading.
-            try {
-                _interface.run(_router);
-            } catch (...) { // TODO: add more handling stuff here
-                return EXIT_FAILURE;
-            }
-            return EXIT_SUCCESS;
+            return req;
         }
     };
 

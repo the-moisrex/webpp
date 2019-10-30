@@ -81,8 +81,8 @@ char const* cgi::header(std::string str) const noexcept {
     return env(str.c_str());
 }
 
-void cgi::run(router<cgi>& _router) noexcept {
-    //    auto self = std::make_shared<cgi>(this);
+// void cgi::run(router<cgi>& _router) noexcept {
+//    auto self = std::make_shared<cgi>(this);
     //    webpp::request<webpp::cgi> req(self);
     //    auto res = _router.run(req);
     //    std::ios_base::sync_with_stdio(false); // TODO: write tests for this
@@ -90,12 +90,7 @@ void cgi::run(router<cgi>& _router) noexcept {
     //        std::cout << attr << ": " << value << "\r\n";
     //    }
     //    std::cout << "\r\n" << res.body();
-}
-
-cgi::body_type cgi::body() noexcept {
-    static body_type data = std::make_shared<webpp::body<cgi>>(*this);
-    return data;
-}
+//}
 
 std::streamsize cgi::read(char* data, std::streamsize length) const {
     std::cin.read(data, length);
