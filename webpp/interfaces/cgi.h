@@ -26,11 +26,15 @@ namespace webpp {
         //        char const* method() const noexcept;
         //        char const* request_uri() const noexcept;
 
-        void run(router& _router) noexcept;
         //        char const* env(std::string_view const& name) const noexcept;
         std::streamsize read(char* data, std::streamsize length) const;
         void write(std::ostream& stream);
         void write(char const* data, std::streamsize length);
+
+        int run() noexcept {
+            request req;
+            req.on_...();
+        }
     };
 
 } // namespace webpp
