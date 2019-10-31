@@ -197,6 +197,16 @@ namespace webpp {
         }
 
         /**
+         * @brief get the remote ident
+         * @details If the HTTP server supports RFC 931 identification, this
+         * variable is set to the remote username retrieved from the server. Use
+         * this variable for logging only.
+         */
+        [[nodiscard]] std::string_view remote_ident() const noexcept {
+            return cgi::env("REMOTE_IDENT");
+        }
+
+        /**
          * @brief returns the request scheme (http/https/...)
          */
         [[nodiscard]] std::string_view request_scheme() const noexcept {
