@@ -14,20 +14,6 @@ namespace webpp {
     class cgi : public basic_interface {
       public:
         cgi() = default;
-        //        char const* header(std::string h) const noexcept;
-        //        header_type headers() noexcept;
-        //        body_type body() noexcept;
-        //        char const* server_addr() const noexcept;
-        //        int server_port() const noexcept;
-        //        char const* remote_addr() const noexcept;
-        //        int remote_port() const noexcept;
-        //        char const* server_name() const noexcept;
-        //        char const* scheme() const noexcept;
-        //        char const* server_protcol() const noexcept;
-        //        char const* method() const noexcept;
-        //        char const* request_uri() const noexcept;
-
-        //        char const* env(std::string_view const& name) const noexcept;
         std::streamsize read(char* data, std::streamsize length) const;
         void write(std::ostream& stream);
         void write(char const* data, std::streamsize length);
@@ -50,6 +36,9 @@ namespace webpp {
     template <>
     class request_t<cgi> : basic_request_t {
 
+        /**
+         * @brief Get the method
+         */
         [[nodiscard]] std::string_view method() const noexcept {
             return cgi::env("REQUEST_METHOD");
         }
@@ -57,65 +46,94 @@ namespace webpp {
         /**
          * @brief returns the request scheme (http/https/...)
          */
-        [[nodiscard]] std::string_view scheme() const noexcept {
-            throw std::logic_error(
-                "This method should be specialized by all the interfaces");
+        [[nodiscard]] std::string_view request_scheme() const noexcept {
+            return cgi::env("REQUEST_SCHEME");
         }
 
         /**
          * @brief returns something like "HTTP/1.1" or ...
          */
         [[nodiscard]] std::string_view server_protocol() const noexcept {
-            throw std::logic_error(
-                "This method should be specialized by all the interfaces");
+            return cgi::env("SERVER_PROTOCOL");
         }
 
+        /**
+         * @brief get the query string
+         */
         [[nodiscard]] std::string_view query() const noexcept {
-            throw std::logic_error(
-                "This method should be specialized by all the interfaces");
+            return cgi::env("QUERY_STRING");
         }
 
+        /**
+         * @brief get the user's port number
+         */
         [[nodiscard]] std::string_view remote_port() const noexcept {
-            throw std::logic_error(
-                "This method should be specialized by all the interfaces");
+            return cgi::env("REMOTE_PORT");
         }
 
+        /**
+         * @brief get the port that the server is listening on
+         */
         [[nodiscard]] std::string_view server_port() const noexcept {
-            throw std::logic_error(
-                "This method should be specialized by all the interfaces");
+            return cgi::env("SERVER_PORT");
         }
 
+        /**
+         * @brief get the ip address that the server is listening on
+         */
         [[nodiscard]] std::string_view server_addr() const noexcept {
-            throw std::logic_error(
-                "This method should be specialized by all the interfaces");
+            return cgi::env("SERVER_ADDR");
         }
 
+        /**
+         * @brief get the ip address of the user
+         */
         [[nodiscard]] std::string_view remote_addr() const noexcept {
-            throw std::logic_error(
-                "This method should be specialized by all the interfaces");
+            return cgi::env("REMOTE_ADDR");
         }
 
+        /**
+         * @brief get the server name
+         */
         [[nodiscard]] std::string_view server_name() const noexcept {
-            throw std::logic_error(
-                "This method should be specialized by all the interfaces");
+            return cgi::env("SERVER_NAME");
         }
 
+        /**
+         * @brief get the request uri
+         */
         [[nodiscard]] std::string_view request_uri() const noexcept {
-            throw std::logic_error(
-                "This method should be specialized by all the interfaces");
+            return cgi::env("REQUEST_URI");
         }
 
+        /**
+         * @brief get a single header
+         * @param name
+         */
         [[nodiscard]] std::string_view
         header(std::string_view const& name) const noexcept {
             throw std::logic_error(
                 "This method should be specialized by all the interfaces");
         }
 
+        /**
+         * @brief get all of the headers as a string_view
+         * @details this method in CGI interfaces will have to do more than
+         * in the our own version because data has already been parsed by the
+         * CGI server; and we have to recreate it based on the environment
+         * variables.
+         */
         [[nodiscard]] std::string_view headers() const noexcept {
             throw std::logic_error(
                 "This method should be specialized by all the interfaces");
         }
 
+        /**
+         * @brief get the whole body as a string_view
+         * @details this method will return raw string values of the body of
+         * the request and will not parse it. Parsing it is another methods'
+         * problem that might even use this function as the source.
+         */
         [[nodiscard]] std::string_view body() const noexcept {
             throw std::logic_error(
                 "This method should be specialized by all the interfaces");
