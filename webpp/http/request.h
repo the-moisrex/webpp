@@ -1,8 +1,10 @@
 #ifndef WEBPP_REQUEST_H
 #define WEBPP_REQUEST_H
 
+#include "../interfaces/basic_interface.h"
 #include "body.h"
 #include "header.h"
+#include <string_view>
 
 /**
  *
@@ -32,46 +34,13 @@
 
 namespace webpp {
 
-    class request {
+    class basic_request_t {
       private:
-
       public:
-
-        auto method() const noexcept { return interface->method(); }
-
-        /**
-         * @brief returns the request scheme (http/https/...)
-         */
-        auto scheme() const noexcept { return interface->scheme(); }
-
-        /**
-         * @brief returns something like "HTTP/1.1" or ...
-         */
-        auto server_protocol() const noexcept {
-            return interface->server_protocol();
-        }
-
-        auto query() const noexcept { return interface->query(); }
-
-        auto remote_port() const noexcept { return interface->remote_port(); }
-
-        auto server_port() const noexcept { return interface->server_port(); }
-
-        auto server_addr() const noexcept { return interface->server_addr(); }
-
-        auto remote_addr() const noexcept { return interface->remote_addr(); }
-
-        auto server_name() const noexcept { return interface->server_name(); }
-
-        auto request_uri() const noexcept { return interface->request_uri(); }
-
-        auto header(std::string_view const& name) const noexcept {
-            return interface->header(name);
-        }
-
-        auto headers() const noexcept { return interface->headers(); }
-        auto body() const noexcept { return interface->body(); }
     };
+
+    template <typename Interface>
+    class request_t : public basic_request_t {};
 } // namespace webpp
 
 #endif // WEBPP_REQUEST_H
