@@ -78,3 +78,23 @@ char const* cgi::header(std::string str) const noexcept {
     //    std::cout << "\r\n" << res.body();
 //}
 
+std::streamsize cgi::read(char* data, std::streamsize length) noexcept {
+    std::cin.read(data, length);
+    return std::cin.gcount();
+}
+
+void cgi::write(std::ostream& stream) noexcept {
+    // I think o-stream is not readable so we cannot do this:
+    // https://stackoverflow.com/questions/15629886/how-to-write-ostringstream-directly-to-cout
+    std::cout << stream.rdbuf(); // TODO: test this, I don't trust myself :)
+}
+
+void cgi::write(char const* data, std::streamsize length) noexcept {
+    std::cout.write(data, length);
+}
+
+std::string_view cgi::env(char const* const key) noexcept {
+    if (auto value = getenv(key))
+        return value;
+    return {};
+}
