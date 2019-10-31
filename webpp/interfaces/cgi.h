@@ -102,6 +102,14 @@ namespace webpp {
         }
 
         /**
+         * @brief get the script name
+         * @example SCRIPT_NAME=/cgi-bin/one.cgi
+         */
+        [[nodiscard]] std::string_view script_name() const noexcept {
+            return cgi::env("SCRIPT_NAME");
+        }
+
+        /**
          * @brief returns the request scheme (http/https/...)
          */
         [[nodiscard]] std::string_view request_scheme() const noexcept {
