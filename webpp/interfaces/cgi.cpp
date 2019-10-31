@@ -60,11 +60,12 @@ int cgi::remote_port() const noexcept {
 int cgi::server_port() const noexcept {
     return atoi(env("SERVER_PORT")); // default value: 0
 }
-char const* cgi::header(std::string str) const noexcept {
-    std::transform(str.begin(), str.end(), str.begin(),
+
+std::string_view cgi::header(std::string name) noexcept {
+    std::transform(name.begin(), name.end(), name.begin(),
                    static_cast<int (*)(int)>(&std::toupper));
-    str.insert(0, "HTTP_");
-    return env(str.c_str());
+    name.insert(0, "HTTP_");
+    return env(name.c_str());
 }
 
 // void cgi::run(router<cgi>& _router) noexcept {

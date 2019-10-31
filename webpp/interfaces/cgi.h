@@ -36,7 +36,9 @@ namespace webpp {
          * @param key
          * @return
          */
-        static std::string_view env(char const* key) noexcept;
+        [[nodiscard]] static std::string_view env(char const* key) noexcept;
+
+        [[nodiscard]] static std::string_view header(std::string name) noexcept;
     };
 
     template <>
@@ -304,7 +306,7 @@ namespace webpp {
          */
         [[nodiscard]] std::string_view
         header(std::string_view const& name) const noexcept {
-            // TODO
+            return cgi::header(name);
         }
 
         /**
