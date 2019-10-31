@@ -253,6 +253,7 @@ namespace webpp {
 
         /**
          * @brief get the document root environment value
+         * @details The root directory of your server
          */
         [[nodiscard]] std::string_view document_root() const noexcept {
             return cgi::env("DOCUMENT_ROOT");
@@ -280,6 +281,14 @@ namespace webpp {
          */
         [[nodiscard]] std::string_view path() const noexcept {
             return cgi::env("PATH");
+        }
+
+        /**
+         * @brief get the script_filename of the environment variables
+         * @details The full pathname of the current CGI
+         */
+        [[nodiscard]] std::string_view script_filename() const noexcept {
+            return cgi::env("SCRIPT_FILENAME");
         }
 
         /**
