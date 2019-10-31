@@ -81,8 +81,16 @@ namespace webpp {
         /**
          * @brief Get the method
          */
-        [[nodiscard]] std::string_view method() const noexcept {
+        [[nodiscard]] std::string_view request_method() const noexcept {
             return cgi::env("REQUEST_METHOD");
+        }
+
+        /**
+         * @brief get the path info
+         * @example PATH_INFO=/hello/world
+         */
+        [[nodiscard]] std::string_view path_info() const noexcept {
+            return cgi::env("PATH_INFO");
         }
 
         /**
