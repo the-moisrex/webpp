@@ -51,8 +51,6 @@ using namespace webpp;
 //    SERVER_SOFTWARE
 //    WEB_SERVER_API
 
-
-
 std::string_view cgi::header(std::string name) noexcept {
 
     // fixme: check if this is all we have to do or we have to do more too:
@@ -68,13 +66,13 @@ std::string_view cgi::header(std::string name) noexcept {
 
 // void cgi::run(router<cgi>& _router) noexcept {
 //    auto self = std::make_shared<cgi>(this);
-    //    webpp::request<webpp::cgi> req(self);
-    //    auto res = _router.run(req);
-    //    std::ios_base::sync_with_stdio(false); // TODO: write tests for this
-    //    part for (auto const& [attr, value] : res.headers()) {
-    //        std::cout << attr << ": " << value << "\r\n";
-    //    }
-    //    std::cout << "\r\n" << res.body();
+//    webpp::request<webpp::cgi> req(self);
+//    auto res = _router.run(req);
+//    std::ios_base::sync_with_stdio(false); // TODO: write tests for this
+//    part for (auto const& [attr, value] : res.headers()) {
+//        std::cout << attr << ": " << value << "\r\n";
+//    }
+//    std::cout << "\r\n" << res.body();
 //}
 
 std::streamsize cgi::read(char* data, std::streamsize length) noexcept {
