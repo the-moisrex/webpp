@@ -6,6 +6,7 @@
 
 using namespace webpp;
 
+// fixme: implement these too:
 //    AUTH_PASSWORD
 //    AUTH_TYPE
 //    AUTH_USER
