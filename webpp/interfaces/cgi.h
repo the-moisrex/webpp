@@ -116,13 +116,20 @@ namespace webpp {
         }
 
         /**
+         * @brief get the content_type
+         * @return
+         */
+        [[nodiscard]] std::string_view content_type() const noexcept {
+            return cgi::env("CONTENT_LENGTH");
+        }
+
+        /**
          * @brief get a single header
          * @param name
          */
         [[nodiscard]] std::string_view
         header(std::string_view const& name) const noexcept {
-            throw std::logic_error(
-                "This method should be specialized by all the interfaces");
+            // TODO
         }
 
         /**
@@ -133,8 +140,7 @@ namespace webpp {
          * variables.
          */
         [[nodiscard]] std::string_view headers() const noexcept {
-            throw std::logic_error(
-                "This method should be specialized by all the interfaces");
+            // todo
         }
 
         /**
@@ -144,8 +150,7 @@ namespace webpp {
          * problem that might even use this function as the source.
          */
         [[nodiscard]] std::string_view body() const noexcept {
-            throw std::logic_error(
-                "This method should be specialized by all the interfaces");
+            // todo
         }
     };
 
