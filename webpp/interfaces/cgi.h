@@ -42,6 +42,13 @@ namespace webpp {
     template <>
     class server<cgi> {};
 
+    /**
+     * Specializing the request_t<cgi> methods so the user can use them.
+     * The request_t class is one of the important classes which that means It's
+     * going to be used a lot so, we will do everything (even if it means we
+     * have to copy and paste lots of codes to make it happen) to make sure
+     * the user is able to use this class properly and easily.
+     */
     template <>
     class request_t<cgi> : basic_request_t {
 
