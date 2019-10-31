@@ -252,6 +252,21 @@ namespace webpp {
         }
 
         /**
+         * @brief get the document root environment value
+         */
+        [[nodiscard]] std::string_view document_root() const noexcept {
+            return cgi::env("DOCUMENT_ROOT");
+        }
+
+        /**
+         * @brief get the https environment value
+         * @return "on" if the user used HTTPS protocol
+         */
+        [[nodiscard]] std::string_view https() const noexcept {
+            return cgi::env("HTTPS");
+        }
+
+        /**
          * @brief get a single header
          * @param name
          */
