@@ -94,6 +94,14 @@ namespace webpp {
         }
 
         /**
+         * @brief get the path translated
+         * @example PATH_TRANSLATED=/srv/http/hello/world
+         */
+        [[nodiscard]] std::string_view path_translated() const noexcept {
+            return cgi::env("PATH_TRANSLATED");
+        }
+
+        /**
          * @brief returns the request scheme (http/https/...)
          */
         [[nodiscard]] std::string_view request_scheme() const noexcept {
