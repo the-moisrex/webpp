@@ -7,16 +7,40 @@
 #include "../server.h"
 #include "../std/string_view.h"
 #include "basic_interface.h"
+#include <iostream>
 #include <string>
 
 namespace webpp {
 
-    class cgi : public basic_interface {
-      public:
-        cgi() = default;
-        std::streamsize read(char* data, std::streamsize length) const;
-        void write(std::ostream& stream);
-        void write(char const* data, std::streamsize length);
+    struct cgi : public basic_interface {
+
+        /**
+         * Read the body of the string
+         * @param data
+         * @param length
+         * @return
+         */
+        static std::streamsize read(char* data,
+                                    std::streamsize length) noexcept {
+            std::cin.read(data, length);
+            return std::cin.gcount();
+        }
+
+        static void write(std::ostream& stream) noexcept {
+            // I think o-stream is not readable so we cannot do this:
+            // https://stackoverflow.com/questions/15629886/how-to-write-ostringstream-directly-to-cout
+            std::cout
+                << stream.rdbuf(); // TODO: test this, I don't trust myself :)
+        }
+
+        /**
+         * Send data to the user
+         * @param data
+         * @param length
+         */
+        static void write(char const* data, std::streamsize length) noexcept {
+            std::cout.write(data, length);
+        }
 
         /**
          * Get the environment value safely
