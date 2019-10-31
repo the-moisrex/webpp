@@ -275,6 +275,14 @@ namespace webpp {
         }
 
         /**
+         * @brief get the path environment variable
+         * @details The system path your server is running under
+         */
+        [[nodiscard]] std::string_view path() const noexcept {
+            return cgi::env("PATH");
+        }
+
+        /**
          * @brief get a single header
          * @param name
          */
