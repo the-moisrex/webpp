@@ -1,14 +1,9 @@
 #ifndef WEBPP_CGI_H
 #define WEBPP_CGI_H
 
-#include "../http/body.h"
-#include "../http/header.h"
-#include "../router.h"
 #include "../server.h"
-#include "../std/string_view.h"
 #include "basic_interface.h"
-#include <iostream>
-#include <string>
+#include <string_view>
 
 namespace webpp {
 
@@ -23,6 +18,10 @@ namespace webpp {
         static std::streamsize read(char* data,
                                     std::streamsize length) noexcept;
 
+        /**
+         * Send the stream to the user
+         * @param stream
+         */
         static void write(std::ostream& stream) noexcept;
 
         /**
