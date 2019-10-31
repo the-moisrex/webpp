@@ -151,8 +151,4 @@ namespace webpp {
 
 } // namespace webpp
 
-#ifdef HEADER_ONLY
-#include "cgi.cpp"
-#endif // header only
-
 #endif // WEBPP_CGI_H
