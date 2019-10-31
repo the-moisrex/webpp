@@ -38,7 +38,23 @@ namespace webpp {
          */
         [[nodiscard]] static std::string_view env(char const* key) noexcept;
 
+        /**
+         * Get a specific header by it's name
+         * @param name
+         * @return
+         */
         [[nodiscard]] static std::string_view header(std::string name) noexcept;
+
+        /**
+         * Get a list of headers as a string
+         */
+        [[nodiscard]] static std::string_view headers() noexcept;
+
+        /**
+         * Get the full body as a string_view
+         * @return
+         */
+        [[nodiscard]] static std::string_view body() noexcept;
     };
 
     template <>
@@ -306,7 +322,7 @@ namespace webpp {
          */
         [[nodiscard]] std::string_view
         header(std::string_view const& name) const noexcept {
-            return cgi::header(name);
+            return cgi::header(std::string(name));
         }
 
         /**
@@ -317,7 +333,7 @@ namespace webpp {
          * variables.
          */
         [[nodiscard]] std::string_view headers() const noexcept {
-            // todo
+            return cgi::headers();
         }
 
         /**
@@ -327,7 +343,7 @@ namespace webpp {
          * problem that might even use this function as the source.
          */
         [[nodiscard]] std::string_view body() const noexcept {
-            // todo
+            return cgi::body();
         }
     };
 
