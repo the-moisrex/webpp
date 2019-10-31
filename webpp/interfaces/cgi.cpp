@@ -1,6 +1,4 @@
 #include "cgi.h"
-#include "../http/request.h"
-#include <algorithm>
 #include <cctype>
 #include <cstdlib>
 #include <functional>
