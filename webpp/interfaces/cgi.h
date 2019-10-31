@@ -47,6 +47,9 @@ namespace webpp {
 
         /**
          * @brief get the server's software
+         * @details Name and version of the information server software
+         * answering the request (and running the gateway). Format:
+         * name/version.
          * @example SERVER_SOFTWARE=Apache/2.4.41 (Unix) OpenSSL/1.1.1d
          */
         [[nodiscard]] std::string_view server_software() const noexcept {
@@ -55,6 +58,8 @@ namespace webpp {
 
         /**
          * @brief get the server name
+         * @details Server's hostname, DNS alias, or IP address as it appears in
+         * self-referencing URLs.
          * @example SERVER_NAME=localhost
          */
         [[nodiscard]] std::string_view server_name() const noexcept {
@@ -63,8 +68,9 @@ namespace webpp {
 
         /**
          * @brief get the gateway interface environment variable
+         * @details CGI specification revision with which this server complies.
+         * Format: CGI/revision.
          * @example GATEWAY_INTERFACE=CGI/1.1
-         * @return
          */
         [[nodiscard]] std::string_view gateway_interface() const noexcept {
             return cgi::env("GATEWAY_INTERFACE");
@@ -72,6 +78,8 @@ namespace webpp {
 
         /**
          * @brief get the server protocol
+         * @details Name and revision of the information protocol this request
+         * came in with. Format: protocol/revision.
          * @example SERVER_PROTOCOL=HTTP/1.1
          */
         [[nodiscard]] std::string_view server_protocol() const noexcept {
@@ -79,7 +87,17 @@ namespace webpp {
         }
 
         /**
+         * @brief get the port that the server is listening on
+         * @details Port number to which the request was sent.
+         */
+        [[nodiscard]] std::string_view server_port() const noexcept {
+            return cgi::env("SERVER_PORT");
+        }
+
+        /**
          * @brief Get the method
+         * @details Method with which the request was made. For HTTP, this is
+         * Get, Head, Post, and so on.
          */
         [[nodiscard]] std::string_view request_method() const noexcept {
             return cgi::env("REQUEST_METHOD");
@@ -87,6 +105,9 @@ namespace webpp {
 
         /**
          * @brief get the path info
+         * @details Extra path information, as given by the client. Scripts can
+         * be accessed by their virtual pathname, followed by extra information
+         * at the end of this path. The extra information is sent as PATH_INFO.
          * @example PATH_INFO=/hello/world
          */
         [[nodiscard]] std::string_view path_info() const noexcept {
@@ -95,6 +116,8 @@ namespace webpp {
 
         /**
          * @brief get the path translated
+         * @details Translated version of PATH_INFO after any
+         * virtual-to-physical mapping.
          * @example PATH_TRANSLATED=/srv/http/hello/world
          */
         [[nodiscard]] std::string_view path_translated() const noexcept {
@@ -103,6 +126,8 @@ namespace webpp {
 
         /**
          * @brief get the script name
+         * @details Virtual path to the script that is executing; used for
+         * self-referencing URLs.
          * @example SCRIPT_NAME=/cgi-bin/one.cgi
          */
         [[nodiscard]] std::string_view script_name() const noexcept {
@@ -111,9 +136,20 @@ namespace webpp {
 
         /**
          * @brief get the query string
+         * @details Query information that follows the ? in the URL that
+         * referenced this script.
          */
         [[nodiscard]] std::string_view query_string() const noexcept {
             return cgi::env("QUERY_STRING");
+        }
+
+        /**
+         * @brief get the remote host
+         * @details Hostname making the request. If the server does not have
+         * this information, it sets REMOTE_ADDR and does not set REMOTE_HOST.
+         */
+        [[nodiscard]] std::string_view remote_host() const noexcept {
+            return cgi::env("REMOTE_HOST");
         }
 
         /**
@@ -123,19 +159,11 @@ namespace webpp {
             return cgi::env("REQUEST_SCHEME");
         }
 
-
         /**
          * @brief get the user's port number
          */
         [[nodiscard]] std::string_view remote_port() const noexcept {
             return cgi::env("REMOTE_PORT");
-        }
-
-        /**
-         * @brief get the port that the server is listening on
-         */
-        [[nodiscard]] std::string_view server_port() const noexcept {
-            return cgi::env("SERVER_PORT");
         }
 
         /**
@@ -152,7 +180,6 @@ namespace webpp {
             return cgi::env("REMOTE_ADDR");
         }
 
-
         /**
          * @brief get the request uri
          */
@@ -166,7 +193,6 @@ namespace webpp {
         [[nodiscard]] std::string_view content_type() const noexcept {
             return cgi::env("CONTENT_LENGTH");
         }
-
 
         /**
          * @brief get a single header
