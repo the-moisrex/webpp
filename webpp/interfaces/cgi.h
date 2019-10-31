@@ -267,6 +267,14 @@ namespace webpp {
         }
 
         /**
+         * @brief get the server admin environment value
+         * @return probabely the administrator's email address
+         */
+        [[nodiscard]] std::string_view server_admin() const noexcept {
+            return cgi::env("SERVER_ADMIN");
+        }
+
+        /**
          * @brief get a single header
          * @param name
          */
