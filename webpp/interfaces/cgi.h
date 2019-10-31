@@ -46,6 +46,39 @@ namespace webpp {
     class request_t<cgi> : basic_request_t {
 
         /**
+         * @brief get the server's software
+         * @example SERVER_SOFTWARE=Apache/2.4.41 (Unix) OpenSSL/1.1.1d
+         */
+        [[nodiscard]] std::string_view server_software() const noexcept {
+            return cgi::env("SERVER_SOFTWARE");
+        }
+
+        /**
+         * @brief get the server name
+         * @example SERVER_NAME=localhost
+         */
+        [[nodiscard]] std::string_view server_name() const noexcept {
+            return cgi::env("SERVER_NAME");
+        }
+
+        /**
+         * @brief get the gateway interface environment variable
+         * @example GATEWAY_INTERFACE=CGI/1.1
+         * @return
+         */
+        [[nodiscard]] std::string_view gateway_interface() const noexcept {
+            return cgi::env("GATEWAY_INTERFACE");
+        }
+
+        /**
+         * @brief get the server protocol
+         * @example SERVER_PROTOCOL=HTTP/1.1
+         */
+        [[nodiscard]] std::string_view server_protocol() const noexcept {
+            return cgi::env("SERVER_PROTOCOL");
+        }
+
+        /**
          * @brief Get the method
          */
         [[nodiscard]] std::string_view method() const noexcept {
@@ -59,12 +92,6 @@ namespace webpp {
             return cgi::env("REQUEST_SCHEME");
         }
 
-        /**
-         * @brief returns something like "HTTP/1.1" or ...
-         */
-        [[nodiscard]] std::string_view server_protocol() const noexcept {
-            return cgi::env("SERVER_PROTOCOL");
-        }
 
         /**
          * @brief get the query string
@@ -101,12 +128,6 @@ namespace webpp {
             return cgi::env("REMOTE_ADDR");
         }
 
-        /**
-         * @brief get the server name
-         */
-        [[nodiscard]] std::string_view server_name() const noexcept {
-            return cgi::env("SERVER_NAME");
-        }
 
         /**
          * @brief get the request uri
@@ -122,13 +143,6 @@ namespace webpp {
             return cgi::env("CONTENT_LENGTH");
         }
 
-        /**
-         * @brief get the server's software
-         * @example SERVER_SOFTWARE=Apache/2.4.41 (Unix) OpenSSL/1.1.1d
-         */
-        [[nodiscard]] std::string_view server_software() const noexcept {
-            return cgi::env("SERVER_SOFTWARE");
-        }
 
         /**
          * @brief get a single header
