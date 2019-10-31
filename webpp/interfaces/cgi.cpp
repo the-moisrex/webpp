@@ -53,14 +53,6 @@ using namespace webpp;
 
 
 
-int cgi::remote_port() const noexcept {
-    return atoi(env("REMOTE_PORT")); // default value: 0
-}
-
-int cgi::server_port() const noexcept {
-    return atoi(env("SERVER_PORT")); // default value: 0
-}
-
 std::string_view cgi::header(std::string name) noexcept {
     std::transform(name.begin(), name.end(), name.begin(),
                    static_cast<int (*)(int)>(&std::toupper));
