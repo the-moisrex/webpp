@@ -153,6 +153,24 @@ namespace webpp {
         }
 
         /**
+         * @brief get the ip address of the user
+         * @details IP address of the remote host making the request.
+         */
+        [[nodiscard]] std::string_view remote_addr() const noexcept {
+            return cgi::env("REMOTE_ADDR");
+        }
+
+        /**
+         * @brief get the auth type
+         * @details If the server supports user authentication, and the script
+         * is protected, the protocol-specific authentication method used to
+         * validate the user.
+         */
+        [[nodiscard]] std::string_view auth_type() const noexcept {
+            return cgi::env("AUTH_TYPE");
+        }
+
+        /**
          * @brief returns the request scheme (http/https/...)
          */
         [[nodiscard]] std::string_view request_scheme() const noexcept {
@@ -171,13 +189,6 @@ namespace webpp {
          */
         [[nodiscard]] std::string_view server_addr() const noexcept {
             return cgi::env("SERVER_ADDR");
-        }
-
-        /**
-         * @brief get the ip address of the user
-         */
-        [[nodiscard]] std::string_view remote_addr() const noexcept {
-            return cgi::env("REMOTE_ADDR");
         }
 
         /**
