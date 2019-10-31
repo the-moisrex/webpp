@@ -110,19 +110,19 @@ namespace webpp {
         }
 
         /**
+         * @brief get the query string
+         */
+        [[nodiscard]] std::string_view query_string() const noexcept {
+            return cgi::env("QUERY_STRING");
+        }
+
+        /**
          * @brief returns the request scheme (http/https/...)
          */
         [[nodiscard]] std::string_view request_scheme() const noexcept {
             return cgi::env("REQUEST_SCHEME");
         }
 
-
-        /**
-         * @brief get the query string
-         */
-        [[nodiscard]] std::string_view query() const noexcept {
-            return cgi::env("QUERY_STRING");
-        }
 
         /**
          * @brief get the user's port number
