@@ -117,10 +117,17 @@ namespace webpp {
 
         /**
          * @brief get the content_type
-         * @return
          */
         [[nodiscard]] std::string_view content_type() const noexcept {
             return cgi::env("CONTENT_LENGTH");
+        }
+
+        /**
+         * @brief get the server's software
+         * @example SERVER_SOFTWARE=Apache/2.4.41 (Unix) OpenSSL/1.1.1d
+         */
+        [[nodiscard]] std::string_view server_software() const noexcept {
+            return cgi::env("SERVER_SOFTWARE");
         }
 
         /**
