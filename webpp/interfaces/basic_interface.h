@@ -3,6 +3,9 @@
 #ifndef WEBPP_BASIC_INTERFACE_H
 #define WEBPP_BASIC_INTERFACE_H
 
+#include "../http/request.h"
+#include "../router.h"
+
 namespace webpp {
 
     /**
