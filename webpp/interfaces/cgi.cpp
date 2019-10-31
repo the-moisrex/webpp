@@ -54,8 +54,14 @@ using namespace webpp;
 
 
 std::string_view cgi::header(std::string name) noexcept {
-    std::transform(name.begin(), name.end(), name.begin(),
-                   static_cast<int (*)(int)>(&std::toupper));
+
+    // fixme: check if this is all we have to do or we have to do more too:
+    std::transform(name.begin(), name.end(), name.begin(), [](auto const& c) {
+        if (c == '-')
+            return '_';
+        return std::toupper(c);
+    });
+
     name.insert(0, "HTTP_");
     return env(name.c_str());
 }
