@@ -236,8 +236,18 @@ namespace webpp {
 
         /**
          * @brief get the content_type
+         * @details For queries that have attached information, such as HTTP
+         * POST and PUT, this is the content type of the data.
          */
         [[nodiscard]] std::string_view content_type() const noexcept {
+            return cgi::env("CONTENT_LENGTH");
+        }
+
+        /**
+         * @brief get the content length
+         * @details Length of the content as given by the client.
+         */
+        [[nodiscard]] std::string_view content_length() const noexcept {
             return cgi::env("CONTENT_LENGTH");
         }
 
