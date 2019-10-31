@@ -52,13 +52,6 @@ using namespace webpp;
 //    WEB_SERVER_API
 
 
-char const* cgi::env(char const* const name) const noexcept {
-    if (auto a = std::getenv(name))
-        return a;
-    return "";
-}
-
-char const* cgi::remote_addr() const noexcept { return env("REMOTE_ADDR"); }
 
 int cgi::remote_port() const noexcept {
     return atoi(env("REMOTE_PORT")); // default value: 0
@@ -67,13 +60,6 @@ int cgi::remote_port() const noexcept {
 int cgi::server_port() const noexcept {
     return atoi(env("SERVER_PORT")); // default value: 0
 }
-
-char const* cgi::server_addr() const noexcept { return env("SERVER_ADDR"); }
-
-char const* cgi::server_name() const noexcept { return env("SERVER_NAME"); }
-
-char const* cgi::request_uri() const noexcept { return env("REQUEST_URI"); }
-
 char const* cgi::header(std::string str) const noexcept {
     std::transform(str.begin(), str.end(), str.begin(),
                    static_cast<int (*)(int)>(&std::toupper));
@@ -92,17 +78,3 @@ char const* cgi::header(std::string str) const noexcept {
     //    std::cout << "\r\n" << res.body();
 //}
 
-std::streamsize cgi::read(char* data, std::streamsize length) const {
-    std::cin.read(data, length);
-    return std::cin.gcount();
-}
-
-void cgi::write(std::ostream& stream) {
-
-    // I think ostream is not readable so we cannot do this:
-    // https://stackoverflow.com/questions/15629886/how-to-write-ostringstream-directly-to-cout
-    std::cout << stream.rdbuf(); // TODO: test this, I don't trust myself :)
-}
-void cgi::write(char const* data, std::streamsize length){
-    std::cout.write(data, length);
-}
