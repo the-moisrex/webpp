@@ -21,37 +21,23 @@ namespace webpp {
          * @return
          */
         static std::streamsize read(char* data,
-                                    std::streamsize length) noexcept {
-            std::cin.read(data, length);
-            return std::cin.gcount();
-        }
+                                    std::streamsize length) noexcept;
 
-        static void write(std::ostream& stream) noexcept {
-            // I think o-stream is not readable so we cannot do this:
-            // https://stackoverflow.com/questions/15629886/how-to-write-ostringstream-directly-to-cout
-            std::cout
-                << stream.rdbuf(); // TODO: test this, I don't trust myself :)
-        }
+        static void write(std::ostream& stream) noexcept;
 
         /**
          * Send data to the user
          * @param data
          * @param length
          */
-        static void write(char const* data, std::streamsize length) noexcept {
-            std::cout.write(data, length);
-        }
+        static void write(char const* data, std::streamsize length) noexcept;
 
         /**
          * Get the environment value safely
          * @param key
          * @return
          */
-        static std::string_view env(char const* const key) noexcept {
-            if (auto value = getenv(key))
-                return value;
-            return {};
-        }
+        static std::string_view env(char const* key) noexcept;
     };
 
     template <>
@@ -165,5 +151,9 @@ namespace webpp {
     };
 
 } // namespace webpp
+
+#ifdef HEADER_ONLY
+#include "cgi.cpp"
+#endif // header only
 
 #endif // WEBPP_CGI_H
