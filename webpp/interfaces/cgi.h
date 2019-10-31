@@ -171,6 +171,32 @@ namespace webpp {
         }
 
         /**
+         * @brief get the remote user or auth user value (both should be the
+         * same)
+         * @details If the server supports user authentication, and the script
+         * is protected, the username the user has authenticated as. (Also
+         * available as AUTH_USER.)
+         */
+        [[nodiscard]] std::string_view remote_user() const noexcept {
+            if (auto a = cgi::env("REMOTE_USER"); !a.empty())
+                return a;
+            return cgi::env("AUTH_USER");
+        }
+
+        /**
+         * @brief get the remote user or auth user value (both should be the
+         * same)
+         * @details If the server supports user authentication, and the script
+         * is protected, the username the user has authenticated as. (Also
+         * available as AUTH_USER.)
+         */
+        [[nodiscard]] std::string_view auth_user() const noexcept {
+            if (auto a = cgi::env("AUTH_USER"); !a.empty())
+                return a;
+            return cgi::env("REMOTE_USER");
+        }
+
+        /**
          * @brief returns the request scheme (http/https/...)
          */
         [[nodiscard]] std::string_view request_scheme() const noexcept {
