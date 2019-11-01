@@ -6,22 +6,16 @@
 namespace webpp {
 
     template <typename Interface>
-    class server : Interface {
+    class server : Interface, public router {
 
-        // TODO: write some template meta codes here to verify the interface
+        static_assert(std::is_convertible_v<Interface, basic_interface>,
+                      "It's not an interface");
 
       public:
         using Interface::Interface;
+        using Interface::run;
 
       private:
-        /**
-         * This method will generate the request
-         */
-        request create_request() noexcept {
-            request req;
-
-            return req;
-        }
     };
 
 }; // namespace webpp

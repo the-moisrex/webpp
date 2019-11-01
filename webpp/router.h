@@ -91,39 +91,6 @@ namespace webpp {
         func_t func;
     };
 
-    namespace matchers {
-
-        struct path {
-            std::string slug;
-
-            bool operator()(std::string_view _slug) const noexcept {
-                return _slug == path::slug;
-            }
-
-            bool operator()(path const& _path) const noexcept {
-                return _path == *this;
-            }
-
-            bool operator==(std::string_view _slug) const noexcept {
-                return _slug == path::slug;
-            }
-
-            bool operator==(path const& _path) const noexcept {
-                return _path.slug == path::slug;
-            }
-
-            bool operator!=(path const& _path) const noexcept {
-                return _path.slug != path::slug;
-            }
-
-            bool operator!=(std::string_view _slug) const noexcept {
-                return _slug != path::slug;
-            }
-        };
-
-        // TODO: overload operators here
-
-    } // namespace matchers
 
     /**
      * @brief This route class contains one single root route and it's children
@@ -196,7 +163,7 @@ namespace webpp {
         }
 
         template <typename... Args>
-        router& use(Args&&... args) noexcept {
+        router& on(Args&&... args) noexcept {
             routes.emplace_back(
                 std::forward<Args>(args)...); // use route's constructors
             return *this;
@@ -204,28 +171,28 @@ namespace webpp {
 
         template <typename... Args>
         auto& get(Args&&... args) noexcept {
-            return use("GET", std::forward<Args>(args)...);
+            return on("GET", std::forward<Args>(args)...);
         }
 
         template <typename... Args>
         auto& post(Args&&... args) noexcept {
-            return use("POST", std::forward<Args>(args)...);
+            return on("POST", std::forward<Args>(args)...);
         }
 
         template <typename... Args>
         auto& put(Args&&... args) noexcept {
-            return use("PUT", std::forward<Args>(args)...);
+            return on("PUT", std::forward<Args>(args)...);
         }
 
         template <typename... Args>
         auto& patch(Args&&... args) noexcept {
-            return use("PATCH", std::forward<Args>(args)...);
+            return on("PATCH", std::forward<Args>(args)...);
         }
 
         template <typename... Args>
         auto&
         deletes(Args&&... args) noexcept { // There's a miss spell, I know.
-            return use("DELETE", std::forward<Args>(args)...);
+            return on("DELETE", std::forward<Args>(args)...);
         }
 
         template <typename... Args>
@@ -234,7 +201,7 @@ namespace webpp {
             // implemented in the interfaces and not here; because of the
             // multi-threading stuff and generally it's low level stuff that it
             // has to do)
-            return use("HEAD", std::forward<Args>(args)...);
+            return on("HEAD", std::forward<Args>(args)...);
         }
 
         /**
