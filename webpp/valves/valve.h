@@ -4,34 +4,34 @@
 #define WEBPP_VALVE_H
 
 #include "../router.h"
-#include <memory>
+#include <functional>
 
 namespace webpp {
 
     enum class logical_operators { NONE, AND, OR, XOR };
 
-    template <typename ValveType, typename NextValveType>
-    class valve : public ValveType {
+    class valve {
       public:
       protected:
         // true: and, false: or
         logical_operators op = logical_operators::NONE;
-        std::unique_ptr<NextValveType> next;
+        std::function<bool(request_t<Interface>)> func;
 
         void set_next(valve const& v, logical_operators the_op) noexcept {
             if (next) {
                 next->set_next(v, the_op);
             } else {
-                next = std::make_unique<NextValveType>(v);
+                next = std::make_unique<valve>(v);
                 next->op = the_op;
             }
         }
 
         void set_next(valve&& v, logical_operators the_op) noexcept {
+            // todo: next->op != logical_operators::NONE
             if (next) {
                 next->set_next(std::move(v), the_op);
             } else {
-                next = std::make_unique<NextValveType>(std::move(v));
+                next = std::make_unique<valve>(std::move(v));
                 next->op = the_op;
             }
         }
@@ -39,59 +39,51 @@ namespace webpp {
       public:
         valve() noexcept = default;
         valve(valve const& v) noexcept
-            : op(v.op), next(std::make_unique<NextValveType>(*v.next)) {}
+            : op(v.op), next(std::make_unique<valve>(*v.next)) {}
         valve(valve&& v) noexcept = default;
 
-        valve& operator=(valve<NextValveType> const& v) noexcept {
+        valve& operator=(valve const& v) noexcept {
             if (&v == this)
                 return *this;
             op = v.op;
-            next = std::make_unique<NextValveType>(*v.next);
+            next = std::make_unique<valve>(*v.next);
             return *this;
         }
 
-        valve& operator=(valve<NextValveType>&&) noexcept = default;
+        valve& operator=(valve&&) noexcept = default;
 
-        valve& operator&&(NextValveType const& v) noexcept {
+        valve& operator&&(valve const& v) noexcept {
             set_next(v, logical_operators::AND);
             return *this;
         }
 
-        valve& operator&&(NextValveType&& v) noexcept {
+        valve& operator&&(valve&& v) noexcept {
             set_next(v, logical_operators::AND);
             return *this;
         }
 
-        auto operator&(NextValveType&& a) noexcept {
-            return operator&&(std::move(a));
-        }
-        auto operator&(NextValveType const& a) noexcept {
-            return operator&&(a);
-        }
+        auto operator&(valve&& a) noexcept { return operator&&(std::move(a)); }
+        auto operator&(valve const& a) noexcept { return operator&&(a); }
 
-        valve& operator||(NextValveType const& v) noexcept {
+        valve& operator||(valve const& v) noexcept {
             set_next(v, logical_operators::OR);
             return *this;
         }
 
-        valve& operator||(NextValveType&& v) noexcept {
+        valve& operator||(valve&& v) noexcept {
             set_next(std::move(v), logical_operators::OR);
             return *this;
         }
 
-        auto operator|(NextValveType const& v) noexcept {
-            return operator||(v);
-        }
-        auto operator|(NextValveType&& v) noexcept {
-            return operator||(std::move(v));
-        }
+        auto operator|(valve const& v) noexcept { return operator||(v); }
+        auto operator|(valve&& v) noexcept { return operator||(std::move(v)); }
 
-        valve& operator^(NextValveType const& v) noexcept {
+        valve& operator^(valve const& v) noexcept {
             set_next(v, logical_operators::XOR);
             return *this;
         }
 
-        valve& operator^(NextValveType&& v) noexcept {
+        valve& operator^(valve&& v) noexcept {
             set_next(std::move(v), logical_operators::XOR);
             return *this;
         }
@@ -101,6 +93,11 @@ namespace webpp {
         [[nodiscard]] auto logic_op() const noexcept { return op; }
 
         [[nodiscard]] auto& next_valve() noexcept { return next; }
+
+        template <typename Interface>
+        [[nodiscard]] bool operator()(request_t<Interface>& req) noexcept {
+            return false;
+        }
     };
 
     template <typename ValveType, typename Interface>
@@ -122,26 +119,20 @@ namespace webpp {
         }
     }
 
-    struct method_condition {
+    struct method : public valve {
       private:
         std::string method_string;
 
       public:
-        explicit method_condition(std::string const& str) noexcept
-            : method_string(str) {}
-        explicit method_condition(std::string& str) noexcept
+        explicit method(std::string const& str) noexcept : method_string(str) {}
+        explicit method(std::string& str) noexcept
             : method_string(std::move(str)) {}
 
         template <typename Interface>
-        constexpr bool operator()(request_t<Interface> const& req) const
-            noexcept {
+        [[nodiscard]] bool operator()(request_t<Interface>& req) noexcept {
             return req.request_method() == method_string;
         }
     };
-
-    using method = valve<method_condition>;
-
-    auto get = method{"GET"};
 
 } // namespace webpp
 
