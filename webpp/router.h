@@ -21,7 +21,7 @@
 namespace webpp {
 
     using matcher_t = std::function<bool(std::string_view)>;
-    using method_t = std::string;
+    //    using method_t = std::string;
 
     /**
      * Places that the migrations will be run.

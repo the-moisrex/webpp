@@ -5,93 +5,108 @@
 
 #include "../router.h"
 #include <functional>
+#include <utility>
 
 namespace webpp {
 
-    enum class logical_operators { NONE, AND, OR, XOR };
+    enum class logical_operators { AND, OR, XOR };
 
-    template <typename PrevValve>
+    template <typename NextValve>
     struct basic_valve {
+        logical_operators op;
+        NextValve next;
 
-        // true: and, false: or
-        logical_operators op = logical_operators::NONE;
+        constexpr basic_valve(basic_valve const& v) noexcept
+            : op(v.op), next(v.valve) {}
+        constexpr basic_valve(basic_valve&& v) noexcept = default;
 
-        PrevValve prev;
-
-        basic_valve(basic_valve const& v) noexcept : op(v.op), prev(v.valve) {}
-        basic_valve(basic_valve&& v) noexcept = default;
-
-        basic_valve& operator=(basic_valve const& v) noexcept {
+        constexpr basic_valve& operator=(basic_valve const& v) noexcept {
             if (&v == this)
                 return *this;
             op = v.op;
-            prev = v.prev;
+            next = v.next;
             return *this;
         }
 
-        basic_valve& operator=(basic_valve&&) noexcept = default;
+        constexpr basic_valve& operator=(basic_valve&&) noexcept = default;
     };
 
     template <>
     struct basic_valve<void> {};
 
-    template <typename ValveType, typename PrevValve = void>
-    class valve : protected basic_valve<PrevValve>, public ValveType {
+    template <typename ValveType, typename NextValve = void>
+    class valve : protected basic_valve<NextValve>, public ValveType {
       public:
         using type = ValveType;
-        using prev_valve_type = PrevValve;
+        using next_valve_type = NextValve;
 
       protected:
       public:
-        valve() noexcept = default;
+        using ValveType::ValveType;
+        constexpr valve() noexcept = default;
 
-        template <typename NewValveType>
-        auto operator&&(NewValveType const& v) noexcept {
+        /**
+         * @tparam NewValveType
+         * @param valve
+         */
+        template <typename NewValveType, typename NewNextValve>
+        [[nodiscard]] constexpr auto
+        set_next(valve<NewValveType, NewNextValve>&& v,
+                 logical_operators the_op) const noexcept {
 
-            // the first way
-            valve<ValveType, typename NewValveType::prev_valve_type> one{
-                .op = logical_operators::AND, .prev = *this};
+            if constexpr (std::is_void_v<next_valve_type>) {
+                // this part will only execute when the "next_valve_type" is
+                // void
 
-            // the second way
-            valve<typename NewValveType::type, NewValveType> two;
+                // the first way (A<X, void> and B<Y, void> === A<X, B<Y, void>>
+                return valve<ValveType, valve<NewValveType, NewNextValve>>{
+                    .op = the_op,
+                    .next = std::forward<valve<NewValveType, NewNextValve>>(v)};
+            } else {
+                // this means this function has a "next" valve already,
+                // so it goes to the next's next valve
+                // this way we recursively create a valve type and return it.
+                auto n = basic_valve<NextValve>::next.set_next(
+                    std::forward<NewNextValve>(v), the_op);
+                return valve<ValveType, decltype(n)>{
+                    .op = basic_valve<ValveType>::op, .next = n};
+            }
         }
 
-        valve& operator&&(valve&& v) noexcept {
-            set_prev(v, logical_operators::AND);
-            return *this;
+        template <typename NewValveType, typename NewNextValve>
+        [[nodiscard]] constexpr auto
+        operator&&(valve<NewValveType, NewNextValve>&& v) const noexcept {
+            return set_next(std::forward<valve<NewValveType, NewNextValve>>(v),
+                            logical_operators::AND);
         }
 
-        auto operator&(valve&& a) noexcept { return operator&&(std::move(a)); }
-        auto operator&(valve const& a) noexcept { return operator&&(a); }
-
-        valve& operator||(valve const& v) noexcept {
-            set_prev(v, logical_operators::OR);
-            return *this;
+        template <typename NewValveType, typename NewNextValve>
+        [[nodiscard]] constexpr auto
+        operator&(valve<NewValveType, NewNextValve>&& v) const noexcept {
+            return set_next(std::forward<valve<NewValveType, NewNextValve>>(v),
+                            logical_operators::AND);
         }
 
-        valve& operator||(valve&& v) noexcept {
-            set_prev(std::move(v), logical_operators::OR);
-            return *this;
+        template <typename NewValveType, typename NewNextValve>
+        [[nodiscard]] constexpr auto
+        operator||(valve<NewValveType, NewNextValve>&& v) const noexcept {
+            return set_next(std::forward<valve<NewValveType, NewNextValve>>(v),
+                            logical_operators::OR);
         }
 
-        auto operator|(valve const& v) noexcept { return operator||(v); }
-        auto operator|(valve&& v) noexcept { return operator||(std::move(v)); }
-
-        valve& operator^(valve const& v) noexcept {
-            set_prev(v, logical_operators::XOR);
-            return *this;
+        template <typename NewValveType, typename NewNextValve>
+        [[nodiscard]] constexpr auto
+        operator|(valve<NewValveType, NewNextValve>&& v) const noexcept {
+            return set_next(std::forward<valve<NewValveType, NewNextValve>>(v),
+                            logical_operators::OR);
         }
 
-        valve& operator^(valve&& v) noexcept {
-            set_prev(std::move(v), logical_operators::XOR);
-            return *this;
+        template <typename NewValveType, typename NewNextValve>
+        [[nodiscard]] constexpr auto
+        operator^(valve<NewValveType, NewNextValve>&& v) const noexcept {
+            return set_next(std::forward<valve<NewValveType, NewNextValve>>(v),
+                            logical_operators::XOR);
         }
-
-        [[nodiscard]] bool has_prev() const noexcept { return prev != nullptr; }
-
-        [[nodiscard]] auto logic_op() const noexcept { return op; }
-
-        [[nodiscard]] auto& prev_valve() noexcept { return prev; }
 
         template <typename Interface>
         [[nodiscard]] bool operator()(request_t<Interface>& req) noexcept {
@@ -107,8 +122,8 @@ namespace webpp {
         case logical_operators::AND:
             if (!last_value || !res)
                 return false;
-            if (v.has_prev())
-                return calculate(*v.prev_valve(), req, res);
+            if (v.has_next())
+                return calculate(*v.next_valve(), req, res);
             else
                 return v();
         case logical_operators::OR:
@@ -118,19 +133,22 @@ namespace webpp {
         }
     }
 
-    struct method : public valve {
+    struct method_t {
       private:
-        std::string method_string;
+        std::string_view method_string;
 
       public:
-        explicit method(std::string const& str) noexcept : method_string(str) {}
-        explicit method(std::string& str) noexcept
+        constexpr method_t(std::string_view str) noexcept
             : method_string(std::move(str)) {}
 
         template <typename Interface>
         [[nodiscard]] bool operator()(request_t<Interface>& req) noexcept {
             return req.request_method() == method_string;
         }
+    };
+
+    struct method : public valve<method_t> {
+        using valve::valve;
     };
 
 } // namespace webpp
