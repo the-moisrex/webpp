@@ -120,25 +120,6 @@ namespace webpp {
         }
     };
 
-    template <typename ValveType, typename Interface>
-    bool calculate(ValveType const& v, request_t<Interface> const& req,
-                   bool last_value = true) noexcept {
-        auto res = v();
-        switch (v.logic_op()) {
-        case logical_operators::AND:
-            if (!last_value || !res)
-                return false;
-            if (v.has_next())
-                return calculate(*v.next_valve(), req, res);
-            else
-                return v();
-        case logical_operators::OR:
-            break;
-        case logical_operators::XOR:
-            break;
-        }
-    }
-
     struct method_t {
       private:
         std::string_view method_string;

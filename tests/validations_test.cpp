@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include <map>
-#include <set>
 #include <string>
 #include <vector>
 #include <webpp/utils/charset.h>
