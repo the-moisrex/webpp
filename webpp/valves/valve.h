@@ -3,7 +3,7 @@
 #ifndef WEBPP_VALVE_H
 #define WEBPP_VALVE_H
 
-#include "../router.h"
+#include "../http/request.h"
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -116,7 +116,21 @@ namespace webpp {
         template <typename Interface>
         [[nodiscard]] bool operator()(request_t<Interface>& req) const
             noexcept {
-            return false;
+            if constexpr (std::is_void_v<NextValve>) {
+                return ValveType::operator()(req);
+            } else {
+                switch (basic_valve<NextValve>::op) {
+                case logical_operators::AND:
+                    return ValveType::operator()(req) &&
+                           basic_valve<NextValve>::next.operator()(req);
+                case logical_operators::OR:
+                    return ValveType::operator()(req) ||
+                           basic_valve<NextValve>::next.operator()(req);
+                case logical_operators::XOR:
+                    return ValveType::operator()(req) ^
+                           basic_valve<NextValve>::next.operator()(req);
+                }
+            }
         }
     };
 
