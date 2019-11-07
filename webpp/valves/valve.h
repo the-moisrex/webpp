@@ -4,7 +4,8 @@
 #define WEBPP_VALVE_H
 
 #include "../router.h"
-#include <functional>
+#include <string_view>
+#include <type_traits>
 #include <utility>
 
 namespace webpp {
@@ -13,18 +14,24 @@ namespace webpp {
 
     template <typename NextValve>
     struct basic_valve {
-        logical_operators op;
         NextValve next;
+        logical_operators op;
+
+        constexpr basic_valve(NextValve&& next, logical_operators op)
+            : next(std::move(next)), op(op) {}
+
+        constexpr basic_valve(NextValve const& next, logical_operators op)
+            : next(next), op(op) {}
 
         constexpr basic_valve(basic_valve const& v) noexcept
-            : op(v.op), next(v.valve) {}
+            : next(v.valve), op(v.op) {}
         constexpr basic_valve(basic_valve&& v) noexcept = default;
 
         constexpr basic_valve& operator=(basic_valve const& v) noexcept {
             if (&v == this)
                 return *this;
-            op = v.op;
             next = v.next;
+            op = v.op;
             return *this;
         }
 
@@ -35,14 +42,13 @@ namespace webpp {
     struct basic_valve<void> {};
 
     template <typename ValveType, typename NextValve = void>
-    class valve : protected basic_valve<NextValve>, public ValveType {
+    class valve : public basic_valve<NextValve>, public ValveType {
       public:
         using type = ValveType;
         using next_valve_type = NextValve;
 
-      protected:
-      public:
         using ValveType::ValveType;
+        using basic_valve<NextValve>::basic_valve;
         constexpr valve() noexcept = default;
 
         /**
@@ -59,9 +65,8 @@ namespace webpp {
                 // void
 
                 // the first way (A<X, void> and B<Y, void> === A<X, B<Y, void>>
-                return valve<ValveType, valve<NewValveType, NewNextValve>>{
-                    .op = the_op,
-                    .next = std::forward<valve<NewValveType, NewNextValve>>(v)};
+                return valve<ValveType, valve<NewValveType, NewNextValve>>(
+                    std::forward<valve<NewValveType, NewNextValve>>(v), the_op);
             } else {
                 // this means this function has a "next" valve already,
                 // so it goes to the next's next valve
@@ -109,7 +114,8 @@ namespace webpp {
         }
 
         template <typename Interface>
-        [[nodiscard]] bool operator()(request_t<Interface>& req) noexcept {
+        [[nodiscard]] bool operator()(request_t<Interface>& req) const
+            noexcept {
             return false;
         }
     };
@@ -139,7 +145,8 @@ namespace webpp {
 
       public:
         constexpr method_t(std::string_view str) noexcept
-            : method_string(std::move(str)) {}
+            : method_string(str) {}
+        constexpr method_t() noexcept = default;
 
         template <typename Interface>
         [[nodiscard]] bool operator()(request_t<Interface>& req) noexcept {
