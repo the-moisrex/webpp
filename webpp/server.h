@@ -6,7 +6,7 @@
 namespace webpp {
 
     template <typename Interface>
-    class server : Interface, public router {
+    class server : Interface {
 
         static_assert(std::is_convertible_v<Interface, basic_interface>,
                       "It's not an interface");
