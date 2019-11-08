@@ -4,10 +4,7 @@
 #include "http/request.h"
 #include "http/response.h"
 #include "valves/valve.h"
-#include <algorithm>
-#include <map>
-#include <string>
-#include <string_view>
+#include <vector>
 
 namespace webpp {
 
@@ -16,21 +13,53 @@ namespace webpp {
      */
     template <typename Interface>
     class route {
-        response(migrator)(request_t<Interface>&);
+        valves::valve<Interface> condition = valves::empty;
+        response (*migrator)(request_t<Interface>&);
         bool active = true;
 
       public:
-        inline bool is_active() const noexcept {
-            return active && !_migrations.empty();
-        }
+        constexpr route(decltype(migrator) m) : migrator(std::move(m)) {}
+        constexpr route(decltype(condition) con, decltype(migrator) m)
+            : condition(std::move(con)), migrator(std::move(m)) {}
 
+        /**
+         * Check if the route is active
+         */
+        inline bool is_active() const noexcept { return active; }
+
+        /**
+         * Reactivate the route
+         */
         inline route& activate() noexcept {
             active = true;
             return *this;
         }
+
+        /**
+         * Deactivate the route
+         */
         inline route& deactivate() noexcept {
             active = false;
             return *this;
+        }
+
+        /**
+         * Run the migration
+         * @return the response
+         */
+        [[nodiscard]] inline response
+        operator()(request_t<Interface>&) noexcept {
+            return migrator();
+        }
+
+        /**
+         * Check if the specified request matches the valve condition
+         * @param req
+         * @return bool
+         */
+        [[nodiscard]] inline bool
+        is_match(request_t<Interface> const& req) const noexcept {
+            return active && condition(req);
         }
     };
 
@@ -42,9 +71,14 @@ namespace webpp {
      */
     template <typename Interface>
     class router {
-        std::multimap<valves::valve<Interface>, route> routes;
+        std::vector<route<Interface>> routes;
 
       public:
+        /**
+         * Run the request through the routes and then return the response
+         * @param req
+         * @return final response
+         */
         response run(request_t<Interface>&& req) {}
 
         router& on(route const& _route) noexcept {
