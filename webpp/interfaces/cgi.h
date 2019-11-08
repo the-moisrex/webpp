@@ -8,7 +8,10 @@
 namespace webpp {
 
     struct cgi : public basic_interface {
+      protected:
+        router<cgi> _router;
 
+      public:
         /**
          * Read the body of the string
          * @param data
@@ -55,10 +58,9 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] static std::string_view body() noexcept;
-    };
 
-    template <>
-    class server<cgi> {};
+        void run() noexcept;
+    };
 
     /**
      * Specializing the request_t<cgi> methods so the user can use them.

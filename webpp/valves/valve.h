@@ -8,7 +8,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace webpp {
+namespace webpp::valves {
 
     enum class logical_operators { AND, OR, XOR };
 
@@ -134,14 +134,14 @@ namespace webpp {
         }
     };
 
-    struct method_t {
+    struct method_condition {
       private:
         std::string_view method_string;
 
       public:
-        constexpr method_t(std::string_view str) noexcept
+        constexpr method_condition(std::string_view str) noexcept
             : method_string(str) {}
-        constexpr method_t() noexcept = default;
+        constexpr method_condition() noexcept = default;
 
         template <typename Interface>
         [[nodiscard]] bool operator()(request_t<Interface>& req) noexcept {
@@ -149,10 +149,21 @@ namespace webpp {
         }
     };
 
-    struct method : public valve<method_t> {
+    struct method : public valve<method_condition> {
         using valve::valve;
     };
 
-} // namespace webpp
+    struct empty_condition {
+        template <typename Interface>
+        [[nodiscard]] constexpr bool operator()(request_t<Interface>& req) const
+            noexcept {
+            return true;
+        }
+    };
+
+    struct empty_t : public valve<empty_condition> {};
+    constexpr empty_t empty;
+
+} // namespace webpp::valves
 
 #endif // WEBPP_VALVE_H

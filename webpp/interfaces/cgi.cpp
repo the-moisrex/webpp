@@ -94,3 +94,5 @@ std::string_view cgi::env(char const* const key) noexcept {
         return value;
     return {};
 }
+
+void cgi::run() noexcept { auto res = _router.run(request_t<cgi>()); }
