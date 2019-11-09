@@ -28,18 +28,11 @@ namespace webpp::valves {
                               logical_operators op) noexcept
             : next(_next), op(op) {}
 
-        constexpr basic_valve(basic_valve const& v) noexcept
-            : next(v.next), op(v.op) {}
+        constexpr basic_valve(basic_valve const& v) noexcept = default;
         constexpr basic_valve(basic_valve&& v) noexcept = default;
 
-        constexpr basic_valve& operator=(basic_valve const& v) noexcept {
-            if (&v == this)
-                return *this;
-            next = v.next;
-            op = v.op;
-            return *this;
-        }
-
+        constexpr basic_valve&
+        operator=(basic_valve const& v) noexcept = default;
         constexpr basic_valve& operator=(basic_valve&&) noexcept = default;
     };
 
