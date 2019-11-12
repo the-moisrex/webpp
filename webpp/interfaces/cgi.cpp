@@ -50,6 +50,11 @@ using namespace webpp;
 //    SERVER_SOFTWARE
 //    WEB_SERVER_API
 
+cgi::cgi() noexcept : basic_interface() {
+    // I'm not using C here; so why should I pay for it!
+    std::ios::sync_with_stdio(false);
+}
+
 std::string_view cgi::header(std::string name) noexcept {
 
     // fixme: check if this is all we have to do or we have to do more too:
@@ -80,6 +85,9 @@ std::streamsize cgi::read(char* data, std::streamsize length) noexcept {
 }
 
 void cgi::write(std::ostream& stream) noexcept {
+
+    // TODO: check if you need to ignore the input or not
+
     // I think o-stream is not readable so we cannot do this:
     // https://stackoverflow.com/questions/15629886/how-to-write-ostringstream-directly-to-cout
     std::cout << stream.rdbuf(); // TODO: test this, I don't trust myself :)
