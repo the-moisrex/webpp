@@ -88,10 +88,75 @@
 namespace webpp {
 
     class body {
+      public:
+        struct variants {
+            using string_type = std::string;
+
+          private:
+            void* data = nullptr;
+            enum class types : uint8_t { empty, string } type = types::empty;
+
+          public:
+            explicit variants(std::string* str) noexcept
+                : data(str), type(types::string) {}
+            explicit variants(std::string&& str) noexcept
+                : data(new std::string(std::move(str))), type(types::string) {}
+            explicit variants(std::string const& str) noexcept
+                : data(new std::string(str)), type(types::string) {}
+
+            /**
+             * Correctly destroy the data
+             */
+            ~variants() noexcept {
+                switch (type) {
+                case types::string:
+                    delete static_cast<std::string*>(data);
+                    break;
+                default:
+                    break;
+                }
+            }
+
+            /**
+             * Empty the data
+             */
+            void empty() noexcept {
+                this->~variants();
+                data = nullptr;
+                type = types::empty;
+            }
+
+            void replace(void* _data, types _type) noexcept {
+                this->~variants();
+                data = _data;
+                type = _type;
+            }
+
+            void replace_string(std::string* str) noexcept {
+                replace(str, types::string);
+            }
+
+            void replace_string(std::string const& str) noexcept {
+                replace(new std::string(str), types::string);
+            }
+
+            void replace_string(std::string&& str) noexcept {
+                replace(new std::string(std::move(str)), types::string);
+            }
+
+            void replace_string_view(std::string_view str) noexcept {
+                replace(new std::string(str), types::string);
+            }
+        };
+
       private:
+        static std::map<std::string, variants> bodies;
+        std::unique_ptr<variants> data;
 
       public:
-        auto json() const;
+        [[nodiscard]] std::string_view str() const noexcept;
+
+        [[nodiscard]] auto json() const;
         auto json(std::string_view const& data);
 
         auto file(std::string_view const& filepath);
