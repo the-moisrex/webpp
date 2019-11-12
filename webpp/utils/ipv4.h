@@ -206,7 +206,7 @@ namespace webpp {
 
             data =
                 parse({static_cast<uint8_t>(oc1), static_cast<uint8_t>(oc2),
-                       static_cast<uint8_t>(oc3), static_cast<uint8_t>(oc3)});
+                       static_cast<uint8_t>(oc3), static_cast<uint8_t>(oc4)});
 
             if (_prefix == 254u)
                 _prefix = 255u; // the ip is valid
@@ -578,6 +578,18 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_valid() const noexcept {
             return _prefix != 254u;
+        }
+
+        /**
+         * Get the ip in reversed order
+         * @return
+         */
+        [[nodiscard]] constexpr ipv4 reversed() const noexcept {
+            return std::array<uint8_t, 4>{
+                static_cast<uint8_t>(data & 0xFFu),
+                static_cast<uint8_t>(data >> 8u & 0xFFu),
+                static_cast<uint8_t>(data >> 16u & 0xFFu),
+                static_cast<uint8_t>(data >> 24u & 0xFFu)};
         }
 
         /**

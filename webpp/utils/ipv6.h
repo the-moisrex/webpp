@@ -1,13 +1,13 @@
 #ifndef WEBPP_IPV6_H
 #define WEBPP_IPV6_H
 
-#include "../std/string_view.h"
 #include "../validators/validators.h"
 #include "ipv4.h"
 #include <algorithm>
 #include <array>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -995,7 +995,18 @@ namespace webpp {
          */
         ipv6& clear_prefix() noexcept { return prefix(255u); }
 
-    }; // namespace webpp
+        /**
+         * Get the ip in reversed order
+         * @return
+         */
+        [[nodiscard]] ipv6 reversed() const noexcept {
+            return ipv6{octets_t{data[14], data[15], data[12], data[13],
+                                 data[10], data[11], data[8], data[9], data[6],
+                                 data[7], data[4], data[5], data[2], data[3],
+                                 data[0], data[1]},
+                        _prefix};
+        }
+    };
 
 } // namespace webpp
 
