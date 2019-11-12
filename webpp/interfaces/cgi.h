@@ -12,6 +12,8 @@ namespace webpp {
         router<cgi> _router;
 
       public:
+        cgi() noexcept;
+
         /**
          * Read the body of the string
          * @param data
