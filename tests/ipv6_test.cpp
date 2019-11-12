@@ -103,6 +103,11 @@ TEST(IPv6Tests, CIDR) {
     }
 }
 
+TEST(IPV6Tests, SpecialCases) {
+    EXPECT_EQ(ipv6("::0.0.0.1"), ipv6("::1"));
+    EXPECT_EQ(ipv6("::0.0.0.1"), ipv6("::1"));
+}
+
 TEST(IPv6Tests, StrTests) {
     EXPECT_EQ(ipv6("::").short_str(), "::");
     EXPECT_EQ(ipv6("::1").short_str(), "::1");

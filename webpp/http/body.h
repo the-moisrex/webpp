@@ -91,10 +91,15 @@ namespace webpp {
       public:
         struct variants {
             using string_type = std::string;
+            using stream_type = std::ostream;
 
           private:
             void* data = nullptr;
-            enum class types : uint8_t { empty, string } type = types::empty;
+            enum class types : uint8_t {
+                empty,
+                string,
+                stream
+            } type = types::empty;
 
           public:
             explicit variants(std::string* str) noexcept
@@ -103,6 +108,8 @@ namespace webpp {
                 : data(new std::string(std::move(str))), type(types::string) {}
             explicit variants(std::string const& str) noexcept
                 : data(new std::string(str)), type(types::string) {}
+            explicit variants(std::ostream& stream) noexcept
+                : data(&stream), type(types::stream) {}
 
             /**
              * Correctly destroy the data
@@ -147,10 +154,13 @@ namespace webpp {
             void replace_string_view(std::string_view str) noexcept {
                 replace(new std::string(str), types::string);
             }
+
+            void replace_stream(std::ostream& stream) noexcept {
+                replace(&stream, types::stream);
+            }
         };
 
       private:
-        static std::map<std::string, variants> bodies;
         std::unique_ptr<variants> data;
 
       public:
