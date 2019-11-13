@@ -94,14 +94,15 @@ namespace webpp {
             using stream_type = std::ostream;
 
           private:
-            void* data = nullptr;
+            mutable void* data = nullptr;
             enum class types : uint8_t {
                 empty,
                 string,
                 stream
-            } type = types::empty;
+            } mutable type = types::empty;
 
           public:
+            variants() noexcept = default;
             explicit variants(std::string* str) noexcept
                 : data(str), type(types::string) {}
             explicit variants(std::string&& str) noexcept
@@ -158,13 +159,34 @@ namespace webpp {
             void replace_stream(std::ostream& stream) noexcept {
                 replace(&stream, types::stream);
             }
+
+            [[nodiscard]] std::string_view
+            str(std::string_view default_val = "") const noexcept {
+                if (type == types::string)
+                    return *static_cast<std::string*>(data);
+
+                // FIXME: check if there's an optimization issue here or not
+                if (type == types::stream) {
+                    auto ndata =
+                        new std::string{std::istreambuf_iterator<char>(
+                                            *static_cast<std::istream*>(data)),
+                                        std::istreambuf_iterator<char>()};
+                    this->~variants();
+                    data = ndata;
+                    type = types::string;
+                    return *static_cast<std::string*>(data);
+                }
+                return default_val;
+            }
         };
 
       private:
-        std::unique_ptr<variants> data;
+        variants data;
 
       public:
-        [[nodiscard]] std::string_view str() const noexcept;
+        [[nodiscard]] std::string_view str() const noexcept {
+            return data.str();
+        }
 
         [[nodiscard]] auto json() const;
         auto json(std::string_view const& data);
