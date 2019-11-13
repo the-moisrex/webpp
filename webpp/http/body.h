@@ -115,75 +115,69 @@ namespace webpp {
             /**
              * Correctly destroy the data
              */
-            ~variants() noexcept {
-                switch (type) {
-                case types::string:
-                    delete static_cast<std::string*>(data);
-                    break;
-                default:
-                    break;
-                }
-            }
+            ~variants() noexcept;
 
             /**
              * Empty the data
              */
-            void empty() noexcept {
-                this->~variants();
-                data = nullptr;
-                type = types::empty;
-            }
+            void empty() noexcept;
 
-            void replace(void* _data, types _type) noexcept {
-                this->~variants();
-                data = _data;
-                type = _type;
-            }
+            /**
+             * Replace the value
+             * @param _data
+             * @param _type
+             */
+            void replace(void* _data, types _type) noexcept;
 
-            void replace_string(std::string* str) noexcept {
-                replace(str, types::string);
-            }
+            /**
+             * Replace the data with a string
+             * @param str
+             */
+            void replace_string(std::string* str) noexcept;
 
-            void replace_string(std::string const& str) noexcept {
-                replace(new std::string(str), types::string);
-            }
+            /**
+             * Replace the data with a string
+             * @param str
+             */
+            void replace_string(std::string const& str) noexcept;
 
-            void replace_string(std::string&& str) noexcept {
-                replace(new std::string(std::move(str)), types::string);
-            }
+            /**
+             * Replace the data with a string
+             * @param str
+             */
+            void replace_string(std::string&& str) noexcept;
 
-            void replace_string_view(std::string_view str) noexcept {
-                replace(new std::string(str), types::string);
-            }
+            /**
+             * Replace the data with a string
+             * @param str
+             */
+            void replace_string_view(std::string_view str) noexcept;
 
-            void replace_stream(std::ostream& stream) noexcept {
-                replace(&stream, types::stream);
-            }
+            /**
+             * Replace the data with a stream
+             * @param stream
+             */
+            void replace_stream(std::ostream& stream) noexcept;
 
+            /**
+             * Get the value as a string (converts the other types to string
+             * too)
+             * @param default_val the default value if we cannot convert the
+             * data to string
+             * @return the string representation of the data
+             */
             [[nodiscard]] std::string_view
-            str(std::string_view default_val = "") const noexcept {
-                if (type == types::string)
-                    return *static_cast<std::string*>(data);
-
-                // FIXME: check if there's an optimization issue here or not
-                if (type == types::stream) {
-                    auto ndata =
-                        new std::string{std::istreambuf_iterator<char>(
-                                            *static_cast<std::istream*>(data)),
-                                        std::istreambuf_iterator<char>()};
-                    this->~variants();
-                    data = ndata;
-                    type = types::string;
-                    return *static_cast<std::string*>(data);
-                }
-                return default_val;
-            }
+            str(std::string_view default_val = "") const noexcept;
         };
 
       private:
         variants data;
 
       public:
+        /**
+         * Get the body value as a string
+         * @return
+         */
         [[nodiscard]] std::string_view str() const noexcept {
             return data.str();
         }
