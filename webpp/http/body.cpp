@@ -46,7 +46,7 @@ void webpp::body::variants::replace(
     type = _type;
 }
 
-void webpp::body::variants::empty() noexcept {
+void webpp::body::variants::clear() noexcept {
     this->~variants();
     data = nullptr;
     type = types::empty;
