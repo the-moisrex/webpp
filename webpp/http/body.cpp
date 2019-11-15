@@ -58,7 +58,8 @@ webpp::body::variants::~variants() noexcept {
         delete static_cast<std::string*>(data);
         break;
     case types::stream:
-        delete static_Cast<std::istream*>(data);
+        delete static_cast<std::istream*>(data);
+        break;
     default:
         break;
     }
