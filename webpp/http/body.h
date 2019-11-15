@@ -120,7 +120,7 @@ namespace webpp {
             /**
              * Empty the data
              */
-            void empty() noexcept;
+            void clear() noexcept;
 
             /**
              * Replace the value
