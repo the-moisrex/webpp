@@ -187,11 +187,6 @@ namespace webpp {
 
         auto file(std::string_view const& filepath);
 
-        /**
-         * @brief get the whole body as a string
-         * @return string_view
-         */
-        std::string_view string() const;
         std::istream& stream() const;
 
         std::ostream& operator<<(std::ostream& __stream) noexcept {
