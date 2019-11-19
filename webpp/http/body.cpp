@@ -18,6 +18,22 @@ std::string_view webpp::body::str(std::string_view default_val) const noexcept {
     return default_val;
 }
 
+std::ostream& webpp::body::operator<<(std::ostream& __stream) {
+    switch (type) {
+    case types::stream:
+        __stream << *static_cast<stream_type*>(data);
+        break;
+    case types::string:
+        __stream << *static_cast<string_type*>(data);
+        break;
+    default:
+        // do nothing
+        break;
+    }
+
+    return __stream;
+}
+
 void webpp::body::replace_stream(std::ostream& stream) noexcept {
     replace(&stream, types::stream);
 }
