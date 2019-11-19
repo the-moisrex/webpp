@@ -1,8 +1,7 @@
 #include "body.h"
 #include <fstream>
 
-std::string_view webpp::body::variants::str(std::string_view default_val) const
-    noexcept {
+std::string_view webpp::body::str(std::string_view default_val) const noexcept {
     if (type == types::string)
         return *static_cast<std::string*>(data);
 
@@ -11,7 +10,7 @@ std::string_view webpp::body::variants::str(std::string_view default_val) const
         auto ndata = new std::string{
             std::istreambuf_iterator<char>(*static_cast<std::istream*>(data)),
             std::istreambuf_iterator<char>()};
-        this->~variants();
+        this->~body();
         data = ndata;
         type = types::string;
         return *static_cast<std::string*>(data);
@@ -19,40 +18,39 @@ std::string_view webpp::body::variants::str(std::string_view default_val) const
     return default_val;
 }
 
-void webpp::body::variants::replace_stream(std::ostream& stream) noexcept {
+void webpp::body::replace_stream(std::ostream& stream) noexcept {
     replace(&stream, types::stream);
 }
 
-void webpp::body::variants::replace_string_view(std::string_view str) noexcept {
+void webpp::body::replace_string_view(std::string_view str) noexcept {
     replace(new std::string(str), types::string);
 }
 
-void webpp::body::variants::replace_string(std::string&& str) noexcept {
+void webpp::body::replace_string(std::string&& str) noexcept {
     replace(new std::string(std::move(str)), types::string);
 }
 
-void webpp::body::variants::replace_string(std::string const& str) noexcept {
+void webpp::body::replace_string(std::string const& str) noexcept {
     replace(new std::string(str), types::string);
 }
 
-void webpp::body::variants::replace_string(std::string* str) noexcept {
+void webpp::body::replace_string(std::string* str) noexcept {
     replace(str, types::string);
 }
 
-void webpp::body::variants::replace(
-    void* _data, webpp::body::variants::types _type) noexcept {
-    this->~variants();
+void webpp::body::replace(void* _data, webpp::body::types _type) noexcept {
+    this->~body();
     data = _data;
     type = _type;
 }
 
-void webpp::body::variants::clear() noexcept {
-    this->~variants();
+void webpp::body::clear() noexcept {
+    this->~body();
     data = nullptr;
     type = types::empty;
 }
 
-webpp::body::variants::~variants() noexcept {
+webpp::body::~body() noexcept {
     switch (type) {
     case types::string:
         delete static_cast<std::string*>(data);
