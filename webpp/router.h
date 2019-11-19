@@ -4,6 +4,7 @@
 #include "http/request.h"
 #include "http/response.h"
 #include "valves/valve.h"
+#include <type_traits>
 #include <vector>
 
 namespace webpp {
@@ -42,13 +43,29 @@ namespace webpp {
      */
     template <typename Interface>
     class route {
-        valves::valve<Interface> condition = valves::empty;
-        response (*migrator)(request_t<Interface>&);
+        using migrator_t = response (*)(request_t<Interface>&);
+        using condition_t = valves::valve<Interface>;
+        using req_t = request_t<Interface>;
+
+        migrator_t migrator;
+        condition_t condition = valves::empty;
         bool active = true;
 
       public:
-        constexpr route(decltype(migrator) m) : migrator(std::move(m)) {}
-        constexpr route(decltype(condition) con, decltype(migrator) m)
+        constexpr route(migrator_t m) : migrator(std::move(m)) {}
+
+        template <typename Callable, typename = std::enable_if_t<
+                                         std::is_invocable_v<Callable, req_t>>>
+        constexpr route(Callable c) noexcept
+            : migrator(+[=](auto& req, auto& res) { c(req); }) {}
+
+        template <typename Callable,
+                  typename = std::enable_if_t<
+                      std::is_invocable_v<Callable, req_t, response>>>
+        constexpr route(Callable c) noexcept
+            : migrator(+[=](auto& req, auto& res) { c(req, response); }) {}
+
+        constexpr route(condition_t con, migrator_t m)
             : condition(std::move(con)), migrator(std::move(m)) {}
 
         /**

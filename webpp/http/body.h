@@ -176,10 +176,7 @@ namespace webpp {
 
         std::istream& stream() const;
 
-        std::ostream& operator<<(std::ostream& __stream) noexcept {
-            // TODO: fill here
-            return __stream;
-        }
+        std::ostream& operator<<(std::ostream& __stream);
 
         // TODO: add more methods for the images and stuff
     };
