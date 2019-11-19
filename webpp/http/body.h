@@ -89,98 +89,85 @@ namespace webpp {
 
     class body {
       public:
-        struct variants {
-            using string_type = std::string;
-            using stream_type = std::ostream;
-
-          private:
-            mutable void* data = nullptr;
-            enum class types : uint8_t {
-                empty,
-                string,
-                stream
-            } mutable type = types::empty;
-
-          public:
-            variants() noexcept = default;
-            explicit variants(std::string* str) noexcept
-                : data(str), type(types::string) {}
-            explicit variants(std::string&& str) noexcept
-                : data(new std::string(std::move(str))), type(types::string) {}
-            explicit variants(std::string const& str) noexcept
-                : data(new std::string(str)), type(types::string) {}
-            explicit variants(std::ostream& stream) noexcept
-                : data(&stream), type(types::stream) {}
-
-            /**
-             * Correctly destroy the data
-             */
-            ~variants() noexcept;
-
-            /**
-             * Empty the data
-             */
-            void clear() noexcept;
-
-            /**
-             * Replace the value
-             * @param _data
-             * @param _type
-             */
-            void replace(void* _data, types _type) noexcept;
-
-            /**
-             * Replace the data with a string
-             * @param str
-             */
-            void replace_string(std::string* str) noexcept;
-
-            /**
-             * Replace the data with a string
-             * @param str
-             */
-            void replace_string(std::string const& str) noexcept;
-
-            /**
-             * Replace the data with a string
-             * @param str
-             */
-            void replace_string(std::string&& str) noexcept;
-
-            /**
-             * Replace the data with a string
-             * @param str
-             */
-            void replace_string_view(std::string_view str) noexcept;
-
-            /**
-             * Replace the data with a stream
-             * @param stream
-             */
-            void replace_stream(std::ostream& stream) noexcept;
-
-            /**
-             * Get the value as a string (converts the other types to string
-             * too)
-             * @param default_val the default value if we cannot convert the
-             * data to string
-             * @return the string representation of the data
-             */
-            [[nodiscard]] std::string_view
-            str(std::string_view default_val = "") const noexcept;
-        };
+        using string_type = std::string;
+        using stream_type = std::ostream;
 
       private:
-        variants data;
+        mutable void* data = nullptr;
+        enum class types : uint8_t {
+            empty,
+            string,
+            stream
+        } mutable type = types::empty;
+
+      public:
+        body() noexcept = default;
+        explicit body(std::string* str) noexcept
+            : data(str), type(types::string) {}
+        explicit body(std::string&& str) noexcept
+            : data(new std::string(std::move(str))), type(types::string) {}
+        explicit body(std::string const& str) noexcept
+            : data(new std::string(str)), type(types::string) {}
+        explicit body(std::ostream& stream) noexcept
+            : data(&stream), type(types::stream) {}
+
+        /**
+         * Correctly destroy the data
+         */
+        ~body() noexcept;
+
+        /**
+         * Empty the data
+         */
+        void clear() noexcept;
+
+        /**
+         * Replace the value
+         * @param _data
+         * @param _type
+         */
+        void replace(void* _data, types _type) noexcept;
+
+        /**
+         * Replace the data with a string
+         * @param str
+         */
+        void replace_string(std::string* str) noexcept;
+
+        /**
+         * Replace the data with a string
+         * @param str
+         */
+        void replace_string(std::string const& str) noexcept;
+
+        /**
+         * Replace the data with a string
+         * @param str
+         */
+        void replace_string(std::string&& str) noexcept;
+
+        /**
+         * Replace the data with a string
+         * @param str
+         */
+        void replace_string_view(std::string_view str) noexcept;
+
+        /**
+         * Replace the data with a stream
+         * @param stream
+         */
+        void replace_stream(std::ostream& stream) noexcept;
 
       public:
         /**
-         * Get the body value as a string
-         * @return
+         * Get the value as a string (converts the other types to string
+         * too)
+         * @param default_val the default value if we cannot convert the
+         * data to string
+         * @return the string representation of the data
          */
-        [[nodiscard]] std::string_view str() const noexcept {
-            return data.str();
-        }
+        [[nodiscard]] std::string_view
+        str(std::string_view default_val = "") const noexcept;
 
         [[nodiscard]] auto json() const;
         auto json(std::string_view const& data);
@@ -194,21 +181,8 @@ namespace webpp {
             return __stream;
         }
 
-        /**
-         * Perfect forwarding the read method.
-         */
-        template <typename... T>
-        auto read(T&&... data) const {
-            return _interface.read(std::forward<T>(data)...);
-        }
-
         // TODO: add more methods for the images and stuff
     };
-
-    std::ostream& operator<<(std::ostream& out, const body& _body) {
-        out << _body.string();
-        return out;
-    }
 
 }; // namespace webpp
 
