@@ -21,11 +21,16 @@ class const_file {
                          std::string_view const& content) noexcept
         : _file_path(file_path), _content(content) {}
 
-    constexpr auto const& path() const noexcept { return _file_path; }
+    [[nodiscard]] constexpr auto const& path() const noexcept {
+        return _file_path;
+    }
 
-    constexpr auto const& content() const noexcept { return _content; }
+    [[nodiscard]] constexpr auto const& content() const noexcept {
+        return _content;
+    }
 
-    static constexpr const_file search(std::string_view const& path) noexcept {
+    [[nodiscard]] static constexpr const_file
+    search(std::string_view const& path) noexcept {
         constexpr std::array<const_file, 2> files{
             const_file("file.json", "{\"value\": 10}"),
             const_file("config.json", "{}")};
