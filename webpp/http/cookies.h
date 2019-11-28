@@ -280,8 +280,8 @@ namespace webpp {
          * @param check
          */
         template <typename T>
-        void make_unique(const const_iterator& dont_touch,
-                         T const& check) noexcept {
+        void make_it_unique(const const_iterator& dont_touch,
+                            T const& check) noexcept {
             for (auto it = begin(); it != end(); it++) {
                 if (check(*it) && dont_touch != it &&
                     dont_touch->same_as(*it)) {

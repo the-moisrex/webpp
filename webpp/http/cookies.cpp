@@ -38,7 +38,7 @@ cookie& cookie::operator=(const cookie& c) noexcept {
     _value = c._value;
     _domain = c._domain;
     _path = c._path;
-    _expires = std::make_unique<date_t>(*c._expires);
+    _expires = std::make_it_unique<date_t>(*c._expires);
     _max_age = c._max_age;
     _same_site = c._same_site;
     _secure = c._secure;
@@ -547,7 +547,7 @@ cookie_jar& cookie_jar::value(condition const& _condition,
 cookie_jar& cookie_jar::path(cookie::path_t const& _path) noexcept {
     change_all([&](auto& it) {
         it->_path = _path;
-        make_unique(it, [&](auto const& c) { return c._path == _path; });
+        make_it_unique(it, [&](auto const& c) { return c._path == _path; });
     });
     return *this;
 }
@@ -556,7 +556,7 @@ cookie_jar& cookie_jar::path(cookie::name_t const& _name,
                              cookie::path_t const& _path) noexcept {
     change_if(_name, [&](auto& it) {
         it->_path = _path;
-        make_unique(it, [&](auto const& c) { return c._path == _path; });
+        make_it_unique(it, [&](auto const& c) { return c._path == _path; });
     });
     return *this;
 }
@@ -565,7 +565,7 @@ cookie_jar& cookie_jar::path(condition const& _condition,
                              cookie::path_t const& _path) noexcept {
     change_if(_condition, [&](auto& it) {
         it->_path = _path;
-        make_unique(it, [&](auto const& c) { return c._path == _path; });
+        make_it_unique(it, [&](auto const& c) { return c._path == _path; });
     });
     return *this;
 }
@@ -573,7 +573,7 @@ cookie_jar& cookie_jar::path(condition const& _condition,
 cookie_jar& cookie_jar::path(const_iterator const& it,
                              cookie::path_t&& _path) noexcept {
     it->_path = _path;
-    make_unique(it, [&](auto const& c) { return c._path == it->_path; });
+    make_it_unique(it, [&](auto const& c) { return c._path == it->_path; });
     return *this;
 }
 
@@ -585,7 +585,7 @@ cookie_jar& cookie_jar::path(const_iterator const& it,
 cookie_jar& cookie_jar::domain(cookie::domain_t const& _domain) noexcept {
     change_all([&](auto& it) {
         it->_domain = _domain;
-        make_unique(it, [&](auto const& c) { return c._domain == _domain; });
+        make_it_unique(it, [&](auto const& c) { return c._domain == _domain; });
     });
     return *this;
 }
@@ -594,7 +594,8 @@ cookie_jar& cookie_jar::domain(cookie::name_t const& _name,
                                cookie::domain_t const& new_domain) noexcept {
     change_if(_name, [&](auto& it) {
         it->_domain = new_domain;
-        make_unique(it, [&](auto const& c) { return c._domain == new_domain; });
+        make_it_unique(it,
+                       [&](auto const& c) { return c._domain == new_domain; });
     });
     return *this;
 }
@@ -602,7 +603,7 @@ cookie_jar& cookie_jar::domain(cookie::name_t const& _name,
 cookie_jar& cookie_jar::domain(const_iterator const& it,
                                cookie::domain_t&& new_domain) noexcept {
     it->_domain = std::move(new_domain);
-    make_unique(it, [&](auto const& c) { return c._domain == it->_domain; });
+    make_it_unique(it, [&](auto const& c) { return c._domain == it->_domain; });
     return *this;
 }
 
