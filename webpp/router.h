@@ -43,7 +43,7 @@ namespace webpp {
      */
     template <typename Interface>
     class route {
-        using migrator_t = response (*)(request_t<Interface>&);
+        using migrator_t = void (*)(request_t<Interface> const&, response&);
         using condition_t = valves::valve<Interface>;
         using req_t = request_t<Interface>;
 
