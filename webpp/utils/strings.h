@@ -95,11 +95,13 @@ namespace webpp {
     }
 
     inline void to_lower(std::string& str) noexcept {
+        // FIXME: I think you can make this algorithm faster
         std::transform(str.cbegin(), str.cend(), str.begin(),
                        [](auto const& c) { return std::tolower(c); });
     }
 
     inline void to_upper(std::string& str) noexcept {
+        // FIXME: I think you can make this algorithm faster
         std::transform(str.cbegin(), str.cend(), str.begin(),
                        [](auto const& c) { return std::tolower(c); });
     }
