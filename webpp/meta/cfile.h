@@ -3,6 +3,7 @@
 
 #include <array>
 #include <exception>
+#include <optional>
 #include <string_view>
 #include <type_traits>
 
@@ -29,7 +30,7 @@ class const_file {
         return _content;
     }
 
-    [[nodiscard]] static constexpr const_file
+    [[nodiscard]] static constexpr std::optional<const_file>
     search(std::string_view const& path) noexcept {
         constexpr std::array<const_file, 2> files{
             const_file("file.json", "{\"value\": 10}"),
@@ -39,8 +40,7 @@ class const_file {
             if (f.path() == path)
                 return f;
 
-        // default file
-        return const_file(path, "");
+        return std::nullopt;
     }
 };
 
