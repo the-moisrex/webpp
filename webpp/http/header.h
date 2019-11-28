@@ -31,9 +31,7 @@ namespace webpp {
          */
         void reload_cookies() const noexcept {
             _cookies.clear();
-            for (auto const& head : *this) {
-                auto& attr = head.first;
-                auto& value = head.second;
+            for (auto const& [attr, value] : *this) {
                 if ("set-cookie" == attr) {
                     _cookies.emplace(value);
                 }
@@ -78,7 +76,7 @@ namespace webpp {
         void remove_cookies() noexcept {
             _cookies.clear();
             for (auto it = begin(); it != end();) {
-                if (it->first == "set-cookie")
+                if (to_lower_copy(it->first) == "set-cookie")
                     it = erase(it);
                 else
                     ++it;
