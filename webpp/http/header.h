@@ -1,11 +1,11 @@
 #ifndef WEBPP_HEADERS_HPP
 #define WEBPP_HEADERS_HPP
 
-#include <string_view>
 #include "cookies.h"
 #include <map>
-#include <string>
 #include <memory>
+#include <string>
+#include <string_view>
 
 namespace webpp {
 
@@ -14,18 +14,14 @@ namespace webpp {
      * That means these classes will own (use std::string/... and not references
      * and pointers) the data they have.
      *
-     * And they also use other "views of data" classes like cookie classes so
-     * they can provide shaped and meaningful data to the developers.
-     *
-     * This class will only contain what's the same in both request and response
-     * classes; the rest, is up to those classes.
+     * This class will only be used in response and not in requests because it's
+     * the owner of its data.
      */
-    class headers {
+    class headers : public std::multimap<std::string, std::string> {
       private:
-        using headers_t = std::multimap<std::string, std::string>;
 
-        mutable headers_t data;
         mutable webpp::cookie_jar _cookies;
+        unsigned int _status_code = 200;
 
         /**
          * @brief this method will reload the cookies's cache.
@@ -34,38 +30,29 @@ namespace webpp {
          * cookies.
          */
         void reload_cookies() const noexcept {
-
             _cookies.clear();
-
-            if constexpr (HeaderType == header_type::RESPONSE) {
-                for (auto const& head : data) {
-                    auto attr = head.first;
-                    auto value = head.second;
-                    if ("set-cookie" == attr) {
-                        _cookies.emplace(value);
-                    }
-                }
-
-            } else {
-
-                for (auto const& head : data) {
-                    auto attr = head.first;
-                    auto value = head.second;
-                    if (attr == "cookie") {
-                        _cookies.emplace(value);
-                    }
+            for (auto const& head : *this) {
+                auto& attr = head.first;
+                auto& value = head.second;
+                if ("set-cookie" == attr) {
+                    _cookies.emplace(value);
                 }
             }
         }
 
       public:
-        // TODO: consider using custom iterators instead of multimap's
+        /**
+         * @brief get status code
+         */
+        auto status_code() const noexcept { return _status_code; }
 
-        using iterator = headers_t::iterator;
-        using const_iterator = headers_t ::const_iterator;
-        using reverse_iterator = headers_t::reverse_iterator;
-        using const_reverse_iterator = headers_t::const_reverse_iterator;
-
+        /**
+         * @brief set status code
+         * @param status_code
+         */
+        void status_code(decltype(_status_code) __status_code) noexcept {
+            _status_code = __status_code;
+        }
 
         /**
          * @brief get cookies
@@ -90,9 +77,9 @@ namespace webpp {
          */
         void remove_cookies() noexcept {
             _cookies.clear();
-            for (auto it = data.begin(); it != data.end();) {
-                if (it->first == "set-cookie" || it->first == "cookie")
-                    it = data.erase(it);
+            for (auto it = begin(); it != end();) {
+                if (it->first == "set-cookie")
+                    it = erase(it);
                 else
                     ++it;
             }
@@ -116,33 +103,7 @@ namespace webpp {
             _cookies = __cookies;
         }
 
-        iterator begin() noexcept { return data.begin(); }
-
-        const_iterator begin() const noexcept { return data.begin(); }
-
-        const_iterator cbegin() const noexcept { return data.cbegin(); }
-
-        iterator end() noexcept { return data.end(); }
-
-        const_iterator end() const noexcept { return data.end(); }
-
-        const_iterator cend() const noexcept { return data.cend(); }
-
-        reverse_iterator rbegin() noexcept { return data.rbegin(); }
-
-        const_reverse_iterator rbegin() const noexcept { return data.rbegin(); }
-
-        reverse_iterator rend() noexcept { return data.rend(); }
-
-        const_reverse_iterator rend() const noexcept { return data.rend(); }
-
-        const_reverse_iterator crbegin() const noexcept {
-            return data.crbegin();
-        }
-
-        const_reverse_iterator crend() const noexcept { return data.crend(); }
     };
-
 
 } // namespace webpp
 

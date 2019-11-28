@@ -94,6 +94,30 @@ namespace webpp {
         return s;
     }
 
+    inline void to_lower(std::string& str) noexcept {
+        std::transform(str.cbegin(), str.cend(), str.begin(),
+                       [](auto const& c) { return std::tolower(c); });
+    }
+
+    inline void to_upper(std::string& str) noexcept {
+        std::transform(str.cbegin(), str.cend(), str.begin(),
+                       [](auto const& c) { return std::tolower(c); });
+    }
+
+    [[nodiscard]] inline std::string
+    to_lower_copy(std::string_view const& str) {
+        std::string s{str};
+        to_lower(s);
+        return s;
+    }
+
+    [[nodiscard]] inline std::string
+    to_upper_copy(std::string_view const& str) {
+        std::string s{str};
+        to_upper(s);
+        return s;
+    }
+
 } // namespace webpp
 
 #endif // STRINGS_H
