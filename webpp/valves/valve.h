@@ -101,8 +101,8 @@ namespace webpp::valves {
         }
 
         template <typename Interface>
-        [[nodiscard]] bool operator()(request_t<Interface> const& req) const
-            noexcept {
+        [[nodiscard]] bool
+        operator()(webpp::request_t<Interface> const& req) const noexcept {
             if constexpr (std::is_void_v<NextValve>) {
                 return ValveType::operator()(req);
             } else {
