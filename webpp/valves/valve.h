@@ -69,7 +69,8 @@ namespace webpp::valves {
                 // this means this function has a "next" valve already,
                 // so it goes to the next's next valve
                 // this way we recursively create a valve type and return it.
-                auto n = basic_valve<NextValve>::next.set_next(v, the_op);
+                auto n = basic_valve<NextValve>::next.set_next(
+                    std::forward<NewValve>(v), the_op);
                 return valve<ValveType, decltype(n)>{n, this->op};
             }
         }
