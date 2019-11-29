@@ -41,10 +41,10 @@ namespace webpp {
     /**
      * @brief This route class contains one single root route and it's children
      */
-    template <typename Interface>
+    template <typename Interface, typename Valve>
     class route {
         using migrator_t = void (*)(request_t<Interface> const&, response&);
-        using condition_t = valves::valve<Interface>;
+        using condition_t = Valve;
         using req_t = request_t<Interface>;
 
         migrator_t migrator;
@@ -127,32 +127,35 @@ namespace webpp {
          */
         response run(request_t<Interface>&& req) {}
 
-        router& on(route const& _route) noexcept {
+        constexpr router& on(route const& _route) noexcept {
             routes.emplace(valves::empty, _route);
             return *this;
         }
 
-        router& on(route&& _route) noexcept {
+        constexpr router& on(route&& _route) noexcept {
             routes.emplace(valves::empty, std::move(_route));
             return *this;
         }
 
-        router& on(valves::valve<Interface> const& v, route const& r) noexcept {
+        constexpr router& on(valves::valve<Interface> const& v,
+                             route const& r) noexcept {
             routes.emplace(v, r);
             return *this;
         }
 
-        router& on(valves::valve<Interface>&& v, route const& r) noexcept {
+        constexpr router& on(valves::valve<Interface>&& v,
+                             route const& r) noexcept {
             routes.emplace(std::move(v), r);
             return *this;
         }
 
-        router& on(valves::valve<Interface> const& v, route&& r) noexcept {
+        constexpr router& on(valves::valve<Interface> const& v,
+                             route&& r) noexcept {
             routes.emplace(v, std::move(r));
             return *this;
         }
 
-        router& on(valves::valve<Interface>&& v, route&& r) noexcept {
+        constexpr router& on(valves::valve<Interface>&& v, route&& r) noexcept {
             routes.emplace(std::move(v), std::move(r));
             return *this;
         }

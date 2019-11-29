@@ -17,16 +17,6 @@ namespace webpp {
      *   - Routing
      */
     class basic_interface {
-      protected:
-        router _router;
-
-        /**
-         * Run a request through chains of routes
-         * @param req
-         */
-        void run_request(request& req) noexcept { _router.run(req); }
-
-      public:
     };
 } // namespace webpp
 
