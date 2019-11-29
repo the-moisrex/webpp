@@ -56,17 +56,20 @@ namespace webpp {
 
         template <typename Callable, typename = std::enable_if_t<
                                          std::is_invocable_v<Callable, req_t>>>
-        constexpr route(Callable c) noexcept
+        constexpr route(Callable&& c) noexcept
             : migrator(+[=](auto& req, auto& res) { c(req); }) {}
 
         template <typename Callable,
                   typename = std::enable_if_t<
                       std::is_invocable_v<Callable, req_t, response>>>
-        constexpr route(Callable c) noexcept
-            : migrator(+[=](auto& req, auto& res) { c(req, response); }) {}
+        constexpr route(Callable&& c) noexcept
+            : migrator(+[=](auto& req, auto& res) { c(req, res); }) {}
 
         constexpr route(condition_t con, migrator_t m)
             : condition(std::move(con)), migrator(std::move(m)) {}
+
+        constexpr route(route const&) noexcept = default;
+        constexpr route(route&&) noexcept = default;
 
         /**
          * Check if the route is active
