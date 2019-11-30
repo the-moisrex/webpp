@@ -25,14 +25,14 @@ namespace webpp {
                   typename = std::enable_if_t<
                       std::is_invocable<T&, Args...>{} &&
                       !std::is_same<std::decay_t<T>, function_ref>{}>>
-        function_ref(T&& x) noexcept : _ptr{(void*)std::addressof(x)} {
+        constexpr function_ref(T&& x) noexcept : _ptr{(void*)std::addressof(x)} {
             _erased_fn = [](void* ptr, Args... xs) -> Return {
                 return (*reinterpret_cast<std::add_pointer_t<T>>(ptr))(
                     std::forward<Args>(xs)...);
             };
         }
 
-        decltype(auto) operator()(Args... xs) const
+        constexpr decltype(auto) operator()(Args... xs) const
             noexcept(noexcept(_erased_fn(_ptr, std::forward<Args>(xs)...))) {
             return _erased_fn(_ptr, std::forward<Args>(xs)...);
         }
@@ -43,7 +43,8 @@ namespace webpp {
      */
     template <typename Interface, typename Valve>
     class route {
-        using migrator_t = void (*)(request_t<Interface> const&, response&);
+        using signature = void(request_t<Interface> const&, response&);
+        using migrator_t = function_ref<signature>;
         using condition_t = Valve;
         using req_t = request_t<Interface>;
 
@@ -54,16 +55,23 @@ namespace webpp {
       public:
         constexpr route(migrator_t m) : migrator(std::move(m)) {}
 
-        template <typename Callable, typename = std::enable_if_t<
-                                         std::is_invocable_v<Callable, req_t>>>
-        constexpr route(Callable&& c) noexcept
-            : migrator(+[=](auto& req, auto& res) { c(req); }) {}
+        /**
+         * This can be used to just have a side-effect. This cannot throw an
+         * exception.
+         * @tparam Callable void(request)
+         * @param c
+         */
+        constexpr route(function_ref<void(request_t<Interface> const&)> c) noexcept
+            : migrator([=](auto& req, auto& res) { c(req); }) {}
 
-        template <typename Callable,
-                  typename = std::enable_if_t<
-                      std::is_invocable_v<Callable, req_t, response>>>
-        constexpr route(Callable&& c) noexcept
-            : migrator(+[=](auto& req, auto& res) { c(req, res); }) {}
+        /**
+         * This will have a response. This cannot throw an
+         * exception
+         * @tparam Callable void(response)
+         * @param c
+         */
+        constexpr route(function_ref<void(response)> const& c) noexcept
+            : migrator([=](auto& req, auto& res) { c(res); }) {}
 
         constexpr route(condition_t con, migrator_t m)
             : condition(std::move(con)), migrator(std::move(m)) {}
