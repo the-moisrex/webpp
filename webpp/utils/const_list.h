@@ -3,26 +3,83 @@
 
 // Created by moisrex on 11/28/19.
 #include <type_traits>
+#include <typeinfo>
 #include <utility>
 
 namespace webpp {
-    template <typename T>
-    class const_list_iterator {
-        T* ptr = nullptr;
-        std::size_t index = 0;
 
-      public:
-        constexpr auto operator++() const noexcept { return ptr->next[index]; }
+    template <template <typename, typename> class LT, typename LType,
+              typename LNextType>
+    struct const_list_iterator {
+        using type = LT<LType, LNextType>;
+
+        void const* ptr;
+
+        constexpr const_list_iterator(type const* const ptr = nullptr) noexcept
+            : ptr(ptr) {}
+
+        constexpr auto const* pointer() const noexcept {
+            return static_cast<type const*>(ptr);
+        }
+
+        constexpr auto& operator++() noexcept {
+            ptr = ptr && !std::is_void_v<pointer()>
+                      ? std::addressof(pointer()->next())
+                      : nullptr;
+            return *this;
+        }
+
+        template <template <typename, typename> class NT, typename NType,
+                  typename NNextType>
+        constexpr bool
+        operator==(const_list_iterator<NT, NType, NNextType> const& iter) const
+            noexcept {
+            if (pointer() == nullptr && iter.pointer() == nullptr)
+                return true;
+            if constexpr (std::is_convertible_v<LT<LType, LNextType>,
+                                                NT<NType, NNextType>>) {
+                return *pointer() == *iter.pointer();
+            } else {
+                return false;
+            }
+        }
+
+        template <template <typename, typename> class NT, typename NType,
+                  typename NNextType>
+        constexpr bool
+        operator!=(const_list_iterator<NT, NType, NNextType> const& iter) const
+            noexcept {
+            return !operator==<NT, NType, NNextType>(iter.pointer());
+        }
+
+        constexpr LType operator*() const noexcept {
+            if constexpr (!std::is_void_v<LType>) {
+                if (ptr) {
+                    return pointer()->value();
+                }
+            }
+            return LType{};
+        }
+
+        constexpr auto operator-> () const noexcept
+            -> decltype(&pointer()->value()) {
+            if constexpr (!std::is_void_v<LType>) {
+                if (ptr) {
+                    return &pointer()->value();
+                }
+            }
+            return nullptr;
+        }
     };
 
     template <typename ValueType>
     struct const_list_value {
         using type = std::decay_t<ValueType>;
 
-        type value;
+        type _value;
 
         constexpr explicit const_list_value(type value) noexcept
-            : value(std::move(value)) {}
+            : _value(std::move(value)) {}
     };
 
     template <>
@@ -34,10 +91,10 @@ namespace webpp {
     struct const_list_next_value {
         using type = std::decay_t<ValueType>;
 
-        type next;
+        type _next;
 
         constexpr explicit const_list_next_value(type next) noexcept
-            : next(std::move(next)) {}
+            : _next(std::move(next)) {}
     };
 
     template <>
@@ -56,7 +113,7 @@ namespace webpp {
         using next_type = NextType;
         using value_t = const_list_value<Type>;
         using next_value_t = const_list_next_value<NextType>;
-        using iterator = const_list_iterator<const_list<Type, NextType>>;
+        using iterator = const_list_iterator<const_list, Type, NextType>;
         using const_iterator = iterator;
 
         constexpr explicit const_list() noexcept = default;
@@ -70,18 +127,28 @@ namespace webpp {
             : value_t(std::move(value)), next_value_t(std::move(next)) {}
 
         constexpr const_list(const_list const& v) noexcept = default;
+
         constexpr const_list(const_list&& v) noexcept = default;
 
         constexpr const_list& operator=(const_list const& v) noexcept = default;
+
         const_list& operator=(type const& _value) noexcept {
-            value_t::value = _value;
+            value_t::_value = _value;
             return *this;
         }
+
         const_list& operator=(type&& _value) noexcept {
-            value_t::value = _value;
+            value_t::_value = _value;
             return *this;
         }
+
         constexpr const_list& operator=(const_list&&) noexcept = default;
+
+        constexpr auto const& next() const noexcept {
+            return next_value_t::_next;
+        }
+
+        constexpr auto const& value() const noexcept { return value_t::_value; }
 
         template <typename NewValueType>
         [[nodiscard]] constexpr auto append(NewValueType&& v) const noexcept {
@@ -93,15 +160,14 @@ namespace webpp {
                 // void
 
                 // the first way (A<X, void> and B<Y, void> === A<X, B<Y, void>>
-                return const_list<Type, lnt>{value_t::value,
-                                             lnt{std::forward<nt>(v)}};
+                return const_list<Type, lnt>{value(), lnt{std::forward<nt>(v)}};
             } else {
                 // this means this function has a "next" const_list already,
                 // so it goes to the next's next const_list
                 // this way we recursively create a const_list type and return
                 // it.
-                auto n = next_value_t::next.append(std::forward<nt>(v));
-                return const_list<Type, decltype(n)>{value_t::value, n};
+                auto n = next().append(std::forward<nt>(v));
+                return const_list<Type, decltype(n)>{value(), n};
             }
         }
 
@@ -118,17 +184,81 @@ namespace webpp {
         template <std::size_t I>
         [[nodiscard]] constexpr auto& at() const noexcept {
             if constexpr (I != 0 && !std::is_void_v<next_type>)
-                return next_value_t::next.template at<I - 1>();
+                return next().template at<I - 1>();
             else
                 return *this;
         }
 
         template <typename NewValueType>
-        [[nodiscard]] constexpr auto operator()(NewValueType&& v) const
+        [[nodiscard]] constexpr auto operator+(NewValueType&& v) const
             noexcept {
             return append(std::forward<NewValueType>(v));
         }
+
+        [[nodiscard]] constexpr auto begin() const noexcept {
+            return iterator(this);
+        }
+
+        [[nodiscard]] constexpr auto end() const noexcept {
+            return iterator(nullptr);
+        }
+
+        [[nodiscard]] constexpr auto cbegin() const noexcept {
+            return const_iterator(this);
+        }
+
+        [[nodiscard]] constexpr auto cend() const noexcept {
+            return const_iterator(nullptr);
+        }
+
+        [[nodiscard]] constexpr std::size_t size() const noexcept {
+            if constexpr (std::is_void_v<Type>) {
+                return 0;
+            } else if constexpr (std::is_void_v<NextType>) {
+                return 1;
+            } else if constexpr (std::is_base_of_v<const_list, NextType>) {
+                return 1 + next().size();
+            } else {
+                return 2;
+            }
+        }
+
+        template <typename Callable>
+        constexpr void for_each(Callable const& callable) const noexcept {
+            if constexpr (!std::is_void_v<type>) {
+                callable(value());
+            }
+            if constexpr (!std::is_void_v<next_type>) {
+                next().for_each(callable);
+            }
+        }
+
+        template <typename NType, typename NNextType>
+        constexpr bool operator==(const_list<NType, NNextType> const& l) const
+            noexcept {
+            if constexpr (!std::is_same_v<type, NType>) {
+                return value() == l.value();
+            } else {
+                return false;
+            }
+        }
+
+        template <typename NType, typename NNextType>
+        constexpr bool operator!=(const_list<NType, NNextType> const& l) const
+            noexcept {
+            return !operator==<NType, NNextType>(l);
+        }
     };
 
-} // namespace webpp
+    template <typename Type, typename NextType>
+    constexpr auto begin(const_list<Type, NextType> const& l) noexcept {
+        return l.begin();
+    }
+
+    template <typename First, typename... Args>
+    constexpr auto make_const_list(First&& first, Args&&... args) noexcept {
+        return (const_list(std::forward<First>(first)) + ... +
+                std::forward<Args>(args));
+
+    }  // namespace webpp
 #endif // WEBPP_CONST_LIST_H
