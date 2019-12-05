@@ -127,7 +127,7 @@ namespace webpp {
      * @param Interface
      */
     template <typename Interface>
-    class router {
+    class router_t {
         std::vector<route<Interface>> routes;
 
       public:
@@ -138,35 +138,36 @@ namespace webpp {
          */
         response run(request_t<Interface>&& req) {}
 
-        constexpr router& on(route const& _route) noexcept {
+        constexpr router_t& on(route const& _route) noexcept {
             routes.emplace(valves::empty, _route);
             return *this;
         }
 
-        constexpr router& on(route&& _route) noexcept {
+        constexpr router_t& on(route&& _route) noexcept {
             routes.emplace(valves::empty, std::move(_route));
             return *this;
         }
 
-        constexpr router& on(valves::valve<Interface> const& v,
-                             route const& r) noexcept {
+        constexpr router_t& on(valves::valve<Interface> const& v,
+                               route const& r) noexcept {
             routes.emplace(v, r);
             return *this;
         }
 
-        constexpr router& on(valves::valve<Interface>&& v,
-                             route const& r) noexcept {
+        constexpr router_t& on(valves::valve<Interface>&& v,
+                               route const& r) noexcept {
             routes.emplace(std::move(v), r);
             return *this;
         }
 
-        constexpr router& on(valves::valve<Interface> const& v,
-                             route&& r) noexcept {
+        constexpr router_t& on(valves::valve<Interface> const& v,
+                               route&& r) noexcept {
             routes.emplace(v, std::move(r));
             return *this;
         }
 
-        constexpr router& on(valves::valve<Interface>&& v, route&& r) noexcept {
+        constexpr router_t& on(valves::valve<Interface>&& v,
+                               route&& r) noexcept {
             routes.emplace(std::move(v), std::move(r));
             return *this;
         }
