@@ -68,7 +68,7 @@ std::string_view cgi::header(std::string name) noexcept {
     return env(name.c_str());
 }
 
-// void cgi::run(router<cgi>& _router) noexcept {
+// void cgi::run(router_t<cgi>& _router) noexcept {
 //    auto self = std::make_shared<cgi>(this);
 //    webpp::request<webpp::cgi> req(self);
 //    auto res = _router.run(req);

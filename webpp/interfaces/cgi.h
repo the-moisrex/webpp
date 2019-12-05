@@ -9,7 +9,7 @@ namespace webpp {
 
     struct cgi : public basic_interface {
       protected:
-        router<cgi> _router;
+        router_t<cgi> _router;
 
       public:
         cgi() noexcept;
