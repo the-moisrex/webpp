@@ -8,69 +8,72 @@
 
 namespace webpp {
 
-    template <template <typename, typename> class LT, typename LType,
-              typename LNextType>
-    struct const_list_iterator {
-        using type = LT<LType, LNextType>;
-
-        void const* ptr;
-
-        constexpr const_list_iterator(type const* const ptr = nullptr) noexcept
-            : ptr(ptr) {}
-
-        constexpr auto const* pointer() const noexcept {
-            return static_cast<type const*>(ptr);
-        }
-
-        constexpr auto& operator++() noexcept {
-            ptr = ptr && !std::is_void_v<pointer()>
-                      ? std::addressof(pointer()->next())
-                      : nullptr;
-            return *this;
-        }
-
-        template <template <typename, typename> class NT, typename NType,
-                  typename NNextType>
-        constexpr bool
-        operator==(const_list_iterator<NT, NType, NNextType> const& iter) const
-            noexcept {
-            if (pointer() == nullptr && iter.pointer() == nullptr)
-                return true;
-            if constexpr (std::is_convertible_v<LT<LType, LNextType>,
-                                                NT<NType, NNextType>>) {
-                return *pointer() == *iter.pointer();
-            } else {
-                return false;
-            }
-        }
-
-        template <template <typename, typename> class NT, typename NType,
-                  typename NNextType>
-        constexpr bool
-        operator!=(const_list_iterator<NT, NType, NNextType> const& iter) const
-            noexcept {
-            return !operator==<NT, NType, NNextType>(iter.pointer());
-        }
-
-        constexpr LType operator*() const noexcept {
-            if constexpr (!std::is_void_v<LType>) {
-                if (ptr) {
-                    return pointer()->value();
-                }
-            }
-            return LType{};
-        }
-
-        constexpr auto operator-> () const noexcept
-            -> decltype(&pointer()->value()) {
-            if constexpr (!std::is_void_v<LType>) {
-                if (ptr) {
-                    return &pointer()->value();
-                }
-            }
-            return nullptr;
-        }
-    };
+    //    template <template <typename, typename> class LT, typename LType,
+    //              typename LNextType>
+    //    struct const_list_iterator {
+    //        using type = LT<LType, LNextType>;
+    //
+    //        void const* ptr;
+    //
+    //        constexpr const_list_iterator(type const* const ptr = nullptr)
+    //        noexcept
+    //            : ptr(ptr) {}
+    //
+    //        constexpr auto const* pointer() const noexcept {
+    //            return static_cast<type const*>(ptr);
+    //        }
+    //
+    //        constexpr auto& operator++() noexcept {
+    //            ptr = ptr && !std::is_void_v<pointer()>
+    //                      ? std::addressof(pointer()->next())
+    //                      : nullptr;
+    //            return *this;
+    //        }
+    //
+    //        template <template <typename, typename> class NT, typename NType,
+    //                  typename NNextType>
+    //        constexpr bool
+    //        operator==(const_list_iterator<NT, NType, NNextType> const& iter)
+    //        const
+    //            noexcept {
+    //            if (pointer() == nullptr && iter.pointer() == nullptr)
+    //                return true;
+    //            if constexpr (std::is_convertible_v<LT<LType, LNextType>,
+    //                                                NT<NType, NNextType>>) {
+    //                return *pointer() == *iter.pointer();
+    //            } else {
+    //                return false;
+    //            }
+    //        }
+    //
+    //        template <template <typename, typename> class NT, typename NType,
+    //                  typename NNextType>
+    //        constexpr bool
+    //        operator!=(const_list_iterator<NT, NType, NNextType> const& iter)
+    //        const
+    //            noexcept {
+    //            return !operator==<NT, NType, NNextType>(iter.pointer());
+    //        }
+    //
+    //        constexpr LType operator*() const noexcept {
+    //            if constexpr (!std::is_void_v<LType>) {
+    //                if (ptr) {
+    //                    return pointer()->value();
+    //                }
+    //            }
+    //            return LType{};
+    //        }
+    //
+    //        constexpr auto operator-> () const noexcept
+    //            -> decltype(&pointer()->value()) {
+    //            if constexpr (!std::is_void_v<LType>) {
+    //                if (ptr) {
+    //                    return &pointer()->value();
+    //                }
+    //            }
+    //            return nullptr;
+    //        }
+    //    };
 
     template <typename ValueType>
     struct const_list_value {
@@ -113,8 +116,8 @@ namespace webpp {
         using next_type = NextType;
         using value_t = const_list_value<Type>;
         using next_value_t = const_list_next_value<NextType>;
-        using iterator = const_list_iterator<const_list, Type, NextType>;
-        using const_iterator = iterator;
+        //        using iterator = const_list_iterator<const_list, Type,
+        //        NextType>; using const_iterator = iterator;
 
         constexpr explicit const_list() noexcept = default;
 
@@ -195,21 +198,21 @@ namespace webpp {
             return append(std::forward<NewValueType>(v));
         }
 
-        [[nodiscard]] constexpr auto begin() const noexcept {
-            return iterator(this);
-        }
-
-        [[nodiscard]] constexpr auto end() const noexcept {
-            return iterator(nullptr);
-        }
-
-        [[nodiscard]] constexpr auto cbegin() const noexcept {
-            return const_iterator(this);
-        }
-
-        [[nodiscard]] constexpr auto cend() const noexcept {
-            return const_iterator(nullptr);
-        }
+        //        [[nodiscard]] constexpr auto begin() const noexcept {
+        //            return iterator(this);
+        //        }
+        //
+        //        [[nodiscard]] constexpr auto end() const noexcept {
+        //            return iterator(nullptr);
+        //        }
+        //
+        //        [[nodiscard]] constexpr auto cbegin() const noexcept {
+        //            return const_iterator(this);
+        //        }
+        //
+        //        [[nodiscard]] constexpr auto cend() const noexcept {
+        //            return const_iterator(nullptr);
+        //        }
 
         [[nodiscard]] constexpr std::size_t size() const noexcept {
             if constexpr (std::is_void_v<Type>) {
@@ -223,6 +226,11 @@ namespace webpp {
             }
         }
 
+        /**
+         * Do something for each element in the list
+         * @tparam Callable
+         * @param callable
+         */
         template <typename Callable>
         constexpr void for_each(Callable const& callable) const noexcept {
             if constexpr (!std::is_void_v<type>) {
@@ -233,11 +241,75 @@ namespace webpp {
             }
         }
 
+        /**
+         * Do something once
+         * @tparam Callable
+         * @param callable
+         *
+         * TODO: use concepts to check
+         */
+        template <typename Callable>
+        constexpr void do_once(Callable const& callable) const noexcept {
+            if constexpr (!std::is_void_v<type>) {
+                if (callable(value()))
+                    return; // don't check the next ones
+            }
+            if constexpr (!std::is_void_v<next_type>) {
+                next().do_once(callable);
+            }
+        }
+
+        /**
+         * Get a single value out of the whole thing
+         * @tparam Callable
+         * @tparam RetType
+         * @param callable
+         * @param first_element
+         * @return
+         */
+        template <typename Callable, typename RetType>
+        constexpr RetType reduce(Callable const& callable,
+                                 RetType const& first_element) const noexcept {
+            auto v = first_element;
+            if constexpr (!std::is_void_v<type>) {
+                v = callable(v, value());
+            }
+            if constexpr (!std::is_void_v<next_type>) {
+                v = next().reduce(callable, v);
+            }
+            return v;
+        }
+
+        /**
+         * Checks if the list contains an specific value
+         * @tparam T
+         * @param value
+         * @return bool an indication on whether or not the value is in the list
+         * or not
+         */
+        template <typename T>
+        constexpr bool has(T const& _value) const noexcept {
+            if constexpr (!std::is_void_v<type>) {
+                return value() == _value;
+            }
+            if constexpr (!std::is_void_v<next_type>) {
+                if (value() == _value)
+                    return true;
+                return next().has(_value);
+            }
+        }
+
         template <typename NType, typename NNextType>
         constexpr bool operator==(const_list<NType, NNextType> const& l) const
             noexcept {
             if constexpr (!std::is_same_v<type, NType>) {
-                return value() == l.value();
+                if (value() != l.value())
+                    return false;
+                if constexpr (!std::is_void_v<next_type>) {
+                    return next().operator==(l);
+                } else {
+                    return true;
+                }
             } else {
                 return false;
             }
@@ -250,10 +322,10 @@ namespace webpp {
         }
     };
 
-    template <typename Type, typename NextType>
-    constexpr auto begin(const_list<Type, NextType> const& l) noexcept {
-        return l.begin();
-    }
+    //    template <typename Type, typename NextType>
+    //    constexpr auto begin(const_list<Type, NextType> const& l) noexcept {
+    //        return l.begin();
+    //    }
 
     template <typename First, typename... Args>
     constexpr auto make_const_list(First&& first, Args&&... args) noexcept {

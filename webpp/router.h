@@ -126,9 +126,11 @@ namespace webpp {
      *
      * @param Interface
      */
-    template <typename Interface>
+    template <typename Interface, typename... Routes>
     class router_t {
-        std::vector<route<Interface>> routes;
+
+        // this is the main route which includes other routes:
+        route<Interface, Routes...> main_route;
 
       public:
         /**
