@@ -3,7 +3,6 @@
 #ifndef WEBPP_VALVE_H
 #define WEBPP_VALVE_H
 
-#include "../http/request.h"
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -100,9 +99,8 @@ namespace webpp::valves {
             return set_next(std::forward<NewValve>(v), logical_operators::XOR);
         }
 
-        template <typename Interface>
-        [[nodiscard]] bool
-        operator()(webpp::request_t<Interface> const& req) const noexcept {
+        template <typename RequestType>
+        [[nodiscard]] bool operator()(RequestType const& req) const noexcept {
             if constexpr (std::is_void_v<NextValve>) {
                 return ValveType::operator()(req);
             } else {
@@ -132,9 +130,8 @@ namespace webpp::valves {
             : method_string(str) {}
         constexpr method_condition() noexcept = default;
 
-        template <typename Interface>
-        [[nodiscard]] bool operator()(request_t<Interface> const& req) const
-            noexcept {
+        template <typename RequestType>
+        [[nodiscard]] bool operator()(RequestType const& req) const noexcept {
             return req.request_method() == method_string;
         }
     };
@@ -144,9 +141,9 @@ namespace webpp::valves {
     };
 
     struct empty_condition {
-        template <typename Interface>
+        template <typename RequestType>
         [[nodiscard]] constexpr bool
-        operator()(request_t<Interface> const& /* req */) const noexcept {
+        operator()(RequestType const& /* req */) const noexcept {
             return true;
         }
     };
