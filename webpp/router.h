@@ -29,8 +29,6 @@ namespace webpp {
         bool active = true;
 
       public:
-        constexpr explicit route(Callable c) noexcept
-            : migrator(std::move(c)) {}
 
         /**
          * This overload is used for migrations that have only side-effects.
@@ -103,6 +101,17 @@ namespace webpp {
                       handle_exception(req);
                   }
               }) {}
+
+        /**
+         * This overload is used for when the callable accept both request and
+         * response as the input and also the callable is marked as noexcept.
+         * @tparam C
+         * @param c
+         */
+        template <typename C,
+                  std::enable_if_t<std::is_nothrow_invocable_v<C, req_t, res_t>,
+                                   int> = 0>
+        constexpr explicit route(C c) noexcept : migrator(std::move(c)) {}
 
         constexpr route(route const&) noexcept = default;
         constexpr route(route&&) noexcept = default;
