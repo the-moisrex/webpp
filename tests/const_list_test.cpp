@@ -1,5 +1,6 @@
 // Created by moisrex on 11/29/19.
 #include <gtest/gtest.h>
+#include <string>
 #include <webpp/utils/const_list.h>
 
 using namespace webpp;
@@ -14,4 +15,13 @@ TEST(ConstListTest, ConstList) {
     one.for_each([&](auto const& value) constexpr {
         EXPECT_TRUE(one.has(value));
     });
+
+    auto str_one = one.reduce(
+        [](string const& data, auto const& value) constexpr {
+            data.append(string((data.empty() ? "" : " ")) + to_string(value));
+            return data;
+        },
+        string(""));
+
+    EXPECT_EQ(str_one, "one two 3");
 }
