@@ -331,6 +331,6 @@ namespace webpp {
     constexpr auto make_const_list(First&& first, Args&&... args) noexcept {
         return (const_list(std::forward<First>(first)) + ... +
                 std::forward<Args>(args));
-
-    }  // namespace webpp
+    }
+} // namespace webpp
 #endif // WEBPP_CONST_LIST_H
