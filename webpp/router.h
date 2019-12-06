@@ -126,11 +126,12 @@ namespace webpp {
      *
      * @param Interface
      */
-    template <typename Interface, typename... Routes>
+    template <typename Interface, typename Routes>
     class router_t {
 
         // this is the main route which includes other routes:
-        route<Interface, Routes...> main_route;
+        // This is a "const_list":
+        Routes routes;
 
       public:
         /**
@@ -140,38 +141,31 @@ namespace webpp {
          */
         response run(request_t<Interface>&& req) {}
 
-        constexpr router_t& on(route const& _route) noexcept {
-            routes.emplace(valves::empty, _route);
-            return *this;
+        constexpr auto on(route const& _route) noexcept {
+            return routes + route(valves::empty, _route);
         }
 
-        constexpr router_t& on(route&& _route) noexcept {
-            routes.emplace(valves::empty, std::move(_route));
-            return *this;
+        constexpr auto on(route&& _route) noexcept {
+            return routes + route(valves::empty, std::move(_route));
         }
 
-        constexpr router_t& on(valves::valve<Interface> const& v,
-                               route const& r) noexcept {
-            routes.emplace(v, r);
-            return *this;
+        constexpr auto on(valves::valve<Interface> const& v,
+                          route const& r) noexcept {
+            return routes + route(v, r);
         }
 
-        constexpr router_t& on(valves::valve<Interface>&& v,
-                               route const& r) noexcept {
-            routes.emplace(std::move(v), r);
-            return *this;
+        constexpr auto on(valves::valve<Interface>&& v,
+                          route const& r) noexcept {
+            return routes + route(std::move(v), r);
         }
 
-        constexpr router_t& on(valves::valve<Interface> const& v,
-                               route&& r) noexcept {
-            routes.emplace(v, std::move(r));
-            return *this;
+        constexpr auto on(valves::valve<Interface> const& v,
+                          route&& r) noexcept {
+            return routes + route(v, std::move(r));
         }
 
-        constexpr router_t& on(valves::valve<Interface>&& v,
-                               route&& r) noexcept {
-            routes.emplace(std::move(v), std::move(r));
-            return *this;
+        constexpr auto on(valves::valve<Interface>&& v, route&& r) noexcept {
+            return routes + route(std::move(v), std::move(r));
         }
     };
 
