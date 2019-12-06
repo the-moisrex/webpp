@@ -1,7 +1,6 @@
 #ifndef WEBPP_ROUTER_H
 #define WEBPP_ROUTER_H
 
-#include "http/request.h"
 #include "http/response.h"
 #include "valves/valve.h"
 #include <type_traits>
@@ -9,17 +8,14 @@
 
 namespace webpp {
 
-
-
     /**
      * @brief This route class contains one single root route and it's children
      */
-    template <typename Interface, typename Valve>
+    template <typename RequestType, typename Valve, typename Callable>
     class route {
-        using signature = void(request_t<Interface> const&, response&);
-        using migrator_t = function_ref<signature>;
+        using signature = void(RequestType const&, response&);
+        using migrator_t = Callable;
         using condition_t = Valve;
-        using req_t = request_t<Interface>;
 
         migrator_t migrator;
         condition_t condition = valves::empty;
@@ -34,8 +30,7 @@ namespace webpp {
          * @tparam Callable void(request)
          * @param c
          */
-        constexpr route(
-            function_ref<void(request_t<Interface> const&)> c) noexcept
+        constexpr route(function_ref<void(RequestType const&)> c) noexcept
             : migrator([=](auto& req, auto& res) { c(req); }) {}
 
         /**
@@ -78,9 +73,9 @@ namespace webpp {
          * Run the migration
          * @return the response
          */
-        [[nodiscard]] inline response
-        operator()(request_t<Interface>&) noexcept {
-            return migrator();
+        [[nodiscard]] inline void operator()(RequestType& req,
+                                             response& res) noexcept {
+            return migrator(req, res);
         }
 
         /**
