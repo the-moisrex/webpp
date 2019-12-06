@@ -25,7 +25,8 @@ namespace webpp {
                   typename = std::enable_if_t<
                       std::is_invocable<T&, Args...>{} &&
                       !std::is_same<std::decay_t<T>, function_ref>{}>>
-        constexpr function_ref(T&& x) noexcept : _ptr{(void*)std::addressof(x)} {
+        constexpr function_ref(T&& x) noexcept
+            : _ptr{(void*)std::addressof(x)} {
             _erased_fn = [](void* ptr, Args... xs) -> Return {
                 return (*reinterpret_cast<std::add_pointer_t<T>>(ptr))(
                     std::forward<Args>(xs)...);
@@ -61,7 +62,8 @@ namespace webpp {
          * @tparam Callable void(request)
          * @param c
          */
-        constexpr route(function_ref<void(request_t<Interface> const&)> c) noexcept
+        constexpr route(
+            function_ref<void(request_t<Interface> const&)> c) noexcept
             : migrator([=](auto& req, auto& res) { c(req); }) {}
 
         /**
@@ -139,32 +141,40 @@ namespace webpp {
          * @param req
          * @return final response
          */
-        response run(request_t<Interface>&& req) {}
+        template <typename RequestType>
+        response run(RequestType& req) noexcept {
+            // FIXME: make sure it's as performant as possible.
+            response res;
+            routes.for_each(
+                [&](auto const& _route) noexcept { _route.call(req, res); });
+            return res;
+        }
 
-        constexpr auto on(route const& _route) noexcept {
+        constexpr auto on(route const& _route) const noexcept {
             return routes + route(valves::empty, _route);
         }
 
-        constexpr auto on(route&& _route) noexcept {
+        constexpr auto on(route&& _route) const noexcept {
             return routes + route(valves::empty, std::move(_route));
         }
 
         constexpr auto on(valves::valve<Interface> const& v,
-                          route const& r) noexcept {
+                          route const& r) const noexcept {
             return routes + route(v, r);
         }
 
-        constexpr auto on(valves::valve<Interface>&& v,
-                          route const& r) noexcept {
+        constexpr auto on(valves::valve<Interface>&& v, route const& r) const
+            noexcept {
             return routes + route(std::move(v), r);
         }
 
-        constexpr auto on(valves::valve<Interface> const& v,
-                          route&& r) noexcept {
+        constexpr auto on(valves::valve<Interface> const& v, route&& r) const
+            noexcept {
             return routes + route(v, std::move(r));
         }
 
-        constexpr auto on(valves::valve<Interface>&& v, route&& r) noexcept {
+        constexpr auto on(valves::valve<Interface>&& v, route&& r) const
+            noexcept {
             return routes + route(std::move(v), std::move(r));
         }
     };
