@@ -84,10 +84,25 @@ namespace webpp {
                   }
               }) {}
 
+        /**
+         * This overload is used for when the callable accepts both request and
+         * response and also might throw an exception.
+         * @tparam C
+         * @param c
+         */
         template <
             typename C,
-            std::enable_if_t<std::is_invocable_v<C, req_t, res_t>, int> = 0>
-        constexpr explicit route(C c) noexcept : migrator(std::move(c)) {}
+            std::enable_if_t<std::is_invocable_v<C, req_t, res_t> &&
+                                 !std::is_nothrow_invocable_v<C, req_t, res_t>,
+                             int> = 0>
+        constexpr explicit route(C const& c) noexcept
+            : migrator([=](auto& req, auto& res) noexcept {
+                  try {
+                      c(req, res);
+                  } catch (...) {
+                      handle_exception(req);
+                  }
+              }) {}
 
         constexpr route(route const&) noexcept = default;
         constexpr route(route&&) noexcept = default;
