@@ -15,7 +15,7 @@ namespace webpp {
      * @brief This route class contains one single root route and it's children
      */
     template <typename RequestType, typename ResponseType, typename Valve,
-              typename Callable,
+              typename Callable = void(RequestType const&, ResponseType&),
               typename = std::enable_if_t<
                   !std::is_convertible_v<RequestType, ResponseType>>>
     class route {
@@ -29,6 +29,9 @@ namespace webpp {
         bool active = true;
 
       public:
+        constexpr explicit route(Callable c) noexcept
+            : migrator(std::move(c)) {}
+
         /**
          * This overload is used for migrations that have only side-effects.
          * The callable can throw exception and they will be handled properly.
