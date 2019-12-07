@@ -541,8 +541,9 @@ namespace webpp {
             } else if (is::digit(str[0]) && is::ipv4(str)) { // ipv4
                 return true;
             } else {
-                return charset(REG_NAME_NOT_PCT_ENCODED, charset('%'))
-                    .contains(str);
+                constexpr auto ccc =
+                    charset(REG_NAME_NOT_PCT_ENCODED, charset('%'));
+                return ccc.contains(str);
             }
 
             return false;
