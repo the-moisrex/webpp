@@ -29,7 +29,6 @@ namespace webpp {
         bool active = true;
 
       public:
-
         /**
          * This overload is used for migrations that have only side-effects.
          * The callable can throw exception and they will be handled properly.
@@ -103,7 +102,7 @@ namespace webpp {
               }) {}
 
         /**
-         * This overload is used for when the callable accept both request and
+         * This overload is used for when the callable accepts both request and
          * response as the input and also the callable is marked as noexcept.
          * @tparam C
          * @param c
@@ -112,6 +111,95 @@ namespace webpp {
                   std::enable_if_t<std::is_nothrow_invocable_v<C, req_t, res_t>,
                                    int> = 0>
         constexpr explicit route(C c) noexcept : migrator(std::move(c)) {}
+        /**
+         * This overload is used for migrations that have only side-effects.
+         * The callable can throw exception and they will be handled properly.
+         * @tparam Callable
+         * @param c
+         */
+        template <typename C,
+                  std::enable_if_t<std::is_invocable_v<C, req_t> &&
+                                       !std::is_nothrow_invocable_v<C, req_t>,
+                                   int> = 0>
+        constexpr explicit route(condition_t con, C const& c) noexcept
+            : condition(std::move(con)),
+              migrator([=](auto& req, auto&) noexcept {
+                  try {
+                      c(req);
+                  } catch (...) {
+                      handle_exception(req);
+                  }
+              }) {}
+
+        /**
+         * This overload is used for migrations that have only side-effects.
+         * This overload will only be used if the callable is marked as noexcept
+         * @tparam Callable
+         * @param c
+         */
+        template <typename C,
+                  std::enable_if_t<
+                      std::is_nothrow_invocable_r_v<void, C, req_t>, int> = 0>
+        constexpr explicit route(condition_t con, C const& c) noexcept
+            : condition(std::move(con)),
+              migrator([=](auto& req, auto&) noexcept { c(req); }) {}
+
+        /**
+         * This overload is used for migrations that don't need the request in
+         * order to produce the response.
+         * This overload will handle those callables that are not marked
+         * noexcept too.
+         * @tparam Callable
+         * @param c
+         */
+        template <typename C,
+                  std::enable_if_t<std::is_invocable_v<C, res_t> &&
+                                       !std::is_nothrow_invocable_v<C, res_t>,
+                                   int> = 0>
+        constexpr explicit route(condition_t con, C const& c) noexcept
+            : condition(std::move(con)),
+              migrator([=](auto& req, auto& res) noexcept {
+                  try {
+                      c(res);
+                  } catch (...) {
+                      handle_exception(req);
+                  }
+              }) {}
+
+        /**
+         * This overload is used for when the callable accepts both request and
+         * response and also might throw an exception.
+         * @tparam C
+         * @param con
+         * @param c
+         */
+        template <
+            typename C,
+            std::enable_if_t<std::is_invocable_v<C, req_t, res_t> &&
+                                 !std::is_nothrow_invocable_v<C, req_t, res_t>,
+                             int> = 0>
+        constexpr explicit route(condition_t con, C const& c) noexcept
+            : condition(std::move(con)),
+              migrator([=](auto& req, auto& res) noexcept {
+                  try {
+                      c(req, res);
+                  } catch (...) {
+                      handle_exception(req);
+                  }
+              }) {}
+
+        /**
+         * This overload is used for when the callable accepts both request and
+         * response as the input and also the callable is marked noexcept.
+         * @tparam C
+         * @param con
+         * @param c
+         */
+        template <typename C,
+                  std::enable_if_t<std::is_nothrow_invocable_v<C, req_t, res_t>,
+                                   int> = 0>
+        constexpr explicit route(condition_t con, C c) noexcept
+            : condition(std::move(con)), migrator(std::move(c)) {}
 
         constexpr route(route const&) noexcept = default;
         constexpr route(route&&) noexcept = default;
