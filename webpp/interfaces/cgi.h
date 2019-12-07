@@ -8,9 +8,6 @@
 namespace webpp {
 
     struct cgi : public basic_interface {
-      protected:
-        router<cgi> _router;
-
       public:
         cgi() noexcept;
 
@@ -61,7 +58,6 @@ namespace webpp {
          */
         [[nodiscard]] static std::string_view body() noexcept;
 
-        void run() noexcept;
     };
 
     /**
