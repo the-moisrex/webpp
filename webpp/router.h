@@ -1,6 +1,8 @@
 #ifndef WEBPP_ROUTER_H
 #define WEBPP_ROUTER_H
 
+#include "http/request.h"
+#include "http/response.h"
 #include "valves/valve.h"
 #include <type_traits>
 #include <vector>
@@ -262,10 +264,10 @@ namespace webpp {
          * @param req
          * @return final response
          */
-        template <typename RequestType>
-        response run(RequestType& req) noexcept {
+        template <typename RequestType, typename ResponseType = response>
+        ResponseType run(RequestType& req) noexcept {
             // FIXME: make sure it's as performant as possible.
-            response res;
+            ResponseType res;
             routes.for_each(
                 [&](auto const& _route) noexcept { _route.call(req, res); });
             return res;
