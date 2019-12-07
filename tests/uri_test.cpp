@@ -13,7 +13,7 @@ TEST(URITests, Creation) {
     EXPECT_TRUE(u.has_host());
     EXPECT_EQ(u.str(), "http://example.com/");
     EXPECT_EQ(u.host(), "example.com");
-    EXPECT_TRUE(is::host(u.str()));
+    EXPECT_TRUE(is::host(u.host()));
     EXPECT_TRUE(u.has_authority());
     EXPECT_TRUE(u.has_path()) << "the path is '/'";
     EXPECT_FALSE(u.has_port());
