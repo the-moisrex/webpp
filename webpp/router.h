@@ -207,7 +207,7 @@ namespace webpp {
         /**
          * Check if the route is active
          */
-        inline bool is_active() const noexcept { return active; }
+        [[nodiscard]] inline bool is_active() const noexcept { return active; }
 
         /**
          * Reactivate the route
@@ -229,7 +229,7 @@ namespace webpp {
          * Run the migration
          * @return the response
          */
-        [[nodiscard]] inline void operator()(req_t& req, res_t& res) noexcept {
+        inline void operator()(req_t& req, res_t& res) noexcept {
             return migrator(req, res);
         }
 
