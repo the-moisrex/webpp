@@ -16,7 +16,9 @@ namespace webpp {
     /**
      * @brief This route class contains one single root route and it's children
      */
-    template <typename RequestType, typename ResponseType, typename Valve,
+    template <typename Interface, typename Valve,
+              typename RequestType = request_t<Interface>,
+              typename ResponseType = response,
               typename Callable = void(RequestType const&, ResponseType&),
               typename = std::enable_if_t<
                   !std::is_convertible_v<RequestType, ResponseType>>>
@@ -252,7 +254,7 @@ namespace webpp {
      * @param Interface
      */
     template <typename Interface, typename Routes>
-    class router_t {
+    class router {
 
         // this is the main route which includes other routes:
         // This is a "const_list":
@@ -264,7 +266,8 @@ namespace webpp {
          * @param req
          * @return final response
          */
-        template <typename RequestType, typename ResponseType = response>
+        template <typename RequestType = request_t<Interface>,
+                  typename ResponseType = response>
         ResponseType run(RequestType& req) noexcept {
             // FIXME: make sure it's as performant as possible.
             ResponseType res;
@@ -273,32 +276,15 @@ namespace webpp {
             return res;
         }
 
-        constexpr auto on(route const& _route) const noexcept {
-            return routes + route(valves::empty, _route);
+        template <typename Route>
+        constexpr auto on(Route&& _route) const noexcept {
+            return routes + route(valves::empty, std::forward<Route>(_route));
         }
 
-        constexpr auto on(route&& _route) const noexcept {
-            return routes + route(valves::empty, std::move(_route));
-        }
-
-        constexpr auto on(valves::valve<Interface> const& v,
-                          route const& r) const noexcept {
-            return routes + route(v, r);
-        }
-
-        constexpr auto on(valves::valve<Interface>&& v, route const& r) const
-            noexcept {
-            return routes + route(std::move(v), r);
-        }
-
-        constexpr auto on(valves::valve<Interface> const& v, route&& r) const
-            noexcept {
-            return routes + route(v, std::move(r));
-        }
-
-        constexpr auto on(valves::valve<Interface>&& v, route&& r) const
-            noexcept {
-            return routes + route(std::move(v), std::move(r));
+        template <typename Valve, typename Route>
+        constexpr auto on(Valve&& v, Route&& r) const noexcept {
+            return routes +
+                   route(std::forward<Valve>(v), std::forward<Route>(r));
         }
     };
 
