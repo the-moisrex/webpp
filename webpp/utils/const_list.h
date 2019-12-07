@@ -289,12 +289,16 @@ namespace webpp {
          */
         template <typename T>
         constexpr bool has(T const& _value) const noexcept {
-            if constexpr (!std::is_void_v<type>) {
-                return value() == _value;
-            }
-            if constexpr (!std::is_void_v<next_type>) {
+            if constexpr (!std::is_void_v<type> &&
+                          std::is_convertible_v<type, T>) {
                 if (value() == _value)
                     return true;
+            }
+            if constexpr (!std::is_void_v<next_type>) {
+                if constexpr (std::is_convertible_v<next_type, T>) {
+                    if (value() == _value)
+                        return true;
+                }
                 return next().has(_value);
             }
         }

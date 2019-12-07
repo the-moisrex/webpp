@@ -1,7 +1,6 @@
 #ifndef WEBPP_URI_TEST_H
 #define WEBPP_URI_TEST_H
 
-#include "../std/string_view.h"
 #include "../validators/validators.h"
 #include "casts.h"
 #include "charset.h"
@@ -12,6 +11,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <variant>
 #include <vector>

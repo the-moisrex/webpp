@@ -17,14 +17,15 @@ TEST(ConstListTest, ConstList) {
     });
 
     auto str_one = one.reduce(
-        [](string data, auto const& value) mutable {
-            data.append(string((data.empty() ? "" : " ")));
+        [](string const& data, auto const& value) constexpr {
+            auto _data = data;
+            _data.append(string((data.empty() ? "" : " ")));
             if constexpr (std::is_convertible_v<decltype(value), int>) {
-                data.append(to_string(value));
+                _data.append(to_string(value));
             } else {
-                data.append(value);
+                _data.append(value);
             }
-            return data;
+            return _data;
         },
         string(""));
 
