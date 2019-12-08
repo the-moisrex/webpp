@@ -52,6 +52,7 @@ using namespace webpp;
 
 cgi::cgi() noexcept : basic_interface() {
     // I'm not using C here; so why should I pay for it!
+    // And also the user should not use cin and cout. so ...
     std::ios::sync_with_stdio(false);
 }
 
@@ -120,4 +121,22 @@ std::string_view cgi::headers() noexcept {
         }
     }
     return headers_cache;
+}
+
+std::string_view cgi::body() noexcept {
+    // again, we can do this only in cgi protocol not in other interfaces:
+    static std::string body_cache;
+    if (body_cache.empty()) {
+        if (auto content_length = env("CONTENT_LENGTH");
+            !content_length.empty()) {
+            // now we know how much we content the user is going to send
+
+            char* buffer = new char[content_length];
+            std::cin.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
+        } else {
+            // we don't know how much the user is going to send. so we use a
+            // small size buffer:
+        }
+    }
+    return body_cache;
 }
