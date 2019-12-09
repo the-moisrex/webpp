@@ -10,6 +10,8 @@
 #include <windows.h>
 #endif
 
+#include <chrono>
+
 /**
  * See: https://stackoverflow.com/a/2513561
  */
@@ -18,9 +20,12 @@ unsigned long long available_memory() noexcept {
     static auto pagesize = sysconf(_SC_PAGE_SIZE);
     return sysconf(_SC_AVPHYS_PAGES) * pagesize;
 #elif _WIN32
-    // TODO: fill this
+    // TODO: test this part on windows too
     // https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-globalmemorystatusex?redirectedfrom=MSDN
-    return 0ull;
+    MEMORYSTATUSEX statex;
+    statex.dwLength = sizeof(statex);
+    GlobalMemoryStatusEx(&statex);
+    return statex.ullAvailPhys;
 #else
     return 0ull; // no idea what the OS is, so ...
 #endif

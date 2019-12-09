@@ -2,6 +2,9 @@
 #define WEBPP_FUNCTIONAL_H
 
 // Created by moisrex on 12/6/19.
+#include <chrono>
+#include <type_traits>
+#include <utility>
 
 namespace webpp {
     template <typename Signature>
@@ -33,6 +36,44 @@ namespace webpp {
             return _erased_fn(_ptr, std::forward<Args>(xs)...);
         }
     };
+
+    /**
+     * This function helps you to call an expensive function and get its results
+     * and cache it.
+     * Its usage is for when you're calling an expensive function but you know
+     * this function's result will not change often.
+     * @tparam Callable
+     * @param callable
+     * @param interval the time (in nanoseconds) that it caches the result of
+     * your callable
+     * @return Whatever your callable returns
+     */
+    template <typename Callable>
+    decltype(auto)
+    call_and_cache(Callable const& callable,
+                   std::chrono::steady_clock::rep interval = 1000) noexcept {
+        using namespace std::chrono;
+
+        static_assert(std::is_invocable_v<Callable>,
+                      "The specified callable is not callable");
+
+        constexpr bool does_returns_void = std::is_void_v<decltype(callable())>;
+        static time_point<steady_clock> t;
+
+        if constexpr (!does_returns_void) {
+            static decltype(callable()) res;
+            if ((steady_clock::now() - t).count() > interval) {
+                t = steady_clock::now();
+                return res = callable();
+            }
+        } else {
+            if ((steady_clock::now() - t).count() > interval) {
+                callable();
+                t = steady_clock::now();
+            }
+        }
+    }
+
 } // namespace webpp
 
 #endif // WEBPP_FUNCTIONAL_H
