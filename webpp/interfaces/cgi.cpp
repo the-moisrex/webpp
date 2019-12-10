@@ -112,7 +112,7 @@ std::string_view cgi::headers() noexcept {
     if (headers_cache.empty()) {
         // TODO: this code won't work on windows. Change when you are worried
         // about windows
-        for (auto it = *environ; *it; it++) {
+        for (auto it = environ; *it; it++) {
             std::string_view h{*it};
             if (h.starts_with("HTTP_")) {
                 headers_cache.append(h.substr(5));
