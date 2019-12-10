@@ -63,8 +63,9 @@ namespace webpp {
         if constexpr (!does_returns_void) {
             static decltype(callable()) res;
             if ((steady_clock::now() - t).count() > interval) {
+                res = callable();
                 t = steady_clock::now();
-                return res = callable();
+                return res;
             }
         } else {
             if ((steady_clock::now() - t).count() > interval) {
@@ -73,6 +74,19 @@ namespace webpp {
             }
         }
     }
+
+    template <typename RetType>
+    struct debounce_cache {
+        auto last_returned_value() const noexcept { return cached; }
+
+      protected:
+        mutable RetType cached;
+    };
+
+    template <>
+    struct debounce_cache<void> {};
+
+    enum class debounce_type { immediate, trailing, async_trailing };
 
     /**
      * Creates a debounced function that delays invoking func until after wait
@@ -95,34 +109,60 @@ namespace webpp {
      * @see https://lodash.com/docs#debounce
      * @see
      * https://github.com/lodash/lodash/blob/15e1557b2a97c8bbee22d873832d90ed3ba50ba7/debounce.js
-     * @tparam Callable
      */
-    template <typename Callable>
-    class debounce {
-        Callable func;
-        std::chrono::steady_clock::rep wait;
-        std::chrono::time_point<std::chrono::steady_clock> last_invoke_time;
-        bool leading = false;
-        bool trailing = true;
+    template <typename Callable, debounce_type DType = debounce_type::immediate,
+              decltype(auto) Interval = std::chrono::nanoseconds(1000),
+              typename Clock = std::chrono::steady_clock>
+    class debounce
+        : public Callable,
+          public debounce_cache<std::remove_cv_t<decltype(Callable())>> {
+
+        static_assert(std::is_invocable_v<Callable>,
+                      "The Callable specified is not actually callable.");
+
+        std::chrono::time_point<Clock> last_invoke_time;
 
       public:
-        debounce(Callable callable, decltype(wait) wait = 0) noexcept
-            : func(std::move(callable)), wait(wait) {
-            static_assert(std::is_invocable_v<Callable>,
-                          "The Callable specified is not actually callable.");
-        }
+        using Callable::Callable;
 
         template <typename... Args>
-        auto operator()(Args... args) noexcept {
-            func(args...);
+        auto operator()(Args... args) noexcept(
+            std::is_nothrow_invocable_v<Callable, Args...>) {
+            if constexpr (std::is_void_v<decltype(Callable(args...))>) {
+                if constexpr (DType == debounce_type::immediate) {
+                    if ((Clock::now() - last_invoke_time).count() > Interval) {
+                        Callable::operator()(args...);
+                        last_invoke_time = Clock::now();
+                    }
+                } else if constexpr (DType == debounce_type::trailing) {
+
+                } else if constexpr (
+                    DType ==
+                    debounce_type::async_trailing) { // DType ==
+                                                     // debounce_type::both
+                }
+            } else {
+                if constexpr (DType == debounce_type::immediate) {
+                }
+            }
         }
 
+        /**
+         *
+         */
         void cancel() noexcept {}
 
         auto flush() noexcept {}
 
         auto pending() noexcept {}
     };
+
+    /**
+     * Type deduction for lambdas
+     */
+    template <typename Callable,
+              std::enable_if_t<std::is_invocable_v<Callable>, int> = 0>
+    debounce(Callable)->debounce<Callable>;
 } // namespace webpp
 
 #endif // WEBPP_FUNCTIONAL_H
