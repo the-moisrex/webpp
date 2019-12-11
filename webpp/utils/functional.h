@@ -109,7 +109,8 @@ namespace webpp {
         Callable callable;
 
         template <typename... Args>
-        debounce_caller_final(Args... args) : callable(args...) {}
+        debounce_caller_final(Args&&... args)
+            : callable(std::forward<Args>(args)...) {}
 
         template <typename... Args>
         auto operator()(Args&&... args) noexcept(
@@ -162,12 +163,13 @@ namespace webpp {
         using Callable::Callable;
 
         template <typename... Args>
-        auto operator()(Args... args) noexcept(
+        auto operator()(Args&&... args) noexcept(
             std::is_nothrow_invocable_v<Callable, Args...>) {
-            if constexpr (std::is_void_v<decltype(Callable(args...))>) {
+            if constexpr (std::is_void_v<decltype(
+                              Callable(std::forward<Args>(args)...))>) {
                 if constexpr (DType == debounce_type::immediate) {
                     if ((Clock::now() - last_invoke_time).count() > Interval) {
-                        Callable::operator()(args...);
+                        Callable::operator()(std::forward<Args>(args)...);
                         last_invoke_time = Clock::now();
                     }
                 } else if constexpr (DType == debounce_type::trailing) {
