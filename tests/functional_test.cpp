@@ -5,4 +5,15 @@
 
 using namespace webpp;
 
-TEST(FunctionalTests, FreeFunctions) {}
+void test(int limit) {
+    static auto i = 0;
+    i++;
+    EXPECT_TRUE(i < limit - 1);
+}
+
+TEST(FunctionalTests, DebouncedFunctions) {
+    constexpr auto debounced = debounce<decltype(test)>();
+    constexpr auto limit = 1000;
+    for (int i = 0; i < limit; i++)
+        debounced(limit);
+}
