@@ -89,6 +89,38 @@ namespace webpp {
     enum class debounce_type { immediate, trailing, async_trailing };
 
     /**
+     * This class is used for callables that are not inheritable
+     * @tparam Callable
+     */
+    template <typename Callable,
+              typename = std::enable_if_t<std::is_function_v<Callable> &&
+                                          !std::is_class_v<Callable>>>
+    struct debounce_caller {
+        template <typename... Args>
+        decltype(auto) operator()(Args&&... args) const
+            noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
+            return Callable(std::forward<Args>(args)...);
+        }
+    };
+
+    template <typename Callable,
+              typename = std::enable_if_t<std::is_final_v<Callable>>>
+    struct debounce_caller_final {
+        Callable callable;
+
+        template <typename... Args>
+        debounce_caller_final(Args... args) : callable(args...) {}
+
+        template <typename... Args>
+        auto operator()(Args&&... args) noexcept(
+            std::is_nothrow_invocable_v<Callable, Args...>) {
+            return callable(std::forward<Args>(args)...);
+        }
+
+        auto& ref() noexcept { return callable; }
+    };
+
+    /**
      * Creates a debounced function that delays invoking func until after wait
      * milliseconds have elapsed since the last time the debounced function was
      * invoked. The debounced function comes with a cancel method to cancel
@@ -114,7 +146,11 @@ namespace webpp {
               decltype(auto) Interval = std::chrono::nanoseconds(1000),
               typename Clock = std::chrono::steady_clock>
     class debounce
-        : public Callable,
+        : public std::conditional_t<
+              std::is_class_v<Callable>,
+              std::conditional_t<std::is_final_v<Callable>,
+                                 debounce_caller_final<Callable>, Callable>,
+              debounce_caller<Callable>>,
           public debounce_cache<std::remove_cv_t<decltype(Callable())>> {
 
         static_assert(std::is_invocable_v<Callable>,
@@ -136,10 +172,7 @@ namespace webpp {
                     }
                 } else if constexpr (DType == debounce_type::trailing) {
 
-                } else if constexpr (
-                    DType ==
-                    debounce_type::async_trailing) { // DType ==
-                                                     // debounce_type::both
+                } else if constexpr (DType == debounce_type::async_trailing) {
                 }
             } else {
                 if constexpr (DType == debounce_type::immediate) {
@@ -160,9 +193,9 @@ namespace webpp {
     /**
      * Type deduction for lambdas
      */
-    template <typename Callable,
-              std::enable_if_t<std::is_invocable_v<Callable>, int> = 0>
-    debounce(Callable)->debounce<Callable>;
+    //    template <typename Callable,
+    //              std::enable_if_t<std::is_invocable_v<Callable>, int> = 0>
+    //    debounce(Callable)->debounce<Callable>;
 } // namespace webpp
 
 #endif // WEBPP_FUNCTIONAL_H
