@@ -3,6 +3,7 @@
 
 // Created by moisrex on 12/6/19.
 #include <chrono>
+#include <future>
 #include <type_traits>
 #include <utility>
 
@@ -86,7 +87,14 @@ namespace webpp {
     template <>
     struct debounce_cache<void> {};
 
-    enum class debounce_type { immediate, trailing, async_trailing };
+    enum class debounce_type {
+        leading,  // this will run the callable the moment it is called
+        trailing, // this will run the callable after Interval finishes
+        both      // this will run the callable the moment it is called and also
+             // while the first call's Interval hasn't finished another call is
+             // omitted, then there will be another call at the end of the
+             // Interval too
+    };
 
     /**
      * This class is used for callables that are not inheritable
@@ -121,6 +129,14 @@ namespace webpp {
         auto& ref() noexcept { return callable; }
     };
 
+    template <typename Callable, typename... Args>
+    struct debounce_thread_manager {
+        using future_type =
+            decltype(std::async(std::launch::async, std::declval<Callable>(),
+                                std::declval<Args>()...));
+        future_type f;
+    };
+
     /**
      * Creates a debounced function that delays invoking func until after wait
      * milliseconds have elapsed since the last time the debounced function was
@@ -143,7 +159,7 @@ namespace webpp {
      * @see
      * https://github.com/lodash/lodash/blob/15e1557b2a97c8bbee22d873832d90ed3ba50ba7/debounce.js
      */
-    template <typename Callable, debounce_type DType = debounce_type::immediate,
+    template <typename Callable, debounce_type DType = debounce_type::leading,
               decltype(auto) Interval = std::chrono::nanoseconds(1000),
               typename Clock = std::chrono::steady_clock>
     class debounce
@@ -160,24 +176,55 @@ namespace webpp {
         std::chrono::time_point<Clock> last_invoke_time;
 
       public:
-        using Callable::Callable;
+        /**
+         * This constructor is for when Callable is:
+         *   - a class -> because if it's not, it means it's a function
+         *     so, it can't be constructible.
+         *   - constructible
+         *   - not a final class -> because there is another constructor
+         *     for it in the "debounce_caller_final" class
+         *
+         * @tparam Args
+         * @param args
+         */
+        template <
+            typename... Args,
+            std::enable_if_t<std::is_class_v<Callable> &&
+                                 std::is_constructible_v<Callable, Args...> &&
+                                 !std::is_final_v<Callable>,
+                             int> = 0>
+        debounce(Args&&... args) noexcept(
+            std::is_nothrow_constructible_v<Callable, Args...>)
+            : Callable(std::forward<Args>(args)...) {}
+
+        /**
+         * Default ctor for when the Callable is a function and not a class
+         */
+        debounce() noexcept = default;
+        debounce(debounce&&) noexcept = default;
+        debounce(debounce const&) noexcept = default;
+        debounce& operator=(debounce&&) noexcept = default;
+        debounce& operator=(debounce const&) noexcept = default;
 
         template <typename... Args>
         auto operator()(Args&&... args) noexcept(
             std::is_nothrow_invocable_v<Callable, Args...>) {
             if constexpr (std::is_void_v<decltype(
                               Callable(std::forward<Args>(args)...))>) {
-                if constexpr (DType == debounce_type::immediate) {
+                if constexpr (DType == debounce_type::leading) {
                     if ((Clock::now() - last_invoke_time).count() > Interval) {
                         Callable::operator()(std::forward<Args>(args)...);
                         last_invoke_time = Clock::now();
                     }
                 } else if constexpr (DType == debounce_type::trailing) {
-
-                } else if constexpr (DType == debounce_type::async_trailing) {
+                    if ((Clock::now() - last_invoke_time).count() > Interval) {
+                        // todo: here we need to check if we have a thread pool
+                        // or not
+                    }
+                } else if constexpr (DType == debounce_type::both) {
                 }
             } else {
-                if constexpr (DType == debounce_type::immediate) {
+                if constexpr (DType == debounce_type::leading) {
                 }
             }
         }
@@ -189,7 +236,13 @@ namespace webpp {
 
         auto flush() noexcept {}
 
-        auto pending() noexcept {}
+        bool pending() noexcept {}
+
+        /**
+         * or maybe "get"??
+         * @return
+         */
+        auto value() const noexcept {}
     };
 
     /**
