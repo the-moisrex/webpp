@@ -208,3 +208,31 @@ time 1572018507
 old [description:"write tests for ipv6" entry:"1567682860" modified:"1567682860" project:"net" status:"pending" uuid:"92edcdb2-73e2-4f22-8e2c-b5a37ad501cf"]
 new [description:"write tests for ipv6" end:"1572018507" entry:"1567682860" modified:"1572018507" project:"net" status:"completed" uuid:"92edcdb2-73e2-4f22-8e2c-b5a37ad501cf"]
 ---
+time 1576148758
+new [description:"change the immediate to leading enum" entry:"1576148758" modified:"1576148758" project:"functional" status:"pending" uuid:"c6d038be-e4ba-4a70-a7c2-9fe880aa12f0"]
+---
+time 1576148807
+new [description:"implement trailing in debounce class" entry:"1576148807" modified:"1576148807" project:"functional" status:"pending" uuid:"aa7b2513-7b81-427b-b182-048f7e1c2ff6"]
+---
+time 1576148828
+new [description:"add a way to use a thread pool in the debounce class" entry:"1576148828" modified:"1576148828" project:"functional" status:"pending" uuid:"2418f634-1d33-4763-9b3e-47ca35eab579"]
+---
+time 1576148910
+new [description:"make property class thread safe if the user wants it" entry:"1576148910" modified:"1576148910" project:"functional" status:"pending" uuid:"ab5edf49-bdd4-4d01-9d34-40c3836c5f71"]
+---
+time 1576148947
+new [description:"add functionality to check if the user is running the program in debug mode or release mode" entry:"1576148947" modified:"1576148947" project:"functional" status:"pending" uuid:"2b504038-7407-48cf-a0ec-4da65b053e1e"]
+---
+time 1576149014
+new [description:"add functionality to the properties class and debounced class to check if the user is going to have a race condition or not if all possible" entry:"1576149014" modified:"1576149014" project:"functional" status:"pending" uuid:"220a68fd-2664-4601-814c-25816ba840b3"]
+---
+time 1576149407
+old [description:"change the immediate to leading enum" entry:"1576148758" modified:"1576148758" project:"functional" status:"pending" uuid:"c6d038be-e4ba-4a70-a7c2-9fe880aa12f0"]
+new [description:"change the immediate to leading enum" end:"1576149407" entry:"1576148758" modified:"1576149407" project:"functional" status:"completed" uuid:"c6d038be-e4ba-4a70-a7c2-9fe880aa12f0"]
+---
+time 1576149446
+new [description:"seperate the debounce class from the function_ref class" entry:"1576149446" modified:"1576149446" project:"functional" status:"pending" uuid:"3ce4fb8b-1148-4f34-b355-06a5fa415139"]
+---
+time 1576149470
+new [description:"check if you actually need the function_ref class or not" entry:"1576149470" modified:"1576149470" project:"functional" status:"pending" uuid:"7f5cb5b8-c8e7-4e1e-a81c-82fafe35035f"]
+---
