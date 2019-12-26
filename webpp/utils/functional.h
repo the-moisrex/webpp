@@ -4,6 +4,7 @@
 // Created by moisrex on 12/6/19.
 #include <chrono>
 #include <future>
+#include <queue>
 #include <type_traits>
 #include <utility>
 
@@ -88,9 +89,10 @@ namespace webpp {
     struct debounce_cache<void> {};
 
     enum class debounce_type {
-        leading,  // this will run the callable the moment it is called
-        trailing, // this will run the callable after Interval finishes
-        both      // this will run the callable the moment it is called and also
+        leading,        // this will run the callable the moment it is called
+        trailing,       // this will run the callable after Interval finishes
+        async_trailing, // same as trailing but it's async
+        both // this will run the callable the moment it is called and also
              // while the first call's Interval hasn't finished another call is
              // omitted, then there will be another call at the end of the
              // Interval too
@@ -103,7 +105,7 @@ namespace webpp {
     template <typename Callable,
               typename = std::enable_if_t<std::is_function_v<Callable> &&
                                           !std::is_class_v<Callable>>>
-    struct debounce_caller {
+    struct callable_function {
         template <typename... Args>
         decltype(auto) operator()(Args&&... args) const
             noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
@@ -113,11 +115,11 @@ namespace webpp {
 
     template <typename Callable,
               typename = std::enable_if_t<std::is_final_v<Callable>>>
-    struct debounce_caller_final {
+    struct callable_final {
         Callable callable;
 
         template <typename... Args>
-        debounce_caller_final(Args&&... args)
+        callable_final(Args&&... args)
             : callable(std::forward<Args>(args)...) {}
 
         template <typename... Args>
@@ -129,13 +131,63 @@ namespace webpp {
         auto& ref() noexcept { return callable; }
     };
 
-    template <typename Callable, typename... Args>
-    struct debounce_thread_manager {
-        using future_type =
-            decltype(std::async(std::launch::async, std::declval<Callable>(),
-                                std::declval<Args>()...));
-        future_type f;
+    template <typename Callable, debounce_type DType, decltype(auto) Interval>
+    struct debounce_async_trailing {};
+
+    template <typename Callable, decltype(auto) Interval>
+    struct debounce_async_trailing<Callable, debounce_type::async_trailing,
+                                   Interval> {
+
+      protected:
+        std::queue<std::thread> trs;
+        std::atomic_flag canceled = ATOMIC_FLAG_INIT;
+
+        template <typename... Args>
+        auto async_run_later() noexcept(
+            std::is_nothrow_invocable_v<Callable, Args...>) {
+            std::this_thread::sleep_for(Interval);
+            while (!canceled) {
+                if (!canceled)
+                    Callable::operator()(std::forward<Args>(args)...);
+            }
+        }
+
+      public:
+        template <typename... Args>
+        auto run_later(Args&&... args) const
+            noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
+            trs.emplace(&debounce_async_trailing::async_run_later, *this,
+                        std::forward<Args>(args)...);
+        }
+
+        ~debounce_async_trailing() noexcept {
+            // cancel everything and wait for the thread to join
+            canceled = true;
+            for (auto& tr : trs)
+                if (tr.joinable())
+                    tr.join();
+        }
+
+        /**
+         * Cancel the operation
+         * @param value
+         */
+        void cancel(bool value = true) noexcept { canceled = value; }
+
+        /**
+         * Call the callable now
+         */
+        void flush() const noexcept(....) {}
+
+        bool pending() noexcept {}
     };
+
+    template <typename Callable>
+    using add_operator = std::conditional_t<
+        std::is_class_v<Callable>,
+        std::conditional_t<std::is_final_v<Callable>, callable_final<Callable>,
+                           Callable>,
+        callable_function<Callable>>;
 
     /**
      * Creates a debounced function that delays invoking func until after wait
@@ -163,12 +215,10 @@ namespace webpp {
               decltype(auto) Interval = std::chrono::nanoseconds(1000),
               typename Clock = std::chrono::steady_clock>
     class debounce
-        : public std::conditional_t<
-              std::is_class_v<Callable>,
-              std::conditional_t<std::is_final_v<Callable>,
-                                 debounce_caller_final<Callable>, Callable>,
-              debounce_caller<Callable>>,
-          public debounce_cache<std::remove_cv_t<decltype(Callable())>> {
+        : public add_operator<Callable>,
+          public debounce_cache<std::remove_cv_t<add_operator<Callable>>>,
+          public debounce_async_trailing<add_operator<Callable>, DType,
+                                         Interval> {
 
         static_assert(std::is_invocable_v<Callable>,
                       "The Callable specified is not actually callable.");
@@ -217,9 +267,20 @@ namespace webpp {
                         last_invoke_time = Clock::now();
                     }
                 } else if constexpr (DType == debounce_type::trailing) {
-                    if ((Clock::now() - last_invoke_time).count() > Interval) {
+                    if (!last_invoke_time ||
+                        (Clock::now() - last_invoke_time).count() >= Interval) {
                         // todo: here we need to check if we have a thread pool
                         // or not
+
+                        // here we don't need the result of the function because
+                        // it's void
+                        std::this_thread::sleep_for(Interval);
+
+                        // The user can't cancel it so there's no point of
+                        // checking if it's canceled or not Wait! What if the
+                        // user cancels it from another thread?
+                        Callable::operator()(std::forward<Args>(args)...);
+                        last_invoke_time = Clock::now();
                     }
                 } else if constexpr (DType == debounce_type::both) {
                 }
@@ -228,15 +289,6 @@ namespace webpp {
                 }
             }
         }
-
-        /**
-         *
-         */
-        void cancel() noexcept {}
-
-        auto flush() noexcept {}
-
-        bool pending() noexcept {}
 
         /**
          * or maybe "get"??
