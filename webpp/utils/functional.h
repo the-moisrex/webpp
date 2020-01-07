@@ -120,7 +120,7 @@ namespace webpp {
 
         template <typename... Args>
         callable_final(Args&&... args)
-            : callable(std::forward<Args>(args)...) {}
+              : callable(std::forward<Args>(args)...) {}
 
         template <typename... Args>
         auto operator()(Args&&... args) noexcept(
@@ -140,15 +140,15 @@ namespace webpp {
 
       protected:
         std::queue<std::thread> trs;
-        std::atomic_flag canceled = ATOMIC_FLAG_INIT;
+        // I might need to use memory order stuff.
+        std::atomic<bool> canceled = false;
 
         template <typename... Args>
         auto async_run_later() noexcept(
             std::is_nothrow_invocable_v<Callable, Args...>) {
             std::this_thread::sleep_for(Interval);
             while (!canceled) {
-                if (!canceled)
-                    Callable::operator()(std::forward<Args>(args)...);
+                  Callable::operator()(std::forward<Args>(args)...);
             }
         }
 
