@@ -113,6 +113,11 @@ namespace webpp {
         }
     };
 
+	/**
+	 * This class is used in debounce class only when the supplied Callable is
+	 * a final class and cannot be extended from thus we have to take other
+	 * actions in order to make things happen.
+	 */
     template <typename Callable,
               typename = std::enable_if_t<std::is_final_v<Callable>>>
     struct callable_final {
