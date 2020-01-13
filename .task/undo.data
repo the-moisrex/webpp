@@ -236,3 +236,6 @@ new [description:"seperate the debounce class from the function_ref class" entry
 time 1576149470
 new [description:"check if you actually need the function_ref class or not" entry:"1576149470" modified:"1576149470" project:"functional" status:"pending" uuid:"7f5cb5b8-c8e7-4e1e-a81c-82fafe35035f"]
 ---
+time 1578909878
+new [description:"Use Steganography in your project, it's cool" entry:"1578909878" modified:"1578909878" status:"pending" uuid:"cc65960e-a13d-4d01-b61b-18780b43a2ed"]
+---
