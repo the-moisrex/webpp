@@ -139,6 +139,11 @@ namespace webpp {
     template <typename Callable, debounce_type DType, decltype(auto) Interval>
     struct debounce_async_trailing {};
 
+    /**
+     * This class will be async trailing implementation of the debounce class
+     * @tparam Callable
+     * @tparam Interval
+     */
     template <typename Callable, decltype(auto) Interval>
     struct debounce_async_trailing<Callable, debounce_type::async_trailing,
                                    Interval> {
