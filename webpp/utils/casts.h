@@ -1,6 +1,7 @@
 #ifndef WEBPP_CASTS_H
 #define WEBPP_CASTS_H
 
+#include <stdexcept>
 #include <string_view>
 
 namespace webpp {
