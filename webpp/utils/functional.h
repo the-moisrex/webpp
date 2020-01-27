@@ -187,7 +187,7 @@ namespace webpp {
         /**
          * Call the callable now
          */
-        void flush() const noexcept(....) {}
+//        void flush() const noexcept(....) {}
 
         bool pending() noexcept {}
     };
