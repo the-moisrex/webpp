@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <functional>
 #include <iostream>
+#include "../utils/casts.h"
 
 using namespace webpp;
 
@@ -127,9 +128,11 @@ std::string_view cgi::body() noexcept {
     // again, we can do this only in cgi protocol not in other interfaces:
     static std::string body_cache;
     if (body_cache.empty()) {
-        if (auto content_length = env("CONTENT_LENGTH");
-            !content_length.empty()) {
-            // now we know how much we content the user is going to send
+        if (auto content_length_str = env("CONTENT_LENGTH");
+            !content_length_str.empty()) {
+            // now we know how much content the user is going to send
+            // so we just create a buffer with that size
+            auto content_length = to_uint(content_length_str);
 
             char* buffer = new char[content_length];
             std::cin.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
