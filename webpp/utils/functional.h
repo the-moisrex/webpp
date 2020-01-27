@@ -113,11 +113,11 @@ namespace webpp {
         }
     };
 
-	/**
-	 * This class is used in debounce class only when the supplied Callable is
-	 * a final class and cannot be extended from thus we have to take other
-	 * actions in order to make things happen.
-	 */
+    /**
+     * This class is used in debounce class only when the supplied Callable is
+     * a final class and cannot be extended from thus we have to take other
+     * actions in order to make things happen.
+     */
     template <typename Callable,
               typename = std::enable_if_t<std::is_final_v<Callable>>>
     struct callable_final {
@@ -125,7 +125,7 @@ namespace webpp {
 
         template <typename... Args>
         callable_final(Args&&... args)
-              : callable(std::forward<Args>(args)...) {}
+            : callable(std::forward<Args>(args)...) {}
 
         template <typename... Args>
         auto operator()(Args&&... args) noexcept(
@@ -158,7 +158,7 @@ namespace webpp {
             std::is_nothrow_invocable_v<Callable, Args...>) {
             std::this_thread::sleep_for(Interval);
             while (!canceled) {
-                  Callable::operator()(std::forward<Args>(args)...);
+                Callable::operator()(std::forward<Args>(args)...);
             }
         }
 
@@ -187,7 +187,7 @@ namespace webpp {
         /**
          * Call the callable now
          */
-//        void flush() const noexcept(....) {}
+        //        void flush() const noexcept(....) {}
 
         bool pending() noexcept {}
     };
