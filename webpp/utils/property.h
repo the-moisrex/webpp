@@ -62,6 +62,11 @@ namespace webpp {
             return data == s;
         }
 
+        template <typename S>
+        constexpr bool operator!=(S const& s) const noexcept {
+            return data != s;
+        }
+
     };
 
     template <typename T>
