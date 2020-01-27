@@ -10,12 +10,11 @@
 #include <windows.h>
 #endif
 
-#include <chrono>
 
 /**
  * See: https://stackoverflow.com/a/2513561
  */
-unsigned long long available_memory() noexcept {
+unsigned long long webpp::available_memory() noexcept {
 #ifdef __unix__
     static auto pagesize = sysconf(_SC_PAGE_SIZE);
     return sysconf(_SC_AVPHYS_PAGES) * pagesize;
