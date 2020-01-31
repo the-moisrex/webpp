@@ -156,17 +156,45 @@ namespace webpp {
         auto& ref() noexcept { return callable; }
     };
 
-    template <typename Callable, debounce_type DType, decltype(auto) Interval>
-    struct debounce_async_trailing {};
+    template <typename Callable, typename Rep, typename Period>
+    struct debounce_ctors {
+      protected:
+        using Interval = std::chrono::duration<Rep, Period>;
+        const Interval _interval;
+
+      public:
+        debounce_ctors(Interval __interval) noexcept
+            : _interval(std::move(__interval)) {}
+
+        void interval(Interval __interval) noexcept {
+            _interval = std::move(__interval);
+        }
+
+        [[nodiscard]] inline const auto& interval() const noexcept {
+            return _interval;
+        }
+    };
+
+    template <typename Callable, debounce_type DType, typename Rep,
+              typename Period>
+    struct debounce_async_trailing
+        : public debounce_ctors<Callable, Rep, Period> {
+        using ctors = debounce_ctors<Callable, Rep, Period>;
+        using ctors::ctors;
+    };
 
     /**
      * This class will be async trailing implementation of the debounce class
      * @tparam Callable
      * @tparam Interval
      */
-    template <typename Callable, decltype(auto) Interval>
-    struct debounce_async_trailing<Callable, debounce_type::async_trailing,
-                                   Interval> {
+    template <typename Callable, typename Rep, typename Period>
+    struct debounce_async_trailing<Callable, debounce_type::async_trailing, Rep,
+                                   Period>
+        : public debounce_ctors<Callable, Rep, Period> {
+
+        using ctors = debounce_ctors<Callable, Rep, Period>;
+        using ctors::ctors;
 
       protected:
         std::queue<std::thread> trs;
@@ -175,7 +203,7 @@ namespace webpp {
         template <typename RetType, typename... Args>
         std::future<RetType> async_run_later(Args&&... args) noexcept(
             std::is_nothrow_invocable_v<Callable, Args...>) {
-            std::this_thread::sleep_for(Interval);
+            std::this_thread::sleep_for(ctors::interval());
             return flush(std::forward<Args>(args)...);
         }
 
@@ -260,16 +288,24 @@ namespace webpp {
      * https://github.com/lodash/lodash/blob/15e1557b2a97c8bbee22d873832d90ed3ba50ba7/debounce.js
      */
     template <typename Callable, debounce_type DType = debounce_type::leading,
-              decltype(auto) Interval = std::chrono::nanoseconds(1000),
+              typename Rep = std::chrono::milliseconds::rep,
+              typename Period = std::chrono::milliseconds::period,
               typename Clock = std::chrono::steady_clock>
-    class debounce : public make_inheritable<Callable>,
-                     public debounce_async_trailing<make_inheritable<Callable>,
-                                                    DType, Interval> {
+    class debounce_t
+        : public make_inheritable<Callable>,
+          public debounce_async_trailing<make_inheritable<Callable>, DType, Rep,
+                                         Period> {
+
+        using async_trailing_t =
+            debounce_async_trailing<make_inheritable<Callable>, DType, Rep,
+                                    Period>;
+        using ctors = typename async_trailing_t::ctors;
 
         mutable std::chrono::time_point<Clock> last_invoke_time;
 
       public:
         using inheritable_callable = make_inheritable<Callable>;
+        using async_trailing_t::async_trailing_t;
         using inheritable_callable::inheritable_callable;
 
         template <typename... Args>
@@ -280,20 +316,21 @@ namespace webpp {
 
             if constexpr (std::is_void_v<RetType>) {
                 if constexpr (DType == debounce_type::leading) {
-                    if ((Clock::now() - last_invoke_time) > Interval) {
+                    if ((Clock::now() - last_invoke_time) > ctors::interval()) {
                         inheritable_callable::operator()(
                             std::forward<Args>(args)...);
                         last_invoke_time = Clock::now();
                     }
                 } else if constexpr (DType == debounce_type::trailing) {
                     if (!last_invoke_time ||
-                        (Clock::now() - last_invoke_time) >= Interval) {
+                        (Clock::now() - last_invoke_time) >=
+                            ctors::interval()) {
                         // todo: here we need to check if we have a thread pool
                         // or not
 
                         // here we don't need the result of the function because
                         // it's void
-                        std::this_thread::sleep_for(Interval);
+                        std::this_thread::sleep_for(ctors::interval());
 
                         // The user can't cancel it so there's no point of
                         // checking if it's canceled or not Wait! What if the
@@ -317,19 +354,24 @@ namespace webpp {
     };
 
     /**
-     * Type deduction for lambdas
-     */
-    //    template <typename Callable,
-    //              std::enable_if_t<std::is_invocable_v<Callable>, int> = 0>
-    //    debounce(Callable)->debounce<Callable>;
-
-    /**
-     * Type deduction for function pointers
+     * Type deduction for function pointers and lambdas
      */
     template <typename Callable, debounce_type DType = debounce_type::leading,
-              decltype(auto) Interval = std::chrono::nanoseconds(1000),
+              typename Rep = std::chrono::milliseconds::rep,
+              typename Period = std::chrono::milliseconds::period,
               typename Clock = std::chrono::steady_clock>
-    debounce(Callable func) -> debounce<decltype(func), DType, Interval, Clock>;
+    debounce_t(Callable func)
+        ->debounce_t<decltype(func), DType, Rep, Period, Clock>;
+
+    template <typename Callable, debounce_type DType = debounce_type::leading,
+              typename Clock = std::chrono::steady_clock,
+              typename Rep = std::chrono::nanoseconds::rep,
+              typename Period = std::chrono::nanoseconds::period>
+    constexpr auto debounce(Callable,
+                            std::chrono::duration<Rep, Period> interval =
+                                std::chrono::milliseconds(1000)) noexcept {
+        return debounce_t<Callable, DType, Rep, Period, Clock>(interval);
+    }
 
 } // namespace webpp
 
