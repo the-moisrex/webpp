@@ -177,8 +177,7 @@ namespace webpp {
 
     template <typename Callable, debounce_type DType, typename Rep,
               typename Period>
-    struct debounce_async_trailing
-        : public debounce_ctors<Callable, Rep, Period> {
+    struct debounce_impl : public debounce_ctors<Callable, Rep, Period> {
         using ctors = debounce_ctors<Callable, Rep, Period>;
         using ctors::ctors;
     };
@@ -189,8 +188,7 @@ namespace webpp {
      * @tparam Interval
      */
     template <typename Callable, typename Rep, typename Period>
-    struct debounce_async_trailing<Callable, debounce_type::async_trailing, Rep,
-                                   Period>
+    struct debounce_impl<Callable, debounce_type::async_trailing, Rep, Period>
         : public debounce_ctors<Callable, Rep, Period> {
 
         using ctors = debounce_ctors<Callable, Rep, Period>;
@@ -211,11 +209,11 @@ namespace webpp {
         template <typename RetType, typename... Args>
         std::future<RetType> run_later(Args&&... args) noexcept(
             std::is_nothrow_invocable_v<Callable, Args...>) {
-            trs.emplace(&debounce_async_trailing::async_run_later, *this,
+            trs.emplace(&debounce_impl::async_run_later, *this,
                         std::forward<Args>(args)...);
         }
 
-        ~debounce_async_trailing() noexcept {
+        ~debounce_impl() noexcept {
             // cancel everything and wait for the thread to join
             done.store(true, std::memory_order_relaxed);
 
@@ -293,19 +291,17 @@ namespace webpp {
               typename Clock = std::chrono::steady_clock>
     class debounce_t
         : public make_inheritable<Callable>,
-          public debounce_async_trailing<make_inheritable<Callable>, DType, Rep,
-                                         Period> {
+          public debounce_impl<make_inheritable<Callable>, DType, Rep, Period> {
 
-        using async_trailing_t =
-            debounce_async_trailing<make_inheritable<Callable>, DType, Rep,
-                                    Period>;
-        using ctors = typename async_trailing_t::ctors;
+        using impl_t =
+            debounce_impl<make_inheritable<Callable>, DType, Rep, Period>;
+        using ctors = typename impl_t::ctors;
 
         mutable std::chrono::time_point<Clock> last_invoke_time;
 
       public:
         using inheritable_callable = make_inheritable<Callable>;
-        using async_trailing_t::async_trailing_t;
+        using impl_t::async_trailing_t;
         using inheritable_callable::inheritable_callable;
 
         template <typename... Args>
