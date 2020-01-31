@@ -77,16 +77,18 @@ namespace webpp {
         }
     }
 
-    template <typename RetType>
-    struct debounce_cache {
-        auto last_returned_value() const noexcept { return cached; }
-
-      protected:
-        mutable RetType cached;
-    };
-
-    template <>
-    struct debounce_cache<void> {};
+    //    template <typename RetType>
+    //    struct debounce_cache {
+    //        auto last_returned_value() const noexcept { return cached; }
+    //
+    //        debounce_cache() noexcept = default;
+    //
+    //      protected:
+    //        mutable RetType cached;
+    //    };
+    //
+    //    template <>
+    //    struct debounce_cache<void> {};
 
     enum class debounce_type {
         leading,        // this will run the callable the moment it is called
@@ -104,18 +106,27 @@ namespace webpp {
      */
     template <typename Callable>
     struct callable_function {
-        static_assert(std::is_function_v<Callable> &&
-                          !std::is_class_v<Callable>,
-                      "The Callable you presented is either not a function or "
-                      "it's a class of it's own.");
+      private:
+        std::remove_pointer_t<Callable>* func;
+
+      public:
+        //        static_assert(std::is_function_v<Callable> &&
+        //                          !std::is_class_v<Callable>,
+        //                      "The Callable you presented is either not a
+        //                      function or " "it's a class of it's own.");
+
+        constexpr callable_function(
+            std::remove_pointer_t<Callable>* func) noexcept
+            : func(func) {}
+
         template <typename... Args>
         decltype(auto) operator()(Args&&... args) const
             noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
             using RetType = std::invoke_result_t<Callable, Args...>;
             if constexpr (std::is_void_v<RetType>) {
-                Callable(std::forward<Args>(args)...);
+                (*func)(std::forward<Args>(args)...);
             } else {
-                return Callable(std::forward<Args>(args)...);
+                return (*func)(std::forward<Args>(args)...);
             }
         }
     };
@@ -251,16 +262,15 @@ namespace webpp {
     template <typename Callable, debounce_type DType = debounce_type::leading,
               decltype(auto) Interval = std::chrono::nanoseconds(1000),
               typename Clock = std::chrono::steady_clock>
-    class debounce
-        : public make_inheritable<Callable>,
-          public debounce_cache<std::remove_cv_t<make_inheritable<Callable>>>,
-          public debounce_async_trailing<make_inheritable<Callable>, DType,
-                                         Interval> {
+    class debounce : public make_inheritable<Callable>,
+                     public debounce_async_trailing<make_inheritable<Callable>,
+                                                    DType, Interval> {
 
         mutable std::chrono::time_point<Clock> last_invoke_time;
 
       public:
         using inheritable_callable = make_inheritable<Callable>;
+        using inheritable_callable::inheritable_callable;
 
         template <typename... Args>
         auto operator()(Args&&... args) const
@@ -270,14 +280,14 @@ namespace webpp {
 
             if constexpr (std::is_void_v<RetType>) {
                 if constexpr (DType == debounce_type::leading) {
-                    if ((Clock::now() - last_invoke_time).count() > Interval) {
+                    if ((Clock::now() - last_invoke_time) > Interval) {
                         inheritable_callable::operator()(
                             std::forward<Args>(args)...);
                         last_invoke_time = Clock::now();
                     }
                 } else if constexpr (DType == debounce_type::trailing) {
                     if (!last_invoke_time ||
-                        (Clock::now() - last_invoke_time).count() >= Interval) {
+                        (Clock::now() - last_invoke_time) >= Interval) {
                         // todo: here we need to check if we have a thread pool
                         // or not
 
@@ -312,6 +322,16 @@ namespace webpp {
     //    template <typename Callable,
     //              std::enable_if_t<std::is_invocable_v<Callable>, int> = 0>
     //    debounce(Callable)->debounce<Callable>;
+
+    /**
+     * Type deduction for function pointers
+     */
+    template <typename Callable, debounce_type DType = debounce_type::leading,
+              decltype(auto) Interval = std::chrono::nanoseconds(1000),
+              typename Clock = std::chrono::steady_clock
+
+              >
+    debounce(Callable func) -> debounce<decltype(func)>;
 } // namespace webpp
 
 #endif // WEBPP_FUNCTIONAL_H
