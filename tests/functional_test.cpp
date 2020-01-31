@@ -12,7 +12,7 @@ void test(int limit) {
 }
 
 TEST(FunctionalTests, DebouncedFunctions) {
-    constexpr auto debounced = debounce<decltype(test)>();
+    constexpr auto debounced = debounce<void(int)>();
     constexpr auto limit = 1000;
     for (int i = 0; i < limit; i++)
         debounced(limit);

@@ -102,10 +102,12 @@ namespace webpp {
      * This class is used for callables that are not inheritable
      * @tparam Callable
      */
-    template <typename Callable,
-              typename = std::enable_if_t<std::is_function_v<Callable> &&
-                                          !std::is_class_v<Callable>>>
+    template <typename Callable>
     struct callable_function {
+        static_assert(std::is_function_v<Callable> &&
+                          !std::is_class_v<Callable>,
+                      "The Callable you presented is either not a function or "
+                      "it's a class of it's own.");
         template <typename... Args>
         decltype(auto) operator()(Args&&... args) const
             noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
@@ -118,9 +120,11 @@ namespace webpp {
      * a final class and cannot be extended from thus we have to take other
      * actions in order to make things happen.
      */
-    template <typename Callable,
-              typename = std::enable_if_t<std::is_final_v<Callable>>>
+    template <typename Callable>
     struct callable_final {
+        static_assert(std::is_final_v<Callable>,
+                      "The specified callable is not a final already, there's "
+                      "no point of using this class when it's not final.");
         Callable callable;
 
         template <typename... Args>
@@ -150,50 +154,68 @@ namespace webpp {
 
       protected:
         std::queue<std::thread> trs;
-        // I might need to use memory order stuff.
-        std::atomic<bool> canceled = false;
+        std::atomic<bool> done = false;
 
-        template <typename... Args>
-        auto async_run_later() noexcept(
+        template <typename RetType, typename... Args>
+        std::future<RetType> async_run_later(Args&&... args) noexcept(
             std::is_nothrow_invocable_v<Callable, Args...>) {
             std::this_thread::sleep_for(Interval);
-            while (!canceled) {
-                Callable::operator()(std::forward<Args>(args)...);
-            }
+            return flush(std::forward<Args>(args)...);
         }
 
       public:
-        template <typename... Args>
-        auto run_later(Args&&... args) const
-            noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
+        template <typename RetType, typename... Args>
+        std::future<RetType> run_later(Args&&... args) noexcept(
+            std::is_nothrow_invocable_v<Callable, Args...>) {
             trs.emplace(&debounce_async_trailing::async_run_later, *this,
                         std::forward<Args>(args)...);
         }
 
         ~debounce_async_trailing() noexcept {
             // cancel everything and wait for the thread to join
-            canceled = true;
-            for (auto& tr : trs)
+            done.store(true, std::memory_order_relaxed);
+
+            // join all the threads
+            while (!trs.empty()) {
+                auto tr = trs.front();
                 if (tr.joinable())
                     tr.join();
+                trs.pop();
+            }
         }
 
         /**
          * Cancel the operation
          * @param value
          */
-        void cancel(bool value = true) noexcept { canceled = value; }
+        void cancel() noexcept { done.store(true, std::memory_order_relaxed); }
 
         /**
          * Call the callable now
          */
-        //        void flush() const noexcept(....) {}
+        template <typename RetType, typename... Args>
+        RetType flush(Args&&... args) noexcept(
+            std::is_nothrow_invocable_v<Callable, Args...>) {
+            auto res = Callable::operator()(std::forward<Args>(args)...);
+            done.store(true, std::memory_order_relaxed);
+            return res;
+        }
 
-        bool pending() noexcept {}
+        /**
+         * Check if the function is done running or not.
+         * @return true if the function is done, and false otherwise.
+         */
+        bool pending() noexcept {
+            return !done.load(std::memory_order_relaxed);
+        }
     };
 
+    /**
+     * Add Functor to the Callable to make sure it's extendable (so we can
+     * inherit from it). It'll make sure it's Inheritable and Callable.
+     */
     template <typename Callable>
-    using add_operator = std::conditional_t<
+    using make_inheritable = std::conditional_t<
         std::is_class_v<Callable>,
         std::conditional_t<std::is_final_v<Callable>, callable_final<Callable>,
                            Callable>,
@@ -225,17 +247,16 @@ namespace webpp {
               decltype(auto) Interval = std::chrono::nanoseconds(1000),
               typename Clock = std::chrono::steady_clock>
     class debounce
-        : public add_operator<Callable>,
-          public debounce_cache<std::remove_cv_t<add_operator<Callable>>>,
-          public debounce_async_trailing<add_operator<Callable>, DType,
+        : public make_inheritable<Callable>,
+          public debounce_cache<std::remove_cv_t<make_inheritable<Callable>>>,
+          public debounce_async_trailing<make_inheritable<Callable>, DType,
                                          Interval> {
-
-        static_assert(std::is_invocable_v<Callable>,
-                      "The Callable specified is not actually callable.");
 
         std::chrono::time_point<Clock> last_invoke_time;
 
       public:
+        using inheritable_callable = make_inheritable<Callable>;
+
         /**
          * This constructor is for when Callable is:
          *   - a class -> because if it's not, it means it's a function
@@ -247,24 +268,28 @@ namespace webpp {
          * @tparam Args
          * @param args
          */
-        template <
-            typename... Args,
-            std::enable_if_t<std::is_class_v<Callable> &&
-                                 std::is_constructible_v<Callable, Args...> &&
-                                 !std::is_final_v<Callable>,
-                             int> = 0>
-        debounce(Args&&... args) noexcept(
-            std::is_nothrow_constructible_v<Callable, Args...>)
-            : Callable(std::forward<Args>(args)...) {}
+        /*
+       template <
+           typename... Args,
+           std::enable_if_t<std::is_class_v<Callable> &&
+                                std::is_constructible_v<Callable, Args...> &&
+                                !std::is_final_v<Callable>,
+                            int> = 0>
+       debounce(Args&&... args) noexcept(
+           std::is_nothrow_constructible_v<Callable, Args...>)
+           : Callable(std::forward<Args>(args)...) {}
+       */
 
         /**
          * Default ctor for when the Callable is a function and not a class
          */
-        debounce() noexcept = default;
-        debounce(debounce&&) noexcept = default;
-        debounce(debounce const&) noexcept = default;
-        debounce& operator=(debounce&&) noexcept = default;
-        debounce& operator=(debounce const&) noexcept = default;
+        /*
+       debounce() noexcept = default;
+       debounce(debounce&&) noexcept = default;
+       debounce(debounce const&) noexcept = default;
+       debounce& operator=(debounce&&) noexcept = default;
+       debounce& operator=(debounce const&) noexcept = default;
+       */
 
         template <typename... Args>
         auto operator()(Args&&... args) noexcept(
