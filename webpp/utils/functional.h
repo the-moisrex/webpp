@@ -39,15 +39,15 @@ namespace webpp {
         }
     };
 
-
     enum class debounce_type {
         leading,        // this will run the callable the moment it is called
         trailing,       // this will run the callable after Interval finishes
-        async_trailing, // same as trailing but it's async
-        both // this will run the callable the moment it is called and also
-             // while the first call's Interval hasn't finished another call is
-             // omitted, then there will be another call at the end of the
-             // Interval too
+        trailing_async, // same as trailing but it's async
+        both, // this will run the callable the moment it is called and also
+              // while the first call's Interval hasn't finished another call is
+              // omitted, then there will be another call at the end of the
+              // Interval too
+        both_async // the same as "both" but async
     };
 
     /**
@@ -60,7 +60,6 @@ namespace webpp {
         std::remove_pointer_t<Callable>* func;
 
       public:
-
         constexpr callable_function(
             std::remove_pointer_t<Callable>* func) noexcept
             : func(func) {}
@@ -102,7 +101,14 @@ namespace webpp {
         auto& ref() noexcept { return callable; }
     };
 
-    template <typename Callable, typename Rep, typename Period>
+    /**
+     * Common functions between all types.
+     * @tparam Callable
+     * @tparam Rep
+     * @tparam Period
+     * @tparam Clock
+     */
+    template <typename Callable, typename Rep, typename Period, typename Clock>
     struct debounce_ctors {
       protected:
         using Interval = std::chrono::duration<Rep, Period>;
@@ -122,10 +128,50 @@ namespace webpp {
     };
 
     template <typename Callable, debounce_type DType, typename Rep,
-              typename Period>
-    struct debounce_impl : public debounce_ctors<Callable, Rep, Period> {
-        using ctors = debounce_ctors<Callable, Rep, Period>;
+              typename Period, typename Clock>
+    struct debounce_impl : public debounce_ctors<Callable, Rep, Period, Clock> {
+        using ctors = debounce_ctors<Callable, Rep, Period, Clock>;
         using ctors::ctors;
+    };
+
+    /**
+     * Debounce type implementation: leading
+     * @tparam Callable
+     * @tparam Rep
+     * @tparam Period
+     * @tparam Clock
+     */
+    template <typename Callable, typename Rep, typename Period, typename Clock>
+    struct debounce_impl<Callable, debounce_type::leading, Rep, Period, Clock>
+        : public debounce_ctors<Callable, Rep, Period, Clock> {
+
+      protected:
+        mutable std::chrono::time_point<Clock> last_invoke_time;
+
+      public:
+        using ctors = debounce_ctors<Callable, Rep, Period, Clock>;
+        using ctors::ctors;
+
+        template <typename... Args>
+        auto operator()(Args&&... args) noexcept {
+            if ((Clock::now() - last_invoke_time) > ctors::interval()) {
+                Callable(std::forward<Args>(args)...);
+                last_invoke_time = Clock::now();
+            }
+        }
+    };
+
+    template <typename Callable, typename Rep, typename Period, typename Clock>
+    struct debounce_impl<Callable, debounce_type::trailing, Rep, Period, Clock>
+        : public debounce_ctors<Callable, Rep, Period, Clock> {
+
+        using ctors = debounce_ctors<Callable, Rep, Period, Clock>;
+        using ctors::ctors;
+
+        template <typename... Args>
+        auto operator()(Args&&... args) noexcept {}
+
+      protected:
     };
 
     /**
@@ -134,7 +180,7 @@ namespace webpp {
      * @tparam Interval
      */
     template <typename Callable, typename Rep, typename Period>
-    struct debounce_impl<Callable, debounce_type::async_trailing, Rep, Period>
+    struct debounce_impl<Callable, debounce_type::trailing_async, Rep, Period>
         : public debounce_ctors<Callable, Rep, Period> {
 
         using ctors = debounce_ctors<Callable, Rep, Period>;
@@ -181,9 +227,10 @@ namespace webpp {
         /**
          * Call the callable now
          */
-        template <typename RetType, typename... Args>
-        RetType flush(Args&&... args) noexcept(
-            std::is_nothrow_invocable_v<Callable, Args...>) {
+        template <typename... Args>
+        auto flush(Args&&... args) noexcept(
+            std::is_nothrow_invocable_v<Callable, Args...>)
+            -> std::invoke_result_t<Callable, Args...> {
             auto res = Callable::operator()(std::forward<Args>(args)...);
             done.store(true, std::memory_order_relaxed);
             return res;
@@ -243,8 +290,6 @@ namespace webpp {
             debounce_impl<make_inheritable<Callable>, DType, Rep, Period>;
         using ctors = typename impl_t::ctors;
 
-        mutable std::chrono::time_point<Clock> last_invoke_time;
-
       public:
         using inheritable_callable = make_inheritable<Callable>;
         using impl_t::async_trailing_t;
@@ -258,11 +303,6 @@ namespace webpp {
 
             if constexpr (std::is_void_v<RetType>) {
                 if constexpr (DType == debounce_type::leading) {
-                    if ((Clock::now() - last_invoke_time) > ctors::interval()) {
-                        inheritable_callable::operator()(
-                            std::forward<Args>(args)...);
-                        last_invoke_time = Clock::now();
-                    }
                 } else if constexpr (DType == debounce_type::trailing) {
                     if (!last_invoke_time ||
                         (Clock::now() - last_invoke_time) >=
