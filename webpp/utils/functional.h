@@ -111,7 +111,12 @@ namespace webpp {
         template <typename... Args>
         decltype(auto) operator()(Args&&... args) const
             noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
-            return Callable(std::forward<Args>(args)...);
+            using RetType = std::invoke_result_t<Callable, Args...>;
+            if constexpr (std::is_void_v<RetType>) {
+                Callable(std::forward<Args>(args)...);
+            } else {
+                return Callable(std::forward<Args>(args)...);
+            }
         }
     };
 
@@ -252,53 +257,22 @@ namespace webpp {
           public debounce_async_trailing<make_inheritable<Callable>, DType,
                                          Interval> {
 
-        std::chrono::time_point<Clock> last_invoke_time;
+        mutable std::chrono::time_point<Clock> last_invoke_time;
 
       public:
         using inheritable_callable = make_inheritable<Callable>;
 
-        /**
-         * This constructor is for when Callable is:
-         *   - a class -> because if it's not, it means it's a function
-         *     so, it can't be constructible.
-         *   - constructible
-         *   - not a final class -> because there is another constructor
-         *     for it in the "debounce_caller_final" class
-         *
-         * @tparam Args
-         * @param args
-         */
-        /*
-       template <
-           typename... Args,
-           std::enable_if_t<std::is_class_v<Callable> &&
-                                std::is_constructible_v<Callable, Args...> &&
-                                !std::is_final_v<Callable>,
-                            int> = 0>
-       debounce(Args&&... args) noexcept(
-           std::is_nothrow_constructible_v<Callable, Args...>)
-           : Callable(std::forward<Args>(args)...) {}
-       */
-
-        /**
-         * Default ctor for when the Callable is a function and not a class
-         */
-        /*
-       debounce() noexcept = default;
-       debounce(debounce&&) noexcept = default;
-       debounce(debounce const&) noexcept = default;
-       debounce& operator=(debounce&&) noexcept = default;
-       debounce& operator=(debounce const&) noexcept = default;
-       */
-
         template <typename... Args>
-        auto operator()(Args&&... args) noexcept(
-            std::is_nothrow_invocable_v<Callable, Args...>) {
-            if constexpr (std::is_void_v<decltype(
-                              Callable(std::forward<Args>(args)...))>) {
+        auto operator()(Args&&... args) const
+            noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
+
+            using RetType = std::invoke_result_t<Callable, Args...>;
+
+            if constexpr (std::is_void_v<RetType>) {
                 if constexpr (DType == debounce_type::leading) {
                     if ((Clock::now() - last_invoke_time).count() > Interval) {
-                        Callable::operator()(std::forward<Args>(args)...);
+                        inheritable_callable::operator()(
+                            std::forward<Args>(args)...);
                         last_invoke_time = Clock::now();
                     }
                 } else if constexpr (DType == debounce_type::trailing) {
