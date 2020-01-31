@@ -39,56 +39,6 @@ namespace webpp {
         }
     };
 
-    /**
-     * This function helps you to call an expensive function and get its results
-     * and cache it.
-     * Its usage is for when you're calling an expensive function but you know
-     * this function's result will not change often.
-     * @tparam Callable
-     * @param callable
-     * @param interval the time (in nanoseconds) that it caches the result of
-     * your callable
-     * @return Whatever your callable returns
-     */
-    template <typename Callable>
-    decltype(auto)
-    call_and_cache(Callable const& callable,
-                   std::chrono::steady_clock::rep interval = 1000) noexcept {
-        using namespace std::chrono;
-
-        static_assert(std::is_invocable_v<Callable>,
-                      "The specified callable is not callable");
-
-        constexpr bool does_returns_void = std::is_void_v<decltype(callable())>;
-        static time_point<steady_clock> t;
-
-        if constexpr (!does_returns_void) {
-            static decltype(callable()) res;
-            if ((steady_clock::now() - t).count() > interval) {
-                res = callable();
-                t = steady_clock::now();
-                return res;
-            }
-        } else {
-            if ((steady_clock::now() - t).count() > interval) {
-                callable();
-                t = steady_clock::now();
-            }
-        }
-    }
-
-    //    template <typename RetType>
-    //    struct debounce_cache {
-    //        auto last_returned_value() const noexcept { return cached; }
-    //
-    //        debounce_cache() noexcept = default;
-    //
-    //      protected:
-    //        mutable RetType cached;
-    //    };
-    //
-    //    template <>
-    //    struct debounce_cache<void> {};
 
     enum class debounce_type {
         leading,        // this will run the callable the moment it is called
@@ -101,7 +51,7 @@ namespace webpp {
     };
 
     /**
-     * This class is used for callables that are not inheritable
+     * This class is used for function pointers because they are not inheritable
      * @tparam Callable
      */
     template <typename Callable>
@@ -110,10 +60,6 @@ namespace webpp {
         std::remove_pointer_t<Callable>* func;
 
       public:
-        //        static_assert(std::is_function_v<Callable> &&
-        //                          !std::is_class_v<Callable>,
-        //                      "The Callable you presented is either not a
-        //                      function or " "it's a class of it's own.");
 
         constexpr callable_function(
             std::remove_pointer_t<Callable>* func) noexcept
