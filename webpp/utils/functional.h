@@ -328,10 +328,9 @@ namespace webpp {
      */
     template <typename Callable, debounce_type DType = debounce_type::leading,
               decltype(auto) Interval = std::chrono::nanoseconds(1000),
-              typename Clock = std::chrono::steady_clock
+              typename Clock = std::chrono::steady_clock>
+    debounce(Callable func) -> debounce<decltype(func), DType, Interval, Clock>;
 
-              >
-    debounce(Callable func) -> debounce<decltype(func)>;
 } // namespace webpp
 
 #endif // WEBPP_FUNCTIONAL_H
