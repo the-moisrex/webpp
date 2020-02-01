@@ -21,9 +21,10 @@ struct ConstMyCallable {
 
 struct MyCallable {
     int i = 0;
-    void operator()(int limit) {
+    auto operator()(int limit) {
         i++;
         EXPECT_TRUE(i < limit - 1) << "i is: " << i << "; limit: " << limit;
+        return i;
     }
 };
 
@@ -32,14 +33,14 @@ TEST(FunctionalTests, DebouncedFunctions) {
 
     constexpr auto limit = 1000;
 
-    constexpr auto checking_deduction_for_function_pointers = debounce_t(test);
-    constexpr auto debounced_test = debounce_t(milliseconds(10), test);
+    auto checking_deduction_for_function_pointers = debounce_t(test);
+    auto debounced_test = debounce_t(milliseconds(10), test);
     for (int i = 0; i < limit; i++)
         debounced_test(limit);
 
     // lambdas
 
-    constexpr auto lambda_test = debounce_t([](int limit) {
+    auto lambda_test = debounce_t([](int limit) {
         static auto i = 0;
         i++;
         EXPECT_LT(i, limit);
@@ -50,9 +51,11 @@ TEST(FunctionalTests, DebouncedFunctions) {
 
     // class
 
-    debounce_t<MyCallable> debounced_class;
-    for (int i = 0; i < limit; i++)
-        debounced_class(limit);
+    debounce_t<MyCallable> debounced_class(milliseconds(1));
+    for (int i = 0; i < limit; i++) {
+        auto res = debounced_class(limit);
+        EXPECT_LT(res, limit) << res;
+    }
 
     const debounce_t<ConstMyCallable> const_debounced_class;
     for (int i = 0; i < limit; i++)
