@@ -78,7 +78,7 @@ namespace webpp {
         Callable callable;
 
         template <typename... Args>
-        callable_final(Args&&... args)
+        constexpr callable_final(Args&&... args)
             : callable(std::forward<Args>(args)...) {}
 
         template <typename... Args>
@@ -115,16 +115,14 @@ namespace webpp {
         const Interval _interval = std::chrono::duration<Rep, Period>{1000};
 
       public:
-        constexpr debounce_ctors() noexcept = default;
-
         template <typename... Args>
         constexpr debounce_ctors(Args&&... args) noexcept
-            : Callable(std::forward<Args>(args)...) {}
+            : Callable{std::forward<Args>(args)...} {}
 
         template <typename... Args>
         constexpr debounce_ctors(Interval __interval, Args&&... args) noexcept
-            : _interval(std::move(__interval)),
-              Callable(std::forward<Args>(args)...) {}
+            : Callable{std::forward<Args>(args)...},
+              _interval(std::move(__interval)) {}
 
         constexpr void interval(Interval __interval) noexcept {
             _interval = std::move(__interval);
@@ -134,6 +132,10 @@ namespace webpp {
             return _interval;
         }
     };
+
+    /**************************************************************************
+     * Implementations
+     **************************************************************************/
 
     template <typename Callable, debounce_type DType, typename Rep,
               typename Period, typename Clock>
@@ -162,9 +164,9 @@ namespace webpp {
         using ctors::ctors;
 
         template <typename... Args>
-        auto operator()(Args&&... args) noexcept {
+        auto operator()(Args&&... args) const noexcept {
             if ((Clock::now() - last_invoke_time) > ctors::interval()) {
-                Callable(std::forward<Args>(args)...);
+                Callable::operator()(std::forward<Args>(args)...);
                 last_invoke_time = Clock::now();
             }
         }
@@ -276,6 +278,10 @@ namespace webpp {
         }
     };
 
+    /**************************************************************************
+     * The base classes
+     **************************************************************************/
+
     /**
      * Add Functor to the Callable to make sure it's extendable (so we can
      * inherit from it). It'll make sure it's Inheritable and Callable.
@@ -348,16 +354,27 @@ namespace webpp {
         auto value() const noexcept {}
     };
 
-    /**
-     * Factory functions for debounce_t class
+    /**************************************************************************
      * Type deduction for function pointers and lambdas
-     */
+     **************************************************************************/
+
+    template <typename Callable, debounce_type DType = debounce_type::leading,
+              typename Rep = std::chrono::milliseconds::rep,
+              typename Period = std::chrono::milliseconds::period,
+              typename Clock = std::chrono::steady_clock>
+    debounce_t(std::chrono::duration<Rep, Period> interval, Callable func)
+        ->debounce_t<decltype(func), DType, Rep, Period, Clock>;
+
     template <typename Callable, debounce_type DType = debounce_type::leading,
               typename Rep = std::chrono::milliseconds::rep,
               typename Period = std::chrono::milliseconds::period,
               typename Clock = std::chrono::steady_clock>
     debounce_t(Callable func)
         ->debounce_t<decltype(func), DType, Rep, Period, Clock>;
+
+    /**************************************************************************
+     * Factory functions for debounce_t class
+     **************************************************************************/
 
     template <typename Callable, debounce_type DType = debounce_type::leading,
               typename Clock = std::chrono::steady_clock,
