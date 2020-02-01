@@ -179,11 +179,12 @@ namespace webpp {
      * @tparam Callable
      * @tparam Interval
      */
-    template <typename Callable, typename Rep, typename Period>
-    struct debounce_impl<Callable, debounce_type::trailing_async, Rep, Period>
-        : public debounce_ctors<Callable, Rep, Period> {
+    template <typename Callable, typename Rep, typename Period, typename Clock>
+    struct debounce_impl<Callable, debounce_type::trailing_async, Rep, Period,
+                         Clock>
+        : public debounce_ctors<Callable, Rep, Period, Clock> {
 
-        using ctors = debounce_ctors<Callable, Rep, Period>;
+        using ctors = debounce_ctors<Callable, Rep, Period, Clock>;
         using ctors::ctors;
 
       protected:
