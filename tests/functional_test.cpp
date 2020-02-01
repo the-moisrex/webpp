@@ -43,6 +43,6 @@ TEST(FunctionalTests, DebouncedFunctions) {
     // class
 
     constexpr debounce_t<MyCallable> debounced_class;
-    for (int i = 0; i < limi; i++)
+    for (int i = 0; i < limit; i++)
         debounced_class(limit);
 }
