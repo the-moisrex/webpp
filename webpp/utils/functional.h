@@ -164,7 +164,17 @@ namespace webpp {
         using ctors::ctors;
 
         template <typename... Args>
-        auto operator()(Args&&... args) const noexcept {
+        auto operator()(Args&&... args) const
+            noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
+            if ((Clock::now() - last_invoke_time) > ctors::interval()) {
+                Callable::operator()(std::forward<Args>(args)...);
+                last_invoke_time = Clock::now();
+            }
+        }
+
+        template <typename... Args>
+        auto operator()(Args&&... args) noexcept(
+            std::is_nothrow_invocable_v<Callable, Args...>) {
             if ((Clock::now() - last_invoke_time) > ctors::interval()) {
                 Callable::operator()(std::forward<Args>(args)...);
                 last_invoke_time = Clock::now();
@@ -185,7 +195,28 @@ namespace webpp {
         using ctors::debounce_ctors;
 
         template <typename... Args>
-        auto operator()(Args&&... args) noexcept {
+        auto operator()(Args&&... args) const
+            noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
+
+            if (!last_invoke_time ||
+                (Clock::now() - last_invoke_time) >= ctors::interval()) {
+                // todo: here we need to check if we have a thread pool
+                // or not
+
+                // here we don't need the result of the function because
+                // it's void
+                std::this_thread::sleep_for(ctors::interval());
+
+                // The user can't cancel it so there's no point of
+                // checking if it's canceled or not Wait! What if the
+                // user cancels it from another thread?
+                Callable::operator()(std::forward<Args>(args)...);
+                last_invoke_time = Clock::now();
+            }
+        }
+        template <typename... Args>
+        auto operator()(Args&&... args) noexcept(
+            std::is_nothrow_invocable_v<Callable, Args...>) {
 
             if (!last_invoke_time ||
                 (Clock::now() - last_invoke_time) >= ctors::interval()) {
@@ -328,24 +359,7 @@ namespace webpp {
         using inheritable_callable = make_inheritable<Callable>;
 
       public:
-        using impl_t::debounce_impl;
-
-        //        template <typename... Args>
-        //        auto operator()(Args&&... args) const
-        //            noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
-        //
-        //            using RetType = std::invoke_result_t<Callable, Args...>;
-        //
-        //            if constexpr (std::is_void_v<RetType>) {
-        //                if constexpr (DType == debounce_type::leading) {
-        //                } else if constexpr (DType == debounce_type::trailing)
-        //                { } else if constexpr (DType == debounce_type::both) {
-        //                }
-        //            } else {
-        //                if constexpr (DType == debounce_type::leading) {
-        //                }
-        //            }
-        //        }
+        using impl_t::impl_t;
 
         /**
          * or maybe "get"??
