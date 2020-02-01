@@ -165,11 +165,32 @@ namespace webpp {
     struct debounce_impl<Callable, debounce_type::trailing, Rep, Period, Clock>
         : public debounce_ctors<Callable, Rep, Period, Clock> {
 
+      protected:
+        mutable std::chrono::time_point<Clock> last_invoke_time;
+
+      public:
         using ctors = debounce_ctors<Callable, Rep, Period, Clock>;
         using ctors::ctors;
 
         template <typename... Args>
-        auto operator()(Args&&... args) noexcept {}
+        auto operator()(Args&&... args) noexcept {
+
+            if (!last_invoke_time ||
+                (Clock::now() - last_invoke_time) >= ctors::interval()) {
+                // todo: here we need to check if we have a thread pool
+                // or not
+
+                // here we don't need the result of the function because
+                // it's void
+                std::this_thread::sleep_for(ctors::interval());
+
+                // The user can't cancel it so there's no point of
+                // checking if it's canceled or not Wait! What if the
+                // user cancels it from another thread?
+                Callable::operator()(std::forward<Args>(args)...);
+                last_invoke_time = Clock::now();
+            }
+        }
 
       protected:
     };
@@ -285,10 +306,11 @@ namespace webpp {
               typename Clock = std::chrono::steady_clock>
     class debounce_t
         : public make_inheritable<Callable>,
-          public debounce_impl<make_inheritable<Callable>, DType, Rep, Period> {
+                       public debounce_impl<make_inheritable<Callable>, DType,
+                                            Rep, Period, Clock> {
 
-        using impl_t =
-            debounce_impl<make_inheritable<Callable>, DType, Rep, Period>;
+        using impl_t = debounce_impl<make_inheritable<Callable>, DType, Rep,
+                                     Period, Clock>;
         using ctors = typename impl_t::ctors;
 
       public:
@@ -305,22 +327,6 @@ namespace webpp {
             if constexpr (std::is_void_v<RetType>) {
                 if constexpr (DType == debounce_type::leading) {
                 } else if constexpr (DType == debounce_type::trailing) {
-                    if (!last_invoke_time ||
-                        (Clock::now() - last_invoke_time) >=
-                            ctors::interval()) {
-                        // todo: here we need to check if we have a thread pool
-                        // or not
-
-                        // here we don't need the result of the function because
-                        // it's void
-                        std::this_thread::sleep_for(ctors::interval());
-
-                        // The user can't cancel it so there's no point of
-                        // checking if it's canceled or not Wait! What if the
-                        // user cancels it from another thread?
-                        Callable::operator()(std::forward<Args>(args)...);
-                        last_invoke_time = Clock::now();
-                    }
                 } else if constexpr (DType == debounce_type::both) {
                 }
             } else {
