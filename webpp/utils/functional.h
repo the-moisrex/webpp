@@ -168,27 +168,6 @@ namespace webpp {
       public:
         using ctors::ctors;
 
-        template <typename... Args>
-        auto operator()(Args&&... args) const
-            noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
-
-            using RetType = std::invoke_result_t<Callable, Args...>;
-
-            if constexpr (std::is_void_v<RetType>) {
-                if ((Clock::now() - last_invoke_time) > ctors::interval()) {
-                    Callable::operator()(std::forward<Args>(args)...);
-                    last_invoke_time = Clock::now();
-                }
-            } else {
-                if ((Clock::now() - last_invoke_time) > ctors::interval()) {
-                    res = Callable::operator()(std::forward<Args>(args)...);
-                    last_invoke_time = Clock::now();
-                    return std::any_cast<RetType>(res);
-                } else {
-                    return std::any_cast<RetType>(res);
-                }
-            }
-        }
 
         template <typename... Args>
         auto operator()(Args&&... args) noexcept(
@@ -232,21 +211,6 @@ namespace webpp {
       public:
         using ctors::debounce_ctors;
 
-        template <typename... Args>
-        auto operator()(Args&&... args) const
-            noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
-
-            if (!last_invoke_time ||
-                (Clock::now() - last_invoke_time) >= ctors::interval()) {
-                std::this_thread::sleep_for(ctors::interval());
-
-                // The user can't cancel it so there's no point of
-                // checking if it's canceled or not Wait! What if the
-                // user cancels it from another thread?
-                Callable::operator()(std::forward<Args>(args)...);
-                last_invoke_time = Clock::now();
-            }
-        }
 
         template <typename... Args>
         auto operator()(Args&&... args) noexcept(
@@ -254,8 +218,6 @@ namespace webpp {
 
             if (!last_invoke_time ||
                 (Clock::now() - last_invoke_time) >= ctors::interval()) {
-                // todo: here we need to check if we have a thread pool
-                // or not
 
                 // here we don't need the result of the function because
                 // it's void
