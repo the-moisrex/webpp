@@ -2,6 +2,7 @@
 #define WEBPP_FUNCTIONAL_H
 
 // Created by moisrex on 12/6/19.
+#include <any>
 #include <chrono>
 #include <future>
 #include <queue>
@@ -160,28 +161,65 @@ namespace webpp {
       protected:
         mutable std::chrono::time_point<Clock> last_invoke_time;
 
+        // TODO: convert this to "void*"; but benchmark the performance first.
+        // and even if it's possible, make the whole thing "constexpr" friendly.
+        mutable std::any res;
+
       public:
         using ctors::ctors;
 
         template <typename... Args>
         auto operator()(Args&&... args) const
             noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
-            if ((Clock::now() - last_invoke_time) > ctors::interval()) {
-                Callable::operator()(std::forward<Args>(args)...);
-                last_invoke_time = Clock::now();
+
+            using RetType = std::invoke_result_t<Callable, Args...>;
+
+            if constexpr (std::is_void_v<RetType>) {
+                if ((Clock::now() - last_invoke_time) > ctors::interval()) {
+                    Callable::operator()(std::forward<Args>(args)...);
+                    last_invoke_time = Clock::now();
+                }
+            } else {
+                if ((Clock::now() - last_invoke_time) > ctors::interval()) {
+                    res = Callable::operator()(std::forward<Args>(args)...);
+                    last_invoke_time = Clock::now();
+                    return std::any_cast<RetType>(res);
+                } else {
+                    return std::any_cast<RetType>(res);
+                }
             }
         }
 
         template <typename... Args>
         auto operator()(Args&&... args) noexcept(
             std::is_nothrow_invocable_v<Callable, Args...>) {
-            if ((Clock::now() - last_invoke_time) > ctors::interval()) {
-                Callable::operator()(std::forward<Args>(args)...);
-                last_invoke_time = Clock::now();
+
+            using RetType = std::invoke_result_t<Callable, Args...>;
+
+            if constexpr (std::is_void_v<RetType>) {
+                if ((Clock::now() - last_invoke_time) > ctors::interval()) {
+                    Callable::operator()(std::forward<Args>(args)...);
+                    last_invoke_time = Clock::now();
+                }
+            } else {
+                if ((Clock::now() - last_invoke_time) > ctors::interval()) {
+                    res = Callable::operator()(std::forward<Args>(args)...);
+                    last_invoke_time = Clock::now();
+                    return std::any_cast<RetType>(res);
+                } else {
+                    return std::any_cast<RetType>(res);
+                }
             }
         }
     };
 
+    /**
+     * Debounce Implementation: non-async trailing
+     * @tparam Callable
+     * @tparam Rep
+     * @tparam Period
+     * @tparam Clock
+     */
     template <typename Callable, typename Rep, typename Period, typename Clock>
     struct debounce_impl<Callable, debounce_type::trailing, Rep, Period, Clock>
         : public debounce_ctors<Callable, Rep, Period, Clock> {
@@ -200,11 +238,6 @@ namespace webpp {
 
             if (!last_invoke_time ||
                 (Clock::now() - last_invoke_time) >= ctors::interval()) {
-                // todo: here we need to check if we have a thread pool
-                // or not
-
-                // here we don't need the result of the function because
-                // it's void
                 std::this_thread::sleep_for(ctors::interval());
 
                 // The user can't cancel it so there's no point of
@@ -214,6 +247,7 @@ namespace webpp {
                 last_invoke_time = Clock::now();
             }
         }
+
         template <typename... Args>
         auto operator()(Args&&... args) noexcept(
             std::is_nothrow_invocable_v<Callable, Args...>) {
