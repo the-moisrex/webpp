@@ -11,9 +11,17 @@ void test(int limit) {
     EXPECT_TRUE(i < limit - 1) << "i is: " << i << "; limit: " << limit;
 }
 
-struct MyCallable {
-    void operator()(int limit) {
+struct ConstMyCallable {
+    void operator()(int limit) const {
         static auto i = 0;
+        i++;
+        EXPECT_TRUE(i < limit - 1) << "i is: " << i << "; limit: " << limit;
+    }
+};
+
+struct MyCallable {
+    int i = 0;
+    void operator()(int limit) {
         i++;
         EXPECT_TRUE(i < limit - 1) << "i is: " << i << "; limit: " << limit;
     }
@@ -45,4 +53,8 @@ TEST(FunctionalTests, DebouncedFunctions) {
     debounce_t<MyCallable> debounced_class;
     for (int i = 0; i < limit; i++)
         debounced_class(limit);
+
+    const debounce_t<ConstMyCallable> const_debounced_class;
+    for (int i = 0; i < limit; i++)
+        const_debounced_class(limit);
 }
