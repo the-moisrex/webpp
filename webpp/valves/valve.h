@@ -124,13 +124,13 @@ namespace webpp::valves {
 
     struct method_condition {
       private:
-        std::string method_string;
+        std::string_view method_string;
 
       public:
-        method_condition(std::string str) noexcept
+        constexpr method_condition(std::string_view str) noexcept
                 : method_string(std::move(str)) {}
 
-        method_condition() noexcept = default;
+        constexpr method_condition() noexcept = default;
 
         template <typename RequestType>
         [[nodiscard]] bool operator()(RequestType const& req) const noexcept {
