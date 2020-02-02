@@ -222,8 +222,6 @@ namespace webpp {
 
     /**
      * This class will be async trailing implementation of the debounce class
-     * @tparam Callable
-     * @tparam Interval
      */
     template<typename Callable, typename Rep, typename Period, typename Clock>
     struct debounce_impl<Callable, debounce_type::trailing, Rep, Period,
@@ -259,7 +257,7 @@ namespace webpp {
 
             // join all the threads
             while (!trs.empty()) {
-                auto tr = trs.front();
+                auto tr = std::move(trs.front());
                 if (tr.joinable())
                     tr.join();
                 trs.pop();
