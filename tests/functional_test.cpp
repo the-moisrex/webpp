@@ -51,7 +51,7 @@ TEST(FunctionalTests, DebouncedFunctions) {
 
     // class
 
-    debounce<MyCallable> debounced_class(milliseconds(1));
+    debounce_t<MyCallable> debounced_class(milliseconds(1));
     for (int i = 0; i < limit; i++) {
         auto res = debounced_class(limit);
         EXPECT_LT(res, limit) << res;
@@ -64,5 +64,11 @@ TEST(FunctionalTests, DebouncedFunctions) {
 
 
 TEST(FunctionalTests, TrailingMode) {
+    using dtype = debounce_type;
+
+    debounce_trailing debounced_lambda([] {
+
+    });
+
 
 }
