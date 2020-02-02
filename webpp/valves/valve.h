@@ -11,21 +11,21 @@ namespace webpp::valves {
 
     enum class logical_operators { AND, OR, XOR };
 
-    template <typename NextValve>
-    struct basic_valve {
+    template<typename ValveType, typename NextValve>
+    struct basic_valve : public ValveType {
         using next_valve_type =
             std::remove_reference_t<std::remove_cv_t<NextValve>>;
 
         next_valve_type next;
         logical_operators op;
 
-        constexpr basic_valve(next_valve_type&& _next,
+        constexpr basic_valve(ValveType const &super, next_valve_type &&_next,
                               logical_operators op) noexcept
-            : next(std::move(_next)), op(op) {}
+                : ValveType(super), next(std::move(_next)), op(op) {}
 
-        constexpr basic_valve(next_valve_type const& _next,
+        constexpr basic_valve(ValveType &&super, next_valve_type const &_next,
                               logical_operators op) noexcept
-            : next(_next), op(op) {}
+                : ValveType(std::move(super)), next(_next), op(op) {}
 
         constexpr basic_valve(basic_valve const& v) noexcept = default;
         constexpr basic_valve(basic_valve&& v) noexcept = default;
@@ -35,17 +35,18 @@ namespace webpp::valves {
         constexpr basic_valve& operator=(basic_valve&&) noexcept = default;
     };
 
-    template <>
-    struct basic_valve<void> {};
+    template<typename ValveType>
+    struct basic_valve<ValveType, void> : public ValveType {
+        using ValveType::ValveType;
+    };
 
-    template <typename ValveType, typename NextValve = void>
-    class valve : public basic_valve<NextValve>, public ValveType {
+    template<typename ValveType, typename NextValve = void>
+    class valve : public basic_valve<ValveType, NextValve> {
       public:
         using type = ValveType;
         using next_valve_type = NextValve;
 
-        using ValveType::ValveType;
-        using basic_valve<NextValve>::basic_valve;
+        using basic_valve<ValveType, NextValve>::basic_valve;
         constexpr valve() noexcept = default;
 
         /**
@@ -62,15 +63,15 @@ namespace webpp::valves {
                 // void
 
                 // the first way (A<X, void> and B<Y, void> === A<X, B<Y, void>>
-                return valve<ValveType, NewValve>(std::forward<NewValve>(v),
+                return valve<ValveType, NewValve>(*this, std::forward<NewValve>(v),
                                                   the_op);
             } else {
                 // this means this function has a "next" valve already,
                 // so it goes to the next's next valve
                 // this way we recursively create a valve type and return it.
-                auto n = basic_valve<NextValve>::next.set_next(
+                auto n = basic_valve<ValveType, NextValve>::next.set_next(
                     std::forward<NewValve>(v), the_op);
-                return valve<ValveType, decltype(n)>{n, this->op};
+                return valve<ValveType, decltype(n)>{*this, n, this->op};
             }
         }
 
@@ -104,16 +105,16 @@ namespace webpp::valves {
             if constexpr (std::is_void_v<NextValve>) {
                 return ValveType::operator()(req);
             } else {
-                switch (basic_valve<NextValve>::op) {
+                switch (basic_valve<ValveType, NextValve>::op) {
                 case logical_operators::AND:
                     return ValveType::operator()(req) &&
-                           basic_valve<NextValve>::next.operator()(req);
+                           basic_valve<ValveType, NextValve>::next.operator()(req);
                 case logical_operators::OR:
                     return ValveType::operator()(req) ||
-                           basic_valve<NextValve>::next.operator()(req);
+                           basic_valve<ValveType, NextValve>::next.operator()(req);
                 case logical_operators::XOR:
                     return ValveType::operator()(req) ^
-                           basic_valve<NextValve>::next.operator()(req);
+                           basic_valve<ValveType, NextValve>::next.operator()(req);
                 default:
                     return false;
                 }
@@ -123,12 +124,13 @@ namespace webpp::valves {
 
     struct method_condition {
       private:
-        std::string_view method_string;
+        std::string method_string;
 
       public:
-        constexpr method_condition(std::string_view str) noexcept
-            : method_string(str) {}
-        constexpr method_condition() noexcept = default;
+        method_condition(std::string str) noexcept
+                : method_string(std::move(str)) {}
+
+        method_condition() noexcept = default;
 
         template <typename RequestType>
         [[nodiscard]] bool operator()(RequestType const& req) const noexcept {
