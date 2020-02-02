@@ -16,7 +16,7 @@ namespace webpp {
     /**
      * @brief This route class contains one single root route and it's children
      */
-    template <typename Interface, typename Valve,
+    template<typename Interface, typename Valve = valves::empty_t,
               typename RequestType = request_t<Interface>,
               typename ResponseType = response,
               typename Callable = void(RequestType const&, ResponseType&),
