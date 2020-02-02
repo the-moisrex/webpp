@@ -8,19 +8,28 @@ using namespace webpp;
 using namespace webpp::valves;
 
 namespace webpp {
-    class fake_cgi_GET;
+    class fake_cgi;
 
     template<>
-    class request_t<fake_cgi_GET> {
+    class request_t<fake_cgi> {
+        std::string method;
     public:
         std::string request_method() const noexcept {
-            return "GET";
+            return method;
+        }
+
+        auto &set_method(std::string _method) noexcept {
+            method = _method;
+            return *this;
         }
     };
 }
 
 TEST(ValvesTests, Creation) {
     constexpr auto v = method("GET") or method("POST");
-    EXPECT_TRUE(v(request_t<fake_cgi_GET>()));
-
+    EXPECT_TRUE(v(request_t<fake_cgi>().set_method("GET")));
+    EXPECT_TRUE(v(request_t<fake_cgi>().set_method("get")));
+    EXPECT_TRUE(v(request_t<fake_cgi>().set_method("Post")));
+    EXPECT_TRUE(v(request_t<fake_cgi>().set_method("post")));
+    EXPECT_TRUE(v(request_t<fake_cgi>().set_method("POST")));
 }
