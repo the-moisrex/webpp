@@ -33,14 +33,14 @@ TEST(FunctionalTests, DebouncedFunctions) {
 
     constexpr auto limit = 1000;
 
-    auto checking_deduction_for_function_pointers = debounce_t(test);
-    auto debounced_test = debounce_t(milliseconds(10), test);
+    auto checking_deduction_for_function_pointers = debounce(test);
+    auto debounced_test = debounce(milliseconds(10), test);
     for (int i = 0; i < limit; i++)
         debounced_test(limit);
 
     // lambdas
 
-    auto lambda_test = debounce_t([](int limit) {
+    auto lambda_test = debounce([](int limit) {
         static auto i = 0;
         i++;
         EXPECT_LT(i, limit);
@@ -51,13 +51,18 @@ TEST(FunctionalTests, DebouncedFunctions) {
 
     // class
 
-    debounce_t<MyCallable> debounced_class(milliseconds(1));
+    debounce<MyCallable> debounced_class(milliseconds(1));
     for (int i = 0; i < limit; i++) {
         auto res = debounced_class(limit);
         EXPECT_LT(res, limit) << res;
     }
 
-    const debounce_t<ConstMyCallable> const_debounced_class;
+    const debounce<ConstMyCallable> const_debounced_class;
     for (int i = 0; i < limit; i++)
         const_debounced_class(limit);
+}
+
+
+TEST(FunctionalTests, TrailingMode) {
+
 }
