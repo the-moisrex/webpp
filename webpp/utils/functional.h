@@ -388,6 +388,7 @@ namespace webpp {
 
     /**************************************************************************
      * Type deduction for function pointers and lambdas
+     * TODO: use deduction guide for aliases in C++20 if possible
      **************************************************************************/
 
     template<typename Callable, debounce_type DType = debounce_type::leading,

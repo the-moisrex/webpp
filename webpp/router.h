@@ -19,7 +19,6 @@ namespace webpp {
     template<typename Interface, typename Valve = valves::empty_t,
               typename RequestType = request_t<Interface>,
               typename ResponseType = response,
-              typename Callable = void(RequestType const&, ResponseType&),
               typename = std::enable_if_t<
                   !std::is_convertible_v<RequestType, ResponseType>>>
     class route {
@@ -27,8 +26,9 @@ namespace webpp {
         using res_t = ResponseType;
         using signature = void(req_t const&, res_t&);
         using condition_t = Valve;
+        using callable = void(RequestType const &, ResponseType &);
 
-        Callable migrator;
+        callable *migrator;
         condition_t condition = valves::empty;
         bool active = true;
 
@@ -287,6 +287,7 @@ namespace webpp {
                    route(std::forward<Valve>(v), std::forward<Route>(r));
         }
     };
+
 
 }; // namespace webpp
 
