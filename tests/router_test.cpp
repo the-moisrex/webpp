@@ -1,10 +1,13 @@
 #include <gtest/gtest.h>
 #include <webpp/router.h>
+#include <webpp/interfaces/cgi.h>
 
+using namespace webpp::valves;
+using namespace webpp;
 
 TEST(Router, RouteCreation) {
-//    constexpr webpp::route about_page([] (auto &res) {
-//        res << "About page\n";
-//    });
+    constexpr route<cgi> about_page([](auto &res) {
+        res << "About page\n";
+    });
 
 }
