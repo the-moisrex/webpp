@@ -370,7 +370,7 @@ namespace webpp {
             typename Rep = std::chrono::milliseconds::rep,
             typename Period = std::chrono::milliseconds::period,
             typename Clock = std::chrono::steady_clock>
-    class debounce_t : public debounce_impl<make_inheritable<Callable>, DType,
+    class debounce : public debounce_impl<make_inheritable<Callable>, DType,
             Rep, Period, Clock> {
 
         using impl_t = debounce_impl<make_inheritable<Callable>, DType, Rep,
@@ -396,40 +396,40 @@ namespace webpp {
             typename Rep = std::chrono::milliseconds::rep,
             typename Period = std::chrono::milliseconds::period,
             typename Clock = std::chrono::steady_clock>
-    debounce_t(std::chrono::duration<Rep, Period> interval, Callable func)
-    ->debounce_t<decltype(func), DType, Rep, Period, Clock>;
+    debounce(std::chrono::duration<Rep, Period> interval, Callable func)
+    ->debounce<decltype(func), DType, Rep, Period, Clock>;
 
     template<typename Callable, debounce_type DType = debounce_type::leading,
             typename Rep = std::chrono::milliseconds::rep,
             typename Period = std::chrono::milliseconds::period,
             typename Clock = std::chrono::steady_clock>
-    debounce_t(Callable func)
-    ->debounce_t<decltype(func), DType, Rep, Period, Clock>;
+    debounce(Callable func)
+    ->debounce<decltype(func), DType, Rep, Period, Clock>;
 
     /**************************************************************************
      * Factory functions for debounce_t class
      **************************************************************************/
 
-    template<typename Callable, debounce_type DType = debounce_type::leading,
-            typename Clock = std::chrono::steady_clock,
-            typename Rep = std::chrono::nanoseconds::rep,
-            typename Period = std::chrono::nanoseconds::period>
-    constexpr auto debounce(Callable callable,
-                            std::chrono::duration<Rep, Period> interval =
-                            std::chrono::milliseconds(1000)) noexcept {
-        debounce_t<Callable, DType, Rep, Period, Clock> debounced{callable};
-        debounced.interval(interval);
-        return debounced;
-    }
-
-    template<typename Callable, debounce_type DType = debounce_type::leading,
-            typename Clock = std::chrono::steady_clock,
-            typename Rep = std::chrono::nanoseconds::rep,
-            typename Period = std::chrono::nanoseconds::period>
-    constexpr auto debounce(std::chrono::duration<Rep, Period> interval =
-    std::chrono::milliseconds(1000)) noexcept {
-        return debounce_t<Callable, DType, Rep, Period, Clock>{interval};
-    }
+//    template<typename Callable, debounce_type DType = debounce_type::leading,
+//            typename Clock = std::chrono::steady_clock,
+//            typename Rep = std::chrono::nanoseconds::rep,
+//            typename Period = std::chrono::nanoseconds::period>
+//    constexpr auto debounce(Callable callable,
+//                            std::chrono::duration<Rep, Period> interval =
+//                            std::chrono::milliseconds(1000)) noexcept {
+//        debounce_t<Callable, DType, Rep, Period, Clock> debounced{callable};
+//        debounced.interval(interval);
+//        return debounced;
+//    }
+//
+//    template<typename Callable, debounce_type DType = debounce_type::leading,
+//            typename Clock = std::chrono::steady_clock,
+//            typename Rep = std::chrono::nanoseconds::rep,
+//            typename Period = std::chrono::nanoseconds::period>
+//    constexpr auto debounce(std::chrono::duration<Rep, Period> interval =
+//    std::chrono::milliseconds(1000)) noexcept {
+//        return debounce_t<Callable, DType, Rep, Period, Clock>{interval};
+//    }
 
 } // namespace webpp
 
