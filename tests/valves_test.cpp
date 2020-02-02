@@ -27,9 +27,8 @@ namespace webpp {
 
 TEST(ValvesTests, Creation) {
     constexpr auto v = method("GET") or method("POST");
+
+    // I'm not gonna test the lowercase and uppercase stuff because it's probably the request's job to fix that information not the valve.
     EXPECT_TRUE(v(request_t<fake_cgi>().set_method("GET")));
-    EXPECT_TRUE(v(request_t<fake_cgi>().set_method("get")));
-    EXPECT_TRUE(v(request_t<fake_cgi>().set_method("Post")));
-    EXPECT_TRUE(v(request_t<fake_cgi>().set_method("post")));
     EXPECT_TRUE(v(request_t<fake_cgi>().set_method("POST")));
 }
