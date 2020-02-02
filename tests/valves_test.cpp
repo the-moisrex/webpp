@@ -20,7 +20,7 @@ namespace webpp {
 }
 
 TEST(ValvesTests, Creation) {
-    auto v = method("GET") or method("POST");
+    constexpr auto v = method("GET") or method("POST");
     EXPECT_TRUE(v(request_t<fake_cgi_GET>()));
 
 }
