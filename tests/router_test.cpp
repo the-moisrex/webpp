@@ -6,7 +6,8 @@ using namespace webpp::valves;
 using namespace webpp;
 
 TEST(Router, RouteCreation) {
-    constexpr route<cgi> about_page([](auto &res) noexcept {
+    using request = request_t<cgi>;
+    constexpr route<cgi> about_page([](response &res) noexcept {
         res << "About page\n";
     });
 

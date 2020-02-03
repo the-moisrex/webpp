@@ -12,7 +12,7 @@ namespace webpp {
      * This class owns its data.
      */
     class response {
-      public:
+    public:
         using body_type = webpp::body;
         using header_type = webpp::headers;
 
@@ -21,6 +21,7 @@ namespace webpp {
 
         response() = default;
 
+        response &operator<<(std::string_view str) noexcept;
     };
 
 } // namespace webpp

@@ -100,6 +100,14 @@ namespace webpp {
             stream
         } mutable type = types::empty;
 
+        [[nodiscard]] string_type const &str_ref() const noexcept;
+
+        [[nodiscard]] string_type &str_ref() noexcept;
+
+        [[nodiscard]] stream_type const &stream_ref() const noexcept;
+
+        [[nodiscard]] stream_type &stream_ref() noexcept;
+
       public:
         body() noexcept = default;
         explicit body(std::string* str) noexcept
@@ -150,7 +158,7 @@ namespace webpp {
          * Replace the data with a string
          * @param str
          */
-        void replace_string_view(std::string_view str) noexcept;
+        void replace_string_view(std::string_view const &str) noexcept;
 
         /**
          * Replace the data with a stream
@@ -158,7 +166,12 @@ namespace webpp {
          */
         void replace_stream(std::ostream& stream) noexcept;
 
-      public:
+        /**
+         * Append a string to the body (weather it's a string ot stream)
+         * @param str
+         */
+        void append_string(std::string_view const &str) noexcept;
+
         /**
          * Get the value as a string (converts the other types to string
          * too)
@@ -167,16 +180,17 @@ namespace webpp {
          * @return the string representation of the data
          */
         [[nodiscard]] std::string_view
-        str(std::string_view default_val = "") const noexcept;
+        str(std::string_view const &default_val = "") const noexcept;
 
         [[nodiscard]] auto json() const;
         auto json(std::string_view const& data);
 
         auto file(std::string_view const& filepath);
-
         std::istream& stream() const;
 
         std::ostream& operator<<(std::ostream& __stream);
+
+        body &operator<<(std::string_view const &str) noexcept;
 
         // TODO: add more methods for the images and stuff
     };
