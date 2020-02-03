@@ -22,7 +22,6 @@ namespace webpp {
             typename ResponseType = response,
             typename Callable = void (*)(RequestType const &, ResponseType &),
             typename = std::enable_if_t<
-                    std::is_invocable_v<Callable, RequestType const &, ResponseType &> &&
                     !std::is_convertible_v<RequestType, ResponseType>>>
     class route : make_inheritable<Callable> {
         using req_t = RequestType const &;
@@ -35,6 +34,10 @@ namespace webpp {
 //        callable migrator;
         condition_t condition = valves::empty;
         bool active = true;
+
+        static_assert(std::is_invocable_v<callable, req_t, res_t>
+                      || std::is_invocable_v<Callable, req_t>
+                      || std::is_invocable_v<Callable, res_t>, "We don't know how to call this callable you passed.");
 
     public:
         using Callable::operator();
