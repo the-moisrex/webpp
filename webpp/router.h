@@ -205,8 +205,8 @@ namespace webpp {
         constexpr explicit route(condition_t con, C c) noexcept
             : condition(std::move(con)), migrator(std::move(c)) {}
 
-        constexpr route(route const&) noexcept = default;
-        constexpr route(route&&) noexcept = default;
+//        constexpr route(route const&) noexcept = default;
+//        constexpr route(route&&) noexcept = default;
 
         /**
          * Check if the route is active
