@@ -110,13 +110,17 @@ namespace webpp {
 
       public:
         body() noexcept = default;
-        explicit body(std::string* str) noexcept
+
+        body(std::string *str) noexcept
             : data(str), type(types::string) {}
-        explicit body(std::string&& str) noexcept
+
+        body(std::string &&str) noexcept
             : data(new std::string(std::move(str))), type(types::string) {}
-        explicit body(std::string const& str) noexcept
+
+        body(std::string_view const &str) noexcept
             : data(new std::string(str)), type(types::string) {}
-        explicit body(std::ostream& stream) noexcept
+
+        body(std::ostream &stream) noexcept
             : data(&stream), type(types::stream) {}
 
         /**
