@@ -129,7 +129,7 @@ body::stream_type &body::stream_ref() noexcept {
     return *static_cast<stream_type *>(data);
 }
 
-void body::append_stream(const webpp::body::stream_type &stream) noexcept {
+void body::append_stream(webpp::body::stream_type &stream) noexcept {
     switch (type) {
         case types::stream:
             stream_ref() << stream.rdbuf();

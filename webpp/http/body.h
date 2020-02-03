@@ -176,7 +176,7 @@ namespace webpp {
          * Appending a stream
          * @param stream
          */
-        void append_stream(stream_type const &stream) noexcept;
+        void append_stream(stream_type &stream) noexcept;
 
         /**
          * Get the value as a string (converts the other types to string
