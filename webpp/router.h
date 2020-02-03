@@ -22,11 +22,11 @@ namespace webpp {
               typename = std::enable_if_t<
                   !std::is_convertible_v<RequestType, ResponseType>>>
     class route {
-        using req_t = RequestType;
-        using res_t = ResponseType;
-        using signature = void(req_t const&, res_t&);
+        using req_t = RequestType const &;
+        using res_t = ResponseType &;
+        using signature = void(req_t, res_t);
         using condition_t = Valve;
-        using callable = void(RequestType const &, ResponseType &);
+        using callable = void(req_t, res_t);
 
         callable *migrator;
         condition_t condition = valves::empty;
@@ -44,7 +44,7 @@ namespace webpp {
                                        !std::is_nothrow_invocable_v<C, req_t>,
                                    int> = 0>
         constexpr explicit route(C const& c) noexcept
-            : migrator([=](auto& req, auto&) noexcept {
+                : migrator([=](req_t req, res_t) noexcept {
                   try {
                       c(req);
                   } catch (...) {
@@ -62,7 +62,7 @@ namespace webpp {
                   std::enable_if_t<
                       std::is_nothrow_invocable_r_v<void, C, req_t>, int> = 0>
         constexpr explicit route(C const& c) noexcept
-            : migrator([=](auto& req, auto&) noexcept { c(req); }) {}
+                : migrator([=](req_t req, res_t) noexcept { c(req); }) {}
 
         /**
          * This overload is used for migrations that don't need the request in
@@ -77,13 +77,31 @@ namespace webpp {
                                        !std::is_nothrow_invocable_v<C, res_t>,
                                    int> = 0>
         constexpr explicit route(C const& c) noexcept
-            : migrator([=](auto& req, auto& res) noexcept {
+                : migrator([=](req_t req, res_t res) noexcept {
                   try {
                       c(res);
                   } catch (...) {
                       handle_exception(req);
                   }
               }) {}
+
+
+        /**
+         * This overload is used for migrations that don't need the request in
+         * order to produce the response.
+         * This overload will handle those callables that are not marked
+         * noexcept too.
+         * @tparam Callable
+         * @param c
+         */
+        template<typename C,
+                std::enable_if_t<std::is_nothrow_invocable_v<C, res_t>,
+                        int> = 0>
+        constexpr explicit route(C const &c) noexcept
+                : migrator([=](req_t req, res_t res) noexcept {
+            c(res);
+        }) {}
+
 
         /**
          * This overload is used for when the callable accepts both request and
@@ -97,7 +115,7 @@ namespace webpp {
                                  !std::is_nothrow_invocable_v<C, req_t, res_t>,
                              int> = 0>
         constexpr explicit route(C const& c) noexcept
-            : migrator([=](auto& req, auto& res) noexcept {
+                : migrator([=](req_t req, res_t res) noexcept {
                   try {
                       c(req, res);
                   } catch (...) {
@@ -127,7 +145,7 @@ namespace webpp {
                                    int> = 0>
         constexpr explicit route(condition_t con, C const& c) noexcept
             : condition(std::move(con)),
-              migrator([=](auto& req, auto&) noexcept {
+              migrator([=](req_t req, res_t) noexcept {
                   try {
                       c(req);
                   } catch (...) {
@@ -146,7 +164,7 @@ namespace webpp {
                       std::is_nothrow_invocable_r_v<void, C, req_t>, int> = 0>
         constexpr explicit route(condition_t con, C const& c) noexcept
             : condition(std::move(con)),
-              migrator([=](auto& req, auto&) noexcept { c(req); }) {}
+              migrator([=](req_t req, res_t) noexcept { c(req); }) {}
 
         /**
          * This overload is used for migrations that don't need the request in
@@ -162,7 +180,7 @@ namespace webpp {
                                    int> = 0>
         constexpr explicit route(condition_t con, C const& c) noexcept
             : condition(std::move(con)),
-              migrator([=](auto& req, auto& res) noexcept {
+              migrator([=](req_t req, res_t res) noexcept {
                   try {
                       c(res);
                   } catch (...) {
@@ -184,7 +202,7 @@ namespace webpp {
                              int> = 0>
         constexpr explicit route(condition_t con, C const& c) noexcept
             : condition(std::move(con)),
-              migrator([=](auto& req, auto& res) noexcept {
+              migrator([=](req_t req, res_t res) noexcept {
                   try {
                       c(req, res);
                   } catch (...) {
