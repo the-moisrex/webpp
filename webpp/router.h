@@ -19,6 +19,7 @@ namespace webpp {
     template<typename Interface, typename Valve = valves::empty_t,
               typename RequestType = request_t<Interface>,
               typename ResponseType = response,
+            typename Callable = void (*)(RequestType const &, ResponseType &),
               typename = std::enable_if_t<
                   !std::is_convertible_v<RequestType, ResponseType>>>
     class route {
@@ -26,9 +27,10 @@ namespace webpp {
         using res_t = ResponseType &;
         using signature = void(req_t, res_t);
         using condition_t = Valve;
-        using callable = void(req_t, res_t);
+//        using callable = void(*)(req_t, res_t);
+        using callable = Callable;
 
-        callable *migrator;
+        callable migrator;
         condition_t condition = valves::empty;
         bool active = true;
 
@@ -98,7 +100,7 @@ namespace webpp {
                 std::enable_if_t<std::is_nothrow_invocable_v<C, res_t>,
                         int> = 0>
         constexpr explicit route(C const &c) noexcept
-                : migrator([=](req_t req, res_t res) noexcept {
+                : migrator([=](req_t, res_t res) noexcept {
             c(res);
         }) {}
 
@@ -223,8 +225,9 @@ namespace webpp {
         constexpr explicit route(condition_t con, C c) noexcept
             : condition(std::move(con)), migrator(std::move(c)) {}
 
-//        constexpr route(route const&) noexcept = default;
-//        constexpr route(route&&) noexcept = default;
+        constexpr route(route const &) noexcept = default;
+
+        constexpr route(route &&) noexcept = default;
 
         /**
          * Check if the route is active
