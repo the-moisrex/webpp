@@ -12,6 +12,12 @@ TEST(Router, RouteCreation) {
     constexpr auto about_page_callback = [](response &res) noexcept {
         res << "About page\n";
     };
-    constexpr route<cgi, decltype(about_page_callback)> about_page();
+    route<cgi, decltype(about_page_callback)> about_page{};
+
+    auto req = request_t<cgi>{};
+    auto res = response();
+
+    about_page(req, res);
+    EXPECT_EQ(res.body.str(""), "About page\n");
 
 }
