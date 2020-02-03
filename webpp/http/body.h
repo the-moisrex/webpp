@@ -164,13 +164,19 @@ namespace webpp {
          * Replace the data with a stream
          * @param stream
          */
-        void replace_stream(std::ostream& stream) noexcept;
+        void replace_stream(stream_type &stream) noexcept;
 
         /**
          * Append a string to the body (weather it's a string ot stream)
          * @param str
          */
         void append_string(std::string_view const &str) noexcept;
+
+        /**
+         * Appending a stream
+         * @param stream
+         */
+        void append_stream(stream_type const &stream) noexcept;
 
         /**
          * Get the value as a string (converts the other types to string
