@@ -30,20 +30,22 @@ namespace webpp {
         bool active = true;
 
         static_assert(std::is_invocable_v<callable, req_t, res_t>
-                      || std::is_invocable_v<Callable, req_t>
-                      || std::is_invocable_v<Callable, res_t>, "We don't know how to call this callable you passed.");
+                      || std::is_invocable_v<callable, req_t>
+                      || std::is_invocable_v<callable, res_t>
+                      || std::is_invocable_v<callable>, "We don't know how to call this callable you passed.");
 
     public:
         using callable::callable;
         using callable::operator();
-
 
         constexpr route() noexcept = default;
 
         constexpr route(Callable c) noexcept : callable(c) {}
 
         constexpr route(condition_t con, Callable c) noexcept : condition(std::move(con)), callable(c) {}
+
         constexpr route(route const &) noexcept = default;
+
         constexpr route(route &&) noexcept = default;
 
         /**
@@ -76,33 +78,73 @@ namespace webpp {
             // TODO: add more overrides. You can simulate "dependency injection" here
 
             if constexpr (std::is_invocable_v<callable, req_t>) {
-                if constexpr (std::is_nothrow_invocable_v<callable, req_t>) {
-                    callable::operator()(req);
+                using RetType = std::invoke_result_t<callable, req_t>;
+                if constexpr (!std::is_convertible_v<RetType, response>) {
+                    if constexpr (std::is_nothrow_invocable_v<callable, req_t>) {
+                        (void) callable::operator()(req);
+                    } else {
+                        try {
+                            (void) callable::operator()(req);
+                        } catch (...) {
+                            handle_exception(req);
+                        }
+                    }
                 } else {
-                    try {
-                        callable::operator()(req);
-                    } catch (...) {
-                        handle_exception(req);
+                    if constexpr (std::is_nothrow_invocable_v<callable, req_t>) {
+                        res = callable::operator()(req);
+                    } else {
+                        try {
+                            res = callable::operator()(req);
+                        } catch (...) {
+                            handle_exception(req);
+                        }
                     }
                 }
             } else if constexpr (std::is_invocable_v<callable, res_t>) {
-                if constexpr (std::is_nothrow_invocable_v<callable, res_t>) {
-                    callable::operator()(res);
+                using RetType = std::invoke_result_t<callable, res_t>;
+                if constexpr (!std::is_convertible_v<RetType, response>) {
+                    if constexpr (std::is_nothrow_invocable_v<callable, res_t>) {
+                        (void) callable::operator()(res);
+                    } else {
+                        try {
+                            (void) callable::operator()(res);
+                        } catch (...) {
+                            handle_exception(req);
+                        }
+                    }
                 } else {
-                    try {
-                        callable::operator()(res);
-                    } catch (...) {
-                        handle_exception(req);
+                    // Yeah I know what it looks like. But we've got some stupid programmers out there!
+                    if constexpr (std::is_nothrow_invocable_v<callable, res_t>) {
+                        res = callable::operator()(res);
+                    } else {
+                        try {
+                            res = callable::operator()(res);
+                        } catch (...) {
+                            handle_exception(req);
+                        }
                     }
                 }
             } else if constexpr (std::is_invocable_v<callable, req_t, res_t>) {
-                if constexpr (std::is_nothrow_invocable_v<callable, req_t, res_t>) {
-                    callable::operator()(req, res);
+                using RetType = std::invoke_result_t<callable, req_t, res_t>;
+                if constexpr (!std::is_convertible_v<RetType, response>) {
+                    if constexpr (std::is_nothrow_invocable_v<callable, req_t, res_t>) {
+                        (void) callable::operator()(req, res);
+                    } else {
+                        try {
+                            (void) callable::operator()(req, res);
+                        } catch (...) {
+                            handle_exception(req);
+                        }
+                    }
                 } else {
-                    try {
-                        callable::operator()(req, res);
-                    } catch (...) {
-                        handle_exception(req);
+                    if constexpr (std::is_nothrow_invocable_v<callable, req_t, res_t>) {
+                        res = callable::operator()(req, res);
+                    } else {
+                        try {
+                            res = callable::operator()(req, res);
+                        } catch (...) {
+                            handle_exception(req);
+                        }
                     }
                 }
             } else {
@@ -116,7 +158,7 @@ namespace webpp {
          * @param req
          * @return bool
          */
-        [[nodiscard]] inline bool is_match(req_t const &req) const noexcept {
+        [[nodiscard]] inline bool is_match(req_t req) const noexcept {
             return active && condition(req);
         }
     };
