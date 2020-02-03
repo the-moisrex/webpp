@@ -9,8 +9,9 @@ TEST(Router, RouteCreation) {
     using request = request_t<cgi>;
 
     // this will happen with a help of a little "user-defined template deduction guide"
-    constexpr route<cgi> about_page([](response &res) noexcept {
+    constexpr auto about_page_callback = [](response &res) noexcept {
         res << "About page\n";
-    });
+    };
+    constexpr route<cgi, decltype(about_page_callback)> about_page();
 
 }
