@@ -1,5 +1,6 @@
 #include "body.h"
 #include <fstream>
+#include <sstream>
 
 using namespace webpp;
 
@@ -36,7 +37,7 @@ std::ostream &body::operator<<(std::ostream &__stream) {
     return __stream;
 }
 
-void body::replace_stream(std::ostream &stream) noexcept {
+void body::replace_stream(body::stream_type &stream) noexcept {
     replace(&stream, types::stream);
 }
 
@@ -90,7 +91,9 @@ body &body::operator<<(std::string_view const &str) noexcept {
             append_string(str);
             break;
         case types::stream:
-            append_stream(str.data());
+            std::stringstream sstr;
+            sstr << str;
+            append_stream(sstr);
             break;
     }
     return *this;
@@ -126,4 +129,20 @@ body::stream_type &body::stream_ref() noexcept {
     return *static_cast<stream_type *>(data);
 }
 
+void body::append_stream(const webpp::body::stream_type &stream) noexcept {
+    switch (type) {
+        case types::stream:
+            stream_ref() << stream.rdbuf();
+            break;
+        case types::string:
+            // todo: I have no idea what the heck is this!
+            // https://stackoverflow.com/questions/3203452/how-to-read-entire-stream-into-a-stdstring
+            str_ref().append(std::string(std::istreambuf_iterator<char>(
+                    (std::istreambuf_iterator<char, std::char_traits<char>>::istream_type &) stream), {}));
+            break;
+        case types::empty:
+            replace_stream(stream);
+            break;
+    }
+}
 
