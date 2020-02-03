@@ -259,59 +259,43 @@ namespace webpp {
          * @return the response
          */
         inline void operator()(req_t req, res_t res) noexcept {
-            if constexpr (std::is_invocable_v<callable, req_t> &&
-                          !std::is_nothrow_invocable_v<callable, req_t>) {
-                try {
+
+            // TODO: add more overrides. You can simulate "dependency injection" here
+
+            if constexpr (std::is_invocable_v<callable, req_t>) {
+                if constexpr (std::is_nothrow_invocable_v<callable, req_t>) {
                     callable::operator()(req);
-                } catch (...) {
-                    handle_exception(req);
+                } else {
+                    try {
+                        callable::operator()(req);
+                    } catch (...) {
+                        handle_exception(req);
+                    }
                 }
-            } else if (std::is_nothrow_invocable_r_v<void, callable, req_t>) {
-                callable::operator()(req);
-            } else if (std::is_invocable_v<callable, res_t> &&
-                       !std::is_nothrow_invocable_v<callable, res_t>) {
-                try {
+            } else if constexpr (std::is_invocable_v<callable, res_t>) {
+                if constexpr (std::is_nothrow_invocable_v<callable, res_t>) {
                     callable::operator()(res);
-                } catch (...) {
-                    handle_exception(req);
+                } else {
+                    try {
+                        callable::operator()(res);
+                    } catch (...) {
+                        handle_exception(req);
+                    }
                 }
-            } else if (std::is_nothrow_invocable_v<callable, res_t>) {
-                callable::operator()(res);
-            } else if (std::is_invocable_v<callable, req_t, res_t> &&
-                       !std::is_nothrow_invocable_v<callable, req_t, res_t>) {
-                try {
+            } else if constexpr (std::is_invocable_v<callable, req_t, res_t>) {
+                if constexpr (std::is_nothrow_invocable_v<callable, req_t, res_t>) {
                     callable::operator()(req, res);
-                } catch (...) {
-                    handle_exception(req);
+                } else {
+                    try {
+                        callable::operator()(req, res);
+                    } catch (...) {
+                        handle_exception(req);
+                    }
                 }
-            } else if (std::is_nothrow_invocable_v<callable, req_t, res_t>) {
-                callable::operator()(req, res);
-            } else if (std::is_invocable_v<callable, req_t> &&
-                       !std::is_nothrow_invocable_v<callable, req_t>) {
-                try {
-                    callable::operator()(req);
-                } catch (...) {
-                    handle_exception(req);
-                }
-            } else if (std::is_nothrow_invocable_r_v<void, callable, req_t>) {
-                callable::operator()(req);
-            } else if (std::is_invocable_v<callable, res_t> &&
-                       !std::is_nothrow_invocable_v<callable, res_t>) {
-                try {
-                    callable::operator()(res);
-                } catch (...) {
-                    handle_exception(req);
-                }
-            } else if (std::is_invocable_v<callable, req_t, res_t> &&
-                       !std::is_nothrow_invocable_v<callable, req_t, res_t>) {
-                try {
-                    callable::operator()(req, res);
-                } catch (...) {
-                    handle_exception(req);
-                }
-            } else if (std::is_nothrow_invocable_v<callable, req_t, res_t>) {
-                callable::operator()(req, res);
+            } else {
+                // This can't happen. So, chill
             }
+
         }
 
         /**
