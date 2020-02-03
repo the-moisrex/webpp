@@ -2,6 +2,7 @@
 #include <array>
 #include <gtest/gtest.h>
 #include <webpp/utils/functional.h>
+#include <webpp/utils/debounce.h>
 
 using namespace webpp;
 

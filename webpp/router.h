@@ -4,55 +4,59 @@
 #include "http/request.h"
 #include "http/response.h"
 #include "valves/valve.h"
+#include "utils/functional.h"
 #include <type_traits>
 #include <vector>
 
 namespace webpp {
 
     // TODO: what should I do here?
-    template <typename RequestType>
-    void handle_exception(RequestType const& req) noexcept;
+    template<typename RequestType>
+    void handle_exception(RequestType const &req) noexcept;
 
     /**
      * @brief This route class contains one single root route and it's children
      */
     template<typename Interface, typename Valve = valves::empty_t,
-              typename RequestType = request_t<Interface>,
-              typename ResponseType = response,
+            typename RequestType = request_t<Interface>,
+            typename ResponseType = response,
             typename Callable = void (*)(RequestType const &, ResponseType &),
-              typename = std::enable_if_t<
-                  !std::is_convertible_v<RequestType, ResponseType>>>
-    class route {
+            typename = std::enable_if_t<
+                    std::is_invocable_v<Callable, RequestType const &, ResponseType &> &&
+                    !std::is_convertible_v<RequestType, ResponseType>>>
+    class route : make_inheritable<Callable> {
         using req_t = RequestType const &;
         using res_t = ResponseType &;
         using signature = void(req_t, res_t);
         using condition_t = Valve;
 //        using callable = void(*)(req_t, res_t);
-        using callable = Callable;
+        using callable = make_inheritable<Callable>;
 
-        callable migrator;
+//        callable migrator;
         condition_t condition = valves::empty;
         bool active = true;
 
-      public:
+    public:
+        using Callable::operator();
+
         /**
          * This overload is used for migrations that have only side-effects.
          * The callable can throw exception and they will be handled properly.
          * @tparam Callable
          * @param c
          */
-        template <typename C,
-                  std::enable_if_t<std::is_invocable_v<C, req_t> &&
-                                       !std::is_nothrow_invocable_v<C, req_t>,
-                                   int> = 0>
-        constexpr explicit route(C const& c) noexcept
-                : migrator([=](req_t req, res_t) noexcept {
-                  try {
-                      c(req);
-                  } catch (...) {
-                      handle_exception(req);
-                  }
-              }) {}
+//        template <typename C,
+//                  std::enable_if_t<std::is_invocable_v<C, req_t> &&
+//                                       !std::is_nothrow_invocable_v<C, req_t>,
+//                                   int> = 0>
+//        constexpr explicit route(C const& c) noexcept
+//                : migrator([=](req_t req, res_t) noexcept {
+//                  try {
+//                      c(req);
+//                  } catch (...) {
+//                      handle_exception(req);
+//                  }
+//              }) {}
 
         /**
          * This overload is used for migrations that have only side-effects.
@@ -60,11 +64,11 @@ namespace webpp {
          * @tparam Callable
          * @param c
          */
-        template <typename C,
-                  std::enable_if_t<
-                      std::is_nothrow_invocable_r_v<void, C, req_t>, int> = 0>
-        constexpr explicit route(C const& c) noexcept
-                : migrator([=](req_t req, res_t) noexcept { c(req); }) {}
+//        template <typename C,
+//                  std::enable_if_t<
+//                      std::is_nothrow_invocable_r_v<void, C, req_t>, int> = 0>
+//        constexpr explicit route(C const& c) noexcept
+//                : migrator([=](req_t req, res_t) noexcept { c(req); }) {}
 
         /**
          * This overload is used for migrations that don't need the request in
@@ -74,18 +78,18 @@ namespace webpp {
          * @tparam Callable
          * @param c
          */
-        template <typename C,
-                  std::enable_if_t<std::is_invocable_v<C, res_t> &&
-                                       !std::is_nothrow_invocable_v<C, res_t>,
-                                   int> = 0>
-        constexpr explicit route(C const& c) noexcept
-                : migrator([=](req_t req, res_t res) noexcept {
-                  try {
-                      c(res);
-                  } catch (...) {
-                      handle_exception(req);
-                  }
-              }) {}
+//        template <typename C,
+//                  std::enable_if_t<std::is_invocable_v<C, res_t> &&
+//                                       !std::is_nothrow_invocable_v<C, res_t>,
+//                                   int> = 0>
+//        constexpr explicit route(C const& c) noexcept
+//                : migrator([=](req_t req, res_t res) noexcept {
+//                  try {
+//                      c(res);
+//                  } catch (...) {
+//                      handle_exception(req);
+//                  }
+//              }) {}
 
 
         /**
@@ -96,14 +100,14 @@ namespace webpp {
          * @tparam Callable
          * @param c
          */
-        template<typename C,
-                std::enable_if_t<std::is_nothrow_invocable_v<C, res_t>,
-                        int> = 0>
-        constexpr explicit route(C const &c) noexcept
-                : migrator([=](req_t, res_t res) noexcept {
-            c(res);
-        }) {}
-
+//        template<typename C,
+//                std::enable_if_t<std::is_nothrow_invocable_v<C, res_t>,
+//                        int> = 0>
+//        constexpr explicit route(C const &c) noexcept
+//                : migrator([=](req_t, res_t res) noexcept {
+//            c(res);
+//        }) {}
+//
 
         /**
          * This overload is used for when the callable accepts both request and
@@ -111,19 +115,19 @@ namespace webpp {
          * @tparam C
          * @param c
          */
-        template <
-            typename C,
-            std::enable_if_t<std::is_invocable_v<C, req_t, res_t> &&
-                                 !std::is_nothrow_invocable_v<C, req_t, res_t>,
-                             int> = 0>
-        constexpr explicit route(C const& c) noexcept
-                : migrator([=](req_t req, res_t res) noexcept {
-                  try {
-                      c(req, res);
-                  } catch (...) {
-                      handle_exception(req);
-                  }
-              }) {}
+//        template <
+//            typename C,
+//            std::enable_if_t<std::is_invocable_v<C, req_t, res_t> &&
+//                                 !std::is_nothrow_invocable_v<C, req_t, res_t>,
+//                             int> = 0>
+//        constexpr explicit route(C const& c) noexcept
+//                : migrator([=](req_t req, res_t res) noexcept {
+//                  try {
+//                      c(req, res);
+//                  } catch (...) {
+//                      handle_exception(req);
+//                  }
+//              }) {}
 
         /**
          * This overload is used for when the callable accepts both request and
@@ -131,29 +135,29 @@ namespace webpp {
          * @tparam C
          * @param c
          */
-        template <typename C,
-                  std::enable_if_t<std::is_nothrow_invocable_v<C, req_t, res_t>,
-                                   int> = 0>
-        constexpr explicit route(C c) noexcept : migrator(std::move(c)) {}
+//        template <typename C,
+//                  std::enable_if_t<std::is_nothrow_invocable_v<C, req_t, res_t>,
+//                                   int> = 0>
+//        constexpr explicit route(C c) noexcept : migrator(std::move(c)) {}
         /**
          * This overload is used for migrations that have only side-effects.
          * The callable can throw exception and they will be handled properly.
          * @tparam Callable
          * @param c
          */
-        template <typename C,
-                  std::enable_if_t<std::is_invocable_v<C, req_t> &&
-                                       !std::is_nothrow_invocable_v<C, req_t>,
-                                   int> = 0>
-        constexpr explicit route(condition_t con, C const& c) noexcept
-            : condition(std::move(con)),
-              migrator([=](req_t req, res_t) noexcept {
-                  try {
-                      c(req);
-                  } catch (...) {
-                      handle_exception(req);
-                  }
-              }) {}
+//        template <typename C,
+//                  std::enable_if_t<std::is_invocable_v<C, req_t> &&
+//                                       !std::is_nothrow_invocable_v<C, req_t>,
+//                                   int> = 0>
+//        constexpr explicit route(condition_t con, C const& c) noexcept
+//            : condition(std::move(con)),
+//              migrator([=](req_t req, res_t) noexcept {
+//                  try {
+//                      c(req);
+//                  } catch (...) {
+//                      handle_exception(req);
+//                  }
+//              }) {}
 
         /**
          * This overload is used for migrations that have only side-effects.
@@ -161,12 +165,12 @@ namespace webpp {
          * @tparam Callable
          * @param c
          */
-        template <typename C,
-                  std::enable_if_t<
-                      std::is_nothrow_invocable_r_v<void, C, req_t>, int> = 0>
-        constexpr explicit route(condition_t con, C const& c) noexcept
-            : condition(std::move(con)),
-              migrator([=](req_t req, res_t) noexcept { c(req); }) {}
+//        template <typename C,
+//                  std::enable_if_t<
+//                      std::is_nothrow_invocable_r_v<void, C, req_t>, int> = 0>
+//        constexpr explicit route(condition_t con, C const& c) noexcept
+//            : condition(std::move(con)),
+//              migrator([=](req_t req, res_t) noexcept { c(req); }) {}
 
         /**
          * This overload is used for migrations that don't need the request in
@@ -176,20 +180,20 @@ namespace webpp {
          * @tparam Callable
          * @param c
          */
-        template <typename C,
-                  std::enable_if_t<std::is_invocable_v<C, res_t> &&
-                                       !std::is_nothrow_invocable_v<C, res_t>,
-                                   int> = 0>
-        constexpr explicit route(condition_t con, C const& c) noexcept
-            : condition(std::move(con)),
-              migrator([=](req_t req, res_t res) noexcept {
-                  try {
-                      c(res);
-                  } catch (...) {
-                      handle_exception(req);
-                  }
-              }) {}
-
+//        template <typename C,
+//                  std::enable_if_t<std::is_invocable_v<C, res_t> &&
+//                                       !std::is_nothrow_invocable_v<C, res_t>,
+//                                   int> = 0>
+//        constexpr explicit route(condition_t con, C const& c) noexcept
+//            : condition(std::move(con)),
+//              migrator([=](req_t req, res_t res) noexcept {
+//                  try {
+//                      c(res);
+//                  } catch (...) {
+//                      handle_exception(req);
+//                  }
+//              }) {}
+//
         /**
          * This overload is used for when the callable accepts both request and
          * response and also might throw an exception.
@@ -197,20 +201,20 @@ namespace webpp {
          * @param con
          * @param c
          */
-        template <
-            typename C,
-            std::enable_if_t<std::is_invocable_v<C, req_t, res_t> &&
-                                 !std::is_nothrow_invocable_v<C, req_t, res_t>,
-                             int> = 0>
-        constexpr explicit route(condition_t con, C const& c) noexcept
-            : condition(std::move(con)),
-              migrator([=](req_t req, res_t res) noexcept {
-                  try {
-                      c(req, res);
-                  } catch (...) {
-                      handle_exception(req);
-                  }
-              }) {}
+//        template <
+//            typename C,
+//            std::enable_if_t<std::is_invocable_v<C, req_t, res_t> &&
+//                                 !std::is_nothrow_invocable_v<C, req_t, res_t>,
+//                             int> = 0>
+//        constexpr explicit route(condition_t con, C const& c) noexcept
+//            : condition(std::move(con)),
+//              migrator([=](req_t req, res_t res) noexcept {
+//                  try {
+//                      c(req, res);
+//                  } catch (...) {
+//                      handle_exception(req);
+//                  }
+//              }) {}
 
         /**
          * This overload is used for when the callable accepts both request and
@@ -219,11 +223,11 @@ namespace webpp {
          * @param con
          * @param c
          */
-        template <typename C,
-                  std::enable_if_t<std::is_nothrow_invocable_v<C, req_t, res_t>,
-                                   int> = 0>
-        constexpr explicit route(condition_t con, C c) noexcept
-            : condition(std::move(con)), migrator(std::move(c)) {}
+//        template <typename C,
+//                  std::enable_if_t<std::is_nothrow_invocable_v<C, req_t, res_t>,
+//                                   int> = 0>
+//        constexpr explicit route(condition_t con, C c) noexcept
+//            : condition(std::move(con)), migrator(std::move(c)) {}
 
         constexpr route(route const &) noexcept = default;
 
@@ -237,7 +241,7 @@ namespace webpp {
         /**
          * Reactivate the route
          */
-        inline route& activate() noexcept {
+        inline route &activate() noexcept {
             active = true;
             return *this;
         }
@@ -245,7 +249,7 @@ namespace webpp {
         /**
          * Deactivate the route
          */
-        inline route& deactivate() noexcept {
+        inline route &deactivate() noexcept {
             active = false;
             return *this;
         }
@@ -254,8 +258,60 @@ namespace webpp {
          * Run the migration
          * @return the response
          */
-        inline void operator()(req_t& req, res_t& res) noexcept {
-            return migrator(req, res);
+        inline void operator()(req_t req, res_t res) noexcept {
+            if constexpr (std::is_invocable_v<callable, req_t> &&
+                          !std::is_nothrow_invocable_v<callable, req_t>) {
+                try {
+                    callable::operator()(req);
+                } catch (...) {
+                    handle_exception(req);
+                }
+            } else if (std::is_nothrow_invocable_r_v<void, callable, req_t>) {
+                callable::operator()(req);
+            } else if (std::is_invocable_v<callable, res_t> &&
+                       !std::is_nothrow_invocable_v<callable, res_t>) {
+                try {
+                    callable::operator()(res);
+                } catch (...) {
+                    handle_exception(req);
+                }
+            } else if (std::is_nothrow_invocable_v<callable, res_t>) {
+                callable::operator()(res);
+            } else if (std::is_invocable_v<callable, req_t, res_t> &&
+                       !std::is_nothrow_invocable_v<callable, req_t, res_t>) {
+                try {
+                    callable::operator()(req, res);
+                } catch (...) {
+                    handle_exception(req);
+                }
+            } else if (std::is_nothrow_invocable_v<callable, req_t, res_t>) {
+                callable::operator()(req, res);
+            } else if (std::is_invocable_v<callable, req_t> &&
+                       !std::is_nothrow_invocable_v<callable, req_t>) {
+                try {
+                    callable::operator()(req);
+                } catch (...) {
+                    handle_exception(req);
+                }
+            } else if (std::is_nothrow_invocable_r_v<void, callable, req_t>) {
+                callable::operator()(req);
+            } else if (std::is_invocable_v<callable, res_t> &&
+                       !std::is_nothrow_invocable_v<callable, res_t>) {
+                try {
+                    callable::operator()(res);
+                } catch (...) {
+                    handle_exception(req);
+                }
+            } else if (std::is_invocable_v<callable, req_t, res_t> &&
+                       !std::is_nothrow_invocable_v<callable, req_t, res_t>) {
+                try {
+                    callable::operator()(req, res);
+                } catch (...) {
+                    handle_exception(req);
+                }
+            } else if (std::is_nothrow_invocable_v<callable, req_t, res_t>) {
+                callable::operator()(req, res);
+            }
         }
 
         /**
@@ -263,7 +319,7 @@ namespace webpp {
          * @param req
          * @return bool
          */
-        [[nodiscard]] inline bool is_match(req_t const& req) const noexcept {
+        [[nodiscard]] inline bool is_match(req_t const &req) const noexcept {
             return active && condition(req);
         }
     };
@@ -274,36 +330,36 @@ namespace webpp {
      *
      * @param Interface
      */
-    template <typename Interface, typename Routes>
+    template<typename Interface, typename Routes>
     class router {
 
         // this is the main route which includes other routes:
         // This is a "const_list":
         Routes routes;
 
-      public:
+    public:
         /**
          * Run the request through the routes and then return the response
          * @param req
          * @return final response
          */
-        template <typename RequestType = request_t<Interface>,
-                  typename ResponseType = response>
-        ResponseType run(RequestType& req) noexcept {
+        template<typename RequestType = request_t<Interface>,
+                typename ResponseType = response>
+        ResponseType run(RequestType &req) noexcept {
             // FIXME: make sure it's as performant as possible.
             ResponseType res;
             routes.for_each(
-                [&](auto const& _route) noexcept { _route.call(req, res); });
+                    [&](auto const &_route) noexcept { _route.call(req, res); });
             return res;
         }
 
-        template <typename Route>
-        constexpr auto on(Route&& _route) const noexcept {
+        template<typename Route>
+        constexpr auto on(Route &&_route) const noexcept {
             return routes + route(valves::empty, std::forward<Route>(_route));
         }
 
-        template <typename Valve, typename Route>
-        constexpr auto on(Valve&& v, Route&& r) const noexcept {
+        template<typename Valve, typename Route>
+        constexpr auto on(Valve &&v, Route &&r) const noexcept {
             return routes +
                    route(std::forward<Valve>(v), std::forward<Route>(r));
         }
