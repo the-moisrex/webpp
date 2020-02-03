@@ -4,7 +4,7 @@
 #include "body.h"
 #include "header.h"
 #include <memory>
-#include <string>
+#include <string_view>
 
 namespace webpp {
 
@@ -20,6 +20,8 @@ namespace webpp {
         header_type header;
 
         response() = default;
+
+        response(std::string_view const &res) noexcept : body{res} {}
 
         response &operator<<(std::string_view str) noexcept;
     };

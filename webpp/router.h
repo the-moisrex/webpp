@@ -147,8 +147,30 @@ namespace webpp {
                         }
                     }
                 }
-            } else {
-                // This can't happen. So, chill
+            } else if (std::is_invocable_v<callable>) {
+                using RetType = std::invoke_result_t<callable>;
+                if constexpr (!std::is_convertible_v<RetType, response>) {
+                    if constexpr (std::is_nothrow_invocable_v<callable>) {
+                        (void) callable::operator()();
+                    } else {
+                        try {
+                            (void) callable::operator()();
+                        } catch (...) {
+                            handle_exception(req);
+                        }
+                    }
+                } else {
+                    if constexpr (std::is_nothrow_invocable_v<callable>) {
+                        res = callable::operator()();
+                    } else {
+                        try {
+                            res = callable::operator()();
+                        } catch (...) {
+                            handle_exception(req);
+                        }
+                    }
+                }
+
             }
 
         }

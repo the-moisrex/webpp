@@ -20,4 +20,10 @@ TEST(Router, RouteCreation) {
     about_page(req, res);
     EXPECT_EQ(res.body.str(""), "About page\n");
 
+
+    constexpr auto return_callback = [] {
+        return response("Hello");
+    };
+    route<cgi, decltype(return_callback)>{}(req, res);
+    EXPECT_EQ(res.body.str(), "Hello");
 }
