@@ -71,10 +71,10 @@ void body::clear() noexcept {
 body::~body() noexcept {
     switch (type) {
         case types::string:
-            delete static_cast<std::string *>(data);
+            static_cast<string_type *>(data)->clear();
             break;
         case types::stream:
-            delete static_cast<std::istream *>(data);
+            delete static_cast<stream_type *>(data);
             break;
         default:
             break;
