@@ -129,7 +129,7 @@ namespace webpp {
         }
 
         [[nodiscard]] bool operator!=(body const &b) const noexcept {
-            return !oeperator == (b);
+            return !operator==(b);
         }
 
         /**
