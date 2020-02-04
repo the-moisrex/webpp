@@ -104,8 +104,6 @@ namespace webpp {
 
         [[nodiscard]] string_type &str_ref() noexcept;
 
-        [[nodiscard]] stream_type const &stream_ref() const noexcept;
-
         [[nodiscard]] stream_type &stream_ref() noexcept;
 
     public:
@@ -122,6 +120,32 @@ namespace webpp {
 
         body(std::ostream &stream) noexcept
                 : data(&stream), type(types::stream) {}
+
+        body &operator=(body &b) noexcept {
+            if (this != &b) {
+                this->~body();
+                type = b.type;
+                switch (b.type) {
+                    case types::empty:
+                        break;
+                    case types::stream:
+                        replace_stream(b.stream_ref());
+                        break;
+                    case types::string:
+                        replace_string(b.str_ref());
+                        break;
+                }
+            }
+            return *this;
+        }
+
+        body &operator=(body &&b) noexcept {
+            if (this != &b) {
+                type = std::move(b.type);
+                data = std::move(b.data);
+            }
+            return *this;
+        }
 
         [[nodiscard]] bool operator==(body const &b) const noexcept {
             // TODO: see if you need a deep equality or a shallow one:
