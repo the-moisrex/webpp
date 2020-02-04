@@ -12,7 +12,9 @@ namespace webpp {
 
     // TODO: what should I do here?
     template<typename RequestType>
-    void handle_exception(RequestType const &req) noexcept;
+    void handle_exception(RequestType const &req) noexcept {
+
+    }
 
     /**
      * @brief This route class contains one single root route and it's children

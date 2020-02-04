@@ -41,7 +41,9 @@ namespace webpp {
             return *this;
         }
 
-        response(std::string_view const &res) noexcept : body{res} {}
+        response(std::string const &b) noexcept : body{b} {}
+
+        response(std::string &&b) noexcept : body{std::move(b)} {}
 
         [[nodiscard]] bool operator==(response const &res) const noexcept {
             return body == res.body && header == res.header;
@@ -52,6 +54,14 @@ namespace webpp {
         }
 
         response &operator<<(std::string_view str) noexcept;
+
+        operator std::string_view() const noexcept {
+            return body.str();
+        }
+
+        operator std::string() const noexcept {
+            return std::string(body.str());
+        }
     };
 
 } // namespace webpp
