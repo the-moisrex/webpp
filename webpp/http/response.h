@@ -27,9 +27,23 @@ namespace webpp {
 
         response &operator=(response const &) = default;
 
-        response &operator=(response &&) noexcept = default;
+        response &operator=(response &&res) noexcept {
+            if (&res != this) {
+                body = std::move(res.body);
+                header = std::move(res.header);
+            }
+            return *this;
+        }
 
         response(std::string_view const &res) noexcept : body{res} {}
+
+        [[nodiscard]] bool operator==(response const &res) const noexcept {
+            return body == res.body && header == res.header;
+        }
+
+        [[nodiscard]] bool operator!=(response const &res) const noexcept {
+            return !operator==(res);
+        }
 
         response &operator<<(std::string_view str) noexcept;
     };
