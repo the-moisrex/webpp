@@ -110,7 +110,7 @@ namespace webpp {
         body() noexcept = default;
 
         body(std::string *str) noexcept
-                : data(str), type(types::string) {}
+                : data(new std::string(*str)), type(types::string) {}
 
         body(std::string &&str) noexcept
                 : data(new std::string(std::move(str))), type(types::string) {}
@@ -144,6 +144,7 @@ namespace webpp {
             if (this != &b) {
                 type = std::move(b.type);
                 data = std::move(b.data);
+                b.data = nullptr;
             }
             return *this;
         }
