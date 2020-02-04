@@ -36,3 +36,44 @@ TEST(Router, RouteCreation) {
     two(req, res);
     EXPECT_EQ(std::string(res.body.str()), "Hello String");
 }
+
+
+namespace webpp {
+    class fake_cgi;
+
+    template<>
+    class request_t<fake_cgi> {
+        std::string method;
+    public:
+        std::string request_method() const noexcept {
+            return method;
+        }
+
+        auto &set_method(std::string _method) noexcept {
+            method = _method;
+            return *this;
+        }
+    };
+}
+
+TEST(Router, ValveTest) {
+    using namespace webpp::valves;
+    using namespace webpp;
+
+    constexpr auto return_callback = [] {
+        return response("Hello");
+    };
+    constexpr auto v = method("GET");
+    route<fake_cgi, decltype(return_callback), decltype(v)> one{v};
+
+    request_t<fake_cgi> req;
+    req.set_method("GET");
+
+    EXPECT_EQ(req.request_method(), "GET");
+}
+
+
+TEST(Router, RouterClass) {
+
+}
+

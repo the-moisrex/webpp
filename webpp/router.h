@@ -40,7 +40,7 @@ namespace webpp {
         using callable = make_inheritable<Callable>;
 
 
-        condition_t condition = valves::empty;
+        condition_t condition = condition_t{};
 
         // TODO: check for padding
         bool active = true;
@@ -58,6 +58,8 @@ namespace webpp {
         constexpr route() noexcept = default;
 
         constexpr route(Callable c) noexcept : callable(c) {}
+
+        constexpr route(condition_t con) noexcept : condition(con) {}
 
         constexpr route(condition_t con, Callable c) noexcept : condition(std::move(con)), callable(c) {}
 
