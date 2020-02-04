@@ -69,15 +69,19 @@ void body::clear() noexcept {
 }
 
 body::~body() noexcept {
-    switch (type) {
-        case types::string:
-            std::string(std::move(*static_cast<string_type *>(data)));
-            break;
-        case types::stream:
-            delete static_cast<stream_type *>(data);
-            break;
-        default:
-            break;
+    // FIXME: check for memory leak here!
+    if (data) {
+        switch (type) {
+            case types::string:
+                delete static_cast<string_type *>(data);
+                break;
+            case types::stream:
+                delete static_cast<stream_type *>(data);
+                break;
+            default:
+                break;
+        }
+        data = nullptr;
     }
 }
 
