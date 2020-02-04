@@ -88,12 +88,12 @@
 namespace webpp {
 
     class body {
-      public:
+    public:
         using string_type = std::string;
         using stream_type = std::ostream;
 
-      private:
-        mutable void* data = nullptr;
+    private:
+        mutable void *data = nullptr;
         enum class types : uint8_t {
             empty,
             string,
@@ -108,20 +108,29 @@ namespace webpp {
 
         [[nodiscard]] stream_type &stream_ref() noexcept;
 
-      public:
+    public:
         body() noexcept = default;
 
         body(std::string *str) noexcept
-            : data(str), type(types::string) {}
+                : data(str), type(types::string) {}
 
         body(std::string &&str) noexcept
-            : data(new std::string(std::move(str))), type(types::string) {}
+                : data(new std::string(std::move(str))), type(types::string) {}
 
         body(std::string_view const &str) noexcept
-            : data(new std::string(str)), type(types::string) {}
+                : data(new std::string(str)), type(types::string) {}
 
         body(std::ostream &stream) noexcept
-            : data(&stream), type(types::stream) {}
+                : data(&stream), type(types::stream) {}
+
+        [[nodiscard]] bool operator==(body const &b) const noexcept {
+            // TODO: see if you need a deep equality or a shallow one:
+            return type == b.type && data == b.data;
+        }
+
+        [[nodiscard]] bool operator!=(body const &b) const noexcept {
+            return !oeperator == (b);
+        }
 
         /**
          * Correctly destroy the data
@@ -138,25 +147,25 @@ namespace webpp {
          * @param _data
          * @param _type
          */
-        void replace(void* _data, types _type) noexcept;
+        void replace(void *_data, types _type) noexcept;
 
         /**
          * Replace the data with a string
          * @param str
          */
-        void replace_string(std::string* str) noexcept;
+        void replace_string(std::string *str) noexcept;
 
         /**
          * Replace the data with a string
          * @param str
          */
-        void replace_string(std::string const& str) noexcept;
+        void replace_string(std::string const &str) noexcept;
 
         /**
          * Replace the data with a string
          * @param str
          */
-        void replace_string(std::string&& str) noexcept;
+        void replace_string(std::string &&str) noexcept;
 
         /**
          * Replace the data with a string
@@ -193,12 +202,14 @@ namespace webpp {
         str(std::string_view const &default_val = "") const noexcept;
 
         [[nodiscard]] auto json() const;
-        auto json(std::string_view const& data);
 
-        auto file(std::string_view const& filepath);
-        std::istream& stream() const;
+        auto json(std::string_view const &data);
 
-        std::ostream& operator<<(std::ostream& __stream);
+        auto file(std::string_view const &filepath);
+
+        std::istream &stream() const;
+
+        std::ostream &operator<<(std::ostream &__stream);
 
         body &operator<<(std::string_view const &str) noexcept;
 
