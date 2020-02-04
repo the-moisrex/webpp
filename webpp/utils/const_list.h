@@ -301,6 +301,7 @@ namespace webpp {
                 }
                 return next().has(_value);
             }
+            return false;
         }
 
         template <typename NType, typename NNextType>

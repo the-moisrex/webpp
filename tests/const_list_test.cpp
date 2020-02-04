@@ -17,7 +17,7 @@ TEST(ConstListTest, ConstList) {
     });
 
     auto str_one = one.reduce(
-        [](string const& data, auto const& value) constexpr {
+        [](string const& data, auto const& value) {
             auto _data = data;
             _data.append(string((data.empty() ? "" : " ")));
             if constexpr (std::is_convertible_v<decltype(value), int>) {

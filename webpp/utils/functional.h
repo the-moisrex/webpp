@@ -10,33 +10,33 @@
 #include <utility>
 
 namespace webpp {
-    template<typename Signature>
+    template <typename Signature>
     class function_ref;
 
-    template<typename Return, typename... Args>
+    template <typename Return, typename... Args>
     class function_ref<Return(Args...)> final {
-    private:
-        using signature_type = Return(void *, Args...);
+      private:
+        using signature_type = Return(void*, Args...);
 
-        void *_ptr;
+        void* _ptr;
 
-        Return (*_erased_fn)(void *, Args...);
+        Return (*_erased_fn)(void*, Args...);
 
-    public:
-        template<typename T,
-                typename = std::enable_if_t<
-                        std::is_invocable<T &, Args...>{} &&
-                        !std::is_same<std::decay_t<T>, function_ref>{}>>
-        constexpr function_ref(T &&x) noexcept
-                : _ptr{(void *) std::addressof(x)} {
-            _erased_fn = [](void *ptr, Args... xs) -> Return {
+      public:
+        template <typename T,
+                  typename = std::enable_if_t<
+                      std::is_invocable<T&, Args...>{} &&
+                      !std::is_same<std::decay_t<T>, function_ref>{}>>
+        constexpr function_ref(T&& x) noexcept
+            : _ptr{(void*)std::addressof(x)} {
+            _erased_fn = [](void* ptr, Args... xs) -> Return {
                 return (*reinterpret_cast<std::add_pointer_t<T>>(ptr))(
-                        std::forward<Args>(xs)...);
+                    std::forward<Args>(xs)...);
             };
         }
 
         constexpr decltype(auto) operator()(Args... xs) const
-        noexcept(noexcept(_erased_fn(_ptr, std::forward<Args>(xs)...))) {
+            noexcept(noexcept(_erased_fn(_ptr, std::forward<Args>(xs)...))) {
             return _erased_fn(_ptr, std::forward<Args>(xs)...);
         }
     };
@@ -45,19 +45,19 @@ namespace webpp {
      * This class is used for function pointers because they are not inheritable
      * @tparam Callable
      */
-    template<typename Callable>
+    template <typename Callable>
     struct callable_function {
-    private:
-        std::remove_pointer_t<Callable> *func;
+      private:
+        std::remove_pointer_t<Callable>* func;
 
-    public:
+      public:
         constexpr callable_function(
-                std::remove_pointer_t<Callable> *func) noexcept
-                : func(func) {}
+            std::remove_pointer_t<Callable>* func) noexcept
+            : func(func) {}
 
-        template<typename... Args>
-        decltype(auto) operator()(Args &&... args) const
-        noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
+        template <typename... Args>
+        decltype(auto) operator()(Args&&... args) const
+            noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
             using RetType = std::invoke_result_t<Callable, Args...>;
             if constexpr (std::is_void_v<RetType>) {
                 (*func)(std::forward<Args>(args)...);
@@ -72,38 +72,35 @@ namespace webpp {
      * a final class and cannot be extended from thus we have to take other
      * actions in order to make things happen.
      */
-    template<typename Callable>
-    struct callable_final {
-        static_assert(std::is_final_v<Callable>,
-                      "The specified callable is not a final already, there's "
-                      "no point of using this class when it's not final.");
+    template <typename Callable>
+    struct callable_as_field {
         Callable callable;
 
-        template<typename... Args>
-        constexpr callable_final(Args &&... args)
-                : callable(std::forward<Args>(args)...) {}
+        template <typename... Args>
+        constexpr callable_as_field(Args&&... args)
+            : callable(std::forward<Args>(args)...) {}
 
-        template<typename... Args>
-        auto operator()(Args &&... args) noexcept(
-        std::is_nothrow_invocable_v<Callable, Args...>) {
+        template <typename... Args>
+        auto operator()(Args&&... args) noexcept(
+            std::is_nothrow_invocable_v<Callable, Args...>) {
             return callable(std::forward<Args>(args)...);
         }
 
-        auto &ref() noexcept { return callable; }
+        auto& ref() noexcept { return callable; }
     };
-
 
     /**
      * Add Functor to the Callable to make sure it's extendable (so we can
      * inherit from it). It'll make sure it's Inheritable and Callable.
      */
-    template<typename Callable>
+    template <typename Callable>
     using make_inheritable = std::conditional_t<
-            std::is_class_v<Callable>,
-            std::conditional_t<std::is_final_v<Callable>, callable_final<Callable>,
-                    Callable>,
-            callable_function<Callable>>;
-
+        std::is_class_v<Callable>,
+        std::conditional_t<
+            std::is_final_v<Callable>, callable_as_field<Callable>,
+            std::conditional_t<!std::is_default_constructible_v<Callable>,
+                               callable_as_field<Callable>, Callable>>,
+        callable_function<Callable>>;
 
 } // namespace webpp
 
