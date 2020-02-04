@@ -2,8 +2,22 @@
 
 #include <gtest/gtest.h>
 #include <webpp/http/response.h>
+#include <type_traits>
 
 using namespace webpp;
+
+TEST(Response, Type) {
+    constexpr auto return_callback = [] {
+        return response("Hello");
+    };
+    using ret_type = std::invoke_result_t<decltype(return_callback)>;
+    constexpr bool one = std::is_same_v<ret_type, response>;
+    constexpr bool two = std::is_convertible_v<ret_type, response>;
+    constexpr bool three = std::is_convertible_v<response, response>;
+    EXPECT_TRUE(one);
+    EXPECT_TRUE(two);
+    EXPECT_TRUE(three);
+}
 
 TEST(Response, Init) {
     auto res = response();

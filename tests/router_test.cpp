@@ -21,15 +21,18 @@ TEST(Router, RouteCreation) {
     EXPECT_EQ(res.body.str(""), "About page\n");
 
 
-    constexpr auto return_callback_string = [] {
-        return "Hello String";
-    };
+
     constexpr auto return_callback = [] {
         return response("Hello");
     };
-    route<cgi, decltype(return_callback)>{}(req, res);
+    route<cgi, decltype(return_callback)> one{};
+    one(req, res);
     EXPECT_EQ(std::string(res.body.str()), "Hello");
 
-    route<cgi, decltype(return_callback_string)>{}(req, res);
+    constexpr auto return_callback_string = [] {
+        return "Hello String";
+    };
+    route<cgi, decltype(return_callback_string)> two{};
+    two(req, res);
     EXPECT_EQ(std::string(res.body.str()), "Hello String");
 }
