@@ -19,7 +19,15 @@ namespace webpp {
         body_type body;
         header_type header;
 
-        response() = default;
+        response() noexcept = default;
+
+        response(response const &) = default;
+
+        response(response &&) noexcept = default;
+
+        response &operator=(response const &) = default;
+
+        response &operator=(response &&) noexcept = default;
 
         response(std::string_view const &res) noexcept : body{res} {}
 
