@@ -121,7 +121,7 @@ namespace webpp {
         body(std::ostream &stream) noexcept
                 : data(&stream), type(types::stream) {}
 
-        body &operator=(body &b) noexcept {
+        body &operator=(body const &b) noexcept {
             if (this != &b) {
                 this->~body();
                 type = b.type;
@@ -129,7 +129,8 @@ namespace webpp {
                     case types::empty:
                         break;
                     case types::stream:
-                        replace_stream(b.stream_ref());
+                        // todo: fix this to be a stream instead of this:
+                        replace_string(string_type(b.str("")));
                         break;
                     case types::string:
                         replace_string(b.str_ref());

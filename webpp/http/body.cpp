@@ -71,7 +71,7 @@ void body::clear() noexcept {
 body::~body() noexcept {
     switch (type) {
         case types::string:
-            static_cast<string_type *>(data)->clear();
+            delete static_cast<string_type *>(data);
             break;
         case types::stream:
             delete static_cast<stream_type *>(data);
@@ -114,10 +114,6 @@ void body::append_string(std::string_view const &str) noexcept {
 
 body::string_type const &body::str_ref() const noexcept {
     return *static_cast<string_type *>(data);
-}
-
-body::stream_type const &body::stream_ref() const noexcept {
-    return *static_cast<stream_type *>(data);
 }
 
 body::string_type &body::str_ref() noexcept {

@@ -9,7 +9,7 @@ TEST(Response, Init) {
     auto res = response();
     auto res2 = response();
 
-    EXPECT_NE(res, res2);
+    EXPECT_EQ(res, res2);
 
     EXPECT_EQ(std::string(res.body.str("")), "");
     res2 << "Code";
