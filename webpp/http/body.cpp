@@ -71,7 +71,7 @@ void body::clear() noexcept {
 body::~body() noexcept {
     switch (type) {
         case types::string:
-            delete static_cast<string_type *>(data);
+            std::string(std::move(*static_cast<string_type *>(data)));
             break;
         case types::stream:
             delete static_cast<stream_type *>(data);
