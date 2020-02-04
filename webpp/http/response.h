@@ -41,6 +41,16 @@ namespace webpp {
             return *this;
         }
 
+        response &operator=(std::string const &str) noexcept {
+            body.replace_string(str);
+            return *this;
+        }
+
+        response &operator=(std::string &str) noexcept {
+            body.replace_string(std::move(str));
+            return *this;
+        }
+
         response(std::string const &b) noexcept : body{b} {}
 
         response(std::string &&b) noexcept : body{std::move(b)} {}

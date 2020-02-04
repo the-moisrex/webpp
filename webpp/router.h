@@ -16,6 +16,19 @@ namespace webpp {
 
     }
 
+    template<typename T, typename U>
+    struct can_cast : std::integral_constant<bool,
+            (!std::is_void_v<T> && !std::is_void_v<U>) && (
+                    std::is_convertible_v<T, U> || std::is_constructible_v<T, U> || std::is_assignable_v<T, U> ||
+                    std::is_convertible_v<U, std::string> || std::is_constructible_v<U, std::string> ||
+                    std::is_assignable_v<U, std::string>)
+    > {
+    };
+
+    template<typename T, typename U>
+    inline constexpr bool can_convert_v = can_cast<T, U>::value;
+
+
     /**
      * @brief This route class contains one single root route and it's children
      */
@@ -26,6 +39,7 @@ namespace webpp {
         using condition_t = Valve;
         using callable = make_inheritable<Callable>;
 
+
         condition_t condition = valves::empty;
 
         // TODO: check for padding
@@ -34,7 +48,8 @@ namespace webpp {
         static_assert(std::is_invocable_v<callable, req_t, res_t>
                       || std::is_invocable_v<callable, req_t>
                       || std::is_invocable_v<callable, res_t>
-                      || std::is_invocable_v<callable>, "We don't know how to call this callable you passed.");
+                      || std::is_invocable_v<callable>,
+                      "We don't know how to call this callable you passed.");
 
     public:
         using callable::callable;
@@ -79,9 +94,10 @@ namespace webpp {
 
             // TODO: add more overrides. You can simulate "dependency injection" here
 
+
             if constexpr (std::is_invocable_v<callable, req_t>) {
                 using RetType = std::invoke_result_t<callable, req_t>;
-                if constexpr (!std::is_convertible_v<RetType, response>) {
+                if constexpr (!can_convert_v<RetType, response>) {
                     if constexpr (std::is_nothrow_invocable_v<callable, req_t>) {
                         (void) callable::operator()(req);
                     } else {
@@ -104,7 +120,7 @@ namespace webpp {
                 }
             } else if constexpr (std::is_invocable_v<callable, res_t>) {
                 using RetType = std::invoke_result_t<callable, res_t>;
-                if constexpr (!std::is_convertible_v<RetType, response>) {
+                if constexpr (!can_convert_v<RetType, response>) {
                     if constexpr (std::is_nothrow_invocable_v<callable, res_t>) {
                         (void) callable::operator()(res);
                     } else {
@@ -128,7 +144,7 @@ namespace webpp {
                 }
             } else if constexpr (std::is_invocable_v<callable, req_t, res_t>) {
                 using RetType = std::invoke_result_t<callable, req_t, res_t>;
-                if constexpr (!std::is_convertible_v<RetType, response>) {
+                if constexpr (!can_convert_v<RetType, response>) {
                     if constexpr (std::is_nothrow_invocable_v<callable, req_t, res_t>) {
                         (void) callable::operator()(req, res);
                     } else {
@@ -151,7 +167,7 @@ namespace webpp {
                 }
             } else if (std::is_invocable_v<callable>) {
                 using RetType = std::invoke_result_t<callable>;
-                if constexpr (!std::is_convertible_v<RetType, response>) {
+                if constexpr (!can_convert_v<RetType, response>) {
                     if constexpr (std::is_nothrow_invocable_v<callable>) {
                         (void) callable::operator()();
                     } else {
