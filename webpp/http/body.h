@@ -149,8 +149,7 @@ namespace webpp {
         }
 
         [[nodiscard]] bool operator==(body const &b) const noexcept {
-            // TODO: see if you need a deep equality or a shallow one:
-            return type == b.type && data == b.data;
+            return b.str("") == str("");
         }
 
         [[nodiscard]] bool operator!=(body const &b) const noexcept {
