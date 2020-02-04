@@ -21,9 +21,15 @@ namespace webpp {
 
         response() noexcept = default;
 
-        response(response const &) = default;
+        response(response const &res) noexcept {
+            body = res.body;
+            header = res.header;
+        }
 
-        response(response &&) noexcept = default;
+        response(response &&res) noexcept {
+            body = std::move(body);
+            header = std::move(header);
+        }
 
         response &operator=(response const &) = default;
 
