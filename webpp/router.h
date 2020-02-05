@@ -248,7 +248,7 @@ namespace webpp {
          */
         template <typename RequestType = request_t<Interface>,
                   typename ResponseType = response>
-        ResponseType run(RequestType& req) noexcept {
+        ResponseType operator()(RequestType& req) noexcept {
             // FIXME: make sure it's as performant as possible.
             ResponseType res;
             auto for_each_route_do = [&](auto& _route) noexcept {
