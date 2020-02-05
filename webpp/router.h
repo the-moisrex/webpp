@@ -44,22 +44,30 @@ namespace webpp {
         // TODO: check for padding
         bool active = true;
 
-        static_assert(std::is_invocable_v<callable, req_t, res_t> ||
-                          std::is_invocable_v<callable, req_t> ||
-                          std::is_invocable_v<callable, res_t> ||
-                          std::is_invocable_v<callable>,
-                      "We don't know how to call this callable you passed.");
+        //        static_assert(std::is_invocable_v<callable, req_t, res_t> ||
+        //                          std::is_invocable_v<callable, req_t> ||
+        //                          std::is_invocable_v<callable, res_t> ||
+        //                          std::is_invocable_v<callable>,
+        //                      "We don't know how to call this callable you
+        //                      passed.");
 
       public:
         using callable::operator();
 
-        template <typename... Args>
+        template <typename... Args,
+                  std::enable_if_t<std::is_constructible_v<callable, Args...>,
+                                   int> = 0>
         constexpr route(Args&&... args) noexcept
             : callable{std::forward<Args>(args)...} {}
 
+        template <typename... Args>
+        constexpr route(condition_t con, Args&&... args) noexcept
+            : condition(std::move(con)), callable{std::forward<Args>(args)...} {
+        }
+
         constexpr route(Callable c) noexcept : callable(c) {}
 
-        constexpr route(condition_t con) noexcept : condition(con) {}
+        constexpr route(condition_t con) noexcept : condition(std::move(con)) {}
 
         constexpr route(condition_t con, Callable c) noexcept
             : condition(std::move(con)), callable(c) {}
