@@ -226,7 +226,7 @@ namespace webpp {
      *
      * @param Interface
      */
-    template <typename Interface, typename Routes>
+    template <typename Interface, typename RouteList = const_list<>>
     class router {
 
         using req_t = request_t<Interface> const&;
@@ -234,7 +234,7 @@ namespace webpp {
 
         // this is the main route which includes other routes:
         // This is a "const_list":
-        Routes routes;
+        RouteList routes;
 
       public:
         template <typename... Args>
@@ -265,8 +265,11 @@ namespace webpp {
                 // for containers
                 std::for_each(std::begin(routes), std::end(routes),
                               for_each_route_do);
+            } else if constexpr (is_specialization_of<RouteList,
+                                                      std::tuple>::value) {
+                std::apply(for_each_route_do, routes);
             } else {
-                // todo: ERROR
+                // todo: what should I do here?
             }
             return res;
         }
@@ -279,23 +282,40 @@ namespace webpp {
         template <typename Valve, typename Route>
         constexpr auto on(Valve&& v, Route&& r) const noexcept {
 
-            static_assert(std::is_invocable_v<Route, req_t, res_t>,
-                          "The specified route is not valid.");
+            static_assert(
+                std::is_invocable_v<Route, req_t, res_t> ||
+                    std::is_invocable_v<route<Interface, Route>, req_t, res_t>,
+                "The specified route is not valid.");
 
-            if constexpr () {
+            auto _route = route<Valve, Route>{std::forward<Valve>(v),
+                                              std::forward<Route>(r)};
+
+            if constexpr (is_specialization_of<RouteList, std::tuple>::value) {
+
+                // when it's a tuple
+                auto _tup = std::tuple_cat(routes, std::move(_route));
+                return router<Interface, decltype(_tup)>{_tup};
+
+            } else if constexpr (is_specialization_of<RouteList,
+                                                      const_list>::value) {
                 // for const_list (constexpr version)
                 auto _the_routes =
                     routes + route(valves::empty, std::forward<Route>(r));
                 return router<Interface, decltype(_the_routes)>{_the_routes};
-            } else if constexpr (is_container_v<Routes>) {
+
+            } else if constexpr (is_container_v<RouteList>) {
+
                 // for containers (dynamic)
                 if constexpr (can_cast<Route,
-                                       typename Routes::value_type>::value) {
+                                       typename RouteList::value_type>::value) {
                     routes.emplace(
                         route{std::forward<Valve>(v), std::forward<Route>(r)});
                 } else {
                     // todo: error maybe?
                 }
+
+            } else {
+                // todo: what should I do here?
             }
         }
     };

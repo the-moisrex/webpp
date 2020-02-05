@@ -114,7 +114,7 @@ TEST(Router, VectorForRouteList) {
 
 TEST(Router, TupleForRouteList) {
 
-    constexpr auto _router = router<fake_cgi, std::tuple>{}.on(
+    constexpr auto _router = router<fake_cgi, std::tuple<>>{}.on(
         method("GET"), [] { return "Hello world"; });
 
     request_t<fake_cgi> req;
@@ -125,7 +125,7 @@ TEST(Router, TupleForRouteList) {
 
 TEST(Router, ConstListForRouteList) {
 
-    constexpr auto _router = router<fake_cgi, const_list>{}.on(
+    constexpr auto _router = router<fake_cgi, const_list<>>{}.on(
         method("GET"), [] { return "Hello world"; });
 
     request_t<fake_cgi> req;
@@ -149,7 +149,7 @@ TEST(Router, MergeEffect) {
     router<fake_cgi> _router1{};
     _router1.on(method("GET"), [] { return "Hello world"; });
 
-    constexpr auto _router2 = router<fake_cgi, const_list>{}.on(
+    constexpr auto _router2 = router<fake_cgi, const_list<>>{}.on(
         method("GET"), [] { return "Hello world"; });
 
     router<fake_cgi> merged_router(_router1, _router2);

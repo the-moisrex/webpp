@@ -104,6 +104,14 @@ namespace webpp {
                                callable_as_field<Callable>, Callable>>,
         callable_function<Callable>>;
 
+    // Tests if T is a specialization of Template
+    template <typename T, template <typename...> class Template>
+    struct is_specialization_of : std::false_type {};
+
+    template <template <typename...> class Template, typename... Args>
+    struct is_specialization_of<Template<Args...>, Template> : std::true_type {
+    };
+
 } // namespace webpp
 
 #endif // WEBPP_FUNCTIONAL_H
