@@ -86,14 +86,14 @@ TEST(Router, RouterClass) {
     constexpr auto v = method("GET");
     route<fake_cgi, decltype(return_callback), decltype(v)> one{
         v, return_callback};
-    router<fake_cgi, decltype(one)> rr{};
+    router<fake_cgi, decltype(one)> rr{one};
 
     request_t<fake_cgi> req;
     req.set_method("GET");
     response res;
 
     EXPECT_TRUE(one.is_match(req));
-    rr.run<decltype(req)>(res);
+    rr.run(req);
     EXPECT_EQ(std::string(res.body.str()), "Hello");
     EXPECT_EQ(i, 3);
 }
