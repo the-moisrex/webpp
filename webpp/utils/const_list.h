@@ -242,6 +242,21 @@ namespace webpp {
         }
 
         /**
+         * Do something for each element in the list
+         * @tparam Callable
+         * @param callable
+         */
+        template <typename Callable>
+        void for_each(Callable& callable) noexcept {
+            if constexpr (!std::is_void_v<type>) {
+                callable(value());
+            }
+            if constexpr (!std::is_void_v<next_type>) {
+                next().for_each(callable);
+            }
+        }
+
+        /**
          * Do something once
          * @tparam Callable
          * @param callable

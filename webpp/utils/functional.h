@@ -74,17 +74,18 @@ namespace webpp {
      */
     template <typename Callable>
     struct callable_as_field {
-        Callable callable;
+        using Callable_t = std::remove_cv_t<Callable>;
+        mutable Callable_t callable;
 
         template <typename... Args,
-                  std::enable_if_t<std::is_constructible_v<Callable, Args...>,
+                  std::enable_if_t<std::is_constructible_v<Callable_t, Args...>,
                                    int> = 0>
         constexpr callable_as_field(Args&&... args)
             : callable(std::forward<Args>(args)...) {}
 
         template <typename... Args>
-        auto operator()(Args&&... args) noexcept(
-            std::is_nothrow_invocable_v<Callable, Args...>) {
+        auto operator()(Args&&... args) const
+            noexcept(std::is_nothrow_invocable_v<Callable_t, Args...>) {
             return callable(std::forward<Args>(args)...);
         }
 

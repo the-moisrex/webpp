@@ -7,6 +7,7 @@
 #include "utils/containers.h"
 #include "utils/functional.h"
 #include "valves/valve.h"
+#include <tuple>
 #include <type_traits>
 
 namespace webpp {
@@ -70,8 +71,8 @@ namespace webpp {
 
         constexpr route(condition_t con) noexcept : condition(std::move(con)) {}
 
-        constexpr route(condition_t con, Callable c) noexcept
-            : condition(std::move(con)), callable(c) {}
+        //        constexpr route(condition_t con, Callable c) noexcept
+        //            : condition(std::move(con)), callable(c) {}
 
         constexpr route(route const&) noexcept = default;
 
@@ -255,16 +256,24 @@ namespace webpp {
                 if (_route.is_match(req))
                     _route(req, res);
             };
-            if constexpr (std::is_integral_v<decltype(
-                              routes.for_each(for_each_route_do), true)>) {
+            if constexpr (is_specialization_of<RouteList, const_list>::value) {
                 // for webpp::const_list
                 routes.for_each(for_each_route_do);
             } else if constexpr (std::is_integral_v<decltype(std::begin(routes),
                                                              std::end(routes),
                                                              true)>) {
                 // for containers
-                std::for_each(std::begin(routes), std::end(routes),
-                              for_each_route_do);
+                std::for_each(
+                    std::begin(routes), std::end(routes),
+                    [](auto& route_wrapper) {
+                        if constexpr (std::is_same_v<decltype(route_wrapper),
+                                                     std::any>) {
+                            for_each_route_do(std::any_cast<route<Interface, >>(
+                                route_wrapper));
+                        } else {
+                            // todo: what should I do here?
+                        }
+                    });
             } else if constexpr (is_specialization_of<RouteList,
                                                       std::tuple>::value) {
                 std::apply(for_each_route_do, routes);
@@ -280,27 +289,27 @@ namespace webpp {
         }
 
         template <typename Valve, typename Route>
-        constexpr auto on(Valve&& v, Route&& r) const noexcept {
+        constexpr auto on(Valve&& v, Route&& r) noexcept {
 
             static_assert(
                 std::is_invocable_v<Route, req_t, res_t> ||
                     std::is_invocable_v<route<Interface, Route>, req_t, res_t>,
                 "The specified route is not valid.");
 
-            auto _route = route<Valve, Route>{std::forward<Valve>(v),
-                                              std::forward<Route>(r)};
+            auto _route = route<Interface, Route, Valve>{
+                std::forward<Valve>(v), std::forward<Route>(r)};
 
             if constexpr (is_specialization_of<RouteList, std::tuple>::value) {
 
                 // when it's a tuple
-                auto _tup = std::tuple_cat(routes, std::move(_route));
+                auto _tup =
+                    std::tuple_cat(routes, std::make_tuple(std::move(_route)));
                 return router<Interface, decltype(_tup)>{_tup};
 
             } else if constexpr (is_specialization_of<RouteList,
                                                       const_list>::value) {
                 // for const_list (constexpr version)
-                auto _the_routes =
-                    routes + route(valves::empty, std::forward<Route>(r));
+                auto _the_routes = routes + std::move(_route);
                 return router<Interface, decltype(_the_routes)>{_the_routes};
 
             } else if constexpr (is_container_v<RouteList>) {
@@ -308,8 +317,7 @@ namespace webpp {
                 // for containers (dynamic)
                 if constexpr (can_cast<Route,
                                        typename RouteList::value_type>::value) {
-                    routes.emplace(
-                        route{std::forward<Valve>(v), std::forward<Route>(r)});
+                    routes.emplace_back(std::move(_route));
                 } else {
                     // todo: error maybe?
                 }
