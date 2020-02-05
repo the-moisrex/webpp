@@ -1,6 +1,8 @@
+#include <any>
 #include <gtest/gtest.h>
-#include <webpp/router.h>
+#include <vector>
 #include <webpp/interfaces/cgi.h>
+#include <webpp/router.h>
 
 using namespace webpp::valves;
 using namespace webpp;
@@ -8,8 +10,9 @@ using namespace webpp;
 TEST(Router, RouteCreation) {
     using request = request_t<cgi>;
 
-    // this will happen with a help of a little "user-defined template deduction guide"
-    constexpr auto about_page_callback = [](response &res) noexcept {
+    // this will happen with a help of a little "user-defined template deduction
+    // guide"
+    constexpr auto about_page_callback = [](response& res) noexcept {
         res << "About page\n";
     };
     route<cgi, decltype(about_page_callback)> about_page{};
@@ -77,16 +80,17 @@ TEST(Router, RouterClass) {
     using namespace webpp::valves;
     using namespace webpp;
 
-    int i = 2;
-
-    auto return_callback = [&] {
+    constexpr auto return_callback = [i = 2]() mutable {
         i++;
         return response("Hello");
     };
     constexpr auto v = method("GET");
-    route<fake_cgi, decltype(return_callback), decltype(v)> one{
+    constexpr route<fake_cgi, decltype(return_callback), decltype(v)> one{
         v, return_callback};
-    router<fake_cgi, decltype(one)> rr{one};
+
+    constexpr auto route_list = make_const_list(one);
+
+    router<fake_cgi, decltype(route_list)> rr{one, route_list};
 
     request_t<fake_cgi> req;
     req.set_method("GET");
@@ -95,5 +99,21 @@ TEST(Router, RouterClass) {
     EXPECT_TRUE(one.is_match(req));
     rr.run(req);
     EXPECT_EQ(std::string(res.body.str()), "Hello");
-    EXPECT_EQ(i, 3);
+    //    EXPECT_EQ(i, 3);
+}
+
+TEST(Router, VectorForRouteList) {
+    using namespace webpp::valves;
+    using namespace webpp;
+    using namespace std;
+
+    router<fake_cgi, vector<any>> _route{};
+    _route.on(method("GET"), [] { return "Hello world"; });
+
+    request_t<fake_cgi> req;
+    req.set_method("GET");
+    response res;
+
+    _route.run(req);
+    EXPECT_EQ(std::string(res.body.str()), "Hello world");
 }
