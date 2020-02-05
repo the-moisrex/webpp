@@ -1,8 +1,10 @@
 #include <any>
 #include <gtest/gtest.h>
+#include <tuple>
 #include <vector>
 #include <webpp/interfaces/cgi.h>
 #include <webpp/router.h>
+#include <webpp/utils/const_list.h>
 
 using namespace webpp::valves;
 using namespace webpp;
@@ -97,7 +99,7 @@ TEST(Router, RouterClass) {
     response res;
 
     EXPECT_TRUE(one.is_match(req));
-    rr.run(req);
+    res = rr(req);
     EXPECT_EQ(std::string(res.body.str()), "Hello");
     //    EXPECT_EQ(i, 3);
 }
@@ -112,8 +114,34 @@ TEST(Router, VectorForRouteList) {
 
     request_t<fake_cgi> req;
     req.set_method("GET");
-    response res;
+    response res = _route(req);
+    EXPECT_EQ(std::string(res.body.str()), "Hello world");
+}
 
-    _route.run(req);
+TEST(Router, TupleForRouteList) {
+    using namespace webpp::valves;
+    using namespace webpp;
+    using namespace std;
+
+    constexpr auto _router = router<fake_cgi, std::tuple>{}.on(
+        method("GET"), [] { return "Hello world"; });
+
+    request_t<fake_cgi> req;
+    req.set_method("GET");
+    response res = _router(req);
+    EXPECT_EQ(std::string(res.body.str()), "Hello world");
+}
+
+TEST(Router, ConstListForRouteList) {
+    using namespace webpp::valves;
+    using namespace webpp;
+    using namespace std;
+
+    constexpr auto _router = router<fake_cgi, const_list>{}.on(
+        method("GET"), [] { return "Hello world"; });
+
+    request_t<fake_cgi> req;
+    req.set_method("GET");
+    response res = _router(req);
     EXPECT_EQ(std::string(res.body.str()), "Hello world");
 }
