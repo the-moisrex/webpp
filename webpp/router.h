@@ -3,10 +3,11 @@
 
 #include "http/request.h"
 #include "http/response.h"
+#include "utils/const_list.h"
+#include "utils/containers.h"
 #include "utils/functional.h"
 #include "valves/valve.h"
 #include <type_traits>
-#include <vector>
 
 namespace webpp {
 
@@ -228,6 +229,9 @@ namespace webpp {
     template <typename Interface, typename Routes>
     class router {
 
+        using req_t = request_t<Interface> const&;
+        using res_t = response&;
+
         // this is the main route which includes other routes:
         // This is a "const_list":
         Routes routes;
@@ -247,22 +251,52 @@ namespace webpp {
         ResponseType run(RequestType& req) noexcept {
             // FIXME: make sure it's as performant as possible.
             ResponseType res;
-            routes.for_each([&](auto const& _route) noexcept {
+            auto for_each_route_do = [&](auto& _route) noexcept {
                 if (_route.is_match(req))
                     _route(req, res);
-            });
+            };
+            if constexpr (std::is_integral_v<decltype(
+                              routes.for_each(for_each_route_do), true)>) {
+                // for webpp::const_list
+                routes.for_each(for_each_route_do);
+            } else if constexpr (std::is_integral_v<decltype(std::begin(routes),
+                                                             std::end(routes),
+                                                             true)>) {
+                // for containers
+                std::for_each(std::begin(routes), std::end(routes),
+                              for_each_route_do);
+            } else {
+                // todo: ERROR
+            }
             return res;
         }
 
         template <typename Route>
         constexpr auto on(Route&& _route) const noexcept {
-            return routes + route(valves::empty, std::forward<Route>(_route));
+            return on(valves::empty, std::forward<Route>(_route));
         }
 
         template <typename Valve, typename Route>
         constexpr auto on(Valve&& v, Route&& r) const noexcept {
-            return routes +
-                   route(std::forward<Valve>(v), std::forward<Route>(r));
+
+            static_assert(std::is_invocable_v<Route, req_t, res_t>,
+                          "The specified route is not valid.");
+
+            if constexpr () {
+                // for const_list (constexpr version)
+                auto _the_routes =
+                    routes + route(valves::empty, std::forward<Route>(r));
+                return router<Interface, decltype(_the_routes)>{_the_routes};
+            } else if constexpr (is_container_v<Routes>) {
+                // for containers (dynamic)
+                if constexpr (can_cast<Route,
+                                       typename Routes::value_type>::value) {
+                    routes.emplace(
+                        route{std::forward<Valve>(v), std::forward<Route>(r)});
+                } else {
+                    // todo: error maybe?
+                }
+            }
         }
     };
 
