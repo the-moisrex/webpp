@@ -8,6 +8,7 @@
 
 using namespace webpp::valves;
 using namespace webpp;
+using namespace std;
 
 TEST(Router, RouteCreation) {
     using request = request_t<cgi>;
@@ -62,8 +63,6 @@ namespace webpp {
 }
 
 TEST(Router, ValveTest) {
-    using namespace webpp::valves;
-    using namespace webpp;
 
     constexpr auto return_callback = [] {
         return response("Hello");
@@ -79,8 +78,6 @@ TEST(Router, ValveTest) {
 
 
 TEST(Router, RouterClass) {
-    using namespace webpp::valves;
-    using namespace webpp;
 
     constexpr auto return_callback = [i = 2]() mutable {
         i++;
@@ -105,9 +102,6 @@ TEST(Router, RouterClass) {
 }
 
 TEST(Router, VectorForRouteList) {
-    using namespace webpp::valves;
-    using namespace webpp;
-    using namespace std;
 
     router<fake_cgi, vector<any>> _route{};
     _route.on(method("GET"), [] { return "Hello world"; });
@@ -119,9 +113,6 @@ TEST(Router, VectorForRouteList) {
 }
 
 TEST(Router, TupleForRouteList) {
-    using namespace webpp::valves;
-    using namespace webpp;
-    using namespace std;
 
     constexpr auto _router = router<fake_cgi, std::tuple>{}.on(
         method("GET"), [] { return "Hello world"; });
@@ -133,9 +124,6 @@ TEST(Router, TupleForRouteList) {
 }
 
 TEST(Router, ConstListForRouteList) {
-    using namespace webpp::valves;
-    using namespace webpp;
-    using namespace std;
 
     constexpr auto _router = router<fake_cgi, const_list>{}.on(
         method("GET"), [] { return "Hello world"; });
@@ -143,5 +131,31 @@ TEST(Router, ConstListForRouteList) {
     request_t<fake_cgi> req;
     req.set_method("GET");
     response res = _router(req);
+    EXPECT_EQ(std::string(res.body.str()), "Hello world");
+}
+
+TEST(Router, DefaultRouteList) {
+
+    router<fake_cgi> _router{};
+    _router.on(method("GET"), [] { return "Hello world"; });
+
+    request_t<fake_cgi> req;
+    req.set_method("GET");
+    response res = _router(req);
+    EXPECT_EQ(std::string(res.body.str()), "Hello world");
+}
+
+TEST(Router, MergeEffect) {
+    router<fake_cgi> _router1{};
+    _router1.on(method("GET"), [] { return "Hello world"; });
+
+    constexpr auto _router2 = router<fake_cgi, const_list>{}.on(
+        method("GET"), [] { return "Hello world"; });
+
+    router<fake_cgi> merged_router(_router1, _router2);
+
+    request_t<fake_cgi> req;
+    req.set_method("GET");
+    response res = merged_router(req);
     EXPECT_EQ(std::string(res.body.str()), "Hello world");
 }
