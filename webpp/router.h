@@ -248,7 +248,7 @@ namespace webpp {
     };
 
     template <typename Interface>
-    using route_signitures = std::disjunction<
+    using route_sigs = std::disjunction<
         std::function<void()>, std::function<void(request_t<Interface> const&)>,
         std::function<void(response&)>,
         std::function<void(request_t<Interface> const&, response&)>,
@@ -260,7 +260,7 @@ namespace webpp {
         std::function<response(response&, request_t<Interface> const&)>>;
 
     template <typename Interface>
-    struct dynamic_route : public route<Interface, route_signitures<Interface>,
+    struct dynamic_route : public route<Interface, route_sigs<Interface>,
                                         valves::dynamic_valve<Interface>> {};
 
     /**
