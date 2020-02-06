@@ -23,12 +23,22 @@ namespace webpp {
             return *this;
         }
     };
-}
+} // namespace webpp
 
 TEST(ValvesTests, Creation) {
     constexpr auto v = method("GET") or method("POST");
 
-    // I'm not gonna test the lowercase and uppercase stuff because it's probably the request's job to fix that information not the valve.
+    // I'm not gonna test the lowercase and uppercase stuff because it's
+    // probably the request's job to fix that information not the valve.
     EXPECT_TRUE(v(request_t<fake_cgi>().set_method("GET")));
     EXPECT_TRUE(v(request_t<fake_cgi>().set_method("POST")));
+}
+
+TEST(ValveTests, DynamicValve) {
+    auto dv = dynamic_valve<fake_cgi>() and method("GET") or method("POST");
+
+    auto con1 = request_t<fake_cgi>().set_method("GET");
+    auto con2 = request_t<fake_cgi>().set_method("POST");
+    EXPECT_TRUE(dv(con1));
+    EXPECT_TRUE(dv(con2));
 }

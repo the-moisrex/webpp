@@ -144,6 +144,21 @@ namespace webpp::valves {
         dynamic_valve& operator=(dynamic_valve const&) noexcept = default;
 
         template <typename NewValve>
+        dynamic_valve&
+        set_next(NewValve&& v, logical_operators const& op) noexcept(
+            std::is_nothrow_invocable_v<NewValve, req_t>) {
+            switch (op) {
+            case logical_operators::AND:
+                return operator&&(std::forward<NewValve>(v));
+            case logical_operators::OR:
+                return operator||(std::forward<NewValve>(v));
+            case logical_operators::XOR:
+                return operator^(std::forward<NewValve>(v));
+            }
+            return *this;
+        }
+
+        template <typename NewValve>
         dynamic_valve& operator&&(NewValve&& v) noexcept(
             std::is_nothrow_invocable_v<NewValve, req_t>) {
             func = [=](req_t req) { return func(req) && v(req); };
