@@ -1,8 +1,8 @@
 // Created by moisrex on 11/7/19.
 #include <gtest/gtest.h>
-#include <webpp/valves/valve.h>
-#include <webpp/http/request.h>
 #include <string>
+#include <webpp/http/request.h>
+#include <webpp/valves/valve.h>
 
 using namespace webpp;
 using namespace webpp::valves;
@@ -10,15 +10,14 @@ using namespace webpp::valves;
 namespace webpp {
     class fake_cgi;
 
-    template<>
+    template <>
     class request_t<fake_cgi> {
         std::string method;
-    public:
-        std::string request_method() const noexcept {
-            return method;
-        }
 
-        auto &set_method(std::string _method) noexcept {
+      public:
+        std::string request_method() const noexcept { return method; }
+
+        auto& set_method(std::string _method) noexcept {
             method = _method;
             return *this;
         }
