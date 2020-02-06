@@ -11,7 +11,7 @@ namespace webpp::valves {
 
     enum class logical_operators { AND, OR, XOR };
 
-    template<typename ValveType, typename NextValve>
+    template <typename ValveType, typename NextValve>
     struct basic_valve : public ValveType {
         using next_valve_type =
             std::remove_reference_t<std::remove_cv_t<NextValve>>;
@@ -19,13 +19,13 @@ namespace webpp::valves {
         next_valve_type next;
         logical_operators op;
 
-        constexpr basic_valve(ValveType const &super, next_valve_type &&_next,
+        constexpr basic_valve(ValveType const& super, next_valve_type&& _next,
                               logical_operators op) noexcept
-                : ValveType(super), next(std::move(_next)), op(op) {}
+            : ValveType(super), next(std::move(_next)), op(op) {}
 
-        constexpr basic_valve(ValveType &&super, next_valve_type const &_next,
+        constexpr basic_valve(ValveType&& super, next_valve_type const& _next,
                               logical_operators op) noexcept
-                : ValveType(std::move(super)), next(_next), op(op) {}
+            : ValveType(std::move(super)), next(_next), op(op) {}
 
         constexpr basic_valve(basic_valve const& v) noexcept = default;
         constexpr basic_valve(basic_valve&& v) noexcept = default;
@@ -35,12 +35,12 @@ namespace webpp::valves {
         constexpr basic_valve& operator=(basic_valve&&) noexcept = default;
     };
 
-    template<typename ValveType>
+    template <typename ValveType>
     struct basic_valve<ValveType, void> : public ValveType {
         using ValveType::ValveType;
     };
 
-    template<typename ValveType, typename NextValve = void>
+    template <typename ValveType, typename NextValve = void>
     class valve : public basic_valve<ValveType, NextValve> {
       public:
         using type = ValveType;
@@ -63,8 +63,8 @@ namespace webpp::valves {
                 // void
 
                 // the first way (A<X, void> and B<Y, void> === A<X, B<Y, void>>
-                return valve<ValveType, NewValve>(*this, std::forward<NewValve>(v),
-                                                  the_op);
+                return valve<ValveType, NewValve>(
+                    *this, std::forward<NewValve>(v), the_op);
             } else {
                 // this means this function has a "next" valve already,
                 // so it goes to the next's next valve
@@ -108,17 +108,75 @@ namespace webpp::valves {
                 switch (basic_valve<ValveType, NextValve>::op) {
                 case logical_operators::AND:
                     return ValveType::operator()(req) &&
-                           basic_valve<ValveType, NextValve>::next.operator()(req);
+                           basic_valve<ValveType, NextValve>::next.operator()(
+                               req);
                 case logical_operators::OR:
                     return ValveType::operator()(req) ||
-                           basic_valve<ValveType, NextValve>::next.operator()(req);
+                           basic_valve<ValveType, NextValve>::next.operator()(
+                               req);
                 case logical_operators::XOR:
                     return ValveType::operator()(req) ^
-                           basic_valve<ValveType, NextValve>::next.operator()(req);
+                           basic_valve<ValveType, NextValve>::next.operator()(
+                               req);
                 default:
                     return false;
                 }
             }
+        }
+    };
+
+    /**
+     * Dynamic version of the above valve class.
+     * todo: use a better name maybe?
+     */
+    template <typename Interface>
+    struct dynamic_valve {
+        using req_t = request_t<Interface> const&;
+
+      protected:
+        std::function<bool(req_t)> func;
+
+      public:
+        template <typename NewValve>
+        dynamic_valve& operator&&(NewValve&& v) noexcept(
+            std::is_nothrow_invocable_v<NewValve, req_t>) {
+            func = [=](req_t req) { return func(req) && v(req); };
+            return *this;
+        }
+
+        template <typename NewValve>
+        dynamic_valve& operator||(NewValve&& v) noexcept(
+            std::is_nothrow_invocable_v<NewValve, req_t>) {
+            func = [=](req_t req) { return func(req) || v(req); };
+            return *this;
+        }
+
+        template <typename NewValve>
+        dynamic_valve& operator&(NewValve&& v) noexcept(
+            std::is_nothrow_invocable_v<NewValve, req_t>) {
+            return operator&&(v);
+        }
+
+        template <typename NewValve>
+        dynamic_valve& operator|(NewValve&& v) noexcept(
+            std::is_nothrow_invocable_v<NewValve, req_t>) {
+            return operator||(v);
+        }
+
+        template <typename NewValve>
+        dynamic_valve& operator^(NewValve&& v) noexcept(
+            std::is_nothrow_invocable_v<NewValve, req_t>) {
+            func = [=](req_t req) {
+                bool one = func(req);
+                bool two = v(req);
+                return (one && !two) || (!one && two);
+            };
+            return *this;
+        }
+
+        [[nodiscard]] bool operator()(req_t req) const
+            noexcept(std::is_nothrow_invocable_v<decltype(func), req_t>) {
+            return func(req);
         }
     };
 
@@ -128,7 +186,7 @@ namespace webpp::valves {
 
       public:
         constexpr method_condition(std::string_view str) noexcept
-                : method_string(std::move(str)) {}
+            : method_string(std::move(str)) {}
 
         constexpr method_condition() noexcept = default;
 
