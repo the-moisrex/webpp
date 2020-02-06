@@ -7,6 +7,7 @@
 #include "utils/containers.h"
 #include "utils/functional.h"
 #include "valves/valve.h"
+#include <functional>
 #include <tuple>
 #include <type_traits>
 
@@ -147,8 +148,8 @@ namespace webpp {
                         }
                     }
                 } else {
-                    // Yeah I know what it looks like. But we've got some stupid
-                    // programmers out there!
+                    // Yeah, I know what it looks like, but we've got some
+                    // stupid programmers out there!
                     if constexpr (std::is_nothrow_invocable_v<callable,
                                                               res_t>) {
                         res = callable::operator()(res);
@@ -221,6 +222,21 @@ namespace webpp {
         }
     };
 
+    template <typename Interface>
+    using route_signitures = std::disjunction<
+        std::function<void()>, std::function<void(request_t<Interface> const&)>,
+        std::function<void(response&)>,
+        std::function<void(request_t<Interface> const&, response&)>,
+        std::function<void(response&, request_t<Interface> const&)>,
+        std::function<response()>,
+        std::function<response(request_t<Interface> const&)>,
+        std::function<response(response&)>,
+        std::function<response(request_t<Interface> const&, response&)>>;
+
+    template <typename Interface>
+    struct dynamic_route : public route<Interface, route_signitures<Interface>,
+                                        valves::dynamic_valve<Interface>> {};
+
     /**
      * This is the router; the developers need this class to inject their routes
      * and also add more migrations.
@@ -266,8 +282,8 @@ namespace webpp {
                     [](auto& route_wrapper) {
                         if constexpr (std::is_same_v<decltype(route_wrapper),
                                                      std::any>) {
-                            for_each_route_do(std::any_cast<route<Interface, >>(
-                                route_wrapper));
+                            for_each_route_do(
+                                std::any_cast<route<Interface>>(route_wrapper));
                         } else {
                             // todo: what should I do here?
                         }
