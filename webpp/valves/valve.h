@@ -137,6 +137,12 @@ namespace webpp::valves {
         std::function<bool(req_t)> func;
 
       public:
+        dynamic_valve() noexcept = default;
+        dynamic_valve(dynamic_valve const&) = default;
+        dynamic_valve(dynamic_valve&&) noexcept = default;
+        dynamic_valve& operator=(dynamic_valve&&) noexcept = default;
+        dynamic_valve& operator=(dynamic_valve const&) noexcept = default;
+
         template <typename NewValve>
         dynamic_valve& operator&&(NewValve&& v) noexcept(
             std::is_nothrow_invocable_v<NewValve, req_t>) {
