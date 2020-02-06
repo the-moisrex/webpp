@@ -259,9 +259,7 @@ namespace webpp {
             if constexpr (is_specialization_of<RouteList, const_list>::value) {
                 // for webpp::const_list
                 routes.for_each(for_each_route_do);
-            } else if constexpr (std::is_integral_v<decltype(std::begin(routes),
-                                                             std::end(routes),
-                                                             true)>) {
+            } else if constexpr (is_container_v<RouteList>) {
                 // for containers
                 std::for_each(
                     std::begin(routes), std::end(routes),
