@@ -186,6 +186,31 @@ namespace webpp {
                         }
                     }
                 }
+            } else if constexpr (std::is_invocable_v<callable, res_t, req_t>) {
+                using RetType = std::invoke_result_t<callable, res_t, req_t>;
+                if constexpr (!can_convert_v<RetType, response>) {
+                    if constexpr (std::is_nothrow_invocable_v<callable, res_t,
+                                                              req_t>) {
+                        (void)callable::operator()(res, req);
+                    } else {
+                        try {
+                            (void)callable::operator()(res, req);
+                        } catch (...) {
+                            handle_exception(req);
+                        }
+                    }
+                } else {
+                    if constexpr (std::is_nothrow_invocable_v<callable, res_t,
+                                                              req_t>) {
+                        res = callable::operator()(res, req);
+                    } else {
+                        try {
+                            res = callable::operator()(res, req);
+                        } catch (...) {
+                            handle_exception(req);
+                        }
+                    }
+                }
             } else if (std::is_invocable_v<callable>) {
                 using RetType = std::invoke_result_t<callable>;
                 if constexpr (!can_convert_v<RetType, response>) {
@@ -231,7 +256,8 @@ namespace webpp {
         std::function<response()>,
         std::function<response(request_t<Interface> const&)>,
         std::function<response(response&)>,
-        std::function<response(request_t<Interface> const&, response&)>>;
+        std::function<response(request_t<Interface> const&, response&)>,
+        std::function<response(response&, request_t<Interface> const&)>>;
 
     template <typename Interface>
     struct dynamic_route : public route<Interface, route_signitures<Interface>,
