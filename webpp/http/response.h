@@ -27,8 +27,10 @@ namespace webpp {
         }
 
         response(response &&res) noexcept {
-            body = std::move(body);
-            header = std::move(header);
+            if (this != &res) {
+                body = std::move(res.body);
+                header = std::move(res.header);
+            }
         }
 
         response &operator=(response const &) = default;

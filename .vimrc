@@ -4,7 +4,7 @@ set shiftwidth=4
 set noexpandtab
 
 set colorcolumn=80
-highlight ColorColumn ctermbg=darkgray
+highlight ColorColumn ctermbg=darkMagenta
 
 augroup project
   autocmd!
@@ -13,3 +13,4 @@ augroup END
 
 
 let &path.="/usr/include/"
+
