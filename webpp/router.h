@@ -303,17 +303,16 @@ namespace webpp {
                 routes.for_each(for_each_route_do);
             } else if constexpr (is_container_v<RouteList>) {
                 // for containers
-                std::for_each(
-                    std::begin(routes), std::end(routes),
-                    [](auto& route_wrapper) {
-                        if constexpr (std::is_same_v<decltype(route_wrapper),
-                                                     std::any>) {
-                            for_each_route_do(
-                                std::any_cast<route<Interface>>(route_wrapper));
-                        } else {
-                            // todo: what should I do here?
-                        }
-                    });
+                std::for_each(std::begin(routes), std::end(routes),
+                              [](auto& _route) {
+                                  if constexpr (std::is_same_v<
+                                                    decltype(_route),
+                                                    dynamic_route<Interface>>) {
+                                      for_each_route_do(_route);
+                                  } else {
+                                      // todo: what should I do here?
+                                  }
+                              });
             } else if constexpr (is_specialization_of<RouteList,
                                                       std::tuple>::value) {
                 std::apply(for_each_route_do, routes);
