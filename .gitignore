@@ -1,4 +1,6 @@
 *.autosave
+.clangd/
+compile_commands.json
 **/*.autosave
 *.swp
 **/*.swp
