@@ -26,47 +26,37 @@ TEST(Router, RouteCreation) {
     about_page(req, res);
     EXPECT_EQ(res.body.str(""), "About page\n");
 
-
-
-    constexpr auto return_callback = [] {
-        return response("Hello");
-    };
+    constexpr auto return_callback = [] { return response("Hello"); };
     route<cgi, decltype(return_callback)> one{};
     one(req, res);
     EXPECT_EQ(std::string(res.body.str()), "Hello");
 
-    constexpr auto return_callback_string = [] {
-        return "Hello String";
-    };
+    constexpr auto return_callback_string = [] { return "Hello String"; };
     route<cgi, decltype(return_callback_string)> two{};
     two(req, res);
     EXPECT_EQ(std::string(res.body.str()), "Hello String");
 }
 
-
 namespace webpp {
     class fake_cgi;
 
-    template<>
+    template <>
     class request_t<fake_cgi> {
         std::string method;
-    public:
-        std::string request_method() const noexcept {
-            return method;
-        }
 
-        auto &set_method(std::string _method) noexcept {
+      public:
+        std::string request_method() const noexcept { return method; }
+
+        auto& set_method(std::string _method) noexcept {
             method = _method;
             return *this;
         }
     };
-}
+} // namespace webpp
 
 TEST(Router, ValveTest) {
 
-    constexpr auto return_callback = [] {
-        return response("Hello");
-    };
+    constexpr auto return_callback = [] { return response("Hello"); };
     constexpr auto v = method("GET");
     route<fake_cgi, decltype(return_callback), decltype(v)> one{v};
 
@@ -75,7 +65,6 @@ TEST(Router, ValveTest) {
 
     EXPECT_EQ(req.request_method(), "GET");
 }
-
 
 TEST(Router, RouterClass) {
 
@@ -158,4 +147,15 @@ TEST(Router, MergeEffect) {
     //    req.set_method("GET");
     //    response res = merged_router(req);
     //    EXPECT_EQ(std::string(res.body.str()), "Hello world");
+}
+
+TEST(Router, DynamicRoute) {
+    dynamic_route<fake_cgi> droute;
+    droute = []() { return response("Hello world"); };
+
+    request_t<fake_cgi> req;
+    req.set_method("GET");
+
+    response res = droute(req);
+    EXPECT_EQ(std::string(res.body.str()), "Hello world");
 }
