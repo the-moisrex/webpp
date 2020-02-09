@@ -79,6 +79,8 @@ namespace webpp {
 
         constexpr route(route&&) noexcept = default;
 
+        using callable::operator=;
+
         /**
          * Check if the route is active
          */
@@ -248,7 +250,7 @@ namespace webpp {
     };
 
     template <typename Interface>
-    using route_sigs = std::disjunction<
+    using route_sigs = overloaded<
         std::function<void()>, std::function<void(request_t<Interface> const&)>,
         std::function<void(response&)>,
         std::function<void(request_t<Interface> const&, response&)>,
@@ -304,7 +306,7 @@ namespace webpp {
             } else if constexpr (is_container_v<RouteList>) {
                 // for containers
                 std::for_each(std::begin(routes), std::end(routes),
-                              [](auto& _route) {
+                              [&](auto& _route) {
                                   if constexpr (std::is_same_v<
                                                     decltype(_route),
                                                     dynamic_route<Interface>>) {
