@@ -113,6 +113,19 @@ namespace webpp {
     struct is_specialization_of<Template<Args...>, Template> : std::true_type {
     };
 
+
+
+    template<class... Ts>
+    struct overloaded : Ts... {
+        using Ts::operator()...;
+        using Ts::operator=...;
+        // using Ts::Ts...;
+    };
+    
+    template<class... Ts>
+    overloaded(Ts...) -> overloaded<Ts...>;
+
+
 } // namespace webpp
 
 #endif // WEBPP_FUNCTIONAL_H
