@@ -13,10 +13,6 @@
 
 namespace webpp {
 
-    // TODO: what should I do here?
-    template <typename RequestType>
-    void handle_exception(RequestType const& req) noexcept {}
-
     template <typename T, typename U>
     struct can_cast
         : std::integral_constant<bool,
@@ -30,6 +26,145 @@ namespace webpp {
 
     template <typename T, typename U>
     inline constexpr bool can_convert_v = can_cast<T, U>::value;
+
+    // TODO: what should I do here?
+    template <typename RequestType>
+    void handle_exception(RequestType const& req) noexcept {}
+
+    template <typename Interface, typename C>
+    constexpr inline auto call_it(C&& c, request_t<Interface> const& req,
+                                  response& res) noexcept {
+        using req_t = request_t<Interface> const&;
+        using res_t = response&;
+        using callable = C;
+        auto callback = std::forward<C>(c);
+
+        // TODO: add more overrides. You can simulate "dependency injection"
+        // here
+
+        if constexpr (std::is_invocable_v<callable, req_t>) {
+            using RetType = std::invoke_result_t<callable, req_t>;
+            if constexpr (!can_convert_v<RetType, response>) {
+                if constexpr (std::is_nothrow_invocable_v<callable, req_t>) {
+                    (void)callable(req);
+                } else {
+                    try {
+                        (void)callable(req);
+                    } catch (...) {
+                        handle_exception(req);
+                    }
+                }
+            } else {
+                if constexpr (std::is_nothrow_invocable_v<callable, req_t>) {
+                    res = callable(req);
+                } else {
+                    try {
+                        res = callable(req);
+                    } catch (...) {
+                        handle_exception(req);
+                    }
+                }
+            }
+        } else if constexpr (std::is_invocable_v<callable, res_t>) {
+            using RetType = std::invoke_result_t<callable, res_t>;
+            if constexpr (!can_convert_v<RetType, response>) {
+                if constexpr (std::is_nothrow_invocable_v<callable, res_t>) {
+                    (void)callable(res);
+                } else {
+                    try {
+                        (void)callable(res);
+                    } catch (...) {
+                        handle_exception(req);
+                    }
+                }
+            } else {
+                // Yeah, I know what it looks like, but we've got some
+                // stupid programmers out there!
+                if constexpr (std::is_nothrow_invocable_v<callable, res_t>) {
+                    res = callable(res);
+                } else {
+                    try {
+                        res = callable(res);
+                    } catch (...) {
+                        handle_exception(req);
+                    }
+                }
+            }
+        } else if constexpr (std::is_invocable_v<callable, req_t, res_t>) {
+            using RetType = std::invoke_result_t<callable, req_t, res_t>;
+            if constexpr (!can_convert_v<RetType, response>) {
+                if constexpr (std::is_nothrow_invocable_v<callable, req_t,
+                                                          res_t>) {
+                    (void)callable(req, res);
+                } else {
+                    try {
+                        (void)callable(req, res);
+                    } catch (...) {
+                        handle_exception(req);
+                    }
+                }
+            } else {
+                if constexpr (std::is_nothrow_invocable_v<callable, req_t,
+                                                          res_t>) {
+                    res = callable(req, res);
+                } else {
+                    try {
+                        res = callable(req, res);
+                    } catch (...) {
+                        handle_exception(req);
+                    }
+                }
+            }
+        } else if constexpr (std::is_invocable_v<callable, res_t, req_t>) {
+            using RetType = std::invoke_result_t<callable, res_t, req_t>;
+            if constexpr (!can_convert_v<RetType, response>) {
+                if constexpr (std::is_nothrow_invocable_v<callable, res_t,
+                                                          req_t>) {
+                    (void)callable(res, req);
+                } else {
+                    try {
+                        (void)callable(res, req);
+                    } catch (...) {
+                        handle_exception(req);
+                    }
+                }
+            } else {
+                if constexpr (std::is_nothrow_invocable_v<callable, res_t,
+                                                          req_t>) {
+                    res = callable(res, req);
+                } else {
+                    try {
+                        res = callable(res, req);
+                    } catch (...) {
+                        handle_exception(req);
+                    }
+                }
+            }
+        } else if (std::is_invocable_v<callable>) {
+            using RetType = std::invoke_result_t<callable>;
+            if constexpr (!can_convert_v<RetType, response>) {
+                if constexpr (std::is_nothrow_invocable_v<callable>) {
+                    (void)callable();
+                } else {
+                    try {
+                        (void)callable();
+                    } catch (...) {
+                        handle_exception(req);
+                    }
+                }
+            } else {
+                if constexpr (std::is_nothrow_invocable_v<callable>) {
+                    res = callable();
+                } else {
+                    try {
+                        res = callable();
+                    } catch (...) {
+                        handle_exception(req);
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * @brief This route class contains one single root route and it's children
@@ -106,137 +241,12 @@ namespace webpp {
          * Run the migration
          * @return the response
          */
-        inline void operator()(req_t req, res_t res) noexcept {
-
-            // TODO: add more overrides. You can simulate "dependency injection"
-            // here
-
-            if constexpr (std::is_invocable_v<callable, req_t>) {
-                using RetType = std::invoke_result_t<callable, req_t>;
-                if constexpr (!can_convert_v<RetType, response>) {
-                    if constexpr (std::is_nothrow_invocable_v<callable,
-                                                              req_t>) {
-                        (void)callable::operator()(req);
-                    } else {
-                        try {
-                            (void)callable::operator()(req);
-                        } catch (...) {
-                            handle_exception(req);
-                        }
-                    }
-                } else {
-                    if constexpr (std::is_nothrow_invocable_v<callable,
-                                                              req_t>) {
-                        res = callable::operator()(req);
-                    } else {
-                        try {
-                            res = callable::operator()(req);
-                        } catch (...) {
-                            handle_exception(req);
-                        }
-                    }
-                }
-            } else if constexpr (std::is_invocable_v<callable, res_t>) {
-                using RetType = std::invoke_result_t<callable, res_t>;
-                if constexpr (!can_convert_v<RetType, response>) {
-                    if constexpr (std::is_nothrow_invocable_v<callable,
-                                                              res_t>) {
-                        (void)callable::operator()(res);
-                    } else {
-                        try {
-                            (void)callable::operator()(res);
-                        } catch (...) {
-                            handle_exception(req);
-                        }
-                    }
-                } else {
-                    // Yeah, I know what it looks like, but we've got some
-                    // stupid programmers out there!
-                    if constexpr (std::is_nothrow_invocable_v<callable,
-                                                              res_t>) {
-                        res = callable::operator()(res);
-                    } else {
-                        try {
-                            res = callable::operator()(res);
-                        } catch (...) {
-                            handle_exception(req);
-                        }
-                    }
-                }
-            } else if constexpr (std::is_invocable_v<callable, req_t, res_t>) {
-                using RetType = std::invoke_result_t<callable, req_t, res_t>;
-                if constexpr (!can_convert_v<RetType, response>) {
-                    if constexpr (std::is_nothrow_invocable_v<callable, req_t,
-                                                              res_t>) {
-                        (void)callable::operator()(req, res);
-                    } else {
-                        try {
-                            (void)callable::operator()(req, res);
-                        } catch (...) {
-                            handle_exception(req);
-                        }
-                    }
-                } else {
-                    if constexpr (std::is_nothrow_invocable_v<callable, req_t,
-                                                              res_t>) {
-                        res = callable::operator()(req, res);
-                    } else {
-                        try {
-                            res = callable::operator()(req, res);
-                        } catch (...) {
-                            handle_exception(req);
-                        }
-                    }
-                }
-            } else if constexpr (std::is_invocable_v<callable, res_t, req_t>) {
-                using RetType = std::invoke_result_t<callable, res_t, req_t>;
-                if constexpr (!can_convert_v<RetType, response>) {
-                    if constexpr (std::is_nothrow_invocable_v<callable, res_t,
-                                                              req_t>) {
-                        (void)callable::operator()(res, req);
-                    } else {
-                        try {
-                            (void)callable::operator()(res, req);
-                        } catch (...) {
-                            handle_exception(req);
-                        }
-                    }
-                } else {
-                    if constexpr (std::is_nothrow_invocable_v<callable, res_t,
-                                                              req_t>) {
-                        res = callable::operator()(res, req);
-                    } else {
-                        try {
-                            res = callable::operator()(res, req);
-                        } catch (...) {
-                            handle_exception(req);
-                        }
-                    }
-                }
-            } else if (std::is_invocable_v<callable>) {
-                using RetType = std::invoke_result_t<callable>;
-                if constexpr (!can_convert_v<RetType, response>) {
-                    if constexpr (std::is_nothrow_invocable_v<callable>) {
-                        (void)callable::operator()();
-                    } else {
-                        try {
-                            (void)callable::operator()();
-                        } catch (...) {
-                            handle_exception(req);
-                        }
-                    }
-                } else {
-                    if constexpr (std::is_nothrow_invocable_v<callable>) {
-                        res = callable::operator()();
-                    } else {
-                        try {
-                            res = callable::operator()();
-                        } catch (...) {
-                            handle_exception(req);
-                        }
-                    }
-                }
-            }
+        inline auto operator()(req_t req, res_t res) noexcept {
+            return call_it<Interface>(
+                [*this](auto&& ...args) noexcept {
+                    return callable::operator()(std::forward<decltype(args)>(args)...);
+                },
+                req, res);
         }
 
         /**
@@ -248,22 +258,45 @@ namespace webpp {
             return active && condition(req);
         }
     };
-
+    //
+    // template <typename Interface>
+    // using route_sigs = overloaded<
+    // std::function<void()>, std::function<void(request_t<Interface> const&)>,
+    // std::function<void(response&)>,
+    // std::function<void(request_t<Interface> const&, response&)>,
+    // std::function<void(response&, request_t<Interface> const&)>,
+    // std::function<response()>,
+    // std::function<response(request_t<Interface> const&)>,
+    // std::function<response(response&)>,
+    // std::function<response(request_t<Interface> const&, response&)>,
+    // std::function<response(response&, request_t<Interface> const&)>>;
+    //
     template <typename Interface>
-    using route_sigs = overloaded<
-        std::function<void()>, std::function<void(request_t<Interface> const&)>,
-        std::function<void(response&)>,
-        std::function<void(request_t<Interface> const&, response&)>,
-        std::function<void(response&, request_t<Interface> const&)>,
-        std::function<response()>,
-        std::function<response(request_t<Interface> const&)>,
-        std::function<response(response&)>,
-        std::function<response(request_t<Interface> const&, response&)>,
-        std::function<response(response&, request_t<Interface> const&)>>;
+    struct dynamic_route {
+      protected:
+        using req_t = request_t<Interface> const&;
+        using res_t = response&;
+        using callback_t = void (*)(req_t, res_t);
 
-    template <typename Interface>
-    struct dynamic_route : public route<Interface, route_sigs<Interface>,
-                                        valves::dynamic_valve<Interface>> {};
+        callback_t callback;
+
+      public:
+        dynamic_route() noexcept = default;
+        dynamic_route(callback_t callback) noexcept : callback(callback) {}
+
+        dynamic_route& operator=(callback_t callback) noexcept {
+            this->callback = callback;
+            return *this;
+        }
+
+        template <typename C>
+        dynamic_route& operator=(C&& callback) noexcept {
+            this->callback = [=](req_t req, res_t res) noexcept {
+                return call_it(std::forward<C>(callback), req, res);
+            };
+            return *this;
+        }
+    };
 
     /**
      * This is the router; the developers need this class to inject their routes
