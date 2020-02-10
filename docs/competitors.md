@@ -1,5 +1,8 @@
 # Competitors
 
+## Served
+[GitHub](https://github.com/meltwater/served)
+
 ## HTTP 2.0
 [HTTP 2.0 implementations](https://github.com/http2/http2-spec/wiki/Implementations)
 
