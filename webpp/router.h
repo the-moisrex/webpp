@@ -288,6 +288,10 @@ namespace webpp {
             };
             return *this;
         }
+
+        auto operator()(req_t req, res_t res) noexcept {
+            return callback(req, res);
+        }
     };
 
     /**

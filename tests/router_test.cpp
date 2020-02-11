@@ -124,8 +124,8 @@ TEST(Router, ConstListForRouteList) {
 
 TEST(Router, DefaultRouteList) {
 
-    router<fake_cgi, std::tuple<>> _router{};
-    _router.on(method("GET"), [] { return "Hello world"; });
+    auto _router = router<fake_cgi, std::tuple<>>{}.on(
+        method("GET"), [] { return "Hello world"; });
 
     request_t<fake_cgi> req;
     req.set_method("GET");
@@ -155,6 +155,7 @@ TEST(Router, DynamicRoute) {
     request_t<fake_cgi> req;
     req.set_method("GET");
 
-    response res = droute(req);
+    response res;
+    droute(req, res);
     EXPECT_EQ(std::string(res.body.str()), "Hello world");
 }
