@@ -284,7 +284,7 @@ namespace webpp {
         template <typename C>
         dynamic_route& operator=(C&& callback) noexcept {
             this->callback = [=](req_t req, res_t res) noexcept {
-                return call_it(std::forward<C>(callback), req, res);
+                return call_it(callback, req, res);
             };
             return *this;
         }
