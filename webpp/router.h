@@ -32,7 +32,7 @@ namespace webpp {
     void handle_exception(RequestType const& req) noexcept {}
 
     template <typename Interface, typename C>
-    inline auto call_it(C&& c, request_t<Interface> const& req,
+    inline auto call_it(C& c, request_t<Interface> const& req,
                                   response& res) noexcept {
         using req_t = request_t<Interface> const&;
         using res_t = response&;
@@ -242,11 +242,7 @@ namespace webpp {
          * @return the response
          */
         inline auto operator()(req_t req, res_t res) noexcept {
-            return call_it<Interface>(
-                [*this](auto&& ...args) noexcept {
-                    return callable::operator()(std::forward<decltype(args)>(args)...);
-                },
-                req, res);
+            return call_it<Interface, callable>(*this, req, res);
         }
 
         /**
