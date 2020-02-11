@@ -32,11 +32,11 @@ namespace webpp {
     void handle_exception(RequestType const& req) noexcept {}
 
     template <typename Interface, typename C>
-    constexpr inline auto call_it(C&& c, request_t<Interface> const& req,
+    inline auto call_it(C&& c, request_t<Interface> const& req,
                                   response& res) noexcept {
         using req_t = request_t<Interface> const&;
         using res_t = response&;
-        using callable = C;
+        using callable = std::decay_t<C>;
         auto callback = std::forward<C>(c);
 
         // TODO: add more overrides. You can simulate "dependency injection"
@@ -46,20 +46,20 @@ namespace webpp {
             using RetType = std::invoke_result_t<callable, req_t>;
             if constexpr (!can_convert_v<RetType, response>) {
                 if constexpr (std::is_nothrow_invocable_v<callable, req_t>) {
-                    (void)callable(req);
+                    (void)callback(req);
                 } else {
                     try {
-                        (void)callable(req);
+                        (void)callback(req);
                     } catch (...) {
                         handle_exception(req);
                     }
                 }
             } else {
                 if constexpr (std::is_nothrow_invocable_v<callable, req_t>) {
-                    res = callable(req);
+                    res = callback(req);
                 } else {
                     try {
-                        res = callable(req);
+                        res = callback(req);
                     } catch (...) {
                         handle_exception(req);
                     }
@@ -69,10 +69,10 @@ namespace webpp {
             using RetType = std::invoke_result_t<callable, res_t>;
             if constexpr (!can_convert_v<RetType, response>) {
                 if constexpr (std::is_nothrow_invocable_v<callable, res_t>) {
-                    (void)callable(res);
+                    (void)callback(res);
                 } else {
                     try {
-                        (void)callable(res);
+                        (void)callback(res);
                     } catch (...) {
                         handle_exception(req);
                     }
@@ -81,10 +81,10 @@ namespace webpp {
                 // Yeah, I know what it looks like, but we've got some
                 // stupid programmers out there!
                 if constexpr (std::is_nothrow_invocable_v<callable, res_t>) {
-                    res = callable(res);
+                    res = callback(res);
                 } else {
                     try {
-                        res = callable(res);
+                        res = callback(res);
                     } catch (...) {
                         handle_exception(req);
                     }
@@ -95,10 +95,10 @@ namespace webpp {
             if constexpr (!can_convert_v<RetType, response>) {
                 if constexpr (std::is_nothrow_invocable_v<callable, req_t,
                                                           res_t>) {
-                    (void)callable(req, res);
+                    (void)callback(req, res);
                 } else {
                     try {
-                        (void)callable(req, res);
+                        (void)callback(req, res);
                     } catch (...) {
                         handle_exception(req);
                     }
@@ -106,10 +106,10 @@ namespace webpp {
             } else {
                 if constexpr (std::is_nothrow_invocable_v<callable, req_t,
                                                           res_t>) {
-                    res = callable(req, res);
+                    res = callback(req, res);
                 } else {
                     try {
-                        res = callable(req, res);
+                        res = callback(req, res);
                     } catch (...) {
                         handle_exception(req);
                     }
@@ -120,10 +120,10 @@ namespace webpp {
             if constexpr (!can_convert_v<RetType, response>) {
                 if constexpr (std::is_nothrow_invocable_v<callable, res_t,
                                                           req_t>) {
-                    (void)callable(res, req);
+                    (void)callback(res, req);
                 } else {
                     try {
-                        (void)callable(res, req);
+                        (void)callback(res, req);
                     } catch (...) {
                         handle_exception(req);
                     }
@@ -131,10 +131,10 @@ namespace webpp {
             } else {
                 if constexpr (std::is_nothrow_invocable_v<callable, res_t,
                                                           req_t>) {
-                    res = callable(res, req);
+                    res = callback(res, req);
                 } else {
                     try {
-                        res = callable(res, req);
+                        res = callback(res, req);
                     } catch (...) {
                         handle_exception(req);
                     }
@@ -144,20 +144,20 @@ namespace webpp {
             using RetType = std::invoke_result_t<callable>;
             if constexpr (!can_convert_v<RetType, response>) {
                 if constexpr (std::is_nothrow_invocable_v<callable>) {
-                    (void)callable();
+                    (void)callback();
                 } else {
                     try {
-                        (void)callable();
+                        (void)callback();
                     } catch (...) {
                         handle_exception(req);
                     }
                 }
             } else {
                 if constexpr (std::is_nothrow_invocable_v<callable>) {
-                    res = callable();
+                    res = callback();
                 } else {
                     try {
-                        res = callable();
+                        res = callback();
                     } catch (...) {
                         handle_exception(req);
                     }
@@ -276,18 +276,14 @@ namespace webpp {
       protected:
         using req_t = request_t<Interface> const&;
         using res_t = response&;
-        using callback_t = void (*)(req_t, res_t);
+        // todo: maybe don't use std::function? it's slow a bit (but not that much)
+        using callback_t = std::function<void(req_t, res_t)>;
 
         callback_t callback;
 
       public:
         dynamic_route() noexcept = default;
         dynamic_route(callback_t callback) noexcept : callback(callback) {}
-
-        dynamic_route& operator=(callback_t callback) noexcept {
-            this->callback = callback;
-            return *this;
-        }
 
         template <typename C>
         dynamic_route& operator=(C&& callback) noexcept {
