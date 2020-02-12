@@ -92,7 +92,7 @@ namespace webpp {
         using string_type = std::string;
         using stream_type = std::ostream;
 
-    private:
+    public:
         mutable void *data = nullptr;
         enum class types : uint8_t {
             empty,
@@ -223,7 +223,7 @@ namespace webpp {
          * data to string
          * @return the string representation of the data
          */
-        [[nodiscard]] std::string_view
+        [[nodiscard]] std::string
         str(std::string_view const &default_val = "") const noexcept;
 
         [[nodiscard]] auto json() const;
