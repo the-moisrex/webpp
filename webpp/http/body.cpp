@@ -3,9 +3,9 @@
 
 using namespace webpp;
 
-std::string_view body::str(std::string_view const &default_val) const noexcept {
+std::string body::str(std::string_view const &default_val) const noexcept {
     if (type == types::string)
-        return *static_cast<std::string *>(data);
+        return str_ref();
 
     // FIXME: check if there's an optimization issue here or not
     if (type == types::stream) {
@@ -15,9 +15,9 @@ std::string_view body::str(std::string_view const &default_val) const noexcept {
         this->~body();
         data = ndata;
         type = types::string;
-        return std::string_view{str_ref()};
+        return str_ref();
     }
-    return default_val;
+    return std::string(default_val);
 }
 
 std::ostream &body::operator<<(std::ostream &__stream) {

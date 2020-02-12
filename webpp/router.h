@@ -33,7 +33,7 @@ namespace webpp {
 
     template <typename Interface, typename C>
     inline auto call_it(C& c, request_t<Interface> const& req,
-                                  response& res) noexcept {
+                        response& res) noexcept {
         using req_t = request_t<Interface> const&;
         using res_t = response&;
         using callable = std::decay_t<C>;
@@ -272,14 +272,18 @@ namespace webpp {
       protected:
         using req_t = request_t<Interface> const&;
         using res_t = response&;
-        // todo: maybe don't use std::function? it's slow a bit (but not that much)
+        // todo: maybe don't use std::function? it's slow a bit (but not that
+        // much)
         using callback_t = std::function<void(req_t, res_t)>;
+        using condition_t = std::function<bool(req_t)>;
 
         callback_t callback;
+        condition_t condition;
 
       public:
         dynamic_route() noexcept = default;
         dynamic_route(callback_t callback) noexcept : callback(callback) {}
+        dynamic_route(condition_t condittion, callback_t callback) noexcept : condition(condition), callback(callback) {}
 
         template <typename C>
         dynamic_route& operator=(C&& callback) noexcept {
@@ -291,6 +295,10 @@ namespace webpp {
 
         auto operator()(req_t req, res_t res) noexcept {
             return callback(req, res);
+        }
+
+        inline bool is_match(req_t req) noexcept {
+            return condition(req);
         }
     };
 
@@ -334,16 +342,14 @@ namespace webpp {
                 routes.for_each(for_each_route_do);
             } else if constexpr (is_container_v<RouteList>) {
                 // for containers
-                std::for_each(std::begin(routes), std::end(routes),
-                              [&](auto& _route) {
-                                  if constexpr (std::is_same_v<
-                                                    decltype(_route),
-                                                    dynamic_route<Interface>>) {
-                                      for_each_route_do(_route);
-                                  } else {
-                                      // todo: what should I do here?
-                                  }
-                              });
+                std::for_each(
+                    std::begin(routes), std::end(routes), [&](auto& _route) {
+                        static_assert(
+                            std::is_same_v<std::decay_t<decltype(_route)>,
+                                           dynamic_route<Interface>>,
+                            "The specified type is not a dynamic_route.");
+                        for_each_route_do(_route);
+                    });
             } else if constexpr (is_specialization_of<RouteList,
                                                       std::tuple>::value) {
                 std::apply(for_each_route_do, routes);
@@ -385,15 +391,13 @@ namespace webpp {
             } else if constexpr (is_container_v<RouteList>) {
 
                 // for containers (dynamic)
-                if constexpr (can_cast<Route,
-                                       typename RouteList::value_type>::value) {
-                    routes.emplace_back(std::move(_route));
-                } else {
-                    // todo: error maybe?
-                }
+                static_assert(can_cast<Route,
+                                       typename RouteList::value_type>::value, "The specified route does not match the router version of route.");
+                routes.emplace_back(std::forward<Valve>(v), std::move(_route));
+
 
             } else {
-                // todo: what should I do here?
+                throw std::invalid_argument("The container for routes is unknown.");
             }
         }
     };

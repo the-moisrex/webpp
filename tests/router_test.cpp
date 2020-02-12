@@ -91,13 +91,16 @@ TEST(Router, RouterClass) {
 
 TEST(Router, VectorForRouteList) {
 
-    router<fake_cgi, vector<any>> _route{};
-    _route.on(method("GET"), [] { return "Hello world"; });
+    router<fake_cgi, vector<dynamic_route<fake_cgi>>> _route{};
+    _route.on(method("GET"), [] () noexcept { return "Hello world"; });
 
     request_t<fake_cgi> req;
     req.set_method("GET");
     response res = _route(req);
-    EXPECT_EQ(std::string(res.body.str()), "Hello world");
+    auto strview_res = res.body.str();
+    std::string str_res = std::string(strview_res);
+    EXPECT_EQ(strview_res, "Hello world") << "strview_res is: " << strview_res;
+    EXPECT_EQ(str_res, "Hello world") << "str_res is: " << std::string(*static_cast<std::string*>(res.body.data));
 }
 
 TEST(Router, TupleForRouteList) {
