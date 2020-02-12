@@ -163,7 +163,9 @@ namespace webpp::valves {
         dynamic_valve& operator&&(NewValve&& v) noexcept(
             std::is_nothrow_invocable_v<NewValve, req_t>) {
             func = [=, *this](req_t req) {
-              return func(req) && v(req);
+              if (func)
+                return func(req) && v(req);
+              return v(req);
             };
             return *this;
         }
@@ -171,7 +173,11 @@ namespace webpp::valves {
         template <typename NewValve>
         dynamic_valve& operator||(NewValve&& v) noexcept(
             std::is_nothrow_invocable_v<NewValve, req_t>) {
-            func = [=, *this](req_t req) { return func(req) || v(req); };
+            func = [=, *this](req_t req) {
+              if (func)
+                return func(req) || v(req);
+              return v(req);
+            };
             return *this;
         }
 
@@ -191,7 +197,7 @@ namespace webpp::valves {
         dynamic_valve& operator^(NewValve&& v) noexcept(
             std::is_nothrow_invocable_v<NewValve, req_t>) {
             func = [=, *this](req_t req) {
-                bool one = func(req);
+                bool one = func ? func(req) : true;
                 bool two = v(req);
                 return (one && !two) || (!one && two);
             };
