@@ -277,13 +277,14 @@ namespace webpp {
         using callback_t = std::function<void(req_t, res_t)>;
         using condition_t = std::function<bool(req_t)>;
 
-        callback_t callback;
-        condition_t condition;
+        callback_t callback = nullptr;
+        condition_t condition = valves::empty;
 
       public:
-        dynamic_route() noexcept = default;
+        // fixme: it gives me error when I put "noexcept" here:
+        dynamic_route() = default;
         dynamic_route(callback_t callback) noexcept : callback(callback) {}
-        dynamic_route(condition_t condittion, callback_t callback) noexcept : condition(condition), callback(callback) {}
+        dynamic_route(condition_t condition, callback_t callback) noexcept : condition(condition), callback(callback) {}
 
         template <typename C>
         dynamic_route& operator=(C&& callback) noexcept {
