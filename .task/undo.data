@@ -239,3 +239,11 @@ new [description:"check if you actually need the function_ref class or not" entr
 time 1578909878
 new [description:"Use Steganography in your project, it's cool" entry:"1578909878" modified:"1578909878" status:"pending" uuid:"cc65960e-a13d-4d01-b61b-18780b43a2ed"]
 ---
+time 1581620541
+old [description:"implement cgi and make sure it builds" entry:"1562323295" modified:"1562323440" project:"interfaces" status:"pending" uuid:"f33319c0-0160-4435-98ec-04b8388c1bae"]
+new [description:"implement cgi and make sure it builds" end:"1581620541" entry:"1562323295" modified:"1581620541" project:"interfaces" status:"completed" uuid:"f33319c0-0160-4435-98ec-04b8388c1bae"]
+---
+time 1581620590
+old [description:"seperate the debounce class from the function_ref class" entry:"1576149446" modified:"1576149446" project:"functional" status:"pending" uuid:"3ce4fb8b-1148-4f34-b355-06a5fa415139"]
+new [description:"seperate the debounce class from the function_ref class" end:"1581620590" entry:"1576149446" modified:"1581620590" project:"functional" status:"completed" uuid:"3ce4fb8b-1148-4f34-b355-06a5fa415139"]
+---
