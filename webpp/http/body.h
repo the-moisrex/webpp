@@ -88,59 +88,56 @@
 namespace webpp {
 
     class body {
-    public:
+      public:
         using string_type = std::string;
         using stream_type = std::ostream;
 
-    public:
-        mutable void *data = nullptr;
+      protected:
+        mutable void* data = nullptr;
         enum class types : uint8_t {
             empty,
             string,
             stream
         } mutable type = types::empty;
 
-        [[nodiscard]] string_type const &str_ref() const noexcept;
+        [[nodiscard]] string_type const& str_ref() const noexcept;
 
-        [[nodiscard]] string_type &str_ref() noexcept;
+        [[nodiscard]] string_type& str_ref() noexcept;
 
-        [[nodiscard]] stream_type &stream_ref() noexcept;
+        [[nodiscard]] stream_type& stream_ref() noexcept;
 
-    public:
+      public:
         body() noexcept = default;
 
-        body(std::string *str) noexcept
-                : data(new std::string(*str)), type(types::string) {}
+        body(char const* const _str) noexcept
+            : data(new std::string(_str)), type(types::string) {}
 
-        body(std::string &&str) noexcept
-                : data(new std::string(std::move(str))), type(types::string) {}
+        body(std::string_view const& str) noexcept
+            : data(new std::string(str)), type(types::string) {}
 
-        body(std::string_view const &str) noexcept
-                : data(new std::string(str)), type(types::string) {}
+        body(std::ostream& stream) noexcept
+            : data(&stream), type(types::stream) {}
 
-        body(std::ostream &stream) noexcept
-                : data(&stream), type(types::stream) {}
-
-        body &operator=(body const &b) noexcept {
+        body& operator=(body const& b) noexcept {
             if (this != &b) {
                 this->~body();
                 type = b.type;
                 switch (b.type) {
-                    case types::empty:
-                        break;
-                    case types::stream:
-                        // todo: fix this to be a stream instead of this:
-                        replace_string(string_type(b.str("")));
-                        break;
-                    case types::string:
-                        replace_string(b.str_ref());
-                        break;
+                case types::empty:
+                    break;
+                case types::stream:
+                    // todo: fix this to be a stream instead of this:
+                    replace_string(string_type(b.str("")));
+                    break;
+                case types::string:
+                    replace_string(b.str_ref());
+                    break;
                 }
             }
             return *this;
         }
 
-        body &operator=(body &&b) noexcept {
+        body& operator=(body&& b) noexcept {
             if (this != &b) {
                 type = std::move(b.type);
                 data = std::move(b.data);
@@ -149,11 +146,21 @@ namespace webpp {
             return *this;
         }
 
-        [[nodiscard]] bool operator==(body const &b) const noexcept {
+        body& operator=(std::string_view const& _str) noexcept {
+            replace_string_view(_str);
+            return *this;
+        }
+
+        body& operator=(char const* const _str) noexcept {
+            replace_string_view(std::string_view(_str));
+            return *this;
+        }
+
+        [[nodiscard]] bool operator==(body const& b) const noexcept {
             return b.str("") == str("");
         }
 
-        [[nodiscard]] bool operator!=(body const &b) const noexcept {
+        [[nodiscard]] bool operator!=(body const& b) const noexcept {
             return !operator==(b);
         }
 
@@ -172,49 +179,49 @@ namespace webpp {
          * @param _data
          * @param _type
          */
-        void replace(void *_data, types _type) noexcept;
+        void replace(void* _data, types _type) noexcept;
 
         /**
          * Replace the data with a string
          * @param str
          */
-        void replace_string(std::string *str) noexcept;
+        void replace_string(std::string* str) noexcept;
 
         /**
          * Replace the data with a string
          * @param str
          */
-        void replace_string(std::string const &str) noexcept;
+        void replace_string(std::string const& str) noexcept;
 
         /**
          * Replace the data with a string
          * @param str
          */
-        void replace_string(std::string &&str) noexcept;
+        void replace_string(std::string&& str) noexcept;
 
         /**
          * Replace the data with a string
          * @param str
          */
-        void replace_string_view(std::string_view const &str) noexcept;
+        void replace_string_view(std::string_view const& str) noexcept;
 
         /**
          * Replace the data with a stream
          * @param stream
          */
-        void replace_stream(stream_type &stream) noexcept;
+        void replace_stream(stream_type& stream) noexcept;
 
         /**
          * Append a string to the body (weather it's a string ot stream)
          * @param str
          */
-        void append_string(std::string_view const &str) noexcept;
+        void append_string(std::string_view const& str) noexcept;
 
         /**
          * Appending a stream
          * @param stream
          */
-        void append_stream(stream_type &stream) noexcept;
+        void append_stream(stream_type& stream) noexcept;
 
         /**
          * Get the value as a string (converts the other types to string
@@ -224,19 +231,19 @@ namespace webpp {
          * @return the string representation of the data
          */
         [[nodiscard]] std::string
-        str(std::string_view const &default_val = "") const noexcept;
+        str(std::string_view const& default_val = "") const noexcept;
 
         [[nodiscard]] auto json() const;
 
-        auto json(std::string_view const &data);
+        auto json(std::string_view const& data);
 
-        auto file(std::string_view const &filepath);
+        auto file(std::string_view const& filepath);
 
-        std::istream &stream() const;
+        std::istream& stream() const;
 
-        std::ostream &operator<<(std::ostream &__stream);
+        std::ostream& operator<<(std::ostream& __stream);
 
-        body &operator<<(std::string_view const &str) noexcept;
+        body& operator<<(std::string_view const& str) noexcept;
 
         // TODO: add more methods for the images and stuff
     };
