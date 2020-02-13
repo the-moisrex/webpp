@@ -1,12 +1,33 @@
 // Created by moisrex on 2/4/20.
 
 #include <gtest/gtest.h>
+#include <webpp/http/body.h>
 #include <webpp/http/response.h>
 #include <string>
 #include <string_view>
 #include <type_traits>
 
 using namespace webpp;
+
+TEST(Body, Text) {
+    body b = "Testing";
+    EXPECT_EQ(b.str(), "Testing");
+    EXPECT_TRUE(b == "Testing");
+
+    std::string str = "hello";
+    b = str;
+
+    EXPECT_EQ(b, "hello");
+    
+    std::string_view sth = "nice";
+    b = sth;
+    EXPECT_EQ(b, "nice");
+
+    b = std::string("cool");
+    EXPECT_EQ(b, "cool");
+    
+}
+
 
 TEST(Response, Type) {
     constexpr auto return_callback = [] {

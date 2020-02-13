@@ -231,9 +231,6 @@ namespace webpp::valves {
     };
 
     struct empty_condition {
-      
-        constexpr empty_condition() noexcept = default;
-
         template <typename RequestType>
         [[nodiscard]] constexpr bool
         operator()(RequestType const& /* req */) const noexcept {
