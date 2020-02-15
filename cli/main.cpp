@@ -23,8 +23,7 @@ void check_args(
         "print this help")(
         "cmd", value<std::string>()->default_value("help")->required(),
         "The command")("cmd_opts",
-                       value<std::vector<std::string>>()
-                           ->multitoken(),
+                       value<std::vector<std::string>>()->multitoken(),
                        "The command options.");
 
     positional_options_description pos;

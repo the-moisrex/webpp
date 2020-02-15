@@ -7,17 +7,33 @@ set(ALL_SOURCES ${LIB_RSOURCES} ${LIB_SOURCES} ${LIB_HEADER_ONLY_SOURCES} ${LIB_
 
 enable_testing()
 
-if(SHARED)
-  add_library(${PROJECT_NAME} SHARED ${ALL_SOURCES})
-else()
-  add_library(${PROJECT_NAME} STATIC ${ALL_SOURCES})
-endif()
-set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+set(LIB_NAME ${PROJECT_NAME})
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/src)
-install(TARGETS ${PROJECT_NAME} DESTINATION lib)
-install(FILES ${LIB_HEADERS} DESTINATION include/webpp)
-set_target_properties(${PROJECT_NAME} PROPERTIES
+if(SHARED)
+  add_library(${LIB_NAME} SHARED ${ALL_SOURCES})
+else()
+  add_library(${LIB_NAME} STATIC ${ALL_SOURCES})
+endif()
+set_target_properties(${LIB_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+
+target_include_directories(${LIB_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include)
+install(TARGETS ${LIB_NAME}
+  EXPORT "${LIB_NAME}Targets"
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
+)
+install(EXPORT "${LIB_NAME}Targets"
+  FILE "${LIB_NAME}Target.cmake"
+  NAMESPACE ${LIB_NAME}::
+  DESTINATION lib/cmake/${LIB_NAME}
+  )
+#install(FILES ${LIB_HEADERS} DESTINATION include)
+
+set_target_properties(${LIB_NAME} PROPERTIES
   VERSION 1.0.0
   SOVERSION 1
 )
+
+## todo: add write_basic_pacakge_version_file and versioning stuff for exporting
