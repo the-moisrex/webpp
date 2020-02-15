@@ -8,6 +8,7 @@ compile_commands.json
 **/*.user
 *~
 **/*~
+build-*/
 build/
 .vscode/
 .idea/
