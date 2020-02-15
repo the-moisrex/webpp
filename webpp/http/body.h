@@ -247,7 +247,7 @@ namespace webpp {
 
         // TODO: add more methods for the images and stuff
         
-        static auto file(std::string_view cosnt& _file) noexcept;
+        //static auto file(std::string_view const& _file) noexcept;
     };
 
 }; // namespace webpp
