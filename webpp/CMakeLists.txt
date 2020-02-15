@@ -8,15 +8,24 @@ set(ALL_SOURCES ${LIB_RSOURCES} ${LIB_SOURCES} ${LIB_HEADER_ONLY_SOURCES} ${LIB_
 enable_testing()
 
 set(LIB_NAME ${PROJECT_NAME})
+set(SLIB_NAME ${LIB_NAME}_static)
 
-if(SHARED)
-  add_library(${LIB_NAME} SHARED ${ALL_SOURCES})
-else()
-  add_library(${LIB_NAME} STATIC ${ALL_SOURCES})
-endif()
-set_target_properties(${LIB_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+add_library(${LIB_NAME} SHARED ${ALL_SOURCES})
+add_library(${SLIB_NAME} STATIC ${ALL_SOURCES})
 
-target_include_directories(${LIB_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include)
+set_target_properties(${LIB_NAME} PROPERTIES
+	VERSION 1.0.0
+	SOVERSION 1
+	LINKER_LANGUAGE CXX
+)
+set_target_properties(${SLIB_NAME} PROPERTIES
+	VERSION 1.0.0
+	SOVERSION 1
+	LINKER_LANGUAGE CXX
+)
+
+#target_include_directories(${LIB_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
+#target_include_directories(${SLIB_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
 install(TARGETS ${LIB_NAME}
   EXPORT "${LIB_NAME}Targets"
   LIBRARY DESTINATION lib
@@ -28,12 +37,30 @@ install(EXPORT "${LIB_NAME}Targets"
   FILE "${LIB_NAME}Target.cmake"
   NAMESPACE ${LIB_NAME}::
   DESTINATION lib/cmake/${LIB_NAME}
-  )
-#install(FILES ${LIB_HEADERS} DESTINATION include)
+)
 
-set_target_properties(${LIB_NAME} PROPERTIES
-  VERSION 1.0.0
-  SOVERSION 1
+
+install(TARGETS ${SLIB_NAME}
+	EXPORT "${SLIB_NAME}Targets"
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
+)
+install(EXPORT "${SLIB_NAME}Targets"
+	FILE "${SLIB_NAME}Target.cmake"
+	NAMESPACE ${SLIB_NAME}::
+	DESTINATION lib/cmake/${SLIB_NAME}
+)
+
+
+
+#install(FILES ${LIB_HEADERS} DESTINATION include)
+target_compile_features(${LIB_NAME} PUBLIC
+	cxx_std_20 
+)
+target_compile_features(${SLIB_NAME} PUBLIC
+	cxx_std_20 
 )
 
 ## todo: add write_basic_pacakge_version_file and versioning stuff for exporting
