@@ -1,7 +1,7 @@
-file(GLOB LIB_RSOURCES ./*/*.cpp)
-file(GLOB LIB_SOURCES *.cpp)
-file(GLOB LIB_HEADER_ONLY_SOURCES *.h)
-file(GLOB LIB_RHEADER_ONLY_SOURCES ./*/*.h)
+file(GLOB LIB_RSOURCES src/*/*.cpp)
+file(GLOB LIB_SOURCES src/*.cpp)
+file(GLOB LIB_HEADER_ONLY_SOURCES include/*.h)
+file(GLOB LIB_RHEADER_ONLY_SOURCES include/*/*.h)
 
 set(ALL_SOURCES ${LIB_RSOURCES} ${LIB_SOURCES} ${LIB_HEADER_ONLY_SOURCES} ${LIB_RHEADER_ONLY_SOURCES})
 
@@ -24,8 +24,14 @@ set_target_properties(${SLIB_NAME} PROPERTIES
 	LINKER_LANGUAGE CXX
 )
 
-#target_include_directories(${LIB_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
-#target_include_directories(${SLIB_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
+target_include_directories(${LIB_NAME} PUBLIC 
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+target_include_directories(${SLIB_NAME} PUBLIC 
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
 install(TARGETS ${LIB_NAME}
   EXPORT "${LIB_NAME}Targets"
   LIBRARY DESTINATION lib
