@@ -1,9 +1,9 @@
-#include "cgi.h"
+#include "webpp/interfaces/cgi.h"
 #include <cctype>
 #include <cstdlib>
 #include <functional>
 #include <iostream>
-#include "../utils/casts.h"
+#include "webpp/utils/casts.h"
 
 using namespace webpp;
 

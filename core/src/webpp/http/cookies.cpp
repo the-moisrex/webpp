@@ -1,5 +1,5 @@
-#include "cookies.h"
-#include "../utils/strings.h"
+#include "webpp/http/cookies.h"
+#include "webpp/utils/strings.h"
 #include <algorithm>
 #include <boost/container_hash/hash.hpp>
 #include <functional>
