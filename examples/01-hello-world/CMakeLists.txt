@@ -1,16 +1,14 @@
 cmake_minimum_required(VERSION 3.10)
-project(helloworld)
-file(GLOB LIB_SOURCES *.cpp)
-file(GLOB LIB_HEADERS *.h)
+project(webpp_helloworld)
+
+file(GLOB BIN_SOURCES *.cpp)
 
 set(EXEC_NAME ${PROJECT_NAME})
 
+find_package(webpp REQUIRED)
 
-add_executable(${EXEC_NAME} ${LIB_SOURCES})
+add_executable(${EXEC_NAME} ${BIN_SOURCES})
 target_link_libraries(${EXEC_NAME}
-  PRIVATE ${PROJECT_NAME}
-  PRIVATE ${Boost_LIBRARIES}
+  PRIVATE webpp::webpp
 )
-# now we rename resman-bin executable to resman using target properties
-set_target_properties(${EXEC_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME}.exe)
 install(TARGETS ${EXEC_NAME} DESTINATION bin)

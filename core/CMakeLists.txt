@@ -1,3 +1,41 @@
+
+set(ALL_HEADERS
+    ${LIB_SRC_DIR}/webpp.h
+    ${LIB_SRC_DIR}/webpp/config.h
+    ${LIB_SRC_DIR}/webpp/router.h
+    ${LIB_SRC_DIR}/webpp/server.h
+    ${LIB_SRC_DIR}/webpp/thread.h
+
+    ${LIB_SRC_DIR}/webpp/valves/valve.h
+    
+    ${LIB_SRC_DIR}/webpp/validators/validators.h
+    ${LIB_SRC_DIR}/webpp/validators/email.h
+    
+    ${LIB_SRC_DIR}/webpp/utils/casts.h
+    ${LIB_SRC_DIR}/webpp/utils/cfile.h
+    ${LIB_SRC_DIR}/webpp/utils/charset.h
+    ${LIB_SRC_DIR}/webpp/utils/const_list.h
+    ${LIB_SRC_DIR}/webpp/utils/containers.h
+    ${LIB_SRC_DIR}/webpp/utils/debounce.h
+    ${LIB_SRC_DIR}/webpp/utils/functional.h
+    ${LIB_SRC_DIR}/webpp/utils/ipv4.h
+    ${LIB_SRC_DIR}/webpp/utils/ipv6.h
+    ${LIB_SRC_DIR}/webpp/utils/memory.h
+    ${LIB_SRC_DIR}/webpp/utils/property.h
+    ${LIB_SRC_DIR}/webpp/utils/strings.h
+    ${LIB_SRC_DIR}/webpp/utils/uri.h
+
+    ${LIB_SRC_DIR}/webpp/interfaces/cgi.h
+
+    ${LIB_SRC_DIR}/webpp/http/body.h
+    ${LIB_SRC_DIR}/webpp/http/cookies.h
+    ${LIB_SRC_DIR}/webpp/http/header.h
+    ${LIB_SRC_DIR}/webpp/http/request.h
+    ${LIB_SRC_DIR}/webpp/http/response.h
+
+  )
+
+
 set(ALL_SOURCES 
     ${LIB_SRC_DIR}/webpp.cpp
     ${LIB_SRC_DIR}/webpp/config.cpp
@@ -65,7 +103,6 @@ target_include_directories(${SLIB_NAME} PUBLIC
 
 
 
-
 install(TARGETS ${LIB_NAME}
   EXPORT "${LIB_NAME}Config"
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -104,6 +141,12 @@ install(EXPORT "${SLIB_NAME}Config"
   DESTINATION "${CMAKE_INSTALL_DATADIR}/${SLIB_NAME}"
 )
 
+
+install(
+  DIRECTORY ${LIB_INCLUDE_DIR}/webpp
+  DESTINATION include
+  FILES_MATCHING PATTERN "*.h"
+)
 
 
 #install(FILES ${LIB_HEADERS} DESTINATION include)
