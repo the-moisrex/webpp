@@ -1,37 +1,37 @@
 
 set(ALL_HEADERS
-    ${LIB_SRC_DIR}/webpp.h
-    ${LIB_SRC_DIR}/webpp/config.h
-    ${LIB_SRC_DIR}/webpp/router.h
-    ${LIB_SRC_DIR}/webpp/server.h
-    ${LIB_SRC_DIR}/webpp/thread.h
+    ${LIB_INCLUDE_DIR}/webpp.h
+    ${LIB_INCLUDE_DIR}/webpp/config.h
+    ${LIB_INCLUDE_DIR}/webpp/router.h
+    ${LIB_INCLUDE_DIR}/webpp/server.h
+    ${LIB_INCLUDE_DIR}/webpp/thread.h
 
-    ${LIB_SRC_DIR}/webpp/valves/valve.h
+    ${LIB_INCLUDE_DIR}/webpp/valves/valve.h
     
-    ${LIB_SRC_DIR}/webpp/validators/validators.h
-    ${LIB_SRC_DIR}/webpp/validators/email.h
+    ${LIB_INCLUDE_DIR}/webpp/validators/validators.h
+    ${LIB_INCLUDE_DIR}/webpp/validators/email.h
     
-    ${LIB_SRC_DIR}/webpp/utils/casts.h
-    ${LIB_SRC_DIR}/webpp/utils/cfile.h
-    ${LIB_SRC_DIR}/webpp/utils/charset.h
-    ${LIB_SRC_DIR}/webpp/utils/const_list.h
-    ${LIB_SRC_DIR}/webpp/utils/containers.h
-    ${LIB_SRC_DIR}/webpp/utils/debounce.h
-    ${LIB_SRC_DIR}/webpp/utils/functional.h
-    ${LIB_SRC_DIR}/webpp/utils/ipv4.h
-    ${LIB_SRC_DIR}/webpp/utils/ipv6.h
-    ${LIB_SRC_DIR}/webpp/utils/memory.h
-    ${LIB_SRC_DIR}/webpp/utils/property.h
-    ${LIB_SRC_DIR}/webpp/utils/strings.h
-    ${LIB_SRC_DIR}/webpp/utils/uri.h
+    ${LIB_INCLUDE_DIR}/webpp/utils/casts.h
+    ${LIB_INCLUDE_DIR}/webpp/utils/cfile.h
+    ${LIB_INCLUDE_DIR}/webpp/utils/charset.h
+    ${LIB_INCLUDE_DIR}/webpp/utils/const_list.h
+    ${LIB_INCLUDE_DIR}/webpp/utils/containers.h
+    ${LIB_INCLUDE_DIR}/webpp/utils/debounce.h
+    ${LIB_INCLUDE_DIR}/webpp/utils/functional.h
+    ${LIB_INCLUDE_DIR}/webpp/utils/ipv4.h
+    ${LIB_INCLUDE_DIR}/webpp/utils/ipv6.h
+    ${LIB_INCLUDE_DIR}/webpp/utils/memory.h
+    ${LIB_INCLUDE_DIR}/webpp/utils/property.h
+    ${LIB_INCLUDE_DIR}/webpp/utils/strings.h
+    ${LIB_INCLUDE_DIR}/webpp/utils/uri.h
 
-    ${LIB_SRC_DIR}/webpp/interfaces/cgi.h
+    ${LIB_INCLUDE_DIR}/webpp/interfaces/cgi.h
 
-    ${LIB_SRC_DIR}/webpp/http/body.h
-    ${LIB_SRC_DIR}/webpp/http/cookies.h
-    ${LIB_SRC_DIR}/webpp/http/header.h
-    ${LIB_SRC_DIR}/webpp/http/request.h
-    ${LIB_SRC_DIR}/webpp/http/response.h
+    ${LIB_INCLUDE_DIR}/webpp/http/body.h
+    ${LIB_INCLUDE_DIR}/webpp/http/cookies.h
+    ${LIB_INCLUDE_DIR}/webpp/http/header.h
+    ${LIB_INCLUDE_DIR}/webpp/http/request.h
+    ${LIB_INCLUDE_DIR}/webpp/http/response.h
 
   )
 
@@ -147,11 +147,11 @@ install(EXPORT "${SLIB_NAME}Config"
 set(ALL_EXTENSIONS ";.hpp")
 get_filename_component(HEADER_FUNCTIONS_FILE ../cmake/header_functions.cmake REALPATH)
 install(CODE "include(${HEADER_FUNCTIONS_FILE})")
-install(CODE "link_extensions(\"${LIB_INCLUDE_DIR}\" \"${PROJECT_BINARY_DIR}\" include \"${ALL_EXTENSIONS}\")")
-install(
-  DIRECTORY ${PROJECT_BINARY_DIR}/include/webpp
-  DESTINATION include
-)
+install(CODE "install_headers(\"${LIB_INCLUDE_DIR}\" \"${CMAKE_INSTALL_PREFIX}/include\" \"${ALL_EXTENSIONS}\")")
+#install(
+#  DIRECTORY ${PROJECT_BINARY_DIR}/include/webpp
+#  DESTINATION include
+#)
 
 
 
