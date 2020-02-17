@@ -142,11 +142,22 @@ install(EXPORT "${SLIB_NAME}Config"
 )
 
 
+############################## install the include files ##############################
+# we do this, so the files would be only copied only on install command not every time.
+set(ALL_EXTENSIONS ";.hpp")
+get_filename_component(HEADER_FUNCTIONS_FILE ../cmake/header_functions.cmake REALPATH)
+install(CODE "include(${HEADER_FUNCTIONS_FILE})")
+install(CODE "link_extensions(\"${LIB_INCLUDE_DIR}\" \"${PROJECT_BINARY_DIR}\" include \"${ALL_EXTENSIONS}\")")
 install(
-  DIRECTORY ${LIB_INCLUDE_DIR}/webpp
+  DIRECTORY ${PROJECT_BINARY_DIR}/include/webpp
   DESTINATION include
-  FILES_MATCHING PATTERN "*.h"
 )
+
+
+
+
+
+
 
 
 #install(FILES ${LIB_HEADERS} DESTINATION include)
