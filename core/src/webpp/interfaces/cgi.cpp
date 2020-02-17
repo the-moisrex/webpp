@@ -51,6 +51,10 @@ using namespace webpp;
 //    SERVER_SOFTWARE
 //    WEB_SERVER_API
 
+// TODO: use GetEnvironmentVariableA for Windows operating system
+extern char** environ;
+
+
 cgi::cgi() noexcept : basic_interface() {
     // I'm not using C here; so why should I pay for it!
     // And also the user should not use cin and cout. so ...
@@ -108,12 +112,11 @@ std::string_view cgi::env(char const* const key) noexcept {
 std::string_view cgi::headers() noexcept {
     // we can do this only in CGI, we have to come up with new ways for
     // long-running protocols:
-    extern char** environ;
     static std::string headers_cache;
     if (headers_cache.empty()) {
         // TODO: this code won't work on windows. Change when you are worried
         // about windows
-        for (auto it = environ; *it; it++) {
+        for (auto it = ::environ; *it; it++) {
             std::string_view h{*it};
             if (h.starts_with("HTTP_")) {
                 headers_cache.append(h.substr(5));
