@@ -11,13 +11,12 @@ endif()
 
 
 find_package(GTest REQUIRED)
-find_package(${LIB_NAME} REQUIRED)
 
 add_executable(${TEST_NAME} ${TEST_SOURCES})
 target_link_libraries(${TEST_NAME}
-  PRIVATE ${PROJECT_NAME}::${LIB_NAME}
+  PRIVATE ${SLIB_NAME}
   PRIVATE GTest::GTest
   PRIVATE GTest::Main
 )
-
+target_include_directories(${TEST_NAME} PRIVATE ${LIB_INCLUDE_DIR})
 add_test(${TEST_NAME} ${TEST_NAME})
