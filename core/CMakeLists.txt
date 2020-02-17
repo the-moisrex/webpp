@@ -1,9 +1,40 @@
-file(GLOB LIB_RSOURCES ${LIB_SRC_DIR}/*/*.cpp)
-file(GLOB LIB_RSOURCES2 ${LIB_SRC_DIR}/*/*/*.cpp)
-file(GLOB LIB_SOURCES ${LIB_SRC_DIR}/*.cpp)
+set(ALL_SOURCES 
+    ${LIB_SRC_DIR}/webpp.cpp
+    ${LIB_SRC_DIR}/webpp/config.cpp
+    ${LIB_SRC_DIR}/webpp/router.cpp
+    ${LIB_SRC_DIR}/webpp/server.cpp
+    ${LIB_SRC_DIR}/webpp/thread.cpp
 
+    ${LIB_SRC_DIR}/webpp/valves/valve.cpp
+    
+    ${LIB_SRC_DIR}/webpp/validators/validators.cpp
+    ${LIB_SRC_DIR}/webpp/validators/email.cpp
+    
+    ${LIB_SRC_DIR}/webpp/utils/casts.cpp
+    ${LIB_SRC_DIR}/webpp/utils/cfile.cpp
+    ${LIB_SRC_DIR}/webpp/utils/charset.cpp
+    ${LIB_SRC_DIR}/webpp/utils/const_list.cpp
+    ${LIB_SRC_DIR}/webpp/utils/containers.cpp
+    ${LIB_SRC_DIR}/webpp/utils/debounce.cpp
+    ${LIB_SRC_DIR}/webpp/utils/functional.cpp
+    ${LIB_SRC_DIR}/webpp/utils/ipv4.cpp
+    ${LIB_SRC_DIR}/webpp/utils/ipv6.cpp
+    ${LIB_SRC_DIR}/webpp/utils/memory.cpp
+    ${LIB_SRC_DIR}/webpp/utils/property.cpp
+    ${LIB_SRC_DIR}/webpp/utils/strings.cpp
+    ${LIB_SRC_DIR}/webpp/utils/uri.cpp
 
-set(ALL_SOURCES ${LIB_RSOURCES} ${LIB_SOURCES} ${LIB_RESOURCES2})
+    ${LIB_SRC_DIR}/webpp/interfaces/cgi.cpp
+
+    ${LIB_SRC_DIR}/webpp/http/body.cpp
+    ${LIB_SRC_DIR}/webpp/http/cookies.cpp
+    ${LIB_SRC_DIR}/webpp/http/header.cpp
+    ${LIB_SRC_DIR}/webpp/http/request.cpp
+    ${LIB_SRC_DIR}/webpp/http/response.cpp
+
+  )
+
+message(STATUS "Library Files:  ${ALL_SOURCES}")
 
 
 add_library(${LIB_NAME} SHARED ${ALL_SOURCES})
