@@ -1,0 +1,4 @@
+[compile]
+  command = "make"
+  args = ['-C', 'build']
+  isBackground = false

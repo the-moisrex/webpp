@@ -32,6 +32,7 @@
  */
 
 #include <utility>
+#include <ostream>
 
 namespace webpp {
 
