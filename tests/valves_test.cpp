@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include <string>
 #include <webpp/http/request.h>
-#include <webpp/valves/valve.h>
+#include <webpp/valves/methods.h>
 
 using namespace webpp;
 using namespace webpp::valves;
