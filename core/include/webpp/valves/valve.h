@@ -210,37 +210,6 @@ namespace webpp::valves {
         }
     };
 
-    struct method_condition {
-      private:
-        std::string_view method_string;
-
-      public:
-        constexpr method_condition(std::string_view str) noexcept
-            : method_string(std::move(str)) {}
-
-        constexpr method_condition() noexcept = default;
-
-        template <typename RequestType>
-        [[nodiscard]] bool operator()(RequestType const& req) const noexcept {
-            return req.request_method() == method_string;
-        }
-    };
-
-    struct method : public valve<method_condition> {
-        using valve<method_condition>::valve;
-    };
-
-    struct empty_condition {
-        template <typename RequestType>
-        [[nodiscard]] constexpr bool
-        operator()(RequestType const& /* req */) const noexcept {
-            return true;
-        }
-    };
-
-    struct empty_t : public valve<empty_condition> {};
-    constexpr empty_t empty;
-
 } // namespace webpp::valves
 
 #endif // WEBPP_VALVE_H

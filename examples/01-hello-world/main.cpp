@@ -1,6 +1,10 @@
-#include <webpp/webpp.h>
+#include <webpp/router>
+#include <webpp/server>
+#include <webpp/http/request>
+#include <webpp/interfaces/cgi>
 
 using namespace webpp;
+using namespace webpp::valves;
 
 using request = request_t<cgi>;
 
@@ -8,8 +12,8 @@ response about_page(request req) { return file("about.html"); }
 
 int main() {
 
-    webpp<cgi> app;
-    app.router.on(get & "/home"_path, [](auto& req, auto& res) {
+    server<cgi> app;
+    app.router.on(valves::get & "/home"_path, [](auto const& req, auto& res) noexcept {
         res << "hello world";
         res << '\n';
     });
