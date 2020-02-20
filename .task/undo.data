@@ -309,3 +309,10 @@ new [description:"implement pop_path in uri" entry:"1582219672" modified:"158221
 time 1582219678
 new [description:"implement append_path in uri" entry:"1582219678" modified:"1582219678" project:"net" status:"pending" uuid:"6685ce51-e22a-432b-8d38-a6face62852a"]
 ---
+time 1582224116
+new [description:"write tests for typed variables in uri class" entry:"1582224116" modified:"1582224116" project:"net" status:"pending" uuid:"eba5d0a3-2437-4942-a131-3ece50b1093c"]
+---
+time 1582224507
+old [description:"write tests for typed variables in uri class" entry:"1582224116" modified:"1582224116" project:"net" status:"pending" uuid:"eba5d0a3-2437-4942-a131-3ece50b1093c"]
+new [description:"write tests for typed variables in uri class" end:"1582224507" entry:"1582224116" modified:"1582224507" project:"net" status:"completed" uuid:"eba5d0a3-2437-4942-a131-3ece50b1093c"]
+---
