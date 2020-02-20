@@ -38,7 +38,7 @@ namespace webpp::valves {
         std::string_view tpath_str;
 
       public:
-        constexpr tapth_condition(std::string_view str) noexcept
+        constexpr tpath_condition(std::string_view str) noexcept
             : tpath_str(str) {}
 
         constexpr tpath_condition() noexcept = default;
