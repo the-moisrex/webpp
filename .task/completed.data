@@ -1,3 +1,5 @@
+[description:"create an example" end:"1582218875" entry:"1563713152" modified:"1582218875" project:"examples" status:"completed" uuid:"98ac6eaf-b224-4394-b477-f8da4d9ff5ce"]
+[description:"make cmake do magic" end:"1582218851" entry:"1563822038" modified:"1582218851" project:"cmake" status:"completed" uuid:"f52a16ef-4e4e-43e6-bd17-5b9558cfc4a7"]
 [description:"seperate the debounce class from the function_ref class" end:"1581620590" entry:"1576149446" modified:"1581620590" project:"functional" status:"completed" uuid:"3ce4fb8b-1148-4f34-b355-06a5fa415139"]
 [description:"implement cgi and make sure it builds" end:"1581620541" entry:"1562323295" modified:"1581620541" project:"interfaces" status:"completed" uuid:"f33319c0-0160-4435-98ec-04b8388c1bae"]
 [description:"change the immediate to leading enum" end:"1576149407" entry:"1576148758" modified:"1576149407" project:"functional" status:"completed" uuid:"c6d038be-e4ba-4a70-a7c2-9fe880aa12f0"]
