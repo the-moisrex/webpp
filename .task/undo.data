@@ -247,3 +247,65 @@ time 1581620590
 old [description:"seperate the debounce class from the function_ref class" entry:"1576149446" modified:"1576149446" project:"functional" status:"pending" uuid:"3ce4fb8b-1148-4f34-b355-06a5fa415139"]
 new [description:"seperate the debounce class from the function_ref class" end:"1581620590" entry:"1576149446" modified:"1581620590" project:"functional" status:"completed" uuid:"3ce4fb8b-1148-4f34-b355-06a5fa415139"]
 ---
+time 1582218826
+new [description:"fix .cmake file paths when install command" entry:"1582218826" modified:"1582218826" project:"cmake" status:"pending" uuid:"054165b9-3083-4ca8-9cd6-bc4b2bd938e6"]
+---
+time 1582218851
+old [description:"make cmake do magic" entry:"1563822038" modified:"1567682669" project:"cmake" status:"pending" uuid:"f52a16ef-4e4e-43e6-bd17-5b9558cfc4a7"]
+new [description:"make cmake do magic" end:"1582218851" entry:"1563822038" modified:"1582218851" project:"cmake" status:"completed" uuid:"f52a16ef-4e4e-43e6-bd17-5b9558cfc4a7"]
+---
+time 1582218875
+old [description:"create an example" entry:"1563713152" modified:"1563713152" project:"examples" status:"pending" uuid:"98ac6eaf-b224-4394-b477-f8da4d9ff5ce"]
+new [description:"create an example" end:"1582218875" entry:"1563713152" modified:"1582218875" project:"examples" status:"completed" uuid:"98ac6eaf-b224-4394-b477-f8da4d9ff5ce"]
+---
+time 1582218893
+new [description:"build the hello world example" entry:"1582218893" modified:"1582218893" project:"examples" status:"pending" uuid:"eebcfb80-cc87-4375-adfb-ad0e68fcbc29"]
+---
+time 1582218925
+new [description:"turn the hello world example to a google test" entry:"1582218925" modified:"1582218925" project:"examples" status:"pending" uuid:"fc3372a3-c5ce-4325-8a09-419bfee55298"]
+---
+time 1582219014
+new [description:"add config .h file in cmake for versioning" entry:"1582219014" modified:"1582219014" project:"cmake" status:"pending" uuid:"3242884a-3786-416e-b78b-6f82fc02ccd0"]
+---
+time 1582219039
+new [description:"add config .h file in cmake for static files" entry:"1582219039" modified:"1582219039" project:"cmake" status:"pending" uuid:"1a47a122-9838-4d51-9c5f-4098cf679d2b"]
+---
+time 1582219083
+new [description:"add mother modules to the server's templtes" entry:"1582219083" modified:"1582219083" project:"modules" status:"pending" uuid:"b106c901-b08e-46ac-adac-ce2c537f115e"]
+---
+time 1582219157
+new [description:"add 'server' arg to the router signitures" entry:"1582219157" modified:"1582219157" project:"modules" status:"pending" uuid:"f94dc762-d8ff-40b8-988c-edaa71acd324"]
+---
+time 1582219283
+new [description:"add a 'parse' function for parsing variables used in URLs" entry:"1582219283" modified:"1582219283" project:"request" status:"pending" uuid:"ce0f4593-1359-4727-98dd-5df9a861dec7"]
+---
+time 1582219371
+new [description:"sort paths in router based on views and how much time it takes for them to be evaluated" entry:"1582219371" modified:"1582219371" project:"request" status:"pending" uuid:"4c721057-1066-4ed6-9362-7718beb8b705"]
+---
+time 1582219403
+new [description:"remove c++20 in cmake and replce with the features that the project requires" entry:"1582219403" modified:"1582219403" project:"cmake" status:"pending" uuid:"aa61ab85-5f5e-4900-b46c-7b3c077118c2"]
+---
+time 1582219451
+new [description:"implement normalize path in uri class" entry:"1582219451" modified:"1582219451" project:"net" status:"pending" uuid:"5bc72080-218b-42d6-b82d-a86213c4a241"]
+---
+time 1582219484
+new [description:"add fragment routing methods in uri (think about it first)" entry:"1582219484" modified:"1582219484" project:"net" status:"pending" uuid:"620c3e4c-f4c9-4001-bb51-3ce824e51a13"]
+---
+time 1582219624
+new [description:"implement put_query in uri" entry:"1582219624" modified:"1582219624" project:"net" status:"pending" uuid:"7fd65650-c4eb-4721-8fe2-e0f77c3c083d"]
+---
+time 1582219642
+new [description:"implement get_query in uri" entry:"1582219642" modified:"1582219642" project:"net" status:"pending" uuid:"81903221-8c51-47f1-8002-647584b2dc56"]
+---
+time 1582219651
+new [description:"implement remove_query in uri" entry:"1582219651" modified:"1582219651" project:"net" status:"pending" uuid:"b4472fcc-3dd6-4894-9127-b00f6163d4f8"]
+---
+time 1582219659
+new [description:"implement append_query in uri" entry:"1582219659" modified:"1582219659" project:"net" status:"pending" uuid:"9e0611c2-a036-44ba-acfa-fc2ca04e53a3"]
+---
+time 1582219672
+new [description:"implement pop_path in uri" entry:"1582219672" modified:"1582219672" project:"net" status:"pending" uuid:"06adf163-95a2-4a05-b659-8680e6e21f2b"]
+---
+time 1582219678
+new [description:"implement append_path in uri" entry:"1582219678" modified:"1582219678" project:"net" status:"pending" uuid:"6685ce51-e22a-432b-8d38-a6face62852a"]
+---

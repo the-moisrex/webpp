@@ -72,3 +72,23 @@
 {"description":"Use Steganography in your project, it's cool","entry":"20200113T100438Z","modified":"20200113T100438Z","status":"pending","uuid":"cc65960e-a13d-4d01-b61b-18780b43a2ed"}
 {"description":"implement cgi and make sure it builds","end":"20200213T190221Z","entry":"20190705T104135Z","modified":"20200213T190221Z","project":"interfaces","status":"completed","uuid":"f33319c0-0160-4435-98ec-04b8388c1bae"}
 {"description":"seperate the debounce class from the function_ref class","end":"20200213T190310Z","entry":"20191212T111726Z","modified":"20200213T190310Z","project":"functional","status":"completed","uuid":"3ce4fb8b-1148-4f34-b355-06a5fa415139"}
+{"description":"fix .cmake file paths when install command","entry":"20200220T171346Z","modified":"20200220T171346Z","project":"cmake","status":"pending","uuid":"054165b9-3083-4ca8-9cd6-bc4b2bd938e6"}
+{"description":"make cmake do magic","end":"20200220T171411Z","entry":"20190722T190038Z","modified":"20200220T171411Z","project":"cmake","status":"completed","uuid":"f52a16ef-4e4e-43e6-bd17-5b9558cfc4a7"}
+{"description":"create an example","end":"20200220T171435Z","entry":"20190721T124552Z","modified":"20200220T171435Z","project":"examples","status":"completed","uuid":"98ac6eaf-b224-4394-b477-f8da4d9ff5ce"}
+{"description":"build the hello world example","entry":"20200220T171453Z","modified":"20200220T171453Z","project":"examples","status":"pending","uuid":"eebcfb80-cc87-4375-adfb-ad0e68fcbc29"}
+{"description":"turn the hello world example to a google test","entry":"20200220T171525Z","modified":"20200220T171525Z","project":"examples","status":"pending","uuid":"fc3372a3-c5ce-4325-8a09-419bfee55298"}
+{"description":"add config .h file in cmake for versioning","entry":"20200220T171654Z","modified":"20200220T171654Z","project":"cmake","status":"pending","uuid":"3242884a-3786-416e-b78b-6f82fc02ccd0"}
+{"description":"add config .h file in cmake for static files","entry":"20200220T171719Z","modified":"20200220T171719Z","project":"cmake","status":"pending","uuid":"1a47a122-9838-4d51-9c5f-4098cf679d2b"}
+{"description":"add mother modules to the server's templtes","entry":"20200220T171803Z","modified":"20200220T171803Z","project":"modules","status":"pending","uuid":"b106c901-b08e-46ac-adac-ce2c537f115e"}
+{"description":"add 'server' arg to the router signitures","entry":"20200220T171917Z","modified":"20200220T171917Z","project":"modules","status":"pending","uuid":"f94dc762-d8ff-40b8-988c-edaa71acd324"}
+{"description":"add a 'parse' function for parsing variables used in URLs","entry":"20200220T172123Z","modified":"20200220T172123Z","project":"request","status":"pending","uuid":"ce0f4593-1359-4727-98dd-5df9a861dec7"}
+{"description":"sort paths in router based on views and how much time it takes for them to be evaluated","entry":"20200220T172251Z","modified":"20200220T172251Z","project":"request","status":"pending","uuid":"4c721057-1066-4ed6-9362-7718beb8b705"}
+{"description":"remove c++20 in cmake and replce with the features that the project requires","entry":"20200220T172323Z","modified":"20200220T172323Z","project":"cmake","status":"pending","uuid":"aa61ab85-5f5e-4900-b46c-7b3c077118c2"}
+{"description":"implement normalize path in uri class","entry":"20200220T172411Z","modified":"20200220T172411Z","project":"net","status":"pending","uuid":"5bc72080-218b-42d6-b82d-a86213c4a241"}
+{"description":"add fragment routing methods in uri (think about it first)","entry":"20200220T172444Z","modified":"20200220T172444Z","project":"net","status":"pending","uuid":"620c3e4c-f4c9-4001-bb51-3ce824e51a13"}
+{"description":"implement put_query in uri","entry":"20200220T172704Z","modified":"20200220T172704Z","project":"net","status":"pending","uuid":"7fd65650-c4eb-4721-8fe2-e0f77c3c083d"}
+{"description":"implement get_query in uri","entry":"20200220T172722Z","modified":"20200220T172722Z","project":"net","status":"pending","uuid":"81903221-8c51-47f1-8002-647584b2dc56"}
+{"description":"implement remove_query in uri","entry":"20200220T172731Z","modified":"20200220T172731Z","project":"net","status":"pending","uuid":"b4472fcc-3dd6-4894-9127-b00f6163d4f8"}
+{"description":"implement append_query in uri","entry":"20200220T172739Z","modified":"20200220T172739Z","project":"net","status":"pending","uuid":"9e0611c2-a036-44ba-acfa-fc2ca04e53a3"}
+{"description":"implement pop_path in uri","entry":"20200220T172752Z","modified":"20200220T172752Z","project":"net","status":"pending","uuid":"06adf163-95a2-4a05-b659-8680e6e21f2b"}
+{"description":"implement append_path in uri","entry":"20200220T172758Z","modified":"20200220T172758Z","project":"net","status":"pending","uuid":"6685ce51-e22a-432b-8d38-a6face62852a"}
