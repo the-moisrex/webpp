@@ -92,3 +92,5 @@
 {"description":"implement append_query in uri","entry":"20200220T172739Z","modified":"20200220T172739Z","project":"net","status":"pending","uuid":"9e0611c2-a036-44ba-acfa-fc2ca04e53a3"}
 {"description":"implement pop_path in uri","entry":"20200220T172752Z","modified":"20200220T172752Z","project":"net","status":"pending","uuid":"06adf163-95a2-4a05-b659-8680e6e21f2b"}
 {"description":"implement append_path in uri","entry":"20200220T172758Z","modified":"20200220T172758Z","project":"net","status":"pending","uuid":"6685ce51-e22a-432b-8d38-a6face62852a"}
+{"description":"write tests for typed variables in uri class","entry":"20200220T184156Z","modified":"20200220T184156Z","project":"net","status":"pending","uuid":"eba5d0a3-2437-4942-a131-3ece50b1093c"}
+{"description":"write tests for typed variables in uri class","end":"20200220T184827Z","entry":"20200220T184156Z","modified":"20200220T184827Z","project":"net","status":"completed","uuid":"eba5d0a3-2437-4942-a131-3ece50b1093c"}

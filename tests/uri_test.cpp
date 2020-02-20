@@ -403,3 +403,16 @@ TEST(URITests, EnDecoded) {
     uri u{"http://سلام.com"};
     EXPECT_TRUE(u.is_valid());
 }
+
+
+
+TEST(URITests, TypedVariables) {
+    uri u{"/user/{user_id}"};
+    EXPECT_TRUE(u.has_path());
+    auto _path = u.path_structured_decoded();
+    EXPECT_EQ(_path[0], "");
+    EXPECT_EQ(_path[1], "user");
+    EXPECT_EQ(_path[2], "{user_id}");
+}
+
+

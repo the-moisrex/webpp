@@ -43,3 +43,4 @@
 [description:"implement append_query in uri" entry:"1582219659" modified:"1582219659" project:"net" status:"pending" uuid:"9e0611c2-a036-44ba-acfa-fc2ca04e53a3"]
 [description:"implement pop_path in uri" entry:"1582219672" modified:"1582219672" project:"net" status:"pending" uuid:"06adf163-95a2-4a05-b659-8680e6e21f2b"]
 [description:"implement append_path in uri" entry:"1582219678" modified:"1582219678" project:"net" status:"pending" uuid:"6685ce51-e22a-432b-8d38-a6face62852a"]
+[description:"write tests for typed variables in uri class" end:"1582224507" entry:"1582224116" modified:"1582224507" project:"net" status:"completed" uuid:"eba5d0a3-2437-4942-a131-3ece50b1093c"]
