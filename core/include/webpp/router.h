@@ -8,10 +8,16 @@
 #include "utils/functional.h"
 #include "valves/methods.h"
 #include <functional>
+#include <map>
+#include <string_view>
 #include <tuple>
 #include <type_traits>
 
 namespace webpp {
+
+    std::map<std::string_view, std::string_view>
+    parse_vars(std::string_view const& tmpl,
+               std::string_view const& path) noexcept;
 
     template <typename T, typename U>
     struct can_cast
@@ -284,7 +290,8 @@ namespace webpp {
         // fixme: it gives me error when I put "noexcept" here:
         dynamic_route() = default;
         dynamic_route(callback_t callback) noexcept : callback(callback) {}
-        dynamic_route(condition_t condition, callback_t callback) noexcept : condition(condition), callback(callback) {}
+        dynamic_route(condition_t condition, callback_t callback) noexcept
+            : condition(condition), callback(callback) {}
 
         template <typename C>
         dynamic_route& operator=(C&& callback) noexcept {
@@ -298,9 +305,7 @@ namespace webpp {
             return callback(req, res);
         }
 
-        inline bool is_match(req_t req) noexcept {
-            return condition(req);
-        }
+        inline bool is_match(req_t req) noexcept { return condition(req); }
     };
 
     /**
@@ -392,13 +397,15 @@ namespace webpp {
             } else if constexpr (is_container_v<RouteList>) {
 
                 // for containers (dynamic)
-                static_assert(can_cast<Route,
-                                       typename RouteList::value_type>::value, "The specified route does not match the router version of route.");
+                static_assert(
+                    can_cast<Route, typename RouteList::value_type>::value,
+                    "The specified route does not match the router version of "
+                    "route.");
                 routes.emplace_back(std::forward<Valve>(v), std::move(_route));
 
-
             } else {
-                throw std::invalid_argument("The container for routes is unknown.");
+                throw std::invalid_argument(
+                    "The container for routes is unknown.");
             }
         }
     };

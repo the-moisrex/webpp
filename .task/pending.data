@@ -4,7 +4,6 @@
 [description:"implement half-lazy loading of images\/... stuff" entry:"1563806570" modified:"1563806570" project:"performance" status:"pending" uuid:"027c5ba8-5180-48b3-90ba-e7e6ec3df841"]
 [description:"use components like cefeika" entry:"1563822100" modified:"1563822100" project:"cmake" status:"pending" uuid:"74af12bd-563b-45bf-87e6-937666878e5b"]
 [description:"learn more: http:\/\/www.yolinux.com\/TUTORIALS\/LibraryArchives-StaticAndDynamic.html" entry:"1563827999" modified:"1563827999" status:"pending" uuid:"3f3a2322-d418-4bc1-8634-eed3a501a233"]
-[description:"write string conversions for string_view" entry:"1567256219" modified:"1567256219" status:"pending" uuid:"2f0f82cf-b400-4987-aa8c-2a1ea6e90ff7"]
 [description:"watch tutorial named Pluralsight Web Performance" entry:"1567260685" modified:"1567682509" project:"performance" status:"pending" uuid:"cd287d23-e515-486a-9ea9-ef97fe5c0c73"]
 [description:"watch WebRTC tutorials" entry:"1567260811" modified:"1567260811" project:"webrtc" status:"pending" uuid:"97244640-b8a5-4fac-851f-96ce8253745b"]
 [description:"implement wsgi" entry:"1567456538" modified:"1567456538" project:"interfaces" status:"pending" uuid:"50dff47e-c030-4fb4-b333-693b9af714d6"]
@@ -43,4 +42,4 @@
 [description:"implement append_query in uri" entry:"1582219659" modified:"1582219659" project:"net" status:"pending" uuid:"9e0611c2-a036-44ba-acfa-fc2ca04e53a3"]
 [description:"implement pop_path in uri" entry:"1582219672" modified:"1582219672" project:"net" status:"pending" uuid:"06adf163-95a2-4a05-b659-8680e6e21f2b"]
 [description:"implement append_path in uri" entry:"1582219678" modified:"1582219678" project:"net" status:"pending" uuid:"6685ce51-e22a-432b-8d38-a6face62852a"]
-[description:"write tests for typed variables in uri class" end:"1582224507" entry:"1582224116" modified:"1582224507" project:"net" status:"completed" uuid:"eba5d0a3-2437-4942-a131-3ece50b1093c"]
+[description:"implement parsed variables for paths" entry:"1582224642" modified:"1582224642" project:"net" status:"pending" uuid:"e75c297d-261b-4787-92b8-d5b75894340f"]
