@@ -316,3 +316,10 @@ time 1582224507
 old [description:"write tests for typed variables in uri class" entry:"1582224116" modified:"1582224116" project:"net" status:"pending" uuid:"eba5d0a3-2437-4942-a131-3ece50b1093c"]
 new [description:"write tests for typed variables in uri class" end:"1582224507" entry:"1582224116" modified:"1582224507" project:"net" status:"completed" uuid:"eba5d0a3-2437-4942-a131-3ece50b1093c"]
 ---
+time 1582224571
+old [description:"write string conversions for string_view" entry:"1567256219" modified:"1567256219" status:"pending" uuid:"2f0f82cf-b400-4987-aa8c-2a1ea6e90ff7"]
+new [description:"write string conversions for string_view" end:"1582224571" entry:"1567256219" modified:"1582224571" status:"completed" uuid:"2f0f82cf-b400-4987-aa8c-2a1ea6e90ff7"]
+---
+time 1582224642
+new [description:"implement parsed variables for paths" entry:"1582224642" modified:"1582224642" project:"net" status:"pending" uuid:"e75c297d-261b-4787-92b8-d5b75894340f"]
+---

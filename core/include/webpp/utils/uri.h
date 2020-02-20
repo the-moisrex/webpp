@@ -1,5 +1,5 @@
-#ifndef WEBPP_URI_TEST_H
-#define WEBPP_URI_TEST_H
+#ifndef WEBPP_UTILS_URI_H
+#define WEBPP_UTILS_URI_H
 
 #include "../validators/validators.h"
 #include "casts.h"
@@ -24,9 +24,7 @@ namespace webpp {
          * @param _scheme
          * @return
          */
-        [[nodiscard]] bool scheme(std::string_view const& _scheme) noexcept {
-            return ALPHA.contains(_scheme);
-        }
+        [[nodiscard]] bool scheme(std::string_view const& _scheme) noexcept;
 
     } // namespace is
 
@@ -1874,14 +1872,10 @@ namespace webpp {
     using const_uri = basic_uri<std::string_view>;
     using uri = basic_uri<std::string>;
 
-    bool operator==(uri const& one, const_uri const& two) noexcept {
-        return one.operator==(two.str());
-    }
+    bool operator==(uri const& one, const_uri const& two) noexcept;
 
-    bool operator==(const_uri const& one, uri const& two) noexcept {
-        return one.operator==(two.str());
-    }
+    bool operator==(const_uri const& one, uri const& two) noexcept;
 
 } // namespace webpp
 
-#endif // WEBPP_URI_TEST_H
+#endif // WEBPP_UTILS_URI_H

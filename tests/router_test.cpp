@@ -162,3 +162,15 @@ TEST(Router, DynamicRoute) {
     droute(req, res);
     EXPECT_EQ(std::string(res.body.str()), "Hello world");
 }
+
+
+
+TEST(Router, ParseVars) {
+
+    std::string a = "/user/19";
+    auto vars = parse_vars("/user/{user_id}", a);
+    EXPECT_EQ(vars.size(), 1);
+    EXPECT_EQ(vars["user_id"], "19");
+
+}
+

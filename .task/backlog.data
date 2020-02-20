@@ -94,3 +94,5 @@
 {"description":"implement append_path in uri","entry":"20200220T172758Z","modified":"20200220T172758Z","project":"net","status":"pending","uuid":"6685ce51-e22a-432b-8d38-a6face62852a"}
 {"description":"write tests for typed variables in uri class","entry":"20200220T184156Z","modified":"20200220T184156Z","project":"net","status":"pending","uuid":"eba5d0a3-2437-4942-a131-3ece50b1093c"}
 {"description":"write tests for typed variables in uri class","end":"20200220T184827Z","entry":"20200220T184156Z","modified":"20200220T184827Z","project":"net","status":"completed","uuid":"eba5d0a3-2437-4942-a131-3ece50b1093c"}
+{"description":"write string conversions for string_view","end":"20200220T184931Z","entry":"20190831T125659Z","modified":"20200220T184931Z","status":"completed","uuid":"2f0f82cf-b400-4987-aa8c-2a1ea6e90ff7"}
+{"description":"implement parsed variables for paths","entry":"20200220T185042Z","modified":"20200220T185042Z","project":"net","status":"pending","uuid":"e75c297d-261b-4787-92b8-d5b75894340f"}
