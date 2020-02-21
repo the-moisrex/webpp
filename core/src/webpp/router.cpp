@@ -1,6 +1,9 @@
 #include "webpp/router.h"
 #include "webpp/utils/uri.h"
 
+/**
+ * TODO: add types to the "{user_id}" to be able to use it as "{int:user_id}"
+ */
 std::map<std::string_view, std::string_view>
 webpp::parse_vars(std::string_view const& _templ,
            std::string_view const& _path) noexcept {
