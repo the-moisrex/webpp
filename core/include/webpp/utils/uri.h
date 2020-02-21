@@ -45,7 +45,7 @@ namespace webpp {
         bool decoding = false;
         std::string res;
         for (const auto c : encoded_str) {
-            if (digits_left) {
+            if (decoding && digits_left) {
                 decoded_char <<= 4;
                 if (c >= '0' && c <= '9') { // DIGITS
                     decoded_char += c - '0';
@@ -1367,14 +1367,20 @@ namespace webpp {
                 return {};
             Container container;
             std::size_t slash_start = 0;
+            std::size_t last_slash_start = 0;
+            auto _path_size = _path.size();
+            if (_path.front() == '/')
+                container.emplace_back(); // empty string
             do {
-                slash_start = _path.find('/');
-                container.push_back(_path.substr(0, slash_start));
-                if (slash_start != std::string_view::npos)
-                    _path.remove_prefix(slash_start + 1);
-                else
-                    _path.remove_prefix(_path.size());
-            } while (!_path.empty());
+                slash_start = _path.find('/', last_slash_start + 1);
+                container.emplace_back(_path.data() + last_slash_start + 1,
+                                       std::min(slash_start, _path_size) - last_slash_start - 1);
+                // if (slash_start != std::string_view::npos)
+                // _path.remove_prefix(slash_start + 1);
+                // else
+                // _path.remove_prefix(_path.size());
+                last_slash_start = slash_start;
+            } while (slash_start != std::string_view::npos);
             return container;
         }
 
