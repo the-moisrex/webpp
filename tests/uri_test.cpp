@@ -416,3 +416,9 @@ TEST(URITests, TypedVariables) {
 }
 
 
+TEST(URITests, StructuredPath) {
+  uri u{"/user/19"};
+  auto parsed = u.path_structured_decoded();
+  EXPECT_EQ(parsed[2], "19");
+}
+
