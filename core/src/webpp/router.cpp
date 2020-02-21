@@ -19,7 +19,7 @@ webpp::parse_vars(std::string_view const& _templ,
                 templ_segment.ends_with('}')) {
 
                 // remove the curly-braces
-                auto var = templ_segment.substr(1, templ_segment.size() - 3);
+                std::string_view var{templ_segment.data() + 1, templ_segment.size() - 2};
                 res[var] = *it;
             }
 
