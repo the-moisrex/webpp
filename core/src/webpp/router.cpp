@@ -6,32 +6,59 @@
  */
 std::map<std::string_view, std::string_view>
 webpp::parse_vars(std::string_view const& _templ,
-           std::string_view const& _path) noexcept {
+                  std::string_view const& _path) noexcept {
 
     using namespace webpp;
 
     std::map<std::string_view, std::string_view> res;
-    auto parsed_path = const_uri{_path}.path_structured_decoded();
-    auto parsed_templ = const_uri{_templ}.path_structured_decoded();
-    auto it = parsed_path.cbegin();
-    for (auto const& templ_segment : parsed_templ) {
 
-        if (templ_segment != *it) {
+    using ptr_t = decltype(_templ.data());
 
-            if (templ_segment.starts_with('{') &&
-                templ_segment.ends_with('}')) {
+    ptr_t templ_start = _templ.data();
+    ptr_t templ_end = _templ.data() + _templ.size();
+    ptr_t curly_start = templ_end;
+    ptr_t colon = templ_end;
+    ptr_t path_char = _path.data();
 
-                // remove the curly-braces
-                std::string_view var{templ_segment.data() + 1, templ_segment.size() - 2};
-                res[var] = *it;
-            }
+    for (ptr_t c = templ_start; c; c++) {
 
-            break; // it's faulty now
-        }
-
-        it++;
-        if (it == parsed_path.cend())
+        // breaks out of the loop when the template and the paths don't match
+        if (curly_start == templ_end && *c != *path_char++)
             break;
+
+        switch (*c) {
+        case '{':
+            if (curly_start != templ_end) {
+                colon = curly_start = c;
+            }
+            break;
+        case ':':
+            if (curly_start != templ_end) {
+                colon = c;
+            }
+            break;
+        case '}':
+            // check if we are in a curly braces
+            if (curly_start != templ_end) {
+                curly_start = colon = templ_end; // reset
+                std::string_view key{
+                    colon + 1,
+                    static_cast<std::string_view::size_type>(c - colon)};
+
+                // find _ in "{var}_" inside path
+                // this doesn't take the / in account
+                auto next_char_path = std::string_view{path_char}.find(*(c + 1));
+
+                std::string_view value{path_char, next_char_path};
+                /*
+                std::string_view type{curly_start + 1,
+                                      static_cast<std::string_view::size_type>(
+                                          colon - curly_start)};
+                                          */
+                res[key] = value;
+            }
+            break;
+        }
     }
 
     return res;
