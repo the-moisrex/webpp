@@ -173,5 +173,13 @@ TEST(Router, ParseVars) {
     EXPECT_EQ(vars.size(), 1);
     EXPECT_EQ(vars["user_id"], "19") << "user_id: " << vars["user_id"];
 
+    vars = parse_vars("/usr/user-{user_id}/{page}", "/usr/user-21/profile");
+
+    EXPECT_EQ(vars.size(), 2);
+    EXPECT_EQ(vars["user_id"], "21");
+    EXPECT_EQ(vars["page"], "profile");
 }
+
+
+
 
