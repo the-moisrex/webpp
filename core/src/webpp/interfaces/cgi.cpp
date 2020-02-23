@@ -1,9 +1,9 @@
 #include "webpp/interfaces/cgi.h"
+#include "webpp/utils/casts.h"
 #include <cctype>
 #include <cstdlib>
 #include <functional>
 #include <iostream>
-#include "webpp/utils/casts.h"
 
 using namespace webpp;
 
@@ -53,7 +53,6 @@ using namespace webpp;
 
 // TODO: use GetEnvironmentVariableA for Windows operating system
 extern char** environ;
-
 
 cgi::cgi() noexcept : basic_interface() {
     // I'm not using C here; so why should I pay for it!
@@ -147,4 +146,11 @@ std::string_view cgi::body() noexcept {
         }
     }
     return body_cache;
+}
+
+void cgi::operator()() noexcept {
+    webpp::request_t<cgi> req;
+    auto res = router(req);
+    auto str = res.body.str();
+    write(str.data(), str.size());
 }

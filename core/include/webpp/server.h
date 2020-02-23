@@ -13,7 +13,12 @@ namespace webpp {
 
       public:
         using Interface::Interface;
-        using Interface::run;
+        using Interface::router;
+
+        int run() noexcept {
+            Interface::operator()();
+            return 0; // success
+        }
 
       private:
     };
