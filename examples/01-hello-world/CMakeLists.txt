@@ -15,4 +15,4 @@ add_executable(${EXEC_NAME} ${BIN_SOURCES})
 target_link_libraries(${EXEC_NAME}
   PRIVATE webpp::webpp
 )
-install(TARGETS ${EXEC_NAME} DESTINATION bin)
+install(TARGETS ${EXEC_NAME} DESTINATION /srv/http/cgi-bin)
