@@ -73,7 +73,7 @@ namespace webpp {
      * the user is able to use this class properly and easily.
      */
     template <>
-    class request_t<cgi> : basic_request_t {
+    struct request_t<cgi> : basic_request_t {
 
         /**
          * @brief get the server's software
