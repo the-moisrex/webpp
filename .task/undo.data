@@ -323,3 +323,11 @@ new [description:"write string conversions for string_view" end:"1582224571" ent
 time 1582224642
 new [description:"implement parsed variables for paths" entry:"1582224642" modified:"1582224642" project:"net" status:"pending" uuid:"e75c297d-261b-4787-92b8-d5b75894340f"]
 ---
+time 1582427401
+old [description:"add a 'parse' function for parsing variables used in URLs" entry:"1582219283" modified:"1582219283" project:"request" status:"pending" uuid:"ce0f4593-1359-4727-98dd-5df9a861dec7"]
+new [description:"add a 'parse' function for parsing variables used in URLs" end:"1582427401" entry:"1582219283" modified:"1582427401" project:"request" status:"completed" uuid:"ce0f4593-1359-4727-98dd-5df9a861dec7"]
+---
+time 1582427401
+old [description:"implement parsed variables for paths" entry:"1582224642" modified:"1582224642" project:"net" status:"pending" uuid:"e75c297d-261b-4787-92b8-d5b75894340f"]
+new [description:"implement parsed variables for paths" end:"1582427401" entry:"1582224642" modified:"1582427401" project:"net" status:"completed" uuid:"e75c297d-261b-4787-92b8-d5b75894340f"]
+---
