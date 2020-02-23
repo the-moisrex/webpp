@@ -31,7 +31,6 @@
 [description:"add config .h file in cmake for static files" entry:"1582219039" modified:"1582219039" project:"cmake" status:"pending" uuid:"1a47a122-9838-4d51-9c5f-4098cf679d2b"]
 [description:"add mother modules to the server's templtes" entry:"1582219083" modified:"1582219083" project:"modules" status:"pending" uuid:"b106c901-b08e-46ac-adac-ce2c537f115e"]
 [description:"add 'server' arg to the router signitures" entry:"1582219157" modified:"1582219157" project:"modules" status:"pending" uuid:"f94dc762-d8ff-40b8-988c-edaa71acd324"]
-[description:"add a 'parse' function for parsing variables used in URLs" entry:"1582219283" modified:"1582219283" project:"request" status:"pending" uuid:"ce0f4593-1359-4727-98dd-5df9a861dec7"]
 [description:"sort paths in router based on views and how much time it takes for them to be evaluated" entry:"1582219371" modified:"1582219371" project:"request" status:"pending" uuid:"4c721057-1066-4ed6-9362-7718beb8b705"]
 [description:"remove c++20 in cmake and replce with the features that the project requires" entry:"1582219403" modified:"1582219403" project:"cmake" status:"pending" uuid:"aa61ab85-5f5e-4900-b46c-7b3c077118c2"]
 [description:"implement normalize path in uri class" entry:"1582219451" modified:"1582219451" project:"net" status:"pending" uuid:"5bc72080-218b-42d6-b82d-a86213c4a241"]
@@ -42,4 +41,3 @@
 [description:"implement append_query in uri" entry:"1582219659" modified:"1582219659" project:"net" status:"pending" uuid:"9e0611c2-a036-44ba-acfa-fc2ca04e53a3"]
 [description:"implement pop_path in uri" entry:"1582219672" modified:"1582219672" project:"net" status:"pending" uuid:"06adf163-95a2-4a05-b659-8680e6e21f2b"]
 [description:"implement append_path in uri" entry:"1582219678" modified:"1582219678" project:"net" status:"pending" uuid:"6685ce51-e22a-432b-8d38-a6face62852a"]
-[description:"implement parsed variables for paths" entry:"1582224642" modified:"1582224642" project:"net" status:"pending" uuid:"e75c297d-261b-4787-92b8-d5b75894340f"]
