@@ -3,6 +3,7 @@
 
 #include "../server.h"
 #include "basic_interface.h"
+#include "../router.h"
 #include <string_view>
 
 namespace webpp {
