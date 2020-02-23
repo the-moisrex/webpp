@@ -59,7 +59,10 @@ webpp::parse_vars(std::string_view const& _templ,
                                           colon - curly_start)};
                                           */
                 res[key] = value;
+
+                // preparing for the next variable
                 curly_start = colon = templ_end; // reset
+                path_char += next_char_path;
             }
             break;
         }
