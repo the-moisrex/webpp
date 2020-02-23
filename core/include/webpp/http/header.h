@@ -19,7 +19,6 @@ namespace webpp {
      */
     class headers : public std::multimap<std::string, std::string> {
       private:
-
         mutable webpp::cookie_jar _cookies;
         unsigned int _status_code = 200;
 
@@ -101,6 +100,16 @@ namespace webpp {
             _cookies = __cookies;
         }
 
+        std::string str() const noexcept {
+            std::string res;
+            for (auto const& [attr, val] : *this) {
+                res.append(attr);
+                res.append(": ");
+                res.append(val); // TODO: make sure it's secure
+                res.append("\r\n");
+            }
+            return res;
+        }
     };
 
 } // namespace webpp

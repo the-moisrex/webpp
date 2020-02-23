@@ -6,14 +6,13 @@
 namespace webpp {
 
     template <typename Interface>
-    class server : Interface {
+    class server : public Interface {
 
         static_assert(std::is_convertible_v<Interface, basic_interface>,
                       "It's not an interface");
 
       public:
         using Interface::Interface;
-        using Interface::router;
 
         int run() noexcept {
             Interface::operator()();
