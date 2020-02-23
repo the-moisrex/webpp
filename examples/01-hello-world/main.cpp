@@ -2,6 +2,7 @@
 #include <webpp/server>
 #include <webpp/http/request>
 #include <webpp/interfaces/cgi>
+#include "config.h"
 
 using namespace webpp;
 using namespace webpp::valves;
