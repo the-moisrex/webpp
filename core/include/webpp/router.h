@@ -314,7 +314,8 @@ namespace webpp {
      *
      * @param Interface
      */
-    template <typename Interface, typename RouteList = const_list<>>
+    template <typename Interface,
+              typename RouteList = std::vector<dynamic_route<Interface>>>
     class router {
 
         using req_t = request_t<Interface> const&;
