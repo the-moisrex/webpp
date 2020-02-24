@@ -404,8 +404,6 @@ TEST(URITests, EnDecoded) {
     EXPECT_TRUE(u.is_valid());
 }
 
-
-
 TEST(URITests, TypedVariables) {
     uri u{"/user/{user_id}"};
     EXPECT_TRUE(u.has_path());
@@ -415,10 +413,16 @@ TEST(URITests, TypedVariables) {
     EXPECT_EQ(_path[2], "{user_id}");
 }
 
-
 TEST(URITests, StructuredPath) {
-  uri u{"/user/19"};
-  auto parsed = u.path_structured_decoded();
-  EXPECT_EQ(parsed[2], "19");
+    uri u{"/user/19"};
+    auto parsed = u.path_structured_decoded();
+    EXPECT_EQ(parsed[2], "19");
 }
 
+TEST(URITests, EqualPaths) {
+  EXPECT_TRUE(equal_path("/one", "/one"));
+  EXPECT_FALSE(equal_path("/two", "/one"));
+  EXPECT_TRUE(equal_path("/two/", "/two/"));
+  EXPECT_TRUE(equal_path("/two//", "/two//"));
+  EXPECT_TRUE(equal_path("/two//three", "/two/three"));
+}

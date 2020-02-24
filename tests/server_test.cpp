@@ -14,7 +14,6 @@ namespace webpp {
     template <>
     class request_t<fake_interface> : public basic_request_t {
       public:
-
         std::string_view request_uri() const noexcept { return __path; }
 
         void set_path(std::string_view ___path) noexcept { __path = ___path; }
@@ -39,7 +38,7 @@ namespace webpp {
         }
     };
 
-} // namespace wbepp
+} // namespace webpp
 
 TEST(Server, Init) {
     server<fake_interface> app;
@@ -49,22 +48,15 @@ TEST(Server, Init) {
     app.run();
     EXPECT_EQ(app.body_result, "hello world");
 
-    app.router.on("/home"_path, [] (request_t<fake_interface> const& req, response &res){
-        res << "Coding";
-        });
+    app.router.on("/home"_path, [](request_t<fake_interface> const& req,
+                                   response& res) { res << "Coding"; });
     app.req.set_path("/home");
     app.run();
     EXPECT_EQ(app.body_result, "Coding");
 
-
-    app.router.on("/about"_path, [] (request_t<fake_interface> const& req, response &res){
-        res << "Something";
-        });
+    app.router.on("/about"_path, [](request_t<fake_interface> const& req,
+                                    response& res) { res << "Something"; });
     app.req.set_path("/about/");
     app.run();
     EXPECT_EQ(app.body_result, "Something");
 }
-
-
-
-
