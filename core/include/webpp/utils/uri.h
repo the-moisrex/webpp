@@ -1882,6 +1882,17 @@ namespace webpp {
 
     bool operator==(const_uri const& one, uri const& two) noexcept;
 
+    template <typename S1, typename S2>
+     [[nodiscard]] bool equal_path(basic_uri<S1> const& p1, basic_uri<S2> const&p2) noexcept {
+        auto _p1 = p1.path_structured_decoded();
+        auto _p2 = p2.path_structured_decoded();
+        if (_p1.size() < 1 || _p2.size() < 1 ||
+            _p1[0] != "" || _p2[0] != "")
+          return false;
+        auto _p1_end = _p1.back() == "" ? _p1.cend() - 1 : _p1.cend();
+        return std::equal(_p1.cbegin() + 1, _p1_end, _p2.cbegin() + 1);
+     }
+
 } // namespace webpp
 
 #endif // WEBPP_UTILS_URI_H

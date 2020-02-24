@@ -3,6 +3,7 @@
 
 #include "valve.h"
 #include <cstddef> // for std::size_t
+#include "webpp/utils/uri.h"
 #include <string_view>
 
 namespace webpp::valves {
@@ -19,7 +20,8 @@ namespace webpp::valves {
 
         template <typename RequestType>
         [[nodiscard]] bool operator()(RequestType const& req) const noexcept {
-            return req.request_uri() == path_str;
+          auto _path = req.request_uri();
+            return _path == path_str || equal_path(const_uri{_path}, const_uri{path_str});
         }
     };
 
