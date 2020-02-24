@@ -607,13 +607,13 @@ namespace webpp {
          * @brief parse from string, it will trim the spaces for generality too
          * @param string_view URI string
          */
-        explicit basic_uri(StringType const& u) noexcept : data(u) {}
+        basic_uri(StringType const& u) noexcept : data(u) {}
 
         /**
          * If the user uses this
          * @param u
          */
-        explicit basic_uri(StringType&& u) noexcept : data(std::move(u)) {}
+        basic_uri(StringType&& u) noexcept : data(std::move(u)) {}
 
         basic_uri(basic_uri const&) = default;
 
@@ -1374,7 +1374,8 @@ namespace webpp {
             do {
                 slash_start = _path.find('/', last_slash_start + 1);
                 container.emplace_back(_path.data() + last_slash_start + 1,
-                                       std::min(slash_start, _path_size) - last_slash_start - 1);
+                                       std::min(slash_start, _path_size) -
+                                           last_slash_start - 1);
                 // if (slash_start != std::string_view::npos)
                 // _path.remove_prefix(slash_start + 1);
                 // else
@@ -1875,6 +1876,11 @@ namespace webpp {
         }
     };
 
+    basic_uri(char const* const)->basic_uri<std::string_view>;
+    basic_uri(const char[])->basic_uri<std::string_view>;
+    basic_uri(std::string_view)->basic_uri<std::string_view>;
+    basic_uri(std::string)->basic_uri<std::string>;
+
     using const_uri = basic_uri<std::string_view>;
     using uri = basic_uri<std::string>;
 
@@ -1882,16 +1888,36 @@ namespace webpp {
 
     bool operator==(const_uri const& one, uri const& two) noexcept;
 
-    template <typename S1, typename S2>
-     [[nodiscard]] bool equal_path(basic_uri<S1> const& p1, basic_uri<S2> const&p2) noexcept {
+    template <typename S1 = std::string_view, typename S2 = std::string_view>
+    [[nodiscard]] bool equal_path(basic_uri<S1> const& p1,
+                                  basic_uri<S2> const& p2) noexcept {
         auto _p1 = p1.path_structured_decoded();
         auto _p2 = p2.path_structured_decoded();
-        if (_p1.size() < 1 || _p2.size() < 1 ||
-            _p1[0] != "" || _p2[0] != "")
-          return false;
-        auto _p1_end = _p1.back() == "" ? _p1.cend() - 1 : _p1.cend();
-        return std::equal(_p1.cbegin() + 1, _p1_end, _p2.cbegin() + 1);
-     }
+        auto it2 = _p2.cbegin();
+        auto it1 = _p1.cbegin();
+        while (it1 != _p1.cend() && it2 != _p2.cend()) {
+            if (*it1 != *it2) {
+                if (*it1 == "") {
+                    ++it1;
+                    continue;
+                } else if (*it2 == "") {
+                    ++it2;
+                    continue;
+                }
+
+                    return false;
+              
+            }
+            ++it1;
+            ++it2;
+        }
+        return it1 == _p1.cend() && it2 == _p2.cend();
+    }
+
+    [[nodiscard]] inline auto equal_path(std::string_view const& p1,
+                                         std::string_view const& p2) noexcept {
+        return p1 == p2 || equal_path(const_uri{p1}, const_uri{p2});
+    }
 
 } // namespace webpp
 

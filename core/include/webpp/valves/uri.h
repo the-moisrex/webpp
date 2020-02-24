@@ -2,8 +2,8 @@
 #define WEBPP_VALVE_URI_H
 
 #include "valve.h"
-#include <cstddef> // for std::size_t
 #include "webpp/utils/uri.h"
+#include <cstddef> // for std::size_t
 #include <string_view>
 
 namespace webpp::valves {
@@ -20,8 +20,7 @@ namespace webpp::valves {
 
         template <typename RequestType>
         [[nodiscard]] bool operator()(RequestType const& req) const noexcept {
-          auto _path = req.request_uri();
-            return _path == path_str || equal_path(const_uri{_path}, const_uri{path_str});
+            return equal_path(req.request_uri(), path_str);
         }
     };
 
@@ -51,7 +50,6 @@ namespace webpp::valves {
             return req.request_uri() == tpath_str;
         }
     };
-
 
     struct tpath : public valve<tpath_condition> {
         using valve<tpath_condition>::valve;
