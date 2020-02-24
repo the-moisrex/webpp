@@ -1905,13 +1905,21 @@ namespace webpp {
                     continue;
                 }
 
-                    return false;
-              
+                return false;
             }
             ++it1;
             ++it2;
         }
-        return it1 == _p1.cend() && it2 == _p2.cend();
+
+        if (it1 != _p1.cend()) {
+            if (!std::all_of(it1, _p1.cend(), [] (auto const& a) { return a == ""; }))
+              return false;
+        }
+        if (it1 != _p2.cend()) {
+            if (!std::all_of(it2, _p2.cend(), [] (auto const& a) { return a == ""; }))
+              return false;
+        }
+        return true;
     }
 
     [[nodiscard]] inline auto equal_path(std::string_view const& p1,

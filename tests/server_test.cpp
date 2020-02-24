@@ -54,8 +54,11 @@ TEST(Server, Init) {
     app.run();
     EXPECT_EQ(app.body_result, "Coding");
 
-    app.router.on("/about"_path, [](request_t<fake_interface> const& req,
-                                    response& res) { res << "Something"; });
+    app.router.on("/about"_path,
+                  [](request_t<fake_interface> const& req, response& res) {
+                      res << "Something";
+                      // stop reformating this into one line clang-format!
+                  });
     app.req.set_path("/about/");
     app.run();
     EXPECT_EQ(app.body_result, "Something");
