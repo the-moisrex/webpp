@@ -48,4 +48,23 @@ TEST(Server, Init) {
 
     app.run();
     EXPECT_EQ(app.body_result, "hello world");
+
+    app.router.on("/home"_path, [] (request_t<fake_interface> const& req, response &res){
+        res << "Coding";
+        });
+    app.req.set_path("/home");
+    app.run();
+    EXPECT_EQ(app.body_result, "Coding");
+
+
+    app.router.on("/about"_path, [] (request_t<fake_interface> const& req, response &res){
+        res << "Something";
+        });
+    app.req.set_path("/about/");
+    app.run();
+    EXPECT_EQ(app.body_result, "Something");
 }
+
+
+
+
