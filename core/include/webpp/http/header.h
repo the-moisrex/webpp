@@ -1,5 +1,5 @@
-#ifndef WEBPP_HEADERS_HPP
-#define WEBPP_HEADERS_HPP
+#ifndef WEBPP_HTTP_HEADERS_HPP
+#define WEBPP_HTTP_HEADERS_HPP
 
 #include "cookies.h"
 #include <map>
@@ -8,6 +8,8 @@
 #include <string_view>
 
 namespace webpp {
+
+    std::string status_reason_phrase(unsigned int status_code) noexcept;
 
     /**
      * The classes header and body are the "owners of data".
@@ -28,20 +30,13 @@ namespace webpp {
          * not paying anything to parse cookies while he/she is not using
          * cookies.
          */
-        void reload_cookies() const noexcept {
-            _cookies.clear();
-            for (auto const& [attr, value] : *this) {
-                if ("set-cookie" == attr) {
-                    _cookies.emplace(value);
-                }
-            }
-        }
+        void reload_cookies() const noexcept;
 
       public:
         /**
          * @brief get status code
          */
-        auto status_code() const noexcept { return _status_code; }
+        inline auto status_code() const noexcept { return _status_code; }
 
         /**
          * @brief set status code
@@ -72,15 +67,8 @@ namespace webpp {
         /**
          * @brief remove cookies in the cookie jar
          */
-        void remove_cookies() noexcept {
-            _cookies.clear();
-            for (auto it = begin(); it != end();) {
-                if (to_lower_copy(it->first) == "set-cookie")
-                    it = erase(it);
-                else
-                    ++it;
-            }
-        }
+        void remove_cookies() noexcept; 
+
 
         /**
          * @brief replace cookies in the cookie_jar
@@ -100,16 +88,7 @@ namespace webpp {
             _cookies = __cookies;
         }
 
-        std::string str() const noexcept {
-            std::string res;
-            for (auto const& [attr, val] : *this) {
-                res.append(attr);
-                res.append(": ");
-                res.append(val); // TODO: make sure it's secure
-                res.append("\r\n");
-            }
-            return res;
-        }
+        std::string str() const noexcept;
 
     };
 
@@ -118,4 +97,4 @@ namespace webpp {
 
 } // namespace webpp
 
-#endif // WEBPP_HEADERS_HPP
+#endif // WEBPP_HTTP_HEADERS_HPP

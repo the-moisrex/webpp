@@ -79,7 +79,6 @@ namespace webpp {
     };
 
 
-    std::string status_reason_phrase(int status_code) noexcept;
 
 } // namespace webpp
 #endif // RESPONSE_H
