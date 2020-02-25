@@ -74,7 +74,12 @@ namespace webpp {
         operator std::string() const noexcept {
             return std::string(body.str());
         }
+
+        void calculate_default_headers() noexcept;
     };
+
+
+    std::string status_reason_phrase(int status_code) noexcept;
 
 } // namespace webpp
 #endif // RESPONSE_H
