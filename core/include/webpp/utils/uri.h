@@ -1877,7 +1877,7 @@ namespace webpp {
     };
 
     basic_uri(char const* const)->basic_uri<std::string_view>;
-    basic_uri(const char[])->basic_uri<std::string_view>;
+    // basic_uri(const char[])->basic_uri<std::string_view>;
     basic_uri(std::string_view)->basic_uri<std::string_view>;
     basic_uri(std::string)->basic_uri<std::string>;
 
@@ -1912,12 +1912,14 @@ namespace webpp {
         }
 
         if (it1 != _p1.cend()) {
-            if (!std::all_of(it1, _p1.cend(), [] (auto const& a) { return a == ""; }))
-              return false;
+            if (!std::all_of(it1, _p1.cend(),
+                             [](auto const& a) { return a == ""; }))
+                return false;
         }
         if (it1 != _p2.cend()) {
-            if (!std::all_of(it2, _p2.cend(), [] (auto const& a) { return a == ""; }))
-              return false;
+            if (!std::all_of(it2, _p2.cend(),
+                             [](auto const& a) { return a == ""; }))
+                return false;
         }
         return true;
     }
