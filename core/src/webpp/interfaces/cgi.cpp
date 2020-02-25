@@ -151,6 +151,7 @@ std::string_view cgi::body() noexcept {
 void cgi::operator()() noexcept {
     webpp::request_t<cgi> req;
     auto res = router(req);
+    res.calculate_default_headers();
     auto header_str = res.header.str();
     auto str = res.body.str();
     write(header_str.data(), header_str.size());
