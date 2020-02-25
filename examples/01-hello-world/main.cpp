@@ -16,7 +16,13 @@ using request = request_t<cgi>;
 int main() {
 
     server<cgi> app;
-    app.router.on(get and "/cgi-bin/webpp_helloworld"_path, [](auto const& req, auto& res) noexcept {
+    app.router.on(empty, [] (response &res) {
+            res << "Default\n";
+        });
+    app.router.on("/"_path, [] {
+            return "main page";
+        });
+    app.router.on(get and "/cgi-bin/webpp_helloworld"_path, [](request const& req, response& res) noexcept {
         res << "hello world";
     });
     // app.router.on(get and "/about"_path, about_page);
