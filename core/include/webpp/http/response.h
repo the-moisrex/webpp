@@ -20,60 +20,23 @@ namespace webpp {
         header_type header;
 
         response() noexcept = default;
-
-        response(response const &res) noexcept {
-            body = res.body;
-            header = res.header;
-        }
-
-        response(response &&res) noexcept {
-            if (this != &res) {
-                body = std::move(res.body);
-                header = std::move(res.header);
-            }
-        }
+        response(response const &res) noexcept;
+        response(response &&res) noexcept;
+        response(std::string const &b) noexcept;
+        response(std::string &&b) noexcept;
 
         response &operator=(response const &) = default;
+        response &operator=(response &&res) noexcept;
+        response &operator=(std::string const &str) noexcept;
+        response &operator=(std::string &str) noexcept;
 
-        response &operator=(response &&res) noexcept {
-            if (&res != this) {
-                body = std::move(res.body);
-                header = std::move(res.header);
-            }
-            return *this;
-        }
-
-        response &operator=(std::string const &str) noexcept {
-            body.replace_string(str);
-            return *this;
-        }
-
-        response &operator=(std::string &str) noexcept {
-            body.replace_string(std::move(str));
-            return *this;
-        }
-
-        response(std::string const &b) noexcept : body{b} {}
-
-        response(std::string &&b) noexcept : body{std::move(b)} {}
-
-        [[nodiscard]] bool operator==(response const &res) const noexcept {
-            return body == res.body && header == res.header;
-        }
-
-        [[nodiscard]] bool operator!=(response const &res) const noexcept {
-            return !operator==(res);
-        }
+        [[nodiscard]] bool operator==(response const &res) const noexcept;
+        [[nodiscard]] bool operator!=(response const &res) const noexcept;
 
         response &operator<<(std::string_view str) noexcept;
 
-        operator std::string_view() const noexcept {
-            return body.str();
-        }
-
-        operator std::string() const noexcept {
-            return std::string(body.str());
-        }
+        operator std::string_view() const noexcept;
+        operator std::string() const noexcept;
 
         void calculate_default_headers() noexcept;
     };
