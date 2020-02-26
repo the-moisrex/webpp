@@ -1,7 +1,7 @@
 // Created by moisrex on 1/27/20.
 #include <gtest/gtest.h>
 #include <string>
-#include <webpp/utils/casts.h>
+#include "../core/include/webpp/utils/casts.h"
 #include <limits>
 
 using namespace webpp;

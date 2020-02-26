@@ -1,8 +1,8 @@
 // Created by moisrex on 11/7/19.
 #include <gtest/gtest.h>
 #include <string>
-#include <webpp/http/request.h>
-#include <webpp/valves/methods.h>
+#include "../core/include/webpp/http/request.h"
+#include "../core/include/webpp/valves/methods.h"
 
 using namespace webpp;
 using namespace webpp::valves;

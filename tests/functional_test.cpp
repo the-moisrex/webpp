@@ -1,8 +1,8 @@
 // Created by moisrex on 12/10/19.
 #include <array>
 #include <gtest/gtest.h>
-#include <webpp/utils/functional.h>
-#include <webpp/utils/debounce.h>
+#include "../core/include/webpp/utils/functional.h"
+#include "../core/include/webpp/utils/debounce.h"
 
 using namespace webpp;
 

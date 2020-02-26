@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include <string>
-#include <webpp/interfaces/basic_interface.h>
-#include <webpp/server.h>
-#include <webpp/valves/uri.h>
+#include "../core/include/webpp/interfaces/basic_interface.h"
+#include "../core/include/webpp/server.h"
+#include "../core/include/webpp/valves/uri.h"
 
 using namespace webpp;
 using namespace webpp::valves;

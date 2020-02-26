@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 #include <string>
-#include <webpp/utils/memory.h>
+#include "../core/include/webpp/utils/memory.h"
 
 using namespace webpp;
 using namespace std;
