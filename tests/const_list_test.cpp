@@ -1,7 +1,7 @@
 // Created by moisrex on 11/29/19.
 #include <gtest/gtest.h>
 #include <string>
-#include <webpp/utils/const_list.h>
+#include "../core/include/webpp/utils/const_list.h"
 
 using namespace webpp;
 using namespace std;

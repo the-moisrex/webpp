@@ -1,8 +1,8 @@
 // Created by moisrex on 2/4/20.
 
 #include <gtest/gtest.h>
-#include <webpp/http/body.h>
-#include <webpp/http/response.h>
+#include "../core/include/webpp/http/body.h"
+#include "../core/include/webpp/http/response.h"
 #include <string>
 #include <string_view>
 #include <type_traits>

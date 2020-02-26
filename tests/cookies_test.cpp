@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <iostream>
-#include <webpp/http/cookies.h>
+#include "../core/include/webpp/http/cookies.h"
 
 TEST(Cookie, CookiesCreation) {
     webpp::cookie c;

@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 #include <tuple>
 #include <vector>
-#include <webpp/interfaces/cgi.h>
-#include <webpp/router.h>
-#include <webpp/utils/const_list.h>
+#include "../core/include/webpp/interfaces/cgi.h"
+#include "../core/include/webpp/router.h"
+#include "../core/include/webpp/utils/const_list.h"
 
 using namespace webpp::valves;
 using namespace webpp;

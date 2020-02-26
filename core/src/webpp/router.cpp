@@ -1,5 +1,5 @@
-#include "webpp/router.h"
-#include "webpp/utils/uri.h"
+#include "../../include/webpp/router.h"
+#include "../../include/webpp/utils/uri.h"
 
 /**
  * TODO: add types to the "{user_id}" to be able to use it as "{int:user_id}"

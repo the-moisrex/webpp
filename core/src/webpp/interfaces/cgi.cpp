@@ -1,5 +1,5 @@
-#include "webpp/interfaces/cgi.h"
-#include "webpp/utils/casts.h"
+#include "../../../include/webpp/interfaces/cgi.h"
+#include "../../../include/webpp/utils/casts.h"
 #include <cctype>
 #include <cstdlib>
 #include <functional>

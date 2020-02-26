@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <string>
-#include <webpp/utils/uri.h>
+#include "../core/include/webpp/utils/uri.h"
 
 using namespace webpp;
 

@@ -1,5 +1,5 @@
-#ifndef RESPONSE_H
-#define RESPONSE_H
+#ifndef WEBPP_RESPONSE_H
+#define WEBPP_RESPONSE_H
 
 #include "body.h"
 #include "header.h"
@@ -44,4 +44,4 @@ namespace webpp {
 
 
 } // namespace webpp
-#endif // RESPONSE_H
+#endif // WEBPP_RESPONSE_H

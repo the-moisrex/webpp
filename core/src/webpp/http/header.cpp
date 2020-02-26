@@ -1,8 +1,8 @@
-#include "webpp/http/header.h"
+#include "../../../include/webpp/http/header.h"
 #include <sstream>
 using namespace webpp;
 
-std::string status_reason_phrase(unsigned int status_code) noexcept {
+std::string webpp::status_reason_phrase(unsigned int status_code) noexcept {
   switch(status_code) {
       case 100:
         return "Continue";
