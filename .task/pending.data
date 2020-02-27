@@ -41,3 +41,4 @@
 [description:"implement append_query in uri" entry:"1582219659" modified:"1582219659" project:"net" status:"pending" uuid:"9e0611c2-a036-44ba-acfa-fc2ca04e53a3"]
 [description:"implement pop_path in uri" entry:"1582219672" modified:"1582219672" project:"net" status:"pending" uuid:"06adf163-95a2-4a05-b659-8680e6e21f2b"]
 [description:"implement append_path in uri" entry:"1582219678" modified:"1582219678" project:"net" status:"pending" uuid:"6685ce51-e22a-432b-8d38-a6face62852a"]
+[description:"cannot use dynamic linking" entry:"1582805023" modified:"1582805023" project:"cmake" status:"pending" uuid:"919ee841-88fa-4d1f-aa8a-ee9e30a7fb7a"]

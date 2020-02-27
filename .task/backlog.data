@@ -98,3 +98,4 @@
 {"description":"implement parsed variables for paths","entry":"20200220T185042Z","modified":"20200220T185042Z","project":"net","status":"pending","uuid":"e75c297d-261b-4787-92b8-d5b75894340f"}
 {"description":"add a 'parse' function for parsing variables used in URLs","end":"20200223T031001Z","entry":"20200220T172123Z","modified":"20200223T031001Z","project":"request","status":"completed","uuid":"ce0f4593-1359-4727-98dd-5df9a861dec7"}
 {"description":"implement parsed variables for paths","end":"20200223T031001Z","entry":"20200220T185042Z","modified":"20200223T031001Z","project":"net","status":"completed","uuid":"e75c297d-261b-4787-92b8-d5b75894340f"}
+{"description":"cannot use dynamic linking","entry":"20200227T120343Z","modified":"20200227T120343Z","project":"cmake","status":"pending","uuid":"919ee841-88fa-4d1f-aa8a-ee9e30a7fb7a"}
