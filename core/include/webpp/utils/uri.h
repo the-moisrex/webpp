@@ -593,7 +593,7 @@ namespace webpp {
         }
 
       public:
-        basic_uri() noexcept {
+        constexpr basic_uri() noexcept {
             static_assert(
                 std::is_same_v<StringType, std::string>,
                 "There's no point using string_view with empty value as a "
@@ -607,17 +607,17 @@ namespace webpp {
          * @brief parse from string, it will trim the spaces for generality too
          * @param string_view URI string
          */
-        basic_uri(StringType const& u) noexcept : data(u) {}
+        constexpr basic_uri(StringType const& u) noexcept : data(u) {}
 
         /**
          * If the user uses this
          * @param u
          */
-        basic_uri(StringType&& u) noexcept : data(std::move(u)) {}
+        constexpr basic_uri(StringType&& u) noexcept : data(std::move(u)) {}
 
-        basic_uri(basic_uri const&) = default;
+        constexpr basic_uri(basic_uri const&) = default;
 
-        basic_uri(basic_uri&&) noexcept = default;
+        constexpr basic_uri(basic_uri&&) noexcept = default;
 
         // assignment operators
         basic_uri& operator=(basic_uri const& u) = default;
@@ -1927,6 +1927,18 @@ namespace webpp {
     [[nodiscard]] inline auto equal_path(std::string_view const& p1,
                                          std::string_view const& p2) noexcept {
         return p1 == p2 || equal_path(const_uri{p1}, const_uri{p2});
+    }
+
+    template <typename S1>
+    [[nodiscard]] inline auto equal_path(basic_uri<S1> const& p1,
+                                         std::string_view const& p2) noexcept {
+        return p1 == p2 || equal_path(p1, const_uri{p2});
+    }
+
+    template <typename S1>
+    [[nodiscard]] inline auto equal_path(
+                                         std::string_view const& p1, basic_uri<S1> const& p2) noexcept {
+        return p2 == p1 || equal_path(const_uri{p1}, p2);
     }
 
 } // namespace webpp
