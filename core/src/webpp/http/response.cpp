@@ -14,7 +14,7 @@ void response::calculate_default_headers() noexcept {
 
     if (!header.contains("Content-Length"))
         header.emplace("Content-Length",
-                       std::to_string(body.str().size() * sizeof(char) * 8));
+                       std::to_string(body.str().size()));
 }
 
 response::response(response const& res) noexcept {
