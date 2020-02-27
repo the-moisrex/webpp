@@ -2,7 +2,7 @@
 #define WEBPP_VALVE_URI_H
 
 #include "valve.h"
-#include "webpp/utils/uri.h"
+#include "../../../include/webpp/utils/uri.h"
 #include <cstddef> // for std::size_t
 #include <string_view>
 
@@ -10,17 +10,17 @@ namespace webpp::valves {
 
     struct path_condition {
       protected:
-        std::string_view path_str;
+        const_uri _path;
 
       public:
         constexpr path_condition(std::string_view str) noexcept
-            : path_str(std::move(str)) {}
+            : _path(std::move(str)) {}
 
         constexpr path_condition() noexcept = default;
 
         template <typename RequestType>
         [[nodiscard]] bool operator()(RequestType const& req) const noexcept {
-            return equal_path(req.request_uri(), path_str);
+            return equal_path(req.request_uri(), _path);
         }
     };
 
