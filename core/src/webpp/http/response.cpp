@@ -10,11 +10,11 @@ response& response::operator<<(std::string_view str) noexcept {
 void response::calculate_default_headers() noexcept {
     // It's C++20
     if (!header.contains("Content-Type"))
-        header.emplace("Content-Type", "text/html");
+        header.emplace("Content-Type", "text/html; charset=utf-8");
 
     if (!header.contains("Content-Length"))
         header.emplace("Content-Length",
-                       std::to_string(body.str().size() * sizeof(char)));
+                       std::to_string(body.str().size() * sizeof(char) * 8));
 }
 
 response::response(response const& res) noexcept {

@@ -331,3 +331,6 @@ time 1582427401
 old [description:"implement parsed variables for paths" entry:"1582224642" modified:"1582224642" project:"net" status:"pending" uuid:"e75c297d-261b-4787-92b8-d5b75894340f"]
 new [description:"implement parsed variables for paths" end:"1582427401" entry:"1582224642" modified:"1582427401" project:"net" status:"completed" uuid:"e75c297d-261b-4787-92b8-d5b75894340f"]
 ---
+time 1582805023
+new [description:"cannot use dynamic linking" entry:"1582805023" modified:"1582805023" project:"cmake" status:"pending" uuid:"919ee841-88fa-4d1f-aa8a-ee9e30a7fb7a"]
+---
