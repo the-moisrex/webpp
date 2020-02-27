@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <functional>
 #include <iostream>
+#include <sstream>
 
 using namespace webpp;
 
@@ -154,6 +155,20 @@ void cgi::operator()() noexcept {
     res.calculate_default_headers();
     auto header_str = res.header.str();
     auto str = res.body.str();
+
+    // Send status code:
+    // Status         = "Status:" status-code SP reason-phrase NL
+    // status-code    = "200" | "302" | "400" | "501" | extension-code
+    // extension-code = 3digit
+    // reason-phrase  = *TEXT
+
+    std::stringstream status_line;
+    status_line << "Status: " << res.header.status_code() << " "
+      << status_reason_phrase(res.header.status_code()) << "\r\n";
+
+    auto _status_line_str = status_line.str();
+    write(_status_line_str.data(), _status_line_str.size());
+
     write(header_str.data(), header_str.size());
     write("\r\n", 2);
     write(str.data(), str.size());
