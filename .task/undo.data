@@ -334,3 +334,10 @@ new [description:"implement parsed variables for paths" end:"1582427401" entry:"
 time 1582805023
 new [description:"cannot use dynamic linking" entry:"1582805023" modified:"1582805023" project:"cmake" status:"pending" uuid:"919ee841-88fa-4d1f-aa8a-ee9e30a7fb7a"]
 ---
+time 1582902354
+old [description:"add config .h file in cmake for static files" entry:"1582219039" modified:"1582219039" project:"cmake" status:"pending" uuid:"1a47a122-9838-4d51-9c5f-4098cf679d2b"]
+new [description:"add config .h file in cmake for static files" end:"1582902354" entry:"1582219039" modified:"1582902354" project:"cmake" status:"completed" uuid:"1a47a122-9838-4d51-9c5f-4098cf679d2b"]
+---
+time 1582902448
+new [description:"add pre-compiling the static files feature in the cmake for different file types in the generate_static_file function" entry:"1582902448" modified:"1582902448" project:"cmake" status:"pending" uuid:"613ddb21-188b-429c-b9e8-5985497dc4d5"]
+---
