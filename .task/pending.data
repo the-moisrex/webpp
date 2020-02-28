@@ -28,7 +28,7 @@
 [description:"build the hello world example" entry:"1582218893" modified:"1582218893" project:"examples" status:"pending" uuid:"eebcfb80-cc87-4375-adfb-ad0e68fcbc29"]
 [description:"turn the hello world example to a google test" entry:"1582218925" modified:"1582218925" project:"examples" status:"pending" uuid:"fc3372a3-c5ce-4325-8a09-419bfee55298"]
 [description:"add config .h file in cmake for versioning" entry:"1582219014" modified:"1582219014" project:"cmake" status:"pending" uuid:"3242884a-3786-416e-b78b-6f82fc02ccd0"]
-[description:"add config .h file in cmake for static files" entry:"1582219039" modified:"1582219039" project:"cmake" status:"pending" uuid:"1a47a122-9838-4d51-9c5f-4098cf679d2b"]
+[description:"add config .h file in cmake for static files" end:"1582902354" entry:"1582219039" modified:"1582902354" project:"cmake" status:"completed" uuid:"1a47a122-9838-4d51-9c5f-4098cf679d2b"]
 [description:"add mother modules to the server's templtes" entry:"1582219083" modified:"1582219083" project:"modules" status:"pending" uuid:"b106c901-b08e-46ac-adac-ce2c537f115e"]
 [description:"add 'server' arg to the router signitures" entry:"1582219157" modified:"1582219157" project:"modules" status:"pending" uuid:"f94dc762-d8ff-40b8-988c-edaa71acd324"]
 [description:"sort paths in router based on views and how much time it takes for them to be evaluated" entry:"1582219371" modified:"1582219371" project:"request" status:"pending" uuid:"4c721057-1066-4ed6-9362-7718beb8b705"]
@@ -42,3 +42,4 @@
 [description:"implement pop_path in uri" entry:"1582219672" modified:"1582219672" project:"net" status:"pending" uuid:"06adf163-95a2-4a05-b659-8680e6e21f2b"]
 [description:"implement append_path in uri" entry:"1582219678" modified:"1582219678" project:"net" status:"pending" uuid:"6685ce51-e22a-432b-8d38-a6face62852a"]
 [description:"cannot use dynamic linking" entry:"1582805023" modified:"1582805023" project:"cmake" status:"pending" uuid:"919ee841-88fa-4d1f-aa8a-ee9e30a7fb7a"]
+[description:"add pre-compiling the static files feature in the cmake for different file types in the generate_static_file function" entry:"1582902448" modified:"1582902448" project:"cmake" status:"pending" uuid:"613ddb21-188b-429c-b9e8-5985497dc4d5"]
