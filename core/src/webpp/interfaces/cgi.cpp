@@ -156,6 +156,7 @@ void cgi::operator()() noexcept {
     auto header_str = res.header.str();
     auto str = res.body.str();
 
+    // From RFC: https://tools.ietf.org/html/rfc3875
     // Send status code:
     // Status         = "Status:" status-code SP reason-phrase NL
     // status-code    = "200" | "302" | "400" | "501" | extension-code
