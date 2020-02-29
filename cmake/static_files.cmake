@@ -1,4 +1,7 @@
-function(generate_config_file config_file)
+
+set(current_dir "${CMAKE_CURRENT_LIST_DIR}")
+
+function(generate_config_file config_file_path)
   
 
   list(LENGTH ARGN files_length)
@@ -40,10 +43,16 @@ function(generate_config_file config_file)
   string(APPEND file_content "// Auto generated with cmake at: ${datetime}\n// Written by: Mohammad Bahoosh\n\n")
   string(APPEND file_content "#include <string_view>\n#include <array>\n\n")
   string(APPEND file_content "${sep_files}\n\n")
-  string(APPEND file_content "${all_files}")
+  string(APPEND file_content "${all_files}\n\n")
+
+  file(READ "${current_dir}/config_template.h.in" config_template)
+  string(APPEND file_content "${config_template}\n")
 
   # write the file_content to the config.h.in
-  file(WRITE "${config_file}" "${file_content}")
+  file(WRITE "${config_file_path}" "${file_content}")
+
+  # set the CONFIG_FILE variable
+  set(CONFIG_FILE "${config_file_path}" PARENT_SCOPE)
 endfunction()
 
 

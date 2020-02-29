@@ -42,6 +42,8 @@ namespace webpp {
     };
 
 
+    response file(std::string_view const& filepath) noexcept;
+
 
 } // namespace webpp
 #endif // WEBPP_RESPONSE_H

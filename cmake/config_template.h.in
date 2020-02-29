@@ -1,0 +1,11 @@
+
+std::string_view get_static_file(std::string_view const&filepath) noexcept {
+    for (auto const& [file, content] : static_files) {
+        if (filepath == file) {
+            return content;
+        }
+    }
+
+    return {};
+}
+
