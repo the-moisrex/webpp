@@ -64,3 +64,14 @@ response::operator std::string_view() const noexcept { return body.str(); }
 response::operator std::string() const noexcept {
     return std::string(body.str());
 }
+
+
+
+response file(std::string_view const& filepath) noexcept {
+    
+    
+
+  return {};
+}
+
+

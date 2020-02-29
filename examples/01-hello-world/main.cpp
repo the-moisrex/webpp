@@ -1,5 +1,5 @@
-#include "config.h"
 #include <webpp/http/request>
+#include <webpp/http/response>
 #include <webpp/interfaces/cgi>
 #include <webpp/router>
 #include <webpp/server>
@@ -11,7 +11,7 @@ using namespace webpp::valves;
 
 using request = request_t<cgi>;
 
-// response about_page(request req) { return file("about.html"); }
+response about_page(request req) { return file("about.html"); }
 
 int main() {
 
@@ -21,7 +21,7 @@ int main() {
                   [](request const& req, response& res) noexcept {
                       res << "Hello world";
                   });
-    // app.router.on(get and "/about"_path, about_page);
+    app.router.on("/about"_path, about_page);
     // app.router.on("/user/{user_id}"_tpath, [](auto const& req, auto& res) {
     // auto headers = res.headers();
     // headers["User-Id"] = req.url().segments()["user_id"];
