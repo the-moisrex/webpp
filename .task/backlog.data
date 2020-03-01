@@ -101,3 +101,4 @@
 {"description":"cannot use dynamic linking","entry":"20200227T120343Z","modified":"20200227T120343Z","project":"cmake","status":"pending","uuid":"919ee841-88fa-4d1f-aa8a-ee9e30a7fb7a"}
 {"description":"add config .h file in cmake for static files","end":"20200228T150554Z","entry":"20200220T171719Z","modified":"20200228T150554Z","project":"cmake","status":"completed","uuid":"1a47a122-9838-4d51-9c5f-4098cf679d2b"}
 {"description":"add pre-compiling the static files feature in the cmake for different file types in the generate_static_file function","entry":"20200228T150728Z","modified":"20200228T150728Z","project":"cmake","status":"pending","uuid":"613ddb21-188b-429c-b9e8-5985497dc4d5"}
+{"description":"add PCH (pre compiled headers) support","entry":"20200301T145220Z","modified":"20200301T145220Z","project":"cmake","status":"pending","uuid":"e8f50f78-006a-4002-9293-98e6fe0166e8"}

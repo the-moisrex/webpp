@@ -1,3 +1,4 @@
+[description:"add config .h file in cmake for static files" end:"1582902354" entry:"1582219039" modified:"1582902354" project:"cmake" status:"completed" uuid:"1a47a122-9838-4d51-9c5f-4098cf679d2b"]
 [description:"add a 'parse' function for parsing variables used in URLs" end:"1582427401" entry:"1582219283" modified:"1582427401" project:"request" status:"completed" uuid:"ce0f4593-1359-4727-98dd-5df9a861dec7"]
 [description:"implement parsed variables for paths" end:"1582427401" entry:"1582224642" modified:"1582427401" project:"net" status:"completed" uuid:"e75c297d-261b-4787-92b8-d5b75894340f"]
 [description:"write string conversions for string_view" end:"1582224571" entry:"1567256219" modified:"1582224571" status:"completed" uuid:"2f0f82cf-b400-4987-aa8c-2a1ea6e90ff7"]
