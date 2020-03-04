@@ -48,7 +48,6 @@ response& response::operator=(std::string& str) noexcept {
 }
 
 response::response(std::string const& b) noexcept : body{b} {}
-
 response::response(std::string&& b) noexcept : body{std::move(b)} {}
 
 [[nodiscard]] bool response::operator==(response const& res) const noexcept {
@@ -66,12 +65,17 @@ response::operator std::string() const noexcept {
 }
 
 
+#ifdef CONFIG_FILE
+extern std::string_view get_static_file(std::string_view const&) noexcept;
+#endif
 
 response file(std::string_view const& filepath) noexcept {
-    
-    
+#ifdef CONFIG_FILE
+  if (auto content = get_static_file(filepath); !content.empty())
+    return std::string{content};
+#endif
 
-  return {};
+  return std::string{"empty file"};
 }
 
 
