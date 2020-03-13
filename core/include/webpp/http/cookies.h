@@ -125,7 +125,9 @@ namespace webpp {
         cookie(const cookie& c) = default;
         cookie(cookie&& c) noexcept = default;
         // TODO: implement this:
-        explicit cookie(std::string_view source) noexcept {}
+        explicit cookie(std::string_view /* source */) noexcept {
+            // TODO
+        }
         cookie(name_t __name, value_t __value) noexcept
             : _name(trim_copy(__name)), _value(trim_copy(__value)) {}
 

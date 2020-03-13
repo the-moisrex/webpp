@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <filesystem>
 
 namespace webpp {
 
@@ -26,6 +27,7 @@ namespace webpp {
         response(std::string const& b) noexcept;
         response(std::string&& b) noexcept;
 
+
         response& operator=(response const&) = default;
         response& operator=(response&& res) noexcept;
         response& operator=(std::string const& str) noexcept;
@@ -40,9 +42,13 @@ namespace webpp {
         operator std::string() const noexcept;
 
         void calculate_default_headers() noexcept;
-    };
 
-    response file(std::string_view const& filepath) noexcept;
+        
+        // static methods:
+        static response file(std::string_view const& file) noexcept;
+        static response image(std::string_view const& file) noexcept;
+        static response json_file(std::string_view const& file) noexcept;
+    };
 
 } // namespace webpp
 #endif // WEBPP_RESPONSE_H

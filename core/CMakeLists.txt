@@ -24,6 +24,7 @@ set(ALL_HEADERS
     ${LIB_INCLUDE_DIR}/webpp/utils/property.h
     ${LIB_INCLUDE_DIR}/webpp/utils/strings.h
     ${LIB_INCLUDE_DIR}/webpp/utils/uri.h
+    ${LIB_INCLUDE_DIR}/webpp/utils/consttants.h
 
     ${LIB_INCLUDE_DIR}/webpp/interfaces/cgi.h
 
@@ -61,6 +62,7 @@ set(ALL_SOURCES
     ${LIB_SRC_DIR}/webpp/utils/property.cpp
     ${LIB_SRC_DIR}/webpp/utils/strings.cpp
     ${LIB_SRC_DIR}/webpp/utils/uri.cpp
+    ${LIB_SRC_DIR}/webpp/utils/constants.cpp
 
     ${LIB_SRC_DIR}/webpp/interfaces/cgi.cpp
 

@@ -347,3 +347,6 @@ new [description:"add PCH (pre compiled headers) support" entry:"1583074340" mod
 time 1583202386
 new [description:"forms for auto code generation, so the user can easily write a boilerplate and change the code later." entry:"1583202386" modified:"1583202386" project:"codegen" status:"pending" uuid:"f0117969-acd7-4d85-b4ff-c4b41cd433f5"]
 ---
+time 1584062102
+new [description:"change the replace_string with replace_string_view when the file is cachable in response constructor" entry:"1584062102" modified:"1584062102" project:"response" status:"pending" uuid:"2aee8c97-082b-4a12-840b-8cfdc76427c5"]
+---

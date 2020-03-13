@@ -5,13 +5,14 @@
 #include <webpp/server>
 #include <webpp/valves/methods>
 #include <webpp/valves/uri>
+#include <webpp/http/response>
 
 using namespace webpp;
 using namespace webpp::valves;
 
 using request = request_t<cgi>;
 
-response about_page(request req) { return file("about.html"); }
+response about_page(request req) { return response::file("about.html"); }
 
 int main() {
 

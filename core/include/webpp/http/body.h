@@ -91,18 +91,22 @@ namespace webpp {
       public:
         using string_type = std::string;
         using stream_type = std::ostream;
+        using string_view_type = std::string_view;
 
       protected:
         mutable void* data = nullptr;
-        enum class types : uint8_t {
+        enum class types : int_fast8_t {
             empty,
             string,
+            string_view,
             stream
         } mutable type = types::empty;
 
         [[nodiscard]] string_type const& str_ref() const noexcept;
 
         [[nodiscard]] string_type& str_ref() noexcept;
+
+        [[nodiscard]] string_view_type const& str_view_ref() const noexcept;
 
         [[nodiscard]] stream_type& stream_ref() noexcept;
 
@@ -147,12 +151,12 @@ namespace webpp {
         }
 
         body& operator=(std::string_view const& _str) noexcept {
-            replace_string_view(_str);
+            replace_string(std::string{_str});
             return *this;
         }
 
         body& operator=(char const* const _str) noexcept {
-            replace_string_view(std::string_view(_str));
+            replace_string(_str);
             return *this;
         }
 
@@ -203,7 +207,7 @@ namespace webpp {
          * Replace the data with a string
          * @param str
          */
-        void replace_string_view(std::string_view const& str) noexcept;
+        void replace_string_view(std::string_view str) noexcept;
 
         /**
          * Replace the data with a stream
