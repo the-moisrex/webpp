@@ -44,3 +44,4 @@
 [description:"add pre-compiling the static files feature in the cmake for different file types in the generate_static_file function" entry:"1582902448" modified:"1582902448" project:"cmake" status:"pending" uuid:"613ddb21-188b-429c-b9e8-5985497dc4d5"]
 [description:"add PCH (pre compiled headers) support" entry:"1583074340" modified:"1583074340" project:"cmake" status:"pending" uuid:"e8f50f78-006a-4002-9293-98e6fe0166e8"]
 [description:"forms for auto code generation, so the user can easily write a boilerplate and change the code later." entry:"1583202386" modified:"1583202386" project:"codegen" status:"pending" uuid:"f0117969-acd7-4d85-b4ff-c4b41cd433f5"]
+[description:"change the replace_string with replace_string_view when the file is cachable in response constructor" entry:"1584062102" modified:"1584062102" project:"response" status:"pending" uuid:"2aee8c97-082b-4a12-840b-8cfdc76427c5"]

@@ -26,6 +26,13 @@ TEST(Body, Text) {
     b = std::string("cool");
     EXPECT_EQ(b, "cool");
     
+      body bt;
+    {
+      std::string_view test = "testing";
+      bt.replace_string_view(test);
+      EXPECT_EQ(bt.str(), test);
+    }
+    EXPECT_EQ(bt.str(), "") << "The test should be empty since it was a string_view and not a string";
 }
 
 
@@ -59,4 +66,10 @@ TEST(Response, Init) {
     EXPECT_EQ(std::string(res.body.str()), "Code");
 
     EXPECT_EQ(res, res2);
+}
+
+
+
+TEST(Response, File) {
+  EXPECT_EQ(response::file("test-file.txt").body.str(), "hello world");
 }
