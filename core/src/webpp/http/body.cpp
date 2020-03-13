@@ -78,6 +78,9 @@ body::~body() noexcept {
     // FIXME: check for memory leak here!
     if (data) {
         switch (type) {
+        case types::string_view:
+            delete static_cast<string_view_type*>(data);
+            break;
         case types::string:
             delete static_cast<string_type*>(data);
             break;
