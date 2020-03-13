@@ -6,6 +6,8 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <fstream>
+#include <cstdio>
 
 using namespace webpp;
 
@@ -71,5 +73,11 @@ TEST(Response, Init) {
 
 
 TEST(Response, File) {
-  EXPECT_EQ(response::file("test-file.txt").body.str(), "hello world");
+  std::filesystem::path file = std::filesystem::temp_directory_path();
+  file.append("webpp_test_file");
+  std::ofstream handle{file};
+  handle << "Hello World";
+  handle.close();
+  EXPECT_EQ(response::file(file).body.str(), "Hello World");
+  std::filesystem::remove(file);
 }
