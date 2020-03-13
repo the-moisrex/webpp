@@ -76,7 +76,7 @@ response::operator std::string() const noexcept {
 #  endif
 #endif
 
-response response::file(std::string_view const& _file) noexcept {
+response response::file(std::filesystem::path const& _file) noexcept {
   response res;
 #ifdef CONFIG_FILE
   if (auto content = ::get_static_file(filepath); !content.empty()) {
@@ -88,7 +88,7 @@ response response::file(std::string_view const& _file) noexcept {
   // TODO: performance tests
   // TODO: change the replace_string with replace_string_view if the file is cached
 
-  if (std::ifstream in{_file.data(), std::ios::binary | std::ios::ate}) {
+  if (std::ifstream in{_file.c_str(), std::ios::binary | std::ios::ate}) {
     // details on this matter: https://stackoverflow.com/questions/11563963/writing-a-binary-file-in-c-very-fast/39097696#39097696
     // std::unique_ptr<char[]> buffer{new char[buffer_size]};
     // in.rdbuf()->pubsetbuf(buffer.get(), buffer_size); // speed boost, I think

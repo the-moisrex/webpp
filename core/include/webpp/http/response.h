@@ -45,7 +45,7 @@ namespace webpp {
 
         
         // static methods:
-        static response file(std::string_view const& file) noexcept;
+        static response file(std::filesystem::path const& file) noexcept;
         static response image(std::string_view const& file) noexcept;
         static response json_file(std::string_view const& file) noexcept;
     };
