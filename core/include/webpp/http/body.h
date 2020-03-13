@@ -207,7 +207,7 @@ namespace webpp {
          * Replace the data with a string
          * @param str
          */
-        void replace_string_view(std::string_view str) noexcept;
+        void replace_string_view(std::string_view const& str) noexcept;
 
         /**
          * Replace the data with a stream
@@ -250,8 +250,8 @@ namespace webpp {
         body& operator<<(std::string_view const& str) noexcept;
 
         // TODO: add more methods for the images and stuff
-        
-        //static auto file(std::string_view const& _file) noexcept;
+
+        // static auto file(std::string_view const& _file) noexcept;
     };
 
 }; // namespace webpp
