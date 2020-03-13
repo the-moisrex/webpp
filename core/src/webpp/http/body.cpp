@@ -5,10 +5,10 @@ using namespace webpp;
 
 std::string body::str(std::string_view const& default_val) const noexcept {
     switch (type) {
-      case types::string:
+    case types::string:
         return str_ref();
 
-      case types::string_view:
+    case types::string_view:
         return std::string{str_view_ref()};
 
     // FIXME: check if there's an optimization issue here or not
@@ -44,9 +44,10 @@ void body::replace_stream(body::stream_type& stream) noexcept {
     replace(&stream, types::stream);
 }
 
-void body::replace_string_view(std::string_view str) noexcept {
-    // we are not going to store the data only because we need to store the size too.
-    replace(static_cast<void*>(&str), types::string_view);
+void body::replace_string_view(std::string_view const& str) noexcept {
+    // we are not going to store the data only because we need to store the size
+    // too.
+    replace(static_cast<void*>(new std::string_view{str}), types::string_view);
 }
 
 void body::replace_string(std::string&& str) noexcept {
@@ -115,7 +116,8 @@ body& body::operator<<(std::string_view const& str) noexcept {
 void body::append_string(std::string_view const& str) noexcept {
     switch (type) {
     case types::empty:
-        // read the operator<<'s details on why I use replace_string and not replace_string_view here
+        // read the operator<<'s details on why I use replace_string and not
+        // replace_string_view here
         replace_string(std::string{str});
         break;
     case types::string:
@@ -130,7 +132,6 @@ void body::append_string(std::string_view const& str) noexcept {
 body::string_view_type const& body::str_view_ref() const noexcept {
     return *static_cast<string_view_type*>(data);
 }
-
 
 body::string_type const& body::str_ref() const noexcept {
     return *static_cast<string_type*>(data);
