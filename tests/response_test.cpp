@@ -30,11 +30,13 @@ TEST(Body, Text) {
 
     body bt;
     {
-        std::string_view test = "testing";
+        std::string _str = "testing";
+        std::string_view test = _str;
         bt.replace_string_view(test);
         EXPECT_EQ(bt.str(), test);
+        _str = "";
     }
-    EXPECT_EQ(bt.str(), "") << "The test should be empty since it was a "
+    EXPECT_NE(bt.str(), "testing") << "The test should be empty since it was a "
                                "string_view and not a string";
 }
 
