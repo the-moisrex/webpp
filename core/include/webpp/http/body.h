@@ -136,6 +136,10 @@ namespace webpp {
                 case types::string:
                     replace_string(b.str_ref());
                     break;
+                case types::string_view:
+                    // we don't know if the string_view will exists that long
+                    replace_string(std::string{b.str_view_ref()});
+                    break;
                 }
             }
             return *this;

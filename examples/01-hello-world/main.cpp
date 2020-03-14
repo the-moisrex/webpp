@@ -23,6 +23,8 @@ int main() {
                       res << "Hello world";
                   });
     app.router.on("/about"_path, &about_page);
+    app.router.on(get and "/cgi-bin/webpp_helloworld/about"_path,
+                  &about_page);
     // app.router.on("/user/{user_id}"_tpath, [](auto const& req, auto& res) {
     // auto headers = res.headers();
     // headers["User-Id"] = req.url().segments()["user_id"];
