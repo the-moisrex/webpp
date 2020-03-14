@@ -18,24 +18,35 @@ namespace webpp {
      *
      */
     template <typename... CacheSystem>
-    class unified_caches {
+    class unified_caches : public CacheSystem... {
       private:
       public:
         unified_caches() noexcept = default;
+        //
+        // template <typename KeyType, typename ValueType>
+        // auto set(KeyType&& key, ValueType&& value) noexcept {
+        // static_assert(
+        // can_use_as_key<KeyType>(),
+        // "You cannot use this key type in this caching system. You can "
+        // "add a new template parameter to the caching system store in "
+        // "order to be able to use this key type here.");
+        // static_assert(
+        // can_use_as_value<ValueType>(),
+        // "You can't use this value type in this caching system. Add a "
+        // "new template parameter to the caching system store in order "
+        // "to be able to store this value here.");
+        // }
+        //
+        // template <typename KeyType, typename ValueType>
+        // auto get(KeyType&& key, ValueType default_value) noexcept {
+        // static_assert(
+        // can_use_as_key<KeyType>(),
+        // "You cannot use this key type in this caching system. You can "
+        // "add a new template parameter to the caching system store in "
+        // "order to be able to use this key type here.");
+        // }
+        //
 
-        template <typename KeyType, typename ValueType>
-        auto set(KeyType&& key, ValueType&& value) noexcept {
-            static_assert(
-                can_use_as_key<KeyType>(),
-                "You cannot use this key type in this caching system. You can "
-                "add a new template parameter to the caching system store in "
-                "order to be able to use this key type here.");
-            static_assert(
-                can_use_as_value<ValueType>(),
-                "You can't use this value type in this caching system. Add a "
-                "new template parameter to the caching system store in order "
-                "to be able to store this value here.");
-        }
 
         // ------------------------- static methods -------------------------
 
