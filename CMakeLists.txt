@@ -16,7 +16,7 @@ set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${CMAKE_BINARY_DIR}/core")
 set(LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core)
 set(LIB_INCLUDE_DIR ${LIB_DIR}/include)
 set(LIB_SRC_DIR ${LIB_DIR}/src)
-set(BIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cli)
+set(SDK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/sdk)
 SET(TESTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
 
@@ -32,7 +32,7 @@ message(STATUS "prefix path             : ${CMAKE_PREFIX_PATH}")
 message(STATUS "Library path            : ${LIB_DIR}")
 message(STATUS "Library include path    : ${LIB_INCLUDE_DIR}")
 message(STATUS "Library source path     : ${LIB_SRC_DIR}")
-message(STATUS "Binary path             : ${BIN_DIR}")
+message(STATUS "Binary path             : ${SDK_DIR}")
 message(STATUS "Tests path              : ${TESTS_DIR}")
 
 
@@ -43,7 +43,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_subdirectory(${LIB_DIR})
-add_subdirectory(${BIN_DIR})
+add_subdirectory(${SDK_DIR})
 add_subdirectory(${TESTS_DIR})
 
 set(USE_SYSTEM_TZ_DB ON CACHE BOOL "Use the operating system's timezone database" FORCE)

@@ -35,7 +35,7 @@ namespace webpp {
 
     // TODO: what should I do here?
     template <typename RequestType>
-    void handle_exception(RequestType const& req) noexcept {}
+    void handle_exception(RequestType const& /* req */) noexcept {}
 
     template <typename Interface, typename C>
     inline auto call_it(C& c, request_t<Interface> const& req,
