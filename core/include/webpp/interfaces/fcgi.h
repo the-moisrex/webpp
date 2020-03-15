@@ -1,13 +1,11 @@
 #ifndef WEBPP_INTERFACE_FCGI
 #define WEBPP_INTERFACE_FCGI
 
-#include "../router.h"
-#include "../server.h"
 #include "basic_interface.h"
 
 namespace webpp {
 
-    class fcgi : public basic_interface {
+    class fcgi : public basic_interface<fcgi> {
       public:
         /**
          * The endpoint may change to std::net::ip::tcp::endpoint (I'm not sure
