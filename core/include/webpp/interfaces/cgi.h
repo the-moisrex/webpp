@@ -1,17 +1,14 @@
 #ifndef WEBPP_CGI_H
 #define WEBPP_CGI_H
 
-#include "../server.h"
 #include "basic_interface.h"
 #include "../router.h"
 #include <string_view>
 
 namespace webpp {
 
-    struct cgi : public basic_interface {
+    struct cgi : public basic_interface<cgi> {
       public:
-
-        webpp::router<cgi> router;
 
         cgi() noexcept;
 
