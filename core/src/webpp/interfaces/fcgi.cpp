@@ -11,6 +11,7 @@ using namespace webpp;
 using namespace boost;
 using namespace boost::asio;
 
+
 class fcgi::fcgi_impl {
   private:
     fcgi* _fcgi;
@@ -28,9 +29,7 @@ class fcgi::fcgi_impl {
         if (_fcgi->endpoints().empty()) {
 
         } else {
-
         }
-        
     }
 };
 
