@@ -3,6 +3,7 @@
 
 #include "basic_interface.h"
 #include "webpp/http/request.h"
+#include <bits/stdint-uintn.h>
 
 namespace webpp {
 
@@ -41,9 +42,9 @@ namespace webpp {
          */
         void clear_endpoints() noexcept { _endpoints.clear(); }
 
-	/**
-	 * Return the endpoints.
-	 */
+        /**
+         * Return the endpoints.
+         */
         auto const& endpoints() const noexcept { return _endpoints; }
     };
 
@@ -51,48 +52,105 @@ namespace webpp {
     class request_t<fcgi> {
       private:
         /**
+         * It is very important that this record_type's size be uint8_t
+         */
+        enum class record_type : uint8_t {
+            begin_request = 1,
+            abort_request = 2,
+            end_request = 3,
+            params = 4,
+            std_in = 5,
+            std_out = 6,
+            std_err = 7,
+            data = 8,
+            get_values = 9,
+            get_values_result = 10,
+            unknown_type = 11
+        };
+
+        /**
          * This is the version 1.0 of the FastCGI Record protocol
          */
-        struct fcgi_record {
-            using element_t = uint8_t;
+        struct header {
 
             /* Identifies the FastCGI protocol version. This is the version 1 */
-            element_t version = 1;
+            uint8_t version = 1;
 
             /* Identifies the FastCGI record type, i.e. the general function
              * that the record performs. Specific record types and their
              * functions are detailed in later sections */
-            element_t type;
+            record_type type;
 
             /* Identifies the FastCGI request to which the record belongs */
-            element_t request_id_b1;
-            element_t request_id_b0;
+            uint8_t request_id_b1;
+            uint8_t request_id_b0;
 
             /* The number of bytes in the contentData component of the record */
-            element_t content_length_b1;
-            element_t content_length_b0;
+            uint8_t content_length_b1;
+            uint8_t content_length_b0;
 
             /* The number of bytes in the paddingData component of the record */
-            element_t padding_length;
+            uint8_t padding_length;
 
             /* reserved for later use */
-            element_t reserved;
-
-            // unsigned char contentData[contentLength];
-            // unsigned char paddingData[paddingLength];
+            uint8_t reserved;
 
             uint16_t request_id() const noexcept {
-                return (static_cast<uint16_t>(request_id_b1) << sizeof(fcgi_record::element_t)) |
+                return (static_cast<uint16_t>(request_id_b1) << 8u) |
                        request_id_b0;
             }
 
+            void request_id(uint16_t req_id) noexcept {
+                request_id_b1 = static_cast<uint8_t>(req_id >> 8u);
+                request_id_b0 = static_cast<uint8_t>(req_id);
+            }
+
             uint16_t content_length() const noexcept {
-                return (static_cast<uint16_t>(content_length_b1) << sizeof(fcgi_record::element_t)) |
+                return (static_cast<uint16_t>(content_length_b1) << 8u) |
                        content_length_b0;
+            }
+
+            void content_length(uint16_t _content_length) noexcept {
+                content_length_b1 = static_cast<uint8_t>(_content_length >> 8u);
+                content_length_b0 = static_cast<uint8_t>(_content_length);
+            }
+
+            /**
+             * Generally there are two types of records, Managements and the
+             * Applocation.
+             */
+            bool is_management_record() const noexcept {
+                return request_id() == 0;
             }
         };
 
-        fcgi_record record;
+        class begin_request {
+          private:
+            uint8_t role_b1;
+            uint8_t role_b0;
+            uint8_t flags;
+            uint8_t reserved[5];
+          public:
+        };
+
+        class end_request {
+          private:
+            uint8_t app_status_b3;
+            uint8_t app_status_b2;
+            uint8_t app_status_b1;
+            uint8_t app_status_b0;
+            uint8_t protocol_status;
+            uint8_t reserved[3];
+          public:
+
+            void app_status(uint32_t status_code) noexcept {
+              app_status_b3 = static_cast<uint8_t>(status_code >> 24u);
+              app_status_b2 = static_cast<uint8_t>(status_code >> 16u & 0xFFu);
+              app_status_b1 = static_cast<uint8_t>(status_code >> 8u & 0xFFu);
+              app_status_b0 = static_cast<uint8_t>(status_code);
+            }
+
+        };
 
       public:
     };
