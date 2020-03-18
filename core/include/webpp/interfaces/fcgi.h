@@ -130,6 +130,7 @@ namespace webpp {
             uint8_t role_b0;
             uint8_t flags;
             uint8_t reserved[5];
+
           public:
         };
 
@@ -141,15 +142,37 @@ namespace webpp {
             uint8_t app_status_b0;
             uint8_t protocol_status;
             uint8_t reserved[3];
+
           public:
-
             void app_status(uint32_t status_code) noexcept {
-              app_status_b3 = static_cast<uint8_t>(status_code >> 24u);
-              app_status_b2 = static_cast<uint8_t>(status_code >> 16u & 0xFFu);
-              app_status_b1 = static_cast<uint8_t>(status_code >> 8u & 0xFFu);
-              app_status_b0 = static_cast<uint8_t>(status_code);
+                app_status_b3 = static_cast<uint8_t>(status_code >> 24u);
+                app_status_b2 =
+                    static_cast<uint8_t>(status_code >> 16u & 0xFFu);
+                app_status_b1 = static_cast<uint8_t>(status_code >> 8u & 0xFFu);
+                app_status_b0 = static_cast<uint8_t>(status_code);
             }
+        };
 
+        struct unknown_type {
+            record_type type;
+            uint8_t reserved[7];
+        };
+
+        template <std::size_t NAMELENGTH, std::size_t VALUELENGTH,
+                  std::size_t PADDINGLENGTH>
+        struct management_reply {
+          private:
+            header _header;
+            uint8_t name_length = NAMELENGTH;
+            uint8_t value_length = VALUELENGTH;
+            uint8_t name[NAMELENGTH];
+            uint8_t value[VALUELENGTH];
+            uint8_t padding[PADDINGLENGTH];
+
+          public:
+            management_reply(std::string_view _name, std::string_view _value) noexcept {
+              // Todo
+            }
         };
 
       public:
