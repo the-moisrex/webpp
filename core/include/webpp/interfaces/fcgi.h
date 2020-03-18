@@ -79,12 +79,12 @@ namespace webpp {
             // unsigned char paddingData[paddingLength];
 
             uint16_t request_id() const noexcept {
-                return (static_cast<uint16_t>(request_id_b1) << 8u) |
+                return (static_cast<uint16_t>(request_id_b1) << sizeof(fcgi_record::element_t)) |
                        request_id_b0;
             }
 
             uint16_t content_length() const noexcept {
-                return (static_cast<uint16_t>(content_length_b1) << 8u) |
+                return (static_cast<uint16_t>(content_length_b1) << sizeof(fcgi_record::element_t)) |
                        content_length_b0;
             }
         };
