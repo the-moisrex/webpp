@@ -41,6 +41,9 @@ namespace webpp {
          */
         void clear_endpoints() noexcept { _endpoints.clear(); }
 
+	/**
+	 * Return the endpoints.
+	 */
         auto const& endpoints() const noexcept { return _endpoints; }
     };
 
