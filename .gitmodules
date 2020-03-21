@@ -1,3 +1,0 @@
-[submodule "libs/date"]
-	path = libs/date
-	url = https://github.com/HowardHinnant/date.git
