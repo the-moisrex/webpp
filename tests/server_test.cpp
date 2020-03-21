@@ -22,7 +22,7 @@ namespace webpp {
         std::string __path;
     };
 
-    class fake_interface : public basic_interface {
+    class fake_interface : public basic_interface<fake_interface> {
       public:
         webpp::router<fake_interface> router;
         std::string body_result;
