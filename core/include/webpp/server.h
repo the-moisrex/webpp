@@ -2,13 +2,14 @@
 #define WEBPP_SERVER_H
 
 #include "router.h"
+#include "interfaces/basic_interface.h"
 
 namespace webpp {
 
     template <typename Interface>
     class server : public Interface {
 
-        static_assert(std::is_convertible_v<Interface, basic_interface>,
+        static_assert(std::is_convertible_v<Interface, basic_interface<Interface>>,
                       "It's not an interface");
 
       public:
