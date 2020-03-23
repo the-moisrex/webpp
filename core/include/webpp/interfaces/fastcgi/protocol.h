@@ -1,7 +1,6 @@
 #ifndef WEBPP_INTERFACE_FCGI_PROTOCOL
 #define WEBPP_INTERFACE_FCGI_PROTOCOL
 
-#include <bits/stdint-uintn.h>
 #include <string_view>
 
 namespace webpp::protocol {
