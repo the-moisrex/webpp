@@ -46,4 +46,8 @@ namespace webpp::sserver {
             });
     }
 
+    void connection::write() noexcept {
+      
+    }
+
 } // namespace webpp::sserver
