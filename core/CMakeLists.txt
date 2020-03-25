@@ -62,7 +62,6 @@ set(ALL_SOURCES
     ${LIB_SRC_DIR}/webpp/utils/property.cpp
     ${LIB_SRC_DIR}/webpp/utils/strings.cpp
     ${LIB_SRC_DIR}/webpp/utils/uri.cpp
-    ${LIB_SRC_DIR}/webpp/utils/constants.cpp
 
     ${LIB_SRC_DIR}/webpp/interfaces/cgi.cpp
 
