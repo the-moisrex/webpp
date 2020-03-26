@@ -34,6 +34,7 @@ set(ALL_HEADERS
     ${LIB_INCLUDE_DIR}/webpp/http/request.h
     ${LIB_INCLUDE_DIR}/webpp/http/response.h
 
+    ${LIB_INCLUDE_DIR}/main.h
   )
 
 
@@ -71,16 +72,23 @@ set(ALL_SOURCES
     ${LIB_SRC_DIR}/webpp/http/request.cpp
     ${LIB_SRC_DIR}/webpp/http/response.cpp
 
+
+    ${LIB_SRC_DIR}/main.cpp
   )
 
 message(STATUS "Library Files:  ${ALL_SOURCES}")
 
+include(../cmake/dyn_lib_entry_point.cmake)
+set_interp_path()
 
 add_library(${LIB_NAME} SHARED ${ALL_SOURCES})
 add_library(${SLIB_NAME} STATIC ${ALL_SOURCES})
 
 add_library(${PROJECT_NAME}::${LIB_NAME} ALIAS ${LIB_NAME})
 add_library(${PROJECT_NAME}::${SLIB_NAME} ALIAS ${SLIB_NAME})
+
+# setting the entry point for a shared library so it can be treated like an executable
+target_link_options(${LIB_NAME} PUBLIC -e __lib_main)
 
 set_target_properties(${LIB_NAME} PROPERTIES
   VERSION ${LIB_VERSION}
