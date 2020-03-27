@@ -48,11 +48,8 @@ namespace webpp::sserver {
             });
     }
 
-    void connection::write() noexcept {
-      
-    }
+    void connection::write() noexcept {}
 
 } // namespace webpp::sserver
 
 #endif // WEBPP_INTERFACE_COMMON_CONNECTION_H
-
