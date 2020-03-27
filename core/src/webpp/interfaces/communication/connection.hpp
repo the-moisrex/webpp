@@ -1,3 +1,5 @@
+#ifndef WEBPP_INTERFACE_COMMON_CONNECTION_H
+#define WEBPP_INTERFACE_COMMON_CONNECTION_H
 #include "constants.hpp"
 #include <memory>
 
@@ -51,3 +53,6 @@ namespace webpp::sserver {
     }
 
 } // namespace webpp::sserver
+
+#endif // WEBPP_INTERFACE_COMMON_CONNECTION_H
+
