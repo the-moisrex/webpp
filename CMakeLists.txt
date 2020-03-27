@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(webpp)
+project(webpp 
+    VERSION 1.0.0
+    LANGUAGES CXX
+)
 set(LIB_NAME ${PROJECT_NAME})
 set(SLIB_NAME ${LIB_NAME}_static)
 set(LIB_SOVERSION 1)
