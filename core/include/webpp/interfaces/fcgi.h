@@ -3,7 +3,6 @@
 
 #include "basic_interface.h"
 #include "webpp/http/request.h"
-#include <bits/stdint-uintn.h>
 
 namespace webpp {
 
@@ -46,12 +45,13 @@ namespace webpp {
          * Return the endpoints.
          */
         auto const& endpoints() const noexcept { return _endpoints; }
+
+        void disable_multithreading() noexcept {}
     };
 
     template <>
     class request_t<fcgi> {
       private:
-
       public:
     };
 
