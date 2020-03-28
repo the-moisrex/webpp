@@ -1,5 +1,6 @@
 #ifndef WEBPP_INTERFACES_COMMON_SERVER_H
 #define WEBPP_INTERFACES_COMMON_SERVER_H
+#include "../../../../include/webpp/common/endpoints.h"
 #include "connection.hpp"
 #include <memory>
 #include <set>
@@ -41,7 +42,8 @@ namespace webpp::common {
         }
 
       public:
-        server() noexcept : acceptor(io, endpoints){};
+        server(net::ip::tcp::endpoints endpoints) noexcept
+            : acceptor(io, endpoints){};
         void run() noexcept { io.run(); }
     };
 
