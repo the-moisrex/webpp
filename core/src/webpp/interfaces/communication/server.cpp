@@ -1,3 +1,5 @@
+#ifndef WEBPP_INTERFACES_COMMON_SERVER_H
+#define WEBPP_INTERFACES_COMMON_SERVER_H
 #include "connection.hpp"
 #include <memory>
 #include <set>
@@ -25,6 +27,8 @@ namespace webpp::sserver {
 
                     if (!ec) {
                         connections.emplace(std::move(socket));
+                    } else {
+                        // TODO: log
                     }
 
                     accept();
@@ -32,6 +36,9 @@ namespace webpp::sserver {
         }
 
       public:
+        void run() noexcept { io.run(); }
     };
 
 } // namespace webpp::sserver
+
+#endif // WEBPP_INTERFACES_COMMON_SERVER_H
