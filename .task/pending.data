@@ -46,3 +46,4 @@
 [description:"forms for auto code generation, so the user can easily write a boilerplate and change the code later." entry:"1583202386" modified:"1583202386" project:"codegen" status:"pending" uuid:"f0117969-acd7-4d85-b4ff-c4b41cd433f5"]
 [description:"change the replace_string with replace_string_view when the file is cachable in response constructor" entry:"1584062102" modified:"1584062102" project:"response" status:"pending" uuid:"2aee8c97-082b-4a12-840b-8cfdc76427c5"]
 [description:"check for memory leaks in body" entry:"1584098316" modified:"1584098316" status:"pending" uuid:"64eac3f4-0854-430c-8cc6-dfd656e0b411"]
+[description:"configure and use sanitizers" entry:"1585429421" modified:"1585429421" project:"cmake" status:"pending" uuid:"d960cd10-ab29-47b3-a8c4-0bd675188232"]
