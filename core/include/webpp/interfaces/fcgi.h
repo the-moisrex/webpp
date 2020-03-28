@@ -28,6 +28,13 @@ namespace webpp {
         }
 
         /**
+         * This will only work before you run the operator()
+         */
+        void add_endpoint(std::string addr, uint_fast8_t port) noexcept {
+            _endpoints.emplace_back(std::move(addr), port);
+        }
+
+        /**
          * Clear the endpoints
          */
         void clear_endpoints() noexcept { _endpoints.clear(); }
