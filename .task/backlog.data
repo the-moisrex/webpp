@@ -106,3 +106,4 @@
 {"description":"change the replace_string with replace_string_view when the file is cachable in response constructor","entry":"20200313T011502Z","modified":"20200313T011502Z","project":"response","status":"pending","uuid":"2aee8c97-082b-4a12-840b-8cfdc76427c5"}
 {"description":"check for memory leaks in body","entry":"20200313T111836Z","modified":"20200313T111836Z","status":"pending","uuid":"64eac3f4-0854-430c-8cc6-dfd656e0b411"}
 {"description":"configure and use sanitizers","entry":"20200328T210341Z","modified":"20200328T210341Z","project":"cmake","status":"pending","uuid":"d960cd10-ab29-47b3-a8c4-0bd675188232"}
+{"description":"add support for encrypted URIs","entry":"20200328T211942Z","modified":"20200328T211942Z","project":"uri","status":"pending","uuid":"3ff6f350-116f-4a74-a482-54f4bc00a2da"}
