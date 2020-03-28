@@ -4,7 +4,7 @@
 #include <memory>
 #include <set>
 
-namespace webpp::sserver {
+namespace webpp::common {
 
     /**
      * This class is the server and the conection manager.
@@ -14,7 +14,7 @@ namespace webpp::sserver {
         std::set<connection> connections;
         net::io_context io;
         net::ip::tcp::acceptor acceptor;
-        boost::asio::signal_set signals;
+        net::signal_set signals{io, SIGINT, SIGTERM};
 
         void accept() noexcept {
             auto self{shared_from_this()};
@@ -41,11 +41,10 @@ namespace webpp::sserver {
         }
 
       public:
-        server() noexcept
-            : acceptor(io, endpoints), signals(io, SIGINT, SIGTERM){};
+        server() noexcept : acceptor(io, endpoints){};
         void run() noexcept { io.run(); }
     };
 
-} // namespace webpp::sserver
+} // namespace webpp::common
 
 #endif // WEBPP_INTERFACES_COMMON_SERVER_H

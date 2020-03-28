@@ -1,6 +1,7 @@
 #ifndef WEBPP_INTERFACE_COMMON_CONNECTION_H
 #define WEBPP_INTERFACE_COMMON_CONNECTION_H
 
+#include "../../../include/webpp/interfaces/common/endpoints.h"
 #include "constants.hpp"
 #include <memory>
 
@@ -10,7 +11,7 @@
  * framework. Hiding implementaions are good ways to do this.
  */
 
-namespace webpp::sserver {
+namespace webpp::common {
 
     class connection : public std::enable_shared_from_this<connection> {
       private:
@@ -51,6 +52,6 @@ namespace webpp::sserver {
 
     void connection::write() noexcept {}
 
-} // namespace webpp::sserver
+} // namespace webpp::common
 
 #endif // WEBPP_INTERFACE_COMMON_CONNECTION_H

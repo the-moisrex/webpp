@@ -2,7 +2,7 @@
 #include "communication/server.hpp"
 
 using namespace webpp;
-using server = sserver::server;
+using server = common::server;
 
 class fcgi::fcgi_impl {
   private:

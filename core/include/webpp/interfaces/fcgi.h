@@ -1,22 +1,13 @@
 #ifndef WEBPP_INTERFACE_FCGI
 #define WEBPP_INTERFACE_FCGI
 
+#include "./common/endpoints.h"
 #include "basic_interface.h"
 #include "webpp/http/request.h"
 
 namespace webpp {
 
     class fcgi : public basic_interface<fcgi> {
-      public:
-        /**
-         * The endpoint may change to std::net::ip::tcp::endpoint (I'm not sure
-         * about the namespaces); but until 2023, I'm gonna use this instead.
-         */
-        struct endpoint {
-            std::string address;
-            uint_fast8_t port;
-        };
-
       private:
         class fcgi_impl;
         std::vector<endpoint> _endpoints;
