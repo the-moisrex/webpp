@@ -9,14 +9,19 @@ class fcgi::fcgi_impl {
     server _server;
     fcgi* _fcgi;
 
+    auto get_endpoints() noexcept {
+        if (_fcgi->endpoints().empty()) {
+        } else {
+            net::tcp::resolver resolver(io_context);
+            net::ip::tcp::endpoint endpoint =
+                *resolver.resolve(address, port).begin();
+        }
+    }
+
   public:
     fcgi_impl(fcgi* __fcgi) noexcept : _fcgi(__fcgi) {}
 
-    void operator()() noexcept {
-        if (_fcgi->endpoints().empty()) {
-        } else {
-        }
-    }
+    void operator()() noexcept {}
 };
 
 fcgi::fcgi() noexcept : impl(new fcgi_impl{this}) {}

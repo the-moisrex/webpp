@@ -2,6 +2,7 @@
 #define WEBPP_INTERFACES_COMMON_SERVER_H
 #include "../../../../include/webpp/common/endpoints.h"
 #include "connection.hpp"
+#include "constants.hpp"
 #include <memory>
 #include <set>
 
