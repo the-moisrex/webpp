@@ -14,6 +14,7 @@ namespace webpp::sserver {
         std::set<connection> connections;
         net::io_context io;
         net::ip::tcp::acceptor acceptor;
+        boost::asio::signal_set signals;
 
         void accept() noexcept {
             auto self{shared_from_this()};
@@ -35,7 +36,13 @@ namespace webpp::sserver {
                 });
         }
 
+        void set_signals() noexcept {
+            signals.async_wait([&](auto, auto) { io.stop(); });
+        }
+
       public:
+        server() noexcept
+            : acceptor(io, endpoints), signals(io, SIGINT, SIGTERM){};
         void run() noexcept { io.run(); }
     };
 
