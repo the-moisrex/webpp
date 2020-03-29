@@ -1,0 +1,26 @@
+#!/usr/bin/bash
+
+TASKDATA=".task";
+TASKRC=".taskrc";
+
+until [ "$(realpath "$TASKRC")" = "/" -o -f "$TASKRC" ]; do
+  TASKRC="../${TASKRC}";
+done;
+
+until [ "$(realpath "$TASKDATA")" = "/" -o -d "$TASKDATA" ]; do
+  TASKDATA="../${TASKDATA}";
+done;
+
+TASKRCGIT="$(realpath $(dirname "$TASKRC"))/.git";
+TASKDATAGIT="$(realpath $(dirname "$TASKDATA"))/.git";
+
+
+if [ -d "$TASKDATA" -a -f "$TASKRC" -a -d "$TASKRCGIT" -a -d "$TASKDATAGIT" ]; then
+  TASKDATA="${TASKDATA}" TASKRC="${TASKRC}" task $@;
+elif [ -f "$TASKRC" -a -d "$TASKRCGIT" ]; then
+  TASKRC="${TASKRC}" task $@;
+elif [ -d "$TASKDATA" -a -d "$TASKDATAGIT" ]; then
+  TASKDATA="${TASKDATA}" task $@;
+else
+  task $@;
+fi;
