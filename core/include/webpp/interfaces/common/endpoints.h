@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <string>
+#include <system_error>
 
 namespace webpp {
     /**
@@ -11,7 +12,8 @@ namespace webpp {
      */
     struct endpoint {
         std::string address;
-        uint_fast8_t port;
+        uint_fast16_t port;
+        std::error_code ec;
 
         // TODO: check the address here and the port.
     };

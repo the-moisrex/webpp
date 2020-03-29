@@ -1,5 +1,6 @@
 #include "../../../include/webpp/interfaces/fcgi.h"
-#include "communication/server.hpp"
+#include "common/constants.hpp"
+#include "common/server.hpp"
 
 using namespace webpp;
 using server = common::server;
@@ -10,12 +11,13 @@ class fcgi::fcgi_impl {
     fcgi* _fcgi;
 
     auto get_endpoints() noexcept {
-        if (_fcgi->endpoints().empty()) {
-        } else {
-            net::tcp::resolver resolver(io_context);
-            net::ip::tcp::endpoint endpoint =
-                *resolver.resolve(address, port).begin();
-        }
+        net::tcp::resolver resolver(server.io);
+        std::error_code ec;
+        auto endpoints = _fcgi->endpoints().empty()
+                             ? resolver.reslove(net::ip::address::from_string(
+                                                    default_fcgi_listen_addr),
+                                                default_fcgi_listen_port)
+                             : resolver.resolve(address, port);
     }
 
   public:
