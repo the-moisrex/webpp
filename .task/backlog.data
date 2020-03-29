@@ -129,3 +129,5 @@
 {"description":"learn how to work with error_code","entry":"20200329T191310Z","modified":"20200329T191310Z","project":"fcgi","status":"pending","uuid":"39d27a15-6c22-44df-b80f-6d2161811bc9"}
 {"description":"build the hello world example","end":"20200329T192847Z","entry":"20200220T171453Z","modified":"20200329T192847Z","project":"examples","status":"completed","uuid":"eebcfb80-cc87-4375-adfb-ad0e68fcbc29"}
 {"description":"turn the hello world example to a google test","end":"20200329T192857Z","entry":"20200220T171525Z","modified":"20200329T192857Z","project":"examples","status":"completed","uuid":"fc3372a3-c5ce-4325-8a09-419bfee55298"}
+{"description":"add tasks in the README file","entry":"20200329T202209Z","modified":"20200329T202209Z","project":"gtask","status":"pending","uuid":"834eb337-f189-4c45-a195-46f1a81dd30e"}
+{"description":"add CI\/CD Auto DevOps into the project","entry":"20200329T202321Z","modified":"20200329T202321Z","project":"ci_cd","status":"pending","uuid":"59a5bc8f-447f-47e7-8050-c0201ce00ba6"}
