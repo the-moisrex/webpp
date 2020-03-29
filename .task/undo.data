@@ -427,3 +427,9 @@ time 1585510137
 old [description:"turn the hello world example to a google test" entry:"1582218925" modified:"1582218925" project:"examples" status:"pending" uuid:"fc3372a3-c5ce-4325-8a09-419bfee55298"]
 new [description:"turn the hello world example to a google test" end:"1585510137" entry:"1582218925" modified:"1585510137" project:"examples" status:"completed" uuid:"fc3372a3-c5ce-4325-8a09-419bfee55298"]
 ---
+time 1585513329
+new [description:"add tasks in the README file" entry:"1585513329" modified:"1585513329" project:"gtask" status:"pending" uuid:"834eb337-f189-4c45-a195-46f1a81dd30e"]
+---
+time 1585513401
+new [description:"add CI\/CD Auto DevOps into the project" entry:"1585513401" modified:"1585513401" project:"ci_cd" status:"pending" uuid:"59a5bc8f-447f-47e7-8050-c0201ce00ba6"]
+---
