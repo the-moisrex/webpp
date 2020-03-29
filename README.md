@@ -5,6 +5,12 @@ This is a web framework written in C++ and hopefully will be used by other progr
 
 It's being developed. News will be shared on [Telegram](https://t.me/webpp).
 
+This project on:
+
+* [Telegram](https://t.me/webpp)
+* [GitHub](https://github.com/the-moisrex/webpp)
+* [GitLab](https://gitlab.com/the.moisrex/webpp)
+
 ## Development
 You can help us develop this project if you're familiar with C++ programming language and web development. Even if you're not really good at web development but you know C++ very well, specially C++17 and C++20 (clang and gcc c++2a is enough), then we have lots of things that you can help with which doesn't have anything to do with web development directly.
 
