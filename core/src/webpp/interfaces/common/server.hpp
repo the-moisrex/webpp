@@ -17,6 +17,7 @@ namespace webpp::common {
         net::io_context io;
         net::ip::tcp::acceptor acceptor;
         net::signal_set signals{io, SIGINT, SIGTERM};
+        std::error_code ec;
 
         void accept() noexcept {
             auto self{shared_from_this()};
@@ -45,7 +46,7 @@ namespace webpp::common {
       public:
         server(net::ip::tcp::endpoints endpoints) noexcept
             : acceptor(io, endpoints){};
-        void run() noexcept { io.run(); }
+        void run() noexcept { io.run(ec); }
     };
 
 } // namespace webpp::common
