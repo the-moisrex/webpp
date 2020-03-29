@@ -107,3 +107,23 @@
 {"description":"check for memory leaks in body","entry":"20200313T111836Z","modified":"20200313T111836Z","status":"pending","uuid":"64eac3f4-0854-430c-8cc6-dfd656e0b411"}
 {"description":"configure and use sanitizers","entry":"20200328T210341Z","modified":"20200328T210341Z","project":"cmake","status":"pending","uuid":"d960cd10-ab29-47b3-a8c4-0bd675188232"}
 {"description":"add support for encrypted URIs","entry":"20200328T211942Z","modified":"20200328T211942Z","project":"uri","status":"pending","uuid":"3ff6f350-116f-4a74-a482-54f4bc00a2da"}
+{"description":"convert endpoint fromats","entry":"20200329T185636Z","modified":"20200329T185636Z","project":"fcgi","status":"pending","uuid":"53d06a1c-02cf-4757-9b39-50945f4a8d3d"}
+{"description":"learn boost::thread_pool","entry":"20200329T185719Z","modified":"20200329T185719Z","project":"fcgi","status":"pending","uuid":"3fc70a1c-c87c-4009-9879-6734035bbc4d"}
+{"description":"find where to add the thread_pool","entry":"20200329T185743Z","modified":"20200329T185743Z","project":"fcgi","status":"pending","uuid":"dfea634f-631d-4425-a56d-33e70448502f"}
+{"description":"add the ctor of threadpool","entry":"20200329T185805Z","modified":"20200329T185805Z","project":"fcgi","status":"pending","uuid":"22eb869b-823c-4c60-81bf-378b0ba36e82"}
+{"description":"use threadpool in running the io_context","entry":"20200329T185857Z","modified":"20200329T185857Z","project":"fcgi","status":"pending","uuid":"f78fe03a-98ef-4218-be23-3a1688f299ba"}
+{"description":"restart the server when the endpoints change","entry":"20200329T185924Z","modified":"20200329T185924Z","project":"fcgi","status":"pending","uuid":"f03c0a53-7537-4a51-a287-4c0638362737"}
+{"description":"learn boost::cpp03::server4::server::operator() example","entry":"20200329T190018Z","modified":"20200329T190018Z","project":"fcgi","status":"pending","uuid":"ea11d12c-5b27-44ea-8782-c1edd910436d"}
+{"description":"add thread_count in fcgi class","entry":"20200329T190251Z","modified":"20200329T190251Z","project":"fcgi","status":"pending","uuid":"80f4f140-76c8-4eef-8a38-31df6bc8f77b"}
+{"description":"implement request methods in fcgi","entry":"20200329T190312Z","modified":"20200329T190312Z","project":"fcgi","status":"pending","uuid":"6bc90373-5aa0-4f1e-a8d6-e9b35977ff6b"}
+{"description":"write a fcgi hello world example","entry":"20200329T190339Z","modified":"20200329T190339Z","project":"fcgi","status":"pending","uuid":"60d04ee9-7e96-4c52-8d68-cd4ca32e6637"}
+{"description":"write fcgi tests","entry":"20200329T190357Z","modified":"20200329T190357Z","project":"fcgi","status":"pending","uuid":"cd798585-c304-4d9b-beeb-1fe31bc448ad"}
+{"description":"read the fcgi header async","entry":"20200329T190657Z","modified":"20200329T190657Z","project":"fcgi","status":"pending","uuid":"489f7829-d50d-423b-81ed-44ced3e46e7d"}
+{"description":"parse the fcgi header","entry":"20200329T190723Z","modified":"20200329T190723Z","project":"fcgi","status":"pending","uuid":"991d685f-4c42-420a-b1d2-3219d2db3120"}
+{"description":"read the rest of the fcgi request","entry":"20200329T190903Z","modified":"20200329T190903Z","project":"fcgi","status":"pending","uuid":"08c8e745-e793-4a1e-b44c-c398331e4ce7"}
+{"description":"parse the rest of the fcgi request","entry":"20200329T190920Z","modified":"20200329T190920Z","project":"fcgi","status":"pending","uuid":"2832c8eb-b252-4db9-a5df-e2b115eecb5b"}
+{"description":"add constructors for protocols' file's classes","entry":"20200329T191022Z","modified":"20200329T191022Z","project":"fcgi","status":"pending","uuid":"bb229d00-c6da-4979-81f6-bdc301d3ea03"}
+{"description":"remove enable_shared_from_this<server>","entry":"20200329T191143Z","modified":"20200329T191143Z","project":"fcgi","status":"pending","uuid":"66e8aed1-e9ef-4b3b-93f9-0e884e897448"}
+{"description":"add fcgi files in cmake","entry":"20200329T191204Z","modified":"20200329T191204Z","project":"fcgi","status":"pending","uuid":"ad9e5913-4289-4ff5-83d1-ed7d102f9b73"}
+{"description":"figure out a way to listen on multiple endpoints","entry":"20200329T191255Z","modified":"20200329T191255Z","project":"fcgi","status":"pending","uuid":"5437f54c-2928-4de2-b3f7-f1eaa53bc50b"}
+{"description":"learn how to work with error_code","entry":"20200329T191310Z","modified":"20200329T191310Z","project":"fcgi","status":"pending","uuid":"39d27a15-6c22-44df-b80f-6d2161811bc9"}
