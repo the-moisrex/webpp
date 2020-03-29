@@ -127,3 +127,5 @@
 {"description":"add fcgi files in cmake","entry":"20200329T191204Z","modified":"20200329T191204Z","project":"fcgi","status":"pending","uuid":"ad9e5913-4289-4ff5-83d1-ed7d102f9b73"}
 {"description":"figure out a way to listen on multiple endpoints","entry":"20200329T191255Z","modified":"20200329T191255Z","project":"fcgi","status":"pending","uuid":"5437f54c-2928-4de2-b3f7-f1eaa53bc50b"}
 {"description":"learn how to work with error_code","entry":"20200329T191310Z","modified":"20200329T191310Z","project":"fcgi","status":"pending","uuid":"39d27a15-6c22-44df-b80f-6d2161811bc9"}
+{"description":"build the hello world example","end":"20200329T192847Z","entry":"20200220T171453Z","modified":"20200329T192847Z","project":"examples","status":"completed","uuid":"eebcfb80-cc87-4375-adfb-ad0e68fcbc29"}
+{"description":"turn the hello world example to a google test","end":"20200329T192857Z","entry":"20200220T171525Z","modified":"20200329T192857Z","project":"examples","status":"completed","uuid":"fc3372a3-c5ce-4325-8a09-419bfee55298"}
