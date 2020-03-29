@@ -7,7 +7,7 @@ It's being developed. News will be shared on [Telegram](https://t.me/webpp).
 
 ## About GTASK (task management tool)
 
-We use `gtask` (a custom script built on top of [https://taskwarrior.org/](TaskWarrior) for task management) as a ToDo list. Of course long-term todos will not be there so the ideas don't get out before they need to.
+We use `gtask` (a custom script built on top of [TaskWarrior](https://taskwarrior.org/) for task management) as a ToDo list. Of course long-term todos will not be there so the ideas don't get out before they need to.
 
 ### Usage:
 
