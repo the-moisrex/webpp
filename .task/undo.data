@@ -419,3 +419,11 @@ new [description:"figure out a way to listen on multiple endpoints" entry:"15855
 time 1585509190
 new [description:"learn how to work with error_code" entry:"1585509190" modified:"1585509190" project:"fcgi" status:"pending" uuid:"39d27a15-6c22-44df-b80f-6d2161811bc9"]
 ---
+time 1585510127
+old [description:"build the hello world example" entry:"1582218893" modified:"1582218893" project:"examples" status:"pending" uuid:"eebcfb80-cc87-4375-adfb-ad0e68fcbc29"]
+new [description:"build the hello world example" end:"1585510127" entry:"1582218893" modified:"1585510127" project:"examples" status:"completed" uuid:"eebcfb80-cc87-4375-adfb-ad0e68fcbc29"]
+---
+time 1585510137
+old [description:"turn the hello world example to a google test" entry:"1582218925" modified:"1582218925" project:"examples" status:"pending" uuid:"fc3372a3-c5ce-4325-8a09-419bfee55298"]
+new [description:"turn the hello world example to a google test" end:"1585510137" entry:"1582218925" modified:"1585510137" project:"examples" status:"completed" uuid:"fc3372a3-c5ce-4325-8a09-419bfee55298"]
+---
