@@ -111,6 +111,9 @@ target_include_directories(${SLIB_NAME} PUBLIC
 )
 
 
+message(STATUS "Install lib dir: \t\t ${CMAKE_INSTALL_LIBDIR}")
+message(STATUS "Install bin dir: \t\t ${CMAKE_INSTALL_BINDIR}")
+message(STATUS "Install include dir: \t\t ${CMAKE_INSTALL_INCLUDEDIR}")
 
 install(TARGETS ${LIB_NAME}
   EXPORT "${LIB_NAME}Config"
