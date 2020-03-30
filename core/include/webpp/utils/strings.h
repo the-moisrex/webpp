@@ -120,8 +120,8 @@ namespace webpp {
     }
 
     template <typename T>
-    [[nodiscard]] constexpr inline bool starts_with(std::string_view const& str,
-                                                    T&& data) noexcept {
+    [[nodiscard]] inline bool starts_with(std::string_view const& str,
+                                          T&& data) noexcept {
 #ifdef CXX20
         return str.starts_with(std::forward<T>(data));
 #else
@@ -129,8 +129,8 @@ namespace webpp {
 #endif
     }
 
-    [[nodiscard]] constexpr inline bool ends_with(std::string_view const& str,
-                                                  char c) noexcept {
+    [[nodiscard]] inline bool ends_with(std::string_view const& str,
+                                        char c) noexcept {
         return !str.empty() && str.back() == c;
     }
 
