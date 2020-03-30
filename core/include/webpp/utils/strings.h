@@ -2,6 +2,8 @@
 #define STRINGS_H
 
 #include <algorithm>
+#include <string>
+#include <string_view>
 
 namespace webpp {
 
