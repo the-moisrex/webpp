@@ -12,7 +12,7 @@ function(set_interp_path)
   )
    
   if(return_value)
-      message(WARNING "Cannot find a valid ELF interpreter")
+      message(WARNING "Cannot find a valid ELF interpreter. You will not be able to run the shared library as a normal executable. You don't need to worry about this if you don't need this feature.")
   else()
       string(REGEX REPLACE
           ".*[[]${INTERPRETER_DESCRIPTION} ([/][^ ].+)[]].*" "\\1"
