@@ -1,6 +1,7 @@
 #ifndef WEBPP_UTILS_URI_H
 #define WEBPP_UTILS_URI_H
 
+#include "../utils/strings.h"
 #include "../validators/validators.h"
 #include "casts.h"
 #include "charset.h"
@@ -271,7 +272,7 @@ namespace webpp {
             auto _data = this->string_view();
 
             // extracting scheme
-            if (_data.starts_with("//")) {
+            if (starts_with(_data, "//")) {
                 authority_start = 2;
                 scheme_end = data.size(); // so we don't have to check again
                 return;
@@ -434,7 +435,7 @@ namespace webpp {
         //                 sub-delims
         //                 * / ":" )
         //                 */
-        //                if (_data.starts_with('[')) { // IP Literal
+        //                if (starts_with(_data, '[')) { // IP Literal
         //                    if (_data.size() > 2 &&
         //                        _data[1] == 'v') { // IPv Future Number
         //                        if (auto dot_delim = _data.find('.');
@@ -712,7 +713,7 @@ namespace webpp {
          * @throws logic_error if uri is const
          */
         basic_uri& scheme(std::string_view __scheme) {
-            if (__scheme.ends_with(':'))
+            if (ends_with(__scheme, ':'))
                 __scheme.remove_suffix(1);
             if (!is::scheme(__scheme))
                 throw std::invalid_argument(
@@ -907,7 +908,7 @@ namespace webpp {
             // todo: are you sure it can handle punycode as well?
             std::string encoded_host =
                 encode_uri_component(new_host, REG_NAME_NOT_PCT_ENCODED);
-            if ((!new_host.starts_with('[') || !new_host.ends_with(']')) &&
+            if ((!starts_with(new_host, '[') || !ends_with(new_host, ']')) &&
                 is::ipv6(new_host)) {
                 encoded_host = '[' + encoded_host + ']';
             }
@@ -942,7 +943,7 @@ namespace webpp {
                 // there's no user info
                 if (scheme_end == data.size()) {
                     start = 0;
-                    if (!new_host.empty() && !encoded_host.starts_with("//")) {
+                    if (!new_host.empty() && !starts_with(encoded_host, "//")) {
                         encoded_host = "//" + encoded_host;
                     }
                 } else {
@@ -1008,7 +1009,7 @@ namespace webpp {
         [[nodiscard]] bool is_ip() const noexcept {
             auto _host = host();
             return is::ipv4(_host) ||
-                   (_host.starts_with('[') && _host.ends_with(']'));
+                   (starts_with(_host, '[') && ends_with(_host, ']'));
         }
 
         /**
@@ -1275,7 +1276,7 @@ namespace webpp {
          * @param new_port
          */
         basic_uri& port(std::string_view new_port) noexcept {
-            if (new_port.starts_with(':'))
+            if (starts_with(new_port, ':'))
                 new_port.remove_prefix(1);
             if (!is::digit(new_port))
                 throw std::invalid_argument("The specified port is not valid");
@@ -1441,7 +1442,7 @@ namespace webpp {
         basic_uri& path(std::string_view const& __path) noexcept {
             parse_path();
             auto _encoded_path =
-                (__path.starts_with('/') ? "" : "/") +
+                (starts_with(__path, '/') ? "" : "/") +
                 encode_uri_component(
                     __path, charset(PCHAR_NOT_PCT_ENCODED, charset('/')));
 
@@ -1498,7 +1499,7 @@ namespace webpp {
                     "The specified string is not a valid query");
 
             auto encoded_query =
-                (__query.starts_with('?') ? "" : "?") +
+                (starts_with(__query, '?') ? "" : "?") +
                 encode_uri_component(__query,
                                      QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
 
@@ -1936,8 +1937,8 @@ namespace webpp {
     }
 
     template <typename S1>
-    [[nodiscard]] inline auto equal_path(
-                                         std::string_view const& p1, basic_uri<S1> const& p2) noexcept {
+    [[nodiscard]] inline auto equal_path(std::string_view const& p1,
+                                         basic_uri<S1> const& p2) noexcept {
         return p2 == p1 || equal_path(const_uri{p1}, p2);
     }
 
