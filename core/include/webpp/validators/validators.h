@@ -3,6 +3,7 @@
 
 #include "../utils/casts.h"
 #include "../utils/charset.h"
+#include "../utils/strings.h"
 #include <algorithm>
 #include <regex>
 #include <string_view>
@@ -399,8 +400,8 @@ namespace webpp {
             bool encountered_double_colons = false;
             std::size_t index = 0;
 
-            if (address.starts_with('[')) {
-                if (address.ends_with(']')) {
+            if (starts_with(address, '[')) {
+                if (ends_with(address, ']')) {
                     address.remove_suffix(1);
                     address.remove_prefix(1);
                 } else {
@@ -419,7 +420,7 @@ namespace webpp {
                         return false;
 
                     if (index == 0) {
-                        if (!address.starts_with("::")) {
+                        if (!starts_with(address, "::")) {
                             return false;
                         }
                         address.remove_prefix(1);
@@ -520,7 +521,7 @@ namespace webpp {
 
             if (str.empty())
                 return false;
-            if (str.starts_with('[') && str.ends_with(']')) {
+            if (starts_with(str, '[') && ends_with(str, ']')) {
                 if (str[1] == 'v') { // future ip
                     if (auto dot_delim = str.find('.');
                         dot_delim != std::string_view::npos) {
@@ -602,7 +603,7 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool
         hex_color(std::string_view const& str) noexcept {
-            if (!str.starts_with('#'))
+            if (!starts_with(str, '#'))
                 return false;
             switch (str.size()) {
             case 3 + 1:
