@@ -1,5 +1,6 @@
 #include "../../../include/webpp/interfaces/cgi.h"
 #include "../../../include/webpp/utils/casts.h"
+#include "../../../include/webpp/utils/strings.h"
 #include <cctype>
 #include <cstdlib>
 #include <functional>
@@ -118,7 +119,7 @@ std::string_view cgi::headers() noexcept {
         // about windows
         for (auto it = ::environ; *it; it++) {
             std::string_view h{*it};
-            if (h.starts_with("HTTP_")) {
+            if (starts_with(h, "HTTP_")) {
                 headers_cache.append(h.substr(5));
                 // FIXME: decide if you need to convert _ to - or not.
             }
@@ -165,7 +166,7 @@ void cgi::operator()() noexcept {
 
     std::stringstream status_line;
     status_line << "Status: " << res.header.status_code() << " "
-      << status_reason_phrase(res.header.status_code()) << "\r\n";
+                << status_reason_phrase(res.header.status_code()) << "\r\n";
 
     auto _status_line_str = status_line.str();
     write(_status_line_str.data(), _status_line_str.size());
