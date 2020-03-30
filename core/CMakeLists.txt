@@ -175,11 +175,11 @@ install(CODE "install_headers(\"${LIB_INCLUDE_DIR}\" \"${CMAKE_INSTALL_PREFIX}/i
 
 
 #install(FILES ${LIB_HEADERS} DESTINATION include)
-target_compile_features(${LIB_NAME} PUBLIC
-	cxx_std_20 
-)
-target_compile_features(${SLIB_NAME} PUBLIC
-	cxx_std_20 
-)
+#target_compile_features(${LIB_NAME} PUBLIC
+#	cxx_std_20 
+#)
+#target_compile_features(${SLIB_NAME} PUBLIC
+#	cxx_std_20 
+#)
 
 ## todo: add write_basic_pacakge_version_file and versioning stuff for exporting
