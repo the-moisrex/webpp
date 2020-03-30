@@ -118,8 +118,8 @@ namespace webpp {
         return str;
     }
 
-    template <typename StrType, typename T>
-    [[nodiscard]] constexpr inline auto starts_with(StrType&& str,
+    template <typename T>
+    [[nodiscard]] constexpr inline auto starts_with(std::string_view const& str,
                                                     T&& data) noexcept {
 #ifdef CXX20
         return str.starts_with(std::forward<T>(data));
@@ -128,15 +128,20 @@ namespace webpp {
 #endif
     }
 
-    template <typename StrType, typename T>
-    [[nodiscard]] constexpr inline auto ends_with(StrType&& str,
-                                                  T&& data) noexcept {
+    template <typename T>
+    [[nodiscard]] constexpr inline auto ends_with(std::string_view const& str,
+                                                  T const& data) noexcept {
 #ifdef CXX20
         return str.ends_with(std::forward<T>(data));
 #else
-        if (data.size() > str.size())
-            return false;
-        return std::equal(data.crbegin(), data.crend(), str.crbegin());
+        if constexpr (std::is_convertible_v<T, char>) {
+            return !str.empty() && str.back() == data;
+        } else {
+            std::string_view _data{data};
+            if (_data.size() > _str.size())
+                return false;
+            return std::equal(_data.crbegin(), _data.crend(), str.crbegin());
+        }
 #endif
     }
 
