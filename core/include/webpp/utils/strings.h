@@ -1,6 +1,7 @@
 #ifndef STRINGS_H
 #define STRINGS_H
 
+#include "../common/meta.h"
 #include <algorithm>
 #include <string>
 #include <string_view>
@@ -115,6 +116,28 @@ namespace webpp {
     [[nodiscard]] inline std::string to_upper_copy(std::string str) noexcept {
         to_upper(str);
         return str;
+    }
+
+    template <typename StrType, typename T>
+    [[nodiscard]] constexpr inline auto starts_with(StrType&& str,
+                                                    T&& data) noexcept {
+#ifdef CXX20
+        return str.starts_with(std::forward<T>(data));
+#else
+        return str.rfind(std::forward<T>(data), 0) == 0;
+#endif
+    }
+
+    template <typename StrType, typename T>
+    [[nodiscard]] constexpr inline auto ends_with(StrType&& str,
+                                                  T&& data) noexcept {
+#ifdef CXX20
+        return str.ends_with(std::forward<T>(data));
+#else
+        if (data.size() > str.size())
+            return false;
+        return std::equal(data.crbegin(), data.crend(), str.crbegin());
+#endif
     }
 
 } // namespace webpp
