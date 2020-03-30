@@ -7,11 +7,6 @@
 #include <string_view>
 #include <type_traits>
 
-#if !__cpp_lib_string_view
-namespace std {
-    using string_view = string;
-}
-#endif
 namespace webpp {
 
     // trim from start (in place)
