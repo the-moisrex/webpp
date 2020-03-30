@@ -7,6 +7,11 @@
 #include <string_view>
 #include <type_traits>
 
+#if !__cpp_lib_string_view
+namespace std {
+    using string_view = string;
+}
+#endif
 namespace webpp {
 
     // trim from start (in place)
@@ -129,20 +134,20 @@ namespace webpp {
 #endif
     }
 
-    template <typename T>
     [[nodiscard]] constexpr inline bool ends_with(std::string_view const& str,
-                                                  T const& data) noexcept {
+                                                  char c) noexcept {
+        return !str.empty() && str.back() == c;
+    }
+
+    [[nodiscard]] constexpr inline bool
+    ends_with(std::string_view const& str,
+              std::string_view const& data) noexcept {
 #ifdef CXX20
         return str.ends_with(data);
 #else
-        if constexpr (std::is_convertible_v<T, char>) {
-            return !str.empty() && str.back() == data;
-        } else {
-            std::string_view _data{data};
-            if (_data.size() > str.size())
-                return false;
-            return std::equal(_data.crbegin(), _data.crend(), str.crbegin());
-        }
+        if (data.size() > str.size())
+            return false;
+        return std::equal(data.crbegin(), data.crend(), str.crbegin());
 #endif
     }
 
