@@ -12,7 +12,7 @@ function(set_interp_path)
   )
    
   if(return_value)
-      message(STATUS "Cannot find a valid ELF interpreter")
+      message(WARNING "Cannot find a valid ELF interpreter")
   else()
       string(REGEX REPLACE
           ".*[[]${INTERPRETER_DESCRIPTION} ([/][^ ].+)[]].*" "\\1"
@@ -20,7 +20,7 @@ function(set_interp_path)
       )
    
       add_definitions(-DELF_INTERPRETER_PATH="${_ELF_INTERPRETER_PATH}" )
-      message(STATUS "ELF interpreter is ${_ELF_INTERPRETER_PATH}")
+      message(STATUS "ELF interpreter                : ${_ELF_INTERPRETER_PATH}")
   endif() 
 
 endfunction()
