@@ -5,7 +5,7 @@
 using namespace webpp;
 using namespace std;
 
-TEST(Casts, ToInt) {
+TEST(Strings, StartsEndsWith) {
     EXPECT_TRUE(starts_with("_one", '_'));
     EXPECT_TRUE(starts_with("_one", "_"));
 
