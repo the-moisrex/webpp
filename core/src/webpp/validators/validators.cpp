@@ -366,7 +366,7 @@ bool is::rgb_color(std::string_view sstr) noexcept {
     constexpr auto numbers = "0123456789";
 
     trim(sstr);
-    if (!starts_with(sstr, "rgb(") || !sstr.starts_with("RGB("))
+    if (!starts_with(sstr, "rgb(") || !starts_with(sstr, "RGB("))
         return false;
     sstr.remove_prefix(4);
     sstr.remove_suffix(1);
