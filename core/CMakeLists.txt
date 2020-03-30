@@ -76,7 +76,13 @@ set(ALL_SOURCES
     ${LIB_SRC_DIR}/main.cpp
   )
 
-message(STATUS "Library Files:  ${ALL_SOURCES}")
+set(ALL_SOURCES_SHORT "")
+foreach (source ${ALL_SOURCES})
+  string(REPLACE "${PROJECT_SOURCE_DIR}/" "" SOURCE_SHORT ${source})
+  list(APPEND ALL_SOURCES_SHORT ${SOURCE_SHORT})
+endforeach()
+string(REPLACE ";" "\n                                    " ALL_SOURCES_SHORT_P "${ALL_SOURCES_SHORT}")
+message(STATUS "Source Files                   : ${ALL_SOURCES_SHORT_P}")
 
 include(../cmake/dyn_lib_entry_point.cmake)
 set_interp_path()
