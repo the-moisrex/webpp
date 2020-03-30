@@ -133,7 +133,7 @@ namespace webpp {
     [[nodiscard]] constexpr inline bool ends_with(std::string_view const& str,
                                                   T const& data) noexcept {
 #ifdef CXX20
-        return str.ends_with(std::forward<T>(data));
+        return str.ends_with(data);
 #else
         if constexpr (std::is_convertible_v<T, char>) {
             return !str.empty() && str.back() == data;

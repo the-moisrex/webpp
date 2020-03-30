@@ -735,9 +735,7 @@ namespace webpp {
                 if (authority_start != data.size()) {
                     replace_value(0, 0,
                                   scheme_colon +
-                                      (std::string_view(data).starts_with("//")
-                                           ? ""
-                                           : "//"));
+                                      (starts_with(data, "//") ? "" : "//"));
                 } else {
                     // It's a URN (or URN like URI)
                     replace_value(0, 0, scheme_colon);
