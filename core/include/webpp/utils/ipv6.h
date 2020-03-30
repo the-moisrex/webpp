@@ -1,6 +1,7 @@
 #ifndef WEBPP_IPV6_H
 #define WEBPP_IPV6_H
 
+#include "../utils/strings.h"
 #include "../validators/validators.h"
 #include "ipv4.h"
 #include <algorithm>
@@ -95,7 +96,7 @@ namespace webpp {
             auto double_colon_point = data.end();
 
             do {
-                if (it == data.cend() && !ipv6_data.starts_with('/')) {
+                if (it == data.cend() && !starts_with(ipv6_data, '/')) {
                     _prefix = 254u; // the ip has too many octets
                     return;
                 }
@@ -159,7 +160,7 @@ namespace webpp {
                         break;          // let's not go all crazy just yet
                     }
                     auto __prefix = std::stoul(std::string(prefix_str));
-                    // if (prefix_str.starts_with('0') && __prefix != 0) {
+                    // if (starts_with(prefix_str, '0') && __prefix != 0) {
                     //     // there can't be a leading zero in the prefix string
                     //     _prefix = 253u;
                     //     return;
