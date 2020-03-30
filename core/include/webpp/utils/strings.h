@@ -120,8 +120,8 @@ namespace webpp {
     }
 
     template <typename T>
-    [[nodiscard]] inline bool starts_with(std::string_view const& str,
-                                          T&& data) noexcept {
+    [[nodiscard]] constexpr inline bool starts_with(std::string_view const& str,
+                                                    T&& data) noexcept {
 #ifdef CXX20
         return str.starts_with(std::forward<T>(data));
 #else
@@ -129,20 +129,22 @@ namespace webpp {
 #endif
     }
 
-    [[nodiscard]] inline bool ends_with(std::string_view const& str,
-                                        char c) noexcept {
+    [[nodiscard]] constexpr inline bool ends_with(std::string_view const& str,
+                                                  char c) noexcept {
         return !str.empty() && str.back() == c;
     }
 
     [[nodiscard]] constexpr inline bool
     ends_with(std::string_view const& str,
-              std::string_view const& data) noexcept {
+              std::string_view const& ending) noexcept {
 #ifdef CXX20
-        return str.ends_with(data);
+        return str.ends_with(ending);
 #else
-        if (data.size() > str.size())
-            return false;
-        return std::equal(data.crbegin(), data.crend(), str.crbegin());
+        if (str.length() >= ending.length()) {
+            return (0 == str.compare(str.length() - ending.length(),
+                                     ending.length(), ending));
+        }
+        return false;
 #endif
     }
 
