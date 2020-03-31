@@ -1,11 +1,16 @@
 #include "../../../include/webpp/http/cookies.h"
 #include "../../../include/webpp/utils/strings.h"
 #include <algorithm>
-#include <boost/container_hash/hash.hpp>
 #include <functional>
 #include <memory>
 #include <sstream>
 #include <string_view>
+
+template <class T>
+inline void hash_combine(std::size_t& seed, const T& v) {
+    std::hash<T> hasher;
+    seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
 
 using namespace webpp;
 /*
@@ -242,23 +247,23 @@ cookie& cookie::encrypted(cookie::encrypted_t __encrypted) noexcept {
     return *this;
 }
 
-cookie_hash::result_type cookie_hash::
-operator()(const cookie_hash::argument_type& c) const noexcept {
+cookie_hash::result_type
+cookie_hash::operator()(const cookie_hash::argument_type& c) const noexcept {
     // change the "same_as" method too if you ever touch this function
     cookie_hash::result_type seed = 0;
-    boost::hash_combine(seed, c._name);
-    boost::hash_combine(seed, c._domain);
-    boost::hash_combine(seed, c._path);
-    //    boost::hash_combine(seed, c._value);
-    //    boost::hash_combine(seed, c._prefix);
-    //    boost::hash_combine(seed, c._secure);
+    hash_combine(seed, c._name);
+    hash_combine(seed, c._domain);
+    hash_combine(seed, c._path);
+    //    hash_combine(seed, c._value);
+    //    hash_combine(seed, c._prefix);
+    //    hash_combine(seed, c._secure);
     //    if (c._expires)
-    //        boost::hash_combine(seed, c._expires->time_since_epoch().count());
-    //    boost::hash_combine(seed, c._max_age);
-    //    boost::hash_combine(seed, c._same_site);
-    //    boost::hash_combine(seed, c._comment);
-    //    boost::hash_combine(seed, c._host_only);
-    //    boost::hash_combine(seed, c._encrypted);
+    //        hash_combine(seed, c._expires->time_since_epoch().count());
+    //    hash_combine(seed, c._max_age);
+    //    hash_combine(seed, c._same_site);
+    //    hash_combine(seed, c._comment);
+    //    hash_combine(seed, c._host_only);
+    //    hash_combine(seed, c._encrypted);
     return seed;
 }
 

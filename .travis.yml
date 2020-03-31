@@ -7,7 +7,8 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - gcc-snapshot
-      - libboost-all-dev
+      - libboost-dev
+      - libboost-program-options-dev
       - libgtest-dev
       - cmake
 
