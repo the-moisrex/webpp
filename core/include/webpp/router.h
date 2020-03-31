@@ -177,7 +177,7 @@ namespace webpp {
      */
     template <typename Interface, typename Callable,
               typename Valve = valves::empty_t>
-    class route : make_inheritable<Callable> {
+    class route : private make_inheritable<Callable> {
         using req_t = request_t<Interface> const&;
         using res_t = response&;
         using condition_t = Valve;
@@ -197,6 +197,8 @@ namespace webpp {
 
       public:
         using callable::operator();
+
+        constexpr route() noexcept : callable{} {}
 
         template <typename... Args,
                   std::enable_if_t<std::is_constructible_v<callable, Args...>,
