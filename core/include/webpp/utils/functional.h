@@ -80,7 +80,7 @@ namespace webpp {
         template <typename... Args,
                   std::enable_if_t<std::is_constructible_v<Callable_t, Args...>,
                                    int> = 0>
-        constexpr callable_as_field(Args&&... args)
+        constexpr callable_as_field(Args&&... args) noexcept
             : callable(std::forward<Args>(args)...) {}
 
         template <typename... Args>
@@ -113,18 +113,15 @@ namespace webpp {
     struct is_specialization_of<Template<Args...>, Template> : std::true_type {
     };
 
-
-
-    template<class... Ts>
+    template <class... Ts>
     struct overloaded : Ts... {
         using Ts::operator()...;
         using Ts::operator=...;
         // using Ts::Ts...;
     };
-    
-    template<class... Ts>
-    overloaded(Ts...) -> overloaded<Ts...>;
 
+    template <class... Ts>
+    overloaded(Ts...)->overloaded<Ts...>;
 
 } // namespace webpp
 
