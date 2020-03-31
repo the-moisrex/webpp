@@ -6,6 +6,8 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
     packages:
+      - g++
+      - clang
       - gcc-snapshot
       - doxygen
       - libboost-dev
