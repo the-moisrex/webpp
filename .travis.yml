@@ -9,6 +9,7 @@ addons:
       - gcc-snapshot
       - libboost-program-options-dev
       - libboost-container-dev
+      - libboost-dev
       - libgtest-dev
       - cmake
 
