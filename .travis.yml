@@ -5,11 +5,18 @@ addons:
   apt:
     packages:
       - g++
-      - libboost-dev
       - libboost-program-options-dev
       - libgtest-dev
-      - googletest
       - cmake
+
+before_install:
+  - cd /usr/src/googletest/googletest
+  - mkdir build
+  - cd build
+  - cmake ..
+  - make install
+  - cd ..
+  - rm -rf build
 
 script:
   - mkdir build
