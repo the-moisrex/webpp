@@ -10,13 +10,12 @@ addons:
       - cmake
 
 before_install:
-  - cd /usr/src/googletest/googletest
-  - mkdir build
-  - cd build
-  - cmake ..
-  - make install
-  - cd ..
-  - rm -rf build
+  - sudo mkdir /usr/src/googletest/googletest/build
+  - cd /usr/src/googletest/googletest/build
+  - sudo cmake ..
+  - sudo make install
+  - sudo rm -rf /usr/src/googletest/googletest/build
+  - cd -
 
 script:
   - mkdir build
