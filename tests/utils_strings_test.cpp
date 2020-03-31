@@ -17,4 +17,10 @@ TEST(Strings, StartsEndsWith) {
 
     EXPECT_FALSE(ends_with("_one! ", "!"));
     EXPECT_FALSE(ends_with("_one! ", '!'));
+
+    EXPECT_TRUE(ends_with("_one! ", "_one!"));
+    EXPECT_FALSE(ends_with("_one! ", "__one!"));
+
+    EXPECT_TRUE(starts_with("_one! ", "_one!"));
+    EXPECT_FALSE(starts_with("_one! ", "__one!"));
 }
