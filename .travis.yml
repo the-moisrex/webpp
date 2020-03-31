@@ -3,8 +3,10 @@ language: cpp
 
 addons:
   apt:
+    sources:
+      - ubuntu-toolchain-r-test
     packages:
-      - g++
+      - gcc-snapshot
       - libboost-program-options-dev
       - libgtest-dev
       - cmake
@@ -20,6 +22,6 @@ before_install:
 script:
   - mkdir build
   - cd build
-  - cmake -DCMAKE_BUILD_TYPE=Debug ..
+  - CXX=/usr/bin/g++-10 CC=/usr/bin/gcc-10 cmake -DCMAKE_BUILD_TYPE=Debug ..
   - cmake --build .
   - ./webpptest
