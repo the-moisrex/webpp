@@ -14,6 +14,8 @@ install:
   - pip install --user conan cmake
 
 script:
-  - CXX=/usr/bin/gcc-10 CC=/usr/bin/g++-10 cmake -DCMAKE_BUILD_TYPE=Debug .
+  - mkdir build
+  - cd build
+  - CXX=/usr/bin/gcc-10 CC=/usr/bin/g++-10 cmake -DCMAKE_BUILD_TYPE=Debug ..
   - cmake --build . -- -j2
   - ./webpptest
