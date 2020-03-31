@@ -1,5 +1,4 @@
 dist: bionic
-sudo: false
 language: cpp
 
 addons:
@@ -9,9 +8,10 @@ addons:
     packages:
       - gcc-snapshot
       - doxygen
-
-install:
-  - pip install --user conan cmake
+      - libboost-dev
+      - googletest
+      - cmake
+      - build-essential
 
 script:
   - mkdir build
