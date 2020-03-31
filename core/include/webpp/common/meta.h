@@ -19,8 +19,7 @@
 #define CXX17
 #endif
 
-// TODO: change this in the yaer 2020
-#if __cplusplus > 201707L
+#if __cplusplus >= 202002L
 #define CXX20
 #endif
 
