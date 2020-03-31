@@ -84,8 +84,10 @@ endforeach()
 string(REPLACE ";" "\n                                    " ALL_SOURCES_SHORT_P "${ALL_SOURCES_SHORT}")
 message(STATUS "Source Files                   : ${ALL_SOURCES_SHORT_P}")
 
-include(../cmake/dyn_lib_entry_point.cmake)
-set_interp_path()
+if (SHARED_LIBRARY_EXECUTABLE)
+  include(../cmake/dyn_lib_entry_point.cmake)
+  set_interp_path()
+endif()
 
 add_library(${LIB_NAME} SHARED ${ALL_SOURCES})
 add_library(${SLIB_NAME} STATIC ${ALL_SOURCES})
@@ -93,8 +95,10 @@ add_library(${SLIB_NAME} STATIC ${ALL_SOURCES})
 add_library(${PROJECT_NAME}::${LIB_NAME} ALIAS ${LIB_NAME})
 add_library(${PROJECT_NAME}::${SLIB_NAME} ALIAS ${SLIB_NAME})
 
-# setting the entry point for a shared library so it can be treated like an executable
-target_link_options(${LIB_NAME} PUBLIC -e __lib_main)
+if (SHARED_LIBRARY_EXECUTABLE)
+  # setting the entry point for a shared library so it can be treated like an executable
+  target_link_options(${LIB_NAME} PUBLIC -e __lib_main)
+endif()
 
 set_target_properties(${LIB_NAME} PROPERTIES
   VERSION ${LIB_VERSION}

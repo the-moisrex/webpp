@@ -11,6 +11,8 @@ set(BIN_SOVERSION 1)
 set(LIB_VERSION 1.0.0)
 set(BIN_VERSION 1.0.0)
 
+option(SHARED_LIBRARY_EXECUTABLE "Make the shared library executable." OFF)
+
 # output the libraries and executables in the cmake home directory instead of
 # their own folders
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
