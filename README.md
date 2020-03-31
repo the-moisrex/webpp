@@ -26,7 +26,7 @@ We don't have a documentation/tutorial/guide at this point. You can help us writ
 ### Build
 Requirements for building and testing:
 
-* At least C++17 (we will be using C++20/23/... as they come and depricate old versions)
+* At least C++20 (we will be using C++20/23/... as they come and depricate old versions)
 * CMake
 * Boost
 * Googletest (gtest)
