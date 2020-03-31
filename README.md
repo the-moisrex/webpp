@@ -1,5 +1,5 @@
-# webpp
-C++ web framework [![Build Status](https://travis-ci.com/the-moisrex/webpp.svg?branch=master)](https://travis-ci.com/the-moisrex/webpp)
+# WEB++ (C++ Web Framework)
+[![Build Status](https://travis-ci.com/the-moisrex/webpp.svg?branch=master)](https://travis-ci.com/the-moisrex/webpp)
 
 This is a web framework written in C++ and hopefully will be used by other programming languages other than C++ too.
 
