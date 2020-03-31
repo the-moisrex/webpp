@@ -1459,7 +1459,7 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] bool is_absolute() const noexcept {
-            return path().starts_with('/');
+            return starts_with(path(), '/');
         }
 
         /**
