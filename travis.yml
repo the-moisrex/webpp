@@ -1,0 +1,19 @@
+dist: bionic
+sudo: false
+language: cpp
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-snapshot
+      - doxygen
+
+install:
+  - pip install --user conan cmake
+
+script:
+  - CXX=/usr/bin/gcc-10 CC=/usr/bin/g++-10 cmake -DCMAKE_BUILD_TYPE=Debug .
+  - cmake --build . -- -j2
+  - ./webpptest
