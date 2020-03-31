@@ -22,6 +22,6 @@ before_install:
 script:
   - mkdir build
   - cd build
-  - CXX=/usr/bin/g++-10 CC=/usr/bin/gcc-10 cmake -DCMAKE_BUILD_TYPE=Debug ..
+  - CXX=g++-10 CC=gcc-10 cmake -DCMAKE_BUILD_TYPE=Debug ..
   - cmake --build .
   - ./webpptest
