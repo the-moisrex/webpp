@@ -121,7 +121,7 @@ namespace webpp {
         /**
          * empty cookie
          */
-        cookie() noexcept = default;
+        cookie() = default;
         cookie(const cookie& c) = default;
         cookie(cookie&& c) noexcept = default;
         // TODO: implement this:
@@ -548,7 +548,6 @@ namespace webpp {
          */
         cookie_jar& name(condition const& _condition,
                          cookie::name_t const& new_name) noexcept;
-
     };
 
 } // namespace webpp
