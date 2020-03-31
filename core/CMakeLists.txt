@@ -90,7 +90,7 @@ if (SHARED_LIBRARY_EXECUTABLE)
 endif()
 
 # boost
-find_package(Boost COMPONENTS container REQUIRED)
+find_package(Boost REQUIRED)
 
 
 add_library(${LIB_NAME} SHARED ${ALL_SOURCES})
