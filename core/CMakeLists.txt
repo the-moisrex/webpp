@@ -89,11 +89,25 @@ if (SHARED_LIBRARY_EXECUTABLE)
   set_interp_path()
 endif()
 
+# boost
+find_package(Boost COMPONENTS container REQUIRED)
+
+
 add_library(${LIB_NAME} SHARED ${ALL_SOURCES})
 add_library(${SLIB_NAME} STATIC ${ALL_SOURCES})
 
 add_library(${PROJECT_NAME}::${LIB_NAME} ALIAS ${LIB_NAME})
 add_library(${PROJECT_NAME}::${SLIB_NAME} ALIAS ${SLIB_NAME})
+
+
+# boost
+target_link_libraries(${LIB_NAME}
+  PRIVATE ${Boost_LIBRARIES}
+)
+target_link_libraries(${SLIB_NAME}
+  PRIVATE ${Boost_LIBRARIES}
+)
+
 
 if (SHARED_LIBRARY_EXECUTABLE)
   # setting the entry point for a shared library so it can be treated like an executable

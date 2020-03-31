@@ -8,6 +8,7 @@ addons:
     packages:
       - gcc-snapshot
       - libboost-program-options-dev
+      - libboost-container-dev
       - libgtest-dev
       - cmake
 
