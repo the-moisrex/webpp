@@ -16,7 +16,7 @@ before_install:
   - sudo mkdir /usr/src/googletest/googletest/build
   - cd /usr/src/googletest/googletest/build
   - sudo cmake ..
-  - sudo make install
+  - sudo make install -j10
   - sudo rm -rf /usr/src/googletest/googletest/build
   - cd -
 
