@@ -68,3 +68,4 @@
 [description:"learn how to work with error_code" entry:"1585509190" modified:"1585509190" project:"fcgi" status:"pending" uuid:"39d27a15-6c22-44df-b80f-6d2161811bc9"]
 [description:"add tasks in the README file" entry:"1585513329" modified:"1585513329" project:"gtask" status:"pending" uuid:"834eb337-f189-4c45-a195-46f1a81dd30e"]
 [description:"add CI\/CD Auto DevOps into the project" entry:"1585513401" modified:"1585513401" project:"ci_cd" status:"pending" uuid:"59a5bc8f-447f-47e7-8050-c0201ce00ba6"]
+[description:"Make travis build successful" entry:"1585775732" modified:"1585775732" project:"pub" status:"pending" uuid:"8b85db80-0692-41fb-906f-b3534b1e8000"]

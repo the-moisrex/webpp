@@ -131,3 +131,4 @@
 {"description":"turn the hello world example to a google test","end":"20200329T192857Z","entry":"20200220T171525Z","modified":"20200329T192857Z","project":"examples","status":"completed","uuid":"fc3372a3-c5ce-4325-8a09-419bfee55298"}
 {"description":"add tasks in the README file","entry":"20200329T202209Z","modified":"20200329T202209Z","project":"gtask","status":"pending","uuid":"834eb337-f189-4c45-a195-46f1a81dd30e"}
 {"description":"add CI\/CD Auto DevOps into the project","entry":"20200329T202321Z","modified":"20200329T202321Z","project":"ci_cd","status":"pending","uuid":"59a5bc8f-447f-47e7-8050-c0201ce00ba6"}
+{"description":"Make travis build successful","entry":"20200401T211532Z","modified":"20200401T211532Z","project":"pub","status":"pending","uuid":"8b85db80-0692-41fb-906f-b3534b1e8000"}
