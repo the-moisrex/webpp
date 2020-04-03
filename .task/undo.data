@@ -436,3 +436,7 @@ new [description:"add CI\/CD Auto DevOps into the project" entry:"1585513401" mo
 time 1585775732
 new [description:"Make travis build successful" entry:"1585775732" modified:"1585775732" project:"pub" status:"pending" uuid:"8b85db80-0692-41fb-906f-b3534b1e8000"]
 ---
+time 1585953643
+old [description:"learn how to work with error_code" entry:"1585509190" modified:"1585509190" project:"fcgi" status:"pending" uuid:"39d27a15-6c22-44df-b80f-6d2161811bc9"]
+new [description:"learn how to work with error_code" end:"1585953643" entry:"1585509190" modified:"1585953643" project:"fcgi" status:"completed" uuid:"39d27a15-6c22-44df-b80f-6d2161811bc9"]
+---
