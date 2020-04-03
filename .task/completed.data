@@ -1,3 +1,4 @@
+[description:"learn how to work with error_code" end:"1585953643" entry:"1585509190" modified:"1585953643" project:"fcgi" status:"completed" uuid:"39d27a15-6c22-44df-b80f-6d2161811bc9"]
 [description:"turn the hello world example to a google test" end:"1585510137" entry:"1582218925" modified:"1585510137" project:"examples" status:"completed" uuid:"fc3372a3-c5ce-4325-8a09-419bfee55298"]
 [description:"build the hello world example" end:"1585510127" entry:"1582218893" modified:"1585510127" project:"examples" status:"completed" uuid:"eebcfb80-cc87-4375-adfb-ad0e68fcbc29"]
 [description:"add config .h file in cmake for static files" end:"1582902354" entry:"1582219039" modified:"1582902354" project:"cmake" status:"completed" uuid:"1a47a122-9838-4d51-9c5f-4098cf679d2b"]

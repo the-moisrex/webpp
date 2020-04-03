@@ -443,3 +443,7 @@ new [description:"learn how to work with error_code" end:"1585953643" entry:"158
 time 1585953767
 new [description:"add a license" entry:"1585953767" modified:"1585953767" project:"pub" status:"pending" uuid:"280f7f2e-4c54-4e32-8661-b9710ab03ed7"]
 ---
+time 1585955014
+old [description:"add a license" entry:"1585953767" modified:"1585953767" project:"pub" status:"pending" uuid:"280f7f2e-4c54-4e32-8661-b9710ab03ed7"]
+new [description:"add a license" end:"1585955014" entry:"1585953767" modified:"1585955014" project:"pub" status:"completed" uuid:"280f7f2e-4c54-4e32-8661-b9710ab03ed7"]
+---
