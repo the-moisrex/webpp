@@ -440,3 +440,6 @@ time 1585953643
 old [description:"learn how to work with error_code" entry:"1585509190" modified:"1585509190" project:"fcgi" status:"pending" uuid:"39d27a15-6c22-44df-b80f-6d2161811bc9"]
 new [description:"learn how to work with error_code" end:"1585953643" entry:"1585509190" modified:"1585953643" project:"fcgi" status:"completed" uuid:"39d27a15-6c22-44df-b80f-6d2161811bc9"]
 ---
+time 1585953767
+new [description:"add a license" entry:"1585953767" modified:"1585953767" project:"pub" status:"pending" uuid:"280f7f2e-4c54-4e32-8661-b9710ab03ed7"]
+---
