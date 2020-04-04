@@ -1,11 +1,11 @@
 #ifndef WEBPP_INTERFACE_COMMON_CONNECTION_H
 #define WEBPP_INTERFACE_COMMON_CONNECTION_H
 
-#include "../../../include/webpp/interfaces/common/endpoints.h"
+#include "../../../include/webpp/std/buffer.h"
+#include "../../../include/webpp/std/socket.h"
 #include "constants.hpp"
 #include <memory>
-#include "../../../include/webpp/common/meta.h"
-
+#include <system_error>
 
 /**
  * The reason that this file is here and not in the include directory is because
@@ -17,7 +17,7 @@ namespace webpp::common {
 
     class connection {
     public:
-        using socket_t = net::ip::tcp::socket;
+      using socket_t = std::net::ip::tcp::socket;
 
     private:
         socket_t socket;
@@ -38,22 +38,21 @@ namespace webpp::common {
         void start() noexcept;
 
         /**
-         * We're shutting down everything, kepp up!
+         * We're shutting down everything, keep up!
          */
         void stop() noexcept;
     };
 
     void connection::read() noexcept {
         // we share ourselves, so the connection keeps itself alive.
-        auto self{shared_from_this()};
-        socket.async_read_some(
-            net::buffer(buffer),
-            [this, self](error_code_t const& err,
-                         std::size_t bytes_transferred) noexcept {
-                if (!err) {
-                    // we need to parse, store, read more, or write something
-                }
-            });
+        socket.async_read_some(std::net::buffer(buffer),
+                               [this](std::error_code const& err,
+                                      std::size_t bytes_transferred) noexcept {
+                                   if (!err) {
+                                       // we need to parse, store, read more, or
+                                       // write something
+                                   }
+                               });
     }
 
     void connection::write() noexcept {}

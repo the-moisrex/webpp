@@ -3,7 +3,6 @@
 
 #include "../http/request.h"
 #include "../std/internet.h"
-#include "./common/endpoints.h"
 #include "basic_interface.h"
 #include <set>
 
@@ -28,7 +27,7 @@ namespace webpp {
         /**
          * This will only work before you run the operator()
          */
-        void add_endpoint(endpoint _endpoint) noexcept {
+        void add_endpoint(endpoint_t _endpoint) noexcept {
             _endpoints.insert(std::move(_endpoint));
         }
 
