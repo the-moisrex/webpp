@@ -1,6 +1,8 @@
 #ifndef WEBPP_INTERFACES_COMMON_SERVER_H
 #define WEBPP_INTERFACES_COMMON_SERVER_H
-#include "../../../../include/webpp/common/endpoints.h"
+
+#include "../../../include/webpp/std/buffer.h"
+#include "../../../include/webpp/std/io_context.h"
 #include "connection.hpp"
 #include "constants.hpp"
 #include <memory>
@@ -9,20 +11,22 @@
 namespace webpp::common {
 
     /**
-     * This class is the server and the conection manager.
+     * This class is the server and the connection manager.
      */
-    class server : public std::enable_shared_from_this<server> {
+    class server {
+      public:
+        using socket_t = std::net::ip::tcp::socket;
+        using socket_t = std::net::ip::tcp::endpoint;
+
       private:
         std::set<connection> connections;
-        net::io_context io;
-        net::ip::tcp::acceptor acceptor;
-        net::signal_set signals{io, SIGINT, SIGTERM};
+        std::net::io_context io;
+        std::net::ip::tcp::acceptor acceptor;
         std::error_code ec;
 
         void accept() noexcept {
-            auto self{shared_from_this()};
             acceptor.async_accept(
-                [this, self](error_code_t const& ec, socket_t socket) {
+                [this](std::error_code const& ec, socket_t socket) {
                     // Check whether the server was stopped by a signal before
                     // this completion handler had a chance to run
                     if (!acceptor.is_open()) {
@@ -39,13 +43,9 @@ namespace webpp::common {
                 });
         }
 
-        void set_signals() noexcept {
-            signals.async_wait([&](auto, auto) { io.stop(); });
-        }
-
       public:
-        server(net::ip::tcp::endpoints endpoints) noexcept
-            : acceptor(io, endpoints){};
+        server(endpoint_t endpoints) noexcept : acceptor(io, endpoints){};
+
         void run() noexcept { io.run(ec); }
     };
 
