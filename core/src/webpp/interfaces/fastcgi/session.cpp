@@ -1,7 +1,5 @@
-
-// TODO: use less heavy headers instead of the whole asio.hpp
-#include <boost/asio.hpp>
 #include <utility>
+
 
 
 class session {

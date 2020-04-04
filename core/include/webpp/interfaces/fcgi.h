@@ -3,14 +3,30 @@
 
 #include "./common/endpoints.h"
 #include "basic_interface.h"
-#include "webpp/http/request.h"
+#include "../http/request.h"
+#include <set>
+
+#include "../common/meta.h"
+
+#if __has_include(<internet>)
+#include <internet>
+#elif __has_include(<experimental/internet>)
+#include <experimental/internet>
+namespace std {
+    namespace net = experimental::net;
+}
+#else
+#error "We don't even have access to networking TS."
+#endif
 
 namespace webpp {
 
     class fcgi : public basic_interface<fcgi> {
+    public:
+        using endpoint_t = std::net::ip::tcp::endpoint;
       private:
         class fcgi_impl;
-        std::vector<endpoint> _endpoints;
+        std::set<> _endpoints;
         std::unique_ptr<fcgi_impl> impl;
 
       public:
@@ -31,7 +47,7 @@ namespace webpp {
          * This will only work before you run the operator()
          */
         void add_endpoint(std::string addr, uint_fast8_t port) noexcept {
-            _endpoints.emplace_back(std::move(addr), port);
+            _endpoints.emplace(std::move(addr), port);
         }
 
         /**
