@@ -18,20 +18,21 @@ namespace webpp::common {
       public:
         using socket_t = std::net::ip::tcp::socket;
         using endpoint_t = std::net::ip::tcp::endpoint;
+#if STD_IO_CONTEXT == STLLIB_BOOST
+        using error_code_t = boost::system::error_code;
+#else
+        using error_code_t = std::error_code;
+#endif
 
       private:
         std::vector<connection> connections;
         std::net::io_context io;
         std::net::ip::tcp::acceptor acceptor;
-#if STD_IO_CONTEXT == STLLIB_BOOST
-        boost::system::error_code ec;
-#else
-        std::error_code ec;
-#endif
+        error_code_t ec;
 
         void accept() noexcept {
             acceptor.async_accept(
-                [this](std::error_code const& ec, socket_t socket) {
+                [this](error_code_t const& ec, socket_t socket) {
                     // Check whether the server was stopped by a signal before
                     // this completion handler had a chance to run
                     if (!acceptor.is_open()) {
