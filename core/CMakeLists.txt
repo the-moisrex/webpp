@@ -55,26 +55,31 @@ set(ALL_SOURCES
     ${LIB_SRC_DIR}/webpp/utils/charset.cpp
     ${LIB_SRC_DIR}/webpp/utils/const_list.cpp
     ${LIB_SRC_DIR}/webpp/utils/containers.cpp
-    ${LIB_SRC_DIR}/webpp/utils/debounce.cpp
-    ${LIB_SRC_DIR}/webpp/utils/functional.cpp
-    ${LIB_SRC_DIR}/webpp/utils/ipv4.cpp
-    ${LIB_SRC_DIR}/webpp/utils/ipv6.cpp
-    ${LIB_SRC_DIR}/webpp/utils/memory.cpp
-    ${LIB_SRC_DIR}/webpp/utils/property.cpp
-    ${LIB_SRC_DIR}/webpp/utils/strings.cpp
-    ${LIB_SRC_DIR}/webpp/utils/uri.cpp
+        ${LIB_SRC_DIR}/webpp/utils/debounce.cpp
+        ${LIB_SRC_DIR}/webpp/utils/functional.cpp
+        ${LIB_SRC_DIR}/webpp/utils/ipv4.cpp
+        ${LIB_SRC_DIR}/webpp/utils/ipv6.cpp
+        ${LIB_SRC_DIR}/webpp/utils/memory.cpp
+        ${LIB_SRC_DIR}/webpp/utils/property.cpp
+        ${LIB_SRC_DIR}/webpp/utils/strings.cpp
+        ${LIB_SRC_DIR}/webpp/utils/uri.cpp
 
-    ${LIB_SRC_DIR}/webpp/interfaces/cgi.cpp
+        ${LIB_SRC_DIR}/webpp/interfaces/cgi.cpp
+        ${LIB_SRC_DIR}/webpp/interfaces/fcgi.cpp
+        ${LIB_SRC_DIR}/webpp/interfaces/fastcgi/protocol.cpp
+        ${LIB_SRC_DIR}/webpp/interfaces/fastcgi/session.cpp
+        ${LIB_SRC_DIR}/webpp/interfaces/fastcgi/transceiver.cpp
+        ${LIB_SRC_DIR}/webpp/interfaces/simple_server.cpp
 
-    ${LIB_SRC_DIR}/webpp/http/body.cpp
-    ${LIB_SRC_DIR}/webpp/http/cookies.cpp
-    ${LIB_SRC_DIR}/webpp/http/header.cpp
-    ${LIB_SRC_DIR}/webpp/http/request.cpp
-    ${LIB_SRC_DIR}/webpp/http/response.cpp
+        ${LIB_SRC_DIR}/webpp/http/body.cpp
+        ${LIB_SRC_DIR}/webpp/http/cookies.cpp
+        ${LIB_SRC_DIR}/webpp/http/header.cpp
+        ${LIB_SRC_DIR}/webpp/http/request.cpp
+        ${LIB_SRC_DIR}/webpp/http/response.cpp
 
 
-    ${LIB_SRC_DIR}/main.cpp
-  )
+        ${LIB_SRC_DIR}/main.cpp
+        )
 
 set(ALL_SOURCES_SHORT "")
 foreach (source ${ALL_SOURCES})
