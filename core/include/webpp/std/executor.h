@@ -9,15 +9,15 @@
 
 #if __has_include(<executor>)
 #include <executor>
-#define STD_IO_CONTEXT STLLIB_STANDARD
+#define STD_EXECUTOR STLLIB_STANDARD
 #elif __has_include(<boost/asio/ts/executor.hpp>)
-#define STD_IO_CONTEXT STLLIB_BOOST
+#define STD_EXECUTOR STLLIB_BOOST
 #include <boost/asio/ts/executor.hpp>
 namespace std {
     namespace net = boost::asio;
 }
 #elif __has_include(<experimental/executor>)
-#define STD_IO_CONTEXT STLLIB_EXPERIMENTAL
+#define STD_EXECUTOR STLLIB_EXPERIMENTAL
 #include <experimental/executor>
 namespace std {
     namespace net = experimental::net;
