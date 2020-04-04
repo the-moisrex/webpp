@@ -2,6 +2,7 @@
 #define WEBPP_INTERFACE_COMMON_CONNECTION_H
 
 #include "../../../../include/webpp/std/buffer.h"
+#include "../../../../include/webpp/std/internet.h"
 #include "../../../../include/webpp/std/socket.h"
 #include "constants.hpp"
 #include <memory>
@@ -30,7 +31,9 @@ namespace webpp::common {
     public:
         connection(socket_t socket) noexcept : socket(std::move(socket)) {}
         connection(connection const&) = delete;
+        connection(connection&&) = default;
         connection& operator=(connection const&) = delete;
+        connection& operator=(connection&&) = default;
 
         /**
          * Start async operations
