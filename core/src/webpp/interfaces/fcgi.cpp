@@ -1,4 +1,5 @@
 #include "../../../include/webpp/interfaces/fcgi.h"
+#include "../../../include/webpp/std/internet.h"
 #include "common/constants.hpp"
 #include "common/server.hpp"
 
@@ -11,7 +12,7 @@ class fcgi::fcgi_impl {
     fcgi* _fcgi;
 
     auto get_endpoints() noexcept {
-        std::net::tcp::resolver resolver(server.io);
+        std::net::ip::tcp::resolver resolver(_server.io);
         std::error_code ec;
         auto endpoints =
             _fcgi->endpoints().empty()
