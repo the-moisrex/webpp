@@ -6,16 +6,6 @@
 #include <memory>
 #include "../../../include/webpp/common/meta.h"
 
-#ifdef CXX20
-#include <experimental/net>
-#include <experimental/socket>
-#include <experimental/io_context>
-#include <experimental/internet>
-namespace net = std::experimental::net;
-#else
-#error "We don't have access to networking TS."
-#endif
-
 
 /**
  * The reason that this file is here and not in the include directory is because
