@@ -4,24 +4,40 @@
 #include "../../../include/webpp/interfaces/common/endpoints.h"
 #include "constants.hpp"
 #include <memory>
+#include "../../../include/webpp/common/meta.h"
+
+#ifdef CXX20
+#include <experimental/net>
+#include <experimental/socket>
+#include <experimental/io_context>
+#include <experimental/internet>
+namespace net = std::experimental::net;
+#else
+#error "We don't have access to networking TS."
+#endif
+
 
 /**
  * The reason that this file is here and not in the include directory is because
  * we want to hide every boost related library from the final users of this
- * framework. Hiding implementaions are good ways to do this.
+ * framework. Hiding implementations are good ways to do this.
  */
 
 namespace webpp::common {
 
-    class connection : public std::enable_shared_from_this<connection> {
-      private:
+    class connection {
+    public:
+        using socket_t = net::ip::tcp::socket;
+
+    private:
         socket_t socket;
         std::array<char, buffer_size> buffer;
 
         void read() noexcept;
+
         void write() noexcept;
 
-      public:
+    public:
         connection(socket_t socket) noexcept : socket(std::move(socket)) {}
         connection(connection const&) = delete;
         connection& operator=(connection const&) = delete;
