@@ -16,7 +16,7 @@ class fcgi::fcgi_impl {
         std::error_code ec;
         auto endpoints =
             _fcgi->endpoints().empty()
-                ? resolver.reslove(std::net::ip::address::from_string(
+                ? resolver.resolve(std::net::ip::address::from_string(
                                        default_fcgi_listen_addr),
                                    default_fcgi_listen_port)
                 : resolver.resolve(address, port);
@@ -28,6 +28,6 @@ class fcgi::fcgi_impl {
     void operator()() noexcept {}
 };
 
-fcgi::fcgi() noexcept : impl(new fcgi_impl{this}) {}
+fcgi::fcgi() noexcept : impl(std::make_unique<fcgi_impl>(this)) {}
 
 void fcgi::operator()() noexcept { impl->operator()(); }
