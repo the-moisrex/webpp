@@ -7,15 +7,15 @@
 
 #if __has_include(<buffer>)
 #include <buffer>
-#define STD_IO_CONTEXT STLLIB_STANDARD
+#define STD_BUFFER STLLIB_STANDARD
 #elif __has_include(<boost/asio/ts/buffer.hpp>)
-#define STD_IO_CONTEXT STLLIB_BOOST
+#define STD_BUFFER STLLIB_BOOST
 #include <boost/asio/ts/buffer.hpp>
 namespace std {
     namespace net = boost::asio;
 }
 #elif __has_include(<experimental/buffer>)
-#define STD_IO_CONTEXT STLLIB_EXPERIMENTAL
+#define STD_BUFFER STLLIB_EXPERIMENTAL
 #include <experimental/buffer>
 namespace std {
     namespace net = experimental::net;

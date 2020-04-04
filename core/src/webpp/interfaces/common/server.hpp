@@ -23,7 +23,11 @@ namespace webpp::common {
         std::vector<connection> connections;
         std::net::io_context io;
         std::net::ip::tcp::acceptor acceptor;
+#if STD_IO_CONTEXT == STLLIB_BOOST
+        boost::system::error_code ec;
+#else
         std::error_code ec;
+#endif
 
         void accept() noexcept {
             acceptor.async_accept(

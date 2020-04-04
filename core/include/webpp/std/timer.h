@@ -7,16 +7,16 @@
 // fixed later.
 
 #if __has_include(<timer>)
-#define STD_IO_CONTEXT STLLIB_STANDARD
+#define STD_TIMER STLLIB_STANDARD
 #include <timer>
 #elif __has_include(<boost/asio/ts/timer.hpp>)
-#define STD_IO_CONTEXT STLLIB_BOOST
+#define STD_TIMER STLLIB_BOOST
 #include <boost/asio/ts/timer.hpp>
 namespace std {
     namespace net = boost::asio;
 }
 #elif __has_include(<experimental/timer>)
-#define STD_IO_CONTEXT STLLIB_EXPERIMENTAL
+#define STD_TIMER STLLIB_EXPERIMENTAL
 #include <experimental/timer>
 namespace std {
     namespace net = experimental::net;

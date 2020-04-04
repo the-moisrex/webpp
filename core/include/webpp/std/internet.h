@@ -7,16 +7,16 @@
 // fixed later.
 
 #if __has_include(<internet>)
-#define STD_IO_CONTEXT STLLIB_STANDARD
+#define STD_INTERNET STLLIB_STANDARD
 #include <internet>
 #elif __has_include(<boost/asio/ts/internet.hpp>)
-#define STD_IO_CONTEXT STLLIB_BOOST
+#define STD_INTERNET STLLIB_BOOST
 #include <boost/asio/ts/internet.hpp>
 namespace std {
     namespace net = boost::asio;
 }
 #elif __has_include(<experimental/internet>)
-#define STD_IO_CONTEXT STLLIB_EXPERIMENTAL
+#define STD_INTERNET STLLIB_EXPERIMENTAL
 #include <experimental/internet>
 namespace std {
     namespace net = experimental::net;
