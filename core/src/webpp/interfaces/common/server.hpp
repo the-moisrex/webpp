@@ -24,9 +24,9 @@ namespace webpp::common {
         using error_code_t = std::error_code;
 #endif
 
+        std::net::io_context io;
       private:
         std::vector<connection> connections;
-        std::net::io_context io;
         std::net::ip::tcp::acceptor acceptor;
         error_code_t ec;
 
