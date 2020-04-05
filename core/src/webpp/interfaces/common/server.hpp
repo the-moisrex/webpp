@@ -18,17 +18,11 @@ namespace webpp::common {
       public:
         using socket_t = std::net::ip::tcp::socket;
         using endpoint_t = std::net::ip::tcp::endpoint;
-#if STD_IO_CONTEXT == STLLIB_BOOST
-        using error_code_t = boost::system::error_code;
-#else
-        using error_code_t = std::error_code;
-#endif
 
         std::net::io_context io;
       private:
         std::vector<connection> connections;
         std::net::ip::tcp::acceptor acceptor;
-        error_code_t ec;
 
         void accept() noexcept {
             acceptor.async_accept(
@@ -56,10 +50,15 @@ namespace webpp::common {
         void run() noexcept {
             // Run until the tasks finishes normally.
             // Don't worry, we'll accept another connection when we finish one
-            // of them fixme: check if we need check for exceptions
-            do {
-                io.run(ec);
-            } while (!ec);
+            // of them
+            for (;;) {
+                try {
+                    io.run();
+                    break;
+                } catch (std::exception const& err) {
+                    // TODO: what should I do here?
+                }
+            }
         }
 
         void stop() noexcept { io.stop(); }
