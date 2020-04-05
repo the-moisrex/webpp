@@ -14,12 +14,14 @@ class fcgi::fcgi_impl {
     auto get_endpoints() noexcept {
         std::net::ip::tcp::resolver resolver(_server.io);
         std::error_code ec;
-        auto endpoints =
-            _fcgi->endpoints().empty()
-                ? resolver.resolve(std::net::ip::address::from_string(
-                                       default_fcgi_listen_addr),
-                                   default_fcgi_listen_port)
-                : resolver.resolve(address, port);
+        std::net::ip::tcp::resolver::results_type _endpoints;
+        if (_fcgi->endpoints().empty()) {
+            _endpoints = resolver.resolve(
+                std::net::ip::address::from_string(default_fcgi_listen_addr),
+                default_fcgi_listen_port);
+        } else {
+            _endpoints =
+        }
     }
 
   public:

@@ -15,7 +15,7 @@ namespace webpp {
       private:
         class fcgi_impl;
         std::set<endpoint_t> _endpoints;
-        std::unique_ptr<fcgi_impl> impl ;
+        std::unique_ptr<fcgi_impl> impl;
 
       public:
         webpp::router<fcgi> router;
