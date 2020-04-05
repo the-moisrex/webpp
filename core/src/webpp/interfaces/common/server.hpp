@@ -52,7 +52,14 @@ namespace webpp::common {
       public:
         server(endpoint_t endpoints) noexcept : acceptor(io, endpoints){};
 
-        void run() noexcept { io.run(ec); }
+        void run() noexcept {
+            // Run until the tasks finishes normally.
+            // Don't worry, we'll accept another connection when we finish one
+            // of them fixme: check if we need check for exceptions
+            do {
+                io.run(ec);
+            } while (!ec);
+        }
     };
 
 } // namespace webpp::common

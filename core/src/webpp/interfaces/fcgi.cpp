@@ -20,7 +20,7 @@ class fcgi::fcgi_impl {
                 std::net::ip::address::from_string(default_fcgi_listen_addr),
                 default_fcgi_listen_port);
         } else {
-            _endpoints =
+            _endpoints = std::net::ip::tcp::v4();
         }
     }
 
