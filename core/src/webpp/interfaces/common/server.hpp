@@ -45,7 +45,8 @@ namespace webpp::common {
                         // TODO: log
                     }
 
-                    accept();
+                    if (!io.stopped())
+                        accept();
                 });
         }
 
@@ -60,6 +61,8 @@ namespace webpp::common {
                 io.run(ec);
             } while (!ec);
         }
+
+        void stop() noexcept { io.stop(); }
     };
 
 } // namespace webpp::common
