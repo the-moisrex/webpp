@@ -6,6 +6,8 @@
 // currently experimental version of timer is buggy. Hopefully that will be
 // fixed later.
 
+#include "std.h"
+
 #if __has_include(<timer>)
 #define STD_TIMER STLLIB_STANDARD
 #include <timer>
