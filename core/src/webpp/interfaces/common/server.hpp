@@ -18,8 +18,9 @@ namespace webpp::common {
       public:
         using socket_t = std::net::ip::tcp::socket;
         using endpoint_t = std::net::ip::tcp::endpoint;
+        using io_context_t = std::net::io_context;
 
-        std::net::io_context io;
+        io_context_t io;
       private:
         std::vector<connection> connections;
         std::net::ip::tcp::acceptor acceptor;
