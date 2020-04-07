@@ -70,3 +70,5 @@
 [description:"Make travis build successful" entry:"1585775732" modified:"1585775732" project:"pub" status:"pending" uuid:"8b85db80-0692-41fb-906f-b3534b1e8000"]
 [description:"optimize ipv6 and checkout the benchmark" entry:"1586100697" modified:"1586100697" project:"performance" status:"pending" uuid:"6202d19b-973a-4723-b0cb-b5ea26ab7f51"]
 [description:"add thread_pool support" entry:"1586273459" modified:"1586273459" status:"pending" uuid:"3e79f48e-c6e6-4d5d-b68f-c9e1e2332e92"]
+[description:"add a high level testing library that uses gtest and catch2 and boost.test and others" entry:"1586285885" modified:"1586285885" project:"tests" status:"pending" uuid:"ffea4453-3ea5-4f14-aa59-29bbb0d33a07"]
+[description:"convert existing tests into your own testing library" entry:"1586285928" modified:"1586285928" project:"tests" status:"pending" uuid:"d6cb4994-f5b1-4966-a919-3f543d40a6cc"]

@@ -453,3 +453,9 @@ new [description:"optimize ipv6 and checkout the benchmark" entry:"1586100697" m
 time 1586273459
 new [description:"add thread_pool support" entry:"1586273459" modified:"1586273459" status:"pending" uuid:"3e79f48e-c6e6-4d5d-b68f-c9e1e2332e92"]
 ---
+time 1586285885
+new [description:"add a high level testing library that uses gtest and catch2 and boost.test and others" entry:"1586285885" modified:"1586285885" project:"tests" status:"pending" uuid:"ffea4453-3ea5-4f14-aa59-29bbb0d33a07"]
+---
+time 1586285928
+new [description:"convert existing tests into your own testing library" entry:"1586285928" modified:"1586285928" project:"tests" status:"pending" uuid:"d6cb4994-f5b1-4966-a919-3f543d40a6cc"]
+---
