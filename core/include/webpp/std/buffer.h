@@ -5,6 +5,8 @@
 // currently experimental version of internet is buggy. Hopefully that will be
 // fixed later.
 
+#include "std.h"
+
 #if __has_include(<buffer>)
 #include <buffer>
 #define STD_BUFFER STLLIB_STANDARD
@@ -13,7 +15,7 @@
 #include <boost/asio/ts/buffer.hpp>
 namespace std {
     namespace net = boost::asio;
-}
+} // namespace std
 #elif __has_include(<experimental/buffer>)
 #define STD_BUFFER STLLIB_EXPERIMENTAL
 #include <experimental/buffer>

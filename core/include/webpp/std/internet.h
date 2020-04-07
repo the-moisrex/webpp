@@ -6,6 +6,8 @@
 // currently experimental version of internet is buggy. Hopefully that will be
 // fixed later.
 
+#include "std.h"
+
 #if __has_include(<internet>)
 #define STD_INTERNET STLLIB_STANDARD
 #include <internet>

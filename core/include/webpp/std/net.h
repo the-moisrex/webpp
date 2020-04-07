@@ -5,6 +5,8 @@
 // currently experimental version of internet is buggy. Hopefully that will be
 // fixed later.
 
+#include "std.h"
+
 #if __has_include(<net>)
 #define STD_NET STLLIB_STANDARD
 #include <net>
