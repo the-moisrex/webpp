@@ -6,6 +6,7 @@
 #include "../../../../include/webpp/std/io_context.h"
 #include "connection.hpp"
 #include "constants.hpp"
+#include <boost/asio/thread_pool.hpp>
 #include <memory>
 #include <vector>
 
@@ -20,10 +21,14 @@ namespace webpp::common {
         using endpoint_t = std::net::ip::tcp::endpoint;
         using io_context_t = std::net::io_context;
 
+        // I share this publicly because I know this file will not be used in a
+        // header file so the final user doesn't have access to this class.
         io_context_t io;
+
       private:
         std::vector<connection> connections;
         std::net::ip::tcp::acceptor acceptor;
+        boost::asio::thread_pool pool;
 
         void accept() noexcept {
             acceptor.async_accept(
