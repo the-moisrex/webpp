@@ -1,5 +1,6 @@
 *.autosave
 .clangd/
+.SpaceVim.d/
 compile_commands.json
 **/*.autosave
 *.swp
