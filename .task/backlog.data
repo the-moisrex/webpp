@@ -139,3 +139,6 @@
 {"description":"add thread_pool support","entry":"20200407T153059Z","modified":"20200407T153059Z","status":"pending","uuid":"3e79f48e-c6e6-4d5d-b68f-c9e1e2332e92"}
 {"description":"add a high level testing library that uses gtest and catch2 and boost.test and others","entry":"20200407T185805Z","modified":"20200407T185805Z","project":"tests","status":"pending","uuid":"ffea4453-3ea5-4f14-aa59-29bbb0d33a07"}
 {"description":"convert existing tests into your own testing library","entry":"20200407T185848Z","modified":"20200407T185848Z","project":"tests","status":"pending","uuid":"d6cb4994-f5b1-4966-a919-3f543d40a6cc"}
+{"description":"add clustering comminication base classes","entry":"20200412T003144Z","modified":"20200412T003144Z","project":"cluster","status":"pending","uuid":"1fdff8a6-273f-4a52-88c3-ff88cea9fb2e"}
+{"description":"clusters can run a thread_pool too","entry":"20200412T003211Z","modified":"20200412T003211Z","project":"cluster","status":"pending","uuid":"065f8fe8-d9a7-4200-ae08-341340efd88e"}
+{"description":"implement thread_pool classes","entry":"20200412T003232Z","modified":"20200412T003232Z","project":"cluster","status":"pending","uuid":"143619d9-74ec-47c0-8036-5e87e7d3f824"}
