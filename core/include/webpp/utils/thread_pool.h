@@ -29,6 +29,8 @@ namespace webpp {
    *   - [ ] std::thread
    *   - [ ] std::jthread
    *   - [ ] boost::thread
+   *   - [ ] POSIX
+   * - [ ] Constexpr way to hash a function object into a known number in the thread pool
    */
     class thread_pool {
       private:
