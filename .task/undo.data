@@ -468,3 +468,6 @@ new [description:"clusters can run a thread_pool too" entry:"1586651531" modifie
 time 1586651552
 new [description:"implement thread_pool classes" entry:"1586651552" modified:"1586651552" project:"cluster" status:"pending" uuid:"143619d9-74ec-47c0-8036-5e87e7d3f824"]
 ---
+time 1587016661
+new [description:"thread-safe properties with the help of marcos or pre-compile code generation based on the spacified class or type" entry:"1587016661" modified:"1587016661" project:"cluster" status:"pending" uuid:"aea14361-c9be-4d68-8510-bdc05a751064"]
+---
