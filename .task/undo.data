@@ -471,3 +471,9 @@ new [description:"implement thread_pool classes" entry:"1586651552" modified:"15
 time 1587016661
 new [description:"thread-safe properties with the help of marcos or pre-compile code generation based on the spacified class or type" entry:"1587016661" modified:"1587016661" project:"cluster" status:"pending" uuid:"aea14361-c9be-4d68-8510-bdc05a751064"]
 ---
+time 1587018438
+new [description:"see if it's possible to use operator overloading magics to implement threadsafe properties" entry:"1587018438" modified:"1587018438" project:"cluster" status:"pending" uuid:"2aea4654-a74b-4414-8c62-c47672395f9c"]
+---
+time 1587036554
+new [description:"add fast and thread-safe class template for containers" entry:"1587036554" modified:"1587036554" project:"thread" status:"pending" uuid:"1c6cd1b3-17c9-44c6-9c1f-c7c64612a96d"]
+---
