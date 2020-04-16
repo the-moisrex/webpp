@@ -75,3 +75,4 @@
 [description:"add clustering comminication base classes" entry:"1586651504" modified:"1586651504" project:"cluster" status:"pending" uuid:"1fdff8a6-273f-4a52-88c3-ff88cea9fb2e"]
 [description:"clusters can run a thread_pool too" entry:"1586651531" modified:"1586651531" project:"cluster" status:"pending" uuid:"065f8fe8-d9a7-4200-ae08-341340efd88e"]
 [description:"implement thread_pool classes" entry:"1586651552" modified:"1586651552" project:"cluster" status:"pending" uuid:"143619d9-74ec-47c0-8036-5e87e7d3f824"]
+[description:"thread-safe properties with the help of marcos or pre-compile code generation based on the spacified class or type" entry:"1587016661" modified:"1587016661" project:"cluster" status:"pending" uuid:"aea14361-c9be-4d68-8510-bdc05a751064"]
