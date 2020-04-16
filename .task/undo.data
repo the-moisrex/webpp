@@ -477,3 +477,6 @@ new [description:"see if it's possible to use operator overloading magics to imp
 time 1587036554
 new [description:"add fast and thread-safe class template for containers" entry:"1587036554" modified:"1587036554" project:"thread" status:"pending" uuid:"1c6cd1b3-17c9-44c6-9c1f-c7c64612a96d"]
 ---
+time 1587047171
+new [description:"add defined(__has_include) macro for safty" entry:"1587047171" modified:"1587047171" status:"pending" uuid:"c648e333-3205-47ae-9f4a-243758ddb3f7"]
+---
