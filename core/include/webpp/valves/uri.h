@@ -63,6 +63,19 @@ namespace webpp::valves {
         }
     };
 
+    /**
+     * Features:
+     *   - [ ] Specifying the type of the segment
+     *   - [ ] Validating the segments with a custom method
+     *   - [ ] Partial segments: segments that are not between two slashes
+     *   - [ ] Naming the segments
+     *   - [ ] Custom SegTypes (Segment Types):
+     *     - [ ]
+     * Attention: getting those segments are the responsibility of the
+     * "route" class. We will define the implementation for it here, but the
+     * final user should get the data from there; they can use this feature
+     * directly here, but it looks nicer if they do it there.
+     */
     struct tpath : public valve<tpath_condition> {
         using valve<tpath_condition>::valve;
     };
