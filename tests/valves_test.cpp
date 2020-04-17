@@ -49,3 +49,14 @@ TEST(ValveTests, DynamicValve) {
     EXPECT_TRUE(dv(con1));
     EXPECT_TRUE(dv(con2));
 }
+
+TEST(ValveTests, EmptyValve) {
+    constexpr auto one = empty;
+    constexpr auto two = get or empty;
+    constexpr auto three = empty or get;
+
+    auto req = request_t<fake_cgi>().set_method("POST");
+    EXPECT_TRUE(one(req));
+    EXPECT_TRUE(two(req));
+    EXPECT_TRUE(three(req));
+}
