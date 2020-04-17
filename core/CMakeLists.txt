@@ -7,10 +7,10 @@ set(ALL_HEADERS
     ${LIB_INCLUDE_DIR}/webpp/thread.h
 
     ${LIB_INCLUDE_DIR}/webpp/valves/valve.h
-    
+
     ${LIB_INCLUDE_DIR}/webpp/validators/validators.h
     ${LIB_INCLUDE_DIR}/webpp/validators/email.h
-    
+
     ${LIB_INCLUDE_DIR}/webpp/utils/casts.h
     ${LIB_INCLUDE_DIR}/webpp/utils/cfile.h
     ${LIB_INCLUDE_DIR}/webpp/utils/charset.h
@@ -24,7 +24,7 @@ set(ALL_HEADERS
     ${LIB_INCLUDE_DIR}/webpp/utils/property.h
     ${LIB_INCLUDE_DIR}/webpp/utils/strings.h
     ${LIB_INCLUDE_DIR}/webpp/utils/uri.h
-    ${LIB_INCLUDE_DIR}/webpp/utils/consttants.h
+        ${LIB_INCLUDE_DIR}/webpp/utils/constants.h
 
     ${LIB_INCLUDE_DIR}/webpp/interfaces/cgi.h
 
@@ -38,23 +38,23 @@ set(ALL_HEADERS
   )
 
 
-set(ALL_SOURCES 
-    ${LIB_SRC_DIR}/webpp.cpp
-    ${LIB_SRC_DIR}/webpp/config.cpp
-    ${LIB_SRC_DIR}/webpp/router.cpp
-    ${LIB_SRC_DIR}/webpp/server.cpp
-    ${LIB_SRC_DIR}/webpp/thread.cpp
+set(ALL_SOURCES
+        ${LIB_SRC_DIR}/webpp.cpp
+        ${LIB_SRC_DIR}/webpp/config.cpp
+        ${LIB_SRC_DIR}/webpp/router.cpp
+        ${LIB_SRC_DIR}/webpp/server.cpp
+        ${LIB_SRC_DIR}/webpp/thread.cpp
 
-    ${LIB_SRC_DIR}/webpp/valves/valve.cpp
-    
-    ${LIB_SRC_DIR}/webpp/validators/validators.cpp
-    ${LIB_SRC_DIR}/webpp/validators/email.cpp
-    
-    ${LIB_SRC_DIR}/webpp/utils/casts.cpp
-    ${LIB_SRC_DIR}/webpp/utils/cfile.cpp
-    ${LIB_SRC_DIR}/webpp/utils/charset.cpp
-    ${LIB_SRC_DIR}/webpp/utils/const_list.cpp
-    ${LIB_SRC_DIR}/webpp/utils/containers.cpp
+        ${LIB_SRC_DIR}/webpp/valves/valve.cpp
+
+        ${LIB_SRC_DIR}/webpp/validators/validators.cpp
+        ${LIB_SRC_DIR}/webpp/validators/email.cpp
+
+        ${LIB_SRC_DIR}/webpp/utils/casts.cpp
+        ${LIB_SRC_DIR}/webpp/utils/cfile.cpp
+        ${LIB_SRC_DIR}/webpp/utils/charset.cpp
+        ${LIB_SRC_DIR}/webpp/utils/const_list.cpp
+        ${LIB_SRC_DIR}/webpp/utils/containers.cpp
         ${LIB_SRC_DIR}/webpp/utils/debounce.cpp
         ${LIB_SRC_DIR}/webpp/utils/functional.cpp
         ${LIB_SRC_DIR}/webpp/utils/ipv4.cpp
@@ -77,15 +77,14 @@ set(ALL_SOURCES
         ${LIB_SRC_DIR}/webpp/http/request.cpp
         ${LIB_SRC_DIR}/webpp/http/response.cpp
 
-
         ${LIB_SRC_DIR}/main.cpp
         )
 
 set(ALL_SOURCES_SHORT "")
 foreach (source ${ALL_SOURCES})
-  string(REPLACE "${PROJECT_SOURCE_DIR}/" "" SOURCE_SHORT ${source})
-  list(APPEND ALL_SOURCES_SHORT ${SOURCE_SHORT})
-endforeach()
+    string(REPLACE "${PROJECT_SOURCE_DIR}/" "" SOURCE_SHORT ${source})
+    list(APPEND ALL_SOURCES_SHORT ${SOURCE_SHORT})
+endforeach ()
 string(REPLACE ";" "\n                                    " ALL_SOURCES_SHORT_P "${ALL_SOURCES_SHORT}")
 message(STATUS "Source Files                   : ${ALL_SOURCES_SHORT_P}")
 
@@ -130,53 +129,50 @@ set_target_properties(${SLIB_NAME} PROPERTIES
 	LINKER_LANGUAGE CXX
 )
 
-target_include_directories(${LIB_NAME} PUBLIC 
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-)
-target_include_directories(${SLIB_NAME} PUBLIC 
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-)
+target_include_directories(${LIB_NAME} PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+        )
+target_include_directories(${SLIB_NAME} PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+        )
 
 
 install(TARGETS ${LIB_NAME}
-  EXPORT "${LIB_NAME}Config"
-  LIBRARY DESTINATION ${INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${INSTALL_LIBDIR}
-  RUNTIME DESTINATION ${INSTALL_BINDIR}
-  INCLUDES DESTINATION ${INSTALL_INCLUDEDIR}
-)
-export(TARGETS ${LIB_NAME} 
-  NAMESPACE ${PROJECT_NAME}::${LIB_NAME}
-  FILE "${CMAKE_CURRENT_BINARY_DIR}/${LIB_NAME}InternalConfig.cmake"
-)
+        EXPORT "${LIB_NAME}Config"
+        LIBRARY DESTINATION ${INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${INSTALL_BINDIR}
+        INCLUDES DESTINATION ${INSTALL_INCLUDEDIR}
+        )
+export(TARGETS ${LIB_NAME}
+        NAMESPACE ${PROJECT_NAME}::${LIB_NAME}
+        FILE "${CMAKE_CURRENT_BINARY_DIR}/${LIB_NAME}InternalConfig.cmake"
+        )
 install(EXPORT "${LIB_NAME}Config"
-  FILE "${LIB_NAME}Config.cmake"
-  NAMESPACE ${PROJECT_NAME}::
-  DESTINATION "${CMAKE_INSTALL_DATADIR}/${LIB_NAME}"
-)
-
-
-
+        FILE "${LIB_NAME}Config.cmake"
+        NAMESPACE ${PROJECT_NAME}::
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/${LIB_NAME}"
+        )
 
 
 install(TARGETS ${SLIB_NAME}
-  EXPORT "${SLIB_NAME}Config"
-  LIBRARY DESTINATION ${INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${INSTALL_LIBDIR}
-  RUNTIME DESTINATION ${INSTALL_BINDIR}
-  INCLUDES DESTINATION ${INSTALL_INCLUDEDIR}
-)
-export(TARGETS ${SLIB_NAME} 
-  NAMESPACE ${PROJECT_NAME}::${SLIB_NAME}
-  FILE "${CMAKE_CURRENT_BINARY_DIR}/${SLIB_NAME}InternalConfig.cmake"
-)
+        EXPORT "${SLIB_NAME}Config"
+        LIBRARY DESTINATION ${INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${INSTALL_BINDIR}
+        INCLUDES DESTINATION ${INSTALL_INCLUDEDIR}
+        )
+export(TARGETS ${SLIB_NAME}
+        NAMESPACE ${PROJECT_NAME}::${SLIB_NAME}
+        FILE "${CMAKE_CURRENT_BINARY_DIR}/${SLIB_NAME}InternalConfig.cmake"
+        )
 install(EXPORT "${SLIB_NAME}Config"
-  FILE "${SLIB_NAME}Config.cmake"
-  NAMESPACE ${PROJECT_NAME}::
-  DESTINATION "${CMAKE_INSTALL_DATADIR}/${SLIB_NAME}"
-)
+        FILE "${SLIB_NAME}Config.cmake"
+        NAMESPACE ${PROJECT_NAME}::
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/${SLIB_NAME}"
+        )
 
 
 ############################## install the include files ##############################
