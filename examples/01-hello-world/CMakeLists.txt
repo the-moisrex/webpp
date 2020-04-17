@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 project(webpp_helloworld)
 
 file(GLOB BIN_SOURCES *.cpp)
+set(CMAKE_CXX_STANDARD 20)
+
 #file(READ index.html INDEX_HTML)
 #string(REPLACE "\n" "\n/" "${INDEX_HTML}" INDEX_HTML)
 #configure_file(config.h.in config.h NEWLINE_STYLE UNIX)
