@@ -12,6 +12,8 @@ namespace webpp {
 
         void set_path(std::string_view ___path) noexcept { __path = ___path; }
 
+        auto request_method() const noexcept { return "GET"; }
+
       protected:
         std::string __path;
     };
@@ -141,3 +143,44 @@ static void valves_run_empty_dynamic(benchmark::State& state) {
     }
 }
 BENCHMARK(valves_run_empty_dynamic);
+
+////////////////////////////// method //////////////////////////////
+
+static void valves_method_init(benchmark::State& state) {
+    for (auto _ : state) {
+        auto _valve = valves::method("GET");
+        benchmark::DoNotOptimize(_valve);
+    }
+}
+BENCHMARK(valves_method_init);
+
+static void valves_dynamic_method_init(benchmark::State& state) {
+    for (auto _ : state) {
+        auto _valve =
+            valves::dynamic_valve<fake_interface>() and valves::method("GET");
+        benchmark::DoNotOptimize(_valve);
+    }
+}
+BENCHMARK(valves_dynamic_method_init);
+
+////////////////////////////// method run //////////////////////////////
+
+static void valves_method_run(benchmark::State& state) {
+    auto _valve = valves::method("GET");
+    request_t<fake_interface> req;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(_valve(req));
+    }
+}
+BENCHMARK(valves_method_run);
+
+static void valves_dynamic_method_run(benchmark::State& state) {
+    auto _valve =
+        valves::dynamic_valve<fake_interface>() and valves::method("GET");
+    request_t<fake_interface> req;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(_valve(req));
+    }
+}
+
+BENCHMARK(valves_dynamic_method_run);
