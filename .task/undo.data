@@ -492,3 +492,6 @@ new [description:"a valve that only allows registered users" entry:"1587133855" 
 time 1587134019
 new [description:"a valve that wraps a function" entry:"1587134019" modified:"1587134019" project:"valves" status:"pending" uuid:"48c08fbb-9cfe-4be3-b20b-703415927613"]
 ---
+time 1587144992
+new [description:"find a better way to specialize empty_t" entry:"1587144992" modified:"1587144992" project:"valves" status:"pending" uuid:"725c4707-29eb-4549-94c2-615190b86ae8"]
+---
