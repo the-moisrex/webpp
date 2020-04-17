@@ -32,7 +32,7 @@ namespace webpp::common {
 
         void accept() noexcept {
             acceptor.async_accept(
-                [this](error_code_t const& ec, socket_t socket) {
+                [this](std::error_code const& ec, socket_t socket) {
                     // Check whether the server was stopped by a signal before
                     // this completion handler had a chance to run
                     if (!acceptor.is_open()) {

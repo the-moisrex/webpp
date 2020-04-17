@@ -20,6 +20,15 @@ namespace webpp::valves {
         next_valve_type next;
         logical_operators op;
 
+        constexpr basic_valve(ValveType&& super, next_valve_type&& _next,
+                              logical_operators op) noexcept
+            : ValveType(std::move(super)), next(std::move(_next)), op(op) {}
+
+        constexpr basic_valve(ValveType const& super,
+                              const next_valve_type& _next,
+                              logical_operators op) noexcept
+            : ValveType(super), next(_next), op(op) {}
+
         constexpr basic_valve(ValveType const& super, next_valve_type&& _next,
                               logical_operators op) noexcept
             : ValveType(super), next(std::move(_next)), op(op) {}
@@ -65,7 +74,7 @@ namespace webpp::valves {
 
                 // the first way (A<X, void> and B<Y, void> === A<X, B<Y, void>>
                 return valve<ValveType, NewValve>(
-                    *this, std::forward<NewValve>(v), the_op);
+                    *this, std::forward<NewValve>(v), std::move(the_op));
             } else {
                 // this means this function has a "next" valve already,
                 // so it goes to the next's next valve
