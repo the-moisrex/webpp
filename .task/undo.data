@@ -480,3 +480,15 @@ new [description:"add fast and thread-safe class template for containers" entry:
 time 1587047171
 new [description:"add defined(__has_include) macro for safty" entry:"1587047171" modified:"1587047171" status:"pending" uuid:"c648e333-3205-47ae-9f4a-243758ddb3f7"]
 ---
+time 1587133796
+new [description:"a valve that limits user visits" entry:"1587133796" modified:"1587133796" project:"valves" status:"pending" uuid:"18762cae-5ebe-4aac-b1e2-429b272efb6f"]
+---
+time 1587133845
+new [description:"a valve that only allows guests" entry:"1587133845" modified:"1587133845" project:"valves" status:"pending" uuid:"d8196883-11eb-48ef-84c1-fa9f0002fd9c"]
+---
+time 1587133855
+new [description:"a valve that only allows registered users" entry:"1587133855" modified:"1587133855" project:"valves" status:"pending" uuid:"10cbdc1f-284f-45b9-86a8-9d825eb87230"]
+---
+time 1587134019
+new [description:"a valve that wraps a function" entry:"1587134019" modified:"1587134019" project:"valves" status:"pending" uuid:"48c08fbb-9cfe-4be3-b20b-703415927613"]
+---
