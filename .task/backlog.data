@@ -150,3 +150,4 @@
 {"description":"a valve that only allows guests","entry":"20200417T143045Z","modified":"20200417T143045Z","project":"valves","status":"pending","uuid":"d8196883-11eb-48ef-84c1-fa9f0002fd9c"}
 {"description":"a valve that only allows registered users","entry":"20200417T143055Z","modified":"20200417T143055Z","project":"valves","status":"pending","uuid":"10cbdc1f-284f-45b9-86a8-9d825eb87230"}
 {"description":"a valve that wraps a function","entry":"20200417T143339Z","modified":"20200417T143339Z","project":"valves","status":"pending","uuid":"48c08fbb-9cfe-4be3-b20b-703415927613"}
+{"description":"find a better way to specialize empty_t","entry":"20200417T173632Z","modified":"20200417T173632Z","project":"valves","status":"pending","uuid":"725c4707-29eb-4549-94c2-615190b86ae8"}
