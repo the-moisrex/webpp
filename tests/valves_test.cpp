@@ -33,6 +33,14 @@ TEST(ValvesTests, Creation) {
     EXPECT_TRUE(v(request_t<fake_cgi>().set_method("POST")));
 }
 
+TEST(ValvesTests, Operations) {
+    constexpr auto v = empty and empty;
+
+    EXPECT_TRUE(v(request_t<fake_cgi>()));
+    EXPECT_TRUE(
+        (empty and empty and empty or empty or empty)(request_t<fake_cgi>()));
+}
+
 TEST(ValveTests, DynamicValve) {
     auto dv = dynamic_valve<fake_cgi>() and method("GET") or method("POST");
 
