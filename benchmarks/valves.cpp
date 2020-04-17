@@ -123,3 +123,21 @@ static void valves_dynamic_xor_two_empties(benchmark::State& state) {
 BENCHMARK(valves_dynamic_xor_two_empties);
 
 ////////////////////////////// operator() //////////////////////////////
+
+static void valves_run_empty(benchmark::State& state) {
+    auto _valve = valves::empty;
+    request_t<fake_interface> req;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(_valve(req));
+    }
+}
+BENCHMARK(valves_run_empty);
+
+static void valves_run_empty_dynamic(benchmark::State& state) {
+    auto _valve = valves::dynamic_valve<fake_interface>() and valves::empty;
+    request_t<fake_interface> req;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(_valve(req));
+    }
+}
+BENCHMARK(valves_run_empty_dynamic);
