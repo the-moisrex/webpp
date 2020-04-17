@@ -51,12 +51,21 @@ TEST(ValveTests, DynamicValve) {
 }
 
 TEST(ValveTests, EmptyValve) {
-    constexpr auto one = empty;
-    constexpr auto two = get or empty;
-    constexpr auto three = empty or get;
+    constexpr auto or_one = empty;
+    constexpr auto or_two = get or empty;
+    constexpr auto or_three = empty or get;
 
     auto req = request_t<fake_cgi>().set_method("POST");
-    EXPECT_TRUE(one(req));
-    EXPECT_TRUE(two(req));
-    EXPECT_TRUE(three(req));
+
+    EXPECT_TRUE(or_one(req));
+    EXPECT_TRUE(or_two(req));
+    EXPECT_TRUE(or_three(req));
+
+    constexpr auto and_one = post;
+    constexpr auto and_two = post and empty;
+    constexpr auto and_three = empty and post;
+
+    EXPECT_TRUE(and_one(req));
+    EXPECT_TRUE(and_two(req));
+    EXPECT_TRUE(and_three(req));
 }
