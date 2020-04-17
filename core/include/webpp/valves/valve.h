@@ -94,7 +94,9 @@ namespace webpp::valves {
 
         template <typename NewValve>
         [[nodiscard]] constexpr auto operator&&(NewValve&& v) const noexcept {
-            if constexpr (std::is_same_v<NewValve, valve<empty_condition>>) {
+            if constexpr (std::is_convertible_v<
+                              typename std::decay_t<NewValve>::type,
+                              empty_condition>) {
                 // AnyValve && EmptyValve == AnyValve
                 return *this;
             } else {
@@ -105,7 +107,9 @@ namespace webpp::valves {
 
         template <typename NewValve>
         [[nodiscard]] constexpr auto operator&(NewValve&& v) const noexcept {
-            if constexpr (std::is_same_v<NewValve, valve<empty_condition>>) {
+            if constexpr (std::is_convertible_v<
+                              typename std::decay_t<NewValve>::type,
+                              empty_condition>) {
                 // AnyValve && EmptyValve == AnyValve
                 return *this;
             } else {
@@ -116,7 +120,9 @@ namespace webpp::valves {
 
         template <typename NewValve>
         [[nodiscard]] constexpr auto operator||(NewValve&& v) const noexcept {
-            if constexpr (std::is_same_v<NewValve, valve<empty_condition>>) {
+            if constexpr (std::is_convertible_v<
+                              typename std::decay_t<NewValve>::type,
+                              empty_condition>) {
                 // AnyValve || EmptyValve == EmptyValve
                 return valve<empty_condition>{};
             } else {
@@ -127,7 +133,9 @@ namespace webpp::valves {
 
         template <typename NewValve>
         [[nodiscard]] constexpr auto operator|(NewValve&& v) const noexcept {
-            if constexpr (std::is_same_v<NewValve, valve<empty_condition>>) {
+            if constexpr (std::is_convertible_v<
+                              typename std::decay_t<NewValve>::type,
+                              empty_condition>) {
                 // AnyValve || EmptyValve == EmptyValve
                 return valve<empty_condition>{};
             } else {
