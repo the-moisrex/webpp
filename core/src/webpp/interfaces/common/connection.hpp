@@ -17,18 +17,29 @@
 namespace webpp::common {
 
     class connection {
-    public:
-      using socket_t = std::net::ip::tcp::socket;
+      public:
+        using socket_t = std::net::ip::tcp::socket;
 
-    private:
+      private:
         socket_t socket;
         std::array<char, buffer_size> buffer;
 
-        void read() noexcept;
+        void read() noexcept {
+            // we share ourselves, so the connection keeps itself alive.
+            socket.async_read_some(
+                std::net::buffer(buffer),
+                [this](std::error_code const& err,
+                       std::size_t bytes_transferred) noexcept {
+                    if (!err) {
+                        // we need to parse, store, read more, or
+                        // write something
+                    }
+                });
+        }
 
-        void write() noexcept;
+        void write() noexcept {}
 
-    public:
+      public:
         connection(socket_t socket) noexcept : socket(std::move(socket)) {}
         connection(connection const&) = delete;
         connection(connection&&) = default;
@@ -45,20 +56,6 @@ namespace webpp::common {
          */
         void stop() noexcept;
     };
-
-    void connection::read() noexcept {
-        // we share ourselves, so the connection keeps itself alive.
-        socket.async_read_some(std::net::buffer(buffer),
-                               [this](std::error_code const& err,
-                                      std::size_t bytes_transferred) noexcept {
-                                   if (!err) {
-                                       // we need to parse, store, read more, or
-                                       // write something
-                                   }
-                               });
-    }
-
-    void connection::write() noexcept {}
 
 } // namespace webpp::common
 
