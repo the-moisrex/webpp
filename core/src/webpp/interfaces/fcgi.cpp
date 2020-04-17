@@ -17,7 +17,7 @@ class fcgi::fcgi_impl {
         std::net::ip::tcp::resolver::results_type _endpoints;
         if (_fcgi->endpoints().empty()) {
             _endpoints = resolver.resolve(
-                std::net::ip::address::from_string(default_fcgi_listen_addr),
+                std::net::ip::address::make_address(default_fcgi_listen_addr),
                 default_fcgi_listen_port);
         } else {
             _endpoints = std::net::ip::tcp::v4();
