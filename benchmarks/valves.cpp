@@ -77,9 +77,49 @@ BENCHMARK(valves_and_two_empties);
 
 static void valves_dynamic_and_two_empties(benchmark::State& state) {
     for (auto _ : state) {
-        auto _valve = valves::dynamic_valve<fake_interface>() && valves::empty && valves::empty;
+        auto _valve = valves::dynamic_valve<fake_interface>() &&
+                      valves::empty && valves::empty;
         benchmark::DoNotOptimize(_valve);
     }
 }
 BENCHMARK(valves_dynamic_and_two_empties);
 
+////////////////////////////// OR //////////////////////////////
+
+static void valves_or_two_empties(benchmark::State& state) {
+    for (auto _ : state) {
+        auto _valve = valves::empty || valves::empty;
+        benchmark::DoNotOptimize(_valve);
+    }
+}
+BENCHMARK(valves_or_two_empties);
+
+static void valves_dynamic_or_two_empties(benchmark::State& state) {
+    for (auto _ : state) {
+        auto _valve = valves::dynamic_valve<fake_interface>() ||
+                      valves::empty || valves::empty;
+        benchmark::DoNotOptimize(_valve);
+    }
+}
+BENCHMARK(valves_dynamic_or_two_empties);
+
+////////////////////////////// XOR //////////////////////////////
+
+static void valves_xor_two_empties(benchmark::State& state) {
+    for (auto _ : state) {
+        auto _valve = valves::empty xor valves::empty;
+        benchmark::DoNotOptimize(_valve);
+    }
+}
+BENCHMARK(valves_xor_two_empties);
+
+static void valves_dynamic_xor_two_empties(benchmark::State& state) {
+    for (auto _ : state) {
+        auto _valve = valves::dynamic_valve<fake_interface>() ^ valves::empty ^
+                      valves::empty;
+        benchmark::DoNotOptimize(_valve);
+    }
+}
+BENCHMARK(valves_dynamic_xor_two_empties);
+
+////////////////////////////// operator() //////////////////////////////
