@@ -36,10 +36,7 @@ namespace webpp {
 
 } // namespace webpp
 
-
-
 ////////////////////////////// Init //////////////////////////////
-
 
 static void valves_empty_valve_init(benchmark::State& state) {
     for (auto _ : state) {
@@ -64,8 +61,6 @@ static void valves_dynamic_valve_init(benchmark::State& state) {
     }
 }
 BENCHMARK(valves_dynamic_valve_init);
-
-
 
 ////////////////////////////// AND //////////////////////////////
 
@@ -144,7 +139,7 @@ static void valves_run_empty_dynamic(benchmark::State& state) {
 }
 BENCHMARK(valves_run_empty_dynamic);
 
-////////////////////////////// method //////////////////////////////
+////////////////////////////// method init //////////////////////////////
 
 static void valves_method_init(benchmark::State& state) {
     for (auto _ : state) {
@@ -184,3 +179,54 @@ static void valves_dynamic_method_run(benchmark::State& state) {
 }
 
 BENCHMARK(valves_dynamic_method_run);
+
+////////////////////////////// long init //////////////////////////////
+
+static void valves_long_init(benchmark::State& state) {
+    for (auto _ : state) {
+        auto _valve = valves::empty or valves::method("POST") or
+                      valves::method("GET") and valves::empty or
+                      valves::tpath("/about") and valves::empty or
+                      valves::path("/home");
+        benchmark::DoNotOptimize(_valve);
+    }
+}
+BENCHMARK(valves_long_init);
+
+static void valves_dynamic_long_init(benchmark::State& state) {
+    for (auto _ : state) {
+        auto _valve =
+            valves::dynamic_valve<fake_interface>() and valves::empty or
+            valves::method("POST") or valves::method("GET") and valves::empty or
+            valves::tpath("/about") and valves::empty or valves::path("/home");
+        benchmark::DoNotOptimize(_valve);
+    }
+}
+BENCHMARK(valves_dynamic_long_init);
+
+////////////////////////////// long run //////////////////////////////
+
+static void valves_long_run(benchmark::State& state) {
+    auto _valve = valves::empty or valves::method("POST") or
+                  valves::method("GET") and valves::empty or
+                  valves::tpath("/about") and valves::empty or
+                  valves::path("/home");
+    request_t<fake_interface> req;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(_valve(req));
+    }
+}
+BENCHMARK(valves_long_run);
+
+static void valves_dynamic_long_run(benchmark::State& state) {
+    auto _valve =
+        valves::dynamic_valve<fake_interface>() and valves::empty or
+        valves::method("POST") or valves::method("GET") and valves::empty or
+        valves::tpath("/about") and valves::empty or valves::path("/home");
+    request_t<fake_interface> req;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(_valve(req));
+    }
+}
+
+BENCHMARK(valves_dynamic_long_run);
