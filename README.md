@@ -29,7 +29,9 @@ I'd appreciate any help of any kind. Even if you're not interested in coding, he
 ### Examples
 In the `examples` directory you can find examples. That's not much but it'll give you they high level viewpoint. Take a look at them and you can be sure that we'll try to write tests for all of them; so if you read tests, you'll learn even more about the project.
 
-### Write tests
+### Tests
+We currently use `googletest` library for unit/integrated testing. This might change in a few years though.
+
 There are many tests you can read, confirm, fix, and/or write. They are the perfect place to start learning about the project after the examples.
 
 You currently can run tests just by running the `webpptest` executable. It's as easy as that.
