@@ -27,31 +27,35 @@ namespace webpp::common {
 
       private:
         std::vector<connection> connections;
-        std::net::ip::tcp::acceptor acceptor;
+        std::vector<std::net::ip::tcp::acceptor> acceptors;
         boost::asio::thread_pool pool;
 
         void accept() noexcept {
-            acceptor.async_accept(
-                [this](std::error_code const& ec, socket_t socket) {
-                    // Check whether the server was stopped by a signal before
-                    // this completion handler had a chance to run
-                    if (!acceptor.is_open()) {
-                        return;
-                    }
-
-                    if (!ec) {
-                        connections.emplace_back(std::move(socket));
-                    } else {
-                        // TODO: log
-                    }
-
-                    if (!io.stopped())
-                        accept();
-                });
+            //            for (auto& acceptor : acceptors)
+            //                acceptor.async_accept(
+            //                    [this](std::error_code const& ec, socket_t
+            //                    socket) {
+            //                        // Check whether the server was stopped by
+            //                        a signal
+            //                        // before this completion handler had a
+            //                        chance to run if (!acceptor.is_open()) {
+            //                            return;
+            //                        }
+            //
+            //                        if (!ec) {
+            //                            connections.emplace_back(std::move(socket));
+            //                        } else {
+            //                            // TODO: log
+            //                        }
+            //
+            //                        if (!io.stopped())
+            //                            accept();
+            //                    });
         }
 
       public:
-        server(endpoint_t endpoints) noexcept : acceptor(io, endpoints){};
+        // TODO: optimize this
+        server(std::vector<endpoint_t> endpoints) noexcept {};
 
         void run() noexcept {
             // Run until the tasks finishes normally.

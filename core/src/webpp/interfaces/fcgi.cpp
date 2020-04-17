@@ -22,10 +22,12 @@ class fcgi::fcgi_impl {
         //        } else {
         //            _endpoints = std::net::ip::tcp::v4();
         //        }
+        return std::vector<std::net::ip::tcp::endpoint>{};
     }
 
   public:
-    fcgi_impl(fcgi* __fcgi) noexcept : _fcgi(__fcgi) {}
+    fcgi_impl(fcgi* __fcgi) noexcept
+        : _fcgi(__fcgi), _server(get_endpoints()) {}
 
     void operator()() noexcept {}
 };
