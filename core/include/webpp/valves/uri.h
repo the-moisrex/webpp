@@ -1,8 +1,8 @@
 #ifndef WEBPP_VALVE_URI_H
 #define WEBPP_VALVE_URI_H
 
-#include "valve.h"
 #include "../../../include/webpp/utils/uri.h"
+#include "valve.h"
 #include <cstddef> // for std::size_t
 #include <string_view>
 
@@ -34,6 +34,18 @@ namespace webpp::valves {
 
     // templated path
 
+    /**
+     * Check whether or not the specified URI path is a match for the specified
+     * template. This function will be used in "tpath_condition". I didn't
+     * implement it there because it's a template method and I'd like to
+     * abstract away the implementation details.
+     * @param templated_path
+     * @param _path
+     * @return
+     */
+    [[nodiscard]] bool tpath_check(std::string_view const& templated_path,
+                                   std::string_view const& _path) noexcept;
+
     struct tpath_condition {
       protected:
         std::string_view tpath_str;
@@ -45,9 +57,9 @@ namespace webpp::valves {
         constexpr tpath_condition() noexcept = default;
 
         template <typename RequestType>
-        [[nodiscard]] bool operator()(RequestType const& req) const noexcept {
-            // TODO: change this algorithm
-            return req.request_uri() == tpath_str;
+        [[nodiscard]] inline bool operator()(RequestType const& req) const
+            noexcept {
+            return tpath_check(tpath_str, req.request_uri());
         }
     };
 
