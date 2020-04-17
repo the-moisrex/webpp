@@ -219,6 +219,52 @@ namespace webpp::valves {
         }
     };
 
+    struct empty_condition {
+        template <typename RequestType>
+        [[nodiscard]] constexpr bool
+        operator()(RequestType const& /* req */) const noexcept {
+            return true;
+        }
+    };
+    struct empty_t : public valve<empty_condition> {
+        using valve<empty_condition>::valve;
+
+        /**
+         * AnyValve || EmptyValve == EmptyValve
+         */
+        template <typename NewValve>
+        [[nodiscard]] constexpr auto operator||(NewValve&& /* v */) const
+            noexcept {
+            return empty_t{};
+        }
+
+        /**
+         * AnyValve || EmptyValve == EmptyValve
+         */
+        template <typename NewValve>
+        [[nodiscard]] constexpr auto operator|(NewValve&& /* v */) const
+            noexcept {
+            return empty_t{};
+        }
+
+        /**
+         * AnyValve && EmptyValve == AnyValve
+         */
+        template <typename NewValve>
+        [[nodiscard]] constexpr auto operator&&(NewValve&& v) const noexcept {
+            return std::forward<NewValve>(v);
+        }
+
+        /**
+         * AnyValve && EmptyValve == AnyValve
+         */
+        template <typename NewValve>
+        [[nodiscard]] constexpr auto operator&(NewValve&& v) const noexcept {
+            return std::forward<NewValve>(v);
+        }
+    };
+    constexpr empty_t empty;
+
 } // namespace webpp::valves
 
 #endif // WEBPP_VALVE_H
