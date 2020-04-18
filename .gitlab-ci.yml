@@ -24,9 +24,9 @@ build:
   artifacts:
     paths:
       - build/
-    cache:
-      paths:
-       - "build/*"
+      cache:
+        paths:
+         - "build/*"
 
 # run tests using the binary built before
 test:
