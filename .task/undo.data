@@ -495,3 +495,6 @@ new [description:"a valve that wraps a function" entry:"1587134019" modified:"15
 time 1587144992
 new [description:"find a better way to specialize empty_t" entry:"1587144992" modified:"1587144992" project:"valves" status:"pending" uuid:"725c4707-29eb-4549-94c2-615190b86ae8"]
 ---
+time 1587181023
+new [description:"add jetbrains logo" entry:"1587181023" modified:"1587181023" status:"pending" uuid:"75fd27e4-fb61-4397-89de-1558f07a5f23"]
+---
