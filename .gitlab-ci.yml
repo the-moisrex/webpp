@@ -26,8 +26,8 @@ build:
       - build/
   cache:
     paths:
-     - "build/*"
-     - "/usr/src/googletest/googletest/build/*"
+     - build/
+     - /usr/src/googletest/googletest/build/
 
 # run tests using the binary built before
 test:
