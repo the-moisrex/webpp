@@ -1,12 +1,12 @@
 default:
   image: archlinux:latest
   before_script:
-    - sudo pacman -Sq --noconfirm gcc cmake boost boost-libs gtest
+    - pacman -Sq --noconfirm gcc cmake boost boost-libs gtest
     - sudo mkdir /usr/src/googletest/googletest/build
     - cd /usr/src/googletest/googletest/build
-    - sudo cmake ..
-    - sudo make install -j10
-    - sudo rm -rf /usr/src/googletest/googletest/build
+    - cmake ..
+    - make install -j10
+    - rm -rf /usr/src/googletest/googletest/build
     - cd -
 
 stages:
