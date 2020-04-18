@@ -37,9 +37,10 @@ There are many tests you can read, confirm, fix, and/or write. They are the perf
 You currently can run tests just by running the `webpptest` executable. It's as easy as that.
 
 ### Benchmarks
+Benchmarks are done for us developers so we know which tool/class/implementation/library/framework/solution that we choose is the best. Currently we are using Googles' mini-benchmark library for this purpose.
 
 ### Documentation
-We don't have a documentation/tutorial/guide at this point. You can help us write one. We're just too busy writing the code that we don't have much time writing documentaions at this point. But you can be sure from the point that this project becomes production-ready, we'll have documentations.
+We don't have a documentation/tutorial/guide at this point. You can help us write one. We're just too busy writing the code that we don't have much time writing documentations at this point. But you can be sure from the point that this project becomes production-ready, we'll have documentations.
 
 ### Build
 Requirements for building and testing:
