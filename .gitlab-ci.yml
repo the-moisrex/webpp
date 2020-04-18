@@ -25,6 +25,7 @@ build:
     paths:
       - build/
   cache:
+    key: builddirs
     paths:
      - build/
      - /usr/src/googletest/googletest/build/
@@ -34,4 +35,10 @@ test:
   stage: test
   script:
     - $CI_PROJECT_DIR/build/webpptest
+  cache:
+    key: builddirs
+    paths:
+     - build/
+     - /usr/src/googletest/googletest/build/
+
 
