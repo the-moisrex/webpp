@@ -15,19 +15,18 @@ build:
     - cd /usr/src/googletest/googletest/build
     - cmake -DCMAKE_BUILD_TYPE=Release -G "Ninja" ..
     - ninja install
-    - cd -
+    - cd "$CI_PROJECT_DIR"
     - mkdir build
-    - cd build
+    - cd ./build
     - cmake -DCMAKE_BUILD_TYPE=Release -G "Ninja" ..
   script:
     - ninja
   artifacts:
     paths:
-      - build
-      # depending on your build setup it's most likely a good idea to cache outputs to reduce the build time
-      cache:
-        paths:
-          - "build/*"
+      - build/
+    cache:
+      paths:
+       - "build/*"
 
 # run tests using the binary built before
 test:
