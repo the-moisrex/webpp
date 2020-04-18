@@ -27,13 +27,11 @@ build:
   cache:
     paths:
      - "build/*"
+     - "/usr/src/googletest/googletest/build/*"
 
 # run tests using the binary built before
 test:
   stage: test
   script:
-    - ./webpptest
-  artifacts:
-    paths:
-      - build
+    - ./$CI_PROJECT_DIR/build/webpptest
 
