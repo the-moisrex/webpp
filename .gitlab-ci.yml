@@ -11,12 +11,12 @@ build:
   # install the necessary build tools when needed
   before_script:
     - apt update && apt -y install make cmake libboost-dev libboost-program-options-dev libgtest-dev
-    - mkdir /usr/src/googletest/googletest/build
+    - mkdir -p /usr/src/googletest/googletest/build
     - cd /usr/src/googletest/googletest/build
     - cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ..
     - cmake --build . -- -j10
     - cd "$CI_PROJECT_DIR"
-    - mkdir build
+    - mkdir -p build
     - cd ./build
     - cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ..
   script:
