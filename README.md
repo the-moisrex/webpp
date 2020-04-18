@@ -9,7 +9,7 @@ This project on:
 
 * [Telegram](https://t.me/webpp)
 * [GitHub](https://github.com/the-moisrex/webpp)
-* [GitLab](https://gitlab.com/the.moisrex/webpp)
+* [GitLab](https://gitlab.com/webpp/webpp)
 
 ## Development
 You can help us develop this project if you're familiar with C++ programming language and web development. Even if you're not really good at web development but you know C++ very well, specially C++17 and C++20 (clang and gcc c++2a is enough), then we have lots of things that you can help with which doesn't have anything to do with web development directly.
@@ -51,7 +51,7 @@ Requirements for building and testing:
 * Googletest (gtest)
 
 ```bash
-git clone https://gitlab.com/the.moisrex/webpp.git
+git clone https://gitlab.com/webpp/webpp.git
 cd webpp/
 mkdir build/
 cd build
