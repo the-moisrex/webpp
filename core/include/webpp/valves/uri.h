@@ -32,8 +32,6 @@ namespace webpp::valves {
         return path{std::string_view{str, len}};
     }
 
-    // templated path
-
     /**
      * Check whether or not the specified URI path is a match for the specified
      * template. This function will be used in "tpath_condition". I didn't
@@ -69,8 +67,19 @@ namespace webpp::valves {
      *   - [ ] Validating the segments with a custom method
      *   - [ ] Partial segments: segments that are not between two slashes
      *   - [ ] Naming the segments
+     *   - [ ] Variadic segments: segments that contain multiple path segments
      *   - [ ] Custom SegTypes (Segment Types):
      *     - [ ]
+     * Examples of tpath:
+     *   - /{@int:user_id}/profile
+     *   - /{@username:username}/profile
+     *   - /{@int}
+     *   - /{@email}
+     *   - /page/{@uint:page_num}.html
+     *   - /product/{@product_list:prod_name}/view
+     *   - /view/{view_name}
+     *   - /{one}/{two}
+     *   - /{slugs...}/page/{@uint:page_num}
      * Attention: getting those segments are the responsibility of the
      * "route" class. We will define the implementation for it here, but the
      * final user should get the data from there; they can use this feature
