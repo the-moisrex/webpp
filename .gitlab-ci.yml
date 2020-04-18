@@ -9,11 +9,11 @@ stages:
 prepare job:
   stage: prepare
   script:
-    - pacman -Syq --noconfirm gcc cmake boost boost-libs gtest
+    - pacman -Syq --noconfirm gcc cmake boost boost-libs gtest make
     - cd /usr/src/gtest
     - mkdir build
     - cd build
-    - cmake .. -GCMAKE_BUILD_TYPE=Release
+    - cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ..
     - make install -j10
     - cd -
 
