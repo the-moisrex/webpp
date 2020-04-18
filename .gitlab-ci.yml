@@ -1,6 +1,7 @@
 default:
   image: archlinux:latest
   before_script:
+    - pacman -Syuq --noconfirm
     - pacman -Sq --noconfirm gcc cmake boost boost-libs gtest
     - sudo mkdir /usr/src/googletest/googletest/build
     - cd /usr/src/googletest/googletest/build
@@ -13,7 +14,7 @@ stages:
   - build
   - test
 
-job 1:
+build job:
   stage: build
   script:
     - mkdir build
@@ -21,7 +22,7 @@ job 1:
     - CXX=/usr/lib/gcc-snapshot/bin/g++ CC=/usr/lib/gcc-snapshot/bin/gcc cmake -DCMAKE_BUILD_TYPE=Debug ..
     - cmake --build . -- -j10
 
-job 2:
+test job:
   stage: test
   script:
     - ./webpptest
