@@ -1,43 +1,3 @@
-
-set(ALL_HEADERS
-    ${LIB_INCLUDE_DIR}/webpp.h
-    ${LIB_INCLUDE_DIR}/webpp/config.h
-    ${LIB_INCLUDE_DIR}/webpp/router.h
-    ${LIB_INCLUDE_DIR}/webpp/server.h
-    ${LIB_INCLUDE_DIR}/webpp/thread.h
-
-    ${LIB_INCLUDE_DIR}/webpp/valves/valve.h
-
-    ${LIB_INCLUDE_DIR}/webpp/validators/validators.h
-    ${LIB_INCLUDE_DIR}/webpp/validators/email.h
-
-    ${LIB_INCLUDE_DIR}/webpp/utils/casts.h
-    ${LIB_INCLUDE_DIR}/webpp/utils/cfile.h
-    ${LIB_INCLUDE_DIR}/webpp/utils/charset.h
-    ${LIB_INCLUDE_DIR}/webpp/utils/const_list.h
-    ${LIB_INCLUDE_DIR}/webpp/utils/containers.h
-    ${LIB_INCLUDE_DIR}/webpp/utils/debounce.h
-    ${LIB_INCLUDE_DIR}/webpp/utils/functional.h
-    ${LIB_INCLUDE_DIR}/webpp/utils/ipv4.h
-    ${LIB_INCLUDE_DIR}/webpp/utils/ipv6.h
-    ${LIB_INCLUDE_DIR}/webpp/utils/memory.h
-    ${LIB_INCLUDE_DIR}/webpp/utils/property.h
-    ${LIB_INCLUDE_DIR}/webpp/utils/strings.h
-    ${LIB_INCLUDE_DIR}/webpp/utils/uri.h
-        ${LIB_INCLUDE_DIR}/webpp/utils/constants.h
-
-    ${LIB_INCLUDE_DIR}/webpp/interfaces/cgi.h
-
-    ${LIB_INCLUDE_DIR}/webpp/http/body.h
-    ${LIB_INCLUDE_DIR}/webpp/http/cookies.h
-    ${LIB_INCLUDE_DIR}/webpp/http/header.h
-    ${LIB_INCLUDE_DIR}/webpp/http/request.h
-    ${LIB_INCLUDE_DIR}/webpp/http/response.h
-
-    ${LIB_INCLUDE_DIR}/main.h
-  )
-
-
 set(ALL_SOURCES
         ${LIB_SRC_DIR}/webpp.cpp
         ${LIB_SRC_DIR}/webpp/config.cpp
@@ -46,6 +6,8 @@ set(ALL_SOURCES
         ${LIB_SRC_DIR}/webpp/thread.cpp
 
         ${LIB_SRC_DIR}/webpp/valves/valve.cpp
+        ${LIB_SRC_DIR}/webpp/valves/methods.cpp
+        ${LIB_SRC_DIR}/webpp/valves/uri.cpp
 
         ${LIB_SRC_DIR}/webpp/validators/validators.cpp
         ${LIB_SRC_DIR}/webpp/validators/email.cpp
