@@ -68,6 +68,12 @@ namespace webpp::valves {
      *   - [ ] Partial segments: segments that are not between two slashes
      *   - [ ] Naming the segments
      *   - [ ] Variadic segments: segments that contain multiple path segments
+     *   - [ ] Default value for segments
+     *     - [ ] string as default value
+     *     - [ ] integer types as default value
+     *     - [ ] custom type as a default value
+     *     - [ ] custom object as default value
+     *   - [ ] Making a segment optional
      *   - [ ] Custom SegTypes (Segment Types):
      *     - [ ]
      * Examples of tpath:
@@ -80,6 +86,7 @@ namespace webpp::valves {
      *   - /view/{view_name}
      *   - /{one}/{two}
      *   - /{slugs...}/page/{@uint:page_num}
+     *   - /{controller=Home}/{action=Index}/{id?}
      * Attention: getting those segments are the responsibility of the
      * "route" class. We will define the implementation for it here, but the
      * final user should get the data from there; they can use this feature
