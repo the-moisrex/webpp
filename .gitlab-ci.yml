@@ -14,13 +14,13 @@ build:
     - mkdir /usr/src/googletest/googletest/build
     - cd /usr/src/googletest/googletest/build
     - cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ..
-    - make install -j10
+    - cmake --build . -- -j10
     - cd "$CI_PROJECT_DIR"
     - mkdir build
     - cd ./build
     - cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ..
   script:
-    - make -j10
+    - cmake --build . -- -j10
   artifacts:
     paths:
       - build/
