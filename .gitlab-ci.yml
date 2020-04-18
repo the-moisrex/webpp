@@ -11,11 +11,9 @@ prepare job:
   script:
     - pacman -Syuq --noconfirm
     - pacman -Sq --noconfirm gcc cmake boost boost-libs gtest
-    - mkdir /usr/src/googletest/googletest/build
-    - cd /usr/src/googletest/googletest/build
+    - cd /usr/src/googletest/googletest
     - cmake ..
     - make install -j10
-    - rm -rf /usr/src/googletest/googletest/build
     - cd -
 
 build job:
