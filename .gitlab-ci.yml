@@ -33,5 +33,5 @@ build:
 test:
   stage: test
   script:
-    - ./$CI_PROJECT_DIR/build/webpptest
+    - $CI_PROJECT_DIR/build/webpptest
 
