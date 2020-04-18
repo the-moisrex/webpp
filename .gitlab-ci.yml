@@ -39,6 +39,4 @@ test:
     key: builddirs
     paths:
      - build/
-     - /usr/src/googletest/googletest/build/
-
 
