@@ -9,7 +9,7 @@ stages:
 prepare job:
   stage: prepare
   script:
-    - pacman -Syq --noconfirm gcc cmake boost boost-libs gtest make
+    - pacman -Syq --noconfirm gcc cmake boost boost-libs gtest make libffi
     - cd /usr/src/gtest
     - mkdir build
     - cd build
