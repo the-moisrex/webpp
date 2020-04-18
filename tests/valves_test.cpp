@@ -1,8 +1,9 @@
 // Created by moisrex on 11/7/19.
-#include <gtest/gtest.h>
-#include <string>
 #include "../core/include/webpp/http/request.h"
 #include "../core/include/webpp/valves/methods.h"
+#include <gtest/gtest.h>
+#include <string>
+#include <utility>
 
 using namespace webpp;
 using namespace webpp::valves;
@@ -15,10 +16,12 @@ namespace webpp {
         std::string method;
 
       public:
-        std::string request_method() const noexcept { return method; }
+        [[nodiscard]] std::string request_method() const noexcept {
+            return method;
+        }
 
         auto& set_method(std::string _method) noexcept {
-            method = _method;
+            method = std::move(_method);
             return *this;
         }
     };
