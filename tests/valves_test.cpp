@@ -1,6 +1,7 @@
 // Created by moisrex on 11/7/19.
 #include "../core/include/webpp/http/request.h"
 #include "../core/include/webpp/valves/methods.h"
+#include "../core/include/webpp/valves/uri.h"
 #include <gtest/gtest.h>
 #include <string>
 #include <utility>
@@ -13,7 +14,8 @@ namespace webpp {
 
     template <>
     class request_t<fake_cgi> {
-        std::string method;
+        std::string method = "GET";
+        std::string _uri = "/home";
 
       public:
         [[nodiscard]] std::string request_method() const noexcept {
@@ -24,10 +26,17 @@ namespace webpp {
             method = std::move(_method);
             return *this;
         }
+
+        auto& set_uri(std::string __uri) noexcept {
+            this->_uri = std::move(__uri);
+            return *this;
+        }
+
+        [[nodiscard]] auto request_uri() const noexcept { return _uri; }
     };
 } // namespace webpp
 
-TEST(ValvesTests, Creation) {
+TEST(Valves, Creation) {
     constexpr auto v = method("GET") or method("POST");
 
     // I'm not gonna test the lowercase and uppercase stuff because it's
@@ -36,7 +45,7 @@ TEST(ValvesTests, Creation) {
     EXPECT_TRUE(v(request_t<fake_cgi>().set_method("POST")));
 }
 
-TEST(ValvesTests, Operations) {
+TEST(Valves, Operations) {
     constexpr auto v = empty and empty;
 
     EXPECT_TRUE(v(request_t<fake_cgi>()));
@@ -44,7 +53,7 @@ TEST(ValvesTests, Operations) {
         (empty and empty and empty or empty or empty)(request_t<fake_cgi>()));
 }
 
-TEST(ValveTests, DynamicValve) {
+TEST(Valves, DynamicValve) {
     auto dv = dynamic_valve<fake_cgi>() and method("GET") or method("POST");
 
     auto con1 = request_t<fake_cgi>().set_method("GET");
@@ -53,7 +62,7 @@ TEST(ValveTests, DynamicValve) {
     EXPECT_TRUE(dv(con2));
 }
 
-TEST(ValveTests, EmptyValve) {
+TEST(Valves, EmptyValve) {
     constexpr auto or_one = empty;
     constexpr auto or_two = get or empty;
     constexpr auto or_three = empty or get;
@@ -71,4 +80,10 @@ TEST(ValveTests, EmptyValve) {
     EXPECT_TRUE(and_one(req));
     EXPECT_TRUE(and_two(req));
     EXPECT_TRUE(and_three(req));
+}
+
+TEST(Valves, TPath) {
+    using namespace webpp::valves;
+    auto req = request_t<fake_cgi>().set_method("POST");
+    EXPECT_TRUE("/home/{page}"_tpath(req));
 }
