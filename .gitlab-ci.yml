@@ -1,31 +1,40 @@
-default:
-  image: archlinux:latest
+# see https://hub.docker.com/_/gcc/
+image: gcc
 
 stages:
-  - prepare
   - build
   - test
 
-prepare job:
-  stage: prepare
-  script:
-    - pacman -Syq --noconfirm gcc cmake boost boost-libs gtest make libffi
-    - cd /usr/src/gtest
-    - mkdir build
-    - cd build
-    - cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ..
-    - make install -j10
-    - cd -
-
-build job:
+build:
   stage: build
-  script:
+  # instead of calling g++ directly you can also use some build toolkit like make
+  # install the necessary build tools when needed
+  before_script:
+    - apt update && apt -y install ninja cmake libboost-dev libboost-program-options-dev libgtest-dev
+    - mkdir /usr/src/googletest/googletest/build
+    - cd /usr/src/googletest/googletest/build
+    - cmake -DCMAKE_BUILD_TYPE=Release -G "Ninja" ..
+    - ninja install
+    - cd -
     - mkdir build
     - cd build
-    - CXX=/usr/lib/gcc-snapshot/bin/g++ CC=/usr/lib/gcc-snapshot/bin/gcc cmake -DCMAKE_BUILD_TYPE=Debug ..
-    - cmake --build . -- -j10
+    - cmake -DCMAKE_BUILD_TYPE=Release -G "Ninja" ..
+  script:
+    - ninja
+  artifacts:
+    paths:
+      - build
+      # depending on your build setup it's most likely a good idea to cache outputs to reduce the build time
+      cache:
+        paths:
+          - "build/*"
 
-test job:
+# run tests using the binary built before
+test:
   stage: test
   script:
     - ./webpptest
+  artifacts:
+    paths:
+      - build
+
