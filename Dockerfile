@@ -13,6 +13,6 @@ RUN mkdir build && \
     cd build && \
     cmake .. && \
     make install 
- 
+
 # run tests
-RUN ./webpptest
+RUN cd build && ./webpptest
