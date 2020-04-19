@@ -1,12 +1,9 @@
 #ifndef CHARSET_H
 #define CHARSET_H
 /**
- * @file cahrset.h
+ * @file charset.h
  *
  * This module declares a charset class
- *
- * © 2018 by Richard Walters (in his own project)
- * © 2019 by Mohammad Bahoosh (made it constexpr)
  */
 
 #include <algorithm>
@@ -23,56 +20,11 @@ namespace webpp {
      * This represents a set of characters which can be queried
      * to find out if a character is in the set or not.
      */
-    template <std::size_t N = 1>
+    template <typename CharT = char, std::size_t N = 1>
     class charset_t {
         static_assert(
             N > 0,
             "A charset with zero elements doesn't makes sense to construct.");
-
-        /*
-            struct charset_t_impl {
-
-                template <std::size_t NN, std::size_t ...I>
-                constexpr auto
-           to_char_initializer_list(std::index_sequence<I...>, charset_t<NN>
-           const &cset) noexcept { return { cset.chars[I]... }; // turning it
-           into a sequence of chars
-                }
-
-                template <template <std::size_t N> class ...CharsetType,
-           std::size_t ...I> constexpr auto impl_l1(std::index_sequence<I...>,
-           CharsetType ...csets) noexcept {
-                    //constexpr auto size_of_list = (0 + ... + N);
-                    constexpr auto char_count = (0 + ... + csets[I].size());
-                    constexpr auto l = (std::array<char, char_count>() += ... +=
-           csets[I].array);
-                    //constexpr auto list_of_list_of_chars = {
-           to_char_initializer_list(std::make_index_sequence<csets[I].size()>{},
-           csets[I])... }; return l;
-                }
-
-                template <std::size_t ...N>
-                constexpr auto operator()(charset_t<N> const& ...csets) noexcept
-           { return impl_l1(std::make_index_sequence<N>{}, csets...);
-                }
-
-            };
-        */
-        /*
-        struct get_size {
-            template <template <std::size_t> class ...CharsetType, std::size_t
-        ...D, std::size_t ...I> constexpr auto impl(std::index_sequence<I...>,
-        CharsetType<D> const &...csets) noexcept { return (0 + ... +
-        csets[I].size());
-            }
-
-            template <std::size_t ...CharCount>
-            constexpr auto operator()(charset_t<CharCount> const &...csets)
-        noexcept { return impl(std::make_index_sequence<(0 + ... +
-        CharCount)>(), csets...);
-            }
-        };
-    */
 
         template <typename Tpl, typename Callable, std::size_t... I>
         constexpr void do_this_for_that(std::index_sequence<I...>,
@@ -90,9 +42,9 @@ namespace webpp {
         }
 
       public:
-        std::array<char, N> chars;
+        CharT content[N] = {};
+        size_t _size{0};
 
-        // Lifecycle management
       public:
         ~charset_t() noexcept = default;
         charset_t(const charset_t&) = default;
@@ -100,32 +52,25 @@ namespace webpp {
         charset_t& operator=(const charset_t&) = default;
         charset_t& operator=(charset_t&&) noexcept = default;
 
-        // Methods
       public:
         /**
          * This is the default constructor.
          */
-        constexpr charset_t() noexcept : chars{} {}
+        constexpr charset_t() noexcept {}
 
-        /**
-         * This constructs a character set that contains
-         * just the given character.
-         *
-         * @param[in] c
-         *     This is the only character to put in the set.
-         */
-        constexpr explicit charset_t(char c) noexcept : chars{c} {}
-
-        template <typename... Char,
-                  typename = typename std::enable_if<
-                      (true && ... && std::is_same_v<Char, char>), void>::type>
-        constexpr charset_t(Char... t) noexcept : chars{t...} {}
-
-        /*
-        explicit charset_t(std::initializer_list<char> cset) noexcept {
-            std::copy(cset.begin(), cset.end(), chars.begin());
+        template <typename CCharT = CharT>
+        constexpr charset_t(const CCharT (&input)[N]) noexcept {
+            if constexpr (std::is_same_v<CCharT, CharT>) {
+                // copy the string over to content
+                for (size_t i{0}; i < N; ++i) {
+                    content[i] = input[i];
+                    if ((i == (N - 1)) && (input[i] == 0))
+                        break;
+                    _size++;
+                }
+            } else {
+            }
         }
-         */
 
         /**
          * This constructs a character set that contains all the
@@ -136,9 +81,7 @@ namespace webpp {
          */
 
         template <std::size_t... NN>
-        constexpr charset_t(const charset_t<NN>&... csets) noexcept : chars{} {
-            // static_assert(((0 + ... + NN) > N), "Sum of csets is greater than
-            // charset's container");
+        constexpr charset_t(const charset_t<CharT, NN>&... csets) noexcept {
             auto csets_tupled = std::make_tuple(csets...);
             for_each_tuple(csets_tupled, [&, i = 0u](auto const& t) mutable {
                 for (auto const& c : t.chars) {
@@ -146,21 +89,12 @@ namespace webpp {
                         chars[i++] = c;
                 }
             });
-            // for (std::size_t i = 0; i < csets_count; i++) {
-            //     auto cset = std::get<i>(csets_tupled);
-            //   for (auto const &c : cset.chars) {
-            //     if (!contains(c)) chars[i++] = c;
-            //   }
-            // }
-
-            // filling the rest with null char
-            // for (; i < N; i++) chars[i] = '\0';
         }
 
-        constexpr explicit charset_t(decltype(chars) const& _chars) noexcept
-            : chars(_chars) {}
-        constexpr explicit charset_t(decltype(chars)&& _chars) noexcept
-            : chars(std::move(_chars)) {}
+        template <typename CCharT = CharT, size_t NN>
+        constexpr explicit charset_t(
+            std::array<CCharT, NN> const& _chars) noexcept
+            : charset_t<CCharT>{_chars.data()} {}
 
         /**
          * This method checks to see if the given character
@@ -173,10 +107,12 @@ namespace webpp {
          *     An indication of whether or not the given character
          *     is in the character set is returned.
          */
-        constexpr bool contains(char c) const noexcept {
-            for (auto const& cc : chars)
-                if (cc == c)
+        template <typename CCharT = CharT>
+        [[nodiscard]] constexpr bool contains(CCharT c) const noexcept {
+            for (auto it = begin<CCharT>(); it != end<CCharT>(); ++it) {
+                if (*it == c)
                     return true;
+            }
             return false;
         }
 
@@ -185,38 +121,43 @@ namespace webpp {
          * @param _cs
          * @return
          */
-        constexpr bool contains(std::string_view _cs) const noexcept {
+        template <typename CCharT = CharT>
+        [[nodiscard]] constexpr bool
+        contains(std::basic_string_view<CCharT> const& _cs) const noexcept {
             for (auto const& c : _cs)
-                if (!contains(c))
+                if (!contains<CCharT>(c))
                     return false;
             return true;
         }
 
-        constexpr auto size() const noexcept { return chars.size(); }
+        template <typename CCharT = CharT>
+        [[nodiscard]] constexpr auto data() const noexcept {
+            // TODO: you have to implement your own iterator
+            return content;
+        }
 
-        constexpr std::string_view string_view() const noexcept {
-            return std::string_view(chars.data(), N);
+        template <typename CCharT = CharT>
+        [[nodiscard]] constexpr std::size_t size() const noexcept {
+            return _size * sizeof(CharT) / sizeof(CCharT);
+        }
+
+        template <typename StrCharT = CharT>
+        [[nodiscard]] constexpr auto string_view() const noexcept {
+            return std::basic_string_view<StrCharT>(data(), size());
+        }
+
+        template <typename StrCharT = CharT>
+        [[nodiscard]] std::string string() const noexcept {
+            return std::basic_string<StrCharT>(data(), size<StrCharT>());
         }
     };
-    /*
-    template <typename T>
-    constexpr auto charset(T const &cset) noexcept {
-        return charset_t<cset.size()>(cset);
-    }
-    */
-
-    //    auto charset(std::initializer_list<char> const& cset) noexcept {
-    //        return charset_t<cset.size()>(cset);
-    //    }
-
     /**
      * Constructing a charset with chars
      * God C++ really needs C++20's concepts; WTF
      * @return charset_t
      */
-    template <
-        typename... Char,
-        typename = typename std::enable_if<
+    template <typename... Char,
+              typename = typename std::enable_if<
                   (true && ... && std::is_same_v<Char, char>), void>::type>
     constexpr auto charset(Char... chars) noexcept {
         return charset_t<sizeof...(chars)>{chars...};
@@ -265,8 +206,6 @@ namespace webpp {
         return charset<the_size>(First,
                                  std::make_integer_sequence<char, the_size>{});
     }
-
-
 
     // TODO: add non-constexpr (or constexpr if you can) charset(first, last) as
     // well
