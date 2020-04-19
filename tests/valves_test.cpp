@@ -85,5 +85,6 @@ TEST(Valves, EmptyValve) {
 TEST(Valves, TPath) {
     using namespace webpp::valves;
     auto req = request_t<fake_cgi>().set_method("POST");
+    req.set_uri("/home/one");
     EXPECT_TRUE("/home/{page}"_tpath(req));
 }
