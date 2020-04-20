@@ -1,13 +1,9 @@
 #ifndef CHARSET_H
 #define CHARSET_H
-/**
- * @file charset.h
- *
- * This module declares a charset class
- */
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <initializer_list>
 #include <string_view>
 #include <tuple>
@@ -21,7 +17,7 @@ namespace webpp {
      * to find out if a character is in the set or not.
      */
     template <typename CharT = char, std::size_t N = 1>
-    class charset_t {
+    class charset_t : public std::array<CharT, N> {
         static_assert(
           N > 0,
           "A charset with zero elements doesn't makes sense to construct.");
@@ -41,20 +37,11 @@ namespace webpp {
                              callback);
         }
 
-      public:
-        CharT  content[N] = {};
-        size_t _size{0};
+        using super = std::array<CharT, N>;
 
       public:
-        constexpr charset_t() noexcept            = default;
-        constexpr ~charset_t() noexcept           = default;
-        constexpr charset_t(const charset_t&)     = default;
-        constexpr charset_t(charset_t&&) noexcept = default;
-        constexpr charset_t& operator=(const charset_t&) = default;
-        constexpr charset_t& operator=(charset_t&&) noexcept = default;
-
-
-        constexpr charset_t(const CharT (&input)[N]) noexcept : content{input} {
+        template <typename... T>
+        constexpr charset_t(T&&... t) noexcept : super{std::forward<T>(t)...} {
         }
 
         /**
@@ -64,22 +51,19 @@ namespace webpp {
          * @param[in] characterSets
          *     These are the character sets to include.
          */
-        template <std::size_t... NN>
-        constexpr charset_t(const charset_t<CharT, NN>&... c_sets) noexcept {
-            auto tpl = std::make_tuple(c_sets...);
-            for_each_tuple(tpl, [&, i = 0u](auto const& t) mutable {
-                for (auto const& c : t.chars) {
-                    if (!contains(c))
-                        content[i++] = c;
-                }
-            });
+        template <std::size_t N1, std::size_t N2, std::size_t... NN>
+        constexpr explicit charset_t(
+          charset_t<CharT, N1> const& set1, charset_t<CharT, N2> const& set2,
+          charset_t<CharT, NN> const&... c_sets) noexcept {
+            auto write = [this, i = 0u](auto const& set) mutable {
+                for (auto c : set)
+                    super::operator[](i++) = c;
+            };
+            write(set1);
+            write(set2);
+            (write(c_sets), ...);
         }
 
-        template <size_t NN>
-        constexpr explicit charset_t(
-          std::array<CharT, NN> const& _chars) noexcept
-          : charset_t<CharT>{_chars.data()} {
-        }
 
         /**
          * This method checks to see if the given character
@@ -113,56 +97,33 @@ namespace webpp {
             return true;
         }
 
-        [[nodiscard]] constexpr auto data() const noexcept {
-            return content;
-        }
-
-        [[nodiscard]] constexpr std::size_t size() const noexcept {
-            return _size;
-        }
-
         [[nodiscard]] constexpr auto string_view() const noexcept {
-            return std::basic_string_view<CharT>(data(), size());
+            return std::basic_string_view<CharT>(this->data(), this->size());
         }
 
         [[nodiscard]] std::string string() const noexcept {
-            return std::basic_string<CharT>(data(), size());
+            return std::basic_string<CharT>(this->data(), this->size());
         }
     };
+
+    template <typename CharT = char, std::size_t N1, std::size_t N2,
+              std::size_t... N>
+    constexpr auto charset(charset_t<CharT, N1> const& set1,
+                           charset_t<CharT, N2> const& set2,
+                           charset_t<CharT, N> const&... csets) noexcept {
+        return charset_t<CharT, N1 + N2 + (0 + ... + N)>{set1, set2, csets...};
+    }
+
+
     /**
-     * Constructing a charset with chars
-     * God C++ really needs C++20's concepts; WTF
-     * @return charset_t
+     * Type deduction. I stole this from a type deduction from std::array
      */
-    template <typename... Char,
-              typename = typename std::enable_if<
-                (true && ... && std::is_same_v<Char, char>), void>::type>
-    constexpr auto charset(Char... chars) noexcept {
-        return charset_t<sizeof...(chars)>{chars...};
-    }
+    template <typename _Tp, typename... _Up>
+    charset_t(_Tp, _Up...)
+      -> charset_t<std::enable_if_t<(std::is_same_v<_Tp, _Up> && ...), _Tp>,
+                   1 + sizeof...(_Up)>;
 
-    template <std::size_t... N>
-    constexpr auto charset(charset_t<N>... csets) noexcept {
-        return charset_t<(0 + ... + N)>{csets...};
-    }
 
-    template <std::size_t N, std::size_t... I>
-    constexpr auto charset_impl(charset_t<N> const& cset,
-                                std::index_sequence<I...>) noexcept {
-        return charset<N>(
-          {cset.chars[I]...}); // turning it into a sequence of chars
-    }
-
-    template <std::size_t N, typename Indeces = std::make_index_sequence<N>>
-    constexpr auto charset(charset_t<N> const& cset) noexcept {
-        return charset_impl(cset, Indeces{});
-    }
-
-    template <std::size_t N, char... I>
-    constexpr auto charset(char first,
-                           std::integer_sequence<char, I...>) noexcept {
-        return charset_t<N>{static_cast<char>(first + I)...};
-    }
 
     /**
      * This constructs a character set that contains all the
@@ -177,78 +138,39 @@ namespace webpp {
      *     This is the last of the range of characters
      *     to put in the set.
      */
-    template <char First, char Last>
+    template <typename CharT = char, CharT First, CharT Last>
     constexpr auto charset() noexcept {
         constexpr auto the_size =
           static_cast<std::size_t>(Last) - static_cast<std::size_t>(First) + 1;
-        return charset<the_size>(First,
-                                 std::make_integer_sequence<char, the_size>{});
+        charset_t<CharT, the_size> data;
+        for (auto it = First; it != Last + 1; ++it)
+            data[it - First] = it;
+        return data;
     }
 
-    // TODO: add non-constexpr (or constexpr if you can) charset(first, last) as
-    // well
+    // TODO: add non-constexpr (or constexpr if you can) charset(first, last) as well
 
-    /*
-    struct charset_t_impl {
 
-        template <std::size_t NN, std::size_t ...I>
-        constexpr auto to_char_initializer_list(std::index_sequence<I...>,
-    charset_t<NN> const &cset) noexcept { return { cset.chars[I]... }; //
-    turning it into a sequence of chars
-        }
-
-        template <template <std::size_t N> class ...CharsetType, std::size_t
-    ...I> constexpr auto impl_l1(std::index_sequence<I...>, CharsetType
-    ...csets) noexcept {
-            //constexpr auto size_of_list = (0 + ... + N);
-            constexpr auto char_count = (0 + ... + csets[I].size());
-            constexpr auto l = (std::array<char, char_count>() += ... +=
-    csets[I].array);
-            //constexpr auto list_of_list_of_chars = {
-    to_char_initializer_list(std::make_index_sequence<csets[I].size()>{},
-    csets[I])... }; return l;
-        }
-
-        template <std::size_t ...N>
-        constexpr auto operator()(charset_t<N> const& ...csets) noexcept {
-            return impl_l1(std::make_index_sequence<N>{}, csets...);
-        }
-    };
-    */
-
-    /*
-    template <std::size_t ...N, std::size_t ...I>
-    constexpr auto charset_(std::index_sequence<I...>, charset_t<N> const
-    &...csets) noexcept { return charset<(0 + ... + N)>({ csets[I]... }); //
-    turning it into a sequence of chars
-    }
-
-    template <std::size_t ...N>
-    constexpr auto charset(charset_t<N> const &...cset) noexcept {
-        return charset_<N>(std::make_index_sequence<N>{}, cset...);
-    }
-    */
-
-    constexpr auto LOWER_ALPHA = charset<'a', 'z'>();
-    constexpr auto UPPER_ALPHA = charset<'A', 'Z'>();
+    constexpr auto LOWER_ALPHA = charset<char, 'a', 'z'>();
+    constexpr auto UPPER_ALPHA = charset<char, 'A', 'Z'>();
 
     /**
      * This is the character set containing just the alphabetic characters
      * from the ASCII character set.
      */
-    constexpr auto ALPHA = charset(LOWER_ALPHA, UPPER_ALPHA);
+    constexpr auto ALPHA = charset<char>(LOWER_ALPHA, UPPER_ALPHA);
 
     /**
      * This is the character set containing just numbers.
      */
-    constexpr auto DIGIT = charset<'0', '9'>();
+    constexpr auto DIGIT = charset<char, '0', '9'>();
 
     /**
      * This is the character set containing just the characters allowed
      * in a hexadecimal digit.
      */
     constexpr auto HEXDIG =
-      charset(DIGIT, charset<'A', 'F'>(), charset<'a', 'f'>());
+      charset(DIGIT, charset<char, 'A', 'F'>(), charset<char, 'a', 'f'>());
 
 } // namespace webpp
 #endif // CHARSET_H
