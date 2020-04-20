@@ -6,6 +6,7 @@
 #include "../../../../include/webpp/std/io_context.h"
 #include "connection.hpp"
 #include "constants.hpp"
+
 #include <boost/asio/thread_pool.hpp>
 #include <memory>
 #include <vector>
@@ -17,8 +18,8 @@ namespace webpp::common {
      */
     class server {
       public:
-        using socket_t = std::net::ip::tcp::socket;
-        using endpoint_t = std::net::ip::tcp::endpoint;
+        using socket_t     = std::net::ip::tcp::socket;
+        using endpoint_t   = std::net::ip::tcp::endpoint;
         using io_context_t = std::net::io_context;
 
         // I share this publicly because I know this file will not be used in a
@@ -26,19 +27,19 @@ namespace webpp::common {
         io_context_t io;
 
       private:
-        std::vector<connection> connections;
+        std::vector<connection>                  connections;
         std::vector<std::net::ip::tcp::acceptor> acceptors;
-        boost::asio::thread_pool pool;
+        boost::asio::thread_pool                 pool;
 
         void accept() noexcept {
             //            for (auto& acceptor : acceptors)
             //                acceptor.async_accept(
             //                    [this](std::error_code const& ec, socket_t
             //                    socket) {
-            //                        // Check whether the server was stopped by
-            //                        a signal
-            //                        // before this completion handler had a
-            //                        chance to run if (!acceptor.is_open()) {
+            //                        // Check whether the server was stopped by a signal
+            //
+            //                        // before this completion handler had a chance to run
+            //                        if (!acceptor.is_open()) {
             //                            return;
             //                        }
             //
@@ -66,12 +67,14 @@ namespace webpp::common {
                     io.run();
                     break;
                 } catch (std::exception const& err) {
-                    // TODO: what should I do here?
+                    // todo: what should I do here?
                 }
             }
         }
 
-        void stop() noexcept { io.stop(); }
+        void stop() noexcept {
+            io.stop();
+        }
     };
 
 } // namespace webpp::common

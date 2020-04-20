@@ -82,7 +82,8 @@ namespace webpp {
         type _value;
 
         constexpr explicit const_list_value(type value) noexcept
-            : _value(std::move(value)) {}
+          : _value(std::move(value)) {
+        }
     };
 
     template <>
@@ -97,7 +98,8 @@ namespace webpp {
         type _next;
 
         constexpr explicit const_list_next_value(type next) noexcept
-            : _next(std::move(next)) {}
+          : _next(std::move(next)) {
+        }
     };
 
     template <>
@@ -112,9 +114,9 @@ namespace webpp {
         // static_assert(std::negation_v<std::is_void<Type>>, "Type cannot be
         // void");
 
-        using type = Type;
-        using next_type = NextType;
-        using value_t = const_list_value<Type>;
+        using type         = Type;
+        using next_type    = NextType;
+        using value_t      = const_list_value<Type>;
         using next_value_t = const_list_next_value<NextType>;
         //        using iterator = const_list_iterator<const_list, Type,
         //        NextType>; using const_iterator = iterator;
@@ -122,12 +124,15 @@ namespace webpp {
         constexpr explicit const_list() noexcept = default;
 
         constexpr explicit const_list(type value) noexcept
-            : value_t(std::move(value)) {}
+          : value_t(std::move(value)) {
+        }
 
         template <typename T,
                   typename = std::enable_if_t<std::negation_v<std::is_void<T>>>>
         constexpr const_list(type value, T next) noexcept
-            : value_t(std::move(value)), next_value_t(std::move(next)) {}
+          : value_t(std::move(value)),
+            next_value_t(std::move(next)) {
+        }
 
         constexpr const_list(const_list const& v) noexcept = default;
 
@@ -151,11 +156,13 @@ namespace webpp {
             return next_value_t::_next;
         }
 
-        constexpr auto const& value() const noexcept { return value_t::_value; }
+        constexpr auto const& value() const noexcept {
+            return value_t::_value;
+        }
 
         template <typename NewValueType>
         [[nodiscard]] constexpr auto append(NewValueType&& v) const noexcept {
-            using nt = std::decay_t<NewValueType>;
+            using nt  = std::decay_t<NewValueType>;
             using lnt = const_list<nt>;
 
             if constexpr (std::is_void_v<next_type>) {
@@ -193,8 +200,8 @@ namespace webpp {
         }
 
         template <typename NewValueType>
-        [[nodiscard]] constexpr auto operator+(NewValueType&& v) const
-            noexcept {
+        [[nodiscard]] constexpr auto
+        operator+(NewValueType&& v) const noexcept {
             return append(std::forward<NewValueType>(v));
         }
 
@@ -284,7 +291,7 @@ namespace webpp {
          */
         template <typename Callable, typename RetType>
         constexpr RetType reduce(Callable const& callable,
-                                 RetType const& first_element) const noexcept {
+                                 RetType const&  first_element) const noexcept {
             auto v = first_element;
             if constexpr (!std::is_void_v<type>) {
                 v = callable(v, value());
@@ -320,8 +327,8 @@ namespace webpp {
         }
 
         template <typename NType, typename NNextType>
-        constexpr bool operator==(const_list<NType, NNextType> const& l) const
-            noexcept {
+        constexpr bool
+        operator==(const_list<NType, NNextType> const& l) const noexcept {
             if constexpr (!std::is_same_v<type, NType>) {
                 if (value() != l.value())
                     return false;
@@ -336,8 +343,8 @@ namespace webpp {
         }
 
         template <typename NType, typename NNextType>
-        constexpr bool operator!=(const_list<NType, NNextType> const& l) const
-            noexcept {
+        constexpr bool
+        operator!=(const_list<NType, NNextType> const& l) const noexcept {
             return !operator==<NType, NNextType>(l);
         }
     };

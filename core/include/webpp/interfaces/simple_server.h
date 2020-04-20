@@ -7,13 +7,10 @@ namespace webpp {
 
     class simple_server : public basic_interface<simple_server> {
       private:
-
       public:
-
-
     };
 
-}
+} // namespace webpp
 
 
 #endif

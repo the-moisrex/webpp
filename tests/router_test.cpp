@@ -1,9 +1,11 @@
+#include "../core/include/webpp/router.h"
+
+#include "../core/include/webpp/interfaces/cgi.h"
+#include "../core/include/webpp/utils/const_list.h"
+
 #include <gtest/gtest.h>
 #include <tuple>
 #include <vector>
-#include "../core/include/webpp/interfaces/cgi.h"
-#include "../core/include/webpp/router.h"
-#include "../core/include/webpp/utils/const_list.h"
 
 using namespace webpp::valves;
 using namespace webpp;
@@ -25,12 +27,16 @@ TEST(Router, RouteCreation) {
     about_page(req, res);
     EXPECT_EQ(res.body.str(""), "About page\n");
 
-    constexpr auto return_callback = [] { return response("Hello"); };
+    constexpr auto return_callback = [] {
+        return response("Hello");
+    };
     route<cgi, decltype(return_callback)> one{};
     one(req, res);
     EXPECT_EQ(std::string(res.body.str()), "Hello");
 
-    constexpr auto return_callback_string = [] { return "Hello String"; };
+    constexpr auto return_callback_string = [] {
+        return "Hello String";
+    };
     route<cgi, decltype(return_callback_string)> two{};
     two(req, res);
     EXPECT_EQ(std::string(res.body.str()), "Hello String");
@@ -44,7 +50,9 @@ namespace webpp {
         std::string method;
 
       public:
-        std::string request_method() const noexcept { return method; }
+        std::string request_method() const noexcept {
+            return method;
+        }
 
         auto& set_method(std::string _method) noexcept {
             method = _method;
@@ -54,9 +62,10 @@ namespace webpp {
 } // namespace webpp
 
 TEST(Router, ValveTest) {
-
-    constexpr auto return_callback = [] { return response("Hello"); };
-    constexpr auto v = method("GET");
+    constexpr auto return_callback = [] {
+        return response("Hello");
+    };
+    constexpr auto                                          v = method("GET");
     route<fake_cgi, decltype(return_callback), decltype(v)> one{v};
 
     request_t<fake_cgi> req;
@@ -66,7 +75,6 @@ TEST(Router, ValveTest) {
 }
 
 TEST(Router, RouterClass) {
-
     //    constexpr auto return_callback = [i = 2]() mutable {
     //        i++;
     //        return response("Hello");
@@ -90,23 +98,25 @@ TEST(Router, RouterClass) {
 }
 
 TEST(Router, VectorForRouteList) {
-
     router<fake_cgi, vector<dynamic_route<fake_cgi>>> _route{};
-    _route.on(method("GET"), [] () noexcept { return "Hello world"; });
+    _route.on(method("GET"), []() noexcept {
+        return "Hello world";
+    });
 
     request_t<fake_cgi> req;
     req.set_method("GET");
-    response res = _route(req);
-    auto strview_res = res.body.str();
-    std::string str_res = std::string(strview_res);
+    response    res         = _route(req);
+    auto        strview_res = res.body.str();
+    std::string str_res     = std::string(strview_res);
     EXPECT_EQ(strview_res, "Hello world") << "strview_res is: " << strview_res;
-    //EXPECT_EQ(str_res, "Hello world") << "str_res is: " << std::string(*static_cast<std::string*>(res.body.data));
+    // EXPECT_EQ(str_res, "Hello world") << "str_res is: " <<
+    // std::string(*static_cast<std::string*>(res.body.data));
 }
 
 TEST(Router, TupleForRouteList) {
-
-    auto _router = router<fake_cgi, std::tuple<>>{}.on(
-        method("GET"), [] { return "Hello world"; });
+    auto _router = router<fake_cgi, std::tuple<>>{}.on(method("GET"), [] {
+        return "Hello world";
+    });
 
     request_t<fake_cgi> req;
     req.set_method("GET");
@@ -115,7 +125,6 @@ TEST(Router, TupleForRouteList) {
 }
 
 TEST(Router, ConstListForRouteList) {
-
     //    constexpr auto _router = router<fake_cgi, const_list<>>{}.on(
     //        method("GET"), [] { return "Hello world"; });
     //
@@ -126,9 +135,9 @@ TEST(Router, ConstListForRouteList) {
 }
 
 TEST(Router, DefaultRouteList) {
-
-    auto _router = router<fake_cgi, std::tuple<>>{}.on(
-        method("GET"), [] { return "Hello world"; });
+    auto _router = router<fake_cgi, std::tuple<>>{}.on(method("GET"), [] {
+        return "Hello world";
+    });
 
     request_t<fake_cgi> req;
     req.set_method("GET");
@@ -153,7 +162,9 @@ TEST(Router, MergeEffect) {
 
 TEST(Router, DynamicRoute) {
     dynamic_route<fake_cgi> droute;
-    droute = []() { return response("Hello world"); };
+    droute = []() {
+        return response("Hello world");
+    };
 
     request_t<fake_cgi> req;
     req.set_method("GET");
@@ -166,10 +177,9 @@ TEST(Router, DynamicRoute) {
 
 
 TEST(Router, ParseVars) {
-
-    std::string a = "/user/19";
+    std::string a     = "/user/19";
     std::string templ = "/user/{user_id}";
-    auto vars = parse_vars(templ, a);
+    auto        vars  = parse_vars(templ, a);
     EXPECT_EQ(vars.size(), 1);
     EXPECT_EQ(vars["user_id"], "19") << "user_id: " << vars["user_id"];
 
@@ -179,7 +189,3 @@ TEST(Router, ParseVars) {
     EXPECT_EQ(vars["user_id"], "21");
     EXPECT_EQ(vars["page"], "profile");
 }
-
-
-
-

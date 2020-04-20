@@ -4,6 +4,7 @@
 #include "../../../include/webpp/common/meta.h"
 #include "../../../include/webpp/utils/uri.h"
 #include "valve.h"
+
 #include <cassert>
 #include <cstddef> // for std::size_t
 #include <string_view>
@@ -16,7 +17,8 @@ namespace webpp::valves {
 
       public:
         constexpr path_condition(std::string_view str) noexcept
-            : _path(std::move(str)) {}
+          : _path(std::move(str)) {
+        }
 
         constexpr path_condition() noexcept = default;
 
@@ -47,78 +49,80 @@ namespace webpp::valves {
     [[nodiscard]] bool
     tpath_check(std::basic_string_view<CharT> const& templated_path,
                 std::basic_string_view<CharT> const& _path) noexcept {
-
-        auto tit = templated_path.data(); // templated iterator
-        auto pit = _path.data();          // path iterator
-        decltype(tit) seg_start = nullptr;
-        std::size_t seg_starts = 0;
+        auto          tit        = templated_path.data(); // templated iterator
+        auto          pit        = _path.data();          // path iterator
+        decltype(tit) seg_start  = nullptr;
+        std::size_t   seg_starts = 0;
         decltype(pit) pseg_start = nullptr;
         for (;;) {
             switch (*tit) {
-            case '\0':
+                case '\0':
 
-                // error: there's an open segment rule and we can't just leave
-                // it unclosed. I should throw an error in the user's face but
-                // I'm nice and I'm just gonna assert
-                assert(("the specified templated path is not valid.",
-                        seg_start == nullptr));
-                if (seg_start) {
-                    return false;
-                }
-                break;
-            case '{': // might be start of a segment
-
-                if (seg_start) {
-                    // the { char is part of the segment rule here
-                    ++seg_starts;
+                    // error: there's an open segment rule and we can't just
+                    // leave it unclosed. I should throw an error in the user's
+                    // face but I'm nice and I'm just gonna assert
+                    assert(("the specified templated path is not valid.",
+                            seg_start == nullptr));
+                    if (seg_start) {
+                        return false;
+                    }
                     break;
-                }
+                case '{': // might be start of a segment
 
-                // pinpoint the segment start for when we reach the end of it
-                seg_start = tit + 1;
-                pseg_start = pit;
-                break;
-            case '}': { // might be the end of a segment
+                    if (seg_start) {
+                        // the { char is part of the segment rule here
+                        ++seg_starts;
+                        break;
+                    }
 
-                // a new } char with no starting { char
-                assert(("The specified templated path is not valid.",
-                        seg_starts != 0));
-                if (seg_starts == 0)
-                    return false;
+                    // pinpoint the segment start for when we reach the end of
+                    // it
+                    seg_start  = tit + 1;
+                    pseg_start = pit;
+                    break;
+                case '}':
+                    { // might be the end of a segment
 
-                --seg_starts;
-                if (seg_starts != 0)
-                    break; // this } char is part of the segment rule itself
+                        // a new } char with no starting { char
+                        assert(("The specified templated path is not valid.",
+                                seg_starts != 0));
+                        if (seg_starts == 0)
+                            return false;
+
+                        --seg_starts;
+                        if (seg_starts != 0)
+                            break; // this } char is part of the segment rule
+                                   // itself
 
 #if CXX20
-                std::basic_string_view<CharT> seg_rule(seg_start, tit);
+                        std::basic_string_view<CharT> seg_rule(seg_start, tit);
 #elif CXX17
-                std::basic_string_view<CharT> seg_rule(seg_start,
-                                                       tit - seg_start);
+                        std::basic_string_view<CharT> seg_rule(seg_start,
+                                                               tit - seg_start);
 #endif
 
-                // going to find the segment in the path string too
-                for (auto it = pit;; ++it) {
-                    switch (*it) {
-                    case '\0':
-                        goto after_loop;
-                    case '/':
+                        // going to find the segment in the path string too
+                        for (auto it = pit;; ++it) {
+                            switch (*it) {
+                                case '\0': goto after_loop;
+                                case '/':
+                            }
+                        }
+                    after_loop:
+                        parse_seg(seg_rule, );
                     }
-                }
-            after_loop:
-                parse_seg(seg_rule, );
-            } break;
-            case '\\': // escape character
-                // we just don't care what the next char is. even if it's { or }
-                // which they have meanings in this algorithm.
-                ++tit;
-                if (*tit != '}' && *tit != '{')
-                    --tit;
-                break;
-            default:
-                // it's not an error, it's normal to return false here.
-                if (!seg_start && *tit != *pit)
-                    return false;
+                    break;
+                case '\\': // escape character
+                    // we just don't care what the next char is. even if it's {
+                    // or } which they have meanings in this algorithm.
+                    ++tit;
+                    if (*tit != '}' && *tit != '{')
+                        --tit;
+                    break;
+                default:
+                    // it's not an error, it's normal to return false here.
+                    if (!seg_start && *tit != *pit)
+                        return false;
             }
 
             ++tit;
@@ -133,7 +137,8 @@ namespace webpp::valves {
 
       public:
         constexpr tpath_condition(std::string_view str) noexcept
-            : tpath_str(str) {}
+          : tpath_str(str) {
+        }
 
         constexpr tpath_condition() noexcept = default;
 

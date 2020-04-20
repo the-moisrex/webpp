@@ -1,5 +1,6 @@
 #include "../../../../include/webpp/std/internet.h"
 #include "../../../../include/webpp/std/socket.h"
+
 #include <system_error>
 #include <utility>
 
@@ -11,10 +12,10 @@ class session {
     socket_t _socket;
 
     /**
-     * This function will read the data and pass it to read_callback to handle those data
+     * This function will read the data and pass it to read_callback to handle
+     * those data
      */
     void read() {
-      
     }
 
     void read_callback(std::error_code const&, std::size_t length) noexcept;
@@ -27,8 +28,6 @@ class session {
     void write_callback(std::error_code const&, std::size_t length) noexcept;
 
   public:
-    session(socket_t&& _socket) noexcept : _socket(std::move(_socket)) {}
-
+    session(socket_t&& _socket) noexcept : _socket(std::move(_socket)) {
+    }
 };
-
-

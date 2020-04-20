@@ -1,9 +1,9 @@
 #ifndef EMAIL_H
 #define EMAIL_H
 
+#include <regex>
 #include <string>
 #include <vector>
-#include <regex>
 
 namespace webpp {
 

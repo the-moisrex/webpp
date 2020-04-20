@@ -20,7 +20,7 @@ namespace webpp {
                     if constexpr (throw_mistakes) {
                         if (*c <= '0' || *c >= '9')
                             throw std::invalid_argument(
-                                "The specified string is not a number");
+                              "The specified string is not a number");
                     }
                     ret *= 10;
                     ret += static_cast<T>(*c - '0');
@@ -31,7 +31,7 @@ namespace webpp {
                     if constexpr (throw_mistakes) {
                         if (c <= '0' || c >= '9')
                             throw std::invalid_argument(
-                                "The specified string is not a number");
+                              "The specified string is not a number");
                     }
                     ret *= 10;
                     ret += static_cast<T>(c - '0');

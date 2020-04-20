@@ -30,6 +30,7 @@
 
 #include "session/client-adapter/cookie_adapter.h"
 #include "session/server-adapter/memory_adapter.h"
+
 #include <memory>
 #include <string>
 #include <thread>
@@ -50,13 +51,14 @@ namespace webpp {
         class cache_proxy_t {
           private:
             std::thread tr;
-            bool _cache_enabled =
-                !std::is_same<ServerAdapter, memory_adapter>::value;
+            bool        _cache_enabled =
+              !std::is_same<ServerAdapter, memory_adapter>::value;
 
           public:
             cache_proxy_t(
-                std::unique_ptr<ServerAdapter>&& server_adapter) noexcept
-                : tr(server_adapter) {}
+              std::unique_ptr<ServerAdapter>&& server_adapter) noexcept
+              : tr(server_adapter) {
+            }
 
             ~cache_proxy_t() noexcept {
                 if (tr.joinable())
@@ -67,8 +69,8 @@ namespace webpp {
       public:
         session(decltype(_server_adapter)&& server_adapter = nullptr,
                 decltype(_client_adapter)&& client_adapter = nullptr) noexcept
-            : _server_adapter{std::move(server_adapter)},
-              _client_adapter{std::move(client_adapter)} {
+          : _server_adapter{std::move(server_adapter)},
+            _client_adapter{std::move(client_adapter)} {
             if (!_server_adapter)
                 _server_adapter = std::make_shared<ServerAdapter>();
 

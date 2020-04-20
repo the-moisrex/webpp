@@ -23,20 +23,19 @@ namespace webpp {
         Return (*_erased_fn)(void*, Args...);
 
       public:
-        template <typename T,
-                  typename = std::enable_if_t<
-                      std::is_invocable<T&, Args...>{} &&
-                      !std::is_same<std::decay_t<T>, function_ref>{}>>
+        template <typename T, typename = std::enable_if_t<
+                                std::is_invocable<T&, Args...>{} &&
+                                !std::is_same<std::decay_t<T>, function_ref>{}>>
         constexpr function_ref(T&& x) noexcept
-            : _ptr{(void*)std::addressof(x)} {
+          : _ptr{(void*)std::addressof(x)} {
             _erased_fn = [](void* ptr, Args... xs) -> Return {
                 return (*reinterpret_cast<std::add_pointer_t<T>>(ptr))(
-                    std::forward<Args>(xs)...);
+                  std::forward<Args>(xs)...);
             };
         }
 
         constexpr decltype(auto) operator()(Args... xs) const
-            noexcept(noexcept(_erased_fn(_ptr, std::forward<Args>(xs)...))) {
+          noexcept(noexcept(_erased_fn(_ptr, std::forward<Args>(xs)...))) {
             return _erased_fn(_ptr, std::forward<Args>(xs)...);
         }
     };
@@ -52,12 +51,13 @@ namespace webpp {
 
       public:
         constexpr callable_function(
-            std::remove_pointer_t<Callable>* func) noexcept
-            : func(func) {}
+          std::remove_pointer_t<Callable>* func) noexcept
+          : func(func) {
+        }
 
         template <typename... Args>
         decltype(auto) operator()(Args&&... args) const
-            noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
+          noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
             using RetType = std::invoke_result_t<Callable, Args...>;
             if constexpr (std::is_void_v<RetType>) {
                 (*func)(std::forward<Args>(args)...);
@@ -81,15 +81,18 @@ namespace webpp {
                   std::enable_if_t<std::is_constructible_v<Callable_t, Args...>,
                                    int> = 0>
         constexpr callable_as_field(Args&&... args) noexcept
-            : callable(std::forward<Args>(args)...) {}
+          : callable(std::forward<Args>(args)...) {
+        }
 
         template <typename... Args>
         auto operator()(Args&&... args) const
-            noexcept(std::is_nothrow_invocable_v<Callable_t, Args...>) {
+          noexcept(std::is_nothrow_invocable_v<Callable_t, Args...>) {
             return callable(std::forward<Args>(args)...);
         }
 
-        auto& ref() noexcept { return callable; }
+        auto& ref() noexcept {
+            return callable;
+        }
     };
 
     /**
@@ -98,12 +101,12 @@ namespace webpp {
      */
     template <typename Callable>
     using make_inheritable = std::conditional_t<
-        std::is_class_v<Callable>,
-        std::conditional_t<
-            std::is_final_v<Callable>, callable_as_field<Callable>,
-            std::conditional_t<!std::is_default_constructible_v<Callable>,
-                               callable_as_field<Callable>, Callable>>,
-        callable_function<Callable>>;
+      std::is_class_v<Callable>,
+      std::conditional_t<
+        std::is_final_v<Callable>, callable_as_field<Callable>,
+        std::conditional_t<!std::is_default_constructible_v<Callable>,
+                           callable_as_field<Callable>, Callable>>,
+      callable_function<Callable>>;
 
     // Tests if T is a specialization of Template
     template <typename T, template <typename...> class Template>
@@ -121,7 +124,7 @@ namespace webpp {
     };
 
     template <class... Ts>
-    overloaded(Ts...)->overloaded<Ts...>;
+    overloaded(Ts...) -> overloaded<Ts...>;
 
 } // namespace webpp
 

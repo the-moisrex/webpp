@@ -1,5 +1,6 @@
-#include <gtest/gtest.h>
 #include "../core/include/webpp/utils/charset.h"
+
+#include <gtest/gtest.h>
 
 using namespace webpp;
 

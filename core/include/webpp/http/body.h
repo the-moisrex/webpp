@@ -89,8 +89,8 @@ namespace webpp {
 
     class body {
       public:
-        using string_type = std::string;
-        using stream_type = std::ostream;
+        using string_type      = std::string;
+        using stream_type      = std::ostream;
         using string_view_type = std::string_view;
 
       protected:
@@ -114,32 +114,36 @@ namespace webpp {
         body() noexcept = default;
 
         body(char const* const _str) noexcept
-            : data(new std::string(_str)), type(types::string) {}
+          : data(new std::string(_str)),
+            type(types::string) {
+        }
 
         body(std::string_view const& str) noexcept
-            : data(new std::string(str)), type(types::string) {}
+          : data(new std::string(str)),
+            type(types::string) {
+        }
 
         body(std::ostream& stream) noexcept
-            : data(&stream), type(types::stream) {}
+          : data(&stream),
+            type(types::stream) {
+        }
 
         body& operator=(body const& b) noexcept {
             if (this != &b) {
                 this->~body();
                 type = b.type;
                 switch (b.type) {
-                case types::empty:
-                    break;
-                case types::stream:
-                    // todo: fix this to be a stream instead of this:
-                    replace_string(string_type(b.str("")));
-                    break;
-                case types::string:
-                    replace_string(b.str_ref());
-                    break;
-                case types::string_view:
-                    // we don't know if the string_view will exists that long
-                    replace_string(std::string{b.str_view_ref()});
-                    break;
+                    case types::empty: break;
+                    case types::stream:
+                        // todo: fix this to be a stream instead of this:
+                        replace_string(string_type(b.str("")));
+                        break;
+                    case types::string: replace_string(b.str_ref()); break;
+                    case types::string_view:
+                        // we don't know if the string_view will exists that
+                        // long
+                        replace_string(std::string{b.str_view_ref()});
+                        break;
                 }
             }
             return *this;
@@ -147,8 +151,8 @@ namespace webpp {
 
         body& operator=(body&& b) noexcept {
             if (this != &b) {
-                type = std::move(b.type);
-                data = std::move(b.data);
+                type   = std::move(b.type);
+                data   = std::move(b.data);
                 b.data = nullptr;
             }
             return *this;

@@ -1,19 +1,18 @@
 #ifndef WEBPP_VALVES_METHODS_H
 #define WEBPP_VALVES_METHODS_H
 
-
 #include "valve.h"
 
 namespace webpp::valves {
 
-
-  struct method_condition {
+    struct method_condition {
       private:
         std::string_view method_string;
 
       public:
         constexpr method_condition(std::string_view str) noexcept
-            : method_string(std::move(str)) {}
+          : method_string(std::move(str)) {
+        }
 
         constexpr method_condition() noexcept = default;
 
@@ -27,12 +26,12 @@ namespace webpp::valves {
         using valve<method_condition>::valve;
     };
 
-    constexpr auto get = method("GET");
+    constexpr auto get  = method("GET");
     constexpr auto post = method("POST");
     constexpr auto head = method("HEAD");
-    constexpr auto put = method("PUT");
+    constexpr auto put  = method("PUT");
     // TODO: add more methods
-}
+} // namespace webpp::valves
 
 
 #endif // WEBPP_VALVES_METHODS_H

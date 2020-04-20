@@ -9,22 +9,22 @@
 #include "std.h"
 
 #if __has_include(<socket>)
-#define STD_SOCKET STLLIB_STANDARD
-#include <socket>
+#    define STD_SOCKET STLLIB_STANDARD
+#    include <socket>
 #elif __has_include(<boost/asio/ts/socket.hpp>)
-#define STD_SOCKET STLLIB_BOOST
-#include <boost/asio/ts/socket.hpp>
+#    define STD_SOCKET STLLIB_BOOST
+#    include <boost/asio/ts/socket.hpp>
 namespace std {
     namespace net = boost::asio;
 }
 #elif __has_include(<experimental/socket>)
-#define STD_SOCKET STLLIB_EXPERIMENTAL
-#include <experimental/socket>
+#    define STD_SOCKET STLLIB_EXPERIMENTAL
+#    include <experimental/socket>
 namespace std {
     namespace net = experimental::net;
 }
 #else
-#error STLLIB_NETWORKING_ERROR
+#    error STLLIB_NETWORKING_ERROR
 #endif
 
 #endif // WEBPP_STD_SOCKET_T

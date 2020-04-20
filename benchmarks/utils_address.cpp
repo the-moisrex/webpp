@@ -27,15 +27,15 @@ auto ipv4_rands() {
         str.append(to_string(i));
         ipv4_rand.push_back(std::move(str));
     }
-  return ipv4_rand;
+    return ipv4_rand;
 }
 auto ipv4_data() {
-  static auto data = ipv4_rands();
-  static auto it = data.begin();
-  ++it;
-  if (it == data.end())
-    it = data.begin();
-  return *it;
+    static auto data = ipv4_rands();
+    static auto it   = data.begin();
+    ++it;
+    if (it == data.end())
+        it = data.begin();
+    return *it;
 }
 
 static void ip_asio_v4_random(benchmark::State& state) {
@@ -83,15 +83,15 @@ auto ipv6_rands() {
         str.append(to_string(i));
         ipv6_rand.push_back(std::move(str));
     }
-  return ipv6_rand;
+    return ipv6_rand;
 }
 auto ipv6_data() {
-  static auto data = ipv6_rands();
-  static auto it = data.begin();
-  ++it;
-  if (it == data.end())
-    it = data.begin();
-  return *it;
+    static auto data = ipv6_rands();
+    static auto it   = data.begin();
+    ++it;
+    if (it == data.end())
+        it = data.begin();
+    return *it;
 }
 
 static void ip_asio_v6_random(benchmark::State& state) {

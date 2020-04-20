@@ -1,6 +1,8 @@
 #include "../../../include/webpp/interfaces/cgi.h"
+
 #include "../../../include/webpp/utils/casts.h"
 #include "../../../include/webpp/utils/strings.h"
+
 #include <cctype>
 #include <cstdlib>
 #include <functional>
@@ -63,7 +65,6 @@ cgi::cgi() noexcept : basic_interface() {
 }
 
 std::string_view cgi::header(std::string name) noexcept {
-
     // fixme: check if this is all we have to do or we have to do more too:
     std::transform(name.begin(), name.end(), name.begin(), [](auto const& c) {
         if (c == '-')
@@ -92,7 +93,6 @@ std::streamsize cgi::read(char* data, std::streamsize length) noexcept {
 }
 
 void cgi::write(std::ostream& stream) noexcept {
-
     // TODO: check if you need to ignore the input or not
 
     // I think o-stream is not readable so we cannot do this:
@@ -152,10 +152,10 @@ std::string_view cgi::body() noexcept {
 
 void cgi::operator()() noexcept {
     webpp::request_t<cgi> req;
-    auto res = router(req);
+    auto                  res = router(req);
     res.calculate_default_headers();
     auto header_str = res.header.str();
-    auto str = res.body.str();
+    auto str        = res.body.str();
 
     // From RFC: https://tools.ietf.org/html/rfc3875
     // Send status code:

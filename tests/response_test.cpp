@@ -1,7 +1,9 @@
 // Created by moisrex on 2/4/20.
 
-#include "../core/include/webpp/http/body.h"
 #include "../core/include/webpp/http/response.h"
+
+#include "../core/include/webpp/http/body.h"
+
 #include <cstdio>
 #include <fstream>
 #include <gtest/gtest.h>
@@ -17,12 +19,12 @@ TEST(Body, Text) {
     EXPECT_TRUE(b == "Testing");
 
     std::string str = "hello";
-    b = str;
+    b               = str;
 
     EXPECT_EQ(b, "hello");
 
     std::string_view sth = "nice";
-    b = sth;
+    b                    = sth;
     EXPECT_EQ(b, "nice");
 
     b = std::string("cool");
@@ -30,23 +32,25 @@ TEST(Body, Text) {
 
     body bt;
     {
-        std::string _str = "testing";
+        std::string      _str = "testing";
         std::string_view test = _str;
         bt.replace_string_view(test);
         EXPECT_EQ(bt.str(), test);
         _str = "";
     }
     EXPECT_NE(bt.str(), "testing") << "The test should be empty since it was a "
-                               "string_view and not a string";
+                                      "string_view and not a string";
 }
 
 TEST(Response, Type) {
-    constexpr auto return_callback = [] { return response("Hello"); };
-    using ret_type = std::invoke_result_t<decltype(return_callback)>;
-    constexpr bool one = std::is_same_v<ret_type, response>;
-    constexpr bool two = std::is_convertible_v<ret_type, response>;
+    constexpr auto return_callback = [] {
+        return response("Hello");
+    };
+    using ret_type       = std::invoke_result_t<decltype(return_callback)>;
+    constexpr bool one   = std::is_same_v<ret_type, response>;
+    constexpr bool two   = std::is_convertible_v<ret_type, response>;
     constexpr bool three = std::is_convertible_v<response, response>;
-    constexpr bool four = std::is_convertible_v<std::string, response>;
+    constexpr bool four  = std::is_convertible_v<std::string, response>;
     //    constexpr bool five = std::is_convertible_v<std::string_view,
     //    response>;
     EXPECT_TRUE(one);
@@ -57,7 +61,7 @@ TEST(Response, Type) {
 }
 
 TEST(Response, Init) {
-    auto res = response();
+    auto res  = response();
     auto res2 = response();
 
     EXPECT_EQ(res, res2);

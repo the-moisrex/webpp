@@ -9,24 +9,23 @@ namespace webpp::protocol {
      * It is very important that this record_type's size be uint8_t
      */
     enum class record_type : uint8_t {
-        begin_request = 1,
-        abort_request = 2,
-        end_request = 3,
-        params = 4,
-        std_in = 5,
-        std_out = 6,
-        std_err = 7,
-        data = 8,
-        get_values = 9,
+        begin_request     = 1,
+        abort_request     = 2,
+        end_request       = 3,
+        params            = 4,
+        std_in            = 5,
+        std_out           = 6,
+        std_err           = 7,
+        data              = 8,
+        get_values        = 9,
         get_values_result = 10,
-        unknown_type = 11
+        unknown_type      = 11
     };
 
     /**
      * This is the version 1.0 of the FastCGI Record protocol
      */
     struct header {
-
         /* Identifies the FastCGI protocol version. This is the version 1 */
         uint8_t version = 1;
 
@@ -51,11 +50,13 @@ namespace webpp::protocol {
 
         header(record_type _type, uint16_t _req_id, uint16_t _content_length,
                uint8_t _padd_len) noexcept
-            : type{_type}, request_id_b1{static_cast<uint8_t>(_req_id >> 8u)},
-              request_id_b0{static_cast<uint8_t>(_req_id)},
-              content_length_b1{static_cast<uint8_t>(_content_length >> 8u)},
-              content_length_b0{static_cast<uint8_t>(_content_length)},
-              padding_length{_padd_len} {}
+          : type{_type},
+            request_id_b1{static_cast<uint8_t>(_req_id >> 8u)},
+            request_id_b0{static_cast<uint8_t>(_req_id)},
+            content_length_b1{static_cast<uint8_t>(_content_length >> 8u)},
+            content_length_b0{static_cast<uint8_t>(_content_length)},
+            padding_length{_padd_len} {
+        }
 
         inline uint16_t request_id() const noexcept {
             return (static_cast<uint16_t>(request_id_b1) << 8u) | request_id_b0;
@@ -115,15 +116,15 @@ namespace webpp::protocol {
 
     struct unknown_type {
         record_type type;
-        uint8_t reserved[7];
+        uint8_t     reserved[7];
     };
 
     template <std::size_t NAMELENGTH, std::size_t VALUELENGTH,
               std::size_t PADDINGLENGTH>
     struct management_reply {
       private:
-        header _header;
-        uint8_t name_length = NAMELENGTH;
+        header  _header;
+        uint8_t name_length  = NAMELENGTH;
         uint8_t value_length = VALUELENGTH;
         uint8_t name[NAMELENGTH];
         uint8_t value[VALUELENGTH];
@@ -132,12 +133,12 @@ namespace webpp::protocol {
       public:
         constexpr management_reply(char const* _name,
                                    char const* _value) noexcept
-            : _header{record_type::get_values_result, 0u,
-                      NAMELENGTH + VALUELENGTH, PADDINGLENGTH} {
-            auto _name_end = _name + NAMELENGTH;
+          : _header{record_type::get_values_result, 0u,
+                    NAMELENGTH + VALUELENGTH, PADDINGLENGTH} {
+            auto _name_end  = _name + NAMELENGTH;
             auto _value_end = _value + VALUELENGTH;
-            auto name_ptr = name;
-            auto value_ptr = value;
+            auto name_ptr   = name;
+            auto value_ptr  = value;
             while (_name != _name_end)
                 *name_ptr = *_name++;
             while (_value != _value_end)
@@ -149,13 +150,12 @@ namespace webpp::protocol {
      * Automatically calculate the managemenr reply required tempate lengths
      */
     template <typename NameT, typename ValueT>
-    management_reply(NameT name, ValueT value)
-        ->management_reply<
-            (sizeof(NameT) / sizeof(char)), (sizeof(ValueT) / sizeof(char)),
-            ((sizeof(int_fast8_t) * 8u) - ((sizeof(management_reply<1, 1, 1>) -
-                                            3 + (sizeof(NameT) / sizeof(char)) +
-                                            (sizeof(ValueT) / sizeof(char))) %
-                                           (sizeof(int_fast8_t) * 8u)))>;
+    management_reply(NameT name, ValueT value) -> management_reply<
+      (sizeof(NameT) / sizeof(char)), (sizeof(ValueT) / sizeof(char)),
+      ((sizeof(int_fast8_t) * 8u) -
+       ((sizeof(management_reply<1, 1, 1>) - 3 +
+         (sizeof(NameT) / sizeof(char)) + (sizeof(ValueT) / sizeof(char))) %
+        (sizeof(int_fast8_t) * 8u)))>;
 
     management_reply default_max_conns_reply{"FCGI_MAX_CONNS", "10"};
     management_reply default_max_reqs_reply{"FCGI_MAX_REQS", "50"};

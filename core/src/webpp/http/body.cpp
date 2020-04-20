@@ -1,40 +1,35 @@
 #include "../../../include/webpp/http/body.h"
+
 #include <sstream>
 
 using namespace webpp;
 
 std::string body::str(std::string_view const& default_val) const noexcept {
     switch (type) {
-    case types::string:
-        return str_ref();
+        case types::string: return str_ref();
 
-    case types::string_view:
-        return std::string{str_view_ref()};
+        case types::string_view: return std::string{str_view_ref()};
 
-    // FIXME: check if there's an optimization issue here or not
-    case types::stream:
-        auto ndata = new std::string{
-            std::istreambuf_iterator<char>(*static_cast<std::istream*>(data)),
-            std::istreambuf_iterator<char>()};
-        this->~body();
-        data = ndata;
-        type = types::string;
-        return str_ref();
+        // FIXME: check if there's an optimization issue here or not
+        case types::stream:
+            auto ndata = new std::string{
+              std::istreambuf_iterator<char>(*static_cast<std::istream*>(data)),
+              std::istreambuf_iterator<char>()};
+            this->~body();
+            data = ndata;
+            type = types::string;
+            return str_ref();
     }
     return std::string(default_val);
 }
 
 std::ostream& body::operator<<(std::ostream& __stream) {
     switch (type) {
-    case types::stream:
-        __stream << static_cast<stream_type*>(data);
-        break;
-    case types::string:
-        __stream << str_ref();
-        break;
-    default:
-        // do nothing
-        break;
+        case types::stream: __stream << static_cast<stream_type*>(data); break;
+        case types::string: __stream << str_ref(); break;
+        default:
+            // do nothing
+            break;
     }
 
     return __stream;
@@ -78,17 +73,12 @@ body::~body() noexcept {
     // FIXME: check for memory leak here!
     if (data) {
         switch (type) {
-        case types::string_view:
-            delete static_cast<string_view_type*>(data);
-            break;
-        case types::string:
-            delete static_cast<string_type*>(data);
-            break;
-        case types::stream:
-            delete static_cast<stream_type*>(data);
-            break;
-        default:
-            break;
+            case types::string_view:
+                delete static_cast<string_view_type*>(data);
+                break;
+            case types::string: delete static_cast<string_type*>(data); break;
+            case types::stream: delete static_cast<stream_type*>(data); break;
+            default: break;
         }
         data = nullptr;
     }
@@ -96,39 +86,33 @@ body::~body() noexcept {
 
 body& body::operator<<(std::string_view const& str) noexcept {
     switch (type) {
-    case types::empty:
-        // I am not using the replace_string_view version because we just don't
-        // know if the string_view the user passed will be valid then, so we
-        // copy the data into a string. I will use replace_string_view directly
-        // in my own implementations so if the user uses the library, they'd get
-        // the performance they want
-        replace_string(std::string{str});
-        break;
-    case types::string:
-        append_string(str);
-        break;
-    case types::stream:
-        std::stringstream sstr;
-        sstr << str;
-        append_stream(sstr);
-        break;
+        case types::empty:
+            // I am not using the replace_string_view version because we just
+            // don't know if the string_view the user passed will be valid then,
+            // so we copy the data into a string. I will use replace_string_view
+            // directly in my own implementations so if the user uses the
+            // library, they'd get the performance they want
+            replace_string(std::string{str});
+            break;
+        case types::string: append_string(str); break;
+        case types::stream:
+            std::stringstream sstr;
+            sstr << str;
+            append_stream(sstr);
+            break;
     }
     return *this;
 }
 
 void body::append_string(std::string_view const& str) noexcept {
     switch (type) {
-    case types::empty:
-        // read the operator<<'s details on why I use replace_string and not
-        // replace_string_view here
-        replace_string(std::string{str});
-        break;
-    case types::string:
-        str_ref().append(str);
-        break;
-    case types::stream:
-        stream_ref() << str;
-        break;
+        case types::empty:
+            // read the operator<<'s details on why I use replace_string and not
+            // replace_string_view here
+            replace_string(std::string{str});
+            break;
+        case types::string: str_ref().append(str); break;
+        case types::stream: stream_ref() << str; break;
     }
 }
 
@@ -150,20 +134,16 @@ body::stream_type& body::stream_ref() noexcept {
 
 void body::append_stream(webpp::body::stream_type& stream) noexcept {
     switch (type) {
-    case types::stream:
-        stream_ref() << stream.rdbuf();
-        break;
-    case types::string:
-        // todo: I have no idea what the heck is this!
-        // https://stackoverflow.com/questions/3203452/how-to-read-entire-stream-into-a-stdstring
-        str_ref().append(std::string(
-            std::istreambuf_iterator<char>(
+        case types::stream: stream_ref() << stream.rdbuf(); break;
+        case types::string:
+            // todo: I have no idea what the heck is this!
+            // https://stackoverflow.com/questions/3203452/how-to-read-entire-stream-into-a-stdstring
+            str_ref().append(std::string(
+              std::istreambuf_iterator<char>(
                 (std::istreambuf_iterator<
-                    char, std::char_traits<char>>::istream_type&)stream),
-            {}));
-        break;
-    case types::empty:
-        replace_stream(stream);
-        break;
+                  char, std::char_traits<char>>::istream_type&)stream),
+              {}));
+            break;
+        case types::empty: replace_stream(stream); break;
     }
 }

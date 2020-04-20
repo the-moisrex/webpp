@@ -19,6 +19,6 @@ find_package(webpp_static REQUIRED)
 
 add_executable(${EXEC_NAME} ${BIN_SOURCES})
 target_link_libraries(${EXEC_NAME}
-  PRIVATE webpp::webpp_static
-)
+        PRIVATE webpp::webpp_static
+        )
 install(TARGETS ${EXEC_NAME} DESTINATION /srv/http/cgi-bin)

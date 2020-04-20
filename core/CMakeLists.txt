@@ -51,9 +51,9 @@ string(REPLACE ";" "\n                                    " ALL_SOURCES_SHORT_P 
 message(STATUS "Source Files                   : ${ALL_SOURCES_SHORT_P}")
 
 if (SHARED_LIBRARY_EXECUTABLE)
-  include(../cmake/dyn_lib_entry_point.cmake)
-  set_interp_path()
-endif()
+    include(../cmake/dyn_lib_entry_point.cmake)
+    set_interp_path()
+endif ()
 
 # boost
 find_package(Boost REQUIRED)
@@ -68,28 +68,28 @@ add_library(${PROJECT_NAME}::${SLIB_NAME} ALIAS ${SLIB_NAME})
 
 # boost
 target_link_libraries(${LIB_NAME}
-  PRIVATE ${Boost_LIBRARIES}
-)
+        PRIVATE ${Boost_LIBRARIES}
+        )
 target_link_libraries(${SLIB_NAME}
-  PRIVATE ${Boost_LIBRARIES}
-)
+        PRIVATE ${Boost_LIBRARIES}
+        )
 
 
 if (SHARED_LIBRARY_EXECUTABLE)
-  # setting the entry point for a shared library so it can be treated like an executable
-  target_link_options(${LIB_NAME} PUBLIC -e __lib_main)
-endif()
+    # setting the entry point for a shared library so it can be treated like an executable
+    target_link_options(${LIB_NAME} PUBLIC -e __lib_main)
+endif ()
 
 set_target_properties(${LIB_NAME} PROPERTIES
-  VERSION ${LIB_VERSION}
-  SOVERSION ${LIB_SOVERSION}
-	LINKER_LANGUAGE CXX
-)
+        VERSION ${LIB_VERSION}
+        SOVERSION ${LIB_SOVERSION}
+        LINKER_LANGUAGE CXX
+        )
 set_target_properties(${SLIB_NAME} PROPERTIES
-  VERSION ${LIB_VERSION}
-  SOVERSION ${LIB_SOVERSION}
-	LINKER_LANGUAGE CXX
-)
+        VERSION ${LIB_VERSION}
+        SOVERSION ${LIB_SOVERSION}
+        LINKER_LANGUAGE CXX
+        )
 
 target_include_directories(${LIB_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -147,12 +147,6 @@ install(CODE "install_headers(\"${LIB_INCLUDE_DIR}\" \"${CMAKE_INSTALL_PREFIX}/i
 #  DIRECTORY ${PROJECT_BINARY_DIR}/include/webpp
 #  DESTINATION include
 #)
-
-
-
-
-
-
 
 
 #install(FILES ${LIB_HEADERS} DESTINATION include)

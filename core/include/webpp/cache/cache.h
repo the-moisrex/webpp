@@ -11,7 +11,7 @@ namespace webpp {
      * It's purpose is to have a unified caching system for different types.
      * You can use different caching system for different key and values
      * You even can use different caching methods available in the wild with
-     * this calss.
+     * this class.
      *
      * You probably want to use this class instead of individual classes out
      * there.
@@ -57,9 +57,9 @@ namespace webpp {
          */
         template <typename KeyType>
         static constexpr bool can_use_as_key() noexcept {
-            return (std::is_convertible_v<KeyType,
-                                          typename CacheSystem::key_type> ||
-                    ...);
+            return (
+              std::is_convertible_v<KeyType, typename CacheSystem::key_type> ||
+              ...);
         }
 
         /**
@@ -80,8 +80,8 @@ namespace webpp {
     auto set(CacheSystem& cache_system, typename CacheSystem::key_type&& key,
              typename CacheSystem::value_type&& value) {
         return cache_system.set(
-            std::forward<typename CacheSystem::key_type>(key),
-            std::forward<typename CacheSystem::value_type>(value));
+          std::forward<typename CacheSystem::key_type>(key),
+          std::forward<typename CacheSystem::value_type>(value));
     }
 
 } // namespace webpp

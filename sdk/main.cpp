@@ -4,27 +4,27 @@
 #include <tuple>
 
 void check_args(
-    const int argc, char const* const* const argv,
-    std::vector<std::pair<
-        std::string, std::function<void(
-                         boost::program_options::options_description const&,
-                         boost::program_options::variables_map const&)>>> const&
-        actions,
+  const int argc, char const* const* const argv,
+  std::vector<std::pair<
+    std::string,
     std::function<void(boost::program_options::options_description const&,
-                       boost::program_options::variables_map const&)> const&
-        default_action) {
+                       boost::program_options::variables_map const&)>>> const&
+    actions,
+  std::function<void(boost::program_options::options_description const&,
+                     boost::program_options::variables_map const&)> const&
+    default_action) {
     using namespace boost::program_options;
 
     options_description desc("Program options");
     desc.add_options()(
-        "update,u", bool_switch()->default_value(false)->implicit_value(true),
-        "update the databases")(
-        "help,h", bool_switch()->default_value(false)->implicit_value(true),
-        "print this help")(
-        "cmd", value<std::string>()->default_value("help")->required(),
-        "The command")("cmd_opts",
-                       value<std::vector<std::string>>()->multitoken(),
-                       "The command options.");
+      "update,u", bool_switch()->default_value(false)->implicit_value(true),
+      "update the databases")(
+      "help,h", bool_switch()->default_value(false)->implicit_value(true),
+      "print this help")(
+      "cmd", value<std::string>()->default_value("help")->required(),
+      "The command")("cmd_opts",
+                     value<std::vector<std::string>>()->multitoken(),
+                     "The command options.");
 
     positional_options_description pos;
     pos.add("cmd", 1);
@@ -63,7 +63,7 @@ void update_db(boost::program_options::options_description const& desc,
 }
 
 void session_manager(boost::program_options::options_description const& desc,
-                     boost::program_options::variables_map const& vm) {
+                     boost::program_options::variables_map const&       vm) {
     // TODO: complete me
     // TODO: clean the sessions
     // TODO: clean session data for a specific user

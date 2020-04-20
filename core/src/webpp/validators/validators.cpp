@@ -1,15 +1,17 @@
 #include "../../../include/webpp/validators/validators.h"
+
 #include "../../../include/webpp/utils/strings.h"
+
 #include <string>
 #include <string_view>
 
 using namespace webpp;
 
 bool is::name_color(std::string str) noexcept {
-
     // converting to lower case
-    std::transform(str.begin(), str.end(), str.begin(),
-                   [](unsigned char c) { return std::tolower(c); });
+    std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c) {
+        return std::tolower(c);
+    });
 
     static constexpr auto names = {"algae green",
                                    "aliceblue",
@@ -354,9 +356,10 @@ bool is::name_color(std::string str) noexcept {
                                    "yellow green",
                                    "zombie green"};
 
-    auto it =
-        std::lower_bound(std::cbegin(names), std::end(names), str,
-                         [](const auto& l, const auto& r) { return l < r; });
+    auto it = std::lower_bound(std::cbegin(names), std::end(names), str,
+                               [](const auto& l, const auto& r) {
+                                   return l < r;
+                               });
     return it != std::end(names) && *it == str;
 }
 
@@ -406,11 +409,10 @@ bool is::rgba_color(std::string_view str) noexcept {
 }
 
 bool is::email(std::string_view const& str) noexcept {
-    // TODO: Do not use regular expression, it's slow
-    // TODO: make this function constexpr
+    // TODO: Do not use regular expression, it's slow; use CTRE
     static const std::regex pattern{
-        "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-"
-        "z0-9]+)*(\\.[A-Za-z]{2,})$"};
+      "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-"
+      "z0-9]+)*(\\.[A-Za-z]{2,})$"};
     return std::regex_match(std::string(str), pattern);
 }
 
@@ -418,7 +420,9 @@ bool is::color(std::string_view const& str) noexcept {
     return hex_color(str) || name_color(std::string(str)) || rgb_color(str) ||
            rgba_color(str) || hsl_color(str);
 }
-bool is::hsla_color(std::string_view str) noexcept { return hsl_color(str); }
+bool is::hsla_color(std::string_view str) noexcept {
+    return hsl_color(str);
+}
 
 bool is::hsl_color(std::string_view str) noexcept {
     return true; // FIXME: implement this

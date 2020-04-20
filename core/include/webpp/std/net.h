@@ -8,22 +8,22 @@
 #include "std.h"
 
 #if __has_include(<net>)
-#define STD_NET STLLIB_STANDARD
-#include <net>
+#    define STD_NET STLLIB_STANDARD
+#    include <net>
 #elif __has_include(<boost/asio/ts/net.hpp>)
-#define STD_NET STLLIB_BOOST
-#include <boost/asio/ts/net.hpp>
+#    define STD_NET STLLIB_BOOST
+#    include <boost/asio/ts/net.hpp>
 namespace std {
     namespace net = boost::asio;
 }
 #elif __has_include(<experimental/net>)
-#define STD_NET STLLIB_EXPERIMENTAL
-#include <experimental/net>
+#    define STD_NET STLLIB_EXPERIMENTAL
+#    include <experimental/net>
 namespace std {
     namespace net = experimental::net;
 }
 #else
-#error STLLIB_NETWORKING_ERROR
+#    error STLLIB_NETWORKING_ERROR
 #endif
 
 #endif // WEBPP_STD_NET_H

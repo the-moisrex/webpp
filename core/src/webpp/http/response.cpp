@@ -1,4 +1,5 @@
 #include "../../../include/webpp/http/response.h"
+
 #include <fstream>
 
 using namespace webpp;
@@ -19,20 +20,20 @@ void response::calculate_default_headers() noexcept {
 }
 
 response::response(response const& res) noexcept {
-    body = res.body;
+    body   = res.body;
     header = res.header;
 }
 
 response::response(response&& res) noexcept {
     if (this != &res) {
-        body = std::move(res.body);
+        body   = std::move(res.body);
         header = std::move(res.header);
     }
 }
 
 response& response::operator=(response&& res) noexcept {
     if (&res != this) {
-        body = std::move(res.body);
+        body   = std::move(res.body);
         header = std::move(res.header);
     }
     return *this;
@@ -48,8 +49,10 @@ response& response::operator=(std::string& str) noexcept {
     return *this;
 }
 
-response::response(std::string const& b) noexcept : body{b} {}
-response::response(std::string&& b) noexcept : body{std::move(b)} {}
+response::response(std::string const& b) noexcept : body{b} {
+}
+response::response(std::string&& b) noexcept : body{std::move(b)} {
+}
 
 [[nodiscard]] bool response::operator==(response const& res) const noexcept {
     return body == res.body && header == res.header;
@@ -59,18 +62,20 @@ response::response(std::string&& b) noexcept : body{std::move(b)} {}
     return !operator==(res);
 }
 
-response::operator std::string_view() const noexcept { return body.str(); }
+response::operator std::string_view() const noexcept {
+    return body.str();
+}
 
 response::operator std::string() const noexcept {
     return std::string(body.str());
 }
 
 #ifdef CONFIG_FILE
-#if CONFIG_FILE != ""
-#include CONFIG_FILE
-#else
+#    if CONFIG_FILE != ""
+#        include CONFIG_FILE
+#    else
 extern std::string_view get_static_file(std::string_view const&) noexcept;
-#endif
+#    endif
 #endif
 
 response response::file(std::filesystem::path const& _file) noexcept {
@@ -92,12 +97,12 @@ response response::file(std::filesystem::path const& _file) noexcept {
         // std::unique_ptr<char[]> buffer{new char[buffer_size]};
         // in.rdbuf()->pubsetbuf(buffer.get(), buffer_size); // speed boost, I
         // think
-        auto size = in.tellg();
+        auto                    size = in.tellg();
         std::unique_ptr<char[]> result(new char[size]);
         in.seekg(0);
         in.read(result.get(), size);
         res.body.replace_string(std::string{
-            result.get(), static_cast<std::string_view::size_type>(size)});
+          result.get(), static_cast<std::string_view::size_type>(size)});
     }
 
     return res;

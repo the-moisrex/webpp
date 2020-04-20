@@ -23,31 +23,31 @@ namespace webpp {
     template <typename CharT = char, std::size_t N = 1>
     class charset_t {
         static_assert(
-            N > 0,
-            "A charset with zero elements doesn't makes sense to construct.");
+          N > 0,
+          "A charset with zero elements doesn't makes sense to construct.");
 
         template <typename Tpl, typename Callable, std::size_t... I>
         constexpr void do_this_for_that(std::index_sequence<I...>,
                                         Tpl const& tpl,
-                                        Callable callback) noexcept {
+                                        Callable   callback) noexcept {
             (callback(std::get<I>(tpl)), ...);
         }
 
         template <typename Tpl, typename Callable>
         constexpr void for_each_tuple(Tpl const& tpl,
-                                      Callable callback) noexcept {
+                                      Callable   callback) noexcept {
             constexpr auto tpl_size = std::tuple_size<Tpl>::value;
             do_this_for_that(std::make_index_sequence<tpl_size>(), tpl,
                              callback);
         }
 
       public:
-        CharT content[N] = {};
+        CharT  content[N] = {};
         size_t _size{0};
 
       public:
-        ~charset_t() noexcept = default;
-        charset_t(const charset_t&) = default;
+        ~charset_t() noexcept           = default;
+        charset_t(const charset_t&)     = default;
         charset_t(charset_t&&) noexcept = default;
         charset_t& operator=(const charset_t&) = default;
         charset_t& operator=(charset_t&&) noexcept = default;
@@ -56,7 +56,8 @@ namespace webpp {
         /**
          * This is the default constructor.
          */
-        constexpr charset_t() noexcept {}
+        constexpr charset_t() noexcept {
+        }
 
         template <typename CCharT = CharT>
         constexpr charset_t(const CCharT (&input)[N]) noexcept {
@@ -93,8 +94,9 @@ namespace webpp {
 
         template <typename CCharT = CharT, size_t NN>
         constexpr explicit charset_t(
-            std::array<CCharT, NN> const& _chars) noexcept
-            : charset_t<CCharT>{_chars.data()} {}
+          std::array<CCharT, NN> const& _chars) noexcept
+          : charset_t<CCharT>{_chars.data()} {
+        }
 
         /**
          * This method checks to see if the given character
@@ -158,7 +160,7 @@ namespace webpp {
      */
     template <typename... Char,
               typename = typename std::enable_if<
-                  (true && ... && std::is_same_v<Char, char>), void>::type>
+                (true && ... && std::is_same_v<Char, char>), void>::type>
     constexpr auto charset(Char... chars) noexcept {
         return charset_t<sizeof...(chars)>{chars...};
     }
@@ -172,7 +174,7 @@ namespace webpp {
     constexpr auto charset_impl(charset_t<N> const& cset,
                                 std::index_sequence<I...>) noexcept {
         return charset<N>(
-            {cset.chars[I]...}); // turning it into a sequence of chars
+          {cset.chars[I]...}); // turning it into a sequence of chars
     }
 
     template <std::size_t N, typename Indeces = std::make_index_sequence<N>>
@@ -201,8 +203,8 @@ namespace webpp {
      */
     template <char First, char Last>
     constexpr auto charset() noexcept {
-        constexpr auto the_size = static_cast<std::size_t>(Last) -
-                                  static_cast<std::size_t>(First) + 1;
+        constexpr auto the_size =
+          static_cast<std::size_t>(Last) - static_cast<std::size_t>(First) + 1;
         return charset<the_size>(First,
                                  std::make_integer_sequence<char, the_size>{});
     }
@@ -270,7 +272,7 @@ namespace webpp {
      * in a hexadecimal digit.
      */
     constexpr auto HEXDIG =
-        charset(DIGIT, charset<'A', 'F'>(), charset<'a', 'f'>());
+      charset(DIGIT, charset<'A', 'F'>(), charset<'a', 'f'>());
 
 } // namespace webpp
 #endif // CHARSET_H

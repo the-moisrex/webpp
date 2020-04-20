@@ -4,6 +4,7 @@
 #include "../http/request.h"
 #include "../std/internet.h"
 #include "basic_interface.h"
+
 #include <set>
 
 namespace webpp {
@@ -14,7 +15,7 @@ namespace webpp {
 
       private:
         class fcgi_impl;
-        std::set<endpoint_t> _endpoints;
+        std::set<endpoint_t>       _endpoints;
         std::unique_ptr<fcgi_impl> impl;
 
       public:
@@ -35,20 +36,23 @@ namespace webpp {
          * This will only work before you run the operator()
          */
         void add_endpoint(std::string_view const& addr,
-                          uint_fast8_t port) noexcept {
+                          uint_fast8_t            port) noexcept {
             _endpoints.emplace(std::net::ip::make_address(addr), port);
         }
 
         /**
          * Clear the endpoints
          */
-        void clear_endpoints() noexcept { _endpoints.clear(); }
+        void clear_endpoints() noexcept {
+            _endpoints.clear();
+        }
 
         /**
          * Return the endpoints.
          */
-        auto const& endpoints() const noexcept { return _endpoints; }
-
+        auto const& endpoints() const noexcept {
+            return _endpoints;
+        }
     };
 
     template <>
