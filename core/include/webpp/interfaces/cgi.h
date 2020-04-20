@@ -1,15 +1,15 @@
 #ifndef WEBPP_CGI_H
 #define WEBPP_CGI_H
 
-#include "basic_interface.h"
 #include "../router.h"
+#include "basic_interface.h"
+
 #include <string_view>
 
 namespace webpp {
 
     struct cgi : public basic_interface<cgi> {
       public:
-
         cgi() noexcept;
 
         /**
@@ -18,7 +18,7 @@ namespace webpp {
          * @param length
          * @return
          */
-        static std::streamsize read(char* data,
+        static std::streamsize read(char*           data,
                                     std::streamsize length) noexcept;
 
         /**
@@ -72,7 +72,6 @@ namespace webpp {
      */
     template <>
     struct request_t<cgi> : basic_request_t {
-
         /**
          * @brief get the server's software
          * @details Name and version of the information server software

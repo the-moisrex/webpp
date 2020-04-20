@@ -1,7 +1,7 @@
 
-#include <webpp/valves/uri.h>
-
 #include "../../../include/webpp/utils/uri.h"
+
+#include <webpp/valves/uri.h>
 
 [[nodiscard]] bool webpp::is::scheme(std::string_view const& _scheme) noexcept {
     return ALPHA.contains(_scheme);

@@ -2,6 +2,7 @@
 #define STRINGS_H
 
 #include "../common/meta.h"
+
 #include <algorithm>
 #include <string>
 #include <string_view>
@@ -11,23 +12,25 @@ namespace webpp {
 
     // trim from start (in place)
     inline void ltrim(std::string_view& s) noexcept {
-        if (auto found = std::find_if_not(
-                s.begin(), s.end(),
-                [](auto const& c) -> bool { return std::isspace(c); });
+        if (auto found = std::find_if_not(s.begin(), s.end(),
+                                          [](auto const& c) -> bool {
+                                              return std::isspace(c);
+                                          });
             found != s.end()) {
-            s.remove_prefix(static_cast<decltype(s.size())>(
-                std::distance(s.begin(), found)));
+            s.remove_prefix(
+              static_cast<decltype(s.size())>(std::distance(s.begin(), found)));
         }
     }
 
     // trim from end (in place)
     inline void rtrim(std::string_view& s) noexcept {
-        if (auto found = std::find_if_not(
-                s.rbegin(), s.rend(),
-                [](auto const& c) -> bool { return std::isspace(c); });
+        if (auto found = std::find_if_not(s.rbegin(), s.rend(),
+                                          [](auto const& c) -> bool {
+                                              return std::isspace(c);
+                                          });
             found != s.rend()) {
             s.remove_suffix(static_cast<decltype(s.size())>(
-                std::distance(s.rbegin(), found)));
+              std::distance(s.rbegin(), found)));
         }
     }
 
@@ -68,8 +71,10 @@ namespace webpp {
     // trim from end (in place)
     inline void rtrim(std::string& s) noexcept {
         s.erase(std::find_if(s.rbegin(), s.rend(),
-                             [](int ch) { return !std::isspace(ch); })
-                    .base(),
+                             [](int ch) {
+                                 return !std::isspace(ch);
+                             })
+                  .base(),
                 s.end());
     }
 
@@ -100,13 +105,17 @@ namespace webpp {
     inline void to_lower(std::string& str) noexcept {
         // FIXME: I think you can make this algorithm faster
         std::transform(str.cbegin(), str.cend(), str.begin(),
-                       [](auto const& c) { return std::tolower(c); });
+                       [](auto const& c) {
+                           return std::tolower(c);
+                       });
     }
 
     inline void to_upper(std::string& str) noexcept {
         // FIXME: I think you can make this algorithm faster
         std::transform(str.cbegin(), str.cend(), str.begin(),
-                       [](auto const& c) { return std::tolower(c); });
+                       [](auto const& c) {
+                           return std::tolower(c);
+                       });
     }
 
     [[nodiscard]] inline std::string to_lower_copy(std::string str) noexcept {

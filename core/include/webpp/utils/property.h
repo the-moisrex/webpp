@@ -27,12 +27,12 @@
  *     - [ ] Read only lock
  *     - [ ] Write only lock
  *     - [ ] Read and write lock
- *   - [ ] Read only capablities
+ *   - [ ] Read only capabilities
  *   - [ ] Constexpr compatible as much as possible
  */
 
-#include <utility>
 #include <ostream>
+#include <utility>
 
 namespace webpp {
 
@@ -42,14 +42,22 @@ namespace webpp {
         T data;
 
       public:
-        constexpr property(T const& t) noexcept : data(t) {}
-        constexpr property(T&& t) noexcept : data(std::move(t)) {}
-        ~property() noexcept = default;
-        constexpr void operator=(T const& t) noexcept { data = t; }
-        constexpr void operator=(T&& t) noexcept { data = std::move(t); }
+        constexpr property(T const& t) noexcept : data(t) {
+        }
+        constexpr property(T&& t) noexcept : data(std::move(t)) {
+        }
+        ~property() noexcept   = default;
+        constexpr void operator=(T const& t) noexcept {
+            data = t;
+        }
+        constexpr void operator=(T&& t) noexcept {
+            data = std::move(t);
+        }
 
         // Getting the value
-        constexpr T const& value() const noexcept { return data; }
+        constexpr T const& value() const noexcept {
+            return data;
+        }
 
         // C++ operators:
         template <typename S>
@@ -67,7 +75,6 @@ namespace webpp {
         constexpr bool operator!=(S const& s) const noexcept {
             return data != s;
         }
-
     };
 
     template <typename T>

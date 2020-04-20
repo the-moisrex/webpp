@@ -3,10 +3,11 @@
 
 #include "body.h"
 #include "header.h"
+
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <string_view>
-#include <filesystem>
 
 namespace webpp {
 
@@ -15,10 +16,10 @@ namespace webpp {
      */
     class response {
       public:
-        using body_type = webpp::body;
+        using body_type   = webpp::body;
         using header_type = webpp::headers;
 
-        body_type body;
+        body_type   body;
         header_type header;
 
         response() noexcept = default;
@@ -29,9 +30,9 @@ namespace webpp {
 
 
         response& operator=(response const&) = default;
-        response& operator=(response&& res) noexcept;
-        response& operator=(std::string const& str) noexcept;
-        response& operator=(std::string& str) noexcept;
+        response& operator                   =(response&& res) noexcept;
+        response& operator                   =(std::string const& str) noexcept;
+        response& operator                   =(std::string& str) noexcept;
 
         [[nodiscard]] bool operator==(response const& res) const noexcept;
         [[nodiscard]] bool operator!=(response const& res) const noexcept;
@@ -43,7 +44,7 @@ namespace webpp {
 
         void calculate_default_headers() noexcept;
 
-        
+
         // static methods:
         static response file(std::filesystem::path const& file) noexcept;
         static response image(std::string_view const& file) noexcept;

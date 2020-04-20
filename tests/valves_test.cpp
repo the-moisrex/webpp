@@ -2,6 +2,7 @@
 #include "../core/include/webpp/http/request.h"
 #include "../core/include/webpp/valves/methods.h"
 #include "../core/include/webpp/valves/uri.h"
+
 #include <gtest/gtest.h>
 #include <string>
 #include <utility>
@@ -15,7 +16,7 @@ namespace webpp {
     template <>
     class request_t<fake_cgi> {
         std::string method = "GET";
-        std::string _uri = "/home";
+        std::string _uri   = "/home";
 
       public:
         [[nodiscard]] std::string request_method() const noexcept {
@@ -32,7 +33,9 @@ namespace webpp {
             return *this;
         }
 
-        [[nodiscard]] auto request_uri() const noexcept { return _uri; }
+        [[nodiscard]] auto request_uri() const noexcept {
+            return _uri;
+        }
     };
 } // namespace webpp
 
@@ -50,7 +53,7 @@ TEST(Valves, Operations) {
 
     EXPECT_TRUE(v(request_t<fake_cgi>()));
     EXPECT_TRUE(
-        (empty and empty and empty or empty or empty)(request_t<fake_cgi>()));
+      (empty and empty and empty or empty or empty)(request_t<fake_cgi>()));
 }
 
 TEST(Valves, DynamicValve) {
@@ -63,8 +66,8 @@ TEST(Valves, DynamicValve) {
 }
 
 TEST(Valves, EmptyValve) {
-    constexpr auto or_one = empty;
-    constexpr auto or_two = get or empty;
+    constexpr auto or_one   = empty;
+    constexpr auto or_two   = get or empty;
     constexpr auto or_three = empty or get;
 
     auto req = request_t<fake_cgi>().set_method("POST");
@@ -73,8 +76,8 @@ TEST(Valves, EmptyValve) {
     EXPECT_TRUE(or_two(req));
     EXPECT_TRUE(or_three(req));
 
-    constexpr auto and_one = post;
-    constexpr auto and_two = post and empty;
+    constexpr auto and_one   = post;
+    constexpr auto and_two   = post and empty;
     constexpr auto and_three = empty and post;
 
     EXPECT_TRUE(and_one(req));

@@ -1,8 +1,9 @@
 // Created by moisrex on 1/27/20.
-#include <gtest/gtest.h>
-#include <string>
 #include "../core/include/webpp/utils/casts.h"
+
+#include <gtest/gtest.h>
 #include <limits>
+#include <string>
 
 using namespace webpp;
 using namespace std;
@@ -15,17 +16,8 @@ TEST(Casts, ToInt) {
     EXPECT_EQ(to<int>("-10"), -10);
     EXPECT_EQ(to<unsigned long long>("+1025153153"), 1025153153);
 
-    auto invalids = {
-        "one",
-        "+two",
-        "12a",
-        "a11",
-        "+a11",
-        "111-751",
-        "123,321",
-        "123.123",
-        "123+123"
-    };
+    auto invalids = {"one",     "+two",    "12a",     "a11",    "+a11",
+                     "111-751", "123,321", "123.123", "123+123"};
 
     for (auto const& c : invalids) {
         // EXPECT_EQ(to<int>(c), 0);
@@ -33,8 +25,6 @@ TEST(Casts, ToInt) {
         try {
             to<int, true, true>(c);
             EXPECT_TRUE(false) << c;
-        } catch (std::exception const& err) {
-            EXPECT_TRUE(true);
-        }
+        } catch (std::exception const& err) { EXPECT_TRUE(true); }
     }
 }

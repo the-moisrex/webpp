@@ -16,7 +16,7 @@ namespace webpp {
     template <typename KeyT = std::string, typename ValT = std::string>
     class passive_cache {
       public:
-        using key_type = KeyT;
+        using key_type   = KeyT;
         using value_type = ValT;
 
       private:
@@ -24,8 +24,8 @@ namespace webpp {
         passive_cache() noexcept;
 
         template <typename KeyValue, typename DataType>
-        auto get(KeyValue&& /* key */, DataType const& default_value) const
-            noexcept {
+        auto get(KeyValue&& /* key */,
+                 DataType const& default_value) const noexcept {
             // yes, that's how useless this class is!
             return default_value;
         }

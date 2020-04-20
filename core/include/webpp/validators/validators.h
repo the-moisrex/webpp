@@ -4,6 +4,7 @@
 #include "../utils/casts.h"
 #include "../utils/charset.h"
 #include "../utils/strings.h"
+
 #include <algorithm>
 #include <regex>
 #include <string_view>
@@ -48,7 +49,7 @@ namespace webpp {
         template <typename T>
         [[nodiscard]] constexpr bool
         contains(std::initializer_list<T> const& container,
-                 T const& value) noexcept {
+                 T const&                        value) noexcept {
             return std::find(std::cbegin(container), std::cend(container),
                              value) != std::cend(container);
         }
@@ -60,7 +61,7 @@ namespace webpp {
                   class... Args>
         [[nodiscard]] constexpr bool
         contains_key(Container<T1, Args...> const& container,
-                     T1 const& key) noexcept {
+                     T1 const&                     key) noexcept {
             return container.find(key) != std::end(container);
         }
 
@@ -71,7 +72,7 @@ namespace webpp {
                   class T2, class... Args>
         [[nodiscard]] constexpr bool
         contains_value(Container<T1, T2, Args...> const& container,
-                       T2 const& value) noexcept {
+                       T2 const&                         value) noexcept {
             for (auto pair : container)
                 if (pair.second == value)
                     return true;
@@ -303,7 +304,7 @@ namespace webpp {
         [[nodiscard]] constexpr bool ipv4(std::string_view str) noexcept {
             std::size_t next_dot = 0;
             for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
-                next_dot = str.find('.');
+                next_dot       = str.find('.');
                 auto octet_str = str.substr(0, next_dot);
                 if (octet_str.size() > 3 || !is::digit(octet_str) ||
                     to_uint(octet_str) > 255)
@@ -322,7 +323,7 @@ namespace webpp {
         [[nodiscard]] constexpr bool subnet(std::string_view str) noexcept {
             std::size_t next_dot = 0;
             for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
-                next_dot = str.find('.');
+                next_dot       = str.find('.');
                 auto octet_str = str.substr(0, next_dot);
                 if (octet_str.size() > 3 || !is::digit(octet_str)) {
                     return false;
@@ -357,10 +358,11 @@ namespace webpp {
         template <std::size_t N>
         [[nodiscard]] constexpr bool
         ipv4_prefix(std::string_view const& str,
-                    charset_t<N> const& devider_chars) noexcept {
-            if (auto found = std::find_if(
-                    std::rbegin(str), std::rend(str),
-                    [&](const auto& c) { return devider_chars.contains(c); });
+                    charset_t<N> const&     devider_chars) noexcept {
+            if (auto found = std::find_if(std::rbegin(str), std::rend(str),
+                                          [&](const auto& c) {
+                                              return devider_chars.contains(c);
+                                          });
                 found != std::rend(str)) {
                 auto index = std::distance(std::begin(str), found.base()) - 1;
                 if (!ipv4(str.substr(0, index)))
@@ -397,8 +399,8 @@ namespace webpp {
          *     is a valid IPv6 address is returned.
          */
         [[nodiscard]] constexpr bool ipv6(std::string_view address) noexcept {
-            bool encountered_double_colons = false;
-            std::size_t index = 0;
+            bool        encountered_double_colons = false;
+            std::size_t index                     = 0;
 
             if (starts_with(address, '[')) {
                 if (ends_with(address, ']')) {
@@ -411,9 +413,8 @@ namespace webpp {
 
             while (index < 8u && !address.empty()) {
                 auto next_colon = address.find(':');
-                auto octet = address.substr(0, next_colon);
+                auto octet      = address.substr(0, next_colon);
                 if (octet.empty()) {
-
                     // ip cannon have two double colon semantics (the first one
                     // and the last one is ok)
                     if (!address.empty() && encountered_double_colons)
@@ -451,11 +452,12 @@ namespace webpp {
 
         template <std::size_t N = 1>
         [[nodiscard]] constexpr bool ipv6_prefix(
-            std::string_view const& str,
-            charset_t<N> const& devider_chars = charset_t<1>('/')) noexcept {
-            if (auto found = std::find_if(
-                    std::rbegin(str), std::rend(str),
-                    [&](const auto& c) { return devider_chars.contains(c); });
+          std::string_view const& str,
+          charset_t<N> const&     devider_chars = charset_t<1>('/')) noexcept {
+            if (auto found = std::find_if(std::rbegin(str), std::rend(str),
+                                          [&](const auto& c) {
+                                              return devider_chars.contains(c);
+                                          });
                 found != std::rend(str)) {
                 auto index = std::distance(std::begin(str), found.base()) - 1;
                 if (auto prefix = str.substr(index + 1); is::digit(prefix)) {
@@ -494,7 +496,7 @@ namespace webpp {
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
             constexpr auto UNRESERVED =
-                charset(ALPHA, DIGIT, charset_t<4>{'-', '.', '_', '~'});
+              charset(ALPHA, DIGIT, charset_t<4>{'-', '.', '_', '~'});
 
             /**
              * This is the character set corresponds to the "sub-delims" syntax
@@ -509,7 +511,7 @@ namespace webpp {
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
             constexpr auto IPV_FUTURE_LAST_PART =
-                charset(UNRESERVED, SUB_DELIMS, charset_t<1>{':'});
+              charset(UNRESERVED, SUB_DELIMS, charset_t<1>{':'});
 
             /**
              * This is the character set corresponds to the "reg-name" syntax
@@ -517,7 +519,7 @@ namespace webpp {
              * leaving out "pct-encoded".
              */
             constexpr auto REG_NAME_NOT_PCT_ENCODED =
-                charset(UNRESERVED, SUB_DELIMS);
+              charset(UNRESERVED, SUB_DELIMS);
 
             if (str.empty())
                 return false;
@@ -525,7 +527,6 @@ namespace webpp {
                 if (str[1] == 'v') { // future ip
                     if (auto dot_delim = str.find('.');
                         dot_delim != std::string_view::npos) {
-
                         auto ipvf_version = str.substr(2, dot_delim);
                         if (!HEXDIG.contains(ipvf_version)) {
                             // ERROR: basic_uri is not valid
@@ -543,7 +544,7 @@ namespace webpp {
                 return true;
             } else {
                 constexpr auto ccc =
-                    charset(REG_NAME_NOT_PCT_ENCODED, charset('%'));
+                  charset(REG_NAME_NOT_PCT_ENCODED, charset('%'));
                 return ccc.contains(str);
             }
 
@@ -560,21 +561,21 @@ namespace webpp {
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
             constexpr auto UNRESERVED =
-                charset(ALPHA, DIGIT, charset_t<4>{'-', '.', '_', '~'});
+              charset(ALPHA, DIGIT, charset_t<4>{'-', '.', '_', '~'});
 
             /**
              * This is the character set corresponds to the "sub-delims" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
             constexpr auto SUB_DELIMS = charset_t<11>(
-                '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
+              '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
             /**
              * This is the character set corresponds to the "pchar" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
              * leaving out "pct-encoded".
              */
             constexpr auto PCHAR_NOT_PCT_ENCODED =
-                charset(UNRESERVED, SUB_DELIMS, webpp::charset_t<2>{':', '@'});
+              charset(UNRESERVED, SUB_DELIMS, webpp::charset_t<2>{':', '@'});
 
             /**
              * This is the character set corresponds to the "query" syntax
@@ -583,7 +584,7 @@ namespace webpp {
              * leaving out "pct-encoded".
              */
             constexpr auto QUERY_OR_FRAGMENT_NOT_PCT_ENCODED =
-                charset(PCHAR_NOT_PCT_ENCODED, charset_t<2>{{'/', '?'}});
+              charset(PCHAR_NOT_PCT_ENCODED, charset_t<2>{{'/', '?'}});
 
             return QUERY_OR_FRAGMENT_NOT_PCT_ENCODED.contains(str);
         }
@@ -606,12 +607,10 @@ namespace webpp {
             if (!starts_with(str, '#'))
                 return false;
             switch (str.size()) {
-            case 3 + 1:
-            case 6 + 1:
-            case 8 + 1:
-                return is::hex(str.substr(1));
-            default:
-                return false;
+                case 3 + 1:
+                case 6 + 1:
+                case 8 + 1: return is::hex(str.substr(1));
+                default: return false;
             }
         }
 
@@ -662,7 +661,7 @@ namespace webpp {
         [[nodiscard]] bool color(std::string_view const& str) noexcept;
 
         [[nodiscard]] constexpr bool
-        mimetype(std::string_view const& str) noexcept;
+                                     mimetype(std::string_view const& str) noexcept;
         [[nodiscard]] constexpr bool UUID(std::string_view const& str) noexcept;
         [[nodiscard]] constexpr bool port(std::string_view const& str) noexcept;
         [[nodiscard]] constexpr bool

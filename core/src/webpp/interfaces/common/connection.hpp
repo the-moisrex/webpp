@@ -5,6 +5,7 @@
 #include "../../../../include/webpp/std/internet.h"
 #include "../../../../include/webpp/std/socket.h"
 #include "constants.hpp"
+
 #include <memory>
 #include <system_error>
 
@@ -21,28 +22,30 @@ namespace webpp::common {
         using socket_t = std::net::ip::tcp::socket;
 
       private:
-        socket_t socket;
+        socket_t                      socket;
         std::array<char, buffer_size> buffer;
 
         void read() noexcept {
             // we share ourselves, so the connection keeps itself alive.
             socket.async_read_some(
-                std::net::buffer(buffer),
-                [this](std::error_code const& err,
-                       std::size_t bytes_transferred) noexcept {
-                    if (!err) {
-                        // we need to parse, store, read more, or
-                        // write something
-                    }
-                });
+              std::net::buffer(buffer),
+              [this](std::error_code const& err,
+                     std::size_t            bytes_transferred) noexcept {
+                  if (!err) {
+                      // we need to parse, store, read more, or
+                      // write something
+                  }
+              });
         }
 
-        void write() noexcept {}
+        void write() noexcept {
+        }
 
       public:
-        connection(socket_t socket) noexcept : socket(std::move(socket)) {}
+        connection(socket_t socket) noexcept : socket(std::move(socket)) {
+        }
         connection(connection const&) = delete;
-        connection(connection&&) = default;
+        connection(connection&&)      = default;
         connection& operator=(connection const&) = delete;
         connection& operator=(connection&&) = default;
 

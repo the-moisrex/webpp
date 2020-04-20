@@ -1,6 +1,8 @@
-#include <gtest/gtest.h>
 #include "../core/include/webpp/utils/ipv6.h"
+
 #include "../core/include/webpp/validators/validators.h"
+
+#include <gtest/gtest.h>
 
 using namespace webpp;
 
@@ -52,20 +54,20 @@ TEST(IPv6Tests, Validation) {
 
     for (auto const& _ip : valid_ipv6s) {
         EXPECT_EQ(ipv6(ipv6(_ip).short_str()), ipv6(_ip))
-            << "ip: " << _ip << "\ncompiled ip: " << ipv6(_ip).short_str()
-            << "\nlong ip: " << ipv6(_ip).str()
-            << "\nshort long ip: " << ipv6(ipv6(_ip).short_str()).str();
+          << "ip: " << _ip << "\ncompiled ip: " << ipv6(_ip).short_str()
+          << "\nlong ip: " << ipv6(_ip).str()
+          << "\nshort long ip: " << ipv6(ipv6(_ip).short_str()).str();
         EXPECT_TRUE(webpp::is::ipv6(_ip))
-            << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).short_str();
+          << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).short_str();
         EXPECT_TRUE(ipv6(_ip).is_valid())
-            << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).short_str();
+          << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).short_str();
     }
 
     for (auto const& _ip : invalid_ipv6s) {
         EXPECT_FALSE(webpp::is::ipv6(_ip))
-            << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).short_str();
+          << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).short_str();
         EXPECT_FALSE(ipv6(_ip).is_valid())
-            << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).short_str();
+          << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).short_str();
     }
 }
 

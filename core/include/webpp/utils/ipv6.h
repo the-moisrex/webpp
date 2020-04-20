@@ -4,6 +4,7 @@
 #include "../utils/strings.h"
 #include "../validators/validators.h"
 #include "ipv4.h"
+
 #include <algorithm>
 #include <array>
 #include <sstream>
@@ -17,31 +18,31 @@ namespace webpp {
     class ipv6 {
       public:
         static constexpr auto IPV6_ADDR_SIZE = 16u; // Bytes
-        using octets8_t = std::array<uint8_t, 16u>;
-        using octets16_t = std::array<uint16_t, 8u>;
-        using octets32_t = std::array<uint32_t, 4u>;
-        using octets64_t = std::array<uint64_t, 2u>;
-        using octets_t = octets8_t;
+        using octets8_t                      = std::array<uint8_t, 16u>;
+        using octets16_t                     = std::array<uint16_t, 8u>;
+        using octets32_t                     = std::array<uint32_t, 4u>;
+        using octets64_t                     = std::array<uint64_t, 2u>;
+        using octets_t                       = octets8_t;
 
         /**
          * IPv6 Address Scopes
          */
         enum class scope {
-            node_local = 0u,      // Node-Local scope
-            interface_local = 1u, // Interface-Local scope
-            link_local = 2u,      // Link-Local scope
-            realm_local = 3u,     // Realm-Local scope
-            admin_local = 4u,     // Admin-Local scope
-            site_local = 5u,      // Site-Local scope
-            org_local = 8u,       // Organization-Local scope
-            global = 14u,         // Global scope
+            node_local      = 0u,  // Node-Local scope
+            interface_local = 1u,  // Interface-Local scope
+            link_local      = 2u,  // Link-Local scope
+            realm_local     = 3u,  // Realm-Local scope
+            admin_local     = 4u,  // Admin-Local scope
+            site_local      = 5u,  // Site-Local scope
+            org_local       = 8u,  // Organization-Local scope
+            global          = 14u, // Global scope
         };
 
       private:
         static constexpr auto interface_identifier_offset =
-            8u; // Interface Identifier offset in bytes
+          8u; // Interface Identifier offset in bytes
         static constexpr auto interface_identifier_size =
-            8u; // Interface Identifier size in bytes
+          8u; // Interface Identifier size in bytes
 
         // I didn't go with a union because in OpenThread project they did and
         // they had to deal with endianness of their data. I rather use shifts
@@ -65,10 +66,10 @@ namespace webpp {
         template <typename OCTET>
         [[nodiscard]] static constexpr octets_t
         to_octets_t(OCTET const& _octets) noexcept {
-            octets_t _data = {};
-            auto _octets_it = _octets.cbegin();
-            auto _data_it = _data.begin();
-            auto each_octet_size = _data.size() / _octets.size();
+            octets_t _data           = {};
+            auto     _octets_it      = _octets.cbegin();
+            auto     _data_it        = _data.begin();
+            auto     each_octet_size = _data.size() / _octets.size();
             for (; _octets_it != _octets.cend(); ++_octets_it) {
                 auto _octet = *_octets_it;
                 for (std::size_t i = 0u; i < each_octet_size; i++) {
@@ -91,8 +92,8 @@ namespace webpp {
                 return;
             }
 
-            data = {}; // all zero
-            auto it = data.begin();
+            data                    = {}; // all zero
+            auto it                 = data.begin();
             auto double_colon_point = data.end();
 
             do {
@@ -107,38 +108,39 @@ namespace webpp {
                     // it's an octet
                     switch (colon == std::string_view::npos ? ipv6_data.size()
                                                             : colon) {
-                    case 4:
-                        *(it++) = std::stoul(
-                            std::string(ipv6_data.substr(0, 2)), nullptr, 16);
-                        *(it++) = std::stoul(
-                            std::string(ipv6_data.substr(2, 2)), nullptr, 16);
-                        break;
-                    case 3:
-                        *(it++) = std::stoul(
-                            std::string(ipv6_data.substr(0, 1)), nullptr, 16);
-                        *(it++) = std::stoul(
-                            std::string(ipv6_data.substr(1, 2)), nullptr, 16);
-                        break;
-                    case 2:
-                    case 1:
-                        *((++it)++) =
-                            std::stoul(std::string(ipv6_data.substr(0, colon)),
-                                       nullptr, 16);
-                        break;
-                    case 0:
-                        // we've reached the double colon rule
-                        if (double_colon_point != data.end()) {
-                            _prefix = 254u; // we can't have two double colons
+                        case 4:
+                            *(it++) = std::stoul(
+                              std::string(ipv6_data.substr(0, 2)), nullptr, 16);
+                            *(it++) = std::stoul(
+                              std::string(ipv6_data.substr(2, 2)), nullptr, 16);
+                            break;
+                        case 3:
+                            *(it++) = std::stoul(
+                              std::string(ipv6_data.substr(0, 1)), nullptr, 16);
+                            *(it++) = std::stoul(
+                              std::string(ipv6_data.substr(1, 2)), nullptr, 16);
+                            break;
+                        case 2:
+                        case 1:
+                            *((++it)++) = std::stoul(
+                              std::string(ipv6_data.substr(0, colon)), nullptr,
+                              16);
+                            break;
+                        case 0:
+                            // we've reached the double colon rule
+                            if (double_colon_point != data.end()) {
+                                _prefix =
+                                  254u; // we can't have two double colons
+                                return;
+                            } else {
+                                double_colon_point = it;
+                                if (it == data.begin())
+                                    ipv6_data.remove_prefix(1);
+                            }
+                            break;
+                        default:
+                            _prefix = 254u; // the ip is invalid
                             return;
-                        } else {
-                            double_colon_point = it;
-                            if (it == data.begin())
-                                ipv6_data.remove_prefix(1);
-                        }
-                        break;
-                    default:
-                        _prefix = 254u; // the ip is invalid
-                        return;
                     }
                     if (ipv6_data[colon] == '/')
                         colon--;
@@ -166,8 +168,8 @@ namespace webpp {
                     //     return;
                     // }
                     _prefix = __prefix > 128u
-                                  ? 253u
-                                  : static_cast<decltype(_prefix)>(__prefix);
+                                ? 253u
+                                : static_cast<decltype(_prefix)>(__prefix);
                     ipv6_data.remove_prefix(prefix_str.size() + 1);
                     if (!ipv6_data.empty()) {
                         _prefix = 254u; // there can't be more stuff in the ip
@@ -200,28 +202,32 @@ namespace webpp {
       public:
         constexpr explicit ipv6(std::string_view const& str,
                                 uint8_t __prefix = 255u) noexcept
-            : _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {
+          : _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {
             parse(str);
         }
         constexpr explicit ipv6(octets8_t const& _octets,
-                                uint8_t __prefix = 255u) noexcept
-            : data(_octets),
-              _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {}
+                                uint8_t          __prefix = 255u) noexcept
+          : data(_octets),
+            _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {
+        }
         constexpr explicit ipv6(octets16_t const& _octets,
-                                uint8_t __prefix = 255u) noexcept
-            : data{to_octets_t(_octets)},
-              _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {}
+                                uint8_t           __prefix = 255u) noexcept
+          : data{to_octets_t(_octets)},
+            _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {
+        }
 
         constexpr explicit ipv6(octets32_t const& _octets,
-                                uint8_t __prefix = 255u) noexcept
-            : data{to_octets_t(_octets)},
-              _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {}
+                                uint8_t           __prefix = 255u) noexcept
+          : data{to_octets_t(_octets)},
+            _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {
+        }
         constexpr explicit ipv6(octets64_t const& _octets,
-                                uint8_t __prefix = 255u) noexcept
-            : data{to_octets_t(_octets)},
-              _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {}
+                                uint8_t           __prefix = 255u) noexcept
+          : data{to_octets_t(_octets)},
+            _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {
+        }
         constexpr ipv6(ipv6 const& ip) noexcept = default;
-        constexpr ipv6(ipv6&& ip) noexcept = default;
+        constexpr ipv6(ipv6&& ip) noexcept      = default;
 
         ipv6& operator=(ipv6 const& ip) noexcept = default;
 
@@ -232,25 +238,25 @@ namespace webpp {
         }
 
         ipv6& operator=(octets8_t const& _octets) noexcept {
-            data = _octets;
+            data    = _octets;
             _prefix = 255u;
             return *this;
         }
 
         ipv6& operator=(octets16_t const& _octets) noexcept {
-            data = to_octets_t(_octets);
+            data    = to_octets_t(_octets);
             _prefix = 255u;
             return *this;
         }
 
         ipv6& operator=(octets32_t const& _octets) noexcept {
-            data = to_octets_t(_octets);
+            data    = to_octets_t(_octets);
             _prefix = 255u;
             return *this;
         }
 
         ipv6& operator=(octets64_t const& _octets) noexcept {
-            data = to_octets_t(_octets);
+            data    = to_octets_t(_octets);
             _prefix = 255u;
             return *this;
         }
@@ -265,17 +271,29 @@ namespace webpp {
 
         // TODO: add other operators
 
-        explicit operator octets8_t() { return octets8(); }
+        explicit operator octets8_t() {
+            return octets8();
+        }
 
-        explicit operator octets16_t() { return octets16(); }
+        explicit operator octets16_t() {
+            return octets16();
+        }
 
-        explicit operator octets32_t() { return octets32(); }
+        explicit operator octets32_t() {
+            return octets32();
+        }
 
-        explicit operator octets64_t() { return octets64(); }
+        explicit operator octets64_t() {
+            return octets64();
+        }
 
-        explicit operator const char*() { return short_str().c_str(); }
+        explicit operator const char*() {
+            return short_str().c_str();
+        }
 
-        explicit operator std::string() { return short_str(); }
+        explicit operator std::string() {
+            return short_str();
+        }
 
         /**
          * @brief get the octets in 8bit format
@@ -303,14 +321,14 @@ namespace webpp {
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
 
-            auto _octets = octets8();
-            octets16_t ndata = {};
-            constexpr std::size_t len = ndata.size();
-            using t = uint16_t;
+            auto                  _octets = octets8();
+            octets16_t            ndata   = {};
+            constexpr std::size_t len     = ndata.size();
+            using t                       = uint16_t;
             for (std::size_t i = 0; i < len; i++) {
                 ndata[i] =
-                    (static_cast<t>(_octets[i * 2u + 0u]) << (16u - 8u * 1u)) |
-                    (static_cast<t>(_octets[i * 2u + 1u]) << (16u - 8u * 2u));
+                  (static_cast<t>(_octets[i * 2u + 0u]) << (16u - 8u * 1u)) |
+                  (static_cast<t>(_octets[i * 2u + 1u]) << (16u - 8u * 2u));
             }
             return ndata;
         }
@@ -325,16 +343,16 @@ namespace webpp {
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
 
-            auto _octets = octets8();
-            octets32_t ndata = {};
-            constexpr std::size_t len = ndata.size();
-            using t = uint32_t;
+            auto                  _octets = octets8();
+            octets32_t            ndata   = {};
+            constexpr std::size_t len     = ndata.size();
+            using t                       = uint32_t;
             for (std::size_t i = 0; i < len; i++) {
                 ndata[i] =
-                    (static_cast<t>(_octets[i * 2u + 0u]) << (32u - 8u * 1u)) |
-                    (static_cast<t>(_octets[i * 2u + 1u]) << (32u - 8u * 2u)) |
-                    (static_cast<t>(_octets[i * 2u + 2u]) << (32u - 8u * 3u)) |
-                    (static_cast<t>(_octets[i * 2u + 3u]) << (32u - 8u * 4u));
+                  (static_cast<t>(_octets[i * 2u + 0u]) << (32u - 8u * 1u)) |
+                  (static_cast<t>(_octets[i * 2u + 1u]) << (32u - 8u * 2u)) |
+                  (static_cast<t>(_octets[i * 2u + 2u]) << (32u - 8u * 3u)) |
+                  (static_cast<t>(_octets[i * 2u + 3u]) << (32u - 8u * 4u));
             }
             return ndata;
         }
@@ -349,20 +367,20 @@ namespace webpp {
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
 
-            auto _octets = octets8();
-            octets64_t ndata = {};
-            constexpr std::size_t len = ndata.size();
-            using t = uint64_t;
+            auto                  _octets = octets8();
+            octets64_t            ndata   = {};
+            constexpr std::size_t len     = ndata.size();
+            using t                       = uint64_t;
             for (std::size_t i = 0; i < len; i++) {
                 ndata[i] =
-                    (static_cast<t>(_octets[i * 2u + 0u]) << (64u - 8u * 1u)) |
-                    (static_cast<t>(_octets[i * 2u + 1u]) << (64u - 8u * 2u)) |
-                    (static_cast<t>(_octets[i * 2u + 2u]) << (64u - 8u * 3u)) |
-                    (static_cast<t>(_octets[i * 2u + 3u]) << (64u - 8u * 4u)) |
-                    (static_cast<t>(_octets[i * 2u + 4u]) << (64u - 8u * 5u)) |
-                    (static_cast<t>(_octets[i * 2u + 5u]) << (64u - 8u * 6u)) |
-                    (static_cast<t>(_octets[i * 2u + 6u]) << (64u - 8u * 7u)) |
-                    (static_cast<t>(_octets[i * 2u + 7u]) << (64u - 8u * 8u));
+                  (static_cast<t>(_octets[i * 2u + 0u]) << (64u - 8u * 1u)) |
+                  (static_cast<t>(_octets[i * 2u + 1u]) << (64u - 8u * 2u)) |
+                  (static_cast<t>(_octets[i * 2u + 2u]) << (64u - 8u * 3u)) |
+                  (static_cast<t>(_octets[i * 2u + 3u]) << (64u - 8u * 4u)) |
+                  (static_cast<t>(_octets[i * 2u + 4u]) << (64u - 8u * 5u)) |
+                  (static_cast<t>(_octets[i * 2u + 5u]) << (64u - 8u * 6u)) |
+                  (static_cast<t>(_octets[i * 2u + 6u]) << (64u - 8u * 7u)) |
+                  (static_cast<t>(_octets[i * 2u + 7u]) << (64u - 8u * 8u));
             }
             return ndata;
         }
@@ -551,8 +569,8 @@ namespace webpp {
          * multicast address.
          *
          */
-        [[nodiscard]] constexpr bool is_link_local_all_nodes_multicast() const
-            noexcept {
+        [[nodiscard]] constexpr bool
+        is_link_local_all_nodes_multicast() const noexcept {
             auto _octets = octets8();
             return _octets[0] == 0xFFu && _octets[1] == 0x02u &&
                    (_octets[2] == 0) && (_octets[3] == 0) &&
@@ -574,8 +592,8 @@ namespace webpp {
          * multicast address.
          *
          */
-        [[nodiscard]] constexpr bool is_link_local_all_routers_multicast() const
-            noexcept {
+        [[nodiscard]] constexpr bool
+        is_link_local_all_routers_multicast() const noexcept {
             auto _octets = octets();
             return _octets[0] == 0xFFu && _octets[1] == 0x02u &&
                    (_octets[2] == 0) && (_octets[3] == 0) &&
@@ -612,8 +630,8 @@ namespace webpp {
          * multicast address.
          *
          */
-        [[nodiscard]] constexpr bool is_realm_local_all_nodes_multicast() const
-            noexcept {
+        [[nodiscard]] constexpr bool
+        is_realm_local_all_nodes_multicast() const noexcept {
             return is_multicast() &&
                    scope() == static_cast<uint8_t>(scope::realm_local);
         }
@@ -651,8 +669,8 @@ namespace webpp {
          * forwarders address.
          *
          */
-        [[nodiscard]] constexpr bool is_realm_local_all_mpl_forwarders() const
-            noexcept {
+        [[nodiscard]] constexpr bool
+        is_realm_local_all_mpl_forwarders() const noexcept {
             auto _octets = octets8();
             return _octets[0] == 0xFFu && _octets[1] == 0x03u &&
                    (_octets[2] == 0) && (_octets[3] == 0) &&
@@ -691,7 +709,7 @@ namespace webpp {
         [[nodiscard]] constexpr bool is_routing_locator() const noexcept {
             constexpr auto aloc_16_mask = 0xFCu; // The mask for Aloc16
             constexpr auto rloc16_reserved_bit_mask =
-                0x02u; // The mask for the reserved bit of Rloc16
+              0x02u; // The mask for the reserved bit of Rloc16
             auto _octets = octets();
             // XX XX XX XX XX XX XX XX 00 00 00 FF FE 00 YY YY
             // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
@@ -710,10 +728,10 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address is not an Anycast RLOC address.
          *
          */
-        [[nodiscard]] constexpr bool is_anycast_routing_locator() const
-            noexcept {
+        [[nodiscard]] constexpr bool
+        is_anycast_routing_locator() const noexcept {
             constexpr auto aloc_16_mask = 0xFC; // The mask for Aloc16
-            auto _octets = octets();
+            auto           _octets      = octets();
 
             // XX XX XX XX XX XX XX XX 00 00 00 FF FE 00 FC XX
             // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
@@ -732,11 +750,11 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address is not an Anycast Service Locator.
          *
          */
-        [[nodiscard]] constexpr bool is_anycast_service_locator() const
-            noexcept {
+        [[nodiscard]] constexpr bool
+        is_anycast_service_locator() const noexcept {
             constexpr auto aloc8_service_start = 0x10;
-            constexpr auto aloc8_service_end = 0x2f;
-            auto _octets = octets();
+            constexpr auto aloc8_service_end   = 0x2f;
+            auto           _octets             = octets();
             return is_anycast_routing_locator() &&
                    (_octets[IPV6_ADDR_SIZE - 2] == 0xfc) &&
                    (_octets[IPV6_ADDR_SIZE - 1] >= aloc8_service_start) &&
@@ -776,8 +794,8 @@ namespace webpp {
          * address.
          *
          */
-        [[nodiscard]] constexpr bool is_reserved_subnet_anycast() const
-            noexcept {
+        [[nodiscard]] constexpr bool
+        is_reserved_subnet_anycast() const noexcept {
             // IP: XX XX XX XX XX XX XX XX FD FF FF FF FF FF FF 80
             // 08: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // 16: --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
@@ -839,7 +857,7 @@ namespace webpp {
         void iid(const octets8_t::const_iterator& piid) noexcept {
             auto _iid = iid();
             auto _end = _iid + interface_identifier_size;
-            auto pit = piid;
+            auto pit  = piid;
             for (auto it = _iid; it != _end; it++) {
                 *it = *pit++;
             }
@@ -900,7 +918,7 @@ namespace webpp {
          */
         std::string str() const noexcept {
             char buffer[40] = {};
-            auto _octets = octets16();
+            auto _octets    = octets16();
             sprintf(buffer, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x",
                     _octets[0], _octets[1], _octets[2], _octets[3], _octets[4],
                     _octets[5], _octets[6], _octets[7]);
@@ -918,19 +936,20 @@ namespace webpp {
             // finding all of the ranges that are zero filled
             decltype(_octets)::const_iterator range_start = _octets.cend(),
                                               range_end = _octets.cend(), start,
-                                              finish = _octets.cbegin();
+                                              finish    = _octets.cbegin();
             do {
                 start = std::find(finish, _octets.cend(), 0u);
                 if (start == _octets.cend()) {
                     break;
                 }
-                finish = std::find_if(start, _octets.cend(),
-                                      [](auto const& a) { return a != 0; });
+                finish = std::find_if(start, _octets.cend(), [](auto const& a) {
+                    return a != 0;
+                });
                 if (range_start == _octets.cend() ||
                     std::distance(start, finish) >
-                        std::distance(range_start, range_end)) {
+                      std::distance(range_start, range_end)) {
                     range_start = start;
-                    range_end = finish;
+                    range_end   = finish;
                 }
             } while (finish != _octets.cend());
 
@@ -994,7 +1013,9 @@ namespace webpp {
         /**
          * Clears the prefix from this ip
          */
-        ipv6& clear_prefix() noexcept { return prefix(255u); }
+        ipv6& clear_prefix() noexcept {
+            return prefix(255u);
+        }
 
         /**
          * Get the ip in reversed order

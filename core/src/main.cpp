@@ -1,8 +1,9 @@
 #ifdef __unix__
 
-#include "../include/main.h"
-#include <stdio.h>
-#include <stdlib.h>
+#    include "../include/main.h"
+
+#    include <stdio.h>
+#    include <stdlib.h>
 
 /**
  * This function is used for printing information about the project
@@ -13,8 +14,8 @@
  * make the library heavy.
  */
 extern "C" void __lib_main(void) {
-  printf("web++ framework in the flesh.\n");
-  exit(0);
+    printf("web++ framework in the flesh.\n");
+    exit(0);
 }
 
 #endif

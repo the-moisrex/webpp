@@ -7,6 +7,7 @@
 #include "utils/containers.h"
 #include "utils/functional.h"
 #include "valves/methods.h"
+
 #include <functional>
 #include <map>
 #include <string_view>
@@ -21,29 +22,29 @@ namespace webpp {
 
     template <typename T, typename U>
     struct can_cast
-        : std::integral_constant<bool,
-                                 (!std::is_void_v<T> && !std::is_void_v<U>)&&(
-                                     std::is_convertible_v<T, U> ||
-                                     std::is_constructible_v<T, U> ||
-                                     std::is_assignable_v<T, U> ||
-                                     std::is_convertible_v<U, std::string> ||
-                                     std::is_constructible_v<U, std::string> ||
-                                     std::is_assignable_v<U, std::string>)> {};
+      : std::integral_constant<
+          bool, (!std::is_void_v<T> && !std::is_void_v<U>)&&(
+                  std::is_convertible_v<T, U> ||
+                  std::is_constructible_v<T, U> || std::is_assignable_v<T, U> ||
+                  std::is_convertible_v<U, std::string> ||
+                  std::is_constructible_v<U, std::string> ||
+                  std::is_assignable_v<U, std::string>)> {};
 
     template <typename T, typename U>
     inline constexpr bool can_convert_v = can_cast<T, U>::value;
 
     // TODO: what should I do here?
     template <typename RequestType>
-    void handle_exception(RequestType const& /* req */) noexcept {}
+    void handle_exception(RequestType const& /* req */) noexcept {
+    }
 
     template <typename Interface, typename C>
     inline auto call_it(C& c, request_t<Interface> const& req,
                         response& res) noexcept {
-        using req_t = request_t<Interface> const&;
-        using res_t = response&;
+        using req_t    = request_t<Interface> const&;
+        using res_t    = response&;
         using callable = std::decay_t<C>;
-        auto callback = std::forward<C>(c);
+        auto callback  = std::forward<C>(c);
 
         // TODO: add more overrides. You can simulate "dependency injection"
         // here
@@ -56,9 +57,7 @@ namespace webpp {
                 } else {
                     try {
                         (void)callback(req);
-                    } catch (...) {
-                        handle_exception(req);
-                    }
+                    } catch (...) { handle_exception(req); }
                 }
             } else {
                 if constexpr (std::is_nothrow_invocable_v<callable, req_t>) {
@@ -66,9 +65,7 @@ namespace webpp {
                 } else {
                     try {
                         res = callback(req);
-                    } catch (...) {
-                        handle_exception(req);
-                    }
+                    } catch (...) { handle_exception(req); }
                 }
             }
         } else if constexpr (std::is_invocable_v<callable, res_t>) {
@@ -79,9 +76,7 @@ namespace webpp {
                 } else {
                     try {
                         (void)callback(res);
-                    } catch (...) {
-                        handle_exception(req);
-                    }
+                    } catch (...) { handle_exception(req); }
                 }
             } else {
                 // Yeah, I know what it looks like, but we've got some
@@ -91,9 +86,7 @@ namespace webpp {
                 } else {
                     try {
                         res = callback(res);
-                    } catch (...) {
-                        handle_exception(req);
-                    }
+                    } catch (...) { handle_exception(req); }
                 }
             }
         } else if constexpr (std::is_invocable_v<callable, req_t, res_t>) {
@@ -105,9 +98,7 @@ namespace webpp {
                 } else {
                     try {
                         (void)callback(req, res);
-                    } catch (...) {
-                        handle_exception(req);
-                    }
+                    } catch (...) { handle_exception(req); }
                 }
             } else {
                 if constexpr (std::is_nothrow_invocable_v<callable, req_t,
@@ -116,9 +107,7 @@ namespace webpp {
                 } else {
                     try {
                         res = callback(req, res);
-                    } catch (...) {
-                        handle_exception(req);
-                    }
+                    } catch (...) { handle_exception(req); }
                 }
             }
         } else if constexpr (std::is_invocable_v<callable, res_t, req_t>) {
@@ -130,9 +119,7 @@ namespace webpp {
                 } else {
                     try {
                         (void)callback(res, req);
-                    } catch (...) {
-                        handle_exception(req);
-                    }
+                    } catch (...) { handle_exception(req); }
                 }
             } else {
                 if constexpr (std::is_nothrow_invocable_v<callable, res_t,
@@ -141,9 +128,7 @@ namespace webpp {
                 } else {
                     try {
                         res = callback(res, req);
-                    } catch (...) {
-                        handle_exception(req);
-                    }
+                    } catch (...) { handle_exception(req); }
                 }
             }
         } else if (std::is_invocable_v<callable>) {
@@ -154,9 +139,7 @@ namespace webpp {
                 } else {
                     try {
                         (void)callback();
-                    } catch (...) {
-                        handle_exception(req);
-                    }
+                    } catch (...) { handle_exception(req); }
                 }
             } else {
                 if constexpr (std::is_nothrow_invocable_v<callable>) {
@@ -164,9 +147,7 @@ namespace webpp {
                 } else {
                     try {
                         res = callback();
-                    } catch (...) {
-                        handle_exception(req);
-                    }
+                    } catch (...) { handle_exception(req); }
                 }
             }
         }
@@ -178,10 +159,10 @@ namespace webpp {
     template <typename Interface, typename Callable,
               typename Valve = valves::empty_t>
     class route : private make_inheritable<Callable> {
-        using req_t = request_t<Interface> const&;
-        using res_t = response&;
+        using req_t       = request_t<Interface> const&;
+        using res_t       = response&;
         using condition_t = Valve;
-        using callable = make_inheritable<Callable>;
+        using callable    = make_inheritable<Callable>;
 
         condition_t condition = condition_t{};
 
@@ -198,22 +179,27 @@ namespace webpp {
       public:
         using callable::operator();
 
-        constexpr route() noexcept : callable{} {}
+        constexpr route() noexcept : callable{} {
+        }
 
-        template <typename... Args,
-                  std::enable_if_t<std::is_constructible_v<callable, Args...>,
-                                   int> = 0>
+        template <
+          typename... Args,
+          std::enable_if_t<std::is_constructible_v<callable, Args...>, int> = 0>
         constexpr route(Args&&... args) noexcept
-            : callable{std::forward<Args>(args)...} {}
+          : callable{std::forward<Args>(args)...} {
+        }
 
         template <typename... Args>
         constexpr route(condition_t con, Args&&... args) noexcept
-            : condition(std::move(con)), callable{std::forward<Args>(args)...} {
+          : condition(std::move(con)),
+            callable{std::forward<Args>(args)...} {
         }
 
-        constexpr route(Callable c) noexcept : callable(c) {}
+        constexpr route(Callable c) noexcept : callable(c) {
+        }
 
-        constexpr route(condition_t con) noexcept : condition(std::move(con)) {}
+        constexpr route(condition_t con) noexcept : condition(std::move(con)) {
+        }
 
         //        constexpr route(condition_t con, Callable c) noexcept
         //            : condition(std::move(con)), callable(c) {}
@@ -227,7 +213,9 @@ namespace webpp {
         /**
          * Check if the route is active
          */
-        [[nodiscard]] inline bool is_active() const noexcept { return active; }
+        [[nodiscard]] inline bool is_active() const noexcept {
+            return active;
+        }
 
         /**
          * Reactivate the route
@@ -282,18 +270,21 @@ namespace webpp {
         using res_t = response&;
         // todo: maybe don't use std::function? it's slow a bit (but not that
         // much)
-        using callback_t = std::function<void(req_t, res_t)>;
+        using callback_t  = std::function<void(req_t, res_t)>;
         using condition_t = std::function<bool(req_t)>;
 
-        callback_t callback = nullptr;
+        callback_t  callback  = nullptr;
         condition_t condition = valves::empty;
 
       public:
         // fixme: it gives me error when I put "noexcept" here:
         dynamic_route() = default;
-        dynamic_route(callback_t callback) noexcept : callback(callback) {}
+        dynamic_route(callback_t callback) noexcept : callback(callback) {
+        }
         dynamic_route(condition_t condition, callback_t callback) noexcept
-            : condition(condition), callback(callback) {}
+          : condition(condition),
+            callback(callback) {
+        }
 
         template <typename C>
         dynamic_route& operator=(C&& callback) noexcept {
@@ -307,7 +298,9 @@ namespace webpp {
             return callback(req, res);
         }
 
-        inline bool is_match(req_t req) noexcept { return condition(req); }
+        inline bool is_match(req_t req) noexcept {
+            return condition(req);
+        }
     };
 
     /**
@@ -319,7 +312,6 @@ namespace webpp {
     template <typename Interface,
               typename RouteList = std::vector<dynamic_route<Interface>>>
     class router {
-
         using req_t = request_t<Interface> const&;
         using res_t = response&;
 
@@ -330,19 +322,20 @@ namespace webpp {
       public:
         template <typename... Args>
         constexpr router(Args&&... args) noexcept
-            : routes(std::forward<Args>(args)...) {}
+          : routes(std::forward<Args>(args)...) {
+        }
 
         /**
          * Run the request through the routes and then return the response
          * @param req
          * @return final response
          */
-        template <typename RequestType = request_t<Interface>,
+        template <typename RequestType  = request_t<Interface>,
                   typename ResponseType = response>
         ResponseType operator()(RequestType& req) noexcept {
             // FIXME: make sure it's as performant as possible.
             ResponseType res;
-            auto for_each_route_do = [&](auto& _route) noexcept {
+            auto         for_each_route_do = [&](auto& _route) noexcept {
                 if (_route.is_match(req))
                     _route(req, res);
             };
@@ -352,13 +345,13 @@ namespace webpp {
             } else if constexpr (is_container_v<RouteList>) {
                 // for containers
                 std::for_each(
-                    std::begin(routes), std::end(routes), [&](auto& _route) {
-                        static_assert(
-                            std::is_same_v<std::decay_t<decltype(_route)>,
-                                           dynamic_route<Interface>>,
-                            "The specified type is not a dynamic_route.");
-                        for_each_route_do(_route);
-                    });
+                  std::begin(routes), std::end(routes), [&](auto& _route) {
+                      static_assert(
+                        std::is_same_v<std::decay_t<decltype(_route)>,
+                                       dynamic_route<Interface>>,
+                        "The specified type is not a dynamic_route.");
+                      for_each_route_do(_route);
+                  });
             } else if constexpr (is_specialization_of<RouteList,
                                                       std::tuple>::value) {
                 std::apply(for_each_route_do, routes);
@@ -375,20 +368,18 @@ namespace webpp {
 
         template <typename Valve, typename Route>
         constexpr auto on(Valve&& v, Route&& r) noexcept {
-
             static_assert(
-                std::is_invocable_v<Route, req_t, res_t> ||
-                    std::is_invocable_v<route<Interface, Route>, req_t, res_t>,
-                "The specified route is not valid.");
+              std::is_invocable_v<Route, req_t, res_t> ||
+                std::is_invocable_v<route<Interface, Route>, req_t, res_t>,
+              "The specified route is not valid.");
 
             auto _route = route<Interface, Route, Valve>{
-                std::forward<Valve>(v), std::forward<Route>(r)};
+              std::forward<Valve>(v), std::forward<Route>(r)};
 
             if constexpr (is_specialization_of<RouteList, std::tuple>::value) {
-
                 // when it's a tuple
                 auto _tup =
-                    std::tuple_cat(routes, std::make_tuple(std::move(_route)));
+                  std::tuple_cat(routes, std::make_tuple(std::move(_route)));
                 return router<Interface, decltype(_tup)>{_tup};
 
             } else if constexpr (is_specialization_of<RouteList,
@@ -398,17 +389,16 @@ namespace webpp {
                 return router<Interface, decltype(_the_routes)>{_the_routes};
 
             } else if constexpr (is_container_v<RouteList>) {
-
                 // for containers (dynamic)
                 static_assert(
-                    can_cast<Route, typename RouteList::value_type>::value,
-                    "The specified route does not match the router version of "
-                    "route.");
+                  can_cast<Route, typename RouteList::value_type>::value,
+                  "The specified route does not match the router version of "
+                  "route.");
                 routes.emplace_back(std::forward<Valve>(v), std::move(_route));
 
             } else {
                 throw std::invalid_argument(
-                    "The container for routes is unknown.");
+                  "The container for routes is unknown.");
             }
         }
     };

@@ -1,9 +1,10 @@
+#include "../core/include/webpp/utils/charset.h"
+#include "../core/include/webpp/validators/validators.h"
+
 #include <gtest/gtest.h>
 #include <map>
 #include <string>
 #include <vector>
-#include "../core/include/webpp/utils/charset.h"
-#include "../core/include/webpp/validators/validators.h"
 
 using namespace webpp::is;
 
@@ -18,7 +19,7 @@ TEST(ValidationsTest, EmptyFunction) {
 
 TEST(ValidationsTest, ContainsFunctions) {
     std::map<int, std::string> data;
-    data[0] = "hello world";
+    data[0]  = "hello world";
     data[10] = "testing";
 
     EXPECT_TRUE(contains_key(data, 10));
@@ -99,7 +100,7 @@ TEST(ValidationTest, IPv6Functions) {
         EXPECT_TRUE(ipv6(item)) << item;
         EXPECT_FALSE(ipv4(item)) << item;
         EXPECT_TRUE(ip(item)) << item;
-        std::string ip = item;
+        std::string ip  = item;
         std::string ip2 = item;
         std::string ip3 = item;
         ip.append("/64");
@@ -122,8 +123,8 @@ TEST(ValidationTest, IPv6Functions) {
 
 TEST(ValidationsTest, HostFunction) {
     auto valids = {
-        "localhost",       "one.com", "example.notcom", "192.168.0.1",
-        "255.255.255.255", "[::1]",   "127.0.0.1",
+      "localhost",       "one.com", "example.notcom", "192.168.0.1",
+      "255.255.255.255", "[::1]",   "127.0.0.1",
     };
     auto invalids = {"&^%&^%$&^%&^%$&^%$#@%$#@@!~#!@"};
 
@@ -137,11 +138,11 @@ TEST(ValidationsTest, HostFunction) {
 
 TEST(ValidationsTest, EmailFunction) {
     EXPECT_TRUE(email("moisrex@gmail.com"))
-        << "moisrex@gmail.com should be valid";
+      << "moisrex@gmail.com should be valid";
     EXPECT_TRUE(email("moisrex.test@gmail.com"))
-        << "moisrex.test@gmail.com should be valid";
+      << "moisrex.test@gmail.com should be valid";
     EXPECT_FALSE(email("not an.email@123.com"))
-        << "spaces are not allowed in emails";
+      << "spaces are not allowed in emails";
 }
 
 TEST(ValidationsTest, NumberFunctions) {

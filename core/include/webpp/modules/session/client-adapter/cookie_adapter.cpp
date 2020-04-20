@@ -1,3 +1,4 @@
 #include "cookie_adapter.h"
 
-webpp::cookie_adapter::cookie_adapter() {}
+webpp::cookie_adapter::cookie_adapter() {
+}

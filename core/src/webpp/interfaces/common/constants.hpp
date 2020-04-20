@@ -9,7 +9,7 @@ constexpr std::size_t buffer_size = 1024 * 1024;
 constexpr auto default_self_hosted_listen_addr = "localhost";
 
 /**
- * This is the default port to listen to when using the Self-Hosten protocols
+ * This is the default port to listen to when using the Self-Hosted protocols
  */
 constexpr auto default_self_hosted_listen_port = 80;
 

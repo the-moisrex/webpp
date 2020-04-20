@@ -11,7 +11,7 @@
  * - [ ] should support multiple config formats including:
  *    - [ ] Memory
  *    - [ ] INI
- *    - [ ] Windows Registery
+ *    - [ ] Windows Registry
  *    - [ ] Android properties
  *    - [ ] JSON
  *    - [ ] SQLite
@@ -19,7 +19,7 @@
  *    - [ ] MySQL / SQLite / SQL Server / ...
  *    - [ ] XML
  * - [ ] should support cache
- * - [ ] should inform other softwares / systems about changes that happen in
+ * - [ ] should inform other software / systems about changes that happen in
  *       this instance of software.
  * - [ ] should support user specific configs
  * - [ ] should support session specific configs
@@ -40,7 +40,7 @@
  * So what we need in order to implement those features?
  *
  * - [ ] A way to easily run a function/method later (run_later function)
- * - [ ] A config port so other softwares can imedietly inform us of changes
+ * - [ ] A config port so other software can immediately inform us of changes
  *       features of this port:
  *         - [ ] encrypted connection or in plain (for when the other side is on
  *               the same server and we don't
@@ -70,7 +70,7 @@
  * - [ ] Blob of data
  * - [ ] practically void*
  *
- * How to retreive data:
+ * How to retrieve data:
  * - [ ] call it by its key
  * - [ ] call it by its nested key
  * - [ ] get a list of all keys in root

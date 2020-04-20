@@ -1,11 +1,11 @@
+#include "../core/include/webpp/utils/uri.h"
+
 #include <gtest/gtest.h>
 #include <string>
-#include "../core/include/webpp/utils/uri.h"
 
 using namespace webpp;
 
 TEST(URITests, Creation) {
-
     // using set and get methods twice in a row should not affect the outcome
 
     uri u("http://example.com/");
@@ -92,9 +92,9 @@ TEST(URITests, Creation) {
 }
 
 TEST(URITests, IPv6HostName) {
-    uri u;
+    uri         u;
     std::string uri_str =
-        "//[::1]:8080/folder/file.md?name=value&name2=value2#str";
+      "//[::1]:8080/folder/file.md?name=value&name2=value2#str";
     u = uri_str;
     EXPECT_EQ(u.str(), uri_str);
     EXPECT_FALSE(u.has_scheme()) << "scheme: " << u.scheme();
@@ -110,13 +110,12 @@ TEST(URITests, IPv6HostName) {
     EXPECT_EQ(u.port_uint16(), 8080);
     EXPECT_EQ(u.port(), "8080");
     EXPECT_TRUE(std::holds_alternative<ipv6>(u.host_structured()))
-        << "index: " << u.host_structured().index();
+      << "index: " << u.host_structured().index();
     u.clear_path();
     EXPECT_EQ(u.str(), "//[::1]:8080/?name=value&name2=value2#str");
 }
 
 TEST(URITests, WieredURIs) {
-
     const_uri u1("ftp://ftp.is.co.za/rfc/rfc1808.txt");
     EXPECT_TRUE(u1.has_host());
     EXPECT_TRUE(u1.has_scheme());
@@ -132,28 +131,28 @@ TEST(URITests, WieredURIs) {
 
     // some examples from https://rosettacode.org/wiki/URL_parser
     auto _uris = {
-        "ftp://ftp.is.co.za/rfc/rfc1808.txt",
-        "http://www.ietf.org/rfc/rfc2396.txt",
-        "ldap://[2001:db8::7]/c=GB?objectClass?one",
-        "mailto:John.Doe@example.com",
-        "news:comp.infosystems.www.servers.unix",
-        "tel:+1-816-555-1212",
-        "telnet://192.0.2.16:80/",
-        "urn:oasis:names:specification:docbook:dtd:xml:4.1.2",
-        "foo://example.com:8042/over/there?name=ferret#nose",
-        "urn:example:animal:ferret:nose",
-        "jdbc:mysql://test_user:test@test.com:3306/sakila?profileSQL=true",
-        "ftp://ftp.is.co.za/rfc/rfc1808.txt",
-        "http://www.ietf.org/rfc/rfc2396.txt#header1",
-        "ldap://[2001:db8::7]/c=GB?objectClass=one&objectClass=two",
-        "mailto:example@email.com",
-        "news:comp.infosystems.www.servers.unix",
-        "tel:+1-816-555-1212",
-        "telnet://192.0.2.16:80/",
-        "urn:oasis:names:specification:docbook:dtd:xml:4.1.2",
-        "ssh://test@test.com",
-        "https://bob:pass@test.com/place",
-        "http://example.com/?a=1&b=2+2&c=3&c=4&d=%65%6e%63%6F%64%65%64"};
+      "ftp://ftp.is.co.za/rfc/rfc1808.txt",
+      "http://www.ietf.org/rfc/rfc2396.txt",
+      "ldap://[2001:db8::7]/c=GB?objectClass?one",
+      "mailto:John.Doe@example.com",
+      "news:comp.infosystems.www.servers.unix",
+      "tel:+1-816-555-1212",
+      "telnet://192.0.2.16:80/",
+      "urn:oasis:names:specification:docbook:dtd:xml:4.1.2",
+      "foo://example.com:8042/over/there?name=ferret#nose",
+      "urn:example:animal:ferret:nose",
+      "jdbc:mysql://test_user:test@test.com:3306/sakila?profileSQL=true",
+      "ftp://ftp.is.co.za/rfc/rfc1808.txt",
+      "http://www.ietf.org/rfc/rfc2396.txt#header1",
+      "ldap://[2001:db8::7]/c=GB?objectClass=one&objectClass=two",
+      "mailto:example@email.com",
+      "news:comp.infosystems.www.servers.unix",
+      "tel:+1-816-555-1212",
+      "telnet://192.0.2.16:80/",
+      "urn:oasis:names:specification:docbook:dtd:xml:4.1.2",
+      "ssh://test@test.com",
+      "https://bob:pass@test.com/place",
+      "http://example.com/?a=1&b=2+2&c=3&c=4&d=%65%6e%63%6F%64%65%64"};
 
     for (auto const& _uri : _uris) {
         EXPECT_TRUE(const_uri(_uri).is_valid()) << "uri: " << _uri;
@@ -170,22 +169,22 @@ TEST(URITests, WieredURIs) {
 
 TEST(URITests, URN) {
     auto valid_urns = {
-        "urn:isbn:0451450523",
-        "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66",
-        "urn:publishing:book",
-        "urn:isbn:0451450523",
-        "urn:isan:0000-0000-2CEA-0000-1-0000-0000-Y",
-        "urn:ISSN:0167-6423",
-        "urn:ietf:rfc:2648",
-        "urn:mpeg:mpeg7:schema:2001",
-        "urn:oid:2.16.840",
-        "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66",
-        "urn:nbn:de:bvb:19-146642",
-        "urn:lex:eu:council:directive:2010-03-09;2010-19-UE",
-        "urn:lsid:zoobank.org:pub:CDC8D258-8F57-41DC-B560-247E17D3DC8C",
-        "urn:mpeg:mpeg7:schema:2001urn:isbn:0451450523",
-        "urn:sha1:YNCKHTQCWBTRNJIV4WNAE52SJUQCZO5C",
-        "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66"};
+      "urn:isbn:0451450523",
+      "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66",
+      "urn:publishing:book",
+      "urn:isbn:0451450523",
+      "urn:isan:0000-0000-2CEA-0000-1-0000-0000-Y",
+      "urn:ISSN:0167-6423",
+      "urn:ietf:rfc:2648",
+      "urn:mpeg:mpeg7:schema:2001",
+      "urn:oid:2.16.840",
+      "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66",
+      "urn:nbn:de:bvb:19-146642",
+      "urn:lex:eu:council:directive:2010-03-09;2010-19-UE",
+      "urn:lsid:zoobank.org:pub:CDC8D258-8F57-41DC-B560-247E17D3DC8C",
+      "urn:mpeg:mpeg7:schema:2001urn:isbn:0451450523",
+      "urn:sha1:YNCKHTQCWBTRNJIV4WNAE52SJUQCZO5C",
+      "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66"};
 
     for (auto const& _urn : valid_urns) {
         EXPECT_TRUE(uri(_urn).is_valid());
@@ -194,8 +193,8 @@ TEST(URITests, URN) {
     }
 
     const_uri a("urn:example:a123,z456");
-    uri b{"URN:example:a123,z456"};
-    uri c{"urn:EXAMPLE:a123,z456"};
+    uri       b{"URN:example:a123,z456"};
+    uri       c{"urn:EXAMPLE:a123,z456"};
 
     EXPECT_EQ(a, b);
     EXPECT_EQ(a, c);
@@ -308,10 +307,9 @@ TEST(URITests, Set) {
               "something_else:someone@example.com");
 
     // TODO: should this be allowed even???
-    EXPECT_EQ(uri("urn:mpeg:mpeg7:schema:2001urn:isbn:0451450523")
-                  .scheme("ftp")
-                  .str(),
-              "ftp:mpeg:mpeg7:schema:2001urn:isbn:0451450523");
+    EXPECT_EQ(
+      uri("urn:mpeg:mpeg7:schema:2001urn:isbn:0451450523").scheme("ftp").str(),
+      "ftp:mpeg:mpeg7:schema:2001urn:isbn:0451450523");
 
     EXPECT_EQ(uri("http://example.com/").scheme("ftp").str(),
               "ftp://example.com/");
@@ -414,15 +412,15 @@ TEST(URITests, TypedVariables) {
 }
 
 TEST(URITests, StructuredPath) {
-    uri u{"/user/19"};
+    uri  u{"/user/19"};
     auto parsed = u.path_structured_decoded();
     EXPECT_EQ(parsed[2], "19");
 }
 
 TEST(URITests, EqualPaths) {
-  EXPECT_TRUE(equal_path("/one", "/one"));
-  EXPECT_FALSE(equal_path("/two", "/one"));
-  EXPECT_TRUE(equal_path("/two/", "/two/"));
-  EXPECT_TRUE(equal_path("/two//", "/two//"));
-  EXPECT_TRUE(equal_path("/two//three", "/two/three"));
+    EXPECT_TRUE(equal_path("/one", "/one"));
+    EXPECT_FALSE(equal_path("/two", "/one"));
+    EXPECT_TRUE(equal_path("/two/", "/two/"));
+    EXPECT_TRUE(equal_path("/two//", "/two//"));
+    EXPECT_TRUE(equal_path("/two//three", "/two/three"));
 }

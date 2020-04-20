@@ -1,7 +1,8 @@
 // Created by moisrex on 11/29/19.
+#include "../core/include/webpp/utils/const_list.h"
+
 #include <gtest/gtest.h>
 #include <string>
-#include "../core/include/webpp/utils/const_list.h"
 
 using namespace webpp;
 using namespace std;
@@ -17,17 +18,17 @@ TEST(ConstListTest, ConstList) {
     });
 
     auto str_one = one.reduce(
-        [](string const& data, auto const& value) {
-            auto _data = data;
-            _data.append(string((data.empty() ? "" : " ")));
-            if constexpr (std::is_convertible_v<decltype(value), int>) {
-                _data.append(to_string(value));
-            } else {
-                _data.append(value);
-            }
-            return _data;
-        },
-        string(""));
+      [](string const& data, auto const& value) {
+          auto _data = data;
+          _data.append(string((data.empty() ? "" : " ")));
+          if constexpr (std::is_convertible_v<decltype(value), int>) {
+              _data.append(to_string(value));
+          } else {
+              _data.append(value);
+          }
+          return _data;
+      },
+      string(""));
 
     EXPECT_EQ(str_one, "one two 3");
 }

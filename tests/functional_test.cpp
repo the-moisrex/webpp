@@ -1,8 +1,10 @@
 // Created by moisrex on 12/10/19.
+#include "../core/include/webpp/utils/functional.h"
+
+#include "../core/include/webpp/utils/debounce.h"
+
 #include <array>
 #include <gtest/gtest.h>
-#include "../core/include/webpp/utils/functional.h"
-#include "../core/include/webpp/utils/debounce.h"
 
 using namespace webpp;
 
@@ -21,7 +23,7 @@ struct ConstMyCallable {
 };
 
 struct MyCallable {
-    int i = 0;
+    int  i = 0;
     auto operator()(int limit) {
         i++;
         EXPECT_TRUE(i < limit - 1) << "i is: " << i << "; limit: " << limit;
@@ -70,6 +72,4 @@ TEST(FunctionalTests, TrailingMode) {
     debounce_trailing debounced_lambda([] {
 
     });
-
-
 }

@@ -1,4 +1,3 @@
-
 #ifndef WEBPP_COOKIES_H
 #define WEBPP_COOKIES_H
 
@@ -51,6 +50,7 @@
  */
 
 #include "../utils/strings.h"
+
 #include <chrono>
 #include <functional>
 #include <map>
@@ -87,65 +87,91 @@ namespace webpp {
 
         // TODO: consider using "variant<string, string_view>" instead of
         // string_view
-        using date_t = std::chrono::time_point<std::chrono::system_clock>;
-        using name_t = std::string;
-        using value_t = std::string;
-        using domain_t = std::string;
-        using path_t = std::string;
-        using expires_t = std::optional<date_t>;
-        using max_age_t = unsigned long;
+        using date_t      = std::chrono::time_point<std::chrono::system_clock>;
+        using name_t      = std::string;
+        using value_t     = std::string;
+        using domain_t    = std::string;
+        using path_t      = std::string;
+        using expires_t   = std::optional<date_t>;
+        using max_age_t   = unsigned long;
         using same_site_t = same_site_value;
-        using secure_t = bool;
+        using secure_t    = bool;
         using host_only_t = bool;
-        using prefix_t = bool;
+        using prefix_t    = bool;
         using encrypted_t = bool;
-        using comment_t = std::string;
+        using comment_t   = std::string;
 
         std::map<std::string, std::string> attrs;
 
       private:
-        mutable name_t _name;
-        mutable value_t _value;
-        mutable domain_t _domain;
-        mutable path_t _path;
-        mutable expires_t _expires;
-        mutable max_age_t _max_age = 0;
+        mutable name_t      _name;
+        mutable value_t     _value;
+        mutable domain_t    _domain;
+        mutable path_t      _path;
+        mutable expires_t   _expires;
+        mutable max_age_t   _max_age   = 0;
         mutable same_site_t _same_site = same_site_value::NONE;
-        mutable secure_t _secure = false;
+        mutable secure_t    _secure    = false;
         mutable host_only_t _host_only = false;
         mutable encrypted_t _encrypted = false;
-        mutable prefix_t _prefix = false;
-        mutable comment_t _comment;
+        mutable prefix_t    _prefix    = false;
+        mutable comment_t   _comment;
 
       public:
         /**
          * empty cookie
          */
-        cookie() = default;
-        cookie(const cookie& c) = default;
+        cookie()                    = default;
+        cookie(const cookie& c)     = default;
         cookie(cookie&& c) noexcept = default;
         // TODO: implement this:
         explicit cookie(std::string_view /* source */) noexcept {
             // TODO
         }
         cookie(name_t __name, value_t __value) noexcept
-            : _name(trim_copy(__name)), _value(trim_copy(__value)) {}
+          : _name(trim_copy(__name)),
+            _value(trim_copy(__value)) {
+        }
 
         cookie& operator=(const cookie& c) = default;
         cookie& operator=(cookie&& c) noexcept = default;
 
-        inline auto const& name() const noexcept { return _name; }
-        inline auto const& value() const noexcept { return _value; }
-        inline auto const& comment() const noexcept { return _comment; }
-        inline auto const& domain() const noexcept { return _domain; }
-        inline auto const& max_age() const noexcept { return _max_age; }
-        inline auto const& secure() const noexcept { return _secure; }
-        inline auto const& host_only() const noexcept { return _host_only; }
-        inline auto const& prefix() const noexcept { return _prefix; }
-        inline auto const& expires() const noexcept { return *_expires; }
-        inline auto const& same_site() const noexcept { return _same_site; }
-        inline auto const& path() const noexcept { return _path; }
-        inline auto const& encrypted() const noexcept { return _encrypted; }
+        inline auto const& name() const noexcept {
+            return _name;
+        }
+        inline auto const& value() const noexcept {
+            return _value;
+        }
+        inline auto const& comment() const noexcept {
+            return _comment;
+        }
+        inline auto const& domain() const noexcept {
+            return _domain;
+        }
+        inline auto const& max_age() const noexcept {
+            return _max_age;
+        }
+        inline auto const& secure() const noexcept {
+            return _secure;
+        }
+        inline auto const& host_only() const noexcept {
+            return _host_only;
+        }
+        inline auto const& prefix() const noexcept {
+            return _prefix;
+        }
+        inline auto const& expires() const noexcept {
+            return *_expires;
+        }
+        inline auto const& same_site() const noexcept {
+            return _same_site;
+        }
+        inline auto const& path() const noexcept {
+            return _path;
+        }
+        inline auto const& encrypted() const noexcept {
+            return _encrypted;
+        }
 
         cookie& name(name_t _name) noexcept;
         cookie& value(value_t __value) noexcept;
@@ -159,7 +185,7 @@ namespace webpp {
         cookie& host_only(host_only_t __host_only) noexcept;
         cookie& expires(date_t __expires) noexcept;
         cookie& remove(bool __remove = true) noexcept;
-        bool is_removed() const noexcept;
+        bool    is_removed() const noexcept;
 
         /**
          * @brief sets exipiration time relative to now.
@@ -184,12 +210,12 @@ namespace webpp {
         value_t encrypted_value() const noexcept;
 
         std::ostream& operator<<(std::ostream& out) const noexcept;
-        bool operator==(cookie const& c) const noexcept;
-        bool operator<(cookie const& c) const noexcept;
-        bool operator>(cookie const& c) const noexcept;
-        bool operator<=(cookie const& c) const noexcept;
-        bool operator>=(cookie const& c) const noexcept;
-        std::string render() const noexcept;
+        bool          operator==(cookie const& c) const noexcept;
+        bool          operator<(cookie const& c) const noexcept;
+        bool          operator>(cookie const& c) const noexcept;
+        bool          operator<=(cookie const& c) const noexcept;
+        bool          operator>=(cookie const& c) const noexcept;
+        std::string   render() const noexcept;
 
         /**
          * @brief this method will return true if the specified cookie and this
@@ -223,7 +249,7 @@ namespace webpp {
     // hash function of std::unordered_set<webpp::cookie>
     struct cookie_hash {
         using argument_type = webpp::cookie;
-        using result_type = std::size_t;
+        using result_type   = std::size_t;
         result_type operator()(argument_type const& c) const noexcept;
     };
 
@@ -241,14 +267,13 @@ namespace webpp {
      * in cookie class go out of scope.
      */
     class cookie_jar
-        : public std::unordered_set<webpp::cookie, cookie_hash, cookie_equals> {
-
+      : public std::unordered_set<webpp::cookie, cookie_hash, cookie_equals> {
       public:
         using condition = std::function<bool(cookie const&)>;
 
       private:
         using super =
-            std::unordered_set<webpp::cookie, cookie_hash, cookie_equals>;
+          std::unordered_set<webpp::cookie, cookie_hash, cookie_equals>;
 
         // Defaults:
         //        cookie::path_t _path;
@@ -283,7 +308,7 @@ namespace webpp {
          */
         template <typename T>
         void make_it_unique(const const_iterator& dont_touch,
-                            T const& check) noexcept {
+                            T const&              check) noexcept {
             for (auto it = begin(); it != end(); it++) {
                 if (check(*it) && dont_touch != it &&
                     dont_touch->same_as(*it)) {
@@ -300,7 +325,7 @@ namespace webpp {
          */
         template <typename T>
         void change_if(condition const& if_statement,
-                       T const& change) noexcept {
+                       T const&         change) noexcept {
             for (auto it = begin(); it != end(); it++)
                 if (if_statement(*it))
                     change(it);
@@ -333,33 +358,33 @@ namespace webpp {
         template <typename Name, class... Args>
         std::pair<iterator, bool> emplace(Name&& name, Args&&... args) {
             auto found =
-                find(name); // we don't have a problem here because we are sure
-                            // that the domain and the path are not the same
-                            // here. so we just look for the name
+              find(name); // we don't have a problem here because we are sure
+                          // that the domain and the path are not the same
+                          // here. so we just look for the name
             if (found != cend())
                 erase(found);
             return static_cast<super*>(this)->emplace(
-                std::forward<Name>(name), std::forward<Args>(args)...);
+              std::forward<Name>(name), std::forward<Args>(args)...);
         }
 
         template <typename Name, class... Args>
         iterator emplace_hint(const_iterator hint, Name&& name,
                               Args&&... args) noexcept {
             auto found =
-                find(name); // we don't have a problem here because we are sure
-                            // that the domain and the path are not the same
-                            // here. so we just look for the name
+              find(name); // we don't have a problem here because we are sure
+                          // that the domain and the path are not the same
+                          // here. so we just look for the name
             if (found != cend())
                 erase(found);
             return static_cast<super*>(this)->emplace_hint(
-                hint, std::forward<Name>(name), std::forward<Args>(args)...);
+              hint, std::forward<Name>(name), std::forward<Args>(args)...);
         }
 
         std::pair<iterator, bool> insert(const value_type& value);
         std::pair<iterator, bool> insert(value_type&& value);
         iterator insert(const_iterator hint, const value_type& value);
         iterator insert(const_iterator hint, value_type&& value);
-        void insert(std::initializer_list<value_type> ilist);
+        void     insert(std::initializer_list<value_type> ilist);
 
         template <class InputIt>
         void insert(InputIt first, InputIt last) {
@@ -382,12 +407,12 @@ namespace webpp {
          * @return
          */
         cookie_jar& encrypted(cookie::encrypted_t const& _encrypted) noexcept;
-        cookie_jar& encrypted(condition const& _condition,
+        cookie_jar& encrypted(condition const&           _condition,
                               cookie::encrypted_t const& _encrypted) noexcept;
-        cookie_jar& encrypted(cookie::name_t const& _name,
+        cookie_jar& encrypted(cookie::name_t const&      _name,
                               cookie::encrypted_t const& _encrypted) noexcept;
         cookie_jar& encrypted(const_iterator const& it,
-                              cookie::encrypted_t _encrypted) noexcept;
+                              cookie::encrypted_t   _encrypted) noexcept;
 
         /**
          * @brief mark all cookies as secure
@@ -395,12 +420,12 @@ namespace webpp {
          * @return
          */
         cookie_jar& secure(cookie::secure_t const& _secure) noexcept;
-        cookie_jar& secure(condition const& _condition,
+        cookie_jar& secure(condition const&        _condition,
                            cookie::secure_t const& _secure) noexcept;
-        cookie_jar& secure(cookie::name_t const& _name,
+        cookie_jar& secure(cookie::name_t const&   _name,
                            cookie::secure_t const& _secure) noexcept;
         cookie_jar& secure(const_iterator const& it,
-                           cookie::secure_t _secure) noexcept;
+                           cookie::secure_t      _secure) noexcept;
 
         /**
          * @brief make every cookie host_only
@@ -408,12 +433,12 @@ namespace webpp {
          * @return
          */
         cookie_jar& host_only(cookie::host_only_t const& _host_only) noexcept;
-        cookie_jar& host_only(condition const& _condition,
+        cookie_jar& host_only(condition const&           _condition,
                               cookie::host_only_t const& _host_only) noexcept;
-        cookie_jar& host_only(cookie::name_t const& _name,
+        cookie_jar& host_only(cookie::name_t const&      _name,
                               cookie::host_only_t const& _host_only) noexcept;
         cookie_jar& host_only(const_iterator const& it,
-                              cookie::host_only_t _host_only) noexcept;
+                              cookie::host_only_t   _host_only) noexcept;
 
         /**
          * @brief enable cookie name prefix in all cookies
@@ -421,12 +446,12 @@ namespace webpp {
          * @return
          */
         cookie_jar& prefix(cookie::prefix_t const& _prefix) noexcept;
-        cookie_jar& prefix(cookie::name_t const& _name,
+        cookie_jar& prefix(cookie::name_t const&   _name,
                            cookie::prefix_t const& _prefix) noexcept;
-        cookie_jar& prefix(condition const& _condition,
+        cookie_jar& prefix(condition const&        _condition,
                            cookie::prefix_t const& _prefix) noexcept;
         cookie_jar& prefix(const_iterator const& it,
-                           cookie::prefix_t _prefix) noexcept;
+                           cookie::prefix_t      _prefix) noexcept;
 
         /**
          * @brief set a comment for every cookie
@@ -434,13 +459,13 @@ namespace webpp {
          * @return
          */
         cookie_jar& comment(cookie::comment_t const& _comment) noexcept;
-        cookie_jar& comment(condition const& _condition,
+        cookie_jar& comment(condition const&         _condition,
                             cookie::comment_t const& _comment) noexcept;
-        cookie_jar& comment(cookie::name_t const& _name,
+        cookie_jar& comment(cookie::name_t const&    _name,
                             cookie::comment_t const& _comment) noexcept;
         cookie_jar& comment(const_iterator const& it,
-                            cookie::comment_t&& _comment) noexcept;
-        cookie_jar& comment(const_iterator const& it,
+                            cookie::comment_t&&   _comment) noexcept;
+        cookie_jar& comment(const_iterator const&    it,
                             cookie::comment_t const& _comment) noexcept;
 
         /**
@@ -449,12 +474,12 @@ namespace webpp {
          * @return
          */
         cookie_jar& same_site(cookie::same_site_t const& _same_site) noexcept;
-        cookie_jar& same_site(cookie::name_t const& _name,
+        cookie_jar& same_site(cookie::name_t const&      _name,
                               cookie::same_site_t const& _same_site) noexcept;
-        cookie_jar& same_site(condition const& _condition,
+        cookie_jar& same_site(condition const&           _condition,
                               cookie::same_site_t const& _same_site) noexcept;
         cookie_jar& same_site(const_iterator const& it,
-                              cookie::same_site_t _same_site) noexcept;
+                              cookie::same_site_t   _same_site) noexcept;
 
         /**
          * @brief set the same expiriration date for every cookie
@@ -464,10 +489,10 @@ namespace webpp {
         cookie_jar& expires(cookie::date_t const& _expires) noexcept;
         cookie_jar& expires(cookie::name_t const& _name,
                             cookie::date_t const& _expires) noexcept;
-        cookie_jar& expires(condition const& _condition,
+        cookie_jar& expires(condition const&      _condition,
                             cookie::date_t const& _expires) noexcept;
         cookie_jar& expires(const_iterator const& it,
-                            cookie::date_t&& _expires) noexcept;
+                            cookie::date_t&&      _expires) noexcept;
         cookie_jar& expires(const_iterator const& it,
                             cookie::date_t const& _expires) noexcept;
 
@@ -477,29 +502,29 @@ namespace webpp {
          * @return
          */
         cookie_jar& max_age(cookie::max_age_t const& _max_age) noexcept;
-        cookie_jar& max_age(cookie::name_t const& _name,
+        cookie_jar& max_age(cookie::name_t const&    _name,
                             cookie::max_age_t const& _max_age) noexcept;
-        cookie_jar& max_age(condition const& _condition,
+        cookie_jar& max_age(condition const&         _condition,
                             cookie::max_age_t const& _max_age) noexcept;
         cookie_jar& max_age(const_iterator const& it,
-                            cookie::max_age_t _max_age) noexcept;
+                            cookie::max_age_t     _max_age) noexcept;
         cookie_jar& value(cookie::value_t const& _value) noexcept;
-        cookie_jar& value(cookie::name_t const& _name,
+        cookie_jar& value(cookie::name_t const&  _name,
+                          cookie::value_t const& _value) noexcept;
+        cookie_jar& value(const_iterator const&  it,
                           cookie::value_t const& _value) noexcept;
         cookie_jar& value(const_iterator const& it,
-                          cookie::value_t const& _value) noexcept;
-        cookie_jar& value(const_iterator const& it,
-                          cookie::value_t&& _value) noexcept;
-        cookie_jar& value(condition const& _condition,
+                          cookie::value_t&&     _value) noexcept;
+        cookie_jar& value(condition const&       _condition,
                           cookie::value_t const& _value) noexcept;
 
         cookie_jar& path(cookie::path_t const& _path) noexcept;
         cookie_jar& path(cookie::name_t const& _name,
                          cookie::path_t const& _path) noexcept;
-        cookie_jar& path(condition const& _condition,
+        cookie_jar& path(condition const&      _condition,
                          cookie::path_t const& _path) noexcept;
         cookie_jar& path(const_iterator const& it,
-                         cookie::path_t&& _path) noexcept;
+                         cookie::path_t&&      _path) noexcept;
         cookie_jar& path(const_iterator const& it,
                          cookie::path_t const& _path) noexcept;
 
@@ -509,13 +534,13 @@ namespace webpp {
          * @return
          */
         cookie_jar& domain(cookie::domain_t const& _domain) noexcept;
-        cookie_jar& domain(cookie::name_t const& _name,
+        cookie_jar& domain(cookie::name_t const&   _name,
                            cookie::domain_t const& new_domain) noexcept;
         cookie_jar& domain(const_iterator const& it,
-                           cookie::domain_t&& new_domain) noexcept;
-        cookie_jar& domain(const_iterator const& it,
+                           cookie::domain_t&&    new_domain) noexcept;
+        cookie_jar& domain(const_iterator const&   it,
                            cookie::domain_t const& new_domain) noexcept;
-        cookie_jar& domain(condition const& _condition,
+        cookie_jar& domain(condition const&        _condition,
                            cookie::domain_t const& new_domain) noexcept;
 
         /**
@@ -536,7 +561,7 @@ namespace webpp {
         cookie_jar& name(cookie::name_t const& old_name,
                          cookie::name_t const& new_name) noexcept;
         cookie_jar& name(const_iterator const& it,
-                         cookie::name_t&& new_name) noexcept;
+                         cookie::name_t&&      new_name) noexcept;
         cookie_jar& name(const_iterator const& it,
                          cookie::name_t const& new_name) noexcept;
 
@@ -546,7 +571,7 @@ namespace webpp {
          * @param new_name
          * @return
          */
-        cookie_jar& name(condition const& _condition,
+        cookie_jar& name(condition const&      _condition,
                          cookie::name_t const& new_name) noexcept;
     };
 

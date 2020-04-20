@@ -1,5 +1,7 @@
 #include "../../../include/webpp/http/cookies.h"
+
 #include "../../../include/webpp/utils/strings.h"
+
 #include <algorithm>
 #include <functional>
 #include <memory>
@@ -97,7 +99,6 @@ std::ostream& cookie::operator<<(std::ostream& out) const noexcept {
             out << "__Host-";
     }
     if (!_name.empty()) {
-
         // FIXME: encode/... name and value here. Programmers are dumb!
         out << _name << "=" << _value;
 
@@ -111,9 +112,9 @@ std::ostream& cookie::operator<<(std::ostream& out) const noexcept {
             out << "; Path=" << _path;
 
         if (_expires) {
-            std::time_t expires_c = system_clock::to_time_t(*_expires);
-            std::tm expires_tm = *std::localtime(&expires_c);
-            char buff[30];
+            std::time_t expires_c  = system_clock::to_time_t(*_expires);
+            std::tm     expires_tm = *std::localtime(&expires_c);
+            char        buff[30];
             // FIXME: check time zone and see if it's ok
             //            setlocale(LC_ALL, "en_US.UTF-8");
             if (strftime(buff, sizeof buff, "%a, %d %b %Y %H:%M:%S GMT",
@@ -168,7 +169,7 @@ bool cookie::operator>=(const cookie& c) const noexcept {
 
 std::string cookie::render() const noexcept {
     std::ostringstream os;
-    this->operator<<(os);
+    this->             operator<<(os);
     return os.str();
 }
 
@@ -267,21 +268,23 @@ cookie_hash::operator()(const cookie_hash::argument_type& c) const noexcept {
     return seed;
 }
 
-bool cookie_equals::operator()(const cookie& lhs, const cookie& rhs) const
-    noexcept {
+bool cookie_equals::operator()(const cookie& lhs,
+                               const cookie& rhs) const noexcept {
     return lhs.name() == rhs.name() && lhs.domain() == rhs.domain() &&
            lhs.path() == rhs.path();
 }
 
-cookie_jar::const_iterator cookie_jar::find(cookie::name_t const& name) const
-    noexcept {
-    return std::find_if(cbegin(), cend(),
-                        [&](auto const& a) { return a.name() == name; });
+cookie_jar::const_iterator
+cookie_jar::find(cookie::name_t const& name) const noexcept {
+    return std::find_if(cbegin(), cend(), [&](auto const& a) {
+        return a.name() == name;
+    });
 }
 
 cookie_jar::const_iterator cookie_jar::find(const cookie& c) const noexcept {
-    return std::find_if(cbegin(), cend(),
-                        [&](auto const& a) { return a.same_as(c); });
+    return std::find_if(cbegin(), cend(), [&](auto const& a) {
+        return a.same_as(c);
+    });
 }
 
 std::pair<cookie_jar::iterator, bool>
@@ -299,7 +302,7 @@ std::pair<cookie_jar::iterator, bool> cookie_jar::insert(value_type&& value) {
     return static_cast<super*>(this)->insert(std::move(value));
 }
 
-cookie_jar::iterator cookie_jar::insert(const_iterator hint,
+cookie_jar::iterator cookie_jar::insert(const_iterator    hint,
                                         const value_type& value) {
     auto found = find(value);
     if (found != cend())
@@ -308,7 +311,7 @@ cookie_jar::iterator cookie_jar::insert(const_iterator hint,
 }
 
 cookie_jar::iterator cookie_jar::insert(const_iterator hint,
-                                        value_type&& value) {
+                                        value_type&&   value) {
     auto found = find(value);
     if (found != cend())
         erase(found);
@@ -331,19 +334,23 @@ cookie_jar::encrypted(cookie::encrypted_t const& _encrypted) noexcept {
     return *this;
 }
 cookie_jar&
-cookie_jar::encrypted(condition const& _condition,
+cookie_jar::encrypted(condition const&           _condition,
                       cookie::encrypted_t const& _encrypted) noexcept {
-    change_if(_condition, [&](auto& it) { it->_encrypted = _encrypted; });
+    change_if(_condition, [&](auto& it) {
+        it->_encrypted = _encrypted;
+    });
     return *this;
 }
 cookie_jar&
-cookie_jar::encrypted(cookie::name_t const& _name,
+cookie_jar::encrypted(cookie::name_t const&      _name,
                       cookie::encrypted_t const& _encrypted) noexcept {
-    change_if(_name, [&](auto& it) { it->_encrypted = _encrypted; });
+    change_if(_name, [&](auto& it) {
+        it->_encrypted = _encrypted;
+    });
     return *this;
 }
 cookie_jar& cookie_jar::encrypted(const_iterator const& it,
-                                  cookie::encrypted_t _encrypted) noexcept {
+                                  cookie::encrypted_t   _encrypted) noexcept {
     it->_encrypted = _encrypted;
     return *this;
 }
@@ -353,18 +360,22 @@ cookie_jar& cookie_jar::secure(cookie::secure_t const& _secure) noexcept {
         c._secure = _secure;
     return *this;
 }
-cookie_jar& cookie_jar::secure(condition const& _condition,
+cookie_jar& cookie_jar::secure(condition const&        _condition,
                                cookie::secure_t const& _secure) noexcept {
-    change_if(_condition, [&](auto& it) { it->_secure = _secure; });
+    change_if(_condition, [&](auto& it) {
+        it->_secure = _secure;
+    });
     return *this;
 }
-cookie_jar& cookie_jar::secure(cookie::name_t const& _name,
+cookie_jar& cookie_jar::secure(cookie::name_t const&   _name,
                                cookie::secure_t const& _secure) noexcept {
-    change_if(_name, [&](auto& it) { it->_secure = _secure; });
+    change_if(_name, [&](auto& it) {
+        it->_secure = _secure;
+    });
     return *this;
 }
 cookie_jar& cookie_jar::secure(const_iterator const& it,
-                               cookie::secure_t _secure) noexcept {
+                               cookie::secure_t      _secure) noexcept {
     it->_secure = _secure;
     return *this;
 }
@@ -377,21 +388,25 @@ cookie_jar::host_only(cookie::host_only_t const& _host_only) noexcept {
 }
 
 cookie_jar&
-cookie_jar::host_only(condition const& _condition,
+cookie_jar::host_only(condition const&           _condition,
                       cookie::host_only_t const& _host_only) noexcept {
-    change_if(_condition, [&](auto& it) { it->_host_only = _host_only; });
+    change_if(_condition, [&](auto& it) {
+        it->_host_only = _host_only;
+    });
     return *this;
 }
 
 cookie_jar&
-cookie_jar::host_only(cookie::name_t const& _name,
+cookie_jar::host_only(cookie::name_t const&      _name,
                       cookie::host_only_t const& _host_only) noexcept {
-    change_if(_name, [&](auto& it) { it->_host_only = _host_only; });
+    change_if(_name, [&](auto& it) {
+        it->_host_only = _host_only;
+    });
     return *this;
 }
 
 cookie_jar& cookie_jar::host_only(const_iterator const& it,
-                                  cookie::host_only_t _host_only) noexcept {
+                                  cookie::host_only_t   _host_only) noexcept {
     it->_host_only = _host_only;
     return *this;
 }
@@ -402,20 +417,24 @@ cookie_jar& cookie_jar::prefix(cookie::prefix_t const& _prefix) noexcept {
     return *this;
 }
 
-cookie_jar& cookie_jar::prefix(cookie::name_t const& _name,
+cookie_jar& cookie_jar::prefix(cookie::name_t const&   _name,
                                cookie::prefix_t const& _prefix) noexcept {
-    change_if(_name, [&](auto& it) { it->_prefix = _prefix; });
+    change_if(_name, [&](auto& it) {
+        it->_prefix = _prefix;
+    });
     return *this;
 }
 
-cookie_jar& cookie_jar::prefix(condition const& _condition,
+cookie_jar& cookie_jar::prefix(condition const&        _condition,
                                cookie::prefix_t const& _prefix) noexcept {
-    change_if(_condition, [&](auto& it) { it->_prefix = _prefix; });
+    change_if(_condition, [&](auto& it) {
+        it->_prefix = _prefix;
+    });
     return *this;
 }
 
 cookie_jar& cookie_jar::prefix(const_iterator const& it,
-                               cookie::prefix_t _prefix) noexcept {
+                               cookie::prefix_t      _prefix) noexcept {
     it->_prefix = _prefix;
     return *this;
 }
@@ -425,22 +444,26 @@ cookie_jar& cookie_jar::comment(cookie::comment_t const& _comment) noexcept {
         c._comment = _comment;
     return *this;
 }
-cookie_jar& cookie_jar::comment(condition const& _condition,
+cookie_jar& cookie_jar::comment(condition const&         _condition,
                                 cookie::comment_t const& _comment) noexcept {
-    change_if(_condition, [&](auto& it) { it->_comment = _comment; });
+    change_if(_condition, [&](auto& it) {
+        it->_comment = _comment;
+    });
     return *this;
 }
-cookie_jar& cookie_jar::comment(cookie::name_t const& _name,
+cookie_jar& cookie_jar::comment(cookie::name_t const&    _name,
                                 cookie::comment_t const& _comment) noexcept {
-    change_if(_name, [&](auto& it) { it->_comment = _comment; });
+    change_if(_name, [&](auto& it) {
+        it->_comment = _comment;
+    });
     return *this;
 }
 cookie_jar& cookie_jar::comment(const_iterator const& it,
-                                cookie::comment_t&& _comment) noexcept {
+                                cookie::comment_t&&   _comment) noexcept {
     it->_comment = std::move(_comment);
     return *this;
 }
-cookie_jar& cookie_jar::comment(const_iterator const& it,
+cookie_jar& cookie_jar::comment(const_iterator const&    it,
                                 cookie::comment_t const& _comment) noexcept {
     return comment(it, cookie::comment_t{_comment});
 }
@@ -452,19 +475,23 @@ cookie_jar::same_site(cookie::same_site_t const& _same_site) noexcept {
     return *this;
 }
 cookie_jar&
-cookie_jar::same_site(cookie::name_t const& _name,
+cookie_jar::same_site(cookie::name_t const&      _name,
                       cookie::same_site_t const& _same_site) noexcept {
-    change_if(_name, [&](auto& it) { it->_same_site = _same_site; });
+    change_if(_name, [&](auto& it) {
+        it->_same_site = _same_site;
+    });
     return *this;
 }
 cookie_jar&
-cookie_jar::same_site(condition const& _condition,
+cookie_jar::same_site(condition const&           _condition,
                       cookie::same_site_t const& _same_site) noexcept {
-    change_if(_condition, [&](auto& it) { it->_same_site = _same_site; });
+    change_if(_condition, [&](auto& it) {
+        it->_same_site = _same_site;
+    });
     return *this;
 }
 cookie_jar& cookie_jar::same_site(const_iterator const& it,
-                                  cookie::same_site_t _same_site) noexcept {
+                                  cookie::same_site_t   _same_site) noexcept {
     it->_same_site = _same_site;
     return *this;
 }
@@ -477,18 +504,22 @@ cookie_jar& cookie_jar::expires(cookie::date_t const& _expires) noexcept {
 
 cookie_jar& cookie_jar::expires(cookie::name_t const& _name,
                                 cookie::date_t const& _expires) noexcept {
-    change_if(_name, [&](auto& it) { it->_expires = _expires; });
+    change_if(_name, [&](auto& it) {
+        it->_expires = _expires;
+    });
     return *this;
 }
 
-cookie_jar& cookie_jar::expires(condition const& _condition,
+cookie_jar& cookie_jar::expires(condition const&      _condition,
                                 cookie::date_t const& _expires) noexcept {
-    change_if(_condition, [&](auto& it) { it->_expires = _expires; });
+    change_if(_condition, [&](auto& it) {
+        it->_expires = _expires;
+    });
     return *this;
 }
 
 cookie_jar& cookie_jar::expires(const_iterator const& it,
-                                cookie::date_t&& _expires) noexcept {
+                                cookie::date_t&&      _expires) noexcept {
     it->_expires = _expires;
     return *this;
 }
@@ -503,19 +534,23 @@ cookie_jar& cookie_jar::max_age(cookie::max_age_t const& _max_age) noexcept {
         c._max_age = _max_age;
     return *this;
 }
-cookie_jar& cookie_jar::max_age(cookie::name_t const& _name,
+cookie_jar& cookie_jar::max_age(cookie::name_t const&    _name,
                                 cookie::max_age_t const& _max_age) noexcept {
-    change_if(_name, [&](auto& it) { it->_max_age = _max_age; });
+    change_if(_name, [&](auto& it) {
+        it->_max_age = _max_age;
+    });
     return *this;
 }
-cookie_jar& cookie_jar::max_age(condition const& _condition,
+cookie_jar& cookie_jar::max_age(condition const&         _condition,
                                 cookie::max_age_t const& _max_age) noexcept {
-    change_if(_condition, [&](auto& it) { it->_max_age = _max_age; });
+    change_if(_condition, [&](auto& it) {
+        it->_max_age = _max_age;
+    });
     return *this;
 }
 
 cookie_jar& cookie_jar::max_age(const_iterator const& it,
-                                cookie::max_age_t _max_age) noexcept {
+                                cookie::max_age_t     _max_age) noexcept {
     it->_max_age = _max_age;
     return *this;
 }
@@ -526,33 +561,39 @@ cookie_jar& cookie_jar::value(cookie::value_t const& _value) noexcept {
     return *this;
 }
 
-cookie_jar& cookie_jar::value(cookie::name_t const& _name,
+cookie_jar& cookie_jar::value(cookie::name_t const&  _name,
                               cookie::value_t const& _value) noexcept {
-    change_if(_name, [&](auto& it) { it->_value = _value; });
+    change_if(_name, [&](auto& it) {
+        it->_value = _value;
+    });
     return *this;
 }
 
-cookie_jar& cookie_jar::value(const_iterator const& it,
+cookie_jar& cookie_jar::value(const_iterator const&  it,
                               cookie::value_t const& _value) noexcept {
     return value(it, cookie::value_t(_value));
 }
 
 cookie_jar& cookie_jar::value(const_iterator const& it,
-                              cookie::value_t&& _value) noexcept {
+                              cookie::value_t&&     _value) noexcept {
     it->_value = std::move(_value);
     return *this;
 }
 
-cookie_jar& cookie_jar::value(condition const& _condition,
+cookie_jar& cookie_jar::value(condition const&       _condition,
                               cookie::value_t const& _value) noexcept {
-    change_if(_condition, [&](auto& it) { it->_value = _value; });
+    change_if(_condition, [&](auto& it) {
+        it->_value = _value;
+    });
     return *this;
 }
 
 cookie_jar& cookie_jar::path(cookie::path_t const& _path) noexcept {
     change_all([&](auto& it) {
         it->_path = _path;
-        make_it_unique(it, [&](auto const& c) { return c._path == _path; });
+        make_it_unique(it, [&](auto const& c) {
+            return c._path == _path;
+        });
     });
     return *this;
 }
@@ -561,24 +602,30 @@ cookie_jar& cookie_jar::path(cookie::name_t const& _name,
                              cookie::path_t const& _path) noexcept {
     change_if(_name, [&](auto& it) {
         it->_path = _path;
-        make_it_unique(it, [&](auto const& c) { return c._path == _path; });
+        make_it_unique(it, [&](auto const& c) {
+            return c._path == _path;
+        });
     });
     return *this;
 }
 
-cookie_jar& cookie_jar::path(condition const& _condition,
+cookie_jar& cookie_jar::path(condition const&      _condition,
                              cookie::path_t const& _path) noexcept {
     change_if(_condition, [&](auto& it) {
         it->_path = _path;
-        make_it_unique(it, [&](auto const& c) { return c._path == _path; });
+        make_it_unique(it, [&](auto const& c) {
+            return c._path == _path;
+        });
     });
     return *this;
 }
 
 cookie_jar& cookie_jar::path(const_iterator const& it,
-                             cookie::path_t&& _path) noexcept {
+                             cookie::path_t&&      _path) noexcept {
     it->_path = _path;
-    make_it_unique(it, [&](auto const& c) { return c._path == it->_path; });
+    make_it_unique(it, [&](auto const& c) {
+        return c._path == it->_path;
+    });
     return *this;
 }
 
@@ -590,36 +637,43 @@ cookie_jar& cookie_jar::path(const_iterator const& it,
 cookie_jar& cookie_jar::domain(cookie::domain_t const& _domain) noexcept {
     change_all([&](auto& it) {
         it->_domain = _domain;
-        make_it_unique(it, [&](auto const& c) { return c._domain == _domain; });
+        make_it_unique(it, [&](auto const& c) {
+            return c._domain == _domain;
+        });
     });
     return *this;
 }
 
-cookie_jar& cookie_jar::domain(cookie::name_t const& _name,
+cookie_jar& cookie_jar::domain(cookie::name_t const&   _name,
                                cookie::domain_t const& new_domain) noexcept {
     change_if(_name, [&](auto& it) {
         it->_domain = new_domain;
-        make_it_unique(it,
-                       [&](auto const& c) { return c._domain == new_domain; });
+        make_it_unique(it, [&](auto const& c) {
+            return c._domain == new_domain;
+        });
     });
     return *this;
 }
 
 cookie_jar& cookie_jar::domain(const_iterator const& it,
-                               cookie::domain_t&& new_domain) noexcept {
+                               cookie::domain_t&&    new_domain) noexcept {
     it->_domain = std::move(new_domain);
-    make_it_unique(it, [&](auto const& c) { return c._domain == it->_domain; });
+    make_it_unique(it, [&](auto const& c) {
+        return c._domain == it->_domain;
+    });
     return *this;
 }
 
-cookie_jar& cookie_jar::domain(const_iterator const& it,
+cookie_jar& cookie_jar::domain(const_iterator const&   it,
                                cookie::domain_t const& new_domain) noexcept {
     return domain(it, cookie::domain_t(new_domain));
 }
 
-cookie_jar& cookie_jar::domain(condition const& _condition,
+cookie_jar& cookie_jar::domain(condition const&        _condition,
                                cookie::domain_t const& new_domain) noexcept {
-    change_if(_condition, [&](auto& it) { it->_domain = new_domain; });
+    change_if(_condition, [&](auto& it) {
+        it->_domain = new_domain;
+    });
     return *this;
 }
 
@@ -640,7 +694,7 @@ cookie_jar& cookie_jar::name(cookie::name_t const& old_name,
 }
 
 cookie_jar& cookie_jar::name(const_iterator const& it,
-                             cookie::name_t&& new_name) noexcept {
+                             cookie::name_t&&      new_name) noexcept {
     erase(find(new_name));
     it->_name = std::move(new_name);
     return *this;
@@ -651,7 +705,7 @@ cookie_jar& cookie_jar::name(const_iterator const& it,
     return name(it, cookie::name_t(new_name));
 }
 
-cookie_jar& cookie_jar::name(condition const& _condition,
+cookie_jar& cookie_jar::name(condition const&      _condition,
                              cookie::name_t const& new_name) noexcept {
     erase(find(new_name));
     if (auto found = std::find_if(begin(), end(), _condition); found != end()) {
