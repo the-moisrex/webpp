@@ -46,31 +46,15 @@ namespace webpp {
         size_t _size{0};
 
       public:
-        ~charset_t() noexcept           = default;
-        charset_t(const charset_t&)     = default;
-        charset_t(charset_t&&) noexcept = default;
-        charset_t& operator=(const charset_t&) = default;
-        charset_t& operator=(charset_t&&) noexcept = default;
+        constexpr charset_t() noexcept            = default;
+        constexpr ~charset_t() noexcept           = default;
+        constexpr charset_t(const charset_t&)     = default;
+        constexpr charset_t(charset_t&&) noexcept = default;
+        constexpr charset_t& operator=(const charset_t&) = default;
+        constexpr charset_t& operator=(charset_t&&) noexcept = default;
 
-      public:
-        /**
-         * This is the default constructor.
-         */
-        constexpr charset_t() noexcept {
-        }
 
-        template <typename CCharT = CharT>
-        constexpr charset_t(const CCharT (&input)[N]) noexcept {
-            if constexpr (std::is_same_v<CCharT, CharT>) {
-                // copy the string over to content
-                for (size_t i{0}; i < N; ++i) {
-                    content[i] = input[i];
-                    if ((i == (N - 1)) && (input[i] == 0))
-                        break;
-                    _size++;
-                }
-            } else {
-            }
+        constexpr charset_t(const CharT (&input)[N]) noexcept : content{input} {
         }
 
         /**
@@ -80,22 +64,21 @@ namespace webpp {
          * @param[in] characterSets
          *     These are the character sets to include.
          */
-
         template <std::size_t... NN>
-        constexpr charset_t(const charset_t<CharT, NN>&... csets) noexcept {
-            auto csets_tupled = std::make_tuple(csets...);
-            for_each_tuple(csets_tupled, [&, i = 0u](auto const& t) mutable {
+        constexpr charset_t(const charset_t<CharT, NN>&... c_sets) noexcept {
+            auto tpl = std::make_tuple(c_sets...);
+            for_each_tuple(tpl, [&, i = 0u](auto const& t) mutable {
                 for (auto const& c : t.chars) {
                     if (!contains(c))
-                        chars[i++] = c;
+                        content[i++] = c;
                 }
             });
         }
 
-        template <typename CCharT = CharT, size_t NN>
+        template <size_t NN>
         constexpr explicit charset_t(
-          std::array<CCharT, NN> const& _chars) noexcept
-          : charset_t<CCharT>{_chars.data()} {
+          std::array<CharT, NN> const& _chars) noexcept
+          : charset_t<CharT>{_chars.data()} {
         }
 
         /**
@@ -109,10 +92,9 @@ namespace webpp {
          *     An indication of whether or not the given character
          *     is in the character set is returned.
          */
-        template <typename CCharT = CharT>
-        [[nodiscard]] constexpr bool contains(CCharT c) const noexcept {
-            for (auto it = begin<CCharT>(); it != end<CCharT>(); ++it) {
-                if (*it == c)
+        [[nodiscard]] constexpr bool contains(CharT c) const noexcept {
+            for (auto cc : *this) {
+                if (cc == c)
                     return true;
             }
             return false;
@@ -123,34 +105,28 @@ namespace webpp {
          * @param _cs
          * @return
          */
-        template <typename CCharT = CharT>
         [[nodiscard]] constexpr bool
-        contains(std::basic_string_view<CCharT> const& _cs) const noexcept {
+        contains(std::basic_string_view<CharT> const& _cs) const noexcept {
             for (auto const& c : _cs)
-                if (!contains<CCharT>(c))
+                if (!contains(c))
                     return false;
             return true;
         }
 
-        template <typename CCharT = CharT>
         [[nodiscard]] constexpr auto data() const noexcept {
-            // TODO: you have to implement your own iterator
             return content;
         }
 
-        template <typename CCharT = CharT>
         [[nodiscard]] constexpr std::size_t size() const noexcept {
-            return _size * sizeof(CharT) / sizeof(CCharT);
+            return _size;
         }
 
-        template <typename StrCharT = CharT>
         [[nodiscard]] constexpr auto string_view() const noexcept {
-            return std::basic_string_view<StrCharT>(data(), size());
+            return std::basic_string_view<CharT>(data(), size());
         }
 
-        template <typename StrCharT = CharT>
         [[nodiscard]] std::string string() const noexcept {
-            return std::basic_string<StrCharT>(data(), size<StrCharT>());
+            return std::basic_string<CharT>(data(), size());
         }
     };
     /**
