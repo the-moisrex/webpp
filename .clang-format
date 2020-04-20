@@ -47,7 +47,7 @@ IndentGotoLabels: true
 IndentPPDirectives: AfterHash
 IndentWidth: 4
 IndentWrappedFunctionNames: false
-KeepEmptyLinesAtTheStartOfBlocks: false
+KeepEmptyLinesAtTheStartOfBlocks: true
 MaxEmptyLinesToKeep: 5
 NamespaceIndentation: All
 PointerAlignment: Left
