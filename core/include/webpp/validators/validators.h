@@ -17,8 +17,9 @@ namespace webpp {
          * @brief check if the string is empty or not
          * @return true if the string is empty
          */
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-        empty(std::string_view const& str) noexcept {
+        empty(std::basic_string_view<CharT> const& str) noexcept {
             return str.empty();
         }
 
@@ -37,10 +38,11 @@ namespace webpp {
          * @param seed
          * @return true if it does contain it
          */
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-        contains(std::string_view const& str,
-                 std::string_view const& seed) noexcept {
-            return str.find(seed) == std::string::npos;
+        contains(std::basic_string_view<CharT> const& str,
+                 std::basic_string_view<CharT> const& seed) noexcept {
+            return str.find(seed) == std::basic_string_view<CharT>::npos;
         }
 
         /**
@@ -84,7 +86,8 @@ namespace webpp {
          * @param c the character to check
          * @return true if c is a whitespace
          */
-        [[nodiscard]] constexpr bool whitespace(char const& c) noexcept {
+        template <typename CharT = char>
+        [[nodiscard]] constexpr bool whitespace(CharT const& c) noexcept {
             return c == ' ' || c == '\n' || c == '\r' || c == '\t' ||
                    c == '\f' || c == '\v';
             // TODO: consider using std::isspace
@@ -95,9 +98,10 @@ namespace webpp {
          * @param str
          * @return true if there's no whitespaces in the right side of input
          */
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-        rtrimmed(std::string_view const& str) noexcept {
-            return !whitespace(*str.rbegin());
+        rtrimmed(std::basic_string_view<CharT> const& str) noexcept {
+            return !whitespace<CharT>(*str.rbegin());
         }
 
         /**
@@ -105,9 +109,10 @@ namespace webpp {
          * @param str
          * @return true if there's no whitespaces in the left side of input
          */
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-        ltrimmed(std::string_view const& str) noexcept {
-            return !whitespace(str[0]);
+        ltrimmed(std::basic_string_view<CharT> const& str) noexcept {
+            return !whitespace<CharT>(str[0]);
         }
 
         /**
@@ -116,9 +121,10 @@ namespace webpp {
          * @return true if there's no whitespaces in the right and left side of
          * input
          */
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-        trimmed(std::string_view const& str) noexcept {
-            return ltrimmed(str) && rtrimmed(str);
+        trimmed(std::basic_string_view<CharT> const& str) noexcept {
+            return ltrimmed<CharT>(str) && rtrimmed<CharT>(str);
         }
 
         /**
@@ -126,7 +132,8 @@ namespace webpp {
          * @param character
          * @return true if the specified input is an integer
          */
-        [[nodiscard]] constexpr bool digit(char const& c) noexcept {
+        template <typename CharT = char>
+        [[nodiscard]] constexpr bool digit(CharT const& c) noexcept {
             return c >= '0' && c <= '9';
         }
 
@@ -135,10 +142,11 @@ namespace webpp {
          * @param str
          * @return true/false
          */
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-        digit(std::string_view const& str) noexcept {
+        digit(std::basic_string_view<CharT> const& str) noexcept {
             for (auto const& c : str)
-                if (!digit(c))
+                if (!digit<CharT>(c))
                     return false;
             return !str.empty();
         }
@@ -148,8 +156,9 @@ namespace webpp {
          * @param c
          * @return
          */
-        [[nodiscard]] constexpr bool number(char const& c) noexcept {
-            return digit(c) || c == '.';
+        template <typename CharT = char>
+        [[nodiscard]] constexpr bool number(CharT const& c) noexcept {
+            return digit<CharT>(c) || c == '.';
         }
 
         /**
@@ -158,11 +167,12 @@ namespace webpp {
          * @param str
          * @return true if the specified string is a number
          */
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-        number(std::string_view const& str) noexcept {
+        number(std::basic_string_view<CharT> const& str) noexcept {
             bool is_first = true;
             for (auto const& c : str) {
-                if (!digit(c)) {
+                if (!digit<CharT>(c)) {
                     if (is_first && c == '.') {
                         is_first = false;
                         continue;
@@ -178,7 +188,8 @@ namespace webpp {
          * @param c
          * @return
          */
-        [[nodiscard]] constexpr bool lowercase(char const& c) noexcept {
+        template <typename CharT = char>
+        [[nodiscard]] constexpr bool lowercase(CharT const& c) noexcept {
             return c >= 'a' && c <= 'z';
         }
 
@@ -187,10 +198,11 @@ namespace webpp {
          * @param str
          * @return
          */
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-        lowercase(std::string_view const& str) noexcept {
+        lowercase(std::basic_string_view<CharT> const& str) noexcept {
             for (auto const& c : str)
-                if (!lowercase(c))
+                if (!lowercase<CharT>(c))
                     return false;
             return true;
         }
@@ -200,7 +212,8 @@ namespace webpp {
          * @param c
          * @return
          */
-        [[nodiscard]] constexpr bool uppercase(char const& c) noexcept {
+        template <typename CharT = char>
+        [[nodiscard]] constexpr bool uppercase(CharT const& c) noexcept {
             return c >= 'A' && c <= 'Z';
         }
 
@@ -209,10 +222,11 @@ namespace webpp {
          * @param str
          * @return
          */
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-        uppercase(std::string_view const& str) noexcept {
+        uppercase(std::basic_string_view<CharT> const& str) noexcept {
             for (auto const& c : str)
-                if (!uppercase(c))
+                if (!uppercase<CharT>(c))
                     return false;
             return true;
         }
@@ -222,8 +236,9 @@ namespace webpp {
          * @param str
          * @return true if the specified string is an integer
          */
-        [[nodiscard]] constexpr bool integer(char const& str) noexcept {
-            return digit(str);
+        template <typename CharT = char>
+        [[nodiscard]] constexpr bool integer(CharT const& str) noexcept {
+            return digit<CharT>(str);
         }
 
         /**
@@ -231,19 +246,21 @@ namespace webpp {
          * @param str
          * @return true if the specified string is an integer
          */
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-        integer(std::string_view const& str) noexcept {
-            return digit(str);
+        integer(std::basic_string_view<CharT> const& str) noexcept {
+            return digit<CharT>(str);
         }
 
         /**
-         * Check if the specifed string is an integer and can be hold inside
+         * Check if the specified string is an integer and can be hold inside
          * uint8_t; which means it's between 0 and 255
          * @param str
          * @return bool
          */
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-        uint8(std::string_view const& str) noexcept {
+        uint8(std::basic_string_view<CharT> const& str) noexcept {
             return !str.empty() && str.size() <= 3 && digit(str) &&
                    to_uint(str) <= 255;
         }
@@ -253,7 +270,8 @@ namespace webpp {
          * @param char
          * @return bool
          */
-        [[nodiscard]] constexpr bool hex(char const& t) noexcept {
+        template <typename CharT = char>
+        [[nodiscard]] constexpr bool hex(CharT const& t) noexcept {
             return (t >= '0' && t <= '9') || (t >= 'a' && t <= 'f') ||
                    (t >= 'A' && t <= 'F');
         }
@@ -264,7 +282,9 @@ namespace webpp {
          * @param str
          * @return bool
          */
-        [[nodiscard]] constexpr bool hex(std::string_view const& str) noexcept {
+        template <typename CharT = char>
+        [[nodiscard]] constexpr bool
+        hex(std::basic_string_view<CharT> const& str) noexcept {
             for (auto const& c : str)
                 if (!hex(c))
                     return false;
@@ -276,10 +296,17 @@ namespace webpp {
          * @param str
          * @return true if the specified str is an email
          */
-        [[nodiscard]] bool email(std::string_view const& str) noexcept;
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        email(std::basic_string_view<CharT> const& str) noexcept;
 
-        [[nodiscard]] constexpr bool FQDN(std::string_view const& str) noexcept;
-        [[nodiscard]] constexpr bool url(std::string_view const& str) noexcept;
+        template <typename CharT = char>
+        [[nodiscard]] constexpr bool
+        FQDN(std::basic_string_view<CharT> const& str) noexcept;
+
+        template <typename CharT = char>
+        [[nodiscard]] constexpr bool
+        url(std::basic_string_view<CharT> const& str) noexcept;
 
         /**
          * Check if the specified Integer is an octet of a subnet mask
@@ -301,7 +328,9 @@ namespace webpp {
          * @param str
          * @return true if str is a valid ipv4
          */
-        [[nodiscard]] constexpr bool ipv4(std::string_view str) noexcept {
+        template <typename CharT = char>
+        [[nodiscard]] constexpr bool
+        ipv4(std::basic_string_view<CharT> str) noexcept {
             std::size_t next_dot = 0;
             for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
                 next_dot       = str.find('.');
@@ -320,7 +349,9 @@ namespace webpp {
          * @return bool an indication weather or not the specified string is a
          * valid ipv4 subnet mask or not
          */
-        [[nodiscard]] constexpr bool subnet(std::string_view str) noexcept {
+        template <typename CharT = char>
+        [[nodiscard]] constexpr bool
+        subnet(std::basic_string_view<CharT> str) noexcept {
             std::size_t next_dot = 0;
             for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
                 next_dot       = str.find('.');
@@ -355,13 +386,13 @@ namespace webpp {
          * is valid or not.
          * @example 192.168.0.1/24, 192.168.0.1:24
          */
-        template <std::size_t N>
+        template <typename CharT = char, std::size_t N>
         [[nodiscard]] constexpr bool
-        ipv4_prefix(std::string_view const& str,
-                    charset_t<N> const&     devider_chars) noexcept {
+        ipv4_prefix(std::basic_string_view<CharT> const& str,
+                    charset_t<char, N> const& divider_chars) noexcept {
             if (auto found = std::find_if(std::rbegin(str), std::rend(str),
                                           [&](const auto& c) {
-                                              return devider_chars.contains(c);
+                                              return divider_chars.contains(c);
                                           });
                 found != std::rend(str)) {
                 auto index = std::distance(std::begin(str), found.base()) - 1;
@@ -381,9 +412,10 @@ namespace webpp {
          * @param str
          * @return
          */
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-        ipv4_prefix(std::string_view const& str) noexcept {
-            return ipv4_prefix(str, charset_t<2>{':', '/'});
+        ipv4_prefix(std::basic_string_view<CharT> const& str) noexcept {
+            return ipv4_prefix(str, charset_t<char, 2>{':', '/'});
         }
 
         /**
@@ -398,7 +430,9 @@ namespace webpp {
          *     An indication of whether or not the given address
          *     is a valid IPv6 address is returned.
          */
-        [[nodiscard]] constexpr bool ipv6(std::string_view address) noexcept {
+        template <typename CharT = char>
+        [[nodiscard]] constexpr bool
+        ipv6(std::basic_string_view<CharT> address) noexcept {
             bool        encountered_double_colons = false;
             std::size_t index                     = 0;
 
@@ -450,13 +484,14 @@ namespace webpp {
                     encountered_double_colons);
         }
 
-        template <std::size_t N = 1>
-        [[nodiscard]] constexpr bool ipv6_prefix(
-          std::string_view const& str,
-          charset_t<N> const&     devider_chars = charset_t<1>('/')) noexcept {
+        template <typename CharT = char, std::size_t N = 1>
+        [[nodiscard]] constexpr bool
+        ipv6_prefix(std::basic_string_view<CharT> const& str,
+                    charset_t<CharT, N> const&           divider_chars =
+                      charset_t<CharT, 1>('/')) noexcept {
             if (auto found = std::find_if(std::rbegin(str), std::rend(str),
                                           [&](const auto& c) {
-                                              return devider_chars.contains(c);
+                                              return divider_chars.contains(c);
                                           });
                 found != std::rend(str)) {
                 auto index = std::distance(std::begin(str), found.base()) - 1;
@@ -479,7 +514,9 @@ namespace webpp {
          * @return true if str is ipv4 or ipv6
          * TODO: start supporting IPvF (IP version Future)
          */
-        [[nodiscard]] constexpr bool ip(std::string_view const& str) noexcept {
+        template <typename CharT = char>
+        [[nodiscard]] constexpr bool
+        ip(std::basic_string_view<CharT> const& str) noexcept {
             return ipv4(str) || ipv6(str);
         }
 
@@ -489,21 +526,22 @@ namespace webpp {
          * @param str
          * @return
          */
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-        host(std::string_view const& str) noexcept {
+        host(std::basic_string_view<CharT> const& str) noexcept {
             /**
              * This is the character set corresponds to the "unreserved" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
             constexpr auto UNRESERVED =
-              charset(ALPHA, DIGIT, charset_t<4>{'-', '.', '_', '~'});
+              charset(ALPHA, DIGIT, charset_t<CharT, 4>{'-', '.', '_', '~'});
 
             /**
              * This is the character set corresponds to the "sub-delims" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
-            constexpr charset_t<11> SUB_DELIMS{'!', '$', '&', '\'', '(', ')',
-                                               '*', '+', ',', ';',  '='};
+            constexpr charset_t<CharT> SUB_DELIMS{'!', '$', '&', '\'', '(', ')',
+                                                  '*', '+', ',', ';',  '='};
 
             /**
              * This is the character set corresponds to the last part of
@@ -511,7 +549,7 @@ namespace webpp {
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
             constexpr auto IPV_FUTURE_LAST_PART =
-              charset(UNRESERVED, SUB_DELIMS, charset_t<1>{':'});
+              charset<CharT>(UNRESERVED, SUB_DELIMS, charset_t<CharT, 1>{':'});
 
             /**
              * This is the character set corresponds to the "reg-name" syntax
@@ -519,14 +557,14 @@ namespace webpp {
              * leaving out "pct-encoded".
              */
             constexpr auto REG_NAME_NOT_PCT_ENCODED =
-              charset(UNRESERVED, SUB_DELIMS);
+              charset<CharT>(UNRESERVED, SUB_DELIMS);
 
             if (str.empty())
                 return false;
             if (starts_with(str, '[') && ends_with(str, ']')) {
                 if (str[1] == 'v') { // future ip
                     if (auto dot_delim = str.find('.');
-                        dot_delim != std::string_view::npos) {
+                        dot_delim != std::basic_string_view<CharT>::npos) {
                         auto ipvf_version = str.substr(2, dot_delim);
                         if (!HEXDIG.contains(ipvf_version)) {
                             // ERROR: basic_uri is not valid
@@ -543,8 +581,8 @@ namespace webpp {
             } else if (is::digit(str[0]) && is::ipv4(str)) { // ipv4
                 return true;
             } else {
-                constexpr auto ccc =
-                  charset(REG_NAME_NOT_PCT_ENCODED, charset('%'));
+                constexpr auto ccc = charset<CharT>(REG_NAME_NOT_PCT_ENCODED,
+                                                    charset_t<CharT, 1>({'%'}));
                 return ccc.contains(str);
             }
 
@@ -555,27 +593,29 @@ namespace webpp {
          * Check if the specified string is a query (in URI) or not
          * @return bool true if it's a query
          */
-        [[nodiscard]] constexpr bool query(std::string_view str) noexcept {
+        template <typename CharT = char>
+        [[nodiscard]] constexpr bool
+        query(std::basic_string_view<CharT> str) noexcept {
             /**
              * This is the character set corresponds to the "unreserved" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
-            constexpr auto UNRESERVED =
-              charset(ALPHA, DIGIT, charset_t<4>{'-', '.', '_', '~'});
+            constexpr auto UNRESERVED = charset<CharT>(
+              ALPHA, DIGIT, charset_t<CharT, 4>{'-', '.', '_', '~'});
 
             /**
              * This is the character set corresponds to the "sub-delims" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
-            constexpr auto SUB_DELIMS = charset_t<11>(
-              '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
+            constexpr charset_t<CharT> SUB_DELIMS{'!', '$', '&', '\'', '(', ')',
+                                                  '*', '+', ',', ';',  '='};
             /**
              * This is the character set corresponds to the "pchar" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
              * leaving out "pct-encoded".
              */
-            constexpr auto PCHAR_NOT_PCT_ENCODED =
-              charset(UNRESERVED, SUB_DELIMS, webpp::charset_t<2>{':', '@'});
+            constexpr auto PCHAR_NOT_PCT_ENCODED = charset<CharT>(
+              UNRESERVED, SUB_DELIMS, charset_t<CharT, 2>{':', '@'});
 
             /**
              * This is the character set corresponds to the "query" syntax
@@ -583,18 +623,23 @@ namespace webpp {
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
              * leaving out "pct-encoded".
              */
-            constexpr auto QUERY_OR_FRAGMENT_NOT_PCT_ENCODED =
-              charset(PCHAR_NOT_PCT_ENCODED, charset_t<2>{{'/', '?'}});
+            constexpr auto QUERY_OR_FRAGMENT_NOT_PCT_ENCODED = charset<CharT>(
+              PCHAR_NOT_PCT_ENCODED, charset_t<CharT, 2>{'/', '?'});
 
             return QUERY_OR_FRAGMENT_NOT_PCT_ENCODED.contains(str);
         }
 
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-        ip_range(std::string_view const& str) noexcept;
+        ip_range(std::basic_string_view<CharT> const& str) noexcept;
+
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-        ipv4_range(std::string_view const& str) noexcept;
+        ipv4_range(std::basic_string_view<CharT> const& str) noexcept;
+
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-        ipv6_range(std::string_view const& str) noexcept;
+        ipv6_range(std::basic_string_view<CharT> const& str) noexcept;
         // bool isImage(something) noexcept;
 
         /**
@@ -602,8 +647,9 @@ namespace webpp {
          * @param str
          * @return
          */
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-        hex_color(std::string_view const& str) noexcept {
+        hex_color(std::basic_string_view<CharT> const& str) noexcept {
             if (!starts_with(str, '#'))
                 return false;
             switch (str.size()) {
@@ -619,21 +665,27 @@ namespace webpp {
          * @param str
          * @return
          */
-        [[nodiscard]] bool rgb_color(std::string_view str) noexcept;
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        rgb_color(std::basic_string_view<CharT> str) noexcept;
 
         /**
          * Check if the specified string is a RGBA HTML color
          * @param str
          * @return bool
          */
-        [[nodiscard]] bool rgba_color(std::string_view str) noexcept;
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        rgba_color(std::basic_string_view<CharT> str) noexcept;
 
         /**
          * Check if the specified string is a valid HSL and HSLA color or not
          * @param str
          * @return bool
          */
-        [[nodiscard]] bool hsl_color(std::string_view str) noexcept;
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        hsl_color(std::basic_string_view<CharT> str) noexcept;
 
         /**
          * Check if the specified string is a valid HSLA color or not
@@ -643,14 +695,17 @@ namespace webpp {
          * @param str
          * @return bool
          */
-        [[nodiscard]] bool hsla_color(std::string_view str) noexcept;
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        hsla_color(std::basic_string_view<CharT> str) noexcept;
 
         /**
          * Check if the specified string is a valid HTML color
          * @param str
          * @return bool
          */
-        [[nodiscard]] bool name_color(std::string str) noexcept;
+        template <typename CharT = char>
+        [[nodiscard]] bool name_color(std::basic_string<CharT> str) noexcept;
 
         /**
          * Check if the specified string is a valid string representation of a
@@ -658,39 +713,103 @@ namespace webpp {
          * @param str
          * @return bool
          */
-        [[nodiscard]] bool color(std::string_view const& str) noexcept;
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        color(std::basic_string_view<CharT> const& str) noexcept;
 
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-                                     mimetype(std::string_view const& str) noexcept;
-        [[nodiscard]] constexpr bool UUID(std::string_view const& str) noexcept;
-        [[nodiscard]] constexpr bool port(std::string_view const& str) noexcept;
+        mimetype(std::basic_string_view<CharT> const& str) noexcept;
+
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
-        mongoid(std::string_view const& str) noexcept;
+        UUID(std::basic_string_view<CharT> const& str) noexcept;
+
+        template <typename CharT = char>
+        [[nodiscard]] constexpr bool
+        port(std::basic_string_view<CharT> const& str) noexcept;
+
+        template <typename CharT = char>
+        [[nodiscard]] constexpr bool
+        mongoid(std::basic_string_view<CharT> const& str) noexcept;
+
+
         // you may want to change the string to a date of some sort or add both
-        [[nodiscard]] bool today(std::string_view const& str) noexcept;
-        [[nodiscard]] bool tomorrow(std::string_view const& str) noexcept;
-        [[nodiscard]] bool yesterday(std::string_view const& str) noexcept;
-        [[nodiscard]] bool this_year(std::string_view const& str) noexcept;
-        [[nodiscard]] bool next_year(std::string_view const& str) noexcept;
-        [[nodiscard]] bool prev_year(std::string_view const& str) noexcept;
-        [[nodiscard]] bool this_month(std::string_view const& str) noexcept;
-        [[nodiscard]] bool next_month(std::string_view const& str) noexcept;
-        [[nodiscard]] bool prev_month(std::string_view const& str) noexcept;
-        [[nodiscard]] bool this_week(std::string_view const& str) noexcept;
-        [[nodiscard]] bool next_week(std::string_view const& str) noexcept;
-        [[nodiscard]] bool prev_week(std::string_view const& str) noexcept;
-        [[nodiscard]] bool between(std::string_view const& str,
-                                   std::string_view const& from,
-                                   std::string_view const& after) noexcept;
-        [[nodiscard]] bool after(std::string_view const& str,
-                                 std::string_view const& pointintime) noexcept;
-        [[nodiscard]] bool before(std::string_view const& str,
-                                  std::string_view const& pointintime) noexcept;
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        today(std::basic_string_view<CharT> const& str) noexcept;
 
-        [[nodiscard]] bool base64(std::string_view const& str) noexcept;
-        [[nodiscard]] bool escaped(std::string_view const& str) noexcept;
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        tomorrow(std::basic_string_view<CharT> const& str) noexcept;
 
-        [[nodiscard]] bool username(std::string_view const& str) noexcept;
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        yesterday(std::basic_string_view<CharT> const& str) noexcept;
+
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        this_year(std::basic_string_view<CharT> const& str) noexcept;
+
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        next_year(std::basic_string_view<CharT> const& str) noexcept;
+
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        prev_year(std::basic_string_view<CharT> const& str) noexcept;
+
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        this_month(std::basic_string_view<CharT> const& str) noexcept;
+
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        next_month(std::basic_string_view<CharT> const& str) noexcept;
+
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        prev_month(std::basic_string_view<CharT> const& str) noexcept;
+
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        this_week(std::basic_string_view<CharT> const& str) noexcept;
+
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        next_week(std::basic_string_view<CharT> const& str) noexcept;
+
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        prev_week(std::basic_string_view<CharT> const& str) noexcept;
+
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        between(std::basic_string_view<CharT> const& str,
+                std::basic_string_view<CharT> const& from,
+                std::basic_string_view<CharT> const& after) noexcept;
+
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        after(std::basic_string_view<CharT> const& str,
+              std::basic_string_view<CharT> const& pointintime) noexcept;
+
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        before(std::basic_string_view<CharT> const& str,
+               std::basic_string_view<CharT> const& pointintime) noexcept;
+
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        base64(std::basic_string_view<CharT> const& str) noexcept;
+
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        escaped(std::basic_string_view<CharT> const& str) noexcept;
+
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        username(std::basic_string_view<CharT> const& str) noexcept;
     } // namespace is
 } // namespace webpp
 
