@@ -26,7 +26,11 @@ namespace webpp {
          * @param _scheme
          * @return
          */
-        [[nodiscard]] bool scheme(std::string_view const& _scheme) noexcept;
+        template <typename CharT = char>
+        [[nodiscard]] bool
+        scheme(std::basic_string_view<CharT> const& _scheme) noexcept {
+            return ALPHA.contains(_scheme);
+        }
 
     } // namespace is
 
@@ -35,15 +39,15 @@ namespace webpp {
      * @details this function is almost the same as "decodeURIComponent" in
      * javascript
      */
-    template <std::size_t N>
-    [[nodiscard]] std::optional<std::string>
-    decode_uri_component(std::string_view const& encoded_str,
-                         charset_t<N> const&     allowed_chars) noexcept {
+    template <typename CharT = char, std::size_t N>
+    [[nodiscard]] std::optional<std::basic_string<CharT>>
+    decode_uri_component(std::basic_string_view<CharT> const& encoded_str,
+                         charset_t<CharT, N> const& allowed_chars) noexcept {
         int           digits_left  = 2;
         unsigned char decoded_char = 0;
         // FIXME: decoding is assigned but never used; check if the algorithm is correct
-        bool        decoding = false;
-        std::string res;
+        bool                     decoding = false;
+        std::basic_string<CharT> res;
         for (const auto c : encoded_str) {
             if (decoding && digits_left) {
                 decoded_char <<= 4;
@@ -60,7 +64,7 @@ namespace webpp {
 
                 if (digits_left == 0) {
                     decoding = false;
-                    res.push_back(static_cast<char>(decoded_char));
+                    res.push_back(static_cast<CharT>(decoded_char));
                 }
             } else if (c == '%') {
                 decoding = true;
@@ -98,19 +102,19 @@ namespace webpp {
      * @details this function is almost the same as "encodeURIComponent" in
      * javascript
      */
-    template <std::size_t N>
-    [[nodiscard]] std::string
-    encode_uri_component(const std::string_view&    element,
-                         const webpp::charset_t<N>& allowedCharacters) {
+    template <typename CharT = char, std::size_t N>
+    [[nodiscard]] std::basic_string<CharT>
+    encode_uri_component(const std::basic_string_view<CharT>& element,
+                         const webpp::charset_t<CharT, N>& allowedCharacters) {
         auto make_hex_digit = [](unsigned int value) {
             if (value < 10) {
-                return static_cast<char>(value + '0');
+                return static_cast<CharT>(value + '0');
             } else {
-                return static_cast<char>(value - 10 + 'A');
+                return static_cast<CharT>(value - 10 + 'A');
             }
         };
 
-        std::string encodedElement;
+        std::basic_string<CharT> encodedElement;
         for (auto c : element) {
             if (allowedCharacters.contains(c)) {
                 encodedElement.push_back(c);
