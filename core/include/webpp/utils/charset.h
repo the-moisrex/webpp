@@ -114,7 +114,6 @@ namespace webpp {
         return charset_t<CharT, N1 + N2 + (0 + ... + N)>{set1, set2, csets...};
     }
 
-
     /**
      * Type deduction. I stole this from a type deduction from std::array
      */
