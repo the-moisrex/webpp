@@ -540,7 +540,8 @@ namespace webpp {
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
             constexpr auto UNRESERVED =
-              charset(ALPHA, DIGIT, charset_t<CharT, 4>{'-', '.', '_', '~'});
+              charset(ALPHA<CharT>, DIGIT<CharT>,
+                      charset_t<CharT, 4>{'-', '.', '_', '~'});
 
             /**
              * This is the character set corresponds to the "sub-delims" syntax
@@ -572,7 +573,7 @@ namespace webpp {
                     if (auto dot_delim = str.find('.');
                         dot_delim != std::basic_string_view<CharT>::npos) {
                         auto ipvf_version = str.substr(2, dot_delim);
-                        if (!HEXDIG.contains(ipvf_version)) {
+                        if (!HEXDIG<CharT>.contains(ipvf_version)) {
                             // ERROR: basic_uri is not valid
                             return false;
                         }
@@ -606,8 +607,9 @@ namespace webpp {
              * This is the character set corresponds to the "unreserved" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
-            constexpr auto UNRESERVED = charset<CharT>(
-              ALPHA, DIGIT, charset_t<CharT, 4>{'-', '.', '_', '~'});
+            constexpr auto UNRESERVED =
+              charset<CharT>(ALPHA<CharT>, DIGIT<CharT>,
+                             charset_t<CharT, 4>{'-', '.', '_', '~'});
 
             /**
              * This is the character set corresponds to the "sub-delims" syntax

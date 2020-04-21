@@ -157,19 +157,22 @@ namespace webpp {
      * This is the character set containing just the alphabetic characters
      * from the ASCII character set.
      */
-    constexpr auto ALPHA = charset<char>(LOWER_ALPHA, UPPER_ALPHA);
+    template <typename CharT = char>
+    constexpr auto ALPHA = charset<CharT>(LOWER_ALPHA, UPPER_ALPHA);
 
     /**
      * This is the character set containing just numbers.
      */
-    constexpr auto DIGIT = charset<char, '0', '9'>();
+    template <typename CharT = char>
+    constexpr auto DIGIT = charset<CharT, '0', '9'>();
 
     /**
      * This is the character set containing just the characters allowed
      * in a hexadecimal digit.
      */
-    constexpr auto HEXDIG =
-      charset(DIGIT, charset<char, 'A', 'F'>(), charset<char, 'a', 'f'>());
+    template <typename CharT = char>
+    constexpr auto HEXDIG = charset(DIGIT<CharT>, charset<CharT, 'A', 'F'>(),
+                                    charset<CharT, 'a', 'f'>());
 
 } // namespace webpp
 #endif // CHARSET_H
