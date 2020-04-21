@@ -84,8 +84,12 @@ namespace webpp {
         /**
          * parses the string_view to the uint8 structure
          */
-        constexpr void parse(std::string_view ipv6_data) const noexcept {
-            constexpr auto hexes = HEXDIG.string_view();
+        template <typename CharT = char>
+        constexpr void
+        parse(std::basic_string_view<CharT> ipv6_data) const noexcept {
+            using str_view       = std::basic_string_view<CharT>;
+            using str            = std::basic_string<CharT>;
+            constexpr auto hexes = HEXDIG<CharT>.string_view();
 
             if (ipv6_data.empty()) {
                 _prefix = 254u;
@@ -102,29 +106,27 @@ namespace webpp {
                     return;
                 }
                 auto colon = ipv6_data.find_first_not_of(hexes);
-                if (colon == std::string_view::npos ||
-                    ipv6_data[colon] == ':' ||
+                if (colon == str_view::npos || ipv6_data[colon] == ':' ||
                     (colon != 0 && ipv6_data[colon] == '/')) {
                     // it's an octet
-                    switch (colon == std::string_view::npos ? ipv6_data.size()
-                                                            : colon) {
+                    switch (colon == str_view::npos ? ipv6_data.size()
+                                                    : colon) {
                         case 4:
-                            *(it++) = std::stoul(
-                              std::string(ipv6_data.substr(0, 2)), nullptr, 16);
-                            *(it++) = std::stoul(
-                              std::string(ipv6_data.substr(2, 2)), nullptr, 16);
+                            *(it++) = std::stoul(str(ipv6_data.substr(0, 2)),
+                                                 nullptr, 16);
+                            *(it++) = std::stoul(str(ipv6_data.substr(2, 2)),
+                                                 nullptr, 16);
                             break;
                         case 3:
-                            *(it++) = std::stoul(
-                              std::string(ipv6_data.substr(0, 1)), nullptr, 16);
-                            *(it++) = std::stoul(
-                              std::string(ipv6_data.substr(1, 2)), nullptr, 16);
+                            *(it++) = std::stoul(str(ipv6_data.substr(0, 1)),
+                                                 nullptr, 16);
+                            *(it++) = std::stoul(str(ipv6_data.substr(1, 2)),
+                                                 nullptr, 16);
                             break;
                         case 2:
                         case 1:
                             *((++it)++) = std::stoul(
-                              std::string(ipv6_data.substr(0, colon)), nullptr,
-                              16);
+                              str(ipv6_data.substr(0, colon)), nullptr, 16);
                             break;
                         case 0:
                             // we've reached the double colon rule
@@ -161,7 +163,7 @@ namespace webpp {
                         _prefix = 253u; // the prefix is invalid
                         break;          // let's not go all crazy just yet
                     }
-                    auto __prefix = std::stoul(std::string(prefix_str));
+                    auto __prefix = std::stoul(str(prefix_str));
                     // if (starts_with(prefix_str, '0') && __prefix != 0) {
                     //     // there can't be a leading zero in the prefix string
                     //     _prefix = 253u;
@@ -181,7 +183,7 @@ namespace webpp {
                     _prefix = 254u; // the ip is not valid
                     return;
                 }
-                if (colon != std::string_view::npos)
+                if (colon != str_view::npos)
                     ipv6_data.remove_prefix(colon + 1);
                 else
                     break;
@@ -200,7 +202,8 @@ namespace webpp {
         }
 
       public:
-        constexpr explicit ipv6(std::string_view const& str,
+        template <typename CharT = char>
+        constexpr explicit ipv6(std::basic_string_view<CharT> const& str,
                                 uint8_t __prefix = 255u) noexcept
           : _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {
             parse(str);
@@ -231,7 +234,8 @@ namespace webpp {
 
         ipv6& operator=(ipv6 const& ip) noexcept = default;
 
-        ipv6& operator=(std::string_view const& str) noexcept {
+        template <typename CharT = char>
+        ipv6& operator=(std::basic_string_view<CharT> const& str) noexcept {
             parse(str);
             _prefix = 255u;
             return *this;
@@ -287,12 +291,16 @@ namespace webpp {
             return octets64();
         }
 
-        explicit operator const char*() {
-            return short_str().c_str();
+        template <typename CharT = char,
+                  typename = std::enable_if_t<std::is_integral_v<CharT>, char>>
+        explicit operator CharT const *() {
+            return short_str<char>().c_str();
         }
 
-        explicit operator std::string() {
-            return short_str();
+        template <typename CharT = char,
+                  typename = std::enable_if_t<std::is_integral_v<CharT>, char>>
+        explicit operator std::basic_string<CharT>() {
+            return short_str<CharT>();
         }
 
         /**
@@ -827,7 +835,7 @@ namespace webpp {
          * @returns A pointer to the Interface Identifier.
          */
         octets8_t::iterator iid() noexcept {
-            return octets8().begin() + interface_identifier_offset;
+            return data.begin() + interface_identifier_offset;
         }
 
         /**
@@ -835,7 +843,7 @@ namespace webpp {
          * @returns A pointer to the Interface Identifier.
          */
         const octets8_t::const_iterator iid() const noexcept {
-            return octets8().cbegin() + interface_identifier_offset;
+            return data.cbegin() + interface_identifier_offset;
         }
 
         /**
@@ -916,21 +924,23 @@ namespace webpp {
         /**
          * @brief long string representation of the ip
          */
-        std::string str() const noexcept {
-            char buffer[40] = {};
-            auto _octets    = octets16();
+        template <typename CharT = char>
+        std::basic_string<CharT> str() const noexcept {
+            CharT buffer[40] = {};
+            auto  _octets    = octets16();
             sprintf(buffer, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x",
                     _octets[0], _octets[1], _octets[2], _octets[3], _octets[4],
                     _octets[5], _octets[6], _octets[7]);
             buffer[39] = '\0';
-            return std::string(buffer);
+            return std::basic_string<CharT>(buffer);
         }
 
         /**
          * @brief return the short string representation of ip version 6
          * TODO: all zero ip prints in a wrong format
          */
-        std::string short_str() const noexcept {
+        template <typename CharT = char>
+        std::basic_string<CharT> short_str() const noexcept {
             auto _octets = octets16();
 
             // finding all of the ranges that are zero filled
@@ -954,7 +964,7 @@ namespace webpp {
             } while (finish != _octets.cend());
 
             // generating short string representation of the ip version 6
-            std::ostringstream ostr;
+            std::basic_ostringstream<CharT> ostr;
             ostr << std::hex;
 
             auto it = _octets.cbegin();
