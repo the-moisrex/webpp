@@ -68,7 +68,7 @@ namespace webpp {
         }
 
         /**
-         * @brief remove cookies in the cookie jar
+         * @brief remove cookies in the basic_cookie jar
          */
         void remove_cookies() noexcept;
 

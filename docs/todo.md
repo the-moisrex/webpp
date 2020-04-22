@@ -16,7 +16,7 @@
 ## Modules
 
 * [ ] Session manager module
-  * [ ] Inject/remove/change cookie for:
+  * [ ] Inject/remove/change basic_cookie for:
     * [ ] Everyone
     * [ ] Specific user
     * [ ] Specific session of a user

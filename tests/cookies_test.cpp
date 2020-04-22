@@ -4,15 +4,15 @@
 #include <iostream>
 
 TEST(Cookie, CookiesCreation) {
-    webpp::cookie c;
+    webpp::basic_cookie c;
     c.name("   test   ").value("  value  ");
     EXPECT_EQ(c.name(), "test");
     EXPECT_EQ(c.value(), "value");
-    EXPECT_EQ(webpp::cookie("  test  ", "  value ").name(),
-              webpp::cookie("test", "value").name())
+    EXPECT_EQ(webpp::basic_cookie("  test  ", "  value ").name(),
+              webpp::basic_cookie("test", "value").name())
       << "cookies should be trimmed";
-    EXPECT_EQ(webpp::cookie("  test  ", "  value  ").name(),
-              webpp::cookie().name("  test  ").name())
+    EXPECT_EQ(webpp::basic_cookie("  test  ", "  value  ").name(),
+              webpp::basic_cookie().name("  test  ").name())
       << "name should trim it too.";
 }
 
@@ -20,7 +20,7 @@ TEST(Cookie, CookiesCreation) {
 TEST(Cookie, CookieExpirationDate) {
     using namespace webpp;
 
-    cookie c;
+    basic_cookie c;
     c.name("name").value("value");
     c.expires_in(std::chrono::minutes(1));
     EXPECT_TRUE(c.expires().time_since_epoch().count() > 0);
@@ -29,11 +29,11 @@ TEST(Cookie, CookieExpirationDate) {
 TEST(Cookies, CookiesHash) {
     using namespace webpp;
     cookie_hash hash;
-    auto        a = hash(webpp::cookie("yes", "value"));
-    auto        b = hash(webpp::cookie("  yes  ", "  value  "));
+    auto        a = hash(webpp::basic_cookie("yes", "value"));
+    auto        b = hash(webpp::basic_cookie("  yes  ", "  value  "));
 
-    EXPECT_FALSE(hash(webpp::cookie("one", "value")) ==
-                 hash(webpp::cookie("two", "value")));
+    EXPECT_FALSE(hash(webpp::basic_cookie("one", "value")) ==
+                 hash(webpp::basic_cookie("two", "value")));
     EXPECT_TRUE(a == b) << "Same cookies should be the same.";
 }
 
@@ -54,26 +54,27 @@ TEST(Cookies, CookieJar) {
     jar2.emplace(" one ", "value 1-2"); // this should replace the other one
 
     EXPECT_TRUE(jar2.size() == 2)
-      << "The order that cookies get added to cookie jar does not matter";
+      << "The order that cookies get added to basic_cookie jar does not matter";
 
     jar2.emplace("two", "value 2-2");
 
     // These all should be replaced with the first one; so the size should not
     // be increased here
     jar2.emplace_hint(jar2.begin(), "one", "value 1-3");
-    jar2.insert(cookie("one", "value 1-4"));
-    cookie c("one", "value 1-5");
+    jar2.insert(basic_cookie("one", "value 1-4"));
+    basic_cookie c("one", "value 1-5");
     jar2.insert(c);
     jar2.insert(jar2.begin(), c);
-    jar2.insert(jar2.begin(), cookie("one", "value 1-6"));
+    jar2.insert(jar2.begin(), basic_cookie("one", "value 1-6"));
     cookie_jar jar3;
     jar3.emplace("one", "value 1-7");
     jar3.emplace("two", "value 2-3");
     jar2.insert(jar3.begin(), jar3.end());
-    jar2.insert({cookie("one", "value 1-8"), cookie("two", "value 2-4")});
+    jar2.insert(
+      {basic_cookie("one", "value 1-8"), basic_cookie("two", "value 2-4")});
 
     EXPECT_TRUE(jar2.size() == 2)
-      << "Cookie jar should have the same size when we're emplacing a cookie "
+      << "Cookie jar should have the same size when we're emplacing a basic_cookie "
          "with the same name";
 
     auto found = jar2.find("two");
@@ -88,7 +89,7 @@ TEST(Cookies, CookieJar) {
     for (auto const& a : jar2) {
         auto found = jar2.find(a.name());
         EXPECT_TRUE(found->value() == a.value())
-          << "Checking all the values in the cookie jar (cookie name: "
+          << "Checking all the values in the basic_cookie jar (basic_cookie name: "
           << a.name() << "=" << a.value() << "; found: " << found->name() << "="
           << found->value() << ")";
     }
@@ -98,14 +99,14 @@ TEST(Cookies, CookieJarUniqeness) {
     using namespace webpp;
 
     cookie_jar cs;
-    cs.insert(cookie().name("one").value("test").domain("google.com"));
-    cs.insert(cookie().name("one").value("test").domain("bing.com"));
+    cs.insert(basic_cookie().name("one").value("test").domain("google.com"));
+    cs.insert(basic_cookie().name("one").value("test").domain("bing.com"));
 
     EXPECT_TRUE(cs.size() == 2)
       << "Different domains should not be considered the same";
 
-    cs.insert(cookie().name("one").value("test").domain("google.com"));
-    cs.insert(cookie().name("one").value("test").domain("bing.com"));
+    cs.insert(basic_cookie().name("one").value("test").domain("google.com"));
+    cs.insert(basic_cookie().name("one").value("test").domain("bing.com"));
 
     EXPECT_TRUE(cs.size() == 2)
       << "Inserting already inserted cookies that are 'same_as' the other "
@@ -113,20 +114,23 @@ TEST(Cookies, CookieJarUniqeness) {
 
     // now we check if changing the name, path, or domain to a new value that
     // already exists will remove the value or not
-    cs.insert(
-      cookie().name("two").value("test").domain("bing.com").comment("hello"));
+    cs.insert(basic_cookie()
+                .name("two")
+                .value("test")
+                .domain("bing.com")
+                .comment("hello"));
     EXPECT_EQ(cs.size(), 3);
     EXPECT_EQ(cs.find("two")->comment(), "hello");
     cs.name("two", "one");
 
     EXPECT_EQ(cs.size(), 2)
-      << "One of the cookies should now be removed so the whole cookie jar "
+      << "One of the cookies should now be removed so the whole basic_cookie jar "
          "have unique cookies";
     EXPECT_EQ(cs.find("one")->comment(), "hello")
-      << "The old cookie should be removed instead of the new one. The new "
-         "cookie should be replace the old one while renaming.";
+      << "The old basic_cookie should be removed instead of the new one. The new "
+         "basic_cookie should be replace the old one while renaming.";
 
-    auto p = cs.insert(cookie()
+    auto p = cs.insert(basic_cookie()
                          .name("one")
                          .value("test")
                          .domain("duckduckgo.com")
@@ -137,11 +141,11 @@ TEST(Cookies, CookieJarUniqeness) {
     EXPECT_EQ(p.first->domain(), "google.com");
 
     EXPECT_EQ(cs.size(), 2)
-      << "One of the cookies should now be removed so the whole cookie jar "
+      << "One of the cookies should now be removed so the whole basic_cookie jar "
          "have unique cookies";
     EXPECT_EQ(cs.find("one")->comment(), "hello")
-      << "The old cookie should be removed instead of the new one. The new "
-         "cookie should be replace the old one in the changing the domain "
+      << "The old basic_cookie should be removed instead of the new one. The new "
+         "basic_cookie should be replace the old one in the changing the domain "
          "process.";
 }
 
