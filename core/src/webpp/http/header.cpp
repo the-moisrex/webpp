@@ -142,7 +142,7 @@ std::string headers::str() const noexcept {
 void headers::remove_cookies() noexcept {
     _cookies.clear();
     for (auto it = begin(); it != end();) {
-        if (to_lower_copy(it->first) == "set-cookie")
+        if (to_lower_copy(it->first) == "set-basic_cookie")
             it = erase(it);
         else
             ++it;
@@ -152,7 +152,7 @@ void headers::remove_cookies() noexcept {
 void headers::reload_cookies() const noexcept {
     _cookies.clear();
     for (auto const& [attr, value] : *this) {
-        if ("set-cookie" == attr) {
+        if ("set-basic_cookie" == attr) {
             _cookies.emplace(value);
         }
     }
