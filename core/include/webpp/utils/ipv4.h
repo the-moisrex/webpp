@@ -41,7 +41,9 @@ namespace webpp {
      * Convert string to prefix
      * @param octets
      */
-    constexpr uint8_t to_prefix(std::string_view const& _data) noexcept {
+    template <typename CharT = char>
+    constexpr uint8_t
+    to_prefix(std::basic_string_view<CharT> const& _data) noexcept {
         if (_data.size() > 15 || _data.size() < 7) {
             return 0u;
         }
@@ -123,7 +125,9 @@ namespace webpp {
         // 253 means the prefix was not valid
         mutable uint8_t _prefix = 255u;
 
-        constexpr void parse(std::string_view const& _data) const noexcept {
+        template <typename CharT = char>
+        constexpr void
+        parse(std::basic_string_view<CharT> const& _data) const noexcept {
             if (_data.size() > 15 || _data.size() < 7) {
                 _prefix = 254u; // the ip is not valid
                 return;
@@ -227,28 +231,37 @@ namespace webpp {
 
         constexpr ipv4(ipv4&& ip) = default;
 
-        constexpr explicit ipv4(std::string_view const& ip) noexcept
+        template <typename CharT = char>
+        constexpr explicit ipv4(
+          std::basic_string_view<CharT> const& ip) noexcept
           : _prefix(255) {
             parse(ip);
         }
 
-        constexpr explicit ipv4(char const* const ip) noexcept : _prefix(255) {
+        template <typename CharT = char>
+        constexpr explicit ipv4(std::enable_if_t<std::is_integral_v<CharT>,
+                                                 void> const* const ip) noexcept
+          : _prefix(255) {
             parse(ip);
         }
 
-        constexpr ipv4(std::string_view const& ip,
-                       std::string_view const& subnet) noexcept
+        template <typename CharT = char>
+        constexpr ipv4(std::basic_string_view<CharT> const& ip,
+                       std::basic_string_view<CharT> const& subnet) noexcept
           : _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {
             parse(ip);
         }
 
-        constexpr ipv4(std::string_view const&       ip,
-                       std::array<uint8_t, 4> const& subnet) noexcept
+        template <typename CharT = char>
+        constexpr ipv4(std::basic_string_view<CharT> const& ip,
+                       std::array<uint8_t, 4> const&        subnet) noexcept
           : _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {
             parse(ip);
         }
 
-        constexpr ipv4(std::string_view const& ip, uint8_t __prefix) noexcept
+        template <typename CharT = char>
+        constexpr ipv4(std::basic_string_view<CharT> const& ip,
+                       uint8_t                              __prefix) noexcept
           : _prefix(__prefix > 32 && __prefix != 255u ? 253u : __prefix) {
             parse(ip);
         }
@@ -271,8 +284,9 @@ namespace webpp {
             _prefix(prefix > 32 && prefix != 255u ? 253u : prefix) {
         }
 
-        constexpr explicit ipv4(uint32_t const&  ip,
-                                std::string_view subnet) noexcept
+        template <typename CharT = char>
+        constexpr explicit ipv4(uint32_t const&               ip,
+                                std::basic_string_view<CharT> subnet) noexcept
           : data(ip),
             _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {
         }
@@ -283,8 +297,9 @@ namespace webpp {
             _prefix(prefix > 32 && prefix != 255u ? 253u : prefix) {
         }
 
-        constexpr ipv4(std::array<uint8_t, 4> const& ip,
-                       std::string_view const&       subnet) noexcept
+        template <typename CharT = char>
+        constexpr ipv4(std::array<uint8_t, 4> const&        ip,
+                       std::basic_string_view<CharT> const& subnet) noexcept
           : data(parse(ip)),
             _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {
         }
@@ -295,12 +310,15 @@ namespace webpp {
             _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {
         }
 
-        explicit operator std::string() {
-            return str();
+        template <typename CharT = char>
+        explicit operator std::basic_string<CharT>() {
+            return str<CharT>();
         }
 
-        explicit operator const char*() {
-            return str().c_str();
+        template <typename CharT = char>
+        explicit
+        operator const std::enable_if_t<std::is_integral_v<CharT>, void> *() {
+            return str<CharT>().c_str();
         }
 
         explicit operator uint32_t() {
@@ -310,7 +328,8 @@ namespace webpp {
         ipv4& operator=(ipv4 const& ip) = default;
         ipv4& operator=(ipv4&& ip) = default;
 
-        ipv4& operator=(std::string_view const& ip) noexcept {
+        template <typename CharT = char>
+        ipv4& operator=(std::basic_string_view<CharT> const& ip) noexcept {
             parse(ip);
             _prefix = 255u;
             return *this;
@@ -376,27 +395,39 @@ namespace webpp {
             return data <= other.data;
         }
 
-        constexpr bool operator!=(std::string_view ip) const noexcept {
+        template <typename CharT = char>
+        constexpr bool
+        operator!=(std::basic_string_view<CharT> ip) const noexcept {
             return operator!=(ipv4(ip));
         }
 
-        constexpr bool operator==(std::string_view ip) const noexcept {
+        template <typename CharT = char>
+        constexpr bool
+        operator==(std::basic_string_view<CharT> ip) const noexcept {
             return operator==(ipv4(ip));
         }
 
-        constexpr bool operator<(std::string_view ip) const noexcept {
+        template <typename CharT = char>
+        constexpr bool
+        operator<(std::basic_string_view<CharT> ip) const noexcept {
             return operator<(ipv4(ip));
         }
 
-        constexpr bool operator>(std::string_view ip) const noexcept {
+        template <typename CharT = char>
+        constexpr bool
+        operator>(std::basic_string_view<CharT> ip) const noexcept {
             return operator>(ipv4(ip));
         }
 
-        constexpr bool operator<=(std::string_view ip) const noexcept {
+        template <typename CharT = char>
+        constexpr bool
+        operator<=(std::basic_string_view<CharT> ip) const noexcept {
             return operator<=(ipv4(ip));
         }
 
-        constexpr bool operator>=(std::string_view ip) const noexcept {
+        template <typename CharT = char>
+        constexpr bool
+        operator>=(std::basic_string_view<CharT> ip) const noexcept {
             return operator>=(ipv4(ip));
         }
 
@@ -424,13 +455,17 @@ namespace webpp {
             return integer() >= ip;
         }
 
-        friend std::ostream& operator<<(std::ostream& stream, ipv4 const& ip) {
-            stream << ip.str();
+        template <typename CharT = char>
+        friend std::basic_ostream<CharT>&
+        operator<<(std::basic_ostream<CharT>& stream, ipv4 const& ip) {
+            stream << ip.str<CharT>();
             return stream;
         }
 
-        friend std::istream& operator>>(std::istream& stream, ipv4& ip) {
-            std::string str;
+        template <typename CharT = char>
+        friend std::basic_istream<CharT>&
+        operator>>(std::basic_istream<CharT>& stream, ipv4& ip) {
+            std::basic_string<CharT> str;
             stream >> str;
             ip = str;
             return stream;
@@ -440,9 +475,10 @@ namespace webpp {
          * @brief get string representation of the ip
          * @return
          */
-        [[nodiscard]] std::string str() const noexcept {
-            auto               _octets = octets();
-            std::ostringstream s;
+        template <typename CharT = char>
+        [[nodiscard]] std::basic_string<CharT> str() const noexcept {
+            auto                            _octets = octets();
+            std::basic_ostringstream<CharT> s;
             s << static_cast<unsigned int>(_octets[0]) << '.'
               << static_cast<unsigned int>(_octets[1]) << '.'
               << static_cast<unsigned int>(_octets[2]) << '.'
@@ -504,7 +540,8 @@ namespace webpp {
          * Set prefix with a subnet string
          * @param _subnet
          */
-        ipv4& prefix(std::string_view const& _subnet) noexcept {
+        template <typename CharT = char>
+        ipv4& prefix(std::basic_string_view<CharT> const& _subnet) noexcept {
             return prefix(to_prefix(_subnet));
         }
 
@@ -616,7 +653,9 @@ namespace webpp {
          * predefined rules
          * @return coordinates or string location
          */
-        [[nodiscard]] std::string geographic_location() const noexcept;
+        template <typename CharT = char>
+        [[nodiscard]] std::basic_string<CharT>
+        geographic_location() const noexcept;
     };
 
     constexpr bool operator==(uint32_t const& one, ipv4 const& two) {
@@ -643,27 +682,39 @@ namespace webpp {
         return one >= two.integer();
     }
 
-    constexpr bool operator==(std::string_view const& one, ipv4 const& two) {
+    template <typename CharT = char>
+    constexpr bool operator==(std::basic_string_view<CharT> const& one,
+                              ipv4 const&                          two) {
         return two == one;
     }
 
-    constexpr bool operator!=(std::string_view const& one, ipv4 const& two) {
+    template <typename CharT = char>
+    constexpr bool operator!=(std::basic_string_view<CharT> const& one,
+                              ipv4 const&                          two) {
         return two != one;
     }
 
-    constexpr bool operator<(std::string_view const& one, ipv4 const& two) {
+    template <typename CharT = char>
+    constexpr bool operator<(std::basic_string_view<CharT> const& one,
+                             ipv4 const&                          two) {
         return ipv4(one) < two;
     }
 
-    constexpr bool operator>(std::string_view const& one, ipv4 const& two) {
+    template <typename CharT = char>
+    constexpr bool operator>(std::basic_string_view<CharT> const& one,
+                             ipv4 const&                          two) {
         return ipv4(one) > two;
     }
 
-    constexpr bool operator<=(std::string_view const& one, ipv4 const& two) {
+    template <typename CharT = char>
+    constexpr bool operator<=(std::basic_string_view<CharT> const& one,
+                              ipv4 const&                          two) {
         return ipv4(one) <= two;
     }
 
-    constexpr bool operator>=(std::string_view const& one, ipv4 const& two) {
+    template <typename CharT = char>
+    constexpr bool operator>=(std::basic_string_view<CharT> const& one,
+                              ipv4 const&                          two) {
         return ipv4(one) >= two;
     }
 
