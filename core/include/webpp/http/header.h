@@ -7,6 +7,7 @@
 #include "cookies.h"
 
 #include <cstdint>
+#include <sstream>
 #include <type_traits>
 
 namespace webpp {
@@ -225,11 +226,19 @@ namespace webpp {
             _cookies = __cookies;
         }
 
-        std::string str() const noexcept;
+        auto str() const noexcept {
+            typename traits::stringstream_type res;
+            // TODO: add support for other HTTP versions
+            // res << "HTTP/1.1" << " " << status_code() << " " <<
+            // status_reason_phrase(status_code()) << "\r\n";
+            for (auto const& [attr, val] : *this) {
+                res << attr << ": ";
+                res << val; // TODO: make sure it's secure
+                res << "\r\n";
+            }
+            return res.str();
+        }
     };
-
-
-
 
 } // namespace webpp
 
