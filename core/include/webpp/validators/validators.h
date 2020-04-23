@@ -847,7 +847,7 @@ namespace webpp {
               "coffee",
               "columbia blue",
               "construction cone orange",
-              "basic_cookie brown",
+              "cookie brown",
               "copper",
               "coral",
               "coral blue",

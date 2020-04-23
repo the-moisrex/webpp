@@ -16,7 +16,7 @@
 ## Modules
 
 * [ ] Session manager module
-  * [ ] Inject/remove/change basic_cookie for:
+  * [ ] Inject/remove/change cookie for:
     * [ ] Everyone
     * [ ] Specific user
     * [ ] Specific session of a user
@@ -70,7 +70,7 @@
     * [ ] Route
     * [ ] URI
     * [ ] Timestamp
-  * [ ] User/session history (roadmap of session)
+  * [ ] User/session history (road-map of session)
     * [ ] Previous stat record
     * [ ] Next stat record
     * [ ] All stat records for:
@@ -89,8 +89,8 @@
     * [ ] Keyboard clicks
     * [ ] Links hovered
     * [ ] Links clicked
-    * [ ] Input intractions (filling forms, etc.)
-    * [ ] Scrollbar intrests (where the users want to see more)
+    * [ ] Input interactions (filling forms, etc.)
+    * [ ] Scrollbar interests (where the users want to see more)
     * [ ] Haven't seen parts
 * [ ] Device manager module
   * [ ] Device name
