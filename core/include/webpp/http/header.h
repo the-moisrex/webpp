@@ -166,7 +166,14 @@ namespace webpp {
          * not paying anything to parse cookies while he/she is not using
          * cookies.
          */
-        void reload_cookies() const noexcept;
+        void reload_cookies() const noexcept {
+            _cookies.clear();
+            for (auto const& [attr, value] : *this) {
+                if ("set-cookie" == attr) {
+                    _cookies.emplace(value);
+                }
+            }
+        }
 
       public:
         /**
@@ -203,9 +210,17 @@ namespace webpp {
         }
 
         /**
-         * @brief remove cookies in the cookie jar
+         * @brief make cookies in the cookie jar as removed.
          */
-        void remove_cookies() noexcept;
+        void remove_cookies() noexcept {
+            _cookies.clear();
+            for (auto it = begin(); it != end();) {
+                if (to_lower_copy(it->first) == "set-cookie")
+                    it = erase(it);
+                else
+                    ++it;
+            }
+        }
 
 
         /**
