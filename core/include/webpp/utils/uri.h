@@ -158,24 +158,14 @@ namespace webpp {
          * Getting the character type
          * It's used for character encoding
          */
-        using char_type = std::conditional_t<
-          std::is_integral_v<StringTypeRaw>, std::remove_cvref_t<StringTypeRaw>,
-          std::conditional_t<
-            std::is_integral_v<typename StringTypeRaw::value_type>,
-            typename StringTypeRaw::value_type, char>>;
+        using char_type = auto_char_type<StringTypeRaw>;
 
         /**
          * Getting the appropriate string type to use.
          * If the specified string type cannot be changed, the string_view will
          * be used, otherwise, string itself.
          */
-        using string_type = std::conditional_t<
-          std::is_empty_v<StringTypeRaw>, std::basic_string<char_type>,
-          std::conditional_t<
-            std::is_array_v<StringTypeRaw> ||
-              std::is_convertible_v<StringTypeRaw, char const* const> ||
-              std::is_const_v<StringTypeRaw>,
-            std::basic_string_view<char_type>, StringTypeRaw>>;
+        using string_type = auto_string_type<StringTypeRaw, char_type>;
 
         using str_view = std::basic_string_view<char_type>;
 
@@ -426,25 +416,25 @@ namespace webpp {
         //            parse_path();
         //
         //            auto _data = (std::is_same_v<string_type,
-        //            str_view>
+        //            str_view_t>
         //                              ? data
-        //                              : str_view(data))
+        //                              : str_view_t(data))
         //                             .substr(authority_start, authority_end);
         //
         //            auto _authority_start = data.find("//");
-        //            if (_authority_start != str_view::npos) {
+        //            if (_authority_start != str_view_t::npos) {
         //                _data.remove_prefix(_authority_start + 2);
         //            }
         //            auto path_start = _data.find('/');
         //
-        //            if (_authority_start != str_view::npos &&
+        //            if (_authority_start != str_view_t::npos &&
         //            path_start != 0) {
         //
         //                auto port_start = _data.find(":", 0, path_start);
         //
         //                // extracting user info
         //                if (auto delim = _data.find("@", 0, path_start);
-        //                    delim != str_view::npos) {
+        //                    delim != str_view_t::npos) {
         //
         //                    pieces[_user_info] = delim;
         //                    _data.remove_prefix(delim + 1);
@@ -464,7 +454,7 @@ namespace webpp {
         //                    if (_data.size() > 2 &&
         //                        _data[1] == 'v') { // IPv Future Number
         //                        if (auto dot_delim = _data.find('.');
-        //                            dot_delim != str_view::npos) {
+        //                            dot_delim != str_view_t::npos) {
         //
         //                            auto ipvf_version = _data.substr(2,
         //                            dot_delim); if
@@ -472,7 +462,7 @@ namespace webpp {
         //
         //                                if (auto ipvf_end = _data.find(']');
         //                                    ipvf_end !=
-        //                                    str_view::npos) { auto
+        //                                    str_view_t::npos) { auto
         //                                    ipvf =
         //                                        _data.substr(dot_delim + 1,
         //                                        ipvf_end);
@@ -493,7 +483,7 @@ namespace webpp {
         //                    } else if (_data.size() >= 5) { // IPv6
         //
         //                        if (auto ipv6_end = _data.find(']');
-        //                            ipv6_end != str_view::npos) {
+        //                            ipv6_end != str_view_t::npos) {
         //
         //                            if (auto ipv6_view = _data.substr(1,
         //                            ipv6_end);
@@ -510,7 +500,7 @@ namespace webpp {
         //                    }
         //                } else { // Not IP Literal
         //                    auto port_or_path_start =
-        //                        port_start != str_view::npos ?
+        //                        port_start != str_view_t::npos ?
         //                        port_start
         //                                                             :
         //                                                             path_start;
@@ -529,7 +519,7 @@ namespace webpp {
         //                    if (HOSTNAME_CHARS.contains(hostname)) {
         //                        _host = hostname;
         //                        if (port_or_path_start !=
-        //                        str_view::npos)
+        //                        str_view_t::npos)
         //                            _data.remove_prefix(port_or_path_start);
         //                        else {
         //                            return;
@@ -538,7 +528,7 @@ namespace webpp {
         //                }
         //
         //                // extracting port
-        //                if (port_start != str_view::npos) {
+        //                if (port_start != str_view_t::npos) {
         //                    auto port_end =
         //                        _data.find_first_not_of(DIGIT.string_view());
         //                    _port = _data.substr(port_start + 1, port_end);
@@ -682,7 +672,7 @@ namespace webpp {
          * Get a part of the uri
          * @param start
          * @param len
-         * @return str_view
+         * @return str_view_t
          */
         [[nodiscard]] str_view
         substr(std::size_t const& start = 0,
@@ -1410,7 +1400,7 @@ namespace webpp {
                 container.emplace_back(_path.data() + last_slash_start + 1,
                                        std::min(slash_start, _path_size) -
                                          last_slash_start - 1);
-                // if (slash_start != str_view::npos)
+                // if (slash_start != str_view_t::npos)
                 // _path.remove_prefix(slash_start + 1);
                 // else
                 // _path.remove_prefix(_path.size());
@@ -1736,7 +1726,7 @@ namespace webpp {
 
         /**
          * Get a string_view version of the uri
-         * @return str_view
+         * @return str_view_t
          */
         [[nodiscard]] str_view string_view() const noexcept {
             if constexpr (std::is_same_v<string_type, str_view>) {

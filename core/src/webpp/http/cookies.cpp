@@ -8,11 +8,6 @@
 #include <sstream>
 #include <string_view>
 
-template <class T>
-inline void hash_combine(std::size_t& seed, const T& v) {
-    std::hash<T> hasher;
-    seed ^= hasher(v) + 0x9e3779b9 + (seed << 6u) + (seed >> 2u);
-}
 
 using namespace webpp;
 /*
@@ -75,210 +70,6 @@ basic_cookie& basic_cookie::operator=(basic_cookie&& c) noexcept {
 }
 */
 
-basic_cookie& basic_cookie::name(basic_cookie::name_t __name) noexcept {
-    trim(__name);
-    _name = std::move(__name);
-    return *this;
-}
-
-basic_cookie& basic_cookie::value(basic_cookie::value_t __value) noexcept {
-    trim(__value);
-    _value = std::move(__value);
-    return *this;
-}
-
-basic_cookie::value_t basic_cookie::encrypted_value() const noexcept {
-    // TODO
-}
-
-std::ostream& basic_cookie::operator<<(std::ostream& out) const noexcept {
-    using namespace std::chrono;
-    if (_prefix) {
-        if (_secure)
-            out << "__Secure-";
-        else if (_host_only)
-            out << "__Host-";
-    }
-    if (!_name.empty()) {
-        // FIXME: encode/... name and value here. Programmers are dumb!
-        out << _name << "=" << _value;
-
-        if (!_comment.empty())
-            out << "; Comment=" << _comment;
-
-        if (!_domain.empty())
-            out << "; Domain=" << _domain;
-
-        if (!_path.empty())
-            out << "; Path=" << _path;
-
-        if (_expires) {
-            std::time_t expires_c  = system_clock::to_time_t(*_expires);
-            std::tm     expires_tm = *std::localtime(&expires_c);
-            char        buff[30];
-            // FIXME: check time zone and see if it's ok
-            //            setlocale(LC_ALL, "en_US.UTF-8");
-            if (strftime(buff, sizeof buff, "%a, %d %b %Y %H:%M:%S GMT",
-                         &expires_tm))
-                out << "; Expires=" << buff;
-        }
-
-        if (_secure)
-            out << "; Secure";
-
-        if (_host_only)
-            out << "; HttpOnly";
-
-        if (_max_age)
-            out << "; Max-Age=" << _max_age;
-
-        if (_same_site != same_site_value::NONE)
-            out << "; SameSite="
-                << (_same_site == same_site_value::STRICT ? "Strict" : "Lax");
-
-        // TODO: encode value and check the key here:
-        if (!attrs.empty())
-            for (auto const& attr : attrs)
-                out << "; " << attr.first << "=" << attr.second;
-    }
-    return out;
-}
-
-bool basic_cookie::operator==(const basic_cookie& c) const noexcept {
-    return _name == c._name && _value == c._value && _prefix == c._prefix &&
-           _encrypted == c._encrypted && _secure == c._secure &&
-           _host_only == c._host_only && _same_site == c._same_site &&
-           _comment == c._comment && _expires == c._expires &&
-           _path == c._path && _domain == c._domain && attrs == c.attrs;
-}
-
-bool basic_cookie::operator<(const basic_cookie& c) const noexcept {
-    return _expires < c._expires;
-}
-
-bool basic_cookie::operator>(const basic_cookie& c) const noexcept {
-    return _expires > c._expires;
-}
-
-bool basic_cookie::operator<=(const basic_cookie& c) const noexcept {
-    return _expires <= c._expires;
-}
-
-bool basic_cookie::operator>=(const basic_cookie& c) const noexcept {
-    return _expires >= c._expires;
-}
-
-std::string basic_cookie::render() const noexcept {
-    std::ostringstream os;
-    this->             operator<<(os);
-    return os.str();
-}
-
-bool basic_cookie::same_as(const basic_cookie& c) const noexcept {
-    return _name == c._name && _path == c._path && c._domain == _domain;
-}
-
-basic_cookie& basic_cookie::remove(bool __remove) noexcept {
-    using namespace std::chrono;
-    if (__remove) {
-        // set the expire date one year before now:
-        expires(system_clock::now() -
-                duration<int, std::ratio<60 * 60 * 24 * 365>>(1));
-    } else if (is_removed()) {
-        // set the expire date one year from now:
-        expires(system_clock::now() +
-                duration<int, std::ratio<60 * 60 * 24 * 365>>(1));
-    }
-    // remove max-age if it exists because we're going with expires
-    max_age(0);
-    return *this;
-}
-
-basic_cookie& basic_cookie::expires(basic_cookie::date_t __expires) noexcept {
-    _expires = __expires;
-    return *this;
-}
-
-bool basic_cookie::is_removed() const noexcept {
-    using namespace std::chrono;
-    return *_expires < system_clock::now();
-}
-
-basic_cookie&
-basic_cookie::host_only(basic_cookie::host_only_t __host_only) noexcept {
-    _host_only = __host_only;
-    return *this;
-}
-
-basic_cookie& basic_cookie::secure(basic_cookie::secure_t __secure) noexcept {
-    _secure = __secure;
-    return *this;
-}
-
-basic_cookie&
-basic_cookie::same_site(basic_cookie::same_site_t __same_site) noexcept {
-    _same_site = __same_site;
-    return *this;
-}
-
-basic_cookie& basic_cookie::prefix(basic_cookie::prefix_t __prefix) noexcept {
-    _prefix = __prefix;
-    return *this;
-}
-
-basic_cookie&
-basic_cookie::max_age(basic_cookie::max_age_t __max_age) noexcept {
-    _max_age = __max_age;
-    return *this;
-}
-
-basic_cookie& basic_cookie::path(basic_cookie::path_t __path) noexcept {
-    _path = std::move(__path);
-    return *this;
-}
-
-basic_cookie& basic_cookie::domain(basic_cookie::domain_t __domain) noexcept {
-    _domain = std::move(__domain);
-    return *this;
-}
-
-basic_cookie&
-basic_cookie::comment(basic_cookie::comment_t __comment) noexcept {
-    _comment = std::move(__comment);
-    return *this;
-}
-
-basic_cookie&
-basic_cookie::encrypted(basic_cookie::encrypted_t __encrypted) noexcept {
-    _encrypted = __encrypted;
-    return *this;
-}
-
-cookie_hash::result_type
-cookie_hash::operator()(const cookie_hash::argument_type& c) const noexcept {
-    // change the "same_as" method too if you ever touch this function
-    cookie_hash::result_type seed = 0;
-    hash_combine(seed, c._name);
-    hash_combine(seed, c._domain);
-    hash_combine(seed, c._path);
-    //    hash_combine(seed, c._value);
-    //    hash_combine(seed, c._prefix);
-    //    hash_combine(seed, c._secure);
-    //    if (c._expires)
-    //        hash_combine(seed, c._expires->time_since_epoch().count());
-    //    hash_combine(seed, c._max_age);
-    //    hash_combine(seed, c._same_site);
-    //    hash_combine(seed, c._comment);
-    //    hash_combine(seed, c._host_only);
-    //    hash_combine(seed, c._encrypted);
-    return seed;
-}
-
-bool cookie_equals::operator()(const basic_cookie& lhs,
-                               const basic_cookie& rhs) const noexcept {
-    return lhs.name() == rhs.name() && lhs.domain() == rhs.domain() &&
-           lhs.path() == rhs.path();
-}
 
 cookie_jar::const_iterator
 cookie_jar::find(basic_cookie::name_t const& name) const noexcept {
@@ -299,14 +90,14 @@ cookie_jar::insert(const value_type& value) {
     auto found = find(value);
     if (found != cend())
         erase(found);
-    return static_cast<super*>(this)->insert(value);
+    return static_cast<super_t*>(this)->insert(value);
 }
 
 std::pair<cookie_jar::iterator, bool> cookie_jar::insert(value_type&& value) {
     auto found = find(value);
     if (found != cend())
         erase(found);
-    return static_cast<super*>(this)->insert(std::move(value));
+    return static_cast<super_t*>(this)->insert(std::move(value));
 }
 
 cookie_jar::iterator cookie_jar::insert(const_iterator    hint,
@@ -314,7 +105,7 @@ cookie_jar::iterator cookie_jar::insert(const_iterator    hint,
     auto found = find(value);
     if (found != cend())
         erase(found);
-    return static_cast<super*>(this)->insert(hint, value);
+    return static_cast<super_t*>(this)->insert(hint, value);
 }
 
 cookie_jar::iterator cookie_jar::insert(const_iterator hint,
@@ -322,7 +113,7 @@ cookie_jar::iterator cookie_jar::insert(const_iterator hint,
     auto found = find(value);
     if (found != cend())
         erase(found);
-    return static_cast<super*>(this)->insert(hint, std::move(value));
+    return static_cast<super_t*>(this)->insert(hint, std::move(value));
 }
 
 void cookie_jar::insert(std::initializer_list<value_type> ilist) {
@@ -331,7 +122,7 @@ void cookie_jar::insert(std::initializer_list<value_type> ilist) {
         if (found != cend())
             erase(found);
     }
-    return static_cast<super*>(this)->insert(ilist);
+    return static_cast<super_t*>(this)->insert(ilist);
 }
 
 cookie_jar&

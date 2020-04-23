@@ -10,6 +10,32 @@
 
 namespace webpp {
 
+    /**
+     * Getting the character type
+     * It's used for character encoding
+     */
+    //    template <typename StringTypeRaw>
+    //    using auto_char_type = std::conditional_t<
+    //      std::is_integral_v<StringTypeRaw>,
+    //      std::remove_cvref_t<StringTypeRaw>,
+    //      std::conditional_t<std::is_integral_v<typename
+    //      StringTypeRaw::value_type>,
+    //                         typename StringTypeRaw::value_type, char>>;
+
+    /**
+     * Getting the appropriate string type to use.
+     * If the specified string type cannot be changed, the string_view will
+     * be used, otherwise, string itself.
+     */
+    //    template <typename StringTypeRaw, typename CharT>
+    //    using auto_string_type = std::conditional_t<
+    //      std::is_empty_v<StringTypeRaw>, std::basic_string<CharT>,
+    //      std::conditional_t<
+    //        std::is_array_v<StringTypeRaw> ||
+    //          std::is_convertible_v<StringTypeRaw, char const* const> ||
+    //          std::is_const_v<StringTypeRaw>,
+    //        std::basic_string_view<CharT>, StringTypeRaw>>;
+
     // trim from start (in place)
     inline void ltrim(std::string_view& s) noexcept {
         if (auto found = std::find_if_not(s.begin(), s.end(),

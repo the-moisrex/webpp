@@ -54,7 +54,7 @@ TEST(Cookies, CookieJar) {
     jar2.emplace(" one ", "value 1-2"); // this should replace the other one
 
     EXPECT_TRUE(jar2.size() == 2)
-      << "The order that cookies get added to basic_cookie jar does not matter";
+      << "The order that cookies get added to cookie jar does not matter";
 
     jar2.emplace("two", "value 2-2");
 
@@ -74,7 +74,7 @@ TEST(Cookies, CookieJar) {
       {basic_cookie("one", "value 1-8"), basic_cookie("two", "value 2-4")});
 
     EXPECT_TRUE(jar2.size() == 2)
-      << "Cookie jar should have the same size when we're emplacing a basic_cookie "
+      << "Cookie jar should have the same size when we're emplacing a cookie "
          "with the same name";
 
     auto found = jar2.find("two");
@@ -89,7 +89,7 @@ TEST(Cookies, CookieJar) {
     for (auto const& a : jar2) {
         auto found = jar2.find(a.name());
         EXPECT_TRUE(found->value() == a.value())
-          << "Checking all the values in the basic_cookie jar (basic_cookie name: "
+          << "Checking all the values in the cookie jar (cookie name: "
           << a.name() << "=" << a.value() << "; found: " << found->name() << "="
           << found->value() << ")";
     }
@@ -124,11 +124,11 @@ TEST(Cookies, CookieJarUniqeness) {
     cs.name("two", "one");
 
     EXPECT_EQ(cs.size(), 2)
-      << "One of the cookies should now be removed so the whole basic_cookie jar "
+      << "One of the cookies should now be removed so the whole cookie jar "
          "have unique cookies";
     EXPECT_EQ(cs.find("one")->comment(), "hello")
-      << "The old basic_cookie should be removed instead of the new one. The new "
-         "basic_cookie should be replace the old one while renaming.";
+      << "The old cookie should be removed instead of the new one. The new "
+         "cookie should be replace the old one while renaming.";
 
     auto p = cs.insert(basic_cookie()
                          .name("one")
@@ -141,14 +141,16 @@ TEST(Cookies, CookieJarUniqeness) {
     EXPECT_EQ(p.first->domain(), "google.com");
 
     EXPECT_EQ(cs.size(), 2)
-      << "One of the cookies should now be removed so the whole basic_cookie jar "
+      << "One of the cookies should now be removed so the whole cookie jar "
          "have unique cookies";
     EXPECT_EQ(cs.find("one")->comment(), "hello")
-      << "The old basic_cookie should be removed instead of the new one. The new "
-         "basic_cookie should be replace the old one in the changing the domain "
+      << "The old cookie should be removed instead of the new one. The new "
+         "cookie should be replace the old one in the changing the domain "
          "process.";
 }
 
+TEST(Cookies, Date) {
+}
 
 TEST(Cookies, CookiesEncryption) {
     // TODO
