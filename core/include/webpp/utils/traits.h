@@ -25,6 +25,8 @@ namespace webpp {
      *         https://en.cppreference.com/w/cpp/named_req/AllocatorAwareContainer
      *         https://en.cppreference.com/w/cpp/named_req/SequenceContainer
      *         https://en.cppreference.com/w/cpp/named_req/ContiguousContainer
+     *    - [ ] stringstream_type: string stream type same thing as:
+     *         https://en.cppreference.com/w/cpp/io/basic_stringstream
      *
      * Traits that might be added in the future:
      *   - [ ] Encryption algorithms and their keys
@@ -48,6 +50,9 @@ namespace webpp {
         using string_view_type = std::basic_string_view<char_type, char_traits>;
         using string_type =
           std::basic_string<char_type, char_traits, allocator<char_type>>;
+
+        using stringstream_type =
+          std::basic_stringstream<char_type, char_traits, allocator>;
     };
 
     using std_traits = basic_std_traits<char>;
