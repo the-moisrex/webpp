@@ -210,7 +210,12 @@ namespace webpp {
         }
 
         /**
-         * @brief make cookies in the cookie jar as removed.
+         * @brief removes cookies in the cookie jar
+         * This method will actually remove the cookie from the cookie jar (and
+         * also from the header list itself).
+         * It doesn't remove the cookies for the user.
+         * For removing the cookies for the user, use the cookie jar templated
+         * class itself which you can get access to with "cookies()" method.
          */
         void remove_cookies() noexcept {
             _cookies.clear();
