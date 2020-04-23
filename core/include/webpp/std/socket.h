@@ -2,9 +2,13 @@
 #ifndef WEBPP_STD_SOCKET_H
 #define WEBPP_STD_SOCKET_H
 
-// we rather use boost::asio instead of experimental version of std because
+// We rather use boost::asio instead of experimental version of std because
 // currently experimental version of socket is buggy. Hopefully that will be
 // fixed later.
+
+// The can use __has_include here because the project is already in C++20 and
+// __has_include is a C++20 feature and we're testing <socket> header which
+// is not yet part of C++ standard but hopefully will be added in C++23
 
 #include "std.h"
 
