@@ -3,25 +3,9 @@
 #ifndef WEBPP_MAP_H
 #define WEBPP_MAP_H
 
-#include "std.h"
-
-#if __has_include(<map>)
-#    define STD_MAP STLLIB_STANDARD
-#    include <map>
-#elif __has_include(<experimental/map>)
-#    define STD_MAP STLLIB_EXPERIMENTAL
-#    include <experimental/map>
-#elif __has_include(<boost/containers/map.hpp>)
-#    define STD_MAP STLLIB_BOOST
-#    include <boost/containers/map.hpp>
-namespace std {
-    using multimap = boost::multimap;
-    using map      = boost::map;
-} // namespace std
-#endif
-
-
 #include "../utils/traits.h"
+
+#include <map>
 
 // Traits aware map:
 namespace webpp::stl {
