@@ -3,8 +3,6 @@
 #include <sstream>
 using namespace webpp;
 
-std::string webpp::status_reason_phrase(unsigned int status_code) noexcept {
-}
 
 
 std::string headers::str() const noexcept {
