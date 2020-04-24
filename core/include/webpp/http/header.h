@@ -145,20 +145,19 @@ namespace webpp {
      * fixme: it needs a complete rewrite.
      */
     template <typename Traits = std_traits, bool Mutable = true>
-    class headers {
+    class headers
+      : public webpp::stl::multimap<Traits, auto_string_type<Traits, Mutable>,
+                                    auto_string_type<Traits, Mutable>> {
         static_assert(is_traits_v<Traits>,
                       "The specified template parameter is no a valid traits.");
 
       public:
         using traits = Traits;
-        using str_t =
-          ::std::conditional_t<Mutable, typename traits::string_type,
-                               typename traits::string_view_type>;
+        using str_t  = auto_string_type<traits, Mutable>;
 
       private:
-        mutable webpp::stl::multimap<Traits, str_t, str_t> _headers;
-        mutable cookie_jar<Traits, Mutable>                _cookies;
-        uint_fast16_t                                      _status_code = 200;
+        mutable cookie_jar<Traits, Mutable> _cookies;
+        uint_fast16_t                       _status_code = 200;
 
         /**
          * @brief this method will reload the cookies's cache.
@@ -176,6 +175,14 @@ namespace webpp {
         }
 
       public:
+        /**
+         * Check if this header is mutable.
+         * @return true if this header can be muted
+         */
+        constexpr bool is_mutable() const noexcept {
+            return Mutable;
+        }
+
         /**
          * @brief get status code
          */
