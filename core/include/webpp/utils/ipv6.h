@@ -275,31 +275,31 @@ namespace webpp {
 
         // TODO: add other operators
 
-        explicit operator octets8_t() {
+        explicit operator octets8_t() const noexcept {
             return octets8();
         }
 
-        explicit operator octets16_t() {
+        explicit operator octets16_t() const noexcept {
             return octets16();
         }
 
-        explicit operator octets32_t() {
+        explicit operator octets32_t() const noexcept {
             return octets32();
         }
 
-        explicit operator octets64_t() {
+        explicit operator octets64_t() const noexcept {
             return octets64();
         }
 
         template <typename CharT = char,
                   typename = std::enable_if_t<std::is_integral_v<CharT>, char>>
-        explicit operator CharT const *() {
+        explicit operator CharT const *() const noexcept {
             return short_str<char>().c_str();
         }
 
         template <typename CharT = char,
                   typename = std::enable_if_t<std::is_integral_v<CharT>, char>>
-        explicit operator std::basic_string<CharT>() {
+        explicit operator std::basic_string<CharT>() const noexcept {
             return short_str<CharT>();
         }
 
@@ -842,7 +842,7 @@ namespace webpp {
          * This method returns a pointer to the Interface Identifier.
          * @returns A pointer to the Interface Identifier.
          */
-        const octets8_t::const_iterator iid() const noexcept {
+        octets8_t::const_iterator iid() const noexcept {
             return data.cbegin() + interface_identifier_offset;
         }
 

@@ -13,13 +13,13 @@ namespace webpp::stl {
               typename Compare = ::std::less<Key>,
               typename Allocator =
                 typename Traits::template allocator<::std::pair<const Key, T>>>
-    class map : public ::std::map<Key, T, Compare, Allocator> {};
+    using map = ::std::map<Key, T, Compare, Allocator>;
 
     template <typename Traits, typename Key, typename T,
               typename Compare = ::std::less<Key>,
               typename Allocator =
                 typename Traits::template allocator<::std::pair<const Key, T>>>
-    class multimap : public ::std::multimap<Key, T, Compare, Allocator> {};
+    using multimap = ::std::multimap<Key, T, Compare, Allocator>;
 
 } // namespace webpp::stl
 

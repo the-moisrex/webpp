@@ -49,6 +49,7 @@
  *    [ ] Does user's browser support cookies but now it's disabled
  */
 
+#include "../utils/charset.h"
 #include "../utils/strings.h"
 #include "../utils/traits.h"
 
@@ -92,6 +93,9 @@ namespace webpp {
           is_traits_v<Traits>,
           "The specified traits template parameter is not a valid traits.");
 
+        using traits    = Traits;
+        using char_type = typename Traits::char_type;
+
         /**
          * Getting the appropriate string type to use.
          * If the specified string type cannot be changed, the string_view will
@@ -132,13 +136,95 @@ namespace webpp {
         mutable domain_t    _domain;
         mutable path_t      _path;
         mutable expires_t   _expires;
+        mutable comment_t   _comment;
         mutable max_age_t   _max_age   = 0;
         mutable same_site_t _same_site = same_site_value::NONE;
         mutable secure_t    _secure    = false;
         mutable host_only_t _host_only = false;
         mutable encrypted_t _encrypted = false;
         mutable prefix_t    _prefix    = false;
-        mutable comment_t   _comment;
+        mutable bool        _valid     = false;
+
+
+        constexpr static auto VALID_COOKIE_NAME = charset<char_type>(
+          ALPHA_DIGIT<char_type>,
+          charset_t<char_type>{'!', '#', '$', '%', '&', '\'', '*', '+', '-',
+                               '.', '^', '_', '`', '|', '~'});
+
+        constexpr static auto VALID_COOKIE_VALUE = charset<char_type>(
+          ALPHA_DIGIT<char_type>,
+          charset_t<char_type>{'!', '#', '$', '%', '&', '\'', '(',
+                               ')', '*', '+', '-', '.', '/',  ':',
+                               '<', '=', '>', '?', '@', '[',  ']',
+                               '^', '_', '`', '{', '|', '}',  '~'});
+
+        void parse_SE_name(str_view_t& str) noexcept {
+            ltrim(str);
+            if (auto equal_pos =
+                  str.find_first_not_of(VALID_COOKIE_NAME.data());
+                equal_pos != str_view_t::npos) {
+                // setting the name we found it
+                _name = str.substr(0, equal_pos);
+
+                // prepare the string for the next value
+                str.remove_prefix(equal_pos);
+                _valid = true;
+            } else {
+                // there's no value in the string
+                _valid = false;
+            }
+        }
+
+        void parse_SE_value(str_view_t& str) noexcept {
+            parse_SE_name(str);
+            if (!_valid)
+                return; // do not continue if there's no name
+            ltrim(str);
+            if (starts_with(str, '='))
+                str.remove_prefix(1);
+            ltrim(str);
+            if (starts_with(str, '"')) {
+                if (auto d_quote_end =
+                      str.find_first_not_of(VALID_COOKIE_VALUE.data(), 1);
+                    d_quote_end != str_view_t::npos) {
+                    if (str[d_quote_end] == '"') {
+                        _value = str.substr(1, d_quote_end - 1);
+                        str.remove_prefix(d_quote_end);
+                    } else {
+                        // You can't use non double quote chars when you used
+                        // one already. You can't even use backslash to escape,
+                        // so there's no worry here
+                        _valid = false;
+                        return;
+                    }
+                } else {
+                    // It won't be a valid string if there's a double quote
+                    // without another one finishing it off.
+                    _valid = false;
+                    return;
+                }
+            } else {
+                // there's no double quote in the value
+                if (auto semicolon_pos =
+                      str.find_first_not_of(VALID_COOKIE_VALUE.data());
+                    semicolon_pos != str_view_t::npos) {
+                    _value = str.substr(0, semicolon_pos);
+                    str.remove_prefix(semicolon_pos);
+                } else {
+                    _value = str;
+                    str.remove_prefix(str.size() - 1);
+                }
+            }
+
+            // Attention: here we are not checking the rest of the string.
+            // There might be invalid characters after this. We have to
+            // check the whole string for validation. But if it's determined
+            // that it's invalid so far, it really is invalid.
+        };
+
+        void parse_set_cookie_header(str_view_t str) noexcept {
+            parse_SE_value(str);
+        }
 
       public:
         /**
@@ -159,6 +245,18 @@ namespace webpp {
 
         basic_cookie& operator=(const basic_cookie& c) = default;
         basic_cookie& operator=(basic_cookie&& c) noexcept = default;
+
+        explicit operator bool() {
+            return is_valid();
+        }
+
+        bool is_valid() const noexcept {
+            // todo
+            // The _valid may not catch all the validness conditions, so we have
+            // to do other validation checks ourselves.
+            if (!_valid)
+                return false;
+        }
 
         inline auto const& name() const noexcept {
             return _name;

@@ -15,16 +15,16 @@ namespace webpp::stl {
               typename KeyEqual = std::equal_to<Key>,
               typename Allocator =
                 typename Traits::template allocator<::std::pair<const Key, T>>>
-    class unordered_map
-      : public ::std::unordered_map<Key, T, Hash, KeyEqual, Allocator> {};
+    using unordered_map =
+      ::std::unordered_map<Key, T, Hash, KeyEqual, Allocator>;
 
     template <typename Traits, typename Key, typename T,
               typename Hash     = std::hash<Key>,
               typename KeyEqual = std::equal_to<Key>,
               typename Allocator =
                 typename Traits::template allocator<::std::pair<const Key, T>>>
-    class unordered_multimap
-      : public ::std::unordered_multimap<Key, T, Hash, KeyEqual, Allocator> {};
+    using unordered_multimap =
+      ::std::unordered_multimap<Key, T, Hash, KeyEqual, Allocator>;
 
 } // namespace webpp::stl
 

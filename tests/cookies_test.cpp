@@ -152,6 +152,14 @@ TEST(Cookies, CookieJarUniqeness) {
 TEST(Cookies, Date) {
 }
 
+TEST(Cookies, StringParsing) {
+
+    basic_cookie c("name=value");
+    EXPECT_TRUE(c.is_valid());
+    EXPECT_EQ("name", c.name());
+    EXPECT_EQ("value", c.value());
+}
+
 TEST(Cookies, CookiesEncryption) {
     // TODO
 }

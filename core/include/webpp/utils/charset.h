@@ -174,5 +174,8 @@ namespace webpp {
     constexpr auto HEXDIG = charset(DIGIT<CharT>, charset<CharT, 'A', 'F'>(),
                                     charset<CharT, 'a', 'f'>());
 
+
+    template <typename CharT = char>
+    constexpr auto ALPHA_DIGIT = charset<CharT>(ALPHA<CharT>, DIGIT<CharT>);
 } // namespace webpp
 #endif // CHARSET_H
