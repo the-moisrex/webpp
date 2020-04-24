@@ -52,7 +52,7 @@ namespace webpp {
           std::basic_string<char_type, char_traits, allocator<char_type>>;
 
         using stringstream_type =
-          std::basic_stringstream<char_type, char_traits, allocator>;
+          std::basic_stringstream<char_type, char_traits, allocator<char_type>>;
     };
 
     using std_traits = basic_std_traits<char>;
@@ -74,6 +74,16 @@ namespace webpp {
 
     template <typename Traits>
     constexpr auto is_traits_v = is_traits<Traits>::value;
+
+
+    /**
+     * Automatically choose a string type based on mutability requested
+     */
+    template <typename Traits, bool Mutable>
+    using auto_string_type =
+      ::std::conditional_t<Mutable, typename Traits::string_type,
+                           typename Traits::string_view_type>;
+
 
 } // namespace webpp
 

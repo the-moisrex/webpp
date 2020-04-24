@@ -120,7 +120,7 @@ namespace webpp {
 
         using attrs_t =
           std::map<storing_str_t, storing_str_t, std::less<storing_str_t>,
-                   typename Traits::allocator<
+                   typename Traits::template allocator<
                      std::pair<const storing_str_t, storing_str_t>>>;
 
         // todo: encapsulate this
