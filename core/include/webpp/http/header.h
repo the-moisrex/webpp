@@ -1,9 +1,9 @@
 #ifndef WEBPP_HTTP_HEADERS_HPP
 #define WEBPP_HTTP_HEADERS_HPP
 
-#include "../std/map.h"
 #include "../std/string.h"
 #include "../std/string_view.h"
+#include "../std/unordered_map.h"
 #include "cookies.h"
 
 #include <cstdint>
@@ -145,15 +145,21 @@ namespace webpp {
      * fixme: it needs a complete rewrite.
      */
     template <typename Traits = std_traits, bool Mutable = true>
-    class headers
-      : public webpp::stl::multimap<Traits, auto_string_type<Traits, Mutable>,
-                                    auto_string_type<Traits, Mutable>> {
+    class headers {
         static_assert(is_traits_v<Traits>,
                       "The specified template parameter is no a valid traits.");
+
+      private:
+        webpp::stl::unordered_multimap<Traits,
+                                       auto_string_type<Traits, Mutable>,
+                                       auto_string_type<Traits, Mutable>>
+          _headers;
 
       public:
         using traits = Traits;
         using str_t  = auto_string_type<traits, Mutable>;
+
+        struct iterator : public decltype(_headers)::iterator {};
 
       private:
         mutable cookie_jar<Traits, Mutable> _cookies;
