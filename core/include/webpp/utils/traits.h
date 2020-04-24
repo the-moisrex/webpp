@@ -44,8 +44,8 @@ namespace webpp {
         using char_type   = CharT;
         using char_traits = std::char_traits<char_type>;
 
-        template <typename _Tp>
-        using allocator = std::allocator<_Tp>;
+        template <typename Type>
+        using allocator = std::allocator<Type>;
 
         using string_view_type = std::basic_string_view<char_type, char_traits>;
         using string_type =
