@@ -37,9 +37,12 @@ namespace webpp {
     //        std::basic_string_view<CharT>, StringTypeRaw>>;
 
     // trim from start (in place)
-    inline void ltrim(std::string_view& s) noexcept {
+    template <typename CharT      = char,
+              typename CharTraits = std::char_traits<CharT>>
+    inline void ltrim(std::basic_string_view<CharT, CharTraits>& s) noexcept {
         if (auto found = std::find_if_not(s.begin(), s.end(),
                                           [](auto const& c) -> bool {
+                                              // todo: should we use std::isspace here?
                                               return std::isspace(c);
                                           });
             found != s.end()) {
@@ -49,7 +52,9 @@ namespace webpp {
     }
 
     // trim from end (in place)
-    inline void rtrim(std::string_view& s) noexcept {
+    template <typename CharT      = char,
+              typename CharTraits = std::char_traits<CharT>>
+    inline void rtrim(std::basic_string_view<CharT, CharTraits>& s) noexcept {
         if (auto found = std::find_if_not(s.rbegin(), s.rend(),
                                           [](auto const& c) -> bool {
                                               return std::isspace(c);
@@ -61,41 +66,57 @@ namespace webpp {
     }
 
     // trim from both ends (in place)
-    inline void trim(std::string_view& s) noexcept {
+    template <typename CharT      = char,
+              typename CharTraits = std::char_traits<CharT>>
+    inline void trim(std::basic_string_view<CharT, CharTraits>& s) noexcept {
         ltrim(s);
         rtrim(s);
     }
 
     // trim from start (copying)
-    [[nodiscard]] inline std::string_view
-    ltrim_copy(std::string_view s) noexcept {
+    template <typename CharT      = char,
+              typename CharTraits = std::char_traits<CharT>>
+    [[nodiscard]] inline std::basic_string_view<CharT, CharTraits>
+    ltrim_copy(std::basic_string_view<CharT, CharTraits> s) noexcept {
         ltrim(s);
         return s;
     }
 
     // trim from end (copying)
-    [[nodiscard]] inline std::string_view
-    rtrim_copy(std::string_view s) noexcept {
+    template <typename CharT      = char,
+              typename CharTraits = std::char_traits<CharT>>
+    [[nodiscard]] inline std::basic_string_view<CharT, CharTraits>
+    rtrim_copy(std::basic_string_view<CharT, CharTraits> s) noexcept {
         rtrim(s);
         return s;
     }
 
     // trim from both ends (copying)
-    [[nodiscard]] inline std::string_view
-    trim_copy(std::string_view s) noexcept {
+    template <typename CharT      = char,
+              typename CharTraits = std::char_traits<CharT>>
+    [[nodiscard]] inline std::basic_string_view<CharT, CharTraits>
+    trim_copy(std::basic_string_view<CharT, CharTraits> s) noexcept {
         trim(s);
         return s;
     }
 
     // trim from start (in place)
-    inline void ltrim(std::string& s) noexcept {
+    template <typename CharT      = char,
+              typename CharTraits = std::char_traits<CharT>,
+              typename Allocator  = std::allocator<CharT>>
+    inline void
+    ltrim(std::basic_string<CharT, CharTraits, Allocator>& s) noexcept {
         s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
                     return !std::isspace(ch);
                 }));
     }
 
     // trim from end (in place)
-    inline void rtrim(std::string& s) noexcept {
+    template <typename CharT      = char,
+              typename CharTraits = std::char_traits<CharT>,
+              typename Allocator  = std::allocator<CharT>>
+    inline void
+    rtrim(std::basic_string<CharT, CharTraits, Allocator>& s) noexcept {
         s.erase(std::find_if(s.rbegin(), s.rend(),
                              [](int ch) {
                                  return !std::isspace(ch);
@@ -105,30 +126,50 @@ namespace webpp {
     }
 
     // trim from both ends (in place)
-    inline void trim(std::string& s) noexcept {
+    template <typename CharT      = char,
+              typename CharTraits = std::char_traits<CharT>,
+              typename Allocator  = std::allocator<CharT>>
+    inline void
+    trim(std::basic_string<CharT, CharTraits, Allocator>& s) noexcept {
         ltrim(s);
         rtrim(s);
     }
 
     // trim from start (copying)
-    [[nodiscard]] inline std::string ltrim_copy(std::string s) noexcept {
+    template <typename CharT      = char,
+              typename CharTraits = std::char_traits<CharT>,
+              typename Allocator  = std::allocator<CharT>>
+    [[nodiscard]] inline std::basic_string<CharT, CharTraits, Allocator>
+    ltrim_copy(std::basic_string<CharT, CharTraits, Allocator> s) noexcept {
         ltrim(s);
         return s;
     }
 
     // trim from end (copying)
-    [[nodiscard]] inline std::string rtrim_copy(std::string s) noexcept {
+    template <typename CharT      = char,
+              typename CharTraits = std::char_traits<CharT>,
+              typename Allocator  = std::allocator<CharT>>
+    [[nodiscard]] inline std::basic_string<CharT, CharTraits, Allocator>
+    rtrim_copy(std::basic_string<CharT, CharTraits, Allocator> s) noexcept {
         rtrim(s);
         return s;
     }
 
     // trim from both ends (copying)
-    [[nodiscard]] inline std::string trim_copy(std::string s) noexcept {
+    template <typename CharT      = char,
+              typename CharTraits = std::char_traits<CharT>,
+              typename Allocator  = std::allocator<CharT>>
+    [[nodiscard]] inline std::basic_string<CharT, CharTraits, Allocator>
+    trim_copy(std::basic_string<CharT, CharTraits, Allocator> s) noexcept {
         trim(s);
         return s;
     }
 
-    inline void to_lower(std::string& str) noexcept {
+    template <typename CharT      = char,
+              typename CharTraits = std::char_traits<CharT>,
+              typename Allocator  = std::allocator<CharT>>
+    inline void
+    to_lower(std::basic_string<CharT, CharTraits, Allocator>& str) noexcept {
         // FIXME: I think you can make this algorithm faster
         std::transform(str.cbegin(), str.cend(), str.begin(),
                        [](auto const& c) {
@@ -136,7 +177,11 @@ namespace webpp {
                        });
     }
 
-    inline void to_upper(std::string& str) noexcept {
+    template <typename CharT      = char,
+              typename CharTraits = std::char_traits<CharT>,
+              typename Allocator  = std::allocator<CharT>>
+    inline void
+    to_upper(std::basic_string<CharT, CharTraits, Allocator>& str) noexcept {
         // FIXME: I think you can make this algorithm faster
         std::transform(str.cbegin(), str.cend(), str.begin(),
                        [](auto const& c) {
@@ -144,19 +189,31 @@ namespace webpp {
                        });
     }
 
-    [[nodiscard]] inline std::string to_lower_copy(std::string str) noexcept {
+    template <typename CharT      = char,
+              typename CharTraits = std::char_traits<CharT>,
+              typename Allocator  = std::allocator<CharT>>
+    [[nodiscard]] inline std::basic_string<CharT, CharTraits, Allocator>
+    to_lower_copy(
+      std::basic_string<CharT, CharTraits, Allocator> str) noexcept {
         to_lower(str);
         return str;
     }
 
-    [[nodiscard]] inline std::string to_upper_copy(std::string str) noexcept {
+    template <typename CharT      = char,
+              typename CharTraits = std::char_traits<CharT>,
+              typename Allocator  = std::allocator<CharT>>
+    [[nodiscard]] inline std::basic_string<CharT, CharTraits, Allocator>
+    to_upper_copy(
+      std::basic_string<CharT, CharTraits, Allocator> str) noexcept {
         to_upper(str);
         return str;
     }
 
-    template <typename T>
-    [[nodiscard]] constexpr inline bool starts_with(std::string_view const& str,
-                                                    T&& data) noexcept {
+    template <typename T, typename CharT = char,
+              typename CharTraits = std::char_traits<CharT>>
+    [[nodiscard]] constexpr inline bool
+    starts_with(std::basic_string_view<CharT, CharTraits> const& str,
+                T&& data) noexcept {
 #ifdef CXX20
         return str.starts_with(std::forward<T>(data));
 #else
@@ -164,14 +221,19 @@ namespace webpp {
 #endif
     }
 
-    [[nodiscard]] constexpr inline bool ends_with(std::string_view const& str,
-                                                  char c) noexcept {
+    template <typename CharT      = char,
+              typename CharTraits = std::char_traits<CharT>>
+    [[nodiscard]] constexpr inline bool
+    ends_with(std::basic_string_view<CharT, CharTraits> const& str,
+              CharT                                            c) noexcept {
         return !str.empty() && str.back() == c;
     }
 
-    [[nodiscard]] constexpr inline bool
-    ends_with(std::string_view const& str,
-              std::string_view const& ending) noexcept {
+    template <typename CharT      = char,
+              typename CharTraits = std::char_traits<CharT>>
+    [[nodiscard]] constexpr inline bool ends_with(
+      std::basic_string_view<CharT, CharTraits> const& str,
+      std::basic_string_view<CharT, CharTraits> const& ending) noexcept {
 #ifdef CXX20
         return str.ends_with(ending);
 #else

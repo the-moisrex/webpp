@@ -12,9 +12,7 @@
 
 namespace webpp {
 
-    template <typename Traits = std_traits>
-    webpp::stl::basic_string<Traits>
-    status_reason_phrase(unsigned int status_code) noexcept {
+    constexpr auto status_reason_phrase(unsigned int status_code) noexcept {
         switch (status_code) {
             case 100: return "Continue";
             case 101: return "Switching Protocols";
@@ -159,7 +157,28 @@ namespace webpp {
         using traits = Traits;
         using str_t  = auto_string_type<traits, Mutable>;
 
-        struct iterator : public decltype(_headers)::iterator {};
+        struct iterator : public decltype(_headers)::iterator {
+
+
+            basic_cookie<Traits, Mutable> as_cookie() noexcept {
+            }
+
+            /**
+             * Check if the header value is a cookie; it only checks the key not
+             * the value
+             * @return
+             */
+            bool is_cookie() const noexcept {
+            }
+
+            /**
+             * Check if the value is a valid cookie regardless of the header
+             * name
+             * @return
+             */
+            bool is_valid_cookie() const noexcept {
+            }
+        };
 
       private:
         mutable cookie_jar<Traits, Mutable> _cookies;

@@ -30,8 +30,7 @@ namespace webpp::stl {
               typename CharT      = typename Traits::char_type,
               typename CharTraits = typename Traits::char_traits,
               typename Allocator  = typename Traits::allocator>
-    class basic_string
-      : public ::std::basic_string<CharT, CharTraits, Allocator> {};
+    using basic_string = ::std::basic_string<CharT, CharTraits, Allocator>;
 
 
 } // namespace webpp::stl

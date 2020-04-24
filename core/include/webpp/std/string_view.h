@@ -13,8 +13,7 @@ namespace webpp::stl {
     template <typename Traits     = webpp::std_traits,
               typename CharT      = typename Traits::char_type,
               typename CharTraits = typename Traits::char_traits>
-    class basic_string_view
-      : public ::std::basic_string_view<CharT, CharTraits> {};
+    using basic_string_view = ::std::basic_string_view<CharT, CharTraits>;
 
 } // namespace webpp::stl
 
