@@ -74,3 +74,6 @@ gtask add project:net "This is a todo"
 ```
 
 Learn more about TaskWarrior in their own documentation.
+
+## Supported by:
+[JetBrains](https://www.jetbrains.com/?from=webpp)
