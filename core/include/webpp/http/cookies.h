@@ -220,7 +220,10 @@ namespace webpp {
             // There might be invalid characters after this. We have to
             // check the whole string for validation. But if it's determined
             // that it's invalid so far, it really is invalid.
-        };
+        }
+
+        void parse_SE_options(str_view_t& str) noexcept {
+        }
 
         void parse_set_cookie_header(str_view_t str) noexcept {
             parse_SE_value(str);

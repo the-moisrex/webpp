@@ -1,7 +1,7 @@
 // Created by moisrex on 4/23/20.
 
-#ifndef WEBPP_MAP_H
-#define WEBPP_MAP_H
+#ifndef WEBPP_UNORDERED_MAP_H
+#define WEBPP_UNORDERED_MAP_H
 
 #include "../utils/traits.h"
 
@@ -28,4 +28,4 @@ namespace webpp::stl {
 
 } // namespace webpp::stl
 
-#endif // WEBPP_MAP_H
+#endif // WEBPP_UNORDERED_MAP_H

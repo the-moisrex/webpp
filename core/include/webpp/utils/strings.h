@@ -211,7 +211,7 @@ namespace webpp {
 
     template <typename T, typename CharT = char,
               typename CharTraits = std::char_traits<CharT>>
-    [[nodiscard]] constexpr inline bool
+    [[nodiscard]] constexpr bool
     starts_with(std::basic_string_view<CharT, CharTraits> const& str,
                 T&& data) noexcept {
 #ifdef CXX20
@@ -223,7 +223,7 @@ namespace webpp {
 
     template <typename CharT      = char,
               typename CharTraits = std::char_traits<CharT>>
-    [[nodiscard]] constexpr inline bool
+    [[nodiscard]] constexpr bool
     ends_with(std::basic_string_view<CharT, CharTraits> const& str,
               CharT                                            c) noexcept {
         return !str.empty() && str.back() == c;
@@ -231,7 +231,7 @@ namespace webpp {
 
     template <typename CharT      = char,
               typename CharTraits = std::char_traits<CharT>>
-    [[nodiscard]] constexpr inline bool ends_with(
+    [[nodiscard]] constexpr bool ends_with(
       std::basic_string_view<CharT, CharTraits> const& str,
       std::basic_string_view<CharT, CharTraits> const& ending) noexcept {
 #ifdef CXX20
