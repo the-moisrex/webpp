@@ -3,7 +3,7 @@
 
 #include "../std/string.h"
 #include "../std/string_view.h"
-#include "../std/unordered_map.h"
+#include "../std/unordered_set.h"
 #include "cookies.h"
 
 #include <cstdint>
@@ -132,6 +132,77 @@ namespace webpp {
         }
     }
 
+    /**
+     * This enum is used to check if a header is a request header or a response
+     * header. We could have avoided creating this, but if we don't, we might
+     * get ourselves in a jam that's hard to get out.
+     * It's best if the header knows if it's a request header or a response
+     * header since it'll have a deep knowledge of the header fields.
+     */
+    enum class header_type : uint_fast8_t { request, response };
+
+    /**
+     * This is the header class witch will contain the name, and the value of
+     * one single field of a header.
+     * @tparam Traits
+     * @tparam Mutable
+     * @tparam HeaderType
+     */
+    template <typename Traits, bool Mutable, header_type HeaderType>
+    struct header_field {
+        static_assert(
+          is_traits_v<Traits>,
+          "The specified template parameter is not of type of traits.");
+
+        using traits     = Traits;
+        using str_t      = auto_string_type<traits, Mutable>;
+        using str_view_t = typename traits::string_view_type;
+
+        str_t name;
+        str_t value;
+
+
+        basic_cookie<Traits, Mutable> as_cookie() noexcept {
+        }
+
+        constexpr auto get_header_type() const noexcept {
+            return HeaderType;
+        }
+
+        /**
+         * Check if the specified name is the same as the header name
+         * It's not a good idea to compare the name directly; the header name is
+         * case-insensitive.
+         */
+        constexpr bool is_name(str_view_t const& str) const noexcept {
+            return to_lower_copy<str_t::value_type, str_t::traits_type,
+                                 str_t::allocator_type>(name) ==
+                   to_lower_copy<str_view_t::value_type,
+                                 str_view_t::traits_type, traits::allocator>(
+                     str);
+        }
+
+        /**
+         * Check if the header value is a cookie; it only checks the key not
+         * the value
+         */
+        constexpr bool is_cookie() const noexcept {
+            if constexpr (header_type::response == get_header_type()) {
+                return is_name("set-cookie") || is_name("set-cookie2");
+            } else {
+                return is_name("cookie");
+            }
+        }
+
+        /**
+         * Check if the value is a valid cookie regardless of the header
+         * name
+         * @return
+         */
+        bool is_valid_cookie() const noexcept {
+        }
+    };
+
 
     /**
      * Setting non-ascii characters in the value section of the headers should
@@ -142,64 +213,29 @@ namespace webpp {
      *
      * fixme: it needs a complete rewrite.
      */
-    template <typename Traits = std_traits, bool Mutable = true>
-    class headers {
+    template <typename Traits = std_traits, bool Mutable = true,
+              header_type HeaderType = header_type::request>
+    class headers : public webpp::stl::unordered_multiset<
+                      Traits, header_field<Traits, Mutable, HeaderType>> {
+
         static_assert(is_traits_v<Traits>,
                       "The specified template parameter is no a valid traits.");
 
-      private:
-        webpp::stl::unordered_multimap<Traits,
-                                       auto_string_type<Traits, Mutable>,
-                                       auto_string_type<Traits, Mutable>>
-          _headers;
+        using super = webpp::stl::unordered_multiset<
+          Traits, header_field<Traits, Mutable, HeaderType>>;
 
       public:
         using traits = Traits;
         using str_t  = auto_string_type<traits, Mutable>;
 
-        struct iterator : public decltype(_headers)::iterator {
-
-
-            basic_cookie<Traits, Mutable> as_cookie() noexcept {
-            }
-
-            /**
-             * Check if the header value is a cookie; it only checks the key not
-             * the value
-             * @return
-             */
-            bool is_cookie() const noexcept {
-            }
-
-            /**
-             * Check if the value is a valid cookie regardless of the header
-             * name
-             * @return
-             */
-            bool is_valid_cookie() const noexcept {
-            }
-        };
-
       private:
-        mutable cookie_jar<Traits, Mutable> _cookies;
-        uint_fast16_t                       _status_code = 200;
-
-        /**
-         * @brief this method will reload the cookies's cache.
-         * This method is used internally in order to make sure the developer is
-         * not paying anything to parse cookies while he/she is not using
-         * cookies.
-         */
-        void reload_cookies() const noexcept {
-            _cookies.clear();
-            for (auto const& [attr, value] : *this) {
-                if ("set-cookie" == attr) {
-                    _cookies.emplace(value);
-                }
-            }
-        }
+        uint_fast16_t _status_code = 200;
 
       public:
+        constexpr auto get_header_type() const noexcept {
+            return HeaderType;
+        }
+
         /**
          * Check if this header is mutable.
          * @return true if this header can be muted
@@ -226,19 +262,26 @@ namespace webpp {
         /**
          * @brief get cookies
          * @return
+         * todo: how to make the result mutable?
          */
-        auto& cookies() noexcept {
-            reload_cookies();
-            return _cookies;
+        auto cookies() noexcept {
+            cookie_jar<traits, Mutable> cookies;
+            for (auto& c : *this)
+                if (c.is_cookie())
+                    cookies.emplace(c);
+            return cookies;
         }
 
         /**
          * @brief get cookies
          * @return
          */
-        auto const& cookies() const noexcept {
-            reload_cookies();
-            return _cookies;
+        auto cookies() const noexcept {
+            cookie_jar<traits, false> cookies;
+            for (auto& c : *this)
+                if (c.is_cookie())
+                    cookies.emplace(c);
+            return cookies;
         }
 
         /**
@@ -250,9 +293,8 @@ namespace webpp {
          * class itself which you can get access to with "cookies()" method.
          */
         void remove_cookies() noexcept {
-            _cookies.clear();
-            for (auto it = begin(); it != end();) {
-                if (to_lower_copy(it->first) == "set-cookie")
+            for (auto it = super::begin(); it != super::end();) {
+                if (it->is_cookie())
                     it = erase(it);
                 else
                     ++it;
@@ -264,18 +306,17 @@ namespace webpp {
          * @brief replace cookies in the cookie_jar
          * @param cookie_jar
          */
-        void replace_cookies(webpp::cookie_jar&& __cookies) noexcept {
+        template <bool IsMutable>
+        void replace_cookies(
+          webpp::cookie_jar<Traits, IsMutable> const& __cookies) noexcept {
             remove_cookies();
-            _cookies = std::move(__cookies);
-        }
-
-        /**
-         * @brief replace cookies in the cookie_jar
-         * @param cookie_jar
-         */
-        void replace_cookies(webpp::cookie_jar const& __cookies) noexcept {
-            remove_cookies();
-            _cookies = __cookies;
+            for (auto const& c : __cookies) {
+                if constexpr (header_type::request == get_header_type()) {
+                    super::emplace("Cookie", c.request_str());
+                } else {
+                    super::emplace("Set-Cookie", c.response_str());
+                }
+            }
         }
 
         auto str() const noexcept {
