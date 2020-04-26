@@ -14,35 +14,67 @@ namespace webpp {
     /**
      * This class owns its data.
      */
+    template <typename Traits = std_traits>
     class response {
       public:
-        using body_type   = webpp::body;
-        using header_type = webpp::headers;
+        using traits     = Traits;
+        using body_t     = webpp::body;
+        using header_t   = webpp::headers<Traits, true, header_type::response>;
+        using str_view_t = typename traits::string_view_type;
+        using str_t      = typename traits::string_type;
 
-        body_type   body;
-        header_type header;
+        body_t   body;
+        header_t header;
 
-        response() noexcept = default;
-        response(response const& res) noexcept;
-        response(response&& res) noexcept;
-        response(std::string const& b) noexcept;
-        response(std::string&& b) noexcept;
+        response() noexcept                    = default;
+        response(response const& res) noexcept = default;
+        response(response&& res) noexcept      = default;
+        response(str_t const& b) noexcept : body(b) {
+        }
+        response(str_t&& b) noexcept : body(std::move(b)) {
+        }
 
 
         response& operator=(response const&) = default;
-        response& operator                   =(response&& res) noexcept;
-        response& operator                   =(std::string const& str) noexcept;
-        response& operator                   =(std::string& str) noexcept;
+        response& operator=(response&& res) noexcept = default;
+        response& operator=(str_t const& str) noexcept {
+            body.replace_string(str);
+            return *this;
+        }
+        response& operator=(str_t&& str) noexcept {
+            body.replace_string(std::move(str));
+            return *this;
+        }
 
-        [[nodiscard]] bool operator==(response const& res) const noexcept;
-        [[nodiscard]] bool operator!=(response const& res) const noexcept;
+        [[nodiscard]] bool operator==(response const& res) const noexcept {
+            return body == res.body && header == res.header;
+        }
+        [[nodiscard]] bool operator!=(response const& res) const noexcept {
+            return body != res.body || header != res.header;
+        }
 
-        response& operator<<(std::string_view str) noexcept;
+        response& operator<<(str_view_t const& str) noexcept {
+            body << str;
+            return *this;
+        }
 
-        operator std::string_view() const noexcept;
-        operator std::string() const noexcept;
+        operator str_view_t() const noexcept {
+            return body.str();
+        }
+        operator str_t() const noexcept {
+            return str_t{body.str()};
+        }
 
-        void calculate_default_headers() noexcept;
+        void calculate_default_headers() noexcept {
+            // todo: use C++20 header.contains instead when possible
+            if (header.find("Content-Type") == header.cend())
+                header.emplace("Content-Type", "text/html; charset=utf-8");
+
+            if (header.find("Content-Length") == header.cend())
+                header.emplace(
+                  "Content-Length",
+                  std::to_string(body.str().size() * sizeof(char)));
+        }
 
 
         // static methods:
