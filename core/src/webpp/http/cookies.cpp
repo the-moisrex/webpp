@@ -90,14 +90,14 @@ cookie_jar::insert(const value_type& value) {
     auto found = find(value);
     if (found != cend())
         erase(found);
-    return static_cast<super_t*>(this)->insert(value);
+    return static_cast<super*>(this)->insert(value);
 }
 
 std::pair<cookie_jar::iterator, bool> cookie_jar::insert(value_type&& value) {
     auto found = find(value);
     if (found != cend())
         erase(found);
-    return static_cast<super_t*>(this)->insert(std::move(value));
+    return static_cast<super*>(this)->insert(std::move(value));
 }
 
 cookie_jar::iterator cookie_jar::insert(const_iterator    hint,
@@ -105,7 +105,7 @@ cookie_jar::iterator cookie_jar::insert(const_iterator    hint,
     auto found = find(value);
     if (found != cend())
         erase(found);
-    return static_cast<super_t*>(this)->insert(hint, value);
+    return static_cast<super*>(this)->insert(hint, value);
 }
 
 cookie_jar::iterator cookie_jar::insert(const_iterator hint,
@@ -113,7 +113,7 @@ cookie_jar::iterator cookie_jar::insert(const_iterator hint,
     auto found = find(value);
     if (found != cend())
         erase(found);
-    return static_cast<super_t*>(this)->insert(hint, std::move(value));
+    return static_cast<super*>(this)->insert(hint, std::move(value));
 }
 
 void cookie_jar::insert(std::initializer_list<value_type> ilist) {
@@ -122,7 +122,7 @@ void cookie_jar::insert(std::initializer_list<value_type> ilist) {
         if (found != cend())
             erase(found);
     }
-    return static_cast<super_t*>(this)->insert(ilist);
+    return static_cast<super*>(this)->insert(ilist);
 }
 
 cookie_jar&
