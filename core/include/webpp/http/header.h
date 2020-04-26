@@ -4,6 +4,7 @@
 #include "../std/string.h"
 #include "../std/string_view.h"
 #include "../std/unordered_set.h"
+#include "./common.h"
 #include "cookies.h"
 
 #include <cstdint>
@@ -133,15 +134,6 @@ namespace webpp {
     }
 
     /**
-     * This enum is used to check if a header is a request header or a response
-     * header. We could have avoided creating this, but if we don't, we might
-     * get ourselves in a jam that's hard to get out.
-     * It's best if the header knows if it's a request header or a response
-     * header since it'll have a deep knowledge of the header fields.
-     */
-    enum class header_type : uint_fast8_t { request, response };
-
-    /**
      * This is the header class witch will contain the name, and the value of
      * one single field of a header.
      * @tparam Traits
@@ -162,9 +154,20 @@ namespace webpp {
         str_t value;
 
 
-        basic_cookie<Traits, Mutable> as_cookie() noexcept {
+        /*
+         * Get the header as a cookie. Make sure to check if the cookie is
+         * actually valid before using it.
+         */
+        basic_cookie<Traits, Mutable, HeaderType> as_cookie() noexcept {
+            if (is_cookie()) {
+                return basic_cookie<Traits, Mutable, HeaderType>(value);
+            }
+            return {}; // empty and invalid cookie
         }
 
+        /**
+         * Get the header type. Is it a response header or a request header?
+         */
         constexpr auto get_header_type() const noexcept {
             return HeaderType;
         }
@@ -192,14 +195,6 @@ namespace webpp {
             } else {
                 return is_name("cookie");
             }
-        }
-
-        /**
-         * Check if the value is a valid cookie regardless of the header
-         * name
-         * @return
-         */
-        bool is_valid_cookie() const noexcept {
         }
     };
 
