@@ -49,15 +49,18 @@
  *    [ ] Does user's browser support cookies but now it's disabled
  */
 
+#include "../std/unordered_map.h"
 #include "../utils/charset.h"
 #include "../utils/strings.h"
 #include "../utils/traits.h"
+#include "./common.h"
 
 #include <chrono>
 #include <functional>
 #include <map>
 #include <memory>
 #include <string_view>
+#include <type_traits>
 #include <unordered_set>
 
 namespace webpp {
@@ -68,27 +71,9 @@ namespace webpp {
     template <typename Traits = std_traits, bool Mutable = true>
     class cookie_jar;
 
-    /**
-     * Cookie classes are "views of data" type of classes. That means these
-     * classes will not own their own data and they are just a representation
-     * of data which makes the life of the developers more comfortable.
-     *
-     * Here, the header classes (which are "owners of data") will have the data
-     * these classes need and they provide full access to their data to these
-     * classes so they can read and write structured and meaningful data to
-     * them.
-     *
-     * The basic_cookie class can be instantiated by the developer and also the
-     * header classes; and also this class will be used in both requests and
-     * responses. This makes this class very hard to obtain because it also
-     * should be just a representation of data and not the owner of the data; so
-     * the cookie_jar class has to immediately write this data to the header
-     * data and change the pointers/remove the whole basic_cookie class that the
-     * developer created.
-     */
-    template <typename Traits = std_traits, bool Mutable = true>
-    class basic_cookie {
-      public:
+    template <typename Traits, bool Mutable>
+    struct basic_cookie_common {
+
         static_assert(
           is_traits_v<Traits>,
           "The specified traits template parameter is not a valid traits.");
@@ -107,44 +92,13 @@ namespace webpp {
 
         enum class same_site_value { NONE, LAX, STRICT };
 
-        // TODO: consider using "variant<string, string_view>" instead of string_view
-        using date_t      = std::chrono::time_point<std::chrono::system_clock>;
-        using name_t      = storing_str_t;
-        using value_t     = storing_str_t;
-        using domain_t    = storing_str_t;
-        using path_t      = storing_str_t;
-        using expires_t   = std::optional<date_t>;
-        using max_age_t   = unsigned long;
-        using same_site_t = same_site_value;
-        using secure_t    = bool;
-        using host_only_t = bool;
-        using prefix_t    = bool;
-        using encrypted_t = bool;
-        using comment_t   = storing_str_t;
-
-        using attrs_t =
-          std::map<storing_str_t, storing_str_t, std::less<storing_str_t>,
-                   typename Traits::template allocator<
-                     std::pair<const storing_str_t, storing_str_t>>>;
-
-        // todo: encapsulate this
-        attrs_t attrs;
+        using name_t  = storing_str_t;
+        using value_t = storing_str_t;
 
       private:
-        mutable name_t      _name;
-        mutable value_t     _value;
-        mutable domain_t    _domain;
-        mutable path_t      _path;
-        mutable expires_t   _expires;
-        mutable comment_t   _comment;
-        mutable max_age_t   _max_age   = 0;
-        mutable same_site_t _same_site = same_site_value::NONE;
-        mutable secure_t    _secure    = false;
-        mutable host_only_t _host_only = false;
-        mutable encrypted_t _encrypted = false;
-        mutable prefix_t    _prefix    = false;
-        mutable bool        _valid     = false;
-
+        mutable name_t  _name;
+        mutable value_t _value;
+        mutable bool    _valid = false;
 
         constexpr static auto VALID_COOKIE_NAME = charset<char_type>(
           ALPHA_DIGIT<char_type>,
@@ -233,21 +187,18 @@ namespace webpp {
         /**
          * empty basic_cookie
          */
-        basic_cookie()                          = default;
-        basic_cookie(const basic_cookie& c)     = default;
-        basic_cookie(basic_cookie&& c) noexcept = default;
+        basic_cookie_common()                                 = default;
+        basic_cookie_common(const basic_cookie_common& c)     = default;
+        basic_cookie_common(basic_cookie_common&& c) noexcept = default;
 
-        explicit basic_cookie(str_view_t const& /* source */) noexcept {
-            // TODO: implement this, it's important
-        }
-
-        basic_cookie(name_t __name, value_t __value) noexcept
+        basic_cookie_common(name_t __name, value_t __value) noexcept
           : _name(trim_copy(__name)),
             _value(trim_copy(__value)) {
         }
 
-        basic_cookie& operator=(const basic_cookie& c) = default;
-        basic_cookie& operator=(basic_cookie&& c) noexcept = default;
+        basic_cookie_common& operator=(const basic_cookie_common& c) = default;
+        basic_cookie_common&
+        operator=(basic_cookie_common&& c) noexcept = default;
 
         explicit operator bool() {
             return is_valid();
@@ -267,6 +218,76 @@ namespace webpp {
         inline auto const& value() const noexcept {
             return _value;
         }
+
+        auto& name(name_t __name) noexcept {
+            trim(__name);
+            this->_name = std::move(__name);
+            return *this;
+        }
+
+        auto& value(value_t __value) noexcept {
+            trim(__value);
+            _value = std::move(__value);
+            return *this;
+        }
+    };
+
+    template <typename Traits, bool Mutable>
+    struct basic_request_cookie : public basic_cookie_common<Traits, Mutable> {
+      private:
+        using super = basic_cookie_common<Traits, Mutable>;
+
+      public:
+        explicit basic_request_cookie(
+          typename super::str_view_t const& /* source */) noexcept {
+            // TODO: implement this, it's important
+        }
+    };
+
+    template <typename Traits, bool Mutable>
+    struct basic_response_cookie : public basic_cookie_common<Traits, Mutable> {
+      private:
+        using super = basic_cookie_common<Traits, Mutable>;
+
+      public:
+        using date_t      = std::chrono::time_point<std::chrono::system_clock>;
+        using domain_t    = typename super::storing_str_t;
+        using path_t      = typename super::storing_str_t;
+        using expires_t   = std::optional<date_t>;
+        using max_age_t   = unsigned long;
+        using same_site_t = typename super::same_site_value;
+        using secure_t    = bool;
+        using host_only_t = bool;
+        using prefix_t    = bool;
+        using encrypted_t = bool;
+        using comment_t   = typename super::storing_str_t;
+
+        using attrs_t =
+          stl::unordered_map<Traits, typename super::storing_str_t,
+                             typename super::storing_str>;
+
+
+      private:
+        mutable domain_t    _domain;
+        mutable path_t      _path;
+        mutable expires_t   _expires;
+        mutable comment_t   _comment;
+        mutable max_age_t   _max_age   = 0;
+        mutable same_site_t _same_site = super::same_site_value::NONE;
+        mutable secure_t    _secure    = false;
+        mutable host_only_t _host_only = false;
+        mutable encrypted_t _encrypted = false;
+        mutable prefix_t    _prefix    = false;
+
+        // todo: encapsulate this
+        attrs_t attrs;
+
+      public:
+        explicit basic_response_cookie(
+          typename super::str_view_t const& /* source */) noexcept {
+            // TODO: implement this, it's important
+        }
+
         inline auto const& comment() const noexcept {
             return _comment;
         }
@@ -298,56 +319,45 @@ namespace webpp {
             return _encrypted;
         }
 
-        basic_cookie& name(name_t __name) noexcept {
-            trim(__name);
-            this->_name = std::move(__name);
-            return *this;
-        }
-
-        basic_cookie& value(value_t __value) noexcept {
-            trim(__value);
-            _value = std::move(__value);
-            return *this;
-        }
-
-        basic_cookie& comment(comment_t __comment) noexcept {
+        auto& comment(comment_t __comment) noexcept {
             _comment = std::move(__comment);
             return *this;
         }
-        basic_cookie& domain(domain_t __domain) noexcept {
+
+        auto& domain(domain_t __domain) noexcept {
             _domain = std::move(__domain);
             return *this;
         }
-        basic_cookie& path(path_t __path) noexcept {
+        auto& path(path_t __path) noexcept {
             _path = std::move(__path);
             return *this;
         }
-        basic_cookie& max_age(max_age_t __max_age) noexcept {
+        auto& max_age(max_age_t __max_age) noexcept {
             _max_age = __max_age;
             return *this;
         }
-        basic_cookie& prefix(prefix_t __prefix) noexcept {
+        auto& prefix(prefix_t __prefix) noexcept {
             _prefix = __prefix;
             return *this;
         }
-        basic_cookie& same_site(same_site_t __same_site) noexcept {
+        auto& same_site(same_site_t __same_site) noexcept {
             _same_site = __same_site;
             return *this;
         }
-        basic_cookie& secure(secure_t __secure) noexcept {
+        auto& secure(secure_t __secure) noexcept {
             _secure = __secure;
             return *this;
         }
-        basic_cookie& host_only(host_only_t __host_only) noexcept {
+        auto& host_only(host_only_t __host_only) noexcept {
             _host_only = __host_only;
             return *this;
         }
-        basic_cookie& expires(date_t __expires) noexcept {
+        auto& expires(date_t __expires) noexcept {
             _expires = __expires;
             return *this;
         }
 
-        basic_cookie& remove(bool __remove = true) noexcept {
+        auto& remove(bool __remove = true) noexcept {
             using namespace std::chrono;
             if (__remove) {
                 // set the expire date 10 year before now:
@@ -372,7 +382,7 @@ namespace webpp {
          * @brief sets expiration time relative to now.
          */
         template <typename D, typename T>
-        inline basic_cookie&
+        inline auto&
         expires_in(std::chrono::duration<D, T> const& __dur) noexcept {
             _expires = std::chrono::system_clock::now() + __dur;
             return *this;
@@ -383,7 +393,7 @@ namespace webpp {
          * @param __encrypted
          * @return
          */
-        basic_cookie& encrypted(encrypted_t __encrypted) noexcept {
+        auto& encrypted(encrypted_t __encrypted) noexcept {
             _encrypted = __encrypted;
             return *this;
         }
@@ -391,12 +401,12 @@ namespace webpp {
         /**
          * @brief decrypt-able encryption
          */
-        value_t encrypted_value() const noexcept {
+        typename super::value_t encrypted_value() const noexcept {
             // todo implement this
         }
 
-        std::basic_ostream<char_type>&
-        operator<<(std::basic_ostream<char_type>& out) const noexcept {
+        std::basic_ostream<typename super::char_type>& operator<<(
+          std::basic_ostream<typename super::char_type>& out) const noexcept {
             using namespace std::chrono;
             if (_prefix) {
                 if (_secure)
@@ -404,9 +414,9 @@ namespace webpp {
                 else if (_host_only)
                     out << "__Host-";
             }
-            if (!_name.empty()) {
+            if (!super::_name.empty()) {
                 // FIXME: encode/... name and value here. Programmers are dumb!
-                out << _name << "=" << _value;
+                out << super::_name << "=" << super::_value;
 
                 if (!_comment.empty())
                     out << "; Comment=" << _comment;
@@ -437,10 +447,11 @@ namespace webpp {
                 if (_max_age)
                     out << "; Max-Age=" << _max_age;
 
-                if (_same_site != same_site_value::NONE)
+                if (_same_site != super::same_site_value::NONE)
                     out << "; SameSite="
-                        << (_same_site == same_site_value::STRICT ? "Strict"
-                                                                  : "Lax");
+                        << (_same_site == super::same_site_value::STRICT
+                              ? "Strict"
+                              : "Lax");
 
                 // TODO: encode value and check the key here:
                 if (!attrs.empty())
@@ -450,8 +461,16 @@ namespace webpp {
             return out;
         }
 
-        bool operator==(basic_cookie const& c) const noexcept {
-            return _name == c._name && _value == c._value &&
+        template <bool ISMutable>
+        bool operator==(
+          basic_request_cookie<Traits, ISMutable> const& c) const noexcept {
+            return super::_name == c._name && super::_value == c._value;
+        }
+
+        template <bool ISMutable>
+        bool operator==(
+          basic_response_cookie<Traits, ISMutable> const& c) const noexcept {
+            return super::_name == c._name && super::_value == c._value &&
                    _prefix == c._prefix && _encrypted == c._encrypted &&
                    _secure == c._secure && _host_only == c._host_only &&
                    _same_site == c._same_site && _comment == c._comment &&
@@ -459,25 +478,33 @@ namespace webpp {
                    _domain == c._domain && attrs == c.attrs;
         }
 
-        bool operator<(basic_cookie const& c) const noexcept {
+        template <bool ISMutable>
+        bool operator<(
+          basic_response_cookie<Traits, ISMutable> const& c) const noexcept {
             return _expires < c._expires;
         }
 
-        bool operator>(basic_cookie const& c) const noexcept {
+        template <bool ISMutable>
+        bool operator>(
+          basic_response_cookie<Traits, ISMutable> const& c) const noexcept {
             return _expires > c._expires;
         }
 
-        bool operator<=(basic_cookie const& c) const noexcept {
+        template <bool ISMutable>
+        bool operator<=(
+          basic_response_cookie<Traits, ISMutable> const& c) const noexcept {
             return _expires <= c._expires;
         }
 
-        bool operator>=(basic_cookie const& c) const noexcept {
+        template <bool ISMutable>
+        bool operator>=(
+          basic_response_cookie<Traits, ISMutable> const& c) const noexcept {
             return _expires >= c._expires;
         }
 
-        [[nodiscard]] str_t render() const noexcept {
-            std::basic_ostringstream<char_type> os;
-                                                operator<<(os);
+        [[nodiscard]] typename super::str_t render() const noexcept {
+            std::basic_ostringstream<typename super::char_type> os;
+                                                                operator<<(os);
             return os.str();
         }
 
@@ -488,13 +515,19 @@ namespace webpp {
          * @param c
          * @return true if they have the same name, domain, and path
          */
-        [[nodiscard]] bool same_as(basic_cookie const& c) const noexcept {
-            return _name == c._name && _path == c._path && c._domain == _domain;
+        template <bool ISMutable>
+        [[nodiscard]] bool same_as(
+          basic_response_cookie<Traits, ISMutable> const& c) const noexcept {
+            return super::_name == c._name && _path == c._path &&
+                   c._domain == _domain;
         }
 
-        friend inline void swap(basic_cookie& first,
-                                basic_cookie& second) noexcept {
+        template <bool ISMutable>
+        friend inline void
+        swap(basic_response_cookie<Traits, ISMutable>& first,
+             basic_response_cookie<Traits, ISMutable>& second) noexcept {
             using std::swap;
+            swap(first._valid, second._valid);
             swap(first._name, second._name);
             swap(first._value, second._value);
             swap(first._comment, second._comment);
@@ -508,13 +541,48 @@ namespace webpp {
             swap(first._prefix, second._prefix);
             swap(first._same_site, second._same_site);
         }
+    };
 
-        friend struct cookie_hash<char_type>;
-        friend class cookie_jar<char_type>;
+    /**
+     * Cookie classes are "views of data" type of classes. That means these
+     * classes will not own their own data and they are just a representation
+     * of data which makes the life of the developers more comfortable.
+     *
+     * Here, the header classes (which are "owners of data") will have the data
+     * these classes need and they provide full access to their data to these
+     * classes so they can read and write structured and meaningful data to
+     * them.
+     *
+     * The basic_cookie class can be instantiated by the developer and also the
+     * header classes; and also this class will be used in both requests and
+     * responses. This makes this class very hard to obtain because it also
+     * should be just a representation of data and not the owner of the data; so
+     * the cookie_jar class has to immediately write this data to the header
+     * data and change the pointers/remove the whole basic_cookie class that the
+     * developer created.
+     */
+    template <typename Traits = std_traits, bool Mutable = true,
+              header_type HeaderType = header_type::response>
+    class basic_cookie
+      : public ::std::conditional_t<HeaderType == header_type::response,
+                                    basic_response_cookie<Traits, Mutable>,
+                                    basic_request_cookie<Traits, Mutable>> {
+        using super =
+          ::std::conditional_t<HeaderType == header_type::response,
+                               basic_response_cookie<Traits, Mutable>,
+                               basic_request_cookie<Traits, Mutable>>;
+
+      public:
+        static constexpr auto get_header_type() const noexcept {
+            return HeaderType;
+        }
+
+        friend struct cookie_hash<typename super::char_type>;
+        friend class cookie_jar<typename super::char_type>;
     };
 
     // hash function of std::unordered_set<webpp::basic_cookie>
-    template <typename Traits, bool Mutable>
+    template <typename Traits, bool Mutable, header_type HeaderType>
     struct cookie_hash {
 
         template <class T>
@@ -523,14 +591,17 @@ namespace webpp {
             seed ^= hasher(v) + 0x9e3779b9 + (seed << 6u) + (seed >> 2u);
         }
 
-        using argument_type = webpp::basic_cookie<Traits, Mutable>;
+        using argument_type = webpp::basic_cookie<Traits, Mutable, HeaderType>;
         using result_type   = std::size_t;
+
         result_type operator()(argument_type const& c) const noexcept {
             // change the "same_as" method too if you ever touch this function
             cookie_hash::result_type seed = 0;
             hash_combine(seed, c._name);
-            hash_combine(seed, c._domain);
-            hash_combine(seed, c._path);
+            if constexpr (HeaderType == header_type::response) {
+                hash_combine(seed, c._domain);
+                hash_combine(seed, c._path);
+            }
             //    hash_combine(seed, c._value);
             //    hash_combine(seed, c._prefix);
             //    hash_combine(seed, c._secure);
@@ -546,12 +617,18 @@ namespace webpp {
         }
     };
 
-    template <typename CharT = char>
+    template <typename Traits, bool Mutable, header_type HeaderType>
     struct cookie_equals {
-        bool operator()(const basic_cookie<CharT>& lhs,
-                        const basic_cookie<CharT>& rhs) const noexcept {
-            return lhs.name() == rhs.name() && lhs.domain() == rhs.domain() &&
-                   lhs.path() == rhs.path();
+        using cookie_type = basic_cookie<Traits, Mutable, HeaderType>;
+
+        bool operator()(const cookie_type& lhs,
+                        const cookie_type& rhs) const noexcept {
+            if constexpr (HeaderType == header_type::response) {
+                return lhs.name() == rhs.name() &&
+                       lhs.domain() == rhs.domain() && lhs.path() == rhs.path();
+            } else {
+                return lhs.name() == rhs.name();
+            }
         }
     };
 
