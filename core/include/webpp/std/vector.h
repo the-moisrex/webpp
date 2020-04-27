@@ -1,13 +1,13 @@
 // Created by moisrex on 4/23/20.
 
-#ifndef WEBPP_MAP_H
-#define WEBPP_MAP_H
+#ifndef WEBPP_VECTOR_H
+#define WEBPP_VECTOR_H
 
 #include "../utils/traits.h"
 
 #include <vector>
 
-// Traits aware map:
+// Traits aware vector:
 namespace webpp::stl {
 
     template <typename Traits, typename T,
@@ -16,4 +16,4 @@ namespace webpp::stl {
 
 } // namespace webpp::stl
 
-#endif // WEBPP_MAP_H
+#endif // WEBPP_VECTOR_H
