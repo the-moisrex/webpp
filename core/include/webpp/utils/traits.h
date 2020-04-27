@@ -53,6 +53,13 @@ namespace webpp {
 
         using stringstream_type =
           std::basic_stringstream<char_type, char_traits, allocator<char_type>>;
+        using ostringstream_type =
+          std::basic_ostringstream<char_type, char_traits,
+                                   allocator<char_type>>;
+
+        template <typename Type>
+        using ostream_iterator_type =
+          std::ostream_iterator<Type, char_type, char_traits>;
     };
 
     using std_traits = basic_std_traits<char>;
@@ -73,7 +80,7 @@ namespace webpp {
       std::is_integral<typename Traits::char_traits::char_type>>;
 
     template <typename Traits>
-    constexpr auto is_traits_v = is_traits<Traits>::value;
+    constexpr bool is_traits_v = is_traits<Traits>::value;
 
 
     /**
