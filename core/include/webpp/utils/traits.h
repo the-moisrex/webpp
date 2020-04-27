@@ -2,6 +2,7 @@
 #ifndef WEBPP_TRAITS_H
 #define WEBPP_TRAITS_H
 
+#include <iterator>
 #include <string>
 #include <string_view>
 

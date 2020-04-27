@@ -1,6 +1,7 @@
 #ifndef WEBPP_UTILS_URI_H
 #define WEBPP_UTILS_URI_H
 
+#include "../std/map.h"
 #include "../std/vector.h"
 #include "../validators/validators.h"
 #include "./casts.h"
