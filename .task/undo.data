@@ -498,3 +498,15 @@ new [description:"find a better way to specialize empty_t" entry:"1587144992" mo
 time 1587181023
 new [description:"add jetbrains logo" entry:"1587181023" modified:"1587181023" status:"pending" uuid:"75fd27e4-fb61-4397-89de-1558f07a5f23"]
 ---
+time 1587982952
+new [description:"convert to_uint and friend. I mean their usage" entry:"1587982952" modified:"1587982952" project:"traits" status:"pending" uuid:"89885db7-3262-48e9-88d1-f40f1e2d0e3f"]
+---
+time 1587982966
+new [description:"convert ipv4" entry:"1587982966" modified:"1587982966" project:"traits" status:"pending" uuid:"9f0a7c72-3b23-45b8-af1c-00c549c6fa63"]
+---
+time 1587982986
+new [description:"convert validators" entry:"1587982986" modified:"1587982986" project:"traits" status:"pending" uuid:"bbfdc424-1325-4c03-b853-f26519e7453f"]
+---
+time 1587983058
+new [description:"convert utils\/string.h file." entry:"1587983058" modified:"1587983058" project:"traits" status:"pending" uuid:"7c7837e7-6803-4b7f-ac37-76fc1b478ee9"]
+---

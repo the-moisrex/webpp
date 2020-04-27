@@ -152,3 +152,7 @@
 {"description":"a valve that wraps a function","entry":"20200417T143339Z","modified":"20200417T143339Z","project":"valves","status":"pending","uuid":"48c08fbb-9cfe-4be3-b20b-703415927613"}
 {"description":"find a better way to specialize empty_t","entry":"20200417T173632Z","modified":"20200417T173632Z","project":"valves","status":"pending","uuid":"725c4707-29eb-4549-94c2-615190b86ae8"}
 {"description":"add jetbrains logo","entry":"20200418T033703Z","modified":"20200418T033703Z","status":"pending","uuid":"75fd27e4-fb61-4397-89de-1558f07a5f23"}
+{"description":"convert to_uint and friend. I mean their usage","entry":"20200427T102232Z","modified":"20200427T102232Z","project":"traits","status":"pending","uuid":"89885db7-3262-48e9-88d1-f40f1e2d0e3f"}
+{"description":"convert ipv4","entry":"20200427T102246Z","modified":"20200427T102246Z","project":"traits","status":"pending","uuid":"9f0a7c72-3b23-45b8-af1c-00c549c6fa63"}
+{"description":"convert validators","entry":"20200427T102306Z","modified":"20200427T102306Z","project":"traits","status":"pending","uuid":"bbfdc424-1325-4c03-b853-f26519e7453f"}
+{"description":"convert utils\/string.h file.","entry":"20200427T102418Z","modified":"20200427T102418Z","project":"traits","status":"pending","uuid":"7c7837e7-6803-4b7f-ac37-76fc1b478ee9"}
