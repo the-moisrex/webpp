@@ -3,6 +3,7 @@
 
 #include "http/request.h"
 #include "http/response.h"
+#include "std/vector.h"
 #include "utils/const_list.h"
 #include "utils/containers.h"
 #include "utils/functional.h"
@@ -38,11 +39,13 @@ namespace webpp {
     void handle_exception(RequestType const& /* req */) noexcept {
     }
 
-    template <typename Interface, typename C>
-    inline auto call_it(C& c, request_t<Interface> const& req,
-                        response& res) noexcept {
-        using req_t    = request_t<Interface> const&;
-        using res_t    = response&;
+    template <typename Traits, typename Interface, typename C>
+    inline auto call_it(C& c, request_t<Traits, Interface> const& req,
+                        response<Traits>& res) noexcept {
+        static_assert(is_traits_v<Traits>,
+                      "The specified template parameter is not a valid traits");
+        using req_t    = request_t<Traits, Interface> const&;
+        using res_t    = response<Traits>&;
         using callable = std::decay_t<C>;
         auto callback  = std::forward<C>(c);
 
@@ -156,11 +159,20 @@ namespace webpp {
     /**
      * @brief This route class contains one single root route and it's children
      */
-    template <typename Interface, typename Callable,
+    template <typename Traits, typename Interface, typename Callable,
               typename Valve = valves::empty_t>
     class route : private make_inheritable<Callable> {
-        using req_t       = request_t<Interface> const&;
-        using res_t       = response&;
+        static_assert(
+          is_traits_v<Traits>,
+          "The specified template parameter is not a valid traits.");
+
+      public:
+        using traits    = Traits;
+        using interface = Interface;
+
+      private:
+        using req_t       = request_t<Traits, Interface> const&;
+        using res_t       = response<Traits>&;
         using condition_t = Valve;
         using callable    = make_inheritable<Callable>;
 
@@ -263,11 +275,17 @@ namespace webpp {
     // std::function<response(request_t<Interface> const&, response&)>,
     // std::function<response(response&, request_t<Interface> const&)>>;
     //
-    template <typename Interface>
+    template <typename Traits, typename Interface>
     struct dynamic_route {
+        static_assert(
+          is_traits_v<Traits>,
+          "The specified template parameter is not a valid traits.");
+        using traits    = Traits;
+        using interface = Interface;
+
       protected:
-        using req_t = request_t<Interface> const&;
-        using res_t = response&;
+        using req_t = request_t<Traits, Interface> const&;
+        using res_t = response<Traits>&;
         // todo: maybe don't use std::function? it's slow a bit (but not that
         // much)
         using callback_t  = std::function<void(req_t, res_t)>;
@@ -309,11 +327,23 @@ namespace webpp {
      *
      * @param Interface
      */
-    template <typename Interface,
-              typename RouteList = std::vector<dynamic_route<Interface>>>
+    template <typename Traits, typename Interface,
+              typename RouteList =
+                stl::vector<Traits, dynamic_route<Traits, Interface>>>
     class router {
-        using req_t = request_t<Interface> const&;
-        using res_t = response&;
+      public:
+        static_assert(
+          is_traits_v<Traits>,
+          "The specified template parameter is not a valid traits type.");
+
+        using traits    = Traits;
+        using interface = Interface;
+
+      private:
+        using req_t_raw = request_t<traits, interface>;
+        using res_t_raw = response<traits>;
+        using req_t     = req_t_raw const&;
+        using res_t     = res_t_raw&;
 
         // this is the main route which includes other routes:
         // This is a "const_list":
@@ -330,8 +360,8 @@ namespace webpp {
          * @param req
          * @return final response
          */
-        template <typename RequestType  = request_t<Interface>,
-                  typename ResponseType = response>
+        template <typename RequestType  = req_t_raw,
+                  typename ResponseType = res_t_raw>
         ResponseType operator()(RequestType& req) noexcept {
             // FIXME: make sure it's as performant as possible.
             ResponseType res;
@@ -348,7 +378,7 @@ namespace webpp {
                   std::begin(routes), std::end(routes), [&](auto& _route) {
                       static_assert(
                         std::is_same_v<std::decay_t<decltype(_route)>,
-                                       dynamic_route<Interface>>,
+                                       dynamic_route<traits, interface>>,
                         "The specified type is not a dynamic_route.");
                       for_each_route_do(_route);
                   });
@@ -368,12 +398,12 @@ namespace webpp {
 
         template <typename Valve, typename Route>
         constexpr auto on(Valve&& v, Route&& r) noexcept {
-            static_assert(
-              std::is_invocable_v<Route, req_t, res_t> ||
-                std::is_invocable_v<route<Interface, Route>, req_t, res_t>,
-              "The specified route is not valid.");
+            static_assert(std::is_invocable_v<Route, req_t, res_t> ||
+                            std::is_invocable_v<route<traits, interface, Route>,
+                                                req_t, res_t>,
+                          "The specified route is not valid.");
 
-            auto _route = route<Interface, Route, Valve>{
+            auto _route = route<traits, interface, Route, Valve>{
               std::forward<Valve>(v), std::forward<Route>(r)};
 
             if constexpr (is_specialization_of<RouteList, std::tuple>::value) {
