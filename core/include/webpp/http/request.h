@@ -43,7 +43,7 @@ namespace webpp {
      * This class doesn't own its data (at least the ones that are important)
      * @tparam Interface
      */
-    template <typename Interface>
+    template <typename Traits, typename Interface>
     class request_t : public basic_request_t {};
 } // namespace webpp
 
