@@ -21,7 +21,7 @@ namespace webpp {
 
 
     template <typename Traits = std_traits>
-    struct cgi : public basic_interface<cgi<Traits>> {
+    struct cgi : public basic_interface<Traits, cgi<Traits>> {
       public:
         using traits     = Traits;
         using str_view_t = typename Traits::string_view_type;
