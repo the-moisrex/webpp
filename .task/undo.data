@@ -510,3 +510,6 @@ new [description:"convert validators" entry:"1587982986" modified:"1587982986" p
 time 1587983058
 new [description:"convert utils\/string.h file." entry:"1587983058" modified:"1587983058" project:"traits" status:"pending" uuid:"7c7837e7-6803-4b7f-ac37-76fc1b478ee9"]
 ---
+time 1588086547
+new [description:"add dependency injection to the routes" entry:"1588086547" modified:"1588086547" project:"routes" status:"pending" uuid:"f40319a7-85d2-41d5-9b02-50fb9c48da07"]
+---
