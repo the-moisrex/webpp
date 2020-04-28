@@ -3,20 +3,21 @@
 #include <webpp/interfaces/cgi>
 #include <webpp/router>
 #include <webpp/server>
+#include <webpp/utils/traits>
 #include <webpp/valves/methods>
 #include <webpp/valves/uri>
 
 using namespace webpp;
 using namespace webpp::valves;
-
-using request = request_t<cgi>;
+using iface   = cgi<std_traits>;
+using request = request_t<iface>;
 
 response about_page(request req) {
     return response::file("about.html");
 }
 
 int main() {
-    server<cgi> app;
+    server<iface> app;
     app.router.on("/"_path, [] {
         return "main page";
     });
