@@ -126,8 +126,9 @@ namespace webpp {
         constexpr size_type _size = digit_count<ValueType>() + 1;
         if constexpr (std::is_same_v<char_type, char>) {
             str_t str(_size, '\0');
-            std::to_chars(str.data(), str.data() + _size, value,
-                          std::forward<R>(args)...);
+            auto [p, _] = std::to_chars(str.data(), str.data() + _size, value,
+                                        std::forward<R>(args)...);
+            str.resize(p - str.data());
             return str;
         } else {
             char str[_size];
