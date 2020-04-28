@@ -188,9 +188,15 @@ namespace webpp::valves {
      * Dynamic version of the above valve class.
      * todo: use a better name maybe?
      */
-    template <typename Interface>
+    template <typename Traits, typename Interface>
     struct dynamic_valve {
-        using req_t = request_t<Interface> const&;
+        static_assert(
+          is_traits_v<Traits>,
+          "The specified template parameter is not a valid traits type.");
+
+        using traits    = Traits;
+        using interface = Interface;
+        using req_t     = request_t<traits, interface> const&;
 
       protected:
         std::function<bool(req_t)> func;
