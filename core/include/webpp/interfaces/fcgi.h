@@ -4,6 +4,7 @@
 #include "../http/request.h"
 #include "../std/internet.h"
 #include "basic_interface.h"
+#include "common/server.h"
 
 #include <set>
 
@@ -19,9 +20,23 @@ namespace webpp {
         using endpoint_t = std::net::ip::tcp::endpoint;
 
       private:
-        class fcgi_impl;
-        std::set<endpoint_t>       _endpoints;
-        std::unique_ptr<fcgi_impl> impl;
+        std::set<endpoint_t> _endpoints;
+        common::server       server;
+
+        auto get_endpoints() noexcept {
+            std::net::ip::tcp::resolver resolver(_server.io);
+            std::error_code             ec;
+            //        std::net::ip::tcp::resolver::results_type _endpoints;
+            //        if (_fcgi->endpoints().empty()) {
+            //            _endpoints = resolver.resolve(
+            //                default_fcgi_listen_addr,
+            //                std::to_string(default_fcgi_listen_port));
+            //        } else {
+            //            _endpoints = std::net::ip::tcp::v4();
+            //        }
+            return std::vector<std::net::ip::tcp::endpoint>{};
+        }
+
 
       public:
         webpp::router<traits, fcgi> router;
@@ -60,7 +75,7 @@ namespace webpp {
         }
     };
 
-    template <template Traits>
+    template <typename Traits>
     class request_t<Traits, fcgi<Traits>> {
       private:
       public:
