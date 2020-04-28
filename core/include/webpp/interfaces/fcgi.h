@@ -9,8 +9,13 @@
 
 namespace webpp {
 
-    class fcgi : public basic_interface<fcgi> {
+    template <typename Traits>
+    class fcgi : public basic_interface<Traits, fcgi<Traits>> {
       public:
+        static_assert(
+          is_traits_v<Traits>,
+          "The specified template parameter is not a valid traits type.");
+        using traits     = Traits;
         using endpoint_t = std::net::ip::tcp::endpoint;
 
       private:
@@ -19,7 +24,7 @@ namespace webpp {
         std::unique_ptr<fcgi_impl> impl;
 
       public:
-        webpp::router<fcgi> router;
+        webpp::router<traits, fcgi> router;
 
         fcgi() noexcept;
 
@@ -55,8 +60,8 @@ namespace webpp {
         }
     };
 
-    template <>
-    class request_t<fcgi> {
+    template <template Traits>
+    class request_t<Traits, fcgi<Traits>> {
       private:
       public:
     };
