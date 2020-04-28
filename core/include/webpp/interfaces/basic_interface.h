@@ -15,13 +15,20 @@ namespace webpp {
      *   - Creating request
      *   - Routing
      */
-    template <typename Interface>
+    template <typename Traits, typename Interface>
     class basic_interface {
       private:
         bool _hijack_stdio = false;
 
       public:
-        webpp::router<Interface> router;
+        static_assert(
+          is_traits_v<Traits>,
+          "The specified template parameter is not a valid traits type.");
+
+        using traits    = Traits;
+        using interface = Interface;
+
+        webpp::router<traits, interface> router;
 
         auto hijack_stio() const noexcept {
             return _hijack_stdio;
@@ -30,7 +37,7 @@ namespace webpp {
         /**
          * This will hijack stdio (cout, cin, cerr) while processing the
          * requests. This will only affect the next requests and not the ones
-         * that are currently being proccessed.
+         * that are currently being processed.
          * TODO: enable hijacking right away instead of constantly checking for it later (if possible)
          */
         void hijack_stio(bool _hijack_stdio) noexcept {

@@ -1499,11 +1499,10 @@ namespace webpp {
          */
         template <typename Iter>
         basic_uri& path(const Iter& _start, const Iter& _end) noexcept {
+            using ostream_iterator_t = typename traits::ostream_iterator_type;
             typename traits::ostringstream_type joined_path;
             // TODO: check if we need std::string here
-            copy(_start, _end - 1,
-                 (typename traits::ostream_iterator_type) < str_view_t >
-                   (joined_path, "/"));
+            copy(_start, _end - 1, ostream_iterator_t(joined_path, "/"));
             joined_path << *std::prev(_end);
             return path(str_view_t(joined_path.str()));
         }
