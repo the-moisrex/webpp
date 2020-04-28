@@ -3,6 +3,7 @@
 #define WEBPP_TRAITS_H
 
 #include <iterator>
+#include <ostream>
 #include <string>
 #include <string_view>
 
@@ -61,6 +62,8 @@ namespace webpp {
         template <typename Type>
         using ostream_iterator_type =
           std::ostream_iterator<Type, char_type, char_traits>;
+
+        using ostream_type = std::basic_ostream<char_type, char_traits>;
     };
 
     using std_traits = basic_std_traits<char>;
