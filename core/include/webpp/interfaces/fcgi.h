@@ -22,7 +22,7 @@ namespace webpp {
 
       private:
         stl::set<traits, endpoint_t> _endpoints;
-        common::server               server;
+        common::server               _server;
 
         auto get_endpoints() noexcept {
             std::net::ip::tcp::resolver resolver(_server.io);
