@@ -6,13 +6,20 @@
 
 namespace webpp {
 
-    template <typename Interface>
+    template <typename Traits, typename Interface>
     class server : public Interface {
         static_assert(
-          std::is_convertible_v<Interface, basic_interface<Interface>>,
+          is_traits_v<Traits>,
+          "The specified template parameter is not a valid traits type.");
+
+        static_assert(
+          std::is_convertible_v<Interface, basic_interface<Traits, Interface>>,
           "It's not an interface");
 
       public:
+        using traits    = Traits;
+        using interface = Interface;
+
         using Interface::Interface;
 
         int run() noexcept {
