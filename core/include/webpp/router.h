@@ -17,10 +17,6 @@
 
 namespace webpp {
 
-    std::map<std::string_view, std::string_view>
-    parse_vars(std::string_view const& tmpl,
-               std::string_view const& path) noexcept;
-
     template <typename T, typename U>
     struct can_cast
       : std::integral_constant<

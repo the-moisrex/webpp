@@ -44,6 +44,82 @@ namespace webpp::valves {
         using valve<path_condition<traits>>::valve;
     };
 
+
+
+
+
+    /**
+     * TODO: add types to the "{user_id}" to be able to use it as "{int:user_id}"
+     */
+    std::map<std::string_view, std::string_view>
+    parse_vars(std::string_view const& _templ,
+               std::string_view const& _path) noexcept {
+        using namespace webpp;
+
+        std::map<std::string_view, std::string_view> res;
+
+        using ptr_t = decltype(_templ.data());
+
+        ptr_t templ_start = _templ.data();
+        ptr_t templ_end   = _templ.data() + _templ.size();
+        ptr_t curly_start = templ_end;
+        ptr_t colon       = templ_end;
+        ptr_t path_char   = _path.data();
+
+        for (ptr_t c = templ_start; *c; c++) {
+            // breaks out of the loop when the template and the paths don't
+            // match
+            if (curly_start == templ_end && *c != '{' && *c != *path_char++)
+                break;
+
+            switch (*c) {
+                case '{':
+                    if (curly_start == templ_end) {
+                        colon = curly_start = c;
+                    }
+                    break;
+                case ':':
+                    if (curly_start != templ_end) {
+                        colon = c;
+                    }
+                    break;
+                case '}':
+                    // check if we are in a curly braces
+                    if (curly_start != templ_end) {
+                        std::string_view key{
+                          colon + 1, static_cast<std::string_view::size_type>(
+                                       c - colon - 1)};
+
+                        // find _ in "{var}_" inside path
+                        // this doesn't take the / in account
+                        auto next_char_path =
+                          std::string_view{path_char}.find(*(c + 1));
+
+                        std::string_view value{
+                          path_char,
+                          std::min(next_char_path,
+                                   _path.size() - (path_char - _path.data()))};
+                        /*
+                        std::string_view type{curly_start + 1,
+                                              static_cast<std::string_view::size_type>(
+                                                  colon - curly_start)};
+                                                  */
+                        res[key] = value;
+
+                        // preparing for the next variable
+                        curly_start = colon = templ_end; // reset
+                        path_char += next_char_path;
+                    }
+                    break;
+            }
+        }
+
+        return res;
+    }
+
+
+
+
     /**
      * Check whether or not the specified URI path is a match for the specified
      * template. This function will be used in "tpath_condition". I didn't
@@ -159,7 +235,8 @@ namespace webpp::valves {
 
     /**
      * Features:
-     *   - [ ] Specifying the type of the segment
+     *   - [ ] Type
+     *     - [ ] Default type
      *   - [ ] Validating the segments with a custom method
      *   - [ ] Partial segments: segments that are not between two slashes
      *   - [ ] Naming the segments
@@ -173,16 +250,16 @@ namespace webpp::valves {
      *   - [ ] Custom SegTypes (Segment Types):
      *     - [ ]
      * Examples of tpath:
-     *   - /{@int:user_id}/profile
-     *   - /{@username:username}/profile
-     *   - /{@int}
-     *   - /{@email}
-     *   - /page/{@uint:page_num}.html
-     *   - /product/{@product_list:prod_name}/view
+     *   - /{int:user_id}/profile
+     *   - /{username:username}/profile
+     *   - /{int:}
+     *   - /{email:}
+     *   - /page/{uint:page_num}.html
+     *   - /product/{product_list:prod_name}/view
      *   - /view/{view_name}
-     *   - /{one}/{two}
-     *   - /{slugs...}/page/{@uint:page_num}
-     *   - /{controller=Home}/{action=Index}/{id?}
+     *   - /{string:one}/{two}
+     *   - /{slugs...}/page/{uint:page_num}
+     *   - /{string:controller=Home}/{action=Index}/{id?}
      * Attention: getting those segments are the responsibility of the
      * "route" class. We will define the implementation for it here, but the
      * final user should get the data from there; they can use this feature
