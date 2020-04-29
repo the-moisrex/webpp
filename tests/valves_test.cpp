@@ -3,7 +3,7 @@
 #include "../core/include/webpp/traits/std_traits.h"
 #include "../core/include/webpp/valves/literals.h"
 #include "../core/include/webpp/valves/methods.h"
-#include "../core/include/webpp/valves/uri.h"
+#include "../core/include/webpp/valves/path.h"
 
 #include <gtest/gtest.h>
 #include <string>

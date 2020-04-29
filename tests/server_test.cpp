@@ -1,7 +1,7 @@
 #include "../core/include/webpp/server.h"
 
 #include "../core/include/webpp/interfaces/basic_interface.h"
-#include "../core/include/webpp/valves/uri.h"
+#include "../core/include/webpp/valves/path.h"
 
 #include <gtest/gtest.h>
 #include <string>
