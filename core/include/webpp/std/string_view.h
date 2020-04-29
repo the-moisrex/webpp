@@ -3,7 +3,7 @@
 #ifndef WEBPP_STRING_VIEW_H
 #define WEBPP_STRING_VIEW_H
 
-#include "../utils/traits.h"
+#include "../traits/std_traits.h"
 
 #include <string_view>
 

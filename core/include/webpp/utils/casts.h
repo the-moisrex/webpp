@@ -1,7 +1,7 @@
 #ifndef WEBPP_CASTS_H
 #define WEBPP_CASTS_H
 
-#include "traits.h"
+#include "../traits/std_traits.h"
 
 #include <charconv>
 #include <stdexcept>

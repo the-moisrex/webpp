@@ -43,7 +43,7 @@
  *    [X] Add customization of cookies in the cookie jar. e.g:
  *         encrypted("cookiename", true)
  *    [X] Move the definitions of the basic_cookie jar into cookies.cpp file
- *    [ ] Consider renaming "cookies" to "cookie_jar"
+ *    [X] Consider renaming "cookies" to "cookie_jar"
  *    [ ] Add doxygen documentations/comments to the declarations
  *    [ ] Does user's browser support cookies
  *    [ ] Does user's browser support cookies but now it's disabled
@@ -51,9 +51,9 @@
 
 #include "../std/unordered_map.h"
 #include "../std/unordered_set.h"
+#include "../traits/std_traits.h"
 #include "../utils/charset.h"
 #include "../utils/strings.h"
-#include "../utils/traits.h"
 #include "./common.h"
 
 #include <chrono>
