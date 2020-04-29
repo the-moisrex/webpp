@@ -3,13 +3,13 @@
 
 #include "../std/map.h"
 #include "../std/vector.h"
+#include "../traits/std_traits.h"
 #include "../validators/validators.h"
 #include "./casts.h"
 #include "./charset.h"
 #include "./ipv4.h"
 #include "./ipv6.h"
 #include "./strings.h"
-#include "./traits.h"
 
 #include <functional>
 #include <memory>

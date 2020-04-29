@@ -171,12 +171,12 @@ namespace webpp {
         using interface = Interface;
 
       private:
-        using req_t       = request_t<Traits, Interface> const&;
-        using res_t       = response<Traits>&;
-        using condition_t = Valve;
-        using callable    = make_inheritable<Callable>;
+        using req_t    = request_t<Traits, Interface> const&;
+        using res_t    = response<Traits>&;
+        using valve_t  = Valve;
+        using callable = make_inheritable<Callable>;
 
-        condition_t condition = condition_t{};
+        valve_t condition = valve_t{};
 
         // TODO: check for padding
         bool active = true;
@@ -202,7 +202,7 @@ namespace webpp {
         }
 
         template <typename... Args>
-        constexpr route(condition_t con, Args&&... args) noexcept
+        constexpr route(valve_t con, Args&&... args) noexcept
           : condition(std::move(con)),
             callable{std::forward<Args>(args)...} {
         }
@@ -210,7 +210,7 @@ namespace webpp {
         constexpr route(Callable c) noexcept : callable(c) {
         }
 
-        constexpr route(condition_t con) noexcept : condition(std::move(con)) {
+        constexpr route(valve_t con) noexcept : condition(std::move(con)) {
         }
 
         //        constexpr route(condition_t con, Callable c) noexcept

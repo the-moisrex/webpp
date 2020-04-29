@@ -1,5 +1,7 @@
 // Created by moisrex on 11/7/19.
 #include "../core/include/webpp/http/request.h"
+#include "../core/include/webpp/traits/std_traits.h"
+#include "../core/include/webpp/valves/literals.h"
 #include "../core/include/webpp/valves/methods.h"
 #include "../core/include/webpp/valves/uri.h"
 

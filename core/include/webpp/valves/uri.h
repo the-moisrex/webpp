@@ -1,8 +1,7 @@
 #ifndef WEBPP_VALVE_URI_H
 #define WEBPP_VALVE_URI_H
 
-#include "../../../include/webpp/common/meta.h"
-#include "../../../include/webpp/utils/uri.h"
+#include "../utils/uri.h"
 #include "valve.h"
 
 #include <cassert>
@@ -11,12 +10,19 @@
 
 namespace webpp::valves {
 
+    template <typename Traits = std_traits>
     struct path_condition {
+      public:
+        static_assert(
+          is_traits_v<Traits>,
+          "The specified template parameter is not a valid traits type.");
+        using traits = Traits;
+
       protected:
-        const_uri _path;
+        basic_uri<traits, false> _path;
 
       public:
-        constexpr path_condition(std::string_view str) noexcept
+        constexpr path_condition(typename traits::string_view_type str) noexcept
           : _path(std::move(str)) {
         }
 
@@ -28,13 +34,15 @@ namespace webpp::valves {
         }
     };
 
-    struct path : public valve<path_condition> {
-        using valve<path_condition>::valve;
-    };
+    template <typename Traits = std_traits>
+    struct path : public valve<path_condition<Traits>> {
+        static_assert(
+          is_traits_v<Traits>,
+          "The specified template parameter is not a valid traits type.");
+        using traits = Traits;
 
-    constexpr path operator""_path(const char* str, std::size_t len) {
-        return path{std::string_view{str, len}};
-    }
+        using valve<path_condition<traits>>::valve;
+    };
 
     /**
      * Check whether or not the specified URI path is a match for the specified
