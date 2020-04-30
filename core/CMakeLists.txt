@@ -7,7 +7,9 @@ set(ALL_SOURCES
 
         ${LIB_SRC_DIR}/webpp/valves/valve.cpp
         ${LIB_SRC_DIR}/webpp/valves/methods.cpp
-        ${LIB_SRC_DIR}/webpp/valves/uri.cpp
+        ${LIB_SRC_DIR}/webpp/valves/path.cpp
+        ${LIB_SRC_DIR}/webpp/valves/tpath.cpp
+        ${LIB_SRC_DIR}/webpp/valves/opath.cpp
 
         ${LIB_SRC_DIR}/webpp/validators/validators.cpp
         ${LIB_SRC_DIR}/webpp/validators/email.cpp

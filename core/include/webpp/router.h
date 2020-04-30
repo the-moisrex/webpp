@@ -45,8 +45,7 @@ namespace webpp {
         using callable = std::decay_t<C>;
         auto callback  = std::forward<C>(c);
 
-        // TODO: add more overrides. You can simulate "dependency injection"
-        // here
+        // TODO: add more overrides. You can simulate "dependency injection" here
 
         if constexpr (std::is_invocable_v<callable, req_t>) {
             using RetType = std::invoke_result_t<callable, req_t>;
