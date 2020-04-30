@@ -10,6 +10,53 @@
 
 namespace webpp::valves {
 
+    /**
+     * The new routing system:
+     *
+     * Route types:
+     *   - Entry routes
+     *   - Sub routes
+     *
+     * Definitions:
+     *   - Route:       Possible ways that are capable of handling user requests
+     *   - Entry Route: The main routes that will be checked first
+     *   - Sub Route:   The routes belong to the each Entry Routes
+     *   - Context:     An object of arbitrary type that will contain everything
+     *                  that routes will need including:
+     *                    - Request
+     *                    - Response
+     *                    - Previous entry routes
+     *                    - Previous sub routes
+     *
+     *
+     * Features we need:
+     *   - [ ] Extendable entry and sub routes
+     *     - [ ] Use class operator() as a place to add more sub-routes
+     *   - [ ] Having access to the context class in the callables
+     *   - [ ] Having access to the request and the response
+     *   - [ ] Termination of continuation of checking the sub-routes by parents
+     *   - [ ] Termination of continuation of checking the entry-routes by any
+     *         previous routes, or sub-routes.
+     *   - [ ] Context modification
+     *     - [ ] Sub-Route local context modification by any previous sub-routes
+     *     - [ ] Inter-Entry-Route context modification by any previous
+     *           (sub/entry) routes
+     *   - [ ] Entry-Route prioritization
+     *     - [ ] Auto prioritization
+     *     - [ ] Manual prioritization
+     *     - [ ] Hinted prioritization
+     *     - [ ] On-The-Fly Re-Prioritization
+     *
+     * Examples:
+     *   - .on(get and "/about"_path >> about_page)
+     *   - ( get and "/home"_path ) or ( post && "/home/{page}"_tpath ) >> ...
+     *   - opath() /"home" / integer("page") /
+     *   - empty / action_list("action", {"open", "delete"}) >> []{...}
+     *   - (...) >> &non_templated_class_with_templated_callable_operator
+     *   - get and "/profile/"_tpath and set_by_class_constructor
+     */
+
+
     struct empty_condition {
         template <typename RequestType>
         [[nodiscard]] constexpr bool
