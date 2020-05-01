@@ -13,6 +13,48 @@ namespace webpp::valves {
     /**
      * The new routing system:
      *
+     * Problems this system will solve compared to the valving system:
+     *   - The migrations now can access the context
+     *     Previously it was possible to implement this through some ways but
+     *     the problem was that the whole thing was based on requests and
+     *     responses, which meant that we couldn't pass other objects and types
+     *     without modifying the request and response types which adding a new
+     *     parameter into their template parameter lists only introduced more
+     *     complexity for the library users
+     *     Other ways we could've solved this issue:
+     *       - Using virtual inheritance for requests
+     *         Would've added unnecessary indirection
+     *       - Using self made vtable
+     *         Would've added unnecessary indirection
+     *       - Using void* type or similar ones and cast them later
+     *         Would've added unnecessary indirection
+     *       - Passing a context object to the migrations/valves to solve this
+     *         Which would've introduced complexity because at that point the
+     *         requests and the responses were not retrievable from the context.
+     *
+     *   - The valves are not aware of the requests and other details provided
+     *     by the context.
+     *     Previously this was an issue since the valves were only capable of
+     *     checking if the request is a match for the valve or not and they
+     *     couldn't modify the response or even stop the request or provide
+     *     information for the migration.
+     *
+     *   - A better constexpr way of passing valves and migrations to the router
+     *     Since the valves and the migrations were a separate entities which
+     *     they would become one entity after creating the "route" template
+     *     class, it was a problem to create a nicer looking route by the user.
+     *
+     *   - Using valves as validators and validators as valves.
+     *     Using valves as validators are now easier since the user doesn't have
+     *     to create a constexpr variable and use that variable in both the
+     *     .on method on router and inside the migration.
+     *     Now the whole thing is inside the context, and it'll be passed to the
+     *     valves/migrations by reference.
+     *     Of course using validators as valves require a bit of a hack from the
+     *     user but there's just no other way and honestly it's easy enough to
+     *     do so!
+     *
+     *
      * Route types:
      *   - Entry routes
      *   - Sub routes
@@ -25,8 +67,10 @@ namespace webpp::valves {
      *                  that routes will need including:
      *                    - Request
      *                    - Response
-     *                    - Previous entry routes
-     *                    - Previous sub routes
+     *                    - Previous entry routes context changes
+     *                    - Previous sub routes context changes
+     *                    - Original entry routes level context
+     *                    - Original sub routes context changes
      *
      *
      * Features we need:
@@ -46,8 +90,23 @@ namespace webpp::valves {
      *     - [ ] Manual prioritization
      *     - [ ] Hinted prioritization
      *     - [ ] On-The-Fly Re-Prioritization
+     *   - [ ] Dynamic route generation / Dynamic route switching
      *
-     * Examples:
+     *
+     * A bit hard to implement places:
+     *   - Prioritization of the entry routes:
+     *     It's easy to do so actually but it'll be a problem because I don't
+     *     want to use dynamically allocated containers in the implementation
+     *     of this. Adding indirection will cause the routing system to be
+     *     processed at run-time. That's not something I'm willing to do yet.
+     *
+     *   - The context type:
+     *     It's defined as an arbitrary type, that eases the pain; but there're
+     *     still a few problems standing:
+     *       - Saving the changes
+     *
+     *
+     * Usage examples:
      *   - .on(get and "/about"_path >> about_page)
      *   - ( get and "/home"_path ) or ( post && "/home/{page}"_tpath ) >> ...
      *   - opath() /"home" / integer("page") /
