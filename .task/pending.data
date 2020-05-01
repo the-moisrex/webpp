@@ -89,4 +89,6 @@
 [description:"convert ipv4" entry:"1587982966" modified:"1587982966" project:"traits" status:"pending" uuid:"9f0a7c72-3b23-45b8-af1c-00c549c6fa63"]
 [description:"convert validators" entry:"1587982986" modified:"1587982986" project:"traits" status:"pending" uuid:"bbfdc424-1325-4c03-b853-f26519e7453f"]
 [description:"convert utils\/string.h file." entry:"1587983058" modified:"1587983058" project:"traits" status:"pending" uuid:"7c7837e7-6803-4b7f-ac37-76fc1b478ee9"]
-[description:"add dependency injection to the routes" entry:"1588086547" modified:"1588086547" project:"routes" status:"pending" uuid:"f40319a7-85d2-41d5-9b02-50fb9c48da07"]
+[description:"rename the routes to entry_route or entryroute or root_route or rootroute" entry:"1588343006" modified:"1588343006" project:"routes" status:"pending" uuid:"f69f9adf-93a4-4f72-b176-246295a2d786"]
+[description:"rename the valves to route or subroute" entry:"1588343063" modified:"1588343063" project:"routes" status:"pending" uuid:"9f6d01ad-0b48-44c5-96a6-2ce5310ded4b"]
+[description:"create the context template class" entry:"1588359953" modified:"1588359953" project:"routes" status:"pending" uuid:"48b5a27b-7f0a-431a-a826-e05f5e920032"]
