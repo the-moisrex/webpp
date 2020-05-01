@@ -8,7 +8,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace webpp::valves {
+namespace webpp::routes {
 
     /**
      * The new routing system:
@@ -448,6 +448,6 @@ namespace webpp::valves {
     };
     constexpr empty_t empty;
 
-} // namespace webpp::valves
+} // namespace webpp::routes
 
 #endif // WEBPP_VALVE_H

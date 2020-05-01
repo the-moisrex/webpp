@@ -4,7 +4,7 @@
 #include "../utils/uri.h"
 #include "route.h"
 
-namespace webpp::valves {
+namespace webpp::routes {
 
     template <typename Traits = std_traits>
     struct path_condition {
@@ -42,6 +42,6 @@ namespace webpp::valves {
 
 
 
-} // namespace webpp::valves
+} // namespace webpp::routes
 
 #endif // WEBPP_VALVE_URI_H
