@@ -56,21 +56,49 @@ namespace webpp::valves {
      *
      *
      * Route types:
-     *   - Entry routes
-     *   - Sub routes
+     *   - based on position:
+     *     - Entry routes
+     *     - Sub routes
+     *   - based on returned type:
+     *     - Condition route
+     *     - Response route
+     *     - Migrator route
      *
      * Definitions:
      *   - Route:       Possible ways that are capable of handling user requests
      *   - Entry Route: The main routes that will be checked first
      *   - Sub Route:   The routes belong to the each Entry Routes
+     *   - Condition route:
+     *                  Which can be an entry route or a sub route.
+     *                  This kind of route only returns boolean and its job is
+     *                  to check if the specified request can be handled by the
+     *                  sub routes of this condition route.
+     *   - Response route:
+     *                  A route that will terminate the route checking process
+     *                  and returns a response that will be sent to the client.
+     *   - Migrator route:
+     *                  A route that will change the context in a way that will
+     *                  be useful for the other sub routes or even other entry
+     *                  routes.
+     *   - Route chain: A route chain is exactly one entry route and undefined
+     *                  number of sub routes of that one entry route.
      *   - Context:     An object of arbitrary type that will contain everything
      *                  that routes will need including:
-     *                    - Request
-     *                    - Response
+     *                    - some types:
+     *                      - Traits
+     *                      - Interface
+     *                      - Next sub route
+     *                    - references to:
+     *                      - Request
+     *                      - Response
+     *                      - Response Route in this route chain
      *                    - Previous entry routes context changes
      *                    - Previous sub routes context changes
      *                    - Original entry routes level context
      *                    - Original sub routes context changes
+     *   - Context Passing Pattern:
+     *                   A pattern designed to share arbitrary data down the
+     *                   routing chain.
      *
      *
      * Features we need:
@@ -91,6 +119,7 @@ namespace webpp::valves {
      *     - [ ] Hinted prioritization
      *     - [ ] On-The-Fly Re-Prioritization
      *   - [ ] Dynamic route generation / Dynamic route switching
+     *   - [ ] Context Passing pattern
      *
      *
      * A bit hard to implement places:
