@@ -5,11 +5,11 @@ set(ALL_SOURCES
         ${LIB_SRC_DIR}/webpp/server.cpp
         ${LIB_SRC_DIR}/webpp/thread.cpp
 
-        ${LIB_SRC_DIR}/webpp/valves/valve.cpp
-        ${LIB_SRC_DIR}/webpp/valves/methods.cpp
-        ${LIB_SRC_DIR}/webpp/valves/path.cpp
-        ${LIB_SRC_DIR}/webpp/valves/tpath.cpp
-        ${LIB_SRC_DIR}/webpp/valves/opath.cpp
+        ${LIB_SRC_DIR}/webpp/routes/route.cpp
+        ${LIB_SRC_DIR}/webpp/routes/methods.cpp
+        ${LIB_SRC_DIR}/webpp/routes/path.cpp
+        ${LIB_SRC_DIR}/webpp/routes/tpath.cpp
+        ${LIB_SRC_DIR}/webpp/routes/opath.cpp
 
         ${LIB_SRC_DIR}/webpp/validators/validators.cpp
         ${LIB_SRC_DIR}/webpp/validators/email.cpp
