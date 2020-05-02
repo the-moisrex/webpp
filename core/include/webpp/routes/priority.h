@@ -11,9 +11,12 @@ namespace webpp::routes {
      *
      * Ordering system:
      *   - Full scale     : 0 - max(uint16_fast_t)
-     *   - Low point      : 100
-     *   - High point     : 1000
-     *   - Middle point   : 500
+     *   - Low point      : 1024
+     *   - High point     : 10240
+     *   - Middle point   : 4608
+     * The reason for this strange numbers is that the user should not usually
+     * mess around these numbers and should only use automatic or relative
+     * ordering and not the manual ways.
      *
      * Entry level route prioritization features:
      *   - [ ] Auto prioritization based on:
