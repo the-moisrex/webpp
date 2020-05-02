@@ -4,6 +4,8 @@
 #define WEBPP_VALVE_H
 
 #include "../http/request.h"
+#include "../http/response.h"
+#include "../utils/functional.h"
 
 #include <type_traits>
 #include <utility>
@@ -99,6 +101,11 @@ namespace webpp::routes {
      *   - Context Passing Pattern:
      *                   A pattern designed to share arbitrary data down the
      *                   routing chain.
+     *   - Context extensions:
+     *                   A class that extends the original context and will be
+     *                   used in context-switching process to add more
+     *                   features to the context so it can be used in the
+     *                   sub routes down the routing chain.
      *
      *
      * Features we need:
@@ -120,6 +127,8 @@ namespace webpp::routes {
      *     - [ ] On-The-Fly Re-Prioritization
      *   - [ ] Dynamic route generation / Dynamic route switching
      *   - [ ] Context Passing pattern
+     *   - [ ] Context extensions
+     *   - [ ] Deactivated routes
      *
      *
      * A bit hard to implement places:
@@ -128,11 +137,6 @@ namespace webpp::routes {
      *     want to use dynamically allocated containers in the implementation
      *     of this. Adding indirection will cause the routing system to be
      *     processed at run-time. That's not something I'm willing to do yet.
-     *
-     *   - The context type:
-     *     It's defined as an arbitrary type, that eases the pain; but there're
-     *     still a few problems standing:
-     *       - Saving the changes
      *
      *
      * Usage examples:
@@ -144,7 +148,253 @@ namespace webpp::routes {
      *   - get and "/profile/"_tpath and set_by_class_constructor
      */
 
+    //////////////////////////////////////////////////////////////////////////
 
+
+    template <typename T, typename U>
+    struct can_cast
+      : std::integral_constant<
+          bool, (!std::is_void_v<T> && !std::is_void_v<U>)&&(
+                  std::is_convertible_v<T, U> ||
+                  std::is_constructible_v<T, U> || std::is_assignable_v<T, U> ||
+                  std::is_convertible_v<U, std::string> ||
+                  std::is_constructible_v<U, std::string> ||
+                  std::is_assignable_v<U, std::string>)> {};
+
+    template <typename T, typename U>
+    inline constexpr bool can_convert_v = can_cast<T, U>::value;
+
+    // TODO: what should I do here?
+    template <typename RequestType>
+    void handle_exception(RequestType const& /* req */) noexcept {
+    }
+
+    template <typename Traits, typename Interface, typename C>
+    inline auto call_it(C& c, request_t<Traits, Interface> const& req,
+                        response<Traits>& res) noexcept {
+        static_assert(is_traits_v<Traits>,
+                      "The specified template parameter is not a valid traits");
+        using req_t    = request_t<Traits, Interface> const&;
+        using res_t    = response<Traits>&;
+        using callable = std::decay_t<C>;
+        auto callback  = std::forward<C>(c);
+
+        // TODO: add more overrides. You can simulate "dependency injection" here
+
+        if constexpr (std::is_invocable_v<callable, req_t>) {
+            using RetType = std::invoke_result_t<callable, req_t>;
+            if constexpr (!can_convert_v<RetType, response>) {
+                if constexpr (std::is_nothrow_invocable_v<callable, req_t>) {
+                    (void)callback(req);
+                } else {
+                    try {
+                        (void)callback(req);
+                    } catch (...) { handle_exception(req); }
+                }
+            } else {
+                if constexpr (std::is_nothrow_invocable_v<callable, req_t>) {
+                    res = callback(req);
+                } else {
+                    try {
+                        res = callback(req);
+                    } catch (...) { handle_exception(req); }
+                }
+            }
+        } else if constexpr (std::is_invocable_v<callable, res_t>) {
+            using RetType = std::invoke_result_t<callable, res_t>;
+            if constexpr (!can_convert_v<RetType, response>) {
+                if constexpr (std::is_nothrow_invocable_v<callable, res_t>) {
+                    (void)callback(res);
+                } else {
+                    try {
+                        (void)callback(res);
+                    } catch (...) { handle_exception(req); }
+                }
+            } else {
+                // Yeah, I know what it looks like, but we've got some
+                // stupid programmers out there!
+                if constexpr (std::is_nothrow_invocable_v<callable, res_t>) {
+                    res = callback(res);
+                } else {
+                    try {
+                        res = callback(res);
+                    } catch (...) { handle_exception(req); }
+                }
+            }
+        } else if constexpr (std::is_invocable_v<callable, req_t, res_t>) {
+            using RetType = std::invoke_result_t<callable, req_t, res_t>;
+            if constexpr (!can_convert_v<RetType, response>) {
+                if constexpr (std::is_nothrow_invocable_v<callable, req_t,
+                                                          res_t>) {
+                    (void)callback(req, res);
+                } else {
+                    try {
+                        (void)callback(req, res);
+                    } catch (...) { handle_exception(req); }
+                }
+            } else {
+                if constexpr (std::is_nothrow_invocable_v<callable, req_t,
+                                                          res_t>) {
+                    res = callback(req, res);
+                } else {
+                    try {
+                        res = callback(req, res);
+                    } catch (...) { handle_exception(req); }
+                }
+            }
+        } else if constexpr (std::is_invocable_v<callable, res_t, req_t>) {
+            using RetType = std::invoke_result_t<callable, res_t, req_t>;
+            if constexpr (!can_convert_v<RetType, response>) {
+                if constexpr (std::is_nothrow_invocable_v<callable, res_t,
+                                                          req_t>) {
+                    (void)callback(res, req);
+                } else {
+                    try {
+                        (void)callback(res, req);
+                    } catch (...) { handle_exception(req); }
+                }
+            } else {
+                if constexpr (std::is_nothrow_invocable_v<callable, res_t,
+                                                          req_t>) {
+                    res = callback(res, req);
+                } else {
+                    try {
+                        res = callback(res, req);
+                    } catch (...) { handle_exception(req); }
+                }
+            }
+        } else if (std::is_invocable_v<callable>) {
+            using RetType = std::invoke_result_t<callable>;
+            if constexpr (!can_convert_v<RetType, response>) {
+                if constexpr (std::is_nothrow_invocable_v<callable>) {
+                    (void)callback();
+                } else {
+                    try {
+                        (void)callback();
+                    } catch (...) { handle_exception(req); }
+                }
+            } else {
+                if constexpr (std::is_nothrow_invocable_v<callable>) {
+                    res = callback();
+                } else {
+                    try {
+                        res = callback();
+                    } catch (...) { handle_exception(req); }
+                }
+            }
+        }
+    }
+
+    /**
+     * Return types of the operator() and their meaning:
+     *   - Condition Routes: [bool]
+     *       Returning true means that the request is a match for this route,
+     *       and false means that the request is not a match for this route
+     *   - Response Route:
+     *     [response<...>]
+     *     [using of >> operator]
+     *     [any type that can be converted into response]
+     *       This makes the route to finish checking the routes and start
+     *       sending the response to the user.
+     *       This action can be overwritten using the context capabilities
+     *   - Context Switching route: [context<...>]
+     *       This context will be passed to the other sub routes chain; this
+     *       will not affect the entry level routes' context.
+     *
+     * Overloaded operators:
+     *   - &   : and also check this sub route              [returns: new route]
+     *   - &&  : and also check this sub route              [returns: new route]
+     *   - |   : or check this sub route instead            [returns: new route]
+     *   - ||  : or check this sub route instead            [returns: new route]
+     *   - ^   : either this route or that sub route (xor)  [returns: new route]
+     *   - >>  : check this sub route no matter what        [returns: new route]
+     *   - ()  : run the route                              [returns: .........]
+     */
+    template <typename Traits, typename Interface, typename Callable>
+    class route : private make_inheritable<Callable> {
+        static_assert(
+          is_traits_v<Traits>,
+          "The specified template parameter is not a valid traits.");
+
+      public:
+        using traits    = Traits;
+        using interface = Interface;
+
+      private:
+        using req_t    = request_t<Traits, Interface> const&;
+        using res_t    = response<Traits>&;
+        using callable = make_inheritable<Callable>;
+
+
+        // TODO: check for padding
+        bool active = true;
+
+        //        static_assert(std::is_invocable_v<callable, req_t, res_t> ||
+        //                          std::is_invocable_v<callable, req_t> ||
+        //                          std::is_invocable_v<callable, res_t> ||
+        //                          std::is_invocable_v<callable>,
+        //                      "We don't know how to call this callable you
+        //                      passed.");
+
+      public:
+        using callable::operator();
+
+        constexpr route() noexcept : callable{} {
+        }
+
+        template <
+          typename... Args,
+          std::enable_if_t<std::is_constructible_v<callable, Args...>, int> = 0>
+        constexpr route(Args&&... args) noexcept
+          : callable{std::forward<Args>(args)...} {
+        }
+
+        constexpr route(route const&) noexcept = default;
+
+        constexpr route(route&&) noexcept = default;
+
+        using callable::operator=;
+
+        /**
+         * Check if the route is active
+         */
+        [[nodiscard]] inline bool is_active() const noexcept {
+            return active;
+        }
+
+        /**
+         * Reactivate the route
+         */
+        inline route& activate() noexcept {
+            active = true;
+            return *this;
+        }
+
+        /**
+         * Deactivate the route
+         */
+        inline route& deactivate() noexcept {
+            active = false;
+            return *this;
+        }
+
+        /**
+         * Run the migration
+         * @return the response
+         */
+        inline auto operator()(req_t req, res_t res) noexcept {
+            return call_it<Interface, callable>(*this, req, res);
+        }
+
+        /**
+         * Check if the specified request matches the valve condition
+         * @param req
+         * @return bool
+         */
+        [[nodiscard]] inline bool is_match(req_t req) const noexcept {
+            return active && condition(req);
+        }
+    };
     struct empty_condition {
         template <typename RequestType>
         [[nodiscard]] constexpr bool
