@@ -162,7 +162,7 @@ namespace webpp::routes {
                   std::is_assignable_v<U, std::string>)> {};
 
     template <typename T, typename U>
-    inline constexpr bool can_convert_v = can_cast<T, U>::value;
+    constexpr bool can_convert_v = can_cast<T, U>::value;
 
     // TODO: what should I do here?
     template <typename RequestType>

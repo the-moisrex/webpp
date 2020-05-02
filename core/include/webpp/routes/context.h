@@ -63,12 +63,6 @@ namespace webpp::routes {
      *
      * public types:
      *   - context    : the type of itself
-     *   - traits
-     *   - interface
-     *   - req_t
-     *   - res_t
-     *   - request_type
-     *   - response_type
      *
      * public methods:
      *   - auto clone<extensions...>()
@@ -103,7 +97,7 @@ namespace webpp::routes {
          * @return
          */
         template <typename... ExtensionType>
-        auto clone() const noexcept {
+        static constexpr auto clone() const noexcept {
         }
     };
 } // namespace webpp::routes
