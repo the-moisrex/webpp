@@ -36,8 +36,7 @@ namespace webpp::routes {
      *
      *
      * Features we need:
-     *   - [ ] Having access to the context class in the callables
-     *   - [ ] Having access to the request and the response
+     *   - [X] Having access to the request and the response
      *   - [ ] Termination of continuation of checking the sub-routes by parents
      *   - [ ] Termination of continuation of checking the entry-routes by any
      *         previous routes, or sub-routes.
@@ -57,12 +56,9 @@ namespace webpp::routes {
      *
      *
      * Public fields:
-     *   - priority   : to check/change this route chain
-     *   - request    : a const reference to the the request object
-     *   - response   : a non-const reference to the response object
-     *
-     * public types:
-     *   - context    : the type of itself
+     *   - [X] priority   : to check/change this route chain
+     *   - [X] request    : a const reference to the the request object
+     *   - [X] response   : a non-const reference to the response object
      *
      * public methods:
      *   - auto clone<extensions...>()
