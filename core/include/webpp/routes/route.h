@@ -6,6 +6,7 @@
 #include "../http/request.h"
 #include "../http/response.h"
 #include "../utils/functional.h"
+#include "context.h"
 
 #include <type_traits>
 #include <utility>
@@ -151,27 +152,90 @@ namespace webpp::routes {
     //////////////////////////////////////////////////////////////////////////
 
 
+    /**
+     * Check if we can convert U to T
+     * @tparam T
+     * @tparam U
+     */
     template <typename T, typename U>
-    struct can_cast
+    struct can_convert
+      : std::integral_constant<bool,
+                               (!std::is_void_v<T> && !std::is_void_v<U>)&&(
+                                 std::is_convertible_v<T, U> ||
+                                 std::is_constructible_v<T, U> ||
+                                 std::is_assignable_v<T, U>)> {};
+
+    template <typename T, typename U>
+    constexpr bool can_convert_v = can_convert<T, U>::value;
+
+    /**
+     * Check if we can convert T to a string
+     * @tparam Traits
+     * @tparam U
+     */
+    template <typename Traits, typename U>
+    struct can_convert_to_string
       : std::integral_constant<
-          bool, (!std::is_void_v<T> && !std::is_void_v<U>)&&(
-                  std::is_convertible_v<T, U> ||
-                  std::is_constructible_v<T, U> || std::is_assignable_v<T, U> ||
-                  std::is_convertible_v<U, std::string> ||
-                  std::is_constructible_v<U, std::string> ||
-                  std::is_assignable_v<U, std::string>)> {};
+          bool, (can_convert_v<Traits, U, typename Traits::string_type> ||
+                 can_convert_v<Traits, U, typename Traits::string_view_type>)> {
+    };
 
-    template <typename T, typename U>
-    constexpr bool can_convert_v = can_cast<T, U>::value;
+    template <typename Traits, typename U>
+    constexpr bool can_convert_to_string_v =
+      can_convert_to_string<Traits, U>::value;
 
-    // TODO: what should I do here?
-    template <typename RequestType>
-    void handle_exception(RequestType const& /* req */) noexcept {
+
+
+
+
+    template <typename HandleExceptionCallable, typename Callable,
+              typename... Args>
+    constexpr auto
+    run_and_catch(HandleExceptionCallable const& handle_exception,
+                  Callable const&                c, Args... args) noexcept {
+        using RetType = std::invoke_result_t<Callable, Args...>;
+        if constexpr (std::is_nothrow_invocable_r_v<RetType, Callable,
+                                                    Args...>) {
+            return callable(std::forward<Args>(args)...);
+        } else if constexpr (std::is_invocable_r_v<RetType, Callable,
+                                                   Args...>) {
+            try {
+                return callable(std::forward<Args>(args)...);
+            } catch (...) {
+                handle_exception(std::current_exception());
+                return false; // todo: check this
+            }
+        } else {
+            throw std::invalid_argument(
+              "The specified route is not valid. We're not able to call it.");
+        }
     }
 
-    template <typename Traits, typename Interface, typename C>
-    inline auto call_it(C& c, request_t<Traits, Interface> const& req,
-                        response<Traits>& res) noexcept {
+    /**
+     * Handle the return type of a route::operator()
+     * @tparam Traits
+     * @tparam Interface
+     * @tparam RetType
+     * @param ret
+     * @return
+     */
+    template <typename Traits, typename Interface, typename RetType>
+    constexpr auto handle_callable_return_type(RetType&& ret) noexcept {
+        if constexpr (std::is_void_v<RetType>) {
+            // it's an "Unknown route"
+            return;
+        } else if constexpr (can_convert_v<RetType, response<Traits>> ||
+                             can_convert_to_string_v<Traits, RetType>) {
+            // It was a "Response route"
+        } else if constexpr (can_convert_v<RetType,
+                                           context_base<Traits, Interface>>) {
+            // It's a "Context Switching route"
+        }
+    }
+
+    template <typename Traits, typename Interface, typename C,
+              typename ContextType>
+    inline auto call_it(C& c, ContextType& context) noexcept {
         static_assert(is_traits_v<Traits>,
                       "The specified template parameter is not a valid traits");
         using req_t    = request_t<Traits, Interface> const&;
@@ -179,27 +243,15 @@ namespace webpp::routes {
         using callable = std::decay_t<C>;
         auto callback  = std::forward<C>(c);
 
+        constexpr auto handle_exception = [](auto err) {
+
+        };
+
+
         // TODO: add more overrides. You can simulate "dependency injection" here
 
         if constexpr (std::is_invocable_v<callable, req_t>) {
-            using RetType = std::invoke_result_t<callable, req_t>;
-            if constexpr (!can_convert_v<RetType, response>) {
-                if constexpr (std::is_nothrow_invocable_v<callable, req_t>) {
-                    (void)callback(req);
-                } else {
-                    try {
-                        (void)callback(req);
-                    } catch (...) { handle_exception(req); }
-                }
-            } else {
-                if constexpr (std::is_nothrow_invocable_v<callable, req_t>) {
-                    res = callback(req);
-                } else {
-                    try {
-                        res = callback(req);
-                    } catch (...) { handle_exception(req); }
-                }
-            }
+            return run_and_catch(handle_exception, callback, context.request);
         } else if constexpr (std::is_invocable_v<callable, res_t>) {
             using RetType = std::invoke_result_t<callable, res_t>;
             if constexpr (!can_convert_v<RetType, response>) {
@@ -382,8 +434,10 @@ namespace webpp::routes {
          * Run the migration
          * @return the response
          */
-        inline auto operator()(req_t req, res_t res) noexcept {
-            return call_it<Interface, callable>(*this, req, res);
+        template <typename... Args>
+        inline auto operator()(Args&&... args) noexcept {
+            return call_it<traits, interface, callable>(
+              *this, std::forward<Args>(args)...);
         }
 
         /**
