@@ -229,7 +229,7 @@ namespace webpp::routes {
                              can_convert_to_string_v<Traits, RetType>) {
             // It was a "Response route"
         } else if constexpr (can_convert_v<RetType,
-                                           context_base<Traits, Interface>>) {
+                                           basic_context<Traits, Interface>>) {
             // It's a "Context Switching route"
         } else if constexpr (std::is_convertible_v<RetType, bool>) {
             // It's a "Conditional route"

@@ -3,6 +3,7 @@
 #ifndef WEBPP_CONTEXT_H
 #define WEBPP_CONTEXT_H
 
+#include "extensions/map.h"
 #include "priority.h"
 
 namespace webpp::routes {
@@ -41,7 +42,7 @@ namespace webpp::routes {
      *   - [ ] Termination of continuation of checking the entry-routes by any
      *         previous routes, or sub-routes.
      *   - [ ] Context modification
-     *     - [ ] Sub-Route local context modification by any previous sub-routes
+     *     - [X] Sub-Route local context modification by any previous sub-routes
      *     - [ ] Inter-Entry-Route context modification by any previous
      *           (sub/entry) routes
      *   - [ ] Entry-Route prioritization
@@ -50,9 +51,10 @@ namespace webpp::routes {
      *     - [ ] Hinted prioritization
      *     - [ ] On-The-Fly Re-Prioritization
      *   - [ ] Dynamic route generation / Dynamic route switching
-     *   - [ ] Context Passing pattern
-     *   - [ ] Context extensions
-     *   - [ ] Deactivated routes
+     *   - [X] Context Passing pattern
+     *   - [X] Context extensions
+     *     - [ ] Deactivate route extension
+     *     - [X] Map extension
      *
      *
      * Public fields:
@@ -64,9 +66,24 @@ namespace webpp::routes {
      *   - auto clone<extensions...>()
      *       get a clone of itself with different type
      *       designed to add extensions
+     *
+     *
+     * Extension requirements:
+     *   - [ ] Having a default constructor
+     *   todo: add "is_context_extension"
+     *
+     * Extension collision:
+     *   It is possible to try to add an extension to the context and get
+     *   compile time errors saying that it's a collision or an ambiguous call
+     *   to some method, to solve this, you can use "Extension As Field"
+     *   features, which means you can clone a context like this:
+     *     return context.clone<as_field<map<traits, string, string>>>();
+     *   It's also possible to simplify this line of code with
+     *   "Extension aware context" struct.
+     *
      */
-    template <typename Traits, typename Interface>
-    struct context_base {
+    template <typename Traits, typename Interface, typename... ExtensionTypes>
+    struct basic_context : public std::decay_t<ExtensionTypes>... {
 
         static_assert(is_traits_v<Traits>,
                       "The specified template parameter is not a valid traits");
@@ -93,9 +110,46 @@ namespace webpp::routes {
          * @return
          */
         template <typename... ExtensionType>
-        static constexpr auto clone() const noexcept {
+        constexpr auto clone() const noexcept {
+            using new_context =
+              basic_context<traits, interface, ExtensionType...>;
+            return new_context{.priority = this->priority,
+                               .request  = this->request,
+                               .response = this->response};
         }
     };
+
+
+
+    /**
+     * This is the "Extension Aware Context"
+     * Extension aware context is a context that simplifies creation of the
+     * context extensions.
+     *
+     * Extension aware context uses "Extension As Field" features.
+     *
+     * @tparam Traits
+     * @tparam Interface
+     * @tparam ExtensionTypes
+     */
+    template <typename Traits, typename Interface, typename... ExtensionTypes>
+    struct context
+      : public basic_context<Traits, Interface, ExtensionTypes...> {
+
+        using string_type      = typename Traits::string_type;
+        using string_view_type = typename Traits::string_view_type;
+
+        template <typename KeyT = string_type, typename ValueT = string_type>
+        auto map() const noexcept {
+            using new_extension =
+              extensions::as_data<extensions::map<Traits, KeyT, ValueT>>;
+            using new_context_t =
+              context<Traits, Interface, ExtensionTypes..., new_extension>;
+            return new_context_t{*this};
+        }
+    };
+
+
 } // namespace webpp::routes
 
 #endif // WEBPP_CONTEXT_H
