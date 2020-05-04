@@ -9,6 +9,103 @@
 namespace webpp::routes {
 
 
+    enum class extension_method : uint_fast8_t {
+        pre_subroute,
+        post_subroute,
+        pre_entryroute,
+        post_entryroute,
+        pre_globalroute,
+        post_globalroute,
+        post_thisroute,
+        pre_termination
+    };
+
+    template <typename A, extension_method em, typename ContextArgType,
+              typename = void>
+    struct has_context_extension_method : std::false_type {};
+
+    /**
+     * pre_subroute
+     */
+    template <typename A, typename ContextArgType>
+    struct has_context_extension_method<
+      A, extension_method::pre_subroute, ContextArgType,
+      std::void_t<decltype(
+        std::declval<A>().pre_subroute(std::declval<ContextArgType&>()),
+        (void)0)>> : std::true_type {};
+
+    /**
+     * post_subroute
+     */
+    template <typename A, typename ContextArgType>
+    struct has_context_extension_method<
+      A, extension_method::post_subroute, ContextArgType,
+      std::void_t<decltype(
+        std::declval<A>().post_subroute(std::declval<ContextArgType&>()),
+        (void)0)>> : std::true_type {};
+
+
+    /**
+     * pre_entryroute
+     */
+    template <typename A, typename ContextArgType>
+    struct has_context_extension_method<
+      A, extension_method::pre_entryroute, ContextArgType,
+      std::void_t<decltype(
+        std::declval<A>().pre_entryroute(std::declval<ContextArgType&>()),
+        (void)0)>> : std::true_type {};
+
+    /**
+     * post_entryroute
+     */
+    template <typename A, typename ContextArgType>
+    struct has_context_extension_method<
+      A, extension_method::post_entryroute, ContextArgType,
+      std::void_t<decltype(
+        std::declval<A>().post_entryroute(std::declval<ContextArgType&>()),
+        (void)0)>> : std::true_type {};
+
+    /**
+     * pre_globalroute
+     */
+    template <typename A, typename ContextArgType>
+    struct has_context_extension_method<
+      A, extension_method::pre_globalroute, ContextArgType,
+      std::void_t<decltype(
+        std::declval<A>().pre_globalroute(std::declval<ContextArgType&>()),
+        (void)0)>> : std::true_type {};
+
+    /**
+     * post_globalroute
+     */
+    template <typename A, typename ContextArgType>
+    struct has_context_extension_method<
+      A, extension_method::post_globalroute, ContextArgType,
+      std::void_t<decltype(
+        std::declval<A>().post_globalroute(std::declval<ContextArgType&>()),
+        (void)0)>> : std::true_type {};
+
+    /**
+     * post_thisroute
+     */
+    template <typename A, typename ContextArgType>
+    struct has_context_extension_method<
+      A, extension_method::post_thisroute, ContextArgType,
+      std::void_t<decltype(
+        std::declval<A>().post_thisroute(std::declval<ContextArgType&>()),
+        (void)0)>> : std::true_type {};
+
+    /**
+     * pre_termination
+     */
+    template <typename A, typename ContextArgType>
+    struct has_context_extension_method<
+      A, extension_method::pre_termination, ContextArgType,
+      std::void_t<decltype(
+        std::declval<A>().pre_termination(std::declval<ContextArgType&>()),
+        (void)0)>> : std::true_type {};
+
+
     /**
      *
      * Definitions:
@@ -81,6 +178,22 @@ namespace webpp::routes {
      *   It's also possible to simplify this line of code with
      *   "Extension aware context" struct.
      *
+     *
+     * Internal Extension Handling:
+     *   We can customize every single route to check if the extension is
+     *   present in the returned context and then act accordingly, but that's
+     *   not scalable; so in order to do this, we're gonna call "something"
+     *   on each extension in these times (if the extension has its method):
+     *     - pre_subroute:      Before every call to a sub-route
+     *     - post_subroute:     After every call to a sub-route
+     *     - pre_entryroute:    Before every call to an entry route
+     *     - post_entryroute:   After every call to an entry route
+     *     - pre_globalroute:   Before calling the global route
+     *     - post_globalroute:  After calling the global route
+     *     - post_thisroute:    Call it once; right after this route
+     *     - pre_termination:   When we get the final result and we're about
+     *                            to send it to the user.
+     *
      */
     template <typename Traits, typename Interface, typename... ExtensionTypes>
     struct basic_context : public std::decay_t<ExtensionTypes>... {
@@ -89,10 +202,11 @@ namespace webpp::routes {
                       "The specified template parameter is not a valid traits");
 
       public:
-        using traits        = Traits;
-        using interface     = Interface;
-        using request_type  = request_t<Traits, Interface>;
-        using response_type = response<Traits>;
+        using traits          = Traits;
+        using interface       = Interface;
+        using request_type    = request_t<Traits, Interface>;
+        using response_type   = response<Traits>;
+        using extension_types = std::tuple<std::decay_t<ExtensionTypes>...>;
 
 
         // public fields:
