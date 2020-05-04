@@ -16,6 +16,38 @@
 #include <type_traits>
 
 namespace webpp {
+
+
+
+    /**
+     * Router:
+     *
+     * Router types:
+     *   - Dynamic route   : dynamic_route
+     *       The routes and the context can be changed at runtime.
+     *   - Constexpr route : const_route
+     *       No route can be changed at runtime. The initial context cannot be
+     *       changed either.
+     *
+     * Routing table implementation:
+     *   - Entry route list:
+     *       It's a list of entry routes (which they include some sub-routes of
+     *       their own).
+     *       We don't need  a Global Routing table, we just need a good
+     *       proioritization technique.
+     *   - Priorities of the entry route list:
+     *       This table will be used to change the priority of the entry route
+     *       list. This priority change is done through the context extensions.
+     *       So the context extensions need a way to access the router. The best
+     *       way to do so is to add this route itself to the base_context. This
+     *       is possible because the constext is created initially by the
+     *       router itself and the changes in its type should be done inside the
+     *       router too.
+     *
+     */
+
+
+
     //
     // template <typename Interface>
     // using route_sigs = overloaded<
@@ -40,22 +72,15 @@ namespace webpp {
       protected:
         using req_t = request_t<Traits, Interface> const&;
         using res_t = response<Traits>&;
-        // todo: maybe don't use std::function? it's slow a bit (but not that
-        // much)
+        // todo: maybe don't use std::function? it's slow a bit (but not that much)
         using callback_t  = std::function<void(req_t, res_t)>;
-        using condition_t = std::function<bool(req_t)>;
 
         callback_t  callback  = nullptr;
-        condition_t condition = valves::empty;
 
       public:
         // fixme: it gives me error when I put "noexcept" here:
         dynamic_route() = default;
         dynamic_route(callback_t callback) noexcept : callback(callback) {
-        }
-        dynamic_route(condition_t condition, callback_t callback) noexcept
-          : condition(condition),
-            callback(callback) {
         }
 
         template <typename C>
@@ -146,19 +171,10 @@ namespace webpp {
         }
 
         template <typename Route>
-        constexpr auto on(Route&& _route) const noexcept {
-            return on(valves::empty, std::forward<Route>(_route));
-        }
-
-        template <typename Valve, typename Route>
-        constexpr auto on(Valve&& v, Route&& r) noexcept {
-            static_assert(std::is_invocable_v<Route, req_t, res_t> ||
-                            std::is_invocable_v<route<traits, interface, Route>,
-                                                req_t, res_t>,
+        constexpr auto on(Route&& _route) noexcept {
+            static_assert(is_route<Route>::value,
                           "The specified route is not valid.");
 
-            auto _route = route<traits, interface, Route, Valve>{
-              std::forward<Valve>(v), std::forward<Route>(r)};
 
             if constexpr (is_specialization_of<RouteList, std::tuple>::value) {
                 // when it's a tuple

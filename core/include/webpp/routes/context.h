@@ -211,6 +211,20 @@ namespace webpp::routes {
      *     - pre_termination:   When we get the final result and we're about
      *                            to send it to the user.
      *
+     *
+     * todo: Extension dependency:
+     *   We need a way of saying that an extension needs another extension to
+     *   work.
+     *
+     *
+     * todo: Runtime modification of Initial context type:
+     *   We need a way to achieve this; we need a way to specify the initial
+     *   context type that will be used for every single time.
+     *   Or we need this:
+     *     A way to preserve data from request to request. Meaning:
+     *     Router extensions.
+     *
+     *
      */
     template <typename Traits, typename Interface, typename... ExtensionTypes>
     struct basic_context : public std::decay_t<ExtensionTypes>... {
