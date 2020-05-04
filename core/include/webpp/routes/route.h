@@ -60,6 +60,7 @@ namespace webpp::routes {
      *
      * Route types:
      *   - based on position:
+     *     - Global routes
      *     - Entry routes
      *     - Sub routes
      *   - based on returned type:
@@ -69,6 +70,9 @@ namespace webpp::routes {
      *
      * Definitions:
      *   - Route:       Possible ways that are capable of handling user requests
+     *   - Global Route:
+     *                  A series of route that will run on every request before
+     *                  and/or after the requests based on choince.
      *   - Entry Route: The main routes that will be checked first
      *   - Sub Route:   The routes belong to the each Entry Routes
      *   - Condition route:
