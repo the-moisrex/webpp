@@ -305,6 +305,8 @@ namespace webpp::routes {
      *   - ^   : either this route or that sub route (xor)  [returns: new route]
      *   - >>  : check this sub route no matter what        [returns: new route]
      *   - ()  : run the route                              [returns: .........]
+     *
+     * todo: add is_route
      */
     template <typename Traits, typename Interface, typename Callable>
     class route : private make_inheritable<Callable> {
