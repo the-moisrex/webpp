@@ -232,8 +232,7 @@ namespace webpp::routes {
         } else if constexpr (can_convert_v<RetType, response<Traits>> ||
                              can_convert_to_string_v<Traits, RetType>) {
             // It was a "Response route"
-        } else if constexpr (can_convert_v<RetType,
-                                           basic_context<Traits, Interface>>) {
+        } else if constexpr (is_basic_context<RetType>::value) {
             // It's a "Context Switching route"
         } else if constexpr (std::is_convertible_v<RetType, bool>) {
             // It's a "Conditional route"
@@ -245,11 +244,11 @@ namespace webpp::routes {
     inline auto call_it(C& c, ContextType& context) noexcept {
         static_assert(is_traits_v<Traits>,
                       "The specified template parameter is not a valid traits");
-        using req_t    = request_t<Traits, Interface> const&;
-        using res_t    = response<Traits>&;
+        using req_t     = request_t<Traits, Interface> const&;
+        using res_t     = response<Traits>&;
         using callable  = std::decay_t<C>;
         using context_t = ContextType&;
-        auto callback  = std::forward<C>(c);
+        auto callback   = std::forward<C>(c);
 
         constexpr auto handle_exception = [](auto err) {
 
