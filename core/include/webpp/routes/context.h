@@ -105,6 +105,24 @@ namespace webpp::routes {
         std::declval<A>().pre_termination(std::declval<ContextArgType&>()),
         (void)0)>> : std::true_type {};
 
+    ///////////////////////////////////////////////////////////////////////////
+
+    template <typename CT, typename = void>
+    struct is_basic_context : std::false_type {};
+
+    template <typename CT>
+    struct is_basic_context<
+      CT,
+      std::void_t<
+        typename CT::traits, typename CT::interface, typename CT::request_type,
+        typename CT::response_type, typename CT::extension_types,
+        decltype((std::declval<CT>().priority, std::declval<CT>().request,
+                  std::declval<CT>().response, (void)0))>> : std::true_type {};
+
+
+
+    template <typename CE>
+    using is_context_extension = std::is_default_constructible<CE>;
 
     /**
      *
@@ -167,7 +185,6 @@ namespace webpp::routes {
      *
      * Extension requirements:
      *   - [ ] Having a default constructor
-     *   todo: add "is_context_extension"
      *
      * Extension collision:
      *   It is possible to try to add an extension to the context and get
@@ -201,6 +218,10 @@ namespace webpp::routes {
         static_assert(is_traits_v<Traits>,
                       "The specified template parameter is not a valid traits");
 
+        static_assert(
+          (is_context_extension<std::decay_t<ExtensionTypes>>::value && ...),
+          "At lease one of the specified extensions are not of a valid extension type.");
+
       public:
         using traits          = Traits;
         using interface       = Interface;
@@ -232,7 +253,6 @@ namespace webpp::routes {
                                .response = this->response};
         }
     };
-
 
 
     /**
