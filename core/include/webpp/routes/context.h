@@ -240,7 +240,7 @@ namespace webpp::routes {
         using traits          = Traits;
         using interface       = Interface;
         using request_type    = request_t<Traits, Interface>;
-        using response_type   = response<Traits>;
+        using response_type   = response_t<Traits>;
         using extension_types = std::tuple<std::decay_t<ExtensionTypes>...>;
 
 

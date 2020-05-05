@@ -28,7 +28,7 @@ namespace webpp {
         using traits    = Traits;
         using interface = Interface;
 
-        webpp::router<traits, interface> router;
+        webpp::router_t<traits, interface> router;
 
         auto hijack_stio() const noexcept {
             return _hijack_stdio;

@@ -229,7 +229,7 @@ namespace webpp::routes {
         if constexpr (std::is_void_v<RetType>) {
             // it's an "Unknown route"
             return;
-        } else if constexpr (can_convert_v<RetType, response<Traits>> ||
+        } else if constexpr (can_convert_v<RetType, response_t<Traits>> ||
                              can_convert_to_string_v<Traits, RetType>) {
             // It was a "Response route"
         } else if constexpr (is_basic_context<RetType>::value) {
@@ -245,7 +245,7 @@ namespace webpp::routes {
         static_assert(is_traits_v<Traits>,
                       "The specified template parameter is not a valid traits");
         using req_t     = request_t<Traits, Interface> const&;
-        using res_t     = response<Traits>&;
+        using res_t     = response_t<Traits>&;
         using callable  = std::decay_t<C>;
         using context_t = ContextType&;
         auto callback   = std::forward<C>(c);
@@ -320,7 +320,7 @@ namespace webpp::routes {
 
       private:
         using req_t    = request_t<Traits, Interface> const&;
-        using res_t    = response<Traits>&;
+        using res_t    = response_t<Traits>&;
         using callable = make_inheritable<Callable>;
 
 

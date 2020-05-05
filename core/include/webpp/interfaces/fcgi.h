@@ -40,7 +40,7 @@ namespace webpp {
 
 
       public:
-        webpp::router<traits, fcgi> router;
+        webpp::router_t<traits, fcgi> router;
 
         fcgi() noexcept;
 
