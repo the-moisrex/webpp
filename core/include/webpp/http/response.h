@@ -15,7 +15,7 @@ namespace webpp {
      * This class owns its data.
      */
     template <typename Traits = std_traits>
-    class response {
+    class response_t {
       public:
         using traits     = Traits;
         using body_t     = webpp::body;
@@ -26,34 +26,34 @@ namespace webpp {
         body_t   body;
         header_t header;
 
-        response() noexcept                    = default;
-        response(response const& res) noexcept = default;
-        response(response&& res) noexcept      = default;
-        response(str_t const& b) noexcept : body(b) {
+        response_t() noexcept                      = default;
+        response_t(response_t const& res) noexcept = default;
+        response_t(response_t&& res) noexcept      = default;
+        response_t(str_t const& b) noexcept : body(b) {
         }
-        response(str_t&& b) noexcept : body(std::move(b)) {
+        response_t(str_t&& b) noexcept : body(std::move(b)) {
         }
 
 
-        response& operator=(response const&) = default;
-        response& operator=(response&& res) noexcept = default;
-        response& operator=(str_t const& str) noexcept {
+        response_t& operator=(response_t const&) = default;
+        response_t& operator=(response_t&& res) noexcept = default;
+        response_t& operator=(str_t const& str) noexcept {
             body.replace_string(str);
             return *this;
         }
-        response& operator=(str_t&& str) noexcept {
+        response_t& operator=(str_t&& str) noexcept {
             body.replace_string(std::move(str));
             return *this;
         }
 
-        [[nodiscard]] bool operator==(response const& res) const noexcept {
+        [[nodiscard]] bool operator==(response_t const& res) const noexcept {
             return body == res.body && header == res.header;
         }
-        [[nodiscard]] bool operator!=(response const& res) const noexcept {
+        [[nodiscard]] bool operator!=(response_t const& res) const noexcept {
             return body != res.body || header != res.header;
         }
 
-        response& operator<<(str_view_t const& str) noexcept {
+        response_t& operator<<(str_view_t const& str) noexcept {
             body << str;
             return *this;
         }
@@ -78,9 +78,9 @@ namespace webpp {
 
 
         // static methods:
-        static response file(std::filesystem::path const& file) noexcept;
-        static response image(std::string_view const& file) noexcept;
-        static response json_file(std::string_view const& file) noexcept;
+        static response_t file(std::filesystem::path const& file) noexcept;
+        static response_t image(std::string_view const& file) noexcept;
+        static response_t json_file(std::string_view const& file) noexcept;
     };
 
 } // namespace webpp

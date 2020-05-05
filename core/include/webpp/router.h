@@ -71,7 +71,7 @@ namespace webpp {
 
       protected:
         using req_t = request_t<Traits, Interface> const&;
-        using res_t = response<Traits>&;
+        using res_t = response_t<Traits>&;
         // todo: maybe don't use std::function? it's slow a bit (but not that much)
         using callback_t  = std::function<void(req_t, res_t)>;
 
@@ -109,7 +109,7 @@ namespace webpp {
     template <typename Traits, typename Interface,
               typename RouteList =
                 stl::vector<Traits, dynamic_route<Traits, Interface>>>
-    class router {
+    class router_t {
       public:
         static_assert(
           is_traits_v<Traits>,
@@ -120,7 +120,7 @@ namespace webpp {
 
       private:
         using req_t_raw = request_t<traits, interface>;
-        using res_t_raw = response<traits>;
+        using res_t_raw = response_t<traits>;
         using req_t     = req_t_raw const&;
         using res_t     = res_t_raw&;
 
@@ -130,7 +130,7 @@ namespace webpp {
 
       public:
         template <typename... Args>
-        constexpr router(Args&&... args) noexcept
+        constexpr router_t(Args&&... args) noexcept
           : routes(std::forward<Args>(args)...) {
         }
 
@@ -180,13 +180,13 @@ namespace webpp {
                 // when it's a tuple
                 auto _tup =
                   std::tuple_cat(routes, std::make_tuple(std::move(_route)));
-                return router<Interface, decltype(_tup)>{_tup};
+                return router_t<Interface, decltype(_tup)>{_tup};
 
             } else if constexpr (is_specialization_of<RouteList,
                                                       const_list>::value) {
                 // for const_list (constexpr version)
                 auto _the_routes = routes + std::move(_route);
-                return router<Interface, decltype(_the_routes)>{_the_routes};
+                return router_t<Interface, decltype(_the_routes)>{_the_routes};
 
             } else if constexpr (is_container_v<RouteList>) {
                 // for containers (dynamic)

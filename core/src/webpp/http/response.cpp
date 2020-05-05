@@ -13,8 +13,8 @@ extern std::string_view get_static_file(std::string_view const&) noexcept;
 #    endif
 #endif
 
-response response::file(std::filesystem::path const& _file) noexcept {
-    response res;
+response_t response_t::file(std::filesystem::path const& _file) noexcept {
+    response_t res;
 #ifdef CONFIG_FILE
     if (auto content = ::get_static_file(filepath); !content.empty()) {
         res.body.replace_string(content);

@@ -30,8 +30,8 @@ namespace webpp {
 
     class fake_interface : public basic_interface<fake_interface> {
       public:
-        webpp::router<fake_interface> router;
-        std::string                   body_result;
+        webpp::router_t<fake_interface> router;
+        std::string                     body_result;
         std::string                   header_result;
         request_t<fake_interface>     req;
 
@@ -57,7 +57,7 @@ TEST(Server, Init) {
     EXPECT_EQ(app.body_result, "hello world");
 
     app.router.on("/home"_path,
-                  [](request_t<fake_interface> const& req, response& res) {
+                  [](request_t<fake_interface> const& req, response_t& res) {
                       res << "Coding";
                   });
     app.req.set_path("/home");
@@ -65,7 +65,7 @@ TEST(Server, Init) {
     EXPECT_EQ(app.body_result, "Coding");
 
     app.router.on("/about"_path,
-                  [](request_t<fake_interface> const& req, response& res) {
+                  [](request_t<fake_interface> const& req, response_t& res) {
                       res << "Something";
                       // stop reformating this into one line clang-format!
                   });
