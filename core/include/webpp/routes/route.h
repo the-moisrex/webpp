@@ -324,9 +324,6 @@ namespace webpp::routes {
         using callable = make_inheritable<Callable>;
 
 
-        // TODO: check for padding
-        bool active = true;
-
         //        static_assert(std::is_invocable_v<callable, req_t, res_t> ||
         //                          std::is_invocable_v<callable, req_t> ||
         //                          std::is_invocable_v<callable, res_t> ||
@@ -352,29 +349,6 @@ namespace webpp::routes {
         constexpr route(route&&) noexcept = default;
 
         using callable::operator=;
-
-        /**
-         * Check if the route is active
-         */
-        [[nodiscard]] inline bool is_active() const noexcept {
-            return active;
-        }
-
-        /**
-         * Reactivate the route
-         */
-        inline route& activate() noexcept {
-            active = true;
-            return *this;
-        }
-
-        /**
-         * Deactivate the route
-         */
-        inline route& deactivate() noexcept {
-            active = false;
-            return *this;
-        }
 
         /**
          * Run the migration
