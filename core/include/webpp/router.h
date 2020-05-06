@@ -73,9 +73,9 @@ namespace webpp {
         using req_t = request_t<Traits, Interface> const&;
         using res_t = response_t<Traits>&;
         // todo: maybe don't use std::function? it's slow a bit (but not that much)
-        using callback_t  = std::function<void(req_t, res_t)>;
+        using callback_t = std::function<void(req_t, res_t)>;
 
-        callback_t  callback  = nullptr;
+        callback_t callback = nullptr;
 
       public:
         // fixme: it gives me error when I put "noexcept" here:
@@ -97,6 +97,117 @@ namespace webpp {
 
         inline bool is_match(req_t req) noexcept {
             return condition(req);
+        }
+    };
+
+    template <typename... Route>
+    struct route_list {
+        const std::tuple<Route...> routes;
+
+        // this madness just fills the array with this: {0, 1, 2, 3, ..., N}
+        std::array<std::size_t, sizeof...(Route)> priorities =
+          ([]<std::size_t... I>(std::index_sequence<I...>) {
+              return std::array<std::size_t, sizeof...(I)>{I...};
+          })(std::make_index_sequence<sizeof...(Route)>());
+
+
+        struct iterator {
+            using value_type = route_list<Route...>;
+
+          private:
+            using routes_ptr_t     = decltype(routes)*;
+            using priorities_ptr_t = decltype(priorities)*;
+
+            routes_ptr_t     routes_ptr;
+            priorities_ptr_t priorities_ptr;
+            std::size_t      index;
+
+          public:
+            constexpr iterator(routes_ptr_t     _routes_ptr     = nullptr,
+                               priorities_ptr_t _priorities_ptr = nullptr,
+                               std::size_t _index = sizeof...(Route)) noexcept
+              : routes_ptr{_routes_ptr},
+                priorities_ptr{_priorities_ptr},
+                index(_index) {
+            }
+
+            constexpr iterator(iterator const& iter) noexcept
+              : routes_ptr{iter.routes_ptr},
+                priorities_ptr{iter.priorities_ptr},
+                index{iter.index} {
+            }
+
+            auto& operator=(iterator const& iter) noexcept {
+                if (iter != *this) {
+                    routes_ptr     = iter.routes_ptr;
+                    priorities_ptr = iter.priorities_ptr;
+                    index          = iter.index;
+                }
+                return *this;
+            }
+
+            ~iterator() noexcept {
+            }
+
+            auto& operator++() noexcept {
+                ++index;
+                return *this;
+            }
+            auto& operator--() noexcept {
+                --index;
+                return *this;
+            }
+            auto& operator->() noexcept {
+                return (*routes_ptr)[(*priorities_ptr)[index]];
+            }
+            auto& operator*() noexcept {
+                return &(*routes_ptr)[(*priorities_ptr)[index]];
+            }
+
+            constexpr bool operator==(iterator const& iter) const noexcept {
+                return routes_ptr == iter.routes_ptr &&
+                       priorities_ptr == iter.priorities_ptr &&
+                       index == iter.index;
+            }
+
+            constexpr bool operator!=(iterator const& iter) const noexcept {
+                return routes_ptr != iter.routes_ptr ||
+                       priorities_ptr != iter.priorities_ptr ||
+                       index != iter.index;
+            }
+
+            constexpr void swap(iterator& iter) noexcept {
+                using std::swap;
+                swap(routes_ptr, iter.routes_ptr);
+                swap(priorities_ptr, iter.priorities_ptr);
+                swap(index, iter.index);
+            }
+        };
+
+        constexpr route_list(Route&&... _route) noexcept
+          : routes(std::forward<Route>(_route)...) {
+        }
+
+        constexpr auto begin() const noexcept {
+            return iterator(routes, priorities, 0);
+        }
+        constexpr auto end() const noexcept {
+            return iterator(routes, priorities);
+        }
+
+        constexpr auto size() const noexcept {
+            return sizeof...(Route);
+        }
+
+        template <std::size_t N = 0>
+        constexpr auto& operator[](std::size_t i) const noexcept {
+            if (N == i) {
+                return std::get<N>(routes);
+            }
+            if constexpr (N + 1 < size()) {
+                return operator[]<N + 1>(i);
+            }
+            throw std::invalid_argument("The specified index is not valid");
         }
     };
 
@@ -194,7 +305,7 @@ namespace webpp {
                   can_cast<Route, typename RouteList::value_type>::value,
                   "The specified route does not match the router version of "
                   "route.");
-                routes.emplace_back(std::forward<Valve>(v), std::move(_route));
+                routes.emplace_back(std::forward<Route>(_route));
 
             } else {
                 throw std::invalid_argument(

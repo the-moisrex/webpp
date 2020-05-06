@@ -3,10 +3,14 @@
 #ifndef WEBPP_COMMON_H
 #define WEBPP_COMMON_H
 
-using traits   = std_tratis;
-using iface    = cgi<traits>;
-using request  = request_t<traits, iface>;
-using response = response_t<traits>;
-using router   = router_t<traits, >
+#include <webpp/http/request>
+#include <webpp/http/response>
+#include <webpp/interfaces/cgi>
+#include <webpp/traits/traits>
+
+using traits   = webpp::std_tratis;
+using iface    = webpp::cgi<traits>;
+using request  = webpp::request_t<traits, iface>;
+using response = webpp::response_t<traits, iface>;
 
 #endif // WEBPP_COMMON_H
