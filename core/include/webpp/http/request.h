@@ -1,6 +1,7 @@
 #ifndef WEBPP_REQUEST_H
 #define WEBPP_REQUEST_H
 
+#include "../interfaces/basic_interface.h"
 #include "body.h"
 #include "header.h"
 
@@ -43,8 +44,20 @@ namespace webpp {
      * This class doesn't own its data (at least the ones that are important)
      * @tparam Interface
      */
-    template <typename Traits, typename Interface>
-    class request_t : public basic_request_t {};
+    template <Traits TraitsT, Interface InterfaceT>
+    struct request_t : public basic_request_t {
+        using traits    = TraitsT;
+        using interface = InterfaceT;
+    };
+
+    template <typename T>
+    concept Request = requires(T x) {
+        typename T::traits;
+        Traits<typename T::traits>;
+
+        typename T::interface;
+        Interface<typename T::interface>;
+    };
 } // namespace webpp
 
 #endif // WEBPP_REQUEST_H
