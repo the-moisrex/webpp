@@ -109,5 +109,8 @@ namespace webpp {
     template <typename ResponseType>
     constexpr bool is_response_v = is_response<ResponseType>::value;
 
+    template <typename ResType>
+    concept Response = is_response_v<ResType>;
+
 } // namespace webpp
 #endif // WEBPP_RESPONSE_H

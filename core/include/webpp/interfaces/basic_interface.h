@@ -7,6 +7,12 @@
 
 namespace webpp {
 
+    template <typename T>
+    concept Interface = requires(T u) {
+        { u.operator()() }
+        noexcept;
+    };
+
     /**
      * This class will do what all interfaces have in common.
      * All interfaces should extend from this base class.
@@ -15,16 +21,12 @@ namespace webpp {
      *   - Creating request
      *   - Routing
      */
-    template <typename Traits, typename Interface>
+    template <Traits Traits, Interface Interface>
     class basic_interface {
       private:
         bool _hijack_stdio = false;
 
       public:
-        static_assert(
-          is_traits_v<Traits>,
-          "The specified template parameter is not a valid traits type.");
-
         using traits    = Traits;
         using interface = Interface;
 

@@ -214,7 +214,7 @@ namespace webpp {
         }
     };
 
-    template <typename... Route>
+    template <typename InitialContextType, typename... Route>
     struct const_router {
         const std::tuple<Route...> routes;
 
@@ -331,12 +331,15 @@ namespace webpp {
          * @param req
          * @return final response
          */
-        template <typename RequestType, typename ResponseType>
+        template <Request RequestType, Response ResponseType>
         ResponseType operator()(RequestType& req) noexcept {
-            ResponseType res;
-            for (auto& _route : *this) {
-                _route();
-            }
+            ResponseType       res;
+            InitialContextType ctx;
+            constexpr auto     l = []<typename ContextType>(ContextType&& ctx) {
+                if constexpr () {}
+            };
+
+            ((handle_callable_return_type(std::get<Route>(ctx))) || ...);
             return res;
         }
 
