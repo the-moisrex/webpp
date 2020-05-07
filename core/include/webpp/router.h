@@ -336,7 +336,6 @@ namespace webpp {
             ResponseType       res;
             InitialContextType ctx;
             constexpr auto     l = []<typename ContextType>(ContextType&& ctx) {
-                if constexpr () {}
             };
 
             ((handle_callable_return_type(std::get<Route>(ctx))) || ...);
@@ -356,7 +355,6 @@ namespace webpp {
      * and also add more migrations.
      *
      * @param Interface
-     */
     template <typename... Route, typename RouteList = const_list<Route...>>
     struct router_t {
         template <typename... Args>
@@ -397,6 +395,7 @@ namespace webpp {
             }
         }
     };
+     */
 
 }; // namespace webpp
 

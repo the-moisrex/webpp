@@ -14,8 +14,22 @@ namespace std {
         concept SameHelper = std::is_same_v<T, U>;
     }
 
+    /* same_as */
     template <class T, class U>
     concept same_as = detail::SameHelper<T, U>&& detail::SameHelper<U, T>;
+
+    /* derived_from */
+    template <class Derived, class Base>
+    concept derived_from = std::is_base_of_v<Base, Derived>&&
+      std::is_convertible_v<const volatile Derived*, const volatile Base*>;
+
+    /* convertible_to */
+    template <class From, class To>
+    concept convertible_to = std::is_convertible_v<From, To>&& requires(
+      std::add_rvalue_reference_t<From> (&f)()) {
+        static_cast<To>(f());
+    };
+
 } // namespace std
 #endif
 
