@@ -186,4 +186,10 @@ target_compile_features(${SLIB_NAME} PUBLIC
         cxx_static_assert
         )
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 10.1.0)
+        message(FATAL_ERROR "This version of GCC is not supported. We need at least version 10.1.0.")
+    endif ()
+endif ()
+
 ## todo: add write_basic_pacakge_version_file and versioning stuff for exporting

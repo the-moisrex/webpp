@@ -22,16 +22,16 @@ namespace webpp {
      *   - Creating request
      *   - Routing
      */
-    template <Traits Traits, Interface Interface>
+    template <Traits TraitsT, Interface InterfaceT>
     class basic_interface {
       private:
         bool _hijack_stdio = false;
 
       public:
-        using traits    = Traits;
-        using interface = Interface;
+        using traits    = TraitsT;
+        using interface = InterfaceT;
 
-        webpp::router_t<traits, interface> router;
+        //        webpp::router_t<traits, interface> router;
 
         auto hijack_stio() const noexcept {
             return _hijack_stdio;
