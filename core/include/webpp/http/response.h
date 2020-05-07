@@ -36,7 +36,7 @@ namespace webpp {
         response_t(response_t&& res) noexcept      = default;
         response_t(str_t const& b) noexcept : body(b) {
         }
-        response_t(str_t&& b) noexcept : body(std::move(b)) {
+        response_t(str_t&& b) noexcept : body(::std::move(b)) {
         }
 
 
@@ -47,7 +47,7 @@ namespace webpp {
             return *this;
         }
         response_t& operator=(str_t&& str) noexcept {
-            body.replace_string(std::move(str));
+            body.replace_string(::std::move(str));
             return *this;
         }
 
@@ -78,14 +78,14 @@ namespace webpp {
             if (header.find("Content-Length") == header.cend())
                 header.emplace(
                   "Content-Length",
-                  std::to_string(body.str().size() * sizeof(char)));
+                  ::std::to_string(body.str().size() * sizeof(char)));
         }
 
 
         // static methods:
-        static response_t file(std::filesystem::path const& file) noexcept;
-        static response_t image(std::string_view const& file) noexcept;
-        static response_t json_file(std::string_view const& file) noexcept;
+        static response_t file(::std::filesystem::path const& file) noexcept;
+        static response_t image(::std::string_view const& file) noexcept;
+        static response_t json_file(::std::string_view const& file) noexcept;
     };
 
 
@@ -129,22 +129,22 @@ namespace webpp {
     }
 
     template <typename ResponseType, typename = void>
-    struct is_response : std::false_type {};
+    struct is_response : ::std::false_type {};
 
     template <typename ResponseType>
     struct is_response<
       ResponseType,
-      std::void_t<
-        typename ResponseType::body_t, typename ResponseType::header_t,
-        typename ResponseType::traits, typename ResponseType::str_t,
-        typename ResponseType::str_view_t,
-        decltype(
-          std::declval<ResponseType>().body,
-          std::declval<ResponseType>().header,
-          std::declval<ResponseType>().operator typename ResponseType::str_t(),
-          std::declval<ResponseType>().
-          operator typename ResponseType::str_view_t(),
-          (void)0)>> : std::true_type {};
+      ::std::void_t<typename ResponseType::body_t,
+                    typename ResponseType::header_t,
+                    typename ResponseType::traits, typename ResponseType::str_t,
+                    typename ResponseType::str_view_t,
+                    decltype(::std::declval<ResponseType>().body,
+                             ::std::declval<ResponseType>().header,
+                             ::std::declval<ResponseType>().
+                             operator typename ResponseType::str_t(),
+                             ::std::declval<ResponseType>().
+                             operator typename ResponseType::str_view_t(),
+                             (void)0)>> : ::std::true_type {};
 
     template <typename ResponseType>
     constexpr bool is_response_v = is_response<ResponseType>::value;
