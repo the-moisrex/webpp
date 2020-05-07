@@ -19,6 +19,128 @@ namespace webpp {
 
 
 
+
+    /**
+     * Check if we can convert T to U
+     * @tparam T
+     * @tparam U
+     */
+    template <typename T, typename U>
+    struct can_convert
+      : std::integral_constant<bool,
+                               (!std::is_void_v<T> && !std::is_void_v<U>)&&(
+                                 std::is_convertible_v<T, U> ||
+                                 std::is_constructible_v<T, U> ||
+                                 std::is_assignable_v<T, U>)> {};
+
+    template <typename T, typename U>
+    constexpr bool can_convert_v = can_convert<T, U>::value;
+
+    /**
+     * Check if we can convert T to a string
+     * @tparam Traits
+     * @tparam U
+     */
+    template <typename Traits, typename U>
+    struct can_convert_to_string
+      : std::integral_constant<
+          bool, (can_convert_v<Traits, U, typename Traits::string_type> ||
+                 can_convert_v<Traits, U, typename Traits::string_view_type>)> {
+    };
+
+    template <typename Traits, typename U>
+    constexpr bool can_convert_to_string_v =
+      can_convert_to_string<Traits, U>::value;
+
+
+
+
+
+    template <typename HandleExceptionCallable, typename Callable,
+              typename... Args>
+    constexpr auto
+    run_and_catch(HandleExceptionCallable const& handle_exception,
+                  Callable const&                c, Args... args) noexcept {
+        using RetType = std::invoke_result_t<Callable, Args...>;
+        if constexpr (std::is_nothrow_invocable_r_v<RetType, Callable,
+                                                    Args...>) {
+            // It's noexcept, we call it knowing that.
+            return callable(std::forward<Args>(args)...);
+        } else if constexpr (std::is_invocable_r_v<RetType, Callable,
+                                                   Args...>) {
+            try {
+                return callable(std::forward<Args>(args)...);
+            } catch (...) {
+                handle_exception(std::current_exception());
+                return false; // todo: check this
+            }
+        } else {
+            throw std::invalid_argument(
+              "The specified route is not valid. We're not able to call it.");
+        }
+    }
+
+    /**
+     * Handle the return type of a route::operator()
+     * @tparam RetType
+     * @param ret
+     * @return
+     */
+    template <typename RetType>
+    constexpr auto handle_callable_return_type(RetType&& ret) noexcept {
+        if constexpr (std::is_void_v<RetType>) {
+            // it's an "Unknown route"
+            return;
+        } else if constexpr (is_response_v<RetType> ||
+                             can_convert_to_string_v<Traits, RetType>) {
+            // It was a "Response route"
+        } else if constexpr (is_basic_context<RetType>::value) {
+            // It's a "Context Switching route"
+        } else if constexpr (std::is_convertible_v<RetType, bool>) {
+            // It's a "Conditional route"
+        }
+    }
+
+    template <typename C, typename ContextType>
+    inline auto call_it(C& c, ContextType& context) noexcept {
+        using req_t     = typename ContextType::request_type const&;
+        using res_t     = typename ContextType::response_type&;
+        using callable  = std::decay_t<C>;
+        using context_t = ContextType&;
+        auto callback   = std::forward<C>(c);
+
+        constexpr auto handle_exception = [](auto err) {
+
+        };
+
+
+        // TODO: add more overrides. You can simulate "dependency injection" here
+
+        if constexpr (std::is_invocable_v<callable, req_t>) {
+            return handle_callback_return_type(
+              run_and_catch(handle_exception, callback, context.request));
+        } else if constexpr (std::is_invocable_v<callable, res_t>) {
+            return handle_callback_return_type(
+              run_and_catch(handle_exception, callback, context.response));
+        } else if constexpr (std::is_invocable_v<callable, req_t, res_t>) {
+            return handle_callback_return_type(run_and_catch(
+              handle_exception, callback, context.request, context.response));
+        } else if constexpr (std::is_invocable_v<callable, res_t, req_t>) {
+            return handle_callback_return_type(run_and_catch(
+              handle_exception, callback, context.response, context.request));
+        } else if constexpr (std::is_invocable_v<callable, context_t>) {
+            return handle_callback_return_type(
+              run_and_catch(handle_exception, callback, context));
+        } else if constexpr (std::is_invocable_v<callable>) {
+            return handle_callback_return_type(
+              run_and_catch(handle_exception, callback));
+        } else {
+            throw std::invalid_argument(
+              "The specified route cannot be called.");
+        }
+    }
+
+
     /**
      * Router:
      *
@@ -61,19 +183,11 @@ namespace webpp {
     // std::function<response(request_t<Interface> const&, response&)>,
     // std::function<response(response&, request_t<Interface> const&)>>;
     //
-    template <typename Traits, typename Interface>
     struct dynamic_route {
-        static_assert(
-          is_traits_v<Traits>,
-          "The specified template parameter is not a valid traits.");
-        using traits    = Traits;
-        using interface = Interface;
 
       protected:
-        using req_t = request_t<Traits, Interface> const&;
-        using res_t = response_t<Traits>&;
         // todo: maybe don't use std::function? it's slow a bit (but not that much)
-        using callback_t = std::function<void(req_t, res_t)>;
+        using callback_t = std::function<void()>;
 
         callback_t callback = nullptr;
 
@@ -101,7 +215,7 @@ namespace webpp {
     };
 
     template <typename... Route>
-    struct route_list {
+    struct const_router {
         const std::tuple<Route...> routes;
 
         // this madness just fills the array with this: {0, 1, 2, 3, ..., N}
@@ -112,7 +226,7 @@ namespace webpp {
 
 
         struct iterator {
-            using value_type = route_list<Route...>;
+            using value_type = const_router<Route...>;
 
           private:
             using routes_ptr_t     = decltype(routes)*;
@@ -184,7 +298,7 @@ namespace webpp {
             }
         };
 
-        constexpr route_list(Route&&... _route) noexcept
+        constexpr const_router(Route&&... _route) noexcept
           : routes(std::forward<Route>(_route)...) {
         }
 
@@ -209,6 +323,29 @@ namespace webpp {
             }
             throw std::invalid_argument("The specified index is not valid");
         }
+
+
+
+        /**
+         * Run the request through the routes and then return the response
+         * @param req
+         * @return final response
+         */
+        template <typename RequestType, typename ResponseType>
+        ResponseType operator()(RequestType& req) noexcept {
+            ResponseType res;
+            for (auto& _route : *this) {
+                _route();
+            }
+            return res;
+        }
+
+        template <typename RouteType, typename ReternedContext,
+                  typename RecievedContext>
+        ReternedContext operator()(RouteType&&       _route,
+                                   RecievedContext&& ctx) noexcept {
+            return _route(ctx);
+        }
     };
 
     /**
@@ -217,69 +354,13 @@ namespace webpp {
      *
      * @param Interface
      */
-    template <typename Traits, typename Interface,
-              typename RouteList =
-                stl::vector<Traits, dynamic_route<Traits, Interface>>>
-    class router_t {
-      public:
-        static_assert(
-          is_traits_v<Traits>,
-          "The specified template parameter is not a valid traits type.");
-
-        using traits    = Traits;
-        using interface = Interface;
-
-      private:
-        using req_t_raw = request_t<traits, interface>;
-        using res_t_raw = response_t<traits>;
-        using req_t     = req_t_raw const&;
-        using res_t     = res_t_raw&;
-
-        // this is the main route which includes other routes:
-        // This is a "const_list":
-        RouteList routes;
-
-      public:
+    template <typename... Route, typename RouteList = const_list<Route...>>
+    struct router_t {
         template <typename... Args>
         constexpr router_t(Args&&... args) noexcept
           : routes(std::forward<Args>(args)...) {
         }
 
-        /**
-         * Run the request through the routes and then return the response
-         * @param req
-         * @return final response
-         */
-        template <typename RequestType  = req_t_raw,
-                  typename ResponseType = res_t_raw>
-        ResponseType operator()(RequestType& req) noexcept {
-            // FIXME: make sure it's as performant as possible.
-            ResponseType res;
-            auto         for_each_route_do = [&](auto& _route) noexcept {
-                if (_route.is_match(req))
-                    _route(req, res);
-            };
-            if constexpr (is_specialization_of<RouteList, const_list>::value) {
-                // for webpp::const_list
-                routes.for_each(for_each_route_do);
-            } else if constexpr (is_container_v<RouteList>) {
-                // for containers
-                std::for_each(
-                  std::begin(routes), std::end(routes), [&](auto& _route) {
-                      static_assert(
-                        std::is_same_v<std::decay_t<decltype(_route)>,
-                                       dynamic_route<traits, interface>>,
-                        "The specified type is not a dynamic_route.");
-                      for_each_route_do(_route);
-                  });
-            } else if constexpr (is_specialization_of<RouteList,
-                                                      std::tuple>::value) {
-                std::apply(for_each_route_do, routes);
-            } else {
-                // todo: what should I do here?
-            }
-            return res;
-        }
 
         template <typename Route>
         constexpr auto on(Route&& _route) noexcept {

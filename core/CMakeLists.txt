@@ -3,7 +3,6 @@ set(ALL_SOURCES
         ${LIB_SRC_DIR}/webpp/config.cpp
         ${LIB_SRC_DIR}/webpp/router.cpp
         ${LIB_SRC_DIR}/webpp/server.cpp
-        ${LIB_SRC_DIR}/webpp/thread.cpp
 
         ${LIB_SRC_DIR}/webpp/routes/route.cpp
         ${LIB_SRC_DIR}/webpp/routes/methods.cpp
@@ -70,10 +69,10 @@ add_library(${PROJECT_NAME}::${SLIB_NAME} ALIAS ${SLIB_NAME})
 
 # boost
 target_link_libraries(${LIB_NAME}
-        PRIVATE ${Boost_LIBRARIES}
+        PRIVATE Boost::boost
         )
 target_link_libraries(${SLIB_NAME}
-        PRIVATE ${Boost_LIBRARIES}
+        PRIVATE Boost::boost
         )
 
 
@@ -152,11 +151,39 @@ install(CODE "install_headers(\"${LIB_INCLUDE_DIR}\" \"${CMAKE_INSTALL_PREFIX}/i
 
 
 #install(FILES ${LIB_HEADERS} DESTINATION include)
-#target_compile_features(${LIB_NAME} PUBLIC
-#	cxx_std_20 
-#)
-#target_compile_features(${SLIB_NAME} PUBLIC
-#	cxx_std_20 
-#)
+target_compile_features(${LIB_NAME} PUBLIC
+        cxx_std_20
+        cxx_auto_type
+        cxx_lambdas
+        cxx_constexpr
+        cxx_variadic_templates
+        cxx_nullptr
+        cxx_attributes
+        cxx_decltype
+        cxx_generic_lambdas
+        cxx_inline_namespaces
+        cxx_lambda_init_captures
+        cxx_noexcept
+        cxx_range_for
+        cxx_raw_string_literals
+        cxx_static_assert
+        )
+target_compile_features(${SLIB_NAME} PUBLIC
+        cxx_std_20
+        cxx_auto_type
+        cxx_lambdas
+        cxx_constexpr
+        cxx_variadic_templates
+        cxx_nullptr
+        cxx_attributes
+        cxx_decltype
+        cxx_generic_lambdas
+        cxx_inline_namespaces
+        cxx_lambda_init_captures
+        cxx_noexcept
+        cxx_range_for
+        cxx_raw_string_literals
+        cxx_static_assert
+        )
 
 ## todo: add write_basic_pacakge_version_file and versioning stuff for exporting

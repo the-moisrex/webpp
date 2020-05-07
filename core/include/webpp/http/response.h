@@ -16,6 +16,10 @@ namespace webpp {
      */
     template <typename Traits = std_traits>
     class response_t {
+        static_assert(
+          is_traits_v<Traits>,
+          "The specified template parameter is not a valid traits type.");
+
       public:
         using traits     = Traits;
         using body_t     = webpp::body;
@@ -82,6 +86,28 @@ namespace webpp {
         static response_t image(std::string_view const& file) noexcept;
         static response_t json_file(std::string_view const& file) noexcept;
     };
+
+
+    template <typename ResponseType, typename = void>
+    struct is_response : std::false_type {};
+
+    template <typename ResponseType>
+    struct is_response<
+      ResponseType,
+      std::void_t<
+        typename ResponseType::body_t, typename ResponseType::header_t,
+        typename ResponseType::traits, typename ResponseType::str_t,
+        typename ResponseType::str_view_t,
+        decltype(
+          std::declval<ResponseType>().body,
+          std::declval<ResponseType>().header,
+          std::declval<ResponseType>().operator typename ResponseType::str_t(),
+          std::declval<ResponseType>().
+          operator typename ResponseType::str_view_t(),
+          (void)0)>> : std::true_type {};
+
+    template <typename ResponseType>
+    constexpr bool is_response_v = is_response<ResponseType>::value;
 
 } // namespace webpp
 #endif // WEBPP_RESPONSE_H
