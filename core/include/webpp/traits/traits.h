@@ -47,7 +47,7 @@ namespace webpp {
 
         // char_traits:
         typename TraitsT::char_traits;
-        CharTraits<typename TraitsT::char_traits>;
+        stl::CharTraits<typename TraitsT::char_traits>;
 
         // allocator:
         typename TraitsT::allocator;
