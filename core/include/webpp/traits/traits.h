@@ -30,7 +30,7 @@ namespace webpp {
      * Traits that might be added in the future:
      *   - [ ] Encryption algorithms and their keys
      *   - [ ] Interfaces
-     *   - [ ] Date and Time systems: std::chrono types
+     *   - [ ] Date and Time systems: ::std::chrono types
      *
      * Any other custom traits must include the traits above so it can be used
      * through out the templated classes inside the webpp project.
@@ -43,7 +43,7 @@ namespace webpp {
     concept Traits = requires(T t) {
         // char_type:
         typename T::char_type;
-        std::is_integral_v<typename T::char_type>;
+        ::std::is_integral_v<typename T::char_type>;
 
         // char_traits:
         typename T::char_traits;
@@ -73,9 +73,9 @@ namespace webpp {
      * todo: add more test and make them more clever than this
      */
     template <typename Traits>
-    using is_traits = std::conjunction<
-      std::is_integral<typename Traits::char_type>,
-      std::is_integral<typename Traits::char_traits::char_type>>;
+    using is_traits = ::std::conjunction<
+      ::std::is_integral<typename Traits::char_type>,
+      ::std::is_integral<typename Traits::char_traits::char_type>>;
 
     template <typename Traits>
     constexpr bool is_traits_v = is_traits<Traits>::value;

@@ -11,7 +11,6 @@
 
 #include <functional>
 #include <map>
-#include <string_view>
 #include <tuple>
 #include <type_traits>
 
@@ -27,11 +26,11 @@ namespace webpp {
      */
     template <typename T, typename U>
     struct can_convert
-      : std::integral_constant<bool,
-                               (!std::is_void_v<T> && !std::is_void_v<U>)&&(
-                                 std::is_convertible_v<T, U> ||
-                                 std::is_constructible_v<T, U> ||
-                                 std::is_assignable_v<T, U>)> {};
+      : ::std::integral_constant<
+          bool, (!::std::is_void_v<T> &&
+                 !::std::is_void_v<U>)&&(::std::is_convertible_v<T, U> ||
+                                         ::std::is_constructible_v<T, U> ||
+                                         ::std::is_assignable_v<T, U>)> {};
 
     template <typename T, typename U>
     constexpr bool can_convert_v = can_convert<T, U>::value;
@@ -43,7 +42,7 @@ namespace webpp {
      */
     template <typename Traits, typename U>
     struct can_convert_to_string
-      : std::integral_constant<
+      : ::std::integral_constant<
           bool, (can_convert_v<Traits, U, typename Traits::string_type> ||
                  can_convert_v<Traits, U, typename Traits::string_view_type>)> {
     };
@@ -61,21 +60,21 @@ namespace webpp {
     constexpr auto
     run_and_catch(HandleExceptionCallable const& handle_exception,
                   Callable const&                c, Args... args) noexcept {
-        using RetType = std::invoke_result_t<Callable, Args...>;
-        if constexpr (std::is_nothrow_invocable_r_v<RetType, Callable,
-                                                    Args...>) {
+        using RetType = ::std::invoke_result_t<Callable, Args...>;
+        if constexpr (::std::is_nothrow_invocable_r_v<RetType, Callable,
+                                                      Args...>) {
             // It's noexcept, we call it knowing that.
-            return callable(std::forward<Args>(args)...);
-        } else if constexpr (std::is_invocable_r_v<RetType, Callable,
-                                                   Args...>) {
+            return callable(::std::forward<Args>(args)...);
+        } else if constexpr (::std::is_invocable_r_v<RetType, Callable,
+                                                     Args...>) {
             try {
-                return callable(std::forward<Args>(args)...);
+                return callable(::std::forward<Args>(args)...);
             } catch (...) {
-                handle_exception(std::current_exception());
+                handle_exception(::std::current_exception());
                 return false; // todo: check this
             }
         } else {
-            throw std::invalid_argument(
+            throw ::std::invalid_argument(
               "The specified route is not valid. We're not able to call it.");
         }
     }
@@ -88,7 +87,7 @@ namespace webpp {
      */
     template <typename RetType>
     constexpr auto handle_callable_return_type(RetType&& ret) noexcept {
-        if constexpr (std::is_void_v<RetType>) {
+        if constexpr (::std::is_void_v<RetType>) {
             // it's an "Unknown route"
             return;
         } else if constexpr (is_response_v<RetType> ||
@@ -96,7 +95,7 @@ namespace webpp {
             // It was a "Response route"
         } else if constexpr (is_basic_context<RetType>::value) {
             // It's a "Context Switching route"
-        } else if constexpr (std::is_convertible_v<RetType, bool>) {
+        } else if constexpr (::std::is_convertible_v<RetType, bool>) {
             // It's a "Conditional route"
         }
     }
@@ -105,9 +104,9 @@ namespace webpp {
     inline auto call_it(C& c, ContextType& context) noexcept {
         using req_t     = typename ContextType::request_type const&;
         using res_t     = typename ContextType::response_type&;
-        using callable  = std::decay_t<C>;
+        using callable  = ::std::decay_t<C>;
         using context_t = ContextType&;
-        auto callback   = std::forward<C>(c);
+        auto callback   = ::std::forward<C>(c);
 
         constexpr auto handle_exception = [](auto err) {
 
@@ -116,26 +115,26 @@ namespace webpp {
 
         // TODO: add more overrides. You can simulate "dependency injection" here
 
-        if constexpr (std::is_invocable_v<callable, req_t>) {
+        if constexpr (::std::is_invocable_v<callable, req_t>) {
             return handle_callback_return_type(
               run_and_catch(handle_exception, callback, context.request));
-        } else if constexpr (std::is_invocable_v<callable, res_t>) {
+        } else if constexpr (::std::is_invocable_v<callable, res_t>) {
             return handle_callback_return_type(
               run_and_catch(handle_exception, callback, context.response));
-        } else if constexpr (std::is_invocable_v<callable, req_t, res_t>) {
+        } else if constexpr (::std::is_invocable_v<callable, req_t, res_t>) {
             return handle_callback_return_type(run_and_catch(
               handle_exception, callback, context.request, context.response));
-        } else if constexpr (std::is_invocable_v<callable, res_t, req_t>) {
+        } else if constexpr (::std::is_invocable_v<callable, res_t, req_t>) {
             return handle_callback_return_type(run_and_catch(
               handle_exception, callback, context.response, context.request));
-        } else if constexpr (std::is_invocable_v<callable, context_t>) {
+        } else if constexpr (::std::is_invocable_v<callable, context_t>) {
             return handle_callback_return_type(
               run_and_catch(handle_exception, callback, context));
-        } else if constexpr (std::is_invocable_v<callable>) {
+        } else if constexpr (::std::is_invocable_v<callable>) {
             return handle_callback_return_type(
               run_and_catch(handle_exception, callback));
         } else {
-            throw std::invalid_argument(
+            throw ::std::invalid_argument(
               "The specified route cannot be called.");
         }
     }
@@ -156,73 +155,27 @@ namespace webpp {
      *       It's a list of entry routes (which they include some sub-routes of
      *       their own).
      *       We don't need  a Global Routing table, we just need a good
-     *       proioritization technique.
+     *       prioritization technique.
      *   - Priorities of the entry route list:
      *       This table will be used to change the priority of the entry route
      *       list. This priority change is done through the context extensions.
      *       So the context extensions need a way to access the router. The best
      *       way to do so is to add this route itself to the base_context. This
-     *       is possible because the constext is created initially by the
+     *       is possible because the context is created initially by the
      *       router itself and the changes in its type should be done inside the
      *       router too.
      *
      */
 
-
-
-    //
-    // template <typename Interface>
-    // using route_sigs = overloaded<
-    // std::function<void()>, std::function<void(request_t<Interface> const&)>,
-    // std::function<void(response&)>,
-    // std::function<void(request_t<Interface> const&, response&)>,
-    // std::function<void(response&, request_t<Interface> const&)>,
-    // std::function<response()>,
-    // std::function<response(request_t<Interface> const&)>,
-    // std::function<response(response&)>,
-    // std::function<response(request_t<Interface> const&, response&)>,
-    // std::function<response(response&, request_t<Interface> const&)>>;
-    //
-    struct dynamic_route {
-
-      protected:
-        // todo: maybe don't use std::function? it's slow a bit (but not that much)
-        using callback_t = std::function<void()>;
-
-        callback_t callback = nullptr;
-
-      public:
-        // fixme: it gives me error when I put "noexcept" here:
-        dynamic_route() = default;
-        dynamic_route(callback_t callback) noexcept : callback(callback) {
-        }
-
-        template <typename C>
-        dynamic_route& operator=(C&& callback) noexcept {
-            this->callback = [=](req_t req, res_t res) noexcept {
-                return call_it(callback, req, res);
-            };
-            return *this;
-        }
-
-        auto operator()(req_t req, res_t res) noexcept {
-            return callback(req, res);
-        }
-
-        inline bool is_match(req_t req) noexcept {
-            return condition(req);
-        }
-    };
-
     template <typename InitialContextType, typename... Route>
     struct const_router {
-        const std::tuple<Route...> routes;
+        const ::std::tuple<Route...> routes;
 
         // this madness just fills the array with this: {0, 1, 2, 3, ..., N}
-        std::array<std::size_t, sizeof...(Route)> priorities =
-          ([]<std::size_t... I>(std::index_sequence<I...>) {
-              return std::array<std::size_t, sizeof...(I)>{I...};
-          })(std::make_index_sequence<sizeof...(Route)>());
+        :: ::std::array<::std::size_t, sizeof...(Route)> priorities =
+          ([]<:: ::std::size_t... I>(:: ::std::index_sequence<I...>) {
+              return :: ::std::array<:: ::std::size_t, sizeof...(I)>{I...};
+          })(:: ::std::make_index_sequence<sizeof...(Route)>());
 
 
         struct iterator {
@@ -232,14 +185,14 @@ namespace webpp {
             using routes_ptr_t     = decltype(routes)*;
             using priorities_ptr_t = decltype(priorities)*;
 
-            routes_ptr_t     routes_ptr;
-            priorities_ptr_t priorities_ptr;
-            std::size_t      index;
+            routes_ptr_t       routes_ptr;
+            priorities_ptr_t   priorities_ptr;
+            ::std::size_t      index;
 
           public:
             constexpr iterator(routes_ptr_t     _routes_ptr     = nullptr,
                                priorities_ptr_t _priorities_ptr = nullptr,
-                               std::size_t _index = sizeof...(Route)) noexcept
+                               ::std::size_t _index = sizeof...(Route)) noexcept
               : routes_ptr{_routes_ptr},
                 priorities_ptr{_priorities_ptr},
                 index(_index) {
@@ -291,7 +244,7 @@ namespace webpp {
             }
 
             constexpr void swap(iterator& iter) noexcept {
-                using std::swap;
+                using ::std::swap;
                 swap(routes_ptr, iter.routes_ptr);
                 swap(priorities_ptr, iter.priorities_ptr);
                 swap(index, iter.index);
@@ -299,7 +252,7 @@ namespace webpp {
         };
 
         constexpr const_router(Route&&... _route) noexcept
-          : routes(std::forward<Route>(_route)...) {
+          : routes(::std::forward<Route>(_route)...) {
         }
 
         constexpr auto begin() const noexcept {
@@ -313,15 +266,15 @@ namespace webpp {
             return sizeof...(Route);
         }
 
-        template <std::size_t N = 0>
-        constexpr auto& operator[](std::size_t i) const noexcept {
+        template <::std::size_t N = 0>
+        constexpr auto& operator[](::std::size_t i) const noexcept {
             if (N == i) {
-                return std::get<N>(routes);
+                return ::std::get<N>(routes);
             }
             if constexpr (N + 1 < size()) {
                 return operator[]<N + 1>(i);
             }
-            throw std::invalid_argument("The specified index is not valid");
+            throw ::std::invalid_argument("The specified index is not valid");
         }
 
 
@@ -338,7 +291,7 @@ namespace webpp {
             constexpr auto     l = []<typename ContextType>(ContextType&& ctx) {
             };
 
-            ((handle_callable_return_type(std::get<Route>(ctx))) || ...);
+            ((handle_callable_return_type(::std::get<Route>(ctx))) || ...);
             return res;
         }
 
@@ -359,7 +312,7 @@ namespace webpp {
     struct router_t {
         template <typename... Args>
         constexpr router_t(Args&&... args) noexcept
-          : routes(std::forward<Args>(args)...) {
+          : routes(::std::forward<Args>(args)...) {
         }
 
 
@@ -369,16 +322,18 @@ namespace webpp {
                           "The specified route is not valid.");
 
 
-            if constexpr (is_specialization_of<RouteList, std::tuple>::value) {
+            if constexpr (is_specialization_of<RouteList, ::std::tuple>::value)
+    {
                 // when it's a tuple
                 auto _tup =
-                  std::tuple_cat(routes, std::make_tuple(std::move(_route)));
-                return router_t<Interface, decltype(_tup)>{_tup};
+                  ::std::tuple_cat(routes,
+    ::std::make_tuple(::std::move(_route))); return router_t<Interface,
+    decltype(_tup)>{_tup};
 
             } else if constexpr (is_specialization_of<RouteList,
                                                       const_list>::value) {
                 // for const_list (constexpr version)
-                auto _the_routes = routes + std::move(_route);
+                auto _the_routes = routes + ::std::move(_route);
                 return router_t<Interface, decltype(_the_routes)>{_the_routes};
 
             } else if constexpr (is_container_v<RouteList>) {
@@ -387,16 +342,49 @@ namespace webpp {
                   can_cast<Route, typename RouteList::value_type>::value,
                   "The specified route does not match the router version of "
                   "route.");
-                routes.emplace_back(std::forward<Route>(_route));
+                routes.emplace_back(::std::forward<Route>(_route));
 
             } else {
-                throw std::invalid_argument(
+                throw ::std::invalid_argument(
                   "The container for routes is unknown.");
             }
         }
     };
      */
 
+
+
+
+    struct dynamic_route {
+
+      protected:
+        // todo: maybe don't use ::std::function? it's slow a bit (but not that much)
+        using callback_t = ::std::function<void()>;
+
+        callback_t callback = nullptr;
+
+      public:
+        // fixme: it gives me error when I put "noexcept" here:
+        dynamic_route() = default;
+        dynamic_route(callback_t callback) noexcept : callback(callback) {
+        }
+
+        template <typename C>
+        dynamic_route& operator=(C&& callback) noexcept {
+            this->callback = [=](req_t req, res_t res) noexcept {
+                return call_it(callback, req, res);
+            };
+            return *this;
+        }
+
+        auto operator()(req_t req, res_t res) noexcept {
+            return callback(req, res);
+        }
+
+        inline bool is_match(req_t req) noexcept {
+            return condition(req);
+        }
+    };
 }; // namespace webpp
 
 #endif // WEBPP_ROUTER_H
