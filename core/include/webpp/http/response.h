@@ -1,32 +1,29 @@
 #ifndef WEBPP_RESPONSE_H
 #define WEBPP_RESPONSE_H
 
+#include "../traits/traits.h"
 #include "body.h"
 #include "header.h"
 
 #include <filesystem>
 #include <fstream>
 #include <memory>
-#include <string>
-#include <string_view>
 
 namespace webpp {
 
     /**
      * This class owns its data.
      */
-    template <typename Traits = std_traits>
+    template <Traits TraitsType>
     class response_t {
-        static_assert(
-          is_traits_v<Traits>,
-          "The specified template parameter is not a valid traits type.");
 
       public:
-        using traits     = Traits;
-        using body_t     = webpp::body;
-        using header_t   = webpp::headers<Traits, true, header_type::response>;
-        using str_view_t = typename traits::string_view_type;
-        using str_t      = typename traits::string_type;
+        using traits_t = TraitsType;
+        using body_t   = webpp::body;
+        using header_t =
+          webpp::headers<TraitsType, true, header_type::response>;
+        using str_view_t = typename traits_t::string_view_type;
+        using str_t      = typename traits_t::string_type;
 
         body_t   body;
         header_t header;
@@ -83,9 +80,11 @@ namespace webpp {
 
 
         // static methods:
+        /*
         static response_t file(::std::filesystem::path const& file) noexcept;
         static response_t image(::std::string_view const& file) noexcept;
         static response_t json_file(::std::string_view const& file) noexcept;
+         */
     };
 
 
@@ -151,6 +150,14 @@ namespace webpp {
 
     template <typename ResType>
     concept Response = is_response_v<ResType>;
+
+    template <typename T>
+    concept ConvertibleToResponse =
+      Response<T> ||
+      ::std::is_constructible_v<
+        response_t<typename std_traits_from_string<T>::type>, T> ||
+      ::std::is_constructible_v<
+        response_t<typename std_traits_from_string_view<T>::type>, T>;
 
 } // namespace webpp
 #endif // WEBPP_RESPONSE_H

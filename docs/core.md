@@ -147,6 +147,30 @@ Types or routes:
      want to use dynamically allocated containers in the implementation
      of this. Adding indirection will cause the routing system to be
      processed at run-time. That's not something I'm willing to do yet.
+ 
+###### Return types of the operator() and their meaning:
+  - Condition Routes: _\[bool\]_
+      Returning true means that the request is a match for this route,
+      and false means that the request is not a match for this route
+  - Response Route:
+    _\[response<...>\]_
+    _\[using of >> operator\]_
+    _\[any type that can be converted into response\]_
+      This makes the route to finish checking the routes and start
+      sending the response to the user.
+      This action can be overwritten using the context capabilities
+  - Context Switching route: _\[context<...>\]_
+      This context will be passed to the other sub routes chain; this
+      will not affect the entry level routes' context.
+ 
+**Overloaded operators**:
+  - `&`   : and also check this sub route              [returns: new route]
+  - `&&`  : and also check this sub route              [returns: new route]
+  - `|`   : or check this sub route instead            [returns: new route]
+  - `||`  : or check this sub route instead            [returns: new route]
+  - `^`   : either this route or that sub route (xor)  [returns: new route]
+  - `>>`  : check this sub route no matter what        [returns: new route]
+  - `()`  : run the route                              [returns: .........]
 
 
 ###### Usage examples:
