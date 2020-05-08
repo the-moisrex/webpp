@@ -130,7 +130,9 @@ namespace webpp::routes {
     concept ContextExtension = is_context_extension<T>::value;
 
     template <typename T>
-    concept Context = is_basic_context<T>::value;
+    concept Context = requires {
+        is_basic_context<T>::value;
+    };
 
     /**
      *
