@@ -12,13 +12,14 @@
 
 namespace webpp {
 
-    template <typename CharT>
+    template <typename CharT, typename CharTraits,
+              template <typename> typename Allocator>
     struct basic_std_traits {
         using char_type   = CharT;
-        using char_traits = std::char_traits<char_type>;
+        using char_traits = CharTraits;
 
         template <typename Type>
-        using allocator = std::allocator<Type>;
+        using allocator = Allocator<Type>;
 
         using string_view_type = std::basic_string_view<char_type, char_traits>;
         using string_type =
@@ -37,10 +38,23 @@ namespace webpp {
         using ostream_type = std::basic_ostream<char_type, char_traits>;
     };
 
-    using std_traits = basic_std_traits<char>;
+    using std_traits =
+      basic_std_traits<char, ::std::char_traits<char>, ::std::allocator>;
 
-    // todo: add concept
+    template <typename T>
+    struct std_traits_from_string_view {
+        using type =
+          basic_std_traits<typename T::value_type, typename T::traits_type,
+                           ::std::allocator>;
+    };
 
+    template <typename T>
+    struct std_traits_from_string {
+        using type =
+          basic_std_traits<typename T::value_type, typename T::traits_type,
+                           ::std::allocator_traits<typename T::allocator_type>::
+                             template rebind_alloc>;
+    };
 
 } // namespace webpp
 
