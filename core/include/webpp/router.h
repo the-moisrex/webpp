@@ -101,7 +101,7 @@ namespace webpp {
     }
 
     template <typename C, typename ContextType>
-    inline auto call_it(C& c, ContextType& context) noexcept {
+    inline auto call_route(C& c, ContextType& context) noexcept {
         using req_t     = typename ContextType::request_type const&;
         using res_t     = typename ContextType::response_type&;
         using callable  = ::std::decay_t<C>;
@@ -288,19 +288,10 @@ namespace webpp {
         ResponseType operator()(RequestType& req) noexcept {
             ResponseType       res;
             InitialContextType ctx;
-            constexpr auto     l = []<typename ContextType>(ContextType&& ctx) {
-            };
-
-            ((handle_callable_return_type(::std::get<Route>(ctx))) || ...);
+            ((call_route(::std::get<Route>(ctx))) || ...);
             return res;
         }
 
-        template <typename RouteType, typename ReternedContext,
-                  typename RecievedContext>
-        ReternedContext operator()(RouteType&&       _route,
-                                   RecievedContext&& ctx) noexcept {
-            return _route(ctx);
-        }
     };
 
     /**
@@ -372,7 +363,7 @@ namespace webpp {
         template <typename C>
         dynamic_route& operator=(C&& callback) noexcept {
             this->callback = [=](req_t req, res_t res) noexcept {
-                return call_it(callback, req, res);
+                return call_route(callback, req, res);
             };
             return *this;
         }
