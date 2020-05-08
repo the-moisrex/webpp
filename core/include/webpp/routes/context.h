@@ -22,7 +22,7 @@ namespace webpp::routes {
 
     template <typename A, extension_method em, typename ContextArgType,
               typename = void>
-    struct has_context_extension_method : std::false_type {};
+    struct has_context_extension_method : ::std::false_type {};
 
     /**
      * pre_subroute
@@ -30,9 +30,9 @@ namespace webpp::routes {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::pre_subroute, ContextArgType,
-      std::void_t<decltype(
-        std::declval<A>().pre_subroute(std::declval<ContextArgType&>()),
-        (void)0)>> : std::true_type {};
+      ::std::void_t<decltype(
+        ::std::declval<A>().pre_subroute(::std::declval<ContextArgType&>()),
+        (void)0)>> : ::std::true_type {};
 
     /**
      * post_subroute
@@ -40,9 +40,9 @@ namespace webpp::routes {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::post_subroute, ContextArgType,
-      std::void_t<decltype(
-        std::declval<A>().post_subroute(std::declval<ContextArgType&>()),
-        (void)0)>> : std::true_type {};
+      ::std::void_t<decltype(
+        ::std::declval<A>().post_subroute(::std::declval<ContextArgType&>()),
+        (void)0)>> : ::std::true_type {};
 
 
     /**
@@ -51,9 +51,9 @@ namespace webpp::routes {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::pre_entryroute, ContextArgType,
-      std::void_t<decltype(
-        std::declval<A>().pre_entryroute(std::declval<ContextArgType&>()),
-        (void)0)>> : std::true_type {};
+      ::std::void_t<decltype(
+        ::std::declval<A>().pre_entryroute(::std::declval<ContextArgType&>()),
+        (void)0)>> : ::std::true_type {};
 
     /**
      * post_entryroute
@@ -61,9 +61,9 @@ namespace webpp::routes {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::post_entryroute, ContextArgType,
-      std::void_t<decltype(
-        std::declval<A>().post_entryroute(std::declval<ContextArgType&>()),
-        (void)0)>> : std::true_type {};
+      ::std::void_t<decltype(
+        ::std::declval<A>().post_entryroute(::std::declval<ContextArgType&>()),
+        (void)0)>> : ::std::true_type {};
 
     /**
      * pre_globalroute
@@ -71,9 +71,9 @@ namespace webpp::routes {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::pre_globalroute, ContextArgType,
-      std::void_t<decltype(
-        std::declval<A>().pre_globalroute(std::declval<ContextArgType&>()),
-        (void)0)>> : std::true_type {};
+      ::std::void_t<decltype(
+        ::std::declval<A>().pre_globalroute(::std::declval<ContextArgType&>()),
+        (void)0)>> : ::std::true_type {};
 
     /**
      * post_globalroute
@@ -81,9 +81,9 @@ namespace webpp::routes {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::post_globalroute, ContextArgType,
-      std::void_t<decltype(
-        std::declval<A>().post_globalroute(std::declval<ContextArgType&>()),
-        (void)0)>> : std::true_type {};
+      ::std::void_t<decltype(
+        ::std::declval<A>().post_globalroute(::std::declval<ContextArgType&>()),
+        (void)0)>> : ::std::true_type {};
 
     /**
      * post_thisroute
@@ -91,9 +91,9 @@ namespace webpp::routes {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::post_thisroute, ContextArgType,
-      std::void_t<decltype(
-        std::declval<A>().post_thisroute(std::declval<ContextArgType&>()),
-        (void)0)>> : std::true_type {};
+      ::std::void_t<decltype(
+        ::std::declval<A>().post_thisroute(::std::declval<ContextArgType&>()),
+        (void)0)>> : ::std::true_type {};
 
     /**
      * pre_termination
@@ -101,28 +101,29 @@ namespace webpp::routes {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::pre_termination, ContextArgType,
-      std::void_t<decltype(
-        std::declval<A>().pre_termination(std::declval<ContextArgType&>()),
-        (void)0)>> : std::true_type {};
+      ::std::void_t<decltype(
+        ::std::declval<A>().pre_termination(::std::declval<ContextArgType&>()),
+        (void)0)>> : ::std::true_type {};
 
     ///////////////////////////////////////////////////////////////////////////
 
     template <typename CT, typename = void>
-    struct is_basic_context : std::false_type {};
+    struct is_basic_context : ::std::false_type {};
 
     template <typename CT>
     struct is_basic_context<
       CT,
-      std::void_t<
+      ::std::void_t<
         typename CT::traits, typename CT::interface, typename CT::request_type,
         typename CT::response_type, typename CT::extension_types,
-        decltype((std::declval<CT>().priority, std::declval<CT>().request,
-                  std::declval<CT>().response, (void)0))>> : std::true_type {};
+        decltype((::std::declval<CT>().priority, ::std::declval<CT>().request,
+                  ::std::declval<CT>().response, (void)0))>>
+      : ::std::true_type {};
 
 
 
     template <typename CE>
-    using is_context_extension = std::is_default_constructible<CE>;
+    using is_context_extension = ::std::is_default_constructible<CE>;
 
     /**
      *
@@ -227,13 +228,13 @@ namespace webpp::routes {
      *
      */
     template <typename Traits, typename Interface, typename... ExtensionTypes>
-    struct basic_context : public std::decay_t<ExtensionTypes>... {
+    struct basic_context : public ::std::decay_t<ExtensionTypes>... {
 
         static_assert(is_traits_v<Traits>,
                       "The specified template parameter is not a valid traits");
 
         static_assert(
-          (is_context_extension<std::decay_t<ExtensionTypes>>::value && ...),
+          (is_context_extension<::std::decay_t<ExtensionTypes>>::value && ...),
           "At lease one of the specified extensions are not of a valid extension type.");
 
       public:
@@ -241,7 +242,7 @@ namespace webpp::routes {
         using interface       = Interface;
         using request_type    = request_t<Traits, Interface>;
         using response_type   = response_t<Traits>;
-        using extension_types = std::tuple<std::decay_t<ExtensionTypes>...>;
+        using extension_types = ::std::tuple<::std::decay_t<ExtensionTypes>...>;
 
 
         // public fields:
