@@ -5,9 +5,6 @@
 #include "http/response.h"
 #include "routes/route.h"
 #include "std/vector.h"
-#include "utils/const_list.h"
-#include "utils/containers.h"
-#include "utils/functional.h"
 
 #include <functional>
 #include <map>
@@ -169,6 +166,8 @@ namespace webpp {
 
     template <typename InitialContextType, typename... Route>
     struct const_router {
+        using initial_context_type = std::decay_t<InitialContextType>;
+
         const ::std::tuple<Route...> routes;
 
         // this madness just fills the array with this: {0, 1, 2, 3, ..., N}
@@ -286,12 +285,16 @@ namespace webpp {
          */
         template <Request RequestType, Response ResponseType>
         ResponseType operator()(RequestType& req) noexcept {
-            ResponseType       res;
-            InitialContextType ctx;
-            ((call_route(::std::get<Route>(ctx))) || ...);
+            ResponseType res;
+                         operator()(req, res);
             return res;
         }
 
+        template <Request RequestType, Response ResponseType>
+        void operator()(RequestType& req, ResponseType& res) noexcept {
+            initial_context_type ctx;
+            ((call_route(::std::get<Route>(ctx))) || ...);
+        }
     };
 
     /**
