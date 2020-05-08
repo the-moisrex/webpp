@@ -18,13 +18,15 @@ namespace webpp::routes {
     concept RouteResponse =
       Response<T> || ConvertibleToResponse<T> || Context<T>;
 
+    // todo: complete this concept
     template <typename T>
-    concept Route = requires(T r, Context c) {
-        { t(c) }
+    concept Route = requires(T r) {
+        { r() }
         ->RouteResponse;
     };
 
-
+    template <typename T>
+    concept NextRoute = Route<T> || ::std::same_as<T, void>;
 
 
     enum class logical_operators { none, AND, OR, XOR };
@@ -52,15 +54,13 @@ namespace webpp::routes {
         constexpr basic_route(RouteType const&  super,
                               next_valve_type&& _next) noexcept
           : RouteType(super),
-            next(std::move(_next)),
-        {
+            next(std::move(_next)) {
         }
 
         constexpr basic_route(RouteType&&            super,
                               next_valve_type const& _next) noexcept
           : RouteType(std::move(super)),
-            next(_next),
-        {
+            next(_next) {
         }
 
         constexpr basic_route(basic_route const& v) noexcept = default;
@@ -71,32 +71,36 @@ namespace webpp::routes {
         constexpr basic_route& operator=(basic_route&&) noexcept = default;
     };
 
-    template <Route RouteType, logical_operators op = logical_operators::none>
-    struct basic_route<RouteType, op, void>
+    template <Route RouteType>
+    struct basic_route<RouteType, logical_operators::none, void>
       : public make_inheritable<RouteType> {
         using RouteType::RouteType;
     };
 
 
 
-    template <Route RouteType, logical_operators Op,
-              requires {Route || ::std::same_as<void>} NextRouteType>
-    class route : public basic_route<RouteType, Op, NextRouteType> {
+    template <Route RouteType, logical_operators Op, NextRoute NextRouteType>
+    struct route : public basic_route<RouteType, Op, NextRouteType> {
+
+        using route_t                         = RouteType;
+        using next_route_t                    = NextRouteType;
+        static constexpr logical_operators op = Op;
 
 
       private:
-        using super_t = basic_route<RouteType, Op, NextRouteType>
+        using super_t = basic_route<RouteType, Op, NextRouteType>;
 
-          public : using super_t::operator();
+      public:
+        using super_t::operator();
 
         constexpr route() noexcept : super_t{} {
         }
 
         template <typename... Args,
-                  std::enable_if_t<std::is_constructible_v<callable_t, Args...>,
-                                   int> = 0>
+                  ::std::enable_if_t<
+                    ::std::is_constructible_v<super_t, Args...>, int> = 0>
         constexpr route(Args&&... args) noexcept
-          : super_t{std::forward<Args>(args)...} {
+          : super_t{::std::forward<Args>(args)...} {
         }
 
         constexpr route(route const&) noexcept = default;
@@ -112,6 +116,85 @@ namespace webpp::routes {
         template <typename... Args>
         inline auto operator()(Args&&... args) noexcept {
             return super_t::operator()(std::forward<Args>(args)...);
+        }
+
+
+        /**
+         * @tparam NewValveType
+         * @param valve
+         */
+        template <logical_operators TheOp, typename NewRouteType>
+        [[nodiscard]] constexpr auto
+        set_next(NewRouteType&& new_route) const noexcept {
+            if constexpr (std::is_void_v<next_route_t>) {
+                // this part will only execute when the "next_valve_type" is
+                // void
+
+                // the first way (A<X, void> and B<Y, void> === A<X, B<Y, void>>
+                return valve<route_t, TheOp, NewRouteType>(
+                  *this, std::forward<NewRouteType>(new_route));
+            } else {
+                // this means this function has a "next" valve already,
+                // so it goes to the next's next valve
+                // this way we recursively create a valve type and return it.
+                auto n =
+                  basic_route<route_t, TheOp, NewRouteType>::next.set_next(
+                    std::forward<NewRouteType>(new_route));
+                return route<route_t, op, decltype(n)>{*this, n};
+            }
+        }
+
+        [[nodiscard]] constexpr auto
+        operator&&(NextRoute auto&& new_route) const noexcept {
+            return set_next<logical_operators::AND>(
+              std::forward<decltype(new_route)>(new_route));
+        }
+
+        [[nodiscard]] constexpr auto
+        operator&(NextRoute auto&& new_route) const noexcept {
+            return set_next<logical_operators::AND>(
+              std::forward<decltype(new_route)>(new_route));
+        }
+
+        [[nodiscard]] constexpr auto
+        operator||(NextRoute auto&& new_route) const noexcept {
+            return set_next<logical_operators::OR>(
+              std::forward<decltype(new_route)>(new_route));
+        }
+
+        [[nodiscard]] constexpr auto
+        operator|(NextRoute auto&& new_route) const noexcept {
+            return set_next<logical_operators::OR>(
+              std::forward<decltype(new_route)>(new_route));
+        }
+
+        [[nodiscard]] constexpr auto
+        operator^(NextRoute auto&& new_route) const noexcept {
+            return set_next<logical_operators::XOR>(
+              std::forward<decltype(new_route)>(new_route));
+        }
+
+        template <typename RequestType>
+        [[nodiscard]] bool operator()(RequestType const& req) const noexcept {
+            if constexpr (std::is_void_v<NextValve>) {
+                return ValveType::operator()(req);
+            } else {
+                switch (basic_valve<ValveType, NextValve>::op) {
+                    case logical_operators::AND:
+                        return ValveType::operator()(req) &&
+                               basic_valve<ValveType, NextValve>::next.
+                               operator()(req);
+                    case logical_operators::OR:
+                        return ValveType::operator()(req) ||
+                               basic_valve<ValveType, NextValve>::next.
+                               operator()(req);
+                    case logical_operators::XOR:
+                        return ValveType::operator()(req) ^
+                               basic_valve<ValveType, NextValve>::next.
+                               operator()(req);
+                    default: return false;
+                }
+            }
         }
     };
 
@@ -137,109 +220,6 @@ namespace webpp::routes {
         using basic_valve<ValveType, NextValve>::basic_valve;
         constexpr valve() noexcept = default;
 
-        /**
-         * @tparam NewValveType
-         * @param valve
-         * /
-        template <typename NewValve>
-        [[nodiscard]] constexpr auto
-        set_next(NewValve&& v, logical_operators the_op) const noexcept {
-            if constexpr (std::is_void_v<next_valve_type>) {
-                // this part will only execute when the "next_valve_type" is
-                // void
-
-                // the first way (A<X, void> and B<Y, void> === A<X, B<Y, void>>
-                return valve<ValveType, NewValve>(
-                  *this, std::forward<NewValve>(v), std::move(the_op));
-            } else {
-                // this means this function has a "next" valve already,
-                // so it goes to the next's next valve
-                // this way we recursively create a valve type and return it.
-                auto n = basic_valve<ValveType, NextValve>::next.set_next(
-                  std::forward<NewValve>(v), the_op);
-                return valve<ValveType, decltype(n)>{*this, n, this->op};
-            }
-        }
-
-        template <typename NewValve>
-        [[nodiscard]] constexpr auto operator&&(NewValve&& v) const noexcept {
-            if constexpr (std::is_convertible_v<
-                            typename std::decay_t<NewValve>::type,
-                            empty_condition>) {
-                // AnyValve && EmptyValve == AnyValve
-                return *this;
-            } else {
-                return set_next(std::forward<NewValve>(v),
-                                logical_operators::AND);
-            }
-        }
-
-        template <typename NewValve>
-        [[nodiscard]] constexpr auto operator&(NewValve&& v) const noexcept {
-            if constexpr (std::is_convertible_v<
-                            typename std::decay_t<NewValve>::type,
-                            empty_condition>) {
-                // AnyValve && EmptyValve == AnyValve
-                return *this;
-            } else {
-                return set_next(std::forward<NewValve>(v),
-                                logical_operators::AND);
-            }
-        }
-
-        template <typename NewValve>
-        [[nodiscard]] constexpr auto operator||(NewValve&& v) const noexcept {
-            if constexpr (std::is_convertible_v<
-                            typename std::decay_t<NewValve>::type,
-                            empty_condition>) {
-                // AnyValve || EmptyValve == EmptyValve
-                return valve<empty_condition>{};
-            } else {
-                return set_next(std::forward<NewValve>(v),
-                                logical_operators::OR);
-            }
-        }
-
-        template <typename NewValve>
-        [[nodiscard]] constexpr auto operator|(NewValve&& v) const noexcept {
-            if constexpr (std::is_convertible_v<
-                            typename std::decay_t<NewValve>::type,
-                            empty_condition>) {
-                // AnyValve || EmptyValve == EmptyValve
-                return valve<empty_condition>{};
-            } else {
-                return set_next(std::forward<NewValve>(v),
-                                logical_operators::OR);
-            }
-        }
-
-        template <typename NewValve>
-        [[nodiscard]] constexpr auto operator^(NewValve&& v) const noexcept {
-            return set_next(std::forward<NewValve>(v), logical_operators::XOR);
-        }
-
-        template <typename RequestType>
-        [[nodiscard]] bool operator()(RequestType const& req) const noexcept {
-            if constexpr (std::is_void_v<NextValve>) {
-                return ValveType::operator()(req);
-            } else {
-                switch (basic_valve<ValveType, NextValve>::op) {
-                    case logical_operators::AND:
-                        return ValveType::operator()(req) &&
-                               basic_valve<ValveType, NextValve>::next.
-                               operator()(req);
-                    case logical_operators::OR:
-                        return ValveType::operator()(req) ||
-                               basic_valve<ValveType, NextValve>::next.
-                               operator()(req);
-                    case logical_operators::XOR:
-                        return ValveType::operator()(req) ^
-                               basic_valve<ValveType, NextValve>::next.
-                               operator()(req);
-                    default: return false;
-                }
-            }
-        }
     };
 
     /**
