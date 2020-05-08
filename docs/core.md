@@ -29,10 +29,14 @@ and at the same time you can accept HTTP request on port 80;
 but in order to implement this, you need the `Server`.
 
 ## Applications
-`Application`s include:
+`Application`s are the struct that the user will create. it includes:
 
  - A `Router` and its `Route`s, `Context` and its extensions
  - Any number of `Application Extensions`.
+ - templated operator()
+
+Creating the Router and its extensions are where the user will be coding
+the actual application.
 
 ### Master Application
 There can be multiple `Application`s. For example, you might have 

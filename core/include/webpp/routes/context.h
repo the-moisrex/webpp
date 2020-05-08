@@ -125,6 +125,9 @@ namespace webpp::routes {
     template <typename CE>
     using is_context_extension = ::std::is_default_constructible<CE>;
 
+    template <typename T>
+    concept ContextExtension = is_context_extension<T>::value;
+
     /**
      *
      * Definitions:
