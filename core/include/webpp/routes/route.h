@@ -15,8 +15,8 @@ namespace webpp::routes {
 
 
     template <typename T>
-    concept RouteResponse =
-      Response<T> || ConvertibleToResponse<T> || Context<T>;
+    concept RouteResponse = Response<T> || ConvertibleToResponse<T> ||
+                            Context<T> || ::std::same_as<T, bool>;
 
     // todo: complete this concept
     template <typename T>
@@ -174,183 +174,201 @@ namespace webpp::routes {
               std::forward<decltype(new_route)>(new_route));
         }
 
-        template <typename RequestType>
-        [[nodiscard]] bool operator()(RequestType const& req) const noexcept {
-            if constexpr (std::is_void_v<NextValve>) {
-                return ValveType::operator()(req);
+        [[nodiscard]] inline bool
+        call_this_route(Context auto&& ctx) const noexcept {
+            // todo handle the return types
+            return super_t::operator()(std::forward<decltype(ctx)>(ctx));
+        }
+
+        [[nodiscard]] inline bool
+        call_next_route(Context auto&& ctx) const noexcept {
+            // todo handle the return types
+            if constexpr (::std::is_void_v<next_route_t>) {
+                return true; // it's the last route in this sub route, doesn't
+                             // matter what I return here; at least not yet
             } else {
-                switch (basic_valve<ValveType, NextValve>::op) {
-                    case logical_operators::AND:
-                        return ValveType::operator()(req) &&
-                               basic_valve<ValveType, NextValve>::next.
-                               operator()(req);
-                    case logical_operators::OR:
-                        return ValveType::operator()(req) ||
-                               basic_valve<ValveType, NextValve>::next.
-                               operator()(req);
-                    case logical_operators::XOR:
-                        return ValveType::operator()(req) ^
-                               basic_valve<ValveType, NextValve>::next.
-                               operator()(req);
-                    default: return false;
-                }
+                return super_t::next::operator()(
+                  std::forward<decltype(ctx)>(ctx));
+            }
+        }
+
+        [[nodiscard]] inline bool
+        operator()(Context auto&& ctx) const noexcept {
+            using context_type = decltype(ctx);
+            if constexpr (logical_operators::none == op) {
+                call_this_route(std::forward<context_type>(ctx));
+                call_next_route(std::forward<context_type>(ctx));
+                return true;
+            } else if constexpr (logical_operators::AND == op) {
+                return call_this_route(std::forward<context_type>(ctx)) &&
+                       call_next_route(std::forward<context_type>(ctx));
+            } else if constexpr (logical_operators::OR == op) {
+                return call_this_route(std::forward<context_type>(ctx)) ||
+                       call_next_route(std::forward<context_type>(ctx));
+            } else if constexpr (logical_operators::XOR == op) {
+                return call_this_route(std::forward<context_type>(ctx)) ^
+                       call_next_route(std::forward<context_type>(ctx));
+            } else {
+                // should not happen ever.
+                return true;
             }
         }
     };
+} // namespace webpp::routes
 
 
 
 
 
-    /*
-    struct empty_condition {
-        template <typename RequestType>
-        [[nodiscard]] constexpr bool
-        operator()(RequestType const&) const noexcept {
-            return true;
+/*
+struct empty_condition {
+    template <typename RequestType>
+    [[nodiscard]] constexpr bool
+    operator()(RequestType const&) const noexcept {
+        return true;
+    }
+};
+
+template <typename ValveType, typename NextValve = void>
+class valve : public basic_valve<ValveType, NextValve> {
+  public:
+    using type            = ValveType;
+    using next_valve_type = NextValve;
+
+    using basic_valve<ValveType, NextValve>::basic_valve;
+    constexpr valve() noexcept = default;
+
+};
+
+/**
+ * Dynamic version of the above valve class.
+ * todo: use a better name maybe?
+ * /
+template <typename Traits, typename Interface>
+struct dynamic_valve {
+    static_assert(
+      is_traits_v<Traits>,
+      "The specified template parameter is not a valid traits type.");
+
+    using traits    = Traits;
+    using interface = Interface;
+    using req_t     = request_t<traits, interface> const&;
+
+  protected:
+    std::function<bool(req_t)> func;
+
+  public:
+    dynamic_valve() noexcept                = default;
+    dynamic_valve(dynamic_valve const&)     = default;
+    dynamic_valve(dynamic_valve&&) noexcept = default;
+    dynamic_valve& operator=(dynamic_valve&&) noexcept = default;
+    dynamic_valve& operator=(dynamic_valve const&) noexcept = default;
+
+    template <typename NewValve>
+    dynamic_valve&
+    set_next(NewValve&& v, logical_operators const& op) noexcept(
+      std::is_nothrow_invocable_v<NewValve, req_t>) {
+        switch (op) {
+            case logical_operators::AND:
+                return operator&&(std::forward<NewValve>(v));
+            case logical_operators::OR:
+                return operator||(std::forward<NewValve>(v));
+            case logical_operators::XOR:
+                return operator^(std::forward<NewValve>(v));
         }
-    };
+        return *this;
+    }
 
-    template <typename ValveType, typename NextValve = void>
-    class valve : public basic_valve<ValveType, NextValve> {
-      public:
-        using type            = ValveType;
-        using next_valve_type = NextValve;
+    template <typename NewValve>
+    dynamic_valve& operator&&(NewValve&& v) noexcept(
+      std::is_nothrow_invocable_v<NewValve, req_t>) {
+        func = [=, *this](req_t req) {
+            if (func)
+                return func(req) && v(req);
+            return v(req);
+        };
+        return *this;
+    }
 
-        using basic_valve<ValveType, NextValve>::basic_valve;
-        constexpr valve() noexcept = default;
+    template <typename NewValve>
+    dynamic_valve& operator||(NewValve&& v) noexcept(
+      std::is_nothrow_invocable_v<NewValve, req_t>) {
+        func = [=, *this](req_t req) {
+            if (func)
+                return func(req) || v(req);
+            return v(req);
+        };
+        return *this;
+    }
 
-    };
+    template <typename NewValve>
+    dynamic_valve& operator&(NewValve&& v) noexcept(
+      std::is_nothrow_invocable_v<NewValve, req_t>) {
+        return operator&&(v);
+    }
+
+    template <typename NewValve>
+    dynamic_valve& operator|(NewValve&& v) noexcept(
+      std::is_nothrow_invocable_v<NewValve, req_t>) {
+        return operator||(v);
+    }
+
+    template <typename NewValve>
+    dynamic_valve& operator^(NewValve&& v) noexcept(
+      std::is_nothrow_invocable_v<NewValve, req_t>) {
+        func = [=, *this](req_t req) {
+            bool one = func ? func(req) : true;
+            bool two = v(req);
+            return (one && !two) || (!one && two);
+        };
+        return *this;
+    }
+
+    [[nodiscard]] bool operator()(req_t req) const
+      noexcept(std::is_nothrow_invocable_v<decltype(func), req_t>) {
+        return func(req);
+    }
+};
+
+struct empty_t : public valve<empty_condition> {
+    using valve<empty_condition>::valve;
 
     /**
-     * Dynamic version of the above valve class.
-     * todo: use a better name maybe?
+     * EmptyValve || AnyValve == EmptyValve
      * /
-    template <typename Traits, typename Interface>
-    struct dynamic_valve {
-        static_assert(
-          is_traits_v<Traits>,
-          "The specified template parameter is not a valid traits type.");
+    template <typename NewValve>
+    [[nodiscard]] constexpr auto
+    operator||(NewValve&& ) const noexcept {
+        return empty_t{};
+    }
 
-        using traits    = Traits;
-        using interface = Interface;
-        using req_t     = request_t<traits, interface> const&;
+    /**
+     * EmptyValve || AnyValve == EmptyValve
+     * /
+    template <typename NewValve>
+    [[nodiscard]] constexpr auto
+    operator|(NewValve&& ) const noexcept {
+        return empty_t{};
+    }
 
-      protected:
-        std::function<bool(req_t)> func;
+    /**
+     *  EmptyValve && AnyValve == AnyValve
+     * /
+    template <typename NewValve>
+    [[nodiscard]] constexpr auto operator&&(NewValve&& v) const noexcept {
+        return std::forward<NewValve>(v);
+    }
 
-      public:
-        dynamic_valve() noexcept                = default;
-        dynamic_valve(dynamic_valve const&)     = default;
-        dynamic_valve(dynamic_valve&&) noexcept = default;
-        dynamic_valve& operator=(dynamic_valve&&) noexcept = default;
-        dynamic_valve& operator=(dynamic_valve const&) noexcept = default;
-
-        template <typename NewValve>
-        dynamic_valve&
-        set_next(NewValve&& v, logical_operators const& op) noexcept(
-          std::is_nothrow_invocable_v<NewValve, req_t>) {
-            switch (op) {
-                case logical_operators::AND:
-                    return operator&&(std::forward<NewValve>(v));
-                case logical_operators::OR:
-                    return operator||(std::forward<NewValve>(v));
-                case logical_operators::XOR:
-                    return operator^(std::forward<NewValve>(v));
-            }
-            return *this;
-        }
-
-        template <typename NewValve>
-        dynamic_valve& operator&&(NewValve&& v) noexcept(
-          std::is_nothrow_invocable_v<NewValve, req_t>) {
-            func = [=, *this](req_t req) {
-                if (func)
-                    return func(req) && v(req);
-                return v(req);
-            };
-            return *this;
-        }
-
-        template <typename NewValve>
-        dynamic_valve& operator||(NewValve&& v) noexcept(
-          std::is_nothrow_invocable_v<NewValve, req_t>) {
-            func = [=, *this](req_t req) {
-                if (func)
-                    return func(req) || v(req);
-                return v(req);
-            };
-            return *this;
-        }
-
-        template <typename NewValve>
-        dynamic_valve& operator&(NewValve&& v) noexcept(
-          std::is_nothrow_invocable_v<NewValve, req_t>) {
-            return operator&&(v);
-        }
-
-        template <typename NewValve>
-        dynamic_valve& operator|(NewValve&& v) noexcept(
-          std::is_nothrow_invocable_v<NewValve, req_t>) {
-            return operator||(v);
-        }
-
-        template <typename NewValve>
-        dynamic_valve& operator^(NewValve&& v) noexcept(
-          std::is_nothrow_invocable_v<NewValve, req_t>) {
-            func = [=, *this](req_t req) {
-                bool one = func ? func(req) : true;
-                bool two = v(req);
-                return (one && !two) || (!one && two);
-            };
-            return *this;
-        }
-
-        [[nodiscard]] bool operator()(req_t req) const
-          noexcept(std::is_nothrow_invocable_v<decltype(func), req_t>) {
-            return func(req);
-        }
-    };
-
-    struct empty_t : public valve<empty_condition> {
-        using valve<empty_condition>::valve;
-
-        /**
-         * EmptyValve || AnyValve == EmptyValve
-         * /
-        template <typename NewValve>
-        [[nodiscard]] constexpr auto
-        operator||(NewValve&& ) const noexcept {
-            return empty_t{};
-        }
-
-        /**
-         * EmptyValve || AnyValve == EmptyValve
-         * /
-        template <typename NewValve>
-        [[nodiscard]] constexpr auto
-        operator|(NewValve&& ) const noexcept {
-            return empty_t{};
-        }
-
-        /**
-         *  EmptyValve && AnyValve == AnyValve
-         * /
-        template <typename NewValve>
-        [[nodiscard]] constexpr auto operator&&(NewValve&& v) const noexcept {
-            return std::forward<NewValve>(v);
-        }
-
-        /**
-         * EmptyValve && AnyValve == AnyValve
-         * /
-        template <typename NewValve>
-        [[nodiscard]] constexpr auto operator&(NewValve&& v) const noexcept {
-            return std::forward<NewValve>(v);
-        }
-    };
-    constexpr empty_t empty;
-     */
+    /**
+     * EmptyValve && AnyValve == AnyValve
+     * /
+    template <typename NewValve>
+    [[nodiscard]] constexpr auto operator&(NewValve&& v) const noexcept {
+        return std::forward<NewValve>(v);
+    }
+};
+constexpr empty_t empty;
+ */
 
 } // namespace webpp::routes
 
