@@ -113,11 +113,12 @@ namespace webpp::routes {
     template <typename CT>
     struct is_basic_context<
       CT,
-      ::std::void_t<
-        typename CT::traits, typename CT::interface, typename CT::request_type,
-        typename CT::response_type, typename CT::extension_types,
-        decltype((::std::declval<CT>().priority, ::std::declval<CT>().request,
-                  ::std::declval<CT>().response, (void)0))>>
+      ::std::void_t<typename CT::traits_type, typename CT::interface_type,
+                        typename CT::request_type, typename CT::response_type,
+                        typename CT::extension_types,
+                        decltype((::std::declval<CT>().priority,
+                                  ::std::declval<CT>().request,
+                                  ::std::declval<CT>().response, (void)0))>>
       : ::std::true_type {};
 
 
@@ -127,6 +128,9 @@ namespace webpp::routes {
 
     template <typename T>
     concept ContextExtension = is_context_extension<T>::value;
+
+    template <typename T>
+    concept Context = is_basic_context<T>::value;
 
     /**
      *
@@ -230,21 +234,15 @@ namespace webpp::routes {
      *
      *
      */
-    template <typename Traits, typename Interface, typename... ExtensionTypes>
+    template <Traits TraitsType, Interface InterfaceType,
+              ContextExtension... ExtensionTypes>
     struct basic_context : public ::std::decay_t<ExtensionTypes>... {
 
-        static_assert(is_traits_v<Traits>,
-                      "The specified template parameter is not a valid traits");
-
-        static_assert(
-          (is_context_extension<::std::decay_t<ExtensionTypes>>::value && ...),
-          "At lease one of the specified extensions are not of a valid extension type.");
-
       public:
-        using traits          = Traits;
-        using interface       = Interface;
-        using request_type    = request_t<Traits, Interface>;
-        using response_type   = response_t<Traits>;
+        using traits_type     = TraitsType;
+        using interface_type  = InterfaceType;
+        using request_type    = request_t<TraitsType, InterfaceType>;
+        using response_type   = response_t<TraitsType>;
         using extension_types = ::std::tuple<::std::decay_t<ExtensionTypes>...>;
 
 
@@ -262,10 +260,10 @@ namespace webpp::routes {
          * @tparam ExtensionType
          * @return
          */
-        template <typename... ExtensionType>
+        template <ContextExtension... ExtensionType>
         constexpr auto clone() const noexcept {
             using new_context =
-              basic_context<traits, interface, ExtensionType...>;
+              basic_context<traits_type, interface_type, ExtensionType...>;
             return new_context{.priority = this->priority,
                                .request  = this->request,
                                .response = this->response};
@@ -280,23 +278,24 @@ namespace webpp::routes {
      *
      * Extension aware context uses "Extension As Field" features.
      *
-     * @tparam Traits
-     * @tparam Interface
+     * @tparam TraitsType
+     * @tparam InterfaceType
      * @tparam ExtensionTypes
      */
-    template <typename Traits, typename Interface, typename... ExtensionTypes>
+    template <Traits TraitsType, Interface InterfaceType,
+              ContextExtension... ExtensionTypes>
     struct context
-      : public basic_context<Traits, Interface, ExtensionTypes...> {
+      : public basic_context<TraitsType, InterfaceType, ExtensionTypes...> {
 
-        using string_type      = typename Traits::string_type;
-        using string_view_type = typename Traits::string_view_type;
+        using string_type      = typename TraitsType::string_type;
+        using string_view_type = typename TraitsType::string_view_type;
 
         template <typename KeyT = string_type, typename ValueT = string_type>
         auto map() const noexcept {
             using new_extension =
-              extensions::as_data<extensions::map<Traits, KeyT, ValueT>>;
-            using new_context_t =
-              context<Traits, Interface, ExtensionTypes..., new_extension>;
+              extensions::as_data<extensions::map<TraitsType, KeyT, ValueT>>;
+            using new_context_t = context<TraitsType, InterfaceType,
+                                          ExtensionTypes..., new_extension>;
             return new_context_t{*this};
         }
     };
