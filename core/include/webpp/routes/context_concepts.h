@@ -3,6 +3,11 @@
 #ifndef WEBPP_CONTEXT_CONCEPTS_H
 #define WEBPP_CONTEXT_CONCEPTS_H
 
+#include "../http/request_concepts.h"
+#include "../http/response_concepts.h"
+#include "../interfaces/basic_interface_concepts.h"
+#include "../traits/traits_concepts.h"
+
 #include <type_traits>
 
 namespace webpp {
@@ -89,10 +94,15 @@ namespace webpp {
     template <typename T>
     concept Context = requires(T c) {
         typename T::traits_type;
+        Traits<typename T::traits_type>;
         typename T::interface_type;
+        Interface<typename T::interface_type>;
         typename T::request_type;
+        Request<typename T::request_type>;
         typename T::response_type;
+        Response<typename T::response_type>;
         typename T::extension_type;
+        ContextExtension<typename T::extension_type>;
         ::std::is_copy_constructible_v<T>;
         ::std::is_move_constructible_v<T>;
         { c.response }
