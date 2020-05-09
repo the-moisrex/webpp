@@ -3,8 +3,8 @@
 #ifndef WEBPP_ROUTES_CONTEXT_H
 #define WEBPP_ROUTES_CONTEXT_H
 
-#include "../http/request_concepts.h"
-#include "../http/response_concepts.h"
+#include "../http/request.h"
+#include "../http/response.h"
 #include "./context_concepts.h"
 #include "extensions/map.h"
 #include "priority.h"
@@ -121,6 +121,7 @@ namespace webpp::routes {
       public:
         using traits_type     = TraitsType;
         using interface_type  = InterfaceType;
+        // todo: use concepts instead maybe?
         using request_type    = request_t<TraitsType, InterfaceType>;
         using response_type   = response_t<TraitsType>;
         using extension_types = ::std::tuple<::std::decay_t<ExtensionTypes>...>;
