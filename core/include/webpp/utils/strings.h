@@ -2,6 +2,7 @@
 #define STRINGS_H
 
 #include "../common/meta.h"
+#include "../traits/traits.h"
 
 #include <algorithm>
 #include <string>

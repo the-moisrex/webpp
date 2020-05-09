@@ -44,6 +44,8 @@ namespace webpp {
     template <Traits TraitsType>
     constexpr uint8_t
     to_prefix(typename TraitsType::string_view_type const& _data) noexcept {
+        using traits_type = TraitsType;
+
         if (_data.size() > 15 || _data.size() < 7) {
             return 0u;
         }
@@ -55,7 +57,7 @@ namespace webpp {
         auto octet_1 = _data.substr(0u, first_dot);
         if (first_dot == len || octet_1.empty() || octet_1.size() > 3 ||
             !is::digit(octet_1) ||
-            (starts_with(octet_1, '0') && octet_1 != "0")) {
+            (starts_with<traits_type>(octet_1, '0') && octet_1 != "0")) {
             return 0u;
         }
 
@@ -67,7 +69,7 @@ namespace webpp {
           _data.substr(first_dot + 1u, second_dot - (first_dot + 1));
         if (second_dot == len || octet_2.empty() || octet_2.size() > 3 ||
             !is::digit(octet_2) ||
-            (starts_with(octet_2, '0') && octet_2 != "0")) {
+            (starts_with<traits_type>(octet_2, '0') && octet_2 != "0")) {
             return 0u;
         }
 
@@ -79,14 +81,14 @@ namespace webpp {
           _data.substr(second_dot + 1u, third_dot - (second_dot + 1));
         if (first_dot == len || octet_3.empty() || octet_3.size() > 3 ||
             !is::digit(octet_3) ||
-            (starts_with(octet_3, '0') && octet_3 != "0")) {
+            (starts_with<traits_type>(octet_3, '0') && octet_3 != "0")) {
             return 0u; // parsing failed.
         }
 
         auto octet_4 = _data.substr(third_dot + 1u);
 
         if (octet_4.empty() || octet_4.size() > 3 || !is::digit(octet_4) ||
-            (starts_with(octet_4, '0') && octet_4 != "0")) {
+            (starts_with<traits_type>(octet_4, '0') && octet_4 != "0")) {
             return 0u;
         }
 
@@ -144,7 +146,7 @@ namespace webpp {
             auto octet_1 = _data.substr(0u, first_dot);
             if (first_dot == len || octet_1.empty() || octet_1.size() > 3 ||
                 !is::digit(octet_1) ||
-                (starts_with(octet_1, '0') && octet_1 != "0")) {
+                (starts_with<traits_type>(octet_1, '0') && octet_1 != "0")) {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
@@ -157,7 +159,7 @@ namespace webpp {
               _data.substr(first_dot + 1u, second_dot - (first_dot + 1));
             if (second_dot == len || octet_2.empty() || octet_2.size() > 3 ||
                 !is::digit(octet_2) ||
-                (starts_with(octet_2, '0') && octet_2 != "0")) {
+                (starts_with<traits_type>(octet_2, '0') && octet_2 != "0")) {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
@@ -170,7 +172,7 @@ namespace webpp {
               _data.substr(second_dot + 1u, third_dot - (second_dot + 1));
             if (third_dot == len || octet_3.empty() || octet_3.size() > 3 ||
                 !is::digit(octet_3) ||
-                (starts_with(octet_3, '0') && octet_3 != "0")) {
+                (starts_with<traits_type>(octet_3, '0') && octet_3 != "0")) {
                 _prefix = 254u; // the ip is not valid
                 return;         // parsing failed.
             }
@@ -183,7 +185,7 @@ namespace webpp {
               _data.substr(third_dot + 1u, slash - (third_dot + 1));
 
             if (octet_4.empty() || octet_4.size() > 3 || !is::digit(octet_4) ||
-                (starts_with(octet_4, '0') && octet_4 != "0")) {
+                (starts_with<traits_type>(octet_4, '0') && octet_4 != "0")) {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
@@ -191,7 +193,8 @@ namespace webpp {
             if (slash != len) {
                 auto prefix_str = _data.substr(slash + 1);
                 if (prefix_str.empty() ||
-                    (starts_with(prefix_str, '0') && prefix_str != "0") ||
+                    (starts_with<traits_type>(prefix_str, '0') &&
+                     prefix_str != "0") ||
                     !is::digit(prefix_str)) {
                     _prefix = 254u; // the ip is not valid
                     return;
@@ -235,51 +238,50 @@ namespace webpp {
 
         constexpr ipv4(ipv4&& ip) = default;
 
-        template <typename CharT = char>
-        constexpr explicit ipv4(
-          std::basic_string_view<CharT> const& ip) noexcept
+        constexpr explicit ipv4(string_view_type const& ip) noexcept
           : _prefix(255) {
             parse(ip);
         }
 
-        template <typename CharT = char>
-        constexpr explicit ipv4(std::enable_if_t<std::is_integral_v<CharT>,
+        constexpr explicit ipv4(std::enable_if_t<std::is_integral_v<char_type>,
                                                  void> const* const ip) noexcept
           : _prefix(255) {
             parse(ip);
         }
 
-        template <typename CharT = char>
-        constexpr ipv4(std::basic_string_view<CharT> const& ip,
-                       std::basic_string_view<CharT> const& subnet) noexcept
-          : _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {
+        constexpr ipv4(string_view_type const& ip,
+                       string_view_type const& subnet) noexcept
+          : _prefix(is::subnet<traits_type>(subnet)
+                      ? to_prefix<traits_type>(subnet)
+                      : 253u) {
             parse(ip);
         }
 
-        template <typename CharT = char>
-        constexpr ipv4(std::basic_string_view<CharT> const& ip,
-                       std::array<uint8_t, 4> const&        subnet) noexcept
-          : _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {
+        constexpr ipv4(string_view_type const&         ip,
+                       ::std::array<uint8_t, 4> const& subnet) noexcept
+          : _prefix(is::subnet<traits_type>(subnet)
+                      ? to_prefix<traits_type>(subnet)
+                      : 253u) {
             parse(ip);
         }
 
-        template <typename CharT = char>
-        constexpr ipv4(std::basic_string_view<CharT> const& ip,
-                       uint8_t                              __prefix) noexcept
+        constexpr ipv4(string_view_type const& ip, uint8_t __prefix) noexcept
           : _prefix(__prefix > 32 && __prefix != 255u ? 253u : __prefix) {
             parse(ip);
         }
 
         constexpr ipv4(uint8_t octet1, uint8_t octet2, uint8_t octet3,
-                       uint8_t octet4, uint8_t prefix = 255) noexcept
+                       uint8_t octet4, uint8_t __prefix = 255) noexcept
           : data(parse({octet1, octet2, octet3, octet4})),
-            _prefix(prefix > 32 && prefix != 255u ? 253u : prefix) {
+            _prefix(__prefix > 32 && __prefix != 255u ? 253u : __prefix) {
         }
 
         constexpr ipv4(uint8_t octet1, uint8_t octet2, uint8_t octet3,
                        uint8_t octet4, std::string_view const& subnet) noexcept
           : data(parse({octet1, octet2, octet3, octet4})),
-            _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {
+            _prefix(is::subnet<traits_type>(subnet)
+                      ? to_prefix<traits_type>(subnet)
+                      : 253u) {
         }
 
         constexpr explicit ipv4(uint32_t const& ip,
@@ -288,41 +290,44 @@ namespace webpp {
             _prefix(prefix > 32 && prefix != 255u ? 253u : prefix) {
         }
 
-        template <typename CharT = char>
-        constexpr explicit ipv4(uint32_t const&               ip,
-                                std::basic_string_view<CharT> subnet) noexcept
+        constexpr explicit ipv4(uint32_t const&  ip,
+                                string_view_type subnet) noexcept
           : data(ip),
-            _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {
+            _prefix(is::subnet<traits_type>(subnet)
+                      ? to_prefix<traits_type>(subnet)
+                      : 253u) {
         }
 
-        constexpr ipv4(std::array<uint8_t, 4> const& ip,
-                       uint8_t                       prefix = 255) noexcept
+        constexpr ipv4(::std::array<uint8_t, 4> const& ip,
+                       uint8_t                         prefix = 255) noexcept
           : data(parse(ip)),
             _prefix(prefix > 32 && prefix != 255u ? 253u : prefix) {
         }
 
-        template <typename CharT = char>
-        constexpr ipv4(std::array<uint8_t, 4> const&        ip,
-                       std::basic_string_view<CharT> const& subnet) noexcept
+        constexpr ipv4(::std::array<uint8_t, 4> const& ip,
+                       string_view_type const&         subnet) noexcept
           : data(parse(ip)),
-            _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {
+            _prefix(is::subnet<traits_type>(subnet)
+                      ? to_prefix<traits_type>(subnet)
+                      : 253u) {
         }
 
-        constexpr ipv4(std::array<uint8_t, 4> const& ip,
-                       std::array<uint8_t, 4> const& subnet) noexcept
+        constexpr ipv4(::std::array<uint8_t, 4> const& ip,
+                       ::std::array<uint8_t, 4> const& subnet) noexcept
           : data(parse(ip)),
-            _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {
+            _prefix(is::subnet<traits_type>(subnet)
+                      ? to_prefix<traits_type>(subnet)
+                      : 253u) {
         }
 
-        template <typename CharT = char>
-        explicit operator std::basic_string<CharT>() {
-            return str<CharT>();
+        explicit operator string_type() {
+            return str();
         }
 
-        template <typename CharT = char>
         explicit
-        operator const std::enable_if_t<std::is_integral_v<CharT>, void> *() {
-            return str<CharT>().c_str();
+        operator const ::std::enable_if_t<::std::is_integral_v<char_type>,
+                                          void> *() {
+            return str().c_str();
         }
 
         explicit operator uint32_t() {
@@ -332,8 +337,7 @@ namespace webpp {
         ipv4& operator=(ipv4 const& ip) = default;
         ipv4& operator=(ipv4&& ip) = default;
 
-        template <typename CharT = char>
-        ipv4& operator=(std::basic_string_view<CharT> const& ip) noexcept {
+        ipv4& operator=(string_view_type const& ip) noexcept {
             parse(ip);
             _prefix = 255u;
             return *this;
@@ -346,32 +350,32 @@ namespace webpp {
         }
 
         constexpr bool
-        operator==(std::array<uint8_t, 4> const& other) const noexcept {
+        operator==(::std::array<uint8_t, 4> const& other) const noexcept {
             return data == parse(other);
         }
 
         constexpr bool
-        operator!=(std::array<uint8_t, 4> const& other) const noexcept {
+        operator!=(::std::array<uint8_t, 4> const& other) const noexcept {
             return data != parse(other);
         }
 
         constexpr bool
-        operator<(std::array<uint8_t, 4> const& other) const noexcept {
+        operator<(::std::array<uint8_t, 4> const& other) const noexcept {
             return data < parse(other);
         }
 
         constexpr bool
-        operator>(std::array<uint8_t, 4> const& other) const noexcept {
+        operator>(::std::array<uint8_t, 4> const& other) const noexcept {
             return data > parse(other);
         }
 
         constexpr bool
-        operator<=(std::array<uint8_t, 4> const& other) const noexcept {
+        operator<=(::std::array<uint8_t, 4> const& other) const noexcept {
             return data <= parse(other);
         }
 
         constexpr bool
-        operator>=(std::array<uint8_t, 4> const& other) const noexcept {
+        operator>=(::std::array<uint8_t, 4> const& other) const noexcept {
             return data >= parse(other);
         }
 
@@ -399,40 +403,28 @@ namespace webpp {
             return data <= other.data;
         }
 
-        template <typename CharT = char>
-        constexpr bool
-        operator!=(std::basic_string_view<CharT> ip) const noexcept {
-            return operator!=(ipv4(ip));
+        constexpr bool operator!=(string_view_type const& ip) const noexcept {
+            return operator!=(ipv4<traits_type>(ip));
         }
 
-        template <typename CharT = char>
-        constexpr bool
-        operator==(std::basic_string_view<CharT> ip) const noexcept {
-            return operator==(ipv4(ip));
+        constexpr bool operator==(string_view_type const& ip) const noexcept {
+            return operator==(ipv4<traits_type>(ip));
         }
 
-        template <typename CharT = char>
-        constexpr bool
-        operator<(std::basic_string_view<CharT> ip) const noexcept {
-            return operator<(ipv4(ip));
+        constexpr bool operator<(string_view_type const& ip) const noexcept {
+            return operator<(ipv4<traits_type>(ip));
         }
 
-        template <typename CharT = char>
-        constexpr bool
-        operator>(std::basic_string_view<CharT> ip) const noexcept {
-            return operator>(ipv4(ip));
+        constexpr bool operator>(string_view_type const& ip) const noexcept {
+            return operator>(ipv4<traits_type>(ip));
         }
 
-        template <typename CharT = char>
-        constexpr bool
-        operator<=(std::basic_string_view<CharT> ip) const noexcept {
-            return operator<=(ipv4(ip));
+        constexpr bool operator<=(string_view_type const& ip) const noexcept {
+            return operator<=(ipv4<traits_type>(ip));
         }
 
-        template <typename CharT = char>
-        constexpr bool
-        operator>=(std::basic_string_view<CharT> ip) const noexcept {
-            return operator>=(ipv4(ip));
+        constexpr bool operator>=(string_view_type const& ip) const noexcept {
+            return operator>=(ipv4<traits_type>(ip));
         }
 
         constexpr bool operator==(uint32_t const& ip) const noexcept {
@@ -459,17 +451,17 @@ namespace webpp {
             return integer() >= ip;
         }
 
-        template <typename CharT = char>
-        friend std::basic_ostream<CharT>&
-        operator<<(std::basic_ostream<CharT>& stream, ipv4 const& ip) {
-            stream << ip.str<CharT>();
+        friend ::std::basic_ostream<char_type>&
+        operator<<(::std::basic_ostream<char_type>& stream,
+                   ipv4<traits_type> const&         ip) {
+            stream << ip.str();
             return stream;
         }
 
-        template <typename CharT = char>
-        friend std::basic_istream<CharT>&
-        operator>>(std::basic_istream<CharT>& stream, ipv4& ip) {
-            std::basic_string<CharT> str;
+        friend std::basic_istream<char_type>&
+        operator>>(std::basic_istream<char_type>& stream,
+                   ipv4<traits_type>&             ip) {
+            std::basic_string<char_type> str;
             stream >> str;
             ip = str;
             return stream;
@@ -479,10 +471,10 @@ namespace webpp {
          * @brief get string representation of the ip
          * @return
          */
-        template <typename CharT = char>
-        [[nodiscard]] std::basic_string<CharT> str() const noexcept {
-            auto                            _octets = octets();
-            std::basic_ostringstream<CharT> s;
+        [[nodiscard]] string_type str() const noexcept {
+            auto _octets = octets();
+            // todo: use lib{fmt}
+            std::basic_ostringstream<char_type> s;
             s << static_cast<unsigned int>(_octets[0]) << '.'
               << static_cast<unsigned int>(_octets[1]) << '.'
               << static_cast<unsigned int>(_octets[2]) << '.'
@@ -502,10 +494,10 @@ namespace webpp {
          * @brief get the 4 octets of the ip address
          * @return
          */
-        [[nodiscard]] constexpr std::array<uint8_t, 4u>
+        [[nodiscard]] constexpr ::std::array<uint8_t, 4u>
         octets() const noexcept {
             uint32_t _data = integer();
-            return std::array<uint8_t, 4u>(
+            return ::std::array<uint8_t, 4u>(
               {static_cast<uint8_t>(_data >> 24u),
                static_cast<uint8_t>(_data >> 16u & 0x0FFu),
                static_cast<uint8_t>(_data >> 8u & 0x0FFu),
@@ -519,7 +511,8 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] constexpr bool
-        in_range(ipv4 const& start, ipv4 const& finish) const noexcept {
+        in_range(ipv4<traits_type> const& start,
+                 ipv4<traits_type> const& finish) const noexcept {
             return *this >= start && *this <= finish;
         }
 
@@ -535,7 +528,7 @@ namespace webpp {
          * Change the prefix of the ip
          * @param __prefix
          */
-        ipv4& prefix(uint8_t __prefix) noexcept {
+        ipv4<traits_type>& prefix(uint8_t __prefix) noexcept {
             _prefix = __prefix > 32 && __prefix != 255u ? 253u : __prefix;
             return *this;
         }
@@ -544,17 +537,17 @@ namespace webpp {
          * Set prefix with a subnet string
          * @param _subnet
          */
-        template <typename CharT = char>
-        ipv4& prefix(std::basic_string_view<CharT> const& _subnet) noexcept {
-            return prefix(to_prefix(_subnet));
+        ipv4<traits_type>& prefix(string_view_type const& _subnet) noexcept {
+            return prefix(to_prefix<traits_type>(_subnet));
         }
 
         /**
          * Set prefix with a subnet array
          * @param _subnet
          */
-        ipv4& prefix(std::array<uint8_t, 4> const& _subnet) noexcept {
-            return prefix(to_prefix(_subnet));
+        ipv4<traits_type>&
+        prefix(::std::array<uint8_t, 4> const& _subnet) noexcept {
+            return prefix(to_prefix<traits_type>(_subnet));
         }
 
         /**
@@ -603,12 +596,14 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] constexpr bool is_private() const noexcept {
-            constexpr ipv4 class_C(std::array<uint8_t, 4u>{192, 168, 0, 0}, 16);
-            constexpr ipv4 class_B_start(
-              std::array<uint8_t, 4u>{172, 16, 0, 0});
+            constexpr ipv4<traits_type> class_C(
+              std::array<uint8_t, 4u>{192, 168, 0, 0}, 16);
+            constexpr ipv4<traits_type> class_B_start(
+              ::std::array<uint8_t, 4u>{172, 16, 0, 0});
             constexpr ipv4 class_B_finish(
-              std::array<uint8_t, 4u>{172, 31, 255, 255});
-            constexpr ipv4 class_A(std::array<uint8_t, 4u>{10, 0, 0, 0}, 8);
+              ::std::array<uint8_t, 4u>{172, 31, 255, 255});
+            constexpr ipv4<traits_type> class_A(
+              ::std::array<uint8_t, 4u>{10, 0, 0, 0}, 8);
             return is_in_subnet(class_C) ||
                    in_range(class_B_start, class_B_finish) ||
                    is_in_subnet(class_A);
@@ -644,7 +639,7 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] constexpr ipv4 reversed() const noexcept {
-            return std::array<uint8_t, 4>{
+            return ::std::array<uint8_t, 4>{
               static_cast<uint8_t>(data & 0xFFu),
               static_cast<uint8_t>(data >> 8u & 0xFFu),
               static_cast<uint8_t>(data >> 16u & 0xFFu),
@@ -657,101 +652,116 @@ namespace webpp {
          * predefined rules
          * @return coordinates or string location
          */
-        template <typename CharT = char>
-        [[nodiscard]] std::basic_string<CharT>
-        geographic_location() const noexcept;
+        // [[nodiscard]] string_type geographic_location() const noexcept;
     };
 
-    constexpr bool operator==(uint32_t const& one, ipv4 const& two) {
+    template <Traits TraitsType>
+    constexpr bool operator==(uint32_t const&         one,
+                              ipv4<TraitsType> const& two) {
         return two == one;
     }
 
-    constexpr bool operator!=(uint32_t const& one, ipv4 const& two) {
+    template <Traits TraitsType>
+    constexpr bool operator!=(uint32_t const&         one,
+                              ipv4<TraitsType> const& two) {
         return two == one;
     }
 
-    constexpr bool operator<(uint32_t const& one, ipv4 const& two) {
+    template <Traits TraitsType>
+    constexpr bool operator<(uint32_t const& one, ipv4<TraitsType> const& two) {
         return one < two.integer();
     }
 
-    constexpr bool operator>(uint32_t const& one, ipv4 const& two) {
+    template <Traits TraitsType>
+    constexpr bool operator>(uint32_t const& one, ipv4<TraitsType> const& two) {
         return one > two.integer();
     }
 
-    constexpr bool operator<=(uint32_t const& one, ipv4 const& two) {
+    template <Traits TraitsType>
+    constexpr bool operator<=(uint32_t const&         one,
+                              ipv4<TraitsType> const& two) {
         return one <= two.integer();
     }
 
-    constexpr bool operator>=(uint32_t const& one, ipv4 const& two) {
+    template <Traits TraitsType>
+    constexpr bool operator>=(uint32_t const&         one,
+                              ipv4<TraitsType> const& two) {
         return one >= two.integer();
     }
 
-    template <typename CharT = char>
-    constexpr bool operator==(std::basic_string_view<CharT> const& one,
-                              ipv4 const&                          two) {
+    template <Traits TraitsType>
+    constexpr bool operator==(typename TraitsType::string_view_type const& one,
+                              ipv4<TraitsType> const& two) {
         return two == one;
     }
 
-    template <typename CharT = char>
-    constexpr bool operator!=(std::basic_string_view<CharT> const& one,
-                              ipv4 const&                          two) {
+    template <Traits TraitsType>
+    constexpr bool operator!=(typename TraitsType::string_view_type const& one,
+                              ipv4<TraitsType> const& two) {
         return two != one;
     }
 
-    template <typename CharT = char>
-    constexpr bool operator<(std::basic_string_view<CharT> const& one,
-                             ipv4 const&                          two) {
+    template <Traits TraitsType>
+    constexpr bool operator<(typename TraitsType::string_view_type const& one,
+                             ipv4<TraitsType> const&                      two) {
         return ipv4(one) < two;
     }
 
-    template <typename CharT = char>
-    constexpr bool operator>(std::basic_string_view<CharT> const& one,
-                             ipv4 const&                          two) {
+    template <Traits TraitsType>
+    constexpr bool operator>(typename TraitsType::string_view_type const& one,
+                             ipv4<TraitsType> const&                      two) {
         return ipv4(one) > two;
     }
 
-    template <typename CharT = char>
-    constexpr bool operator<=(std::basic_string_view<CharT> const& one,
-                              ipv4 const&                          two) {
+    template <Traits TraitsType>
+    constexpr bool operator<=(typename TraitsType::string_view_type const& one,
+                              ipv4<TraitsType> const& two) {
         return ipv4(one) <= two;
     }
 
-    template <typename CharT = char>
-    constexpr bool operator>=(std::basic_string_view<CharT> const& one,
-                              ipv4 const&                          two) {
+    template <Traits TraitsType>
+    constexpr bool operator>=(typename TraitsType::stirng_view_type const& one,
+                              ipv4<TraitsType> const& two) {
         return ipv4(one) >= two;
     }
 
-    constexpr bool operator==(std::array<uint8_t, 4> const& one,
-                              ipv4 const&                   two) {
+    template <Traits TraitsType>
+    constexpr bool operator==(::std::array<uint8_t, 4> const& one,
+                              ipv4<TraitsType> const&         two) {
         return two == one;
     }
 
-    constexpr bool operator!=(std::array<uint8_t, 4> const& one,
-                              ipv4 const&                   two) {
+    template <Traits TraitsType>
+    constexpr bool operator!=(::std::array<uint8_t, 4> const& one,
+                              ipv4<TraitsType> const&         two) {
         return two != one;
     }
 
-    constexpr bool operator<(std::array<uint8_t, 4> const& one,
-                             ipv4 const&                   two) {
-        return ipv4(one) < two;
+    template <Traits TraitsType>
+    constexpr bool operator<(::std::array<uint8_t, 4> const& one,
+                             ipv4<TraitsType> const&         two) {
+        return ipv4<TraitsType>(one) < two;
     }
 
-    constexpr bool operator>(std::array<uint8_t, 4> const& one,
-                             ipv4 const&                   two) {
-        return ipv4(one) > two;
+    template <Traits TraitsType>
+    constexpr bool operator>(::std::array<uint8_t, 4> const& one,
+                             ipv4<TraitsType> const&         two) {
+        return ipv4<TraitsType>(one) > two;
     }
 
-    constexpr bool operator<=(std::array<uint8_t, 4> const& one,
-                              ipv4 const&                   two) {
-        return ipv4(one) <= two;
+    template <Traits TraitsType>
+    constexpr bool operator<=(::std::array<uint8_t, 4> const& one,
+                              ipv4<TraitsType> const&         two) {
+        return ipv4<TraitsType>(one) <= two;
     }
 
-    constexpr bool operator>=(std::array<uint8_t, 4> const& one,
-                              ipv4 const&                   two) {
-        return ipv4(one) >= two;
+    template <Traits TraitsType>
+    constexpr bool operator>=(::std::array<uint8_t, 4> const& one,
+                              ipv4<TraitsType> const&         two) {
+        return ipv4<TraitsType>(one) >= two;
     }
 
 } // namespace webpp
+
 
 #endif // WEBPP_IP_H
