@@ -5,7 +5,6 @@
 #include "body.h"
 #include "header.h"
 
-#include <string_view>
 
 /**
  *
@@ -46,8 +45,8 @@ namespace webpp {
      */
     template <Traits TraitsT, Interface InterfaceT>
     struct request_t : public basic_request_t {
-        using traits    = TraitsT;
-        using interface = InterfaceT;
+        using traits_type    = TraitsT;
+        using interface_type = InterfaceT;
     };
 
     template <typename T>
