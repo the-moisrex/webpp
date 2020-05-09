@@ -32,6 +32,8 @@
  *
  */
 
+#include "request_concepts.h"
+
 namespace webpp {
 
     class basic_request_t {
@@ -49,14 +51,6 @@ namespace webpp {
         using interface_type = InterfaceT;
     };
 
-    template <typename T>
-    concept Request = requires(T x) {
-        typename T::traits;
-        Traits<typename T::traits>;
-
-        typename T::interface;
-        Interface<typename T::interface>;
-    };
 } // namespace webpp
 
 #endif // WEBPP_REQUEST_H

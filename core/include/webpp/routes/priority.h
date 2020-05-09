@@ -1,7 +1,7 @@
 // Created by moisrex on 5/1/20.
 
-#ifndef WEBPP_PRIORITY_H
-#define WEBPP_PRIORITY_H
+#ifndef WEBPP_ROUTES_PRIORITY_H
+#define WEBPP_ROUTES_PRIORITY_H
 
 #include <cstdint>
 
@@ -134,4 +134,4 @@ namespace webpp::routes {
 
 } // namespace webpp::routes
 
-#endif // WEBPP_PRIORITY_H
+#endif // WEBPP_ROUTES_PRIORITY_H

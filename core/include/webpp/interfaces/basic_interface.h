@@ -3,15 +3,10 @@
 #ifndef WEBPP_BASIC_INTERFACE_H
 #define WEBPP_BASIC_INTERFACE_H
 
-#include "../traits/traits.h"
+#include "../traits/traits_concepts.h"
+#include "./basic_interface_concepts.h"
 
 namespace webpp {
-
-    template <typename T>
-    concept Interface = requires(T u) {
-        { u.operator()() }
-        noexcept;
-    };
 
     /**
      * This class will do what all interfaces have in common.

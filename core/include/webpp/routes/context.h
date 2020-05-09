@@ -3,114 +3,14 @@
 #ifndef WEBPP_ROUTES_CONTEXT_H
 #define WEBPP_ROUTES_CONTEXT_H
 
+#include "../http/request_concepts.h"
+#include "../http/response_concepts.h"
+#include "./context_concepts.h"
 #include "extensions/map.h"
 #include "priority.h"
 
 namespace webpp::routes {
 
-
-    enum class extension_method : uint_fast8_t {
-        pre_subroute,
-        post_subroute,
-        pre_entryroute,
-        post_entryroute,
-        pre_firstroute,
-        post_lastroute
-    };
-
-    template <typename A, extension_method em, typename ContextArgType,
-              typename = void>
-    struct has_context_extension_method : ::std::false_type {};
-
-    /**
-     * pre_subroute
-     */
-    template <typename A, typename ContextArgType>
-    struct has_context_extension_method<
-      A, extension_method::pre_subroute, ContextArgType,
-      ::std::void_t<decltype(
-        ::std::declval<A>().pre_subroute(::std::declval<ContextArgType&>()),
-        (void)0)>> : ::std::true_type {};
-
-    /**
-     * post_subroute
-     */
-    template <typename A, typename ContextArgType>
-    struct has_context_extension_method<
-      A, extension_method::post_subroute, ContextArgType,
-      ::std::void_t<decltype(
-        ::std::declval<A>().post_subroute(::std::declval<ContextArgType&>()),
-        (void)0)>> : ::std::true_type {};
-
-
-    /**
-     * pre_entryroute
-     */
-    template <typename A, typename ContextArgType>
-    struct has_context_extension_method<
-      A, extension_method::pre_entryroute, ContextArgType,
-      ::std::void_t<decltype(
-        ::std::declval<A>().pre_entryroute(::std::declval<ContextArgType&>()),
-        (void)0)>> : ::std::true_type {};
-
-    /**
-     * post_entryroute
-     */
-    template <typename A, typename ContextArgType>
-    struct has_context_extension_method<
-      A, extension_method::post_entryroute, ContextArgType,
-      ::std::void_t<decltype(
-        ::std::declval<A>().post_entryroute(::std::declval<ContextArgType&>()),
-        (void)0)>> : ::std::true_type {};
-
-    /**
-     * pre first route
-     */
-    template <typename A, typename ContextArgType>
-    struct has_context_extension_method<
-      A, extension_method::pre_firstroute, ContextArgType,
-      ::std::void_t<decltype(
-        ::std::declval<A>().pre_firstroute(::std::declval<ContextArgType&>()),
-        (void)0)>> : ::std::true_type {};
-
-    /**
-     * post last route
-     */
-    template <typename A, typename ContextArgType>
-    struct has_context_extension_method<
-      A, extension_method::post_lastroute, ContextArgType,
-      ::std::void_t<decltype(
-        ::std::declval<A>().post_lastroute(::std::declval<ContextArgType&>()),
-        (void)0)>> : ::std::true_type {};
-
-    ///////////////////////////////////////////////////////////////////////////
-
-    template <typename CT, typename = void>
-    struct is_basic_context : ::std::false_type {};
-
-    template <typename CT>
-    struct is_basic_context<
-      CT,
-      ::std::void_t<typename CT::traits_type, typename CT::interface_type,
-                        typename CT::request_type, typename CT::response_type,
-                        typename CT::extension_types,
-                        decltype((::std::declval<CT>().priority,
-                                  ::std::declval<CT>().request,
-                                  ::std::declval<CT>().response, (void)0))>>
-      : ::std::true_type {};
-
-
-
-    template <typename CE>
-    using is_context_extension = ::std::is_default_constructible<CE>;
-
-    template <typename T>
-    concept ContextExtension = is_context_extension<T>::value;
-
-    template <typename T>
-    concept Context = requires {
-        is_basic_context<T>::value;
-    };
 
     /**
      *
