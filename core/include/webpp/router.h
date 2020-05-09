@@ -1,10 +1,10 @@
 #ifndef WEBPP_ROUTER_H
 #define WEBPP_ROUTER_H
 
-#include "http/request.h"
-#include "http/response.h"
-#include "routes/context.h"
-#include "routes/route.h"
+#include "./http/request_concepts.h"
+#include "./http/response_concepts.h"
+#include "./routes/context_concepts.h"
+#include "./routes/route_concepts.h"
 #include "std/vector.h"
 
 #include <functional>
@@ -83,9 +83,9 @@ namespace webpp {
             using routes_ptr_t     = decltype(routes)*;
             using priorities_ptr_t = decltype(priorities)*;
 
-            routes_ptr_t       routes_ptr;
-            priorities_ptr_t   priorities_ptr;
-            ::std::size_t      index;
+            routes_ptr_t     routes_ptr;
+            priorities_ptr_t priorities_ptr;
+            ::std::size_t    index;
 
           public:
             constexpr iterator(
