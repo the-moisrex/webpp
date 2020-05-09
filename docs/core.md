@@ -270,10 +270,8 @@ return context.clone<as_field<map<traits, string, string>>>();
    - **post_subroute**: After every call to a sub-route
    - **pre_entryroute**: Before every call to an entry route
    - **post_entryroute**: After every call to an entry route
-   - **pre_globalroute**: Before calling the global route
-   - **post_globalroute**: After calling the global route
-   - **post_thisroute**: Call it once; right after this route
-   - **pre_termination**: When we get the final result and we're
+   - **pre_firstroute**: Before calling the first entry route if possible
+   - **post_lastroute**: When we get the final result and we're
        about to send it to the user.
 
 

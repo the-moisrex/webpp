@@ -14,10 +14,8 @@ namespace webpp::routes {
         post_subroute,
         pre_entryroute,
         post_entryroute,
-        pre_globalroute,
-        post_globalroute,
-        post_thisroute,
-        pre_termination
+        pre_firstroute,
+        post_lastroute
     };
 
     template <typename A, extension_method em, typename ContextArgType,
@@ -66,43 +64,23 @@ namespace webpp::routes {
         (void)0)>> : ::std::true_type {};
 
     /**
-     * pre_globalroute
+     * pre first route
      */
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
-      A, extension_method::pre_globalroute, ContextArgType,
+      A, extension_method::pre_firstroute, ContextArgType,
       ::std::void_t<decltype(
-        ::std::declval<A>().pre_globalroute(::std::declval<ContextArgType&>()),
+        ::std::declval<A>().pre_firstroute(::std::declval<ContextArgType&>()),
         (void)0)>> : ::std::true_type {};
 
     /**
-     * post_globalroute
+     * post last route
      */
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
-      A, extension_method::post_globalroute, ContextArgType,
+      A, extension_method::post_lastroute, ContextArgType,
       ::std::void_t<decltype(
-        ::std::declval<A>().post_globalroute(::std::declval<ContextArgType&>()),
-        (void)0)>> : ::std::true_type {};
-
-    /**
-     * post_thisroute
-     */
-    template <typename A, typename ContextArgType>
-    struct has_context_extension_method<
-      A, extension_method::post_thisroute, ContextArgType,
-      ::std::void_t<decltype(
-        ::std::declval<A>().post_thisroute(::std::declval<ContextArgType&>()),
-        (void)0)>> : ::std::true_type {};
-
-    /**
-     * pre_termination
-     */
-    template <typename A, typename ContextArgType>
-    struct has_context_extension_method<
-      A, extension_method::pre_termination, ContextArgType,
-      ::std::void_t<decltype(
-        ::std::declval<A>().pre_termination(::std::declval<ContextArgType&>()),
+        ::std::declval<A>().post_lastroute(::std::declval<ContextArgType&>()),
         (void)0)>> : ::std::true_type {};
 
     ///////////////////////////////////////////////////////////////////////////
