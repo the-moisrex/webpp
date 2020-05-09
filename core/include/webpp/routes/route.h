@@ -3,10 +3,8 @@
 #ifndef WEBPP_ROUTES_ROUTE_H
 #define WEBPP_ROUTES_ROUTE_H
 
-#include "../http/request.h"
-#include "../http/response.h"
 #include "../utils/functional.h"
-#include "context.h"
+#include "./route_concepts.h"
 
 #include <type_traits>
 #include <utility>
@@ -137,22 +135,6 @@ namespace webpp::routes {
               "The specified route cannot be called.");
         }
     }
-
-    template <typename T>
-    concept RouteResponse = Response<T> || ConvertibleToResponse<T> ||
-                            Context<T> || ::std::same_as<T, bool>;
-
-    // todo: complete this concept
-    template <typename T>
-    concept Route = requires(T r) {
-        typename T::next_route_type;
-        typename T::route_type;
-        { r() }
-        ->RouteResponse;
-    };
-
-    template <typename T>
-    concept NextRoute = Route<T> || ::std::same_as<T, void>;
 
 
     enum class logical_operators { none, AND, OR, XOR };

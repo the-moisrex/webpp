@@ -3,7 +3,7 @@
 #ifndef WEBPP_RESPONSE_CONCEPTS_H
 #define WEBPP_RESPONSE_CONCEPTS_H
 
-#include "../traits/traits_concepts.h"
+#include "../traits/std_traits.h"
 
 namespace webpp {
 
@@ -34,10 +34,8 @@ namespace webpp {
     template <typename T>
     concept ConvertibleToResponse =
       Response<T> ||
-      ::std::is_constructible_v<
-        response_t<typename std_traits_from_string<T>::type>, T> ||
-      ::std::is_constructible_v<
-        response_t<typename std_traits_from_string_view<T>::type>, T>;
+      ::std::is_convertible_v<T, typename std_traits_from_string<T>::type> ||
+      ::std::is_convertible_v<T, typename std_traits_from_string_view<T>::type>;
 
 } // namespace webpp
 
