@@ -191,13 +191,13 @@ namespace webpp {
         }
 
         inline void operator()(Request auto& req, Response auto& res) noexcept {
-            priority             p;
+            routes::priority     p;
             initial_context_type ctx{
               .request = req, .response = res, .priority = p};
             operator()(ctx);
         }
 
-        inline void operator()(Context auto&& ctx) noexcept {
+        inline void operator()(routes::Context auto&& ctx) noexcept {
             ((call_route(
                ::std::get<RouteType>(std::forward<decltype(ctx)>(ctx)))) ||
              ...);
@@ -256,6 +256,7 @@ namespace webpp {
 
 
 
+    /*
     struct dynamic_route {
 
       protected:
@@ -286,6 +287,9 @@ namespace webpp {
             return condition(req);
         }
     };
+     */
+
+
 }; // namespace webpp
 
 #endif // WEBPP_ROUTER_H

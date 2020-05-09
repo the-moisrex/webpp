@@ -205,7 +205,8 @@ namespace webpp::routes {
 
 
 
-    template <Route RouteType, logical_operators Op, NextRoute NextRouteType>
+    template <Route RouteType, logical_operators Op = logical_operators::none,
+              NextRoute NextRouteType = void>
     struct route : public basic_route<RouteType, Op, NextRouteType> {
 
         using route_type                      = RouteType;

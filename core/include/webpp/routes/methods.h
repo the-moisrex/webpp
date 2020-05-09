@@ -22,8 +22,8 @@ namespace webpp::valves {
         }
     };
 
-    struct method : public valve<method_condition> {
-        using valve<method_condition>::valve;
+    struct method : public routes::route<method_condition> {
+        using routes::route<method_condition>::valve;
     };
 
     constexpr auto get  = method("GET");

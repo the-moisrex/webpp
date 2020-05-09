@@ -16,32 +16,33 @@ namespace webpp {
      * This represents a set of characters which can be queried
      * to find out if a character is in the set or not.
      */
-    template <typename CharT = char, std::size_t N = 1>
-    class charset_t : public std::array<CharT, N> {
+    template <typename CharT = char, ::std::size_t N = 1>
+    class charset_t : public ::std::array<CharT, N> {
         static_assert(
           N > 0,
           "A charset with zero elements doesn't makes sense to construct.");
 
-        template <typename Tpl, typename Callable, std::size_t... I>
-        constexpr void do_this_for_that(std::index_sequence<I...>,
+        template <typename Tpl, typename Callable, ::std::size_t... I>
+        constexpr void do_this_for_that(::std::index_sequence<I...>,
                                         Tpl const& tpl,
                                         Callable   callback) noexcept {
-            (callback(std::get<I>(tpl)), ...);
+            (callback(::std::get<I>(tpl)), ...);
         }
 
         template <typename Tpl, typename Callable>
         constexpr void for_each_tuple(Tpl const& tpl,
                                       Callable   callback) noexcept {
-            constexpr auto tpl_size = std::tuple_size<Tpl>::value;
-            do_this_for_that(std::make_index_sequence<tpl_size>(), tpl,
+            constexpr auto tpl_size = ::std::tuple_size<Tpl>::value;
+            do_this_for_that(::std::make_index_sequence<tpl_size>(), tpl,
                              callback);
         }
 
-        using super = std::array<CharT, N>;
+        using super = ::std::array<CharT, N>;
 
       public:
         template <typename... T>
-        constexpr charset_t(T&&... t) noexcept : super{std::forward<T>(t)...} {
+        constexpr charset_t(T&&... t) noexcept
+          : super{::std::forward<T>(t)...} {
         }
 
         /**
@@ -98,11 +99,11 @@ namespace webpp {
         }
 
         [[nodiscard]] constexpr auto string_view() const noexcept {
-            return std::basic_string_view<CharT>(this->data(), this->size());
+            return ::std::basic_string_view<CharT>(this->data(), this->size());
         }
 
-        [[nodiscard]] std::string string() const noexcept {
-            return std::basic_string<CharT>(this->data(), this->size());
+        [[nodiscard]] ::std::basic_string<CharT> string() const noexcept {
+            return ::std::basic_string<CharT>(this->data(), this->size());
         }
     };
 
@@ -119,7 +120,7 @@ namespace webpp {
      */
     template <typename _Tp, typename... _Up>
     charset_t(_Tp, _Up...)
-      -> charset_t<std::enable_if_t<(std::is_same_v<_Tp, _Up> && ...), _Tp>,
+      -> charset_t<::std::enable_if_t<(std::is_same_v<_Tp, _Up> && ...), _Tp>,
                    1 + sizeof...(_Up)>;
 
 
@@ -139,8 +140,8 @@ namespace webpp {
      */
     template <typename CharT = char, CharT First, CharT Last>
     constexpr auto charset() noexcept {
-        constexpr auto the_size =
-          static_cast<std::size_t>(Last) - static_cast<std::size_t>(First) + 1;
+        constexpr auto the_size = static_cast<::std::size_t>(Last) -
+                                  static_cast<::std::size_t>(First) + 1;
         charset_t<CharT, the_size> data;
         for (auto it = First; it != Last + 1; ++it)
             data[it - First] = it;
