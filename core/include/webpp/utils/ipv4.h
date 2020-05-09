@@ -41,14 +41,14 @@ namespace webpp {
      * Convert string to prefix
      * @param octets
      */
-    template <typename CharT = char>
+    template <Traits TraitsType>
     constexpr uint8_t
-    to_prefix(std::basic_string_view<CharT> const& _data) noexcept {
+    to_prefix(typename TraitsType::string_view_type const& _data) noexcept {
         if (_data.size() > 15 || _data.size() < 7) {
             return 0u;
         }
-        std::size_t first_dot = 0u;
-        std::size_t len       = _data.size();
+        ::std::size_t first_dot = 0u;
+        ::std::size_t len       = _data.size();
         while (_data[first_dot] != '.' && first_dot != len)
             first_dot++;
 
@@ -59,7 +59,7 @@ namespace webpp {
             return 0u;
         }
 
-        std::size_t second_dot = first_dot + 1;
+        ::std::size_t second_dot = first_dot + 1;
         while (_data[second_dot] != '.' && second_dot != len)
             second_dot++;
 
@@ -71,7 +71,7 @@ namespace webpp {
             return 0u;
         }
 
-        std::size_t third_dot = second_dot + 1;
+        ::std::size_t third_dot = second_dot + 1;
         while (_data[third_dot] != '.' && third_dot != len)
             third_dot++;
 
@@ -116,7 +116,13 @@ namespace webpp {
                 static_cast<uint8_t>(subnet & 0xFFu)};
     }
 
-    class ipv4 {
+    template <Traits TraitsType>
+    struct ipv4 {
+        using traits_type      = TraitsType;
+        using string_view_type = typename traits_type::string_view_type;
+        using string_type      = typename traits_type::string_type;
+        using char_type        = typename traits_type::char_type;
+
       private:
         mutable uint32_t data = 0u; // all bits are used
 
@@ -125,15 +131,13 @@ namespace webpp {
         // 253 means the prefix was not valid
         mutable uint8_t _prefix = 255u;
 
-        template <typename CharT = char>
-        constexpr void
-        parse(std::basic_string_view<CharT> const& _data) const noexcept {
+        constexpr void parse(string_view_type const& _data) const noexcept {
             if (_data.size() > 15 || _data.size() < 7) {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
-            std::size_t first_dot = 0u;
-            std::size_t len       = _data.size();
+            ::std::size_t first_dot = 0u;
+            ::std::size_t len       = _data.size();
             while (_data[first_dot] != '.' && first_dot != len)
                 first_dot++;
 
@@ -145,7 +149,7 @@ namespace webpp {
                 return;
             }
 
-            std::size_t second_dot = first_dot + 1;
+            ::std::size_t second_dot = first_dot + 1;
             while (_data[second_dot] != '.' && second_dot != len)
                 second_dot++;
 
@@ -158,7 +162,7 @@ namespace webpp {
                 return;
             }
 
-            std::size_t third_dot = second_dot + 1;
+            ::std::size_t third_dot = second_dot + 1;
             while (_data[third_dot] != '.' && third_dot != len)
                 third_dot++;
 
@@ -171,7 +175,7 @@ namespace webpp {
                 return;         // parsing failed.
             }
 
-            std::size_t slash = third_dot + 1;
+            ::std::size_t slash = third_dot + 1;
             while (_data[slash] != '/' && slash != len)
                 slash++;
 
