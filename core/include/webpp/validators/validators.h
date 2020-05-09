@@ -355,9 +355,9 @@ namespace webpp {
          * @return bool an indication weather or not the specified string is a
          * valid ipv4 subnet mask or not
          */
-        template <typename CharT = char>
+        template <Traits TraitsType>
         [[nodiscard]] constexpr bool
-        subnet(std::basic_string_view<CharT> str) noexcept {
+        subnet(typename TraitsType::string_view_type str) noexcept {
             std::size_t next_dot = 0;
             for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
                 next_dot       = str.find('.');
@@ -365,7 +365,7 @@ namespace webpp {
                 if (octet_str.size() > 3 || !is::digit(octet_str)) {
                     return false;
                 }
-                if (auto octet_int = to_uint(octet_str);
+                if (auto octet_int = to_uint<TraitsType>(octet_str);
                     octet_int > 255 || subnet_octet(octet_int))
                     return false;
                 str.remove_prefix(octet_str.size() + (octet_index != 3));
