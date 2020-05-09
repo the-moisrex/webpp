@@ -485,6 +485,5 @@ struct empty_t : public valve<empty_condition> {
 constexpr empty_t empty;
  */
 
-} // namespace webpp::routes
 
 #endif // WEBPP_ROUTES_ROUTE_H

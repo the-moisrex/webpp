@@ -9,6 +9,9 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/routes/path.h
         ${LIB_INCLUDE_DIR}/webpp/routes/tpath.h
         ${LIB_INCLUDE_DIR}/webpp/routes/opath.h
+        ${LIB_INCLUDE_DIR}/webpp/routes/context.h
+        ${LIB_INCLUDE_DIR}/webpp/routes/literals.h
+        ${LIB_INCLUDE_DIR}/webpp/routes/priority.h
 
         ${LIB_INCLUDE_DIR}/webpp/validators/validators.h
         ${LIB_INCLUDE_DIR}/webpp/validators/email.h
@@ -39,6 +42,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/response.h
 
         ${LIB_INCLUDE_DIR}/main.h
+        ${LIB_INCLUDE_DIR}/webpp.h
         )
 
 set(ALL_SOURCES_SHORT "")

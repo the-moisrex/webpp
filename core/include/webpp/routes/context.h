@@ -1,7 +1,7 @@
 // Created by moisrex on 5/1/20.
 
-#ifndef WEBPP_CONTEXT_H
-#define WEBPP_CONTEXT_H
+#ifndef WEBPP_ROUTES_CONTEXT_H
+#define WEBPP_ROUTES_CONTEXT_H
 
 #include "extensions/map.h"
 #include "priority.h"
@@ -305,4 +305,4 @@ namespace webpp::routes {
 
 } // namespace webpp::routes
 
-#endif // WEBPP_CONTEXT_H
+#endif // WEBPP_ROUTES_CONTEXT_H
