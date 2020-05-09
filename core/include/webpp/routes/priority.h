@@ -107,27 +107,27 @@ namespace webpp::routes {
 
 
 
-    constexpr bool operator<(uint_fast8_t lhs, priority rhs) const noexcept {
+    constexpr bool operator<(uint_fast8_t lhs, priority rhs) noexcept {
         return lhs < rhs.level();
     }
 
-    constexpr bool operator>(uint_fast16_t lhs, priority rhs) const noexcept {
+    constexpr bool operator>(uint_fast16_t lhs, priority rhs) noexcept {
         return lhs > rhs.level();
     }
 
-    constexpr bool operator<=(uint_fast16_t lhs, priority rhs) const noexcept {
+    constexpr bool operator<=(uint_fast16_t lhs, priority rhs) noexcept {
         return lhs <= rhs.level();
     }
 
-    constexpr bool operator>=(uint_fast16_t lhs, priority rhs) const noexcept {
+    constexpr bool operator>=(uint_fast16_t lhs, priority rhs) noexcept {
         return lhs >= rhs.level();
     }
 
-    constexpr bool operator!=(uint_fast16_t lhs, priority rhs) const noexcept {
+    constexpr bool operator!=(uint_fast16_t lhs, priority rhs) noexcept {
         return lhs != rhs.level();
     }
 
-    constexpr bool operator==(uint_fast16_t lhs, priority rhs) const noexcept {
+    constexpr bool operator==(uint_fast16_t lhs, priority rhs) noexcept {
         return lhs == rhs.level();
     }
 

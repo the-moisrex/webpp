@@ -57,8 +57,8 @@ namespace webpp {
     struct route_extension_pack : public ExtensionType... {};
 
 
-    template <Context InitialContextType, RouteExtensions ExtensionsType,
-              Route... RouteType>
+    template <routes::Context InitialContextType,
+              RouteExtensions ExtensionsType, routes::Route... RouteType>
     struct const_router {
 
         // Add any additional "context extensions" that the "route extensions"
@@ -72,7 +72,7 @@ namespace webpp {
         // this madness just fills the array with this: {0, 1, 2, 3, ..., N}
         ::std::array<::std::size_t, sizeof...(RouteType)> priorities =
           ([]<::std::size_t... I>(::std::index_sequence<I...>) {
-              return :: ::std::array<::std::size_t, sizeof...(I)>{I...};
+              return ::std::array<::std::size_t, sizeof...(I)>{I...};
           })(::std::make_index_sequence<sizeof...(RouteType)>());
 
 
@@ -183,6 +183,7 @@ namespace webpp {
          * @param req
          * @return final response
          */
+        template <Response ResponseType>
         Response auto operator()(Request auto& req) noexcept {
             ResponseType res;
                          operator()(req, res);
