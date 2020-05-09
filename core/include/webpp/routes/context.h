@@ -250,9 +250,9 @@ namespace webpp::routes {
 
         // public fields:
 
-        priority&           priority;
         request_type const& request;
         response_type&      response;
+        priority&           priority;
 
 
 
