@@ -5,7 +5,7 @@
 
 #include "../../std/map.h"
 
-namespace webpp::routes::extensions {
+namespace webpp::extensions {
 
     /**
      * This context extension is designed for sharing arbitrary key/value pairs
