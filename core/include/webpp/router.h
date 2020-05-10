@@ -5,6 +5,7 @@
 #include "./http/response_concepts.h"
 #include "./routes/context_concepts.h"
 #include "./routes/route_concepts.h"
+#include "./routes/router_concepts.h"
 #include "std/vector.h"
 
 #include <functional>
@@ -15,156 +16,51 @@
 namespace webpp {
 
 
-    /**
-     * Router:
-     *
-     * Router types:
-     *   - Dynamic route   : dynamic_route
-     *       The routes and the context can be changed at runtime.
-     *   - Constexpr route : const_route
-     *       No route can be changed at runtime. The initial context cannot be
-     *       changed either.
-     *
-     * Routing table implementation:
-     *   - Entry route list:
-     *       It's a list of entry routes (which they include some sub-routes of
-     *       their own).
-     *       We don't need  a Global Routing table, we just need a good
-     *       prioritization technique.
-     *   - Priorities of the entry route list:
-     *       This table will be used to change the priority of the entry route
-     *       list. This priority change is done through the context extensions.
-     *       So the context extensions need a way to access the router. The best
-     *       way to do so is to add this route itself to the base_context. This
-     *       is possible because the context is created initially by the
-     *       router itself and the changes in its type should be done inside the
-     *       router too.
-     *
-     */
-
-    template <typename E>
-    concept RouteExtension = requires(E e) {
-        ::std::is_default_constructible_v<E>;
-    };
-
-    template <typename E>
-    concept RouteExtensions = requires(E e) {
-        ::std::is_default_constructible_v<E>;
-    };
-
-
     template <RouteExtension... ExtensionType>
-    struct route_extension_pack : public ExtensionType... {};
+    struct route_extension_pack : public ExtensionType... {
+
+        template <typename ICT>
+        struct initial_context_type {
+            using type = typename ICT::template rebind<ExtensionType...>;
+        };
+    };
 
 
-    template <routes::Context InitialContextType,
-              RouteExtensions ExtensionsType, routes::Route... RouteType>
+    template <Context InitialContextType, RouteExtensions ExtensionsType,
+              Route... RouteType>
     struct const_router {
 
         // Add any additional "context extensions" that the "route extensions"
         // might want
-        using initial_context_type =
-          typename ExtensionsType::template initial_context<
-            ::std::decay_t<InitialContextType>>;
+        using initial_context_type_original =
+          ::std::decay_t<InitialContextType>;
+        using initial_context_type = ::std::conditional<
+          has_initial_context_type<initial_context_type_original,
+                                   ExtensionsType>,
+          typename ExtensionsType::template initial_context_type<
+            initial_context_type_original>,
+          initial_context_type_original>;
 
         const ::std::tuple<RouteType...> routes;
-
-        // this madness just fills the array with this: {0, 1, 2, 3, ..., N}
-        ::std::array<::std::size_t, sizeof...(RouteType)> priorities =
-          ([]<::std::size_t... I>(::std::index_sequence<I...>) {
-              return ::std::array<::std::size_t, sizeof...(I)>{I...};
-          })(::std::make_index_sequence<sizeof...(RouteType)>());
-
-
-        struct iterator {
-            using value_type = const_router<RouteType...>;
-
-          private:
-            using routes_ptr_t     = decltype(routes)*;
-            using priorities_ptr_t = decltype(priorities)*;
-
-            routes_ptr_t     routes_ptr;
-            priorities_ptr_t priorities_ptr;
-            ::std::size_t    index;
-
-          public:
-            constexpr iterator(
-              routes_ptr_t     _routes_ptr     = nullptr,
-              priorities_ptr_t _priorities_ptr = nullptr,
-              ::std::size_t    _index          = sizeof...(RouteType)) noexcept
-              : routes_ptr{_routes_ptr},
-                priorities_ptr{_priorities_ptr},
-                index(_index) {
-            }
-
-            constexpr iterator(iterator const& iter) noexcept
-              : routes_ptr{iter.routes_ptr},
-                priorities_ptr{iter.priorities_ptr},
-                index{iter.index} {
-            }
-
-            auto& operator=(iterator const& iter) noexcept {
-                if (iter != *this) {
-                    routes_ptr     = iter.routes_ptr;
-                    priorities_ptr = iter.priorities_ptr;
-                    index          = iter.index;
-                }
-                return *this;
-            }
-
-            ~iterator() noexcept {
-            }
-
-            auto& operator++() noexcept {
-                ++index;
-                return *this;
-            }
-            auto& operator--() noexcept {
-                --index;
-                return *this;
-            }
-            auto& operator->() noexcept {
-                return (*routes_ptr)[(*priorities_ptr)[index]];
-            }
-            auto& operator*() noexcept {
-                return &(*routes_ptr)[(*priorities_ptr)[index]];
-            }
-
-            constexpr bool operator==(iterator const& iter) const noexcept {
-                return routes_ptr == iter.routes_ptr &&
-                       priorities_ptr == iter.priorities_ptr &&
-                       index == iter.index;
-            }
-
-            constexpr bool operator!=(iterator const& iter) const noexcept {
-                return routes_ptr != iter.routes_ptr ||
-                       priorities_ptr != iter.priorities_ptr ||
-                       index != iter.index;
-            }
-
-            constexpr void swap(iterator& iter) noexcept {
-                using ::std::swap;
-                swap(routes_ptr, iter.routes_ptr);
-                swap(priorities_ptr, iter.priorities_ptr);
-                swap(index, iter.index);
-            }
-        };
 
         constexpr const_router(RouteType&&... _route) noexcept
           : routes(::std::forward<RouteType>(_route)...) {
         }
 
-        constexpr auto begin() const noexcept {
-            return iterator(routes, priorities, 0);
-        }
-        constexpr auto end() const noexcept {
-            return iterator(routes, priorities);
-        }
 
+        /**
+         * @return how many routes are in this router
+         */
         constexpr auto size() const noexcept {
             return sizeof...(RouteType);
         }
 
+        /**
+         * Get the nth route
+         * @tparam N
+         * @param i
+         * @return
+         */
         template <::std::size_t N = 0>
         constexpr auto& operator[](::std::size_t i) const noexcept {
             if (N == i) {
@@ -175,8 +71,6 @@ namespace webpp {
             }
             throw ::std::invalid_argument("The specified index is not valid");
         }
-
-
 
         /**
          * Run the request through the routes and then return the response
@@ -191,13 +85,11 @@ namespace webpp {
         }
 
         inline void operator()(Request auto& req, Response auto& res) noexcept {
-            routes::priority     p;
-            initial_context_type ctx{
-              .request = req, .response = res, .priority = p};
-            operator()(ctx);
+            initial_context_type ctx{.request = req, .response = res};
+                                 operator()(ctx);
         }
 
-        inline void operator()(routes::Context auto&& ctx) noexcept {
+        inline void operator()(Context auto&& ctx) noexcept {
             ((call_route(
                ::std::get<RouteType>(std::forward<decltype(ctx)>(ctx)))) ||
              ...);

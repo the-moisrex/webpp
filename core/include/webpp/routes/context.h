@@ -6,8 +6,7 @@
 #include "../http/request.h"
 #include "../http/response.h"
 #include "./context_concepts.h"
-#include "extensions/map.h"
-#include "priority.h"
+#include "./extensions/map.h"
 
 namespace webpp::routes {
 
@@ -119,8 +118,8 @@ namespace webpp::routes {
     struct basic_context : public ::std::decay_t<ExtensionTypes>... {
 
       public:
-        using traits_type     = TraitsType;
-        using interface_type  = InterfaceType;
+        using traits_type    = TraitsType;
+        using interface_type = InterfaceType;
         // todo: use concepts instead maybe?
         using request_type    = request_t<TraitsType, InterfaceType>;
         using response_type   = response_t<TraitsType>;
@@ -131,8 +130,12 @@ namespace webpp::routes {
 
         request_type const& request;
         response_type&      response;
-        priority&           priority;
 
+
+
+        template <ContextExtension... NewExtensionTypes>
+        using rebind = basic_context<TraitsType, InterfaceType,
+                                     ExtensionTypes..., NewExtensionTypes...>;
 
 
         /**
@@ -145,8 +148,7 @@ namespace webpp::routes {
         constexpr auto clone() const noexcept {
             using new_context =
               basic_context<traits_type, interface_type, ExtensionType...>;
-            return new_context{.priority = this->priority,
-                               .request  = this->request,
+            return new_context{.request  = this->request,
                                .response = this->response};
         }
     };
