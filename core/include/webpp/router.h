@@ -16,30 +16,33 @@
 namespace webpp {
 
 
-    template <RouteExtension... ExtensionType>
-    struct route_extension_pack : public ExtensionType... {
+    template <RouterExtension... ExtensionType>
+    struct pack : public std::decay_t<ExtensionType>... {
 
         template <typename ICT>
-        struct initial_context_type {
-            using type = typename ICT::template rebind<ExtensionType...>;
-        };
+        using initial_context_type = typename ICT::template rebind<
+          typename ExtensionType::initial_context_type...>;
     };
 
 
-    template <Context InitialContextType, RouteExtensions ExtensionsType,
+    template <Context InitialContextType, RouterExtensions ExtensionsType,
               Route... RouteType>
     struct const_router {
 
-        // Add any additional "context extensions" that the "route extensions"
+        // Add any additional "context extensions" that the "router extensions"
         // might want
         using initial_context_type_original =
           ::std::decay_t<InitialContextType>;
-        using initial_context_type = ::std::conditional<
+        using initial_context_type = ::std::conditional_t<
           has_initial_context_type<initial_context_type_original,
                                    ExtensionsType>,
           typename ExtensionsType::template initial_context_type<
             initial_context_type_original>,
           initial_context_type_original>;
+
+
+        // Additional routes extracted from the extensions
+        using additional_routes = ;
 
         const ::std::tuple<RouteType...> routes;
 
@@ -86,7 +89,7 @@ namespace webpp {
 
         inline void operator()(Request auto& req, Response auto& res) noexcept {
             initial_context_type ctx{.request = req, .response = res};
-                                 operator()(ctx);
+            this->               operator()(ctx);
         }
 
         inline void operator()(Context auto&& ctx) noexcept {
