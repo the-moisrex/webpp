@@ -9,12 +9,21 @@
 #include <webpp/routes/router>
 
 
+struct my_router_extension {
+
+    using context_extensions   = pack<>;
+    using initial_context_type = context
+};
+
+
 struct app {
     using namespace webpp::routes;
 
-    static constexpr router_t router = {get and (opath() / "home") >> app::home,
-                                        get and
-                                          (opath() / "about") >> app::about};
+    using additional_router_extensions = pack<rx_prioritized>;
+
+    static constexpr const_router<additional_router_extensions> router = {
+      get and (opath() / "home") >> app::home,
+      get and (opath() / "about") >> app::about};
 
     app() noexcept {
     }

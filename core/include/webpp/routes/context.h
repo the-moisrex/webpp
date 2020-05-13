@@ -113,29 +113,16 @@ namespace webpp::routes {
      *
      *
      */
-    template <Traits TraitsType, Interface InterfaceType,
-              ContextExtension... ExtensionTypes>
+    template <ContextExtension... ExtensionTypes>
     struct basic_context : public ::std::decay_t<ExtensionTypes>... {
 
       public:
-        using traits_type    = TraitsType;
-        using interface_type = InterfaceType;
-        // todo: use concepts instead maybe?
-        using request_type    = request_t<TraitsType, InterfaceType>;
-        using response_type   = response_t<TraitsType>;
+        // todo: use extension pack instead of tuple:
         using extension_types = ::std::tuple<::std::decay_t<ExtensionTypes>...>;
-
-
-        // public fields:
-
-        request_type const& request;
-        response_type&      response;
-
-
+        using basic_context_type = basic_context<ExtensionTypes...>;
 
         template <ContextExtension... NewExtensionTypes>
-        using rebind = basic_context<TraitsType, InterfaceType,
-                                     ExtensionTypes..., NewExtensionTypes...>;
+        using rebind = basic_context<ExtensionTypes..., NewExtensionTypes...>;
 
 
         /**
@@ -150,6 +137,78 @@ namespace webpp::routes {
               basic_context<traits_type, interface_type, ExtensionType...>;
             return new_context{.request  = this->request,
                                .response = this->response};
+        }
+
+        // todo: these methods need to be noexcept. They call unknown stuff.
+
+        inline void call_pre_subroute_methods() noexcept {
+            ((has_context_extension_method<ExtensionTypes,
+                                           extension_method::pre_subroute,
+                                           basic_context>::value
+                ? (ExtensionTypes::template pre_subroute<basic_context_type>(
+                     *this),
+                   (void)0)
+                : (void)0),
+             ...);
+        }
+
+
+        inline void call_pre_entryroute_methods() noexcept {
+            ((has_context_extension_method<ExtensionTypes,
+                                           extension_method::pre_entryroute,
+                                           basic_context>::value
+                ? (ExtensionTypes::template pre_entryroute<basic_context_type>(
+                     *this),
+                   (void)0)
+                : (void)0),
+             ...);
+        }
+
+
+        inline void call_pre_firstroute_methods() noexcept {
+            ((has_context_extension_method<ExtensionTypes,
+                                           extension_method::pre_firstroute,
+                                           basic_context>::value
+                ? (ExtensionTypes::template pre_firstroute<basic_context_type>(
+                     *this),
+                   (void)0)
+                : (void)0),
+             ...);
+        }
+
+
+        inline void call_post_subroute_methods() noexcept {
+            ((has_context_extension_method<ExtensionTypes,
+                                           extension_method::post_subroute,
+                                           basic_context>::value
+                ? (ExtensionTypes::template post_subroute<basic_context_type>(
+                     *this),
+                   (void)0)
+                : (void)0),
+             ...);
+        }
+
+        inline void call_post_entryroute_methods() noexcept {
+            ((has_context_extension_method<ExtensionTypes,
+                                           extension_method::post_entryroute,
+                                           basic_context>::value
+                ? (ExtensionTypes::template post_entryroute<basic_context_type>(
+                     *this),
+                   (void)0)
+                : (void)0),
+             ...);
+        }
+
+
+        inline void call_post_lastroute_methods() noexcept {
+            ((has_context_extension_method<ExtensionTypes,
+                                           extension_method::post_lastroute,
+                                           basic_context>::value
+                ? (ExtensionTypes::template post_lastroute<basic_context_type>(
+                     *this),
+                   (void)0)
+                : (void)0),
+             ...);
         }
     };
 

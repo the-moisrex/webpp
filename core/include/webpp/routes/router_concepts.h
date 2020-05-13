@@ -3,6 +3,8 @@
 #ifndef WEBPP_ROUTER_CONCEPTS_H
 #define WEBPP_ROUTER_CONCEPTS_H
 
+#include "../std/tuple.h"
+
 #include <type_traits>
 
 namespace webpp {
@@ -32,22 +34,39 @@ namespace webpp {
      *       router itself and the changes in its type should be done inside the
      *       router too.
      *
+     *
+     * Router Extensions:
+     *   Router extensions have these features:
+     *     - Can specify other extensions as dependencies of this extension.
+     *     - Can add new extensions for the "initial context type".
+     *     - Cannot change the initial extension type to something not valid.
+     *     - Can add routes:
+     *         - Before all routes
+     *         - After all routes
+     *
      */
-    template <typename E>
-    concept RouteExtension = requires(E e) {
-        ::std::is_default_constructible_v<E>;
+
+
+
+    template <typename T>
+    concept InitialContextType = requires {
+        T::template initial_context_type;
     };
 
     template <typename E>
-    concept RouteExtensions = requires(E e) {
+    concept RouterExtension = requires(E e) {
         ::std::is_default_constructible_v<E>;
     };
 
+    /**
+     * it can be one of these 3:
+     *   - a tuple of extensions
+     *   - a router_extension_pack of extensions (maybe not? todo)
+     *   - a single extension
+     */
+    template <typename T>
+    concept RouterExtensionDependency = RouterExtension<T> || stl::Tuple<T>;
 
-    template <typename ICT, typename T>
-    concept has_initial_context_type = requires {
-        typename T::template initial_context_type<ICT>::type;
-    };
 
 } // namespace webpp
 
