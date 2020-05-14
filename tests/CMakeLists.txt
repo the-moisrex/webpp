@@ -19,5 +19,5 @@ target_link_libraries(${TEST_NAME}
         PRIVATE GTest::Main
         )
 add_test(${TEST_NAME} ${TEST_NAME})
-target_include_directories(${TEST_NAME}
-        PRIVATE ${LIB_INCLUDE_DIR})
+#target_include_directories(${TEST_NAME}
+#        PRIVATE ${LIB_INCLUDE_DIR})

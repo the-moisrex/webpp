@@ -3,7 +3,7 @@
 #ifndef WEBPP_TPATH_H
 #define WEBPP_TPATH_H
 
-#include "../utils/uri.h"
+#include "../../utils/uri.h"
 #include "route.h"
 
 #include <cassert>

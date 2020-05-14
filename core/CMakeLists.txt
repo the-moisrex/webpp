@@ -4,14 +4,13 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/router.h
         ${LIB_INCLUDE_DIR}/webpp/server.h
 
-        ${LIB_INCLUDE_DIR}/webpp/routes/route.h
-        ${LIB_INCLUDE_DIR}/webpp/routes/methods.h
-        ${LIB_INCLUDE_DIR}/webpp/routes/path.h
-        ${LIB_INCLUDE_DIR}/webpp/routes/tpath.h
-        ${LIB_INCLUDE_DIR}/webpp/routes/opath.h
-        ${LIB_INCLUDE_DIR}/webpp/routes/context.h
-        ${LIB_INCLUDE_DIR}/webpp/routes/literals.h
-        ${LIB_INCLUDE_DIR}/webpp/routes/priority.h
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/route.h
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/methods.h
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/path.h
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/tpath.h
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/opath.h
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/context.h
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/literals.h
 
         ${LIB_INCLUDE_DIR}/webpp/validators/validators.h
         ${LIB_INCLUDE_DIR}/webpp/validators/email.h
@@ -30,10 +29,10 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/utils/strings.h
         ${LIB_INCLUDE_DIR}/webpp/utils/uri.h
 
-        ${LIB_INCLUDE_DIR}/webpp/interfaces/cgi.h
-        ${LIB_INCLUDE_DIR}/webpp/interfaces/fcgi.h
-        ${LIB_INCLUDE_DIR}/webpp/interfaces/fastcgi/protocol.h
-        ${LIB_INCLUDE_DIR}/webpp/interfaces/simple_server.h
+        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/cgi.h
+        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fcgi.h
+        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fastcgi/protocol.h
+        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/simple_server.h
 
         ${LIB_INCLUDE_DIR}/webpp/http/body.h
         ${LIB_INCLUDE_DIR}/webpp/http/cookies.h

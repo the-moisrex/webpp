@@ -1,7 +1,7 @@
 #ifndef WEBPP_VALVE_URI_H
 #define WEBPP_VALVE_URI_H
 
-#include "../utils/uri.h"
+#include "../../utils/uri.h"
 #include "route.h"
 
 namespace webpp::routes {
