@@ -3,7 +3,7 @@
 #ifndef WEBPP_BASIC_INTERFACE_H
 #define WEBPP_BASIC_INTERFACE_H
 
-#include "../traits/traits_concepts.h"
+#include "../../traits/traits_concepts.h"
 #include "./basic_interface_concepts.h"
 
 namespace webpp {

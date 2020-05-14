@@ -1,12 +1,12 @@
 #ifndef WEBPP_INTERFACE_FCGI
 #define WEBPP_INTERFACE_FCGI
 
-#include "../http/request.h"
-#include "../std/internet.h"
-#include "../std/set.h"
-#include "../std/vector.h"
+#include "../../std/internet.h"
+#include "../../std/set.h"
+#include "../../std/vector.h"
+#include "../request.h"
+#include "./common/server.h"
 #include "basic_interface.h"
-#include "common/server.h"
 
 
 namespace webpp {
