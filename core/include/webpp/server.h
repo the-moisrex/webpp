@@ -1,8 +1,8 @@
 #ifndef WEBPP_SERVER_H
 #define WEBPP_SERVER_H
 
-#include "interfaces/basic_interface.h"
-#include "router.h"
+#include "http/interfaces/basic_interface.h"
+#include "http/routes/router.h"
 
 namespace webpp {
 

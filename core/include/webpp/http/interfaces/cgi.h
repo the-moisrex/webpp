@@ -1,11 +1,11 @@
 #ifndef WEBPP_CGI_H
 #define WEBPP_CGI_H
 
-#include "../../router.h"
 #include "../../std/string_view.h"
 #include "../../traits/std_traits.h"
 #include "../../utils/casts.h"
 #include "../../utils/strings.h"
+#include "../routes/router.h"
 #include "basic_interface.h"
 
 #include <cctype>

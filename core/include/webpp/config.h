@@ -6,7 +6,7 @@
  * This config class should:
  *
  * - [ ] should not be removed if the program stops
- * - [ ] you can configure it to be used across other softwares or even other
+ * - [ ] you can configure it to be used across other software or even other
  *       computers
  * - [ ] should support multiple config formats including:
  *    - [ ] Memory
