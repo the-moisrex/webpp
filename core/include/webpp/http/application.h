@@ -3,8 +3,8 @@
 #ifndef WEBPP_APPLICATION_H
 #define WEBPP_APPLICATION_H
 
-#include "./http/request.h"
-#include "./http/response.h"
+#include "request.h"
+#include "response.h"
 
 #include <type_traits>
 
