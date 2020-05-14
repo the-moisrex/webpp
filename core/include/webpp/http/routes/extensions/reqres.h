@@ -3,10 +3,10 @@
 #ifndef WEBPP_EXTENSIONS_REQRES_H
 #define WEBPP_EXTENSIONS_REQRES_H
 
-#include "../../http/request_concepts.h"
-#include "../../http/response_concepts.h"
+#include "../../../traits/traits_concepts.h"
 #include "../../interfaces/basic_interface_concepts.h"
-#include "../../traits/traits_concepts.h"
+#include "../../request_concepts.h"
+#include "../../response_concepts.h"
 
 namespace webpp::inline extensions {
 
