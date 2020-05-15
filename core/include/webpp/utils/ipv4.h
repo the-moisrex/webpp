@@ -1,6 +1,7 @@
 #ifndef WEBPP_IP_H
 #define WEBPP_IP_H
 
+#include "../traits/traits_concepts.h"
 #include "../utils/strings.h"
 #include "../validators/validators.h"
 #include "casts.h"
