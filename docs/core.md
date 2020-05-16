@@ -1,15 +1,28 @@
 # Core specifications
 
-## Server
-Server is an `Interface Abstracter` meaning it can hold:
+## Protocols
+Protocols are usually a way of communication between the high level application layer,
+and the low level transmission layers.
 
- - Two or more `Interface`s .
- - One `Application` or `Master Application`
+Protocols:
 
-## Interfaces
-Interfaces are the part that have contact with the outside world.
+- Can depend on another protocols.
 
-Each interface implements an specific protocol. Including:
+Examples of protocols:
+
+- **HTTP**
+- **HTTPS**
+- **WebRTC**
+- **FTP**
+
+## HTTP Protocol
+The rest of this article is about HTTP protocol.
+
+### Interfaces
+Interfaces are part of the HTTP protocol and they are the part 
+that have contact with the outside world.
+
+Each interface implements an specific communication protocol. Including:
 
  - CGI
  - FastCGI
@@ -25,14 +38,12 @@ The `interface` instantiates the `Application`.
 
 There can be more than one `interface` inside an executable.
 For example you can accept request from a FastCGI on port 2020,
-and at the same time you can accept HTTP request on port 80;
-but in order to implement this, you need the `Server`.
+and at the same time you can accept HTTP request on port 80.
 
-## Applications
-`Application`s are the struct that the user will create. it includes:
+### Applications
+`Application`s are the struct that the user will create. it  _might_ includes:
 
  - A `Router` and its `Route`s, `Context` and its extensions
- - Any number of `Application Extensions`.
  - templated operator()
 
 Creating the Router and its extensions are where the user will be coding
