@@ -69,11 +69,10 @@ namespace webpp {
         }
 
         void calculate_default_headers() noexcept {
-            // todo: use C++20 header.contains instead when possible
-            if (header.find("Content-Type") == header.cend())
+            if (!header.contains("Content-Type"))
                 header.emplace("Content-Type", "text/html; charset=utf-8");
 
-            if (header.find("Content-Length") == header.cend())
+            if (!header.contains("Content-Length"))
                 header.emplace(
                   "Content-Length",
                   ::std::to_string(body.str().size() * sizeof(char)));
