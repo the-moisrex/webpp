@@ -49,17 +49,11 @@ and at the same time you can accept HTTP request on port 80.
 Creating the Router and its extensions are where the user will be coding
 the actual application.
 
-### Master Application
-There can be multiple `Application`s. For example, you might have 
-written a whole website before in a different project, now you can use
-that whole application just by including it in the project an with the
-help of the `Master Application`, you can combine two or more applications
-into one single application and use it normally.
-
-### Application Extensions
-_Application extensions_ are classes that an _application_ inherits from.
-These classes are capable of adding arbitrary features to the _application_
-so it'll be available to the _routes_ through the _contexts_.
+#### Application Extensions
+_Application extensions_ are classes that an _application_ inherits from or uses.
+These classes are capable of adding arbitrary features to the _application_.
+These extensions may need to access _router_ or _initial context type_ or
+any other related thing. You need to see their documentation for those.
 
 Examples of application extensions:
 
@@ -68,16 +62,26 @@ Examples of application extensions:
  - Users' chat information in a chat-room website
  - Stats
 
-### Application's Router
-The router is the place where all the routes are stored. 
+#### Application's Router
+The router is the place where all the routes are stored.
 Each request will go through the router, and router, with 
 the help of the routes it has, will produce a _response_ and 
 returns it back to the caller.
+This is not a mandatory thing to use, but you probably need it.
+It will be used inside an application. A sub-application can have its own
+version router. We recommend you constant router version because it
+will process creation stuff at compile-time and won't cost you
+anything at runtime.
 
 There's also a _dynamic router_ which will let the user 
-to dynamically change the routes at runtime.
+to dynamically change the routes at runtime but it will cost you
+some runtime processing which is not that much and you can
+ignore it for the most part.
 
-#### Route
+##### Route
+Routes are being used inside a router. With routes, you can specify
+which function should be run when a request is given to you.
+
 Types or routes:
 
  - based on position:
@@ -88,7 +92,7 @@ Types or routes:
    - Response route
    - Migrator route
 
-###### Definitions:
+Definitions:
 
    - **Route**: Possible ways that are capable of handling user requests
    - **Global Route**: A series of route that will run on every request
@@ -128,7 +132,7 @@ Types or routes:
                    features to the context so it can be used in the
                    sub routes down the routing chain.
 
-###### Features we need:
+Features we need:
 
    - [ ] Extendable entry and sub routes
      - [ ] Use class operator() as a place to add more sub-routes
@@ -151,15 +155,7 @@ Types or routes:
    - [ ] Context extensions
    - [ ] Deactivated routes
 
-###### A bit hard to implement places:
-
-   - Prioritization of the entry routes:
-     It's easy to do so actually but it'll be a problem because I don't
-     want to use dynamically allocated containers in the implementation
-     of this. Adding indirection will cause the routing system to be
-     processed at run-time. That's not something I'm willing to do yet.
- 
-###### Return types of the operator() and their meaning:
+Return types of the operator() and their meaning:
   - Condition Routes: _\[bool\]_
       Returning true means that the request is a match for this route,
       and false means that the request is not a match for this route
@@ -174,7 +170,7 @@ Types or routes:
       This context will be passed to the other sub routes chain; this
       will not affect the entry level routes' context.
  
-**Overloaded operators**:
+Overloaded operators:
   - `&`   : and also check this sub route              [returns: new route]
   - `&&`  : and also check this sub route              [returns: new route]
   - `|`   : or check this sub route instead            [returns: new route]
@@ -184,7 +180,7 @@ Types or routes:
   - `()`  : run the route                              [returns: .........]
 
 
-###### Usage examples:
+Usage examples:
    - `.on(get and "/about"_path >> about_page)`
    - `( get and "/home"_path ) or ( post && "/home/{page}"_tpath ) >> ...`
    - `opath() /"home" / integer("page") /`
@@ -192,8 +188,13 @@ Types or routes:
    - `(...) >> &non_templated_class_with_templated_callable_operator`
    - `get and "/profile/"_tpath and set_by_class_constructor`
  
-#### Context
-###### Definitions:
+##### Context
+Contexts are a way of passing information from one route to another.
+The burden of carrying request and responses in the router is upon
+the context. Each route may change the context type by returning a
+new context.
+
+Definitions:
  - **Context**: An object of arbitrary type that will contain everything
                 that routes will need including:
       - some types:
@@ -218,7 +219,7 @@ Types or routes:
                  sub routes down the routing chain.
 
 
-###### Features we need:
+Features we need:
  - [X] Having access to the request and the response
  - [ ] Termination of continuation of checking the sub-routes by parents
  - [ ] Termination of continuation of checking the entry-routes by any
@@ -239,13 +240,12 @@ Types or routes:
    - [X] Map extension
 
 
-###### Public fields:
+Public fields:
  - [ ] **app**: a reference to the application instance
- - [X] **priority**: to check/change this route chain
  - [X] **request**: a const reference to the the request object
  - [X] **response**: a non-const reference to the response object
 
-###### public methods:
+public methods:
  - auto clone<extensions...>()
      get a clone of itself with different type
      designed to add extensions
@@ -253,12 +253,19 @@ Types or routes:
 
 
 
-##### Context Extensions
+###### Context Extensions
+Context extensions are added features to the contexts. These features
+will be used by the routes in order to have a easier way of doing
+things. For example you could use a context extension to parse
+data in one router, and pass those data to another router, and
+that router will use those data knowing that it's already been parsed.
 
-###### Extension requirements:
+**Extension requirements:**
  - [ ] Having a default constructor
+ - [ ] Having a copy constructor for extensions
+ - [ ] Having a move constructor for extensions
 
-###### Extension collision:
+**Extension collision:**
  It is possible to try to add an extension to the context and get
  compile time errors saying that it's a collision or an ambiguous call
  to some method, to solve this, you can use "Extension As Field"
@@ -272,7 +279,8 @@ return context.clone<as_field<map<traits, string, string>>>();
  "Extension aware context" struct.
 
 
-###### Internal Extension Handling:
+**Internal Extension Handling:**
+
  We can customize every single route to check if the extension is
  present in the returned context and then act accordingly, but that's
  not scalable; so in order to do this, we're gonna call "something"
