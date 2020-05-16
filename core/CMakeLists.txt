@@ -1,9 +1,12 @@
 set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp.h
         ${LIB_INCLUDE_DIR}/webpp/config.h
-        ${LIB_INCLUDE_DIR}/webpp/router.h
         ${LIB_INCLUDE_DIR}/webpp/server.h
 
+        ${LIB_INCLUDE_DIR}/webpp/extensions/extension.h
+        ${LIB_INCLUDE_DIR}/webpp/extensions/extension_concepts.h
+
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/router.h
         ${LIB_INCLUDE_DIR}/webpp/http/routes/route.h
         ${LIB_INCLUDE_DIR}/webpp/http/routes/methods.h
         ${LIB_INCLUDE_DIR}/webpp/http/routes/path.h

@@ -3,6 +3,7 @@
 #ifndef WEBPP_ROUTES_CONTEXT_H
 #define WEBPP_ROUTES_CONTEXT_H
 
+#include "../../extensions/extension.h"
 #include "../request.h"
 #include "../response.h"
 #include "./context_concepts.h"

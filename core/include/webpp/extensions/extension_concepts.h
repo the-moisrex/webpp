@@ -1,0 +1,6 @@
+// Created by moisrex on 5/15/20.
+
+#ifndef WEBPP_EXTENSION_CONCEPTS_H
+#define WEBPP_EXTENSION_CONCEPTS_H
+
+#endif // WEBPP_EXTENSION_CONCEPTS_H
