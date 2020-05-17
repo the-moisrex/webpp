@@ -8,41 +8,41 @@
 
 namespace webpp {
 
-    namespace details {
 
-        template <typename Predicate, typename Operation>
-        struct unique_op {
-            template <typename Pair, typename T>
-            struct apply {
-                typedef typename Pair::first  seq_;
-                typedef typename Pair::second prior_;
-                typedef typename eval_if<
-                  and_<is_not_na<prior_>, apply2<Predicate, prior_, T>>,
-                  identity<seq_>, apply2<Operation, seq_, T>>::type new_seq_;
-
-                typedef ::std::pair<new_seq_, T> type;
-            };
+    template <typename... T>
+    struct typelist {
+      private:
+        template <typename... F>
+        struct prepend {
+            using type = typelist<F...>;
         };
 
-        template <typename Sequence, typename Predicate, typename Inserter>
-        struct unique_impl
-          : first<typename fold<
-              Sequence, pair<typename Inserter::state, na>,
-              protect<aux::unique_op<Predicate,
-                                     typename Inserter::operation>>>::type> {};
+        template <typename F, typename... L>
+        struct prepend<F, typelist<L...>> {
+            using type = typelist<F, L...>;
+        };
 
-        template <typename Sequence, typename Predicate, typename Inserter>
-        struct reverse_unique_impl
-          : first<typename reverse_fold<
-              Sequence, pair<typename Inserter::state, na>,
-              protect<aux::unique_op<Predicate,
-                                     typename Inserter::operation>>>::type> {};
+        template <typename First = void, typename... U>
+        struct unique_types {
+            using type = ::std::conditional_t<
+              ((!std::is_same_v<First, U>)&&...),
+              typename prepend<First, typename typelist<U...>::unique>::type,
+              typename typelist<U...>::unique>;
+        };
 
+        template <typename... U>
+        struct unique_types<void, U...> {
+            using type = typelist<U...>;
+        };
 
-    } // namespace details
+      public:
+        using unique = typename unique_types<T...>::type;
+    };
+
 
     template <typename... Extensions>
     struct extension_pack : public ::std::decay_t<Extensions>... {};
+
 
     /**
      * Unpack std::tuple into extension pack
@@ -52,23 +52,19 @@ namespace webpp {
       : public extension_pack<Extensions...> {};
 
     /**
+     * Unpack typelist into extension pack
+     */
+    template <typename... Extensions>
+    struct extension_pack<typelist<Extensions...>>
+      : public extension_pack<Extensions...> {};
+
+    /**
      * Unpack the extension pack
      */
     template <typename... Extensions>
     struct extension_pack<extension_pack<Extensions...>>
       : public extension_pack<Extensions...> {};
 
-    /**
-     * Remove duplicate extensions
-     */
-    template <typename E1, typename... Extensions>
-    struct extension_pack<E1, E1, Extensions...>
-      : public extension_pack<E1, Extensions...> {};
-
-    template <typename... Extensions>
-    using flatten_extension_list = extension_pack<
-
-      >;
 
 } // namespace webpp
 
