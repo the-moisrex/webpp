@@ -22,7 +22,6 @@ namespace webpp {
         (Extension<T> && ...);
     };
 
-
     template <typename T>
     concept ExtensionWithDependencies = requires {
         Extension<T>;

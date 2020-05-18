@@ -3,6 +3,8 @@
 #ifndef WEBPP_EXTENSION_H
 #define WEBPP_EXTENSION_H
 
+#include "extension_concepts.h"
+
 #include <tuple>
 #include <type_traits>
 
@@ -40,31 +42,65 @@ namespace webpp {
     };
 
 
-    template <typename... Extensions>
+    template <Extension... Extensions>
     struct extension_pack : public ::std::decay_t<Extensions>... {};
 
 
     /**
      * Unpack std::tuple into extension pack
      */
-    template <typename... Extensions>
+    template <Extension... Extensions>
     struct extension_pack<::std::tuple<Extensions...>>
       : public extension_pack<Extensions...> {};
 
     /**
      * Unpack typelist into extension pack
      */
-    template <typename... Extensions>
+    template <Extension... Extensions>
     struct extension_pack<typelist<Extensions...>>
       : public extension_pack<Extensions...> {};
 
     /**
      * Unpack the extension pack
      */
-    template <typename... Extensions>
+    template <Extension... Extensions>
     struct extension_pack<extension_pack<Extensions...>>
       : public extension_pack<Extensions...> {};
 
+    template <typename... E>
+    struct flattened_extension_pack;
+
+    template <Extension... EP1, Extension... EP2>
+    struct flattened_extension_pack<extension_pack<EP1...>, typelist<EP2...>> {
+        using type = extension_pack<EP1..., EP2...>;
+    };
+
+    template <Extension... EP1, Extension... EP2>
+    struct flattened_extension_pack<extension_pack<EP1...>,
+                                    ::std::tuple<EP2...>> {
+        using type = extension_pack<EP1..., EP2...>;
+    };
+
+    template <Extension... EP1, Extension... EP2>
+    struct flattened_extension_pack<::std::tuple<EP1...>, typelist<EP2...>> {
+        using type = extension_pack<EP1..., EP2...>;
+    };
+
+    template <Extension... EP1, Extension... EP2>
+    struct flattened_extension_pack<::std::tuple<EP1...>,
+                                    extension_pack<EP2...>> {
+        using type = extension_pack<EP1..., EP2...>;
+    };
+
+    template <Extension... EP1, Extension... EP2>
+    struct flattened_extension_pack<typelist<EP1...>, extension_pack<EP2...>> {
+        using type = extension_pack<EP1..., EP2...>;
+    };
+
+    template <Extension... EP1, Extension... EP2>
+    struct flattened_extension_pack<typelist<EP1...>, ::std::tuple<EP2...>> {
+        using type = extension_pack<EP1..., EP2...>;
+    };
 
 } // namespace webpp
 
