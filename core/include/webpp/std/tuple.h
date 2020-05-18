@@ -26,6 +26,13 @@ namespace stl {
     template <typename T>
     concept Tuple = is_tuple<T>::value;
 
+    template <template <typename> typename Concept,
+              template <typename...> typename Tup, typename... T>
+    concept TupleOf = Tuple<Tup<T...>>&& requires(Tup<T...> tup) {
+        (Concept<T>::value && ...);
+    };
+
+
 } // namespace stl
 
 #endif // WEBPP_TUPLE_H
