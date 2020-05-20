@@ -3,6 +3,7 @@
 #ifndef WEBPP_ROUTER_CONCEPTS_H
 #define WEBPP_ROUTER_CONCEPTS_H
 
+#include "../../extensions/extension_concepts.h"
 #include "../../std/tuple.h"
 
 #include <type_traits>
@@ -46,8 +47,6 @@ namespace webpp {
      *
      */
 
-
-
     template <typename T>
     concept InitialContextType = requires {
         T::template initial_context_type;
@@ -55,7 +54,7 @@ namespace webpp {
 
     template <typename E>
     concept RouterExtension = requires(E e) {
-        ::std::is_default_constructible_v<E>;
+        Extension<E>;
     };
 
     /**
@@ -65,7 +64,12 @@ namespace webpp {
      *   - a single extension
      */
     template <typename T>
-    concept RouterExtensionDependency = RouterExtension<T> || stl::Tuple<T>;
+    concept RouterExtensionDependency = RouterExtension<T> || ::stl::Tuple<T>;
+
+    template <typename T>
+    concept RouterExtensionList = RouterExtension<T> || requires {
+
+                                                        };
 
 
 } // namespace webpp
