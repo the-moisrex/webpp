@@ -18,7 +18,7 @@ namespace webpp {
     concept Extension = is_extension<T>::value;
 
     template <template <typename...> typename E, typename... T>
-    concept ExtensionList = stl::TupleOf<is_extension, E, T...> || requires {
+    concept ExtensionList = ::stl::TupleOf<is_extension, E, T...> || requires {
         (Extension<T> && ...);
     };
 
