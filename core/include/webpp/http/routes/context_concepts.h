@@ -3,6 +3,7 @@
 #ifndef WEBPP_CONTEXT_CONCEPTS_H
 #define WEBPP_CONTEXT_CONCEPTS_H
 
+#include "../../extensions/extension_concepts.h"
 #include "../../traits/traits_concepts.h"
 #include "../interfaces/basic_interface_concepts.h"
 #include "../request_concepts.h"
@@ -89,27 +90,24 @@ namespace webpp {
     ///////////////////////////////////////////////////////////////////////////
 
     template <typename T>
-    concept ContextExtension = ::std::is_default_constructible_v<T>;
+    concept ContextExtension = Extension<T>;
 
     template <typename T>
-    concept Context = requires(T c) {
-        typename T::traits_type;
-        Traits<typename T::traits_type>;
-        typename T::interface_type;
-        Interface<typename T::interface_type>;
-        typename T::request_type;
-        Request<typename T::request_type>;
-        typename T::response_type;
-        Response<typename T::response_type>;
-        typename T::extension_type;
-        ContextExtension<typename T::extension_type>;
-        ::std::is_copy_constructible_v<T>;
-        ::std::is_move_constructible_v<T>;
+    concept Context = Traits<typename T::traits_type>and
+            Interface<typename T::interface_type>and
+            Request<typename T::request_type>and
+            Response<typename T::response_type>and
+            ContextExtension<typename T::extension_type>and ::std::
+              is_copy_constructible_v<T>and ::std::is_move_constructible_v<
+                T>and requires(T c) {
         { c.response }
         ->Response;
+    }
+    and requires(T c) {
         { c.request }
         ->Request;
     };
+
 
 } // namespace webpp
 

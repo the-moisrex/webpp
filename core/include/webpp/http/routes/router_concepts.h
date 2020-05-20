@@ -53,9 +53,7 @@ namespace webpp {
     };
 
     template <typename E>
-    concept RouterExtension = requires(E e) {
-        Extension<E>;
-    };
+    concept RouterExtension = Extension<E>;
 
     /**
      * it can be one of these 3:
@@ -67,9 +65,8 @@ namespace webpp {
     concept RouterExtensionDependency = RouterExtension<T> || ::stl::Tuple<T>;
 
     template <typename T>
-    concept RouterExtensionList = RouterExtension<T> || requires {
-
-                                                        };
+    concept RouterExtensionList = RouterExtension<T> ||
+      ;
 
 
 } // namespace webpp
