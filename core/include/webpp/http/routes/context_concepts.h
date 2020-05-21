@@ -3,7 +3,7 @@
 #ifndef WEBPP_CONTEXT_CONCEPTS_H
 #define WEBPP_CONTEXT_CONCEPTS_H
 
-#include "../../extensions/extension_concepts.h"
+#include "../../extensions/extension.h"
 #include "../../traits/traits_concepts.h"
 #include "../interfaces/basic_interface_concepts.h"
 #include "../request_concepts.h"

@@ -3,7 +3,7 @@
 #ifndef WEBPP_ROUTER_CONCEPTS_H
 #define WEBPP_ROUTER_CONCEPTS_H
 
-#include "../../extensions/extension_concepts.h"
+#include "../../extensions/extension.h"
 #include "../../std/tuple.h"
 
 #include <type_traits>
@@ -64,9 +64,28 @@ namespace webpp {
     template <typename T>
     concept RouterExtensionDependency = RouterExtension<T> || ::stl::Tuple<T>;
 
+    template <typename... T>
+    struct is_router_extension_list {
+        static constexpr bool value = false;
+    };
+
+    template <RouterExtension... T>
+    struct is_router_extension_list<::std::tuple<T...>> {
+        static constexpr bool value = true;
+    };
+
+    template <RouterExtension... T>
+    struct is_router_extension_list<typelist<T...>> {
+        static constexpr bool value = true;
+    };
+
+    template <RouterExtension... T>
+    struct is_router_extension_list<extension_pack<T...>> {
+        static constexpr bool value = true;
+    };
+
     template <typename T>
-    concept RouterExtensionList = RouterExtension<T> ||
-      ;
+    concept RouterExtensionList = ExtensionList<T, is_router_extension_list>;
 
 
 } // namespace webpp

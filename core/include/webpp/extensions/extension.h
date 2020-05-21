@@ -5,10 +5,44 @@
 
 #include "extension_concepts.h"
 
-#include <tuple>
 #include <type_traits>
 
 namespace webpp {
+
+    template <typename T>
+    concept Extension =
+      !::std::is_final_v<T> && ::std::is_default_constructible_v<T> &&
+      ::std::is_move_constructible_v<T> && ::std::is_move_assignable_v<T> &&
+      ::std::is_copy_assignable_v<T> && ::std::is_class_v<T> &&
+      !::stl::is_tuple<T>::value && !::std::is_integral_v<T>;
+
+
+    template <typename... T>
+    struct is_extension_list {
+        static constexpr bool value = false;
+    };
+
+    template <Extension T>
+    struct is_extension_list<T> {
+        static constexpr bool value = true;
+    };
+
+    template <Extension... T>
+    struct is_extension_list<::std::tuple<T...>> {
+        static constexpr bool value = true;
+    };
+
+    template <typename T, template <typename...>
+                          typename IsExtensionList = is_extension_list>
+    concept ExtensionList = IsExtensionList<T>::value ||
+                            (::stl::Tuple<T> && IsExtensionList<T>::value);
+
+
+    template <typename T>
+    concept ExtensionWithDependencies = Extension<T>&& requires {
+        typename T::required_extensions;
+    }
+    &&Extension<typename T::required_extensions>;
 
 
     template <typename... T>
@@ -101,6 +135,20 @@ namespace webpp {
     struct flattened_extension_pack<typelist<EP1...>, ::std::tuple<EP2...>> {
         using type = extension_pack<EP1..., EP2...>;
     };
+
+
+    ///////////////////// Extending the is_extension_list ////////////////////
+
+    template <typename... T>
+    struct is_extension_list<extension_pack<T...>> {
+        static constexpr bool value = true;
+    };
+
+    template <typename... T>
+    struct is_extension_list<typelist<T...>> {
+        static constexpr bool value = true;
+    };
+
 
 } // namespace webpp
 
