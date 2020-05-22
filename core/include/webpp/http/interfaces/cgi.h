@@ -17,7 +17,7 @@
 #include <sstream>
 
 // TODO: use GetEnvironmentVariableA for Windows operating system
-extern char** environ;
+#include <unistd.h> // for environ
 
 namespace webpp {
 
@@ -133,7 +133,8 @@ namespace webpp {
                     !content_length_str.empty()) {
                     // now we know how much content the user is going to send
                     // so we just create a buffer with that size
-                    auto content_length = to_uint(content_length_str);
+                    auto content_length =
+                      to_uint<traits_type>(content_length_str);
 
                     char* buffer = new char[content_length];
                     std::cin.rdbuf()->pubsetbuf(buffer, sizeof(buffer));

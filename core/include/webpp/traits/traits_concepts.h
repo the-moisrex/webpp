@@ -46,8 +46,8 @@ namespace webpp {
       // char_type:
       ::std::is_integral_v<typename T::char_type>&&
 
-      // char_traits:
-      ::stl::CharTraits<typename T::char_traits>&&
+        // char_traits:
+        stl::CharTraits<typename T::char_traits>&&
 
       requires {
         typename T::template allocator<typename T::char_traits>;

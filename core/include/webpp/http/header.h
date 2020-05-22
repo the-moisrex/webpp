@@ -1,9 +1,10 @@
-#ifndef WEBPP_HTTP_HEADERS_HPP
-#define WEBPP_HTTP_HEADERS_HPP
+#ifndef WEBPP_HTTP_HEADERS_H
+#define WEBPP_HTTP_HEADERS_H
 
 #include "../std/string.h"
 #include "../std/string_view.h"
 #include "../std/unordered_set.h"
+#include "../traits/traits_concepts.h"
 #include "./common.h"
 #include "cookies.h"
 
@@ -136,19 +137,17 @@ namespace webpp {
     /**
      * This is the header class witch will contain the name, and the value of
      * one single field of a header.
-     * @tparam Traits
+     * @tparam TraitsType
      * @tparam Mutable
      * @tparam HeaderType
      */
-    template <typename Traits, bool Mutable, header_type HeaderType>
+    template <Traits TraitsType, bool Mutable, header_type HeaderType>
     struct header_field {
-        static_assert(
-          is_traits_v<Traits>,
-          "The specified template parameter is not of type of traits.");
 
-        using traits     = Traits;
-        using str_t      = auto_string_type<traits, Mutable>;
-        using str_view_t = typename traits::string_view_type;
+
+        using traits_type = TraitsType;
+        using str_t       = auto_string_type<traits_type, Mutable>;
+        using str_view_t  = typename traits_type::string_view_type;
 
         str_t name;
         str_t value;
@@ -158,9 +157,9 @@ namespace webpp {
          * Get the header as a cookie. Make sure to check if the cookie is
          * actually valid before using it.
          */
-        basic_cookie<Traits, Mutable, HeaderType> as_cookie() noexcept {
+        basic_cookie<TraitsType, Mutable, HeaderType> as_cookie() noexcept {
             if (is_cookie()) {
-                return basic_cookie<Traits, Mutable, HeaderType>(value);
+                return basic_cookie<TraitsType, Mutable, HeaderType>(value);
             }
             return {}; // empty and invalid cookie
         }
@@ -181,8 +180,8 @@ namespace webpp {
             return to_lower_copy<str_t::value_type, str_t::traits_type,
                                  str_t::allocator_type>(name) ==
                    to_lower_copy<str_view_t::value_type,
-                                 str_view_t::traits_type, traits::allocator>(
-                     str);
+                                 str_view_t::traits_type,
+                                 traits_type::allocator>(str);
         }
 
         /**
@@ -208,19 +207,17 @@ namespace webpp {
      *
      * fixme: it needs a complete rewrite.
      */
-    template <typename Traits = std_traits, bool Mutable = true,
+    template <Traits TraitsType = std_traits, bool Mutable = true,
               header_type HeaderType = header_type::request>
-    class headers : public webpp::stl::unordered_multiset<
-                      Traits, header_field<Traits, Mutable, HeaderType>> {
+    class headers
+      : public stl::unordered_multiset<
+          TraitsType, header_field<TraitsType, Mutable, HeaderType>> {
 
-        static_assert(is_traits_v<Traits>,
-                      "The specified template parameter is no a valid traits.");
-
-        using super = webpp::stl::unordered_multiset<
-          Traits, header_field<Traits, Mutable, HeaderType>>;
+        using super = stl::unordered_multiset<
+          TraitsType, header_field<TraitsType, Mutable, HeaderType>>;
 
       public:
-        using traits = Traits;
+        using traits = TraitsType;
         using str_t  = auto_string_type<traits, Mutable>;
 
       private:
@@ -303,7 +300,7 @@ namespace webpp {
          */
         template <bool IsMutable>
         void replace_cookies(
-          webpp::cookie_jar<Traits, IsMutable> const& __cookies) noexcept {
+          webpp::cookie_jar<TraitsType, IsMutable> const& __cookies) noexcept {
             remove_cookies();
             for (auto const& c : __cookies) {
                 if constexpr (header_type::request == get_header_type()) {
@@ -330,4 +327,4 @@ namespace webpp {
 
 } // namespace webpp
 
-#endif // WEBPP_HTTP_HEADERS_HPP
+#endif // WEBPP_HTTP_HEADERS_H

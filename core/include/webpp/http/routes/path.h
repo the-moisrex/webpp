@@ -6,19 +6,17 @@
 
 namespace webpp::routes {
 
-    template <typename Traits = std_traits>
+    template <Traits TraitsType>
     struct path_condition {
       public:
-        static_assert(
-          is_traits_v<Traits>,
-          "The specified template parameter is not a valid traits type.");
-        using traits = Traits;
+        using traits_type = TraitsType;
 
       protected:
-        basic_uri<traits, false> _path;
+        basic_uri<traits_type, false> _path;
 
       public:
-        constexpr path_condition(typename traits::string_view_type str) noexcept
+        constexpr path_condition(
+          typename traits_type::string_view_type str) noexcept
           : _path(std::move(str)) {
         }
 
@@ -30,16 +28,16 @@ namespace webpp::routes {
         }
     };
 
-    template <typename Traits = std_traits>
-    struct path : public valve<path_condition<Traits>> {
-        static_assert(
-          is_traits_v<Traits>,
-          "The specified template parameter is not a valid traits type.");
-        using traits = Traits;
-
-        using valve<path_condition<traits>>::valve;
-    };
-
+    //    template <typename Traits >
+    //    struct path : public valve<path_condition<Traits>> {
+    //        static_assert(
+    //          is_traits_v<Traits>,
+    //          "The specified template parameter is not a valid traits type.");
+    //        using traits = Traits;
+    //
+    //        using valve<path_condition<traits>>::valve;
+    //    };
+    //
 
 
 } // namespace webpp::routes
