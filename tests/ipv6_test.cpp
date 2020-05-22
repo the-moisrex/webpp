@@ -1,13 +1,16 @@
 #include "../core/include/webpp/utils/ipv6.h"
 
+#include "../core/include/webpp/traits/std_traits.h"
 #include "../core/include/webpp/validators/validators.h"
 
 #include <gtest/gtest.h>
 
 using namespace webpp;
 
+using ipv6_t = ipv6<std_traits>;
+
 TEST(IPv6Tests, Creation) {
-    ipv6 ip1{"::"};
+    ipv6_t ip1{"::"};
     EXPECT_TRUE(ip1.is_valid());
     EXPECT_TRUE(ip1.is_unspecified());
 

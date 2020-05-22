@@ -46,11 +46,11 @@ TEST(Response, Type) {
     constexpr auto return_callback = [] {
         return response_t("Hello");
     };
-    using ret_type       = std::invoke_result_t<decltype(return_callback)>;
-    constexpr bool one   = std::is_same_v<ret_type, response_t>;
-    constexpr bool two   = std::is_convertible_v<ret_type, response_t>;
-    constexpr bool three = std::is_convertible_v<response_t, response_t>;
-    constexpr bool four  = std::is_convertible_v<std::string, response_t>;
+    using ret_type       = ::std::invoke_result_t<decltype(return_callback)>;
+    constexpr bool one   = ::std::is_same_v<ret_type, response_t>;
+    constexpr bool two   = ::std::is_convertible_v<ret_type, response_t>;
+    constexpr bool three = ::std::is_convertible_v<response_t, response_t>;
+    constexpr bool four  = ::std::is_convertible_v<std::string, response_t>;
     //    constexpr bool five = std::is_convertible_v<std::string_view,
     //    response>;
     EXPECT_TRUE(one);

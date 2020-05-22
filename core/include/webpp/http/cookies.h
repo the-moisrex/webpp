@@ -1,5 +1,5 @@
-#ifndef WEBPP_COOKIES_H
-#define WEBPP_COOKIES_H
+#ifndef WEBPP_HTTP_COOKIES_H
+#define WEBPP_HTTP_COOKIES_H
 
 /*
  * Documentations about cookies:
@@ -265,7 +265,7 @@ namespace webpp {
 
         using attrs_t =
           stl::unordered_map<TraitsType, typename super::storing_str_t,
-                             typename super::storing_str>;
+                             typename super::storing_str_t>;
 
 
       private:
@@ -1401,4 +1401,4 @@ namespace webpp {
 
 } // namespace webpp
 
-#endif // WEBPP_COOKIES_H
+#endif // WEBPP_HTTP_COOKIES_H
