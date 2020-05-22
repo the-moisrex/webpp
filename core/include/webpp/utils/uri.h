@@ -939,7 +939,8 @@ namespace webpp {
          * doesn't include invalid syntax.
          * @return
          */
-        [[nodiscard]] std::variant<ipv4<traits_type>, ipv6, str_view_t>
+        [[nodiscard]] std::variant<ipv4<traits_type>, ipv6<traits_type>,
+                                   str_view_t>
         host_structured() const noexcept {
             auto _host = host();
             if (is::ipv4(_host))
@@ -1050,12 +1051,13 @@ namespace webpp {
          * @return string/ipv4/ipv6
          * @default empty string
          */
-        [[nodiscard]] std::variant<ipv4<traits_type>, ipv6, std::string>
+        [[nodiscard]] ::std::variant<ipv4<traits_type>, ipv6<traits_type>,
+                                     str_t>
         host_structured_decoded() const noexcept {
             if (auto _host_structured = host_structured();
-                std::holds_alternative<str_view_t>(_host_structured))
+                ::std::holds_alternative<str_view_t>(_host_structured))
                 return decode_uri_component<traits_type>(
-                  std::get<str_view_t>(_host_structured),
+                  ::std::get<str_view_t>(_host_structured),
                   REG_NAME_NOT_PCT_ENCODED);
             else
                 return _host_structured;
