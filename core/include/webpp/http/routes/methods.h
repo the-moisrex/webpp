@@ -22,14 +22,14 @@ namespace webpp::valves {
         }
     };
 
-    struct method : public routes::route<method_condition> {
-        using routes::route<method_condition>::valve;
-    };
-
-    constexpr auto get  = method("GET");
-    constexpr auto post = method("POST");
-    constexpr auto head = method("HEAD");
-    constexpr auto put  = method("PUT");
+    //    struct method : public routes::route<method_condition> {
+    //        using routes::route<method_condition>::valve;
+    //    };
+    //
+    //    constexpr auto get  = method("GET");
+    //    constexpr auto post = method("POST");
+    //    constexpr auto head = method("HEAD");
+    //    constexpr auto put  = method("PUT");
     // TODO: add more methods
 } // namespace webpp::valves
 

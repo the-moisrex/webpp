@@ -1,29 +1,23 @@
 #ifndef WEBPP_SERVER_H
 #define WEBPP_SERVER_H
 
-#include "http/interfaces/basic_interface.h"
-#include "http/routes/router.h"
+#include "./http/interfaces/basic_interface_concepts.h"
+#include "./http/routes/router.h"
+#include "./traits/traits_concepts.h"
 
 namespace webpp {
 
-    template <typename Traits, typename Interface>
-    class server : public Interface {
-        static_assert(
-          is_traits_v<Traits>,
-          "The specified template parameter is not a valid traits type.");
-
-        static_assert(
-          std::is_convertible_v<Interface, basic_interface<Traits, Interface>>,
-          "It's not an interface");
+    template <Traits TraitsType, Interface InterfaceType>
+    class server : public InterfaceType {
 
       public:
-        using traits    = Traits;
-        using interface = Interface;
+        using traits_type    = TraitsType;
+        using interface_type = InterfaceType;
 
-        using Interface::Interface;
+        using InterfaceType::Interface;
 
         int run() noexcept {
-            Interface::operator()();
+            InterfaceType::operator()();
             return 0; // success
         }
 
