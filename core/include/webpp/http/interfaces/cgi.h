@@ -5,6 +5,8 @@
 #include "../../traits/std_traits.h"
 #include "../../utils/casts.h"
 #include "../../utils/strings.h"
+#include "../request.h"
+#include "../response.h"
 #include "../routes/router.h"
 #include "basic_interface.h"
 
