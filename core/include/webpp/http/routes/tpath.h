@@ -153,12 +153,15 @@ namespace webpp {
                         // going to find the segment in the path string too
                         for (auto it = pit;; ++it) {
                             switch (*it) {
-                                case '\0': goto after_loop;
-                                case '/':
+                                case '\0':
+                                    goto after_loop;
+                                    //                                case '/':
+                                    // todo
                             }
                         }
-                    after_loop:
-                        parse_seg(seg_rule, );
+                        //                    after_loop:
+                        // todo
+                        //                        parse_seg(seg_rule, );
                     }
                     break;
                 case '\\': // escape character
@@ -230,14 +233,14 @@ namespace webpp {
      * final user should get the data from there; they can use this feature
      * directly here, but it looks nicer if they do it there.
      */
-    struct tpath : public valve<tpath_condition> {
-        using valve<tpath_condition>::valve;
-    };
-
-    constexpr tpath operator""_tpath(const char* str, std::size_t len) {
-        return tpath{std::string_view{str, len}};
-    }
-
+    //    struct tpath : public valve<tpath_condition> {
+    //        using valve<tpath_condition>::valve;
+    //    };
+    //
+    //    constexpr tpath operator""_tpath(const char* str, std::size_t len) {
+    //        return tpath{std::string_view{str, len}};
+    //    }
+    //
 } // namespace webpp
 
 #endif // WEBPP_TPATH_H

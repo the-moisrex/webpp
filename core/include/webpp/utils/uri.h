@@ -41,8 +41,8 @@ namespace webpp {
      * @details this function is almost the same as "decodeURIComponent" in
      * javascript
      */
-    template <Traits TraitsType, std::size_t N>
-    [[nodiscard]] std::optional<typename TraitsType::string_type>
+    template <Traits TraitsType, ::std::size_t N>
+    [[nodiscard]] ::std::optional<typename TraitsType::string_type>
     decode_uri_component(
       typename TraitsType::string_view_type const& encoded_str,
       charset_t<typename TraitsType::char_type, N> const&
@@ -157,7 +157,7 @@ namespace webpp {
      *
      *  [protocol"://"[username[":"password]"@"]hostname[":"port]"/"?][path]["?"querystring]["#"fragment]
      */
-    template <Traits TraitsType = std_traits, bool Mutable = true>
+    template <Traits TraitsType, bool Mutable = true>
     class basic_uri {
       public:
         using traits_type = TraitsType;
@@ -1977,9 +1977,9 @@ namespace webpp {
     using uri = basic_uri<basic_std_traits<CharT>, true>;
 
 
-    template <typename Traits = std_traits, bool Mutable1, bool Mutable2>
-    bool operator==(basic_uri<Traits, Mutable1> const& one,
-                    basic_uri<Traits, Mutable2> const& two) noexcept {
+    template <Traits TraitsType, bool Mutable1, bool Mutable2>
+    bool operator==(basic_uri<TraitsType, Mutable1> const& one,
+                    basic_uri<TraitsType, Mutable2> const& two) noexcept {
         return one.operator==(two.str());
     }
 
@@ -1996,10 +1996,10 @@ namespace webpp {
     //        return one.operator==(two.str());
     //    }
     //
-    template <typename Traits = std_traits, bool Mutable1, bool Mutable2>
+    template <Traits TraitsType, bool Mutable1, bool Mutable2>
     [[nodiscard]] bool
-    equal_path(basic_uri<Traits, Mutable1> const& p1,
-               basic_uri<Traits, Mutable2> const& p2) noexcept {
+    equal_path(basic_uri<TraitsType, Mutable1> const& p1,
+               basic_uri<TraitsType, Mutable2> const& p2) noexcept {
         auto _p1 = p1.path_structured_decoded();
         auto _p2 = p2.path_structured_decoded();
         auto it2 = _p2.cbegin();
@@ -2044,18 +2044,20 @@ namespace webpp {
                              const_uri<basic_std_traits<CharT>>{p2});
     }
 
-    template <typename Traits = std_traits, bool Mutable>
+    template <Traits TraitsType, bool Mutable>
     [[nodiscard]] inline auto
-    equal_path(basic_uri<Traits, Mutable> const&        p1,
-               typename Traits::string_view_type const& p2) noexcept {
-        return p1 == p2 || equal_path<Traits, false>(p1, const_uri<Traits>{p2});
+    equal_path(basic_uri<TraitsType, Mutable> const&        p1,
+               typename TraitsType::string_view_type const& p2) noexcept {
+        return p1 == p2 ||
+               equal_path<TraitsType, false>(p1, const_uri<TraitsType>{p2});
     }
 
-    template <typename Traits = std_traits, bool Mutable>
+    template <Traits TraitsType, bool Mutable>
     [[nodiscard]] inline auto
-    equal_path(typename Traits::string_view_type const& p1,
-               basic_uri<Traits, Mutable> const&        p2) noexcept {
-        return p2 == p1 || equal_path<Traits, false>(const_uri<Traits>{p1}, p2);
+    equal_path(typename TraitsType::string_view_type const& p1,
+               basic_uri<TraitsType, Mutable> const&        p2) noexcept {
+        return p2 == p1 ||
+               equal_path<TraitsType, false>(const_uri<TraitsType>{p1}, p2);
     }
 
 } // namespace webpp

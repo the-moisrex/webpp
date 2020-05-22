@@ -251,10 +251,10 @@ namespace webpp {
 
       public:
         using traits_type = TraitsType;
-        using date_t      = std::chrono::time_point<std::chrono::system_clock>;
-        using domain_t    = typename super::storing_str_t;
+        using date_t   = ::std::chrono::time_point<std::chrono::system_clock>;
+        using domain_t = typename super::storing_str_t;
         using path_t      = typename super::storing_str_t;
-        using expires_t   = std::optional<date_t>;
+        using expires_t   = ::std::optional<date_t>;
         using max_age_t   = unsigned long;
         using same_site_t = typename super::same_site_value;
         using secure_t    = bool;

@@ -45,61 +45,61 @@ namespace webpp {
         return ret;
     }
 
-    template <Traits TraitsType = std_traits>
+    template <Traits TraitsType>
     constexpr auto
     to_int(typename TraitsType::string_view_type const& str) noexcept {
         return to<TraitsType, int>(str);
     }
 
-    template <Traits TraitsType = std_traits>
+    template <Traits TraitsType>
     constexpr auto
     to_int8(typename TraitsType::string_view_type const& str) noexcept {
         return to<TraitsType, int8_t>(str);
     }
 
-    template <Traits TraitsType = std_traits>
+    template <Traits TraitsType>
     constexpr auto
     to_int16(typename TraitsType::string_view_type const& str) noexcept {
         return to<TraitsType, int16_t>(str);
     }
 
-    template <Traits TraitsType = std_traits>
+    template <Traits TraitsType>
     constexpr auto
     to_int32(typename TraitsType::string_view_type const& str) noexcept {
         return to<TraitsType, int32_t>(str);
     }
 
-    template <Traits TraitsType = std_traits>
+    template <Traits TraitsType>
     constexpr auto
     to_int64(typename TraitsType::string_view_type const& str) noexcept {
         return to<TraitsType, int64_t>(str);
     }
 
-    template <Traits TraitsType = std_traits>
+    template <Traits TraitsType>
     constexpr auto
     to_uint(typename TraitsType::string_view_type const& str) noexcept {
         return to<TraitsType, unsigned int>(str);
     }
 
-    template <Traits TraitsType = std_traits>
+    template <Traits TraitsType>
     constexpr auto
     to_uint8(typename TraitsType::string_view_type const& str) noexcept {
         return to<TraitsType, uint8_t>(str);
     }
 
-    template <Traits TraitsType = std_traits>
+    template <Traits TraitsType>
     constexpr auto
     to_uint16(typename TraitsType::string_view_type const& str) noexcept {
         return to<TraitsType, uint16_t>(str);
     }
 
-    template <Traits TraitsType = std_traits>
+    template <Traits TraitsType>
     constexpr auto
     to_uint32(typename TraitsType::string_view_type const& str) noexcept {
         return to<TraitsType, uint32_t>(str);
     }
 
-    template <Traits TraitsType = std_traits>
+    template <Traits TraitsType>
     constexpr auto
     to_uint64(typename TraitsType::string_view_type const& str) noexcept {
         return to<TraitsType, uint64_t>(str);
@@ -118,7 +118,7 @@ namespace webpp {
     }
 
 
-    template <Traits TraitsType = std_traits, typename ValueType, typename... R>
+    template <Traits TraitsType, typename ValueType, typename... R>
     constexpr auto to_str(ValueType value, R&&... args) noexcept {
         using char_type           = typename TraitsType::char_type;
         using str_t               = typename TraitsType::string_type;
