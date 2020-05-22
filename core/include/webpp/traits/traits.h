@@ -6,27 +6,6 @@
 
 namespace webpp {
 
-
-
-
-    /**
-     * A series of simple tests to check if the specified template parameter
-     * Traits is a valid traits or not.
-     *
-     * This set of tests are not yet fool proof, but they hold the fort until
-     * later.
-     *
-     * todo: add more test and make them more clever than this
-     */
-    template <typename Traits>
-    using is_traits = ::std::conjunction<
-      ::std::is_integral<typename Traits::char_type>,
-      ::std::is_integral<typename Traits::char_traits::char_type>>;
-
-    template <typename Traits>
-    constexpr bool is_traits_v = is_traits<Traits>::value;
-
-
     /**
      * Automatically choose a string type based on mutability requested
      */

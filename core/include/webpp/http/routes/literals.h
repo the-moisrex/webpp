@@ -8,7 +8,7 @@
 namespace webpp::inline literals {
 
 
-    inline namespace std_traits {
+    namespace std_traits {
 
         /*
         constexpr path<::webpp::std_traits>
