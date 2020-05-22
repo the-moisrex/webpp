@@ -65,32 +65,28 @@
 
 namespace webpp {
 
-    template <typename Traits = std_traits, bool Mutable = true,
+    template <Traits TraitsType = std_traits, bool Mutable = true,
               header_type HeaderType = header_type::response>
     struct cookie_hash;
 
-    template <typename Traits = std_traits, bool Mutable = true,
+    template <Traits TraitsType = std_traits, bool Mutable = true,
               header_type HeaderType = header_type::response>
     class cookie_jar;
 
-    template <typename Traits, bool Mutable>
+    template <Traits TraitsType, bool Mutable>
     struct basic_cookie_common {
 
-        static_assert(
-          is_traits_v<Traits>,
-          "The specified traits template parameter is not a valid traits.");
-
-        using traits    = Traits;
-        using char_type = typename Traits::char_type;
+        using traits_type = TraitsType;
+        using char_type   = typename TraitsType::char_type;
 
         /**
          * Getting the appropriate string type to use.
          * If the specified string type cannot be changed, the string_view will
          * be used, otherwise, string itself.
          */
-        using str_t         = typename Traits::string_type;
-        using str_view_t    = typename Traits::string_view_type;
-        using storing_str_t = std::conditional_t<Mutable, str_t, str_view_t>;
+        using str_t         = typename TraitsType::string_type;
+        using str_view_t    = typename TraitsType::string_view_type;
+        using storing_str_t = ::std::conditional_t<Mutable, str_t, str_view_t>;
 
         enum class same_site_value { NONE, LAX, STRICT };
 
@@ -234,10 +230,11 @@ namespace webpp {
         }
     };
 
-    template <typename Traits, bool Mutable>
-    struct basic_request_cookie : public basic_cookie_common<Traits, Mutable> {
+    template <Traits TraitsType, bool Mutable>
+    struct basic_request_cookie
+      : public basic_cookie_common<TraitsType, Mutable> {
       private:
-        using super = basic_cookie_common<Traits, Mutable>;
+        using super = basic_cookie_common<TraitsType, Mutable>;
 
       public:
         explicit basic_request_cookie(
@@ -246,12 +243,14 @@ namespace webpp {
         }
     };
 
-    template <typename Traits, bool Mutable>
-    struct basic_response_cookie : public basic_cookie_common<Traits, Mutable> {
+    template <Traits TraitsType, bool Mutable>
+    struct basic_response_cookie
+      : public basic_cookie_common<TraitsType, Mutable> {
       private:
-        using super = basic_cookie_common<Traits, Mutable>;
+        using super = basic_cookie_common<TraitsType, Mutable>;
 
       public:
+        using traits_type = TraitsType;
         using date_t      = std::chrono::time_point<std::chrono::system_clock>;
         using domain_t    = typename super::storing_str_t;
         using path_t      = typename super::storing_str_t;
@@ -265,7 +264,7 @@ namespace webpp {
         using comment_t   = typename super::storing_str_t;
 
         using attrs_t =
-          stl::unordered_map<Traits, typename super::storing_str_t,
+          stl::unordered_map<TraitsType, typename super::storing_str_t,
                              typename super::storing_str>;
 
 
@@ -465,13 +464,13 @@ namespace webpp {
 
         template <bool ISMutable>
         bool operator==(
-          basic_request_cookie<Traits, ISMutable> const& c) const noexcept {
+          basic_request_cookie<TraitsType, ISMutable> const& c) const noexcept {
             return super::_name == c._name && super::_value == c._value;
         }
 
         template <bool ISMutable>
-        bool operator==(
-          basic_response_cookie<Traits, ISMutable> const& c) const noexcept {
+        bool operator==(basic_response_cookie<TraitsType, ISMutable> const& c)
+          const noexcept {
             return super::_name == c._name && super::_value == c._value &&
                    _prefix == c._prefix && _encrypted == c._encrypted &&
                    _secure == c._secure && _host_only == c._host_only &&
@@ -481,26 +480,26 @@ namespace webpp {
         }
 
         template <bool ISMutable>
-        bool operator<(
-          basic_response_cookie<Traits, ISMutable> const& c) const noexcept {
+        bool operator<(basic_response_cookie<TraitsType, ISMutable> const& c)
+          const noexcept {
             return _expires < c._expires;
         }
 
         template <bool ISMutable>
-        bool operator>(
-          basic_response_cookie<Traits, ISMutable> const& c) const noexcept {
+        bool operator>(basic_response_cookie<TraitsType, ISMutable> const& c)
+          const noexcept {
             return _expires > c._expires;
         }
 
         template <bool ISMutable>
-        bool operator<=(
-          basic_response_cookie<Traits, ISMutable> const& c) const noexcept {
+        bool operator<=(basic_response_cookie<TraitsType, ISMutable> const& c)
+          const noexcept {
             return _expires <= c._expires;
         }
 
         template <bool ISMutable>
-        bool operator>=(
-          basic_response_cookie<Traits, ISMutable> const& c) const noexcept {
+        bool operator>=(basic_response_cookie<TraitsType, ISMutable> const& c)
+          const noexcept {
             return _expires >= c._expires;
         }
 
@@ -518,16 +517,17 @@ namespace webpp {
          * @return true if they have the same name, domain, and path
          */
         template <bool ISMutable>
-        [[nodiscard]] bool same_as(
-          basic_response_cookie<Traits, ISMutable> const& c) const noexcept {
+        [[nodiscard]] bool
+        same_as(basic_response_cookie<TraitsType, ISMutable> const& c)
+          const noexcept {
             return super::_name == c._name && _path == c._path &&
                    c._domain == _domain;
         }
 
         template <bool ISMutable>
         friend inline void
-        swap(basic_response_cookie<Traits, ISMutable>& first,
-             basic_response_cookie<Traits, ISMutable>& second) noexcept {
+        swap(basic_response_cookie<TraitsType, ISMutable>& first,
+             basic_response_cookie<TraitsType, ISMutable>& second) noexcept {
             using std::swap;
             swap(first._valid, second._valid);
             swap(first._name, second._name);
@@ -584,7 +584,7 @@ namespace webpp {
     };
 
     // hash function of std::unordered_set<webpp::basic_cookie>
-    template <typename Traits, bool Mutable, header_type HeaderType>
+    template <Traits TraitsType, bool Mutable, header_type HeaderType>
     struct cookie_hash {
 
         template <class T>
@@ -593,8 +593,9 @@ namespace webpp {
             seed ^= hasher(v) + 0x9e3779b9 + (seed << 6u) + (seed >> 2u);
         }
 
-        using argument_type = webpp::basic_cookie<Traits, Mutable, HeaderType>;
-        using result_type   = std::size_t;
+        using argument_type =
+          webpp::basic_cookie<TraitsType, Mutable, HeaderType>;
+        using result_type = std::size_t;
 
         result_type operator()(argument_type const& c) const noexcept {
             // change the "same_as" method too if you ever touch this function
@@ -619,9 +620,9 @@ namespace webpp {
         }
     };
 
-    template <typename Traits, bool Mutable, header_type HeaderType>
+    template <Traits TraitsType, bool Mutable, header_type HeaderType>
     struct cookie_equals {
-        using cookie_type = basic_cookie<Traits, Mutable, HeaderType>;
+        using cookie_type = basic_cookie<TraitsType, Mutable, HeaderType>;
 
         bool operator()(const cookie_type& lhs,
                         const cookie_type& rhs) const noexcept {
@@ -643,22 +644,23 @@ namespace webpp {
      * class has to put new cookies into the header classes before the
      * string_views's in basic_cookie class go out of scope.
      */
-    template <typename Traits, bool Mutable, header_type HeaderType>
+    template <Traits TraitsType, bool Mutable, header_type HeaderType>
     class cookie_jar
-      : public stl::unordered_set<Traits,
-                                  basic_cookie<Traits, Mutable, HeaderType>,
-                                  cookie_hash<Traits, Mutable, HeaderType>,
-                                  cookie_equals<Traits, Mutable, HeaderType>> {
+      : public stl::unordered_set<
+          TraitsType, basic_cookie<TraitsType, Mutable, HeaderType>,
+          cookie_hash<TraitsType, Mutable, HeaderType>,
+          cookie_equals<TraitsType, Mutable, HeaderType>> {
       public:
-        using traits    = Traits;
-        using cookie_t  = basic_cookie<Traits, Mutable, HeaderType>;
-        using condition = std::function<bool(cookie_t const&)>;
+        using traits_type = TraitsType;
+        using cookie_t    = basic_cookie<TraitsType, Mutable, HeaderType>;
+        using condition   = std::function<bool(cookie_t const&)>;
 
       private:
         using super =
-          stl::unordered_set<Traits, basic_cookie<Traits, Mutable, HeaderType>,
-                             cookie_hash<Traits, Mutable, HeaderType>,
-                             cookie_equals<Traits, Mutable, HeaderType>>;
+          stl::unordered_set<traits_type,
+                             basic_cookie<traits_type, Mutable, HeaderType>,
+                             cookie_hash<traits_type, Mutable, HeaderType>,
+                             cookie_equals<traits_type, Mutable, HeaderType>>;
 
       private:
         // Defaults:
