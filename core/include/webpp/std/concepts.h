@@ -58,9 +58,9 @@ namespace stl {
           CopyAssignable<typename X::state_type>&&
           CopyConstructible<typename X::state_type>&&
           DefaultConstructible<typename X::state_type>&& requires(
-            X ct, typename X::char_type c, typename X::char_type const* p,
-            typename X::char_type const* s, ::std::size_t n,
-            typename X::int_type e, typename X::char_type const& ch) {
+            typename X::char_type c, typename X::char_type const* p,
+            typename X::char_type* s, ::std::size_t n, typename X::int_type e,
+            typename X::char_type const& ch) {
         typename X::char_type;
         typename X::int_type;
         typename X::off_type;
@@ -78,11 +78,11 @@ namespace stl {
         ->::std::same_as<::std::size_t>;
         { X::find(p, n, ch) }
         ->::std::same_as<typename X::char_type const*>;
-        { X::move(s, n, ch) }
+        { X::move(s, p, ch) }
         ->::std::same_as<typename X::char_type*>;
         { X::copy(s, p, n) }
         ->::std::same_as<typename X::char_type*>;
-        { X::assing(s, n, c) }
+        { X::assign(s, n, c) }
         ->::std::same_as<typename X::char_type*>;
         { X::not_eof(e) }
         ->::std::same_as<typename X::int_type>;

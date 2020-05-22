@@ -49,24 +49,14 @@ namespace webpp {
       // char_traits:
       ::stl::CharTraits<typename T::char_traits>&&
 
-      // allocator:
       requires {
-        typename T::allocator;
-    }
-    &&
-      // todo: add Allocator<typename T::allocator>;
-
-      requires {
+        typename T::template allocator<typename T::char_traits>;
         typename T::string_type;
-    }
-    &&
-      // todo: add BasicString<typename T::string_type>;
-
-      requires {
         typename T::string_view_type;
-    }
-    // todo: add BasicStringView<typename T::string_view_type>;
-    ;
+        // todo: add Allocator<typename T::allocator>;
+        // todo: add BasicString<typename T::string_type>;
+        // todo: add BasicStringView<typename T::string_view_type>;
+    };
 } // namespace webpp
 
 #endif // WEBPP_TRAITS_CONCEPTS_H
