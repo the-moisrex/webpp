@@ -188,7 +188,7 @@ namespace webpp {
 #ifdef CXX20
         return str.starts_with(::std::forward<T>(data));
 #else
-        return str.rfind(std::forward<T>(data), 0) == 0;
+        return str.rfind(::std::forward<T>(data), 0) == 0;
 #endif
     }
 
@@ -214,9 +214,6 @@ namespace webpp {
 #endif
     }
 
-
-    template <typename T, typename C>
-    starts_with(T const&, C) -> starts_with<std_traits_from<T>::type>;
 
 
 } // namespace webpp

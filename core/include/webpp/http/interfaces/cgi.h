@@ -23,8 +23,8 @@ namespace webpp {
     template <typename Traits = std_traits>
     struct cgi : public basic_interface<Traits, cgi<Traits>> {
       public:
-        using traits     = Traits;
-        using str_view_t = typename Traits::string_view_type;
+        using traits_type = Traits;
+        using str_view_t  = typename Traits::string_view_type;
         using str_t      = typename Traits::string_type;
         using ostream_t  = typename Traits::ostream_type;
 
@@ -101,16 +101,16 @@ namespace webpp {
         /**
          * Get a list of headers as a string
          */
-        [[nodiscard]] static ::std::string_view headers() noexcept {
+        [[nodiscard]] static str_view_t headers() noexcept {
             // we can do this only in CGI, we have to come up with new ways for
             // long-running protocols:
-            static ::std::string headers_cache;
+            static str_t headers_cache;
             if (headers_cache.empty()) {
                 // TODO: this code won't work on windows. Change when you are worried
                 // about windows
                 for (auto it = ::environ; *it; it++) {
-                    ::std::string_view h{*it};
-                    if (::webpp::starts_with(h, "HTTP_")) {
+                    str_view_t h{*it};
+                    if (starts_with<traits_type>(h, "HTTP_")) {
                         headers_cache.append(h.substr(5));
                         // FIXME: decide if you need to convert _ to - or not.
                     }
@@ -147,8 +147,8 @@ namespace webpp {
 
 
         void operator()() noexcept {
-            webpp::request_t<traits, cgi<traits>> req;
-            auto                                  res = router(req);
+            webpp::request_t<traits_type, cgi<traits_type>> req;
+            auto                                            res = router(req);
             res.calculate_default_headers();
             auto header_str = res.header.str();
             auto str        = res.body.str();

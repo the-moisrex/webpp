@@ -1,8 +1,8 @@
 // Created by moisrex on 11/7/19.
 #include "../core/include/webpp/http/request.h"
-#include "../core/include/webpp/routes/literals.h"
-#include "../core/include/webpp/routes/methods.h"
-#include "../core/include/webpp/routes/path.h"
+#include "../core/include/webpp/http/routes/literals.h"
+#include "../core/include/webpp/http/routes/methods.h"
+#include "../core/include/webpp/http/routes/path.h"
 #include "../core/include/webpp/traits/std_traits.h"
 
 #include <gtest/gtest.h>

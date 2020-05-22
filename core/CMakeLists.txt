@@ -4,7 +4,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/server.h
 
         ${LIB_INCLUDE_DIR}/webpp/extensions/extension.h
-        ${LIB_INCLUDE_DIR}/webpp/extensions/extension_concepts.h
 
         ${LIB_INCLUDE_DIR}/webpp/http/routes/router.h
         ${LIB_INCLUDE_DIR}/webpp/http/routes/route.h
