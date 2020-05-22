@@ -101,16 +101,16 @@ namespace webpp {
         /**
          * Get a list of headers as a string
          */
-        [[nodiscard]] static std::string_view headers() noexcept {
+        [[nodiscard]] static ::std::string_view headers() noexcept {
             // we can do this only in CGI, we have to come up with new ways for
             // long-running protocols:
-            static std::string headers_cache;
+            static ::std::string headers_cache;
             if (headers_cache.empty()) {
                 // TODO: this code won't work on windows. Change when you are worried
                 // about windows
                 for (auto it = ::environ; *it; it++) {
-                    std::string_view h{*it};
-                    if (starts_with(h, "HTTP_")) {
+                    ::std::string_view h{*it};
+                    if (::webpp::starts_with(h, "HTTP_")) {
                         headers_cache.append(h.substr(5));
                         // FIXME: decide if you need to convert _ to - or not.
                     }

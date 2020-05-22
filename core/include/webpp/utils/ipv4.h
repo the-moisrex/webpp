@@ -27,7 +27,7 @@ namespace webpp {
         return prefix;
     }
 
-    constexpr uint8_t to_prefix(std::array<uint8_t, 4> octets) noexcept {
+    constexpr uint8_t to_prefix(::std::array<uint8_t, 4> octets) noexcept {
         uint8_t prefix = 0u;
         for (auto const& octet : octets)
             for (uint8_t mask = 0b1000'0000; mask != 0u; mask >>= 1u)

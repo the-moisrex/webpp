@@ -5,8 +5,8 @@
 #ifndef WEBPP_REQUEST_CONCEPTS_H
 #define WEBPP_REQUEST_CONCEPTS_H
 
-#include "../interfaces/basic_interface_concepts.h"
 #include "../traits/traits_concepts.h"
+#include "./interfaces/basic_interface_concepts.h"
 
 namespace webpp {
     template <typename T>

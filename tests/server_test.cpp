@@ -1,7 +1,7 @@
 #include "../core/include/webpp/server.h"
 
-#include "../core/include/webpp/interfaces/basic_interface.h"
-#include "../core/include/webpp/routes/uri.h"
+#include "../core/include/webpp/http/interfaces/basic_interface.h"
+#include "../core/include/webpp/http/routes/tpath.h"
 
 #include <gtest/gtest.h>
 #include <string>

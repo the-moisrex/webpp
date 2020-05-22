@@ -56,6 +56,22 @@ namespace webpp {
                              template rebind_alloc>;
     };
 
+    template <typename T>
+    struct std_traits_from {};
+
+    template <typename CharT, typename CharTraitsT>
+    struct std_traits_from<::std::basic_string_view<CharT, CharTraitsT>> {
+        using type = basic_std_traits<CharT, CharTraitsT>;
+    };
+
+    template <typename CharT, typename CharTraitsT, typename AllocatorType>
+    struct std_traits_from<
+      ::std::basic_string<CharT, CharTraitsT, AllocatorType>> {
+        using type = basic_std_traits<
+          CharT, CharTraitsT,
+          ::std::allocator_traits<AllocatorType>::template rebind_alloc>;
+    };
+
 } // namespace webpp
 
 #endif // WEBPP_STD_TRAITS_H
