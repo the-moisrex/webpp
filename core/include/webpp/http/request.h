@@ -1,7 +1,8 @@
 #ifndef WEBPP_REQUEST_H
 #define WEBPP_REQUEST_H
 
-#include "../interfaces/basic_interface.h"
+#include "../traits/traits_concepts.h"
+#include "./interfaces/basic_interface.h"
 #include "body.h"
 #include "header.h"
 

@@ -42,25 +42,31 @@ namespace webpp {
      */
 
     template <typename T>
-    concept Traits = requires(T t) {
-        // char_type:
-        typename T::char_type;
-        ::std::is_integral_v<typename T::char_type>;
+    concept Traits =
+      // char_type:
+      ::std::is_integral_v<typename T::char_type>&&
 
-        // char_traits:
-        typename T::char_traits;
-        stl::CharTraits<typename T::char_traits>;
+      // char_traits:
+      ::stl::CharTraits<typename T::char_traits>&&
 
-        // allocator:
+      // allocator:
+      requires {
         typename T::allocator;
-        // todo: add Allocator<typename T::allocator>;
+    }
+    &&
+      // todo: add Allocator<typename T::allocator>;
 
+      requires {
         typename T::string_type;
-        // todo: add BasicString<typename T::string_type>;
+    }
+    &&
+      // todo: add BasicString<typename T::string_type>;
 
+      requires {
         typename T::string_view_type;
-        // todo: add BasicStringView<typename T::string_view_type>;
-    };
+    }
+    // todo: add BasicStringView<typename T::string_view_type>;
+    ;
 } // namespace webpp
 
 #endif // WEBPP_TRAITS_CONCEPTS_H

@@ -25,7 +25,7 @@ namespace webpp {
     };
 
 
-    template <Context InitialContextType, RouterExtensions ExtensionsType,
+    template <Context InitialContextType, RouterExtensionList ExtensionsType,
               Route... RouteType>
     struct const_router {
 
@@ -33,16 +33,16 @@ namespace webpp {
         // might want
         using initial_context_type_original =
           ::std::decay_t<InitialContextType>;
+
         using initial_context_type = ::std::conditional_t<
-          has_initial_context_type<initial_context_type_original,
-                                   ExtensionsType>,
+          RouterExtensionWithInitialContextType<ExtensionsType>,
           typename ExtensionsType::template initial_context_type<
             initial_context_type_original>,
           initial_context_type_original>;
 
 
         // Additional routes extracted from the extensions
-        using additional_routes = ;
+        //        using additional_routes = ;
 
         const ::std::tuple<RouteType...> routes;
 

@@ -47,22 +47,20 @@ namespace webpp {
      *
      */
 
-    template <typename T>
-    concept InitialContextType = requires {
-        T::template initial_context_type;
-    };
-
     template <typename E>
     concept RouterExtension = Extension<E>;
 
-    /**
-     * it can be one of these 3:
-     *   - a tuple of extensions
-     *   - a router_extension_pack of extensions (maybe not? todo)
-     *   - a single extension
-     */
     template <typename T>
-    concept RouterExtensionDependency = RouterExtension<T> || ::stl::Tuple<T>;
+    concept RouterExtensionWithInitialContextType =
+      RouterExtension<T>&& requires {
+        T::template initial_context_type;
+    };
+
+    template <typename T>
+    concept RouterExtensionWithAdditionalRoutes = requires {
+        typename T::additional_routes;
+    };
+
 
     template <typename... T>
     struct is_router_extension_list {

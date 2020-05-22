@@ -1,7 +1,7 @@
 // Created by moisrex on 5/7/20.
 
-#ifndef WEBPP_CONCEPTS_H
-#define WEBPP_CONCEPTS_H
+#ifndef WEBPP_STD_CONCEPTS_H
+#define WEBPP_STD_CONCEPTS_H
 
 #include <type_traits>
 
@@ -54,21 +54,19 @@ namespace stl {
     concept DefaultConstructible = ::std::is_default_constructible_v<T>;
 
     template <typename X>
-    concept CharTraits = requires(X ct, typename X::char_type c,
-                                  typename X::char_type const* p,
-                                  typename X::char_type const* s,
-                                  ::std::size_t n, typename X::int_type e,
-                                  typename X::char_type const& ch) {
+    concept CharTraits = Destructible<typename X::state_type>&&
+          CopyAssignable<typename X::state_type>&&
+          CopyConstructible<typename X::state_type>&&
+          DefaultConstructible<typename X::state_type>&& requires(
+            X ct, typename X::char_type c, typename X::char_type const* p,
+            typename X::char_type const* s, ::std::size_t n,
+            typename X::int_type e, typename X::char_type const& ch) {
         typename X::char_type;
         typename X::int_type;
         typename X::off_type;
         typename X::pos_type;
-
         typename X::state_type;
-        Destructible<typename X::state_type>;
-        CopyAssignable<typename X::state_type>;
-        CopyConstructible<typename X::state_type>;
-        DefaultConstructible<typename X::state_type>;
+
 
         { X::eq(c, c) }
         ->::std::same_as<bool>;
@@ -101,4 +99,4 @@ namespace stl {
 
 } // namespace stl
 
-#endif // WEBPP_CONCEPTS_H
+#endif // WEBPP_STD_CONCEPTS_H

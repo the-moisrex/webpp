@@ -1,8 +1,9 @@
-#ifndef STRINGS_H
-#define STRINGS_H
+#ifndef WEBPP_UTILS_STRINGS_H
+#define WEBPP_UTILS_STRINGS_H
 
 #include "../common/meta.h"
-#include "../traits/traits.h"
+#include "../traits/std_traits.h"
+#include "../traits/traits_concepts.h"
 
 #include <algorithm>
 #include <string>
@@ -47,8 +48,8 @@ namespace webpp {
                                                      c == '\f' || c == '\v';
                                           });
             found != s.end()) {
-            s.remove_prefix(
-              static_cast<decltype(s.size())>(std::distance(s.begin(), found)));
+            s.remove_prefix(static_cast<decltype(s.size())>(
+              ::std::distance(s.begin(), found)));
         }
     }
 
@@ -58,11 +59,11 @@ namespace webpp {
     inline void rtrim(typename TraitsType::string_view_type& s) noexcept {
         if (auto found = std::find_if_not(s.rbegin(), s.rend(),
                                           [](auto const& c) -> bool {
-                                              return std::isspace(c);
+                                              return ::std::isspace(c);
                                           });
             found != s.rend()) {
             s.remove_suffix(static_cast<decltype(s.size())>(
-              std::distance(s.rbegin(), found)));
+              ::std::distance(s.rbegin(), found)));
         }
     }
 
@@ -153,7 +154,7 @@ namespace webpp {
     inline void to_lower(typename TraitsType::stirng_type& str) noexcept {
         // FIXME: I think you can make this algorithm faster
         std::transform(str.cbegin(), str.cend(), str.begin(), [](auto c) {
-            return std::tolower(c);
+            return ::std::tolower(c);
         });
     }
 
@@ -162,7 +163,7 @@ namespace webpp {
         // FIXME: I think you can make this algorithm faster
         std::transform(str.cbegin(), str.cend(), str.begin(),
                        [](auto const& c) {
-                           return std::tolower(c);
+                           return ::std::tolower(c);
                        });
     }
 
@@ -185,7 +186,7 @@ namespace webpp {
     starts_with(typename TraitsType::string_view_type const& str,
                 T&&                                          data) noexcept {
 #ifdef CXX20
-        return str.starts_with(std::forward<T>(data));
+        return str.starts_with(::std::forward<T>(data));
 #else
         return str.rfind(std::forward<T>(data), 0) == 0;
 #endif
@@ -213,6 +214,11 @@ namespace webpp {
 #endif
     }
 
+
+    template <typename T, typename C>
+    starts_with(T const&, C) -> starts_with<std_traits_from<T>::type>;
+
+
 } // namespace webpp
 
-#endif // STRINGS_H
+#endif // WEBPP_UTILS_STRINGS_H
