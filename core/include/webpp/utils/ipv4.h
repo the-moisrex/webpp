@@ -93,8 +93,9 @@ namespace webpp {
             return 0u;
         }
 
-        return to_prefix({to_uint8(octet_1), to_uint8(octet_2),
-                          to_uint8(octet_3), to_uint8(octet_4)});
+        return to_prefix(
+          {to_uint8<traits_type>(octet_1), to_uint8<traits_type>(octet_2),
+           to_uint8<traits_type>(octet_3), to_uint8<traits_type>(octet_4)});
     }
 
     /**

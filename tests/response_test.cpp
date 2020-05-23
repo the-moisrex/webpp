@@ -13,6 +13,8 @@
 
 using namespace webpp;
 
+using res_t = response_t<std_traits>;
+
 TEST(Body, Text) {
     body b = "Testing";
     EXPECT_EQ(b.str(), "Testing");
@@ -44,13 +46,13 @@ TEST(Body, Text) {
 
 TEST(Response, Type) {
     constexpr auto return_callback = [] {
-        return response_t("Hello");
+        return res_t("Hello");
     };
     using ret_type       = ::std::invoke_result_t<decltype(return_callback)>;
-    constexpr bool one   = ::std::is_same_v<ret_type, response_t>;
-    constexpr bool two   = ::std::is_convertible_v<ret_type, response_t>;
-    constexpr bool three = ::std::is_convertible_v<response_t, response_t>;
-    constexpr bool four  = ::std::is_convertible_v<std::string, response_t>;
+    constexpr bool one   = ::std::is_same_v<ret_type, res_t>;
+    constexpr bool two   = ::std::is_convertible_v<ret_type, res_t>;
+    constexpr bool three = ::std::is_convertible_v<res_t, res_t>;
+    constexpr bool four  = ::std::is_convertible_v<std::string, res_t>;
     //    constexpr bool five = std::is_convertible_v<std::string_view,
     //    response>;
     EXPECT_TRUE(one);
@@ -61,8 +63,8 @@ TEST(Response, Type) {
 }
 
 TEST(Response, Init) {
-    auto res  = response_t();
-    auto res2 = response_t();
+    auto res  = res_t();
+    auto res2 = res_t();
 
     EXPECT_EQ(res, res2);
 
@@ -81,6 +83,6 @@ TEST(Response, File) {
     std::ofstream handle{file};
     handle << "Hello World";
     handle.close();
-    EXPECT_EQ(response_t::response_t(file).body.str(), "Hello World");
+    EXPECT_EQ(res_t::res_t(file).body.str(), "Hello World");
     std::filesystem::remove(file);
 }
