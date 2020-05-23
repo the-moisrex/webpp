@@ -218,13 +218,13 @@ namespace webpp {
         }
 
         auto& name(name_t __name) noexcept {
-            trim(__name);
+            trim<traits_type>(__name);
             this->_name = std::move(__name);
             return *this;
         }
 
         auto& value(value_t __value) noexcept {
-            trim(__value);
+            trim<traits_type>(__value);
             _value = std::move(__value);
             return *this;
         }
@@ -237,6 +237,7 @@ namespace webpp {
         using super = basic_cookie_common<TraitsType, Mutable>;
 
       public:
+        constexpr basic_request_cookie() noexcept {};
         explicit basic_request_cookie(
           typename super::str_view_t const& /* source */) noexcept {
             // TODO: implement this, it's important
@@ -251,11 +252,11 @@ namespace webpp {
 
       public:
         using traits_type = TraitsType;
-        using date_t   = ::std::chrono::time_point<std::chrono::system_clock>;
-        using domain_t = typename super::storing_str_t;
-        using path_t      = typename super::storing_str_t;
-        using expires_t   = ::std::optional<date_t>;
-        using max_age_t   = unsigned long;
+        using date_t    = ::std::chrono::time_point<std::chrono::system_clock>;
+        using domain_t  = typename super::storing_str_t;
+        using path_t    = typename super::storing_str_t;
+        using expires_t = ::std::optional<date_t>;
+        using max_age_t = unsigned long;
         using same_site_t = typename super::same_site_value;
         using secure_t    = bool;
         using host_only_t = bool;
@@ -284,6 +285,14 @@ namespace webpp {
         attrs_t attrs;
 
       public:
+        constexpr basic_response_cookie() noexcept {};
+
+        explicit basic_response_cookie(typename super::name_t const& name,
+                                       typename super::value_t value) noexcept
+          : super::_name{name},
+            super::_value{value} {
+        }
+
         explicit basic_response_cookie(
           typename super::str_view_t const& /* source */) noexcept {
             // TODO: implement this, it's important
@@ -575,6 +584,10 @@ namespace webpp {
                                basic_request_cookie<Traits, Mutable>>;
 
       public:
+        using super::super;
+
+        constexpr basic_cookie() noexcept = default;
+
         static constexpr auto get_header_type() noexcept {
             return HeaderType;
         }

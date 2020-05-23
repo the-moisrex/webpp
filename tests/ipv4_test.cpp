@@ -1,5 +1,6 @@
 #include "../core/include/webpp/utils/ipv4.h"
 
+#include "../core/include/webpp/traits/std_traits.h"
 #include "../core/include/webpp/validators/validators.h"
 
 #include <array>
@@ -8,10 +9,12 @@
 
 using namespace webpp;
 
+using ipv4_t = ipv4<std_traits>;
+
 TEST(IPv4Tests, FreeFunctions) {
-    EXPECT_EQ(to_prefix("255.255.255.0"), 24);
-    EXPECT_EQ(to_prefix("255.255.255.128"), 25);
-    EXPECT_EQ(to_prefix("0.255.255.128"), 0);
+    EXPECT_EQ(to_prefix<std_traits>("255.255.255.0"), 24);
+    EXPECT_EQ(to_prefix<std_traits>("255.255.255.128"), 25);
+    EXPECT_EQ(to_prefix<std_traits>("0.255.255.128"), 0);
     EXPECT_EQ(to_prefix({255, 255, 255, 128}), 25);
     EXPECT_EQ(to_prefix({0, 255, 255, 128}), 0);
     EXPECT_EQ(to_prefix(0xFF'FF'FF'00u), 24);
@@ -19,15 +22,15 @@ TEST(IPv4Tests, FreeFunctions) {
     EXPECT_EQ(to_subnet(24), 0xFF'FF'FF'00);
     EXPECT_EQ(to_subnet(8), 0xFF'00'00'00);
 
-    auto a = std::array<uint8_t, 4>({255, 0, 0, 0});
-    auto b = std::array<uint8_t, 4>({255, 255, 255, 128});
+    auto a = ::std::array<uint8_t, 4>({255, 0, 0, 0});
+    auto b = ::std::array<uint8_t, 4>({255, 255, 255, 128});
     EXPECT_EQ(to_subnet_array(8), a);
     EXPECT_EQ(to_subnet_array(25), b);
 }
 
 TEST(IPv4Tests, Creation) {
-    constexpr ipv4 one{192, 168, 2, 1};
-    ipv4           two("192.168.2.1");
+    constexpr ipv4_t one{192, 168, 2, 1};
+    ipv4_t           two("192.168.2.1");
     EXPECT_EQ(one, two) << "one is: " << one.str() << "; two is: " << two.str();
     EXPECT_EQ(one.integer(), two.integer());
     EXPECT_EQ(one.str(), two.str());
@@ -35,11 +38,11 @@ TEST(IPv4Tests, Creation) {
 }
 
 TEST(IPv4Tests, Methods) {
-    ipv4 ip{192, 168, 1, 1};
+    ipv4_t ip{192, 168, 1, 1};
     EXPECT_TRUE(ip.is_in_subnet({{192, 168, 0, 0}, 16}));
     EXPECT_TRUE(ip.is_in_subnet({{192, 168, 1, 0}, 24}));
-    EXPECT_TRUE(ip.in_range({192, 168, 0, 1}, ipv4("192.168.2.1")));
-    EXPECT_FALSE(ip.in_range({192, 168, 1, 2}, ipv4("192.168.2.1")));
+    EXPECT_TRUE(ip.in_range({192, 168, 0, 1}, ipv4_t("192.168.2.1")));
+    EXPECT_FALSE(ip.in_range({192, 168, 1, 2}, ipv4_t("192.168.2.1")));
     EXPECT_TRUE(ip.is_private());
     EXPECT_FALSE(ip.is_public());
     EXPECT_FALSE(ip.is_zero());
@@ -64,16 +67,16 @@ TEST(IPv4Tests, Validation) {
         EXPECT_TRUE(webpp::is::ipv4(_ip));
         EXPECT_TRUE(ipv4(_ip).is_valid())
           << "ip: " << _ip << "; compiled ip: " << ipv4(_ip);
-        ipv4 ip{_ip};
+        ipv4_t ip{_ip};
         (void)ip.integer(); // just to make sure it's parsed
         EXPECT_TRUE(ip.is_valid());
     }
 
     for (auto const& _ip : invalid_ipv4s) {
         EXPECT_FALSE(webpp::is::ipv4(_ip));
-        EXPECT_FALSE(ipv4(_ip).is_valid())
-          << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).str();
-        ipv4 ip{_ip};
+        EXPECT_FALSE(ipv4_t(_ip).is_valid())
+          << "ip: " << _ip << "; compiled ip: " << ipv4_t(_ip).str();
+        ipv4_t ip{_ip};
         (void)ip.integer(); // just to make sure it's parsed
         EXPECT_FALSE(ip.is_valid());
     }
@@ -86,17 +89,17 @@ TEST(IPv4Tests, CIDR) {
 
     for (auto const& _ip : valid_ipv4s) {
         EXPECT_TRUE(webpp::is::ipv4_prefix(_ip)) << _ip;
-        EXPECT_TRUE(ipv4(_ip).is_valid())
-          << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).str();
-        EXPECT_TRUE(ipv4(_ip).has_prefix()) << _ip;
-        EXPECT_GE(ipv4(_ip).prefix(), 0) << _ip;
-        EXPECT_LE(ipv4(_ip).prefix(), 32) << _ip;
+        EXPECT_TRUE(ipv4_t(_ip).is_valid())
+          << "ip: " << _ip << "; compiled ip: " << ipv4_t(_ip).str();
+        EXPECT_TRUE(ipv4_t(_ip).has_prefix()) << _ip;
+        EXPECT_GE(ipv4_t(_ip).prefix(), 0) << _ip;
+        EXPECT_LE(ipv4_t(_ip).prefix(), 32) << _ip;
     }
 
     for (auto const& _ip : invalid_ipv4s) {
         EXPECT_FALSE(webpp::is::ipv6(_ip)) << _ip;
-        EXPECT_FALSE(ipv4(_ip).is_valid()) << _ip;
-        EXPECT_FALSE(ipv4(_ip).has_prefix()) << _ip;
+        EXPECT_FALSE(ipv4_t(_ip).is_valid()) << _ip;
+        EXPECT_FALSE(ipv4_t(_ip).has_prefix()) << _ip;
         // TODO: check cidr(prefix) method
     }
 }
