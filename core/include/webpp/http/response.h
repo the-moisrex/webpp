@@ -20,7 +20,7 @@ namespace webpp {
 
       public:
         using traits_type = TraitsType;
-        using body_type   = webpp::body;
+        using body_type   = webpp::basic_body;
         using header_type =
           webpp::headers<TraitsType, true, header_type::response>;
         using str_view_t = typename traits_type::string_view_type;
