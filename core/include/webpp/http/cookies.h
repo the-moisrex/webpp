@@ -330,6 +330,14 @@ namespace webpp {
             return _encrypted;
         }
 
+        inline auto const& name() const noexcept {
+            return super::name();
+        }
+
+        inline auto const& value() const noexcept {
+            return super::value();
+        }
+
         self_t& name(typename super::name_t __name) noexcept {
             return static_cast<self_t&>(super::name(__name));
         }

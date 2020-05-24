@@ -13,7 +13,7 @@
 
 using namespace webpp;
 
-using res_t = response_t<std_traits>;
+using res_t = basic_response<std_traits>;
 
 TEST(Body, Text) {
     body b = "Testing";

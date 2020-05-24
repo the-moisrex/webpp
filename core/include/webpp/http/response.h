@@ -16,47 +16,49 @@ namespace webpp {
      * This class owns its data.
      */
     template <Traits TraitsType>
-    class response_t {
+    class basic_response {
 
       public:
-        using traits_t = TraitsType;
-        using body_t   = webpp::body;
-        using header_t =
+        using traits_type = TraitsType;
+        using body_type   = webpp::body;
+        using header_type =
           webpp::headers<TraitsType, true, header_type::response>;
-        using str_view_t = typename traits_t::string_view_type;
-        using str_t      = typename traits_t::string_type;
+        using str_view_t = typename traits_type::string_view_type;
+        using str_t      = typename traits_type::string_type;
 
-        body_t   body;
-        header_t header;
+        body_type   body;
+        header_type header;
 
-        response_t() noexcept                      = default;
-        response_t(response_t const& res) noexcept = default;
-        response_t(response_t&& res) noexcept      = default;
-        response_t(str_t const& b) noexcept : body(b) {
+        basic_response() noexcept                          = default;
+        basic_response(basic_response const& res) noexcept = default;
+        basic_response(basic_response&& res) noexcept      = default;
+        basic_response(str_t const& b) noexcept : body(b) {
         }
-        response_t(str_t&& b) noexcept : body(::std::move(b)) {
+        basic_response(str_t&& b) noexcept : body(::std::move(b)) {
         }
 
 
-        response_t& operator=(response_t const&) = default;
-        response_t& operator=(response_t&& res) noexcept = default;
-        response_t& operator=(str_t const& str) noexcept {
+        basic_response& operator=(basic_response const&) = default;
+        basic_response& operator=(basic_response&& res) noexcept = default;
+        basic_response& operator=(str_t const& str) noexcept {
             body.replace_string(str);
             return *this;
         }
-        response_t& operator=(str_t&& str) noexcept {
+        basic_response& operator=(str_t&& str) noexcept {
             body.replace_string(::std::move(str));
             return *this;
         }
 
-        [[nodiscard]] bool operator==(response_t const& res) const noexcept {
+        [[nodiscard]] bool
+        operator==(basic_response const& res) const noexcept {
             return body == res.body && header == res.header;
         }
-        [[nodiscard]] bool operator!=(response_t const& res) const noexcept {
+        [[nodiscard]] bool
+        operator!=(basic_response const& res) const noexcept {
             return body != res.body || header != res.header;
         }
 
-        response_t& operator<<(str_view_t const& str) noexcept {
+        basic_response& operator<<(str_view_t const& str) noexcept {
             body << str;
             return *this;
         }
