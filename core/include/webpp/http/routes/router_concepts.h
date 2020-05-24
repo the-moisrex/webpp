@@ -46,7 +46,19 @@ namespace webpp {
      *         - After all routes
      *
      */
+    template <typename T>
+    concept Router = requires(T r) {
+        typename T::initial_context_type;
+        // {r()} -> Response;
+        // todo: add support for operator()
+    };
 
+    /**
+     * Additional stuff that a router extension may have:
+     *   - type     initial_context_type
+     *   - type     additional_routes    : additional routes / router
+     *   - static   todo: stuff we need in router extensions
+     */
     template <typename E>
     concept RouterExtension = Extension<E>;
 
