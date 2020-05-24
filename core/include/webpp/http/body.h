@@ -87,7 +87,7 @@
  */
 namespace webpp {
 
-    class body {
+    class basic_body {
       public:
         using string_type      = std::string;
         using stream_type      = std::ostream;
@@ -111,26 +111,26 @@ namespace webpp {
         [[nodiscard]] stream_type& stream_ref() noexcept;
 
       public:
-        body() noexcept = default;
+        basic_body() noexcept = default;
 
-        body(char const* const _str) noexcept
+        basic_body(char const* const _str) noexcept
           : data(new std::string(_str)),
             type(types::string) {
         }
 
-        body(std::string_view const& str) noexcept
+        basic_body(std::string_view const& str) noexcept
           : data(new std::string(str)),
             type(types::string) {
         }
 
-        body(std::ostream& stream) noexcept
+        basic_body(std::ostream& stream) noexcept
           : data(&stream),
             type(types::stream) {
         }
 
-        body& operator=(body const& b) noexcept {
+        basic_body& operator=(basic_body const& b) noexcept {
             if (this != &b) {
-                this->~body();
+                this->basic_body();
                 type = b.type;
                 switch (b.type) {
                     case types::empty: break;
@@ -149,7 +149,7 @@ namespace webpp {
             return *this;
         }
 
-        body& operator=(body&& b) noexcept {
+        basic_body& operator=(basic_body&& b) noexcept {
             if (this != &b) {
                 type   = std::move(b.type);
                 data   = std::move(b.data);
@@ -158,28 +158,28 @@ namespace webpp {
             return *this;
         }
 
-        body& operator=(std::string_view const& _str) noexcept {
+        basic_body& operator=(std::string_view const& _str) noexcept {
             replace_string(std::string{_str});
             return *this;
         }
 
-        body& operator=(char const* const _str) noexcept {
+        basic_body& operator=(char const* const _str) noexcept {
             replace_string(_str);
             return *this;
         }
 
-        [[nodiscard]] bool operator==(body const& b) const noexcept {
+        [[nodiscard]] bool operator==(basic_body const& b) const noexcept {
             return b.str("") == str("");
         }
 
-        [[nodiscard]] bool operator!=(body const& b) const noexcept {
+        [[nodiscard]] bool operator!=(basic_body const& b) const noexcept {
             return !operator==(b);
         }
 
         /**
          * Correctly destroy the data
          */
-        ~body() noexcept;
+        ~basic_body() noexcept;
 
         /**
          * Empty the data
@@ -255,7 +255,7 @@ namespace webpp {
 
         std::ostream& operator<<(std::ostream& __stream);
 
-        body& operator<<(std::string_view const& str) noexcept;
+        basic_body& operator<<(std::string_view const& str) noexcept;
 
         // TODO: add more methods for the images and stuff
 
