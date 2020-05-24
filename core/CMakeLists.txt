@@ -40,7 +40,9 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/cookies.h
         ${LIB_INCLUDE_DIR}/webpp/http/header.h
         ${LIB_INCLUDE_DIR}/webpp/http/request.h
+        ${LIB_INCLUDE_DIR}/webpp/http/request_concepts.h
         ${LIB_INCLUDE_DIR}/webpp/http/response.h
+        ${LIB_INCLUDE_DIR}/webpp/http/response_concepts.h
 
         ${LIB_INCLUDE_DIR}/main.h
         ${LIB_INCLUDE_DIR}/webpp.h

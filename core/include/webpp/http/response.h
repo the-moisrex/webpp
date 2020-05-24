@@ -58,18 +58,6 @@ namespace webpp {
             return body != res.body || header != res.header;
         }
 
-        basic_response& operator<<(str_view_t const& str) noexcept {
-            body << str;
-            return *this;
-        }
-
-        operator str_view_t() const noexcept {
-            return body.str();
-        }
-        operator str_t() const noexcept {
-            return str_t{body.str()};
-        }
-
         void calculate_default_headers() noexcept {
             if (!header.contains("Content-Type"))
                 header.emplace("Content-Type", "text/html; charset=utf-8");

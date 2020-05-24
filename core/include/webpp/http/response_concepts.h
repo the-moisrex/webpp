@@ -3,6 +3,7 @@
 #ifndef WEBPP_RESPONSE_CONCEPTS_H
 #define WEBPP_RESPONSE_CONCEPTS_H
 
+#include "../extensions/extension.h"
 #include "../traits/std_traits.h"
 
 namespace webpp {
@@ -36,6 +37,38 @@ namespace webpp {
       Response<T> ||
       ::std::is_convertible_v<T, typename std_traits_from_string<T>::type> ||
       ::std::is_convertible_v<T, typename std_traits_from_string_view<T>::type>;
+
+
+    template <typename T>
+    concept ResponseExtension = Extension<T>;
+
+    template <typename T>
+    struct is_response_extension_list {};
+
+    template <ResponseExtension T>
+    struct is_response_extension_list<T> {
+        static constexpr bool value = true;
+    };
+
+    template <ResponseExtension... T>
+    struct is_response_extension_list<::std::tuple<T...>> {
+        static constexpr bool value = true;
+    };
+
+    template <ResponseExtension... T>
+    struct is_response_extension_list<extension_pack<T...>> {
+        static constexpr bool value = true;
+    };
+
+    template <ResponseExtension... T>
+    struct is_response_extension_list<typelist<T...>> {
+        static constexpr bool value = true;
+    };
+
+
+    template <typename T>
+    concept ResponseExtensionList =
+      ExtensionList<T, is_response_extension_list>;
 
 } // namespace webpp
 
