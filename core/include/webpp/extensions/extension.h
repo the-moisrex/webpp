@@ -139,12 +139,12 @@ namespace webpp {
 
     ///////////////////// Extending the is_extension_list ////////////////////
 
-    template <typename... T>
+    template <Extension... T>
     struct is_extension_list<extension_pack<T...>> {
         static constexpr bool value = true;
     };
 
-    template <typename... T>
+    template <Extension... T>
     struct is_extension_list<typelist<T...>> {
         static constexpr bool value = true;
     };
