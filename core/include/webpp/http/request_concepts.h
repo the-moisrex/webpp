@@ -12,11 +12,10 @@ namespace webpp {
     template <typename T>
     concept Request = requires(T x) {
         typename T::traits;
-        Traits<typename T::traits>;
-
         typename T::interface;
-        Interface<typename T::interface>;
-    };
+    }
+    &&Traits<typename T::traits>&& Interface<typename T::interface>;
+    ;
 } // namespace webpp
 
 #endif // WEBPP_REQUEST_CONCEPTS_H

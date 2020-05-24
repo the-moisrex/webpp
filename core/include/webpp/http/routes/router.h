@@ -25,6 +25,13 @@ namespace webpp {
     };
 
 
+    /**
+     * Const router is a router that satisfies that "Router" concept.
+     *
+     * @tparam InitialContextType
+     * @tparam ExtensionsType
+     * @tparam RouteType
+     */
     template <Context InitialContextType, RouterExtensionList ExtensionsType,
               Route... RouteType>
     struct const_router {
@@ -54,7 +61,7 @@ namespace webpp {
         /**
          * @return how many routes are in this router
          */
-        constexpr auto size() const noexcept {
+        constexpr auto route_count() const noexcept {
             return sizeof...(RouteType);
         }
 
@@ -69,7 +76,7 @@ namespace webpp {
             if (N == i) {
                 return ::std::get<N>(routes);
             }
-            if constexpr (N + 1 < size()) {
+            if constexpr (N + 1 < route_count()) {
                 return operator[]<N + 1>(i);
             }
             throw ::std::invalid_argument("The specified index is not valid");

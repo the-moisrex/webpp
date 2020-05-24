@@ -245,8 +245,7 @@ namespace webpp {
             parse(ip);
         }
 
-        constexpr explicit ipv4(std::enable_if_t<std::is_integral_v<char_type>,
-                                                 void> const* const ip) noexcept
+        constexpr explicit ipv4(char_type const* const ip) noexcept
           : _prefix(255) {
             parse(ip);
         }

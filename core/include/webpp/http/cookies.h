@@ -65,11 +65,11 @@
 
 namespace webpp {
 
-    template <Traits TraitsType = std_traits, bool Mutable = true,
+    template <Traits TraitsType, bool Mutable = true,
               header_type HeaderType = header_type::response>
     struct cookie_hash;
 
-    template <Traits TraitsType = std_traits, bool Mutable = true,
+    template <Traits TraitsType, bool Mutable = true,
               header_type HeaderType = header_type::response>
     class cookie_jar;
 
@@ -248,7 +248,8 @@ namespace webpp {
     struct basic_response_cookie
       : public basic_cookie_common<TraitsType, Mutable> {
       private:
-        using super = basic_cookie_common<TraitsType, Mutable>;
+        using super  = basic_cookie_common<TraitsType, Mutable>;
+        using self_t = basic_response_cookie<TraitsType, Mutable>;
 
       public:
         using traits_type = TraitsType;
@@ -328,6 +329,15 @@ namespace webpp {
         inline auto const& encrypted() const noexcept {
             return _encrypted;
         }
+
+        self_t& name(typename super::name_t __name) noexcept {
+            return static_cast<self_t&>(super::name(__name));
+        }
+
+        self_t& value(typename super::value_t __value) noexcept {
+            return static_cast<self_t&>(super::value(__value));
+        }
+
 
         auto& comment(comment_t __comment) noexcept {
             _comment = std::move(__comment);
@@ -572,7 +582,7 @@ namespace webpp {
      * data and change the pointers/remove the whole basic_cookie class that the
      * developer created.
      */
-    template <typename Traits = std_traits, bool Mutable = true,
+    template <typename Traits, bool Mutable = true,
               header_type HeaderType = header_type::response>
     class basic_cookie
       : public ::std::conditional_t<HeaderType == header_type::response,
