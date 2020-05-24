@@ -99,10 +99,49 @@ namespace webpp {
             this->               operator()(ctx);
         }
 
+        template <::std::size_t Index = 0>
         inline void operator()(Context auto&& ctx) noexcept {
-            ((call_route(
-               ::std::get<RouteType>(std::forward<decltype(ctx)>(ctx)))) ||
-             ...);
+            using context_type              = decltype(ctx);
+            constexpr auto next_route_index = Index + 1;
+            constexpr auto route            = ::std::get<Index>(routes);
+            constexpr bool is_last_route    = Index != route_count() - 1;
+            ctx.call_pre_subroute_methods();
+            auto res = route(ctx);
+            ctx.call_post_subroute_methods();
+            using result_type = decltype(res);
+            if constexpr (::std::is_void_v<result_type>) {
+                // nothing to do!
+            } else if constexpr (Response<result_type>) {
+                ctx.response = res;
+
+                // just call the context handlers
+                ctx.call_post_entryroute_methods();
+
+                // we're done; don't call the next route
+                return;
+            } else if constexpr (Context<result_type>) {
+                // context switching is happening here
+                // just call the next route or finish it with calling the
+                // context handlers
+                if constexpr (is_last_route) {
+                    operator()<next_route_index>(std::move(res));
+                } else {
+                    // call the context handlers
+                    ctx.call_post_entryroute_methods();
+                }
+                return; // done; no more routing
+            } else {
+                throw ::std::invalid_argument(
+                  "Your route is not returning something that we understand.");
+            }
+
+            // call the next route:
+            if constexpr (is_last_route) {
+                operator()<next_route_index>(::std::forward<context_type>(ctx));
+            } else {
+                // call the context
+                ctx.call_post_entryroute_methods();
+            }
         }
     };
 
