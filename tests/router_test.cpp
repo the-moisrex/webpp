@@ -16,20 +16,20 @@ TEST(Router, RouteCreation) {
     // this will happen with a help of a little "user-defined template deduction
     // guide"
     constexpr auto about_page_callback =
-      [](response_t<std_traits>& res) noexcept {
+      [](basic_response<std_traits>& res) noexcept {
           res << "About page\n";
       };
     route<std_traits, cgi<std_traits>, decltype(about_page_callback)>
       about_page{about_page_callback};
 
     auto req = request_t<std_traits, cgi<std_traits>>{};
-    auto res = response_t<std_traits>();
+    auto res = basic_response<std_traits>();
 
     about_page(req, res);
     EXPECT_EQ(res.body.str(""), "About page\n");
 
     constexpr auto return_callback = [] {
-        return response_t("Hello");
+        return basic_response("Hello");
     };
     route<std_traits, cgi<std_traits>, decltype(return_callback)> one{};
     one(req, res);
@@ -64,7 +64,7 @@ namespace webpp {
 
 TEST(Router, ValveTest) {
     constexpr auto return_callback = [] {
-        return response_t("Hello");
+        return basic_response("Hello");
     };
     constexpr auto v = method("GET");
     route<std_traits, fake_cgi, decltype(return_callback), decltype(v)> one{v};
@@ -108,8 +108,8 @@ TEST(Router, VectorForRouteList) {
 
     request_t<std_traits, fake_cgi> req;
     req.set_method("GET");
-    response_t  res         = _route(req);
-    auto        strview_res = res.body.str();
+    basic_response res         = _route(req);
+    auto           strview_res = res.body.str();
     std::string str_res     = std::string(strview_res);
     EXPECT_EQ(strview_res, "Hello world") << "strview_res is: " << strview_res;
     // EXPECT_EQ(str_res, "Hello world") << "str_res is: " <<
@@ -124,7 +124,7 @@ TEST(Router, TupleForRouteList) {
 
     request_t<std_traits, fake_cgi> req;
     req.set_method("GET");
-    response_t res = _router(req);
+    basic_response res = _router(req);
     EXPECT_EQ(std::string(res.body.str()), "Hello world");
 }
 
@@ -145,7 +145,7 @@ TEST(Router, DefaultRouteList) {
 
     request_t<std_traits, fake_cgi> req;
     req.set_method("GET");
-    response_t res = _router(req);
+    basic_response res = _router(req);
     EXPECT_EQ(std::string(res.body.str()), "Hello world");
 }
 
@@ -167,13 +167,13 @@ TEST(Router, MergeEffect) {
 TEST(Router, DynamicRoute) {
     dynamic_route<std_traits, fake_cgi> droute;
     droute = []() {
-        return response_t("Hello world");
+        return basic_response("Hello world");
     };
 
     request_t<std_traits, fake_cgi> req;
     req.set_method("GET");
 
-    response_t<std_traits> res;
+    basic_response<std_traits> res;
     droute(req, res);
     EXPECT_EQ(std::string(res.body.str()), "Hello world");
 }
