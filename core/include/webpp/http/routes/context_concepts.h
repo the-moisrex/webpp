@@ -93,17 +93,16 @@ namespace webpp {
     concept ContextExtension = Extension<T>;
 
     template <typename T>
-    concept Context = Traits<typename T::traits_type>and
-            Interface<typename T::interface_type>and
-            Request<typename T::request_type>and
-            Response<typename T::response_type>and
-            ContextExtension<typename T::extension_type>and ::std::
-              is_copy_constructible_v<T>and ::std::is_move_constructible_v<
-                T>and requires(T c) {
+    concept Context = Traits<typename T::traits_type>&&
+          Interface<typename T::interface_type>&&
+          Request<typename T::request_type>&&
+          Response<typename T::response_type>&& ContextExtension<
+            typename T::extension_type>&& ::std::is_copy_constructible_v<T>&& ::
+            std::is_move_constructible_v<T>&& requires(T c) {
         { c.response }
         ->Response;
     }
-    and requires(T c) {
+    &&requires(T c) {
         { c.request }
         ->Request;
     };

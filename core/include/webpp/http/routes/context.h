@@ -9,7 +9,7 @@
 #include "./context_concepts.h"
 #include "./extensions/map.h"
 
-namespace webpp::routes {
+namespace webpp {
 
 
     /**
@@ -115,11 +115,11 @@ namespace webpp::routes {
      *
      */
     template <ContextExtension... ExtensionTypes>
-    struct basic_context : public ::std::decay_t<ExtensionTypes>... {
+    struct basic_context : public ExtensionTypes... {
 
       public:
         // todo: use extension pack instead of tuple:
-        using extension_types = ::std::tuple<::std::decay_t<ExtensionTypes>...>;
+        using extension_types    = ::std::tuple<ExtensionTypes...>;
         using basic_context_type = basic_context<ExtensionTypes...>;
 
         template <ContextExtension... NewExtensionTypes>
