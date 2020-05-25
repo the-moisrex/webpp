@@ -63,9 +63,9 @@ namespace webpp {
     concept RouterExtension = Extension<E>;
 
     template <typename T>
-    concept RouterExtensionWithInitialContextType =
+    concept RouterExtensionWithContextExtensions =
       RouterExtension<T>&& requires {
-        T::template initial_context_type;
+        T::template context_extensions;
     };
 
     template <typename T>

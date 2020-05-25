@@ -35,9 +35,11 @@
 
 #include "request_concepts.h"
 
+
 namespace webpp {
 
-    class basic_request_t {
+    template <RequestExtensionList REL>
+    class basic_request_t : public REL {
       private:
       public:
     };
@@ -46,8 +48,8 @@ namespace webpp {
      * This class doesn't own its data (at least the ones that are important)
      * @tparam Interface
      */
-    template <Traits TraitsT, Interface InterfaceT>
-    struct request_t : public basic_request_t {
+    template <Traits TraitsT, Interface InterfaceT, RequestExtensionList REL>
+    struct request_t : public basic_request_t<REL> {
         using traits_type    = TraitsT;
         using interface_type = InterfaceT;
     };

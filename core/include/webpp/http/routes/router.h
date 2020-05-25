@@ -40,7 +40,7 @@ namespace webpp {
         using initial_context_type_original = basic_context<>;
 
         using initial_context_type = ::std::conditional_t<
-          RouterExtensionWithInitialContextType<ExtensionsType>,
+          RouterExtensionWithContextExtensions<ExtensionsType>,
           typename ExtensionsType::template initial_context_type<
             initial_context_type_original>,
           initial_context_type_original>;
