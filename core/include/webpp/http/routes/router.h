@@ -4,7 +4,7 @@
 #include "../../std/vector.h"
 #include "../request_concepts.h"
 #include "../response_concepts.h"
-#include "./context_concepts.h"
+#include "./context.h"
 #include "./route_concepts.h"
 #include "./router_concepts.h"
 
@@ -32,14 +32,12 @@ namespace webpp {
      * @tparam ExtensionsType
      * @tparam RouteType
      */
-    template <Context InitialContextType, RouterExtensionList ExtensionsType,
-              Route... RouteType>
+    template <RouterExtensionList ExtensionsType, Route... RouteType>
     struct const_router {
 
         // Add any additional "context extensions" that the "router extensions"
         // might want
-        using initial_context_type_original =
-          ::std::decay_t<InitialContextType>;
+        using initial_context_type_original = basic_context<>;
 
         using initial_context_type = ::std::conditional_t<
           RouterExtensionWithInitialContextType<ExtensionsType>,
@@ -100,7 +98,7 @@ namespace webpp {
         }
 
         template <::std::size_t Index = 0>
-        inline void operator()(Context auto&& ctx) noexcept {
+        void operator()(Context auto&& ctx) noexcept {
             using context_type              = decltype(ctx);
             constexpr auto next_route_index = Index + 1;
             constexpr auto route            = ::std::get<Index>(routes);
