@@ -77,7 +77,7 @@ namespace webpp {
     };
 
     template <typename Traits>
-    class request_t<Traits, fcgi<Traits>> {
+    class basic_request<Traits, fcgi<Traits>> {
       private:
       public:
     };

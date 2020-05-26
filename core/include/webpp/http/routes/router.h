@@ -1,6 +1,7 @@
 #ifndef WEBPP_ROUTER_H
 #define WEBPP_ROUTER_H
 
+#include "../../extensions/extension.h"
 #include "../../std/vector.h"
 #include "../request_concepts.h"
 #include "../response_concepts.h"
@@ -16,14 +17,6 @@
 namespace webpp {
 
 
-    template <RouterExtension... ExtensionType>
-    struct pack : public std::decay_t<ExtensionType>... {
-
-        template <typename ICT>
-        using initial_context_type = typename ICT::template rebind<
-          typename ExtensionType::initial_context_type...>;
-    };
-
 
     /**
      * Const router is a router that satisfies that "Router" concept.
@@ -32,7 +25,8 @@ namespace webpp {
      * @tparam ExtensionsType
      * @tparam RouteType
      */
-    template <RouterExtensionList ExtensionsType, Route... RouteType>
+    template <RouterExtensionList ExtensionsType = empty_extension_pack,
+              Route... RouteType>
     struct const_router {
 
         // Add any additional "context extensions" that the "router extensions"
@@ -92,13 +86,13 @@ namespace webpp {
             return res;
         }
 
-        inline void operator()(Request auto& req, Response auto& res) noexcept {
+        void operator()(Request auto& req, Response auto& res) noexcept {
             initial_context_type ctx{.request = req, .response = res};
             this->               operator()(ctx);
         }
 
         template <::std::size_t Index = 0>
-        void operator()(Context auto&& ctx) noexcept {
+        Response auto operator()(Context auto&& ctx) noexcept {
             using context_type              = decltype(ctx);
             constexpr auto next_route_index = Index + 1;
             constexpr auto route            = ::std::get<Index>(routes);

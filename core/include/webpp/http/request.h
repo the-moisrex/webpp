@@ -1,11 +1,6 @@
 #ifndef WEBPP_REQUEST_H
 #define WEBPP_REQUEST_H
 
-#include "../traits/traits_concepts.h"
-#include "./interfaces/basic_interface.h"
-#include "body.h"
-#include "header.h"
-
 
 /**
  *
@@ -33,23 +28,19 @@
  *
  */
 
-#include "request_concepts.h"
-
+#include "../traits/traits_concepts.h"
+#include "./body.h"
+#include "./header.h"
+#include "./request_concepts.h"
 
 namespace webpp {
-
-    template <RequestExtensionList REL>
-    class basic_request_t : public REL {
-      private:
-      public:
-    };
 
     /**
      * This class doesn't own its data (at least the ones that are important)
      * @tparam Interface
      */
     template <Traits TraitsT, Interface InterfaceT, RequestExtensionList REL>
-    struct request_t : public basic_request_t<REL> {
+    struct basic_request : public REL {
         using traits_type    = TraitsT;
         using interface_type = InterfaceT;
     };

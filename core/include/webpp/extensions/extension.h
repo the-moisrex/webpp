@@ -150,6 +150,10 @@ namespace webpp {
     };
 
 
+    //////////////////////////////////////////////////////////////////////////
+
+    using empty_extension_pack = extension_pack<>;
+
 } // namespace webpp
 
 #endif // WEBPP_EXTENSION_H
