@@ -13,7 +13,7 @@ namespace webpp {
     class fake_interface;
 
     template <>
-    class request_t<fake_interface> : public basic_request_t {
+    class basic_request<fake_interface> : public basic_request_t {
       public:
         std::string_view request_uri() const noexcept {
             return __path;
@@ -31,8 +31,8 @@ namespace webpp {
       public:
         webpp::router_t<fake_interface> router;
         std::string                     body_result;
-        std::string                   header_result;
-        request_t<fake_interface>     req;
+        std::string                     header_result;
+        basic_request<fake_interface>   req;
 
         fake_interface() noexcept = default;
 
@@ -55,19 +55,19 @@ TEST(Server, Init) {
     app.run();
     EXPECT_EQ(app.body_result, "hello world");
 
-    app.router.on("/home"_path,
-                  [](request_t<fake_interface> const& req, response_t& res) {
-                      res << "Coding";
-                  });
+    app.router.on("/home"_path, [](basic_request<fake_interface> const& req,
+                                   response_t&                          res) {
+        res << "Coding";
+    });
     app.req.set_path("/home");
     app.run();
     EXPECT_EQ(app.body_result, "Coding");
 
-    app.router.on("/about"_path,
-                  [](request_t<fake_interface> const& req, response_t& res) {
-                      res << "Something";
-                      // stop reformating this into one line clang-format!
-                  });
+    app.router.on("/about"_path, [](basic_request<fake_interface> const& req,
+                                    response_t&                          res) {
+        res << "Something";
+        // stop reformating this into one line clang-format!
+    });
     app.req.set_path("/about/");
     app.run();
     EXPECT_EQ(app.body_result, "Something");

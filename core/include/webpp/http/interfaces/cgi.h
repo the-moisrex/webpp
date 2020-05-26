@@ -27,7 +27,7 @@ namespace webpp {
       public:
         using traits_type          = TraitsType;
         using application_type     = App;
-        using request_type         = request_t<traits_type, cgi>;
+        using request_type         = basic_request<traits_type, cgi>;
         using default_context_type = context<traits_type, cgi>;
         using str_view_t           = typename TraitsType::string_view_type;
         using str_t                = typename TraitsType::string_type;
@@ -248,7 +248,7 @@ namespace webpp {
      * the user is able to use this class properly and easily.
      */
     template <typename Traits>
-    struct request_t<Traits, cgi<Traits>> : public basic_request_t {
+    struct basic_request<Traits, cgi<Traits>> : public basic_request_t {
         using super = cgi<Traits>;
 
         /**

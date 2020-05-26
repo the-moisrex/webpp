@@ -1,5 +1,6 @@
 #include "../core/include/webpp/http/routes/router.h"
 
+#include "../core/include/webpp/http/application_concepts.h"
 #include "../core/include/webpp/http/interfaces/cgi.h"
 #include "../core/include/webpp/utils/const_list.h"
 
@@ -10,8 +11,12 @@
 using namespace webpp;
 using namespace std;
 
+TEST(Router, RouterConcepts) {
+    EXPECT_TRUE(static_cast<bool>(Application<const_router>));
+}
+
 TEST(Router, RouteCreation) {
-    using request = request_t<std_traits, cgi<std_traits>>;
+    using request = basic_request<std_traits, cgi<std_traits>>;
 
     // this will happen with a help of a little "user-defined template deduction
     // guide"
@@ -47,7 +52,7 @@ namespace webpp {
     class fake_cgi;
 
     template <typename Traits>
-    class request_t<Traits, fake_cgi> {
+    class basic_request<Traits, fake_cgi> {
         std::string method;
 
       public:
@@ -69,7 +74,7 @@ TEST(Router, ValveTest) {
     constexpr auto v = method("GET");
     route<std_traits, fake_cgi, decltype(return_callback), decltype(v)> one{v};
 
-    request_t<std_traits, fake_cgi> req;
+    basic_request<std_traits, fake_cgi> req;
     req.set_method("GET");
 
     EXPECT_EQ(req.request_method(), "GET");
@@ -106,7 +111,7 @@ TEST(Router, VectorForRouteList) {
         return "Hello world";
     });
 
-    request_t<std_traits, fake_cgi> req;
+    basic_request<std_traits, fake_cgi> req;
     req.set_method("GET");
     basic_response res         = _route(req);
     auto           strview_res = res.body.str();
@@ -122,7 +127,7 @@ TEST(Router, TupleForRouteList) {
           return "Hello world";
       });
 
-    request_t<std_traits, fake_cgi> req;
+    basic_request<std_traits, fake_cgi> req;
     req.set_method("GET");
     basic_response res = _router(req);
     EXPECT_EQ(std::string(res.body.str()), "Hello world");
@@ -143,7 +148,7 @@ TEST(Router, DefaultRouteList) {
         return "Hello world";
     });
 
-    request_t<std_traits, fake_cgi> req;
+    basic_request<std_traits, fake_cgi> req;
     req.set_method("GET");
     basic_response res = _router(req);
     EXPECT_EQ(std::string(res.body.str()), "Hello world");
@@ -170,7 +175,7 @@ TEST(Router, DynamicRoute) {
         return basic_response("Hello world");
     };
 
-    request_t<std_traits, fake_cgi> req;
+    basic_request<std_traits, fake_cgi> req;
     req.set_method("GET");
 
     basic_response<std_traits> res;

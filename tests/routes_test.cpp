@@ -16,7 +16,7 @@ namespace webpp {
     class fake_cgi;
 
     template <typename Traits>
-    class request_t<Traits, fake_cgi> {
+    class basic_request<Traits, fake_cgi> {
         std::string method = "GET";
         std::string _uri   = "/home";
 
@@ -46,24 +46,24 @@ TEST(Valves, Creation) {
 
     // I'm not gonna test the lowercase and uppercase stuff because it's
     // probably the request's job to fix that information not the valve.
-    EXPECT_TRUE(v(request_t<std_traits, fake_cgi>().set_method("GET")));
-    EXPECT_TRUE(v(request_t<std_traits, fake_cgi>().set_method("POST")));
+    EXPECT_TRUE(v(basic_request<std_traits, fake_cgi>().set_method("GET")));
+    EXPECT_TRUE(v(basic_request<std_traits, fake_cgi>().set_method("POST")));
 }
 
 TEST(Valves, Operations) {
     constexpr auto v = empty and empty;
 
-    EXPECT_TRUE(v(request_t<std_traits, fake_cgi>()));
+    EXPECT_TRUE(v(basic_request<std_traits, fake_cgi>()));
     EXPECT_TRUE((empty and empty and empty or empty or
-                 empty)(request_t<std_traits, fake_cgi>()));
+                 empty)(basic_request<std_traits, fake_cgi>()));
 }
 
 TEST(Valves, DynamicValve) {
     auto dv =
       dynamic_valve<std_traits, fake_cgi>() and method("GET") or method("POST");
 
-    auto con1 = request_t<std_traits, fake_cgi>().set_method("GET");
-    auto con2 = request_t<std_traits, fake_cgi>().set_method("POST");
+    auto con1 = basic_request<std_traits, fake_cgi>().set_method("GET");
+    auto con2 = basic_request<std_traits, fake_cgi>().set_method("POST");
     EXPECT_TRUE(dv(con1));
     EXPECT_TRUE(dv(con2));
 }
@@ -73,7 +73,7 @@ TEST(Valves, EmptyValve) {
     constexpr auto or_two   = get or empty;
     constexpr auto or_three = empty or get;
 
-    auto req = request_t<std_traits, fake_cgi>().set_method("POST");
+    auto req = basic_request<std_traits, fake_cgi>().set_method("POST");
 
     EXPECT_TRUE(or_one(req));
     EXPECT_TRUE(or_two(req));
@@ -90,7 +90,7 @@ TEST(Valves, EmptyValve) {
 
 TEST(Valves, TPath) {
     using namespace webpp::valves;
-    auto req = request_t<std_traits, fake_cgi>().set_method("POST");
+    auto req = basic_request<std_traits, fake_cgi>().set_method("POST");
     req.set_uri("/home/one");
     EXPECT_TRUE("/home/{page}"_tpath(req));
 }
