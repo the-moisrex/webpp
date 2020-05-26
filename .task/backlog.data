@@ -162,3 +162,4 @@
 {"description":"rename the valves to route or subroute","entry":"20200501T142423Z","modified":"20200501T142423Z","project":"routes","status":"pending","uuid":"9f6d01ad-0b48-44c5-96a6-2ce5310ded4b"}
 {"description":"create the context template class","entry":"20200501T190553Z","modified":"20200501T190553Z","project":"routes","status":"pending","uuid":"48b5a27b-7f0a-431a-a826-e05f5e920032"}
 {"description":"Add custom clang-check matchers to chatch some bugs before they happen for the final user","entry":"20200507T232208Z","modified":"20200507T232208Z","project":"clang","status":"pending","uuid":"7514ece6-2018-4563-a58c-5509d0933bb7"}
+{"description":"give the user the ability to change the status phrase of status code","entry":"20200526T133747Z","modified":"20200526T133747Z","project":"headers","status":"pending","uuid":"a0fcf05c-4d80-4ca2-bef6-03e32d230a5f"}

@@ -117,13 +117,13 @@ namespace webpp {
     template <ContextExtension... ExtensionTypes>
     struct basic_context : public ExtensionTypes... {
 
-      public:
         // todo: use extension pack instead of tuple:
         using extension_types    = ::std::tuple<ExtensionTypes...>;
         using basic_context_type = basic_context<ExtensionTypes...>;
 
         template <ContextExtension... NewExtensionTypes>
         using rebind = basic_context<ExtensionTypes..., NewExtensionTypes...>;
+
 
 
         /**
@@ -227,8 +227,7 @@ namespace webpp {
      */
     template <Traits TraitsType, Interface InterfaceType,
               ContextExtension... ExtensionTypes>
-    struct context
-      : public basic_context<TraitsType, InterfaceType, ExtensionTypes...> {
+    struct context : public basic_context<ExtensionTypes...> {
 
         using string_type      = typename TraitsType::string_type;
         using string_view_type = typename TraitsType::string_view_type;

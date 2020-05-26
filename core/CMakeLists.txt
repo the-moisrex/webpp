@@ -1,7 +1,6 @@
 set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp.h
         ${LIB_INCLUDE_DIR}/webpp/config.h
-        ${LIB_INCLUDE_DIR}/webpp/server.h
 
         ${LIB_INCLUDE_DIR}/webpp/extensions/extension.h
 
@@ -43,6 +42,9 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/request_concepts.h
         ${LIB_INCLUDE_DIR}/webpp/http/response.h
         ${LIB_INCLUDE_DIR}/webpp/http/response_concepts.h
+        ${LIB_INCLUDE_DIR}/webpp/http/application.h
+        ${LIB_INCLUDE_DIR}/webpp/http/application_concepts.h
+        ${LIB_INCLUDE_DIR}/webpp/http/http.h
 
         ${LIB_INCLUDE_DIR}/main.h
         ${LIB_INCLUDE_DIR}/webpp.h

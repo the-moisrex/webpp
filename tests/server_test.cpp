@@ -1,5 +1,4 @@
-#include "../core/include/webpp/server.h"
-
+#include "../core/include/webpp/http/http.h"
 #include "../core/include/webpp/http/interfaces/basic_interface.h"
 #include "../core/include/webpp/http/routes/tpath.h"
 
@@ -47,7 +46,7 @@ namespace webpp {
 } // namespace webpp
 
 TEST(Server, Init) {
-    server<fake_interface> app;
+    http<fake_interface> app;
     app.req.set_path("/");
     app.router.on("/"_path, [] {
         return "hello world";
