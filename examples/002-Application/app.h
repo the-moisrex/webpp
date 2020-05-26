@@ -8,22 +8,24 @@
 #include <webpp/application>
 #include <webpp/routes/router>
 
+using namespace webpp::routes;
 
-struct my_router_extension {
-
-    using context_extensions   = pack<>;
-    using initial_context_type = context
-};
+// admin sub application
+using admin_app = const_route{get and "profile" >> [] {
+    return "profile page";
+}};
 
 
 struct app {
-    using namespace webpp::routes;
 
-    using additional_router_extensions = pack<rx_prioritized>;
+    // webpp can pick up on this
+    using traits_type = std_traits;
 
-    static constexpr const_router<additional_router_extensions> router = {
+    admin_app admin;
+
+    static constexpr const_router router = {
       get and (opath() / "home") >> app::home,
-      get and (opath() / "about") >> app::about};
+      get and (opath() / "about") >> app::about, opath() / "admin" >> admin};
 
     app() noexcept {
     }
@@ -37,8 +39,7 @@ struct app {
         return "About page";
     }
 
-    template <typename Context>
-    auto operator()(Context& req) {
+    Response auto operator()(Context auto& req) {
         return router(req);
     }
 };

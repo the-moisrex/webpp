@@ -22,18 +22,23 @@
 namespace webpp {
 
 
-    template <typename Traits = std_traits>
-    struct cgi : public basic_interface<Traits, cgi<Traits>> {
+    template <Traits TraitsType, Application App>
+    struct cgi {
       public:
-        using traits_type = Traits;
-        using str_view_t  = typename Traits::string_view_type;
-        using str_t      = typename Traits::string_type;
-        using ostream_t  = typename Traits::ostream_type;
+        using traits_type          = TraitsType;
+        using application_type     = App;
+        using request_type         = request_t<traits_type, cgi>;
+        using default_context_type = context<traits_type, cgi>;
+        using str_view_t           = typename TraitsType::string_view_type;
+        using str_t                = typename TraitsType::string_type;
+        using ostream_t            = typename TraitsType::ostream_type;
+
+        application_type app;
 
         cgi() noexcept {
             // I'm not using C here; so why should I pay for it!
             // And also the user should not use cin and cout. so ...
-            std::ios::sync_with_stdio(false);
+            ::std::ios::sync_with_stdio(false);
         }
 
         /**
@@ -42,8 +47,8 @@ namespace webpp {
          * @param length
          * @return
          */
-        static std::streamsize read(char*           data,
-                                    std::streamsize length) noexcept {
+        static ::std::streamsize read(char*             data,
+                                      ::std::streamsize length) noexcept {
             std::cin.read(data, length);
             return std::cin.gcount();
         }
@@ -57,7 +62,7 @@ namespace webpp {
 
             // I think o-stream is not readable so we cannot do this:
             // https://stackoverflow.com/questions/15629886/how-to-write-ostringstream-directly-to-cout
-            std::cout
+            ::std::cout
               << stream.rdbuf(); // TODO: test this, I don't trust myself :)
         }
 
@@ -66,8 +71,8 @@ namespace webpp {
          * @param data
          * @param length
          */
-        static void write(char const* data, std::streamsize length) noexcept {
-            std::cout.write(data, length);
+        static void write(char const* data, ::std::streamsize length) noexcept {
+            ::std::cout.write(data, length);
         }
 
         /**
@@ -75,7 +80,7 @@ namespace webpp {
          * @param key
          * @return
          */
-        [[nodiscard]] static std::string_view env(char const* key) noexcept {
+        [[nodiscard]] static ::std::string_view env(char const* key) noexcept {
             if (auto value = getenv(key))
                 return value;
             return {};
@@ -86,15 +91,14 @@ namespace webpp {
          * @param name
          * @return
          */
-        [[nodiscard]] static std::string_view
-        header(std::string name) noexcept {
+        [[nodiscard]] static str_view_t header(::std::string name) noexcept {
             // fixme: check if this is all we have to do or we have to do more too:
-            std::transform(name.begin(), name.end(), name.begin(),
-                           [](auto const& c) {
-                               if (c == '-')
-                                   return '_';
-                               return static_cast<char>(std::toupper(c));
-                           });
+            ::std::transform(name.begin(), name.end(), name.begin(),
+                             [](auto const& c) {
+                                 if (c == '-')
+                                     return '_';
+                                 return static_cast<char>(::std::toupper(c));
+                             });
 
             name.insert(0, "HTTP_");
             return env(name.c_str());
@@ -137,7 +141,7 @@ namespace webpp {
                       to_uint<traits_type>(content_length_str);
 
                     char* buffer = new char[content_length];
-                    std::cin.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
+                    ::std::cin.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
                 } else {
                     // we don't know how much the user is going to send. so we
                     // use a small size buffer:
@@ -150,8 +154,9 @@ namespace webpp {
 
 
         void operator()() noexcept {
-            webpp::request_t<traits_type, cgi<traits_type>> req;
-            auto                                            res = router(req);
+            request_type         req;
+            default_context_type ctx{.request = req};
+            auto                 res = app(ctx);
             res.calculate_default_headers();
             auto header_str = res.header.str();
             auto str        = res.body.str();
@@ -163,7 +168,9 @@ namespace webpp {
             // extension-code = 3digit
             // reason-phrase  = *TEXT
 
-            std::stringstream status_line;
+            // todo: use <format> or {fmt}
+            // todo: give the user the ability to change the status phrase
+            ::std::stringstream status_line;
             status_line << "Status: " << res.header.status_code() << " "
                         << status_reason_phrase(res.header.status_code())
                         << "\r\n";
