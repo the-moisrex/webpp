@@ -39,7 +39,8 @@ namespace webpp {
      * This class doesn't own its data (at least the ones that are important)
      * @tparam Interface
      */
-    template <Traits TraitsT, Interface InterfaceT, RequestExtensionList REL>
+    template <Traits TraitsT, Interface InterfaceT,
+              RequestExtensionList REL = empty_extension_pack>
     struct basic_request : public REL {
         using traits_type    = TraitsT;
         using interface_type = InterfaceT;
