@@ -130,7 +130,7 @@ namespace webpp {
 
         basic_body& operator=(basic_body const& b) noexcept {
             if (this != &b) {
-                this->basic_body();
+                this->~basic_body();
                 type = b.type;
                 switch (b.type) {
                     case types::empty: break;

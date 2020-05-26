@@ -134,10 +134,14 @@ namespace webpp {
          */
         template <ContextExtension... ExtensionType>
         constexpr auto clone() const noexcept {
-            using new_context =
-              basic_context<traits_type, interface_type, ExtensionType...>;
-            return new_context{.request  = this->request,
-                               .response = this->response};
+            using new_context = basic_context<ExtensionType...>;
+            return new_context{*this}; // todo: initialization
+        }
+
+        template <ContextExtension... ExtensionType>
+        constexpr auto move() const noexcept {
+            using new_context = basic_context<ExtensionType...>;
+            return new_context{*this}; // todo: initialization
         }
 
         // todo: these methods need to be noexcept. They call unknown stuff.

@@ -21,13 +21,13 @@ namespace webpp {
       public:
         using traits_type = TraitsType;
         using body_type   = webpp::basic_body;
-        using header_type =
+        using headers_type =
           webpp::headers<TraitsType, true, header_type::response>;
         using str_view_t = typename traits_type::string_view_type;
         using str_t      = typename traits_type::string_type;
 
-        body_type   body;
-        header_type header;
+        body_type    body;
+        headers_type header;
 
         basic_response() noexcept                          = default;
         basic_response(basic_response const& res) noexcept = default;

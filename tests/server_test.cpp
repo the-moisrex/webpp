@@ -1,5 +1,4 @@
 #include "../core/include/webpp/http/http.h"
-#include "../core/include/webpp/http/interfaces/basic_interface.h"
 #include "../core/include/webpp/http/routes/tpath.h"
 
 #include <gtest/gtest.h>
