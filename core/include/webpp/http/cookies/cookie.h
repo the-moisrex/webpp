@@ -87,6 +87,7 @@
 #include "../../utils/charset.h"
 #include "../../utils/strings.h"
 #include "../common.h"
+#include "./cookies_concepts.h"
 
 #include <chrono>
 #include <string_view>
@@ -250,7 +251,7 @@ namespace webpp {
         using super = basic_cookie_common<TraitsType, false>;
 
       public:
-        static constexpr auto header_type = webpp::header_type::request;
+        static constexpr auto header_direction = webpp::header_type::request;
 
         constexpr request_cookie() noexcept {};
 
@@ -270,7 +271,7 @@ namespace webpp {
         using super  = basic_cookie_common<TraitsType, true>;
         using self_t = response_cookie<TraitsType>;
 
-        void parse_SE_options(str_view_t& str) noexcept {
+        void parse_SE_options(super::str_view_t& str) noexcept {
             super::parse_SE_value(str);
             // todo
         }
@@ -310,7 +311,7 @@ namespace webpp {
         attrs_t attrs;
 
       public:
-        static constexpr auto header_type = webpp::header_type::response;
+        static constexpr auto header_direction = webpp::header_type::response;
 
         constexpr response_cookie() noexcept {};
 
@@ -517,15 +518,11 @@ namespace webpp {
             return out;
         }
 
-        template <bool ISMutable>
-        bool operator==(
-          request_cookie<TraitsType, ISMutable> const& c) const noexcept {
+        bool operator==(request_cookie<TraitsType> const& c) const noexcept {
             return super::_name == c._name && super::_value == c._value;
         }
 
-        template <bool ISMutable>
-        bool operator==(
-          response_cookie<TraitsType, ISMutable> const& c) const noexcept {
+        bool operator==(response_cookie<TraitsType> const& c) const noexcept {
             return super::_name == c._name && super::_value == c._value &&
                    _prefix == c._prefix && _encrypted == c._encrypted &&
                    _secure == c._secure && _host_only == c._host_only &&
@@ -534,27 +531,19 @@ namespace webpp {
                    _domain == c._domain && attrs == c.attrs;
         }
 
-        template <bool ISMutable>
-        bool operator<(
-          response_cookie<TraitsType, ISMutable> const& c) const noexcept {
+        bool operator<(response_cookie<TraitsType> const& c) const noexcept {
             return _expires < c._expires;
         }
 
-        template <bool ISMutable>
-        bool operator>(
-          response_cookie<TraitsType, ISMutable> const& c) const noexcept {
+        bool operator>(response_cookie<TraitsType> const& c) const noexcept {
             return _expires > c._expires;
         }
 
-        template <bool ISMutable>
-        bool operator<=(
-          response_cookie<TraitsType, ISMutable> const& c) const noexcept {
+        bool operator<=(response_cookie<TraitsType> const& c) const noexcept {
             return _expires <= c._expires;
         }
 
-        template <bool ISMutable>
-        bool operator>=(
-          response_cookie<TraitsType, ISMutable> const& c) const noexcept {
+        bool operator>=(response_cookie<TraitsType> const& c) const noexcept {
             return _expires >= c._expires;
         }
 
@@ -572,17 +561,14 @@ namespace webpp {
          * @param c
          * @return true if they have the same name, domain, and path
          */
-        template <bool ISMutable>
-        [[nodiscard]] bool same_as(
-          response_cookie<TraitsType, ISMutable> const& c) const noexcept {
+        [[nodiscard]] bool
+        same_as(response_cookie<TraitsType> const& c) const noexcept {
             return super::_name == c._name && _path == c._path &&
                    c._domain == _domain;
         }
 
-        template <bool ISMutable>
-        friend inline void
-        swap(response_cookie<TraitsType, ISMutable>& first,
-             response_cookie<TraitsType, ISMutable>& second) noexcept {
+        friend inline void swap(response_cookie<TraitsType>& first,
+                                response_cookie<TraitsType>& second) noexcept {
             using std::swap;
             swap(first._valid, second._valid);
             swap(first._name, second._name);
@@ -600,18 +586,17 @@ namespace webpp {
         }
     };
 
-    template <typename Traits, bool Mutable = true,
-              header_type HeaderType = header_type::response>
+    template <typename Traits, header_type HeaderType = header_type::response>
     class basic_cookie
       : public ::std::conditional_t<HeaderType == header_type::response,
-                                    response_cookie<Traits, Mutable>,
-                                    request_cookie<Traits, Mutable>> {
-        using super = ::std::conditional_t<HeaderType == header_type::response,
-                                           response_cookie<Traits, Mutable>,
-                                           request_cookie<Traits, Mutable>>;
+                                    response_cookie<Traits>,
+                                    request_cookie<Traits>> {
+        using super =
+          ::std::conditional_t<HeaderType == header_type::response,
+                               response_cookie<Traits>, request_cookie<Traits>>;
 
       public:
-        static constexpr auto header_type = HeaderType;
+        static constexpr auto header_direction = HeaderType;
 
         using super::super;
         constexpr basic_cookie() noexcept = default;
@@ -634,7 +619,8 @@ namespace webpp {
             // change the "same_as" method too if you ever touch this function
             cookie_hash::result_type seed = 0;
             hash_combine(seed, c.name());
-            if constexpr (CookieType::header_type == header_type::response) {
+            if constexpr (CookieType::header_direction ==
+                          header_type::response) {
                 hash_combine(seed, c.domain());
                 hash_combine(seed, c.path());
             }
@@ -659,7 +645,8 @@ namespace webpp {
 
         bool operator()(const cookie_type& lhs,
                         const cookie_type& rhs) const noexcept {
-            if constexpr (cookie_type::header_type == header_type::response) {
+            if constexpr (cookie_type::header_direction ==
+                          header_type::response) {
                 return lhs.name() == rhs.name() &&
                        lhs.domain() == rhs.domain() && lhs.path() == rhs.path();
             } else {
