@@ -48,8 +48,8 @@ namespace webpp {
          */
         static ::std::streamsize read(char*             data,
                                       ::std::streamsize length) noexcept {
-            std::cin.read(data, length);
-            return std::cin.gcount();
+            ::std::cin.read(data, length);
+            return ::std::cin.gcount();
         }
 
         /**
@@ -246,9 +246,9 @@ namespace webpp {
      * have to copy and paste lots of codes to make it happen) to make sure
      * the user is able to use this class properly and easily.
      */
-    template <typename Traits>
-    struct basic_request<Traits, cgi<Traits>> : public basic_request_t {
-        using super = cgi<Traits>;
+    template <Traits TraitsType, Application App>
+    struct basic_request<TraitsType, cgi<TraitsType, App>> {
+        using interface_type = cgi<TraitsType, App>;
 
         /**
          * @brief get the server's software
@@ -258,7 +258,7 @@ namespace webpp {
          * @example SERVER_SOFTWARE=Apache/2.4.41 (Unix) OpenSSL/1.1.1d
          */
         [[nodiscard]] std::string_view server_software() const noexcept {
-            return super::env("SERVER_SOFTWARE");
+            return interface_type::env("SERVER_SOFTWARE");
         }
 
         /**
@@ -268,7 +268,7 @@ namespace webpp {
          * @example SERVER_NAME=localhost
          */
         [[nodiscard]] std::string_view server_name() const noexcept {
-            return super::env("SERVER_NAME");
+            return interface_type::env("SERVER_NAME");
         }
 
         /**
@@ -278,7 +278,7 @@ namespace webpp {
          * @example GATEWAY_INTERFACE=CGI/1.1
          */
         [[nodiscard]] std::string_view gateway_interface() const noexcept {
-            return super::env("GATEWAY_INTERFACE");
+            return interface_type::env("GATEWAY_INTERFACE");
         }
 
         /**
@@ -288,7 +288,7 @@ namespace webpp {
          * @example SERVER_PROTOCOL=HTTP/1.1
          */
         [[nodiscard]] std::string_view server_protocol() const noexcept {
-            return super::env("SERVER_PROTOCOL");
+            return interface_type::env("SERVER_PROTOCOL");
         }
 
         /**
@@ -296,7 +296,7 @@ namespace webpp {
          * @details Port number to which the request was sent.
          */
         [[nodiscard]] std::string_view server_port() const noexcept {
-            return super::env("SERVER_PORT");
+            return interface_type::env("SERVER_PORT");
         }
 
         /**
@@ -305,7 +305,7 @@ namespace webpp {
          * Get, Head, Post, and so on.
          */
         [[nodiscard]] std::string_view request_method() const noexcept {
-            return super::env("REQUEST_METHOD");
+            return interface_type::env("REQUEST_METHOD");
         }
 
         /**
@@ -316,7 +316,7 @@ namespace webpp {
          * @example PATH_INFO=/hello/world
          */
         [[nodiscard]] std::string_view path_info() const noexcept {
-            return super::env("PATH_INFO");
+            return interface_type::env("PATH_INFO");
         }
 
         /**
@@ -326,7 +326,7 @@ namespace webpp {
          * @example PATH_TRANSLATED=/srv/http/hello/world
          */
         [[nodiscard]] std::string_view path_translated() const noexcept {
-            return super::env("PATH_TRANSLATED");
+            return interface_type::env("PATH_TRANSLATED");
         }
 
         /**
@@ -336,7 +336,7 @@ namespace webpp {
          * @example SCRIPT_NAME=/cgi-bin/one.cgi
          */
         [[nodiscard]] std::string_view script_name() const noexcept {
-            return super::env("SCRIPT_NAME");
+            return interface_type::env("SCRIPT_NAME");
         }
 
         /**
@@ -345,7 +345,7 @@ namespace webpp {
          * referenced this script.
          */
         [[nodiscard]] std::string_view query_string() const noexcept {
-            return super::env("QUERY_STRING");
+            return interface_type::env("QUERY_STRING");
         }
 
         /**
@@ -354,7 +354,7 @@ namespace webpp {
          * this information, it sets REMOTE_ADDR and does not set REMOTE_HOST.
          */
         [[nodiscard]] std::string_view remote_host() const noexcept {
-            return super::env("REMOTE_HOST");
+            return interface_type::env("REMOTE_HOST");
         }
 
         /**
@@ -362,7 +362,7 @@ namespace webpp {
          * @details IP address of the remote host making the request.
          */
         [[nodiscard]] std::string_view remote_addr() const noexcept {
-            return super::env("REMOTE_ADDR");
+            return interface_type::env("REMOTE_ADDR");
         }
 
         /**
@@ -372,7 +372,7 @@ namespace webpp {
          * validate the user.
          */
         [[nodiscard]] std::string_view auth_type() const noexcept {
-            return super::env("AUTH_TYPE");
+            return interface_type::env("AUTH_TYPE");
         }
 
         /**
@@ -383,9 +383,9 @@ namespace webpp {
          * available as AUTH_USER.)
          */
         [[nodiscard]] std::string_view remote_user() const noexcept {
-            if (auto a = super::env("REMOTE_USER"); !a.empty())
+            if (auto a = interface_type::env("REMOTE_USER"); !a.empty())
                 return a;
-            return super::env("AUTH_USER");
+            return interface_type::env("AUTH_USER");
         }
 
         /**
@@ -396,9 +396,9 @@ namespace webpp {
          * available as AUTH_USER.)
          */
         [[nodiscard]] std::string_view auth_user() const noexcept {
-            if (auto a = super::env("AUTH_USER"); !a.empty())
+            if (auto a = interface_type::env("AUTH_USER"); !a.empty())
                 return a;
-            return super::env("REMOTE_USER");
+            return interface_type::env("REMOTE_USER");
         }
 
         /**
@@ -408,35 +408,35 @@ namespace webpp {
          * this variable for logging only.
          */
         [[nodiscard]] std::string_view remote_ident() const noexcept {
-            return super::env("REMOTE_IDENT");
+            return interface_type::env("REMOTE_IDENT");
         }
 
         /**
          * @brief returns the request scheme (http/https/...)
          */
         [[nodiscard]] std::string_view request_scheme() const noexcept {
-            return super::env("REQUEST_SCHEME");
+            return interface_type::env("REQUEST_SCHEME");
         }
 
         /**
          * @brief get the user's port number
          */
         [[nodiscard]] std::string_view remote_port() const noexcept {
-            return super::env("REMOTE_PORT");
+            return interface_type::env("REMOTE_PORT");
         }
 
         /**
          * @brief get the ip address that the server is listening on
          */
         [[nodiscard]] std::string_view server_addr() const noexcept {
-            return super::env("SERVER_ADDR");
+            return interface_type::env("SERVER_ADDR");
         }
 
         /**
          * @brief get the request uri
          */
         [[nodiscard]] std::string_view request_uri() const noexcept {
-            return super::env("REQUEST_URI");
+            return interface_type::env("REQUEST_URI");
         }
 
         /**
@@ -445,7 +445,7 @@ namespace webpp {
          * POST and PUT, this is the content type of the data.
          */
         [[nodiscard]] std::string_view content_type() const noexcept {
-            return super::env("CONTENT_LENGTH");
+            return interface_type::env("CONTENT_LENGTH");
         }
 
         /**
@@ -453,7 +453,7 @@ namespace webpp {
          * @details Length of the content as given by the client.
          */
         [[nodiscard]] std::string_view content_length() const noexcept {
-            return super::env("CONTENT_LENGTH");
+            return interface_type::env("CONTENT_LENGTH");
         }
 
         /**
@@ -461,7 +461,7 @@ namespace webpp {
          * @details The root directory of your server
          */
         [[nodiscard]] std::string_view document_root() const noexcept {
-            return super::env("DOCUMENT_ROOT");
+            return interface_type::env("DOCUMENT_ROOT");
         }
 
         /**
@@ -469,7 +469,7 @@ namespace webpp {
          * @return "on" if the user used HTTPS protocol
          */
         [[nodiscard]] std::string_view https() const noexcept {
-            return super::env("HTTPS");
+            return interface_type::env("HTTPS");
         }
 
         /**
@@ -477,7 +477,7 @@ namespace webpp {
          * @return probabely the administrator's email address
          */
         [[nodiscard]] std::string_view server_admin() const noexcept {
-            return super::env("SERVER_ADMIN");
+            return interface_type::env("SERVER_ADMIN");
         }
 
         /**
@@ -485,7 +485,7 @@ namespace webpp {
          * @details The system path your server is running under
          */
         [[nodiscard]] std::string_view path() const noexcept {
-            return super::env("PATH");
+            return interface_type::env("PATH");
         }
 
         /**
@@ -493,7 +493,7 @@ namespace webpp {
          * @details The full pathname of the current CGI
          */
         [[nodiscard]] std::string_view script_filename() const noexcept {
-            return super::env("SCRIPT_FILENAME");
+            return interface_type::env("SCRIPT_FILENAME");
         }
 
         /**
@@ -502,7 +502,7 @@ namespace webpp {
          */
         [[nodiscard]] std::string_view
         header(std::string_view const& name) const noexcept {
-            return super::header(std::string(name));
+            return interface_type::header(std::string(name));
         }
 
         /**
@@ -513,7 +513,7 @@ namespace webpp {
          * variables.
          */
         [[nodiscard]] std::string_view headers() const noexcept {
-            return super::headers();
+            return interface_type::headers();
         }
 
         /**
@@ -523,7 +523,7 @@ namespace webpp {
          * problem that might even use this function as the source.
          */
         [[nodiscard]] std::string_view body() const noexcept {
-            return super::body();
+            return interface_type::body();
         }
     };
 

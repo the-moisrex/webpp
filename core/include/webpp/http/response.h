@@ -15,7 +15,8 @@ namespace webpp {
     /**
      * This class owns its data.
      */
-    template <Traits TraitsType, ResponseExtensionList REL>
+    template <Traits                TraitsType,
+              ResponseExtensionList REL = empty_extension_pack>
     class basic_response : public REL {
 
       public:
