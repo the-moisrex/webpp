@@ -36,7 +36,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/simple_server.h
 
         ${LIB_INCLUDE_DIR}/webpp/http/body.h
-        ${LIB_INCLUDE_DIR}/webpp/http/cookies.h
         ${LIB_INCLUDE_DIR}/webpp/http/header.h
         ${LIB_INCLUDE_DIR}/webpp/http/request.h
         ${LIB_INCLUDE_DIR}/webpp/http/request_concepts.h
@@ -45,6 +44,10 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/application.h
         ${LIB_INCLUDE_DIR}/webpp/http/application_concepts.h
         ${LIB_INCLUDE_DIR}/webpp/http/http.h
+
+        ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie.h
+        ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie_jar.h
+        ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookies_concepts.h
 
         ${LIB_INCLUDE_DIR}/main.h
         ${LIB_INCLUDE_DIR}/webpp.h

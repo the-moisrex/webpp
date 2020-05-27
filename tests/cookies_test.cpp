@@ -1,5 +1,6 @@
-#include "../core/include/webpp/http/cookies.h"
+#include "../core/include/webpp/http/cookies/cookie.h"
 #include "../core/include/webpp/traits/std_traits.h"
+
 #include <gtest/gtest.h>
 #include <iostream>
 
@@ -40,7 +41,7 @@ TEST(Cookies, CookiesHash) {
 
 TEST(Cookies, CookieJar) {
 
-    cookie_jar<webpp::std_traits> jar;
+    basic_cookie_jar<webpp::std_traits> jar;
     jar.emplace("one", "value");
     jar.emplace(" one ", "value 2"); // this should replace the other one
     jar.emplace("two", "value");
@@ -48,7 +49,7 @@ TEST(Cookies, CookieJar) {
     EXPECT_TRUE(jar.size() == 2)
       << "cookies with the same name should be replaced with the older ones";
 
-    cookie_jar<webpp::std_traits> jar2;
+    basic_cookie_jar<webpp::std_traits> jar2;
     jar2.emplace("one", "value 1");
     jar2.emplace("two", "value 2");
     jar2.emplace(" one ", "value 1-2"); // this should replace the other one
@@ -66,7 +67,7 @@ TEST(Cookies, CookieJar) {
     jar2.insert(c);
     jar2.insert(jar2.begin(), c);
     jar2.insert(jar2.begin(), cookie_t("one", "value 1-6"));
-    cookie_jar<webpp::std_traits> jar3;
+    basic_cookie_jar<webpp::std_traits> jar3;
     jar3.emplace("one", "value 1-7");
     jar3.emplace("two", "value 2-3");
     jar2.insert(jar3.begin(), jar3.end());
@@ -95,7 +96,7 @@ TEST(Cookies, CookieJar) {
 }
 
 TEST(Cookies, CookieJarUniqeness) {
-    cookie_jar<webpp::std_traits> cs;
+    basic_cookie_jar<webpp::std_traits> cs;
     cs.insert(cookie_t().name("one").value("test").domain("google.com"));
     cs.insert(cookie_t().name("one").value("test").domain("bing.com"));
 

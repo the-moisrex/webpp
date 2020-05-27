@@ -6,7 +6,7 @@
 #include "../std/unordered_set.h"
 #include "../traits/traits_concepts.h"
 #include "./common.h"
-#include "cookies.h"
+#include "cookies/cookie.h"
 
 #include <cstdint>
 #include <sstream>
@@ -257,7 +257,7 @@ namespace webpp {
          * todo: how to make the result mutable?
          */
         auto cookies() noexcept {
-            cookie_jar<traits, Mutable> cookies;
+            basic_cookie_jar<traits, Mutable> cookies;
             for (auto& c : *this)
                 if (c.is_cookie())
                     cookies.emplace(c);
@@ -269,7 +269,7 @@ namespace webpp {
          * @return
          */
         auto cookies() const noexcept {
-            cookie_jar<traits, false> cookies;
+            basic_cookie_jar<traits, false> cookies;
             for (auto& c : *this)
                 if (c.is_cookie())
                     cookies.emplace(c);
@@ -299,8 +299,9 @@ namespace webpp {
          * @param cookie_jar
          */
         template <bool IsMutable>
-        void replace_cookies(
-          webpp::cookie_jar<TraitsType, IsMutable> const& __cookies) noexcept {
+        void
+        replace_cookies(webpp::basic_cookie_jar<TraitsType, IsMutable> const&
+                          __cookies) noexcept {
             remove_cookies();
             for (auto const& c : __cookies) {
                 if constexpr (header_type::request == get_header_type()) {
