@@ -60,7 +60,18 @@ namespace webpp {
 
     template <Traits TraitsType>
     struct request_cookie_jar
-      : public basic_cookie_jar<basic_reqeust_cookie<TraitsType>> {};
+      : public basic_cookie_jar<basic_reqeust_cookie<TraitsType>> {
+
+        using string_view_type = typename TraitsType::string_view_type;
+
+        /**
+         * Parse Cookie header value
+         * @param source
+         */
+        explicit request_cookie_jar(string_view_type const& source) noexcept {
+            // todo
+        }
+    };
 
 
     template <Traits TraitsType>
@@ -114,6 +125,12 @@ namespace webpp {
 
 
       public:
+        template <typename Iter>
+        explicit response_cookie_jar(Iter const& _start,
+                                     Iter const& _end) noexcept {
+            // todo: parse a list of strings which represent cookies
+        }
+
         template <typename Name, class... Args>
         ::std::pair<typename super::iterator, bool> emplace(Name&& name,
                                                             Args&&... args) {
