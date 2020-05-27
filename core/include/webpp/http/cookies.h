@@ -619,14 +619,14 @@ namespace webpp {
     struct cookie_hash {
 
         template <class T>
-        inline void hash_combine(std::size_t& seed, const T& v) {
-            std::hash<T> hasher;
+        inline void hash_combine(::std::size_t& seed, const T& v) {
+            ::std::hash<T> hasher;
             seed ^= hasher(v) + 0x9e3779b9 + (seed << 6u) + (seed >> 2u);
         }
 
         using argument_type =
           webpp::basic_cookie<TraitsType, Mutable, HeaderType>;
-        using result_type = std::size_t;
+        using result_type = ::std::size_t;
 
         result_type operator()(argument_type const& c) const noexcept {
             // change the "same_as" method too if you ever touch this function
@@ -814,7 +814,7 @@ namespace webpp {
               hint, std::forward<Name>(name), std::forward<Args>(args)...);
         }
 
-        std::pair<typename super::iterator, bool>
+        ::std::pair<typename super::iterator, bool>
         insert(const typename super::value_type& value) {
             auto found = find(value);
             if (found != super::cend())
@@ -823,7 +823,7 @@ namespace webpp {
         }
 
 
-        std::pair<typename super::iterator, bool>
+        ::std::pair<typename super::iterator, bool>
         insert(typename super::value_type&& value) {
             auto found = find(value);
             if (found != super::cend())
@@ -848,7 +848,7 @@ namespace webpp {
             return static_cast<super*>(this)->insert(hint, std::move(value));
         }
 
-        void insert(std::initializer_list<typename super::value_type> ilist) {
+        void insert(::std::initializer_list<typename super::value_type> ilist) {
             for (const auto& it : ilist) {
                 auto found = find(it);
                 if (found != super::cend())
