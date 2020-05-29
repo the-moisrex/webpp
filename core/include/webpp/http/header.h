@@ -229,6 +229,12 @@ namespace webpp {
         }
     };
 
+    template <Traits TraitsType>
+    using request_headers = headers<TraitsType, header_type::request>;
+
+    template <Traits TraitsType>
+    using response_headers = headers<TraitsType, header_type::response>;
+
 } // namespace webpp
 
 #endif // WEBPP_HTTP_HEADERS_H
