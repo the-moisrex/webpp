@@ -6,7 +6,7 @@
 #include "../std/unordered_set.h"
 #include "../traits/traits_concepts.h"
 #include "./common.h"
-#include "cookies/cookie.h"
+#include "./cookies/cookie.h"
 
 #include <cstdint>
 #include <sstream>
@@ -141,24 +141,20 @@ namespace webpp {
      * @tparam Mutable
      * @tparam HeaderType
      */
-    template <Traits TraitsType, bool Mutable, header_type HeaderType>
+    template <Traits TraitsType, header_type HeaderType>
     struct header_field {
 
+        constexpr static auto header_direction = HeaderType;
+        constexpr static bool is_mutable =
+          header_direction == header_type::response;
 
         using traits_type = TraitsType;
-        using str_t       = auto_string_type<traits_type, Mutable>;
+        using str_t       = auto_string_type<traits_type, is_mutable>;
         using str_view_t  = typename traits_type::string_view_type;
 
         str_t name;
         str_t value;
 
-
-        /**
-         * Get the header type. Is it a response header or a request header?
-         */
-        constexpr auto get_header_type() const noexcept {
-            return HeaderType;
-        }
 
         /**
          * Check if the specified name is the same as the header name
@@ -172,7 +168,6 @@ namespace webpp {
                                  str_view_t::traits_type,
                                  traits_type::allocator>(str);
         }
-
     };
 
 
