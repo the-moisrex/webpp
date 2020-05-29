@@ -3,6 +3,8 @@
 #ifndef WEBPP_COOKIES_CONCEPTS_H
 #define WEBPP_COOKIES_CONCEPTS_H
 
+#include "../../traits/tratis_concepts.h"
+
 namespace webpp {
 
     template <typename T>
@@ -11,7 +13,8 @@ namespace webpp {
         {cookie.value()};
         typename T::header_direction;
         typename T::traits_type;
-    };
+    }
+    &&Traits<typename T::traits_type>;
 
     // todo: complete this
     template <typename T>
