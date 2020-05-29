@@ -5,6 +5,7 @@
 
 #include "../std/tuple.h"
 
+#include <cstdint>
 #include <type_traits>
 
 namespace webpp {
@@ -153,6 +154,19 @@ namespace webpp {
     //////////////////////////////////////////////////////////////////////////
 
     using empty_extension_pack = extension_pack<>;
+
+    namespace extensions {
+        static constexpr auto mother = 0x1;
+        static constexpr auto child  = 0x2;
+
+        template <typename T>
+        concept MotherExtension = Extension<T> &&
+                                  ((T::features & mother) == mother);
+
+        template <typename T>
+        concept ChildExtension = Extension<T> &&
+                                 ((T::features & child) == child);
+    } // namespace extensions
 
 } // namespace webpp
 

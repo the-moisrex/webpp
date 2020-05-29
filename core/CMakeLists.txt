@@ -48,6 +48,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie.h
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie_jar.h
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookies_concepts.h
+        ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie_extensions.h
 
         ${LIB_INCLUDE_DIR}/main.h
         ${LIB_INCLUDE_DIR}/webpp.h

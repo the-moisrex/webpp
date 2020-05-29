@@ -153,17 +153,6 @@ namespace webpp {
         str_t value;
 
 
-        /*
-         * Get the header as a cookie. Make sure to check if the cookie is
-         * actually valid before using it.
-         */
-        basic_cookie<TraitsType, Mutable, HeaderType> as_cookie() noexcept {
-            if (is_cookie()) {
-                return basic_cookie<TraitsType, Mutable, HeaderType>(value);
-            }
-            return {}; // empty and invalid cookie
-        }
-
         /**
          * Get the header type. Is it a response header or a request header?
          */
@@ -184,17 +173,6 @@ namespace webpp {
                                  traits_type::allocator>(str);
         }
 
-        /**
-         * Check if the header value is a cookie; it only checks the key not
-         * the value
-         */
-        constexpr bool is_cookie() const noexcept {
-            if constexpr (header_type::response == get_header_type()) {
-                return is_name("set-cookie") || is_name("set-cookie2");
-            } else {
-                return is_name("cookie");
-            }
-        }
     };
 
 
@@ -250,68 +228,6 @@ namespace webpp {
         void status_code(decltype(_status_code) __status_code) noexcept {
             _status_code = __status_code;
         }
-
-        /**
-         * @brief get cookies
-         * @return
-         * todo: how to make the result mutable?
-         */
-        auto cookies() noexcept {
-            basic_cookie_jar<traits, Mutable> cookies;
-            for (auto& c : *this)
-                if (c.is_cookie())
-                    cookies.emplace(c);
-            return cookies;
-        }
-
-        /**
-         * @brief get cookies
-         * @return
-         */
-        auto cookies() const noexcept {
-            basic_cookie_jar<traits, false> cookies;
-            for (auto& c : *this)
-                if (c.is_cookie())
-                    cookies.emplace(c);
-            return cookies;
-        }
-
-        /**
-         * @brief removes cookies in the cookie jar
-         * This method will actually remove the cookie from the cookie jar (and
-         * also from the header list itself).
-         * It doesn't remove the cookies for the user.
-         * For removing the cookies for the user, use the cookie jar templated
-         * class itself which you can get access to with "cookies()" method.
-         */
-        void remove_cookies() noexcept {
-            for (auto it = super::begin(); it != super::end();) {
-                if (it->is_cookie())
-                    it = erase(it);
-                else
-                    ++it;
-            }
-        }
-
-
-        /**
-         * @brief replace cookies in the cookie_jar
-         * @param cookie_jar
-         */
-        template <bool IsMutable>
-        void
-        replace_cookies(webpp::basic_cookie_jar<TraitsType, IsMutable> const&
-                          __cookies) noexcept {
-            remove_cookies();
-            for (auto const& c : __cookies) {
-                if constexpr (header_type::request == get_header_type()) {
-                    super::emplace("Cookie", c.request_str());
-                } else {
-                    super::emplace("Set-Cookie", c.response_str());
-                }
-            }
-        }
-
         auto str() const noexcept {
             typename traits::stringstream_type res;
             // TODO: add support for other HTTP versions
