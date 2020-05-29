@@ -28,7 +28,7 @@ namespace webpp {
              */
             bool is_cookie() const noexcept {
                 if constexpr (header_type::response ==
-                              super::get_header_type()) {
+                              super::header_direction) {
                     return super::is_name("set-cookie") ||
                            super::is_name("set-cookie2");
                 } else {
@@ -41,11 +41,21 @@ namespace webpp {
              * Get the header as a cookie. Make sure to check if the cookie is
              * actually valid before using it.
              */
-            basic_cookie<TraitsType, Mutable, HeaderType> as_cookie() noexcept {
-                if (is_cookie()) {
-                    return basic_cookie<TraitsType, Mutable, HeaderType>(value);
+            auto as_cookie() noexcept {
+                if constexpr (header_type::response ==
+                              super::header_direction) {
+                    if (is_cookie()) {
+                        return response_cookie<traits_type>(value);
+                    } else {
+                        return response_cookie<traits_type>{}; // empty cookie
+                    };
+                } else {
+                    if (is_cookie()) {
+                        return request_cookie<traits_type>(value);
+                    } else {
+                        return request_cookie<traits_type>{}; // empty cookie
+                    };
                 }
-                return {}; // empty and invalid cookie
             }
         };
 
