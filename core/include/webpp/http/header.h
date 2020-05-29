@@ -138,7 +138,6 @@ namespace webpp {
      * This is the header class witch will contain the name, and the value of
      * one single field of a header.
      * @tparam TraitsType
-     * @tparam Mutable
      * @tparam HeaderType
      */
     template <Traits TraitsType, header_type HeaderType>
@@ -180,35 +179,27 @@ namespace webpp {
      *
      * fixme: it needs a complete rewrite.
      */
-    template <Traits TraitsType = std_traits, bool Mutable = true,
-              header_type HeaderType = header_type::request>
+    template <Traits TraitsType, header_type HeaderType>
     class headers
-      : public stl::unordered_multiset<
-          TraitsType, header_field<TraitsType, Mutable, HeaderType>> {
+      : public stl::unordered_multiset<TraitsType,
+                                       header_field<TraitsType, HeaderType>> {
 
-        using super = stl::unordered_multiset<
-          TraitsType, header_field<TraitsType, Mutable, HeaderType>>;
+        using super =
+          stl::unordered_multiset<TraitsType,
+                                  header_field<TraitsType, HeaderType>>;
 
       public:
-        using traits = TraitsType;
-        using str_t  = auto_string_type<traits, Mutable>;
+        constexpr static auto header_direction = HeaderType;
+        constexpr static bool is_mutable =
+          header_direction == header_type::response;
+
+        using traits_type = TraitsType;
+        using str_t       = auto_string_type<traits_type, is_mutable>;
 
       private:
         uint_fast16_t _status_code = 200;
 
       public:
-        constexpr auto get_header_type() const noexcept {
-            return HeaderType;
-        }
-
-        /**
-         * Check if this header is mutable.
-         * @return true if this header can be muted
-         */
-        constexpr bool is_mutable() const noexcept {
-            return Mutable;
-        }
-
         /**
          * @brief get status code
          */
@@ -223,8 +214,9 @@ namespace webpp {
         void status_code(decltype(_status_code) __status_code) noexcept {
             _status_code = __status_code;
         }
+
         auto str() const noexcept {
-            typename traits::stringstream_type res;
+            typename traits_type::stringstream_type res;
             // TODO: add support for other HTTP versions
             // res << "HTTP/1.1" << " " << status_code() << " " <<
             // status_reason_phrase(status_code()) << "\r\n";
