@@ -3,6 +3,7 @@
 #ifndef WEBPP_COOKIE_EXTENSIONS_H
 #define WEBPP_COOKIE_EXTENSIONS_H
 
+#include "../common.h"
 #include "../header_concepts.h"
 
 #include <algorithm>
@@ -14,7 +15,6 @@ namespace webpp {
 
         template <HeaderField HF>
         struct cookie_header_field_extension : public HF {
-            static constexpr auto features = extensions::child;
 
           private:
             using super = HF;
@@ -62,7 +62,6 @@ namespace webpp {
 
         template <Header H>
         struct cookie_header_extension : public H {
-            static constexpr auto features = extensions::child;
             using traits_type              = typename H::traits_type;
             using string_type              = typename traits_type::string_type;
             using string_view_type = typename traits_type::string_view_type;

@@ -31,6 +31,21 @@ namespace std {
         static_cast<To>(f());
     };
 
+    template <typename T>
+    concept integral = ::std::is_integral_v<T>;
+
+    template <typename T>
+    concept move_constructible =
+      ::std::constructible_from<T, T>&& ::std::convertible_to<T, T>;
+
+    template <class T>
+
+    concept copy_constructible =
+      ::std::move_constructible<T>&& ::std::constructible_from<T, T&>&& ::std::
+        convertible_to<T&, T>&& ::std::constructible_from<T, const T&>&& ::std::
+          convertible_to<const T&, T>&& ::std::constructible_from<
+            T, const T>&& ::std::convertible_to<const T, T>;
+
 } // namespace std
 #endif
 
