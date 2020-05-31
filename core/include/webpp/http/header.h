@@ -1,6 +1,7 @@
 #ifndef WEBPP_HTTP_HEADERS_H
 #define WEBPP_HTTP_HEADERS_H
 
+#include "../std/format.h"
 #include "../std/string.h"
 #include "../std/string_view.h"
 #include "../std/unordered_set.h"
@@ -9,6 +10,7 @@
 #include "./cookies/cookie.h"
 
 #include <cstdint>
+#include <iterator>
 #include <sstream>
 #include <type_traits>
 
@@ -172,7 +174,6 @@ namespace webpp {
      *   In the header:  "Subject: =?iso-8859-1?Q?=A1Hola,_se=F1or!?="
      *   Interpreted as: "Subject: ¡Hola, señor!"
      *
-     * fixme: it needs a complete rewrite.
      */
     template <Traits TraitsType>
     class response_headers
@@ -189,17 +190,22 @@ namespace webpp {
 
 
         auto str() const noexcept {
-            // todo: use {fmt} / <format>
-            typename traits_type::stringstream_type res;
+            // todo check performance
             // TODO: add support for other HTTP versions
             // res << "HTTP/1.1" << " " << status_code() << " " <<
             // status_reason_phrase(status_code()) << "\r\n";
-            for (auto const& [attr, val] : *this) {
-                res << attr << ": ";
-                res << val; // TODO: make sure it's secure
-                res << "\r\n";
+            ::std::size_t size = 1;
+            for (auto const& [attr, val], *this) {
+                size += attr.size() + val.size() + 4;
             }
-            return res.str();
+            str_t res;
+            res.reserve(size);
+            for (auto const& [attr, val] : *this) {
+                // todo: make sure value is secure and doesn't have any newlines
+                ::std::format_to(::std::back_insert_iterator<str_t>(res),
+                                 "{}: {}\r\n", attr, val);
+            }
+            return res;
         }
     };
 

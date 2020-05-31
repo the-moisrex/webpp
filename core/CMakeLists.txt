@@ -4,6 +4,25 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/webpp/extensions/extension.h
 
+        ${LIB_INCLUDE_DIR}/webpp/std/buffer.h
+        ${LIB_INCLUDE_DIR}/webpp/std/executor.h
+        ${LIB_INCLUDE_DIR}/webpp/std/format.h
+        ${LIB_INCLUDE_DIR}/webpp/std/internet.h
+        ${LIB_INCLUDE_DIR}/webpp/std/io_context.h
+        ${LIB_INCLUDE_DIR}/webpp/std/map.h
+        ${LIB_INCLUDE_DIR}/webpp/std/net.h
+        ${LIB_INCLUDE_DIR}/webpp/std/netfwd.h
+        ${LIB_INCLUDE_DIR}/webpp/std/set.h
+        ${LIB_INCLUDE_DIR}/webpp/std/socket.h
+        ${LIB_INCLUDE_DIR}/webpp/std/std.h
+        ${LIB_INCLUDE_DIR}/webpp/std/string.h
+        ${LIB_INCLUDE_DIR}/webpp/std/string_view.h
+        ${LIB_INCLUDE_DIR}/webpp/std/timer.h
+        ${LIB_INCLUDE_DIR}/webpp/std/tuple.h
+        ${LIB_INCLUDE_DIR}/webpp/std/unordered_map.h
+        ${LIB_INCLUDE_DIR}/webpp/std/unordered_set.h
+        ${LIB_INCLUDE_DIR}/webpp/std/vector.h
+
         ${LIB_INCLUDE_DIR}/webpp/http/routes/router.h
         ${LIB_INCLUDE_DIR}/webpp/http/routes/route.h
         ${LIB_INCLUDE_DIR}/webpp/http/routes/methods.h
@@ -68,17 +87,16 @@ if (SHARED_LIBRARY_EXECUTABLE)
     set_interp_path()
 endif ()
 
-# boost
-find_package(Boost REQUIRED)
-
-
 add_library(${LIB_NAME} STATIC ${ALL_SOURCES})
 add_library(${PROJECT_NAME}::${LIB_NAME} ALIAS ${LIB_NAME})
 
 
-# boost
+# boost and fmt
+find_package(Boost REQUIRED)
+find_package(fmt REQUIRED)
 target_link_libraries(${LIB_NAME}
         PRIVATE Boost::boost
+        PUBLIC fmt::fmt
         )
 
 
