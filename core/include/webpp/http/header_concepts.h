@@ -4,14 +4,28 @@
 #define WEBPP_HEADER_CONCEPTS_H
 
 #include "../extensions/extension.h"
+#include "../std/concepts.h"
 
 namespace webpp {
 
     template <typename T>
-    concept Header = ;
+    concept Header = requires(T h) {
+        typename T::traits_type;
+        {T::header_direction};
+        { T::is_mutable }
+        ->::std::same_as<bool>;
+    };
 
     template <typename T>
-    concept HeaderField = ;
+    concept HeaderField = requires(T f) {
+        typename T::traits_type;
+        {T::header_direction};
+        { T::is_mutable }
+        ->::std::same_as<bool>;
+        { f.is_name(typename(typename T::traits_type)::string_view_type{}) }
+        ->::std::same_as<bool>;
+    }
+    &&HasExtensionSupport<T>;
 
     template <typename T>
     concept HeaderExtension = ;

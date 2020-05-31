@@ -37,6 +37,7 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/webpp/http/body.h
         ${LIB_INCLUDE_DIR}/webpp/http/header.h
+        ${LIB_INCLUDE_DIR}/webpp/http/header_concepts.h
         ${LIB_INCLUDE_DIR}/webpp/http/request.h
         ${LIB_INCLUDE_DIR}/webpp/http/request_concepts.h
         ${LIB_INCLUDE_DIR}/webpp/http/response.h

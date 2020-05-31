@@ -115,34 +115,13 @@ namespace webpp {
      *
      */
     template <ContextExtension... ExtensionTypes>
-    struct basic_context : public ExtensionTypes... {
+    struct basic_context : public extension<basic_context, ExtensionType...> {
 
         // todo: use extension pack instead of tuple:
         using extension_types    = ::std::tuple<ExtensionTypes...>;
         using basic_context_type = basic_context<ExtensionTypes...>;
 
-        template <ContextExtension... NewExtensionTypes>
-        using rebind = basic_context<ExtensionTypes..., NewExtensionTypes...>;
 
-
-
-        /**
-         * This method will generate a new context based on this context and
-         * adds the context extensions to the context as well.
-         * @tparam ExtensionType
-         * @return
-         */
-        template <ContextExtension... ExtensionType>
-        constexpr auto clone() const noexcept {
-            using new_context = basic_context<ExtensionType...>;
-            return new_context{*this}; // todo: initialization
-        }
-
-        template <ContextExtension... ExtensionType>
-        constexpr auto move() const noexcept {
-            using new_context = basic_context<ExtensionType...>;
-            return new_context{*this}; // todo: initialization
-        }
 
         // todo: these methods need to be noexcept. They call unknown stuff.
 

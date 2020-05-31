@@ -140,13 +140,8 @@ namespace webpp {
      * @tparam TraitsType
      * @tparam HeaderType
      */
-    template <Traits TraitsType, header_type HeaderType>
+    template <Traits TraitsType>
     struct header_field {
-
-        constexpr static auto header_direction = HeaderType;
-        constexpr static bool is_mutable =
-          header_direction == header_type::response;
-
         using traits_type = TraitsType;
         using str_t       = auto_string_type<traits_type, is_mutable>;
         using str_view_t  = typename traits_type::string_view_type;
@@ -179,43 +174,22 @@ namespace webpp {
      *
      * fixme: it needs a complete rewrite.
      */
-    template <Traits TraitsType, header_type HeaderType>
-    class headers
-      : public stl::unordered_multiset<TraitsType,
-                                       header_field<TraitsType, HeaderType>> {
+    template <Traits TraitsType>
+    class response_headers
+      : public stl::unordered_multiset<TraitsType, header_field<TraitsType>> {
 
         using super =
-          stl::unordered_multiset<TraitsType,
-                                  header_field<TraitsType, HeaderType>>;
+          stl::unordered_multiset<TraitsType, header_field<TraitsType>>;
 
       public:
-        constexpr static auto header_direction = HeaderType;
-        constexpr static bool is_mutable =
-          header_direction == header_type::response;
-
         using traits_type = TraitsType;
-        using str_t       = auto_string_type<traits_type, is_mutable>;
+        using str_t       = typename traits_type::string_type;
 
-      private:
-        uint_fast16_t _status_code = 200;
+        ::std::uint_fast16_t status_code = 200;
 
-      public:
-        /**
-         * @brief get status code
-         */
-        inline auto status_code() const noexcept {
-            return _status_code;
-        }
-
-        /**
-         * @brief set status code
-         * @param status_code
-         */
-        void status_code(decltype(_status_code) __status_code) noexcept {
-            _status_code = __status_code;
-        }
 
         auto str() const noexcept {
+            // todo: use {fmt} / <format>
             typename traits_type::stringstream_type res;
             // TODO: add support for other HTTP versions
             // res << "HTTP/1.1" << " " << status_code() << " " <<
@@ -229,11 +203,6 @@ namespace webpp {
         }
     };
 
-    template <Traits TraitsType>
-    using request_headers = headers<TraitsType, header_type::request>;
-
-    template <Traits TraitsType>
-    using response_headers = headers<TraitsType, header_type::response>;
 
 } // namespace webpp
 
