@@ -6,7 +6,7 @@
 // currently experimental version of internet is buggy. Hopefully that will be
 // fixed later.
 
-#include "std.h"
+#include "./std.h"
 
 #if __has_include(<internet>)
 #    define STD_INTERNET STLLIB_STANDARD
@@ -14,13 +14,13 @@
 #elif __has_include(<boost/asio/ts/internet.hpp>)
 #    define STD_INTERNET STLLIB_BOOST
 #    include <boost/asio/ts/internet.hpp>
-namespace std {
+namespace webpp::std {
     namespace net = boost::asio;
 }
 #elif __has_include(<experimental/internet>)
 #    define STD_INTERNET STLLIB_EXPERIMENTAL
 #    include <experimental/internet>
-namespace std {
+namespace webpp::std {
     namespace net = experimental::net;
 }
 #else

@@ -10,7 +10,7 @@
 // __has_include is a C++20 feature and we're testing <socket> header which
 // is not yet part of C++ standard but hopefully will be added in C++23
 
-#include "std.h"
+#include "./std.h"
 
 #if __has_include(<socket>)
 #    define STD_SOCKET STLLIB_STANDARD
@@ -18,13 +18,13 @@
 #elif __has_include(<boost/asio/ts/socket.hpp>)
 #    define STD_SOCKET STLLIB_BOOST
 #    include <boost/asio/ts/socket.hpp>
-namespace std {
+namespace webpp::std {
     namespace net = boost::asio;
 }
 #elif __has_include(<experimental/socket>)
 #    define STD_SOCKET STLLIB_EXPERIMENTAL
 #    include <experimental/socket>
-namespace std {
+namespace webpp::std {
     namespace net = experimental::net;
 }
 #else

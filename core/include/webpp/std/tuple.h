@@ -3,13 +3,15 @@
 #ifndef WEBPP_TUPLE_H
 #define WEBPP_TUPLE_H
 
+#include "./std.h"
+
 #include <tuple>
 #include <type_traits>
 
-namespace stl {
+namespace webpp::stl {
 
     template <typename T>
-    struct is_tuple : public ::std::false_type {};
+    struct is_tuple : public std::false_type {};
 
     template <typename T>
     struct is_tuple<T const> : public is_tuple<T> {};
@@ -21,18 +23,18 @@ namespace stl {
     struct is_tuple<T const volatile> : public is_tuple<T> {};
 
     template <typename... Types>
-    struct is_tuple<::std::tuple<Types...>> : public ::std::true_type {};
+    struct is_tuple<std::tuple<Types...>> : public std::true_type {};
 
     template <typename T>
     concept Tuple = is_tuple<T>::value;
 
-    template <template <typename> typename Concept,
-              template <typename...> typename Tup, typename... T>
-    concept TupleOf = Tuple<Tup<T...>>&& requires(Tup<T...> tup) {
-        (Concept<T>::value && ...);
-    };
+    //    template <template <typename> typename Concept,
+    //              template <typename...> typename Tup, typename... T>
+    //    concept TupleOf = Tuple<Tup<T...>>&& requires(Tup<T...> tup) {
+    //        (Concept<T>::value && ...);
+    //    };
+    //
 
-
-} // namespace stl
+} // namespace webpp::stl
 
 #endif // WEBPP_TUPLE_H

@@ -3,15 +3,17 @@
 #ifndef WEBPP_STD_CONCEPTS_H
 #define WEBPP_STD_CONCEPTS_H
 
+#include "./std.h"
+
 #include <type_traits>
 
 #if __has_include(<concepts>)
 #    include <concepts>
 #else
-namespace std {
+namespace webppstd {
     namespace detail {
         template <class T, class U>
-        concept SameHelper = ::std::is_same_v<T, U>;
+        concept SameHelper = std::is_same_v<T, U>;
     }
 
     /* same_as */
@@ -20,33 +22,31 @@ namespace std {
 
     /* derived_from */
     template <class Derived, class Base>
-    concept derived_from =
-      ::std::is_base_of_v<Base, Derived>&& ::std::is_convertible_v<
-        const volatile Derived*, const volatile Base*>;
+    concept derived_from = std::is_base_of_v<Base, Derived>&&
+      std::is_convertible_v<const volatile Derived*, const volatile Base*>;
 
     /* convertible_to */
     template <class From, class To>
-    concept convertible_to = ::std::is_convertible_v<From, To>&& requires(
-      ::std::add_rvalue_reference_t<From> (&f)()) {
+    concept convertible_to = std::is_convertible_v<From, To>&& requires(
+      std::add_rvalue_reference_t<From> (&f)()) {
         static_cast<To>(f());
     };
 
     template <typename T>
-    concept integral = ::std::is_integral_v<T>;
+    concept integral = std::is_integral_v<T>;
 
     template <typename T>
     concept move_constructible =
-      ::std::constructible_from<T, T>&& ::std::convertible_to<T, T>;
+      std::constructible_from<T, T>&& std::convertible_to<T, T>;
 
     template <class T>
 
-    concept copy_constructible =
-      ::std::move_constructible<T>&& ::std::constructible_from<T, T&>&& ::std::
-        convertible_to<T&, T>&& ::std::constructible_from<T, const T&>&& ::std::
-          convertible_to<const T&, T>&& ::std::constructible_from<
-            T, const T>&& ::std::convertible_to<const T, T>;
+    concept copy_constructible = std::move_constructible<
+      T>&& std::constructible_from<T, T&>&& std::convertible_to<T&, T>&&
+      std::constructible_from<T, const T&>&& std::convertible_to<const T&, T>&&
+        std::constructible_from<T, const T>&& std::convertible_to<const T, T>;
 
-} // namespace std
+} // namespace webppstd
 #endif
 
 namespace webpp::stl {
@@ -57,16 +57,16 @@ namespace webpp::stl {
     };
 
     template <typename T>
-    concept MoveAssignable = ::std::is_move_assignable_v<T>;
+    concept MoveAssignable = std::is_move_assignable_v<T>;
 
     template <typename T>
-    concept CopyAssignable = ::std::is_copy_assignable_v<T>;
+    concept CopyAssignable = std::is_copy_assignable_v<T>;
 
     template <typename T>
-    concept CopyConstructible = ::std::is_copy_constructible_v<T>;
+    concept CopyConstructible = std::is_copy_constructible_v<T>;
 
     template <typename T>
-    concept DefaultConstructible = ::std::is_default_constructible_v<T>;
+    concept DefaultConstructible = std::is_default_constructible_v<T>;
 
     template <typename X>
     concept CharTraits = Destructible<typename X::state_type>&&
@@ -74,7 +74,7 @@ namespace webpp::stl {
           CopyConstructible<typename X::state_type>&&
           DefaultConstructible<typename X::state_type>&& requires(
             typename X::char_type c, typename X::char_type const* p,
-            typename X::char_type* s, ::std::size_t n, typename X::int_type e,
+            typename X::char_type* s, std::size_t n, typename X::int_type e,
             typename X::char_type const& ch) {
         typename X::char_type;
         typename X::int_type;
@@ -84,31 +84,31 @@ namespace webpp::stl {
 
 
         { X::eq(c, c) }
-        ->::std::same_as<bool>;
+        ->std::same_as<bool>;
         { X::lt(c, c) }
-        ->::std::same_as<bool>;
+        ->std::same_as<bool>;
         { X::compare(p, p, n) }
-        ->::std::same_as<int>;
+        ->std::same_as<int>;
         { X::length(p) }
-        ->::std::same_as<::std::size_t>;
+        ->std::same_as<std::size_t>;
         { X::find(p, n, ch) }
-        ->::std::same_as<typename X::char_type const*>;
+        ->std::same_as<typename X::char_type const*>;
         { X::move(s, p, ch) }
-        ->::std::same_as<typename X::char_type*>;
+        ->std::same_as<typename X::char_type*>;
         { X::copy(s, p, n) }
-        ->::std::same_as<typename X::char_type*>;
+        ->std::same_as<typename X::char_type*>;
         { X::assign(s, n, c) }
-        ->::std::same_as<typename X::char_type*>;
+        ->std::same_as<typename X::char_type*>;
         { X::not_eof(e) }
-        ->::std::same_as<typename X::int_type>;
+        ->std::same_as<typename X::int_type>;
         { X::to_char_type(e) }
-        ->::std::same_as<typename X::char_type>;
+        ->std::same_as<typename X::char_type>;
         { X::to_int_type(c) }
-        ->::std::same_as<typename X::int_type>;
+        ->std::same_as<typename X::int_type>;
         { X::eq_int_type(e, e) }
-        ->::std::same_as<bool>;
+        ->std::same_as<bool>;
         { X::eof() }
-        ->::std::same_as<typename X::int_type>;
+        ->std::same_as<typename X::int_type>;
     };
 
 
