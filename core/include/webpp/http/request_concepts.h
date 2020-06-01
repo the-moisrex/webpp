@@ -33,11 +33,11 @@ namespace webpp {
         static constexpr bool value = true;
     };
 
-    template <RequestExtension... T>
-    struct is_request_extension_list<typelist<T...>> {
-        static constexpr bool value = true;
-    };
-
+    //    template <RequestExtension... T>
+    //    struct is_request_extension_list<typelist<T...>> {
+    //        static constexpr bool value = true;
+    //    };
+    //
     template <RequestExtension... T>
     struct is_request_extension_list<extension_pack<T...>> {
         static constexpr bool value = true;
