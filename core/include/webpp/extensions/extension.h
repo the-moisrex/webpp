@@ -12,11 +12,10 @@ namespace webpp {
 
     template <typename T>
     concept Extension =
-      ::std::copy_constructible<T> && !::std::is_final_v<T> &&
-      ::std::is_default_constructible_v<T> &&
-      ::std::is_move_constructible_v<T> && ::std::is_move_assignable_v<T> &&
-      ::std::is_copy_assignable_v<T> && ::std::is_class_v<T> &&
-      !::stl::is_tuple<T>::value && !::std::is_integral_v<T>;
+      std::copy_constructible<T> && !std::is_final_v<T> &&
+      std::is_default_constructible_v<T> && std::is_move_constructible_v<T> &&
+      std::is_move_assignable_v<T> && std::is_copy_assignable_v<T> &&
+      std::is_class_v<T> && !stl::is_tuple<T>::value && !std::is_integral_v<T>;
 
     template <template <typename> typename... E>
     struct extension_pack {};
@@ -33,7 +32,7 @@ namespace webpp {
     //    };
     //
     //    template <Extension... T>
-    //    struct is_extension_list<::std::tuple<T...>> {
+    //    struct is_extension_list<std::tuple<T...>> {
     //        static constexpr bool value = true;
     //    };
     //
@@ -66,7 +65,7 @@ namespace webpp {
     //
     //        template <typename First = void, typename... U>
     //        struct unique_types {
-    //            using type = ::std::conditional_t<
+    //            using type = std::conditional_t<
     //              ((!std::is_same_v<First, U>)&&...),
     //              typename prepend<First, typename
     //              typelist<U...>::unique>::type, typename
@@ -91,7 +90,7 @@ namespace webpp {
     //     * Unpack std::tuple into extension pack
     //     */
     //    template <Extension... Extensions>
-    //    struct extension_pack<::std::tuple<Extensions...>>
+    //    struct extension_pack<std::tuple<Extensions...>>
     //      : public extension_pack<Extensions...> {};
     //
     //    /**
@@ -119,18 +118,18 @@ namespace webpp {
     //
     //    template <Extension... EP1, Extension... EP2>
     //    struct flattened_extension_pack<extension_pack<EP1...>,
-    //                                    ::std::tuple<EP2...>> {
+    //                                    std::tuple<EP2...>> {
     //        using type = extension_pack<EP1..., EP2...>;
     //    };
     //
     //    template <Extension... EP1, Extension... EP2>
-    //    struct flattened_extension_pack<::std::tuple<EP1...>,
+    //    struct flattened_extension_pack<std::tuple<EP1...>,
     //    typelist<EP2...>> {
     //        using type = extension_pack<EP1..., EP2...>;
     //    };
     //
     //    template <Extension... EP1, Extension... EP2>
-    //    struct flattened_extension_pack<::std::tuple<EP1...>,
+    //    struct flattened_extension_pack<std::tuple<EP1...>,
     //                                    extension_pack<EP2...>> {
     //        using type = extension_pack<EP1..., EP2...>;
     //    };
@@ -143,7 +142,7 @@ namespace webpp {
     //
     //    template <Extension... EP1, Extension... EP2>
     //    struct flattened_extension_pack<typelist<EP1...>,
-    //    ::std::tuple<EP2...>> {
+    //    std::tuple<EP2...>> {
     //        using type = extension_pack<EP1..., EP2...>;
     //    };
 
@@ -189,7 +188,7 @@ namespace webpp {
     //    template <typename T>
     //    concept HasExtensionSupport = requires {
     //        typename T::template rebind<empty_extension>;
-    //        ::std::copy_constructible<T>; // includes move constructor as well
+    //        std::copy_constructible<T>; // includes move constructor as well
     //    };
 
     //    template <typename T>
@@ -197,7 +196,7 @@ namespace webpp {
     //
     //    template <typename T, Extension FirstE>
     //    using rebinder =
-    //    ::std::conditional_t<extensions::MotherExtension<FirstE>,
+    //    std::conditional_t<extensions::MotherExtension<FirstE>,
     //                                          typename T::template
     //                                          rebind<FirstE>, typename
     //                                          FirstE::template rebind<T>>;
@@ -214,7 +213,7 @@ namespace webpp {
     //        template<Extension FE>
     //        struct rebind {
     //            using type =
-    //            ::std::conditional_t<extensions::MotherExtension<FE>,
+    //            std::conditional_t<extensions::MotherExtension<FE>,
     //                    T<C..., FE>,
     //                    typename FE::template rebind<T>>
     //        };

@@ -22,6 +22,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/std/unordered_map.h
         ${LIB_INCLUDE_DIR}/webpp/std/unordered_set.h
         ${LIB_INCLUDE_DIR}/webpp/std/vector.h
+        ${LIB_INCLUDE_DIR}/webpp/std/optional.h
 
         ${LIB_INCLUDE_DIR}/webpp/http/routes/router.h
         ${LIB_INCLUDE_DIR}/webpp/http/routes/route.h
