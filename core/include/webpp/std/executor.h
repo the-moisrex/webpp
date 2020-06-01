@@ -5,7 +5,7 @@
 // currently experimental version of internet is buggy. Hopefully that will be
 // fixed later.
 
-#include "std.h"
+#include "./std.h"
 
 #if __has_include(<executor>)
 #    include <executor>
@@ -13,13 +13,13 @@
 #elif __has_include(<boost/asio/ts/executor.hpp>)
 #    define STD_EXECUTOR STLLIB_BOOST
 #    include <boost/asio/ts/executor.hpp>
-namespace std {
+namespace webpp::std {
     namespace net = boost::asio;
 }
 #elif __has_include(<experimental/executor>)
 #    define STD_EXECUTOR STLLIB_EXPERIMENTAL
 #    include <experimental/executor>
-namespace std {
+namespace webpp::std {
     namespace net = experimental::net;
 }
 #else

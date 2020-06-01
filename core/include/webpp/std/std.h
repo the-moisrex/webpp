@@ -11,5 +11,8 @@
 #define STLLIB_NETWORKING_ERROR "We don't even have access to networking TS."
 #define BOOST_ASIO_NO_DEPRECATED
 
+namespace webpp::std {
+    using namespace ::std;
+}
 
 #endif // WEBPP_STD_STD_H
