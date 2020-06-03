@@ -311,3 +311,97 @@ using other types for specific purposes. Fox example to use a different
 `Allocator` STL uses or a different _character type_ in the strings or
 even configure UTF-8.
 
+
+## Extension system
+
+Definitions:
+
+- __Extension__: some type that adds features to the extensy, e.g.: cookie
+- __Extensy__: the type that extensions will add features to; e.g.: request, response, context
+
+There are 2 types of extensions:
+
+- Mother extensions
+- Child extensions
+
+**Mother Extensions** are the type of extensions that the extensies will extend from.
+
+__Child Extensions__ are the type of extensions that will inherit extensies;
+they will replace the original extension type, but they have access to
+the extensie.
+
+### Extension syntax
+
+__Mother Extension__:
+
+```c++
+struct mother_extension : virtual extension_pack<some_required_extension> {
+  type new_feature;
+  type2 another_feature;
+};
+```
+
+__Child Extension__ (for context):
+
+Using child extensions are a big harder because they need to have access to their
+parents' fields and methods.
+
+```c++
+template <Context C>
+struct cookies : C {
+  using C::C;
+  auto get_cookies() { ... }
+};
+
+struct cookies_child_extensions {
+
+  template <Context C>
+  struct child_extension {
+    using type = cookies<C>;
+  };
+
+};
+```
+
+### Unified extension type
+With a __unified extension type__, you can have an extension that can
+introduce other extensions or require other extensions to be presented.
+
+A unified extensioni will be passed to routers; so unified extensions are
+only able to add extensions to the types that are being created by router
+or any type down its chain.
+
+Features of a unified extension type:
+
+- router-extensions: a pack of router extensions
+- context-extensions: a pack of context extensions
+- response-extensions: a pack of response extensions
+- response-header-extensions: a pack of response header extensions
+- response-header-field-extensions: a pack of response header field extensions
+- response-body-extensions: a pack of response body extensions
+
+
+### Extension usage
+Here's an example of how you can use extensions inside your application layer:
+
+```c++
+struct app {
+  using extensions = extension_pack<cookies, sqlite>;
+  router<extensions> router;
+
+  app () {
+    router.db.username = "admin";
+    router.db.password = "password";
+    router.db.file = "file.sqlite";
+    router.db.connect();
+  }
+
+  auto Response operator()(auto Context& ctx) {
+    return router(ctx);
+  }
+
+};
+```
+
+
+
