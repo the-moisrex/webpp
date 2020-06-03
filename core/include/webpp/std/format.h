@@ -13,8 +13,7 @@ namespace webpp::std {
     using namespace fmt;
 } // namespace webpp::std
 #else
-#    error \
-      "We don't have access to <format> nor {fmt} library. Provide at least one of them."
+#    error "We don't have access to <format> nor {fmt} library."
 #endif
 
 #endif // WEBPP_FORMAT_H

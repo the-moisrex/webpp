@@ -17,11 +17,11 @@ namespace webpp {
         static_assert(
           is_traits_v<Traits>,
           "The specified template parameter is not a valid traits type.");
-        using traits     = Traits;
+        using traits_type = Traits;
         using endpoint_t = std::net::ip::tcp::endpoint;
 
       private:
-        stl::set<traits, endpoint_t> _endpoints;
+        stl::set<traits_type, endpoint_t> _endpoints;
         common::server               _server;
 
         auto get_endpoints() noexcept {
@@ -35,12 +35,12 @@ namespace webpp {
             //        } else {
             //            _endpoints = std::net::ip::tcp::v4();
             //        }
-            return stl::vector<traits, std::net::ip::tcp::endpoint>{};
+            return stl::vector<traits_type, std::net::ip::tcp::endpoint>{};
         }
 
 
       public:
-        webpp::router_t<traits, fcgi> router;
+        webpp::router_t<traits_type, fcgi> router;
 
         fcgi() noexcept;
 
