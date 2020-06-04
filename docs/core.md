@@ -311,13 +311,18 @@ using other types for specific purposes. Fox example to use a different
 `Allocator` STL uses or a different _character type_ in the strings or
 even configure UTF-8.
 
+------------------------------------------------------------------
+
+
+
+
 
 ## Extension system
 
 Definitions:
 
-- __Extension__: some type that adds features to the extensy, e.g.: cookie
-- __Extensy__: the type that extensions will add features to; e.g.: request, response, context
+- __Extension__: some type that adds features to the extensie, e.g.: cookie
+- __Extensie__: the type that extensions will add features to; e.g.: request, response, context
 
 There are 2 types of extensions:
 
@@ -340,6 +345,8 @@ struct mother_extension : virtual extension_pack<some_required_extension> {
   type2 another_feature;
 };
 ```
+
+__Attention__: mother extensions are not able to require other child extensions as dependencies.
 
 __Child Extension__ (for context):
 
@@ -367,7 +374,7 @@ struct cookies_child_extensions {
 With a __unified extension type__, you can have an extension that can
 introduce other extensions or require other extensions to be presented.
 
-A unified extensioni will be passed to routers; so unified extensions are
+A unified extension will be passed to routers; so unified extensions are
 only able to add extensions to the types that are being created by router
 or any type down its chain.
 
@@ -402,6 +409,37 @@ struct app {
 
 };
 ```
+
+### Extensies
+
+Extensies are these types:
+
+- const_router / dynamic_router
+- context
+- response
+- response_headers
+- response_header_field
+- response_body
+
+There are two level for each extensies:
+
+- Mid-Level extensie
+- Final extensie
+
+
+__Mid-Level__ extensies are extensies which:
+
+- can extend from _mother extensions_
+- _child extensions_ can extend from it
+- are not a __final__
+- can specify a _final extensie_
+
+__Final Extensies__ are the extensies that:
+
+- cannot be extended from
+- inherits from all the _child extensions_ and the _mid-level extensie_
+
+
 
 
 
