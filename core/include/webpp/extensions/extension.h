@@ -112,6 +112,15 @@ namespace webpp {
          * Get the unique types
          */
         using unique = typename unique_types<E...>::type;
+
+        /**
+         * Apply extensions into one type
+         */
+        template <Traits TraitsType, typename MidLevelExtensie,
+                  typename FinalExtensie>
+        using apply = FinalExtensie<
+          typename MidLevelExtensie::template rebind<mother_extensions>,
+          child_extensions>;
     };
 
 
