@@ -400,12 +400,12 @@ or any type down its chain.
 
 Features of a unified extension type:
 
-- router-extensions: a pack of router extensions
-- context-extensions: a pack of context extensions
-- response-extensions: a pack of response extensions
-- response-header-extensions: a pack of response header extensions
-- response-header-field-extensions: a pack of response header field extensions
-- response-body-extensions: a pack of response body extensions
+- `router_extensions`: a pack of router extensions
+- `context_extensions`: a pack of context extensions
+- `response_extensions`: a pack of response extensions
+- `response_header_extensions`: a pack of response header extensions
+- `response_header_field_extensions`: a pack of response header field extensions
+- `response_body_extensions`: a pack of response body extensions
 
 
 ### Extension usage
@@ -479,6 +479,5 @@ To assemble the extensions and the extensies into one single type we have to:
    apply the result to the second _child extension_ and so on.
 6. Extract the _final extensie_ from the _mid-level extensie_
 7. Apply the result of the _child extension_ to the _final extensie_
-
 
 
