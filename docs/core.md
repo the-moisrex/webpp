@@ -336,25 +336,43 @@ they will replace the original extension type, but they have access to
 the extensie.
 
 ### Extension syntax
+The extensions are just a type that has a __templated using statement__.
+The difference between extension types are just which extension they have
+access to.
+
 
 __Mother Extension__:
 
+Can only have access to _traits type_.
 ```c++
-struct mother_extension : virtual extension_pack<some_required_extension> {
+
+template <Traits TraitsType>
+struct mommy : virtual mother_extension_pack<some_required_extension> {
   type new_feature;
   type2 another_feature;
+};
+
+struct mother_extension {
+    
+    template <Traits TraitsType>
+    using extension_type = mommy<TraitsType>;
+};
+
+struct router_level_extension {
+    using context_extensions = extension_pack<mother_extension>;
 };
 ```
 
 __Attention__: mother extensions are not able to require other child extensions as dependencies.
 
-__Child Extension__ (for context):
+__Child Extension__:
 
+Child extensions have access to the _traits type_ and also the _extensie_.
 Using child extensions are a big harder because they need to have access to their
 parents' fields and methods.
 
 ```c++
-template <Context C>
+template <Traits TraitsType, ResponseHeaders C>
 struct cookies : C {
   using C::C;
   auto get_cookies() { ... }
@@ -362,11 +380,13 @@ struct cookies : C {
 
 struct cookies_child_extensions {
 
-  template <Context C>
-  struct child_extension {
-    using type = cookies<C>;
-  };
+  template <Traits TraitsType, Context C>
+  struct extension_type = cookies<TraitsType, child_extensions_pack<TraitsType, C, one, two, three>>;
 
+};
+
+struct router_level_extensions {
+    using header_extensions = extension_pack<cookies_child_extension>;
 };
 ```
 
@@ -440,6 +460,24 @@ __Final Extensies__ are the extensies that:
 - inherits from all the _child extensions_ and the _mid-level extensie_
 
 
+### Extension hierarchy 
+The hierarchy of the extensions is like this:
+
+1. The _Mother Extensions_ (optional)
+2. The _Mid-Level Extensie_ (required)
+3. The _Child Extensions_ (optional)
+4. The _Final Extensie_ (optional)
+
+### Extension hierarchy assembly 
+To assemble the extensions and the extensies into one single type we have to:
+
+1. Extract _mother extensions_ from the extension pack
+2. Apply the _mother extensions_ to the _mid-level extensie_
+3. Extract the _child extensions_ from the extension pack
+4. Apply the _mid-level extensie_ to first _child extension_ and then
+   apply the result to the second _child extension_ and so on.
+5. Extract the _final extensie_ from the _mid-level extensie_
+6. Apply the result of the _child extension_ to the _final extensie_
 
 
 
