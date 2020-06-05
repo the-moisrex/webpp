@@ -111,6 +111,61 @@ namespace webpp::stl {
         ->std::same_as<typename X::int_type>;
     };
 
+    struct fake_char_traits {
+        using char_type  = char;
+        using int_type   = int;
+        using off_type   = void;
+        using pos_type   = void;
+        using state_type = void;
+
+        typedef char_type        c;
+        typedef char_type const* p;
+        typedef char_type*       s;
+        typedef std::size_t      n;
+        typedef int_type         e;
+        typedef char_type const& ch;
+
+        static constexpr bool eq(c, c) noexcept {
+            return true;
+        }
+        static constexpr bool lt(c, c) noexcept {
+            return true;
+        }
+        static constexpr int compare(p, p, n) noexcept {
+            return 0;
+        }
+        static constexpr n length(p) noexcept {
+            return 0;
+        }
+        static constexpr p find(p _p, n, ch) noexcept {
+            return _p;
+        }
+        static constexpr s move(s _s, p, ch) noexcept {
+            return _s;
+        }
+        static constexpr s move(s _s, p, n) noexcept {
+            return _s;
+        }
+        static constexpr s assign(s _s, n, c) noexcept {
+            return _s;
+        }
+        static constexpr e not_eof(e) noexcept {
+            return 0;
+        }
+        static constexpr c to_char_type(e _e) noexcept {
+            return _e;
+        }
+        static constexpr e to_int_type(c _c) noexcept {
+            return _c;
+        }
+        static constexpr bool eq_int_type(e, e) noexcept {
+            return true;
+        }
+        static constexpr e eof() noexcept {
+            return 0;
+        }
+    };
+
 
 } // namespace webpp::stl
 
