@@ -106,7 +106,8 @@ namespace webpp {
         /**
          * Extract the _child extensions_ from the extension pack
          */
-        using child_extensions = extract_types<child_types, E...>::type;
+        using child_extensions =
+          typename extract_types<child_types, E...>::type;
 
         /**
          * Get the unique types
@@ -116,13 +117,12 @@ namespace webpp {
         /**
          * Apply extensions into one type
          */
-        template <Traits TraitsType, typename MidLevelExtensie,
-                  typename FinalExtensie>
-        using apply = FinalExtensie<
-          typename MidLevelExtensie::template rebind<mother_extensions>,
-          child_extensions>;
+        //        template <Traits TraitsType, typename MidLevelExtensie,
+        //                  typename FinalExtensie>
+        //        using applied = FinalExtensie<
+        //          typename MidLevelExtensie::template
+        //          rebind<mother_extensions>, child_extensions>;
     };
-
 
     //        template <typename... T>
     //        struct is_extension_list {
