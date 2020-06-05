@@ -57,6 +57,19 @@ namespace webpp {
         // todo: add BasicString<typename T::string_type>;
         // todo: add BasicStringView<typename T::string_view_type>;
     };
+
+
+    struct fake_traits {
+        using char_type = void;
+
+        template <typename T>
+        using allocator = void;
+
+        using string_type      = void;
+        using string_view_type = void;
+        using char_traits      = stl::fake_char_traits;
+    };
+
 } // namespace webpp
 
 #endif // WEBPP_TRAITS_CONCEPTS_H
