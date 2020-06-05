@@ -471,13 +471,14 @@ The hierarchy of the extensions is like this:
 ### Extension hierarchy assembly 
 To assemble the extensions and the extensies into one single type we have to:
 
-1. Extract _mother extensions_ from the extension pack
-2. Apply the _mother extensions_ to the _mid-level extensie_
-3. Extract the _child extensions_ from the extension pack
-4. Apply the _mid-level extensie_ to first _child extension_ and then
+1. Extract the type _extension pack_ from the router level extensions
+2. Extract _mother extensions_ from the extension pack
+3. Apply the _mother extensions_ to the _mid-level extensie_
+4. Extract the _child extensions_ from the extension pack
+5. Apply the _mid-level extensie_ to first _child extension_ and then
    apply the result to the second _child extension_ and so on.
-5. Extract the _final extensie_ from the _mid-level extensie_
-6. Apply the result of the _child extension_ to the _final extensie_
+6. Extract the _final extensie_ from the _mid-level extensie_
+7. Apply the result of the _child extension_ to the _final extensie_
 
 
 
