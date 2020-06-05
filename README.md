@@ -26,6 +26,8 @@ I'd appreciate any help of any kind. Even if you're not interested in coding, he
 - **Suggest someone** who can help: I'd appreciate any help on finding people who can help in any way.
 - **Write documentation**: writing documentation is so much fun that I don't want to do it alone! 😂
 
+Look at the [Core Readme file](./core/README.md) for the core concepts of the project.
+
 ### Examples
 In the `examples` directory you can find examples. That's not much but it'll give you they high level viewpoint. Take a look at them and you can be sure that we'll try to write tests for all of them; so if you read tests, you'll learn even more about the project.
 
