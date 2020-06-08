@@ -22,29 +22,14 @@ namespace webpp {
     template <typename T>
     concept RequestExtension = Extension<T>;
 
-
-    template <typename... T>
-    struct is_request_extension_list {
-        static constexpr bool value = false;
-    };
-
-    template <RequestExtension... T>
-    struct is_request_extension_list<::std::tuple<T...>> {
-        static constexpr bool value = true;
-    };
-
-    //    template <RequestExtension... T>
-    //    struct is_request_extension_list<typelist<T...>> {
-    //        static constexpr bool value = true;
-    //    };
-    //
-    template <RequestExtension... T>
-    struct is_request_extension_list<extension_pack<T...>> {
-        static constexpr bool value = true;
+    template <typename E>
+    struct is_request_extension_pack {
+        static constexpr bool value = RequestExtension<E>;
     };
 
     template <typename T>
-    concept RequestExtensionList = ExtensionList<T, is_request_extension_list>;
+    concept RequestExtensionList =
+      ExtensionListOf<T, is_request_extension_pack>;
 
 
 } // namespace webpp
