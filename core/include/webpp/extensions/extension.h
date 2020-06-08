@@ -149,9 +149,9 @@ namespace webpp {
 
         template <typename ExtensieDescriptor, typename EPack>
         using merged_extensions = typename epack_miner<
-          typename ExtensieDescriptor::related_extension_pack_type,
+          ExtensieDescriptor::template related_extension_pack_type,
           typename filter_epack<
-            typename ExtensieDescriptor::has_related_extension_pack,
+            ExtensieDescriptor::template has_related_extension_pack,
             EPack>::type>::type;
 
 
@@ -183,11 +183,49 @@ namespace webpp {
         using extensie_type = ExtensieDescriptor::template final_extensie_type<
           TraitsType,
           extend_to_all<
-            ExtensieDescriptor::template mid_level_extensie_type<
+            typename ExtensieDescriptor::template mid_level_extensie_type<
               TraitsType, inheritable_extension_pack<merged_extensions<
                             ExtensieDescriptor, mother_extensions>>>::type,
             merged_extensions<ExtensieDescriptor, child_extensions>>>;
+
+
+
+        /**
+         * Check if all of the extensions are the correct type
+         * @tparam IF
+         */
+        template <template <typename> typename IF>
+        struct is_all {
+            static constexpr bool value = (IF<E>::value && ...);
+        };
     };
+    struct fake_extensie_descriptor {
+        template <typename ExtensionType>
+        struct has_related_extension_pack {
+            static constexpr bool value = true;
+        };
+
+        template <typename ExtensionType>
+        using related_extension_pack_type = typename ExtensionType::something;
+
+        template <typename TraitsType, typename EList>
+        using mid_level_extensie_type = void;
+
+        // empty final extensie
+        template <typename TraitsType, typename EList>
+        struct final_extensie_type final : public EList {};
+    };
+
+    template <typename E>
+    concept ExtensionList = requires {
+        typename E::template extensie_type<fake_traits,
+                                           fake_extensie_descriptor>;
+        typename E::template is_all<
+          fake_extensie_descriptor::template has_related_extension_pack>;
+    };
+
+    template <typename E, template <typename> typename IF>
+    concept ExtensionListOf = ExtensionList<E>&& E::template is_all<IF>::value;
 
     //        template <typename... T>
     //        struct is_extension_list {
