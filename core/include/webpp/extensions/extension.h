@@ -257,35 +257,36 @@ namespace webpp {
     //    &&Extension<typename T::required_extensions>;
     //
 
-    template <typename... T>
-    struct typelist {
-      private:
-        template <typename... F>
-        struct prepend {
-            using type = typelist<F...>;
-        };
-
-        template <typename F, typename... L>
-        struct prepend<F, typelist<L...>> {
-            using type = typelist<F, L...>;
-        };
-
-        template <typename First = void, typename... U>
-        struct unique_types {
-            using type = std::conditional_t<
-              ((!std::is_same_v<First, U>)&&...),
-              typename prepend<First, typename typelist<U...>::unique>::type,
-              typename typelist<U...>::unique>;
-        };
-
-        template <typename... U>
-        struct unique_types<void, U...> {
-            using type = typelist<U...>;
-        };
-
-      public:
-        using unique = typename unique_types<T...>::type;
-    };
+    //    template <typename... T>
+    //    struct typelist {
+    //      private:
+    //        template <typename... F>
+    //        struct prepend {
+    //            using type = typelist<F...>;
+    //        };
+    //
+    //        template <typename F, typename... L>
+    //        struct prepend<F, typelist<L...>> {
+    //            using type = typelist<F, L...>;
+    //        };
+    //
+    //        template <typename First = void, typename... U>
+    //        struct unique_types {
+    //            using type = std::conditional_t<
+    //              ((!std::is_same_v<First, U>)&&...),
+    //              typename prepend<First, typename
+    //              typelist<U...>::unique>::type, typename
+    //              typelist<U...>::unique>;
+    //        };
+    //
+    //        template <typename... U>
+    //        struct unique_types<void, U...> {
+    //            using type = typelist<U...>;
+    //        };
+    //
+    //      public:
+    //        using unique = typename unique_types<T...>::type;
+    //    };
 
 
     //    template <Extension... Extensions>
@@ -445,17 +446,17 @@ namespace webpp {
     //
 
 
-    template <typename T, template <typename> typename FE,
-              template <typename> typename... E>
-    struct apply_extensions {
-        using type = apply_extensions<FE<T>, E...>;
-    };
-
-    template <typename T, template <typename> typename FE>
-    struct apply_extensions<T, FE> {
-        using type = FE<T>;
-    };
-
+    //    template <typename T, template <typename> typename FE,
+    //              template <typename> typename... E>
+    //    struct apply_extensions {
+    //        using type = apply_extensions<FE<T>, E...>;
+    //    };
+    //
+    //    template <typename T, template <typename> typename FE>
+    //    struct apply_extensions<T, FE> {
+    //        using type = FE<T>;
+    //    };
+    //
 
 } // namespace webpp
 
