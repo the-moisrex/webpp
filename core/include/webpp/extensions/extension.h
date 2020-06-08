@@ -140,7 +140,7 @@ namespace webpp {
           : public virtual Ex... {
             template <typename... X>
             inheritable_extension_pack(X&&... x)
-              : Ex... {std::forward<X>(x)...} {
+              : Ex{std::forward<X>(x)...}... {
             }
         };
 
