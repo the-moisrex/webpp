@@ -144,23 +144,15 @@ namespace webpp {
             }
         };
 
-        /**
-         * Extract _mother extensions_ from the extension pack
-         */
         using mother_extensions = typename filter<mother_type, E...>::type;
-
-
-        /**
-         * Extract the _child extensions_ from the extension pack
-         */
-        using child_extensions = typename filter<child_type, E...>::type;
+        using child_extensions  = typename filter<child_type, E...>::type;
 
         template <typename ExtensieDescriptor, typename EPack>
-        using merged_extensions =
-          typename epack_miner <
-          ExtensieDescriptor::template related_extension_pack_type,
-              filter_epack<
-                ExtensieDescriptor::template has_related_extension_pack, EPack>;
+        using merged_extensions = typename epack_miner<
+          typename ExtensieDescriptor::related_extension_pack_type,
+          typename filter_epack<
+            typename ExtensieDescriptor::has_related_extension_pack,
+            EPack>::type>::type;
 
 
         template <typename ExtendThis, typename... Ex>
@@ -169,8 +161,11 @@ namespace webpp {
         };
 
         template <typename ExtendThis, typename... Ex>
-        struct extend_to_all<extension_pack<Ex...>> : public virtual Ex... {
-            using Ex::Ex...;
+        struct extend_to_all<ExtendThis, extension_pack<Ex...>>
+          : public virtual Ex... {
+            template <typename... Args>
+            extend_to_all(Args&&... args) : Ex{std::forward<Args>(args)...}... {
+            }
         };
 
 
