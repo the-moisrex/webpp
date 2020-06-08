@@ -142,11 +142,15 @@ namespace webpp {
      * @tparam TraitsType
      * @tparam HeaderType
      */
-    template <Traits TraitsType>
-    struct header_field {
+    template <Traits TraitsType, typename EList>
+    struct response_header_field : public EList {
         using traits_type = TraitsType;
         using str_t       = auto_string_type<traits_type, is_mutable>;
         using str_view_t  = typename traits_type::string_view_type;
+
+        using EList::EList;
+
+        // todo: provide constructor
 
         str_t name;
         str_t value;
@@ -175,9 +179,10 @@ namespace webpp {
      *   Interpreted as: "Subject: ¡Hola, señor!"
      *
      */
-    template <Traits TraitsType>
+    template <Traits TraitsType, typename EList>
     class response_headers
-      : public stl::unordered_multiset<TraitsType, header_field<TraitsType>> {
+      : public stl::unordered_multiset<TraitsType, header_field<TraitsType>>,
+        public EList {
 
         using super =
           stl::unordered_multiset<TraitsType, header_field<TraitsType>>;
@@ -185,6 +190,8 @@ namespace webpp {
       public:
         using traits_type = TraitsType;
         using str_t       = typename traits_type::string_type;
+
+        using EList::EList;
 
         std::uint_fast16_t status_code = 200;
 
@@ -209,6 +216,53 @@ namespace webpp {
         }
     };
 
+
+
+    struct response_header_descriptor {
+        template <typename ExtensionType>
+        struct has_related_extension_pack {
+            static constexpr bool value = requires {
+                typename T::response_headers_extensions;
+            };
+        };
+
+        template <typename ExtensionType>
+        using related_extension_pack_type =
+          typename T::response_headers_extensions;
+
+        template <typename TraitsType, typename EList>
+        using mid_level_extensie_type = response_headers<TraitsType, EList>;
+
+        // empty final extensie
+        template <typename TraitsType, typename EList>
+        struct final_extensie_type final : public EList {
+            using EList::EList;
+        };
+    };
+
+
+    struct response_header_field_descriptor {
+        template <typename ExtensionType>
+        struct has_related_extension_pack {
+            static constexpr bool value = requires {
+                typename T::response_header_field_extensions;
+            };
+        };
+
+        template <typename ExtensionType>
+        using related_extension_pack_type =
+          typename T::response_header_field_extensions;
+
+        template <typename TraitsType, typename EList>
+        using mid_level_extensie_type =
+          response_header_field<TraitsType, EList>;
+
+        // empty final extensie
+        template <typename TraitsType, typename EList>
+        struct final_extensie_type final : public EList {
+            using EList::EList;
+        };
+    };
 
 } // namespace webpp
 

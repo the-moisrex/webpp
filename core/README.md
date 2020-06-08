@@ -355,7 +355,7 @@ struct mommy : virtual mother_extension_pack<some_required_extension> {
 struct mother_extension {
     
     template <Traits TraitsType>
-    using extension_type = mommy<TraitsType>;
+    using type = mommy<TraitsType>;
 };
 
 struct router_level_extension {
@@ -373,7 +373,7 @@ parents' fields and methods.
 
 ```c++
 template <Traits TraitsType, ResponseHeaders C>
-struct cookies : C {
+struct cookies : public virtual typename extension_pack<one, two, three>::template child_extensions<TraitsType, C>, public virtual C {
   using C::C;
   auto get_cookies() { ... }
 };
@@ -381,7 +381,7 @@ struct cookies : C {
 struct cookies_child_extensions {
 
   template <Traits TraitsType, Context C>
-  struct extension_type = cookies<TraitsType, child_extensions_pack<TraitsType, C, one, two, three>>;
+  struct type = cookies<TraitsType, cookies<TraitsType, C>>;
 
 };
 
@@ -414,13 +414,20 @@ Here's an example of how you can use extensions inside your application layer:
 ```c++
 struct app {
   using extensions = extension_pack<cookies, sqlite>;
-  router<extensions> router;
+  
+  const_router<extensions> router {
+      path() / "home" >> app::home
+  };
 
   app () {
-    router.db.username = "admin";
-    router.db.password = "password";
-    router.db.file = "file.sqlite";
-    router.db.connect();
+    router.sqlite.username = "admin";
+    router.sqlite.password = "password";
+    router.sqlite.file = "file.sqlite";
+    router.sqlite.connect();
+  }
+
+  auto home(auto Context& ctx) {
+    return "Home Page";
   }
 
   auto Response operator()(auto Context& ctx) {
@@ -468,19 +475,29 @@ The hierarchy of the extensions is like this:
 3. The _Child Extensions_ (optional)
 4. The _Final Extensie_ (optional)
 
-### Extension hierarchy assembly 
+### Extensie descriptor type (internal usage)
+For each extensie, it is required to write a type with these types in them so the extension pack
+can detect which extensions should be used where.
+
+- `has_related_extension_pack` (required)
+- `related_extension_pack_type` (required)
+- `mid_level_extensie_type` (required)
+- `final_extensie_type` (required) (could be optional, but that's for later)
+
+### Extension hierarchy assembly (internal usage)
 To assemble the extensions and the extensies into one single type we have to:
 
 1. [ ] Extract the type _extension pack_ from the router level extensions
 2. [X] Extract _mother extensions_ from the extension pack
-3. [ ] Extract the extension packs of the extensie, from the extracted _mother extensions_
-4. [ ] Merge the extracted extension packs into one extension pack
-5. [ ] Apply the _mother extensions_ to the _mid-level extensie_
-6. [X] Extract the _child extensions_ from the extension pack
-7. [ ] Extract the extension packs of the extensie, from the extracted _child extensions_
-8. [ ] Merge the extracted extension packs into one extension pack
-9. [ ] Apply the _mid-level extensie_ to all the _child extension_
-10. [ ] Extract the _final extensie_ from the _mid-level extensie_ or create a fake one
-11. [ ] Apply _child extension_ to the _final extensie_
-
+3. [X] Filter the _mother extensions_ that have extensions for this extensie
+4. [X] Extract the extension packs of the extensie, from the extracted _mother extensions_
+5. [X] Merge the extracted extension packs into one extension pack
+6. [X] Apply the _mother extensions_ to the _mid-level extensie_
+7. [X] Extract the _child extensions_ from the extension pack
+8. [X] Filter the _child extensions_ that have extensions for this extensie
+9. [X] Extract the extension packs of the extensie, from the extracted _child extensions_
+10. [X] Merge the extracted extension packs into one extension pack
+11. [X] Apply the _mid-level extensie_ to all the _child extension_
+12. [X] Extract the _final extensie_ from the _extensie descriptor_
+13. [X] Apply _child extension_ to the _final extensie_
 

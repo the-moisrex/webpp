@@ -114,18 +114,17 @@ namespace webpp {
      *
      *
      */
-    template <ContextExtension... ExtensionTypes>
-    struct basic_context : public extension<basic_context, ExtensionType...> {
+    template <typename ExtensionList>
+    struct basic_context : public ExtensionList {};
 
-        // todo: use extension pack instead of tuple:
-        using extension_types    = ::std::tuple<ExtensionTypes...>;
-        using basic_context_type = basic_context<ExtensionTypes...>;
+    template <typename EList>
+    struct final_context final : public EList {
 
-
+        using EList::EList;
 
         // todo: these methods need to be noexcept. They call unknown stuff.
 
-        inline void call_pre_subroute_methods() noexcept {
+        void call_pre_subroute_methods() noexcept {
             ((has_context_extension_method<ExtensionTypes,
                                            extension_method::pre_subroute,
                                            basic_context>::value
@@ -137,7 +136,7 @@ namespace webpp {
         }
 
 
-        inline void call_pre_entryroute_methods() noexcept {
+        void call_pre_entryroute_methods() noexcept {
             ((has_context_extension_method<ExtensionTypes,
                                            extension_method::pre_entryroute,
                                            basic_context>::value
@@ -149,7 +148,7 @@ namespace webpp {
         }
 
 
-        inline void call_pre_firstroute_methods() noexcept {
+        void call_pre_firstroute_methods() noexcept {
             ((has_context_extension_method<ExtensionTypes,
                                            extension_method::pre_firstroute,
                                            basic_context>::value
@@ -161,7 +160,7 @@ namespace webpp {
         }
 
 
-        inline void call_post_subroute_methods() noexcept {
+        void call_post_subroute_methods() noexcept {
             ((has_context_extension_method<ExtensionTypes,
                                            extension_method::post_subroute,
                                            basic_context>::value
@@ -172,7 +171,7 @@ namespace webpp {
              ...);
         }
 
-        inline void call_post_entryroute_methods() noexcept {
+        void call_post_entryroute_methods() noexcept {
             ((has_context_extension_method<ExtensionTypes,
                                            extension_method::post_entryroute,
                                            basic_context>::value
@@ -184,7 +183,7 @@ namespace webpp {
         }
 
 
-        inline void call_post_lastroute_methods() noexcept {
+        void call_post_lastroute_methods() noexcept {
             ((has_context_extension_method<ExtensionTypes,
                                            extension_method::post_lastroute,
                                            basic_context>::value
@@ -195,7 +194,6 @@ namespace webpp {
              ...);
         }
     };
-
 
     /**
      * This is the "Extension Aware Context"
@@ -224,6 +222,33 @@ namespace webpp {
             return new_context_t{*this};
         }
     };
+
+
+
+    /**
+     * This struct helps the extension pack to find the correct type of the
+     * extensions from the unified extension pack for context
+     * Used by routers, to be passed to the extension_pack.
+     */
+    struct context_descriptor {
+        template <typename ExtensionType>
+        struct has_related_extension_pack {
+            static constexpr bool value = requires {
+                typename ExtensionType::context_extensions;
+            };
+        };
+
+        template <typename ExtensionType>
+        using related_extension_pack_type =
+          typename ExtensionType::context_extensions;
+
+        template <typename TraitsType, typename EList> // extension_pack
+        using mid_level_extensie_type = base_context<EList>;
+
+        template <typename TraitsType, typename EList>
+        using final_extensie_type = final_context<EList>;
+    };
+
 
 
 } // namespace webpp::routes
