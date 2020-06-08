@@ -69,19 +69,20 @@ namespace webpp {
             using type = typename filter<IF, EI...>::type;
         };
 
-        template <typename First = void, typename... U>
-        struct unique_types {
-            using type = std::conditional_t<
-              ((!std::is_same_v<First, U>)&&...),
-              typename prepend<First, typename extension_pack<
-                                        U...>::unique_types<E...>::type>::type,
-              typename extension_pack<U...>::unique_types<E...>::type>;
-        };
-
-        template <typename... U>
-        struct unique_types<void, U...> {
-            using type = extension_pack<U...>;
-        };
+        //        template <typename First = void, typename... U>
+        //        struct unique_types {
+        //            using type = std::conditional_t<
+        //              ((!std::is_same_v<First, U>)&&...),
+        //              typename prepend<First, typename extension_pack<
+        //                                        U...>::unique_types<E...>::type>::type,
+        //              typename
+        //              extension_pack<U...>::unique_types<E...>::type>;
+        //        };
+        //
+        //        template <typename... U>
+        //        struct unique_types<void, U...> {
+        //            using type = extension_pack<U...>;
+        //        };
 
 
         template <typename T>
@@ -93,31 +94,32 @@ namespace webpp {
         struct child_type {
             static constexpr bool value = ChildExtension<T>;
         };
-
-        template <typename... E1>
-        struct flatten_extensions {
-            using type = extension_pack<>;
-        };
-
-        template <typename... E1>
-        struct flatten_extensions<extension_pack<E1...>> {
-            using type = extension_pack<E1...>;
-        };
-
-        template <typename... E1, typename... E2>
-        struct flatten_extensions<extension_pack<E1...>,
-                                  extension_pack<E2...>> {
-            using type = extension_pack<E1..., E2...>;
-        };
-
-        template <typename... E1, typename... E2, typename... ER>
-        struct flatten_extensions<extension_pack<EI...>, extension_pack<E2...>,
-                                  ER...> {
-            using type = typename flatten_extensions<
-              typename flatten_extensions<extension_pack<E1...>,
-                                          extension_pack<E2...>>::type,
-              ER...>::type;
-        };
+        //
+        //        template <typename... E1>
+        //        struct flatten_extensions {
+        //            using type = extension_pack<>;
+        //        };
+        //
+        //        template <typename... E1>
+        //        struct flatten_extensions<extension_pack<E1...>> {
+        //            using type = extension_pack<E1...>;
+        //        };
+        //
+        //        template <typename... E1, typename... E2>
+        //        struct flatten_extensions<extension_pack<E1...>,
+        //                                  extension_pack<E2...>> {
+        //            using type = extension_pack<E1..., E2...>;
+        //        };
+        //
+        //        template <typename... E1, typename... E2, typename... ER>
+        //        struct flatten_extensions<extension_pack<EI...>,
+        //        extension_pack<E2...>,
+        //                                  ER...> {
+        //            using type = typename flatten_extensions<
+        //              typename flatten_extensions<extension_pack<E1...>,
+        //                                          extension_pack<E2...>>::type,
+        //              ER...>::type;
+        //        };
 
 
         template <template <typename> typename Extractor, typename... EPack>
@@ -172,7 +174,7 @@ namespace webpp {
         /**
          * Get the unique types
          */
-        using unique = typename unique_types<E...>::type;
+        //        using unique = typename unique_types<E...>::type;
 
         /**
          * Apply extensions into one type
@@ -181,19 +183,11 @@ namespace webpp {
         template <typename TraitsType, typename ExtensieDescriptor>
         using extensie_type = ExtensieDescriptor::template final_extensie_type<
           TraitsType,
-
           extend_to_all<
-
             ExtensieDescriptor::template mid_level_extensie_type<
               TraitsType, inheritable_extension_pack<merged_extensions<
                             ExtensieDescriptor, mother_extensions>>>::type,
-            merged_extensions<ExtensieDescriptor, child_extensions>
-
-            >
-
-          >
-
-          ;
+            merged_extensions<ExtensieDescriptor, child_extensions>>>;
     };
 
     //        template <typename... T>
