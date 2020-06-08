@@ -17,6 +17,15 @@
 namespace webpp {
 
 
+    template <typename E>
+    struct router_extension_pack_extractor {
+        static constexpr bool value = requires {
+            typename E::router_extensions;
+        };
+
+        using type =
+          std::conditional_t<value, typename E::router_extension, void>;
+    };
 
     /**
      * Const router is a router that satisfies that "Router" concept.

@@ -13,7 +13,7 @@ namespace webpp {
 
     struct fake_extension {
         template <typename T>
-        using extension_type = void;
+        using type = void;
     };
 
     // todo: check this, it's old
@@ -26,12 +26,12 @@ namespace webpp {
 
     template <typename T>
     concept MotherExtension = Extension<T>&& requires {
-        typename T::template extension_type<fake_traits>;
+        typename T::template type<fake_traits>;
     };
 
     template <typename T>
     concept ChildExtension = Extension<T>&& requires {
-        T::template extension_type<fake_traits, fake_extension>;
+        T::template type<fake_traits, fake_extension>;
     };
 
     template <Extension... E>
@@ -49,16 +49,24 @@ namespace webpp {
 
         template <template <typename> typename IF, typename First = void,
                   typename... EI>
-        struct extract_types {
+        struct filter {
             using type = std::conditional_t<
-              IF<EI>::value,
+              IF<First>::value,
               typename prepend<First, typename mother_types<EI...>::type>::type,
               typename extension_pack<E...>::type>;
         };
 
         template <template <typename> typename IF, typename... EI>
-        struct extract_types<IF, void, EI...> {
+        struct filter<IF, void, EI...> {
             using type = extension_pack<EI...>;
+        };
+
+        template <template <typename> typename IF, typename... EI>
+        struct filter_epack {};
+
+        template <template <typename> typename IF, typename... EI>
+        struct filter_epack<IF, extension_pack<EI...>> {
+            using type = typename filter<IF, EI...>::type;
         };
 
         template <typename First = void, typename... U>
@@ -78,37 +86,89 @@ namespace webpp {
 
         template <typename T>
         struct mother_type {
-            static constexpr bool value = false;
-        };
-
-        template <MotherExtension T>
-        struct mother_type {
-            static constexpr bool value = true;
+            static constexpr bool value = MotherExtension<T>;
         };
 
         template <typename T>
         struct child_type {
-            static constexpr bool value = false;
+            static constexpr bool value = ChildExtension<T>;
         };
 
-        template <ChildExtension T>
-        struct child_type {
-            static constexpr bool value = true;
+        template <typename... E1>
+        struct flatten_extensions {
+            using type = extension_pack<>;
         };
 
-      public:
+        template <typename... E1>
+        struct flatten_extensions<extension_pack<E1...>> {
+            using type = extension_pack<E1...>;
+        };
+
+        template <typename... E1, typename... E2>
+        struct flatten_extensions<extension_pack<E1...>,
+                                  extension_pack<E2...>> {
+            using type = extension_pack<E1..., E2...>;
+        };
+
+        template <typename... E1, typename... E2, typename... ER>
+        struct flatten_extensions<extension_pack<EI...>, extension_pack<E2...>,
+                                  ER...> {
+            using type = typename flatten_extensions<
+              typename flatten_extensions<extension_pack<E1...>,
+                                          extension_pack<E2...>>::type,
+              ER...>::type;
+        };
+
+
+        template <template <typename> typename Extractor, typename... EPack>
+        struct epack_miner {};
+
+        template <template <typename> typename Extractor, typename... EPack>
+        struct epack_miner<extension_pack<EPack...>> {
+            using type = extension_pack<Extractor<EPack>...>;
+        };
+
+        template <typename... Ex>
+        struct inheritable_extension_pack {
+            // this should not happen
+        };
+        template <typename... Ex>
+        struct inheritable_extension_pack<extension_pack<Ex...>>
+          : public virtual Ex... {
+            using Ex::Ex...;
+        };
+
         /**
          * Extract _mother extensions_ from the extension pack
          */
-        using mother_extensions =
-          typename extract_types<mother_type, E...>::type;
+        using mother_extensions = typename filter<mother_type, E...>::type;
+
 
         /**
          * Extract the _child extensions_ from the extension pack
          */
-        using child_extensions =
-          typename extract_types<child_types, E...>::type;
+        using child_extensions = typename filter<child_types, E...>::type;
 
+        template <typename ExtensieDescriptor, typename EPack>
+        using merged_extensions =
+          typename epack_miner <
+          ExtensieDescriptor::template related_extension_pack_type,
+              filter_epack<
+                ExtensieDescriptor::template has_related_extension_pack, EPack>;
+
+
+        template <typename ExtendThis, typename... Ex>
+        struct extend_to_all {
+            // this should not happen
+        };
+
+        template <typename ExtendThis, typename... Ex>
+        struct extend_to_all<extension_pack<Ex...>> : public virtual Ex... {
+            using Ex::Ex...;
+        };
+
+
+      public:
         /**
          * Get the unique types
          */
@@ -116,12 +176,24 @@ namespace webpp {
 
         /**
          * Apply extensions into one type
+         * todo: first filter based on extensie, then filter based on mother or child
          */
-        //        template <Traits TraitsType, typename MidLevelExtensie,
-        //                  typename FinalExtensie>
-        //        using applied = FinalExtensie<
-        //          typename MidLevelExtensie::template
-        //          rebind<mother_extensions>, child_extensions>;
+        template <typename TraitsType, typename ExtensieDescriptor>
+        using extensie_type = ExtensieDescriptor::template final_extensie_type<
+          TraitsType,
+
+          extend_to_all<
+
+            ExtensieDescriptor::template mid_level_extensie_type<
+              TraitsType, inheritable_extension_pack<merged_extensions<
+                            ExtensieDescriptor, mother_extensions>>>::type,
+            merged_extensions<ExtensieDescriptor, child_extensions>
+
+            >
+
+          >
+
+          ;
     };
 
     //        template <typename... T>
