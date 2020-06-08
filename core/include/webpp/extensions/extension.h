@@ -3,6 +3,7 @@
 #ifndef WEBPP_EXTENSION_H
 #define WEBPP_EXTENSION_H
 
+#include "../std/std.h"
 #include "../std/tuple.h"
 #include "../traits/traits_concepts.h"
 
@@ -52,8 +53,8 @@ namespace webpp {
         struct filter {
             using type = std::conditional_t<
               IF<First>::value,
-              typename prepend<First, typename mother_types<EI...>::type>::type,
-              typename extension_pack<E...>::type>;
+              typename prepend<First, typename filter<IF, EI...>::type>::type,
+              typename filter<IF, EI...>::type>;
         };
 
         template <template <typename> typename IF, typename... EI>
@@ -126,7 +127,7 @@ namespace webpp {
         struct epack_miner {};
 
         template <template <typename> typename Extractor, typename... EPack>
-        struct epack_miner<extension_pack<EPack...>> {
+        struct epack_miner<Extractor, extension_pack<EPack...>> {
             using type = extension_pack<Extractor<EPack>...>;
         };
 
@@ -137,7 +138,10 @@ namespace webpp {
         template <typename... Ex>
         struct inheritable_extension_pack<extension_pack<Ex...>>
           : public virtual Ex... {
-            using Ex::Ex...;
+            template <typename... X>
+            inheritable_extension_pack(X&&... x)
+              : Ex... {std::forward<X>(x)...} {
+            }
         };
 
         /**
@@ -149,7 +153,7 @@ namespace webpp {
         /**
          * Extract the _child extensions_ from the extension pack
          */
-        using child_extensions = typename filter<child_types, E...>::type;
+        using child_extensions = typename filter<child_type, E...>::type;
 
         template <typename ExtensieDescriptor, typename EPack>
         using merged_extensions =
