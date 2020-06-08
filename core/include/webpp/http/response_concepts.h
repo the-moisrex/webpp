@@ -42,33 +42,14 @@ namespace webpp {
     template <typename T>
     concept ResponseExtension = Extension<T>;
 
-    template <typename T>
-    struct is_response_extension_list {};
-
-    template <ResponseExtension T>
-    struct is_response_extension_list<T> {
-        static constexpr bool value = true;
+    template <typename E>
+    struct is_response_extension_list {
+        static constexpr bool value = ResponseExtension<E>;
     };
-
-    template <ResponseExtension... T>
-    struct is_response_extension_list<::std::tuple<T...>> {
-        static constexpr bool value = true;
-    };
-
-    template <ResponseExtension... T>
-    struct is_response_extension_list<extension_pack<T...>> {
-        static constexpr bool value = true;
-    };
-
-    template <ResponseExtension... T>
-    struct is_response_extension_list<typelist<T...>> {
-        static constexpr bool value = true;
-    };
-
 
     template <typename T>
     concept ResponseExtensionList =
-      ExtensionList<T, is_response_extension_list>;
+      ExtensionListOf<T, is_response_extension_list>;
 
 } // namespace webpp
 
