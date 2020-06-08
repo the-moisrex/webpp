@@ -27,7 +27,7 @@ namespace webpp::stl {
     template <Traits TraitsType,
               typename CharT      = typename TraitsType::char_type,
               typename CharTraits = typename TraitsType::char_traits>
-    using basic_string_view = std::basic_string_view<CharT, CharTraits>;
+    using basic_string_view = ::std::basic_string_view<CharT, CharTraits>;
 
 } // namespace webpp::stl
 
