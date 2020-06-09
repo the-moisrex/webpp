@@ -145,7 +145,7 @@ namespace webpp {
     template <Traits TraitsType, typename EList>
     struct response_header_field : public EList {
         using traits_type = TraitsType;
-        using str_t       = auto_string_type<traits_type, is_mutable>;
+        using str_t       = typename traits_type::string_type;
         using str_view_t  = typename traits_type::string_view_type;
 
         using EList::EList;
@@ -179,19 +179,21 @@ namespace webpp {
      *   Interpreted as: "Subject: ¡Hola, señor!"
      *
      */
-    template <Traits TraitsType, typename EList>
+    template <Traits TraitsType, typename HeaderEList,
+              typename HeaderFieldEList>
     class response_headers
-      : public stl::unordered_multiset<TraitsType, header_field<TraitsType>>,
-        public EList {
+      : public stl::unordered_multiset<
+          TraitsType, response_header_field<TraitsType, HeaderFieldEList>>,
+        public HeaderEList {
 
-        using super =
-          stl::unordered_multiset<TraitsType, header_field<TraitsType>>;
+        using super = stl::unordered_multiset<
+          TraitsType, response_header_field<TraitsType, HeaderFieldEList>>;
 
       public:
         using traits_type = TraitsType;
         using str_t       = typename traits_type::string_type;
 
-        using EList::EList;
+        using HeaderEList::HeaderEList;
 
         std::uint_fast16_t status_code = 200;
 
@@ -202,7 +204,7 @@ namespace webpp {
             // res << "HTTP/1.1" << " " << status_code() << " " <<
             // status_reason_phrase(status_code()) << "\r\n";
             std::size_t size = 1;
-            for (auto const& [attr, val], *this) {
+            for (auto const& [attr, val] : *this) {
                 size += attr.size() + val.size() + 4;
             }
             str_t res;
@@ -222,13 +224,13 @@ namespace webpp {
         template <typename ExtensionType>
         struct has_related_extension_pack {
             static constexpr bool value = requires {
-                typename T::response_headers_extensions;
+                typename ExtensionType::response_headers_extensions;
             };
         };
 
         template <typename ExtensionType>
         using related_extension_pack_type =
-          typename T::response_headers_extensions;
+          typename ExtensionType::response_headers_extensions;
 
         template <typename TraitsType, typename EList>
         using mid_level_extensie_type = response_headers<TraitsType, EList>;
@@ -245,13 +247,13 @@ namespace webpp {
         template <typename ExtensionType>
         struct has_related_extension_pack {
             static constexpr bool value = requires {
-                typename T::response_header_field_extensions;
+                typename ExtensionType::response_header_field_extensions;
             };
         };
 
         template <typename ExtensionType>
         using related_extension_pack_type =
-          typename T::response_header_field_extensions;
+          typename ExtensionType::response_header_field_extensions;
 
         template <typename TraitsType, typename EList>
         using mid_level_extensie_type =
