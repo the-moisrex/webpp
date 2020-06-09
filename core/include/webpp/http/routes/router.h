@@ -34,7 +34,7 @@ namespace webpp {
      * @tparam ExtensionsType
      * @tparam RouteType
      */
-    template <RouterExtensionList ExtensionsType = empty_extension_pack,
+    template <ExtensionList ExtensionsType = empty_extension_pack,
               Route... RouteType>
     struct const_router {
 
@@ -42,7 +42,7 @@ namespace webpp {
         // might want
         using initial_context_type_original = basic_context<>;
 
-        using initial_context_type = ::std::conditional_t<
+        using initial_context_type = std::conditional_t<
           RouterExtensionWithContextExtensions<ExtensionsType>,
           typename ExtensionsType::template initial_context_type<
             initial_context_type_original>,
@@ -52,10 +52,10 @@ namespace webpp {
         // Additional routes extracted from the extensions
         //        using additional_routes = ;
 
-        const ::std::tuple<RouteType...> routes;
+        const std::tuple<RouteType...> routes;
 
         constexpr const_router(RouteType&&... _route) noexcept
-          : routes(::std::forward<RouteType>(_route)...) {
+          : routes(std::forward<RouteType>(_route)...) {
         }
 
 
@@ -72,15 +72,15 @@ namespace webpp {
          * @param i
          * @return
          */
-        template <::std::size_t N = 0>
-        constexpr auto& operator[](::std::size_t i) const noexcept {
+        template <std::size_t N = 0>
+        constexpr auto& operator[](std::size_t i) const noexcept {
             if (N == i) {
-                return ::std::get<N>(routes);
+                return std::get<N>(routes);
             }
             if constexpr (N + 1 < route_count()) {
                 return operator[]<N + 1>(i);
             }
-            throw ::std::invalid_argument("The specified index is not valid");
+            throw std::invalid_argument("The specified index is not valid");
         }
 
         /**
@@ -100,17 +100,17 @@ namespace webpp {
             this->               operator()(ctx);
         }
 
-        template <::std::size_t Index = 0>
+        template <std::size_t Index = 0>
         Response auto operator()(Context auto&& ctx) noexcept {
             using context_type              = decltype(ctx);
             constexpr auto next_route_index = Index + 1;
-            constexpr auto route            = ::std::get<Index>(routes);
+            constexpr auto route            = std::get<Index>(routes);
             constexpr bool is_last_route    = Index != route_count() - 1;
             ctx.call_pre_subroute_methods();
             auto res = route(ctx);
             ctx.call_post_subroute_methods();
             using result_type = decltype(res);
-            if constexpr (::std::is_void_v<result_type>) {
+            if constexpr (std::is_void_v<result_type>) {
                 // nothing to do!
             } else if constexpr (Response<result_type>) {
                 ctx.response = res;
@@ -132,13 +132,13 @@ namespace webpp {
                 }
                 return; // done; no more routing
             } else {
-                throw ::std::invalid_argument(
+                throw std::invalid_argument(
                   "Your route is not returning something that we understand.");
             }
 
             // call the next route:
             if constexpr (is_last_route) {
-                operator()<next_route_index>(::std::forward<context_type>(ctx));
+                operator()<next_route_index>(std::forward<context_type>(ctx));
             } else {
                 // call the context
                 ctx.call_post_entryroute_methods();
@@ -155,7 +155,7 @@ namespace webpp {
     struct router_t {
         template <typename... Args>
         constexpr router_t(Args&&... args) noexcept
-          : routes(::std::forward<Args>(args)...) {
+          : routes(std::forward<Args>(args)...) {
         }
 
 
@@ -165,18 +165,18 @@ namespace webpp {
                           "The specified route is not valid.");
 
 
-            if constexpr (is_specialization_of<RouteList, ::std::tuple>::value)
+            if constexpr (is_specialization_of<RouteList, std::tuple>::value)
     {
                 // when it's a tuple
                 auto _tup =
-                  ::std::tuple_cat(routes,
-    ::std::make_tuple(::std::move(_route))); return router_t<Interface,
+                  std::tuple_cat(routes,
+    std::make_tuple(std::move(_route))); return router_t<Interface,
     decltype(_tup)>{_tup};
 
             } else if constexpr (is_specialization_of<RouteList,
                                                       const_list>::value) {
                 // for const_list (constexpr version)
-                auto _the_routes = routes + ::std::move(_route);
+                auto _the_routes = routes + std::move(_route);
                 return router_t<Interface, decltype(_the_routes)>{_the_routes};
 
             } else if constexpr (is_container_v<RouteList>) {
@@ -185,10 +185,10 @@ namespace webpp {
                   can_cast<Route, typename RouteList::value_type>::value,
                   "The specified route does not match the router version of "
                   "route.");
-                routes.emplace_back(::std::forward<Route>(_route));
+                routes.emplace_back(std::forward<Route>(_route));
 
             } else {
-                throw ::std::invalid_argument(
+                throw std::invalid_argument(
                   "The container for routes is unknown.");
             }
         }
@@ -202,8 +202,8 @@ namespace webpp {
     struct dynamic_route {
 
       protected:
-        // todo: maybe don't use ::std::function? it's slow a bit (but not that much)
-        using callback_t = ::std::function<void()>;
+        // todo: maybe don't use std::function? it's slow a bit (but not that much)
+        using callback_t = std::function<void()>;
 
         callback_t callback = nullptr;
 
