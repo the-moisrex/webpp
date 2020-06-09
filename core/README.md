@@ -484,6 +484,9 @@ can detect which extensions should be used where.
 - `mid_level_extensie_type` (required)
 - `final_extensie_type` (required) (could be optional, but that's for later)
 
+### Extensie descriptor carry dependencies
+
+
 ### Extension hierarchy assembly (internal usage)
 To assemble the extensions and the extensies into one single type we have to:
 

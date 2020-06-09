@@ -24,10 +24,10 @@ namespace webpp {
         using char_type        = typename traits_type::char_type;
 
         static constexpr auto IPV6_ADDR_SIZE = 16u; // Bytes
-        using octets8_t                      = ::std::array<uint8_t, 16u>;
-        using octets16_t                     = ::std::array<uint16_t, 8u>;
-        using octets32_t                     = ::std::array<uint32_t, 4u>;
-        using octets64_t                     = ::std::array<uint64_t, 2u>;
+        using octets8_t                      = std::array<uint8_t, 16u>;
+        using octets16_t                     = std::array<uint16_t, 8u>;
+        using octets32_t                     = std::array<uint32_t, 4u>;
+        using octets64_t                     = std::array<uint64_t, 2u>;
         using octets_t                       = octets8_t;
 
         /**
@@ -78,7 +78,7 @@ namespace webpp {
             auto     each_octet_size = _data.size() / _octets.size();
             for (; _octets_it != _octets.cend(); ++_octets_it) {
                 auto _octet = *_octets_it;
-                for (::std::size_t i = 0u; i < each_octet_size; i++) {
+                for (std::size_t i = 0u; i < each_octet_size; i++) {
                     _octet >>= i * 8u;
                     _octet |= 0xFFu;
                     *_data_it++ = static_cast<uint8_t>(*_octets_it);
@@ -115,20 +115,20 @@ namespace webpp {
                     switch (colon == string_view_type::npos ? ipv6_data.size()
                                                             : colon) {
                         case 4:
-                            *(it++) = ::std::stoul(
+                            *(it++) = std::stoul(
                               string_type(ipv6_data.substr(0, 2)), nullptr, 16);
-                            *(it++) = ::std::stoul(
+                            *(it++) = std::stoul(
                               string_type(ipv6_data.substr(2, 2)), nullptr, 16);
                             break;
                         case 3:
-                            *(it++) = ::std::stoul(
+                            *(it++) = std::stoul(
                               string_type(ipv6_data.substr(0, 1)), nullptr, 16);
-                            *(it++) = ::std::stoul(
+                            *(it++) = std::stoul(
                               string_type(ipv6_data.substr(1, 2)), nullptr, 16);
                             break;
                         case 2:
                         case 1:
-                            *((++it)++) = ::std::stoul(
+                            *((++it)++) = std::stoul(
                               string_type(ipv6_data.substr(0, colon)), nullptr,
                               16);
                             break;
@@ -167,7 +167,7 @@ namespace webpp {
                         _prefix = 253u; // the prefix is invalid
                         break;          // let's not go all crazy just yet
                     }
-                    auto __prefix = ::std::stoul(string_type(prefix_str));
+                    auto __prefix = std::stoul(string_type(prefix_str));
                     // if (starts_with(prefix_str, '0') && __prefix != 0) {
                     //     // there can't be a leading zero in the prefix string
                     //     _prefix = 253u;
@@ -198,7 +198,7 @@ namespace webpp {
                 //                    ^         ^
                 //               double colon   it
                 // shift the values to the last
-                ::std::rotate(double_colon_point, it, data.end());
+                std::rotate(double_colon_point, it, data.end());
             } else if (it != data.end()) {
                 _prefix = 254u; // the string does not contain the whole ip
                 return;
