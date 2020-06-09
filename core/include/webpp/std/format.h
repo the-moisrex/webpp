@@ -10,7 +10,17 @@
 #elif __has_include(<fmt/format.h>)
 #    include <fmt/format.h>
 namespace webpp::std {
-    using namespace fmt;
+
+    template <typename... Args>
+    inline auto format(Args&&... args) {
+        return fmt::format(std::format<Args>(args)...);
+    }
+
+    template <typename... Args>
+    inline auto format_to(Args&&... args) {
+        return fmt::format_to(std::format<Args>(args)...);
+    }
+
 } // namespace webpp::std
 #else
 #    error "We don't have access to <format> nor {fmt} library."
