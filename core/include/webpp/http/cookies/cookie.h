@@ -251,7 +251,7 @@ namespace webpp {
         using super = basic_cookie_common<TraitsType, false>;
 
       public:
-        static constexpr auto header_direction = webpp::header_type::request;
+        static constexpr auto header_direction = header_type::request;
 
         constexpr request_cookie() noexcept {};
 
@@ -311,7 +311,7 @@ namespace webpp {
         attrs_t attrs;
 
       public:
-        static constexpr auto header_direction = webpp::header_type::response;
+        static constexpr auto header_direction = header_type::response;
 
         constexpr response_cookie() noexcept {};
 
