@@ -23,7 +23,7 @@ namespace webpp {
       std::copy_constructible<T> && !std::is_final_v<T> &&
       std::is_default_constructible_v<T> && std::is_move_constructible_v<T> &&
       std::is_move_assignable_v<T> && std::is_copy_assignable_v<T> &&
-      std::is_class_v<T> && !stl::is_tuple<T>::value && !std::is_integral_v<T>;
+      std::is_class_v<T> && !std::is_integral_v<T>;
 
     template <typename T>
     concept MotherExtension = Extension<T>&& requires {

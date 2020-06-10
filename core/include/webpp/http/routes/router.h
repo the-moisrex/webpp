@@ -21,25 +21,15 @@ namespace webpp {
      * Const router is a router that satisfies that "Router" concept.
      *
      * @tparam InitialContextType
-     * @tparam ExtensionsType
+     * @tparam ExtensionListType
      * @tparam RouteType
      */
-    template <ExtensionList ExtensionsType = empty_extension_pack,
+    template <ExtensionList ExtensionListType = empty_extension_pack,
               Route... RouteType>
     struct const_router {
 
-        // Add any additional "context extensions" that the "router extensions"
-        // might want
-        using initial_context_type_original = basic_context<>;
 
-        using initial_context_type = std::conditional_t<
-          RouterExtensionWithContextExtensions<ExtensionsType>,
-          typename ExtensionsType::template initial_context_type<
-            initial_context_type_original>,
-          initial_context_type_original>;
-
-
-        // Additional routes extracted from the extensions
+        // todo: Additional routes extracted from the extensions
         //        using additional_routes = ;
 
         const std::tuple<RouteType...> routes;
@@ -80,14 +70,12 @@ namespace webpp {
          */
         template <Response ResponseType>
         Response auto operator()(Request auto& req) noexcept {
-            ResponseType res;
-                         operator()(req, res);
-            return res;
-        }
-
-        void operator()(Request auto& req, Response auto& res) noexcept {
-            initial_context_type ctx{.request = req, .response = res};
-            this->               operator()(ctx);
+            using req_type = decltype(req);
+            using context_type =
+              typename ExtensionListType::template extensie_type<
+                req_type::traits_type, context_descriptor>;
+            context_type ctx{.request = req, .response = res};
+            return this->operator()(ctx);
         }
 
         template <std::size_t Index = 0>

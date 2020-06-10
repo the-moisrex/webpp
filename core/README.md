@@ -381,12 +381,27 @@ struct cookies : public virtual typename extension_pack<one, two, three>::templa
 struct cookies_child_extensions {
 
   template <Traits TraitsType, Context C>
-  struct type = cookies<TraitsType, cookies<TraitsType, C>>;
-
+  using type = cookies<TraitsType, cookies<TraitsType, C>>;
 };
 
 struct router_level_extensions {
     using header_extensions = extension_pack<cookies_child_extension>;
+};
+```
+
+or the shortened version:
+
+```c++
+template <Traits TraitsType = std_traits, ResponseHeader C = default_response_header>
+struct cookies : public C {
+    using C::C;
+    
+    template <Traits TT, Context CC>
+    using type = cookies<TT, CC>;
+};
+
+struct router_level_extension {
+    using header_extensions = extension_pack<cookies<>>;
 };
 ```
 
