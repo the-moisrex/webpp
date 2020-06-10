@@ -14,10 +14,10 @@
 #elif __has_include(<boost/utility/string.hpp>)
 #    define STD_STRING STLLIB_BOOST
 #    include <boost/utility/string.hpp>
-namespace webpp::std {
+namespace webpp::stl {
     using basic_string = boost::basic_string;
     using string       = boost::string;
-} // namespace webpp::std
+} // namespace webpp::stl
 #endif
 
 

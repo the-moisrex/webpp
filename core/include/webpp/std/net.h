@@ -19,7 +19,7 @@ namespace webpp::stl {
 #elif __has_include(<experimental/net>)
 #    define STD_NET STLLIB_EXPERIMENTAL
 #    include <experimental/net>
-namespace webpp::std {
+namespace webpp::stl {
     namespace net = experimental::net;
 }
 #else

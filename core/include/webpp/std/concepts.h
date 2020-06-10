@@ -10,10 +10,10 @@
 #if __has_include(<concepts>)
 #    include <concepts>
 #else
-namespace webppstd {
+namespace webpp::stl {
     namespace detail {
         template <class T, class U>
-        concept SameHelper = std::is_same_v<T, U>;
+        concept SameHelper = stl::is_same_v<T, U>;
     }
 
     /* same_as */
@@ -22,31 +22,31 @@ namespace webppstd {
 
     /* derived_from */
     template <class Derived, class Base>
-    concept derived_from = std::is_base_of_v<Base, Derived>&&
-      std::is_convertible_v<const volatile Derived*, const volatile Base*>;
+    concept derived_from = stl::is_base_of_v<Base, Derived>&&
+      stl::is_convertible_v<const volatile Derived*, const volatile Base*>;
 
     /* convertible_to */
     template <class From, class To>
-    concept convertible_to = std::is_convertible_v<From, To>&& requires(
-      std::add_rvalue_reference_t<From> (&f)()) {
+    concept convertible_to = stl::is_convertible_v<From, To>&& requires(
+      stl::add_rvalue_reference_t<From> (&f)()) {
         static_cast<To>(f());
     };
 
     template <typename T>
-    concept integral = std::is_integral_v<T>;
+    concept integral = stl::is_integral_v<T>;
 
     template <typename T>
     concept move_constructible =
-      std::constructible_from<T, T>&& std::convertible_to<T, T>;
+      stl::constructible_from<T, T>&& stl::convertible_to<T, T>;
 
     template <class T>
 
-    concept copy_constructible = std::move_constructible<
-      T>&& std::constructible_from<T, T&>&& std::convertible_to<T&, T>&&
-      std::constructible_from<T, const T&>&& std::convertible_to<const T&, T>&&
-        std::constructible_from<T, const T>&& std::convertible_to<const T, T>;
+    concept copy_constructible = stl::move_constructible<
+      T>&& stl::constructible_from<T, T&>&& stl::convertible_to<T&, T>&&
+      stl::constructible_from<T, const T&>&& stl::convertible_to<const T&, T>&&
+        stl::constructible_from<T, const T>&& stl::convertible_to<const T, T>;
 
-} // namespace webppstd
+} // namespace webpp::stl
 #endif
 
 namespace webpp::stl {
