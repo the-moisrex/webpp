@@ -234,13 +234,13 @@ namespace webpp {
 
         auto& name(name_t __name) noexcept {
             trim<traits_type>(__name);
-            this->_name = std::move(__name);
+            this->_name = stl::move(__name);
             return *this;
         }
 
         auto& value(value_t __value) noexcept {
             trim<traits_type>(__value);
-            _value = std::move(__value);
+            _value = stl::move(__value);
             return *this;
         }
     };
@@ -278,7 +278,7 @@ namespace webpp {
 
       public:
         using traits_type = TraitsType;
-        using date_t    = ::std::chrono::time_point<std::chrono::system_clock>;
+        using date_t    = ::std::chrono::time_point<stl::chrono::system_clock>;
         using domain_t  = typename super::storing_str_t;
         using path_t    = typename super::storing_str_t;
         using expires_t = ::std::optional<date_t>;
@@ -375,16 +375,16 @@ namespace webpp {
         }
 
         auto& comment(comment_t __comment) noexcept {
-            _comment = std::move(__comment);
+            _comment = stl::move(__comment);
             return *this;
         }
 
         auto& domain(domain_t __domain) noexcept {
-            _domain = std::move(__domain);
+            _domain = stl::move(__domain);
             return *this;
         }
         auto& path(path_t __path) noexcept {
-            _path = std::move(__path);
+            _path = stl::move(__path);
             return *this;
         }
         auto& max_age(max_age_t __max_age) noexcept {
@@ -417,13 +417,13 @@ namespace webpp {
                 // set the expire date 10 year before now:
                 expires(
                   ::std::chrono::system_clock::now() -
-                  ::std::chrono::duration<int, std::ratio<60 * 60 * 24 * 365>>(
+                  ::std::chrono::duration<int, stl::ratio<60 * 60 * 24 * 365>>(
                     10));
             } else if (is_removed()) {
                 // set the expire date 1 year from now:
                 expires(
                   ::std::chrono::system_clock::now() +
-                  ::std::chrono::duration<int, std::ratio<60 * 60 * 24 * 365>>(
+                  ::std::chrono::duration<int, stl::ratio<60 * 60 * 24 * 365>>(
                     1));
             }
             // remove max-age if it exists because we're going with expires
@@ -440,8 +440,8 @@ namespace webpp {
          */
         template <typename D, typename T>
         inline auto&
-        expires_in(std::chrono::duration<D, T> const& __dur) noexcept {
-            _expires = std::chrono::system_clock::now() + __dur;
+        expires_in(stl::chrono::duration<D, T> const& __dur) noexcept {
+            _expires = stl::chrono::system_clock::now() + __dur;
             return *this;
         }
 
@@ -485,8 +485,8 @@ namespace webpp {
                     out << "; Path=" << _path;
 
                 if (_expires) {
-                    std::time_t expires_c  = system_clock::to_time_t(*_expires);
-                    std::tm     expires_tm = *std::localtime(&expires_c);
+                    stl::time_t expires_c  = system_clock::to_time_t(*_expires);
+                    stl::tm     expires_tm = *stl::localtime(&expires_c);
                     char        buff[30];
                     // FIXME: check time zone and see if it's ok
                     //            setlocale(LC_ALL, "en_US.UTF-8");
@@ -569,7 +569,7 @@ namespace webpp {
 
         friend inline void swap(response_cookie<TraitsType>& first,
                                 response_cookie<TraitsType>& second) noexcept {
-            using std::swap;
+            using stl::swap;
             swap(first._valid, second._valid);
             swap(first._name, second._name);
             swap(first._value, second._value);

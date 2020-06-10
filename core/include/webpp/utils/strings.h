@@ -41,7 +41,7 @@ namespace webpp {
     // trim from start (in place)
     template <Traits TraitsType>
     inline void ltrim(typename TraitsType::string_view_type& s) noexcept {
-        if (auto found = std::find_if_not(s.begin(), s.end(),
+        if (auto found = stl::find_if_not(s.begin(), s.end(),
                                           [](auto const& c) -> bool {
                                               return c == ' ' || c == '\n' ||
                                                      c == '\r' || c == '\t' ||
@@ -57,7 +57,7 @@ namespace webpp {
     // trim from end (in place)
     template <Traits TraitsType>
     inline void rtrim(typename TraitsType::string_view_type& s) noexcept {
-        if (auto found = std::find_if_not(s.rbegin(), s.rend(),
+        if (auto found = stl::find_if_not(s.rbegin(), s.rend(),
                                           [](auto const& c) -> bool {
                                               return ::std::isspace(c);
                                           });
@@ -101,7 +101,7 @@ namespace webpp {
     // trim from start (in place)
     template <Traits TraitsType>
     inline void ltrim(typename TraitsType::string_type& s) noexcept {
-        s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](auto c) {
+        s.erase(s.begin(), stl::find_if(s.begin(), s.end(), [](auto c) {
                     return c != ' ' && c != '\n' && c != '\r' && c != '\t' &&
                            c != '\f' && c != '\v';
                 }));
@@ -110,7 +110,7 @@ namespace webpp {
     // trim from end (in place)
     template <Traits TraitsType>
     inline void rtrim(typename TraitsType::string_type& s) noexcept {
-        s.erase(std::find_if(s.rbegin(), s.rend(),
+        s.erase(stl::find_if(s.rbegin(), s.rend(),
                              [](auto c) {
                                  return c != ' ' && c != '\n' && c != '\r' &&
                                         c != '\t' && c != '\f' && c != '\v';
@@ -153,7 +153,7 @@ namespace webpp {
     template <Traits TraitsType>
     inline void to_lower(typename TraitsType::stirng_type& str) noexcept {
         // FIXME: I think you can make this algorithm faster
-        std::transform(str.cbegin(), str.cend(), str.begin(), [](auto c) {
+        stl::transform(str.cbegin(), str.cend(), str.begin(), [](auto c) {
             return ::std::tolower(c);
         });
     }
@@ -161,7 +161,7 @@ namespace webpp {
     template <Traits TraitsType>
     inline void to_upper(typename TraitsType::string_type& str) noexcept {
         // FIXME: I think you can make this algorithm faster
-        std::transform(str.cbegin(), str.cend(), str.begin(),
+        stl::transform(str.cbegin(), str.cend(), str.begin(),
                        [](auto const& c) {
                            return ::std::tolower(c);
                        });

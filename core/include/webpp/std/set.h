@@ -10,13 +10,13 @@
 
 // Traits aware map:
 namespace webpp::stl {
-    template <typename Traits, typename Key, typename Compare = std::less<Key>,
+    template <typename Traits, typename Key, typename Compare = stl::less<Key>,
               typename Allocator = typename Traits::template allocator<Key>>
-    using set = std::set<Key, Compare, Allocator>;
+    using set = stl::set<Key, Compare, Allocator>;
 
-    template <typename Traits, typename Key, typename Compare = std::less<Key>,
+    template <typename Traits, typename Key, typename Compare = stl::less<Key>,
               typename Allocator = typename Traits::template allocator<Key>>
-    using multiset = std::multiset<Key, Compare, Allocator>;
+    using multiset = stl::multiset<Key, Compare, Allocator>;
 
 } // namespace webpp::stl
 

@@ -9,16 +9,16 @@
 #    include <format>
 #elif __has_include(<fmt/format.h>)
 #    include <fmt/format.h>
-namespace webpp::std {
+namespace webpp::stl {
 
     template <typename... Args>
     inline auto format(Args&&... args) {
-        return fmt::format(std::format<Args>(args)...);
+        return fmt::format(stl::format<Args>(args)...);
     }
 
     template <typename... Args>
     inline auto format_to(Args&&... args) {
-        return fmt::format_to(std::format<Args>(args)...);
+        return fmt::format_to(stl::format<Args>(args)...);
     }
 
 } // namespace webpp::std

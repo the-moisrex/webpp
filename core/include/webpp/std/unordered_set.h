@@ -11,16 +11,16 @@
 // Traits aware map:
 namespace webpp::stl {
 
-    template <Traits TraitsType, typename Key, typename Hash = std::hash<Key>,
-              typename KeyEqual  = std::equal_to<Key>,
+    template <Traits TraitsType, typename Key, typename Hash = stl::hash<Key>,
+              typename KeyEqual  = stl::equal_to<Key>,
               typename Allocator = typename TraitsType::template allocator<Key>>
-    using unordered_set = std::unordered_set<Key, Hash, KeyEqual, Allocator>;
+    using unordered_set = stl::unordered_set<Key, Hash, KeyEqual, Allocator>;
 
-    template <Traits TraitsType, typename Key, typename Hash = std::hash<Key>,
-              typename KeyEqual  = std::equal_to<Key>,
+    template <Traits TraitsType, typename Key, typename Hash = stl::hash<Key>,
+              typename KeyEqual  = stl::equal_to<Key>,
               typename Allocator = typename TraitsType::template allocator<Key>>
     using unordered_multiset =
-      std::unordered_multiset<Key, Hash, KeyEqual, Allocator>;
+      stl::unordered_multiset<Key, Hash, KeyEqual, Allocator>;
 
 } // namespace webpp::stl
 

@@ -9,22 +9,22 @@
 namespace webpp {
 
     template <typename ResponseType, typename = void>
-    struct is_response : std::false_type {};
+    struct is_response : stl::false_type {};
 
     template <typename ResponseType>
     struct is_response<
       ResponseType,
-      std::void_t<
+      stl::void_t<
         typename ResponseType::body_t, typename ResponseType::header_t,
         typename ResponseType::traits, typename ResponseType::str_t,
         typename ResponseType::str_view_t,
         decltype(
-          std::declval<ResponseType>().body,
-          std::declval<ResponseType>().header,
-          std::declval<ResponseType>().operator typename ResponseType::str_t(),
-          std::declval<ResponseType>().
+          stl::declval<ResponseType>().body,
+          stl::declval<ResponseType>().header,
+          stl::declval<ResponseType>().operator typename ResponseType::str_t(),
+          stl::declval<ResponseType>().
           operator typename ResponseType::str_view_t(),
-          (void)0)>> : std::true_type {};
+          (void)0)>> : stl::true_type {};
 
     template <typename ResponseType>
     constexpr bool is_response_v = is_response<ResponseType>::value;
@@ -35,8 +35,8 @@ namespace webpp {
     template <typename T>
     concept ConvertibleToResponse =
       Response<T> ||
-      std::is_convertible_v<T, typename std_traits_from_string<T>::type> ||
-      std::is_convertible_v<T, typename std_traits_from_string_view<T>::type>;
+      stl::is_convertible_v<T, typename std_traits_from_string<T>::type> ||
+      stl::is_convertible_v<T, typename std_traits_from_string_view<T>::type>;
 
 
     template <typename T>

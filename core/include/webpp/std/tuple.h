@@ -11,7 +11,7 @@
 namespace webpp::stl {
 
     template <typename T>
-    struct is_tuple : public std::false_type {};
+    struct is_tuple : public stl::false_type {};
 
     template <typename T>
     struct is_tuple<T const> : public is_tuple<T> {};
@@ -23,7 +23,7 @@ namespace webpp::stl {
     struct is_tuple<T const volatile> : public is_tuple<T> {};
 
     template <typename... Types>
-    struct is_tuple<std::tuple<Types...>> : public std::true_type {};
+    struct is_tuple<stl::tuple<Types...>> : public stl::true_type {};
 
     template <typename T>
     concept Tuple = is_tuple<T>::value;

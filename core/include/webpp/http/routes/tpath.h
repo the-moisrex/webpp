@@ -16,12 +16,12 @@ namespace webpp {
     /**
      * TODO: add types to the "{user_id}" to be able to use it as "{int:user_id}"
      */
-    std::map<std::string_view, std::string_view>
-    parse_vars(std::string_view const& _templ,
-               std::string_view const& _path) noexcept {
+    stl::map<stl::string_view, stl::string_view>
+    parse_vars(stl::string_view const& _templ,
+               stl::string_view const& _path) noexcept {
         using namespace webpp;
 
-        std::map<std::string_view, std::string_view> res;
+        stl::map<stl::string_view, stl::string_view> res;
 
         using ptr_t = decltype(_templ.data());
 
@@ -51,18 +51,18 @@ namespace webpp {
                 case '}':
                     // check if we are in a curly braces
                     if (curly_start != templ_end) {
-                        std::string_view key{
-                          colon + 1, static_cast<std::string_view::size_type>(
+                        stl::string_view key{
+                          colon + 1, static_cast<stl::string_view::size_type>(
                                        c - colon - 1)};
 
                         // find _ in "{var}_" inside path
                         // this doesn't take the / in account
                         auto next_char_path =
-                          std::string_view{path_char}.find(*(c + 1));
+                          stl::string_view{path_char}.find(*(c + 1));
 
-                        std::string_view value{
+                        stl::string_view value{
                           path_char,
-                          std::min(next_char_path,
+                          stl::min(next_char_path,
                                    _path.size() - (path_char - _path.data()))};
                         /*
                         std::string_view type{curly_start + 1,
@@ -96,12 +96,12 @@ namespace webpp {
      */
     template <typename CharT>
     [[nodiscard]] bool
-    tpath_check(std::basic_string_view<CharT> const& templated_path,
-                std::basic_string_view<CharT> const& _path) noexcept {
+    tpath_check(stl::basic_string_view<CharT> const& templated_path,
+                stl::basic_string_view<CharT> const& _path) noexcept {
         auto          tit        = templated_path.data(); // templated iterator
         auto          pit        = _path.data();          // path iterator
         decltype(tit) seg_start  = nullptr;
-        std::size_t   seg_starts = 0;
+        stl::size_t   seg_starts = 0;
         decltype(pit) pseg_start = nullptr;
         for (;;) {
             switch (*tit) {
@@ -144,7 +144,7 @@ namespace webpp {
                                    // itself
 
 #if CXX20
-                        std::basic_string_view<CharT> seg_rule(seg_start, tit);
+                        stl::basic_string_view<CharT> seg_rule(seg_start, tit);
 #elif CXX17
                         std::basic_string_view<CharT> seg_rule(seg_start,
                                                                tit - seg_start);
@@ -185,10 +185,10 @@ namespace webpp {
 
     struct tpath_condition {
       protected:
-        std::string_view tpath_str;
+        stl::string_view tpath_str;
 
       public:
-        constexpr tpath_condition(std::string_view str) noexcept
+        constexpr tpath_condition(stl::string_view str) noexcept
           : tpath_str(str) {
         }
 

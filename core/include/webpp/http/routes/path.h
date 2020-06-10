@@ -17,7 +17,7 @@ namespace webpp::routes {
       public:
         constexpr path_condition(
           typename traits_type::string_view_type str) noexcept
-          : _path(std::move(str)) {
+          : _path(stl::move(str)) {
         }
 
         constexpr path_condition() noexcept = default;

@@ -14,7 +14,7 @@
 #elif __has_include(<boost/asio/ts/netfwd.hpp>)
 #    define STD_NETFWD STLLIB_BOOST
 #    include <boost/asio/ts/netfwd.hpp>
-namespace webpp::std {
+namespace webpp::stl {
     namespace net = boost::asio;
 }
 #elif __has_include(<experimental/netfwd>)

@@ -14,7 +14,7 @@
 #elif __has_include(<boost/asio/ts/internet.hpp>)
 #    define STD_INTERNET STLLIB_BOOST
 #    include <boost/asio/ts/internet.hpp>
-namespace webpp::std {
+namespace webpp::stl {
     namespace net = boost::asio;
 }
 #elif __has_include(<experimental/internet>)

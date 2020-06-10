@@ -23,7 +23,7 @@ namespace webpp {
                 for (; c != str.cend(); c++) {
                     if constexpr (throw_mistakes) {
                         if (*c <= '0' || *c >= '9')
-                            throw std::invalid_argument(
+                            throw stl::invalid_argument(
                               "The specified string is not a number");
                     }
                     ret *= 10;
@@ -34,7 +34,7 @@ namespace webpp {
                 for (auto const& c : str) {
                     if constexpr (throw_mistakes) {
                         if (c <= '0' || c >= '9')
-                            throw std::invalid_argument(
+                            throw stl::invalid_argument(
                               "The specified string is not a number");
                     }
                     ret *= 10;
@@ -111,7 +111,7 @@ namespace webpp {
     template <typename INT>
     constexpr auto digit_count() noexcept {
         uint_fast8_t t = 0;
-        INT          a = std::numeric_limits<int>::max();
+        INT          a = stl::numeric_limits<int>::max();
         while (a /= 10)
             ++t;
         return t;
@@ -124,16 +124,16 @@ namespace webpp {
         using str_t               = typename TraitsType::string_type;
         using size_type           = typename str_t::size_type;
         constexpr size_type _size = digit_count<ValueType>() + 1;
-        if constexpr (std::is_same_v<char_type, char>) {
+        if constexpr (stl::is_same_v<char_type, char>) {
             str_t str(_size, '\0');
-            auto [p, _] = std::to_chars(str.data(), str.data() + _size, value,
-                                        std::forward<R>(args)...);
+            auto [p, _] = stl::to_chars(str.data(), str.data() + _size, value,
+                                        stl::forward<R>(args)...);
             str.resize(p - str.data());
             return str;
         } else {
             char str[_size];
             auto [p, _] =
-              std::to_chars(str, str + _size, value, std::forward<R>(args)...);
+              stl::to_chars(str, str + _size, value, stl::forward<R>(args)...);
             size_type __size = static_cast<size_type>(p - str);
             str_t     res(__size, '\0');
             auto      it = res.begin();

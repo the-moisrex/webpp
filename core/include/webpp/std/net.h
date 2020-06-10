@@ -13,7 +13,7 @@
 #elif __has_include(<boost/asio/ts/net.hpp>)
 #    define STD_NET STLLIB_BOOST
 #    include <boost/asio/ts/net.hpp>
-namespace webpp::std {
+namespace webpp::stl {
     namespace net = boost::asio;
 }
 #elif __has_include(<experimental/net>)

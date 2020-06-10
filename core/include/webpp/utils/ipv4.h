@@ -112,7 +112,7 @@ namespace webpp {
      * @param prefix
      * @return bool
      */
-    constexpr std::array<uint8_t, 4> to_subnet_array(uint8_t prefix) noexcept {
+    constexpr stl::array<uint8_t, 4> to_subnet_array(uint8_t prefix) noexcept {
         auto subnet = to_subnet(prefix);
         return {static_cast<uint8_t>(subnet >> 24u & 0xFFu),
                 static_cast<uint8_t>(subnet >> 16u & 0xFFu),
@@ -228,7 +228,7 @@ namespace webpp {
         }
 
         constexpr uint32_t
-        parse(std::array<uint8_t, 4u> const& ip) const noexcept {
+        parse(stl::array<uint8_t, 4u> const& ip) const noexcept {
             return static_cast<uint32_t>(ip[0] << 24u) |
                    static_cast<uint32_t>(ip[1] << 16u) |
                    static_cast<uint32_t>(ip[2] << 8u) |
@@ -278,7 +278,7 @@ namespace webpp {
         }
 
         constexpr ipv4(uint8_t octet1, uint8_t octet2, uint8_t octet3,
-                       uint8_t octet4, std::string_view const& subnet) noexcept
+                       uint8_t octet4, stl::string_view const& subnet) noexcept
           : data(parse({octet1, octet2, octet3, octet4})),
             _prefix(is::subnet<traits_type>(subnet)
                       ? to_prefix<traits_type>(subnet)
@@ -459,10 +459,10 @@ namespace webpp {
             return stream;
         }
 
-        friend std::basic_istream<char_type>&
-        operator>>(std::basic_istream<char_type>& stream,
+        friend stl::basic_istream<char_type>&
+        operator>>(stl::basic_istream<char_type>& stream,
                    ipv4<traits_type>&             ip) {
-            std::basic_string<char_type> str;
+            stl::basic_string<char_type> str;
             stream >> str;
             ip = str;
             return stream;
@@ -475,7 +475,7 @@ namespace webpp {
         [[nodiscard]] string_type str() const noexcept {
             auto _octets = octets();
             // todo: use lib{fmt}
-            std::basic_ostringstream<char_type> s;
+            stl::basic_ostringstream<char_type> s;
             s << static_cast<unsigned int>(_octets[0]) << '.'
               << static_cast<unsigned int>(_octets[1]) << '.'
               << static_cast<unsigned int>(_octets[2]) << '.'
@@ -598,7 +598,7 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_private() const noexcept {
             constexpr ipv4<traits_type> class_C(
-              std::array<uint8_t, 4u>{192, 168, 0, 0}, 16);
+              stl::array<uint8_t, 4u>{192, 168, 0, 0}, 16);
             constexpr ipv4<traits_type> class_B_start(
               ::std::array<uint8_t, 4u>{172, 16, 0, 0});
             constexpr ipv4 class_B_finish(

@@ -7,11 +7,11 @@ namespace webpp::valves {
 
     struct method_condition {
       private:
-        std::string_view method_string;
+        stl::string_view method_string;
 
       public:
-        constexpr method_condition(std::string_view str) noexcept
-          : method_string(std::move(str)) {
+        constexpr method_condition(stl::string_view str) noexcept
+          : method_string(stl::move(str)) {
         }
 
         constexpr method_condition() noexcept = default;

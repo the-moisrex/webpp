@@ -20,10 +20,10 @@ namespace webpp {
     // todo: check this, it's old
     template <typename T>
     concept Extension =
-      std::copy_constructible<T> && !std::is_final_v<T> &&
-      std::is_default_constructible_v<T> && std::is_move_constructible_v<T> &&
-      std::is_move_assignable_v<T> && std::is_copy_assignable_v<T> &&
-      std::is_class_v<T> && !std::is_integral_v<T>;
+      stl::copy_constructible<T> && !stl::is_final_v<T> &&
+      stl::is_default_constructible_v<T> && stl::is_move_constructible_v<T> &&
+      stl::is_move_assignable_v<T> && stl::is_copy_assignable_v<T> &&
+      stl::is_class_v<T> && !stl::is_integral_v<T>;
 
     template <typename T>
     concept MotherExtension = Extension<T>&& requires {
@@ -51,7 +51,7 @@ namespace webpp {
         template <template <typename> typename IF, typename First = void,
                   typename... EI>
         struct filter {
-            using type = std::conditional_t<
+            using type = stl::conditional_t<
               IF<First>::value,
               typename prepend<First, typename filter<IF, EI...>::type>::type,
               typename filter<IF, EI...>::type>;
@@ -140,7 +140,7 @@ namespace webpp {
           : public virtual Ex... {
             template <typename... X>
             inheritable_extension_pack(X&&... x)
-              : Ex{std::forward<X>(x)...}... {
+              : Ex{stl::forward<X>(x)...}... {
             }
         };
 
@@ -164,7 +164,7 @@ namespace webpp {
         struct extend_to_all<ExtendThis, extension_pack<Ex...>>
           : public virtual Ex... {
             template <typename... Args>
-            extend_to_all(Args&&... args) : Ex{std::forward<Args>(args)...}... {
+            extend_to_all(Args&&... args) : Ex{stl::forward<Args>(args)...}... {
             }
         };
 

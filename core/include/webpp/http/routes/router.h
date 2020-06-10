@@ -32,10 +32,10 @@ namespace webpp {
         // todo: Additional routes extracted from the extensions
         //        using additional_routes = ;
 
-        const std::tuple<RouteType...> routes;
+        const stl::tuple<RouteType...> routes;
 
         constexpr const_router(RouteType&&... _route) noexcept
-          : routes(std::forward<RouteType>(_route)...) {
+          : routes(stl::forward<RouteType>(_route)...) {
         }
 
 
@@ -52,15 +52,15 @@ namespace webpp {
          * @param i
          * @return
          */
-        template <std::size_t N = 0>
-        constexpr auto& operator[](std::size_t i) const noexcept {
+        template <stl::size_t N = 0>
+        constexpr auto& operator[](stl::size_t i) const noexcept {
             if (N == i) {
-                return std::get<N>(routes);
+                return stl::get<N>(routes);
             }
             if constexpr (N + 1 < route_count()) {
                 return operator[]<N + 1>(i);
             }
-            throw std::invalid_argument("The specified index is not valid");
+            throw stl::invalid_argument("The specified index is not valid");
         }
 
         /**
@@ -78,17 +78,17 @@ namespace webpp {
             return this->operator()(ctx);
         }
 
-        template <std::size_t Index = 0>
+        template <stl::size_t Index = 0>
         Response auto operator()(Context auto&& ctx) noexcept {
             using context_type              = decltype(ctx);
             constexpr auto next_route_index = Index + 1;
-            constexpr auto route            = std::get<Index>(routes);
+            constexpr auto route            = stl::get<Index>(routes);
             constexpr bool is_last_route    = Index != route_count() - 1;
             ctx.call_pre_subroute_methods();
             auto res = route(ctx);
             ctx.call_post_subroute_methods();
             using result_type = decltype(res);
-            if constexpr (std::is_void_v<result_type>) {
+            if constexpr (stl::is_void_v<result_type>) {
                 // nothing to do!
             } else if constexpr (Response<result_type>) {
                 ctx.response = res;
@@ -103,20 +103,20 @@ namespace webpp {
                 // just call the next route or finish it with calling the
                 // context handlers
                 if constexpr (is_last_route) {
-                    operator()<next_route_index>(std::move(res));
+                    operator()<next_route_index>(stl::move(res));
                 } else {
                     // call the context handlers
                     ctx.call_post_entryroute_methods();
                 }
                 return; // done; no more routing
             } else {
-                throw std::invalid_argument(
+                throw stl::invalid_argument(
                   "Your route is not returning something that we understand.");
             }
 
             // call the next route:
             if constexpr (is_last_route) {
-                operator()<next_route_index>(std::forward<context_type>(ctx));
+                operator()<next_route_index>(stl::forward<context_type>(ctx));
             } else {
                 // call the context
                 ctx.call_post_entryroute_methods();
