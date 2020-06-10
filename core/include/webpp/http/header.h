@@ -179,19 +179,17 @@ namespace webpp {
      *   Interpreted as: "Subject: ¡Hola, señor!"
      *
      */
-    template <Traits TraitsType, typename HeaderEList,
-              typename HeaderFieldEList>
+    template <Traits TraitsType, typename HeaderEList, typename HeaderFieldType>
     class response_headers
-      : public stl::unordered_multiset<
-          TraitsType, response_header_field<TraitsType, HeaderFieldEList>>,
+      : public stl::unordered_multiset<TraitsType, HeaderFieldType>,
         public HeaderEList {
 
-        using super = stl::unordered_multiset<
-          TraitsType, response_header_field<TraitsType, HeaderFieldEList>>;
+        using super = stl::unordered_multiset<TraitsType, HeaderFieldType>;
 
       public:
-        using traits_type = TraitsType;
-        using str_t       = typename traits_type::string_type;
+        using traits_type       = TraitsType;
+        using str_t             = typename traits_type::string_type;
+        using header_field_type = HeaderFieldType;
 
         using HeaderEList::HeaderEList;
 
@@ -232,11 +230,13 @@ namespace webpp {
         using related_extension_pack_type =
           typename ExtensionType::response_headers_extensions;
 
-        template <typename TraitsType, typename EList>
+        template <typename ExtensionListType, typename TraitsType,
+                  typename EList>
         using mid_level_extensie_type = response_headers<TraitsType, EList>;
 
         // empty final extensie
-        template <typename TraitsType, typename EList>
+        template <typename ExtensionListType, typename TraitsType,
+                  typename EList>
         struct final_extensie_type final : public EList {
             using EList::EList;
         };
@@ -255,12 +255,16 @@ namespace webpp {
         using related_extension_pack_type =
           typename ExtensionType::response_header_field_extensions;
 
-        template <typename TraitsType, typename EList>
-        using mid_level_extensie_type =
-          response_header_field<TraitsType, EList>;
+        template <typename ExtensionListType, typename TraitsType,
+                  typename EList>
+        using mid_level_extensie_type = response_header_field<
+          TraitsType, EList,
+          typename ExtensionListType::template extensie_type<
+            TraitsType, response_header_field_descriptor>>;
 
         // empty final extensie
-        template <typename TraitsType, typename EList>
+        template <typename ExtensionListType, typename TraitsType,
+                  typename EList>
         struct final_extensie_type final : public EList {
             using EList::EList;
         };
