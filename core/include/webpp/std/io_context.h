@@ -15,7 +15,7 @@
 #elif __has_include(<boost/asio/ts/io_context.hpp>)
 #    include <boost/asio/ts/io_context.hpp>
 #    define STD_IO_CONTEXT STLLIB_BOOST
-namespace webpp::std {
+namespace webpp::stl {
     namespace net = boost::asio;
 }
 #elif __has_include(<experimental/io_context>)

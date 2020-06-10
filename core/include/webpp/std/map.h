@@ -11,16 +11,16 @@
 // Traits aware map:
 namespace webpp::stl {
     template <typename Traits, typename Key, typename T,
-              typename Compare = std::less<Key>,
+              typename Compare = stl::less<Key>,
               typename Allocator =
-                typename Traits::template allocator<std::pair<const Key, T>>>
-    using map = std::map<Key, T, Compare, Allocator>;
+                typename Traits::template allocator<stl::pair<const Key, T>>>
+    using map = stl::map<Key, T, Compare, Allocator>;
 
     template <typename Traits, typename Key, typename T,
-              typename Compare = std::less<Key>,
+              typename Compare = stl::less<Key>,
               typename Allocator =
-                typename Traits::template allocator<std::pair<const Key, T>>>
-    using multimap = std::multimap<Key, T, Compare, Allocator>;
+                typename Traits::template allocator<stl::pair<const Key, T>>>
+    using multimap = stl::multimap<Key, T, Compare, Allocator>;
 
 } // namespace webpp::stl
 

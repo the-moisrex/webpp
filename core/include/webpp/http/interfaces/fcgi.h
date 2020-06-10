@@ -18,15 +18,15 @@ namespace webpp {
           is_traits_v<Traits>,
           "The specified template parameter is not a valid traits type.");
         using traits_type = Traits;
-        using endpoint_t = std::net::ip::tcp::endpoint;
+        using endpoint_t  = stl::net::ip::tcp::endpoint;
 
       private:
         stl::set<traits_type, endpoint_t> _endpoints;
         common::server               _server;
 
         auto get_endpoints() noexcept {
-            std::net::ip::tcp::resolver resolver(_server.io);
-            std::error_code             ec;
+            stl::net::ip::tcp::resolver resolver(_server.io);
+            stl::error_code             ec;
             //        std::net::ip::tcp::resolver::results_type _endpoints;
             //        if (_fcgi->endpoints().empty()) {
             //            _endpoints = resolver.resolve(
@@ -35,7 +35,7 @@ namespace webpp {
             //        } else {
             //            _endpoints = std::net::ip::tcp::v4();
             //        }
-            return stl::vector<traits_type, std::net::ip::tcp::endpoint>{};
+            return stl::vector<traits_type, stl::net::ip::tcp::endpoint>{};
         }
 
 
@@ -50,15 +50,15 @@ namespace webpp {
          * This will only work before you run the operator()
          */
         void add_endpoint(endpoint_t _endpoint) noexcept {
-            _endpoints.insert(std::move(_endpoint));
+            _endpoints.insert(stl::move(_endpoint));
         }
 
         /**
          * This will only work before you run the operator()
          */
-        void add_endpoint(std::string_view const& addr,
+        void add_endpoint(stl::string_view const& addr,
                           uint_fast8_t            port) noexcept {
-            _endpoints.emplace(std::net::ip::make_address(addr), port);
+            _endpoints.emplace(stl::net::ip::make_address(addr), port);
         }
 
         /**

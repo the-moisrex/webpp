@@ -13,7 +13,7 @@
 #elif __has_include(<boost/asio/ts/buffer.hpp>)
 #    define STD_BUFFER STLLIB_BOOST
 #    include <boost/asio/ts/buffer.hpp>
-namespace webpp::std {
+namespace webpp::stl {
     namespace net = boost::asio;
 } // namespace webpp::std
 #elif __has_include(<experimental/buffer>)

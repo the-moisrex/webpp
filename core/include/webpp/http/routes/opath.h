@@ -21,26 +21,26 @@ namespace webpp::routes {
 
 
     template <typename A, typename = void>
-    struct has_variable_name : std::false_type {};
+    struct has_variable_name : stl::false_type {};
 
     template <typename A>
     struct has_variable_name<A,
-                             std::void_t<decltype(A::variable_name, (void)0)>>
-      : std::true_type {};
+                             stl::void_t<decltype(A::variable_name, (void)0)>>
+      : stl::true_type {};
 
 
     template <typename Traits, typename OPathType, typename NextOPathType>
     struct basic_opath : public OPathType {
 
         using next_opath_type =
-          std::remove_reference_t<std::remove_cv_t<NextOPathType>>;
+          stl::remove_reference_t<stl::remove_cv_t<NextOPathType>>;
 
         next_opath_type next;
 
         constexpr basic_opath(OPathType&&       super,
                               next_opath_type&& _next) noexcept
-          : OPathType(std::move(super)),
-            next(std::move(_next)) {
+          : OPathType(stl::move(super)),
+            next(stl::move(_next)) {
         }
 
         constexpr basic_opath(OPathType const&       super,
@@ -52,12 +52,12 @@ namespace webpp::routes {
         constexpr basic_opath(OPathType const&  super,
                               next_opath_type&& _next) noexcept
           : OPathType(super),
-            next(std::move(_next)) {
+            next(stl::move(_next)) {
         }
 
         constexpr basic_opath(OPathType&&            super,
                               next_opath_type const& _next) noexcept
-          : OPathType(std::move(super)),
+          : OPathType(stl::move(super)),
             next(_next) {
         }
 
@@ -86,9 +86,9 @@ namespace webpp::routes {
           is_traits_v<Traits>,
           "The specified template parameter is not a valid traits type.");
 
-        using opath_type = std::remove_reference_t<std::remove_cv_t<OPathType>>;
+        using opath_type = stl::remove_reference_t<stl::remove_cv_t<OPathType>>;
         using next_opath_type =
-          std::remove_reference_t<std::remove_cv_t<NextOPathType>>;
+          stl::remove_reference_t<stl::remove_cv_t<NextOPathType>>;
         using traits     = Traits;
         using super      = basic_opath<Traits, OPathType, NextOPathType>;
         using str_view_t = typename traits::string_view_type;
@@ -106,19 +106,19 @@ namespace webpp::routes {
               opath_condition<Traits,
                               opath_condition<opath_type, next_opath_type>,
                               next_opath_t>;
-            return new_opath_t(*this, std::forward<NNextOPathType>(next_opath));
+            return new_opath_t(*this, stl::forward<NNextOPathType>(next_opath));
         }
 
 
 
         template <typename Type>
         constexpr auto operator[](str_view_t const& segment) const noexcept {
-            if constexpr (std::is_void_v<opath_type>) {
-                throw std::invalid_argument(
+            if constexpr (stl::is_void_v<opath_type>) {
+                throw stl::invalid_argument(
                   "The specified segment name does not exist in this opath.");
             } else if constexpr (!has_variable_name<opath_type>::value) {
-                if constexpr (std::is_void_v<next_opath_type>) {
-                    throw std::invalid_argument(
+                if constexpr (stl::is_void_v<next_opath_type>) {
+                    throw stl::invalid_argument(
                       "The specified segment name does not exists in this opath");
                 } else {
                     // this segment doesn't have a variable name

@@ -17,21 +17,21 @@ namespace webpp {
 
     template <typename Traits>
     class basic_request<Traits, fake_cgi> {
-        std::string method = "GET";
-        std::string _uri   = "/home";
+        stl::string method = "GET";
+        stl::string _uri   = "/home";
 
       public:
-        [[nodiscard]] std::string request_method() const noexcept {
+        [[nodiscard]] stl::string request_method() const noexcept {
             return method;
         }
 
-        auto& set_method(std::string _method) noexcept {
-            method = std::move(_method);
+        auto& set_method(stl::string _method) noexcept {
+            method = stl::move(_method);
             return *this;
         }
 
-        auto& set_uri(std::string __uri) noexcept {
-            this->_uri = std::move(__uri);
+        auto& set_uri(stl::string __uri) noexcept {
+            this->_uri = stl::move(__uri);
             return *this;
         }
 

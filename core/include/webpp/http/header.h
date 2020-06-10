@@ -193,7 +193,7 @@ namespace webpp {
 
         using HeaderEList::HeaderEList;
 
-        std::uint_fast16_t status_code = 200;
+        stl::uint_fast16_t status_code = 200;
 
 
         auto str() const noexcept {
@@ -201,7 +201,7 @@ namespace webpp {
             // TODO: add support for other HTTP versions
             // res << "HTTP/1.1" << " " << status_code() << " " <<
             // status_reason_phrase(status_code()) << "\r\n";
-            std::size_t size = 1;
+            stl::size_t size = 1;
             for (auto const& [attr, val] : *this) {
                 size += attr.size() + val.size() + 4;
             }
@@ -209,7 +209,7 @@ namespace webpp {
             res.reserve(size);
             for (auto const& [attr, val] : *this) {
                 // todo: make sure value is secure and doesn't have any newlines
-                std::format_to(std::back_insert_iterator<str_t>(res),
+                stl::format_to(stl::back_insert_iterator<str_t>(res),
                                "{}: {}\r\n", attr, val);
             }
             return res;

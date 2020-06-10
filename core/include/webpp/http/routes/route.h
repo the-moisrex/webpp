@@ -142,15 +142,15 @@ namespace webpp::routes {
     template <typename RouteType, logical_operators Op, typename NextRoute>
     struct basic_route : public make_inheritable<RouteType> {
         using next_valve_type =
-          std::remove_reference_t<std::remove_cv_t<NextRoute>>;
+          stl::remove_reference_t<stl::remove_cv_t<NextRoute>>;
 
         constexpr static logical_operators op = Op;
         next_valve_type                    next;
 
         constexpr basic_route(RouteType&&       super,
                               next_valve_type&& _next) noexcept
-          : RouteType(std::move(super)),
-            next(std::move(_next)) {
+          : RouteType(stl::move(super)),
+            next(stl::move(_next)) {
         }
 
         constexpr basic_route(RouteType const&       super,
@@ -162,12 +162,12 @@ namespace webpp::routes {
         constexpr basic_route(RouteType const&  super,
                               next_valve_type&& _next) noexcept
           : RouteType(super),
-            next(std::move(_next)) {
+            next(stl::move(_next)) {
         }
 
         constexpr basic_route(RouteType&&            super,
                               next_valve_type const& _next) noexcept
-          : RouteType(std::move(super)),
+          : RouteType(stl::move(super)),
             next(_next) {
         }
 
@@ -224,7 +224,7 @@ namespace webpp::routes {
          */
         template <typename... Args>
         inline auto operator()(Args&&... args) noexcept {
-            return super_t::operator()(std::forward<Args>(args)...);
+            return super_t::operator()(stl::forward<Args>(args)...);
         }
 
 
@@ -235,20 +235,20 @@ namespace webpp::routes {
         template <logical_operators TheOp, typename NewRouteType>
         [[nodiscard]] constexpr auto
         set_next(NewRouteType&& new_route) const noexcept {
-            if constexpr (std::is_void_v<next_route_type>) {
+            if constexpr (stl::is_void_v<next_route_type>) {
                 // this part will only execute when the "next_valve_type" is
                 // void
 
                 // the first way (A<X, void> and B<Y, void> === A<X, B<Y, void>>
                 return valve<route_type, TheOp, NewRouteType>(
-                  *this, std::forward<NewRouteType>(new_route));
+                  *this, stl::forward<NewRouteType>(new_route));
             } else {
                 // this means this function has a "next" valve already,
                 // so it goes to the next's next valve
                 // this way we recursively create a valve type and return it.
                 auto n =
                   basic_route<route_type, TheOp, NewRouteType>::next.set_next(
-                    std::forward<NewRouteType>(new_route));
+                    stl::forward<NewRouteType>(new_route));
                 return route<route_type, op, decltype(n)>{*this, n};
             }
         }
@@ -256,37 +256,37 @@ namespace webpp::routes {
         [[nodiscard]] constexpr auto
         operator&&(NextRoute auto&& new_route) const noexcept {
             return set_next<logical_operators::AND>(
-              std::forward<decltype(new_route)>(new_route));
+              stl::forward<decltype(new_route)>(new_route));
         }
 
         [[nodiscard]] constexpr auto
         operator&(NextRoute auto&& new_route) const noexcept {
             return set_next<logical_operators::AND>(
-              std::forward<decltype(new_route)>(new_route));
+              stl::forward<decltype(new_route)>(new_route));
         }
 
         [[nodiscard]] constexpr auto
         operator||(NextRoute auto&& new_route) const noexcept {
             return set_next<logical_operators::OR>(
-              std::forward<decltype(new_route)>(new_route));
+              stl::forward<decltype(new_route)>(new_route));
         }
 
         [[nodiscard]] constexpr auto
         operator|(NextRoute auto&& new_route) const noexcept {
             return set_next<logical_operators::OR>(
-              std::forward<decltype(new_route)>(new_route));
+              stl::forward<decltype(new_route)>(new_route));
         }
 
         [[nodiscard]] constexpr auto
         operator^(NextRoute auto&& new_route) const noexcept {
             return set_next<logical_operators::XOR>(
-              std::forward<decltype(new_route)>(new_route));
+              stl::forward<decltype(new_route)>(new_route));
         }
 
         [[nodiscard]] inline bool
         call_this_route(Context auto&& ctx) const noexcept {
             // todo handle the return types
-            return super_t::operator()(std::forward<decltype(ctx)>(ctx));
+            return super_t::operator()(stl::forward<decltype(ctx)>(ctx));
         }
 
         [[nodiscard]] inline bool
@@ -297,7 +297,7 @@ namespace webpp::routes {
                              // matter what I return here; at least not yet
             } else {
                 return super_t::next::operator()(
-                  std::forward<decltype(ctx)>(ctx));
+                  stl::forward<decltype(ctx)>(ctx));
             }
         }
 
@@ -305,18 +305,18 @@ namespace webpp::routes {
         operator()(Context auto&& ctx) const noexcept {
             using context_type = decltype(ctx);
             if constexpr (logical_operators::none == op) {
-                call_this_route(std::forward<context_type>(ctx));
-                call_next_route(std::forward<context_type>(ctx));
+                call_this_route(stl::forward<context_type>(ctx));
+                call_next_route(stl::forward<context_type>(ctx));
                 return true;
             } else if constexpr (logical_operators::AND == op) {
-                return call_this_route(std::forward<context_type>(ctx)) &&
-                       call_next_route(std::forward<context_type>(ctx));
+                return call_this_route(stl::forward<context_type>(ctx)) &&
+                       call_next_route(stl::forward<context_type>(ctx));
             } else if constexpr (logical_operators::OR == op) {
-                return call_this_route(std::forward<context_type>(ctx)) ||
-                       call_next_route(std::forward<context_type>(ctx));
+                return call_this_route(stl::forward<context_type>(ctx)) ||
+                       call_next_route(stl::forward<context_type>(ctx));
             } else if constexpr (logical_operators::XOR == op) {
-                return call_this_route(std::forward<context_type>(ctx)) ^
-                       call_next_route(std::forward<context_type>(ctx));
+                return call_this_route(stl::forward<context_type>(ctx)) ^
+                       call_next_route(stl::forward<context_type>(ctx));
             } else {
                 // should not happen ever.
                 return true;

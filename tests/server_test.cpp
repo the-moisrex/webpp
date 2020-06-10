@@ -14,23 +14,23 @@ namespace webpp {
     template <>
     class basic_request<fake_interface> : public basic_request_t {
       public:
-        std::string_view request_uri() const noexcept {
+        stl::string_view request_uri() const noexcept {
             return __path;
         }
 
-        void set_path(std::string_view ___path) noexcept {
+        void set_path(stl::string_view ___path) noexcept {
             __path = ___path;
         }
 
       protected:
-        std::string __path;
+        stl::string __path;
     };
 
     class fake_interface : public basic_interface<fake_interface> {
       public:
         webpp::router_t<fake_interface> router;
-        std::string                     body_result;
-        std::string                     header_result;
+        stl::string                     body_result;
+        stl::string                     header_result;
         basic_request<fake_interface>   req;
 
         fake_interface() noexcept = default;

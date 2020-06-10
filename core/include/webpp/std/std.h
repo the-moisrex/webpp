@@ -15,7 +15,7 @@
 #    include <version>
 #endif
 
-namespace webpp::std {
+namespace webpp::stl {
     using namespace ::std;
 }
 

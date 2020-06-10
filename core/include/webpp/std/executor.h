@@ -13,7 +13,7 @@
 #elif __has_include(<boost/asio/ts/executor.hpp>)
 #    define STD_EXECUTOR STLLIB_BOOST
 #    include <boost/asio/ts/executor.hpp>
-namespace webpp::std {
+namespace webpp::stl {
     namespace net = boost::asio;
 }
 #elif __has_include(<experimental/executor>)

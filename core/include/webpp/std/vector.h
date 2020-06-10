@@ -13,7 +13,7 @@ namespace webpp::stl {
 
     template <Traits TraitsType, typename T,
               typename Allocator = typename TraitsType::template allocator<T>>
-    using vector = std::vector<T, Allocator>;
+    using vector = stl::vector<T, Allocator>;
 
 } // namespace webpp::stl
 

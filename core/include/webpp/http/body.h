@@ -89,9 +89,9 @@ namespace webpp {
 
     class basic_body {
       public:
-        using string_type      = std::string;
-        using stream_type      = std::ostream;
-        using string_view_type = std::string_view;
+        using string_type      = stl::string;
+        using stream_type      = stl::ostream;
+        using string_view_type = stl::string_view;
 
       protected:
         mutable void* data = nullptr;
@@ -114,16 +114,16 @@ namespace webpp {
         basic_body() noexcept = default;
 
         basic_body(char const* const _str) noexcept
-          : data(new std::string(_str)),
+          : data(new stl::string(_str)),
             type(types::string) {
         }
 
-        basic_body(std::string_view const& str) noexcept
-          : data(new std::string(str)),
+        basic_body(stl::string_view const& str) noexcept
+          : data(new stl::string(str)),
             type(types::string) {
         }
 
-        basic_body(std::ostream& stream) noexcept
+        basic_body(stl::ostream& stream) noexcept
           : data(&stream),
             type(types::stream) {
         }
@@ -142,7 +142,7 @@ namespace webpp {
                     case types::string_view:
                         // we don't know if the string_view will exists that
                         // long
-                        replace_string(std::string{b.str_view_ref()});
+                        replace_string(stl::string{b.str_view_ref()});
                         break;
                 }
             }
@@ -151,15 +151,15 @@ namespace webpp {
 
         basic_body& operator=(basic_body&& b) noexcept {
             if (this != &b) {
-                type   = std::move(b.type);
-                data   = std::move(b.data);
+                type   = stl::move(b.type);
+                data   = stl::move(b.data);
                 b.data = nullptr;
             }
             return *this;
         }
 
-        basic_body& operator=(std::string_view const& _str) noexcept {
-            replace_string(std::string{_str});
+        basic_body& operator=(stl::string_view const& _str) noexcept {
+            replace_string(stl::string{_str});
             return *this;
         }
 
@@ -197,25 +197,25 @@ namespace webpp {
          * Replace the data with a string
          * @param str
          */
-        void replace_string(std::string* str) noexcept;
+        void replace_string(stl::string* str) noexcept;
 
         /**
          * Replace the data with a string
          * @param str
          */
-        void replace_string(std::string const& str) noexcept;
+        void replace_string(stl::string const& str) noexcept;
 
         /**
          * Replace the data with a string
          * @param str
          */
-        void replace_string(std::string&& str) noexcept;
+        void replace_string(stl::string&& str) noexcept;
 
         /**
          * Replace the data with a string
          * @param str
          */
-        void replace_string_view(std::string_view const& str) noexcept;
+        void replace_string_view(stl::string_view const& str) noexcept;
 
         /**
          * Replace the data with a stream
@@ -227,7 +227,7 @@ namespace webpp {
          * Append a string to the body (weather it's a string ot stream)
          * @param str
          */
-        void append_string(std::string_view const& str) noexcept;
+        void append_string(stl::string_view const& str) noexcept;
 
         /**
          * Appending a stream
@@ -242,20 +242,20 @@ namespace webpp {
          * data to string
          * @return the string representation of the data
          */
-        [[nodiscard]] std::string
-        str(std::string_view const& default_val = "") const noexcept;
+        [[nodiscard]] stl::string
+        str(stl::string_view const& default_val = "") const noexcept;
 
         [[nodiscard]] auto json() const;
 
-        auto json(std::string_view const& data);
+        auto json(stl::string_view const& data);
 
-        auto file(std::string_view const& filepath);
+        auto file(stl::string_view const& filepath);
 
-        std::istream& stream() const;
+        stl::istream& stream() const;
 
-        std::ostream& operator<<(std::ostream& __stream);
+        stl::ostream& operator<<(stl::ostream& __stream);
 
-        basic_body& operator<<(std::string_view const& str) noexcept;
+        basic_body& operator<<(stl::string_view const& str) noexcept;
 
         // TODO: add more methods for the images and stuff
 

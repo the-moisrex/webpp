@@ -57,16 +57,16 @@ namespace webpp::stl {
     };
 
     template <typename T>
-    concept MoveAssignable = std::is_move_assignable_v<T>;
+    concept MoveAssignable = stl::is_move_assignable_v<T>;
 
     template <typename T>
-    concept CopyAssignable = std::is_copy_assignable_v<T>;
+    concept CopyAssignable = stl::is_copy_assignable_v<T>;
 
     template <typename T>
-    concept CopyConstructible = std::is_copy_constructible_v<T>;
+    concept CopyConstructible = stl::is_copy_constructible_v<T>;
 
     template <typename T>
-    concept DefaultConstructible = std::is_default_constructible_v<T>;
+    concept DefaultConstructible = stl::is_default_constructible_v<T>;
 
     template <typename X>
     concept CharTraits = Destructible<typename X::state_type>&&
@@ -74,7 +74,7 @@ namespace webpp::stl {
           CopyConstructible<typename X::state_type>&&
           DefaultConstructible<typename X::state_type>&& requires(
             typename X::char_type c, typename X::char_type const* p,
-            typename X::char_type* s, std::size_t n, typename X::int_type e,
+            typename X::char_type* s, stl::size_t n, typename X::int_type e,
             typename X::char_type const& ch) {
         typename X::char_type;
         typename X::int_type;
@@ -84,31 +84,31 @@ namespace webpp::stl {
 
 
         { X::eq(c, c) }
-        ->std::same_as<bool>;
+        ->stl::same_as<bool>;
         { X::lt(c, c) }
-        ->std::same_as<bool>;
+        ->stl::same_as<bool>;
         { X::compare(p, p, n) }
-        ->std::same_as<int>;
+        ->stl::same_as<int>;
         { X::length(p) }
-        ->std::same_as<std::size_t>;
+        ->stl::same_as<stl::size_t>;
         { X::find(p, n, ch) }
-        ->std::same_as<typename X::char_type const*>;
+        ->stl::same_as<typename X::char_type const*>;
         { X::move(s, p, ch) }
-        ->std::same_as<typename X::char_type*>;
+        ->stl::same_as<typename X::char_type*>;
         { X::copy(s, p, n) }
-        ->std::same_as<typename X::char_type*>;
+        ->stl::same_as<typename X::char_type*>;
         { X::assign(s, n, c) }
-        ->std::same_as<typename X::char_type*>;
+        ->stl::same_as<typename X::char_type*>;
         { X::not_eof(e) }
-        ->std::same_as<typename X::int_type>;
+        ->stl::same_as<typename X::int_type>;
         { X::to_char_type(e) }
-        ->std::same_as<typename X::char_type>;
+        ->stl::same_as<typename X::char_type>;
         { X::to_int_type(c) }
-        ->std::same_as<typename X::int_type>;
+        ->stl::same_as<typename X::int_type>;
         { X::eq_int_type(e, e) }
-        ->std::same_as<bool>;
+        ->stl::same_as<bool>;
         { X::eof() }
-        ->std::same_as<typename X::int_type>;
+        ->stl::same_as<typename X::int_type>;
     };
 
     struct fake_char_traits {
@@ -121,7 +121,7 @@ namespace webpp::stl {
         typedef char_type        c;
         typedef char_type const* p;
         typedef char_type*       s;
-        typedef std::size_t      n;
+        typedef stl::size_t      n;
         typedef int_type         e;
         typedef char_type const& ch;
 

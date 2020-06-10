@@ -43,7 +43,7 @@ namespace webpp {
 
         typename super::const_iterator
         find(typename cookie_type::name_t const& name) const noexcept {
-            return std::find_if(super::cbegin(), super::cend(),
+            return stl::find_if(super::cbegin(), super::cend(),
                                 [&](auto const& a) {
                                     return a.name() == name;
                                 });
@@ -51,7 +51,7 @@ namespace webpp {
 
         typename super::const_iterator
         find(cookie_type const& c) const noexcept {
-            return std::find_if(super::cbegin(), super::cend(),
+            return stl::find_if(super::cbegin(), super::cend(),
                                 [&](auto const& a) {
                                     return a.same_as(c);
                                 });

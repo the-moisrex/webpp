@@ -18,7 +18,7 @@
 #elif __has_include(<boost/asio/ts/socket.hpp>)
 #    define STD_SOCKET STLLIB_BOOST
 #    include <boost/asio/ts/socket.hpp>
-namespace webpp::std {
+namespace webpp::stl {
     namespace net = boost::asio;
 }
 #elif __has_include(<experimental/socket>)

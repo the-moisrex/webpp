@@ -13,18 +13,18 @@ namespace webpp::stl {
 
     template <
       Traits TraitsType, typename Key, typename T,
-      typename Hash = std::hash<Key>, typename KeyEqual = std::equal_to<Key>,
+      typename Hash = stl::hash<Key>, typename KeyEqual = stl::equal_to<Key>,
       typename Allocator =
-        typename TraitsType::template allocator<std::pair<const Key, T>>>
-    using unordered_map = std::unordered_map<Key, T, Hash, KeyEqual, Allocator>;
+        typename TraitsType::template allocator<stl::pair<const Key, T>>>
+    using unordered_map = stl::unordered_map<Key, T, Hash, KeyEqual, Allocator>;
 
     template <
       Traits TraitsType, typename Key, typename T,
-      typename Hash = std::hash<Key>, typename KeyEqual = std::equal_to<Key>,
+      typename Hash = stl::hash<Key>, typename KeyEqual = stl::equal_to<Key>,
       typename Allocator =
-        typename TraitsType::template allocator<std::pair<const Key, T>>>
+        typename TraitsType::template allocator<stl::pair<const Key, T>>>
     using unordered_multimap =
-      std::unordered_multimap<Key, T, Hash, KeyEqual, Allocator>;
+      stl::unordered_multimap<Key, T, Hash, KeyEqual, Allocator>;
 
 } // namespace webpp::stl
 

@@ -53,14 +53,14 @@ namespace webpp {
 
     template <typename Traits>
     class basic_request<Traits, fake_cgi> {
-        std::string method;
+        stl::string method;
 
       public:
-        std::string request_method() const noexcept {
+        stl::string request_method() const noexcept {
             return method;
         }
 
-        auto& set_method(std::string _method) noexcept {
+        auto& set_method(stl::string _method) noexcept {
             method = _method;
             return *this;
         }
