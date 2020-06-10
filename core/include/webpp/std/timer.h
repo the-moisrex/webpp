@@ -20,7 +20,7 @@ namespace webpp::stl {
 #elif __has_include(<experimental/timer>)
 #    define STD_TIMER STLLIB_EXPERIMENTAL
 #    include <experimental/timer>
-namespace webpp::std {
+namespace webpp::stl {
     namespace net = experimental::net;
 }
 #else

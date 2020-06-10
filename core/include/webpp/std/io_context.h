@@ -21,7 +21,7 @@ namespace webpp::stl {
 #elif __has_include(<experimental/io_context>)
 #    include <experimental/io_context>
 #    define STD_IO_CONTEXT STLLIB_EXPERIMENTAL
-namespace webpp::std {
+namespace webpp::stl {
     namespace net = experimental::net;
 }
 #else

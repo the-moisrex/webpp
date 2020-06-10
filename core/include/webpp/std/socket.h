@@ -24,7 +24,7 @@ namespace webpp::stl {
 #elif __has_include(<experimental/socket>)
 #    define STD_SOCKET STLLIB_EXPERIMENTAL
 #    include <experimental/socket>
-namespace webpp::std {
+namespace webpp::stl {
     namespace net = experimental::net;
 }
 #else

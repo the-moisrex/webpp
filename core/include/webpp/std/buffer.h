@@ -19,7 +19,7 @@ namespace webpp::stl {
 #elif __has_include(<experimental/buffer>)
 #    define STD_BUFFER STLLIB_EXPERIMENTAL
 #    include <experimental/buffer>
-namespace webpp::std {
+namespace webpp::stl {
     namespace net = experimental::net;
 }
 #else

@@ -19,7 +19,7 @@ namespace webpp::stl {
 #elif __has_include(<experimental/executor>)
 #    define STD_EXECUTOR STLLIB_EXPERIMENTAL
 #    include <experimental/executor>
-namespace webpp::std {
+namespace webpp::stl {
     namespace net = experimental::net;
 }
 #else

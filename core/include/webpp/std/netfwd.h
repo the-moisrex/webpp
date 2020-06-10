@@ -20,7 +20,7 @@ namespace webpp::stl {
 #elif __has_include(<experimental/netfwd>)
 #    define STD_NETFWD STLLIB_EXPERIMENTAL
 #    include <experimental/netfwd>
-namespace webpp::std {
+namespace webpp::stl {
     namespace net = experimental::net;
 }
 #else

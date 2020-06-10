@@ -15,10 +15,10 @@
 #elif __has_include(<boost/utility/string_view.hpp>)
 #    define STD_STRING_VIEW STLLIB_BOOST
 #    include <boost/utility/string_view.hpp>
-namespace webpp::std {
+namespace webpp::stl {
     using basic_string = boost::basic_string;
     using string       = boost::string;
-} // namespace webpp::std
+} // namespace webpp::stl
 #endif
 
 // Traits aware string_view:
