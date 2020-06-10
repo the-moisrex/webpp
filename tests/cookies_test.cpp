@@ -1,46 +1,49 @@
 #include "../core/include/webpp/http/cookies/cookie.h"
+#include "../core/include/webpp/http/cookies/cookie_jar.h"
 #include "../core/include/webpp/traits/std_traits.h"
 
 #include <gtest/gtest.h>
 #include <iostream>
 
 
-using cookie_t = webpp::response_cookie<webpp::std_traits>;
+using res_cookie_t     = webpp::response_cookie<webpp::std_traits>;
+using res_cookie_jar_t = webpp::basic_cookie_jar<res_cookie_t>;
+using cookie_hash_t    = webpp::cookie_hash<res_cookie_t>;
 
 TEST(Cookie, CookiesCreation) {
-    cookie_t c;
+    res_cookie_t c;
     c.name("   test   ").value("  value  ");
     EXPECT_EQ(c.name(), "test");
     EXPECT_EQ(c.value(), "value");
-    EXPECT_EQ(cookie_t("  test  ", "  value ").name(),
-              cookie_t("test", "value").name())
+    EXPECT_EQ(res_cookie_t("  test  ", "  value ").name(),
+              res_cookie_t("test", "value").name())
       << "cookies should be trimmed";
-    EXPECT_EQ(cookie_t("  test  ", "  value  ").name(),
-              cookie_t().name("  test  ").name())
+    EXPECT_EQ(res_cookie_t("  test  ", "  value  ").name(),
+              res_cookie_t().name("  test  ").name())
       << "name should trim it too.";
 }
 
 // TODO: fill here
 TEST(Cookie, CookieExpirationDate) {
-    cookie_t c;
+    res_cookie_t c;
     c.name("name").value("value");
     c.expires_in(std::chrono::minutes(1));
     EXPECT_TRUE(c.expires().time_since_epoch().count() > 0);
 }
 
 TEST(Cookies, CookiesHash) {
-    webpp::cookie_hash<webpp::std_traits> hash;
-    auto                                  a = hash(cookie_t("yes", "value"));
-    auto b = hash(cookie_t("  yes  ", "  value  "));
+    cookie_hash_t hash;
+    auto          a = hash(res_cookie_t("yes", "value"));
+    auto          b = hash(res_cookie_t("  yes  ", "  value  "));
 
-    EXPECT_FALSE(hash(cookie_t("one", "value")) ==
-                 hash(cookie_t("two", "value")));
+    EXPECT_FALSE(hash(res_cookie_t("one", "value")) ==
+                 hash(res_cookie_t("two", "value")));
     EXPECT_TRUE(a == b) << "Same cookies should be the same.";
 }
 
 TEST(Cookies, CookieJar) {
 
-    webpp::basic_cookie_jar<webpp::std_traits> jar;
+    res_cookie_jar_t jar;
     jar.emplace("one", "value");
     jar.emplace(" one ", "value 2"); // this should replace the other one
     jar.emplace("two", "value");
@@ -48,7 +51,7 @@ TEST(Cookies, CookieJar) {
     EXPECT_TRUE(jar.size() == 2)
       << "cookies with the same name should be replaced with the older ones";
 
-    webpp::basic_cookie_jar<webpp::std_traits> jar2;
+    res_cookie_jar_t jar2;
     jar2.emplace("one", "value 1");
     jar2.emplace("two", "value 2");
     jar2.emplace(" one ", "value 1-2"); // this should replace the other one
@@ -61,17 +64,18 @@ TEST(Cookies, CookieJar) {
     // These all should be replaced with the first one; so the size should not
     // be increased here
     jar2.emplace_hint(jar2.begin(), "one", "value 1-3");
-    jar2.insert(cookie_t("one", "value 1-4"));
-    cookie_t c("one", "value 1-5");
+    jar2.insert(res_cookie_t("one", "value 1-4"));
+    res_cookie_t c("one", "value 1-5");
     jar2.insert(c);
     jar2.insert(jar2.begin(), c);
-    jar2.insert(jar2.begin(), cookie_t("one", "value 1-6"));
+    jar2.insert(jar2.begin(), res_cookie_t("one", "value 1-6"));
 
-    webpp::basic_cookie_jar<webpp::std_traits> jar3;
+    res_cookie_jar_t jar3;
     jar3.emplace("one", "value 1-7");
     jar3.emplace("two", "value 2-3");
     jar2.insert(jar3.begin(), jar3.end());
-    jar2.insert({cookie_t("one", "value 1-8"), cookie_t("two", "value 2-4")});
+    jar2.insert(
+      {res_cookie_t("one", "value 1-8"), res_cookie_t("two", "value 2-4")});
 
     EXPECT_TRUE(jar2.size() == 2)
       << "Cookie jar should have the same size when we're emplacing a cookie "
@@ -96,15 +100,15 @@ TEST(Cookies, CookieJar) {
 }
 
 TEST(Cookies, CookieJarUniqeness) {
-    webpp::basic_cookie_jar<webpp::std_traits> cs;
-    cs.insert(cookie_t().name("one").value("test").domain("google.com"));
-    cs.insert(cookie_t().name("one").value("test").domain("bing.com"));
+    res_cookie_jar_t cs;
+    cs.insert(res_cookie_t().name("one").value("test").domain("google.com"));
+    cs.insert(res_cookie_t().name("one").value("test").domain("bing.com"));
 
     EXPECT_TRUE(cs.size() == 2)
       << "Different domains should not be considered the same";
 
-    cs.insert(cookie_t().name("one").value("test").domain("google.com"));
-    cs.insert(cookie_t().name("one").value("test").domain("bing.com"));
+    cs.insert(res_cookie_t().name("one").value("test").domain("google.com"));
+    cs.insert(res_cookie_t().name("one").value("test").domain("bing.com"));
 
     EXPECT_TRUE(cs.size() == 2)
       << "Inserting already inserted cookies that are 'same_as' the other "
@@ -112,8 +116,11 @@ TEST(Cookies, CookieJarUniqeness) {
 
     // now we check if changing the name, path, or domain to a new value that
     // already exists will remove the value or not
-    cs.insert(
-      cookie_t().name("two").value("test").domain("bing.com").comment("hello"));
+    cs.insert(res_cookie_t()
+                .name("two")
+                .value("test")
+                .domain("bing.com")
+                .comment("hello"));
     EXPECT_EQ(cs.size(), 3);
     EXPECT_EQ(cs.find("two")->comment(), "hello");
     cs.name("two", "one");
@@ -125,7 +132,7 @@ TEST(Cookies, CookieJarUniqeness) {
       << "The old cookie should be removed instead of the new one. The new "
          "cookie should be replace the old one while renaming.";
 
-    auto p = cs.insert(cookie_t()
+    auto p = cs.insert(res_cookie_t()
                          .name("one")
                          .value("test")
                          .domain("duckduckgo.com")
@@ -149,7 +156,7 @@ TEST(Cookies, Date) {
 
 TEST(Cookies, StringParsing) {
 
-    cookie_t c("name=value");
+    res_cookie_t c("name=value");
     EXPECT_TRUE(c.is_valid());
     EXPECT_EQ("name", c.name());
     EXPECT_EQ("value", c.value());
