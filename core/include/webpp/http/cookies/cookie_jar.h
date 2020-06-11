@@ -3,6 +3,7 @@
 #ifndef WEBPP_HTTP_COOKIE_JAR_H
 #define WEBPP_HTTP_COOKIE_JAR_H
 
+#include "../../std/unordered_set.h"
 #include "./cookie.h"
 
 #include <functional>
@@ -22,21 +23,19 @@ namespace webpp {
      */
     template <Cookie CookieType>
     struct basic_cookie_jar
-      : public stl::unordered_set<
-          typename CookieType::traits_type, CookieType, cookie_hash<CookieType>,
-          cookie_equals<CookieType>,
-          typename(typename CookieType::traits_type)::allocator<CookieType>> {
+      : public istl::unordered_set<typename CookieType::traits_type, CookieType,
+                                   cookie_hash<CookieType>,
+                                   cookie_equals<CookieType>> {
 
       public:
         using traits_type = typename CookieType::traits_type;
         using cookie_type = CookieType;
-        using condition   = ::std::function<bool(cookie_type const&)>;
+        using condition   = stl::function<bool(cookie_type const&)>;
 
       private:
-        using super = stl::unordered_set<
-          typename CookieType::traits_type, CookieType, cookie_hash<CookieType>,
-          cookie_equals<CookieType>,
-          typename(typename CookieType::traits_type)::allocator<CookieType>>;
+        using super = istl::unordered_set<typename CookieType::traits_type,
+                                          CookieType, cookie_hash<CookieType>,
+                                          cookie_equals<CookieType>>;
 
       public:
         using super::unordered_set; // constructors
@@ -60,7 +59,7 @@ namespace webpp {
 
     template <Traits TraitsType>
     struct request_cookie_jar
-      : public basic_cookie_jar<basic_reqeust_cookie<TraitsType>> {
+      : public basic_cookie_jar<request_cookie<TraitsType>> {
 
         using string_view_type = typename TraitsType::string_view_type;
 
@@ -76,7 +75,7 @@ namespace webpp {
 
     template <Traits TraitsType>
     struct response_cookie_jar
-      : public basic_cookie_jar<basic_response_cookie<TraitsType>> {
+      : public basic_cookie_jar<response_cookie<TraitsType>> {
 
       private:
         /**
@@ -132,8 +131,8 @@ namespace webpp {
         }
 
         template <typename Name, class... Args>
-        ::std::pair<typename super::iterator, bool> emplace(Name&& name,
-                                                            Args&&... args) {
+        stl::pair<typename super::iterator, bool> emplace(Name&& name,
+                                                          Args&&... args) {
             auto found =
               find(name); // we don't have a problem here because we are sure
                           // that the domain and the path are not the same
@@ -141,7 +140,7 @@ namespace webpp {
             if (found != super::cend())
                 erase(found);
             return static_cast<super*>(this)->emplace(
-              ::std::forward<Name>(name), ::std::forward<Args>(args)...);
+              stl::forward<Name>(name), stl::forward<Args>(args)...);
         }
 
         template <typename Name, class... Args>
@@ -158,7 +157,7 @@ namespace webpp {
               hint, std::forward<Name>(name), std::forward<Args>(args)...);
         }
 
-        ::std::pair<typename super::iterator, bool>
+        stl::pair<typename super::iterator, bool>
         insert(const typename super::value_type& value) {
             auto found = find(value);
             if (found != super::cend())
@@ -167,7 +166,7 @@ namespace webpp {
         }
 
 
-        ::std::pair<typename super::iterator, bool>
+        stl::pair<typename super::iterator, bool>
         insert(typename super::value_type&& value) {
             auto found = find(value);
             if (found != super::cend())
@@ -192,7 +191,7 @@ namespace webpp {
             return static_cast<super*>(this)->insert(hint, std::move(value));
         }
 
-        void insert(::std::initializer_list<typename super::value_type> ilist) {
+        void insert(stl::initializer_list<typename super::value_type> ilist) {
             for (const auto& it : ilist) {
                 auto found = find(it);
                 if (found != super::cend())
