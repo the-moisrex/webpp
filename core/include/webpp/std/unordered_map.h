@@ -9,7 +9,7 @@
 #include <unordered_map>
 
 // Traits aware map:
-namespace webpp::stl {
+namespace webpp::istl {
 
     template <
       Traits TraitsType, typename Key, typename T,

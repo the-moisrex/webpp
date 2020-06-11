@@ -22,7 +22,7 @@ namespace webpp::stl {
 #endif
 
 // Traits aware string_view:
-namespace webpp::stl {
+namespace webpp::istl {
 
     template <Traits TraitsType,
               typename CharT      = typename TraitsType::char_type,

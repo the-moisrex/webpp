@@ -8,7 +8,7 @@
 #include <tuple>
 #include <type_traits>
 
-namespace webpp::stl {
+namespace webpp::istl {
 
     template <typename T>
     struct is_tuple : public stl::false_type {};
@@ -35,6 +35,6 @@ namespace webpp::stl {
     //    };
     //
 
-} // namespace webpp::stl
+} // namespace webpp::istl
 
 #endif // WEBPP_TUPLE_H
