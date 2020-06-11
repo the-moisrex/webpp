@@ -271,7 +271,7 @@ namespace webpp {
         using super  = basic_cookie_common<TraitsType, true>;
         using self_t = response_cookie<TraitsType>;
 
-        void parse_SE_options(super::str_view_t& str) noexcept {
+        void parse_SE_options(typename super::str_view_t& str) noexcept {
             super::parse_SE_value(str);
             // todo
         }
