@@ -77,7 +77,10 @@ namespace webpp {
     struct response_cookie_jar
       : public basic_cookie_jar<response_cookie<TraitsType>> {
 
+        using traits_type = TraitsType;
+
       private:
+        using super = basic_cookie_jar<response_cookie<TraitsType>>;
         /**
          * @brief This function will make sure that the cookies are stay unique
          * in the cookie jar
