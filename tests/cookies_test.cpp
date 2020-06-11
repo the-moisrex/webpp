@@ -7,7 +7,7 @@
 
 
 using res_cookie_t     = webpp::response_cookie<webpp::std_traits>;
-using res_cookie_jar_t = webpp::basic_cookie_jar<res_cookie_t>;
+using res_cookie_jar_t = webpp::response_cookie_jar<webpp::std_traits>;
 using cookie_hash_t    = webpp::cookie_hash<res_cookie_t>;
 
 TEST(Cookie, CookiesCreation) {
