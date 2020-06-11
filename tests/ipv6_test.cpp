@@ -59,7 +59,7 @@ TEST(IPv6Tests, Validation) {
         EXPECT_EQ(ipv6_t(ipv6_t(_ip).short_str()), ipv6_t(_ip))
           << "ip: " << _ip << "\ncompiled ip: " << ipv6_t(_ip).short_str()
           << "\nlong ip: " << ipv6_t(_ip).str()
-          << "\nshort long ip: " << ipv6_t(ipe6_t(_ip).short_str()).str();
+          << "\nshort long ip: " << ipv6_t(ipv6_t(_ip).short_str()).str();
         EXPECT_TRUE(webpp::is::ipv6(_ip))
           << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).short_str();
         EXPECT_TRUE(ipv6_t(_ip).is_valid())

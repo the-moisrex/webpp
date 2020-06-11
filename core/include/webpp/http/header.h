@@ -232,7 +232,10 @@ namespace webpp {
 
         template <typename ExtensionListType, typename TraitsType,
                   typename EList>
-        using mid_level_extensie_type = response_headers<TraitsType, EList>;
+        using mid_level_extensie_type =
+          response_headers<TraitsType, EList,
+                           typename ExtensionListType::template extensie_type<
+                             TraitsType, response_header_field_descriptor>>;
 
         // empty final extensie
         template <typename ExtensionListType, typename TraitsType,
@@ -257,10 +260,8 @@ namespace webpp {
 
         template <typename ExtensionListType, typename TraitsType,
                   typename EList>
-        using mid_level_extensie_type = response_header_field<
-          TraitsType, EList,
-          typename ExtensionListType::template extensie_type<
-            TraitsType, response_header_field_descriptor>>;
+        using mid_level_extensie_type =
+          response_header_field<TraitsType, EList>;
 
         // empty final extensie
         template <typename ExtensionListType, typename TraitsType,
