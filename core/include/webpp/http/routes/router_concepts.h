@@ -74,28 +74,13 @@ namespace webpp {
     };
 
 
-    template <typename... T>
-    struct is_router_extension_list {
-        static constexpr bool value = false;
-    };
-
-    template <RouterExtension... T>
-    struct is_router_extension_list<::std::tuple<T...>> {
-        static constexpr bool value = true;
-    };
-
-    template <RouterExtension... T>
-    struct is_router_extension_list<typelist<T...>> {
-        static constexpr bool value = true;
-    };
-
-    template <RouterExtension... T>
-    struct is_router_extension_list<extension_pack<T...>> {
-        static constexpr bool value = true;
+    template <typename T>
+    struct is_router_extension {
+        static constexpr bool value = RouterExtension<T>;
     };
 
     template <typename T>
-    concept RouterExtensionList = ExtensionList<T, is_router_extension_list>;
+    concept RouterExtensionList = ExtensionListOf<T, is_router_extension>;
 
 
 } // namespace webpp

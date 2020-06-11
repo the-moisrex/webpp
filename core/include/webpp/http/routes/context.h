@@ -114,7 +114,7 @@ namespace webpp {
      *
      *
      */
-    template <typename ExtensionList>
+    template <typename ExtensionList = empty_extension_pack>
     struct basic_context : public ExtensionList {};
 
     template <typename EList>
@@ -124,75 +124,81 @@ namespace webpp {
 
         // todo: these methods need to be noexcept. They call unknown stuff.
 
-        void call_pre_subroute_methods() noexcept {
-            ((has_context_extension_method<ExtensionTypes,
-                                           extension_method::pre_subroute,
-                                           basic_context>::value
-                ? (ExtensionTypes::template pre_subroute<basic_context_type>(
-                     *this),
-                   (void)0)
-                : (void)0),
-             ...);
-        }
-
-
-        void call_pre_entryroute_methods() noexcept {
-            ((has_context_extension_method<ExtensionTypes,
-                                           extension_method::pre_entryroute,
-                                           basic_context>::value
-                ? (ExtensionTypes::template pre_entryroute<basic_context_type>(
-                     *this),
-                   (void)0)
-                : (void)0),
-             ...);
-        }
-
-
-        void call_pre_firstroute_methods() noexcept {
-            ((has_context_extension_method<ExtensionTypes,
-                                           extension_method::pre_firstroute,
-                                           basic_context>::value
-                ? (ExtensionTypes::template pre_firstroute<basic_context_type>(
-                     *this),
-                   (void)0)
-                : (void)0),
-             ...);
-        }
-
-
-        void call_post_subroute_methods() noexcept {
-            ((has_context_extension_method<ExtensionTypes,
-                                           extension_method::post_subroute,
-                                           basic_context>::value
-                ? (ExtensionTypes::template post_subroute<basic_context_type>(
-                     *this),
-                   (void)0)
-                : (void)0),
-             ...);
-        }
-
-        void call_post_entryroute_methods() noexcept {
-            ((has_context_extension_method<ExtensionTypes,
-                                           extension_method::post_entryroute,
-                                           basic_context>::value
-                ? (ExtensionTypes::template post_entryroute<basic_context_type>(
-                     *this),
-                   (void)0)
-                : (void)0),
-             ...);
-        }
-
-
-        void call_post_lastroute_methods() noexcept {
-            ((has_context_extension_method<ExtensionTypes,
-                                           extension_method::post_lastroute,
-                                           basic_context>::value
-                ? (ExtensionTypes::template post_lastroute<basic_context_type>(
-                     *this),
-                   (void)0)
-                : (void)0),
-             ...);
-        }
+        //        void call_pre_subroute_methods() noexcept {
+        //            ((has_context_extension_method<ExtensionTypes,
+        //                                           extension_method::pre_subroute,
+        //                                           basic_context>::value
+        //                ? (ExtensionTypes::template
+        //                pre_subroute<basic_context_type>(
+        //                     *this),
+        //                   (void)0)
+        //                : (void)0),
+        //             ...);
+        //        }
+        //
+        //
+        //        void call_pre_entryroute_methods() noexcept {
+        //            ((has_context_extension_method<ExtensionTypes,
+        //                                           extension_method::pre_entryroute,
+        //                                           basic_context>::value
+        //                ? (ExtensionTypes::template
+        //                pre_entryroute<basic_context_type>(
+        //                     *this),
+        //                   (void)0)
+        //                : (void)0),
+        //             ...);
+        //        }
+        //
+        //
+        //        void call_pre_firstroute_methods() noexcept {
+        //            ((has_context_extension_method<ExtensionTypes,
+        //                                           extension_method::pre_firstroute,
+        //                                           basic_context>::value
+        //                ? (ExtensionTypes::template
+        //                pre_firstroute<basic_context_type>(
+        //                     *this),
+        //                   (void)0)
+        //                : (void)0),
+        //             ...);
+        //        }
+        //
+        //
+        //        void call_post_subroute_methods() noexcept {
+        //            ((has_context_extension_method<ExtensionTypes,
+        //                                           extension_method::post_subroute,
+        //                                           basic_context>::value
+        //                ? (ExtensionTypes::template
+        //                post_subroute<basic_context_type>(
+        //                     *this),
+        //                   (void)0)
+        //                : (void)0),
+        //             ...);
+        //        }
+        //
+        //        void call_post_entryroute_methods() noexcept {
+        //            ((has_context_extension_method<ExtensionTypes,
+        //                                           extension_method::post_entryroute,
+        //                                           basic_context>::value
+        //                ? (ExtensionTypes::template
+        //                post_entryroute<basic_context_type>(
+        //                     *this),
+        //                   (void)0)
+        //                : (void)0),
+        //             ...);
+        //        }
+        //
+        //
+        //        void call_post_lastroute_methods() noexcept {
+        //            ((has_context_extension_method<ExtensionTypes,
+        //                                           extension_method::post_lastroute,
+        //                                           basic_context>::value
+        //                ? (ExtensionTypes::template
+        //                post_lastroute<basic_context_type>(
+        //                     *this),
+        //                   (void)0)
+        //                : (void)0),
+        //             ...);
+        //        }
     };
 
     /**
@@ -243,7 +249,7 @@ namespace webpp {
           typename ExtensionType::context_extensions;
 
         template <typename TraitsType, typename EList> // extension_pack
-        using mid_level_extensie_type = base_context<EList>;
+        using mid_level_extensie_type = basic_context<EList>;
 
         template <typename TraitsType, typename EList>
         using final_extensie_type = final_context<EList>;
