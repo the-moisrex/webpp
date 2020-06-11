@@ -201,7 +201,7 @@ namespace webpp {
                     _prefix = 254u; // the ip is not valid
                     return;
                 }
-                auto __prefix = to_uint(prefix_str);
+                auto __prefix = to_uint<traits_type>(prefix_str);
                 if (__prefix > 32) {
                     _prefix = 254; // the ip is not valid
                     return;
