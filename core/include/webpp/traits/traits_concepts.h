@@ -32,7 +32,7 @@ namespace webpp {
      * Traits that might be added in the future:
      *   - [ ] Encryption algorithms and their keys
      *   - [ ] Interfaces
-     *   - [ ] Date and Time systems: ::std::chrono types
+     *   - [ ] Date and Time systems: stl::chrono types
      *
      * Any other custom traits must include the traits above so it can be used
      * through out the templated classes inside the webpp project.
@@ -44,10 +44,10 @@ namespace webpp {
     template <typename T>
     concept Traits =
       // char_type:
-      ::std::is_integral_v<typename T::char_type>&&
+      stl::is_integral_v<typename T::char_type>&&
 
-      // char_traits:
-      ::webpp::stl::CharTraits<typename T::char_traits>&&
+        // char_traits:
+        istl::CharTraits<typename T::char_traits>&&
 
       requires {
         typename T::template allocator<typename T::char_traits>;
@@ -67,7 +67,7 @@ namespace webpp {
 
         using string_type      = void;
         using string_view_type = void;
-        using char_traits      = stl::fake_char_traits;
+        using char_traits      = istl::fake_char_traits;
     };
 
 } // namespace webpp
