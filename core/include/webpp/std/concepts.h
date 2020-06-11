@@ -49,7 +49,7 @@ namespace webpp::stl {
 } // namespace webpp::stl
 #endif
 
-namespace webpp::stl {
+namespace webpp::istl {
     template <typename D>
     concept Destructible = requires(D u) {
         { u.~D() }

@@ -9,7 +9,7 @@
 #include <vector>
 
 // Traits aware vector:
-namespace webpp::stl {
+namespace webpp::istl {
 
     template <Traits TraitsType, typename T,
               typename Allocator = typename TraitsType::template allocator<T>>

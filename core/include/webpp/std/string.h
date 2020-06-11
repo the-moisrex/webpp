@@ -24,7 +24,7 @@ namespace webpp::stl {
 #include "../traits/traits_concepts.h"
 
 // Traits aware string:
-namespace webpp::stl {
+namespace webpp::istl {
 
     template <Traits TraitsType,
               typename CharT      = typename TraitsType::char_type,

@@ -9,7 +9,7 @@
 #include <unordered_set>
 
 // Traits aware map:
-namespace webpp::stl {
+namespace webpp::istl {
 
     template <Traits TraitsType, typename Key, typename Hash = stl::hash<Key>,
               typename KeyEqual  = stl::equal_to<Key>,

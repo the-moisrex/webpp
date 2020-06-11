@@ -9,7 +9,7 @@
 #include <map>
 
 // Traits aware map:
-namespace webpp::stl {
+namespace webpp::istl {
     template <typename Traits, typename Key, typename T,
               typename Compare = stl::less<Key>,
               typename Allocator =
