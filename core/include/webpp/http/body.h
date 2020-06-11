@@ -1,6 +1,8 @@
 #ifndef WEBPP_BODY_H
 #define WEBPP_BODY_H
 
+#include "../extensions/extension.h"
+
 #include <memory>
 #include <string>
 #include <string_view>
@@ -87,11 +89,13 @@
  */
 namespace webpp {
 
-    class basic_body {
+    template <Traits TraitsType, ExtensionList EList = empty_extension_pack>
+    class response_body : public EList {
       public:
         using string_type      = stl::string;
         using stream_type      = stl::ostream;
         using string_view_type = stl::string_view;
+        using extension_list   = EList;
 
       protected:
         mutable void* data = nullptr;
@@ -111,26 +115,28 @@ namespace webpp {
         [[nodiscard]] stream_type& stream_ref() noexcept;
 
       public:
-        basic_body() noexcept = default;
+        using EList::EList;
 
-        basic_body(char const* const _str) noexcept
+        response_body() noexcept = default;
+
+        response_body(char const* const _str) noexcept
           : data(new stl::string(_str)),
             type(types::string) {
         }
 
-        basic_body(stl::string_view const& str) noexcept
+        response_body(stl::string_view const& str) noexcept
           : data(new stl::string(str)),
             type(types::string) {
         }
 
-        basic_body(stl::ostream& stream) noexcept
+        response_body(stl::ostream& stream) noexcept
           : data(&stream),
             type(types::stream) {
         }
 
-        basic_body& operator=(basic_body const& b) noexcept {
+        response_body& operator=(response_body const& b) noexcept {
             if (this != &b) {
-                this->~basic_body();
+                this->response_body();
                 type = b.type;
                 switch (b.type) {
                     case types::empty: break;
@@ -149,7 +155,7 @@ namespace webpp {
             return *this;
         }
 
-        basic_body& operator=(basic_body&& b) noexcept {
+        response_body& operator=(response_body&& b) noexcept {
             if (this != &b) {
                 type   = stl::move(b.type);
                 data   = stl::move(b.data);
@@ -158,28 +164,28 @@ namespace webpp {
             return *this;
         }
 
-        basic_body& operator=(stl::string_view const& _str) noexcept {
+        response_body& operator=(stl::string_view const& _str) noexcept {
             replace_string(stl::string{_str});
             return *this;
         }
 
-        basic_body& operator=(char const* const _str) noexcept {
+        response_body& operator=(char const* const _str) noexcept {
             replace_string(_str);
             return *this;
         }
 
-        [[nodiscard]] bool operator==(basic_body const& b) const noexcept {
+        [[nodiscard]] bool operator==(response_body const& b) const noexcept {
             return b.str("") == str("");
         }
 
-        [[nodiscard]] bool operator!=(basic_body const& b) const noexcept {
+        [[nodiscard]] bool operator!=(response_body const& b) const noexcept {
             return !operator==(b);
         }
 
         /**
          * Correctly destroy the data
          */
-        ~basic_body() noexcept;
+        ~response_body() noexcept;
 
         /**
          * Empty the data
@@ -255,11 +261,36 @@ namespace webpp {
 
         stl::ostream& operator<<(stl::ostream& __stream);
 
-        basic_body& operator<<(stl::string_view const& str) noexcept;
+        response_body& operator<<(stl::string_view const& str) noexcept;
 
         // TODO: add more methods for the images and stuff
 
         // static auto file(std::string_view const& _file) noexcept;
+    };
+
+
+    struct response_body_descriptor {
+        template <typename ExtensionType>
+        struct has_related_extension_pack {
+            static constexpr bool value = requires {
+                typename ExtensionType::response_body_extensions;
+            };
+        };
+
+        template <typename ExtensionType>
+        using related_extension_pack_type =
+          typename ExtensionType::response_body_extensions;
+
+        template <typename ExtensionListType, typename TraitsType,
+                  typename EList>
+        using mid_level_extensie_type = response_body<TraitsType, EList>;
+
+        // empty final extensie
+        template <typename ExtensionListType, typename TraitsType,
+                  typename EList>
+        struct final_extensie_type final : public EList {
+            using EList::EList;
+        };
     };
 
 

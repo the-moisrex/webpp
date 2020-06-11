@@ -16,16 +16,17 @@ namespace webpp {
      * This class owns its data.
      */
     template <Traits                TraitsType,
-              ResponseExtensionList REL = empty_extension_pack>
+              ResponseExtensionList REL   = empty_extension_pack,
+              typename ResponseHeaderType = response_headers<TraitsType, REL>,
+              typename BodyType           = response_body<TraitsType>>
     class basic_response : public REL {
 
       public:
-        using traits_type = TraitsType;
-        using body_type   = webpp::basic_body;
-        using headers_type =
-          webpp::headers<TraitsType, true, header_type::response>;
-        using str_view_t = typename traits_type::string_view_type;
-        using str_t      = typename traits_type::string_type;
+        using traits_type  = TraitsType;
+        using body_type    = BodyType;
+        using headers_type = ResponseHeaderType;
+        using str_view_t   = typename traits_type::string_view_type;
+        using str_t        = typename traits_type::string_type;
 
         body_type    body;
         headers_type header;
@@ -76,6 +77,36 @@ namespace webpp {
         static response_t image(::std::string_view const& file) noexcept;
         static response_t json_file(::std::string_view const& file) noexcept;
          */
+    };
+
+    struct basic_response_descriptor {
+        template <typename ExtensionType>
+        struct has_related_extension_pack {
+            static constexpr bool value = requires {
+                typename ExtensionType::response_extensions;
+            };
+        };
+
+        template <typename ExtensionType>
+        using related_extension_pack_type =
+          typename ExtensionType::response_extensions;
+
+        template <typename ExtensionListType, typename TraitsType,
+                  typename EList>
+        using mid_level_extensie_type =
+          basic_response<TraitsType, EList,
+                         typename ExtensionListType::template extensie_type<
+                           TraitsType, response_header_descriptor>,
+
+                         typename ExtensionListType::template extensie_type<
+                           TraitsType, response_body_descriptor>>;
+
+        // empty final extensie
+        template <typename ExtensionListType, typename TraitsType,
+                  typename EList>
+        struct final_extensie_type final : public EList {
+            using EList::EList;
+        };
     };
 
 
