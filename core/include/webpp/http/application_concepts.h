@@ -12,7 +12,7 @@ namespace webpp {
 
     template <typename T>
     concept Application =
-      ::std::default_initializable<T>&& requires(T app, basic_context<> ctx) {
+      stl::default_initializable<T>&& requires(T app, basic_context<> ctx) {
         { app(ctx) }
         ->Response;
     };

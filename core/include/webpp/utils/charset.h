@@ -42,8 +42,7 @@ namespace webpp {
 
       public:
         template <typename... T>
-        constexpr charset_t(T&&... t) noexcept
-          : super{{stl::forward<T>(t)...}} {
+        constexpr charset_t(T&&... t) noexcept : super{stl::forward<T>(t)...} {
             static_assert((sizeof...(T) <= N),
                           "We are not able to expand the charset.");
         }
