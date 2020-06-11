@@ -180,16 +180,19 @@ namespace webpp {
          * Apply extensions into one type
          * todo: first filter based on extensie, then filter based on mother or child
          */
-        template <typename TraitsType, typename ExtensieDescriptor>
+        template <typename TraitsType, typename ExtensieDescriptor,
+                  typename... ExtraArgs>
         using extensie_type =
           typename ExtensieDescriptor::template final_extensie_type<
             this_epack, TraitsType,
             extend_to_all<
               typename ExtensieDescriptor::template mid_level_extensie_type<
                 this_epack, TraitsType,
-                inheritable_extension_pack<merged_extensions<
-                  ExtensieDescriptor, mother_extensions>>>::type,
-              merged_extensions<ExtensieDescriptor, child_extensions>>>;
+                inheritable_extension_pack<
+                  merged_extensions<ExtensieDescriptor, mother_extensions>>,
+                ExtraArgs...>::type,
+              merged_extensions<ExtensieDescriptor, child_extensions>>,
+            ExtraArgs...>;
 
 
 

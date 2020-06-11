@@ -71,11 +71,11 @@ namespace webpp {
         template <Response ResponseType>
         Response auto operator()(Request auto& req) noexcept {
             using req_type = decltype(req);
+            // we can pass req_type to the extensie_type as an extra argument
             using context_type =
               typename ExtensionListType::template extensie_type<
-                req_type::traits_type, context_descriptor>;
-            context_type ctx{.request = req, .response = res};
-            return this->operator()(ctx);
+                req_type::traits_type, context_descriptor, req_type>;
+            return this->operator()(context_type{req});
         }
 
         template <stl::size_t Index = 0>
