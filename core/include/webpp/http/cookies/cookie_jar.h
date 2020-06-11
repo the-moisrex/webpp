@@ -254,7 +254,7 @@ namespace webpp {
                    typename cookie_type::name_t const& new_name) noexcept {
             super::erase(super::find(new_name));
             if (auto found = super::find(old_name); found != super::end())
-                found->_name = new_name;
+                found->name(new_name);
             return *this;
         }
 
