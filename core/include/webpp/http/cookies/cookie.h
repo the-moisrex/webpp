@@ -122,15 +122,15 @@ namespace webpp {
 
         constexpr static auto VALID_COOKIE_NAME = charset<char_type>(
           ALPHA_DIGIT<char_type>,
-          charset_t<char_type>{'!', '#', '$', '%', '&', '\'', '*', '+', '-',
-                               '.', '^', '_', '`', '|', '~'});
+          charset_t<char_type, 16>{'!', '#', '$', '%', '&', '\'', '*', '+', '-',
+                                   '.', '^', '_', '`', '|', '~'});
 
         constexpr static auto VALID_COOKIE_VALUE = charset<char_type>(
           ALPHA_DIGIT<char_type>,
-          charset_t<char_type>{'!', '#', '$', '%', '&', '\'', '(',
-                               ')', '*', '+', '-', '.', '/',  ':',
-                               '<', '=', '>', '?', '@', '[',  ']',
-                               '^', '_', '`', '{', '|', '}',  '~'});
+          charset_t<char_type, 28>{'!', '#', '$', '%', '&', '\'', '(',
+                                   ')', '*', '+', '-', '.', '/',  ':',
+                                   '<', '=', '>', '?', '@', '[',  ']',
+                                   '^', '_', '`', '{', '|', '}',  '~'});
 
         void parse_SE_name(str_view_t& str) noexcept {
             ltrim(str);

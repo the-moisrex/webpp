@@ -547,8 +547,8 @@ namespace webpp {
              * This is the character set corresponds to the "sub-delims" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
-            constexpr charset_t<CharT> SUB_DELIMS{'!', '$', '&', '\'', '(', ')',
-                                                  '*', '+', ',', ';',  '='};
+            constexpr charset_t<CharT, 11> SUB_DELIMS{
+              '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '='};
 
             /**
              * This is the character set corresponds to the last part of
@@ -615,8 +615,8 @@ namespace webpp {
              * This is the character set corresponds to the "sub-delims" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
-            constexpr charset_t<CharT> SUB_DELIMS{'!', '$', '&', '\'', '(', ')',
-                                                  '*', '+', ',', ';',  '='};
+            constexpr charset_t<CharT, 11> SUB_DELIMS{
+              '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '='};
             /**
              * This is the character set corresponds to the "pchar" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),

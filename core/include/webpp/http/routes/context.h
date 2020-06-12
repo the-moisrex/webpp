@@ -124,7 +124,9 @@ namespace webpp {
         template <typename... Args>
         basic_context(Args&&... args) : EList{stl::forward<Args>(args)...} {};
 
-        basic_context(request_type const& req) noexcept : EList{}, req(req) {
+        basic_context(request_type const& req) noexcept
+          : EList{},
+            request(req) {
         }
 
         /**
@@ -270,7 +272,8 @@ namespace webpp {
         using related_extension_pack_type =
           typename ExtensionType::context_extensions;
 
-        template <typename TraitsType, typename EList,
+        template <typename ExtensionListType, typename TraitsType,
+                  typename EList,
                   typename ReqType> // extension_pack
         using mid_level_extensie_type =
           basic_context<EList,
@@ -279,11 +282,13 @@ namespace webpp {
                           TraitsType, basic_response_descriptor>,
                         ReqType>;
 
-        template <typename TraitsType, typename EList, typename ReqType>
+        template <typename ExtensionListType, typename TraitsType,
+                  typename EList, typename ReqType>
         using final_extensie_type = final_context<EList>;
     };
 
 
+    struct fake_basic_context {};
 
 } // namespace webpp::routes
 
