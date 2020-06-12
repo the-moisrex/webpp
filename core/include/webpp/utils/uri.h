@@ -1424,7 +1424,7 @@ namespace webpp {
         [[nodiscard]] auto path_decoded() const noexcept {
             return decode_uri_component<traits_type>(
               path(),
-              charset(PCHAR_NOT_PCT_ENCODED, charset_t<char_type>('/')));
+              charset(PCHAR_NOT_PCT_ENCODED, charset_t<char_type, 1>('/')));
         }
 
         /**

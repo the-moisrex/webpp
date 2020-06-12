@@ -1,6 +1,7 @@
 #ifndef CHARSET_H
 #define CHARSET_H
 
+#include "../std/concepts.h"
 #include "../std/string_view.h"
 
 #include <algorithm>
@@ -17,7 +18,7 @@ namespace webpp {
      * This represents a set of characters which can be queried
      * to find out if a character is in the set or not.
      */
-    template <typename CharT = char, stl::size_t N = 1>
+    template <typename CharT, stl::size_t N>
     class charset_t : public stl::array<CharT, N> {
         static_assert(
           N > 0,
@@ -42,9 +43,9 @@ namespace webpp {
 
       public:
         template <typename... T>
-        constexpr charset_t(T&&... t) noexcept : super{stl::forward<T>(t)...} {
-            static_assert((sizeof...(T) <= N),
-                          "We are not able to expand the charset.");
+        requires((stl::same_as<T, CharT> && ...) &&
+                 sizeof...(T) <= N) constexpr charset_t(T... data) noexcept
+          : super{data...} {
         }
 
         /**
@@ -121,9 +122,8 @@ namespace webpp {
      * Type deduction. I stole this from a type deduction from std::array
      */
     template <typename _Tp, typename... _Up>
-    charset_t(_Tp, _Up...)
-      -> charset_t<stl::enable_if_t<(stl::is_same_v<_Tp, _Up> && ...), _Tp>,
-                   1 + sizeof...(_Up)>;
+    requires((stl::same_as<_Tp, _Up> && ...)) charset_t(_Tp, _Up...)
+      ->charset_t<_Tp, 1 + sizeof...(_Up)>;
 
 
 
