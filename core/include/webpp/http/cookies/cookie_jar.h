@@ -28,17 +28,26 @@ namespace webpp {
                                    cookie_equals<CookieType>> {
 
       public:
-        using traits_type = typename CookieType::traits_type;
-        using cookie_type = CookieType;
-        using condition   = stl::function<bool(cookie_type const&)>;
+        using traits_type      = typename CookieType::traits_type;
+        using cookie_type      = CookieType;
+        using condition        = stl::function<bool(cookie_type const&)>;
+        using string_type      = typename traits_type ::string_type;
+        using string_view_type = typename traits_type::string_view_type;
+        using str_t = std::conditional_t<cookie_type::is_mutable, string_type,
+                                         string_view_type>;
 
       private:
         using super = istl::unordered_set<typename CookieType::traits_type,
                                           CookieType, cookie_hash<CookieType>,
                                           cookie_equals<CookieType>>;
 
+      protected:
+        str_t _name, _value;
+
       public:
-        using super::unordered_set; // constructors
+        template <typename... Args>
+        basic_cookie_jar(Args&&... args) : super{std::forward<Args>(args)...} {
+        }
 
         typename super::const_iterator
         find(typename cookie_type::name_t const& name) const noexcept {
@@ -55,11 +64,41 @@ namespace webpp {
                                     return a.same_as(c);
                                 });
         }
+
+        auto const& name() const noexcept {
+            return _name;
+        }
+
+        auto& name(str_t const& new_name) const noexcept {
+            _name = new_name;
+            return *this;
+        }
+
+        auto& name(str_t&& new_name) const noexcept {
+            _name = stl::move(new_name);
+            return *this;
+        }
+
+        auto const& value() const noexcept {
+            return _value;
+        }
+
+        auto& value(str_t const& new_value) const noexcept {
+            _value = new_value;
+            return *this;
+        }
+
+        auto& value(str_t&& new_value) const noexcept {
+            _value = stl::move(new_value);
+            return *this;
+        }
     };
 
     template <Traits TraitsType>
     struct request_cookie_jar
       : public basic_cookie_jar<request_cookie<TraitsType>> {
+
+        static constexpr bool is_mutable = false;
 
         using string_view_type = typename TraitsType::string_view_type;
 
@@ -80,9 +119,10 @@ namespace webpp {
         using super = basic_cookie_jar<response_cookie<TraitsType>>;
 
       public:
-        using traits_type = TraitsType;
-        using cookie_type = response_cookie<traits_type>;
-        using condition   = typename super::condition;
+        using traits_type                = TraitsType;
+        using cookie_type                = response_cookie<traits_type>;
+        using condition                  = typename super::condition;
+        static constexpr bool is_mutable = true;
 
       private:
         /**
