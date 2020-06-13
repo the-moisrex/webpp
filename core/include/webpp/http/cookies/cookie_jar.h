@@ -41,9 +41,6 @@ namespace webpp {
                                           CookieType, cookie_hash<CookieType>,
                                           cookie_equals<CookieType>>;
 
-      protected:
-        str_t _name, _value;
-
       public:
         template <typename... Args>
         basic_cookie_jar(Args&&... args) : super{std::forward<Args>(args)...} {
@@ -63,34 +60,6 @@ namespace webpp {
                                 [&](auto const& a) {
                                     return a.same_as(c);
                                 });
-        }
-
-        auto const& name() const noexcept {
-            return _name;
-        }
-
-        auto& name(str_t const& new_name) const noexcept {
-            _name = new_name;
-            return *this;
-        }
-
-        auto& name(str_t&& new_name) const noexcept {
-            _name = stl::move(new_name);
-            return *this;
-        }
-
-        auto const& value() const noexcept {
-            return _value;
-        }
-
-        auto& value(str_t const& new_value) const noexcept {
-            _value = new_value;
-            return *this;
-        }
-
-        auto& value(str_t&& new_value) const noexcept {
-            _value = stl::move(new_value);
-            return *this;
         }
     };
 

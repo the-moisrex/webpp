@@ -252,6 +252,7 @@ namespace webpp {
 
       public:
         static constexpr auto header_direction = header_type::request;
+        static constexpr bool is_mutable       = false;
 
         constexpr request_cookie() noexcept {};
 
@@ -312,6 +313,7 @@ namespace webpp {
 
       public:
         static constexpr auto header_direction = header_type::response;
+        static constexpr bool is_mutable       = true;
 
         constexpr response_cookie() noexcept {};
 
