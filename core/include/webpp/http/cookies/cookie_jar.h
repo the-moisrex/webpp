@@ -31,10 +31,8 @@ namespace webpp {
         using traits_type      = typename CookieType::traits_type;
         using cookie_type      = CookieType;
         using condition        = stl::function<bool(cookie_type const&)>;
-        using string_type      = typename traits_type ::string_type;
+        using string_type      = typename traits_type::string_type;
         using string_view_type = typename traits_type::string_view_type;
-        using str_t = std::conditional_t<cookie_type::is_mutable, string_type,
-                                         string_view_type>;
 
       private:
         using super = istl::unordered_set<typename CookieType::traits_type,
@@ -239,21 +237,6 @@ namespace webpp {
 
 
         /**
-         * @brief Change ever basic_cookie's name to the specified value
-         * @param _name
-         * @return
-         * @return
-         * @return
-         */
-        auto& name(typename cookie_type::name_t const& _name) noexcept {
-            if (auto first = super::begin(); first != super::end()) {
-                first->_name = _name;
-                super::erase(stl::next(first), super::end()); // remove the rest
-            }
-            return *this;
-        }
-
-        /**
          * @brief performing rename
          * @param old_name
          * @param new_name
@@ -261,17 +244,39 @@ namespace webpp {
          */
         auto& name(typename cookie_type::name_t const& old_name,
                    typename cookie_type::name_t const& new_name) noexcept {
-            super::erase(super::find(new_name));
-            if (auto found = super::find(old_name); found != super::end())
-                found->name(new_name);
+            if (auto found = super::find(old_name); found != super::end()) {
+                return name(found, new_name);
+            }
             return *this;
         }
 
         auto& name(typename super::const_iterator const& it,
                    typename cookie_type::name_t&&        new_name) noexcept {
-            super::erase(super::find(new_name));
-            it->_name = stl::move(new_name);
+            auto new_cookie = *it;
+            new_cookie.name(new_name);
+            super::erase(it);
+            insert(std::move(new_cookie));
             return *this;
+        }
+
+        auto& name(typename super::iterator&      it,
+                   typename cookie_type::name_t&& new_name) noexcept {
+            if constexpr (stl::is_const_v<decltype(*it)>) {
+                it->name(std::move(new_name));
+                return *this;
+            } else {
+                return name(stl::add_const(it), std::move(new_name));
+            }
+        }
+
+        auto& name(typename super::iterator&           it,
+                   typename cookie_type::name_t const& new_name) noexcept {
+            if constexpr (stl::is_const_v<decltype(*it)>) {
+                it->name(new_name);
+                return *this;
+            } else {
+                return name(stl::add_const(it), new_name);
+            }
         }
 
         auto& name(typename super::const_iterator const& it,
@@ -280,18 +285,17 @@ namespace webpp {
         }
 
         /**
-         * @brief rename the cookies that meed the condition
+         * @brief rename the cookie that meed the condition
          * @param condition
          * @param new_name
          * @return
          */
         auto& name(condition const&                    _condition,
                    typename cookie_type::name_t const& new_name) noexcept {
-            super::erase(super::find(new_name));
             if (auto found =
                   stl::find_if(super::begin(), super::end(), _condition);
                 found != super::end()) {
-                found->_name = new_name;
+                return name(found, new_name);
             }
             return *this;
         }
@@ -303,7 +307,7 @@ namespace webpp {
         auto& encrypted(
           typename cookie_type::encrypted_t const& _encrypted) noexcept {
             for (auto& c : *this)
-                c._encrypted = _encrypted;
+                c.encrypted(_encrypted);
             return *this;
         }
 
@@ -311,7 +315,7 @@ namespace webpp {
           condition const&                         _condition,
           typename cookie_type::encrypted_t const& _encrypted) noexcept {
             change_if(_condition, [&](auto& it) {
-                it->_encrypted = _encrypted;
+                it->encrypted(_encrypted);
             });
             return *this;
         }
@@ -321,14 +325,14 @@ namespace webpp {
           typename cookie_type::name_t const&      _name,
           typename cookie_type::encrypted_t const& _encrypted) noexcept {
             change_if(_name, [&](auto& it) {
-                it->_encrypted = _encrypted;
+                it->encrypted(_encrypted);
             });
             return *this;
         }
 
         auto& encrypted(typename super::const_iterator const& it,
                         typename cookie_type::encrypted_t _encrypted) noexcept {
-            it->_encrypted = _encrypted;
+            it->encrypted(_encrypted);
             return *this;
         }
 
@@ -339,14 +343,14 @@ namespace webpp {
          */
         auto& secure(typename cookie_type::secure_t const& _secure) noexcept {
             for (auto& c : *this)
-                c._secure = _secure;
+                c.secure(_secure);
             return *this;
         }
 
         auto& secure(condition const&                      _condition,
                      typename cookie_type::secure_t const& _secure) noexcept {
             change_if(_condition, [&](auto& it) {
-                it->_secure = _secure;
+                it->secure(_secure);
             });
             return *this;
         }
@@ -355,7 +359,7 @@ namespace webpp {
         auto& secure(typename cookie_type::name_t const&   _name,
                      typename cookie_type::secure_t const& _secure) noexcept {
             change_if(_name, [&](auto& it) {
-                it->_secure = _secure;
+                it->secure(_secure);
             });
             return *this;
         }
@@ -363,7 +367,7 @@ namespace webpp {
 
         auto& secure(typename super::const_iterator const& it,
                      typename cookie_type::secure_t        _secure) noexcept {
-            it->_secure = _secure;
+            it->secure(_secure);
             return *this;
         }
 
@@ -375,7 +379,7 @@ namespace webpp {
         auto& host_only(
           typename cookie_type::host_only_t const& _host_only) noexcept {
             for (auto& c : *this)
-                c._host_only = _host_only;
+                c.host_only(_host_only);
             return *this;
         }
 
@@ -384,7 +388,7 @@ namespace webpp {
           condition const&                         _condition,
           typename cookie_type::host_only_t const& _host_only) noexcept {
             change_if(_condition, [&](auto& it) {
-                it->_host_only = _host_only;
+                it->host_only(_host_only);
             });
             return *this;
         }
@@ -393,14 +397,14 @@ namespace webpp {
           typename cookie_type::name_t const&      _name,
           typename cookie_type::host_only_t const& _host_only) noexcept {
             change_if(_name, [&](auto& it) {
-                it->_host_only = _host_only;
+                it->host_only(_host_only);
             });
             return *this;
         }
 
         auto& host_only(typename super::const_iterator const& it,
                         typename cookie_type::host_only_t _host_only) noexcept {
-            it->_host_only = _host_only;
+            it->host_only(_host_only);
             return *this;
         }
 
@@ -411,14 +415,14 @@ namespace webpp {
          */
         auto& prefix(typename cookie_type::prefix_t const& _prefix) noexcept {
             for (auto& c : *this)
-                c._prefix = _prefix;
+                c.prefix(_prefix);
             return *this;
         }
 
         auto& prefix(typename cookie_type::name_t const&   _name,
                      typename cookie_type::prefix_t const& _prefix) noexcept {
             change_if(_name, [&](auto& it) {
-                it->_prefix = _prefix;
+                it->prefix(_prefix);
             });
             return *this;
         }
@@ -426,14 +430,14 @@ namespace webpp {
         auto& prefix(condition const&                      _condition,
                      typename cookie_type::prefix_t const& _prefix) noexcept {
             change_if(_condition, [&](auto& it) {
-                it->_prefix = _prefix;
+                it->prefix(_prefix);
             });
             return *this;
         }
 
         auto& prefix(typename super::const_iterator const& it,
                      typename cookie_type::prefix_t        _prefix) noexcept {
-            it->_prefix = _prefix;
+            it->prefix(_prefix);
             return *this;
         }
 
@@ -445,7 +449,7 @@ namespace webpp {
         auto&
         comment(typename cookie_type::comment_t const& _comment) noexcept {
             for (auto& c : *this)
-                c._comment = _comment;
+                c.comment(_comment);
             return *this;
         }
 
@@ -453,7 +457,7 @@ namespace webpp {
         comment(condition const&                       _condition,
                 typename cookie_type::comment_t const& _comment) noexcept {
             change_if(_condition, [&](auto& it) {
-                it->_comment = _comment;
+                it->comment(_comment);
             });
             return *this;
         }
@@ -462,14 +466,14 @@ namespace webpp {
         comment(typename cookie_type::name_t const&    _name,
                 typename cookie_type::comment_t const& _comment) noexcept {
             change_if(_name, [&](auto& it) {
-                it->_comment = _comment;
+                it->comment(_comment);
             });
             return *this;
         }
 
         auto& comment(typename super::const_iterator const& it,
                       typename cookie_type::comment_t&&     _comment) noexcept {
-            it->_comment = stl::move(_comment);
+            it->comment(stl::move(_comment));
             return *this;
         }
 
@@ -487,7 +491,7 @@ namespace webpp {
         auto& same_site(
           typename cookie_type::same_site_t const& _same_site) noexcept {
             for (auto& c : *this)
-                c._same_site = _same_site;
+                c.same_site(_same_site);
             return *this;
         }
 
@@ -495,7 +499,7 @@ namespace webpp {
           typename cookie_type::name_t const&      _name,
           typename cookie_type::same_site_t const& _same_site) noexcept {
             change_if(_name, [&](auto& it) {
-                it->_same_site = _same_site;
+                it->same_site(_same_site);
             });
             return *this;
         }
@@ -504,14 +508,14 @@ namespace webpp {
           condition const&                         _condition,
           typename cookie_type::same_site_t const& _same_site) noexcept {
             change_if(_condition, [&](auto& it) {
-                it->_same_site = _same_site;
+                it->same_site(_same_site);
             });
             return *this;
         }
 
         auto& same_site(typename super::const_iterator const& it,
                         typename cookie_type::same_site_t _same_site) noexcept {
-            it->_same_site = _same_site;
+            it->same_site(_same_site);
             return *this;
         }
 
@@ -522,14 +526,14 @@ namespace webpp {
          */
         auto& expires(typename cookie_type::date_t const& _expires) noexcept {
             for (auto& c : *this)
-                c._expires = _expires;
+                c.expires(_expires);
             return *this;
         }
 
         auto& expires(typename cookie_type::name_t const& _name,
                       typename cookie_type::date_t const& _expires) noexcept {
             change_if(_name, [&](auto& it) {
-                it->_expires = _expires;
+                it->expires(_expires);
             });
             return *this;
         }
@@ -537,14 +541,14 @@ namespace webpp {
         auto& expires(condition const&                    _condition,
                       typename cookie_type::date_t const& _expires) noexcept {
             change_if(_condition, [&](auto& it) {
-                it->_expires = _expires;
+                it->expires(_expires);
             });
             return *this;
         }
 
         auto& expires(typename super::const_iterator const& it,
                       typename cookie_type::date_t&&        _expires) noexcept {
-            it->_expires = _expires;
+            it->expires(_expires);
             return *this;
         }
 
@@ -561,7 +565,7 @@ namespace webpp {
         auto&
         max_age(typename cookie_type::max_age_t const& _max_age) noexcept {
             for (auto& c : *this)
-                c._max_age = _max_age;
+                c.max_age(_max_age);
             return *this;
         }
 
@@ -569,7 +573,7 @@ namespace webpp {
         max_age(typename cookie_type::name_t const&    _name,
                 typename cookie_type::max_age_t const& _max_age) noexcept {
             change_if(_name, [&](auto& it) {
-                it->_max_age = _max_age;
+                it->max_age(_max_age);
             });
             return *this;
         }
@@ -578,27 +582,27 @@ namespace webpp {
         max_age(condition const&                       _condition,
                 typename cookie_type::max_age_t const& _max_age) noexcept {
             change_if(_condition, [&](auto& it) {
-                it->_max_age = _max_age;
+                it->max_age(_max_age);
             });
             return *this;
         }
 
         auto& max_age(typename super::const_iterator const& it,
                       typename cookie_type::max_age_t       _max_age) noexcept {
-            it->_max_age = _max_age;
+            it->max_age(_max_age);
             return *this;
         }
 
         auto& value(typename cookie_type::value_t const& _value) noexcept {
             for (auto& c : *this)
-                c._value = _value;
+                c.value(_value);
             return *this;
         }
 
         auto& value(typename cookie_type::name_t const&  _name,
                     typename cookie_type::value_t const& _value) noexcept {
             change_if(_name, [&](auto& it) {
-                it->_value = _value;
+                it->value(_value);
             });
             return *this;
         }
@@ -610,23 +614,23 @@ namespace webpp {
 
         auto& value(typename super::const_iterator const& it,
                     typename cookie_type::value_t&&       _value) noexcept {
-            it->_value = stl::move(_value);
+            it->value(stl::move(_value));
             return *this;
         }
 
         auto& value(condition const&                     _condition,
                     typename cookie_type::value_t const& _value) noexcept {
             change_if(_condition, [&](auto& it) {
-                it->_value = _value;
+                it->value(_value);
             });
             return *this;
         }
 
         auto& path(typename cookie_type::path_t const& _path) noexcept {
             change_all([&](auto& it) {
-                it->_path = _path;
+                it->path(_path);
                 make_it_unique(it, [&](auto const& c) {
-                    return c._path == _path;
+                    return c.path() == _path;
                 });
             });
             return *this;
@@ -635,9 +639,9 @@ namespace webpp {
         auto& path(typename cookie_type::name_t const& _name,
                    typename cookie_type::path_t const& _path) noexcept {
             change_if(_name, [&](auto& it) {
-                it->_path = _path;
+                it->path(_path);
                 make_it_unique(it, [&](auto const& c) {
-                    return c._path == _path;
+                    return c.path() == _path;
                 });
             });
             return *this;
@@ -646,9 +650,9 @@ namespace webpp {
         auto& path(condition const&                    _condition,
                    typename cookie_type::path_t const& _path) noexcept {
             change_if(_condition, [&](auto& it) {
-                it->_path = _path;
+                it->path(_path);
                 make_it_unique(it, [&](auto const& c) {
-                    return c._path == _path;
+                    return c.path() == _path;
                 });
             });
             return *this;
@@ -656,9 +660,9 @@ namespace webpp {
 
         auto& path(typename super::const_iterator const& it,
                    typename cookie_type::path_t&&        _path) noexcept {
-            it->_path = _path;
+            it->path(_path);
             make_it_unique(it, [&](auto const& c) {
-                return c._path == it->_path;
+                return c.path() == it->path();
             });
             return *this;
         }
@@ -675,9 +679,9 @@ namespace webpp {
          */
         auto& domain(typename cookie_type::domain_t const& _domain) noexcept {
             change_all([&](auto& it) {
-                it->_domain = _domain;
+                it->domain(_domain);
                 make_it_unique(it, [&](auto const& c) {
-                    return c._domain == _domain;
+                    return c.domain() == _domain;
                 });
             });
             return *this;
@@ -697,9 +701,9 @@ namespace webpp {
 
         auto& domain(typename super::const_iterator const& it,
                      typename cookie_type::domain_t&& new_domain) noexcept {
-            it->_domain = stl::move(new_domain);
+            it->domain(stl::move(new_domain));
             make_it_unique(it, [&](auto const& c) {
-                return c._domain == it->_domain;
+                return c.domain() == it->domain();
             });
             return *this;
         }
@@ -714,7 +718,7 @@ namespace webpp {
         domain(condition const&                      _condition,
                typename cookie_type::domain_t const& new_domain) noexcept {
             change_if(_condition, [&](auto& it) {
-                it->_domain = new_domain;
+                it->domain(new_domain);
             });
             return *this;
         }
