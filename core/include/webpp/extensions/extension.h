@@ -214,11 +214,11 @@ namespace webpp {
         template <typename ExtensionType>
         using related_extension_pack_type = typename ExtensionType::something;
 
-        template <typename TraitsType, typename EList>
+        template <typename EPackType, typename TraitsType, typename EList>
         using mid_level_extensie_type = void;
 
         // empty final extensie
-        template <typename TraitsType, typename EList>
+        template <typename EPackType, typename TraitsType, typename EList>
         struct final_extensie_type final : public EList {};
     };
 
