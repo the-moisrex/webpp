@@ -37,37 +37,43 @@ namespace webpp {
 
     template <Extension... E>
     struct extension_pack {
-      private:
-        template <typename... F>
+        template <template <typename...> typename PackType, typename... F>
         struct prepend {
-            using type = extension_pack<F...>;
+            using type = PackType<F...>;
         };
 
-        template <typename F, typename... L>
-        struct prepend<F, extension_pack<L...>> {
-            using type = extension_pack<F, L...>;
+        template <template <typename...> typename PackType, typename F,
+                  typename... L>
+        struct prepend<PackType, F, extension_pack<L...>> {
+            using type = PackType<F, L...>;
         };
 
-        template <template <typename> typename IF, typename First = void,
+        template <template <typename...> typename PackType,
+                  template <typename> typename IF, typename First = void,
                   typename... EI>
         struct filter {
             using type = stl::conditional_t<
               IF<First>::value,
-              typename prepend<First, typename filter<IF, EI...>::type>::type,
-              typename filter<IF, EI...>::type>;
+              typename prepend<
+                PackType, First,
+                typename filter<PackType, IF, EI...>::type>::type,
+              typename filter<PackType, IF, EI...>::type>;
         };
 
-        template <template <typename> typename IF, typename... EI>
-        struct filter<IF, void, EI...> {
-            using type = extension_pack<EI...>;
+        template <template <typename...> typename PackType,
+                  template <typename> typename IF, typename... EI>
+        struct filter<PackType, IF, void, EI...> {
+            using type = PackType<EI...>;
         };
 
-        template <template <typename> typename IF, typename... EI>
+        template <template <typename...> typename PackType,
+                  template <typename> typename IF, typename... EI>
         struct filter_epack {};
 
-        template <template <typename> typename IF, typename... EI>
-        struct filter_epack<IF, extension_pack<EI...>> {
-            using type = typename filter<IF, EI...>::type;
+        template <template <typename...> typename PackType,
+                  template <typename> typename IF, typename... EI>
+        struct filter_epack<PackType, IF, extension_pack<EI...>> {
+            using type = typename filter<PackType, IF, EI...>::type;
         };
 
         //        template <typename First = void, typename... U>
@@ -123,12 +129,14 @@ namespace webpp {
         //        };
 
 
-        template <template <typename> typename Extractor, typename... EPack>
+        template <template <typename...> typename PackType,
+                  template <typename> typename Extractor, typename... EPack>
         struct epack_miner {};
 
-        template <template <typename> typename Extractor, typename... EPack>
-        struct epack_miner<Extractor, extension_pack<EPack...>> {
-            using type = extension_pack<Extractor<EPack>...>;
+        template <template <typename...> typename PackType,
+                  template <typename> typename Extractor, typename... EPack>
+        struct epack_miner<PackType, Extractor, extension_pack<EPack...>> {
+            using type = PackType<Extractor<EPack>...>;
         };
 
         template <typename... Ex>
@@ -144,13 +152,17 @@ namespace webpp {
             }
         };
 
-        using mother_extensions = typename filter<mother_type, E...>::type;
-        using child_extensions  = typename filter<child_type, E...>::type;
+        using mother_extensions =
+          typename filter<extension_pack, mother_type, E...>::type;
+        using child_extensions =
+          typename filter<extension_pack, child_type, E...>::type;
 
         template <typename ExtensieDescriptor, typename EPack>
         using merged_extensions = typename epack_miner<
+          extension_pack,
           ExtensieDescriptor::template related_extension_pack_type,
           typename filter_epack<
+            extension_pack,
             ExtensieDescriptor::template has_related_extension_pack,
             EPack>::type>::type;
 
@@ -170,7 +182,6 @@ namespace webpp {
 
         using this_epack = extension_pack<E...>;
 
-      public:
         /**
          * Get the unique types
          */

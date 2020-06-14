@@ -209,10 +209,10 @@ namespace webpp {
                 _prefix = static_cast<uint8_t>(__prefix);
             }
 
-            auto oc1 = to_uint(octet_1);
-            auto oc2 = to_uint(octet_2);
-            auto oc3 = to_uint(octet_3);
-            auto oc4 = to_uint(octet_4);
+            auto oc1 = to_uint<traits_type>(octet_1);
+            auto oc2 = to_uint<traits_type>(octet_2);
+            auto oc3 = to_uint<traits_type>(octet_3);
+            auto oc4 = to_uint<traits_type>(octet_4);
 
             if (oc1 > 255 || oc2 > 255 || oc3 > 255 || oc4 > 255) {
                 _prefix = 254u; // the ip is not valid

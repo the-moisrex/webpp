@@ -153,7 +153,7 @@ namespace webpp {
                         colon--;
                 } else if (ipv6_data[colon] == '.') {
                     // we found an ipv4 address
-                    ipv4 ip(ipv6_data);
+                    ipv4<traits_type> ip(ipv6_data);
                     if (!ip.is_valid()) {
                         _prefix = 254u; // the ip is not valid
                         return;

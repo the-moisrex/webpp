@@ -48,8 +48,8 @@ namespace webpp {
                                                      c == '\f' || c == '\v';
                                           });
             found != s.end()) {
-            s.remove_prefix(static_cast<decltype(s.size())>(
-              ::std::distance(s.begin(), found)));
+            s.remove_prefix(
+              static_cast<decltype(s.size())>(stl::distance(s.begin(), found)));
         }
     }
 
@@ -59,26 +59,26 @@ namespace webpp {
     inline void rtrim(typename TraitsType::string_view_type& s) noexcept {
         if (auto found = stl::find_if_not(s.rbegin(), s.rend(),
                                           [](auto const& c) -> bool {
-                                              return ::std::isspace(c);
+                                              return stl::isspace(c);
                                           });
             found != s.rend()) {
             s.remove_suffix(static_cast<decltype(s.size())>(
-              ::std::distance(s.rbegin(), found)));
+              stl::distance(s.rbegin(), found)));
         }
     }
 
     // trim from both ends (in place)
     template <Traits TraitsType>
     inline void trim(typename TraitsType::string_view_type& s) noexcept {
-        ltrim(s);
-        rtrim(s);
+        ltrim<TraitsType>(s);
+        rtrim<TraitsType>(s);
     }
 
     // trim from start (copying)
     template <Traits TraitsType>
     [[nodiscard]] inline typename TraitsType::string_view_type
     ltrim_copy(typename TraitsType::string_view_type s) noexcept {
-        ltrim(s);
+        ltrim<TraitsType>(s);
         return s;
     }
 
@@ -86,7 +86,7 @@ namespace webpp {
     template <Traits TraitsType>
     [[nodiscard]] inline typename TraitsType::string_view_type
     rtrim_copy(typename TraitsType::string_view_type s) noexcept {
-        rtrim(s);
+        rtrim<TraitsType>(s);
         return s;
     }
 
@@ -94,7 +94,7 @@ namespace webpp {
     template <Traits TraitsType>
     [[nodiscard]] inline typename TraitsType::string_view_type
     trim_copy(typename TraitsType::string_view_type s) noexcept {
-        trim(s);
+        trim<TraitsType>(s);
         return s;
     }
 
@@ -122,15 +122,15 @@ namespace webpp {
     // trim from both ends (in place)
     template <Traits TraitsType>
     inline void trim(typename TraitsType::string_type& s) noexcept {
-        ltrim(s);
-        rtrim(s);
+        ltrim<TraitsType>(s);
+        rtrim<TraitsType>(s);
     }
 
     // trim from start (copying)
     template <Traits TraitsType>
     [[nodiscard]] inline typename TraitsType::string_type
     ltrim_copy(typename TraitsType::string_type s) noexcept {
-        ltrim(s);
+        ltrim<TraitsType>(s);
         return s;
     }
 
@@ -138,7 +138,7 @@ namespace webpp {
     template <Traits TraitsType>
     [[nodiscard]] inline typename TraitsType::string_type
     rtrim_copy(typename TraitsType::string_type s) noexcept {
-        rtrim(s);
+        rtrim<TraitsType>(s);
         return s;
     }
 
@@ -146,7 +146,7 @@ namespace webpp {
     template <Traits TraitsType>
     [[nodiscard]] inline typename TraitsType::string_type
     trim_copy(typename TraitsType::string_type s) noexcept {
-        trim(s);
+        trim<TraitsType>(s);
         return s;
     }
 
@@ -154,7 +154,7 @@ namespace webpp {
     inline void to_lower(typename TraitsType::stirng_type& str) noexcept {
         // FIXME: I think you can make this algorithm faster
         stl::transform(str.cbegin(), str.cend(), str.begin(), [](auto c) {
-            return ::std::tolower(c);
+            return stl::tolower(c);
         });
     }
 
@@ -163,7 +163,7 @@ namespace webpp {
         // FIXME: I think you can make this algorithm faster
         stl::transform(str.cbegin(), str.cend(), str.begin(),
                        [](auto const& c) {
-                           return ::std::tolower(c);
+                           return stl::tolower(c);
                        });
     }
 
@@ -177,7 +177,7 @@ namespace webpp {
     template <Traits TraitsType>
     [[nodiscard]] inline typename TraitsType::string_type
     to_upper_copy(typename TraitsType::string_type str) noexcept {
-        to_upper(str);
+        to_upper<TraitsType>(str);
         return str;
     }
 
@@ -186,9 +186,9 @@ namespace webpp {
     starts_with(typename TraitsType::string_view_type const& str,
                 T&&                                          data) noexcept {
 #ifdef CXX20
-        return str.starts_with(::std::forward<T>(data));
+        return str.starts_with(stl::forward<T>(data));
 #else
-        return str.rfind(::std::forward<T>(data), 0) == 0;
+        return str.rfind(stl::forward<T>(data), 0) == 0;
 #endif
     }
 
