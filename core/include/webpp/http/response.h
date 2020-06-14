@@ -36,7 +36,7 @@ namespace webpp {
         basic_response(basic_response&& res) noexcept      = default;
         basic_response(str_t const& b) noexcept : body(b) {
         }
-        basic_response(str_t&& b) noexcept : body(::std::move(b)) {
+        basic_response(str_t&& b) noexcept : body(stl::move(b)) {
         }
 
 
@@ -47,7 +47,7 @@ namespace webpp {
             return *this;
         }
         basic_response& operator=(str_t&& str) noexcept {
-            body.replace_string(::std::move(str));
+            body.replace_string(stl::move(str));
             return *this;
         }
 
@@ -67,15 +67,15 @@ namespace webpp {
             if (!header.contains("Content-Length"))
                 header.emplace(
                   "Content-Length",
-                  ::std::to_string(body.str().size() * sizeof(char)));
+                  stl::to_string(body.str().size() * sizeof(char)));
         }
 
 
         // static methods:
         /*
-        static response_t file(::std::filesystem::path const& file) noexcept;
-        static response_t image(::std::string_view const& file) noexcept;
-        static response_t json_file(::std::string_view const& file) noexcept;
+        static response_t file(stl::filesystem::path const& file) noexcept;
+        static response_t image(stl::string_view const& file) noexcept;
+        static response_t json_file(stl::string_view const& file) noexcept;
          */
     };
 
