@@ -19,12 +19,12 @@ namespace webpp {
     template <typename T, typename CookieType>
     concept cookie_changer = stl::is_invocable_v<T, CookieType&>;
 
-    template <typename T, typename CookieType>
+    template <typename T, typename CookieJarType>
     concept cookie_iterator =
       stl::same_as<stl::decay_t<T>,
-                   stl::decay_t<typename CookieType::iterator>> ||
+                   stl::decay_t<typename CookieJarType::iterator>> ||
       stl::same_as<stl::decay_t<T>,
-                   stl::decay_t<typename CookieType::const_iterator>>;
+                   stl::decay_t<typename CookieJarType::const_iterator>>;
 
     /**
      * @brief The cookies class (it's a basic_cookie jar for cookies)
@@ -104,7 +104,8 @@ namespace webpp {
 
       public:
         using traits_type = TraitsType;
-        using cookie_type = response_cookie<traits_type>;
+        using cookie_type     = response_cookie<traits_type>;
+        using cookie_jar_type = response_cookie_jar<traits_type>;
 
         static constexpr bool is_mutable = true;
 
@@ -192,7 +193,15 @@ namespace webpp {
     }                                                                    \
                                                                          \
     auto& method_name(                                                   \
-      cookie_iterator<cookie_type> auto const&     it,                   \
+      cookie_iterator<cookie_jar_type> auto const& it,                   \
+      typename cookie_type::method_name##_t const& new_value) noexcept { \
+        if (auto& iter = remove_const(it); iter != super::cend())        \
+            iter->method_name(new_value);                                \
+        return *this;                                                    \
+    }                                                                    \
+                                                                         \
+    auto& method_name(                                                   \
+      cookie_iterator<cookie_jar_type> auto&       it,                   \
       typename cookie_type::method_name##_t const& new_value) noexcept { \
         if (auto& iter = remove_const(it); iter != super::cend())        \
             iter->method_name(new_value);                                \
