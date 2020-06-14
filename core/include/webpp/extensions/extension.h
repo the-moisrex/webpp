@@ -190,7 +190,7 @@ namespace webpp {
                 this_epack, TraitsType,
                 inheritable_extension_pack<
                   merged_extensions<ExtensieDescriptor, mother_extensions>>,
-                ExtraArgs...>::type,
+                ExtraArgs...>,
               merged_extensions<ExtensieDescriptor, child_extensions>>,
             ExtraArgs...>;
 

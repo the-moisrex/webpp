@@ -108,7 +108,7 @@ namespace webpp {
          */
         using str_t         = typename TraitsType::string_type;
         using str_view_t    = typename TraitsType::string_view_type;
-        using storing_str_t = ::std::conditional_t<Mutable, str_t, str_view_t>;
+        using storing_str_t = stl::conditional_t<Mutable, str_t, str_view_t>;
 
         enum class same_site_value { NONE, LAX, STRICT };
 
@@ -116,9 +116,9 @@ namespace webpp {
         using value_t = storing_str_t;
 
       private:
-        mutable name_t  _name;
-        mutable value_t _value;
-        mutable bool    _valid = false;
+        name_t  _name;
+        value_t _value;
+        bool    _valid = false;
 
         constexpr static auto VALID_COOKIE_NAME = charset<char_type>(
           ALPHA_DIGIT<char_type>,
@@ -279,17 +279,18 @@ namespace webpp {
 
       public:
         using traits_type = TraitsType;
-        using date_t    = ::std::chrono::time_point<stl::chrono::system_clock>;
-        using domain_t  = typename super::storing_str_t;
-        using path_t    = typename super::storing_str_t;
-        using expires_t = ::std::optional<date_t>;
-        using max_age_t = unsigned long;
-        using same_site_t = typename super::same_site_value;
-        using secure_t    = bool;
-        using host_only_t = bool;
-        using prefix_t    = bool;
-        using encrypted_t = bool;
-        using comment_t   = typename super::storing_str_t;
+        using date_t      = stl::chrono::time_point<stl::chrono::system_clock>;
+        using domain_t    = typename super::storing_str_t;
+        using path_t      = typename super::storing_str_t;
+        using expires_t   = date_t;
+        using optional_expires_t = stl::optional<date_t>;
+        using max_age_t          = unsigned long;
+        using same_site_t        = typename super::same_site_value;
+        using secure_t           = bool;
+        using host_only_t        = bool;
+        using prefix_t           = bool;
+        using encrypted_t        = bool;
+        using comment_t          = typename super::storing_str_t;
 
         using attrs_t =
           stl::unordered_map<TraitsType, typename super::storing_str_t,
@@ -297,16 +298,16 @@ namespace webpp {
 
 
       private:
-        mutable domain_t    _domain;
-        mutable path_t      _path;
-        mutable expires_t   _expires;
-        mutable comment_t   _comment;
-        mutable max_age_t   _max_age   = 0;
-        mutable same_site_t _same_site = super::same_site_value::NONE;
-        mutable secure_t    _secure    = false;
-        mutable host_only_t _host_only = false;
-        mutable encrypted_t _encrypted = false;
-        mutable prefix_t    _prefix    = false;
+        domain_t           _domain;
+        path_t             _path;
+        optional_expires_t _expires;
+        comment_t          _comment;
+        max_age_t          _max_age   = 0;
+        same_site_t        _same_site = super::same_site_value::NONE;
+        secure_t           _secure    = false;
+        host_only_t        _host_only = false;
+        encrypted_t        _encrypted = false;
+        prefix_t           _prefix    = false;
 
         // todo: encapsulate this
         attrs_t attrs;
@@ -418,14 +419,14 @@ namespace webpp {
             if (__remove) {
                 // set the expire date 10 year before now:
                 expires(
-                  ::std::chrono::system_clock::now() -
-                  ::std::chrono::duration<int, stl::ratio<60 * 60 * 24 * 365>>(
+                  stl::chrono::system_clock::now() -
+                  stl::chrono::duration<int, stl::ratio<60 * 60 * 24 * 365>>(
                     10));
             } else if (is_removed()) {
                 // set the expire date 1 year from now:
                 expires(
-                  ::std::chrono::system_clock::now() +
-                  ::std::chrono::duration<int, stl::ratio<60 * 60 * 24 * 365>>(
+                  stl::chrono::system_clock::now() +
+                  stl::chrono::duration<int, stl::ratio<60 * 60 * 24 * 365>>(
                     1));
             }
             // remove max-age if it exists because we're going with expires
@@ -434,7 +435,7 @@ namespace webpp {
         }
 
         [[nodiscard]] bool is_removed() const noexcept {
-            return *_expires < ::std::chrono::system_clock::now();
+            return *_expires < stl::chrono::system_clock::now();
         }
 
         /**
@@ -464,9 +465,9 @@ namespace webpp {
             // todo implement this
         }
 
-        ::std::basic_ostream<typename super::char_type>& operator<<(
-          ::std::basic_ostream<typename super::char_type>& out) const noexcept {
-            using namespace ::std::chrono;
+        stl::basic_ostream<typename super::char_type>& operator<<(
+          stl::basic_ostream<typename super::char_type>& out) const noexcept {
+            using namespace stl::chrono;
             if (_prefix) {
                 if (_secure)
                     out << "__Secure-";
@@ -551,8 +552,8 @@ namespace webpp {
 
         [[nodiscard]] typename super::str_t render() const noexcept {
             // todo: don't use streams here
-            ::std::basic_ostringstream<typename super::char_type> os;
-                                                                  operator<<(os);
+            stl::basic_ostringstream<typename super::char_type> os;
+                                                                operator<<(os);
             return os.str();
         }
 
@@ -590,12 +591,12 @@ namespace webpp {
 
     template <typename Traits, header_type HeaderType = header_type::response>
     class basic_cookie
-      : public ::std::conditional_t<HeaderType == header_type::response,
-                                    response_cookie<Traits>,
-                                    request_cookie<Traits>> {
+      : public stl::conditional_t<HeaderType == header_type::response,
+                                  response_cookie<Traits>,
+                                  request_cookie<Traits>> {
         using super =
-          ::std::conditional_t<HeaderType == header_type::response,
-                               response_cookie<Traits>, request_cookie<Traits>>;
+          stl::conditional_t<HeaderType == header_type::response,
+                             response_cookie<Traits>, request_cookie<Traits>>;
 
       public:
         static constexpr auto header_direction = HeaderType;
@@ -609,13 +610,13 @@ namespace webpp {
     struct cookie_hash {
 
         template <class T>
-        inline void hash_combine(::std::size_t& seed, const T& v) {
-            ::std::hash<T> hasher;
+        inline void hash_combine(stl::size_t& seed, const T& v) {
+            stl::hash<T> hasher;
             seed ^= hasher(v) + 0x9e3779b9 + (seed << 6u) + (seed >> 2u);
         }
 
 
-        using result_type = ::std::size_t;
+        using result_type = stl::size_t;
 
         result_type operator()(CookieType const& c) const noexcept {
             // change the "same_as" method too if you ever touch this function
