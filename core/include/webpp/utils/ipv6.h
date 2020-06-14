@@ -103,7 +103,8 @@ namespace webpp {
             auto double_colon_point = data.end();
 
             do {
-                if (it == data.cend() && !starts_with(ipv6_data, '/')) {
+                if (it == data.cend() &&
+                    !starts_with<traits_type>(ipv6_data, '/')) {
                     _prefix = 254u; // the ip has too many octets
                     return;
                 }
