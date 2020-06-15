@@ -105,7 +105,7 @@ TEST(Router, RouterClass) {
 
 TEST(Router, VectorForRouteList) {
     router_t<std_traits, fake_cgi,
-             stl::vector<std_traits, dynamic_route<std_traits, fake_cgi>>>
+             istl::vector<std_traits, dynamic_route<std_traits, fake_cgi>>>
       _route{};
     _route.on(method("GET"), []() noexcept {
         return "Hello world";
@@ -115,7 +115,7 @@ TEST(Router, VectorForRouteList) {
     req.set_method("GET");
     basic_response res         = _route(req);
     auto           strview_res = res.body.str();
-    std::string str_res     = std::string(strview_res);
+    std::string    str_res     = std::string(strview_res);
     EXPECT_EQ(strview_res, "Hello world") << "strview_res is: " << strview_res;
     // EXPECT_EQ(str_res, "Hello world") << "str_res is: " <<
     // std::string(*static_cast<std::string*>(res.body.data));

@@ -106,14 +106,15 @@ namespace webpp {
          * If the specified string type cannot be changed, the string_view will
          * be used, otherwise, string itself.
          */
-        using str_t         = typename TraitsType::string_type;
-        using str_view_t    = typename TraitsType::string_view_type;
-        using storing_str_t = stl::conditional_t<Mutable, str_t, str_view_t>;
+        using string_type      = typename TraitsType::string_type;
+        using string_view_type = typename TraitsType::string_view_type;
+        using storing_string_type =
+          stl::conditional_t<Mutable, string_type, string_view_type>;
 
         enum class same_site_value { NONE, LAX, STRICT };
 
-        using name_t  = storing_str_t;
-        using value_t = storing_str_t;
+        using name_t  = storing_string_type;
+        using value_t = storing_string_type;
 
       private:
         name_t  _name;
@@ -132,11 +133,11 @@ namespace webpp {
                                    '<', '=', '>', '?', '@', '[',  ']',
                                    '^', '_', '`', '{', '|', '}',  '~'});
 
-        void parse_SE_name(str_view_t& str) noexcept {
-            ltrim(str);
+        void parse_SE_name(string_view_type& str) noexcept {
+            ltrim<traits_type>(str);
             if (auto equal_pos =
                   str.find_first_not_of(VALID_COOKIE_NAME.data());
-                equal_pos != str_view_t::npos) {
+                equal_pos != string_view_type::npos) {
                 // setting the name we found it
                 _name = str.substr(0, equal_pos);
 
@@ -149,18 +150,18 @@ namespace webpp {
             }
         }
 
-        void parse_SE_value(str_view_t& str) noexcept {
+        void parse_SE_value(string_view_type& str) noexcept {
             parse_SE_name(str);
             if (!_valid)
                 return; // do not continue if there's no name
-            ltrim(str);
-            if (starts_with(str, '='))
+            ltrim<traits_type>(str);
+            if (starts_with<traits_type>(str, '='))
                 str.remove_prefix(1);
-            ltrim(str);
-            if (starts_with(str, '"')) {
+            ltrim<traits_type>(str);
+            if (starts_with<traits_type>(str, '"')) {
                 if (auto d_quote_end =
                       str.find_first_not_of(VALID_COOKIE_VALUE.data(), 1);
-                    d_quote_end != str_view_t::npos) {
+                    d_quote_end != string_view_type::npos) {
                     if (str[d_quote_end] == '"') {
                         _value = str.substr(1, d_quote_end - 1);
                         str.remove_prefix(d_quote_end);
@@ -181,7 +182,7 @@ namespace webpp {
                 // there's no double quote in the value
                 if (auto semicolon_pos =
                       str.find_first_not_of(VALID_COOKIE_VALUE.data());
-                    semicolon_pos != str_view_t::npos) {
+                    semicolon_pos != string_view_type::npos) {
                     _value = str.substr(0, semicolon_pos);
                     str.remove_prefix(semicolon_pos);
                 } else {
@@ -205,8 +206,8 @@ namespace webpp {
         basic_cookie_common(basic_cookie_common&& c) noexcept = default;
 
         basic_cookie_common(name_t __name, value_t __value) noexcept
-          : _name(trim_copy(__name)),
-            _value(trim_copy(__value)) {
+          : _name(trim_copy<traits_type>(__name)),
+            _value(trim_copy<traits_type>(__value)) {
         }
 
         basic_cookie_common& operator=(const basic_cookie_common& c) = default;
@@ -261,7 +262,7 @@ namespace webpp {
          * @param source
          */
         explicit request_cookie(
-          typename super::str_view_t const& source) noexcept {
+          typename super::string_view_type const& source) noexcept {
             super::parse_SE_value(source); // parsing name and value
         }
     };
@@ -272,7 +273,7 @@ namespace webpp {
         using super  = basic_cookie_common<TraitsType, true>;
         using self_t = response_cookie<TraitsType>;
 
-        void parse_SE_options(typename super::str_view_t& str) noexcept {
+        void parse_SE_options(typename super::string_view_type& str) noexcept {
             super::parse_SE_value(str);
             // todo
         }
@@ -280,8 +281,8 @@ namespace webpp {
       public:
         using traits_type = TraitsType;
         using date_t      = stl::chrono::time_point<stl::chrono::system_clock>;
-        using domain_t    = typename super::storing_str_t;
-        using path_t      = typename super::storing_str_t;
+        using domain_t    = typename super::storing_string_type;
+        using path_t      = typename super::storing_string_type;
         using expires_t   = date_t;
         using optional_expires_t = stl::optional<date_t>;
         using max_age_t          = unsigned long;
@@ -290,11 +291,11 @@ namespace webpp {
         using host_only_t        = bool;
         using prefix_t           = bool;
         using encrypted_t        = bool;
-        using comment_t          = typename super::storing_str_t;
+        using comment_t          = typename super::storing_string_type;
 
         using attrs_t =
-          stl::unordered_map<TraitsType, typename super::storing_str_t,
-                             typename super::storing_str_t>;
+          stl::unordered_map<TraitsType, typename super::storing_string_type,
+                             typename super::storing_string_type>;
 
 
       private:
@@ -318,10 +319,9 @@ namespace webpp {
 
         constexpr response_cookie() noexcept {};
 
-        explicit response_cookie(typename super::name_t const& name,
-                                 typename super::value_t       value) noexcept
-          : super::_name{name},
-            super::_value{value} {
+        explicit response_cookie(typename super::name_t  name,
+                                 typename super::value_t value) noexcept
+          : super{stl::move(name), stl::move(value)} {
         }
 
         /**
@@ -330,7 +330,7 @@ namespace webpp {
          * @param source
          */
         explicit response_cookie(
-          typename super::str_view_t const& source) noexcept {
+          typename super::string_view_type const& source) noexcept {
             parse_SE_options(source); // parse name, value, and options
         }
 
@@ -550,7 +550,7 @@ namespace webpp {
             return _expires >= c._expires;
         }
 
-        [[nodiscard]] typename super::str_t render() const noexcept {
+        [[nodiscard]] typename super::string_type render() const noexcept {
             // todo: don't use streams here
             stl::basic_ostringstream<typename super::char_type> os;
                                                                 operator<<(os);
@@ -606,57 +606,58 @@ namespace webpp {
     };
 
     // hash function of std::unordered_set<webpp::basic_cookie>
-    template <Cookie CookieType>
-    struct cookie_hash {
-
-        template <class T>
-        inline void hash_combine(stl::size_t& seed, const T& v) {
-            stl::hash<T> hasher;
-            seed ^= hasher(v) + 0x9e3779b9 + (seed << 6u) + (seed >> 2u);
-        }
-
-
-        using result_type = stl::size_t;
-
-        result_type operator()(CookieType const& c) const noexcept {
-            // change the "same_as" method too if you ever touch this function
-            cookie_hash::result_type seed = 0;
-            hash_combine(seed, c.name());
-            if constexpr (CookieType::header_direction ==
-                          header_type::response) {
-                hash_combine(seed, c.domain());
-                hash_combine(seed, c.path());
-            }
-            //    hash_combine(seed, c._value);
-            //    hash_combine(seed, c._prefix);
-            //    hash_combine(seed, c._secure);
-            //    if (c._expires)
-            //        hash_combine(seed,
-            //        c._expires->time_since_epoch().count());
-            //    hash_combine(seed, c._max_age);
-            //    hash_combine(seed, c._same_site);
-            //    hash_combine(seed, c._comment);
-            //    hash_combine(seed, c._host_only);
-            //    hash_combine(seed, c._encrypted);
-            return seed;
-        }
-    };
-
-    template <Cookie CookieType>
-    struct cookie_equals {
-        using cookie_type = CookieType;
-
-        bool operator()(const cookie_type& lhs,
-                        const cookie_type& rhs) const noexcept {
-            if constexpr (cookie_type::header_direction ==
-                          header_type::response) {
-                return lhs.name() == rhs.name() &&
-                       lhs.domain() == rhs.domain() && lhs.path() == rhs.path();
-            } else {
-                return lhs.name() == rhs.name();
-            }
-        }
-    };
+    //    template <Cookie CookieType>
+    //    struct cookie_hash {
+    //
+    //        template <class T>
+    //        void hash_combine(stl::size_t& seed, const T& v) {
+    //            stl::hash<T> hasher;
+    //            seed ^= hasher(v) + 0x9e3779b9 + (seed << 6u) + (seed >> 2u);
+    //        }
+    //
+    //
+    //        using result_type = stl::size_t;
+    //
+    //        result_type operator()(CookieType const& c) const noexcept {
+    //            // change the "same_as" method too if you ever touch this function
+    //            cookie_hash::result_type seed = 0;
+    //            hash_combine(seed, c.name());
+    //            if constexpr (CookieType::header_direction ==
+    //                          header_type::response) {
+    //                hash_combine(seed, c.domain());
+    //                hash_combine(seed, c.path());
+    //            }
+    //            //    hash_combine(seed, c._value);
+    //            //    hash_combine(seed, c._prefix);
+    //            //    hash_combine(seed, c._secure);
+    //            //    if (c._expires)
+    //            //        hash_combine(seed,
+    //            //        c._expires->time_since_epoch().count());
+    //            //    hash_combine(seed, c._max_age);
+    //            //    hash_combine(seed, c._same_site);
+    //            //    hash_combine(seed, c._comment);
+    //            //    hash_combine(seed, c._host_only);
+    //            //    hash_combine(seed, c._encrypted);
+    //            return seed;
+    //        }
+    //    };
+    //
+    //    template <Cookie CookieType>
+    //    struct cookie_equals {
+    //        using cookie_type = CookieType;
+    //
+    //        bool operator()(const cookie_type& lhs,
+    //                        const cookie_type& rhs) const noexcept {
+    //            if constexpr (cookie_type::header_direction ==
+    //                          header_type::response) {
+    //                return lhs.name() == rhs.name() &&
+    //                       lhs.domain() == rhs.domain() && lhs.path() ==
+    //                       rhs.path();
+    //            } else {
+    //                return lhs.name() == rhs.name();
+    //            }
+    //        }
+    //    };
 
 
 

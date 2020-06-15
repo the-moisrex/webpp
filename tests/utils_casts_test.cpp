@@ -1,4 +1,5 @@
 // Created by moisrex on 1/27/20.
+#include "../core/include/webpp/traits/std_traits.h"
 #include "../core/include/webpp/utils/casts.h"
 
 #include <gtest/gtest.h>
@@ -9,10 +10,11 @@ using namespace webpp;
 using namespace std;
 
 TEST(Casts, ToInt) {
-    EXPECT_EQ(to_uint("10"), 10);
-    EXPECT_EQ(to_int("+10"), 10);
-    EXPECT_EQ(to_int("-10"), -10);
-    EXPECT_EQ(to_uint32("-10"), std::numeric_limits<uint32_t>::max() - 10 + 1);
+    EXPECT_EQ(to_uint<std_traits>("10"), 10);
+    EXPECT_EQ(to_int<std_traits>("+10"), 10);
+    EXPECT_EQ(to_int<std_traits>("-10"), -10);
+    EXPECT_EQ(to_uint32<std_traits>("-10"),
+              std::numeric_limits<uint32_t>::max() - 10 + 1);
     EXPECT_EQ((to<std_traits, int>("-10")), -10);
     EXPECT_EQ((to<std_traits, unsigned long long>("+1025153153")), 1025153153);
 
@@ -30,7 +32,7 @@ TEST(Casts, ToInt) {
 }
 
 TEST(Casts, ToStr) {
-    EXPECT_EQ("12", to_str(12));
-    EXPECT_EQ("-12", to_str(-12));
-    EXPECT_EQ(to_str(1222).size(), 4);
+    EXPECT_EQ("12", to_str<std_traits>(12));
+    EXPECT_EQ("-12", to_str<std_traits>(-12));
+    EXPECT_EQ(to_str<std_traits>(1222).size(), 4);
 }

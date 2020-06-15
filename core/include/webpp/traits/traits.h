@@ -11,8 +11,8 @@ namespace webpp {
      */
     template <typename Traits, bool Mutable>
     using auto_string_type =
-      ::std::conditional_t<Mutable, typename Traits::string_type,
-                           typename Traits::string_view_type>;
+      stl::conditional_t<Mutable, typename Traits::string_type,
+                         typename Traits::string_view_type>;
 
 
     /**

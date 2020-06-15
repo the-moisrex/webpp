@@ -52,9 +52,7 @@ namespace webpp {
         using string_view_type = typename traits_type::string_view_type;
 
       private:
-        using super = istl::unordered_set<typename CookieType::traits_type,
-                                          CookieType, cookie_hash<CookieType>,
-                                          cookie_equals<CookieType>>;
+        using super = istl::vector<traits_type, cookie_type>;
 
       public:
         template <typename... Args>
@@ -103,7 +101,7 @@ namespace webpp {
         using super = basic_cookie_jar<response_cookie<TraitsType>>;
 
       public:
-        using traits_type = TraitsType;
+        using traits_type     = TraitsType;
         using cookie_type     = response_cookie<traits_type>;
         using cookie_jar_type = response_cookie_jar<traits_type>;
 
