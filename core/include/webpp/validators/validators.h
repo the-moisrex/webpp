@@ -88,10 +88,10 @@ namespace webpp {
          * @param str
          * @return true if there's no whitespaces in the right side of input
          */
-        template <typename CharT = char>
+        template <Traits TraitsType>
         [[nodiscard]] constexpr bool
-        rtrimmed(stl::basic_string_view<CharT> const& str) noexcept {
-            return !whitespace<CharT>(*str.rbegin());
+        rtrimmed(typename TraitsType::string_view_type const& str) noexcept {
+            return !whitespace<typename TraitsType::char_type>(*str.rbegin());
         }
 
         /**
@@ -99,10 +99,10 @@ namespace webpp {
          * @param str
          * @return true if there's no whitespaces in the left side of input
          */
-        template <typename CharT = char>
+        template <Traits TraitsType>
         [[nodiscard]] constexpr bool
-        ltrimmed(stl::basic_string_view<CharT> const& str) noexcept {
-            return !whitespace<CharT>(str[0]);
+        ltrimmed(typename TraitsType::string_view_type const& str) noexcept {
+            return !whitespace<typename TraitsType::char_type>(str[0]);
         }
 
         /**
@@ -111,10 +111,10 @@ namespace webpp {
          * @return true if there's no whitespaces in the right and left side of
          * input
          */
-        template <typename CharT = char>
+        template <Traits TraitsType>
         [[nodiscard]] constexpr bool
-        trimmed(stl::basic_string_view<CharT> const& str) noexcept {
-            return ltrimmed<CharT>(str) && rtrimmed<CharT>(str);
+        trimmed(typename TraitsType::string_view_type const& str) noexcept {
+            return ltrimmed<TraitsType>(str) && rtrimmed<TraitsType>(str);
         }
 
         /**
@@ -523,10 +523,10 @@ namespace webpp {
          * @return true if str is ipv4 or ipv6
          * TODO: start supporting IPvF (IP version Future)
          */
-        template <typename CharT = char>
+        template <Traits TraitsType>
         [[nodiscard]] constexpr bool
-        ip(stl::basic_string_view<CharT> const& str) noexcept {
-            return ipv4(str) || ipv6(str);
+        ip(typename TraitsType::string_view_type const& str) noexcept {
+            return is::ipv4<TraitsType>(str) || ipv6<TraitsType>(str);
         }
 
         /**
