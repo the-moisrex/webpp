@@ -1,5 +1,7 @@
 #include "../core/include/webpp/utils/uri.h"
 
+#include "../core/include/webpp/traits/std_traits.h"
+
 #include <gtest/gtest.h>
 #include <string>
 

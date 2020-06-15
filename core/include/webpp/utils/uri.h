@@ -284,7 +284,7 @@ namespace webpp {
             auto _data = this->string_view();
 
             // extracting scheme
-            if (starts_with(_data, "//")) {
+            if (starts_with<traits_type>(_data, "//")) {
                 authority_start = 2;
                 scheme_end = data.size(); // so we don't have to check again
                 return;
@@ -447,7 +447,8 @@ namespace webpp {
         //                 sub-delims
         //                 * / ":" )
         //                 */
-        //                if (starts_with(_data, '[')) { // IP Literal
+        //                if (starts_with<traits_type>(_data, '[')) { // IP
+        //                Literal
         //                    if (_data.size() > 2 &&
         //                        _data[1] == 'v') { // IPv Future Number
         //                        if (auto dot_delim = _data.find('.');
@@ -778,7 +779,7 @@ namespace webpp {
          * @throws logic_error if uri is const
          */
         basic_uri& scheme(str_view_t __scheme) {
-            if (ends_with(__scheme, ':'))
+            if (ends_with<traits_type>(__scheme, ':'))
                 __scheme.remove_suffix(1);
             if (!is::scheme<traits_type>(__scheme))
                 throw stl::invalid_argument(
@@ -798,9 +799,10 @@ namespace webpp {
                 auto scheme_colon =
                   __scheme.empty() ? "" : str_t(__scheme) + ':';
                 if (authority_start != data.size()) {
-                    replace_value(0, 0,
-                                  scheme_colon +
-                                    (starts_with(data, "//") ? "" : "//"));
+                    replace_value(
+                      0, 0,
+                      scheme_colon +
+                        (starts_with<traits_type>(data, "//") ? "" : "//"));
                 } else {
                     // It's a URN (or URN like URI)
                     replace_value(0, 0, scheme_colon);
@@ -942,10 +944,10 @@ namespace webpp {
                                    str_view_t>
         host_structured() const noexcept {
             auto _host = host();
-            if (is::ipv4(_host))
-                return ipv4(_host);
-            if (is::ipv6(_host))
-                return ipv6(_host);
+            if (is::ipv4<traits_type>(_host))
+                return ipv4<traits_type>(_host);
+            if (is::ipv6<traits_type>(_host))
+                return ipv6<traits_type>(_host);
             return _host;
         }
 
@@ -978,8 +980,9 @@ namespace webpp {
             // todo: are you sure it can handle punycode as well?
             auto encoded_host = encode_uri_component<traits_type>(
               new_host, REG_NAME_NOT_PCT_ENCODED);
-            if ((!starts_with(new_host, '[') || !ends_with(new_host, ']')) &&
-                is::ipv6(new_host)) {
+            if ((!starts_with<traits_type>(new_host, '[') ||
+                 !ends_with<traits_type>(new_host, ']')) &&
+                is::ipv6<traits_type>(new_host)) {
                 encoded_host = '[' + encoded_host + ']';
             }
 
@@ -1013,7 +1016,8 @@ namespace webpp {
                 if (scheme_end == data.size()) {
                     start = 0;
                     if (!new_host.empty() &&
-                        !starts_with(str_view_t{encoded_host}, "//")) {
+                        !starts_with<traits_type>(str_view_t{encoded_host},
+                                                  "//")) {
                         encoded_host = "//" + encoded_host;
                     }
                 } else {
@@ -1080,8 +1084,9 @@ namespace webpp {
          */
         [[nodiscard]] bool is_ip() const noexcept {
             auto _host = host();
-            return is::ipv4(_host) ||
-                   (starts_with(_host, '[') && ends_with(_host, ']'));
+            return is::ipv4<traits_type>(_host) ||
+                   (starts_with<traits_type>(_host, '[') &&
+                    ends_with<traits_type>(_host, ']'));
         }
 
         /**
@@ -1129,7 +1134,7 @@ namespace webpp {
             if (_host.empty()) {
                 // I've already written that code. Yay, I'm so happy
                 static_cast<void>(host(tld));
-            } else if (!is_ip() && !is::ip(tld)) {
+            } else if (!is_ip() && !is::ip<traits_type>(tld)) {
                 // cannot put an ip address as a tld, user should use set host
                 // instead of this method.
                 auto dot   = _host.find_last_of('.');
@@ -1347,7 +1352,7 @@ namespace webpp {
          * @param new_port
          */
         basic_uri& port(str_view_t new_port) noexcept {
-            if (starts_with(new_port, ':'))
+            if (starts_with<traits_type>(new_port, ':'))
                 new_port.remove_prefix(1);
             if (!is::digit(new_port))
                 throw stl::invalid_argument("The specified port is not valid");
@@ -1514,10 +1519,11 @@ namespace webpp {
          */
         basic_uri& path(str_view_t const& __path) noexcept {
             parse_path();
-            auto _encoded_path = (starts_with(__path, '/') ? "" : "/") +
-                                 encode_uri_component<traits_type>(
-                                   __path, charset(PCHAR_NOT_PCT_ENCODED,
-                                                   charset<char_type>('/')));
+            auto _encoded_path =
+              (starts_with<traits_type>(__path, '/') ? "" : "/") +
+              encode_uri_component<traits_type>(
+                __path,
+                charset(PCHAR_NOT_PCT_ENCODED, charset<char_type>('/')));
 
             replace_value(authority_end, query_start - authority_end,
                           _encoded_path);
@@ -1536,7 +1542,7 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] bool is_absolute() const noexcept {
-            return starts_with(path(), '/');
+            return starts_with<traits_type>(path(), '/');
         }
 
         /**
@@ -1573,9 +1579,10 @@ namespace webpp {
                 throw stl::invalid_argument(
                   "The specified string is not a valid query");
 
-            auto encoded_query = (starts_with(__query, '?') ? "" : "?") +
-                                 encode_uri_component<traits_type>(
-                                   __query, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
+            auto encoded_query =
+              (starts_with<traits_type>(__query, '?') ? "" : "?") +
+              encode_uri_component<traits_type>(
+                __query, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
 
             parse_query();
 

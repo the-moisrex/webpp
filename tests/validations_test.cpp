@@ -1,3 +1,4 @@
+#include "../core/include/webpp/traits/std_traits.h"
 #include "../core/include/webpp/utils/charset.h"
 #include "../core/include/webpp/validators/validators.h"
 
@@ -20,29 +21,30 @@ TEST(ValidationsTest, ContainsFunctions) {
 }
 
 TEST(ValidationsTest, TrimmedFunctions) {
-    EXPECT_TRUE(trimmed("trimmed string"));
-    EXPECT_TRUE(rtrimmed(" right trimmed"));
-    EXPECT_TRUE(ltrimmed("left trimmed "));
+    EXPECT_TRUE(trimmed<webpp::std_traits>("trimmed string"));
+    EXPECT_TRUE(rtrimmed<webpp::std_traits>(" right trimmed"));
+    EXPECT_TRUE(ltrimmed<webpp::std_traits>("left trimmed "));
 }
 
 TEST(ValidationsTest, IPv4Functions) {
-    EXPECT_TRUE(ipv4("255.255.255.255"));
-    EXPECT_FALSE(ipv4("256.1.1.1"));
-    EXPECT_FALSE(ipv4("260.1.2.3"));
-    EXPECT_TRUE(ipv4("127.0.0.1"));
-    EXPECT_TRUE(ipv4("0.0.0.0"));
-    EXPECT_TRUE(ipv4("192.168.0.0"));
-    EXPECT_FALSE(ipv4("192.168.1.256"));
-    EXPECT_TRUE(ipv4("192.168.0.255"));
+    EXPECT_TRUE(ipv4<webpp::std_traits>("255.255.255.255"));
+    EXPECT_FALSE(ipv4<webpp::std_traits>("256.1.1.1"));
+    EXPECT_FALSE(ipv4<webpp::std_traits>("260.1.2.3"));
+    EXPECT_TRUE(ipv4<webpp::std_traits>("127.0.0.1"));
+    EXPECT_TRUE(ipv4<webpp::std_traits>("0.0.0.0"));
+    EXPECT_TRUE(ipv4<webpp::std_traits>("192.168.0.0"));
+    EXPECT_FALSE(ipv4<webpp::std_traits>("192.168.1.256"));
+    EXPECT_TRUE(ipv4<webpp::std_traits>("192.168.0.255"));
 
-    EXPECT_TRUE(ipv4_prefix("192.168.1.2:24"));
-    EXPECT_TRUE(ipv4_prefix("192.168.1.2:16"));
-    EXPECT_TRUE(ipv4_prefix("192.168.1.2:0"));
-    EXPECT_TRUE(ipv4_prefix("192.168.1.2/24"));
-    EXPECT_FALSE(ipv4_prefix("false_ip/24"));
-    EXPECT_FALSE(ipv4_prefix("192.168.1.3/40"));
-    EXPECT_FALSE(ipv4_prefix("192.168.1.3/false_prefix"));
-    EXPECT_TRUE(ipv4_prefix("192.168.1.2-24", webpp::charset_t<1>('-')));
+    EXPECT_TRUE(ipv4_prefix<webpp::std_traits>("192.168.1.2:24"));
+    EXPECT_TRUE(ipv4_prefix<webpp::std_traits>("192.168.1.2:16"));
+    EXPECT_TRUE(ipv4_prefix<webpp::std_traits>("192.168.1.2:0"));
+    EXPECT_TRUE(ipv4_prefix<webpp::std_traits>("192.168.1.2/24"));
+    EXPECT_FALSE(ipv4_prefix<webpp::std_traits>("false_ip/24"));
+    EXPECT_FALSE(ipv4_prefix<webpp::std_traits>("192.168.1.3/40"));
+    EXPECT_FALSE(ipv4_prefix<webpp::std_traits>("192.168.1.3/false_prefix"));
+    EXPECT_TRUE(ipv4_prefix<webpp::std_traits>("192.168.1.2-24",
+                                               webpp::charset_t<char, 1>('-')));
 }
 
 TEST(ValidationTest, IPv6Functions) {
@@ -88,26 +90,26 @@ TEST(ValidationTest, IPv6Functions) {
                      ":f:0:0:c:0:f:f:."};
 
     for (auto const& item : valids) {
-        EXPECT_TRUE(ipv6(item)) << item;
-        EXPECT_FALSE(ipv4(item)) << item;
-        EXPECT_TRUE(ip(item)) << item;
+        EXPECT_TRUE(ipv6<webpp::std_traits>(item)) << item;
+        EXPECT_FALSE(ipv4<webpp::std_traits>(item)) << item;
+        EXPECT_TRUE(ip<webpp::std_traits>(item)) << item;
         std::string ip  = item;
         std::string ip2 = item;
         std::string ip3 = item;
         ip.append("/64");
-        EXPECT_TRUE(ipv6_prefix(ip)) << "ip has a prefix: " << ip;
+        EXPECT_TRUE(ipv6<webpp::std_traits>(_prefix(ip)) << "ip has a prefix: " << ip;
         ip2.append("/something bad");
-        EXPECT_FALSE(ipv6_prefix(ip2));
+        EXPECT_FALSE(ipv6<webpp::std_traits>(_prefix(ip2));
         ip3.append("-128");
-        EXPECT_TRUE(ipv6_prefix(ip3, webpp::charset_t<1>('-')));
+        EXPECT_TRUE(ipv6<webpp::std_traits>(_prefix(ip3, webpp::charset_t<1>('-')));
         EXPECT_TRUE(host("[" + std::string(item) + "]")) << "ip: " << item;
     }
 
     for (auto const& item : invalids) {
-        EXPECT_FALSE(ipv6(item)) << item;
+        EXPECT_FALSE(ipv6<webpp::std_traits>((item)) << item;
         std::string ip = item;
         ip.append("/64");
-        EXPECT_FALSE(ipv6_prefix(ip));
+        EXPECT_FALSE(ipv6<webpp::std_traits>(_prefix(ip));
         EXPECT_FALSE(host("[" + std::string(item) + "]")) << "ip: " << item;
     }
 }

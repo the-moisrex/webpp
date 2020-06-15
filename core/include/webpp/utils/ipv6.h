@@ -964,7 +964,7 @@ namespace webpp {
 
             // generating short string representation of the ip version 6
             // todo:
-            typename traits_type::basic_ostringstream ostr;
+            typename traits_type::ostringstream ostr;
             ostr << stl::hex;
 
             auto it = _octets.cbegin();

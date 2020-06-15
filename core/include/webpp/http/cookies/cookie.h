@@ -116,7 +116,7 @@ namespace webpp {
         using name_t  = storing_string_type;
         using value_t = storing_string_type;
 
-      private:
+      protected:
         name_t  _name;
         value_t _value;
         bool    _valid = false;
@@ -330,7 +330,7 @@ namespace webpp {
          * @param source
          */
         explicit response_cookie(
-          typename super::string_view_type const& source) noexcept {
+          typename super::string_view_type source) noexcept {
             parse_SE_options(source); // parse name, value, and options
         }
 
