@@ -8,7 +8,6 @@
 
 using res_cookie_t     = webpp::response_cookie<webpp::std_traits>;
 using res_cookie_jar_t = webpp::response_cookie_jar<webpp::std_traits>;
-using cookie_hash_t    = webpp::cookie_hash<res_cookie_t>;
 
 TEST(Cookie, CookiesCreation) {
     res_cookie_t c;
@@ -31,16 +30,16 @@ TEST(Cookie, CookieExpirationDate) {
     EXPECT_TRUE(c.expires().time_since_epoch().count() > 0);
 }
 
-TEST(Cookies, CookiesHash) {
-    cookie_hash_t hash;
-    auto          a = hash(res_cookie_t("yes", "value"));
-    auto          b = hash(res_cookie_t("  yes  ", "  value  "));
-
-    EXPECT_FALSE(hash(res_cookie_t("one", "value")) ==
-                 hash(res_cookie_t("two", "value")));
-    EXPECT_TRUE(a == b) << "Same cookies should be the same.";
-}
-
+// TEST(Cookies, CookiesHash) {
+//    cookie_hash_t hash;
+//    auto          a = hash(res_cookie_t("yes", "value"));
+//    auto          b = hash(res_cookie_t("  yes  ", "  value  "));
+//
+//    EXPECT_FALSE(hash(res_cookie_t("one", "value")) ==
+//                 hash(res_cookie_t("two", "value")));
+//    EXPECT_TRUE(a == b) << "Same cookies should be the same.";
+//}
+//
 TEST(Cookies, CookieJar) {
 
     res_cookie_jar_t jar;

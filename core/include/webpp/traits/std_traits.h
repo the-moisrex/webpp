@@ -12,8 +12,8 @@
 
 namespace webpp {
 
-    template <typename CharT, typename CharTraits = ::std::char_traits<CharT>,
-              template <typename> typename Allocator = ::std::allocator>
+    template <typename CharT, typename CharTraits = stl::char_traits<CharT>,
+              template <typename> typename Allocator = stl::allocator>
     struct basic_std_traits {
         using char_type   = CharT;
         using char_traits = CharTraits;
@@ -39,20 +39,19 @@ namespace webpp {
     };
 
     using std_traits =
-      basic_std_traits<char, ::std::char_traits<char>, ::std::allocator>;
+      basic_std_traits<char, stl::char_traits<char>, stl::allocator>;
 
     template <typename T>
     struct std_traits_from_string_view {
-        using type =
-          basic_std_traits<typename T::value_type, typename T::traits_type,
-                           ::std::allocator>;
+        using type = basic_std_traits<typename T::value_type,
+                                      typename T::traits_type, stl::allocator>;
     };
 
     template <typename T>
     struct std_traits_from_string {
         using type =
           basic_std_traits<typename T::value_type, typename T::traits_type,
-                           ::std::allocator_traits<typename T::allocator_type>::
+                           stl::allocator_traits<typename T::allocator_type>::
                              template rebind_alloc>;
     };
 
@@ -60,16 +59,16 @@ namespace webpp {
     struct std_traits_from {};
 
     template <typename CharT, typename CharTraitsT>
-    struct std_traits_from<::std::basic_string_view<CharT, CharTraitsT>> {
+    struct std_traits_from<stl::basic_string_view<CharT, CharTraitsT>> {
         using type = basic_std_traits<CharT, CharTraitsT>;
     };
 
     template <typename CharT, typename CharTraitsT, typename AllocatorType>
     struct std_traits_from<
-      ::std::basic_string<CharT, CharTraitsT, AllocatorType>> {
+      stl::basic_string<CharT, CharTraitsT, AllocatorType>> {
         using type = basic_std_traits<
           CharT, CharTraitsT,
-          ::std::allocator_traits<AllocatorType>::template rebind_alloc>;
+          stl::allocator_traits<AllocatorType>::template rebind_alloc>;
     };
 
 } // namespace webpp

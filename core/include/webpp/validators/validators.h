@@ -14,16 +14,6 @@ namespace webpp {
     namespace is {
 
         /**
-         * @brief check if the string is empty or not
-         * @return true if the string is empty
-         */
-        template <typename CharT = char>
-        [[nodiscard]] constexpr bool
-        empty(stl::basic_string_view<CharT> const& str) noexcept {
-            return str.empty();
-        }
-
-        /**
          * @brief check if these two are equal
          */
         template <typename T1, typename T2>
@@ -334,15 +324,16 @@ namespace webpp {
          * @param str
          * @return true if str is a valid ipv4
          */
-        template <typename CharT = char>
+        template <Traits TraitsType>
         [[nodiscard]] constexpr bool
-        ipv4(stl::basic_string_view<CharT> str) noexcept {
+        ipv4(typename TraitsType::string_view_type str) noexcept {
+            using traits_type    = TraitsType;
             stl::size_t next_dot = 0;
             for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
                 next_dot       = str.find('.');
                 auto octet_str = str.substr(0, next_dot);
                 if (octet_str.size() > 3 || !is::digit(octet_str) ||
-                    to_uint(octet_str) > 255)
+                    to_uint<traits_type>(octet_str) > 255)
                     return false;
                 str.remove_prefix(octet_str.size() + (octet_index != 3));
             }
@@ -392,20 +383,24 @@ namespace webpp {
          * is valid or not.
          * @example 192.168.0.1/24, 192.168.0.1:24
          */
-        template <typename CharT = char, stl::size_t N>
+        template <Traits TraitsType, stl::size_t N>
         [[nodiscard]] constexpr bool
-        ipv4_prefix(stl::basic_string_view<CharT> const& str,
-                    charset_t<char, N> const& divider_chars) noexcept {
+        ipv4_prefix(typename TraitsType::string_view_type const& str,
+                    charset_t<typename TraitsType::char_type, N> const&
+                      divider_chars) noexcept {
+
+            using traits_type = TraitsType;
+
             if (auto found = stl::find_if(stl::rbegin(str), stl::rend(str),
                                           [&](const auto& c) {
                                               return divider_chars.contains(c);
                                           });
                 found != stl::rend(str)) {
                 auto index = stl::distance(stl::begin(str), found.base()) - 1;
-                if (!ipv4(str.substr(0, index)))
+                if (!is::ipv4<traits_type>(str.substr(0, index)))
                     return false;
                 if (auto prefix = str.substr(index + 1); is::digit(prefix)) {
-                    auto _prefix = to_uint(prefix);
+                    auto _prefix = to_uint<traits_type>(prefix);
                     return _prefix >= 0 && _prefix <= 32;
                 }
                 return false;
@@ -418,10 +413,12 @@ namespace webpp {
          * @param str
          * @return
          */
-        template <typename CharT = char>
+        template <Traits TraitsType>
         [[nodiscard]] constexpr bool
-        ipv4_prefix(stl::basic_string_view<CharT> const& str) noexcept {
-            return ipv4_prefix(str, charset_t<char, 2>{':', '/'});
+        ipv4_prefix(typename TraitsType::string_view_type const& str) noexcept {
+            using char_type = typename TraitsType::char_type;
+            return ipv4_prefix<TraitsType>(str,
+                                           charset_t<char_type, 2>{':', '/'});
         }
 
         /**
@@ -436,14 +433,17 @@ namespace webpp {
          *     An indication of whether or not the given address
          *     is a valid IPv6 address is returned.
          */
-        template <typename CharT = char>
+        template <Traits TraitsType>
         [[nodiscard]] constexpr bool
-        ipv6(stl::basic_string_view<CharT> address) noexcept {
+        ipv6(typename TraitsType::string_view_type address) noexcept {
+            using traits_type = TraitsType;
+            using str_view_t  = typename traits_type::string_view_type;
+
             bool        encountered_double_colons = false;
             stl::size_t index                     = 0;
 
-            if (starts_with(address, '[')) {
-                if (ends_with(address, ']')) {
+            if (starts_with<traits_type>(address, '[')) {
+                if (ends_with<traits_type>(address, ']')) {
                     address.remove_suffix(1);
                     address.remove_prefix(1);
                 } else {
@@ -461,14 +461,14 @@ namespace webpp {
                         return false;
 
                     if (index == 0) {
-                        if (!starts_with(address, "::")) {
+                        if (!starts_with<traits_type>(address, "::")) {
                             return false;
                         }
                         address.remove_prefix(1);
                     }
                     encountered_double_colons = true;
                 } else if (octet.size() > 4) {
-                    if (ipv4(octet)) {
+                    if (is::ipv4<traits_type>(octet)) {
                         // ipv4 inside ipv6 address should be the last octet
                         return octet.size() == address.size() &&
                                ((!encountered_double_colons && index == 8u) ||
@@ -478,7 +478,7 @@ namespace webpp {
                 } else if (!is::hex(octet)) {
                     return false;
                 }
-                if (next_colon != stl::string_view::npos)
+                if (next_colon != str_view_t::npos)
                     address.remove_prefix(next_colon + 1);
                 else
                     address.remove_prefix(octet.size());
@@ -490,11 +490,14 @@ namespace webpp {
                     encountered_double_colons);
         }
 
-        template <typename CharT = char, stl::size_t N = 1>
-        [[nodiscard]] constexpr bool
-        ipv6_prefix(stl::basic_string_view<CharT> const& str,
-                    charset_t<CharT, N> const&           divider_chars =
-                      charset_t<CharT, 1>('/')) noexcept {
+        template <Traits TraitsType, stl::size_t N = 1>
+        [[nodiscard]] constexpr bool ipv6_prefix(
+          typename TraitsType::string_view_type const&        str,
+          charset_t<typename TraitsType::char_type, N> const& divider_chars =
+            charset_t<typename TraitsType::char_type, 1>('/')) noexcept {
+            using traits_type = TraitsType;
+            using char_type   = typename TraitsType::char_type;
+
             if (auto found = stl::find_if(stl::rbegin(str), stl::rend(str),
                                           [&](const auto& c) {
                                               return divider_chars.contains(c);
@@ -502,13 +505,13 @@ namespace webpp {
                 found != stl::rend(str)) {
                 auto index = stl::distance(stl::begin(str), found.base()) - 1;
                 if (auto prefix = str.substr(index + 1); is::digit(prefix)) {
-                    int _prefix = to_uint(prefix);
+                    int _prefix = to_uint<traits_type>(prefix);
                     if (!(_prefix >= 0 && _prefix <= 128))
                         return false;
                 } else {
                     return false;
                 }
-                if (ipv6(str.substr(0, index)))
+                if (is::ipv6<traits_type>(str.substr(0, index)))
                     return true;
             }
             return false;
@@ -532,22 +535,26 @@ namespace webpp {
          * @param str
          * @return
          */
-        template <typename CharT = char>
+        template <Traits TraitsType>
         [[nodiscard]] constexpr bool
-        host(stl::basic_string_view<CharT> const& str) noexcept {
+        host(typename TraitsType::string_view_type const& str) noexcept {
+            using traits_type = TraitsType;
+            using char_type   = typename traits_type::char_type;
+            using str_view_t  = typename traits_type::string_view_type;
+
             /**
              * This is the character set corresponds to the "unreserved" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
             constexpr auto UNRESERVED =
-              charset(ALPHA<CharT>, DIGIT<CharT>,
-                      charset_t<CharT, 4>{'-', '.', '_', '~'});
+              charset(ALPHA<char_type>, DIGIT<char_type>,
+                      charset_t<char_type, 4>{'-', '.', '_', '~'});
 
             /**
              * This is the character set corresponds to the "sub-delims" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
-            constexpr charset_t<CharT, 11> SUB_DELIMS{
+            constexpr charset_t<char_type, 11> SUB_DELIMS{
               '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '='};
 
             /**
@@ -555,8 +562,8 @@ namespace webpp {
              * the "IPvFuture" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
-            constexpr auto IPV_FUTURE_LAST_PART =
-              charset<CharT>(UNRESERVED, SUB_DELIMS, charset_t<CharT, 1>{':'});
+            constexpr auto IPV_FUTURE_LAST_PART = charset<char_type>(
+              UNRESERVED, SUB_DELIMS, charset_t<char_type, 1>{':'});
 
             /**
              * This is the character set corresponds to the "reg-name" syntax
@@ -564,16 +571,17 @@ namespace webpp {
              * leaving out "pct-encoded".
              */
             constexpr auto REG_NAME_NOT_PCT_ENCODED =
-              charset<CharT>(UNRESERVED, SUB_DELIMS);
+              charset<char_type>(UNRESERVED, SUB_DELIMS);
 
             if (str.empty())
                 return false;
-            if (starts_with(str, '[') && ends_with(str, ']')) {
+            if (starts_with<traits_type>(str, '[') &&
+                ends_with<traits_type>(str, ']')) {
                 if (str[1] == 'v') { // future ip
                     if (auto dot_delim = str.find('.');
-                        dot_delim != stl::basic_string_view<CharT>::npos) {
+                        dot_delim != str_view_t::npos) {
                         auto ipvf_version = str.substr(2, dot_delim);
-                        if (!HEXDIG<CharT>.contains(ipvf_version)) {
+                        if (!HEXDIG<char_type>.contains(ipvf_version)) {
                             // ERROR: basic_uri is not valid
                             return false;
                         }
@@ -583,13 +591,14 @@ namespace webpp {
                     }
 
                 } else { // ipv6
-                    return is::ipv6(str.substr(1, str.size() - 2));
+                    return is::ipv6<std_traits>(str.substr(1, str.size() - 2));
                 }
-            } else if (is::digit(str[0]) && is::ipv4(str)) { // ipv4
+            } else if (is::digit(str[0]) &&
+                       is::ipv4<traits_type>(str)) { // ipv4
                 return true;
             } else {
-                constexpr auto ccc = charset<CharT>(REG_NAME_NOT_PCT_ENCODED,
-                                                    charset_t<CharT, 1>({'%'}));
+                constexpr auto ccc = charset<char_type>(
+                  REG_NAME_NOT_PCT_ENCODED, charset_t<char_type, 1>({'%'}));
                 return ccc.contains(str);
             }
 

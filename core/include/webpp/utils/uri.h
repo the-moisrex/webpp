@@ -18,7 +18,6 @@
 #include <string_view>
 #include <type_traits>
 #include <variant>
-#include <vector>
 
 namespace webpp {
 
@@ -41,8 +40,8 @@ namespace webpp {
      * @details this function is almost the same as "decodeURIComponent" in
      * javascript
      */
-    template <Traits TraitsType, ::std::size_t N>
-    [[nodiscard]] ::std::optional<typename TraitsType::string_type>
+    template <Traits TraitsType, stl::size_t N>
+    [[nodiscard]] stl::optional<typename TraitsType::string_type>
     decode_uri_component(
       typename TraitsType::string_view_type const& encoded_str,
       charset_t<typename TraitsType::char_type, N> const&
@@ -1051,13 +1050,12 @@ namespace webpp {
          * @return string/ipv4/ipv6
          * @default empty string
          */
-        [[nodiscard]] ::std::variant<ipv4<traits_type>, ipv6<traits_type>,
-                                     str_t>
+        [[nodiscard]] stl::variant<ipv4<traits_type>, ipv6<traits_type>, str_t>
         host_structured_decoded() const noexcept {
             if (auto _host_structured = host_structured();
-                ::std::holds_alternative<str_view_t>(_host_structured))
+                stl::holds_alternative<str_view_t>(_host_structured))
                 return decode_uri_component<traits_type>(
-                  ::std::get<str_view_t>(_host_structured),
+                  stl::get<str_view_t>(_host_structured),
                   REG_NAME_NOT_PCT_ENCODED);
             else
                 return _host_structured;
@@ -1091,11 +1089,12 @@ namespace webpp {
          * will be the last one and Second Level Domain will be the one before
          * that and the rest will be subdomains.
          */
-        [[nodiscard]] stl::vector<traits_type, str_t> domains() const noexcept {
+        [[nodiscard]] istl::vector<traits_type, str_t>
+        domains() const noexcept {
             auto _host = host();
             if (_host.empty() || is_ip())
                 return {};
-            stl::vector<traits_type, str_t> subs;
+            istl::vector<traits_type, str_t> subs;
             for (;;) {
                 auto dot = _host.find('.');
                 auto sub = _host.substr(0, dot);
@@ -1435,7 +1434,7 @@ namespace webpp {
          * be an std container, but if string/string_view is presented as a
          * container, it will return the whole path.
          */
-        template <typename Container = stl::vector<traits_type, str_view_t>>
+        template <typename Container = istl::vector<traits_type, str_view_t>>
         [[nodiscard]] Container path_structured() const noexcept {
             auto _path = path();
             if (_path.empty())
@@ -1466,7 +1465,7 @@ namespace webpp {
          * @attention do not use string_view or any alternatives for this method
          * as this method should own its data.
          */
-        template <typename Container = stl::vector<traits_type, str_t>>
+        template <typename Container = istl::vector<traits_type, str_t>>
         [[nodiscard]] Container path_structured_decoded() const noexcept {
             Container container;
             for (auto const& slug : path_structured()) {
@@ -1515,8 +1514,7 @@ namespace webpp {
          */
         basic_uri& path(str_view_t const& __path) noexcept {
             parse_path();
-            auto _encoded_path =
-              (starts_with(__path, '/') ? "" : "/") +
+            auto _encoded_path = (starts_with(__path, '/') ? "" : "/") +
                                  encode_uri_component<traits_type>(
                                    __path, charset(PCHAR_NOT_PCT_ENCODED,
                                                    charset<char_type>('/')));
@@ -1972,11 +1970,8 @@ namespace webpp {
     basic_uri(stl::basic_string<CharT>)
       -> basic_uri<basic_std_traits<CharT>, true>;
 
-    template <typename CharT = char>
-    using const_uri = basic_uri<basic_std_traits<CharT>, false>;
-
-    template <typename CharT = char>
-    using uri = basic_uri<basic_std_traits<CharT>, true>;
+    using const_uri = basic_uri<std_traits, false>;
+    using uri       = basic_uri<std_traits, true>;
 
 
     template <Traits TraitsType, bool Mutable1, bool Mutable2>
@@ -2037,29 +2032,24 @@ namespace webpp {
         return true;
     }
 
-    template <typename CharT = char>
-    [[nodiscard]] inline auto
-    equal_path(stl::basic_string_view<CharT> const& p1,
-               stl::basic_string_view<CharT> const& p2) noexcept {
-        return p1 == p2 || equal_path<basic_std_traits<CharT>, false, false>(
-                             const_uri<basic_std_traits<CharT>>{p1},
-                             const_uri<basic_std_traits<CharT>>{p2});
+    [[nodiscard]] inline auto equal_path(stl::string_view const& p1,
+                                         stl::string_view const& p2) noexcept {
+        return p1 == p2 || equal_path<std_traits, false, false>(const_uri{p1},
+                                                                const_uri{p2});
     }
 
     template <Traits TraitsType, bool Mutable>
     [[nodiscard]] inline auto
     equal_path(basic_uri<TraitsType, Mutable> const&        p1,
                typename TraitsType::string_view_type const& p2) noexcept {
-        return p1 == p2 ||
-               equal_path<TraitsType, false>(p1, const_uri<TraitsType>{p2});
+        return p1 == p2 || equal_path<TraitsType, false>(p1, const_uri{p2});
     }
 
     template <Traits TraitsType, bool Mutable>
     [[nodiscard]] inline auto
     equal_path(typename TraitsType::string_view_type const& p1,
                basic_uri<TraitsType, Mutable> const&        p2) noexcept {
-        return p2 == p1 ||
-               equal_path<TraitsType, false>(const_uri<TraitsType>{p1}, p2);
+        return p2 == p1 || equal_path<TraitsType, false>(const_uri{p1}, p2);
     }
 
 } // namespace webpp

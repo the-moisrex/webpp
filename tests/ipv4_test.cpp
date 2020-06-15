@@ -64,16 +64,16 @@ TEST(IPv4Tests, Validation) {
     };
 
     for (auto const& _ip : valid_ipv4s) {
-        EXPECT_TRUE(webpp::is::ipv4(_ip));
-        EXPECT_TRUE(ipv4(_ip).is_valid())
-          << "ip: " << _ip << "; compiled ip: " << ipv4(_ip);
+        EXPECT_TRUE(static_cast<bool>(is::ipv4<std_traits>(_ip)));
+        EXPECT_TRUE(ipv4<std_traits>(_ip).is_valid())
+          << "ip: " << _ip << "; compiled ip: " << ipv4<std_traits>(_ip);
         ipv4_t ip{_ip};
         (void)ip.integer(); // just to make sure it's parsed
         EXPECT_TRUE(ip.is_valid());
     }
 
     for (auto const& _ip : invalid_ipv4s) {
-        EXPECT_FALSE(webpp::is::ipv4(_ip));
+        EXPECT_FALSE(is::ipv4<std_traits>(_ip));
         EXPECT_FALSE(ipv4_t(_ip).is_valid())
           << "ip: " << _ip << "; compiled ip: " << ipv4_t(_ip).str();
         ipv4_t ip{_ip};
@@ -88,7 +88,7 @@ TEST(IPv4Tests, CIDR) {
                           "192.168.1.1/33"};
 
     for (auto const& _ip : valid_ipv4s) {
-        EXPECT_TRUE(webpp::is::ipv4_prefix(_ip)) << _ip;
+        EXPECT_TRUE(static_cast<bool>(is::ipv4_prefix<std_traits>(_ip))) << _ip;
         EXPECT_TRUE(ipv4_t(_ip).is_valid())
           << "ip: " << _ip << "; compiled ip: " << ipv4_t(_ip).str();
         EXPECT_TRUE(ipv4_t(_ip).has_prefix()) << _ip;
@@ -97,7 +97,7 @@ TEST(IPv4Tests, CIDR) {
     }
 
     for (auto const& _ip : invalid_ipv4s) {
-        EXPECT_FALSE(webpp::is::ipv6(_ip)) << _ip;
+        EXPECT_FALSE(is::ipv6<std_traits>(_ip)) << _ip;
         EXPECT_FALSE(ipv4_t(_ip).is_valid()) << _ip;
         EXPECT_FALSE(ipv4_t(_ip).has_prefix()) << _ip;
         // TODO: check cidr(prefix) method

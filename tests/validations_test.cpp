@@ -8,15 +8,6 @@
 
 using namespace webpp::is;
 
-TEST(ValidationsTest, EmptyFunction) {
-    EXPECT_TRUE(empty(""));
-    EXPECT_FALSE(empty("not empty"));
-    std::string str;
-    EXPECT_TRUE(empty(str));
-    str = "not empty";
-    EXPECT_FALSE(empty(str));
-}
-
 TEST(ValidationsTest, ContainsFunctions) {
     std::map<int, std::string> data;
     data[0]  = "hello world";

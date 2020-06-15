@@ -989,6 +989,7 @@ namespace webpp {
                     ostr << ':';
             }
 
+            // todo: replace this whole stream shenanigan with {fmt}
             return ostr.str();
         }
 

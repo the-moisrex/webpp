@@ -7,9 +7,6 @@
 #include "casts.h"
 
 #include <array>
-#include <sstream>
-#include <string>
-#include <string_view>
 
 namespace webpp {
 
@@ -27,7 +24,7 @@ namespace webpp {
         return prefix;
     }
 
-    constexpr uint8_t to_prefix(::std::array<uint8_t, 4> octets) noexcept {
+    constexpr uint8_t to_prefix(stl::array<uint8_t, 4> octets) noexcept {
         uint8_t prefix = 0u;
         for (auto const& octet : octets)
             for (uint8_t mask = 0b1000'0000; mask != 0u; mask >>= 1u)
@@ -50,8 +47,8 @@ namespace webpp {
         if (_data.size() > 15 || _data.size() < 7) {
             return 0u;
         }
-        ::std::size_t first_dot = 0u;
-        ::std::size_t len       = _data.size();
+        stl::size_t first_dot = 0u;
+        stl::size_t len       = _data.size();
         while (_data[first_dot] != '.' && first_dot != len)
             first_dot++;
 
@@ -62,7 +59,7 @@ namespace webpp {
             return 0u;
         }
 
-        ::std::size_t second_dot = first_dot + 1;
+        stl::size_t second_dot = first_dot + 1;
         while (_data[second_dot] != '.' && second_dot != len)
             second_dot++;
 
@@ -74,7 +71,7 @@ namespace webpp {
             return 0u;
         }
 
-        ::std::size_t third_dot = second_dot + 1;
+        stl::size_t third_dot = second_dot + 1;
         while (_data[third_dot] != '.' && third_dot != len)
             third_dot++;
 
@@ -140,8 +137,8 @@ namespace webpp {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
-            ::std::size_t first_dot = 0u;
-            ::std::size_t len       = _data.size();
+            stl::size_t first_dot = 0u;
+            stl::size_t len       = _data.size();
             while (_data[first_dot] != '.' && first_dot != len)
                 first_dot++;
 
@@ -153,7 +150,7 @@ namespace webpp {
                 return;
             }
 
-            ::std::size_t second_dot = first_dot + 1;
+            stl::size_t second_dot = first_dot + 1;
             while (_data[second_dot] != '.' && second_dot != len)
                 second_dot++;
 
@@ -166,7 +163,7 @@ namespace webpp {
                 return;
             }
 
-            ::std::size_t third_dot = second_dot + 1;
+            stl::size_t third_dot = second_dot + 1;
             while (_data[third_dot] != '.' && third_dot != len)
                 third_dot++;
 
@@ -179,7 +176,7 @@ namespace webpp {
                 return;         // parsing failed.
             }
 
-            ::std::size_t slash = third_dot + 1;
+            stl::size_t slash = third_dot + 1;
             while (_data[slash] != '/' && slash != len)
                 slash++;
 
@@ -258,8 +255,8 @@ namespace webpp {
             parse(ip);
         }
 
-        constexpr ipv4(string_view_type const&         ip,
-                       ::std::array<uint8_t, 4> const& subnet) noexcept
+        constexpr ipv4(string_view_type const&       ip,
+                       stl::array<uint8_t, 4> const& subnet) noexcept
           : _prefix(is::subnet<traits_type>(subnet)
                       ? to_prefix<traits_type>(subnet)
                       : 253u) {
@@ -299,22 +296,22 @@ namespace webpp {
                       : 253u) {
         }
 
-        constexpr ipv4(::std::array<uint8_t, 4> const& ip,
-                       uint8_t                         prefix = 255) noexcept
+        constexpr ipv4(stl::array<uint8_t, 4> const& ip,
+                       uint8_t                       prefix = 255) noexcept
           : data(parse(ip)),
             _prefix(prefix > 32 && prefix != 255u ? 253u : prefix) {
         }
 
-        constexpr ipv4(::std::array<uint8_t, 4> const& ip,
-                       string_view_type const&         subnet) noexcept
+        constexpr ipv4(stl::array<uint8_t, 4> const& ip,
+                       string_view_type const&       subnet) noexcept
           : data(parse(ip)),
             _prefix(is::subnet<traits_type>(subnet)
                       ? to_prefix<traits_type>(subnet)
                       : 253u) {
         }
 
-        constexpr ipv4(::std::array<uint8_t, 4> const& ip,
-                       ::std::array<uint8_t, 4> const& subnet) noexcept
+        constexpr ipv4(stl::array<uint8_t, 4> const& ip,
+                       stl::array<uint8_t, 4> const& subnet) noexcept
           : data(parse(ip)),
             _prefix(is::subnet<traits_type>(subnet)
                       ? to_prefix<traits_type>(subnet)
@@ -325,9 +322,8 @@ namespace webpp {
             return str();
         }
 
-        explicit
-        operator const ::std::enable_if_t<::std::is_integral_v<char_type>,
-                                          void> *() {
+        explicit operator const stl::enable_if_t<stl::is_integral_v<char_type>,
+                                                 void> *() {
             return str().c_str();
         }
 
@@ -351,32 +347,32 @@ namespace webpp {
         }
 
         constexpr bool
-        operator==(::std::array<uint8_t, 4> const& other) const noexcept {
+        operator==(stl::array<uint8_t, 4> const& other) const noexcept {
             return data == parse(other);
         }
 
         constexpr bool
-        operator!=(::std::array<uint8_t, 4> const& other) const noexcept {
+        operator!=(stl::array<uint8_t, 4> const& other) const noexcept {
             return data != parse(other);
         }
 
         constexpr bool
-        operator<(::std::array<uint8_t, 4> const& other) const noexcept {
+        operator<(stl::array<uint8_t, 4> const& other) const noexcept {
             return data < parse(other);
         }
 
         constexpr bool
-        operator>(::std::array<uint8_t, 4> const& other) const noexcept {
+        operator>(stl::array<uint8_t, 4> const& other) const noexcept {
             return data > parse(other);
         }
 
         constexpr bool
-        operator<=(::std::array<uint8_t, 4> const& other) const noexcept {
+        operator<=(stl::array<uint8_t, 4> const& other) const noexcept {
             return data <= parse(other);
         }
 
         constexpr bool
-        operator>=(::std::array<uint8_t, 4> const& other) const noexcept {
+        operator>=(stl::array<uint8_t, 4> const& other) const noexcept {
             return data >= parse(other);
         }
 
@@ -452,9 +448,9 @@ namespace webpp {
             return integer() >= ip;
         }
 
-        friend ::std::basic_ostream<char_type>&
-        operator<<(::std::basic_ostream<char_type>& stream,
-                   ipv4<traits_type> const&         ip) {
+        friend stl::basic_ostream<char_type>&
+        operator<<(stl::basic_ostream<char_type>& stream,
+                   ipv4<traits_type> const&       ip) {
             stream << ip.str();
             return stream;
         }
@@ -495,10 +491,10 @@ namespace webpp {
          * @brief get the 4 octets of the ip address
          * @return
          */
-        [[nodiscard]] constexpr ::std::array<uint8_t, 4u>
+        [[nodiscard]] constexpr stl::array<uint8_t, 4u>
         octets() const noexcept {
             uint32_t _data = integer();
-            return ::std::array<uint8_t, 4u>(
+            return stl::array<uint8_t, 4u>(
               {static_cast<uint8_t>(_data >> 24u),
                static_cast<uint8_t>(_data >> 16u & 0x0FFu),
                static_cast<uint8_t>(_data >> 8u & 0x0FFu),
@@ -547,7 +543,7 @@ namespace webpp {
          * @param _subnet
          */
         ipv4<traits_type>&
-        prefix(::std::array<uint8_t, 4> const& _subnet) noexcept {
+        prefix(stl::array<uint8_t, 4> const& _subnet) noexcept {
             return prefix(to_prefix<traits_type>(_subnet));
         }
 
@@ -600,11 +596,11 @@ namespace webpp {
             constexpr ipv4<traits_type> class_C(
               stl::array<uint8_t, 4u>{192, 168, 0, 0}, 16);
             constexpr ipv4<traits_type> class_B_start(
-              ::std::array<uint8_t, 4u>{172, 16, 0, 0});
+              stl::array<uint8_t, 4u>{172, 16, 0, 0});
             constexpr ipv4 class_B_finish(
-              ::std::array<uint8_t, 4u>{172, 31, 255, 255});
+              stl::array<uint8_t, 4u>{172, 31, 255, 255});
             constexpr ipv4<traits_type> class_A(
-              ::std::array<uint8_t, 4u>{10, 0, 0, 0}, 8);
+              stl::array<uint8_t, 4u>{10, 0, 0, 0}, 8);
             return is_in_subnet(class_C) ||
                    in_range(class_B_start, class_B_finish) ||
                    is_in_subnet(class_A);
@@ -640,7 +636,7 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] constexpr ipv4 reversed() const noexcept {
-            return ::std::array<uint8_t, 4>{
+            return stl::array<uint8_t, 4>{
               static_cast<uint8_t>(data & 0xFFu),
               static_cast<uint8_t>(data >> 8u & 0xFFu),
               static_cast<uint8_t>(data >> 16u & 0xFFu),
@@ -727,38 +723,38 @@ namespace webpp {
     }
 
     template <Traits TraitsType>
-    constexpr bool operator==(::std::array<uint8_t, 4> const& one,
-                              ipv4<TraitsType> const&         two) {
+    constexpr bool operator==(stl::array<uint8_t, 4> const& one,
+                              ipv4<TraitsType> const&       two) {
         return two == one;
     }
 
     template <Traits TraitsType>
-    constexpr bool operator!=(::std::array<uint8_t, 4> const& one,
-                              ipv4<TraitsType> const&         two) {
+    constexpr bool operator!=(stl::array<uint8_t, 4> const& one,
+                              ipv4<TraitsType> const&       two) {
         return two != one;
     }
 
     template <Traits TraitsType>
-    constexpr bool operator<(::std::array<uint8_t, 4> const& one,
-                             ipv4<TraitsType> const&         two) {
+    constexpr bool operator<(stl::array<uint8_t, 4> const& one,
+                             ipv4<TraitsType> const&       two) {
         return ipv4<TraitsType>(one) < two;
     }
 
     template <Traits TraitsType>
-    constexpr bool operator>(::std::array<uint8_t, 4> const& one,
-                             ipv4<TraitsType> const&         two) {
+    constexpr bool operator>(stl::array<uint8_t, 4> const& one,
+                             ipv4<TraitsType> const&       two) {
         return ipv4<TraitsType>(one) > two;
     }
 
     template <Traits TraitsType>
-    constexpr bool operator<=(::std::array<uint8_t, 4> const& one,
-                              ipv4<TraitsType> const&         two) {
+    constexpr bool operator<=(stl::array<uint8_t, 4> const& one,
+                              ipv4<TraitsType> const&       two) {
         return ipv4<TraitsType>(one) <= two;
     }
 
     template <Traits TraitsType>
-    constexpr bool operator>=(::std::array<uint8_t, 4> const& one,
-                              ipv4<TraitsType> const&         two) {
+    constexpr bool operator>=(stl::array<uint8_t, 4> const& one,
+                              ipv4<TraitsType> const&       two) {
         return ipv4<TraitsType>(one) >= two;
     }
 
