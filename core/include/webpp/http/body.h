@@ -93,22 +93,16 @@ namespace webpp {
     template <Traits TraitsType, ExtensionList EList = empty_extension_pack>
     class response_body : public EList {
       private:
-        template <typename... T>
-        struct variant_type_extractor {
-            using type = stl::variant<>;
-        };
-
-        template <typename... E>
-        struct variant_type_extractor<extension_pack<E...>> {
-            using type = stl::variant<
-
-              >;
-        };
+        template <typename ExtensionType>
+        using variant_extractor =
+          typename ExtensionType::response_body_extensions;
 
 
       public:
         using extension_list = EList;
-        using variant_type   = variant_type_extractor<EList>;
+        using variant_type =
+          typename EList::template epack_miner<stl::variant, variant_extractor,
+                                               EList>::type;
 
       public:
         using EList::EList;
