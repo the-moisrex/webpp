@@ -97,20 +97,24 @@ TEST(ValidationTest, IPv6Functions) {
         std::string ip2 = item;
         std::string ip3 = item;
         ip.append("/64");
-        EXPECT_TRUE(ipv6<webpp::std_traits>(ipv6_prefix<webpp::std_traits>(ip)) << "ip has a prefix: " << ip;
+        EXPECT_TRUE(ipv6_prefix<webpp::std_traits>(ip))
+          << "ip has a prefix: " << ip;
         ip2.append("/something bad");
-        EXPECT_FALSE(ipv6<webpp::std_traits>(ipv6_prefix<webpp::std_traits>(ip2));
+        EXPECT_FALSE(ipv6_prefix<webpp::std_traits>(ip2));
         ip3.append("-128");
-        EXPECT_TRUE(ipv6<webpp::std_traits>(ipv6_prefix<webpp::std_traits>(ip3, webpp::charset_t<char, 1>('-')));
-        EXPECT_TRUE(host("[" + std::string(item) + "]")) << "ip: " << item;
+        EXPECT_TRUE(
+          ipv6_prefix<webpp::std_traits>(ip3, webpp::charset_t<char, 1>('-')));
+        EXPECT_TRUE(host<webpp::std_traits>("[" + std::string(item) + "]"))
+          << "ip: " << item;
     }
 
     for (auto const& item : invalids) {
-        EXPECT_FALSE(ipv6<webpp::std_traits>((item)) << item;
+        EXPECT_FALSE(ipv6<webpp::std_traits>(item)) << item;
         std::string ip = item;
         ip.append("/64");
-        EXPECT_FALSE(ipv6<webpp::std_traits>(_prefix(ip));
-        EXPECT_FALSE(host("[" + std::string(item) + "]")) << "ip: " << item;
+        EXPECT_FALSE(ipv6_prefix<webpp::std_traits>(ip));
+        EXPECT_FALSE(host<webpp::std_traits>("[" + std::string(item) + "]"))
+          << "ip: " << item;
     }
 }
 
@@ -122,19 +126,19 @@ TEST(ValidationsTest, HostFunction) {
     auto invalids = {"&^%&^%$&^%&^%$&^%$#@%$#@@!~#!@"};
 
     for (auto const& item : valids) {
-        EXPECT_TRUE(host(item)) << "item is: " << item;
+        EXPECT_TRUE(host<webpp::std_traits>(item)) << "item is: " << item;
     }
     for (auto const& item : invalids) {
-        EXPECT_FALSE(host(item)) << "item is: " << item;
+        EXPECT_FALSE(host<webpp::std_traits>(item)) << "item is: " << item;
     }
 }
 
 TEST(ValidationsTest, EmailFunction) {
-    EXPECT_TRUE(email("moisrex@gmail.com"))
+    EXPECT_TRUE(email<webpp::std_traits>("moisrex@gmail.com"))
       << "moisrex@gmail.com should be valid";
-    EXPECT_TRUE(email("moisrex.test@gmail.com"))
+    EXPECT_TRUE(email<webpp::std_traits>("moisrex.test@gmail.com"))
       << "moisrex.test@gmail.com should be valid";
-    EXPECT_FALSE(email("not an.email@123.com"))
+    EXPECT_FALSE(email<webpp::std_traits>("not an.email@123.com"))
       << "spaces are not allowed in emails";
 }
 

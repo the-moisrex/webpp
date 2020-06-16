@@ -123,7 +123,8 @@ namespace webpp {
          * @return true if the specified input is an integer
          */
         template <typename CharT = char>
-        [[nodiscard]] constexpr bool digit(CharT const& c) noexcept {
+        requires(stl::is_integral_v<CharT>)
+          [[nodiscard]] constexpr bool digit(CharT c) noexcept {
             return c >= '0' && c <= '9';
         }
 
@@ -133,12 +134,20 @@ namespace webpp {
          * @return true/false
          */
         template <typename CharT = char>
+        requires(stl::is_integral_v<CharT>)
+          [[nodiscard]] constexpr bool digit(const CharT* str) noexcept {
+            if (*str == '\0')
+                return false;
+            for (; *str != '\0'; ++str)
+                if (!digit<CharT>(*str))
+                    return false;
+            return true;
+        }
+
+        template <typename CharT = char>
         [[nodiscard]] constexpr bool
         digit(stl::basic_string_view<CharT> const& str) noexcept {
-            for (auto const& c : str)
-                if (!digit<CharT>(c))
-                    return false;
-            return !str.empty();
+            return digit<CharT>(str.data());
         }
 
         /**
@@ -286,9 +295,9 @@ namespace webpp {
          * @param str
          * @return true if the specified str is an email
          */
-        template <typename CharT = char>
+        template <Traits TraitsType>
         [[nodiscard]] bool
-        email(stl::basic_string_view<CharT> const& str) noexcept {
+        email(typename TraitsType::string_view_type const& str) noexcept {
             // TODO: Do not use regular expression, it's slow; use CTRE
             static const stl::regex pattern{
               "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-"
