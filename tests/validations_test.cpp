@@ -148,22 +148,22 @@ TEST(ValidationsTest, NumberFunctions) {
     for (char i = 'a'; i <= 'z'; i++)
         EXPECT_FALSE(digit('c'));
 
-    EXPECT_TRUE(digit("123"));
-    EXPECT_FALSE(digit("1.3"));
+    EXPECT_TRUE(digit(std::string_view{"123"}));
+    EXPECT_FALSE(digit(std::string_view{"1.3"}));
 
-    EXPECT_TRUE(number("123"));
-    EXPECT_TRUE(number("1.23"));
-    EXPECT_TRUE(number("12.3333333333333351846162000"));
-    EXPECT_TRUE(number("12.3333333333333351846162000"));
-    EXPECT_TRUE(number(".3333333333333351846162000"));
-    EXPECT_TRUE(number("0.3333333333333351846162000"));
-    EXPECT_TRUE(number("0."));
-    EXPECT_TRUE(number("0.0"));
-    EXPECT_FALSE(number("0.0a"));
-    EXPECT_TRUE(number("00"));
-    EXPECT_FALSE(number("abc"));
-    EXPECT_FALSE(number(" "));
-    EXPECT_FALSE(number(""));
+    EXPECT_TRUE(number(std::string_view{"123"}));
+    EXPECT_TRUE(number(std::string_view{"1.23"}));
+    EXPECT_TRUE(number(std::string_view{"12.3333333333333351846162000"}));
+    EXPECT_TRUE(number(std::string_view{"12.3333333333333351846162000"}));
+    EXPECT_TRUE(number(std::string_view{".3333333333333351846162000"}));
+    EXPECT_TRUE(number(std::string_view{"0.3333333333333351846162000"}));
+    EXPECT_TRUE(number(std::string_view{"0."}));
+    EXPECT_TRUE(number(std::string_view{"0.0"}));
+    EXPECT_FALSE(number(std::string_view{"0.0a"}));
+    EXPECT_TRUE(number(std::string_view{"00"}));
+    EXPECT_FALSE(number(std::string_view{"abc"}));
+    EXPECT_FALSE(number(std::string_view{" "}));
+    EXPECT_FALSE(number(std::string_view{""}));
     EXPECT_FALSE(number('a'));
     EXPECT_TRUE(number('1'));
     EXPECT_TRUE(number('.'));

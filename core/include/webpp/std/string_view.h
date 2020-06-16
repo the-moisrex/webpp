@@ -16,8 +16,9 @@
 #    define STD_STRING_VIEW STLLIB_BOOST
 #    include <boost/utility/string_view.hpp>
 namespace webpp::stl {
-    using basic_string = boost::basic_string;
-    using string       = boost::string;
+    template <typename... T>
+    using basic_string_view = boost::basic_string_view<T...>;
+    using string_view       = boost::string_view;
 } // namespace webpp::stl
 #endif
 
@@ -28,6 +29,26 @@ namespace webpp::istl {
               typename CharT      = typename TraitsType::char_type,
               typename CharTraits = typename TraitsType::char_traits>
     using basic_string_view = ::std::basic_string_view<CharT, CharTraits>;
+
+
+
+    template <typename T>
+    concept StringView = requires(T str) {
+        {T{"str"}};
+        {str.empty()};
+        {str.at(0)};
+        {str.data()};
+        {str.size()};
+        {str.remove_suffix(1)};
+        {str.remove_prefix(1)};
+        {str.starts_with('a')};
+        {str.ends_with('a')};
+        {str.substr('a')};
+        {T::npos};
+
+        typename T::value_type;
+    };
+
 
 } // namespace webpp::stl
 

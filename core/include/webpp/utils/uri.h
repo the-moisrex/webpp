@@ -1306,7 +1306,7 @@ namespace webpp {
          */
         [[nodiscard]] uint16_t port_uint16() const noexcept {
             if (has_port()) {
-                return static_cast<uint16_t>(to_uint(port()));
+                return static_cast<uint16_t>(to_uint<traits_type>(port()));
             }
             return default_port();
         }
