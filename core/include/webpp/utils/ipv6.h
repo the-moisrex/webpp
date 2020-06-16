@@ -962,35 +962,67 @@ namespace webpp {
                 }
             } while (finish != _octets.cend());
 
+
+
+
+
             // generating short string representation of the ip version 6
-            // todo:
-            typename traits_type::ostringstream ostr;
-            ostr << stl::hex;
+
+            // I'm not gonna use std::string here because most small object
+            // optimizations are smaller than 48bit (16 or 20 mostly)
+            char_type   buffer[IPV6_ADDR_SIZE * 2 + (IPV6_ADDR_SIZE - 1) + 1];
+            stl::size_t index = 0;
+
+
+            auto append_to_buffer = [&](uint16_t octet) {
+                constexpr auto hex_table =
+                  "000102030405060708090a0b0c0d0e0f1011"
+                  "12131415161718191a1b1c1d1e1f20212223"
+                  "2425262728292a2b2c2d2e2f303132333435"
+                  "363738393a3b3c3d3e3f4041424344454647"
+                  "48494a4b4c4d4e4f50515253545556575859"
+                  "5a5b5c5d5e5f606162636465666768696a6b"
+                  "6c6d6e6f707172737475767778797a7b7c7d"
+                  "7e7f808182838485868788898a8b8c8d8e8f"
+                  "909192939495969798999a9b9c9d9e9fa0a1"
+                  "a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3"
+                  "b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5"
+                  "c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7"
+                  "d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9"
+                  "eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafb"
+                  "fcfdfeff";
+                auto hex_val = hex_table + octet;
+                if (octet > 0xfu)
+                    buffer[index++] = *hex_val;
+                ++hex_val;
+                buffer[index++] = *hex_val;
+            };
 
             auto it = _octets.cbegin();
 
             // [0, range_start)
             while (it != range_start) {
-                ostr << *it;
+                append_to_buffer(*it);
                 if (++it != range_start)
-                    ostr << ':';
+                    buffer[index++] = ':';
             }
 
             // [range_start, range_end)
             if (it != range_end) {
-                ostr << "::";
-                it = range_end;
+                buffer[index++] = ':';
+                buffer[index++] = ':';
+                it              = range_end;
             }
 
             // [range_end, end)
             while (it != _octets.cend()) {
-                ostr << *it;
+                append_to_buffer(*it);
                 if (++it != _octets.cend())
-                    ostr << ':';
+                    buffer[index++] = ':';
             }
 
-            // todo: replace this whole stream shenanigan with {fmt}
-            return ostr.str();
+            buffer[index++] = '\0';
+            return string_type(buffer, index);
         }
 
         /**

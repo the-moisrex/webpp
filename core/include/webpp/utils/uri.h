@@ -1523,7 +1523,7 @@ namespace webpp {
               (starts_with<traits_type>(__path, '/') ? "" : "/") +
               encode_uri_component<traits_type>(
                 __path,
-                charset(PCHAR_NOT_PCT_ENCODED, charset<char_type>('/')));
+                charset(PCHAR_NOT_PCT_ENCODED, charset_t<char_type, 1>('/')));
 
             replace_value(authority_end, query_start - authority_end,
                           _encoded_path);
