@@ -13,10 +13,11 @@
 
 using namespace webpp;
 
-using res_t = basic_response<std_traits>;
+using res_t  = basic_response<std_traits>;
+using body_t = body_t<std_traits>;
 
 TEST(Body, Text) {
-    response_body b = "Testing";
+    body_t b = "Testing";
     EXPECT_EQ(b.str(), "Testing");
     EXPECT_TRUE(b == "Testing");
 
@@ -32,7 +33,7 @@ TEST(Body, Text) {
     b = std::string("cool");
     EXPECT_EQ(b, "cool");
 
-    response_body bt;
+    body_t bt;
     {
         std::string      _str = "testing";
         std::string_view test = _str;
