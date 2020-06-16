@@ -97,12 +97,20 @@ namespace webpp {
         using variant_extractor =
           typename ExtensionType::response_body_extensions;
 
+        template <typename ExtensionType>
+        struct has_variant {
+            static constexpr bool value = requires {
+                typename ExtensionType::response_body_extensions;
+            };
+        };
+
+        using extensions_that_has_variants =
+          typename EList::template filter<stl::variant, has_variant, EList>;
 
       public:
         using extension_list = EList;
-        using variant_type =
-          typename EList::template epack_miner<stl::variant, variant_extractor,
-                                               EList>::type;
+        using variant_type   = typename EList::template epack_miner<
+          stl::variant, variant_extractor, extensions_that_has_variants>::type;
 
       public:
         using EList::EList;
@@ -118,22 +126,6 @@ namespace webpp {
          */
         [[nodiscard]] stl::string
         str(stl::string_view const& default_val = "") const noexcept;
-
-        [[nodiscard]] auto json() const;
-
-        auto json(stl::string_view const& data);
-
-        auto file(stl::string_view const& filepath);
-
-        stl::istream& stream() const;
-
-        stl::ostream& operator<<(stl::ostream& __stream);
-
-        response_body& operator<<(stl::string_view const& str) noexcept;
-
-        // TODO: add more methods for the images and stuff
-
-        // static auto file(std::string_view const& _file) noexcept;
     };
 
 

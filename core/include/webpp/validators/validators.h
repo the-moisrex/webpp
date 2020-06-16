@@ -1,13 +1,13 @@
 #ifndef WEBPP_VALIDATION_H
 #define WEBPP_VALIDATION_H
 
+#include "../std/string_view.h"
 #include "../utils/casts.h"
 #include "../utils/charset.h"
 #include "../utils/strings.h"
 
 #include <algorithm>
 #include <regex>
-#include <string_view>
 
 namespace webpp {
 
@@ -133,21 +133,14 @@ namespace webpp {
          * @param str
          * @return true/false
          */
-        template <typename CharT = char>
-        requires(stl::is_integral_v<CharT>)
-          [[nodiscard]] constexpr bool digit(const CharT* str) noexcept {
-            if (*str == '\0')
-                return false;
-            for (; *str != '\0'; ++str)
-                if (!digit<CharT>(*str))
+        template <typename CharT          = char,
+                  typename CharTraitsType = stl::char_traits<CharT>>
+        [[nodiscard]] constexpr bool digit(
+          stl::basic_string_view<CharT, CharTraitsType> const& str) noexcept {
+            for (auto c : str)
+                if (!digit<CharT>(c))
                     return false;
-            return true;
-        }
-
-        template <typename CharT = char>
-        [[nodiscard]] constexpr bool
-        digit(stl::basic_string_view<CharT> const& str) noexcept {
-            return digit<CharT>(str.data());
+            return !str.empty();
         }
 
         /**
@@ -156,7 +149,8 @@ namespace webpp {
          * @return
          */
         template <typename CharT = char>
-        [[nodiscard]] constexpr bool number(CharT const& c) noexcept {
+        requires(stl::is_integral_v<CharT>)
+          [[nodiscard]] constexpr bool number(CharT c) noexcept {
             return digit<CharT>(c) || c == '.';
         }
 
@@ -167,8 +161,8 @@ namespace webpp {
          * @return true if the specified string is a number
          */
         template <typename CharT = char>
-        [[nodiscard]] constexpr bool
-        number(stl::basic_string_view<CharT> const& str) noexcept {
+        requires(stl::is_integral_v<CharT>) [[nodiscard]] constexpr bool number(
+          stl::basic_string_view<CharT> const& str) noexcept {
             bool is_first = true;
             for (auto const& c : str) {
                 if (!digit<CharT>(c)) {

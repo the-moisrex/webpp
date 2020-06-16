@@ -33,6 +33,28 @@ namespace webpp::istl {
     using basic_string = stl::basic_string<CharT, CharTraits, Allocator>;
 
 
+    template <typename T>
+    concept String = requires(T str) {
+        {T{"str"}};
+        {str.empty()};
+        {str.at(0)};
+        {str.data()};
+        {str.c_str()};
+        {str = "str"};
+        {str.size()};
+        {str.capacity()};
+        {str.shrink_to_fit()};
+        {str.clear()};
+        {str.append("str")};
+        {str.starts_with('a')};
+        {str.ends_with('a')};
+        {str.substr('a')};
+        {T::npos};
+
+        typename T::value_type;
+        typename T::allocator_type;
+    };
+
 } // namespace webpp::stl
 
 #endif // WEBPP_STRING_H
