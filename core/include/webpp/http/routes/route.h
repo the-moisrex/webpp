@@ -22,11 +22,11 @@ namespace webpp::routes {
      */
     template <typename T, typename U>
     struct can_convert
-      : ::std::integral_constant<
-          bool, (!::std::is_void_v<T> &&
-                 !::std::is_void_v<U>)&&(::std::is_convertible_v<T, U> ||
-                                         ::std::is_constructible_v<T, U> ||
-                                         ::std::is_assignable_v<T, U>)> {};
+      : stl::integral_constant<bool,
+                               (!stl::is_void_v<T> && !stl::is_void_v<U>)&&(
+                                 stl::is_convertible_v<T, U> ||
+                                 stl::is_constructible_v<T, U> ||
+                                 stl::is_assignable_v<T, U>)> {};
 
     template <typename T, typename U>
     constexpr bool can_convert_v = can_convert<T, U>::value;
@@ -38,7 +38,7 @@ namespace webpp::routes {
      */
     template <typename Traits, typename U>
     struct can_convert_to_string
-      : ::std::integral_constant<
+      : stl::integral_constant<
           bool, (can_convert_v<Traits, U, typename Traits::string_type> ||
                  can_convert_v<Traits, U, typename Traits::string_view_type>)> {
     };
@@ -56,21 +56,21 @@ namespace webpp::routes {
     constexpr auto
     run_and_catch(HandleExceptionCallable const& handle_exception,
                   Callable const&                c, Args... args) noexcept {
-        using RetType = ::std::invoke_result_t<Callable, Args...>;
-        if constexpr (::std::is_nothrow_invocable_r_v<RetType, Callable,
-                                                      Args...>) {
+        using RetType = stl::invoke_result_t<Callable, Args...>;
+        if constexpr (stl::is_nothrow_invocable_r_v<RetType, Callable,
+                                                    Args...>) {
             // It's noexcept, we call it knowing that.
-            return callable(::std::forward<Args>(args)...);
-        } else if constexpr (::std::is_invocable_r_v<RetType, Callable,
-                                                     Args...>) {
+            return callable(stl::forward<Args>(args)...);
+        } else if constexpr (stl::is_invocable_r_v<RetType, Callable,
+                                                   Args...>) {
             try {
-                return callable(::std::forward<Args>(args)...);
+                return callable(stl::forward<Args>(args)...);
             } catch (...) {
-                handle_exception(::std::current_exception());
+                handle_exception(stl::current_exception());
                 return false; // todo: check this
             }
         } else {
-            throw ::std::invalid_argument(
+            throw stl::invalid_argument(
               "The specified route is not valid. We're not able to call it.");
         }
     }
@@ -83,7 +83,7 @@ namespace webpp::routes {
      */
     template <typename RetType>
     constexpr auto handle_callable_return_type(RetType&& ret) noexcept {
-        if constexpr (::std::is_void_v<RetType>) {
+        if constexpr (stl::is_void_v<RetType>) {
             // it's an "Unknown route"
             return;
         } else if constexpr (Response<RetType>) {
@@ -91,7 +91,7 @@ namespace webpp::routes {
         } else if constexpr (Context<RetType>) {
             // It's a "Context Switching route"
 
-        } else if constexpr (::std::is_same_v<RetType, bool>) {
+        } else if constexpr (stl::is_same_v<RetType, bool>) {
             // It's a "Conditional route"
             return ret;
         }
@@ -101,9 +101,9 @@ namespace webpp::routes {
     inline bool call_route(C& c, ContextType& context) noexcept {
         using req_t     = typename ContextType::request_type const&;
         using res_t     = typename ContextType::response_type&;
-        using callable  = ::std::decay_t<C>;
+        using callable  = stl::decay_t<C>;
         using context_t = ContextType&;
-        auto callback   = ::std::forward<C>(c);
+        auto callback   = stl::forward<C>(c);
 
         constexpr auto handle_exception = [](auto err) {
 
@@ -112,26 +112,26 @@ namespace webpp::routes {
 
         // TODO: add more overrides. You can simulate "dependency injection" here
 
-        if constexpr (::std::is_invocable_v<callable, req_t>) {
+        if constexpr (stl::is_invocable_v<callable, req_t>) {
             return handle_callback_return_type(
               run_and_catch(handle_exception, callback, context.request));
-        } else if constexpr (::std::is_invocable_v<callable, res_t>) {
+        } else if constexpr (stl::is_invocable_v<callable, res_t>) {
             return handle_callback_return_type(
               run_and_catch(handle_exception, callback, context.response));
-        } else if constexpr (::std::is_invocable_v<callable, req_t, res_t>) {
+        } else if constexpr (stl::is_invocable_v<callable, req_t, res_t>) {
             return handle_callback_return_type(run_and_catch(
               handle_exception, callback, context.request, context.response));
-        } else if constexpr (::std::is_invocable_v<callable, res_t, req_t>) {
+        } else if constexpr (stl::is_invocable_v<callable, res_t, req_t>) {
             return handle_callback_return_type(run_and_catch(
               handle_exception, callback, context.response, context.request));
-        } else if constexpr (::std::is_invocable_v<callable, context_t>) {
+        } else if constexpr (stl::is_invocable_v<callable, context_t>) {
             return handle_callback_return_type(
               run_and_catch(handle_exception, callback, context));
-        } else if constexpr (::std::is_invocable_v<callable>) {
+        } else if constexpr (stl::is_invocable_v<callable>) {
             return handle_callback_return_type(
               run_and_catch(handle_exception, callback));
         } else {
-            throw ::std::invalid_argument(
+            throw stl::invalid_argument(
               "The specified route cannot be called.");
         }
     }
@@ -205,11 +205,11 @@ namespace webpp::routes {
         constexpr route() noexcept : super_t{} {
         }
 
-        template <typename... Args,
-                  ::std::enable_if_t<
-                    ::std::is_constructible_v<super_t, Args...>, int> = 0>
+        template <
+          typename... Args,
+          stl::enable_if_t<stl::is_constructible_v<super_t, Args...>, int> = 0>
         constexpr route(Args&&... args) noexcept
-          : super_t{::std::forward<Args>(args)...} {
+          : super_t{stl::forward<Args>(args)...} {
         }
 
         constexpr route(route const&) noexcept = default;
@@ -292,7 +292,7 @@ namespace webpp::routes {
         [[nodiscard]] inline bool
         call_next_route(Context auto&& ctx) const noexcept {
             // todo handle the return types
-            if constexpr (::std::is_void_v<next_route_type>) {
+            if constexpr (stl::is_void_v<next_route_type>) {
                 return true; // it's the last route in this sub route, doesn't
                              // matter what I return here; at least not yet
             } else {
