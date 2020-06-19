@@ -3,11 +3,11 @@
 
 #include "route.h"
 
-namespace webpp::valves {
+namespace webpp::routes {
 
     struct method_condition {
       private:
-        stl::string_view method_string;
+        const stl::string_view method_string;
 
       public:
         constexpr method_condition(stl::string_view str) noexcept

@@ -239,6 +239,12 @@ namespace webpp {
                               define_method(domain)
 
 
+                                void fix() noexcept {
+            // todo
+            // 1. trim the names
+            // 2. remove duplicates
+        }
+
     }; // namespace webpp
 
 } // namespace webpp

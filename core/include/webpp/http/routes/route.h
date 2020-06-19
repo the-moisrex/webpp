@@ -98,7 +98,7 @@ namespace webpp::routes {
     }
 
     template <typename C, Context ContextType>
-    inline bool call_route(C& c, ContextType& context) noexcept {
+    bool call_route(C& c, ContextType& context) noexcept {
         using req_t     = typename ContextType::request_type const&;
         using res_t     = typename ContextType::response_type&;
         using callable  = stl::decay_t<C>;
@@ -205,10 +205,9 @@ namespace webpp::routes {
         constexpr route() noexcept : super_t{} {
         }
 
-        template <
-          typename... Args,
-          stl::enable_if_t<stl::is_constructible_v<super_t, Args...>, int> = 0>
-        constexpr route(Args&&... args) noexcept
+        template <typename... Args>
+        requires(stl::is_constructible_v<super_t, Args...>) constexpr route(
+          Args&&... args) noexcept
           : super_t{stl::forward<Args>(args)...} {
         }
 
@@ -223,7 +222,7 @@ namespace webpp::routes {
          * @return the response or the context or ...
          */
         template <typename... Args>
-        inline auto operator()(Args&&... args) noexcept {
+        auto operator()(Args&&... args) noexcept {
             return super_t::operator()(stl::forward<Args>(args)...);
         }
 
@@ -240,7 +239,7 @@ namespace webpp::routes {
                 // void
 
                 // the first way (A<X, void> and B<Y, void> === A<X, B<Y, void>>
-                return valve<route_type, TheOp, NewRouteType>(
+                return route<route_type, TheOp, NewRouteType>(
                   *this, stl::forward<NewRouteType>(new_route));
             } else {
                 // this means this function has a "next" valve already,
@@ -283,14 +282,18 @@ namespace webpp::routes {
               stl::forward<decltype(new_route)>(new_route));
         }
 
-        [[nodiscard]] inline bool
-        call_this_route(Context auto&& ctx) const noexcept {
+        [[nodiscard]] constexpr auto
+        operator>>(NextRoute auto&& new_route) const noexcept {
+            return set_next<logical_operators::none>(
+              stl::forward<decltype(new_route)>(new_route));
+        }
+
+        [[nodiscard]] bool call_this_route(Context auto&& ctx) const noexcept {
             // todo handle the return types
             return super_t::operator()(stl::forward<decltype(ctx)>(ctx));
         }
 
-        [[nodiscard]] inline bool
-        call_next_route(Context auto&& ctx) const noexcept {
+        [[nodiscard]] bool call_next_route(Context auto&& ctx) const noexcept {
             // todo handle the return types
             if constexpr (stl::is_void_v<next_route_type>) {
                 return true; // it's the last route in this sub route, doesn't
@@ -301,13 +304,11 @@ namespace webpp::routes {
             }
         }
 
-        [[nodiscard]] inline bool
-        operator()(Context auto&& ctx) const noexcept {
+        [[nodiscard]] bool operator()(Context auto&& ctx) const noexcept {
             using context_type = decltype(ctx);
             if constexpr (logical_operators::none == op) {
                 call_this_route(stl::forward<context_type>(ctx));
-                call_next_route(stl::forward<context_type>(ctx));
-                return true;
+                return call_next_route(stl::forward<context_type>(ctx));
             } else if constexpr (logical_operators::AND == op) {
                 return call_this_route(stl::forward<context_type>(ctx)) &&
                        call_next_route(stl::forward<context_type>(ctx));

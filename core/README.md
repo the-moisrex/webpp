@@ -183,7 +183,7 @@ Overloaded operators:
 Usage examples:
    - `.on(get and "/about"_path >> about_page)`
    - `( get and "/home"_path ) or ( post && "/home/{page}"_tpath ) >> ...`
-   - `opath() /"home" / integer("page") /`
+   - `opath() / "home" / integer("page")`
    - `empty / action_list("action", {"open", "delete"}) >> []{...}`
    - `(...) >> &non_templated_class_with_templated_callable_operator`
    - `get and "/profile/"_tpath and set_by_class_constructor`

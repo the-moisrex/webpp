@@ -10,19 +10,20 @@ namespace webpp {
 
     template <typename T>
     concept RouteResponse = Response<T> || ConvertibleToResponse<T> ||
-                            Context<T> || ::std::same_as<T, bool>;
+                            Context<T> || stl::same_as<T, bool>;
 
     // todo: complete this concept
     template <typename T>
-    concept Route = requires(T r) {
-        typename T::next_route_type;
-        typename T::route_type;
-        { r() }
-        ->RouteResponse;
+    concept Route = requires {
+        typename T::template route_type<fake_traits>;
+        requires requires(typename T::template route_type<fake_traits> r) {
+            { r() }
+            ->RouteResponse;
+        };
     };
 
     template <typename T>
-    concept NextRoute = Route<T> || ::std::same_as<T, void>;
+    concept NextRoute = Route<T> || stl::same_as<T, void>;
 
 } // namespace webpp
 
