@@ -9,7 +9,7 @@
 using res_cookie_t     = webpp::response_cookie<webpp::std_traits>;
 using res_cookie_jar_t = webpp::response_cookie_jar<webpp::std_traits>;
 
-TEST(Cookie, CookiesCreation) {
+TEST(Cookie, ResponseCookiesCreation) {
     res_cookie_t c;
     c.name("   test   ").value("  value  ");
     EXPECT_EQ(c.name(), "test");
@@ -30,7 +30,7 @@ TEST(Cookie, CookieExpirationDate) {
     EXPECT_TRUE(c.expires().time_since_epoch().count() > 0);
 }
 
-// TEST(Cookies, CookiesHash) {
+// TEST(ResponseCookies, ResponseCookiesHash) {
 //    cookie_hash_t hash;
 //    auto          a = hash(res_cookie_t("yes", "value"));
 //    auto          b = hash(res_cookie_t("  yes  ", "  value  "));
@@ -40,7 +40,7 @@ TEST(Cookie, CookieExpirationDate) {
 //    EXPECT_TRUE(a == b) << "Same cookies should be the same.";
 //}
 //
-TEST(Cookies, CookieJar) {
+TEST(ResponseCookies, CookieJar) {
 
     res_cookie_jar_t jar;
     jar.emplace_back("one", "value");
@@ -98,7 +98,7 @@ TEST(Cookies, CookieJar) {
     }
 }
 
-TEST(Cookies, CookieJarUniqeness) {
+TEST(ResponseCookies, CookieJarUniqeness) {
     res_cookie_jar_t cs;
     cs.push_back(res_cookie_t().name("one").value("test").domain("google.com"));
     cs.push_back(res_cookie_t().name("one").value("test").domain("bing.com"));
@@ -164,10 +164,10 @@ TEST(Cookies, CookieJarUniqeness) {
               std::end(cs));
 }
 
-TEST(Cookies, Date) {
+TEST(ResponseCookies, Date) {
 }
 
-TEST(Cookies, StringParsing) {
+TEST(ResponseCookies, StringParsing) {
 
     res_cookie_t c("name=value");
     EXPECT_TRUE(c.is_valid());
@@ -175,6 +175,6 @@ TEST(Cookies, StringParsing) {
     EXPECT_EQ("value", c.value());
 }
 
-TEST(Cookies, CookiesEncryption) {
+TEST(ResponseCookies, ResponseCookiesEncryption) {
     // TODO
 }

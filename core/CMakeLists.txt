@@ -29,9 +29,9 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/routes/methods.h
         ${LIB_INCLUDE_DIR}/webpp/http/routes/path.h
         ${LIB_INCLUDE_DIR}/webpp/http/routes/tpath.h
-        ${LIB_INCLUDE_DIR}/webpp/http/routes/opath.h
         ${LIB_INCLUDE_DIR}/webpp/http/routes/context.h
         ${LIB_INCLUDE_DIR}/webpp/http/routes/literals.h
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/path/number.h
 
         ${LIB_INCLUDE_DIR}/webpp/validators/validators.h
         ${LIB_INCLUDE_DIR}/webpp/validators/email.h

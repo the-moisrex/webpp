@@ -195,7 +195,6 @@ namespace webpp::routes {
         using next_route_type                 = NextRouteType;
         static constexpr logical_operators op = Op;
 
-
       private:
         using super_t = basic_route<RouteType, Op, NextRouteType>;
 
