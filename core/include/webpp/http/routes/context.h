@@ -11,6 +11,24 @@
 
 namespace webpp {
 
+    struct context_features {
+
+        enum class route_level : stl::uint8_t {
+            none               = 0x0u,
+            root_route         = 0x1u,
+            sub_route          = 0x2u,
+            internal_sub_route = 0x3u,
+        };
+
+        // we specify the bit fields to reduce the padding
+        stl::uint16_t root_route_index : 16         = 0;
+        stl::uint16_t sub_route_index : 16          = 0;
+        stl::uint16_t internal_sub_route_index : 16 = 0;
+        bool          last_root_route : 1           = false;
+        bool          last_sub_route : 1            = false;
+        bool          last_internal_sub_route : 1   = false;
+        route_level   level : 2                     = route_level::none;
+    };
 
     /**
      *
@@ -119,6 +137,7 @@ namespace webpp {
         using request_type  = RequestType;
         using response_type = ResponseType;
 
+        context_features   features;
         const request_type request;
 
         template <typename... Args>
@@ -290,6 +309,6 @@ namespace webpp {
 
     struct fake_basic_context {};
 
-} // namespace webpp::routes
+} // namespace webpp
 
 #endif // WEBPP_ROUTES_CONTEXT_H
