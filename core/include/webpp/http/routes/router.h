@@ -89,6 +89,12 @@ namespace webpp {
             auto res = route(ctx);
             ctx.call_post_subroute_methods();
             using result_type = decltype(res);
+
+            // setting the context features
+            ctx.features.level = context_features::route_level::root_route;
+            ctx.features.last_root_route  = is_last_route;
+            ctx.features.root_route_index = Index;
+
             if constexpr (stl::is_void_v<result_type>) {
                 // nothing to do!
             } else if constexpr (Response<result_type>) {
