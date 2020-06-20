@@ -26,7 +26,7 @@ namespace webpp {
      */
     template <ExtensionList ExtensionListType = empty_extension_pack,
               Route... RouteType>
-    struct const_router {
+    struct router {
 
 
         // todo: Additional routes extracted from the extensions
@@ -34,10 +34,15 @@ namespace webpp {
 
         const stl::tuple<RouteType...> routes;
 
-        constexpr const_router(RouteType&&... _route) noexcept
+        constexpr router(RouteType&&... _route) noexcept
           : routes(stl::forward<RouteType>(_route)...) {
         }
 
+
+        Response auto error(stl::uint_fast16_t error_code) {
+            // todo
+            return "Error";
+        }
 
         /**
          * @return how many routes are in this router
@@ -84,49 +89,50 @@ namespace webpp {
             using context_type              = decltype(ctx);
             constexpr auto next_route_index = Index + 1;
             constexpr auto route            = stl::get<Index>(routes);
-            constexpr bool is_last_route    = Index != route_count() - 1;
+            constexpr bool is_last_route    = Index == route_count() - 1;
+
+            // setting the context features
+            ctx.features.level = router_features::route_level::entryroute;
+            ctx.features.last_root_route  = is_last_route;
+            ctx.features.root_route_index = Index;
+
             ctx.call_pre_subroute_methods();
             auto res = route(ctx);
             ctx.call_post_subroute_methods();
             using result_type = decltype(res);
 
-            // setting the context features
-            ctx.features.level = context_features::route_level::root_route;
-            ctx.features.last_root_route  = is_last_route;
-            ctx.features.root_route_index = Index;
 
-            if constexpr (stl::is_void_v<result_type>) {
-                // nothing to do!
-            } else if constexpr (Response<result_type>) {
-                ctx.response = res;
+            if constexpr (Response<result_type>) {
 
                 // just call the context handlers
                 ctx.call_post_entryroute_methods();
 
                 // we're done; don't call the next route
-                return;
+                return res;
             } else if constexpr (Context<result_type>) {
                 // context switching is happening here
                 // just call the next route or finish it with calling the
                 // context handlers
-                if constexpr (is_last_route) {
-                    operator()<next_route_index>(stl::move(res));
+                if constexpr (!is_last_route) {
+                    return operator()<next_route_index>(stl::move(res));
                 } else {
                     // call the context handlers
                     ctx.call_post_entryroute_methods();
+                    return error(404u);
                 }
-                return; // done; no more routing
             } else {
-                throw stl::invalid_argument(
-                  "Your route is not returning something that we understand.");
+                // we just ignore anything else the user returns;
+                // todo: add a warning or log here so the user can find the issue
             }
 
             // call the next route:
-            if constexpr (is_last_route) {
-                operator()<next_route_index>(stl::forward<context_type>(ctx));
+            if constexpr (!is_last_route) {
+                return operator()<next_route_index>(
+                  stl::forward<context_type>(ctx));
             } else {
                 // call the context
                 ctx.call_post_entryroute_methods();
+                return error(404u);
             }
         }
     };

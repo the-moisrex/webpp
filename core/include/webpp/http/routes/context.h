@@ -11,23 +11,24 @@
 
 namespace webpp {
 
-    struct context_features {
+    struct router_features {
+        // todo: add termination of routing here, so the user can terminate it with the context
 
         enum class route_level : stl::uint8_t {
-            none               = 0x0u,
-            root_route         = 0x1u,
-            sub_route          = 0x2u,
-            internal_sub_route = 0x3u,
+            none              = 0x0u,
+            entryroute        = 0x1u,
+            subroute          = 0x2u,
+            internal_subroute = 0x3u,
         };
 
         // we specify the bit fields to reduce the padding
-        stl::uint16_t root_route_index : 16         = 0;
-        stl::uint16_t sub_route_index : 16          = 0;
-        stl::uint16_t internal_sub_route_index : 16 = 0;
-        bool          last_root_route : 1           = false;
-        bool          last_sub_route : 1            = false;
-        bool          last_internal_sub_route : 1   = false;
-        route_level   level : 2                     = route_level::none;
+        stl::uint16_t entryroute_index : 16        = 0;
+        stl::uint16_t subroute_index : 16          = 0;
+        stl::uint16_t internal_subroute_index : 16 = 0;
+        bool          last_entryroute : 1          = false;
+        bool          last_subroute : 1            = false;
+        bool          last_internal_subroute : 1   = false;
+        route_level   level : 2                    = route_level::none;
     };
 
     /**
@@ -137,7 +138,7 @@ namespace webpp {
         using request_type  = RequestType;
         using response_type = ResponseType;
 
-        context_features   features;
+        router_features    router_features;
         const request_type request;
 
         template <typename... Args>
@@ -164,6 +165,20 @@ namespace webpp {
     struct final_context final : public EList {
 
         using EList::EList;
+
+        template <ContextExtension... E>
+        constexpr auto clone() const noexcept {
+            // todo: ...
+            using context_type = ;
+            return context_type{*this};
+        }
+
+        template <ContextExtension... E>
+        constexpr auto move() noexcept {
+            // todo: ...
+            using context_type = ;
+            return context_type{stl::move(*this)};
+        }
 
         // todo: these methods need to be noexcept. They call unknown stuff.
 
