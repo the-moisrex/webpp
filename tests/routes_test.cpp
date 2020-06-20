@@ -95,3 +95,9 @@ using namespace webpp::routes;
 //    req.set_uri("/home/one");
 //    EXPECT_TRUE("/home/{page}"_tpath(req));
 //}
+
+
+TEST(Routes, Path) {
+    using namespace webpp::routes;
+    EXPECT_TRUE((path() / integer("integer name"))());
+}

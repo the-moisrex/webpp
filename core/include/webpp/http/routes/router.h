@@ -80,6 +80,7 @@ namespace webpp {
 
         template <stl::size_t Index = 0>
         Response auto operator()(Context auto&& ctx) noexcept {
+            // handling root-level route calls:
             using context_type              = decltype(ctx);
             constexpr auto next_route_index = Index + 1;
             constexpr auto route            = stl::get<Index>(routes);
