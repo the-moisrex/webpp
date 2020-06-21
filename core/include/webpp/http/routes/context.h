@@ -311,7 +311,6 @@ namespace webpp {
                   typename ReqType> // extension_pack
         using mid_level_extensie_type =
           basic_context<EList,
-
                         typename ExtensionListType::template extensie_type<
                           TraitsType, basic_response_descriptor>,
                         ReqType>;
