@@ -11,11 +11,11 @@
 
 namespace webpp::routes {
 
-    struct Integer {
+    struct integer {
         stl::string_view variable_name = "";
 
         [[nodiscard]] bool operator()(Context auto& ctx) const noexcept {
-            return is::number(ctx.opath->current_segment);
+            return is::number(ctx.path.current_segment);
         }
     };
 

@@ -92,13 +92,12 @@ namespace webpp {
             constexpr bool is_last_route    = Index == route_count() - 1;
 
             // setting the context features
-            ctx.features.level = router_features::route_level::entryroute;
-            ctx.features.last_root_route  = is_last_route;
-            ctx.features.root_route_index = Index;
+            ctx.router_features.level =
+              router_features::route_level::entryroute;
+            ctx.router_features.last_entryroute  = is_last_route;
+            ctx.router_features.entryroute_index = Index;
 
-            ctx.call_pre_subroute_methods();
-            auto res = route(ctx);
-            ctx.call_post_subroute_methods();
+            auto res          = route(ctx);
             using result_type = decltype(res);
 
 
