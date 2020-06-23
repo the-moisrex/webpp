@@ -161,22 +161,30 @@ namespace webpp {
         }
     };
 
-    template <typename EList>
+    template <Traits TraitsType, typename ContextDescriptorType,
+              typename OriginalExtensionList, typename EList, typename ReqType>
     struct final_context final : public EList {
+        using traits_type                  = TraitsType;
+        using context_descriptor_type      = ContextDescriptorType;
+        using original_extension_pack_type = OriginalExtensionList;
 
         using EList::EList;
 
         template <ContextExtension... E>
         constexpr auto clone() const noexcept {
-            // todo: ...
-            using context_type = ;
+            using new_epak =
+              typename original_extension_pack_type.template appended<E...>;
+            using context_type = typename new_epak.template extensie_type<
+              traits_type, context_descriptor_type, ReqType>;
             return context_type{*this};
         }
 
         template <ContextExtension... E>
         constexpr auto move() noexcept {
-            // todo: ...
-            using context_type = ;
+            using new_epak =
+              typename original_extension_pack_type.template appended<E...>;
+            using context_type = typename new_epak.template extensie_type<
+              traits_type, context_descriptor_type, ReqType>;
             return context_type{stl::move(*this)};
         }
 
@@ -307,17 +315,20 @@ namespace webpp {
           typename ExtensionType::context_extensions;
 
         template <typename ExtensionListType, typename TraitsType,
-                  typename EList,
-                  typename ReqType> // extension_pack
+                  typename EList, // extension_pack
+                  typename ReqType>
         using mid_level_extensie_type =
           basic_context<EList,
+                        // getting the extensie_type of the basic_response
                         typename ExtensionListType::template extensie_type<
                           TraitsType, basic_response_descriptor>,
                         ReqType>;
 
         template <typename ExtensionListType, typename TraitsType,
                   typename EList, typename ReqType>
-        using final_extensie_type = final_context<EList>;
+        using final_extensie_type =
+          final_context<TraitsType, context_descriptor, ExtensionList, EList,
+                        ReqType>;
     };
 
 
