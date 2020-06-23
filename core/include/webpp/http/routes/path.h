@@ -13,15 +13,16 @@ namespace webpp::routes {
      * This class is used as a field type in the context type of the
      * internal sub routes of the "path" sub route.
      */
+    template <Traits TraitsType>
     struct path_field {
         using traits_type      = TraitsType;
         using string_view_type = typename traits_type::string_view_type;
 
 
-        string_view_type current_segment = "";
 
-        constexpr auto
-        operator[](string_view_type const& segment) const noexcept {
+        template <typename T>
+        constexpr T const&
+        segment(string_view_type const& segment_variable_name) const noexcept {
 
             // if it doesn't have a variable name
             constexpr bool has_segment_variable_name =
@@ -47,11 +48,11 @@ namespace webpp::routes {
                     // this segment doesn't have a variable name
                     // check the next segment:
                     return next_segment_type::template operator[]<Type>(
-                      segment);
+                      segment_variable_name);
                 }
             } else { // this type has a variable name, so we check it
-                if (segment_type::variable_name == segment) {
-                    return segment;
+                if (segment_type::variable_name == segment_variable_name) {
+                    return segment_variable_name;
                 }
             }
         }
@@ -65,7 +66,7 @@ namespace webpp::routes {
     struct path_context_extension {
         template <Traits TraitsType>
         struct type {
-            path_field path;
+            path_field<TraitsType> path;
         };
     };
 
@@ -163,20 +164,17 @@ namespace webpp::routes {
 
                 // context switching
                 auto first_segment = segments[0];
-                auto new_ctx       = ctx.clone<path_context_extension>(
-                  {.segments = segments,
-                   .current_segment =
-                     string_view_type{first_segment, first_segment.size()}});
-                return run(stl::move(new_ctx));
+                auto new_ctx       = ctx.clone<path_context_extension<segment_type, next_segment_type>>(
+                  {.segments = segments);
+                    return run(stl::move(new_ctx));
             } else {
-                return run(stl::forward<context_type>(ctx));
+                    return run(stl::forward<context_type>(ctx));
             }
-        }
-    };
+            }
+        };
 
 
 
 } // namespace webpp::routes
-
 
 #endif // WEBPP_PATH_H
