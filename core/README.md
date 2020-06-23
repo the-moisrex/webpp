@@ -1,5 +1,26 @@
 # Core specifications
 
+## Examples
+
+```c++
+struct app {
+    using namespace webpp;
+
+    router _router {
+        path() / "page" / integer("page_num") >> app::page
+    };
+
+    auto page(Context auto& ctx) const noexcept {
+        auto page_num = ctx.path.operator[]<int>("page_num");
+        return ctx.response.file("page.html", page_num);
+    }
+    
+    Response auto operator()(Context auto&& ctx) noexcept {
+        return _router(ctx);
+    }
+};
+```
+
 ## Protocols
 Protocols are usually a way of communication between the high level application layer,
 and the low level transmission layers.

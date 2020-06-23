@@ -49,6 +49,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/utils/property.h
         ${LIB_INCLUDE_DIR}/webpp/utils/strings.h
         ${LIB_INCLUDE_DIR}/webpp/utils/uri.h
+        ${LIB_INCLUDE_DIR}/webpp/utils/fixed_string.h
 
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/cgi.h
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fcgi.h
