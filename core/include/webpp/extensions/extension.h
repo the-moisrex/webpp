@@ -37,6 +37,10 @@ namespace webpp {
 
     template <Extension... E>
     struct extension_pack {
+
+        template <typename... NE>
+        using appended = extension_pack<E..., NE...>;
+
         template <template <typename...> typename PackType, typename... F>
         struct prepend {
             using type = PackType<F...>;
@@ -204,7 +208,6 @@ namespace webpp {
                 ExtraArgs...>,
               merged_extensions<ExtensieDescriptor, child_extensions>>,
             ExtraArgs...>;
-
 
 
         /**

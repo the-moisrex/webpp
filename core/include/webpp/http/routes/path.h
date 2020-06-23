@@ -13,11 +13,11 @@ namespace webpp::routes {
      * This class is used as a field type in the context type of the
      * internal sub routes of the "path" sub route.
      */
-    template <Traits TraitsType>
+    template <Traits TraitsType, typename PathType>
     struct path_field {
         using traits_type      = TraitsType;
         using string_view_type = typename traits_type::string_view_type;
-
+        using path_type        = PathType;
 
 
         template <typename T>
@@ -63,10 +63,11 @@ namespace webpp::routes {
      * use something like this:
      *   ctx.segments["page_number"]
      */
+    template <typename PathType>
     struct path_context_extension {
         template <Traits TraitsType>
         struct type {
-            path_field<TraitsType> path;
+            path_field<TraitsType, PathType> path;
         };
     };
 
@@ -175,6 +176,6 @@ namespace webpp::routes {
 
 
 
-} // namespace webpp::routes
+    } // namespace webpp::routes
 
 #endif // WEBPP_PATH_H
