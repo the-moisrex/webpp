@@ -1438,6 +1438,8 @@ namespace webpp {
          * this method does not just response to the fact that Container should
          * be an std container, but if string/string_view is presented as a
          * container, it will return the whole path.
+         *
+         * todo: should we rename path_structured to slugs?
          */
         template <typename Container = istl::vector<traits_type, str_view_t>>
         [[nodiscard]] Container path_structured() const noexcept {
@@ -1472,13 +1474,13 @@ namespace webpp {
          */
         template <typename Container = istl::vector<traits_type, str_t>>
         [[nodiscard]] Container path_structured_decoded() const noexcept {
-            Container container;
-            for (auto const& slug : path_structured()) {
-                container.push_back(
+            auto _slugs = path_structured<Container>();
+            for (auto& slug : _slugs) {
+                slug =
                   decode_uri_component<traits_type>(slug, PCHAR_NOT_PCT_ENCODED)
-                    .value_or((typename Container::value_type)(slug)));
+                    .value_or((typename Container::value_type)(slug));
             }
-            return container;
+            return _slugs;
         }
 
         /**
