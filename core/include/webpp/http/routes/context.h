@@ -167,25 +167,27 @@ namespace webpp {
         using traits_type                  = TraitsType;
         using context_descriptor_type      = ContextDescriptorType;
         using original_extension_pack_type = OriginalExtensionList;
+        using request_type                 = ReqType;
+
+        /**
+         * Append some extensions to this context type and get the type back
+         */
+        template <typename... E>
+        using context_type_with_appended_extensions =
+          typename(
+            typename original_extension_pack_type.template appended<E...>)
+            .template extensie_type<traits_type, context_descriptor_type,
+                                    request_type>;
 
         using EList::EList;
 
-        template <ContextExtension... E>
+        /**
+         * Clone this context and append the new extensions along the way.
+         */
+        template <typename... E>
         constexpr auto clone() const noexcept {
-            using new_epak =
-              typename original_extension_pack_type.template appended<E...>;
-            using context_type = typename new_epak.template extensie_type<
-              traits_type, context_descriptor_type, ReqType>;
+            using context_type = context_type_with_appended_extensions<E...>;
             return context_type{*this};
-        }
-
-        template <ContextExtension... E>
-        constexpr auto move() noexcept {
-            using new_epak =
-              typename original_extension_pack_type.template appended<E...>;
-            using context_type = typename new_epak.template extensie_type<
-              traits_type, context_descriptor_type, ReqType>;
-            return context_type{stl::move(*this)};
         }
 
         // todo: these methods need to be noexcept. They call unknown stuff.
