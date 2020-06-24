@@ -3,6 +3,7 @@
 #ifndef WEBPP_PATH_H
 #define WEBPP_PATH_H
 
+#include "../../utils/fixed_string.h"
 #include "route.h"
 
 #include <type_traits>
@@ -13,12 +14,39 @@ namespace webpp::routes {
      * This class is used as a field type in the context type of the
      * internal sub routes of the "path" sub route.
      */
-    template <Traits TraitsType, typename PathType>
+    template <Traits TraitsType, typename PathType, typename UriSegmentsType>
     struct path_field {
-        using traits_type      = TraitsType;
-        using string_view_type = typename traits_type::string_view_type;
-        using path_type        = PathType;
+        using traits_type            = TraitsType;
+        using string_view_type       = typename traits_type::string_view_type;
+        using path_type              = PathType;
+        using segments_type          = UriSegmentsType;
+        using segments_iterator_type = typename segments_type::iterator;
 
+        /**
+         * I know I'm not using a raw pointer here; it's okay because it's a
+         * pointer to an object on stack. Its lifetime is guaranteed to be
+         * longer than this object.
+         */
+        path_type const* the_path = nullptr;
+
+        // todo: also give access to the segments the user specified
+
+        segments_type          segments{};
+        segments_iterator_type current_segment{};
+
+      private:
+        friend path_type;
+
+        bool next_segment() noexcept {
+            // todo: should this method be private?
+            return ++current_segment != segments.end();
+        }
+
+      public:
+        template <fixed_string segment_variable_name>
+        [[nodiscard]] constexpr auto const& segment() const noexcept {
+            // using seg_type = ;
+        }
 
         template <typename T>
         constexpr T const&
@@ -63,12 +91,16 @@ namespace webpp::routes {
      * use something like this:
      *   ctx.segments["page_number"]
      */
-    template <typename PathType>
+    template <typename PathType, typename UriSegmentsType>
     struct path_context_extension {
+
         template <Traits TraitsType>
-        struct type {
-            path_field<TraitsType, PathType> path;
+        struct path_extension {
+            path_field<TraitsType, PathType, UriSegmentsType> path;
         };
+
+        template <Traits TraitsType>
+        using context_extensions = extension_pack<path_extension>;
     };
 
     /**
@@ -87,6 +119,7 @@ namespace webpp::routes {
         static constexpr bool has_next_segment =
           !stl::is_void_v<NextSegmentType>;
 
+        using path_type = path<SegmentType, NextSegmentType>;
         // false_type is just used for "void" type; we could have avoided this
         // with some semi-clever inheritance way, but that would cause more
         // code bloat that it would fix any problem
@@ -123,13 +156,14 @@ namespace webpp::routes {
                 ->stl::same_as<path_field>;
             };
 
+            // run the user's codes; hopefully this will optimized away
             constexpr auto run = [&](auto&& ctx) {
                 if constexpr (has_segment) {
                     using result_type =
                       stl::invoke_result_t<segment, decltype(ctx)>;
 
                     // if the result of this segment is void
-                    if constexpr (std::is_void_v<result_type>) {
+                    if constexpr (stl::is_void_v<result_type>) {
                         segment(ctx);
                         if constexpr (has_next_segment) {
                             return next_segment(ctx);
@@ -139,6 +173,12 @@ namespace webpp::routes {
 
                     // if the result of calling this segment is NOT void
                     auto res = segment(ctx);
+                    if constexpr (stl::is_same_v<result_type, bool>) {
+                        // don't check the rest of the segments if it's not a
+                        // match for the current segment
+                        if (!res)
+                            return false;
+                    }
                     if constexpr (has_next_segment) {
                         if constexpr (Response<result_type>) {
                             return res;
@@ -158,24 +198,39 @@ namespace webpp::routes {
             };
 
             if constexpr (!has_path_extension) {
+
                 // parse the uri
-                const auto segments =
+                // todo: we can optimize this, right? it parses the whole uri, do we need the whole uri? I think yes
+                // fixme: should we decode it? if we decode it we need to care about the UTF-8 stuff as well?
+                auto segments =
                   basic_uri<traits_type, false>{ctx.request.request_uri()}
-                    .path_structured_decoded();
+                    .path_structured();
+                using uri_segments_type = decltype(segments);
 
                 // context switching
-                auto first_segment = segments[0];
-                auto new_ctx       = ctx.clone<path_context_extension<segment_type, next_segment_type>>(
-                  {.segments = segments);
-                    return run(stl::move(new_ctx));
+                auto new_ctx = ctx.clone<
+                  path_context_extension<path_type, uri_segments_type>>();
+
+                new_ctx.path.segments = stl::move(segments);
+
+                // nothing to do if the segment counts don't match
+                if (!new_ctx.path.next_segment())
+                    return false;
+
+                return run(stl::move(new_ctx));
             } else {
-                    return run(stl::forward<context_type>(ctx));
+
+                // nothing to do if we the user's requesting a segment that we
+                // don't have
+                if (!ctx.path.next_segment())
+                    return false;
+                return run(stl::forward<context_type>(ctx));
             }
-            }
-        };
+        }
+    };
 
 
 
-    } // namespace webpp::routes
+} // namespace webpp::routes
 
 #endif // WEBPP_PATH_H
