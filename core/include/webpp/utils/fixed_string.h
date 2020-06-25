@@ -6,11 +6,11 @@
 #include <string_view>
 #include <utility>
 
-#if !((__cpp_nontype_template_parameter_class || \
-       (__cpp_nontype_template_args >= 201911L)))
-#    error "You need a decent compiler that supports C++20!"
-#endif
-
+//#if !((__cpp_nontype_template_parameter_class || \
+//       (__cpp_nontype_template_args >= 201911L)))
+//#    error "You need a decent compiler that supports C++20!"
+//#endif
+//
 namespace webpp {
 
     struct length_value_t {
