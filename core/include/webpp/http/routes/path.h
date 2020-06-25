@@ -3,6 +3,7 @@
 #ifndef WEBPP_PATH_H
 #define WEBPP_PATH_H
 
+#include "../../std/optional.h"
 #include "../../utils/fixed_string.h"
 #include "route.h"
 
@@ -145,16 +146,20 @@ namespace webpp::routes {
          * @tparam SegType
          * @tparam T
          */
-        template <typename SegType, typename T>
-        concept can_parse_to = requires(SegType seg) {
-            { seg.template parse<T>() }
-            ->stl::same_as<T>;
+        template <Context ContextType, typename SegType, typename T>
+        concept can_parse_to = requires(SegType seg, ContextType ctx) {
+            { seg.template parse<T>(ctx) }
+            ->stl::same_as<stl::optional<T>>;
         };
 
         segment_type      segment;
         next_segment_type next_segment;
 
 
+        /**
+         * Add a new segment to the path and get a new path containing that specific segment and all the
+         * previous ones
+         */
         template <typename NewNextSegmentType>
         constexpr auto operator/(NewNextSegmentType&& next_segment) const noexcept {
             using next_segment_t   = NewNextSegmentType;
@@ -184,19 +189,25 @@ namespace webpp::routes {
             return _size;
         }
 
-        template <typename T>
-        [[nodiscard]] stl::optional<T> get(stl::string_view const& variable_name) const noexcept {
+        /**
+         * Get a segment (or something which that segment can be parsed into) based on the specified variable
+         * name
+         */
+        template <Context ContextType, typename T>
+        [[nodiscard]] stl::optional<T> get(ContextType const&      ctx,
+                                           stl::string_view const& variable_name) const noexcept {
             if constexpr (has_segment) {
                 if constexpr (is_segment_nested) {
                     if (auto res = segment.template get<T>(variable_name))
                         return res;
-                } else if constexpr ((stl::is_same_v<T, segment_type> ||
-                                      can_parse_to<T, segment_type>)&&has_variable_name<segment_type>) {
+                } else if constexpr ((stl::is_convertible_v<T, segment_type> ||
+                                      can_parse_to<ContextType, segment_type,
+                                                   T>)&&has_variable_name<segment_type>) {
                     if (variable_name == segment.variable_name) {
-                        if constexpr (stl::is_same_v<T, segment_type>) {
+                        if constexpr (stl::is_convertible_v<T, segment_type>) {
                             return segment;
-                        } else if constexpr (can_parse_to<segment_type, T>) {
-                            return segment.template parse<T>();
+                        } else if constexpr (can_parse_to<ContexType, segment_type, T>) {
+                            return segment.template parse<T>(ctx);
                         }
                     }
                 } else {
@@ -210,14 +221,14 @@ namespace webpp::routes {
                 if constexpr (is_next_segment_nested) {
                     if (auto res = next_segment.template get<T>(variable_name))
                         return res;
-                } else if constexpr ((stl::is_same_v<T, next_segment_type> ||
-                                      can_parse_to<
-                                        T, next_segment_type>)&&has_variable_name<next_segment_type>) {
+                } else if constexpr ((stl::is_convertible_v<T, next_segment_type> ||
+                                      can_parse_to<ContextType, next_segment_type,
+                                                   T>)&&has_variable_name<next_segment_type>) {
                     if (variable_name == next_segment.variable_name) {
-                        if constexpr (stl::is_same_v<T, next_segment_type>) {
+                        if constexpr (stl::is_convertible_v<T, next_segment_type>) {
                             return next_segment;
-                        } else if constexpr (can_parse_to<next_segment_type, T>) {
-                            return next_segment.template parse<T>();
+                        } else if constexpr (can_parse_to<ContextType, next_segment_type, T>) {
+                            return next_segment.template parse<T>(ctx);
                         }
                     }
                 }
