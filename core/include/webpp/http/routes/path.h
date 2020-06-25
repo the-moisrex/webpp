@@ -43,9 +43,13 @@ namespace webpp::routes {
         }
 
       public:
-        template <fixed_string segment_variable_name>
-        [[nodiscard]] constexpr auto const& segment() const noexcept {
-            // using seg_type = ;
+        //        template <fixed_string segment_variable_name>
+        //        [[nodiscard]] constexpr auto const& segment() const noexcept {
+        //            // using seg_type = ;
+        //        }
+
+        auto const&
+        segment(string_view_type const& segment_var_name) const noexcept {
         }
 
         template <typename T>
@@ -54,7 +58,7 @@ namespace webpp::routes {
 
             // if it doesn't have a variable name
             constexpr bool has_segment_variable_name =
-              requires(segment_type op) {
+              requires(segments_type op) {
                 {op.variable_name};
             };
 
@@ -143,6 +147,25 @@ namespace webpp::routes {
               path<path<segment_type, next_segment_type>, next_segment_t>;
             return new_segment_type(
               *this, stl::forward<NewNextSegmentType>(next_segment));
+        }
+
+        [[nodiscard]] static constexpr stl::size_t size() const noexcept {
+            stl::size_t _size = 0;
+            if constexpr (has_segment) {
+                if constexpr (requires { {segment_type::size()}; }) {
+                    _size += segment_type::size();
+                } else {
+                    ++_size;
+                }
+            }
+            if constexpr (has_next_segment) {
+                if constexpr (requires { {next_segment_type::size()}; }) {
+                    _size += next_segment_type::size();
+                } else {
+                    ++_size;
+                }
+            }
+            return _size;
         }
 
         [[nodiscard]] auto operator(Context auto& ctx) noexcept {

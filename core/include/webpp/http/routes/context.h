@@ -174,8 +174,7 @@ namespace webpp {
          */
         template <typename... E>
         using context_type_with_appended_extensions =
-          typename(
-            typename original_extension_pack_type.template appended<E...>)
+          (typename original_extension_pack_type.template appended<E...>)
             .template extensie_type<traits_type, context_descriptor_type,
                                     request_type>;
 
