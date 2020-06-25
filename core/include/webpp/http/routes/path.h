@@ -22,13 +22,6 @@ namespace webpp::routes {
         using segments_type          = UriSegmentsType;
         using segments_iterator_type = typename segments_type::iterator;
 
-        /**
-         * I know I'm not using a raw pointer here; it's okay because it's a
-         * pointer to an object on stack. Its lifetime is guaranteed to be
-         * longer than this object.
-         */
-        path_type const* the_path = nullptr;
-
         // todo: also give access to the segments the user specified
 
         segments_type          segments{};
@@ -48,17 +41,14 @@ namespace webpp::routes {
         //            // using seg_type = ;
         //        }
 
-        auto const&
-        segment(string_view_type const& segment_var_name) const noexcept {
+        auto const& segment(string_view_type const& segment_var_name) const noexcept {
         }
 
         template <typename T>
-        constexpr T const&
-        segment(string_view_type const& segment_variable_name) const noexcept {
+        constexpr T const& segment(string_view_type const& segment_variable_name) const noexcept {
 
             // if it doesn't have a variable name
-            constexpr bool has_segment_variable_name =
-              requires(segments_type op) {
+            constexpr bool has_segment_variable_name = requires(segments_type op) {
                 {op.variable_name};
             };
 
@@ -68,19 +58,16 @@ namespace webpp::routes {
                 // throw error, (kill the program)
                 // remove the noexcept, (so the user can handle it)
                 // or just avoid the error and return something useless?
-                throw stl::invalid_argument(
-                  "The specified segment name does not exist in this opath.");
+                throw stl::invalid_argument("The specified segment name does not exist in this opath.");
             }
 
             if constexpr (!has_segment_variable_name) {
                 if constexpr (stl::is_void_v<next_segment_type>) {
-                    throw stl::invalid_argument(
-                      "The specified segment name does not exists in this opath");
+                    throw stl::invalid_argument("The specified segment name does not exists in this opath");
                 } else {
                     // this segment doesn't have a variable name
                     // check the next segment:
-                    return next_segment_type::template operator[]<Type>(
-                      segment_variable_name);
+                    return next_segment_type::template operator[]<Type>(segment_variable_name);
                 }
             } else { // this type has a variable name, so we check it
                 if (segment_type::variable_name == segment_variable_name) {
@@ -119,36 +106,65 @@ namespace webpp::routes {
     template <typename SegmentType = void, typename NextSegmentType = void>
     struct path {
 
-        static constexpr bool has_segment = !stl::is_void_v<SegmentType>;
-        static constexpr bool has_next_segment =
-          !stl::is_void_v<NextSegmentType>;
+        static constexpr bool has_segment      = !stl::is_void_v<SegmentType>;
+        static constexpr bool has_next_segment = !stl::is_void_v<NextSegmentType>;
 
         using path_type = path<SegmentType, NextSegmentType>;
         // false_type is just used for "void" type; we could have avoided this
         // with some semi-clever inheritance way, but that would cause more
         // code bloat that it would fix any problem
-        using segment_type = stl::conditional_t<
-          has_segment, stl::remove_reference_t<stl::remove_cv_t<PathType>>,
-          stl::false_type>;
-        using next_segment_type = stl::conditional_t<
-          has_next_segment,
-          stl::remove_reference_t<stl::remove_cv_t<NextPathType>>,
-          stl::false_type>;
+        using segment_type =
+          stl::conditional_t<has_segment, stl::remove_reference_t<stl::remove_cv_t<PathType>>,
+                             stl::false_type>;
+        using next_segment_type =
+          stl::conditional_t<has_next_segment, stl::remove_reference_t<stl::remove_cv_t<NextPathType>>,
+                             stl::false_type>;
+
+        // if the SegmentType is itself a path
+        static constexpr bool is_segment_nested =
+          has_segment &&
+          stl::same_as<segment_type,
+                       path<typename segment_type::segment_type, typename segment_type::next_segment_type>>;
+
+        // if the NextSegmentType is itself a path (which normally should not
+        // happen)
+        static constexpr bool is_next_segment_nested =
+          has_next_segment &&
+          stl::same_as<next_segment_type, path<typename next_segment_type::segment_type,
+                                               typename next_segment_type::next_segment_type>>;
+
+        template <typename T>
+        concept has_variable_name = requires(T seg) {
+            { seg.variable_name }
+            ->stl::convertible_to<stl::string_view>;
+        };
+
+        /**
+         * Check if the specified segment can parse a uri segment into the
+         * specified type T
+         * @tparam SegType
+         * @tparam T
+         */
+        template <typename SegType, typename T>
+        concept can_parse_to = requires(SegType seg) {
+            { seg.template parse<T>() }
+            ->stl::same_as<T>;
+        };
 
         segment_type      segment;
         next_segment_type next_segment;
 
 
         template <typename NewNextSegmentType>
-        constexpr auto
-        operator/(NewNextSegmentType&& next_segment) const noexcept {
-            using next_segment_t = NewNextSegmentType;
-            using new_segment_type =
-              path<path<segment_type, next_segment_type>, next_segment_t>;
-            return new_segment_type(
-              *this, stl::forward<NewNextSegmentType>(next_segment));
+        constexpr auto operator/(NewNextSegmentType&& next_segment) const noexcept {
+            using next_segment_t   = NewNextSegmentType;
+            using new_segment_type = path<path<segment_type, next_segment_type>, next_segment_t>;
+            return new_segment_type(*this, stl::forward<NewNextSegmentType>(next_segment));
         }
 
+        /**
+         * Get the number or segments in this path
+         */
         [[nodiscard]] static constexpr stl::size_t size() const noexcept {
             stl::size_t _size = 0;
             if constexpr (has_segment) {
@@ -168,12 +184,54 @@ namespace webpp::routes {
             return _size;
         }
 
+        template <typename T>
+        [[nodiscard]] stl::optional<T> get(stl::string_view const& variable_name) const noexcept {
+            if constexpr (has_segment) {
+                if constexpr (is_segment_nested) {
+                    if (auto res = segment.template get<T>(variable_name))
+                        return res;
+                } else if constexpr ((stl::is_same_v<T, segment_type> ||
+                                      can_parse_to<T, segment_type>)&&has_variable_name<segment_type>) {
+                    if (variable_name == segment.variable_name) {
+                        if constexpr (stl::is_same_v<T, segment_type>) {
+                            return segment;
+                        } else if constexpr (can_parse_to<segment_type, T>) {
+                            return segment.template parse<T>();
+                        }
+                    }
+                } else {
+                    // we should return stl::nullopt but we avoid returning
+                    // anything here because we need to check the
+                    // next_segment_type as well.
+                }
+            }
+
+            if constexpr (has_next_segment) {
+                if constexpr (is_next_segment_nested) {
+                    if (auto res = next_segment.template get<T>(variable_name))
+                        return res;
+                } else if constexpr ((stl::is_same_v<T, next_segment_type> ||
+                                      can_parse_to<
+                                        T, next_segment_type>)&&has_variable_name<next_segment_type>) {
+                    if (variable_name == next_segment.variable_name) {
+                        if constexpr (stl::is_same_v<T, next_segment_type>) {
+                            return next_segment;
+                        } else if constexpr (can_parse_to<next_segment_type, T>) {
+                            return next_segment.template parse<T>();
+                        }
+                    }
+                }
+            }
+
+            return stl::nullopt;
+        }
+
         [[nodiscard]] auto operator(Context auto& ctx) noexcept {
             // handle inside-sub-route internal segment is done in this method
 
-            using context_type     = decltype(ctx);
-            using traits_type      = typename context_type::traits_type;
-            using string_view_type = typename traits_type::string_view_type;
+            using context_type                = decltype(ctx);
+            using traits_type                 = typename context_type::traits_type;
+            using string_view_type            = typename traits_type::string_view_type;
             constexpr bool has_path_extension = requires {
                 { ctx.path }
                 ->stl::same_as<path_field>;
@@ -182,8 +240,7 @@ namespace webpp::routes {
             // run the user's codes; hopefully this will optimized away
             constexpr auto run = [&](auto&& ctx) {
                 if constexpr (has_segment) {
-                    using result_type =
-                      stl::invoke_result_t<segment, decltype(ctx)>;
+                    using result_type = stl::invoke_result_t<segment, decltype(ctx)>;
 
                     // if the result of this segment is void
                     if constexpr (stl::is_void_v<result_type>) {
@@ -225,14 +282,11 @@ namespace webpp::routes {
                 // parse the uri
                 // todo: we can optimize this, right? it parses the whole uri, do we need the whole uri? I think yes
                 // fixme: should we decode it? if we decode it we need to care about the UTF-8 stuff as well?
-                auto segments =
-                  basic_uri<traits_type, false>{ctx.request.request_uri()}
-                    .path_structured();
+                auto segments = basic_uri<traits_type, false>{ctx.request.request_uri()}.path_structured();
                 using uri_segments_type = decltype(segments);
 
                 // context switching
-                auto new_ctx = ctx.clone<
-                  path_context_extension<path_type, uri_segments_type>>();
+                auto new_ctx = ctx.clone<path_context_extension<path_type, uri_segments_type>>();
 
                 new_ctx.path.segments = stl::move(segments);
 

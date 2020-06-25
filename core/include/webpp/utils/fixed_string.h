@@ -6,11 +6,12 @@
 #include <string_view>
 #include <utility>
 
-//#if !((__cpp_nontype_template_parameter_class || \
-//       (__cpp_nontype_template_args >= 201911L)))
-//#    error "You need a decent compiler that supports C++20!"
-//#endif
-//
+#if !((__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L)))
+#    error "You need a decent compiler that supports C++20!"
+#else
+#    define FIXED_STRING_SUPPORT 1
+#endif
+
 namespace webpp {
 
     struct length_value_t {
@@ -18,8 +19,7 @@ namespace webpp {
         uint8_t  length;
     };
 
-    constexpr length_value_t
-    length_and_value_of_utf8_code_point(uint8_t first_unit) noexcept {
+    constexpr length_value_t length_and_value_of_utf8_code_point(uint8_t first_unit) noexcept {
         if ((first_unit & 0b1000'0000) == 0b0000'0000)
             return {static_cast<uint32_t>(first_unit), 1};
         else if ((first_unit & 0b1110'0000) == 0b1100'0000)

@@ -174,9 +174,8 @@ namespace webpp {
          */
         template <typename... E>
         using context_type_with_appended_extensions =
-          (typename original_extension_pack_type.template appended<E...>)
-            .template extensie_type<traits_type, context_descriptor_type,
-                                    request_type>;
+          (typename original_extension_pack_type.template appended<E...>::type)
+            .template extensie_type<traits_type, context_descriptor_type, request_type>;
 
         using EList::EList;
 
