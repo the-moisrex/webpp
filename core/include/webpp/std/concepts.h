@@ -111,12 +111,16 @@ namespace webpp::istl {
         ->stl::same_as<typename X::int_type>;
     };
 
-    struct fake_char_traits {
-        using char_type  = char;
-        using int_type   = int;
-        using off_type   = void;
-        using pos_type   = void;
-        using state_type = void;
+    struct fake_char_traits_type {
+
+        ~fake_char_traits_type() {
+        }
+
+        using char_type = char;
+        using int_type  = int;
+        using off_type  = void;
+        using pos_type  = void;
+        struct state_type {};
 
         typedef char_type        c;
         typedef char_type const* p;
@@ -140,7 +144,7 @@ namespace webpp::istl {
         static constexpr p find(p _p, n, ch) noexcept {
             return _p;
         }
-        static constexpr s move(s _s, p, ch) noexcept {
+        static constexpr s copy(s _s, p, ch) noexcept {
             return _s;
         }
         static constexpr s move(s _s, p, n) noexcept {

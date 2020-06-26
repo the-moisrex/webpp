@@ -15,8 +15,8 @@ namespace webpp {
     // todo: complete this concept
     template <typename T>
     concept Route = requires {
-        typename T::template route_type<fake_traits>;
-        requires requires(typename T::template route_type<fake_traits> r) {
+        typename T::template route_type<fake_traits_type>;
+        requires requires(typename T::template route_type<fake_traits_type> r) {
             { r() }
             ->RouteResponse;
         };

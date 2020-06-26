@@ -90,12 +90,11 @@
  */
 namespace webpp {
 
-    template <Traits TraitsType, ExtensionList EList = empty_extension_pack>
+    template <Traits TraitsType, typename EList = empty_extension_pack>
     class response_body : public EList {
       private:
         template <typename ExtensionType>
-        using variant_extractor =
-          typename ExtensionType::response_body_extensions;
+        using variant_extractor = typename ExtensionType::response_body_extensions;
 
         template <typename ExtensionType>
         struct has_variant {

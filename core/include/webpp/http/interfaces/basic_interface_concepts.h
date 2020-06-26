@@ -11,6 +11,11 @@ namespace webpp {
         noexcept;
     };
 
+    struct fake_interface_type {
+        void operator()() noexcept {
+        }
+    };
+
 } // namespace webpp
 
 #endif // WEBPP_BASIC_INTERFACE_CONCEPTS_H

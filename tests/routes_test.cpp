@@ -1,8 +1,10 @@
 // Created by moisrex on 11/7/19.
 #include "../core/include/webpp/http/request.h"
+#include "../core/include/webpp/http/routes/context.h"
 #include "../core/include/webpp/http/routes/literals.h"
 #include "../core/include/webpp/http/routes/methods.h"
 #include "../core/include/webpp/http/routes/path.h"
+#include "../core/include/webpp/http/routes/path/number.h"
 #include "../core/include/webpp/traits/std_traits.h"
 
 #include <gtest/gtest.h>
@@ -96,8 +98,14 @@ using namespace webpp::routes;
 //    EXPECT_TRUE("/home/{page}"_tpath(req));
 //}
 
+using fake_context_type = simple_context<fake_request_type>;
 
 TEST(Routes, Path) {
     using namespace webpp::routes;
-    EXPECT_TRUE((path() / integer("integer name"))());
+    fake_request_type req;
+    fake_context_type ctx{.request = req};
+
+    EXPECT_TRUE((path() / number{"integer name"})(ctx));
+    EXPECT_TRUE((path() / number{"integer name"} / number{"2th num"})(ctx));
+    EXPECT_TRUE((path() / number{"integer name"} / number{"another number"} / number{"3th num"})(ctx));
 }

@@ -17,22 +17,23 @@ namespace webpp {
         using type = void;
     };
 
+    struct fake_extensie {};
+
     // todo: check this, it's old
     template <typename T>
     concept Extension =
-      stl::copy_constructible<T> && !stl::is_final_v<T> &&
-      stl::is_default_constructible_v<T> && stl::is_move_constructible_v<T> &&
-      stl::is_move_assignable_v<T> && stl::is_copy_assignable_v<T> &&
+      stl::copy_constructible<T> && !stl::is_final_v<T> && stl::is_default_constructible_v<T> &&
+      stl::is_move_constructible_v<T> && stl::is_move_assignable_v<T> && stl::is_copy_assignable_v<T> &&
       stl::is_class_v<T> && !stl::is_integral_v<T>;
 
     template <typename T>
     concept MotherExtension = Extension<T>&& requires {
-        typename T::template type<fake_traits>;
+        typename T::template type<fake_traits_type>;
     };
 
     template <typename T>
     concept ChildExtension = Extension<T>&& requires {
-        T::template type<fake_traits, fake_extension>;
+        T::template type<fake_traits_type, fake_extensie>;
     };
 
     template <Extension... E>
@@ -238,8 +239,7 @@ namespace webpp {
 
     template <typename E>
     concept ExtensionList = requires {
-        typename E::template extensie_type<fake_traits,
-                                           fake_extensie_descriptor>;
+        typename E::template extensie_type<fake_traits_type, fake_extensie_descriptor>;
         typename E::template is_all<
           fake_extensie_descriptor::template has_related_extension_pack>;
     };

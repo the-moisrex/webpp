@@ -11,7 +11,7 @@
 
 namespace webpp {
 
-    struct router_features {
+    struct router_stats {
         // todo: add termination of routing here, so the user can terminate it with the context
 
         enum class route_level : stl::uint8_t {
@@ -133,20 +133,19 @@ namespace webpp {
      *
      *
      */
-    template <typename EList, typename ResponseType, typename RequestType>
-    struct basic_context : public EList {
-        using request_type  = RequestType;
-        using response_type = ResponseType;
+    template <typename EList, typename RequestType, typename ResponseType>
+    struct basic_context : public stl::remove_cvref_t<EList> {
+        using elist_type    = stl::remove_cvref_t<EList>;
+        using request_type  = stl::remove_cvref_t<RequestType>;
+        using response_type = stl::remove_cvref_t<ResponseType>;
 
-        router_features    router_features;
-        const request_type request;
+        router_stats  router_features{};
+        request_type& request;
 
         template <typename... Args>
-        basic_context(Args&&... args) : EList{stl::forward<Args>(args)...} {};
+        basic_context(Args&&... args) : elist_type{stl::forward<Args>(args)...} {};
 
-        basic_context(request_type const& req) noexcept
-          : EList{},
-            request(req) {
+        basic_context(request_type const& req) noexcept : elist_type{}, request(req) {
         }
 
         /**
@@ -161,21 +160,21 @@ namespace webpp {
         }
     };
 
-    template <Traits TraitsType, typename ContextDescriptorType,
-              typename OriginalExtensionList, typename EList, typename ReqType>
-    struct final_context final : public EList {
+    template <Traits TraitsType, typename ContextDescriptorType, typename OriginalExtensionList,
+              typename EList, typename ReqType>
+    struct final_context final : public stl::remove_cvref_t<EList> {
         using traits_type                  = TraitsType;
         using context_descriptor_type      = ContextDescriptorType;
         using original_extension_pack_type = OriginalExtensionList;
-        using request_type                 = ReqType;
+        using request_type                 = stl::remove_cvref_t<ReqType>;
 
         /**
          * Append some extensions to this context type and get the type back
          */
         template <typename... E>
         using context_type_with_appended_extensions =
-          (typename original_extension_pack_type.template appended<E...>::type)
-            .template extensie_type<traits_type, context_descriptor_type, request_type>;
+          typename original_extension_pack_type::template appended<E...>::type::template extensie_type<
+            traits_type, context_descriptor_type, request_type>;
 
         using EList::EList;
 
@@ -267,33 +266,7 @@ namespace webpp {
         //        }
     };
 
-    /**
-     * This is the "Extension Aware Context"
-     * Extension aware context is a context that simplifies creation of the
-     * context extensions.
-     *
-     * Extension aware context uses "Extension As Field" features.
-     *
-     * @tparam TraitsType
-     * @tparam InterfaceType
-     * @tparam ExtensionTypes
-     */
-    template <Traits TraitsType, Interface InterfaceType,
-              ContextExtension... ExtensionTypes>
-    struct context : public basic_context<ExtensionTypes...> {
 
-        using string_type      = typename TraitsType::string_type;
-        using string_view_type = typename TraitsType::string_view_type;
-
-        template <typename KeyT = string_type, typename ValueT = string_type>
-        auto map() const noexcept {
-            using new_extension =
-              extensions::as_data<extensions::map<TraitsType, KeyT, ValueT>>;
-            using new_context_t = context<TraitsType, InterfaceType,
-                                          ExtensionTypes..., new_extension>;
-            return new_context_t{*this};
-        }
-    };
 
 
 
@@ -311,28 +284,29 @@ namespace webpp {
         };
 
         template <typename ExtensionType>
-        using related_extension_pack_type =
-          typename ExtensionType::context_extensions;
+        using related_extension_pack_type = typename ExtensionType::context_extensions;
 
         template <typename ExtensionListType, typename TraitsType,
                   typename EList, // extension_pack
                   typename ReqType>
-        using mid_level_extensie_type =
-          basic_context<EList,
-                        // getting the extensie_type of the basic_response
-                        typename ExtensionListType::template extensie_type<
-                          TraitsType, basic_response_descriptor>,
-                        ReqType>;
+        using mid_level_extensie_type = basic_context<
+          EList, ReqType,
+          // getting the extensie_type of the basic_response
+          typename ExtensionListType::template extensie_type<TraitsType, basic_response_descriptor>>;
 
-        template <typename ExtensionListType, typename TraitsType,
-                  typename EList, typename ReqType>
+        template <typename ExtensionListType, typename TraitsType, typename EList, typename ReqType>
         using final_extensie_type =
-          final_context<TraitsType, context_descriptor, ExtensionList, EList,
-                        ReqType>;
+          final_context<TraitsType, context_descriptor, ExtensionListType, EList, ReqType>;
     };
 
+    template <Request ReqType, typename ExtensionListType = empty_extension_pack>
+    using simple_context = typename ExtensionListType::template extensie_type<typename ReqType::traits_type,
+                                                                              context_descriptor, ReqType>;
 
-    struct fake_basic_context {};
+    // todo: move this into "context_concepts.h" file
+    //    using fake_context_type = typename context_descriptor::template final_extensie_type<
+    //      empty_extension_pack, fake_traits_type,
+    //      basic_context<empty_extension_pack, fake_request_type, fake_response_type>, fake_request_type>;
 
 } // namespace webpp
 
