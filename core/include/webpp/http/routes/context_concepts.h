@@ -22,9 +22,8 @@ namespace webpp {
         post_lastroute
     };
 
-    template <typename A, extension_method em, typename ContextArgType,
-              typename = void>
-    struct has_context_extension_method : ::std::false_type {};
+    template <typename A, extension_method em, typename ContextArgType, typename = void>
+    struct has_context_extension_method : stl::false_type {};
 
     /**
      * pre_subroute
@@ -32,9 +31,8 @@ namespace webpp {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::pre_subroute, ContextArgType,
-      ::std::void_t<decltype(
-        ::std::declval<A>().pre_subroute(::std::declval<ContextArgType&>()),
-        (void)0)>> : ::std::true_type {};
+      stl::void_t<decltype(stl::declval<A>().pre_subroute(stl::declval<ContextArgType&>()), (void)0)>>
+      : stl::true_type {};
 
     /**
      * post_subroute
@@ -42,9 +40,8 @@ namespace webpp {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::post_subroute, ContextArgType,
-      ::std::void_t<decltype(
-        ::std::declval<A>().post_subroute(::std::declval<ContextArgType&>()),
-        (void)0)>> : ::std::true_type {};
+      stl::void_t<decltype(stl::declval<A>().post_subroute(stl::declval<ContextArgType&>()), (void)0)>>
+      : stl::true_type {};
 
 
     /**
@@ -53,9 +50,8 @@ namespace webpp {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::pre_entryroute, ContextArgType,
-      ::std::void_t<decltype(
-        ::std::declval<A>().pre_entryroute(::std::declval<ContextArgType&>()),
-        (void)0)>> : ::std::true_type {};
+      stl::void_t<decltype(stl::declval<A>().pre_entryroute(stl::declval<ContextArgType&>()), (void)0)>>
+      : stl::true_type {};
 
     /**
      * post_entryroute
@@ -63,9 +59,8 @@ namespace webpp {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::post_entryroute, ContextArgType,
-      ::std::void_t<decltype(
-        ::std::declval<A>().post_entryroute(::std::declval<ContextArgType&>()),
-        (void)0)>> : ::std::true_type {};
+      stl::void_t<decltype(stl::declval<A>().post_entryroute(stl::declval<ContextArgType&>()), (void)0)>>
+      : stl::true_type {};
 
     /**
      * pre first route
@@ -73,9 +68,8 @@ namespace webpp {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::pre_firstroute, ContextArgType,
-      ::std::void_t<decltype(
-        ::std::declval<A>().pre_firstroute(::std::declval<ContextArgType&>()),
-        (void)0)>> : ::std::true_type {};
+      stl::void_t<decltype(stl::declval<A>().pre_firstroute(stl::declval<ContextArgType&>()), (void)0)>>
+      : stl::true_type {};
 
     /**
      * post last route
@@ -83,9 +77,8 @@ namespace webpp {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::post_lastroute, ContextArgType,
-      ::std::void_t<decltype(
-        ::std::declval<A>().post_lastroute(::std::declval<ContextArgType&>()),
-        (void)0)>> : ::std::true_type {};
+      stl::void_t<decltype(stl::declval<A>().post_lastroute(stl::declval<ContextArgType&>()), (void)0)>>
+      : stl::true_type {};
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -93,18 +86,9 @@ namespace webpp {
     concept ContextExtension = Extension<T>;
 
     template <typename T>
-    concept Context = Traits<typename T::traits_type>&&
-          Interface<typename T::interface_type>&&
-          Request<typename T::request_type>&&
-          Response<typename T::response_type>&& ContextExtension<
-            typename T::extension_type>&& ::std::is_copy_constructible_v<T>&& ::
-            std::is_move_constructible_v<T>&& requires(T c) {
-        { c.response }
-        ->Response;
-    }
-    &&requires(T c) {
-        { c.request }
-        ->Request;
+    concept Context = Traits<typename T::traits_type>&& Request<typename T::request_type>&&
+      stl::is_copy_constructible_v<T>&& stl::is_move_constructible_v<T>&& requires(T c) {
+        {c.request};
     };
 
 

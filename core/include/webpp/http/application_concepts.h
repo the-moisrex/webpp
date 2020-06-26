@@ -11,9 +11,8 @@
 namespace webpp {
 
     template <typename T>
-    concept Application =
-      stl::default_initializable<T>&& requires(T app, fake_basic_context ctx) {
-        { app(ctx) }
+    concept Application = stl::default_initializable<T>&& requires(T app) {
+        { app(fake_request_type{}) }
         ->Response;
     };
 

@@ -15,8 +15,7 @@ namespace webpp {
     /**
      * This class owns its data.
      */
-    template <Traits                TraitsType,
-              ResponseExtensionList REL   = empty_extension_pack,
+    template <Traits TraitsType, typename REL = empty_extension_pack,
               typename ResponseHeaderType = response_headers<TraitsType, REL>,
               typename BodyType           = response_body<TraitsType>>
     class basic_response : public REL {
@@ -42,7 +41,7 @@ namespace webpp {
 
         basic_response& operator=(basic_response const&) = default;
         basic_response& operator=(basic_response&& res) noexcept = default;
-        basic_response& operator=(str_t const& str) noexcept {
+        basic_response& operator                                 =(str_t const& str) noexcept {
             body.replace_string(str);
             return *this;
         }
@@ -51,12 +50,10 @@ namespace webpp {
             return *this;
         }
 
-        [[nodiscard]] bool
-        operator==(basic_response const& res) const noexcept {
+        [[nodiscard]] bool operator==(basic_response const& res) const noexcept {
             return body == res.body && header == res.header;
         }
-        [[nodiscard]] bool
-        operator!=(basic_response const& res) const noexcept {
+        [[nodiscard]] bool operator!=(basic_response const& res) const noexcept {
             return body != res.body || header != res.header;
         }
 
@@ -65,9 +62,7 @@ namespace webpp {
                 header.emplace("Content-Type", "text/html; charset=utf-8");
 
             if (!header.contains("Content-Length"))
-                header.emplace(
-                  "Content-Length",
-                  stl::to_string(body.str().size() * sizeof(char)));
+                header.emplace("Content-Length", stl::to_string(body.str().size() * sizeof(char)));
         }
 
 
@@ -88,22 +83,17 @@ namespace webpp {
         };
 
         template <typename ExtensionType>
-        using related_extension_pack_type =
-          typename ExtensionType::response_extensions;
+        using related_extension_pack_type = typename ExtensionType::response_extensions;
 
-        template <typename ExtensionListType, typename TraitsType,
-                  typename EList>
-        using mid_level_extensie_type =
-          basic_response<TraitsType, EList,
-                         typename ExtensionListType::template extensie_type<
-                           TraitsType, response_header_descriptor>,
+        template <typename ExtensionListType, typename TraitsType, typename EList>
+        using mid_level_extensie_type = basic_response<
+          TraitsType, EList,
+          typename ExtensionListType::template extensie_type<TraitsType, response_header_descriptor>,
 
-                         typename ExtensionListType::template extensie_type<
-                           TraitsType, response_body_descriptor>>;
+          typename ExtensionListType::template extensie_type<TraitsType, response_body_descriptor>>;
 
         // empty final extensie
-        template <typename ExtensionListType, typename TraitsType,
-                  typename EList>
+        template <typename ExtensionListType, typename TraitsType, typename EList>
         struct final_extensie_type final : public EList {
             using EList::EList;
         };

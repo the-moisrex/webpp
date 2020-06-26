@@ -24,8 +24,7 @@ namespace webpp {
      * @tparam ExtensionListType
      * @tparam RouteType
      */
-    template <ExtensionList ExtensionListType = empty_extension_pack,
-              Route... RouteType>
+    template <ExtensionList ExtensionListType = empty_extension_pack, Route... RouteType>
     struct router {
 
 
@@ -34,8 +33,7 @@ namespace webpp {
 
         const stl::tuple<RouteType...> routes;
 
-        constexpr router(RouteType&&... _route) noexcept
-          : routes(stl::forward<RouteType>(_route)...) {
+        constexpr router(RouteType&&... _route) noexcept : routes(stl::forward<RouteType>(_route)...) {
         }
 
 
@@ -73,27 +71,25 @@ namespace webpp {
          * @param req
          * @return final response
          */
-        template <Response ResponseType>
-        Response auto operator()(Request auto& req) noexcept {
-            using req_type = decltype(req);
-            // we can pass req_type to the extensie_type as an extra argument
-            using context_type =
-              typename ExtensionListType::template extensie_type<
-                req_type::traits_type, context_descriptor, req_type>;
+        template <typename RequestType>
+        requires(Request<stl::remove_cvref_t<RequestType>>) Response auto
+        operator()(RequestType& req) noexcept {
+            using req_type     = stl::remove_cvref_t<RequestType>;
+            using context_type = simple_context<req_type, ExtensionListType>;
             return this->operator()(context_type{req});
         }
 
-        template <stl::size_t Index = 0>
-        Response auto operator()(Context auto&& ctx) noexcept {
+        template <typename ContextType, stl::size_t Index = 0>
+        requires(Context<stl::remove_cvref_t<ContextType>>) Response auto
+        operator()(ContextType&& ctx) noexcept {
             // handling root-level route calls:
-            using context_type              = decltype(ctx);
+            using context_type              = stl::remove_cvref_t<ContextType>;
             constexpr auto next_route_index = Index + 1;
             constexpr auto route            = stl::get<Index>(routes);
             constexpr bool is_last_route    = Index == route_count() - 1;
 
             // setting the context features
-            ctx.router_features.level =
-              router_features::route_level::entryroute;
+            ctx.router_features.level            = router_stats::route_level::entryroute;
             ctx.router_features.last_entryroute  = is_last_route;
             ctx.router_features.entryroute_index = Index;
 
@@ -126,8 +122,7 @@ namespace webpp {
 
             // call the next route:
             if constexpr (!is_last_route) {
-                return operator()<next_route_index>(
-                  stl::forward<context_type>(ctx));
+                return operator()<next_route_index>(stl::forward<context_type>(ctx));
             } else {
                 // call the context
                 ctx.call_post_entryroute_methods();

@@ -12,11 +12,7 @@
 namespace webpp {
 
     template <typename T>
-    concept Request = requires(T x) {
-        typename T::traits;
-        typename T::interface;
-    }
-    &&Traits<typename T::traits>&& Interface<typename T::interface>;
+    concept Request = Traits<typename T::traits_type>&& Interface<typename T::interface_type>;
 
 
     template <typename T>
@@ -28,9 +24,16 @@ namespace webpp {
     };
 
     template <typename T>
-    concept RequestExtensionList =
-      ExtensionListOf<T, is_request_extension_pack>;
+    concept RequestExtensionList = ExtensionListOf<T, is_request_extension_pack>;
 
+    struct fake_request_type {
+        using interface_type = fake_interface_type;
+        using traits_type    = fake_traits_type;
+
+        auto request_uri() const noexcept {
+            return "/";
+        }
+    };
 
 } // namespace webpp
 

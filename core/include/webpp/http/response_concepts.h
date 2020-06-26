@@ -14,17 +14,18 @@ namespace webpp {
     template <typename ResponseType>
     struct is_response<
       ResponseType,
-      stl::void_t<
-        typename ResponseType::body_t, typename ResponseType::header_t,
-        typename ResponseType::traits, typename ResponseType::str_t,
-        typename ResponseType::str_view_t,
-        decltype(
-          stl::declval<ResponseType>().body,
-          stl::declval<ResponseType>().header,
-          stl::declval<ResponseType>().operator typename ResponseType::str_t(),
-          stl::declval<ResponseType>().
-          operator typename ResponseType::str_view_t(),
-          (void)0)>> : stl::true_type {};
+      stl::void_t<typename ResponseType::body_type, typename ResponseType::header_type,
+                  typename ResponseType::traits_type,
+                  decltype(stl::declval<ResponseType>().body, stl::declval<ResponseType>().header, (void)0)>>
+      : stl::true_type {};
+
+    struct fake_response_type {
+        using body_type   = void;
+        using header_type = void;
+        using traits_type = fake_traits_type;
+        stl::true_type body;
+        stl::true_type header;
+    };
 
     template <typename ResponseType>
     constexpr bool is_response_v = is_response<ResponseType>::value;
@@ -34,8 +35,7 @@ namespace webpp {
 
     template <typename T>
     concept ConvertibleToResponse =
-      Response<T> ||
-      stl::is_convertible_v<T, typename std_traits_from_string<T>::type> ||
+      Response<T> || stl::is_convertible_v<T, typename std_traits_from_string<T>::type> ||
       stl::is_convertible_v<T, typename std_traits_from_string_view<T>::type>;
 
 
@@ -48,8 +48,7 @@ namespace webpp {
     };
 
     template <typename T>
-    concept ResponseExtensionList =
-      ExtensionListOf<T, is_response_extension_list>;
+    concept ResponseExtensionList = ExtensionListOf<T, is_response_extension_list>;
 
 } // namespace webpp
 

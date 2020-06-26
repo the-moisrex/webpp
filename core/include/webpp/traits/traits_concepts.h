@@ -59,15 +59,15 @@ namespace webpp {
     };
 
 
-    struct fake_traits {
-        using char_type = void;
+    struct fake_traits_type {
+        using char_type = char;
 
         template <typename T>
         using allocator = void;
 
         using string_type      = void;
         using string_view_type = void;
-        using char_traits      = istl::fake_char_traits;
+        using char_traits      = istl::fake_char_traits_type;
     };
 
 } // namespace webpp

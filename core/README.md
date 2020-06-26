@@ -7,16 +7,17 @@ struct app {
     using namespace webpp;
 
     router _router {
-        path() / "page" / integer("page_num") >> app::page
+        path() / number("user_id") / "page" / number("page_num") >> app::page
     };
 
     auto page(Context auto& ctx) const noexcept {
-        auto page_num = ctx.path.operator[]<int>("page_num");
-        return ctx.response.file("page.html", page_num);
+        auto page_num = ctx.path.template get<int>("page_num");
+        auto _user = ctx.path.template get<user>("user_id");
+        return ctx.response.file("page.html", _user, page_num);
     }
     
-    Response auto operator()(Context auto&& ctx) noexcept {
-        return _router(ctx);
+    Response auto operator()(Request auto&& req) noexcept {
+        return _router(req);
     }
 };
 ```
