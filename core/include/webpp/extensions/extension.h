@@ -47,36 +47,29 @@ namespace webpp {
             using type = PackType<F...>;
         };
 
-        template <template <typename...> typename PackType, typename F,
-                  typename... L>
+        template <template <typename...> typename PackType, typename F, typename... L>
         struct prepend<PackType, F, extension_pack<L...>> {
             using type = PackType<F, L...>;
         };
 
-        template <template <typename...> typename PackType,
-                  template <typename> typename IF, typename First = void,
-                  typename... EI>
+        template <template <typename...> typename PackType, template <typename> typename IF,
+                  typename First = void, typename... EI>
         struct filter {
             using type = stl::conditional_t<
               IF<First>::value,
-              typename prepend<
-                PackType, First,
-                typename filter<PackType, IF, EI...>::type>::type,
+              typename prepend<PackType, First, typename filter<PackType, IF, EI...>::type>::type,
               typename filter<PackType, IF, EI...>::type>;
         };
 
-        template <template <typename...> typename PackType,
-                  template <typename> typename IF, typename... EI>
+        template <template <typename...> typename PackType, template <typename> typename IF, typename... EI>
         struct filter<PackType, IF, void, EI...> {
             using type = PackType<EI...>;
         };
 
-        template <template <typename...> typename PackType,
-                  template <typename> typename IF, typename... EI>
+        template <template <typename...> typename PackType, template <typename> typename IF, typename... EI>
         struct filter_epack {};
 
-        template <template <typename...> typename PackType,
-                  template <typename> typename IF, typename... EI>
+        template <template <typename...> typename PackType, template <typename> typename IF, typename... EI>
         struct filter_epack<PackType, IF, extension_pack<EI...>> {
             using type = typename filter<PackType, IF, EI...>::type;
         };
@@ -134,12 +127,12 @@ namespace webpp {
         //        };
 
 
-        template <template <typename...> typename PackType,
-                  template <typename> typename Extractor, typename... EPack>
+        template <template <typename...> typename PackType, template <typename> typename Extractor,
+                  typename... EPack>
         struct epack_miner {};
 
-        template <template <typename...> typename PackType,
-                  template <typename> typename Extractor, typename... EPack>
+        template <template <typename...> typename PackType, template <typename> typename Extractor,
+                  typename... EPack>
         struct epack_miner<PackType, Extractor, extension_pack<EPack...>> {
             using type = PackType<Extractor<EPack>...>;
         };
@@ -149,27 +142,20 @@ namespace webpp {
             // this should not happen
         };
         template <typename... Ex>
-        struct inheritable_extension_pack<extension_pack<Ex...>>
-          : public virtual Ex... {
+        struct inheritable_extension_pack<extension_pack<Ex...>> : public virtual Ex... {
             template <typename... X>
-            inheritable_extension_pack(X&&... x)
-              : Ex{stl::forward<X>(x)...}... {
+            inheritable_extension_pack(X&&... x) : Ex{stl::forward<X>(x)...}... {
             }
         };
 
-        using mother_extensions =
-          typename filter<extension_pack, mother_type, E...>::type;
-        using child_extensions =
-          typename filter<extension_pack, child_type, E...>::type;
+        using mother_extensions = typename filter<extension_pack, mother_type, E...>::type;
+        using child_extensions  = typename filter<extension_pack, child_type, E...>::type;
 
         template <typename ExtensieDescriptor, typename EPack>
         using merged_extensions = typename epack_miner<
-          extension_pack,
-          ExtensieDescriptor::template related_extension_pack_type,
-          typename filter_epack<
-            extension_pack,
-            ExtensieDescriptor::template has_related_extension_pack,
-            EPack>::type>::type;
+          extension_pack, ExtensieDescriptor::template related_extension_pack_type,
+          typename filter_epack<extension_pack, ExtensieDescriptor::template has_related_extension_pack,
+                                EPack>::type>::type;
 
 
         template <typename ExtendThis, typename... Ex>
@@ -178,8 +164,7 @@ namespace webpp {
         };
 
         template <typename ExtendThis, typename... Ex>
-        struct extend_to_all<ExtendThis, extension_pack<Ex...>>
-          : public virtual Ex... {
+        struct extend_to_all<ExtendThis, extension_pack<Ex...>> : public virtual Ex... {
             template <typename... Args>
             extend_to_all(Args&&... args) : Ex{stl::forward<Args>(args)...}... {
             }
@@ -196,19 +181,16 @@ namespace webpp {
          * Apply extensions into one type
          * todo: first filter based on extensie, then filter based on mother or child
          */
-        template <typename TraitsType, typename ExtensieDescriptor,
-                  typename... ExtraArgs>
-        using extensie_type =
-          typename ExtensieDescriptor::template final_extensie_type<
-            this_epack, TraitsType,
-            extend_to_all<
-              typename ExtensieDescriptor::template mid_level_extensie_type<
-                this_epack, TraitsType,
-                inheritable_extension_pack<
-                  merged_extensions<ExtensieDescriptor, mother_extensions>>,
-                ExtraArgs...>,
-              merged_extensions<ExtensieDescriptor, child_extensions>>,
-            ExtraArgs...>;
+        template <typename TraitsType, typename ExtensieDescriptor, typename... ExtraArgs>
+        using extensie_type = typename ExtensieDescriptor::template final_extensie_type<
+          this_epack, TraitsType,
+          extend_to_all<
+            typename ExtensieDescriptor::template mid_level_extensie_type<
+              this_epack, TraitsType,
+              inheritable_extension_pack<merged_extensions<ExtensieDescriptor, mother_extensions>>,
+              ExtraArgs...>,
+            merged_extensions<ExtensieDescriptor, child_extensions>>,
+          ExtraArgs...>;
 
 
         /**
@@ -240,8 +222,7 @@ namespace webpp {
     template <typename E>
     concept ExtensionList = requires {
         typename E::template extensie_type<fake_traits_type, fake_extensie_descriptor>;
-        typename E::template is_all<
-          fake_extensie_descriptor::template has_related_extension_pack>;
+        typename E::template is_all<fake_extensie_descriptor::template has_related_extension_pack>;
     };
 
     template <typename E, template <typename> typename IF>
