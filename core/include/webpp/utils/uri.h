@@ -250,7 +250,7 @@ namespace webpp {
         /**
          * This is the whole url (if we need to own the uri ourselves)
          */
-        storred_str_t data;
+        storred_str_t data{};
 
 
         mutable stl::size_t scheme_end      = str_view_t::npos,

@@ -8,6 +8,7 @@
 #include "../request.h"
 #include "../response.h"
 #include "../routes/router.h"
+#include "../application_concepts.h"
 
 #include <cctype>
 #include <cstdlib>

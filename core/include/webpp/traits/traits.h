@@ -9,10 +9,10 @@ namespace webpp {
     /**
      * Automatically choose a string type based on mutability requested
      */
-    template <typename Traits, bool Mutable>
+    template <typename TraitsType, bool Mutable>
     using auto_string_type =
-      stl::conditional_t<Mutable, typename Traits::string_type,
-                         typename Traits::string_view_type>;
+      stl::conditional_t<Mutable, typename TraitsType::string_type,
+                         typename TraitsType::string_view_type>;
 
 
     /**

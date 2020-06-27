@@ -8,17 +8,6 @@
 
 namespace webpp {
 
-    template <typename ResponseType, typename = void>
-    struct is_response : stl::false_type {};
-
-    template <typename ResponseType>
-    struct is_response<
-      ResponseType,
-      stl::void_t<typename ResponseType::body_type, typename ResponseType::header_type,
-                  typename ResponseType::traits_type,
-                  decltype(stl::declval<ResponseType>().body, stl::declval<ResponseType>().header, (void)0)>>
-      : stl::true_type {};
-
     struct fake_response_type {
         using body_type   = void;
         using header_type = void;
@@ -27,11 +16,14 @@ namespace webpp {
         stl::true_type header;
     };
 
-    template <typename ResponseType>
-    constexpr bool is_response_v = is_response<ResponseType>::value;
-
     template <typename ResType>
-    concept Response = is_response_v<ResType>;
+    concept Response = requires (ResType res) {
+        typename ResType::body_type;
+        typename ResType::header_type;
+        typename ResType::traits_type;
+        {res.body};
+        {res.header};
+    };
 
     template <typename T>
     concept ConvertibleToResponse =
