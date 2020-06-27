@@ -155,7 +155,7 @@ namespace webpp {
          * @return
          */
         template <typename... Args>
-        response_type response(Args&&... args) {
+        response_type response(Args&&... args) const noexcept {
             return response_type{stl::forward<Args>(args)...};
         }
     };

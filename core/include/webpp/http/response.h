@@ -24,6 +24,7 @@ namespace webpp {
         using traits_type  = TraitsType;
         using body_type    = BodyType;
         using headers_type = ResponseHeaderType;
+        using error_code_type = typename body_type::error_code_type;
         using str_view_t   = typename traits_type::string_view_type;
         using str_t        = typename traits_type::string_type;
 
@@ -33,6 +34,10 @@ namespace webpp {
         basic_response() noexcept                          = default;
         basic_response(basic_response const& res) noexcept = default;
         basic_response(basic_response&& res) noexcept      = default;
+        basic_response(error_code_type err_code, str_t const& b) noexcept : body{err_code, b} {
+        }
+        basic_response(error_code_type err_code, str_t&& b) noexcept : body{err_code, stl::move(b)} {
+        }
         basic_response(str_t const& b) noexcept : body(b) {
         }
         basic_response(str_t&& b) noexcept : body(stl::move(b)) {
