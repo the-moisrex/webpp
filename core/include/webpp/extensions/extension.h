@@ -158,15 +158,17 @@ namespace webpp {
                                 EPack>::type>::type;
 
 
-        template <typename ExtendThis, typename... Ex>
+        template <typename E1, typename... Ex>
         struct extend_to_all {
             // this should not happen
         };
 
-        template <typename ExtendThis, typename... Ex>
-        struct extend_to_all<ExtendThis, extension_pack<Ex...>> : public virtual Ex... {
+        template <typename E1, typename... Ex>
+        struct extend_to_all<E1, extension_pack<Ex...>> : public virtual E1, Ex... {
             template <typename... Args>
-            extend_to_all(Args&&... args) : Ex{stl::forward<Args>(args)...}... {
+            extend_to_all(Args&&... args)
+              : E1{stl::forward<Args>(args)...},
+                Ex{stl::forward<Args>(args)...}... {
             }
         };
 
@@ -185,11 +187,15 @@ namespace webpp {
         using extensie_type = typename ExtensieDescriptor::template final_extensie_type<
           this_epack, TraitsType,
           extend_to_all<
+
             typename ExtensieDescriptor::template mid_level_extensie_type<
               this_epack, TraitsType,
               inheritable_extension_pack<merged_extensions<ExtensieDescriptor, mother_extensions>>,
               ExtraArgs...>,
-            merged_extensions<ExtensieDescriptor, child_extensions>>,
+
+            merged_extensions<ExtensieDescriptor, child_extensions>
+
+            >,
           ExtraArgs...>;
 
 
