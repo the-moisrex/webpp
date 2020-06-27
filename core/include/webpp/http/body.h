@@ -92,6 +92,12 @@ namespace webpp {
 
     template <Traits TraitsType, typename EList = empty_extension_pack>
     class response_body : public EList {
+      public:
+        using error_code_type  = stl::uint_fast16_t;
+        using traits_type      = TraitsType;
+        using string_type      = typename traits_type::string_type;
+        using string_view_type = typename traits_type::string_view_type;
+
       private:
         template <typename ExtensionType>
         using variant_extractor = typename ExtensionType::response_body_extensions;
@@ -108,13 +114,15 @@ namespace webpp {
 
       public:
         using extension_list = EList;
-        using variant_type   = typename EList::template epack_miner<
-          stl::variant, variant_extractor, extensions_that_has_variants>::type;
+        using variant_type   = typename EList::template epack_miner<stl::variant, variant_extractor,
+                                                                  extensions_that_has_variants>::type;
 
       public:
         using EList::EList;
 
         response_body() noexcept = default;
+        response_body(error_code_type err_code, string_type const& str) noexcept;
+        response_body(error_code_type err_code, string_type&& str) noexcept;
 
         /**
          * Get the value as a string (converts the other types to string
@@ -123,8 +131,7 @@ namespace webpp {
          * data to string
          * @return the string representation of the data
          */
-        [[nodiscard]] stl::string
-        str(stl::string_view const& default_val = "") const noexcept;
+        [[nodiscard]] stl::string str(stl::string_view const& default_val = "") const noexcept;
     };
 
 
@@ -137,16 +144,13 @@ namespace webpp {
         };
 
         template <typename ExtensionType>
-        using related_extension_pack_type =
-          typename ExtensionType::response_body_extensions;
+        using related_extension_pack_type = typename ExtensionType::response_body_extensions;
 
-        template <typename ExtensionListType, typename TraitsType,
-                  typename EList>
+        template <typename ExtensionListType, typename TraitsType, typename EList>
         using mid_level_extensie_type = response_body<TraitsType, EList>;
 
         // empty final extensie
-        template <typename ExtensionListType, typename TraitsType,
-                  typename EList>
+        template <typename ExtensionListType, typename TraitsType, typename EList>
         struct final_extensie_type final : public EList {
             using EList::EList;
         };

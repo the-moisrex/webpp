@@ -13,12 +13,12 @@ namespace webpp::stl {
 
     template <typename... Args>
     inline auto format(Args&&... args) {
-        return fmt::format(stl::format<Args>(args)...);
+        return fmt::format(stl::forward<Args>(args)...);
     }
 
     template <typename... Args>
     inline auto format_to(Args&&... args) {
-        return fmt::format_to(stl::format<Args>(args)...);
+        return fmt::format_to(stl::forward<Args>(args)...);
     }
 
 } // namespace webpp::std
