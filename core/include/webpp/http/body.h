@@ -91,12 +91,13 @@
 namespace webpp {
 
     template <Traits TraitsType, typename EList = empty_extension_pack>
-    class response_body : public EList {
+    class response_body : public stl::remove_cvref<EList> {
       public:
         using error_code_type  = stl::uint_fast16_t;
         using traits_type      = TraitsType;
         using string_type      = typename traits_type::string_type;
         using string_view_type = typename traits_type::string_view_type;
+        using elist_type       = stl::remove_cvref<EList>;
 
       private:
         template <typename ExtensionType>
@@ -117,12 +118,11 @@ namespace webpp {
         using variant_type   = typename EList::template epack_miner<stl::variant, variant_extractor,
                                                                   extensions_that_has_variants>::type;
 
-      public:
-        using EList::EList;
+        template <typename... Args>
+        response_body(Args&&... args) noexcept : elist_type{stl::format<Args>(args)...} {
+        }
 
         response_body() noexcept = default;
-        response_body(error_code_type err_code, string_type const& str) noexcept;
-        response_body(error_code_type err_code, string_type&& str) noexcept;
 
         /**
          * Get the value as a string (converts the other types to string

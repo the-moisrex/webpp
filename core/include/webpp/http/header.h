@@ -16,7 +16,9 @@
 
 namespace webpp {
 
-    constexpr auto status_reason_phrase(unsigned int status_code) noexcept {
+    using status_code_type = stl::uint_fast16_t;
+
+    constexpr auto status_reason_phrase(status_code_type status_code) noexcept {
         switch (status_code) {
             case 100: return "Continue";
             case 101: return "Switching Protocols";
@@ -194,7 +196,7 @@ namespace webpp {
 
         using HeaderEList::HeaderEList;
 
-        stl::uint_fast16_t status_code = 200;
+        status_code_type status_code = 200u;
 
 
         auto str() const noexcept {

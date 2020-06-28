@@ -74,7 +74,7 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/main.h
         ${LIB_INCLUDE_DIR}/webpp.h
-        )
+        include/webpp/http/bodies/string.h)
 
 set(ALL_SOURCES_SHORT "")
 foreach (source ${ALL_SOURCES})
