@@ -3,4 +3,12 @@
 #ifndef WEBPP_STRING_H
 #define WEBPP_STRING_H
 
+namespace webpp {
+
+	struct body_str {
+		
+	};
+
+}
+
 #endif // WEBPP_STRING_H
