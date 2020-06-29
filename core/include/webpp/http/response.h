@@ -21,12 +21,11 @@ namespace webpp {
     class basic_response : public REL {
 
       public:
-        using traits_type     = TraitsType;
-        using body_type       = BodyType;
-        using headers_type    = ResponseHeaderType;
-        using error_code_type = typename body_type::error_code_type;
-        using str_view_t      = typename traits_type::string_view_type;
-        using str_t           = typename traits_type::string_type;
+        using traits_type  = TraitsType;
+        using body_type    = BodyType;
+        using headers_type = ResponseHeaderType;
+        using str_view_t   = typename traits_type::string_view_type;
+        using str_t        = typename traits_type::string_type;
 
         body_type    body;
         headers_type header;
@@ -35,11 +34,11 @@ namespace webpp {
         basic_response(basic_response const& res) noexcept = default;
         basic_response(basic_response&& res) noexcept      = default;
 
-        basic_response(error_code_type err_code) noexcept : header{err_code} {
+        basic_response(status_code_type err_code) noexcept : header{err_code} {
         }
-        basic_response(error_code_type err_code, str_t const& b) noexcept : header{err_code}, body{b} {
+        basic_response(status_code_type err_code, str_t const& b) noexcept : header{err_code}, body{b} {
         }
-        basic_response(error_code_type err_code, str_t&& b) noexcept : header{err_code}, body{stl::move(b)} {
+        basic_response(status_code_type err_code, str_t&& b) noexcept : header{err_code}, body{stl::move(b)} {
         }
         basic_response(str_t const& b) noexcept : body(b) {
         }
@@ -82,6 +81,26 @@ namespace webpp {
          */
     };
 
+
+
+
+    template <Traits TraitsType, typename DescriptorType, typename OriginalExtensionList, typename EList>
+    struct final_response final : public stl::remove_cvref_t<EList> {
+        using traits_type                  = TraitsType;
+        using elist_type                   = stl::remove_cvref_t<EList>;
+        using response_descriptor_type     = DescriptorType;
+        using original_extension_pack_type = OriginalExtensionList;
+
+        /**
+         * Append some extensions to this context type and get the type back
+         */
+        template <typename... E>
+        using apply_extensions_type = typename original_extension_pack_type::template appended<
+          E...>::type::template extensie_type<traits_type, response_descriptor_type>;
+    };
+
+
+
     struct basic_response_descriptor {
         template <typename ExtensionType>
         struct has_related_extension_pack {
@@ -102,51 +121,10 @@ namespace webpp {
 
         // empty final extensie
         template <typename ExtensionListType, typename TraitsType, typename EList>
-        struct final_extensie_type final : public EList {
-            using EList::EList;
-        };
+        using final_extensie_type =
+          final_response<TraitsType, basic_response_descriptor, ExtensionListType, EList>;
     };
 
-
-    /*
-
-    #ifdef CONFIG_FILE
-    #    if CONFIG_FILE != ""
-    #        include CONFIG_FILE
-    #    else
-        extern std::string_view get_static_file(std::string_view const&)
-    noexcept; #    endif #endif
-
-        response_t response_t::file(std::filesystem::path const& _file) noexcept
-    { response_t res; #ifdef CONFIG_FILE if (auto content =
-    ::get_static_file(filepath); !content.empty()) {
-                res.body.replace_string(content);
-                return res;
-            }
-    #endif
-
-            // TODO: performance tests
-            // TODO: change the replace_string with replace_string_view if the file is cached
-
-            if (std::ifstream in{_file.c_str(), std::ios::binary |
-    std::ios::ate}) {
-                // details on this matter:
-                // https://stackoverflow.com/questions/11563963/writing-a-binary-file-in-c-very-fast/39097696#39097696
-                // std::unique_ptr<char[]> buffer{new char[buffer_size]};
-                // in.rdbuf()->pubsetbuf(buffer.get(), buffer_size); // speed boost,
-                // I think
-                auto                    size = in.tellg();
-                std::unique_ptr<char[]> result(new char[size]);
-                in.seekg(0);
-                in.read(result.get(), size);
-                res.body.replace_string(std::string{
-                  result.get(),
-    static_cast<std::string_view::size_type>(size)});
-            }
-
-            return res;
-        }
-    */
 
 } // namespace webpp
 #endif // WEBPP_HTTP_RESPONSE_H

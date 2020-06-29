@@ -110,12 +110,17 @@ struct fake_app {
     }
 };
 
-using fake_context_type = simple_context<basic_request<std_traits, cgi<std_traits , fake_app>>>;
+using context_type = simple_context<basic_request<std_traits, cgi<std_traits , fake_app>>>;
+struct request_type : basic_request<std_traits , cgi<std_traits , fake_app>> {
+    auto request_uri() const noexcept {
+        return "/path";
+    }
+};
 
 TEST(Routes, Path) {
     using namespace webpp::routes;
-    fake_request_type req;
-    fake_context_type ctx{.request = req};
+    request_type req;
+    context_type ctx{.request = req};
 
     constexpr auto root = path<void, void>();
 

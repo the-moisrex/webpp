@@ -66,12 +66,14 @@ namespace webpp {
             throw stl::invalid_argument("The specified index is not valid");
         }
 
-        constexpr Response auto error(Context auto const& ctx, stl::uint_fast16_t error_code) const noexcept {
-            return ctx.response(
+        Response auto error(Context auto const& ctx, status_code_type error_code,
+                            stl::string_view phrase = "") const noexcept {
+            stl::string_view _phrase = phrase.empty() ? status_reason_phrase(error_code) : phrase;
+            return ctx.template response<string_body>(
               error_code,
               stl::format(
                 R"html(<!doctype html><html><head><meta charset="utf-8"><title>{1} {2}!</title></head><body><h1>{1} {2}</h1></body></html>)html",
-                error_code, status_reason_phrase(error_code)));
+                error_code, _phrase));
         }
 
         /**

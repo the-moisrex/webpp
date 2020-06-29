@@ -93,45 +93,33 @@ namespace webpp {
     template <Traits TraitsType, typename EList = empty_extension_pack>
     class response_body : public stl::remove_cvref<EList> {
       public:
-        using error_code_type  = stl::uint_fast16_t;
         using traits_type      = TraitsType;
         using string_type      = typename traits_type::string_type;
         using string_view_type = typename traits_type::string_view_type;
         using elist_type       = stl::remove_cvref<EList>;
+        /*
+              private:
+                template <typename ExtensionType>
+                using variant_extractor = typename ExtensionType::response_body_extensions;
 
-      private:
-        template <typename ExtensionType>
-        using variant_extractor = typename ExtensionType::response_body_extensions;
+                template <typename ExtensionType>
+                struct has_variant {
+                    static constexpr bool value = requires {
+                        typename ExtensionType::response_body_extensions;
+                    };
+                };
 
-        template <typename ExtensionType>
-        struct has_variant {
-            static constexpr bool value = requires {
-                typename ExtensionType::response_body_extensions;
-            };
-        };
+                using extensions_that_has_variants =
+                  typename EList::template filter<stl::variant, has_variant, EList>;
 
-        using extensions_that_has_variants =
-          typename EList::template filter<stl::variant, has_variant, EList>;
-
-      public:
-        using extension_list = EList;
-        using variant_type   = typename EList::template epack_miner<stl::variant, variant_extractor,
-                                                                  extensions_that_has_variants>::type;
-
+              public:
+                using variant_type   = typename EList::template epack_miner<stl::variant, variant_extractor,
+                                                                          extensions_that_has_variants>::type;
+        */
         template <typename... Args>
-        response_body(Args&&... args) noexcept : elist_type{stl::format<Args>(args)...} {
+        response_body(Args&&... args) noexcept : elist_type{stl::forward<Args>(args)...} {
         }
 
-        response_body() noexcept = default;
-
-        /**
-         * Get the value as a string (converts the other types to string
-         * too)
-         * @param default_val the default value if we cannot convert the
-         * data to string
-         * @return the string representation of the data
-         */
-        [[nodiscard]] stl::string str(stl::string_view const& default_val = "") const noexcept;
     };
 
 
