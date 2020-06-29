@@ -154,15 +154,18 @@ namespace webpp {
          * @param args
          * @return
          */
-        template <typename... Args>
-        response_type response(Args&&... args) const noexcept {
-            return response_type{stl::forward<Args>(args)...};
+        template <typename... NewExtensions, typename... Args>
+        Response auto response(Args&&... args) const noexcept {
+            using new_response_type = typename response_type::template apply_extensions_type<NewExtensions...>;
+            // todo: write an auto extension finder based on the Args that get passed
+            return new_response_type{stl::forward<Args>(args)...};
         }
     };
 
     template <Traits TraitsType, typename ContextDescriptorType, typename OriginalExtensionList,
               typename EList, typename ReqType>
     struct final_context final : public stl::remove_cvref_t<EList> {
+        using elist_type                   = stl::remove_cvref_t<EList>;
         using traits_type                  = TraitsType;
         using context_descriptor_type      = ContextDescriptorType;
         using original_extension_pack_type = OriginalExtensionList;
@@ -176,7 +179,9 @@ namespace webpp {
           typename original_extension_pack_type::template appended<E...>::type::template extensie_type<
             traits_type, context_descriptor_type, request_type>;
 
-        using EList::EList;
+        template <typename... Args>
+        constexpr final_context(Args&&... args) noexcept : elist_type{stl::forward<Args>(args)...} {
+        }
 
         /**
          * Clone this context and append the new extensions along the way.

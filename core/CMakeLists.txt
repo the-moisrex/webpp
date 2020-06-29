@@ -33,6 +33,9 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/routes/literals.h
         ${LIB_INCLUDE_DIR}/webpp/http/routes/path/number.h
 
+        ${LIB_INCLUDE_DIR}/webpp/http/bodies/file.h
+        ${LIB_INCLUDE_DIR}/webpp/http/bodies/string.h
+
         ${LIB_INCLUDE_DIR}/webpp/validators/validators.h
         ${LIB_INCLUDE_DIR}/webpp/validators/email.h
 
