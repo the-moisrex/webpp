@@ -39,9 +39,8 @@ namespace webpp {
      * This class doesn't own its data (at least the ones that are important)
      * @tparam Interface
      */
-    template <Traits TraitsT, Interface InterfaceT,
-              RequestExtensionList REL = empty_extension_pack>
-    struct basic_request : public REL {
+    template <Traits TraitsT, Interface InterfaceT, RequestExtensionList REL = empty_extension_pack>
+    struct basic_request : public stl::remove_cvref_t<REL> {
         using traits_type    = TraitsT;
         using interface_type = InterfaceT;
     };

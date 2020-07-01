@@ -8,6 +8,7 @@
 #include "./context.h"
 #include "./route_concepts.h"
 #include "./router_concepts.h"
+#include "../bodies/string.h"
 
 #include <functional>
 #include <map>
@@ -69,7 +70,7 @@ namespace webpp {
         Response auto error(Context auto const& ctx, status_code_type error_code,
                             stl::string_view phrase = "") const noexcept {
             stl::string_view _phrase = phrase.empty() ? status_reason_phrase(error_code) : phrase;
-            return ctx.template response<string_body>(
+            return ctx.template response<string_response>(
               error_code,
               stl::format(
                 R"html(<!doctype html><html><head><meta charset="utf-8"><title>{1} {2}!</title></head><body><h1>{1} {2}</h1></body></html>)html",
@@ -110,7 +111,6 @@ namespace webpp {
 
                 auto res          = route(ctx);
                 using result_type = decltype(res);
-
 
                 if constexpr (Response<result_type>) {
 

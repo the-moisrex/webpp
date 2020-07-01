@@ -145,7 +145,8 @@ namespace webpp {
         template <typename... Args>
         basic_context(Args&&... args) : elist_type{stl::forward<Args>(args)...} {};
 
-        basic_context(request_type const& req) noexcept : elist_type{}, request(req) {
+        template <typename ... Args>
+        basic_context(request_type const& req, Args&& ...args) noexcept : elist_type{stl::forward<Args>(args)...}, request(req) {
         }
 
         /**
@@ -176,7 +177,7 @@ namespace webpp {
          */
         template <typename... E>
         using context_type_with_appended_extensions =
-          typename original_extension_pack_type::template appended<E...>::type::template extensie_type<
+          typename original_extension_pack_type::template appended<E...>::template extensie_type<
             traits_type, context_descriptor_type, request_type>;
 
         template <typename... Args>
@@ -186,7 +187,7 @@ namespace webpp {
         /**
          * Clone this context and append the new extensions along the way.
          */
-        template <typename... E>
+        template <Extension... E>
         constexpr auto clone() const noexcept {
             using context_type = context_type_with_appended_extensions<E...>;
             return context_type{*this};

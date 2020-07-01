@@ -5,10 +5,10 @@
 #include "../../traits/std_traits.h"
 #include "../../utils/casts.h"
 #include "../../utils/strings.h"
+#include "../application_concepts.h"
 #include "../request.h"
 #include "../response.h"
 #include "../routes/router.h"
-#include "../application_concepts.h"
 
 #include <cctype>
 #include <cstdlib>
@@ -27,7 +27,9 @@ namespace webpp {
       public:
         using traits_type      = TraitsType;
         using application_type = App;
-        using request_type     = basic_request<traits_type, cgi>;
+        using interface_type   = cgi<traits_type, application_type>;
+        // todo: think about the extensions
+        using request_type     = basic_request<traits_type, interface_type>;
         using str_view_type    = typename TraitsType::string_view_type;
         using str_type         = typename TraitsType::string_type;
         using ostream_t        = typename TraitsType::ostream_type;
@@ -165,8 +167,7 @@ namespace webpp {
             // todo: give the user the ability to change the status phrase
             stl::stringstream status_line;
             status_line << "Status: " << res.header.status_code() << " "
-                        << status_reason_phrase(res.header.status_code())
-                        << "\r\n";
+                        << status_reason_phrase(res.header.status_code()) << "\r\n";
 
             auto _status_line_str = status_line.str();
             write(_status_line_str.data(), _status_line_str.size());
@@ -242,6 +243,7 @@ namespace webpp {
      */
     template <Traits TraitsType, Application App>
     struct basic_request<TraitsType, cgi<TraitsType, App>> {
+        using traits_type  = TraitsType;
         using interface_type = cgi<TraitsType, App>;
 
         /**
@@ -494,8 +496,7 @@ namespace webpp {
          * @brief get a single header
          * @param name
          */
-        [[nodiscard]] stl::string_view
-        header(stl::string_view const& name) const noexcept {
+        [[nodiscard]] stl::string_view header(stl::string_view const& name) const noexcept {
             return interface_type::header(stl::string(name));
         }
 
