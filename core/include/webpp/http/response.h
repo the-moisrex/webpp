@@ -96,7 +96,7 @@ namespace webpp {
          */
         template <typename... E>
         using apply_extensions_type = typename original_extension_pack_type::template appended<
-          E...>::type::template extensie_type<traits_type, response_descriptor_type>;
+          E...>::template extensie_type<traits_type, response_descriptor_type>;
     };
 
 

@@ -6,9 +6,8 @@
 namespace webpp {
 
     template <typename T>
-    concept Interface = requires(T u) {
-        { u.operator()() }
-        noexcept;
+    concept Interface = requires {
+      typename T::traits_type;
     };
 
     struct fake_interface_type {

@@ -7,7 +7,8 @@
 #include <utility>
 
 #if !((__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L)))
-#    error "You need a decent compiler that supports C++20!"
+#    warning \
+      "Your compiler doesn't support non-type template parameters. Some compile-time features may not work"
 #else
 #    define FIXED_STRING_SUPPORT 1
 #endif
@@ -36,8 +37,7 @@ namespace webpp {
             return {0, 0};
     }
 
-    constexpr char32_t
-    value_of_trailing_utf8_code_point(uint8_t unit, bool& correct) noexcept {
+    constexpr char32_t value_of_trailing_utf8_code_point(uint8_t unit, bool& correct) noexcept {
         if ((unit & 0b1100'0000) == 0b1000'0000)
             return unit & 0b0011'1111;
         else {
@@ -46,8 +46,7 @@ namespace webpp {
         }
     }
 
-    constexpr length_value_t
-    length_and_value_of_utf16_code_point(uint16_t first_unit) noexcept {
+    constexpr length_value_t length_and_value_of_utf16_code_point(uint16_t first_unit) noexcept {
         if ((first_unit & 0b1111110000000000) == 0b1101'1000'0000'0000)
             return {static_cast<uint32_t>(first_unit & 0b0000001111111111), 2};
         else
@@ -68,38 +67,32 @@ namespace webpp {
                 for (size_t i{0}; i < N; ++i) {
                     if ((i == (N - 1)) && (input[i] == 0))
                         break;
-                    length_value_t info =
-                      length_and_value_of_utf8_code_point(input[i]);
+                    length_value_t info = length_and_value_of_utf8_code_point(input[i]);
                     switch (info.length) {
                         case 6:
                             if (++i < N)
                                 info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(
-                                               input[i], correct_flag);
+                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
                             [[fallthrough]];
                         case 5:
                             if (++i < N)
                                 info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(
-                                               input[i], correct_flag);
+                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
                             [[fallthrough]];
                         case 4:
                             if (++i < N)
                                 info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(
-                                               input[i], correct_flag);
+                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
                             [[fallthrough]];
                         case 3:
                             if (++i < N)
                                 info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(
-                                               input[i], correct_flag);
+                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
                             [[fallthrough]];
                         case 2:
                             if (++i < N)
                                 info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(
-                                               input[i], correct_flag);
+                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
                             [[fallthrough]];
                         case 1:
                             content[out++] = static_cast<char32_t>(info.value);
@@ -122,38 +115,32 @@ namespace webpp {
                 for (size_t i{0}; i < N; ++i) {
                     if ((i == (N - 1)) && (input[i] == 0))
                         break;
-                    length_value_t info =
-                      length_and_value_of_utf8_code_point(input[i]);
+                    length_value_t info = length_and_value_of_utf8_code_point(input[i]);
                     switch (info.length) {
                         case 6:
                             if (++i < N)
                                 info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(
-                                               input[i], correct_flag);
+                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
                             [[fallthrough]];
                         case 5:
                             if (++i < N)
                                 info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(
-                                               input[i], correct_flag);
+                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
                             [[fallthrough]];
                         case 4:
                             if (++i < N)
                                 info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(
-                                               input[i], correct_flag);
+                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
                             [[fallthrough]];
                         case 3:
                             if (++i < N)
                                 info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(
-                                               input[i], correct_flag);
+                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
                             [[fallthrough]];
                         case 2:
                             if (++i < N)
                                 info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(
-                                               input[i], correct_flag);
+                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
                             [[fallthrough]];
                         case 1:
                             content[out++] = static_cast<char32_t>(info.value);
@@ -166,15 +153,11 @@ namespace webpp {
             } else if constexpr (std::is_same_v<T, char16_t>) {
                 size_t out{0};
                 for (size_t i{0}; i < N; ++i) {
-                    length_value_t info =
-                      length_and_value_of_utf16_code_point(input[i]);
+                    length_value_t info = length_and_value_of_utf16_code_point(input[i]);
                     if (info.length == 2) {
                         if (++i < N) {
-                            if ((input[i] & 0b1111'1100'0000'0000) ==
-                                0b1101'1100'0000'0000) {
-                                content[out++] =
-                                  (info.value << 10) |
-                                  (input[i] & 0b0000'0011'1111'1111);
+                            if ((input[i] & 0b1111'1100'0000'0000) == 0b1101'1100'0000'0000) {
+                                content[out++] = (info.value << 10) | (input[i] & 0b0000'0011'1111'1111);
                             } else {
                                 correct_flag = false;
                                 break;
@@ -187,8 +170,7 @@ namespace webpp {
                     }
                 }
                 real_size = out;
-            } else if constexpr (std::is_same_v<T, wchar_t> ||
-                                 std::is_same_v<T, char32_t>) {
+            } else if constexpr (std::is_same_v<T, wchar_t> || std::is_same_v<T, char32_t>) {
                 for (size_t i{0}; i < N; ++i) {
                     content[i] = input[i];
                     if ((i == (N - 1)) && (input[i] == 0))

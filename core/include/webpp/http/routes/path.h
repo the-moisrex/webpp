@@ -48,9 +48,6 @@ namespace webpp::routes {
         segments_type          segments{};
         segments_iterator_type current_segment{};
 
-      private:
-        friend path_type;
-        context_type* ctx = nullptr;
         path_type*    pth = nullptr;
 
         bool next_segment() noexcept {
@@ -58,7 +55,6 @@ namespace webpp::routes {
             return ++current_segment != segments.end();
         }
 
-      public:
         //        template <fixed_string segment_variable_name>
         //        [[nodiscard]] constexpr auto const& segment() const noexcept {
         //            // using seg_type = ;
@@ -69,21 +65,19 @@ namespace webpp::routes {
 
         template <typename T>
         T segment(string_view_type const& segment_variable_name) const noexcept {
-            return pth->template get<T>(*ctx);
+            return pth->template get<T>(*this);
         }
     };
 
     /**
-     * This context extension will be used in the "path" so the user will be
-     * use something like this:
-     *   ctx.segments["page_number"]
+     * This context extension will be used in the "path"
      */
     template <typename PathType, typename UriSegmentsType>
     struct path_context_extension {
 
         template <Traits TraitsType, typename ContextType>
-        struct path_extension {
-            path_field<ContextType, PathType, UriSegmentsType> path;
+        struct path_extension : public ContextType {
+            path_field<ContextType, PathType, UriSegmentsType> path{};
         };
 
         template <Traits TraitsType, typename ContextType>
@@ -138,7 +132,7 @@ namespace webpp::routes {
         template <typename NewNextSegmentType>
         constexpr auto operator/(NewNextSegmentType&& next_segment) const noexcept {
             if constexpr (!has_segment) {
-                return path<NewNextSegmentType, void>{};
+                return path<NewNextSegmentType, void>{stl::forward<NewNextSegmentType>(next_segment)};
             } else if constexpr (!has_next_segment) {
                 return path<segment_type, NewNextSegmentType>{*this};
             } else {
@@ -280,11 +274,11 @@ namespace webpp::routes {
 
                 // context switching
                 auto new_ctx = ctx.template clone<path_context_extension<path_type, uri_segments_type>>();
+                static_assert(requires {{new_ctx.path};}, "For some reason, we're not able to perform context switching.");
 
                 new_ctx.path.segments        = stl::move(uri_segments);
                 new_ctx.path.current_segment = new_ctx.path.segments.begin();
                 new_ctx.path.pth             = this;
-                new_ctx.path.ctx             = &ctx;
 
                 // nothing to do if the segment counts don't match
                 if (new_ctx.path.current_segment == new_ctx.path.current_segment.end())
