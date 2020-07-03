@@ -150,8 +150,6 @@ namespace webpp {
         using str_t       = typename traits_type::string_type;
         using str_view_t  = typename traits_type::string_view_type;
 
-        using EList::EList;
-
         // todo: provide constructor
 
         str_t name;

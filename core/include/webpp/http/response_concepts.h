@@ -19,7 +19,7 @@ namespace webpp {
     template <typename ResType>
     concept Response = requires (ResType res) {
         typename ResType::body_type;
-        typename ResType::header_type;
+        typename ResType::headers_type;
         typename ResType::traits_type;
         {res.body};
         {res.header};

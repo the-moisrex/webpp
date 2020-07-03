@@ -26,8 +26,8 @@ struct fake_app {
     }
 };
 
-using context_type = simple_context<basic_request<std_traits, cgi<std_traits, fake_app>>>;
 using request_type = basic_request<std_traits, cgi<std_traits, fake_app>>;
+using context_type = simple_context<request_type>;
 
 TEST(Routes, Path) {
     using namespace webpp::routes;
