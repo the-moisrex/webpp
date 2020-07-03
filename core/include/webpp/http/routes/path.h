@@ -48,7 +48,7 @@ namespace webpp::routes {
         segments_type          segments{};
         segments_iterator_type current_segment{};
 
-        path_type*    pth = nullptr;
+        path_type* pth = nullptr;
 
         bool next_segment() noexcept {
             // todo: should this method be private?
@@ -77,6 +77,12 @@ namespace webpp::routes {
 
         template <Traits TraitsType, typename ContextType>
         struct path_extension : public ContextType {
+
+            template <typename... Args>
+            constexpr path_extension(Args&&... args) noexcept : ContextType{stl::forward<Args>(args)...} {
+            }
+
+
             path_field<ContextType, PathType, UriSegmentsType> path{};
         };
 
@@ -274,7 +280,9 @@ namespace webpp::routes {
 
                 // context switching
                 auto new_ctx = ctx.template clone<path_context_extension<path_type, uri_segments_type>>();
-                static_assert(requires {{new_ctx.path};}, "For some reason, we're not able to perform context switching.");
+                static_assert(
+                  requires { {new_ctx.path}; },
+                  "For some reason, we're not able to perform context switching.");
 
                 new_ctx.path.segments        = stl::move(uri_segments);
                 new_ctx.path.current_segment = new_ctx.path.segments.begin();

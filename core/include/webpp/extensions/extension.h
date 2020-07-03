@@ -67,7 +67,9 @@ namespace webpp {
         };
 
         template <template <typename...> typename PackType, template <typename> typename IF, typename... EI>
-        struct filter_epack {};
+        struct filter_epack {
+            using type = typename filter<PackType, IF, EI...>::type;
+        };
 
         template <template <typename...> typename PackType, template <typename> typename IF, typename... EI>
         struct filter_epack<PackType, IF, extension_pack<EI...>> {
@@ -137,16 +139,16 @@ namespace webpp {
             using type = PackType<Extractor<EPack>...>;
         };
 
-        template <typename... Ex>
-        struct inheritable_extension_pack {
-            // this should not happen
-        };
-        template <typename... Ex>
-        struct inheritable_extension_pack<extension_pack<Ex...>> : public virtual Ex... {
-            template <typename... X>
-            inheritable_extension_pack(X&&... x) : Ex{stl::forward<X>(x)...}... {
-            }
-        };
+        //        template <typename... Ex>
+        //        struct inheritable_extension_pack {
+        //            // this should not happen
+        //        };
+        //        template <typename... Ex>
+        //        struct inheritable_extension_pack<extension_pack<Ex...>> : public virtual Ex... {
+        //            template <typename... X>
+        //            inheritable_extension_pack(X&&... x) : Ex{stl::forward<X>(x)...}... {
+        //            }
+        //        };
 
         using mother_extensions = typename filter<extension_pack, mother_type, E...>::type;
         using child_extensions  = typename filter<extension_pack, child_type, E...>::type;
@@ -158,19 +160,14 @@ namespace webpp {
                                 EPack>::type>::type;
 
 
-        template <typename E1, typename... Ex>
-        struct extend_to_all {
-            // this should not happen
-        };
-
-        template <typename E1, typename... Ex>
-        struct extend_to_all<E1, extension_pack<Ex...>> : public virtual E1, Ex... {
+        struct inherited : public virtual E... {
             template <typename... Args>
-            extend_to_all(Args&&... args)
-              : E1{stl::forward<Args>(args)...},
-                Ex{stl::forward<Args>(args)...}... {
+            constexpr inherited(Args&&... args) noexcept : E{stl::forward<Args>(args)...}... {
             }
         };
+
+        template <Traits TraitsType, typename Mother>
+        struct joined_extensions : public virtual E::type<TraitsType, Mother>... {};
 
         using this_epack = extension_pack<E...>;
 
@@ -183,19 +180,19 @@ namespace webpp {
          * Apply extensions into one type
          * todo: first filter based on extensie, then filter based on mother or child
          */
-        template <typename TraitsType, typename ExtensieDescriptor, typename... ExtraArgs>
+        template <Traits TraitsType, typename ExtensieDescriptor, typename... ExtraArgs>
         using extensie_type = typename ExtensieDescriptor::template final_extensie_type<
           this_epack, TraitsType,
-          extend_to_all<
 
+
+          // child extensions + the mid-level extensie + mother extensions
+          typename merged_extensions<ExtensieDescriptor, child_extensions>::template joined_extensions<
+            TraitsType,
             typename ExtensieDescriptor::template mid_level_extensie_type<
               this_epack, TraitsType,
-              inheritable_extension_pack<merged_extensions<ExtensieDescriptor, mother_extensions>>,
-              ExtraArgs...>,
+              typename merged_extensions<ExtensieDescriptor, mother_extensions>::inherited, ExtraArgs...>>
 
-            merged_extensions<ExtensieDescriptor, child_extensions>
-
-            >,
+          ,
           ExtraArgs...>;
 
 
@@ -215,10 +212,10 @@ namespace webpp {
         };
 
         template <typename ExtensionType>
-        using related_extension_pack_type = typename ExtensionType::something;
+        struct related_extension_pack_type {};
 
         template <typename EPackType, typename TraitsType, typename EList>
-        using mid_level_extensie_type = void;
+        struct mid_level_extensie_type : public EList {};
 
         // empty final extensie
         template <typename EPackType, typename TraitsType, typename EList>
