@@ -76,21 +76,28 @@ namespace webpp {
             using type = typename filter<PackType, IF, EI...>::type;
         };
 
-        //        template <typename First = void, typename... U>
-        //        struct unique_types {
-        //            using type = std::conditional_t<
-        //              ((!std::is_same_v<First, U>)&&...),
-        //              typename prepend<First, typename extension_pack<
-        //                                        U...>::unique_types<E...>::type>::type,
-        //              typename
-        //              extension_pack<U...>::unique_types<E...>::type>;
-        //        };
-        //
-        //        template <typename... U>
-        //        struct unique_types<void, U...> {
-        //            using type = extension_pack<U...>;
-        //        };
+        template <typename First = void, typename... U>
+        struct unique_types {
+            using type = stl::conditional_t<
+              ((!std::is_same_v<First, U>)&&...),
+              typename prepend<extension_pack, First, typename unique_types<U...>::type>::type,
+              typename unique_types<U...>::type>;
+        };
 
+        template <typename... U>
+        struct unique_types<void, U...> {
+            using type = extension_pack<U...>;
+        };
+
+        template <typename... U>
+        struct unique_types<extension_pack<U...>> {
+            using type = typename unique_types<U...>::type;
+        };
+
+        /**
+         * Get the unique types
+         */
+        //        using unique = typename unique_types<E...>::type;
 
         template <typename T>
         struct mother_type {
@@ -153,11 +160,40 @@ namespace webpp {
         using mother_extensions = typename filter<extension_pack, mother_type, E...>::type;
         using child_extensions  = typename filter<extension_pack, child_type, E...>::type;
 
-        template <typename ExtensieDescriptor, typename EPack>
-        using merged_extensions = typename epack_miner<
+        using this_epack = extension_pack<E...>;
+
+        template <typename... EPacks>
+        struct flatten_epacks {
+            using type = extension_pack<EPacks...>;
+        };
+
+        template <Extension... Ex>
+        struct flatten_epacks<extension_pack<Ex...>> {
+            using type = extension_pack<Ex...>;
+        };
+
+        template <Extension... Ex1, Extension... Ex2>
+        struct flatten_epacks<extension_pack<Ex1...>, extension_pack<Ex2...>> {
+            using type = extension_pack<Ex1..., Ex2...>;
+        };
+
+        template <Extension... Ex, typename... EPacks>
+        struct flatten_epacks<extension_pack<Ex...>, EPacks...> {
+            using type = typename flatten_epacks<Ex..., typename flatten_epacks<EPacks...>::type>::type;
+        };
+
+        template <Extension... Ex1, typename... EPacks>
+        struct flatten_epacks<extension_pack<extension_pack<Ex1...>, EPacks...>> {
+            using type =
+              typename flatten_epacks<extension_pack<Ex1...>, typename flatten_epacks<EPacks...>::type>::type;
+        };
+
+
+        template <typename ExtensieDescriptor>
+        using merge_extensions = typename unique_types<typename flatten_epacks<typename epack_miner<
           extension_pack, ExtensieDescriptor::template related_extension_pack_type,
           typename filter_epack<extension_pack, ExtensieDescriptor::template has_related_extension_pack,
-                                EPack>::type>::type;
+                                this_epack>::type>::type>::type>::type;
 
 
         struct inherited : public virtual E... {
@@ -169,12 +205,7 @@ namespace webpp {
         template <Traits TraitsType, typename Mother>
         struct joined_extensions : public virtual E::type<TraitsType, Mother>... {};
 
-        using this_epack = extension_pack<E...>;
 
-        /**
-         * Get the unique types
-         */
-        //        using unique = typename unique_types<E...>::type;
 
         /**
          * Apply extensions into one type
@@ -184,15 +215,13 @@ namespace webpp {
         using extensie_type = typename ExtensieDescriptor::template final_extensie_type<
           this_epack, TraitsType,
 
-
           // child extensions + the mid-level extensie + mother extensions
-          typename merged_extensions<ExtensieDescriptor, child_extensions>::template joined_extensions<
+          typename merge_extensions<ExtensieDescriptor>::child_extensions::template joined_extensions<
             TraitsType,
             typename ExtensieDescriptor::template mid_level_extensie_type<
               this_epack, TraitsType,
-              typename merged_extensions<ExtensieDescriptor, mother_extensions>::inherited, ExtraArgs...>>
+              typename merge_extensions<ExtensieDescriptor>::mother_extensions::inherited, ExtraArgs...>>,
 
-          ,
           ExtraArgs...>;
 
 
