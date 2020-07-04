@@ -196,14 +196,27 @@ namespace webpp {
                                 this_epack>::type>::type>::type>::type;
 
 
-        struct inherited : public virtual E... {
+        template <Traits TraitsType>
+        struct mother_inherited : public virtual E::template type<TraitsType>... {
+            constexpr mother_inherited() noexcept : E::template type<TraitsType>{}... {
+            }
+
             template <typename... Args>
-            constexpr inherited(Args&&... args) noexcept : E{stl::forward<Args>(args)...}... {
+            constexpr mother_inherited(Args&&... args) noexcept
+              : E::template type<TraitsType>{stl::forward<Args>(args)...}... {
             }
         };
 
         template <Traits TraitsType, typename Mother>
-        struct joined_extensions : public virtual E::type<TraitsType, Mother>... {};
+        struct children_inherited : public virtual E::template type<TraitsType, Mother>... {
+            constexpr children_inherited() noexcept : E::template type<TraitsType, Mother>{}... {
+            }
+
+            template <typename... Args>
+            constexpr children_inherited(Args&&... args) noexcept
+              : E::template type<TraitsType, Mother>{stl::forward<Args>(args)...}... {
+            }
+        };
 
 
 
@@ -216,11 +229,12 @@ namespace webpp {
           this_epack, TraitsType,
 
           // child extensions + the mid-level extensie + mother extensions
-          typename merge_extensions<ExtensieDescriptor>::child_extensions::template joined_extensions<
-            TraitsType,
-            typename ExtensieDescriptor::template mid_level_extensie_type<
-              this_epack, TraitsType,
-              typename merge_extensions<ExtensieDescriptor>::mother_extensions::inherited, ExtraArgs...>>,
+          typename merge_extensions<ExtensieDescriptor>::child_extensions::template children_inherited<
+            TraitsType, typename ExtensieDescriptor::template mid_level_extensie_type<
+                          this_epack, TraitsType,
+                          typename merge_extensions<
+                            ExtensieDescriptor>::mother_extensions::template mother_inherited<TraitsType>,
+                          ExtraArgs...>>,
 
           ExtraArgs...>;
 
