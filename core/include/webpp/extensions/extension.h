@@ -208,16 +208,17 @@ namespace webpp {
         };
 
         template <Traits TraitsType, typename Mother>
-        struct children_inherited : public virtual E::template type<TraitsType, Mother>... {
-            constexpr children_inherited() noexcept : E::template type<TraitsType, Mother>{}... {
+        struct children_inherited : public virtual Mother,
+                                    public virtual E::template type<TraitsType, Mother>... {
+            constexpr children_inherited() noexcept : Mother{}, E::template type<TraitsType, Mother>{}... {
             }
 
             template <typename... Args>
             constexpr children_inherited(Args&&... args) noexcept
-              : E::template type<TraitsType, Mother>{stl::forward<Args>(args)...}... {
+              : Mother{stl::forward<Args>(args)...},
+                E::template type<TraitsType, Mother>{stl::forward<Args>(args)...}... {
             }
         };
-
 
 
         /**
