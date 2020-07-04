@@ -39,6 +39,32 @@ struct three {
     };
 };
 
+struct cone {
+    static constexpr bool item     = true;
+    static constexpr bool item_one = true;
+    template <typename tt, typename Daddy>
+    struct type : public virtual Daddy {
+        static constexpr bool cvalue_one = true;
+    };
+};
+struct ctwo {
+    static constexpr bool item     = true;
+    static constexpr bool item_two = true;
+    template <typename tt, typename Daddy>
+    struct type : public virtual Daddy {
+        static constexpr bool cvalue_two = true;
+    };
+};
+struct cthree {
+    static constexpr bool item       = true;
+    static constexpr bool item_three = true;
+
+    template <typename tt, typename Daddy>
+    struct type : public virtual Daddy {
+        static constexpr bool cvalue_three = true;
+    };
+};
+
 template <typename T>
 struct has_item {
     static constexpr bool value = T::item;
@@ -72,6 +98,7 @@ struct fake_descriptor {
 
 TEST(ExtensionsTests, ExtensionPackStuff) {
     using pack   = extension_pack<one, two, three>;
+    using cpack   = extension_pack<cone, ctwo, cthree>;
     using expack = extension_pack<exes>;
     EXPECT_TRUE(pack::template is_all<has_item>::value);
 
@@ -87,6 +114,22 @@ TEST(ExtensionsTests, ExtensionPackStuff) {
     static_assert(
       stl::same_as<typename extension_pack<exes, exes, exes>::merge_extensions<fake_descriptor>, pack>,
       "epack is failing at making the extensions unique");
+
+    typename pack::template mother_inherited<std_traits> ipack;
+
+    EXPECT_TRUE(ipack.value_one);
+    EXPECT_TRUE(ipack.value_two);
+    EXPECT_TRUE(ipack.value_three);
+
+    struct daddy {
+        bool daddy_value = true;
+    };
+    typename cpack::template children_inherited<std_traits, daddy> icpack;
+
+    EXPECT_TRUE(icpack.cvalue_one);
+    EXPECT_TRUE(icpack.cvalue_two);
+    EXPECT_TRUE(icpack.cvalue_three);
+    EXPECT_TRUE(icpack.daddy_value);
 
 
     using iexpack = typename expack::template merge_extensions<
