@@ -15,17 +15,34 @@ TEST(ExtensionsTests, ExtensionConcepts) {
 
 struct one {
     static constexpr bool item = true;
+    template <typename tt>
+    struct type {
+        bool one = true;
+    };
 };
 struct two {
     static constexpr bool item = true;
+    template <typename tt>
+    struct type {
+        bool two = true;
+    };
 };
 struct three {
     static constexpr bool item = true;
+
+    template <typename tt>
+    struct type {
+        bool three = true;
+    };
 };
 
 template <typename T>
 struct has_item {
     static constexpr bool value = T::item;
+};
+
+struct exes {
+    using fake_extensions = extension_pack<one, two, three>;
 };
 
 struct fake_descriptor {
@@ -54,7 +71,20 @@ TEST(ExtensionsTests, ExtensionPackStuff) {
     using pack = extension_pack<one, two, three>;
     EXPECT_TRUE(pack::template is_all<has_item>::value);
 
-    using etype = typename pack::template extensie_type<std_traits, fake_descriptor>;
+    static_assert(stl::same_as<typename pack::mother_extensions, pack>,
+                  "Extension system is not able to identify the mother extensions");
+
+    static_assert(stl::same_as<typename pack::child_extensions, empty_extension_pack>,
+                  "Extension system is not able to identify the child extensions");
+
+    static_assert(stl::same_as<typename extension_pack<exes>::merge_extensions<fake_descriptor>, pack>,
+                  "Cannot merge the extensions");
+
+    static_assert(
+      stl::same_as<typename extension_pack<exes, exes, exes>::merge_extensions<fake_descriptor>, pack>,
+      "epack is failing at making the extensions unique");
+
+    using etype = typename extension_pack<exes>::template extensie_type<std_traits, fake_descriptor>;
     etype e{};
     EXPECT_TRUE(e.mid_level);
     EXPECT_TRUE(e.final_level);

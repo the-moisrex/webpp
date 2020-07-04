@@ -85,9 +85,9 @@ namespace webpp {
 
 
     template <Traits TraitsType, typename DescriptorType, typename OriginalExtensionList, typename EList>
-    struct final_response final : public stl::remove_cvref_t<EList> {
+    struct final_response final : public EList {
         using traits_type                  = TraitsType;
-        using elist_type                   = stl::remove_cvref_t<EList>;
+        using elist_type                   = EList;
         using response_descriptor_type     = DescriptorType;
         using original_extension_pack_type = OriginalExtensionList;
 
