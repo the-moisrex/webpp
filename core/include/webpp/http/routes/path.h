@@ -76,7 +76,7 @@ namespace webpp::routes {
     struct path_context_extension {
 
         template <Traits TraitsType, typename ContextType>
-        struct path_extension : public ContextType {
+        struct path_extension : public virtual ContextType {
 
             template <typename... Args>
             constexpr path_extension(Args&&... args) noexcept : ContextType{stl::forward<Args>(args)...} {
