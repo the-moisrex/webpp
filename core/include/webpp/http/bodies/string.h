@@ -3,8 +3,8 @@
 #ifndef WEBPP_HTTP_BODIES_STRING_H
 #define WEBPP_HTTP_BODIES_STRING_H
 
-#include "../../traits/traits_concepts.h"
 #include "../../extensions/extension.h"
+#include "../../traits/traits_concepts.h"
 
 #include <type_traits>
 #include <utility>
@@ -21,6 +21,8 @@ namespace webpp {
             using traits_type      = TraitsType;
             using string_type      = typename traits_type::string_type;
             using string_view_type = typename traits_type::string_view_type;
+            using allocator_type   = typename string_type::allocator_type;
+            using alloc_type       = allocator_type const&;
 
           private:
             string_type content = "";

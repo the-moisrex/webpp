@@ -106,15 +106,15 @@ namespace webpp {
          * If the specified string type cannot be changed, the string_view will
          * be used, otherwise, string itself.
          */
-        using string_type      = typename TraitsType::string_type;
-        using string_view_type = typename TraitsType::string_view_type;
-        using storing_string_type =
-          stl::conditional_t<Mutable, string_type, string_view_type>;
+        using string_type         = typename TraitsType::string_type;
+        using string_view_type    = typename TraitsType::string_view_type;
+        using storing_string_type = stl::conditional_t<Mutable, string_type, string_view_type>;
 
         enum class same_site_value { NONE, LAX, STRICT };
 
-        using name_t  = storing_string_type;
-        using value_t = storing_string_type;
+        using name_t         = storing_string_type;
+        using value_t        = storing_string_type;
+        using allocator_type = typename storing_string_type::allocator_type;
 
       protected:
         name_t  _name;
@@ -122,24 +122,20 @@ namespace webpp {
         bool    _valid = false;
 
         constexpr static auto VALID_COOKIE_NAME = charset<char_type>(
-          ALPHA_DIGIT<char_type>,
-          charset_t<char_type, 16>{'!', '#', '$', '%', '&', '\'', '*', '+', '-',
-                                   '.', '^', '_', '`', '|', '~'});
+          ALPHA_DIGIT<char_type>, charset_t<char_type, 16>{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.',
+                                                           '^', '_', '`', '|', '~'});
 
         constexpr static auto VALID_COOKIE_VALUE = charset<char_type>(
           ALPHA_DIGIT<char_type>,
-          charset_t<char_type, 28>{'!', '#', '$', '%', '&', '\'', '(',
-                                   ')', '*', '+', '-', '.', '/',  ':',
-                                   '<', '=', '>', '?', '@', '[',  ']',
-                                   '^', '_', '`', '{', '|', '}',  '~'});
+          charset_t<char_type, 28>{'!', '#', '$', '%', '&', '\'', '(', ')', '*', '+', '-', '.', '/', ':',
+                                   '<', '=', '>', '?', '@', '[',  ']', '^', '_', '`', '{', '|', '}', '~'});
 
-        void parse_SE_name(string_view_type& str) noexcept {
+        void parse_SE_name(string_view_type& str, allocator_type const& alloc) noexcept {
             ltrim<traits_type>(str);
-            if (auto equal_pos =
-                  str.find_first_not_of(VALID_COOKIE_NAME.data());
+            if (auto equal_pos = str.find_first_not_of(VALID_COOKIE_NAME.data());
                 equal_pos != string_view_type::npos) {
                 // setting the name we found it
-                _name = str.substr(0, equal_pos);
+                _name = name_t{str.substr(0, equal_pos), alloc};
 
                 // prepare the string for the next value
                 str.remove_prefix(equal_pos);
@@ -150,8 +146,8 @@ namespace webpp {
             }
         }
 
-        void parse_SE_value(string_view_type& str) noexcept {
-            parse_SE_name(str);
+        void parse_SE_value(string_view_type& str, allocator_type const& alloc) noexcept {
+            parse_SE_name(str, alloc);
             if (!_valid)
                 return; // do not continue if there's no name
             ltrim<traits_type>(str);
@@ -159,11 +155,10 @@ namespace webpp {
                 str.remove_prefix(1);
             ltrim<traits_type>(str);
             if (starts_with<traits_type>(str, '"')) {
-                if (auto d_quote_end =
-                      str.find_first_not_of(VALID_COOKIE_VALUE.data(), 1);
+                if (auto d_quote_end = str.find_first_not_of(VALID_COOKIE_VALUE.data(), 1);
                     d_quote_end != string_view_type::npos) {
                     if (str[d_quote_end] == '"') {
-                        _value = str.substr(1, d_quote_end - 1);
+                        _value = value_t{str.substr(1, d_quote_end - 1), alloc};
                         str.remove_prefix(d_quote_end);
                     } else {
                         // You can't use non double quote chars when you used
@@ -180,13 +175,12 @@ namespace webpp {
                 }
             } else {
                 // there's no double quote in the value
-                if (auto semicolon_pos =
-                      str.find_first_not_of(VALID_COOKIE_VALUE.data());
+                if (auto semicolon_pos = str.find_first_not_of(VALID_COOKIE_VALUE.data());
                     semicolon_pos != string_view_type::npos) {
-                    _value = str.substr(0, semicolon_pos);
+                    _value = value_t{str.substr(0, semicolon_pos), alloc};
                     str.remove_prefix(semicolon_pos);
                 } else {
-                    _value = str;
+                    _value = value_t{str, alloc};
                     str.remove_prefix(str.size() - 1);
                 }
             }
@@ -201,18 +195,18 @@ namespace webpp {
         /**
          * empty basic_cookie
          */
-        basic_cookie_common()                                 = default;
+        basic_cookie_common(allocator_type const& alloc = allocator_type{}) : _name{alloc}, _value{alloc} {};
         basic_cookie_common(const basic_cookie_common& c)     = default;
         basic_cookie_common(basic_cookie_common&& c) noexcept = default;
 
-        basic_cookie_common(name_t __name, value_t __value) noexcept
-          : _name(trim_copy<traits_type>(__name)),
-            _value(trim_copy<traits_type>(__value)) {
+        basic_cookie_common(name_t __name, value_t __value,
+                            allocator_type const& alloc = allocator_type{}) noexcept
+          : _name(trim_copy<traits_type>(__name), alloc),
+            _value(trim_copy<traits_type>(__value), alloc) {
         }
 
         basic_cookie_common& operator=(const basic_cookie_common& c) = default;
-        basic_cookie_common&
-        operator=(basic_cookie_common&& c) noexcept = default;
+        basic_cookie_common& operator=(basic_cookie_common&& c) noexcept = default;
 
         explicit operator bool() {
             return is_valid();
@@ -249,41 +243,43 @@ namespace webpp {
     template <Traits TraitsType>
     struct request_cookie : public basic_cookie_common<TraitsType, false> {
       private:
-        using super = basic_cookie_common<TraitsType, false>;
+        using super      = basic_cookie_common<TraitsType, false>;
+        using alloc_type = typename super::allocator_type;
 
       public:
         static constexpr auto header_direction = header_type::request;
         static constexpr bool is_mutable       = false;
 
-        constexpr request_cookie() noexcept {};
+        constexpr request_cookie(alloc_type const& alloc = {}) noexcept : super{alloc} {};
 
         /**
          * Source here is in "name = value" syntax and only one single cookie
          * @param source
          */
-        explicit request_cookie(
-          typename super::string_view_type const& source) noexcept {
-            super::parse_SE_value(source); // parsing name and value
+        explicit request_cookie(typename super::string_view_type const& source,
+                                alloc_type const&                       alloc = {}) noexcept {
+            super::parse_SE_value(source, alloc); // parsing name and value
         }
     };
 
     template <Traits TraitsType>
     struct response_cookie : public basic_cookie_common<TraitsType, true> {
       private:
-        using super  = basic_cookie_common<TraitsType, true>;
-        using self_t = response_cookie<TraitsType>;
+        using super      = basic_cookie_common<TraitsType, true>;
+        using self_t     = response_cookie<TraitsType>;
+        using alloc_type = typename super::allocator_type;
 
-        void parse_SE_options(typename super::string_view_type& str) noexcept {
-            super::parse_SE_value(str);
+        void parse_SE_options(typename super::string_view_type& str, alloc_type const& alloc) noexcept {
+            super::parse_SE_value(str, alloc);
             // todo
         }
 
       public:
-        using traits_type = TraitsType;
-        using date_t      = stl::chrono::time_point<stl::chrono::system_clock>;
-        using domain_t    = typename super::storing_string_type;
-        using path_t      = typename super::storing_string_type;
-        using expires_t   = date_t;
+        using traits_type        = TraitsType;
+        using date_t             = stl::chrono::time_point<stl::chrono::system_clock>;
+        using domain_t           = typename super::storing_string_type;
+        using path_t             = typename super::storing_string_type;
+        using expires_t          = date_t;
         using optional_expires_t = stl::optional<date_t>;
         using max_age_t          = unsigned long;
         using same_site_t        = typename super::same_site_value;
@@ -293,9 +289,8 @@ namespace webpp {
         using encrypted_t        = bool;
         using comment_t          = typename super::storing_string_type;
 
-        using attrs_t =
-          stl::unordered_map<TraitsType, typename super::storing_string_type,
-                             typename super::storing_string_type>;
+        using attrs_t = stl::unordered_map<TraitsType, typename super::storing_string_type,
+                                           typename super::storing_string_type>;
 
 
       private:
@@ -317,11 +312,12 @@ namespace webpp {
         static constexpr auto header_direction = header_type::response;
         static constexpr bool is_mutable       = true;
 
-        constexpr response_cookie() noexcept {};
+        constexpr response_cookie(alloc_type const& alloc = {}) noexcept : super{alloc} {};
 
-        explicit response_cookie(typename super::name_t  name,
-                                 typename super::value_t value) noexcept
-          : super{stl::move(name), stl::move(value)} {
+
+        explicit response_cookie(typename super::name_t name, typename super::value_t value,
+                                 alloc_type const& alloc = {}) noexcept
+          : super{stl::move(name), stl::move(value), alloc} {
         }
 
         /**
@@ -329,9 +325,9 @@ namespace webpp {
          * There are not many reasons to use this constructor
          * @param source
          */
-        explicit response_cookie(
-          typename super::string_view_type source) noexcept {
-            parse_SE_options(source); // parse name, value, and options
+        explicit response_cookie(typename super::string_view_type source,
+                                 alloc_type const&                alloc = {}) noexcept {
+            parse_SE_options(source, alloc); // parse name, value, and options
         }
 
         [[nodiscard]] auto const& comment() const noexcept {
@@ -418,16 +414,12 @@ namespace webpp {
         auto& remove(bool __remove = true) noexcept {
             if (__remove) {
                 // set the expire date 10 year before now:
-                expires(
-                  stl::chrono::system_clock::now() -
-                  stl::chrono::duration<int, stl::ratio<60 * 60 * 24 * 365>>(
-                    10));
+                expires(stl::chrono::system_clock::now() -
+                        stl::chrono::duration<int, stl::ratio<60 * 60 * 24 * 365>>(10));
             } else if (is_removed()) {
                 // set the expire date 1 year from now:
-                expires(
-                  stl::chrono::system_clock::now() +
-                  stl::chrono::duration<int, stl::ratio<60 * 60 * 24 * 365>>(
-                    1));
+                expires(stl::chrono::system_clock::now() +
+                        stl::chrono::duration<int, stl::ratio<60 * 60 * 24 * 365>>(1));
             }
             // remove max-age if it exists because we're going with expires
             max_age(0);
@@ -442,8 +434,7 @@ namespace webpp {
          * @brief sets expiration time relative to now.
          */
         template <typename D, typename T>
-        inline auto&
-        expires_in(stl::chrono::duration<D, T> const& __dur) noexcept {
+        inline auto& expires_in(stl::chrono::duration<D, T> const& __dur) noexcept {
             _expires = stl::chrono::system_clock::now() + __dur;
             return *this;
         }
@@ -465,8 +456,8 @@ namespace webpp {
             // todo implement this
         }
 
-        stl::basic_ostream<typename super::char_type>& operator<<(
-          stl::basic_ostream<typename super::char_type>& out) const noexcept {
+        stl::basic_ostream<typename super::char_type>&
+        operator<<(stl::basic_ostream<typename super::char_type>& out) const noexcept {
             using namespace stl::chrono;
             if (_prefix) {
                 if (_secure)
@@ -493,8 +484,7 @@ namespace webpp {
                     char        buff[30];
                     // FIXME: check time zone and see if it's ok
                     //            setlocale(LC_ALL, "en_US.UTF-8");
-                    if (strftime(buff, sizeof buff, "%a, %d %b %Y %H:%M:%S GMT",
-                                 &expires_tm))
+                    if (strftime(buff, sizeof buff, "%a, %d %b %Y %H:%M:%S GMT", &expires_tm))
                         out << "; Expires=" << buff;
                 }
 
@@ -508,10 +498,7 @@ namespace webpp {
                     out << "; Max-Age=" << _max_age;
 
                 if (_same_site != super::same_site_value::NONE)
-                    out << "; SameSite="
-                        << (_same_site == super::same_site_value::STRICT
-                              ? "Strict"
-                              : "Lax");
+                    out << "; SameSite=" << (_same_site == super::same_site_value::STRICT ? "Strict" : "Lax");
 
                 // TODO: encode value and check the key here:
                 if (!attrs.empty())
@@ -526,12 +513,10 @@ namespace webpp {
         }
 
         bool operator==(response_cookie<TraitsType> const& c) const noexcept {
-            return super::_name == c._name && super::_value == c._value &&
-                   _prefix == c._prefix && _encrypted == c._encrypted &&
-                   _secure == c._secure && _host_only == c._host_only &&
-                   _same_site == c._same_site && _comment == c._comment &&
-                   _expires == c._expires && _path == c._path &&
-                   _domain == c._domain && attrs == c.attrs;
+            return super::_name == c._name && super::_value == c._value && _prefix == c._prefix &&
+                   _encrypted == c._encrypted && _secure == c._secure && _host_only == c._host_only &&
+                   _same_site == c._same_site && _comment == c._comment && _expires == c._expires &&
+                   _path == c._path && _domain == c._domain && attrs == c.attrs;
         }
 
         bool operator<(response_cookie<TraitsType> const& c) const noexcept {
@@ -564,10 +549,8 @@ namespace webpp {
          * @param c
          * @return true if they have the same name, domain, and path
          */
-        [[nodiscard]] bool
-        same_as(response_cookie<TraitsType> const& c) const noexcept {
-            return super::_name == c._name && _path == c._path &&
-                   c._domain == _domain;
+        [[nodiscard]] bool same_as(response_cookie<TraitsType> const& c) const noexcept {
+            return super::_name == c._name && _path == c._path && c._domain == _domain;
         }
 
         friend inline void swap(response_cookie<TraitsType>& first,
@@ -590,19 +573,15 @@ namespace webpp {
     };
 
     template <typename Traits, header_type HeaderType = header_type::response>
-    class basic_cookie
-      : public stl::conditional_t<HeaderType == header_type::response,
-                                  response_cookie<Traits>,
-                                  request_cookie<Traits>> {
-        using super =
-          stl::conditional_t<HeaderType == header_type::response,
-                             response_cookie<Traits>, request_cookie<Traits>>;
+    class basic_cookie : public stl::conditional_t<HeaderType == header_type::response,
+                                                   response_cookie<Traits>, request_cookie<Traits>> {
+        using super = stl::conditional_t<HeaderType == header_type::response, response_cookie<Traits>,
+                                         request_cookie<Traits>>;
 
       public:
         static constexpr auto header_direction = HeaderType;
 
         using super::super;
-        constexpr basic_cookie() noexcept = default;
     };
 
     // hash function of std::unordered_set<webpp::basic_cookie>
