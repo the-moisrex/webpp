@@ -142,8 +142,8 @@ namespace webpp {
         router_stats  router_features{};
         request_type* request = nullptr;
 
-        //        constexpr basic_context() noexcept : elist_type{} {
-        //        }
+        constexpr basic_context() noexcept : elist_type{} {
+        }
 
         constexpr basic_context(request_type& req) noexcept : elist_type{}, request(&req) {
         }

@@ -96,10 +96,12 @@ struct fake_descriptor {
     };
 };
 
+using pack   = extension_pack<one, two, three>;
+using cpack   = extension_pack<cone, ctwo, cthree>;
+using expack = extension_pack<exes>;
+
+
 TEST(ExtensionsTests, ExtensionPackStuff) {
-    using pack   = extension_pack<one, two, three>;
-    using cpack   = extension_pack<cone, ctwo, cthree>;
-    using expack = extension_pack<exes>;
     EXPECT_TRUE(pack::template is_all<has_item>::value);
 
     static_assert(stl::same_as<typename pack::mother_extensions, pack>,
@@ -141,4 +143,20 @@ TEST(ExtensionsTests, ExtensionPackStuff) {
     etype e{};
     EXPECT_TRUE(e.mid_level);
     EXPECT_TRUE(e.final_level);
+}
+
+struct ctor_one {
+    template <typename TraitsType>
+    struct type {
+        int a;
+        type(int a, int b) : a {a + b} {}
+    };
+};
+
+TEST(ExtensionsTests, ExtensionConstructors) {
+    using ctor_pack = extension_pack<ctor_one>;
+    using ictor_pack = typename ctor_pack::template mother_inherited<std_traits>;
+
+    ictor_pack ipack;
+    EXPECT_EQ(ipack(4, 2).a, 6);
 }
