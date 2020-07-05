@@ -14,7 +14,7 @@ namespace webpp {
     struct cookies {
 
         template <HeaderField HF>
-        struct cookie_header_field_extension : public HF {
+        struct cookie_header_field_extension : public virtual HF {
 
           private:
             using super = HF;
@@ -61,7 +61,7 @@ namespace webpp {
 
 
         template <Header H>
-        struct cookie_header_extension : public H {
+        struct cookie_header_extension : public virtual H {
             using traits_type              = typename H::traits_type;
             using string_type              = typename traits_type::string_type;
             using string_view_type = typename traits_type::string_view_type;

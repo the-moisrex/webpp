@@ -146,14 +146,37 @@ namespace webpp {
      */
     template <Traits TraitsType, typename EList = empty_extension_pack>
     struct response_header_field : public EList {
-        using traits_type = TraitsType;
-        using str_t       = typename traits_type::string_type;
-        using str_view_t  = typename traits_type::string_view_type;
+        using traits_type      = TraitsType;
+        using string_type      = typename traits_type::string_type;
+        using string_view_type = typename traits_type::string_view_type;
+        using allocator_type   = typename string_type::allocator_type;
+        using alloc_type       = allocator_type const&;
 
-        // todo: provide constructor
+        string_type name;
+        string_type value;
 
-        str_t name;
-        str_t value;
+        constexpr response_header_field(string_type&& _name, string_type&& _value)
+          : name{stl::move(_name)},
+            value{stl::move(_value)} {
+        }
+
+        constexpr response_header_field(string_view_type _name, string_view_type _value,
+                                        alloc_type alloc = allocator_type{})
+          : name{_name, alloc},
+            value{_value, alloc} {
+        }
+
+        constexpr response_header_field(string_view_type _name, string_type&& _value,
+                                        alloc_type alloc = allocator_type{})
+          : name{_name, alloc},
+            value{stl::move(_value)} {
+        }
+
+        constexpr response_header_field(string_type&& _name, string_view_type _value,
+                                        alloc_type alloc = allocator_type{})
+          : name{stl::move(_name)},
+            value{_value, alloc} {
+        }
 
 
         /**
@@ -161,11 +184,10 @@ namespace webpp {
          * It's not a good idea to compare the name directly; the header name is
          * case-insensitive.
          */
-        constexpr bool is_name(str_view_t const& str) const noexcept {
-            return to_lower_copy<str_t::value_type, str_t::traits_type,
-                                 str_t::allocator_type>(name) ==
-                   to_lower_copy<str_view_t::value_type,
-                                 str_view_t::traits_type,
+        constexpr bool is_name(string_view_type const& str) const noexcept {
+            return to_lower_copy<string_type::value_type, string_type::traits_type,
+                                 string_type::allocator_type>(name) ==
+                   to_lower_copy<string_view_type::value_type, string_view_type::traits_type,
                                  traits_type::allocator>(str);
         }
     };
@@ -181,15 +203,13 @@ namespace webpp {
      */
     template <Traits TraitsType, typename HeaderEList = empty_extension_pack,
               typename HeaderFieldType = response_header_field<TraitsType>>
-    class response_headers
-      : public stl::unordered_multiset<TraitsType, HeaderFieldType>,
-        public HeaderEList {
+    class response_headers : public stl::unordered_multiset<TraitsType, HeaderFieldType>, public HeaderEList {
 
         using super = stl::unordered_multiset<TraitsType, HeaderFieldType>;
 
       public:
         using traits_type       = TraitsType;
-        using str_t             = typename traits_type::string_type;
+        using string_type       = typename traits_type::string_type;
         using header_field_type = HeaderFieldType;
 
         using HeaderEList::HeaderEList;
@@ -206,12 +226,11 @@ namespace webpp {
             for (auto const& [attr, val] : *this) {
                 size += attr.size() + val.size() + 4;
             }
-            str_t res;
+            string_type res{super::get_allocator()};
             res.reserve(size);
             for (auto const& [attr, val] : *this) {
                 // todo: make sure value is secure and doesn't have any newlines
-                stl::format_to(stl::back_insert_iterator<str_t>(res),
-                               "{}: {}\r\n", attr, val);
+                stl::format_to(stl::back_insert_iterator<string_type>(res), "{}: {}\r\n", attr, val);
             }
             return res;
         }
@@ -227,17 +246,13 @@ namespace webpp {
         };
 
         template <typename ExtensionType>
-        using related_extension_pack_type =
-          typename ExtensionType::response_header_field_extensions;
+        using related_extension_pack_type = typename ExtensionType::response_header_field_extensions;
 
-        template <typename ExtensionListType, typename TraitsType,
-                  typename EList>
-        using mid_level_extensie_type =
-          response_header_field<TraitsType, EList>;
+        template <typename ExtensionListType, typename TraitsType, typename EList>
+        using mid_level_extensie_type = response_header_field<TraitsType, EList>;
 
         // empty final extensie
-        template <typename ExtensionListType, typename TraitsType,
-                  typename EList>
+        template <typename ExtensionListType, typename TraitsType, typename EList>
         struct final_extensie_type final : public EList {
             using EList::EList;
         };
@@ -252,19 +267,15 @@ namespace webpp {
         };
 
         template <typename ExtensionType>
-        using related_extension_pack_type =
-          typename ExtensionType::response_headers_extensions;
+        using related_extension_pack_type = typename ExtensionType::response_headers_extensions;
 
-        template <typename ExtensionListType, typename TraitsType,
-                  typename EList>
-        using mid_level_extensie_type =
-          response_headers<TraitsType, EList,
-                           typename ExtensionListType::template extensie_type<
-                             TraitsType, response_header_field_descriptor>>;
+        template <typename ExtensionListType, typename TraitsType, typename EList>
+        using mid_level_extensie_type = response_headers<
+          TraitsType, EList,
+          typename ExtensionListType::template extensie_type<TraitsType, response_header_field_descriptor>>;
 
         // empty final extensie
-        template <typename ExtensionListType, typename TraitsType,
-                  typename EList>
+        template <typename ExtensionListType, typename TraitsType, typename EList>
         struct final_extensie_type final : public EList {
             using EList::EList;
         };

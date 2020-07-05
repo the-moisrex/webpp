@@ -91,12 +91,12 @@
 namespace webpp {
 
     template <Traits TraitsType, typename EList = empty_extension_pack>
-    class response_body : public stl::remove_cvref<EList> {
+    class response_body : public EList {
       public:
         using traits_type      = TraitsType;
         using string_type      = typename traits_type::string_type;
         using string_view_type = typename traits_type::string_view_type;
-        using elist_type       = stl::remove_cvref<EList>;
+        using elist_type       = EList;
         /*
               private:
                 template <typename ExtensionType>

@@ -25,6 +25,8 @@ namespace webpp {
         }
     };
 
+    // todo: we can provide more tools for traits here so the user can get the allocators from the interface (for app)
+
 }; // namespace webpp
 
 #endif // WEBPP_HTTP_HTTP_H

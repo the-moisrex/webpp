@@ -157,6 +157,5 @@ TEST(ExtensionsTests, ExtensionConstructors) {
     using ctor_pack = extension_pack<ctor_one>;
     using ictor_pack = typename ctor_pack::template mother_inherited<std_traits>;
 
-    ictor_pack ipack;
-    EXPECT_EQ(ipack(4, 2).a, 6);
+    EXPECT_EQ((ictor_pack{4, 2}.a), 6);
 }
