@@ -4,6 +4,10 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/webpp/extensions/extension.h
 
+        ${LIB_INCLUDE_DIR}/webpp/traits/traits.h
+        ${LIB_INCLUDE_DIR}/webpp/traits/std_traits.h
+        ${LIB_INCLUDE_DIR}/webpp/traits/std_pmr_traits.h
+
         ${LIB_INCLUDE_DIR}/webpp/std/buffer.h
         ${LIB_INCLUDE_DIR}/webpp/std/executor.h
         ${LIB_INCLUDE_DIR}/webpp/std/format.h
