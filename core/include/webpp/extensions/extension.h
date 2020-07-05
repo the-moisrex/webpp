@@ -189,35 +189,42 @@ namespace webpp {
         };
 
 
-        template <typename ExtensieDescriptor>
-        using merge_extensions = typename unique_types<typename flatten_epacks<typename epack_miner<
-          extension_pack, ExtensieDescriptor::template related_extension_pack_type,
-          typename filter_epack<extension_pack, ExtensieDescriptor::template has_related_extension_pack,
-                                this_epack>::type>::type>::type>::type;
+        template <typename ExtensieDescriptor, template <typename> typename IF>
+        using merge_extensions = typename unique_types<
+          typename flatten_epacks<typename epack_miner<
+            extension_pack, ExtensieDescriptor::template related_extension_pack_type,
+
+            // filter the packs that contain the interested packs
+            typename filter_epack<extension_pack, ExtensieDescriptor::template has_related_extension_pack,
+                                  this_epack>::type
+
+            >::type>::type
+          // append the individual lonely extensions in the big epack
+          ::template appended<typename filter_epack<extension_pack, IF, this_epack>::type>>::type;
 
 
         template <Traits TraitsType>
         struct mother_inherited : public virtual E::template type<TraitsType>... {
-//            constexpr mother_inherited() noexcept : E::template type<TraitsType>{}... {
-//            }
-//
-//            template <typename... Args>
-//            constexpr mother_inherited(Args&&... args) noexcept
-//              : E::template type<TraitsType>{stl::forward<Args>(args)...}... {
-//            }
+            constexpr mother_inherited() noexcept : E::template type<TraitsType>{}... {
+            }
+
+            template <typename... Args>
+            constexpr mother_inherited(Args&&... args) noexcept
+              : E::template type<TraitsType>{stl::forward<Args>(args)...}... {
+            }
         };
 
         template <Traits TraitsType, typename Mother>
         struct children_inherited : public virtual Mother,
                                     public virtual E::template type<TraitsType, Mother>... {
-//            constexpr children_inherited() noexcept : Mother{}, E::template type<TraitsType, Mother>{}... {
-//            }
-//
-//            template <typename... Args>
-//            constexpr children_inherited(Args&&... args) noexcept
-//              : Mother{stl::forward<Args>(args)...},
-//                E::template type<TraitsType, Mother>{stl::forward<Args>(args)...}... {
-//            }
+            constexpr children_inherited() noexcept : Mother{}, E::template type<TraitsType, Mother>{}... {
+            }
+
+            template <typename... Args>
+            constexpr children_inherited(Args&&... args) noexcept
+              : Mother{stl::forward<Args>(args)...},
+                E::template type<TraitsType, Mother>{stl::forward<Args>(args)...}... {
+            }
         };
 
 
@@ -230,12 +237,13 @@ namespace webpp {
           this_epack, TraitsType,
 
           // child extensions + the mid-level extensie + mother extensions
-          typename merge_extensions<ExtensieDescriptor>::child_extensions::template children_inherited<
-            TraitsType, typename ExtensieDescriptor::template mid_level_extensie_type<
-                          this_epack, TraitsType,
-                          typename merge_extensions<
-                            ExtensieDescriptor>::mother_extensions::template mother_inherited<TraitsType>,
-                          ExtraArgs...>>,
+          typename merge_extensions<ExtensieDescriptor, child_type>::child_extensions::
+            template children_inherited<TraitsType,
+                                        typename ExtensieDescriptor::template mid_level_extensie_type<
+                                          this_epack, TraitsType,
+                                          typename merge_extensions<ExtensieDescriptor, mother_type>::
+                                            mother_extensions::template mother_inherited<TraitsType>,
+                                          ExtraArgs...>>,
 
           ExtraArgs...>;
 
