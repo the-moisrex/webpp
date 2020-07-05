@@ -27,10 +27,8 @@ namespace webpp {
              * the value
              */
             bool is_cookie() const noexcept {
-                if constexpr (header_type::response ==
-                              super::header_direction) {
-                    return super::is_name("set-cookie") ||
-                           super::is_name("set-cookie2");
+                if constexpr (header_type::response == super::header_direction) {
+                    return super::is_name("set-cookie") || super::is_name("set-cookie2");
                 } else {
                     return super::is_name("cookie");
                 }
@@ -42,8 +40,7 @@ namespace webpp {
              * actually valid before using it.
              */
             auto as_cookie() noexcept {
-                if constexpr (header_type::response ==
-                              super::header_direction) {
+                if constexpr (header_type::response == super::header_direction) {
                     if (is_cookie()) {
                         return response_cookie<traits_type>(value);
                     } else {
@@ -62,8 +59,8 @@ namespace webpp {
 
         template <Header H>
         struct cookie_header_extension : public virtual H {
-            using traits_type              = typename H::traits_type;
-            using string_type              = typename traits_type::string_type;
+            using traits_type      = typename H::traits_type;
+            using string_type      = typename traits_type::string_type;
             using string_view_type = typename traits_type::string_view_type;
 
           private:
@@ -127,8 +124,7 @@ namespace webpp {
              * Replace a single cookie
              * @param _cookie
              */
-            void replace_cookie(Cookie auto const& _cookie_to_find,
-                                Cookie auto const& cookie) noexcept {
+            void replace_cookie(Cookie auto const& _cookie_to_find, Cookie auto const& cookie) noexcept {
                 replace_cookie(find_cookie(_cookie_to_find), cookie);
             }
 
@@ -136,8 +132,7 @@ namespace webpp {
              * Replace a cookie based on its name
              * @param cookie_name
              */
-            void replace_cookie(string_view_type const& cookie_name,
-                                Cookie auto const&      cookie) noexcept {
+            void replace_cookie(string_view_type const& cookie_name, Cookie auto const& cookie) noexcept {
                 replace_cookie(find_cookie(cookie_name), cookie);
             }
 
@@ -148,8 +143,7 @@ namespace webpp {
              * that for yourself.
              * @param _cookie
              */
-            void replace_cookie(super::iterator const& it,
-                                Cookie auto const&     cookie) noexcept {
+            void replace_cookie(super::iterator const& it, Cookie auto const& cookie) noexcept {
                 if (it == super::end())
                     return;
                 super::erase(it);
@@ -161,8 +155,7 @@ namespace webpp {
              * @param cookie
              */
             void emplace(Cookie auto const& cookie) noexcept {
-                if constexpr (header_type::request ==
-                              super::header_direction()) {
+                if constexpr (header_type::request == super::header_direction()) {
                     super::emplace("Cookie", cookie.request_str());
                 } else {
                     super::emplace("Set-Cookie", cookie.response_str());
@@ -175,10 +168,9 @@ namespace webpp {
              * @return
              */
             auto find_cookie(Cookie auto const& _cookie) const noexcept {
-                return ::std::find_if(
-                  super::begin(), super::end(), [&](auto const& this_header) {
-                      return _cookie == this_header.as_cookie();
-                  });
+                return ::std::find_if(super::begin(), super::end(), [&](auto const& this_header) {
+                    return _cookie == this_header.as_cookie();
+                });
             }
 
             /**
@@ -187,19 +179,16 @@ namespace webpp {
              * @param cookie_name
              * @return
              */
-            auto
-            find_cookie(string_view_type const& cookie_name) const noexcept {
-                return ::std::find_if(
-                  super::begin(), super::end(), [&](auto const& this_header) {
-                      return this_header.as_cookie().name() == cookie_name;
-                  });
+            auto find_cookie(string_view_type const& cookie_name) const noexcept {
+                return ::std::find_if(super::begin(), super::end(), [&](auto const& this_header) {
+                    return this_header.as_cookie().name() == cookie_name;
+                });
             }
         }
     };
 
     template <HeaderField HF>
-    using header_field_extensions =
-      extension_pack<cookie_header_field_extension<HF>>;
+    using header_field_extensions = extension_pack<cookie_header_field_extension<HF>>;
 }; // namespace webpp
 
 } // namespace webpp
