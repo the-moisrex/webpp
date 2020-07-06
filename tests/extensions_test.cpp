@@ -152,7 +152,8 @@ TEST(ExtensionsTests, ExtensionPackStuff) {
 struct ctor_one {
     template <typename TraitsType>
     struct type {
-        int a;
+        int a = 0;
+        type() = default;
         type(int a, int b) : a{a + b} {
         }
     };

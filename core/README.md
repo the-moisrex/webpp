@@ -367,20 +367,18 @@ __Mother Extension__:
 
 Can only have access to _traits type_.
 ```c++
-
-template <Traits TraitsType>
-struct mommy : virtual mother_extension_pack<some_required_extension> {
-  type new_feature;
-  type2 another_feature;
-};
-
 struct mother_extension {
     
     template <Traits TraitsType>
-    using type = mommy<TraitsType>;
+    using type {
+
+        type(Allocator auto const& alloc) {}
+
+        // features ...
+    };
 };
 
-struct router_level_extension {
+struct portable_extension_packs {
     using context_extensions = extension_pack<mother_extension>;
 };
 ```
@@ -395,19 +393,18 @@ parents' fields and methods.
 
 ```c++
 template <Traits TraitsType, ResponseHeaders C>
-struct cookies : public virtual typename extension_pack<one, two, three>::template child_extensions<TraitsType, C>, public virtual C {
-  using C::C;
+struct cookies : public virtual C {
   auto get_cookies() { ... }
 };
 
 struct cookies_child_extensions {
 
-  template <Traits TraitsType, Context C>
-  using type = cookies<TraitsType, cookies<TraitsType, C>>;
+  template <Traits TraitsType, ResponseHeaders C>
+  using type = cookies<TraitsType, C>;
 };
 
 struct router_level_extensions {
-    using header_extensions = extension_pack<cookies_child_extension>;
+    using response_header_extensions = extension_pack<cookies_child_extension>;
 };
 ```
 
@@ -415,8 +412,7 @@ or the shortened version:
 
 ```c++
 template <Traits TraitsType = std_traits, ResponseHeader C = default_response_header>
-struct cookies : public C {
-    using C::C;
+struct cookies : public virtual C {
     
     template <Traits TT, Context CC>
     using type = cookies<TT, CC>;

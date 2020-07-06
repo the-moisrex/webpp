@@ -36,7 +36,7 @@ struct fake_mommy {
     };
 };
 
-TEST(Routes, Path) {
+TEST(Routes, PathTests) {
     using namespace webpp::routes;
     request_type req;
     context_type ctx{req};
