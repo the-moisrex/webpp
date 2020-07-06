@@ -202,28 +202,34 @@ namespace webpp {
           // append the individual lonely extensions in the big epack
           ::template appended<typename filter_epack<extension_pack, IF, this_epack>::type>>::type;
 
-
-        template <Traits TraitsType>
-        struct mother_inherited : public virtual E::template type<TraitsType>... {
-            constexpr mother_inherited() noexcept : E::template type<TraitsType>{}... {
+        template <typename Parent>
+        struct ctor : public virtual Parent {
+            template <typename... Args>
+            requires(std::is_constructible_v<Parent, Args...>) ctor(Args&&... args)
+              : Parent{std::forward<Args>(args)...} {
             }
 
             template <typename... Args>
+            ctor([[maybe_unused]] Args&&... args) : Parent{} {
+            }
+        };
+
+        template <Traits TraitsType>
+        struct mother_inherited : public virtual ctor<typename E::template type<TraitsType>>... {
+
+            template <typename... Args>
             constexpr mother_inherited(Args&&... args) noexcept
-              : E::template type<TraitsType>{stl::forward<Args>(args)...}... {
+              : ctor<typename E::template type<TraitsType>>{stl::forward<Args>(args)...}... {
             }
         };
 
         template <Traits TraitsType, typename Mother>
-        struct children_inherited : public virtual Mother,
-                                    public virtual E::template type<TraitsType, Mother>... {
-            constexpr children_inherited() noexcept : Mother{}, E::template type<TraitsType, Mother>{}... {
-            }
-
+        struct children_inherited : public virtual ctor<Mother>,
+                                    public virtual ctor<typename E::template type<TraitsType, Mother>>... {
             template <typename... Args>
             constexpr children_inherited(Args&&... args) noexcept
-              : Mother{stl::forward<Args>(args)...},
-                E::template type<TraitsType, Mother>{stl::forward<Args>(args)...}... {
+              : ctor<Mother>{stl::forward<Args>(args)...},
+                ctor<typename E::template type<TraitsType, Mother>>{stl::forward<Args>(args)...}... {
             }
         };
 
