@@ -202,11 +202,21 @@ namespace webpp {
           // append the individual lonely extensions in the big epack
           ::template appended<typename filter_epack<extension_pack, IF, this_epack>::type>>::type;
 
+        /**
+         * This struct is used to ignore the constructor calls to the base classes that don't have the
+         * necessary constructor.
+         * This struct requires the base classes to be default constructible.
+         * @tparam Parent
+         */
         template <typename Parent>
         struct ctor : public virtual Parent {
+
+            static_assert(!stl::is_default_constructible<Parent>,
+                          "The extension you specified is not default constructible.");
+
             template <typename... Args>
-            requires(std::is_constructible_v<Parent, Args...>) ctor(Args&&... args)
-              : Parent{std::forward<Args>(args)...} {
+            requires(stl::is_constructible_v<Parent, Args...>) ctor(Args&&... args)
+              : Parent{stl::forward<Args>(args)...} {
             }
 
             template <typename... Args>
