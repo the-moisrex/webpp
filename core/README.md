@@ -371,9 +371,7 @@ struct mother_extension {
     
     template <Traits TraitsType>
     using type {
-
-        type(Allocator auto const& alloc) {}
-
+        // has to have at least a default constructor
         // features ...
     };
 };
@@ -394,6 +392,7 @@ parents' fields and methods.
 ```c++
 template <Traits TraitsType, ResponseHeaders C>
 struct cookies : public virtual C {
+  // has to have a default constructor
   auto get_cookies() { ... }
 };
 
