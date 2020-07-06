@@ -550,7 +550,8 @@ namespace webpp {
          * @return true if they have the same name, domain, and path
          */
         [[nodiscard]] bool same_as(response_cookie<TraitsType> const& c) const noexcept {
-            return super::_name == c._name && _path == c._path && c._domain == _domain;
+            return trim_copy<traits_type>(super::_name) == trim_copy<traits_type>(c._name) &&
+                   _path == c._path && c._domain == _domain;
         }
 
         friend inline void swap(response_cookie<TraitsType>& first,

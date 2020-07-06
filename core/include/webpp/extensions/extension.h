@@ -211,16 +211,15 @@ namespace webpp {
         template <typename Parent>
         struct ctor : public virtual Parent {
 
-            static_assert(!stl::is_default_constructible<Parent>,
-                          "The extension you specified is not default constructible.");
-
             template <typename... Args>
             requires(stl::is_constructible_v<Parent, Args...>) ctor(Args&&... args)
               : Parent{stl::forward<Args>(args)...} {
             }
 
             template <typename... Args>
-            ctor([[maybe_unused]] Args&&... args) : Parent{} {
+            /*requires(stl::is_constructible_v<Parent>)*/ ctor([[maybe_unused]] Args&&... args) : Parent{} {
+                //                static_assert(!stl::is_default_constructible<Parent>,
+                //                              "The extension you specified is not default constructible.");
             }
         };
 
