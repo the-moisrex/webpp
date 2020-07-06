@@ -20,9 +20,6 @@ TEST(Strings, StartsEndsWith) {
     EXPECT_FALSE(ends_with<std_traits>("_one! ", "!"));
     EXPECT_FALSE(ends_with<std_traits>("_one! ", '!'));
 
-    EXPECT_TRUE(ends_with<std_traits>("_one! ", "_one!"));
-    EXPECT_FALSE(ends_with<std_traits>("_one! ", "__one!"));
-
     EXPECT_TRUE(starts_with<std_traits>("_one! ", "_one!"));
     EXPECT_FALSE(starts_with<std_traits>("_one! ", "__one!"));
 }
