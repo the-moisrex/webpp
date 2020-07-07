@@ -83,6 +83,7 @@
 
 #include "../../std/unordered_map.h"
 #include "../../std/unordered_set.h"
+#include "../../std/optional.h"
 #include "../../traits/std_traits.h"
 #include "../../utils/charset.h"
 #include "../../utils/strings.h"

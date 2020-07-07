@@ -177,7 +177,7 @@ namespace webpp {
             }
 
             stl::size_t slash = third_dot + 1;
-            while (_data[slash] != '/' && slash != len)
+            while (slash != len && _data[slash] != '/')
                 slash++;
 
             auto octet_4 =
