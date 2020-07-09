@@ -10,8 +10,6 @@
       * [ ] Session manager module
       * [ ] User manager module
       * [ ] Database manager module
-      
-
 
 ## Modules
 
@@ -99,12 +97,8 @@
   * [ ] Features in the browser
     * [ ] Does it have ....?
 
-
 ## Porting to other languages
 
 ### NodeJS
-(NodeJS Doc on C++ AddOns)[https://nodejs.org/dist/latest-v8.x/docs/api/addons.html]
 
-
-
-
+[NodeJS Doc on C++ AddOns](https://nodejs.org/dist/latest-v8.x/docs/api/addons.html)
