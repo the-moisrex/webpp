@@ -22,13 +22,13 @@ namespace webpp::stl {
 
     /* derived_from */
     template <class Derived, class Base>
-    concept derived_from = stl::is_base_of_v<Base, Derived>&&
-      stl::is_convertible_v<const volatile Derived*, const volatile Base*>;
+    concept derived_from =
+      stl::is_base_of_v<Base, Derived>&& stl::is_convertible_v<const volatile Derived*, const volatile Base*>;
 
     /* convertible_to */
     template <class From, class To>
-    concept convertible_to = stl::is_convertible_v<From, To>&& requires(
-      stl::add_rvalue_reference_t<From> (&f)()) {
+    concept convertible_to =
+      stl::is_convertible_v<From, To>&& requires(stl::add_rvalue_reference_t<From> (&f)()) {
         static_cast<To>(f());
     };
 
@@ -36,15 +36,17 @@ namespace webpp::stl {
     concept integral = stl::is_integral_v<T>;
 
     template <typename T>
-    concept move_constructible =
-      stl::constructible_from<T, T>&& stl::convertible_to<T, T>;
+    concept move_constructible = stl::constructible_from<T, T>&& stl::convertible_to<T, T>;
 
     template <class T>
 
-    concept copy_constructible = stl::move_constructible<
-      T>&& stl::constructible_from<T, T&>&& stl::convertible_to<T&, T>&&
-      stl::constructible_from<T, const T&>&& stl::convertible_to<const T&, T>&&
+    concept copy_constructible = stl::move_constructible<T>&& stl::constructible_from<T, T&>&&
+      stl::convertible_to<T&, T>&& stl::constructible_from<T, const T&>&& stl::convertible_to<const T&, T>&&
         stl::constructible_from<T, const T>&& stl::convertible_to<const T, T>;
+
+
+    template <class T, class... Args>
+    concept constructible_from = stl::destructible<T>&& stl::is_constructible_v<T, Args...>;
 
 } // namespace webpp::stl
 #endif
@@ -69,13 +71,10 @@ namespace webpp::istl {
     concept DefaultConstructible = stl::is_default_constructible_v<T>;
 
     template <typename X>
-    concept CharTraits = Destructible<typename X::state_type>&&
-          CopyAssignable<typename X::state_type>&&
-          CopyConstructible<typename X::state_type>&&
-          DefaultConstructible<typename X::state_type>&& requires(
-            typename X::char_type c, typename X::char_type const* p,
-            typename X::char_type* s, stl::size_t n, typename X::int_type e,
-            typename X::char_type const& ch) {
+    concept CharTraits = Destructible<typename X::state_type>&& CopyAssignable<typename X::state_type>&&
+      CopyConstructible<typename X::state_type>&& DefaultConstructible<typename X::state_type>&& requires(
+        typename X::char_type c, typename X::char_type const* p, typename X::char_type* s, stl::size_t n,
+        typename X::int_type e, typename X::char_type const& ch) {
         typename X::char_type;
         typename X::int_type;
         typename X::off_type;
@@ -172,6 +171,6 @@ namespace webpp::istl {
 
 
 
-} // namespace webpp::stl
+} // namespace webpp::istl
 
 #endif // WEBPP_STD_CONCEPTS_H
