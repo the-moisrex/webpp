@@ -212,19 +212,18 @@ namespace webpp {
         struct ctor : public virtual Parent {
 
             template <typename... Args>
-            requires(stl::is_constructible_v<Parent, Args...>) ctor(Args&&... args)
+            requires(stl::constructible_from<Parent, Args...>) ctor(Args&&... args) noexcept
               : Parent{stl::forward<Args>(args)...} {
             }
 
             template <typename... Args>
-            /*requires(stl::is_constructible_v<Parent>)*/ ctor([[maybe_unused]] Args&&... args) : Parent{} {
-                //                static_assert(!stl::is_default_constructible<Parent>,
-                //                              "The extension you specified is not default constructible.");
+            requires(!stl::constructible_from<Parent, Args...>) ctor([[maybe_unused]] Args&&... args) noexcept
+              : Parent{} {
             }
         };
 
         template <Traits TraitsType>
-        struct mother_inherited : public virtual ctor<typename E::template type<TraitsType>>... {
+        struct mother_inherited : public ctor<typename E::template type<TraitsType>>... {
 
             template <typename... Args>
             constexpr mother_inherited(Args&&... args) noexcept
@@ -232,14 +231,33 @@ namespace webpp {
             }
         };
 
+        // with 2 or more kids
+        template <Traits TraitsType, typename Mother, typename... Kids>
+        struct children_inherited {
+            struct type : public ctor<typename Kids::template type<TraitsType, Mother>>... {
+                template <typename... Args>
+                constexpr type(Args&&... args) noexcept
+                  : ctor<typename Kids::template type<TraitsType, Mother>>{stl::forward<Args>(args)...}... {
+                }
+            };
+        };
+
+        // without any kids
         template <Traits TraitsType, typename Mother>
-        struct children_inherited : public virtual ctor<Mother>,
-                                    public virtual ctor<typename E::template type<TraitsType, Mother>>... {
-            template <typename... Args>
-            constexpr children_inherited(Args&&... args) noexcept
-              : ctor<Mother>{stl::forward<Args>(args)...},
-                ctor<typename E::template type<TraitsType, Mother>>{stl::forward<Args>(args)...}... {
-            }
+        struct children_inherited<TraitsType, Mother> {
+            using type = Mother;
+        };
+
+        // with only one kid
+        template <Traits TraitsType, typename Mother, typename Kid>
+        struct children_inherited<TraitsType, Mother, Kid> {
+            using type = typename Kid::template type<TraitsType, Mother>;
+        };
+
+        // 2 or more kids, passed with an extension pack
+        template <Traits TraitsType, typename Mother, typename ...Kids>
+        struct children_inherited<TraitsType, Mother, extension_pack<Kids...>> {
+            using type = typename children_inherited<TraitsType, Mother, Kids...>::type;
         };
 
 
@@ -252,13 +270,14 @@ namespace webpp {
           this_epack, TraitsType,
 
           // child extensions + the mid-level extensie + mother extensions
-          typename merge_extensions<ExtensieDescriptor, child_type>::child_extensions::
-            template children_inherited<TraitsType,
-                                        typename ExtensieDescriptor::template mid_level_extensie_type<
-                                          this_epack, TraitsType,
-                                          typename merge_extensions<ExtensieDescriptor, mother_type>::
-                                            mother_extensions::template mother_inherited<TraitsType>,
-                                          ExtraArgs...>>,
+          typename children_inherited<
+            TraitsType,
+            typename ExtensieDescriptor::template mid_level_extensie_type<
+              this_epack, TraitsType,
+              typename merge_extensions<
+                ExtensieDescriptor, mother_type>::mother_extensions::template mother_inherited<TraitsType>,
+              ExtraArgs...>,
+            typename merge_extensions<ExtensieDescriptor, child_type>::child_extensions>::type,
 
           ExtraArgs...>;
 

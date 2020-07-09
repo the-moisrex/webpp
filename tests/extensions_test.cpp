@@ -10,7 +10,7 @@ TEST(ExtensionsTests, ExtensionConcepts) {
     EXPECT_FALSE(static_cast<bool>(Extension<int>));
 
     EXPECT_TRUE(static_cast<bool>(Extension<fake_extension>));
-    EXPECT_TRUE(static_cast<bool>(ExtensionList<::std::tuple<fake_extension, fake_extension>>));
+    EXPECT_FALSE(static_cast<bool>(ExtensionList<::std::tuple<fake_extension, fake_extension>>));
 }
 
 struct one {
@@ -43,7 +43,7 @@ struct cone {
     static constexpr bool item     = true;
     static constexpr bool item_one = true;
     template <typename tt, typename Daddy>
-    struct type : public virtual Daddy {
+    struct type : public Daddy {
         static constexpr bool cvalue_one = true;
     };
 };
@@ -51,7 +51,7 @@ struct ctwo {
     static constexpr bool item     = true;
     static constexpr bool item_two = true;
     template <typename tt, typename Daddy>
-    struct type : public virtual Daddy {
+    struct type : public Daddy {
         static constexpr bool cvalue_two = true;
     };
 };
@@ -60,7 +60,7 @@ struct cthree {
     static constexpr bool item_three = true;
 
     template <typename tt, typename Daddy>
-    struct type : public virtual Daddy {
+    struct type : public Daddy {
         static constexpr bool cvalue_three = true;
     };
 };
@@ -88,11 +88,19 @@ struct fake_descriptor {
     template <typename ExtensionListType, typename TraitsType, typename EList>
     struct mid_level_extensie_type : public EList {
         static constexpr bool mid_level = true;
+
+        template <typename... Args>
+        mid_level_extensie_type(Args&&... args) noexcept : EList{std::forward<Args>(args)...} {
+        }
     };
 
     template <typename ExtensionListType, typename TraitsType, typename EList>
     struct final_extensie_type : public EList {
         static constexpr bool final_level = true;
+
+        template <typename... Args>
+        final_extensie_type(Args&&... args) noexcept : EList{std::forward<Args>(args)...} {
+        }
     };
 };
 
@@ -129,7 +137,7 @@ TEST(ExtensionsTests, ExtensionPackStuff) {
     struct daddy {
         bool daddy_value = true;
     };
-    typename cpack::template children_inherited<std_traits, daddy> icpack;
+    typename empty_extension_pack::template children_inherited<std_traits, daddy, cpack> icpack;
 
     EXPECT_TRUE(icpack.cvalue_one);
     EXPECT_TRUE(icpack.cvalue_two);
@@ -152,16 +160,26 @@ TEST(ExtensionsTests, ExtensionPackStuff) {
 struct ctor_one {
     template <typename TraitsType>
     struct type {
-        int a = 0;
+        int a  = 1;
         type() = default;
-        type(int a, int b) : a{a + b} {
+        type(int _a, int _b) : a{_a + _b} {
         }
     };
 };
 
+
 TEST(ExtensionsTests, ExtensionConstructors) {
     using ctor_pack  = extension_pack<ctor_one>;
     using ictor_pack = typename ctor_pack::template mother_inherited<std_traits>;
+    using etype      = typename ctor_pack::template extensie_type<std_traits, fake_descriptor>;
 
-    EXPECT_EQ((ictor_pack{4, 2}.a), 6);
+    static_assert(std::is_constructible_v<typename ctor_one::template type<std_traits>, int, int>,
+                  "We cannot construct the ctor_one::type with two ints");
+
+    static_assert(std::is_constructible_v<ictor_pack, int, int>,
+                  "We cannot construct the ctor_one::type with two ints");
+
+    auto d1 = ictor_pack{4, 2};
+    EXPECT_EQ(d1.a, 6) << typeid(ictor_pack).name();
+    EXPECT_EQ((etype{4, 2}.a), 6) << typeid(etype).name();
 }
