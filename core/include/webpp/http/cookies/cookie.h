@@ -217,8 +217,7 @@ namespace webpp {
             // todo
             // The _valid may not catch all the validness conditions, so we have
             // to do other validation checks ourselves.
-            if (!_valid)
-                return false;
+            return _valid;
         }
 
         auto const& name() const noexcept {
