@@ -3,6 +3,7 @@
 
 #include "../std/map.h"
 #include "../std/vector.h"
+#include "../std/optional.h"
 #include "../traits/traits_concepts.h"
 #include "../validators/validators.h"
 #include "./casts.h"
