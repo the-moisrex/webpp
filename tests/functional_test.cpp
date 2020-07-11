@@ -1,7 +1,7 @@
 // Created by moisrex on 12/10/19.
-#include "../core/include/webpp/utils/functional.h"
+#include "../core/include/webpp/utils/functional.hpp"
 
-#include "../core/include/webpp/utils/debounce.h"
+#include "../core/include/webpp/utils/debounce.hpp"
 
 #include <array>
 #include <gtest/gtest.h>
