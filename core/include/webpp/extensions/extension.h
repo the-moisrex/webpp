@@ -234,10 +234,11 @@ namespace webpp {
         // with 2 or more kids
         template <Traits TraitsType, typename Mother, typename... Kids>
         struct children_inherited {
-            struct type : public ctor<typename Kids::template type<TraitsType, Mother>>... {
+            struct type : public ctor<typename Kids::template type<TraitsType, ctor<Mother>>>... {
                 template <typename... Args>
                 constexpr type(Args&&... args) noexcept
-                  : ctor<typename Kids::template type<TraitsType, Mother>>{stl::forward<Args>(args)...}... {
+                  : ctor<typename Kids::template type<TraitsType, ctor<Mother>>>{
+                      stl::forward<Args>(args)...}... {
                 }
             };
         };
@@ -255,7 +256,7 @@ namespace webpp {
         };
 
         // 2 or more kids, passed with an extension pack
-        template <Traits TraitsType, typename Mother, typename ...Kids>
+        template <Traits TraitsType, typename Mother, typename... Kids>
         struct children_inherited<TraitsType, Mother, extension_pack<Kids...>> {
             using type = typename children_inherited<TraitsType, Mother, Kids...>::type;
         };
