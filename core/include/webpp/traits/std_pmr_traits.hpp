@@ -3,7 +3,7 @@
 #ifndef WEBPP_STD_PMR_TRAITS_H
 #define WEBPP_STD_PMR_TRAITS_H
 
-#include "std_traits.h"
+#include "std_traits.hpp"
 
 namespace webpp {
 

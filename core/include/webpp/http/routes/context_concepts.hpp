@@ -3,11 +3,11 @@
 #ifndef WEBPP_CONTEXT_CONCEPTS_H
 #define WEBPP_CONTEXT_CONCEPTS_H
 
-#include "../../extensions/extension.h"
-#include "../../traits/traits_concepts.h"
-#include "../interfaces/basic_interface_concepts.h"
-#include "../request_concepts.h"
-#include "../response_concepts.h"
+#include "../../extensions/extension.hpp"
+#include "../../traits/traits_concepts.hpp"
+#include "../interfaces/basic_interface_concepts.hpp"
+#include "../request_concepts.hpp"
+#include "../response_concepts.hpp"
 
 #include <type_traits>
 

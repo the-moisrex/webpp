@@ -1,11 +1,11 @@
 #ifndef WEBPP_INTERFACES_COMMON_SERVER_H
 #define WEBPP_INTERFACES_COMMON_SERVER_H
 
-#include "../../std/buffer.h"
-#include "../../std/internet.h"
-#include "../../std/io_context.h"
-#include "connection.h"
-#include "constants.h"
+#include "../../std/buffer.hpp"
+#include "../../std/internet.hpp"
+#include "../../std/io_context.hpp"
+#include "connection.hpp"
+#include "constants.hpp"
 
 #include <boost/asio/thread_pool.hpp>
 #include <memory>

@@ -28,10 +28,10 @@
  *
  */
 
-#include "../traits/traits_concepts.h"
-#include "./body.h"
-#include "./header.h"
-#include "./request_concepts.h"
+#include "../traits/traits_concepts.hpp"
+#include "./body.hpp"
+#include "./header.hpp"
+#include "./request_concepts.hpp"
 
 namespace webpp {
 

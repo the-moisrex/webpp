@@ -3,7 +3,7 @@
 #ifndef WEBPP_STD_TRAITS_H
 #define WEBPP_STD_TRAITS_H
 
-#include "./traits.h"
+#include "./traits.hpp"
 
 #include <iterator>
 #include <ostream>

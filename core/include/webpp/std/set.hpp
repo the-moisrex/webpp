@@ -3,8 +3,8 @@
 #ifndef WEBPP_SET_H
 #define WEBPP_SET_H
 
-#include "../traits/std_traits.h"
-#include "./std.h"
+#include "../traits/std_traits.hpp"
+#include "./std.hpp"
 
 #include <set>
 

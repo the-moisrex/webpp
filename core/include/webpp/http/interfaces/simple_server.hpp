@@ -1,7 +1,7 @@
 #ifndef WEBPP_INTERFACE_SSERVER_H
 #define WEBPP_INTERFACE_SSERVER_H
 
-#include "basic_interface.h"
+#include "basic_interface.hpp"
 
 namespace webpp {
 

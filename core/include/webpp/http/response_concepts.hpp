@@ -3,8 +3,8 @@
 #ifndef WEBPP_RESPONSE_CONCEPTS_H
 #define WEBPP_RESPONSE_CONCEPTS_H
 
-#include "../extensions/extension.h"
-#include "../traits/std_traits.h"
+#include "../extensions/extension.hpp"
+#include "../traits/std_traits.hpp"
 
 namespace webpp {
 

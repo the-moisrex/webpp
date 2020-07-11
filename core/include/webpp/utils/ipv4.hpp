@@ -1,10 +1,10 @@
 #ifndef WEBPP_IP_H
 #define WEBPP_IP_H
 
-#include "../traits/traits_concepts.h"
-#include "../utils/strings.h"
-#include "../validators/validators.h"
-#include "casts.h"
+#include "../traits/traits_concepts.hpp"
+#include "../utils/strings.hpp"
+#include "../validators/validators.hpp"
+#include "casts.hpp"
 
 #include <array>
 

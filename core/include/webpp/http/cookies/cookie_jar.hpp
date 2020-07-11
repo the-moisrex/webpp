@@ -3,8 +3,8 @@
 #ifndef WEBPP_HTTP_COOKIE_JAR_H
 #define WEBPP_HTTP_COOKIE_JAR_H
 
-#include "../../std/vector.h"
-#include "./cookie.h"
+#include "../../std/vector.hpp"
+#include "./cookie.hpp"
 
 #include <algorithm>
 #include <functional>

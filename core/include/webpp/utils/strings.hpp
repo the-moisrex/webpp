@@ -1,11 +1,11 @@
 #ifndef WEBPP_UTILS_STRINGS_H
 #define WEBPP_UTILS_STRINGS_H
 
-#include "../common/meta.h"
-#include "../std/string.h"
-#include "../std/string_view.h"
-#include "../traits/std_traits.h"
-#include "../traits/traits_concepts.h"
+#include "../common/meta.hpp"
+#include "../std/string.hpp"
+#include "../std/string_view.hpp"
+#include "../traits/std_traits.hpp"
+#include "../traits/traits_concepts.hpp"
 
 #include <algorithm>
 #include <type_traits>

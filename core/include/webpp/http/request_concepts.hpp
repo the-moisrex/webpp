@@ -5,9 +5,9 @@
 #ifndef WEBPP_REQUEST_CONCEPTS_H
 #define WEBPP_REQUEST_CONCEPTS_H
 
-#include "../extensions/extension.h"
-#include "../traits/traits_concepts.h"
-#include "./interfaces/basic_interface_concepts.h"
+#include "../extensions/extension.hpp"
+#include "../traits/traits_concepts.hpp"
+#include "./interfaces/basic_interface_concepts.hpp"
 
 namespace webpp {
 

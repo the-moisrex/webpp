@@ -3,8 +3,8 @@
 #ifndef WEBPP_APPLICATION_H
 #define WEBPP_APPLICATION_H
 
-#include "./application_concepts.h"
-#include "./routes/context_concepts.h"
+#include "./application_concepts.hpp"
+#include "./routes/context_concepts.hpp"
 
 #include <cstdint>
 #include <type_traits>

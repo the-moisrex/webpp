@@ -3,11 +3,11 @@
 #ifndef WEBPP_ROUTES_CONTEXT_H
 #define WEBPP_ROUTES_CONTEXT_H
 
-#include "../../extensions/extension.h"
-#include "../request.h"
-#include "../response.h"
-#include "./context_concepts.h"
-#include "./extensions/map.h"
+#include "../../extensions/extension.hpp"
+#include "../request.hpp"
+#include "../response.hpp"
+#include "./context_concepts.hpp"
+#include "./extensions/map.hpp"
 
 namespace webpp {
 

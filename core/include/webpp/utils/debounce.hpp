@@ -3,7 +3,7 @@
 #ifndef WEBPP_DEBOUNCE_H
 #define WEBPP_DEBOUNCE_H
 
-#include "functional.h"
+#include "functional.hpp"
 
 namespace webpp {
     /**

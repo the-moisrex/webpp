@@ -3,8 +3,8 @@
 #ifndef WEBPP_HEADER_CONCEPTS_H
 #define WEBPP_HEADER_CONCEPTS_H
 
-#include "../extensions/extension.h"
-#include "../std/concepts.h"
+#include "../extensions/extension.hpp"
+#include "../std/concepts.hpp"
 
 namespace webpp {
 

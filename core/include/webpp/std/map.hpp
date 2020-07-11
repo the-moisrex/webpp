@@ -3,8 +3,8 @@
 #ifndef WEBPP_MAP_H
 #define WEBPP_MAP_H
 
-#include "../traits/std_traits.h"
-#include "./std.h"
+#include "../traits/std_traits.hpp"
+#include "./std.hpp"
 
 #include <map>
 

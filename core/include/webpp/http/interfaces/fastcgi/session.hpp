@@ -1,5 +1,5 @@
-#include "../../std/internet.h"
-#include "../../std/socket.h"
+#include "../../std/internet.hpp"
+#include "../../std/socket.hpp"
 
 #include <system_error>
 #include <utility>

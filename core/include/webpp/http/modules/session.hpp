@@ -28,8 +28,8 @@
  *    - [ ] In custom database (User configured database)
  */
 
-#include "session/client-adapter/cookie_adapter.h"
-#include "session/server-adapter/memory_adapter.h"
+#include "session/client-adapter/cookie_adapter.hpp"
+#include "session/server-adapter/memory_adapter.hpp"
 
 #include <memory>
 #include <string>

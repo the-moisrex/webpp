@@ -3,8 +3,8 @@
 #ifndef WEBPP_HTTP_BODIES_STRING_H
 #define WEBPP_HTTP_BODIES_STRING_H
 
-#include "../../extensions/extension.h"
-#include "../../traits/traits_concepts.h"
+#include "../../extensions/extension.hpp"
+#include "../../traits/traits_concepts.hpp"
 
 #include <type_traits>
 #include <utility>

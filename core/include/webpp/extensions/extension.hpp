@@ -3,9 +3,9 @@
 #ifndef WEBPP_EXTENSION_H
 #define WEBPP_EXTENSION_H
 
-#include "../std/std.h"
-#include "../std/tuple.h"
-#include "../traits/traits_concepts.h"
+#include "../std/std.hpp"
+#include "../std/tuple.hpp"
+#include "../traits/traits_concepts.hpp"
 
 #include <cstdint>
 #include <type_traits>

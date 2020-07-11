@@ -1,14 +1,14 @@
 #ifndef WEBPP_ROUTER_H
 #define WEBPP_ROUTER_H
 
-#include "../../extensions/extension.h"
-#include "../../std/vector.h"
-#include "../request_concepts.h"
-#include "../response_concepts.h"
-#include "./context.h"
-#include "./route_concepts.h"
-#include "./router_concepts.h"
-#include "../bodies/string.h"
+#include "../../extensions/extension.hpp"
+#include "../../std/vector.hpp"
+#include "../request_concepts.hpp"
+#include "../response_concepts.hpp"
+#include "./context.hpp"
+#include "./route_concepts.hpp"
+#include "./router_concepts.hpp"
+#include "../bodies/string.hpp"
 
 #include <functional>
 #include <map>

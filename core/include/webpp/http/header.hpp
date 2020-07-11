@@ -1,13 +1,13 @@
 #ifndef WEBPP_HTTP_HEADERS_H
 #define WEBPP_HTTP_HEADERS_H
 
-#include "../std/format.h"
-#include "../std/string.h"
-#include "../std/string_view.h"
-#include "../std/unordered_set.h"
-#include "../traits/traits_concepts.h"
-#include "./common.h"
-#include "./cookies/cookie.h"
+#include "../std/format.hpp"
+#include "../std/string.hpp"
+#include "../std/string_view.hpp"
+#include "../std/unordered_set.hpp"
+#include "../traits/traits_concepts.hpp"
+#include "./common.hpp"
+#include "./cookies/cookie.hpp"
 
 #include <cstdint>
 #include <iterator>

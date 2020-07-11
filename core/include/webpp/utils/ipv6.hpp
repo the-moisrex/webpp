@@ -1,10 +1,10 @@
 #ifndef WEBPP_IPV6_H
 #define WEBPP_IPV6_H
 
-#include "../traits/traits_concepts.h"
-#include "../utils/strings.h"
-#include "../validators/validators.h"
-#include "ipv4.h"
+#include "../traits/traits_concepts.hpp"
+#include "../utils/strings.hpp"
+#include "../validators/validators.hpp"
+#include "ipv4.hpp"
 
 #include <algorithm>
 #include <array>
