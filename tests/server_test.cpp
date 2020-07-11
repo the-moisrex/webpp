@@ -1,5 +1,5 @@
-#include "../core/include/webpp/http/http.h"
-#include "../core/include/webpp/http/routes/tpath.h"
+#include "../core/include/webpp/http/http.hpp"
+#include "../core/include/webpp/http/routes/tpath.hpp"
 
 #include <gtest/gtest.h>
 #include <string>

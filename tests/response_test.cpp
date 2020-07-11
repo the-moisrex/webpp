@@ -1,8 +1,8 @@
 // Created by moisrex on 2/4/20.
 
-#include "../core/include/webpp/http/response.h"
+#include "../core/include/webpp/http/response.hpp"
 
-#include "../core/include/webpp/http/body.h"
+#include "../core/include/webpp/http/body.hpp"
 
 #include <cstdio>
 #include <fstream>
