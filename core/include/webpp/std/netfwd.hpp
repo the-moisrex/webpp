@@ -6,7 +6,7 @@
 // currently experimental version of internet is buggy. Hopefully that will be
 // fixed later.
 
-#include "./std.h"
+#include "./std.hpp"
 
 #if __has_include(<netfwd>)
 #    define STD_NETFWD STLLIB_STANDARD

@@ -1,7 +1,7 @@
 #ifndef WEBPP_BODY_H
 #define WEBPP_BODY_H
 
-#include "../extensions/extension.h"
+#include "../extensions/extension.hpp"
 
 #include <memory>
 #include <string>

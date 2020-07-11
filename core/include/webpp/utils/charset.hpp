@@ -1,8 +1,8 @@
 #ifndef CHARSET_H
 #define CHARSET_H
 
-#include "../std/concepts.h"
-#include "../std/string_view.h"
+#include "../std/concepts.hpp"
+#include "../std/string_view.hpp"
 
 #include <algorithm>
 #include <array>

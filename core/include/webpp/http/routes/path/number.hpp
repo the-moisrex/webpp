@@ -5,10 +5,10 @@
 #ifndef WEBPP_NUMBER_H
 #define WEBPP_NUMBER_H
 
-#include "../../../std/optional.h"
-#include "../../../std/string_view.h"
-#include "../../../validators/validators.h"
-#include "../path.h"
+#include "../../../std/optional.hpp"
+#include "../../../std/string_view.hpp"
+#include "../../../validators/validators.hpp"
+#include "../path.hpp"
 
 #include <type_traits>
 

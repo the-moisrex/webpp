@@ -1,10 +1,10 @@
 #ifndef WEBPP_VALIDATION_H
 #define WEBPP_VALIDATION_H
 
-#include "../std/string_view.h"
-#include "../utils/casts.h"
-#include "../utils/charset.h"
-#include "../utils/strings.h"
+#include "../std/string_view.hpp"
+#include "../utils/casts.hpp"
+#include "../utils/charset.hpp"
+#include "../utils/strings.hpp"
 
 #include <algorithm>
 #include <regex>

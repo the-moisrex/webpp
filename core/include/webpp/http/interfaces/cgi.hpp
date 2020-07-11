@@ -1,14 +1,14 @@
 #ifndef WEBPP_CGI_H
 #define WEBPP_CGI_H
 
-#include "../../std/string_view.h"
-#include "../../traits/std_traits.h"
-#include "../../utils/casts.h"
-#include "../../utils/strings.h"
-#include "../application_concepts.h"
-#include "../request.h"
-#include "../response.h"
-#include "../routes/router.h"
+#include "../../std/string_view.hpp"
+#include "../../traits/std_traits.hpp"
+#include "../../utils/casts.hpp"
+#include "../../utils/strings.hpp"
+#include "../application_concepts.hpp"
+#include "../request.hpp"
+#include "../response.hpp"
+#include "../routes/router.hpp"
 
 #include <cctype>
 #include <cstdlib>

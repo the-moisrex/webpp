@@ -3,8 +3,8 @@
 #ifndef WEBPP_ROUTES_ROUTE_H
 #define WEBPP_ROUTES_ROUTE_H
 
-#include "../../utils/functional.h"
-#include "./route_concepts.h"
+#include "../../utils/functional.hpp"
+#include "./route_concepts.hpp"
 
 #include <type_traits>
 #include <utility>

@@ -3,8 +3,8 @@
 #ifndef WEBPP_STRING_VIEW_H
 #define WEBPP_STRING_VIEW_H
 
-#include "../traits/traits_concepts.h"
-#include "./std.h"
+#include "../traits/traits_concepts.hpp"
+#include "./std.hpp"
 
 #if __has_include(<string_view>)
 #    define STD_STRING_VIEW STLLIB_STANDARD

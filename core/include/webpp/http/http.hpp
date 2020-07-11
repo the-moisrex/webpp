@@ -1,10 +1,10 @@
 #ifndef WEBPP_HTTP_HTTP_H
 #define WEBPP_HTTP_HTTP_H
 
-#include "../traits/traits_concepts.h"
-#include "./application_concepts.h"
-#include "./interfaces/basic_interface_concepts.h"
-#include "./routes/router.h"
+#include "../traits/traits_concepts.hpp"
+#include "./application_concepts.hpp"
+#include "./interfaces/basic_interface_concepts.hpp"
+#include "./routes/router.hpp"
 
 namespace webpp {
 

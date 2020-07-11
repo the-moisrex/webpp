@@ -3,8 +3,8 @@
 #ifndef WEBPP_VECTOR_H
 #define WEBPP_VECTOR_H
 
-#include "../traits/traits_concepts.h"
-#include "./std.h"
+#include "../traits/traits_concepts.hpp"
+#include "./std.hpp"
 
 #include <vector>
 

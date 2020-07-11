@@ -3,8 +3,8 @@
 #ifndef WEBPP_ROUTER_CONCEPTS_H
 #define WEBPP_ROUTER_CONCEPTS_H
 
-#include "../../extensions/extension.h"
-#include "../../std/tuple.h"
+#include "../../extensions/extension.hpp"
+#include "../../std/tuple.hpp"
 
 #include <type_traits>
 

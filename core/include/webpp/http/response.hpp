@@ -1,10 +1,10 @@
 #ifndef WEBPP_HTTP_RESPONSE_H
 #define WEBPP_HTTP_RESPONSE_H
 
-#include "../traits/traits_concepts.h"
-#include "./response_concepts.h"
-#include "body.h"
-#include "header.h"
+#include "../traits/traits_concepts.hpp"
+#include "./response_concepts.hpp"
+#include "body.hpp"
+#include "header.hpp"
 
 #include <filesystem>
 #include <fstream>

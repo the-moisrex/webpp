@@ -1,16 +1,16 @@
 #ifndef WEBPP_UTILS_URI_H
 #define WEBPP_UTILS_URI_H
 
-#include "../std/map.h"
-#include "../std/vector.h"
-#include "../std/optional.h"
-#include "../traits/traits_concepts.h"
-#include "../validators/validators.h"
-#include "./casts.h"
-#include "./charset.h"
-#include "./ipv4.h"
-#include "./ipv6.h"
-#include "./strings.h"
+#include "../std/map.hpp"
+#include "../std/vector.hpp"
+#include "../std/optional.hpp"
+#include "../traits/traits_concepts.hpp"
+#include "../validators/validators.hpp"
+#include "./casts.hpp"
+#include "./charset.hpp"
+#include "./ipv4.hpp"
+#include "./ipv6.hpp"
+#include "./strings.hpp"
 
 #include <functional>
 #include <memory>

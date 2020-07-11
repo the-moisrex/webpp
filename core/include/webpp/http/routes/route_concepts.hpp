@@ -3,8 +3,8 @@
 #ifndef WEBPP_ROUTE_CONCEPTS_H
 #define WEBPP_ROUTE_CONCEPTS_H
 
-#include "../response_concepts.h"
-#include "./context_concepts.h"
+#include "../response_concepts.hpp"
+#include "./context_concepts.hpp"
 
 namespace webpp {
 

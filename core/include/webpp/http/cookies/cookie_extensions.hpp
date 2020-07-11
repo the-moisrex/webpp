@@ -3,8 +3,8 @@
 #ifndef WEBPP_COOKIE_EXTENSIONS_H
 #define WEBPP_COOKIE_EXTENSIONS_H
 
-#include "../common.h"
-#include "../header_concepts.h"
+#include "../common.hpp"
+#include "../header_concepts.hpp"
 
 #include <algorithm>
 

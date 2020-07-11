@@ -3,10 +3,10 @@
 #ifndef WEBPP_PATH_H
 #define WEBPP_PATH_H
 
-#include "../../std/optional.h"
-#include "../../utils/fixed_string.h"
-#include "../../utils/uri.h"
-#include "route.h"
+#include "../../std/optional.hpp"
+#include "../../utils/fixed_string.hpp"
+#include "../../utils/uri.hpp"
+#include "route.hpp"
 
 #include <type_traits>
 

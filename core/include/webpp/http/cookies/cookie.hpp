@@ -81,14 +81,14 @@
  *    [ ] Does user's browser support cookies but now it's disabled
  */
 
-#include "../../std/unordered_map.h"
-#include "../../std/unordered_set.h"
-#include "../../std/optional.h"
-#include "../../traits/std_traits.h"
-#include "../../utils/charset.h"
-#include "../../utils/strings.h"
-#include "../common.h"
-#include "./cookies_concepts.h"
+#include "../../std/unordered_map.hpp"
+#include "../../std/unordered_set.hpp"
+#include "../../std/optional.hpp"
+#include "../../traits/std_traits.hpp"
+#include "../../utils/charset.hpp"
+#include "../../utils/strings.hpp"
+#include "../common.hpp"
+#include "./cookies_concepts.hpp"
 
 #include <chrono>
 #include <string_view>

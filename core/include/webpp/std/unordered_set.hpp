@@ -3,8 +3,8 @@
 #ifndef WEBPP_UNORDERED_SET_H
 #define WEBPP_UNORDERED_SET_H
 
-#include "../traits/traits_concepts.h"
-#include "./std.h"
+#include "../traits/traits_concepts.hpp"
+#include "./std.hpp"
 
 #include <unordered_set>
 

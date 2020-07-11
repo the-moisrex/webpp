@@ -3,10 +3,10 @@
 #ifndef WEBPP_APPLICATION_CONCEPTS_H
 #define WEBPP_APPLICATION_CONCEPTS_H
 
-#include "../std/concepts.h"
-#include "./request_concepts.h"
-#include "./response_concepts.h"
-#include "./routes/context.h"
+#include "../std/concepts.hpp"
+#include "./request_concepts.hpp"
+#include "./response_concepts.hpp"
+#include "./routes/context.hpp"
 
 namespace webpp {
 

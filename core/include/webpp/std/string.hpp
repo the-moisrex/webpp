@@ -3,7 +3,7 @@
 #ifndef WEBPP_STRING_H
 #define WEBPP_STRING_H
 
-#include "./std.h"
+#include "./std.hpp"
 
 #if __has_include(<string>)
 #    define STD_STRING STLLIB_STANDARD
@@ -21,7 +21,7 @@ namespace webpp::stl {
 #endif
 
 
-#include "../traits/traits_concepts.h"
+#include "../traits/traits_concepts.hpp"
 
 // Traits aware string:
 namespace webpp::istl {
