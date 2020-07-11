@@ -1,7 +1,7 @@
-#include "../core/include/webpp/utils/ipv4.h"
+#include "../core/include/webpp/utils/ipv4.hpp"
 
-#include "../core/include/webpp/traits/std_traits.h"
-#include "../core/include/webpp/validators/validators.h"
+#include "../core/include/webpp/traits/std_traits.hpp"
+#include "../core/include/webpp/validators/validators.hpp"
 
 #include <array>
 #include <gtest/gtest.h>

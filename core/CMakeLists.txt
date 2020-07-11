@@ -1,87 +1,87 @@
 set(ALL_SOURCES
-        ${LIB_INCLUDE_DIR}/webpp.h
-        ${LIB_INCLUDE_DIR}/webpp/config.h
+        ${LIB_INCLUDE_DIR}/webpp.hpp
+        ${LIB_INCLUDE_DIR}/webpp/config.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/extensions/extension.h
+        ${LIB_INCLUDE_DIR}/webpp/extensions/extension.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/traits/traits.h
-        ${LIB_INCLUDE_DIR}/webpp/traits/std_traits.h
-        ${LIB_INCLUDE_DIR}/webpp/traits/std_pmr_traits.h
+        ${LIB_INCLUDE_DIR}/webpp/traits/traits.hpp
+        ${LIB_INCLUDE_DIR}/webpp/traits/std_traits.hpp
+        ${LIB_INCLUDE_DIR}/webpp/traits/std_pmr_traits.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/std/buffer.h
-        ${LIB_INCLUDE_DIR}/webpp/std/executor.h
-        ${LIB_INCLUDE_DIR}/webpp/std/format.h
-        ${LIB_INCLUDE_DIR}/webpp/std/internet.h
-        ${LIB_INCLUDE_DIR}/webpp/std/io_context.h
-        ${LIB_INCLUDE_DIR}/webpp/std/map.h
-        ${LIB_INCLUDE_DIR}/webpp/std/net.h
-        ${LIB_INCLUDE_DIR}/webpp/std/netfwd.h
-        ${LIB_INCLUDE_DIR}/webpp/std/set.h
-        ${LIB_INCLUDE_DIR}/webpp/std/socket.h
-        ${LIB_INCLUDE_DIR}/webpp/std/std.h
-        ${LIB_INCLUDE_DIR}/webpp/std/string.h
-        ${LIB_INCLUDE_DIR}/webpp/std/string_view.h
-        ${LIB_INCLUDE_DIR}/webpp/std/timer.h
-        ${LIB_INCLUDE_DIR}/webpp/std/tuple.h
-        ${LIB_INCLUDE_DIR}/webpp/std/unordered_map.h
-        ${LIB_INCLUDE_DIR}/webpp/std/unordered_set.h
-        ${LIB_INCLUDE_DIR}/webpp/std/vector.h
-        ${LIB_INCLUDE_DIR}/webpp/std/optional.h
+        ${LIB_INCLUDE_DIR}/webpp/std/buffer.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/executor.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/format.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/internet.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/io_context.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/map.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/net.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/netfwd.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/set.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/socket.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/std.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/string.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/string_view.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/timer.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/tuple.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/unordered_map.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/unordered_set.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/vector.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/optional.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/http/routes/router.h
-        ${LIB_INCLUDE_DIR}/webpp/http/routes/route.h
-        ${LIB_INCLUDE_DIR}/webpp/http/routes/methods.h
-        ${LIB_INCLUDE_DIR}/webpp/http/routes/path.h
-        ${LIB_INCLUDE_DIR}/webpp/http/routes/tpath.h
-        ${LIB_INCLUDE_DIR}/webpp/http/routes/context.h
-        ${LIB_INCLUDE_DIR}/webpp/http/routes/literals.h
-        ${LIB_INCLUDE_DIR}/webpp/http/routes/path/number.h
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/router.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/route.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/methods.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/path.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/tpath.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/context.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/literals.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/path/number.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/http/bodies/file.h
-        ${LIB_INCLUDE_DIR}/webpp/http/bodies/string.h
+        ${LIB_INCLUDE_DIR}/webpp/http/bodies/file.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/bodies/string.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/validators/validators.h
-        ${LIB_INCLUDE_DIR}/webpp/validators/email.h
+        ${LIB_INCLUDE_DIR}/webpp/validators/validators.hpp
+        ${LIB_INCLUDE_DIR}/webpp/validators/email.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/utils/casts.h
-        ${LIB_INCLUDE_DIR}/webpp/utils/cfile.h
-        ${LIB_INCLUDE_DIR}/webpp/utils/charset.h
-        ${LIB_INCLUDE_DIR}/webpp/utils/const_list.h
-        ${LIB_INCLUDE_DIR}/webpp/utils/containers.h
-        ${LIB_INCLUDE_DIR}/webpp/utils/debounce.h
-        ${LIB_INCLUDE_DIR}/webpp/utils/functional.h
-        ${LIB_INCLUDE_DIR}/webpp/utils/ipv4.h
-        ${LIB_INCLUDE_DIR}/webpp/utils/ipv6.h
-        ${LIB_INCLUDE_DIR}/webpp/utils/memory.h
-        ${LIB_INCLUDE_DIR}/webpp/utils/property.h
-        ${LIB_INCLUDE_DIR}/webpp/utils/strings.h
-        ${LIB_INCLUDE_DIR}/webpp/utils/uri.h
-        ${LIB_INCLUDE_DIR}/webpp/utils/fixed_string.h
+        ${LIB_INCLUDE_DIR}/webpp/utils/casts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/utils/cfile.hpp
+        ${LIB_INCLUDE_DIR}/webpp/utils/charset.hpp
+        ${LIB_INCLUDE_DIR}/webpp/utils/const_list.hpp
+        ${LIB_INCLUDE_DIR}/webpp/utils/containers.hpp
+        ${LIB_INCLUDE_DIR}/webpp/utils/debounce.hpp
+        ${LIB_INCLUDE_DIR}/webpp/utils/functional.hpp
+        ${LIB_INCLUDE_DIR}/webpp/utils/ipv4.hpp
+        ${LIB_INCLUDE_DIR}/webpp/utils/ipv6.hpp
+        ${LIB_INCLUDE_DIR}/webpp/utils/memory.hpp
+        ${LIB_INCLUDE_DIR}/webpp/utils/property.hpp
+        ${LIB_INCLUDE_DIR}/webpp/utils/strings.hpp
+        ${LIB_INCLUDE_DIR}/webpp/utils/uri.hpp
+        ${LIB_INCLUDE_DIR}/webpp/utils/fixed_string.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/cgi.h
-        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fcgi.h
-        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fastcgi/protocol.h
-        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/simple_server.h
+        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/cgi.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fcgi.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fastcgi/protocol.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/simple_server.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/http/body.h
-        ${LIB_INCLUDE_DIR}/webpp/http/header.h
-        ${LIB_INCLUDE_DIR}/webpp/http/header_concepts.h
-        ${LIB_INCLUDE_DIR}/webpp/http/request.h
-        ${LIB_INCLUDE_DIR}/webpp/http/request_concepts.h
-        ${LIB_INCLUDE_DIR}/webpp/http/response.h
-        ${LIB_INCLUDE_DIR}/webpp/http/response_concepts.h
-        ${LIB_INCLUDE_DIR}/webpp/http/application.h
-        ${LIB_INCLUDE_DIR}/webpp/http/application_concepts.h
-        ${LIB_INCLUDE_DIR}/webpp/http/http.h
+        ${LIB_INCLUDE_DIR}/webpp/http/body.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/header.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/header_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/request.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/request_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/response.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/response_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/application.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/application_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/http.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie.h
-        ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie_jar.h
-        ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookies_concepts.h
-        ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie_extensions.h
+        ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie_jar.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookies_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie_extensions.hpp
 
-        ${LIB_INCLUDE_DIR}/main.h
-        ${LIB_INCLUDE_DIR}/webpp.h
-        include/webpp/http/bodies/string.h)
+        ${LIB_INCLUDE_DIR}/main.hpp
+        ${LIB_INCLUDE_DIR}/webpp.hpp
+        include/webpp/http/bodies/string.hpp)
 
 set(ALL_SOURCES_SHORT "")
 foreach (source ${ALL_SOURCES})
@@ -147,7 +147,7 @@ install(EXPORT "${LIB_NAME}Config"
 
 ############################## install the include files ##############################
 # we do this, so the files would be only copied only on install command not every time.
-set(ALL_EXTENSIONS ";.hpp")
+set(ALL_EXTENSIONS ";.h")
 get_filename_component(HEADER_FUNCTIONS_FILE ../cmake/header_functions.cmake REALPATH)
 install(CODE "include(${HEADER_FUNCTIONS_FILE})")
 install(CODE "install_headers(\"${LIB_INCLUDE_DIR}\" \"${CMAKE_INSTALL_PREFIX}/include\" \"${ALL_EXTENSIONS}\")")

@@ -1,12 +1,12 @@
 // Created by moisrex on 7/1/20.
-#include "../core/include/webpp/http/interfaces/cgi.h"
-#include "../core/include/webpp/http/request.h"
-#include "../core/include/webpp/http/routes/context.h"
-#include "../core/include/webpp/http/routes/literals.h"
-#include "../core/include/webpp/http/routes/methods.h"
-#include "../core/include/webpp/http/routes/path.h"
-#include "../core/include/webpp/http/routes/path/number.h"
-#include "../core/include/webpp/traits/std_traits.h"
+#include "../core/include/webpp/http/interfaces/cgi.hpp"
+#include "../core/include/webpp/http/request.hpp"
+#include "../core/include/webpp/http/routes/context.hpp"
+#include "../core/include/webpp/http/routes/literals.hpp"
+#include "../core/include/webpp/http/routes/methods.hpp"
+#include "../core/include/webpp/http/routes/path.hpp"
+#include "../core/include/webpp/http/routes/path/number.hpp"
+#include "../core/include/webpp/traits/std_traits.hpp"
 
 #include <gtest/gtest.h>
 #include <string>

@@ -1,6 +1,6 @@
-#include "../core/include/webpp/extensions/extension.h"
-#include "../core/include/webpp/std/concepts.h"
-#include "../core/include/webpp/traits/std_traits.h"
+#include "../core/include/webpp/extensions/extension.hpp"
+#include "../core/include/webpp/std/concepts.hpp"
+#include "../core/include/webpp/traits/std_traits.hpp"
 
 #include <gtest/gtest.h>
 

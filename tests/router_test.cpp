@@ -1,8 +1,8 @@
-#include "../core/include/webpp/http/routes/router.h"
+#include "../core/include/webpp/http/routes/router.hpp"
 
-#include "../core/include/webpp/http/application_concepts.h"
-#include "../core/include/webpp/http/interfaces/cgi.h"
-#include "../core/include/webpp/utils/const_list.h"
+#include "../core/include/webpp/http/application_concepts.hpp"
+#include "../core/include/webpp/http/interfaces/cgi.hpp"
+#include "../core/include/webpp/utils/const_list.hpp"
 
 #include <gtest/gtest.h>
 #include <tuple>

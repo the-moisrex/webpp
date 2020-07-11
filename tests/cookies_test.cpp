@@ -1,6 +1,6 @@
-#include "../core/include/webpp/http/cookies/cookie.h"
-#include "../core/include/webpp/http/cookies/cookie_jar.h"
-#include "../core/include/webpp/traits/std_traits.h"
+#include "../core/include/webpp/http/cookies/cookie.hpp"
+#include "../core/include/webpp/http/cookies/cookie_jar.hpp"
+#include "../core/include/webpp/traits/std_traits.hpp"
 
 #include <gtest/gtest.h>
 #include <iostream>
