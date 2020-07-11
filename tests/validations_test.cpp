@@ -1,6 +1,6 @@
-#include "../core/include/webpp/traits/std_traits.h"
-#include "../core/include/webpp/utils/charset.h"
-#include "../core/include/webpp/validators/validators.h"
+#include "../core/include/webpp/traits/std_traits.hpp"
+#include "../core/include/webpp/utils/charset.hpp"
+#include "../core/include/webpp/validators/validators.hpp"
 
 #include <gtest/gtest.h>
 #include <map>
