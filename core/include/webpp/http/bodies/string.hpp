@@ -39,8 +39,30 @@ namespace webpp {
             [[nodiscard]] string_type const& str() const noexcept {
                 return content;
             }
+
+            [[nodiscard]] bool operator==(string_view_type str) const noexcept {
+                return str == content;
+            }
+
+            [[nodiscard]] bool operator!=(string_view_type str) const noexcept {
+                return str != content;
+            }
         };
     };
+
+    template <Traits TraitsType>
+    [[nodiscard]] bool
+    operator==(typename TraitsType::string_view_type                  str,
+               typename string_body::template type<TraitsType> const& strbody) noexcept {
+        return strbody.str() == str;
+    }
+
+    template <Traits TraitsType>
+    [[nodiscard]] bool
+    operator!=(typename TraitsType::string_view_type                  str,
+               typename string_body::template type<TraitsType> const& strbody) noexcept {
+        return strbody.str() != str;
+    }
 
 
     struct string_response {
