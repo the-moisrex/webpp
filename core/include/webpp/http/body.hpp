@@ -119,7 +119,6 @@ namespace webpp {
         template <typename... Args>
         response_body(Args&&... args) noexcept : elist_type{stl::forward<Args>(args)...} {
         }
-
     };
 
 
@@ -143,6 +142,10 @@ namespace webpp {
             using EList::EList;
         };
     };
+
+    template <Traits TraitsType, Extension... E>
+    using simple_body =
+      typename extension_pack<E...>::template extensie_type<TraitsType, response_body_descriptor>;
 
 }; // namespace webpp
 
