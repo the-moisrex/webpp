@@ -209,11 +209,25 @@ namespace webpp {
          * @tparam Parent
          */
         template <typename Parent>
-        struct ctor : public virtual Parent {
+        struct vctor : public virtual Parent {
+
+            template <typename... Args>
+            requires(stl::constructible_from<Parent, Args...>) vctor(Args&&... args) noexcept
+              : Parent{stl::forward<Args>(args)...} {
+            }
+
+            template <typename... Args>
+            requires(!stl::constructible_from<Parent, Args...>) vctor([[maybe_unused]] Args&&... args) noexcept
+              : Parent{} {
+            }
+        };
+
+        template <typename Parent>
+        struct ctor : public  Parent {
 
             template <typename... Args>
             requires(stl::constructible_from<Parent, Args...>) ctor(Args&&... args) noexcept
-              : Parent{stl::forward<Args>(args)...} {
+            : Parent{stl::forward<Args>(args)...} {
             }
 
             template <typename... Args>
@@ -234,10 +248,10 @@ namespace webpp {
         // with 2 or more kids
         template <Traits TraitsType, typename Mother, typename... Kids>
         struct children_inherited {
-            struct type : public ctor<typename Kids::template type<TraitsType, ctor<Mother>>>... {
+            struct type : public vctor<typename Kids::template type<TraitsType, vctor<Mother>>>... {
                 template <typename... Args>
                 constexpr type(Args&&... args) noexcept
-                  : ctor<typename Kids::template type<TraitsType, ctor<Mother>>>{
+                  : vctor<typename Kids::template type<TraitsType, vctor<Mother>>>{
                       stl::forward<Args>(args)...}... {
                 }
             };

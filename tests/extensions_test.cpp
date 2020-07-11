@@ -180,6 +180,6 @@ TEST(ExtensionsTests, ExtensionConstructors) {
                   "We cannot construct the ctor_one::type with two ints");
 
     auto d1 = ictor_pack{4, 2};
-    EXPECT_EQ(d1.a, 6) << typeid(ictor_pack).name();
-    EXPECT_EQ((etype{4, 2}.a), 6) << typeid(etype).name();
+    EXPECT_EQ(d1.a, 6);
+    EXPECT_EQ((etype{4, 2}.a), 6);
 }
