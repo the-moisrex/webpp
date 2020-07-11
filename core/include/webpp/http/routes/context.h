@@ -135,9 +135,10 @@ namespace webpp {
      */
     template <typename EList, Request RequestType, Response ResponseType>
     struct basic_context : public EList {
-        using elist_type    = EList;
-        using request_type  = RequestType;
-        using response_type = ResponseType;
+        using elist_type         = EList;
+        using request_type       = RequestType;
+        using response_type      = ResponseType;
+        using basic_context_type = basic_context<EList, RequestType, ResponseType>;
 
         router_stats  router_features{};
         request_type* request = nullptr;
@@ -192,7 +193,8 @@ namespace webpp {
         using traits_type                  = TraitsType;
         using context_descriptor_type      = ContextDescriptorType;
         using original_extension_pack_type = OriginalExtensionList;
-        using request_type                 = ReqType;
+        using request_type                 = stl::decay_t<ReqType>;
+        using basic_context_type           = typename EList::basic_context_type;
 
 
         /**
@@ -206,30 +208,34 @@ namespace webpp {
         constexpr final_context() noexcept : EList{} {
         }
 
-        template <typename... Args>
-        constexpr final_context(Args&&... args) noexcept : EList{stl::forward<Args>(args)...} {
+        //        template <typename... Args>
+        //        constexpr final_context(Args&&... args) noexcept : EList{stl::forward<Args>(args)...} {
+        //        }
+        //
+        //        template <typename... Args>
+        //        constexpr final_context(request_type* req, Args&&... args) noexcept
+        //          : basic_context_type{req},
+        //            EList{stl::forward<Args>(args)...} {
+        //        }
+
+        //        template <typename... Args>
+        //        constexpr final_context(request_type& req, Args&&... args) noexcept
+        //          : basic_context_type{req},
+        //            EList{stl::forward<Args>(args)...} {
+        //        }
+
+
+        constexpr final_context(request_type* req) noexcept : basic_context_type{req} {
         }
 
-        template <typename... Args>
-        constexpr final_context(request_type* req, Args&&... args) noexcept
-          : EList{req, stl::forward<Args>(args)...} {
+        constexpr final_context(request_type& req) noexcept : basic_context_type{req} {
         }
 
-        template <typename... Args>
-        constexpr final_context(request_type& req, Args&&... args) noexcept
-          : EList{req, stl::forward<Args>(args)...} {
-        }
-
-
-        constexpr final_context(request_type* req) noexcept : EList(req) {
-        }
-
-        constexpr final_context(request_type& req) noexcept : EList(req) {
-        }
-
-
-        template <Context ContextType>
-        constexpr final_context(ContextType&& ctx) noexcept : EList{stl::forward<ContextType>(ctx)} {
+        template <Traits NTraitsType, typename NContextDescriptorType, typename NOriginalExtensionList,
+                  typename NEList, typename NReqType>
+        constexpr final_context(final_context<NTraitsType, NContextDescriptorType, NOriginalExtensionList,
+                                              NEList, NReqType> const& ctx) noexcept
+          : basic_context_type{ctx.request} {
         }
 
         /**

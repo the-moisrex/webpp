@@ -137,7 +137,7 @@ TEST(ExtensionsTests, ExtensionPackStuff) {
     struct daddy {
         bool daddy_value = true;
     };
-    typename empty_extension_pack::template children_inherited<std_traits, daddy, cpack> icpack;
+    typename empty_extension_pack::template children_inherited<std_traits, daddy, cpack>::type icpack;
 
     EXPECT_TRUE(icpack.cvalue_one);
     EXPECT_TRUE(icpack.cvalue_two);
