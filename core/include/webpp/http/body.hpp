@@ -117,7 +117,7 @@ namespace webpp {
                                                                           extensions_that_has_variants>::type;
         */
         template <typename... Args>
-        response_body(Args&&... args) noexcept : elist_type{stl::forward<Args>(args)...} {
+        constexpr response_body(Args&&... args) noexcept : elist_type{stl::forward<Args>(args)...} {
         }
     };
 
@@ -138,9 +138,7 @@ namespace webpp {
 
         // empty final extensie
         template <typename ExtensionListType, typename TraitsType, typename EList>
-        struct final_extensie_type final : public EList {
-            using EList::EList;
-        };
+        using final_extensie_type = EList;
     };
 
     template <Traits TraitsType, Extension... E>

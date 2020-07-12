@@ -35,6 +35,13 @@ namespace webpp::stl {
     template <typename T>
     concept integral = stl::is_integral_v<T>;
 
+
+    template <typename T>
+    concept destructible = stl::is_nothrow_destructible_v<T>;
+
+    template <typename T, typename... Args>
+    concept constructible_from = stl::destructible<T>&& stl::is_constructible_v<T, Args...>;
+
     template <typename T>
     concept move_constructible = stl::constructible_from<T, T>&& stl::convertible_to<T, T>;
 
@@ -44,9 +51,6 @@ namespace webpp::stl {
       stl::convertible_to<T&, T>&& stl::constructible_from<T, const T&>&& stl::convertible_to<const T&, T>&&
         stl::constructible_from<T, const T>&& stl::convertible_to<const T, T>;
 
-
-    template <class T, class... Args>
-    concept constructible_from = stl::destructible<T>&& stl::is_constructible_v<T, Args...>;
 
 } // namespace webpp::stl
 #endif

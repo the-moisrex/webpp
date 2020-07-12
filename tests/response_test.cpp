@@ -16,36 +16,6 @@ using namespace webpp;
 using res_t  = basic_response<std_traits>;
 using body_t = response_body<std_traits>;
 
-// TEST(Body, Text) {
-//    body_t b = "Testing";
-//    EXPECT_EQ(b.str(), "Testing");
-//    EXPECT_TRUE(b == "Testing");
-//
-//    std::string str = "hello";
-//    b               = str;
-//
-//    EXPECT_EQ(b, "hello");
-//
-//    std::string_view sth = "nice";
-//    b                    = sth;
-//    EXPECT_EQ(b, "nice");
-//
-//    b = std::string("cool");
-//    EXPECT_EQ(b, "cool");
-//
-//    body_t bt;
-//    {
-//        std::string      _str = "testing";
-//        std::string_view test = _str;
-//        bt.replace_string_view(test);
-//        EXPECT_EQ(bt.str(), test);
-//        _str = "";
-//    }
-//    EXPECT_NE(bt.str(), "testing") << "The test should be empty since it was a
-//    "
-//                                      "string_view and not a string";
-//}
-//
 // TEST(Response, Type) {
 //    constexpr auto return_callback = [] {
 //        return res_t("Hello");
