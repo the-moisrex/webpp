@@ -1,6 +1,7 @@
 // Created by moisrex on 2/4/20.
 
 #include "../core/include/webpp/http/bodies/string.hpp"
+#include "../core/include/webpp/http/bodies/file.hpp"
 #include "../core/include/webpp/http/body.hpp"
 #include "../core/include/webpp/http/response.hpp"
 
@@ -14,9 +15,9 @@
 using namespace webpp;
 
 using res_t  = basic_response<std_traits>;
-using body_t = simple_body<std_traits, string_body>;
 
 TEST(Body, Text) {
+    using body_t = simple_body<std_traits, string_body>;
     body_t b = "Testing";
     EXPECT_EQ(b.str(), "Testing");
     EXPECT_TRUE(b == "Testing");
@@ -43,6 +44,20 @@ TEST(Body, Text) {
     }
     // EXPECT_NE(bt.str(), "testing") << "The test should be empty since it was a string_view and not a
     // string";
+}
+
+ TEST(Body, File) {
+    using body_t = simple_body<std_traits, file_response>;
+    std::filesystem::path file = std::filesystem::temp_directory_path();
+    file.append("webpp_test_file");
+    std::ofstream handle{file};
+    handle << "Hello World";
+    handle.close();
+
+    body_t the_body;
+    the_body.load(file);
+    EXPECT_EQ(the_body.str(), "Hello World");
+    std::filesystem::remove(file);
 }
 
 // TEST(Response, Type) {
@@ -78,12 +93,3 @@ TEST(Body, Text) {
 //    EXPECT_EQ(res, res2);
 //}
 //
-// TEST(Response, File) {
-//    std::filesystem::path file = std::filesystem::temp_directory_path();
-//    file.append("webpp_test_file");
-//    std::ofstream handle{file};
-//    handle << "Hello World";
-//    handle.close();
-//    EXPECT_EQ(res_t::res_t(file).body.str(), "Hello World");
-//    std::filesystem::remove(file);
-//}

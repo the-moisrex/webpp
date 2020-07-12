@@ -66,7 +66,6 @@ namespace webpp {
 
 
     struct string_response {
-        template <Traits TraitsType>
         using response_body_extensions = extension_pack<string_body>;
     };
 

@@ -20,19 +20,22 @@ namespace webpp {
         struct type {
             using traits_type      = TraitsType;
             using string_type      = typename traits_type::string_type;
-            using string_view_type = typename traits_type::stirng_view_type;
-            using char_type        = typename string_type::char_type;
-            using allocator_type   = typename traits_type::allocator<char_type>;
+            using string_view_type = typename traits_type::string_view_type;
+            using char_type        = typename string_type::value_type;
+            using allocator_type   = typename traits_type::template allocator<char_type>;
             using alloc_type       = allocator_type const&;
+            using ifstream_type = typename stl::basic_ifstream<char_type, typename traits_type::char_traits>;
 
           private:
-            string_type content;
+            string_type     content;
+            stl::error_code _error{};
 
-            static string_type load_file(stl::filesystem::path const& filepath,
-                                         alloc_type                   alloc) const noexcept {
+            void load_file(stl::filesystem::path const& filepath, allocator_type alloc) noexcept {
 #ifdef WEBPP_EMBEDDED_FILES
                 if (auto content = ::get_static_file(filepath); !content.empty()) {
-                    return string_type{content, alloc};
+                    content = string_type{content, alloc};
+                    _error  = stl::error_code{}; // reset the error_code
+                    return;
                 }
 #endif
 
@@ -40,7 +43,8 @@ namespace webpp {
                 // todo: add unix specializations for performance and having fun reasons
                 // TODO: change the replace_string with replace_string_view if the file is cached
 
-                if (stl::ifstream in{filepath.c_str(), stl::ios::binary | stl::ios::ate}) {
+                if (auto in = ifstream_type{filepath.c_str(), stl::ios::binary | stl::ios::ate};
+                    in.is_open()) {
                     // details on this matter:
                     // https://stackoverflow.com/questions/11563963/writing-a-binary-file-in-c-very-fast/39097696#39097696
                     // stl::unique_ptr<char[]> buffer{new char[buffer_size]};
@@ -49,23 +53,77 @@ namespace webpp {
                     stl::unique_ptr<char_type[]> result(alloc.allocate(size));
                     in.seekg(0);
                     in.read(result.get(), size);
-                    return string_type{result.get(), static_cast<stl::string_view::size_type>(size), alloc};
+                    // todo: cache the results
+                    content =
+                      string_type{result.get(), static_cast<stl::string_view::size_type>(size), alloc};
+                    return;
+                } else {
+                    // todo: error code here
+                    // todo: retry feature
                 }
 
-                return res;
+                return;
             }
 
           public:
-            type(stl::filesystem::path filename, alloc_type alloc = alloc_type()) noexcept
-              : content{load_file(filename, alloc)} {
+            constexpr type(alloc_type alloc = allocator_type{}) noexcept : content{"", alloc} {
             }
 
+            constexpr type(string_view_type filename, alloc_type alloc = allocator_type{}) noexcept {
+                load_file(filename, alloc);
+            }
+
+            // fixme: why? why can't I have non-constexpr constructor?
+//            type(stl::filesystem::path filename, alloc_type alloc = allocator_type{}) noexcept {
+//                load_file(filename, alloc);
+//            }
+
+            constexpr type(type const& fbody) noexcept : content{fbody.content}, _error{fbody._error} {
+            }
+
+            constexpr type(type&& fbody) noexcept
+              : content{stl::move(fbody.content)},
+                _error{stl::move(fbody._error)} {
+            }
+
+            void load(stl::filesystem::path _file) noexcept {
+                load_file(_file, content.get_allocator());
+            }
 
             [[nodiscard]] string_type const& str() const noexcept {
                 return content;
             }
-        }
+
+            [[nodiscard]] auto const& error() const noexcept {
+                return _error;
+            }
+
+            [[nodiscard]] bool operator==(string_view_type str) const noexcept {
+                return str == content;
+            }
+
+            [[nodiscard]] bool operator!=(string_view_type str) const noexcept {
+                return str != content;
+            }
+        };
     };
+
+    template <Traits TraitsType>
+    [[nodiscard]] bool operator==(typename TraitsType::string_view_type                str,
+                                  typename file_body::template type<TraitsType> const& filebody) noexcept {
+        return filebody.str() == str;
+    }
+
+    template <Traits TraitsType>
+    [[nodiscard]] bool operator!=(typename TraitsType::string_view_type                str,
+                                  typename file_body::template type<TraitsType> const& filebody) noexcept {
+        return filebody.str() != str;
+    }
+
+    struct file_response {
+        using response_body_extensions = extension_pack<file_body>;
+    };
+
 
 } // namespace webpp
 
