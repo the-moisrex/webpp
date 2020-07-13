@@ -2,8 +2,8 @@
 
 #include "../core/include/webpp/http/response.hpp"
 
-#include "../core/include/webpp/http/body.hpp"
 #include "../core/include/webpp/http/bodies/string.hpp"
+#include "../core/include/webpp/http/body.hpp"
 
 #include <cstdio>
 #include <fstream>
@@ -15,8 +15,8 @@
 using namespace webpp;
 
 
- TEST(Response, Type) {
-    using res_t  = simple_response<std_traits, string_response>;
+TEST(Response, Type) {
+    using res_t                    = simple_response<std_traits, string_response>;
     constexpr auto return_callback = [] {
         return res_t("Hello");
     };
@@ -24,14 +24,14 @@ using namespace webpp;
     constexpr bool one   = ::std::is_same_v<ret_type, res_t>;
     constexpr bool two   = ::std::is_convertible_v<ret_type, res_t>;
     constexpr bool three = ::std::is_convertible_v<res_t, res_t>;
-    constexpr bool four  = ::std::is_convertible_v<std::string, res_t>;
-    //    constexpr bool five = std::is_convertible_v<std::string_view,
-    //    response>;
+    //    constexpr bool four  = ::std::is_convertible_v<std::string, res_t>;
+    //    constexpr bool five = std::is_convertible_v<std::string_view, response>;
     EXPECT_TRUE(one);
     EXPECT_TRUE(two);
     EXPECT_TRUE(three);
-    EXPECT_TRUE(four);
+    //    EXPECT_TRUE(four);
     //    EXPECT_TRUE(five);
+    EXPECT_EQ("Hello", return_callback().body);
 }
 
 // TEST(Response, Init) {
