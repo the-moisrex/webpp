@@ -28,8 +28,12 @@ namespace webpp {
             string_type content = "";
 
           public:
+            constexpr type(string_view_type str, alloc_type alloc = allocator_type{}) noexcept
+              : content{str, alloc} {
+            }
+
             template <typename... Args>
-            type(Args&&... args) noexcept : content{stl::forward<Args>(args)...} {
+            constexpr type(Args&&... args) noexcept : content{stl::forward<Args>(args)...} {
             }
 
             /**
@@ -51,16 +55,14 @@ namespace webpp {
     };
 
     template <Traits TraitsType>
-    [[nodiscard]] bool
-    operator==(typename TraitsType::string_view_type                  str,
-               typename string_body::template type<TraitsType> const& strbody) noexcept {
+    [[nodiscard]] bool operator==(typename TraitsType::string_view_type                  str,
+                                  typename string_body::template type<TraitsType> const& strbody) noexcept {
         return strbody.str() == str;
     }
 
     template <Traits TraitsType>
-    [[nodiscard]] bool
-    operator!=(typename TraitsType::string_view_type                  str,
-               typename string_body::template type<TraitsType> const& strbody) noexcept {
+    [[nodiscard]] bool operator!=(typename TraitsType::string_view_type                  str,
+                                  typename string_body::template type<TraitsType> const& strbody) noexcept {
         return strbody.str() != str;
     }
 

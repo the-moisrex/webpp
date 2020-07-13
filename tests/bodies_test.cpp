@@ -14,7 +14,6 @@
 
 using namespace webpp;
 
-using res_t  = basic_response<std_traits>;
 
 TEST(Body, Text) {
     using body_t = simple_body<std_traits, string_body>;

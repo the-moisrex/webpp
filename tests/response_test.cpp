@@ -3,6 +3,7 @@
 #include "../core/include/webpp/http/response.hpp"
 
 #include "../core/include/webpp/http/body.hpp"
+#include "../core/include/webpp/http/bodies/string.hpp"
 
 #include <cstdio>
 #include <fstream>
@@ -13,27 +14,26 @@
 
 using namespace webpp;
 
-using res_t  = basic_response<std_traits>;
-using body_t = response_body<std_traits>;
 
-// TEST(Response, Type) {
-//    constexpr auto return_callback = [] {
-//        return res_t("Hello");
-//    };
-//    using ret_type       = ::std::invoke_result_t<decltype(return_callback)>;
-//    constexpr bool one   = ::std::is_same_v<ret_type, res_t>;
-//    constexpr bool two   = ::std::is_convertible_v<ret_type, res_t>;
-//    constexpr bool three = ::std::is_convertible_v<res_t, res_t>;
-//    constexpr bool four  = ::std::is_convertible_v<std::string, res_t>;
-//    //    constexpr bool five = std::is_convertible_v<std::string_view,
-//    //    response>;
-//    EXPECT_TRUE(one);
-//    EXPECT_TRUE(two);
-//    EXPECT_TRUE(three);
-//    EXPECT_TRUE(four);
-//    //    EXPECT_TRUE(five);
-//}
-//
+ TEST(Response, Type) {
+    using res_t  = simple_response<std_traits, string_response>;
+    constexpr auto return_callback = [] {
+        return res_t("Hello");
+    };
+    using ret_type       = ::std::invoke_result_t<decltype(return_callback)>;
+    constexpr bool one   = ::std::is_same_v<ret_type, res_t>;
+    constexpr bool two   = ::std::is_convertible_v<ret_type, res_t>;
+    constexpr bool three = ::std::is_convertible_v<res_t, res_t>;
+    constexpr bool four  = ::std::is_convertible_v<std::string, res_t>;
+    //    constexpr bool five = std::is_convertible_v<std::string_view,
+    //    response>;
+    EXPECT_TRUE(one);
+    EXPECT_TRUE(two);
+    EXPECT_TRUE(three);
+    EXPECT_TRUE(four);
+    //    EXPECT_TRUE(five);
+}
+
 // TEST(Response, Init) {
 //    auto res  = res_t();
 //    auto res2 = res_t();
