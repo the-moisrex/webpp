@@ -15,44 +15,54 @@ namespace webpp {
     /**
      * This class owns its data.
      */
-    template <Traits TraitsType, typename REL = empty_extension_pack,
-              typename ResponseHeaderType = response_headers<TraitsType, REL>,
-              typename BodyType           = response_body<TraitsType>>
-    class basic_response : public REL {
+    template <Traits TraitsType, typename EList, typename ResponseHeaderType, typename BodyType>
+    class basic_response : public EList {
 
       public:
-        using traits_type  = TraitsType;
-        using body_type    = BodyType;
-        using headers_type = ResponseHeaderType;
-        using str_view_t   = typename traits_type::string_view_type;
-        using str_t        = typename traits_type::string_type;
+        using traits_type      = TraitsType;
+        using body_type        = BodyType;
+        using headers_type     = ResponseHeaderType;
+        using string_view_type = typename traits_type::string_view_type;
+        using string_type      = typename traits_type::string_type;
 
-        body_type    body;
-        headers_type header;
+        body_type    body{};
+        headers_type header{}; // todo: change this to headers
 
         basic_response() noexcept                          = default;
         basic_response(basic_response const& res) noexcept = default;
         basic_response(basic_response&& res) noexcept      = default;
 
-        basic_response(status_code_type err_code) noexcept : header{err_code} {
+        basic_response(status_code_type err_code) noexcept : EList{}, header{err_code} {
         }
-        basic_response(status_code_type err_code, str_t const& b) noexcept : header{err_code}, body{b} {
+        basic_response(status_code_type err_code, string_type const& b) noexcept
+          : EList{},
+            header{err_code},
+            body{b} {
         }
-        basic_response(status_code_type err_code, str_t&& b) noexcept : header{err_code}, body{stl::move(b)} {
+        basic_response(status_code_type err_code, string_type&& b) noexcept
+          : EList{},
+            header{err_code},
+            body{stl::move(b)} {
         }
-        basic_response(str_t const& b) noexcept : body(b) {
-        }
-        basic_response(str_t&& b) noexcept : body(stl::move(b)) {
+        basic_response(body_type const& b) noexcept : EList{}, body(b) {
         }
 
+        basic_response(body_type&& b) noexcept : EList{}, body(stl::move(b)) {
+        }
+
+        explicit basic_response(header_type&& e) noexcept : EList{}, header(stl::move(e)) {
+        }
+
+        explicit basic_response(header_type const& e) noexcept : EList{}, header(e) {
+        }
 
         basic_response& operator=(basic_response const&) = default;
         basic_response& operator=(basic_response&& res) noexcept = default;
-        basic_response& operator                                 =(str_t const& str) noexcept {
+        basic_response& operator                                 =(string_type const& str) noexcept {
             body.replace_string(str);
             return *this;
         }
-        basic_response& operator=(str_t&& str) noexcept {
+        basic_response& operator=(string_type&& str) noexcept {
             body.replace_string(stl::move(str));
             return *this;
         }
@@ -91,6 +101,9 @@ namespace webpp {
         using response_descriptor_type     = DescriptorType;
         using original_extension_pack_type = OriginalExtensionList;
 
+        using EList::EList;
+
+
         /**
          * Append some extensions to this context type and get the type back
          */
@@ -124,6 +137,11 @@ namespace webpp {
         using final_extensie_type =
           final_response<TraitsType, basic_response_descriptor, ExtensionListType, EList>;
     };
+
+
+    template <Traits TraitsType, Extension... E>
+    using simple_response =
+      typename extension_pack<E...>::template extensie_type<TraitsType, basic_response_descriptor>;
 
 
 } // namespace webpp

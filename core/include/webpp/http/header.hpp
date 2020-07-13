@@ -144,7 +144,7 @@ namespace webpp {
      * @tparam TraitsType
      * @tparam HeaderType
      */
-    template <Traits TraitsType, typename EList = empty_extension_pack>
+    template <Traits TraitsType, typename EList>
     struct response_header_field : public EList {
         using traits_type      = TraitsType;
         using string_type      = typename traits_type::string_type;
@@ -193,6 +193,41 @@ namespace webpp {
     };
 
 
+
+    // hash function of std::unordered_set<webpp::basic_cookie>
+    template <typename FieldType>
+    struct response_header_field_hash {
+        using field_type = FieldType;
+
+        template <class T>
+        void hash_combine(stl::size_t& seed, const T& v) noexcept {
+            stl::hash<T> hasher;
+            seed ^= hasher(v) + 0x9e3779b9 + (seed << 6u) + (seed >> 2u);
+        }
+
+
+        using result_type = stl::size_t;
+
+        result_type operator()(field_type const& c) const noexcept {
+            // change the "same_as" method too if you ever touch this function
+            result_type seed = 0;
+            hash_combine(seed, c.name);
+            hash_combine(seed, c.value);
+            return seed;
+        }
+    };
+
+    template <typename FieldType>
+    struct response_header_field_equals {
+        using field_type = FieldType;
+
+        bool operator()(const field_type& lhs, const field_type& rhs) const noexcept {
+            return lhs.name == rhs.name;
+        }
+    };
+
+
+
     /**
      * Setting non-ascii characters in the value section of the headers should
      * result in transforming the value to the "Encoded-Word" syntax (RFC 2047).
@@ -201,18 +236,26 @@ namespace webpp {
      *   Interpreted as: "Subject: ¡Hola, señor!"
      *
      */
-    template <Traits TraitsType, typename HeaderEList = empty_extension_pack,
-              typename HeaderFieldType = response_header_field<TraitsType>>
-    class response_headers : public stl::unordered_multiset<TraitsType, HeaderFieldType>, public HeaderEList {
+    template <Traits TraitsType, typename HeaderEList, typename HeaderFieldType>
+    class response_headers : public istl::unordered_multiset<TraitsType, HeaderFieldType,
+                                                             response_header_field_hash<HeaderFieldType>,
+                                                             response_header_field_equals<HeaderFieldType>>,
+                             public HeaderEList {
 
-        using super = stl::unordered_multiset<TraitsType, HeaderFieldType>;
+        using super =
+          istl::unordered_multiset<TraitsType, HeaderFieldType, response_header_field_hash<HeaderFieldType>,
+                                   response_header_field_equals<HeaderFieldType>>;
 
       public:
         using traits_type       = TraitsType;
         using string_type       = typename traits_type::string_type;
         using header_field_type = HeaderFieldType;
 
-        using HeaderEList::HeaderEList;
+        template <typename... Args>
+        constexpr response_headers(Args&&... args) noexcept
+          : super{stl::forward<Args>(args)...},
+            HeaderFieldType{} {
+        }
 
         status_code_type status_code = 200u;
 
@@ -253,9 +296,7 @@ namespace webpp {
 
         // empty final extensie
         template <typename ExtensionListType, typename TraitsType, typename EList>
-        struct final_extensie_type final : public EList {
-            using EList::EList;
-        };
+        using final_extensie_type = EList;
     };
 
     struct response_header_descriptor {
@@ -276,9 +317,7 @@ namespace webpp {
 
         // empty final extensie
         template <typename ExtensionListType, typename TraitsType, typename EList>
-        struct final_extensie_type final : public EList {
-            using EList::EList;
-        };
+        using final_extensie_type = EList;
     };
 
 
