@@ -184,6 +184,9 @@ namespace webpp {
             // todo: write an auto extension finder based on the Args that get passed
             return new_response_type{stl::forward<Args>(args)...};
         }
+
+        // todo: add all the features of returning a response each body type should have at least one method here
+        using string = typename response_type::template apply_extension_type<string_response>;
     };
 
     template <Traits TraitsType, typename ContextDescriptorType, typename OriginalExtensionList,
