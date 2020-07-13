@@ -44,6 +44,10 @@ namespace webpp {
                 return content;
             }
 
+            constexpr operator string_type() const noexcept {
+                return content;
+            }
+
             [[nodiscard]] bool operator==(string_view_type str) const noexcept {
                 return str == content;
             }

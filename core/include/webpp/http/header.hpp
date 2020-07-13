@@ -254,7 +254,7 @@ namespace webpp {
         template <typename... Args>
         constexpr response_headers(Args&&... args) noexcept
           : super{stl::forward<Args>(args)...},
-            HeaderFieldType{} {
+            HeaderEList{} {
         }
 
         status_code_type status_code = 200u;
