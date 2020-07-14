@@ -5,6 +5,7 @@
 
 #include "./std.hpp"
 
+#include <memory> // for Allocator
 #include <type_traits>
 
 #if __has_include(<concepts>)
@@ -174,7 +175,15 @@ namespace webpp::istl {
     };
 
 
-
+    template <typename A>
+    concept Allocator =
+      !stl::integral<A> && stl::default_initializable<A> && stl::copy_constructible<A> && requires(A alloc) {
+        {alloc.allocate(1)};
+        {alloc.deallocate(nullptr, 1)};
+        {alloc == alloc};
+        {alloc != alloc};
+        typename A::value_type;
+    };
 } // namespace webpp::istl
 
 #endif // WEBPP_STD_CONCEPTS_H

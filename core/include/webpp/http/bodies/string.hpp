@@ -5,6 +5,7 @@
 
 #include "../../extensions/extension.hpp"
 #include "../../traits/traits_concepts.hpp"
+#include "../../std/concepts.hpp"
 
 #include <type_traits>
 #include <utility>
@@ -22,9 +23,9 @@ namespace webpp {
             using string_type      = typename traits_type::string_type;
             using string_view_type = typename traits_type::string_view_type;
             using allocator_type   = typename string_type::allocator_type;
-            using alloc_type       = allocator_type const&;
 
           private:
+            using alloc_type    = allocator_type const&;
             string_type content = "";
 
           public:
@@ -72,7 +73,38 @@ namespace webpp {
 
 
     struct string_response {
+
+        /**
+         * This extension helps the user to create a response with the help of the context
+         *
+         *   ctx.string_type{"this is a response"}
+         *   ctx.str_t{"this is nice"}
+         *   ctx.string("hello world")
+         *
+         * The reason for preferring "string" over "string_type" is that the allocator is handled correctly.
+         */
+        struct string_context_extension {
+            template <Traits TraitsType, Context ContextType>
+            struct type : public ContextType {
+                using string_response =
+                  typename ContextType::response_type::template apply_extension_type<string_body>;
+
+                using ContextType::ContextType;
+
+                template <typename... Args>
+                constexpr auto string(Args&&... args) const noexcept {
+                    constexpr bool has_allocator = (istl::Allocator<Args>, ...); // we only care about the last one
+                    if constexpr (has_allocator) {
+                        return string_response{stl::forward<Args>(args)...};
+                    } else {
+                        return string_response{stl::forward<Args>(args)..., ContextType::alloc};
+                    }
+                }
+            };
+        };
+
         using response_body_extensions = extension_pack<string_body>;
+        using context_extensions       = extension_pack<string_context_extension>;
     };
 
 

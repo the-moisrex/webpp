@@ -133,23 +133,37 @@ namespace webpp {
      *
      *
      */
-    template <typename EList, Request RequestType, Response ResponseType>
+    template <Traits TraitsType, typename EList, Request RequestType, Response ResponseType>
     struct basic_context : public EList {
+        using traits_type        = TraitsType;
+        using allocator_type     = typename traits_type::template allocator<typename traits_type::char_type>;
         using elist_type         = EList;
         using request_type       = RequestType;
         using response_type      = ResponseType;
-        using basic_context_type = basic_context<EList, RequestType, ResponseType>;
+        using basic_context_type = basic_context<TraitsType, EList, RequestType, ResponseType>;
 
+      protected:
+        allocator_type alloc;
+
+      public:
         router_stats  router_features{};
         request_type* request = nullptr;
 
-        constexpr basic_context() noexcept : elist_type{} {
+        constexpr basic_context(allocator_type const& _alloc = allocator_type{}) noexcept
+          : elist_type{},
+            alloc{_alloc} {
         }
 
-        constexpr basic_context(request_type& req) noexcept : elist_type{}, request(&req) {
+        constexpr basic_context(request_type& req, allocator_type const& _alloc = allocator_type{}) noexcept
+          : elist_type{},
+            alloc{_alloc},
+            request(&req) {
         }
 
-        constexpr basic_context(request_type* req) noexcept : elist_type{}, request(req) {
+        constexpr basic_context(request_type* req, allocator_type const& _alloc = allocator_type{}) noexcept
+          : elist_type{},
+            alloc{_alloc},
+            request(req) {
         }
 
 
@@ -171,6 +185,10 @@ namespace webpp {
             elist_type{stl::forward<ContextType>(ctx)} {
         }
 
+        [[nodiscard]] auto const& get_allocator() const noexcept {
+            return alloc;
+        }
+
         /**
          * Generate a response
          * @tparam Args
@@ -178,7 +196,7 @@ namespace webpp {
          * @return
          */
         template <typename... NewExtensions, typename... Args>
-        Response auto response(Args&&... args) const noexcept {
+        [[nodiscard]] Response auto response(Args&&... args) const noexcept {
             using new_response_type =
               typename response_type::template apply_extensions_type<NewExtensions...>;
             // todo: write an auto extension finder based on the Args that get passed
@@ -186,7 +204,6 @@ namespace webpp {
         }
 
         // todo: add all the features of returning a response each body type should have at least one method here
-        using string = typename response_type::template apply_extension_type<string_response>;
     };
 
     template <Traits TraitsType, typename ContextDescriptorType, typename OriginalExtensionList,
@@ -199,6 +216,9 @@ namespace webpp {
         using request_type                 = stl::decay_t<ReqType>;
         using basic_context_type           = typename EList::basic_context_type;
 
+        // should we use a char_type as allocator? change this if you think it's not the correct type
+        using allocator_type = typename traits_type::template allocator<typename traits_type::char_type>;
+
 
         /**
          * Append some extensions to this context type and get the type back
@@ -208,7 +228,9 @@ namespace webpp {
           typename original_extension_pack_type::template appended<E...>::template extensie_type<
             traits_type, context_descriptor_type, request_type>;
 
-        constexpr final_context() noexcept : EList{} {
+        constexpr final_context(allocator_type const& alloc = allocator_type{}) noexcept
+          : basic_context_type{alloc},
+            EList{} {
         }
 
         //        template <typename... Args>
@@ -353,7 +375,7 @@ namespace webpp {
                   typename EList, // extension_pack
                   typename ReqType>
         using mid_level_extensie_type = basic_context<
-          EList, ReqType,
+          TraitsType, EList, ReqType,
           // getting the extensie_type of the basic_response
           typename ExtensionListType::template extensie_type<TraitsType, basic_response_descriptor>>;
 
