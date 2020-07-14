@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-project(webpp_helloworld)
 
 file(GLOB BIN_SOURCES *.cpp)
 set(CMAKE_CXX_STANDARD 20)
@@ -13,12 +11,11 @@ generate_config_file(${CMAKE_CURRENT_BINARY_DIR}/config.h index.html)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-set(EXEC_NAME ${PROJECT_NAME})
-
-find_package(webpp_static REQUIRED)
+set(EXEC_NAME webpp_helloworld)
 
 add_executable(${EXEC_NAME} ${BIN_SOURCES})
 target_link_libraries(${EXEC_NAME}
-        PRIVATE webpp::webpp_static
+        PRIVATE ${LIB_NAME}
         )
+set_target_properties(${EXEC_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 install(TARGETS ${EXEC_NAME} DESTINATION /srv/http/cgi-bin)
