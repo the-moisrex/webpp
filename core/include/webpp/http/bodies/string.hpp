@@ -93,7 +93,8 @@ namespace webpp {
 
                 template <typename... Args>
                 constexpr auto string(Args&&... args) const noexcept {
-                    constexpr bool has_allocator = (istl::Allocator<Args>, ...); // we only care about the last one
+                    // check if there's an allocator in the args:
+                    constexpr bool has_allocator = (istl::Allocator<Args> || ...);
                     if constexpr (has_allocator) {
                         return string_response{stl::forward<Args>(args)...};
                     } else {

@@ -14,6 +14,7 @@
 #include "./webpp/http/routes/context.hpp"
 #include "./webpp/http/routes/path.hpp"
 #include "./webpp/http/routes/tpath.hpp"
+#include "./webpp/http/routes/methods.hpp"
 
 // todo: optimize the includes and also include others as well
 

@@ -3,35 +3,31 @@
 
 #include "route.hpp"
 
-namespace webpp::routes {
+namespace webpp {
 
-    struct method_condition {
+    struct method_route_condition {
       private:
         const stl::string_view method_string;
 
       public:
-        constexpr method_condition(stl::string_view str) noexcept
-          : method_string(stl::move(str)) {
+        constexpr method_route_condition(stl::string_view str) noexcept : method_string(stl::move(str)) {
         }
 
-        constexpr method_condition() noexcept = default;
+        constexpr method_route_condition() noexcept = default;
 
-        template <typename RequestType>
-        [[nodiscard]] bool operator()(RequestType const& req) const noexcept {
-            return req.request_method() == method_string;
+        [[nodiscard]] bool operator()(Context auto const& ctx) const noexcept {
+            return ctx.request.request_method() == method_string;
         }
     };
 
-    //    struct method : public routes::route<method_condition> {
-    //        using routes::route<method_condition>::valve;
-    //    };
-    //
-    //    constexpr auto get  = method("GET");
-    //    constexpr auto post = method("POST");
-    //    constexpr auto head = method("HEAD");
-    //    constexpr auto put  = method("PUT");
+    using method = route<method_route_condition>;
+
+    constexpr auto get  = method("GET");
+    constexpr auto post = method("POST");
+    constexpr auto head = method("HEAD");
+    constexpr auto put  = method("PUT");
     // TODO: add more methods
-} // namespace webpp::valves
+} // namespace webpp
 
 
 #endif // WEBPP_VALVES_METHODS_H

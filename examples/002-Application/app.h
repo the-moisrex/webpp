@@ -9,9 +9,9 @@ using namespace webpp;
 using namespace webpp::routes;
 
 // admin sub application
-using admin_app = route{get and "profile" >> [] {
+using admin_app = get and "profile" >> [] {
     return "profile page";
-}};
+};
 
 
 struct app {
@@ -21,19 +21,19 @@ struct app {
 
     admin_app admin;
 
-    static constexpr webpp::router router {
-      get and (opath() / "home") >> app::home,
-      get and (opath() / "about") >> app::about, opath() / "admin" >> admin};
+    static constexpr webpp::router router{get and (opath() / "home") >> app::home,
+                                          get and (opath() / "about") >> app::about,
+                                          opath() / "admin" >> admin};
 
     app() noexcept {
     }
 
 
-    auto home(Context auto & ctx) noexcept {
+    auto home(Context auto& ctx) noexcept {
         return ctx.string("Home page");
     }
 
-    auto about(Context auto & ctx) {
+    auto about(Context auto& ctx) {
         return ctx.string("About page");
     }
 
