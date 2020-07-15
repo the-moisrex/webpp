@@ -88,7 +88,7 @@ namespace webpp {
             auto callback   = stl::forward<C>(c);
 
             constexpr auto handle_exception = [](auto err) {
-
+                // todo: use the log system here
             };
 
             // TODO: add more overrides. You can simulate "dependency injection" here
@@ -96,20 +96,29 @@ namespace webpp {
             if constexpr (stl::is_invocable_v<callable, req_t>) {
                 return handle_callback_return_type(
                   run_and_catch(handle_exception, callback, context.request));
-            } else if constexpr (stl::is_invocable_v<callable, res_t>) {
-                return handle_callback_return_type(
-                  run_and_catch(handle_exception, callback, context.response));
-            } else if constexpr (stl::is_invocable_v<callable, req_t, res_t>) {
-                return handle_callback_return_type(
-                  run_and_catch(handle_exception, callback, context.request, context.response));
-            } else if constexpr (stl::is_invocable_v<callable, res_t, req_t>) {
-                return handle_callback_return_type(
-                  run_and_catch(handle_exception, callback, context.response, context.request));
+                //            } else if constexpr (stl::is_invocable_v<callable, res_t>) {
+                //                return handle_callback_return_type(
+                //                  run_and_catch(handle_exception, callback, context.response));
+                //            } else if constexpr (stl::is_invocable_v<callable, req_t, res_t>) {
+                //                return handle_callback_return_type(
+                //                  run_and_catch(handle_exception, callback, context.request,
+                //                  context.response));
+                //            } else if constexpr (stl::is_invocable_v<callable, res_t, req_t>) {
+                //                return handle_callback_return_type(
+                //                  run_and_catch(handle_exception, callback, context.response,
+                //                  context.request));
             } else if constexpr (stl::is_invocable_v<callable, context_t>) {
                 return handle_callback_return_type(run_and_catch(handle_exception, callback, context));
+            } else if constexpr (stl::is_invocable_v<callable, context_t, req_t>) {
+                return handle_callback_return_type(
+                  run_and_catch(handle_exception, callback, context, context.request));
+            } else if constexpr (stl::is_invocable_v<callable, req_t, context_t>) {
+                return handle_callback_return_type(
+                  run_and_catch(handle_exception, callback, context.request, context));
             } else if constexpr (stl::is_invocable_v<callable>) {
                 return handle_callback_return_type(run_and_catch(handle_exception, callback));
             } else {
+                // todo: move this throw in the log system
                 throw stl::invalid_argument("The specified route cannot be called.");
             }
         }
@@ -211,7 +220,6 @@ namespace webpp {
             }
 
           public:
-
             [[nodiscard]] constexpr auto operator&&(Route auto&& new_route) const noexcept {
                 return set_next<logical_operators::AND>(stl::forward<decltype(new_route)>(new_route));
             }
