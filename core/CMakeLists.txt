@@ -79,6 +79,8 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookies_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie_extensions.hpp
 
+        ${LIB_INCLUDE_DIR}/webpp/logs/log_concepts.hpp
+
         ${LIB_INCLUDE_DIR}/main.hpp
         ${LIB_INCLUDE_DIR}/webpp.hpp
         include/webpp/http/bodies/string.hpp)
