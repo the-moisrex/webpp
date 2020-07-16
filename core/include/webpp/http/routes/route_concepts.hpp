@@ -11,14 +11,9 @@ namespace webpp {
     template <typename T>
     concept RouteResponse = Response<T> || ConvertibleToResponse<T> || Context<T> || stl::same_as<T, bool>;
 
-    // todo: complete this concept
     template <typename T>
-    concept Route = stl::same_as<T, void> || requires {
-        typename T::template route_type<fake_traits_type>;
-        requires requires(typename T::template route_type<fake_traits_type> r) {
-            { r() }
-            ->RouteResponse;
-        };
+    concept Route = stl::is_void_v<T> || requires(T obj) {
+        {obj.template operator()<fake_context_type>(fake_context_type{})};
     };
 
 } // namespace webpp

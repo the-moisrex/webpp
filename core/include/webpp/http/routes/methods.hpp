@@ -27,6 +27,7 @@ namespace webpp {
     constexpr auto head = method("HEAD");
     constexpr auto put  = method("PUT");
     // TODO: add more methods
+
 } // namespace webpp
 
 

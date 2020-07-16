@@ -32,17 +32,28 @@ using context_type = simple_context<request_type>;
 struct fake_mommy {
     template <typename TraitsType>
     struct type {
-        bool test = true;
+        bool test             = true;
+        type()                = default;
+        type(type const&)     = default;
+        type(type&&) noexcept = default;
     };
 };
 
 TEST(Routes, PathTests) {
     using namespace webpp::routes;
+
+    EXPECT_TRUE(static_cast<bool>(Interface<typename fake_request_type::interface_type>));
+
+    EXPECT_TRUE(static_cast<bool>(Traits<typename fake_context_type::traits_type>));
+    EXPECT_TRUE(static_cast<bool>(Request<typename fake_context_type::request_type>));
+    EXPECT_TRUE(static_cast<bool>(std::is_copy_constructible_v<fake_context_type>));
+    EXPECT_TRUE(static_cast<bool>(std::is_move_constructible_v<fake_context_type>));
+    EXPECT_TRUE(static_cast<bool>(Context<fake_context_type>));
+
     request_type req;
     context_type ctx{req};
 
-    auto nctx = ctx.template clone<fake_mommy>();
+    auto nctx       = ctx.template clone<fake_mommy>();
     using nctx_type = decltype(nctx);
     EXPECT_TRUE(nctx.test);
 }
-

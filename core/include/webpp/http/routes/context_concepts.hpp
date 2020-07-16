@@ -91,6 +91,15 @@ namespace webpp {
         {c.request};
     };
 
+    struct fake_context_type {
+        using traits_type = fake_traits_type;
+        using request_type = fake_request_type;
+        request_type request{};
+        fake_context_type() = default;
+        fake_context_type(request_type req) : request{req} {}
+        fake_context_type(fake_context_type const&) = default;
+        fake_context_type(fake_context_type&&) noexcept = default;
+    };
 
 } // namespace webpp
 

@@ -12,7 +12,10 @@
 namespace webpp {
 
     template <typename T>
-    concept Request = Traits<typename T::traits_type>&& Interface<typename T::interface_type>;
+    concept Request = Traits<typename T::traits_type>&&
+      Interface<typename T::interface_type>&& requires(T req) {
+        {req.request_uri()};
+    };
 
 
     template <typename T>

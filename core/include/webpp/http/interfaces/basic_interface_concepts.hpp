@@ -11,6 +11,7 @@ namespace webpp {
     };
 
     struct fake_interface_type {
+        using traits_type = fake_traits_type;
         void operator()() noexcept {
         }
     };

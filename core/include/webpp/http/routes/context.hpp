@@ -179,10 +179,9 @@ namespace webpp {
             request(req) {
         }
 
-        template <Context ContextType>
-        constexpr basic_context(ContextType&& ctx) noexcept
-          : request{ctx.request},
-            elist_type{stl::forward<ContextType>(ctx)} {
+        constexpr basic_context(basic_context&& ctx) noexcept
+          : request{std::move(ctx.request)},
+            elist_type{std::move(ctx)} {
         }
 
         [[nodiscard]] auto const& get_allocator() const noexcept {

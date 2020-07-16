@@ -165,6 +165,9 @@ namespace webpp {
             using RouteType::RouteType;
         };
 
+        template <>
+        struct basic_route<void, logical_operators::none, void> {};
+
         template <Route RouteType = void, logical_operators Op = logical_operators::none,
                   Route NextRouteType = void>
         struct route : public basic_route<RouteType, Op, NextRouteType> {
@@ -282,7 +285,8 @@ namespace webpp {
         };
     } // namespace details
 
-    using route = details::route<>;
+    template <typename... T>
+    using route = details::route<T...>;
 } // namespace webpp
 
 #endif // WEBPP_ROUTES_ROUTE_H
