@@ -8,22 +8,14 @@
 using namespace webpp;
 using namespace webpp::routes;
 
-// admin sub application
-using admin_app = get and "profile" >> [] {
-    return "profile page";
-};
-
-
 struct app {
 
-    // webpp can pick up on this
-    using traits_type = std_traits;
+    static constexpr auto admin = [] {
+        return "profile page";
+    };
 
-    admin_app admin;
-
-    static constexpr webpp::router router{get and (opath() / "home") >> app::home,
-                                          get and (opath() / "about") >> app::about,
-                                          opath() / "admin" >> admin};
+    const router<> router{get and (root / "home") >> app::home, get and (root / "about") >> app::about,
+                          root / "admin" >> admin};
 
     app() noexcept {
     }
