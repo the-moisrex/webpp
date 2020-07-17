@@ -5,6 +5,12 @@
 
 #include "functional.hpp"
 
+#include <any>
+#include <chrono>
+#include <future>
+#include <queue>
+#include <thread>
+
 namespace webpp {
     /**
      * Leading:   non-async
@@ -30,23 +36,22 @@ namespace webpp {
     template <typename Callable, typename Rep, typename Period, typename Clock>
     struct debounce_ctors : public Callable {
       protected:
-        using Interval           = std::chrono::duration<Rep, Period>;
-        const Interval _interval = std::chrono::duration<Rep, Period>{1000};
+        using Interval           = stl::chrono::duration<Rep, Period>;
+        const Interval _interval = stl::chrono::duration<Rep, Period>{1000};
 
       public:
         template <typename... Args>
-        constexpr debounce_ctors(Args&&... args) noexcept
-          : Callable{std::forward<Args>(args)...} {
+        constexpr debounce_ctors(Args&&... args) noexcept : Callable{stl::forward<Args>(args)...} {
         }
 
         template <typename... Args>
         constexpr debounce_ctors(Interval __interval, Args&&... args) noexcept
-          : Callable{std::forward<Args>(args)...},
-            _interval(std::move(__interval)) {
+          : Callable{stl::forward<Args>(args)...},
+            _interval(stl::move(__interval)) {
         }
 
         constexpr void interval(Interval __interval) noexcept {
-            _interval = std::move(__interval);
+            _interval = stl::move(__interval);
         }
 
         [[nodiscard]] constexpr auto& interval() const noexcept {
@@ -58,8 +63,7 @@ namespace webpp {
      * Implementations
      **************************************************************************/
 
-    template <typename Callable, debounce_type DType, typename Rep,
-              typename Period, typename Clock>
+    template <typename Callable, debounce_type DType, typename Rep, typename Period, typename Clock>
     struct debounce_impl : public debounce_ctors<Callable, Rep, Period, Clock> {
         using ctors = debounce_ctors<Callable, Rep, Period, Clock>;
         using ctors::ctors;
@@ -78,54 +82,52 @@ namespace webpp {
         using ctors = debounce_ctors<Callable, Rep, Period, Clock>;
 
       protected:
-        mutable std::chrono::time_point<Clock> last_invoke_time;
+        mutable stl::chrono::time_point<Clock> last_invoke_time;
 
         // TODO: convert this to "void*"; but benchmark the performance first.
         // and even if it's possible, make the whole thing "constexpr" friendly.
-        mutable std::any res;
+        mutable stl::any res;
 
       public:
         using ctors::ctors;
 
         template <typename... Args>
-        auto operator()(Args&&... args) noexcept(
-          std::is_nothrow_invocable_v<Callable, Args...>) {
-            using RetType = std::invoke_result_t<Callable, Args...>;
+        auto operator()(Args&&... args) noexcept(stl::is_nothrow_invocable_v<Callable, Args...>) {
+            using RetType = stl::invoke_result_t<Callable, Args...>;
 
-            if constexpr (std::is_void_v<RetType>) {
+            if constexpr (stl::is_void_v<RetType>) {
                 if ((Clock::now() - last_invoke_time) > ctors::interval()) {
-                    Callable::operator()(std::forward<Args>(args)...);
+                    Callable::operator()(stl::forward<Args>(args)...);
                     last_invoke_time = Clock::now();
                 }
             } else {
                 if ((Clock::now() - last_invoke_time) > ctors::interval()) {
-                    res = Callable::operator()(std::forward<Args>(args)...);
+                    res              = Callable::operator()(stl::forward<Args>(args)...);
                     last_invoke_time = Clock::now();
-                    return std::any_cast<RetType>(res);
+                    return stl::any_cast<RetType>(res);
                 } else {
-                    return std::any_cast<RetType>(res);
+                    return stl::any_cast<RetType>(res);
                 }
             }
         }
 
 
         template <typename... Args>
-        auto operator()(Args&&... args) const
-          noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
-            using RetType = std::invoke_result_t<Callable, Args...>;
+        auto operator()(Args&&... args) const noexcept(stl::is_nothrow_invocable_v<Callable, Args...>) {
+            using RetType = stl::invoke_result_t<Callable, Args...>;
 
-            if constexpr (std::is_void_v<RetType>) {
+            if constexpr (stl::is_void_v<RetType>) {
                 if ((Clock::now() - last_invoke_time) > ctors::interval()) {
-                    Callable::operator()(std::forward<Args>(args)...);
+                    Callable::operator()(stl::forward<Args>(args)...);
                     last_invoke_time = Clock::now();
                 }
             } else {
                 if ((Clock::now() - last_invoke_time) > ctors::interval()) {
-                    res = Callable::operator()(std::forward<Args>(args)...);
+                    res              = Callable::operator()(stl::forward<Args>(args)...);
                     last_invoke_time = Clock::now();
-                    return std::any_cast<RetType>(res);
+                    return stl::any_cast<RetType>(res);
                 } else {
-                    return std::any_cast<RetType>(res);
+                    return stl::any_cast<RetType>(res);
                 }
             }
         }
@@ -141,33 +143,32 @@ namespace webpp {
         using ctors = debounce_ctors<Callable, Rep, Period, Clock>;
 
       protected:
-        std::queue<std::thread> trs;
-        std::atomic<bool>       done = false;
+        stl::queue<stl::thread> trs;
+        stl::atomic<bool>       done = false;
 
         template <typename RetType, typename... Args>
-        std::future<RetType> async_run_later(Args&&... args) noexcept(
-          std::is_nothrow_invocable_v<Callable, Args...>) {
-            std::this_thread::sleep_for(ctors::interval());
-            return flush(std::forward<Args>(args)...);
+        stl::future<RetType>
+        async_run_later(Args&&... args) noexcept(stl::is_nothrow_invocable_v<Callable, Args...>) {
+            stl::this_thread::sleep_for(ctors::interval());
+            return flush(stl::forward<Args>(args)...);
         }
 
       public:
         using ctors::debounce_ctors;
 
         template <typename RetType, typename... Args>
-        std::future<RetType> operator()(Args&&... args) noexcept(
-          std::is_nothrow_invocable_v<Callable, Args...>) {
-            trs.emplace(&debounce_impl::async_run_later, *this,
-                        std::forward<Args>(args)...);
+        stl::future<RetType>
+        operator()(Args&&... args) noexcept(stl::is_nothrow_invocable_v<Callable, Args...>) {
+            trs.emplace(&debounce_impl::async_run_later, *this, stl::forward<Args>(args)...);
         }
 
         ~debounce_impl() noexcept {
             // cancel everything and wait for the thread to join
-            done.store(true, std::memory_order_relaxed);
+            done.store(true, stl::memory_order_relaxed);
 
             // join all the threads
             while (!trs.empty()) {
-                auto tr = std::move(trs.front());
+                auto tr = stl::move(trs.front());
                 if (tr.joinable())
                     tr.join();
                 trs.pop();
@@ -179,18 +180,17 @@ namespace webpp {
          * @param value
          */
         void cancel() noexcept {
-            done.store(true, std::memory_order_relaxed);
+            done.store(true, stl::memory_order_relaxed);
         }
 
         /**
          * Call the callable now
          */
         template <typename... Args>
-        auto flush(Args&&... args) noexcept(
-          std::is_nothrow_invocable_v<Callable, Args...>)
-          -> std::invoke_result_t<Callable, Args...> {
-            auto res = Callable::operator()(std::forward<Args>(args)...);
-            done.store(true, std::memory_order_relaxed);
+        auto flush(Args&&... args) noexcept(stl::is_nothrow_invocable_v<Callable, Args...>)
+          -> stl::invoke_result_t<Callable, Args...> {
+            auto res = Callable::operator()(stl::forward<Args>(args)...);
+            done.store(true, stl::memory_order_relaxed);
             return res;
         }
 
@@ -199,7 +199,7 @@ namespace webpp {
          * @return true if the function is done, and false otherwise.
          */
         bool pending() noexcept {
-            return !done.load(std::memory_order_relaxed);
+            return !done.load(stl::memory_order_relaxed);
         }
     };
 
@@ -232,13 +232,10 @@ namespace webpp {
      * https://github.com/lodash/lodash/blob/15e1557b2a97c8bbee22d873832d90ed3ba50ba7/debounce.js
      */
     template <typename Callable, debounce_type DType = debounce_type::leading,
-              typename Rep    = std::chrono::milliseconds::rep,
-              typename Period = std::chrono::milliseconds::period,
-              typename Clock  = std::chrono::steady_clock>
-    class debounce_t : public debounce_impl<make_inheritable<Callable>, DType,
-                                            Rep, Period, Clock> {
-        using impl_t =
-          debounce_impl<make_inheritable<Callable>, DType, Rep, Period, Clock>;
+              typename Rep    = stl::chrono::milliseconds::rep,
+              typename Period = stl::chrono::milliseconds::period, typename Clock = stl::chrono::steady_clock>
+    class debounce_t : public debounce_impl<make_inheritable<Callable>, DType, Rep, Period, Clock> {
+        using impl_t = debounce_impl<make_inheritable<Callable>, DType, Rep, Period, Clock>;
 
       public:
         using impl_t::impl_t;
@@ -250,45 +247,33 @@ namespace webpp {
 
 
     template <typename Callable, debounce_type DType = debounce_type::leading,
-              typename Rep    = std::chrono::milliseconds::rep,
-              typename Period = std::chrono::milliseconds::period,
-              typename Clock  = std::chrono::steady_clock>
+              typename Rep    = stl::chrono::milliseconds::rep,
+              typename Period = stl::chrono::milliseconds::period, typename Clock = stl::chrono::steady_clock>
     struct debounce : public debounce_t<Callable, DType, Rep, Period, Clock> {
         using super = debounce_t<Callable, DType, Rep, Period, Clock>;
         using super::super;
     };
 
-    template <typename Callable, typename Rep = std::chrono::milliseconds::rep,
-              typename Period = std::chrono::milliseconds::period,
-              typename Clock  = std::chrono::steady_clock>
-    struct debounce_leading
-      : public debounce_t<Callable, debounce_type::leading, Rep, Period,
-                          Clock> {
-        using super =
-          debounce_t<Callable, debounce_type::leading, Rep, Period, Clock>;
+    template <typename Callable, typename Rep = stl::chrono::milliseconds::rep,
+              typename Period = stl::chrono::milliseconds::period, typename Clock = stl::chrono::steady_clock>
+    struct debounce_leading : public debounce_t<Callable, debounce_type::leading, Rep, Period, Clock> {
+        using super = debounce_t<Callable, debounce_type::leading, Rep, Period, Clock>;
         using super::super;
     };
 
 
-    template <typename Callable, typename Rep = std::chrono::milliseconds::rep,
-              typename Period = std::chrono::milliseconds::period,
-              typename Clock  = std::chrono::steady_clock>
-    struct debounce_trailing
-      : public debounce_t<Callable, debounce_type::trailing, Rep, Period,
-                          Clock> {
-        using super =
-          debounce_t<Callable, debounce_type::trailing, Rep, Period, Clock>;
+    template <typename Callable, typename Rep = stl::chrono::milliseconds::rep,
+              typename Period = stl::chrono::milliseconds::period, typename Clock = stl::chrono::steady_clock>
+    struct debounce_trailing : public debounce_t<Callable, debounce_type::trailing, Rep, Period, Clock> {
+        using super = debounce_t<Callable, debounce_type::trailing, Rep, Period, Clock>;
         using super::super;
     };
 
 
-    template <typename Callable, typename Rep = std::chrono::milliseconds::rep,
-              typename Period = std::chrono::milliseconds::period,
-              typename Clock  = std::chrono::steady_clock>
-    struct debounce_both
-      : public debounce_t<Callable, debounce_type::both, Rep, Period, Clock> {
-        using super =
-          debounce_t<Callable, debounce_type::both, Rep, Period, Clock>;
+    template <typename Callable, typename Rep = stl::chrono::milliseconds::rep,
+              typename Period = stl::chrono::milliseconds::period, typename Clock = stl::chrono::steady_clock>
+    struct debounce_both : public debounce_t<Callable, debounce_type::both, Rep, Period, Clock> {
+        using super = debounce_t<Callable, debounce_type::both, Rep, Period, Clock>;
         using super::super;
     };
 
@@ -299,68 +284,55 @@ namespace webpp {
      **************************************************************************/
 
     template <typename Callable, debounce_type DType = debounce_type::leading,
-              typename Rep    = std::chrono::milliseconds::rep,
-              typename Period = std::chrono::milliseconds::period,
-              typename Clock  = std::chrono::steady_clock>
-    debounce(std::chrono::duration<Rep, Period> interval, Callable func)
+              typename Rep    = stl::chrono::milliseconds::rep,
+              typename Period = stl::chrono::milliseconds::period, typename Clock = stl::chrono::steady_clock>
+    debounce(stl::chrono::duration<Rep, Period> interval, Callable func)
       -> debounce<decltype(func), DType, Rep, Period, Clock>;
 
     template <typename Callable, debounce_type DType = debounce_type::leading,
-              typename Rep    = std::chrono::milliseconds::rep,
-              typename Period = std::chrono::milliseconds::period,
-              typename Clock  = std::chrono::steady_clock>
-    debounce(Callable func)
-      -> debounce<decltype(func), DType, Rep, Period, Clock>;
+              typename Rep    = stl::chrono::milliseconds::rep,
+              typename Period = stl::chrono::milliseconds::period, typename Clock = stl::chrono::steady_clock>
+    debounce(Callable func) -> debounce<decltype(func), DType, Rep, Period, Clock>;
 
     // leading
 
     template <typename Callable, debounce_type DType = debounce_type::leading,
-              typename Rep    = std::chrono::milliseconds::rep,
-              typename Period = std::chrono::milliseconds::period,
-              typename Clock  = std::chrono::steady_clock>
-    debounce_leading(std::chrono::duration<Rep, Period> interval, Callable func)
+              typename Rep    = stl::chrono::milliseconds::rep,
+              typename Period = stl::chrono::milliseconds::period, typename Clock = stl::chrono::steady_clock>
+    debounce_leading(stl::chrono::duration<Rep, Period> interval, Callable func)
       -> debounce_leading<decltype(func), Rep, Period, Clock>;
 
     template <typename Callable, debounce_type DType = debounce_type::leading,
-              typename Rep    = std::chrono::milliseconds::rep,
-              typename Period = std::chrono::milliseconds::period,
-              typename Clock  = std::chrono::steady_clock>
-    debounce_leading(Callable func)
-      -> debounce_leading<decltype(func), Rep, Period, Clock>;
+              typename Rep    = stl::chrono::milliseconds::rep,
+              typename Period = stl::chrono::milliseconds::period, typename Clock = stl::chrono::steady_clock>
+    debounce_leading(Callable func) -> debounce_leading<decltype(func), Rep, Period, Clock>;
 
     // trailing
 
     template <typename Callable, debounce_type DType = debounce_type::leading,
-              typename Rep    = std::chrono::milliseconds::rep,
-              typename Period = std::chrono::milliseconds::period,
-              typename Clock  = std::chrono::steady_clock>
-    debounce_trailing(std::chrono::duration<Rep, Period> interval,
-                      Callable                           func)
+              typename Rep    = stl::chrono::milliseconds::rep,
+              typename Period = stl::chrono::milliseconds::period, typename Clock = stl::chrono::steady_clock>
+    debounce_trailing(stl::chrono::duration<Rep, Period> interval, Callable func)
       -> debounce_trailing<decltype(func), Rep, Period, Clock>;
 
     template <typename Callable, debounce_type DType = debounce_type::leading,
-              typename Rep    = std::chrono::milliseconds::rep,
-              typename Period = std::chrono::milliseconds::period,
-              typename Clock  = std::chrono::steady_clock>
-    debounce_trailing(Callable func)
-      -> debounce_trailing<decltype(func), Rep, Period, Clock>;
+              typename Rep    = stl::chrono::milliseconds::rep,
+              typename Period = stl::chrono::milliseconds::period, typename Clock = stl::chrono::steady_clock>
+    debounce_trailing(Callable func) -> debounce_trailing<decltype(func), Rep, Period, Clock>;
 
 
     // both
 
     template <typename Callable, debounce_type DType = debounce_type::leading,
-              typename Rep    = std::chrono::milliseconds::rep,
-              typename Period = std::chrono::milliseconds::period,
-              typename Clock  = std::chrono::steady_clock>
-    debounce_both(std::chrono::duration<Rep, Period> interval, Callable func)
+              typename Rep    = stl::chrono::milliseconds::rep,
+              typename Period = stl::chrono::milliseconds::period, typename Clock = stl::chrono::steady_clock>
+    debounce_both(stl::chrono::duration<Rep, Period> interval, Callable func)
       -> debounce_both<decltype(func), Rep, Period, Clock>;
 
     template <typename Callable, debounce_type DType = debounce_type::leading,
-              typename Rep    = std::chrono::milliseconds::rep,
-              typename Period = std::chrono::milliseconds::period,
-              typename Clock  = std::chrono::steady_clock>
-    debounce_both(Callable func)
-      -> debounce_both<decltype(func), Rep, Period, Clock>;
+              typename Rep    = stl::chrono::milliseconds::rep,
+              typename Period = stl::chrono::milliseconds::period, typename Clock = stl::chrono::steady_clock>
+    debounce_both(Callable func) -> debounce_both<decltype(func), Rep, Period, Clock>;
 
 
     /**************************************************************************
@@ -369,12 +341,12 @@ namespace webpp {
 
     //    template<typename Callable, debounce_type DType =
     //    debounce_type::leading,
-    //            typename Clock = std::chrono::steady_clock,
-    //            typename Rep = std::chrono::nanoseconds::rep,
-    //            typename Period = std::chrono::nanoseconds::period>
+    //            typename Clock = stl::chrono::steady_clock,
+    //            typename Rep = stl::chrono::nanoseconds::rep,
+    //            typename Period = stl::chrono::nanoseconds::period>
     //    constexpr auto debounce(Callable callable,
-    //                            std::chrono::duration<Rep, Period> interval =
-    //                            std::chrono::milliseconds(1000)) noexcept {
+    //                            stl::chrono::duration<Rep, Period> interval =
+    //                            stl::chrono::milliseconds(1000)) noexcept {
     //        debounce_t<Callable, DType, Rep, Period, Clock>
     //        debounced{callable}; debounced.interval(interval); return
     //        debounced;
@@ -382,11 +354,11 @@ namespace webpp {
     //
     //    template<typename Callable, debounce_type DType =
     //    debounce_type::leading,
-    //            typename Clock = std::chrono::steady_clock,
-    //            typename Rep = std::chrono::nanoseconds::rep,
-    //            typename Period = std::chrono::nanoseconds::period>
-    //    constexpr auto debounce(std::chrono::duration<Rep, Period> interval =
-    //    std::chrono::milliseconds(1000)) noexcept {
+    //            typename Clock = stl::chrono::steady_clock,
+    //            typename Rep = stl::chrono::nanoseconds::rep,
+    //            typename Period = stl::chrono::nanoseconds::period>
+    //    constexpr auto debounce(stl::chrono::duration<Rep, Period> interval =
+    //    stl::chrono::milliseconds(1000)) noexcept {
     //        return debounce_t<Callable, DType, Rep, Period, Clock>{interval};
     //    }
 

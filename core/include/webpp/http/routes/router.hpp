@@ -3,12 +3,13 @@
 
 #include "../../extensions/extension.hpp"
 #include "../../std/vector.hpp"
+#include "../bodies/string.hpp"
 #include "../request_concepts.hpp"
 #include "../response_concepts.hpp"
 #include "./context.hpp"
 #include "./route_concepts.hpp"
 #include "./router_concepts.hpp"
-#include "../bodies/string.hpp"
+#include "../../std/tuple.hpp"
 
 #include <functional>
 #include <map>
@@ -16,6 +17,11 @@
 #include <type_traits>
 
 namespace webpp {
+
+    template <typename T>
+    struct application_pointers {
+        static constexpr bool value = stl::is_pointer_v<T> && stl::is_class_v<stl::remove_pointer_t<T>>;
+    };
 
 
     /**
@@ -25,16 +31,23 @@ namespace webpp {
      * @tparam ExtensionListType
      * @tparam RouteType
      */
-    template <ExtensionList ExtensionListType = empty_extension_pack, Route... RouteType>
+    template <ExtensionList ExtensionListType = empty_extension_pack, typename AppTypes = stl::tuple<>,
+              RealRoute... RouteType>
+    requires (istl::TupleOf<application_pointers, AppTypes>)
     struct router {
 
 
         // todo: Additional routes extracted from the extensions
         //        using additional_routes = ;
-
-        const stl::tuple<RouteType...> routes;
+        [[no_unique_address]] const AppTypes apps{};
+        const stl::tuple<RouteType...>       routes;
 
         constexpr router(RouteType&&... _route) noexcept : routes(stl::forward<RouteType>(_route)...) {
+        }
+
+        constexpr router(AppTypes _apps, RouteType&&... _route) noexcept
+          : apps{_apps},
+            routes(stl::forward<RouteType>(_route)...) {
         }
 
 
@@ -63,7 +76,7 @@ namespace webpp {
         }
 
         auto error(Context auto const& ctx, status_code_type error_code,
-                            stl::string_view phrase = "") const noexcept {
+                   stl::string_view phrase = "") const noexcept {
             // todo: add methods to change the default error template and individual ones
             stl::string_view _phrase = phrase.empty() ? status_reason_phrase(error_code) : phrase;
             return ctx.template response<string_response>(

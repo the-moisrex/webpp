@@ -133,22 +133,22 @@ namespace webpp {
             constexpr static logical_operators op = Op;
             next_valve_type                    next;
 
-            constexpr basic_route(RouteType&& super, next_valve_type&& _next) noexcept
+            constexpr basic_route(RouteType&& super = RouteType{}, next_valve_type&& _next = next_valve_type{}) noexcept
               : RouteType(stl::move(super)),
                 next(stl::move(_next)) {
             }
 
-            constexpr basic_route(RouteType const& super, const next_valve_type& _next) noexcept
+            constexpr basic_route(RouteType const& super = RouteType{}, const next_valve_type& _next = next_valve_type{}) noexcept
               : RouteType(super),
                 next(_next) {
             }
 
-            constexpr basic_route(RouteType const& super, next_valve_type&& _next) noexcept
+            constexpr basic_route(RouteType const& super = RouteType{}, next_valve_type&& _next = next_valve_type{}) noexcept
               : RouteType(super),
                 next(stl::move(_next)) {
             }
 
-            constexpr basic_route(RouteType&& super, next_valve_type const& _next) noexcept
+            constexpr basic_route(RouteType&& super = RouteType{}, next_valve_type const& _next = next_valve_type{}) noexcept
               : RouteType(stl::move(super)),
                 next(_next) {
             }
@@ -162,14 +162,19 @@ namespace webpp {
 
         template <Route RouteType>
         struct basic_route<RouteType, logical_operators::none, void> : public make_inheritable<RouteType> {
-            using RouteType::RouteType;
+            using super_t = make_inheritable<RouteType>;
+
+            template <typename ...Args>
+            constexpr basic_route(Args&& ...args) noexcept : super_t{stl::forward<Args>(args)...} {}
         };
 
         template <>
-        struct basic_route<void, logical_operators::none, void> {};
+        struct basic_route<void, logical_operators::none, void> {
+            void operator()(Context auto const&) const noexcept{}
+        };
 
-        template <Route RouteType = void, logical_operators Op = logical_operators::none,
-                  Route NextRouteType = void>
+        template <typename RouteType = void, logical_operators Op = logical_operators::none,
+                  typename NextRouteType = void>
         struct route : public basic_route<RouteType, Op, NextRouteType> {
 
             using route_type                      = RouteType;
@@ -188,7 +193,7 @@ namespace webpp {
             constexpr route(route&&) noexcept      = default;
 
             template <typename... Args>
-            requires(stl::is_constructible_v<super_t, Args...>) constexpr route(Args&&... args) noexcept
+            constexpr route(Args&&... args) noexcept
               : super_t{stl::forward<Args>(args)...} {
             }
 
@@ -243,7 +248,11 @@ namespace webpp {
                 return set_next<logical_operators::XOR>(stl::forward<decltype(new_route)>(new_route));
             }
 
-            [[nodiscard]] constexpr auto operator>>(Route auto&& new_route) const noexcept {
+            [[nodiscard]] constexpr auto operator>>=(Route auto&& new_route) const noexcept {
+                return set_next<logical_operators::none>(stl::forward<decltype(new_route)>(new_route));
+            }
+
+            [[nodiscard]] constexpr auto operator=(Route auto&& new_route) const noexcept {
                 return set_next<logical_operators::none>(stl::forward<decltype(new_route)>(new_route));
             }
 
@@ -263,8 +272,13 @@ namespace webpp {
             }
 
             [[nodiscard]] bool operator()(Context auto&& ctx) const noexcept {
-                // handling sub-route calls:
                 using context_type = decltype(ctx);
+                static_assert(stl::is_invocable_v<route_type, context_type>,
+                        "The specified route is not capable of handling this context. "
+                        "Your route might be in the wrong place or previous routes in the router "
+                        "should've switched the context to something that this route is able to use.");
+
+                // handling sub-route calls:
                 if constexpr (logical_operators::none == op) {
                     call_this_route(stl::forward<context_type>(ctx));
                     return call_next_route(stl::forward<context_type>(ctx));

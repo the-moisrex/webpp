@@ -28,12 +28,25 @@ namespace webpp::istl {
     template <typename T>
     concept Tuple = is_tuple<T>::value;
 
-    //    template <template <typename> typename Concept,
-    //              template <typename...> typename Tup, typename... T>
-    //    concept TupleOf = Tuple<Tup<T...>>&& requires(Tup<T...> tup) {
+    //    template <template <typename> typename Concept, template <typename...> typename Tup, typename... T>
+    //    concept TupleOf = Tuple<Tup<T...>>&& requires {
     //        (Concept<T>::value && ...);
     //    };
-    //
+
+    template <template <typename> typename Concept, typename... Types>
+    struct is_tuple_of {
+        static constexpr bool value = false;
+    };
+
+    template <template <typename> typename Concept, typename... Types>
+    struct is_tuple_of<Concept, stl::tuple<Types...>> {
+        static constexpr bool value = (Concept<Types>::value && ...);
+    };
+
+
+    template <template <typename> typename Concept, typename Tup>
+    concept TupleOf = is_tuple_of<Concept, Tup>::value;
+
 
 } // namespace webpp::istl
 

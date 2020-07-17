@@ -4,5 +4,6 @@
 int main() {
     using namespace webpp;
     http<cgi<std_traits, app>> my_app;
-    return my_app();
+    my_app();
+    return 0;
 }

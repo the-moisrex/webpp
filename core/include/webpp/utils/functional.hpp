@@ -2,10 +2,8 @@
 #define WEBPP_FUNCTIONAL_H
 
 // Created by moisrex on 12/6/19.
-#include <any>
-#include <chrono>
-#include <future>
-#include <queue>
+#include "../std/std.hpp"
+
 #include <type_traits>
 #include <utility>
 
@@ -23,20 +21,17 @@ namespace webpp {
         Return (*_erased_fn)(void*, Args...);
 
       public:
-        template <typename T, typename = std::enable_if_t<
-                                std::is_invocable<T&, Args...>{} &&
-                                !std::is_same<std::decay_t<T>, function_ref>{}>>
-        constexpr function_ref(T&& x) noexcept
-          : _ptr{(void*)std::addressof(x)} {
+        template <typename T, typename = stl::enable_if_t<stl::is_invocable<T&, Args...>{} &&
+                                                          !stl::is_same<stl::decay_t<T>, function_ref>{}>>
+        constexpr function_ref(T&& x) noexcept : _ptr{(void*)stl::addressof(x)} {
             _erased_fn = [](void* ptr, Args... xs) -> Return {
-                return (*reinterpret_cast<std::add_pointer_t<T>>(ptr))(
-                  std::forward<Args>(xs)...);
+                return (*reinterpret_cast<stl::add_pointer_t<T>>(ptr))(stl::forward<Args>(xs)...);
             };
         }
 
         constexpr decltype(auto) operator()(Args... xs) const
-          noexcept(noexcept(_erased_fn(_ptr, std::forward<Args>(xs)...))) {
-            return _erased_fn(_ptr, std::forward<Args>(xs)...);
+          noexcept(noexcept(_erased_fn(_ptr, stl::forward<Args>(xs)...))) {
+            return _erased_fn(_ptr, stl::forward<Args>(xs)...);
         }
     };
 
@@ -47,22 +42,20 @@ namespace webpp {
     template <typename Callable>
     struct callable_function {
       private:
-        std::remove_pointer_t<Callable>* func;
+        stl::remove_pointer_t<Callable>* func;
 
       public:
-        constexpr callable_function(
-          std::remove_pointer_t<Callable>* func) noexcept
-          : func(func) {
+        constexpr callable_function(stl::remove_pointer_t<Callable>* func) noexcept : func(func) {
         }
 
         template <typename... Args>
         decltype(auto) operator()(Args&&... args) const
-          noexcept(std::is_nothrow_invocable_v<Callable, Args...>) {
-            using RetType = std::invoke_result_t<Callable, Args...>;
-            if constexpr (std::is_void_v<RetType>) {
-                (*func)(std::forward<Args>(args)...);
+          noexcept(stl::is_nothrow_invocable_v<Callable, Args...>) {
+            using RetType = stl::invoke_result_t<Callable, Args...>;
+            if constexpr (stl::is_void_v<RetType>) {
+                (*func)(stl::forward<Args>(args)...);
             } else {
-                return (*func)(std::forward<Args>(args)...);
+                return (*func)(stl::forward<Args>(args)...);
             }
         }
     };
@@ -74,24 +67,16 @@ namespace webpp {
      */
     template <typename Callable>
     struct callable_as_field {
-        using Callable_t = std::remove_cv_t<Callable>;
+        using Callable_t = stl::remove_cv_t<Callable>;
         mutable Callable_t callable;
 
-        template <typename... Args,
-                  std::enable_if_t<std::is_constructible_v<Callable_t, Args...>,
-                                   int> = 0>
-        constexpr callable_as_field(Args&&... args) noexcept
-          : callable(std::forward<Args>(args)...) {
+        template <typename... Args>
+        constexpr callable_as_field(Args&&... args) noexcept : callable(stl::forward<Args>(args)...) {
         }
 
         template <typename... Args>
-        auto operator()(Args&&... args) const
-          noexcept(std::is_nothrow_invocable_v<Callable_t, Args...>) {
-            return callable(std::forward<Args>(args)...);
-        }
-
-        auto& ref() noexcept {
-            return callable;
+        auto operator()(Args&&... args) const noexcept(stl::is_nothrow_invocable_v<Callable_t, Args...>) {
+            return callable(stl::forward<Args>(args)...);
         }
     };
 
@@ -100,21 +85,19 @@ namespace webpp {
      * inherit from it). It'll make sure it's Inheritable and Callable.
      */
     template <typename Callable>
-    using make_inheritable = std::conditional_t<
-      std::is_class_v<Callable>,
-      std::conditional_t<
-        std::is_final_v<Callable>, callable_as_field<Callable>,
-        std::conditional_t<!std::is_default_constructible_v<Callable>,
-                           callable_as_field<Callable>, Callable>>,
-      callable_function<Callable>>;
+    using make_inheritable =
+      stl::conditional_t<stl::is_class_v<Callable>,
+                         stl::conditional_t<stl::is_final_v<Callable>, callable_as_field<Callable>,
+                                            stl::conditional_t<!stl::is_default_constructible_v<Callable>,
+                                                               callable_as_field<Callable>, Callable>>,
+                         callable_function<Callable>>;
 
     // Tests if T is a specialization of Template
     template <typename T, template <typename...> class Template>
-    struct is_specialization_of : std::false_type {};
+    struct is_specialization_of : stl::false_type {};
 
     template <template <typename...> class Template, typename... Args>
-    struct is_specialization_of<Template<Args...>, Template> : std::true_type {
-    };
+    struct is_specialization_of<Template<Args...>, Template> : stl::true_type {};
 
     template <class... Ts>
     struct overloaded : Ts... {
