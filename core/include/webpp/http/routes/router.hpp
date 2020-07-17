@@ -2,6 +2,7 @@
 #define WEBPP_ROUTER_H
 
 #include "../../extensions/extension.hpp"
+#include "../../std/tuple.hpp"
 #include "../../std/vector.hpp"
 #include "../bodies/string.hpp"
 #include "../request_concepts.hpp"
@@ -9,7 +10,6 @@
 #include "./context.hpp"
 #include "./route_concepts.hpp"
 #include "./router_concepts.hpp"
-#include "../../std/tuple.hpp"
 
 #include <functional>
 #include <map>
@@ -31,23 +31,26 @@ namespace webpp {
      * @tparam ExtensionListType
      * @tparam RouteType
      */
-    template <ExtensionList ExtensionListType = empty_extension_pack, typename AppTypes = stl::tuple<>,
-              RealRoute... RouteType>
-    requires (istl::TupleOf<application_pointers, AppTypes>)
+    template <ExtensionList ExtensionListType = empty_extension_pack, RealRoute... RouteType>
     struct router {
 
 
         // todo: Additional routes extracted from the extensions
         //        using additional_routes = ;
-        [[no_unique_address]] const AppTypes apps{};
-        const stl::tuple<RouteType...>       routes;
+        const stl::tuple<RouteType...> routes;
 
         constexpr router(RouteType&&... _route) noexcept : routes(stl::forward<RouteType>(_route)...) {
         }
 
-        constexpr router(AppTypes _apps, RouteType&&... _route) noexcept
-          : apps{_apps},
-            routes(stl::forward<RouteType>(_route)...) {
+        template <typename... AppTypes>
+        requires(istl::TupleOf<application_pointers, AppTypes>) constexpr router(
+          stl::tuple<AppTypes...> const& _apps, RouteType&&... _route) noexcept
+          : routes(stl::forward<RouteType>(_route)...) {
+            stl::apply(
+              [this](auto&... _route) {
+                  (..., (requires { {_route.app}; } && (_route.app = this)));
+              },
+              routes);
         }
 
 

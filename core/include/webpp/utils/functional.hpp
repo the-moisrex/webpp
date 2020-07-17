@@ -109,6 +109,18 @@ namespace webpp {
     template <class... Ts>
     overloaded(Ts...) -> overloaded<Ts...>;
 
+
+    template <typename T>
+    struct member_function_pointer {
+    };
+
+    template <typename T, typename Ret, typename ...Args>
+    struct member_function_pointer<Ret(T::*)(Args...)> {
+        using return_type = Ret;
+        using type = T;
+        using args = stl::tuple<Args...>;
+    };
+
 } // namespace webpp
 
 #endif // WEBPP_FUNCTIONAL_H

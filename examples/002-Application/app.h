@@ -14,9 +14,9 @@ struct app {
         return "profile page";
     };
 
-    const router<> router{this, get & root / "home" >>= &app::home,
-                          get & (root / "about" >>= &app::about),
-                          root / "admin" >>= admin};
+    const router<> router{this, (get & root / "home") = &app::home,
+                          get & (root / "about" = &app::about),
+                          root / "admin" = admin};
 
     auto home(Context auto& ctx) noexcept {
         return ctx.string("Home page");
