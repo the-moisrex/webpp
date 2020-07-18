@@ -43,8 +43,8 @@ namespace webpp {
         }
 
         template <typename... AppTypes>
-        requires(istl::TupleOf<application_pointers, AppTypes>) constexpr router(
-          stl::tuple<AppTypes...> const& _apps, RouteType&&... _route) noexcept
+        requires((application_pointers<AppTypes>::value && ...))
+          constexpr router(stl::tuple<AppTypes...> const& _apps, RouteType&&... _route) noexcept
           : routes(stl::forward<RouteType>(_route)...) {
             stl::apply(
               [this](auto&... _route) {

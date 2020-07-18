@@ -259,13 +259,9 @@ namespace webpp {
             }
 
             template <typename RT>
-            [[nodiscard]] constexpr auto operator=(RT&& new_route) const noexcept {
-                using rtype = stl::remove_cvref_t<RT>;
-                if constexpr (Route<rtype>) {
-                    return set_next<logical_operators::none>(stl::forward<decltype(new_route)>(new_route));
-                } else {
-                    throw stl::invalid_argument("The specified \"supposed to be a route\", is not.");
-                }
+            requires(Route<stl::remove_cvref_t<RT>>) [[nodiscard]] constexpr auto
+            operator=(RT&& new_route) const noexcept {
+                return set_next<logical_operators::none>(stl::forward<decltype(new_route)>(new_route));
             }
 
             template <typename T, typename Ret, typename... Args>
@@ -273,7 +269,7 @@ namespace webpp {
                 using app_type = T;
                 struct route_with_router_pointer {
                     app_type*          app = nullptr;
-                    [[nodiscard]] auto operator()(Context auto&& ctx) const noexcept {
+                    [[nodiscard]] auto operator()(Args...args) const noexcept -> Ret {
                         // yes we know app must not be nullptr, but route should only be used with router,
                         // and the router will set the app if it can otherwise the router can throw an
                         // error at compile time or at least at initialization time instead of when the
@@ -281,8 +277,7 @@ namespace webpp {
                         // will catch this error sooner.
                         assert(app != nullptr); // You did not supply the correct app to the router
 
-                        using context_type = decltype(ctx);
-                        return (app->*mem_func_pointer)(stl::forward<context_type>(ctx));
+                        return (app->*mem_func_pointer)(stl::forward<Args>(args)...);
                     }
                 };
                 return set_next<logical_operators::none>(route_with_router_pointer{});
