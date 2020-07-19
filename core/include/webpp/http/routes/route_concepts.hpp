@@ -12,8 +12,10 @@ namespace webpp {
     concept RouteResponse = Response<T> || ConvertibleToResponse<T> || Context<T> || stl::same_as<T, bool>;
 
     template <typename T, typename C = fake_context_type>
-    concept PotentialRoute = stl::is_void_v<T> || (stl::is_class_v<stl::remove_cvref_t<T>> && stl::is_default_constructible_v<T>) ||
-      stl::is_invocable_v<T, C>;
+    concept PotentialRoute = stl::is_void_v<T> ||
+                             (stl::is_class_v<stl::remove_cvref_t<T>> &&
+                              stl::is_default_constructible_v<stl::remove_cvref_t<T>>) ||
+                             stl::is_invocable_v<stl::remove_cvref_t<T>, C>;
 
     template <typename T, typename C = fake_context_type>
     concept Route = requires(T obj, C ctx) {

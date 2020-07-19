@@ -129,7 +129,7 @@ namespace webpp {
         template <typename RouteType, logical_operators Op, typename NextRoute>
         struct basic_route : public make_inheritable<RouteType> {
             using next_route_type = NextRoute;
-            using super_t = make_inheritable<RouteType>;
+            using super_t         = make_inheritable<RouteType>;
 
             constexpr static logical_operators op = Op;
             next_route_type                    next;
@@ -164,7 +164,7 @@ namespace webpp {
             using super_t::operator=;
         };
 
-        template <Route RouteType>
+        template <typename RouteType>
         struct basic_route<RouteType, logical_operators::none, void> : public make_inheritable<RouteType> {
             using super_t = make_inheritable<RouteType>;
 
@@ -173,7 +173,7 @@ namespace webpp {
             }
 
             constexpr basic_route(basic_route const&) noexcept = default;
-            constexpr basic_route(basic_route&&)      noexcept= default;
+            constexpr basic_route(basic_route&&) noexcept      = default;
 
             using super_t::operator=;
         };
@@ -200,15 +200,45 @@ namespace webpp {
                 ->Context;
             };
 
+          private:
+            template <bool Condition, template <typename...> typename T1, typename T2, typename... C>
+            struct lazy_conditional {};
 
+            template <template <typename...> typename T1, typename T2, typename... C>
+            struct lazy_conditional<true, T1, T2, C...> {
+                using type = T1<C...>;
+            };
+
+            template <template <typename...> typename T1, typename T2, typename... C>
+            struct lazy_conditional<false, T1, T2, C...> {
+                using type = T2;
+            };
+
+            template <bool Condition, template <typename...> typename T1, typename T2, typename... C>
+            using lazy_conditional_t = typename lazy_conditional<Condition, T1, T2, C...>::type;
+
+
+            /**
+             * Get the "switched context typed" if it's R is a route, otherwise, return the context type if
+             * the operator(C) of R is doing context switching, otherwise, return the specified default C
+             * @tparam R
+             * @tparam C
+             */
             template <typename R, typename C>
-            using route_switched_context_type = stl::conditional_t<
-              stl::is_invocable_v<R, C>,
-              stl::conditional_t<
-                Route<R>, typename R::template switched_context_type<C>,
-                stl::conditional_t<is_switching_context<R, C>,
-                                   decltype(stl::declval<R>().template operator()<C>(stl::declval<C>())), C>>,
-              C>;
+            struct lazy_switched_context_type {
+                using type = lazy_conditional_t<is_switching_context<R, C>, stl::invoke_result_t, C, R, C>;
+            };
+
+            template <Route R, typename C>
+            struct lazy_switched_context_type<R, C> {
+                using type = typename R::template switched_context_type<C>;
+            };
+
+          public:
+            template <typename R, typename C>
+            using route_switched_context_type =
+              stl::conditional_t<stl::is_invocable_v<R, C>, typename lazy_switched_context_type<R, C>::type,
+                                 C>;
 
             template <typename C>
             using route_context_type = route_switched_context_type<route_type, C>;
@@ -231,8 +261,8 @@ namespace webpp {
 
             constexpr route() noexcept : super_t{} {
             }
-            route(route const&) = delete;
-            route(route&&)      = delete;
+            constexpr route(route const&) noexcept= default;
+            constexpr route(route&&)   noexcept   = default;
             route operator=(route const&) = delete;
             route operator=(route&&) = delete;
 
@@ -295,8 +325,7 @@ namespace webpp {
             }
 
             template <PotentialRoute RT>
-            [[nodiscard]] constexpr auto
-            operator=(RT&& new_route) const noexcept {
+            [[nodiscard]] constexpr auto operator=(RT&& new_route) const noexcept {
                 return set_next<logical_operators::none>(stl::forward<decltype(new_route)>(new_route));
             }
 

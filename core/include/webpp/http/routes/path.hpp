@@ -175,24 +175,23 @@ namespace webpp::routes {
             }
         }
 
-              private:
-                template <typename NextSegType>
-                struct make_a_path {
-                    stl::decay_t<stl::remove_cvref_t<NextSegType>> new_next_segment;
+      private:
+        template <typename NextSegType>
+        struct make_a_path {
+            stl::decay_t<stl::remove_cvref_t<NextSegType>> new_next_segment;
 
-                    auto operator()(PathContext auto const& ctx) const noexcept {
-                        if constexpr (requires { {new_next_segment == ""}; }) {
-                            return new_next_segment == ctx.path.current_segment;
-                        } else if constexpr (requires { {"" == new_next_segment}; }) {
-                            return ctx.path.current_segment == new_next_segment;
-                        } else {
-                            return false; // should not happen
-                        }
-                    }
-                };
+            auto operator()(PathContext auto const& ctx) const noexcept {
+                if constexpr (requires { {new_next_segment == ""}; }) {
+                    return new_next_segment == ctx.path.current_segment;
+                } else if constexpr (requires { {"" == new_next_segment}; }) {
+                    return ctx.path.current_segment == new_next_segment;
+                } else {
+                    return false; // should not happen
+                }
+            }
+        };
 
-              public:
-
+      public:
         /**
          * Convert those segments that can be compared with a string, to a normal segment type that have
          * an operator(context)
@@ -202,18 +201,17 @@ namespace webpp::routes {
                    stl::is_class_v<stl::remove_cvref_t<NewSegType>> &&
                  !Segment<stl::remove_cvref_t<NewSegType>>) constexpr auto
         operator/(NewSegType new_next_segment) const noexcept {
-//            return operator/([=](PathContext auto const& ctx) {
-//                if constexpr (requires { {next_segment == ""}; }) {
-//                    return new_next_segment == ctx.path.current_segment;
-//                } else if constexpr (requires { {"" == new_next_segment}; }) {
-//                    return ctx.path.current_segment == new_next_segment;
-//                } else {
-//                    return false; // should not happen
-//                }
-//            });
-                        using type = stl::remove_cvref_t<NewSegType>;
-                        return operator/(make_a_path<type>{.new_next_segment =
-                        stl::move(new_next_segment)});
+            //            return operator/([=](PathContext auto const& ctx) {
+            //                if constexpr (requires { {next_segment == ""}; }) {
+            //                    return new_next_segment == ctx.path.current_segment;
+            //                } else if constexpr (requires { {"" == new_next_segment}; }) {
+            //                    return ctx.path.current_segment == new_next_segment;
+            //                } else {
+            //                    return false; // should not happen
+            //                }
+            //            });
+            using type = stl::remove_cvref_t<NewSegType>;
+            return operator/(make_a_path<type>{.new_next_segment = stl::move(new_next_segment)});
         }
 
 
