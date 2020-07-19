@@ -31,7 +31,7 @@ namespace webpp {
      * @tparam ExtensionListType
      * @tparam RouteType
      */
-    template <ExtensionList ExtensionListType = empty_extension_pack, RealRoute... RouteType>
+    template <ExtensionList ExtensionListType = empty_extension_pack, Route... RouteType>
     struct router {
 
 

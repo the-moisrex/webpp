@@ -11,14 +11,14 @@ namespace webpp {
     template <typename T>
     concept RouteResponse = Response<T> || ConvertibleToResponse<T> || Context<T> || stl::same_as<T, bool>;
 
-    template <typename T>
-    concept Route = stl::is_void_v<T> || requires (T obj) {
-        obj.template operator()<fake_context_type>;
-    };
+    template <typename T, typename C = fake_context_type>
+    concept PotentialRoute = stl::is_void_v<T> || (stl::is_class_v<stl::remove_cvref_t<T>> && stl::is_default_constructible_v<T>) ||
+      stl::is_invocable_v<T, C>;
 
-    template <typename T>
-    concept RealRoute = requires(T obj, fake_context_type ctx) {
-        {obj.template operator()<fake_context_type>(ctx)};
+    template <typename T, typename C = fake_context_type>
+    concept Route = requires(T obj, C ctx) {
+        typename T::template switched_context_type<C>;
+        {obj.template operator()<C>(ctx)};
     };
 
 } // namespace webpp
