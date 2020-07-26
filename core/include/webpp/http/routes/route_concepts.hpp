@@ -15,10 +15,12 @@ namespace webpp {
     concept PotentialRoute = stl::is_void_v<T> ||
                              (stl::is_class_v<stl::remove_cvref_t<T>> &&
                               stl::is_default_constructible_v<stl::remove_cvref_t<T>>) ||
-                             stl::is_invocable_v<stl::remove_cvref_t<T>, C>;
+                             requires(T func, C& ctx) {
+        {func(ctx)};
+    };
 
     template <typename T, typename C = fake_context_type>
-    concept Route = requires(T obj, C ctx) {
+    concept Route = requires(T obj, C& ctx) {
         typename T::template switched_context_type<C>;
         {obj.template operator()<C>(ctx)};
     };

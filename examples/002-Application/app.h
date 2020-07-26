@@ -10,14 +10,6 @@ using namespace webpp::routes;
 
 struct app {
 
-    static constexpr auto admin = [] {
-        return "profile page";
-    };
-
-    const router<> router{this, (get & root / "home") >>= &app::home,
-                          get & (root / "about" >>= &app::about),
-                          root / "admin" >>= admin};
-
     auto home(Context auto& ctx) noexcept {
         return ctx.string("Home page");
     }
@@ -26,8 +18,16 @@ struct app {
         return ctx.string("About page");
     }
 
-    Response auto operator()(Context auto& req) {
-        return this->router(req);
+    Response auto operator()(Request auto& req) {
+        const auto admin = []() {
+            return "Nice page.";
+        };
+        const router<> _router{{this},
+                              (get & root / "home") >>= [this] (Context auto & ctx) { return home(ctx); },
+                              get & (root / "about" >>= [this] (Context auto & ctx) { return about(ctx); }),
+                              root / "admin" >>= admin};
+
+        return _router(req);
     }
 };
 

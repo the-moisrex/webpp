@@ -351,6 +351,10 @@ namespace webpp {
     };
 
 
+    struct context {};
+
+    template <typename T>
+    concept ContextPlaceholder = stl::same_as<T, context>;
 
 
 

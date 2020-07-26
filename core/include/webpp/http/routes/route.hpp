@@ -319,34 +319,46 @@ namespace webpp {
                 return set_next<logical_operators::XOR>(stl::forward<decltype(new_route)>(new_route));
             }
 
-            template <typename RT>
-            [[nodiscard]] constexpr auto operator>>=(RT&& new_route) const noexcept {
-                return operator=<RT>(stl::forward<RT>(new_route));
+            [[nodiscard]] constexpr auto operator>>=(auto&& new_route) const noexcept {
+                using rt = decltype(new_route);
+                if constexpr (PotentialRoute<rt>) {
+                    return set_next<logical_operators::none>(stl::forward<decltype(new_route)>(new_route));
+                } else if constexpr (stl::is_member_function_pointer_v<rt>) {
+                    using mem_func_ptr_t = member_function_pointer<rt>;
+                    using app_type = typename mem_func_ptr_t::type;
+                    struct route_with_router_pointer {
+                        app_type*          app = nullptr;
+                        [[nodiscard]] auto operator()(auto... args) noexcept(mem_func_ptr_t::is_noexcept) {
+                            // yes we know app must not be nullptr, but route should only be used with router,
+                            // and the router will set the app if it can otherwise the router can throw an
+                            // error at compile time or at least at initialization time instead of when the
+                            // a user's request comes to this specific route. This makes sure the developers
+                            // will catch this error sooner.
+                            assert(app != nullptr); // You did not supply the correct app to the router
+
+                            return (app->*new_route)(stl::forward<decltype(args)>(args)...);
+                        }
+                    };
+                    return set_next<logical_operators::none>(route_with_router_pointer{});
+                } else {
+                    return false;
+                }
             }
 
-            template <PotentialRoute RT>
-            [[nodiscard]] constexpr auto operator=(RT&& new_route) const noexcept {
-                return set_next<logical_operators::none>(stl::forward<decltype(new_route)>(new_route));
-            }
+//            template <typename T, typename Ret, typename... Args>
+//            [[nodiscard]] constexpr auto operator>>=(Ret (T::*mem_func_pointer)(Args...)) const noexcept {
+//                using app_type = T;
+//            }
 
-            template <typename T, typename Ret, typename... Args>
-            [[nodiscard]] constexpr auto operator=(Ret (T::*mem_func_pointer)(Args...)) const noexcept {
-                using app_type = T;
-                struct route_with_router_pointer {
-                    app_type*          app = nullptr;
-                    [[nodiscard]] auto operator()(Args... args) const noexcept -> Ret {
-                        // yes we know app must not be nullptr, but route should only be used with router,
-                        // and the router will set the app if it can otherwise the router can throw an
-                        // error at compile time or at least at initialization time instead of when the
-                        // a user's request comes to this specific route. This makes sure the developers
-                        // will catch this error sooner.
-                        assert(app != nullptr); // You did not supply the correct app to the router
-
-                        return (app->*mem_func_pointer)(stl::forward<Args>(args)...);
-                    }
-                };
-                return set_next<logical_operators::none>(route_with_router_pointer{});
-            }
+//            template <typename RT>
+//            [[nodiscard]] constexpr auto operator=(RT&& new_route) const noexcept {
+//                return operator>>=<RT>(stl::forward<RT>(new_route));
+//            }
+//
+//            template <typename T, typename Ret, typename... Args>
+//            [[nodiscard]] constexpr auto operator=(Ret (T::*mem_func_pointer)(Args...)) const noexcept {
+//                return operator>>=<T, Ret, Args...>(mem_func_pointer);
+//            }
 
             [[nodiscard]] bool call_this_route(Context auto&& ctx) const noexcept {
                 // todo handle the return types
