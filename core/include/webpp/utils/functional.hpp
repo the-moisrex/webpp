@@ -111,15 +111,67 @@ namespace webpp {
 
 
     template <typename T>
-    struct member_function_pointer {
-    };
+    struct member_function_pointer {};
 
-    template <typename T, typename Ret, typename ...Args>
-    struct member_function_pointer<Ret(T::*)(Args...)> {
-        using return_type = Ret;
-        using type = T;
-        using args = stl::tuple<Args...>;
-    };
+#define MEMBER_FUNCTION_POINTER_IMPL_no_noexcept
+#define MEMBER_FUNCTION_POINTER_IMPL_no_const
+#define MEMBER_FUNCTION_POINTER_IMPL_no_ref
+#define MEMBER_FUNCTION_POINTER_IMPL_no_move
+#define MEMBER_FUNCTION_POINTER_IMPL_no_volatile
+#define MEMBER_FUNCTION_POINTER_IMPL_noexcept    noexcept
+#define MEMBER_FUNCTION_POINTER_IMPL_const       const
+#define MEMBER_FUNCTION_POINTER_IMPL_ref         &
+#define MEMBER_FUNCTION_POINTER_IMPL_move        &&
+#define MEMBER_FUNCTION_POINTER_IMPL_volatile    volatile
+#define MEMBER_FUNCTION_POINTER_IMPL_OPT(OPTION) MEMBER_FUNCTION_POINTER_IMPL_##OPTION
+
+#define MEMBER_FUNCTION_POINTER_IMPL_IF_no_noexcept false
+#define MEMBER_FUNCTION_POINTER_IMPL_IF_no_const    false
+#define MEMBER_FUNCTION_POINTER_IMPL_IF_no_ref      false
+#define MEMBER_FUNCTION_POINTER_IMPL_IF_no_move     false
+#define MEMBER_FUNCTION_POINTER_IMPL_IF_no_volatile false
+#define MEMBER_FUNCTION_POINTER_IMPL_IF_noexcept    true
+#define MEMBER_FUNCTION_POINTER_IMPL_IF_const       true
+#define MEMBER_FUNCTION_POINTER_IMPL_IF_ref         true
+#define MEMBER_FUNCTION_POINTER_IMPL_IF_move        true
+#define MEMBER_FUNCTION_POINTER_IMPL_IF_volatile    true
+#define MEMBER_FUNCTION_POINTER_IMPL_IF_OPT(OPTION) MEMBER_FUNCTION_POINTER_IMPL_IF_##OPTION
+
+#define MEMBER_FUNCTION_POINTER_IMPL(IS_CONST, IS_VOLATILE, IS_REFERENCE, IS_MOVE, IS_NOEXCEPT)              \
+    template <typename T, typename Ret, typename... Args>                                                    \
+    struct member_function_pointer<Ret (T::*)(Args...)                                                       \
+                                     MEMBER_FUNCTION_POINTER_IMPL_OPT(IS_CONST)                              \
+                                     MEMBER_FUNCTION_POINTER_IMPL_OPT(IS_VOLATILE)                           \
+                                     MEMBER_FUNCTION_POINTER_IMPL_OPT(IS_REFERENCE)                          \
+                                     MEMBER_FUNCTION_POINTER_IMPL_OPT(IS_MOVE)                               \
+                                     MEMBER_FUNCTION_POINTER_IMPL_OPT(IS_NOEXCEPT)> {                        \
+        using return_type                       = Ret;                                                       \
+        using type                              = T;                                                         \
+        using args                              = stl::tuple<Args...>;                                       \
+        static constexpr bool is_const          = MEMBER_FUNCTION_POINTER_IMPL_IF_OPT(IS_CONST);             \
+        static constexpr bool is_volatile       = MEMBER_FUNCTION_POINTER_IMPL_IF_OPT(IS_VOLATILE);          \
+        static constexpr bool returns_reference = MEMBER_FUNCTION_POINTER_IMPL_IF_OPT(IS_REFERENCE);         \
+        static constexpr bool returns_move      = MEMBER_FUNCTION_POINTER_IMPL_IF_OPT(IS_MOVE);              \
+        static constexpr bool is_noexcept       = MEMBER_FUNCTION_POINTER_IMPL_IF_OPT(IS_NOEXCEPT);          \
+    }
+
+    MEMBER_FUNCTION_POINTER_IMPL(no_const, no_volatile, no_ref, no_move, no_noexcept);
+    MEMBER_FUNCTION_POINTER_IMPL(const, no_volatile, no_ref, no_move, no_noexcept);
+    MEMBER_FUNCTION_POINTER_IMPL(const, no_volatile, ref, no_move, no_noexcept);
+    MEMBER_FUNCTION_POINTER_IMPL(no_const, no_volatile, no_ref, no_move, noexcept);
+    MEMBER_FUNCTION_POINTER_IMPL(const, no_volatile, no_ref, no_move, noexcept);
+    MEMBER_FUNCTION_POINTER_IMPL(const, no_volatile, ref, no_move, noexcept);
+    MEMBER_FUNCTION_POINTER_IMPL(no_const, volatile, no_ref, no_move, no_noexcept);
+    MEMBER_FUNCTION_POINTER_IMPL(const, volatile, no_ref, no_move, no_noexcept);
+    MEMBER_FUNCTION_POINTER_IMPL(const, volatile, no_ref, no_move, noexcept);
+    MEMBER_FUNCTION_POINTER_IMPL(const, volatile, ref, no_move, no_noexcept);
+    MEMBER_FUNCTION_POINTER_IMPL(const, volatile, ref, no_move, noexcept);
+    MEMBER_FUNCTION_POINTER_IMPL(const, volatile, no_ref, move, noexcept);
+    MEMBER_FUNCTION_POINTER_IMPL(const, no_volatile, no_ref, move, noexcept);
+    MEMBER_FUNCTION_POINTER_IMPL(no_const, no_volatile, no_ref, move, noexcept);
+    MEMBER_FUNCTION_POINTER_IMPL(no_const, volatile, no_ref, move, no_noexcept);
+    MEMBER_FUNCTION_POINTER_IMPL(const, no_volatile, no_ref, move, no_noexcept);
+    MEMBER_FUNCTION_POINTER_IMPL(no_const, no_volatile, no_ref, move, no_noexcept);
 
 } // namespace webpp
 
