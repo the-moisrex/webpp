@@ -174,6 +174,9 @@ namespace webpp::istl {
         }
     };
 
+    template <typename T>
+    concept bool CharType = stl::is_integral_v<T>;
+
 
     template <typename A>
     concept Allocator =
