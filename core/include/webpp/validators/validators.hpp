@@ -252,6 +252,7 @@ namespace webpp {
          * @return bool
          */
         template <typename CharT = char>
+        requires (stl::is_integral_v<CharT>)
         [[nodiscard]] constexpr bool
         uint8(stl::basic_string_view<CharT> const& str) noexcept {
             return !str.empty() && str.size() <= 3 && digit(str) &&
@@ -264,7 +265,8 @@ namespace webpp {
          * @return bool
          */
         template <typename CharT = char>
-        [[nodiscard]] constexpr bool hex(CharT const& t) noexcept {
+        requires (stl::is_integral_v<CharT>)
+        [[nodiscard]] constexpr bool hex(CharT t) noexcept {
             return (t >= '0' && t <= '9') || (t >= 'a' && t <= 'f') ||
                    (t >= 'A' && t <= 'F');
         }
