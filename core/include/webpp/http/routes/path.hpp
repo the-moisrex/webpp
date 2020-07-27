@@ -10,7 +10,7 @@
 
 #include <type_traits>
 
-namespace webpp::routes {
+namespace webpp {
 
     struct fake_path_context_type : fake_context_type {
         struct path_type {
@@ -85,8 +85,7 @@ namespace webpp::routes {
         //            // using seg_type = ;
         //        }
 
-        auto const& segment(string_view_type const& segment_var_name) const noexcept {
-        }
+        auto const& segment(string_view_type const& segment_var_name) const noexcept {}
 
         template <typename T>
         T segment(string_view_type const& segment_variable_name) const noexcept {
@@ -104,8 +103,7 @@ namespace webpp::routes {
         struct path_extension : public virtual ContextType {
 
             template <typename... Args>
-            constexpr path_extension(Args&&... args) noexcept : ContextType{stl::forward<Args>(args)...} {
-            }
+            constexpr path_extension(Args&&... args) noexcept : ContextType{stl::forward<Args>(args)...} {}
 
 
             path_field<ContextType, PathType, UriSegmentsType> path{};
@@ -165,13 +163,15 @@ namespace webpp::routes {
                 return route<path<NewNextSegmentType, void>>{path<NewNextSegmentType, void>{
                   .segment = stl::forward<NewNextSegmentType>(new_next_segment)}};
             } else if constexpr (!has_next_segment) {
-                return route<path<segment_type, NewNextSegmentType>>{path<segment_type, NewNextSegmentType>{
-                  .segment = segment, .next_segment = new_next_segment}};
+                return route<path<segment_type, NewNextSegmentType>>{
+                  path<segment_type, NewNextSegmentType>{.segment      = segment,
+                                                         .next_segment = new_next_segment}};
             } else {
                 using next_segment_t   = NewNextSegmentType;
                 using new_segment_type = path<path<segment_type, next_segment_type>, next_segment_t>;
-                return route<new_segment_type>{new_segment_type{
-                  .segment = *this, .next_segment = stl::forward<NewNextSegmentType>(new_next_segment)}};
+                return route<new_segment_type>{
+                  new_segment_type{.segment      = *this,
+                                   .next_segment = stl::forward<NewNextSegmentType>(new_next_segment)}};
             }
         }
 
@@ -282,7 +282,7 @@ namespace webpp::routes {
                         return res;
                 } else if constexpr ((stl::is_convertible_v<T, segment_type> ||
                                       can_parse_to<ContextType, segment_type,
-                                                   T>)&&has_variable_name<segment_type>) {
+                                                   T>) &&has_variable_name<segment_type>) {
                     if (variable_name == segment.variable_name) {
                         if constexpr (stl::is_convertible_v<T, segment_type>) {
                             return segment;
@@ -303,7 +303,7 @@ namespace webpp::routes {
                         return res;
                 } else if constexpr ((stl::is_convertible_v<T, next_segment_type> ||
                                       can_parse_to<ContextType, next_segment_type,
-                                                   T>)&&has_variable_name<next_segment_type>) {
+                                                   T>) &&has_variable_name<next_segment_type>) {
                     if (variable_name == next_segment.variable_name) {
                         if constexpr (stl::is_convertible_v<T, next_segment_type>) {
                             return next_segment;
@@ -409,6 +409,6 @@ namespace webpp::routes {
     // relative path
     constexpr auto relative = path{};
 
-} // namespace webpp::routes
+} // namespace webpp
 
 #endif // WEBPP_PATH_H

@@ -31,7 +31,7 @@ namespace webpp {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::pre_subroute, ContextArgType,
-      stl::void_t<decltype(stl::declval<A>().pre_subroute(stl::declval<ContextArgType&>()), (void)0)>>
+      stl::void_t<decltype(stl::declval<A>().pre_subroute(stl::declval<ContextArgType&>()), (void) 0)>>
       : stl::true_type {};
 
     /**
@@ -40,7 +40,7 @@ namespace webpp {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::post_subroute, ContextArgType,
-      stl::void_t<decltype(stl::declval<A>().post_subroute(stl::declval<ContextArgType&>()), (void)0)>>
+      stl::void_t<decltype(stl::declval<A>().post_subroute(stl::declval<ContextArgType&>()), (void) 0)>>
       : stl::true_type {};
 
 
@@ -50,7 +50,7 @@ namespace webpp {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::pre_entryroute, ContextArgType,
-      stl::void_t<decltype(stl::declval<A>().pre_entryroute(stl::declval<ContextArgType&>()), (void)0)>>
+      stl::void_t<decltype(stl::declval<A>().pre_entryroute(stl::declval<ContextArgType&>()), (void) 0)>>
       : stl::true_type {};
 
     /**
@@ -59,7 +59,7 @@ namespace webpp {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::post_entryroute, ContextArgType,
-      stl::void_t<decltype(stl::declval<A>().post_entryroute(stl::declval<ContextArgType&>()), (void)0)>>
+      stl::void_t<decltype(stl::declval<A>().post_entryroute(stl::declval<ContextArgType&>()), (void) 0)>>
       : stl::true_type {};
 
     /**
@@ -68,7 +68,7 @@ namespace webpp {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::pre_firstroute, ContextArgType,
-      stl::void_t<decltype(stl::declval<A>().pre_firstroute(stl::declval<ContextArgType&>()), (void)0)>>
+      stl::void_t<decltype(stl::declval<A>().pre_firstroute(stl::declval<ContextArgType&>()), (void) 0)>>
       : stl::true_type {};
 
     /**
@@ -77,7 +77,7 @@ namespace webpp {
     template <typename A, typename ContextArgType>
     struct has_context_extension_method<
       A, extension_method::post_lastroute, ContextArgType,
-      stl::void_t<decltype(stl::declval<A>().post_lastroute(stl::declval<ContextArgType&>()), (void)0)>>
+      stl::void_t<decltype(stl::declval<A>().post_lastroute(stl::declval<ContextArgType&>()), (void) 0)>>
       : stl::true_type {};
 
     ///////////////////////////////////////////////////////////////////////////
@@ -92,12 +92,12 @@ namespace webpp {
     };
 
     struct fake_context_type {
-        using traits_type = fake_traits_type;
+        using traits_type  = fake_context_type;
         using request_type = fake_request_type;
         request_type request{};
         fake_context_type() = default;
         fake_context_type(request_type req) : request{req} {}
-        fake_context_type(fake_context_type const&) = default;
+        fake_context_type(fake_context_type const&)     = default;
         fake_context_type(fake_context_type&&) noexcept = default;
     };
 

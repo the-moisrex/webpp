@@ -151,38 +151,32 @@ namespace webpp {
 
         constexpr basic_context(allocator_type const& _alloc = allocator_type{}) noexcept
           : elist_type{},
-            alloc{_alloc} {
-        }
+            alloc{_alloc} {}
 
         constexpr basic_context(request_type& req, allocator_type const& _alloc = allocator_type{}) noexcept
           : elist_type{},
             alloc{_alloc},
-            request(&req) {
-        }
+            request(&req) {}
 
         constexpr basic_context(request_type* req, allocator_type const& _alloc = allocator_type{}) noexcept
           : elist_type{},
             alloc{_alloc},
-            request(req) {
-        }
+            request(req) {}
 
 
         template <typename... Args>
         constexpr basic_context(request_type& req, Args&&... args) noexcept
           : elist_type{stl::forward<Args>(args)...},
-            request(&req) {
-        }
+            request(&req) {}
 
         template <typename... Args>
         constexpr basic_context(request_type* req, Args&&... args) noexcept
           : elist_type{stl::forward<Args>(args)...},
-            request(req) {
-        }
+            request(req) {}
 
         constexpr basic_context(basic_context&& ctx) noexcept
           : request{std::move(ctx.request)},
-            elist_type{std::move(ctx)} {
-        }
+            elist_type{std::move(ctx)} {}
 
         [[nodiscard]] auto const& get_allocator() const noexcept {
             return alloc;
@@ -229,8 +223,7 @@ namespace webpp {
 
         constexpr final_context(allocator_type const& alloc = allocator_type{}) noexcept
           : basic_context_type{alloc},
-            EList{} {
-        }
+            EList{} {}
 
         //        template <typename... Args>
         //        constexpr final_context(Args&&... args) noexcept : EList{stl::forward<Args>(args)...} {
@@ -249,18 +242,15 @@ namespace webpp {
         //        }
 
 
-        constexpr final_context(request_type* req) noexcept : basic_context_type{req} {
-        }
+        constexpr final_context(request_type* req) noexcept : basic_context_type{req} {}
 
-        constexpr final_context(request_type& req) noexcept : basic_context_type{req} {
-        }
+        constexpr final_context(request_type& req) noexcept : basic_context_type{req} {}
 
         template <Traits NTraitsType, typename NContextDescriptorType, typename NOriginalExtensionList,
                   typename NEList, typename NReqType>
         constexpr final_context(final_context<NTraitsType, NContextDescriptorType, NOriginalExtensionList,
                                               NEList, NReqType> const& ctx) noexcept
-          : basic_context_type{ctx.request} {
-        }
+          : basic_context_type{ctx.request} {}
 
         /**
          * Clone this context and append the new extensions along the way.
@@ -351,11 +341,11 @@ namespace webpp {
     };
 
 
+    /**
+     * Dynamic context
+     * todo
+     */
     struct context {};
-
-    template <typename T>
-    concept ContextPlaceholder = stl::same_as<T, context>;
-
 
 
     /**
@@ -392,9 +382,10 @@ namespace webpp {
                                                                               context_descriptor, ReqType>;
 
     // todo: move this into "context_concepts.h" file
-    //    using fake_context_type = typename context_descriptor::template final_extensie_type<
-    //      empty_extension_pack, fake_traits_type,
-    //      basic_context<empty_extension_pack, fake_request_type, fake_response_type>, fake_request_type>;
+    //        using std_context_type = typename context_descriptor::template final_extensie_type<
+    //          empty_extension_pack, fake_traits_type,
+    //          basic_context<empty_extension_pack, fake_request_type, fake_response_type>,
+    //          fake_request_type>;
 
 } // namespace webpp
 

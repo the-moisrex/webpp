@@ -19,7 +19,7 @@ namespace webpp {
          */
         template <typename T, typename U>
         struct can_convert
-          : stl::integral_constant<bool, (!stl::is_void_v<T> && !stl::is_void_v<U>)&&(
+          : stl::integral_constant<bool, (!stl::is_void_v<T> && !stl::is_void_v<U>) &&(
                                            stl::is_convertible_v<T, U> || stl::is_constructible_v<T, U> ||
                                            stl::is_assignable_v<T, U>)> {};
 
@@ -137,26 +137,22 @@ namespace webpp {
             constexpr basic_route(RouteType&&       super = RouteType{},
                                   next_route_type&& _next = next_route_type{}) noexcept
               : RouteType(stl::move(super)),
-                next(stl::move(_next)) {
-            }
+                next(stl::move(_next)) {}
 
             constexpr basic_route(RouteType const&       super = RouteType{},
                                   const next_route_type& _next = next_route_type{}) noexcept
               : RouteType(super),
-                next(_next) {
-            }
+                next(_next) {}
 
             constexpr basic_route(RouteType const&  super = RouteType{},
                                   next_route_type&& _next = next_route_type{}) noexcept
               : RouteType(super),
-                next(stl::move(_next)) {
-            }
+                next(stl::move(_next)) {}
 
             constexpr basic_route(RouteType&&            super = RouteType{},
                                   next_route_type const& _next = next_route_type{}) noexcept
               : RouteType(stl::move(super)),
-                next(_next) {
-            }
+                next(_next) {}
 
             constexpr basic_route(basic_route const& v) noexcept = default;
             constexpr basic_route(basic_route&& v) noexcept      = default;
@@ -169,8 +165,7 @@ namespace webpp {
             using super_t = make_inheritable<RouteType>;
 
             template <typename... Args>
-            constexpr basic_route(Args&&... args) noexcept : super_t{stl::forward<Args>(args)...} {
-            }
+            constexpr basic_route(Args&&... args) noexcept : super_t{stl::forward<Args>(args)...} {}
 
             constexpr basic_route(basic_route const&) noexcept = default;
             constexpr basic_route(basic_route&&) noexcept      = default;
@@ -180,8 +175,7 @@ namespace webpp {
 
         template <>
         struct basic_route<void, logical_operators::none, void> {
-            void operator()(Context auto const&) const noexcept {
-            }
+            void operator()(Context auto const&) const noexcept {}
         };
 
         template <typename RouteType = void, logical_operators Op = logical_operators::none,
@@ -259,16 +253,14 @@ namespace webpp {
           public:
             using super_t::operator();
 
-            constexpr route() noexcept : super_t{} {
-            }
-            constexpr route(route const&) noexcept= default;
-            constexpr route(route&&)   noexcept   = default;
+            constexpr route() noexcept : super_t{} {}
+            constexpr route(route const&) noexcept = default;
+            constexpr route(route&&) noexcept      = default;
             route operator=(route const&) = delete;
             route operator=(route&&) = delete;
 
             template <typename... Args>
-            constexpr route(Args&&... args) noexcept : super_t{stl::forward<Args>(args)...} {
-            }
+            constexpr route(Args&&... args) noexcept : super_t{stl::forward<Args>(args)...} {}
 
             /**
              * Run the migration
@@ -321,11 +313,9 @@ namespace webpp {
 
             [[nodiscard]] constexpr auto operator>>=(auto&& new_route) const noexcept {
                 using rt = decltype(new_route);
-                if constexpr (PotentialRoute<rt>) {
-                    return set_next<logical_operators::none>(stl::forward<decltype(new_route)>(new_route));
-                } else if constexpr (stl::is_member_function_pointer_v<rt>) {
+                if constexpr (stl::is_member_function_pointer_v<rt>) {
                     using mem_func_ptr_t = member_function_pointer<rt>;
-                    using app_type = typename mem_func_ptr_t::type;
+                    using app_type       = typename mem_func_ptr_t::type;
                     struct route_with_router_pointer {
                         app_type*          app = nullptr;
                         [[nodiscard]] auto operator()(auto... args) noexcept(mem_func_ptr_t::is_noexcept) {
@@ -340,25 +330,35 @@ namespace webpp {
                         }
                     };
                     return set_next<logical_operators::none>(route_with_router_pointer{});
+                } else if constexpr (PotentialRoute<rt, switched_context_type<fake_context_type>>) {
+                    return set_next<logical_operators::none>(stl::forward<decltype(new_route)>(new_route));
                 } else {
-                    return false;
+                    // todo: write tests for this:
+                    return set_next<logical_operators::none>([=](auto... args) {
+                        static_assert(stl::is_invocable_v<decltype(new_route), decltype(args)...>,
+                                      "The specified route can't be called in any way that our router knows; "
+                                      "you might need to change the signature of your route.");
+                        return new_route(stl::forward<decltype(args)>(args)...);
+                    });
                 }
             }
 
-//            template <typename T, typename Ret, typename... Args>
-//            [[nodiscard]] constexpr auto operator>>=(Ret (T::*mem_func_pointer)(Args...)) const noexcept {
-//                using app_type = T;
-//            }
+            //            template <typename T, typename Ret, typename... Args>
+            //            [[nodiscard]] constexpr auto operator>>=(Ret (T::*mem_func_pointer)(Args...)) const
+            //            noexcept {
+            //                using app_type = T;
+            //            }
 
-//            template <typename RT>
-//            [[nodiscard]] constexpr auto operator=(RT&& new_route) const noexcept {
-//                return operator>>=<RT>(stl::forward<RT>(new_route));
-//            }
-//
-//            template <typename T, typename Ret, typename... Args>
-//            [[nodiscard]] constexpr auto operator=(Ret (T::*mem_func_pointer)(Args...)) const noexcept {
-//                return operator>>=<T, Ret, Args...>(mem_func_pointer);
-//            }
+            //            template <typename RT>
+            //            [[nodiscard]] constexpr auto operator=(RT&& new_route) const noexcept {
+            //                return operator>>=<RT>(stl::forward<RT>(new_route));
+            //            }
+            //
+            //            template <typename T, typename Ret, typename... Args>
+            //            [[nodiscard]] constexpr auto operator=(Ret (T::*mem_func_pointer)(Args...)) const
+            //            noexcept {
+            //                return operator>>=<T, Ret, Args...>(mem_func_pointer);
+            //            }
 
             [[nodiscard]] bool call_this_route(Context auto&& ctx) const noexcept {
                 // todo handle the return types

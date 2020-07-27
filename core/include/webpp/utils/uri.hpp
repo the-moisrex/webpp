@@ -2,8 +2,8 @@
 #define WEBPP_UTILS_URI_H
 
 #include "../std/map.hpp"
-#include "../std/vector.hpp"
 #include "../std/optional.hpp"
+#include "../std/vector.hpp"
 #include "../traits/traits_concepts.hpp"
 #include "../validators/validators.hpp"
 #include "./casts.hpp"
@@ -29,8 +29,7 @@ namespace webpp {
          * @return
          */
         template <Traits TraitsType>
-        [[nodiscard]] constexpr bool
-        scheme(typename TraitsType::string_view_type const& _scheme) noexcept {
+        [[nodiscard]] constexpr bool scheme(typename TraitsType::string_view_type const& _scheme) noexcept {
             return ALPHA<typename TraitsType::char_type>.contains(_scheme);
         }
 
@@ -43,10 +42,8 @@ namespace webpp {
      */
     template <Traits TraitsType, stl::size_t N>
     [[nodiscard]] stl::optional<typename TraitsType::string_type>
-    decode_uri_component(
-      typename TraitsType::string_view_type const& encoded_str,
-      charset_t<typename TraitsType::char_type, N> const&
-        allowed_chars) noexcept {
+    decode_uri_component(typename TraitsType::string_view_type const&        encoded_str,
+                         charset_t<typename TraitsType::char_type, N> const& allowed_chars) noexcept {
         int                            digits_left  = 2;
         typename TraitsType::char_type decoded_char = 0;
         // FIXME: decoding is assigned but never used; check if the algorithm is correct
@@ -68,8 +65,7 @@ namespace webpp {
 
                 if (digits_left == 0) {
                     decoding = false;
-                    res.push_back(static_cast<typename TraitsType::char_type>(
-                      decoded_char));
+                    res.push_back(static_cast<typename TraitsType::char_type>(decoded_char));
                 }
             } else if (c == '%') {
                 decoding = true;
@@ -108,9 +104,9 @@ namespace webpp {
      * javascript
      */
     template <Traits TraitsType, stl::size_t N>
-    [[nodiscard]] typename TraitsType::string_type encode_uri_component(
-      const typename TraitsType::string_view_type&        element,
-      const charset_t<typename TraitsType::char_type, N>& allowedCharacters) {
+    [[nodiscard]] typename TraitsType::string_type
+    encode_uri_component(const typename TraitsType::string_view_type&        element,
+                         const charset_t<typename TraitsType::char_type, N>& allowedCharacters) {
         using char_type     = typename TraitsType::char_type;
         auto make_hex_digit = [](unsigned int value) {
             if (value < 10) {
@@ -126,10 +122,8 @@ namespace webpp {
                 encodedElement.push_back(c);
             } else {
                 encodedElement.push_back('%');
-                encodedElement.push_back(
-                  make_hex_digit(static_cast<unsigned int>(c) >> 4u));
-                encodedElement.push_back(
-                  make_hex_digit(static_cast<unsigned int>(c) & 0x0Fu));
+                encodedElement.push_back(make_hex_digit(static_cast<unsigned int>(c) >> 4u));
+                encodedElement.push_back(make_hex_digit(static_cast<unsigned int>(c) & 0x0Fu));
             }
         }
         return encodedElement;
@@ -179,32 +173,29 @@ namespace webpp {
          */
         static constexpr auto ALLOWED_CHARACTERS_IN_URI =
           charset(ALPHA<char_type>, DIGIT<char_type>,
-                  charset_t<char_type, 20>{';', ',', '/',  '?', ':', '@', '&',
-                                           '=', '+', '$',  '-', '_', '.', '!',
-                                           '~', '*', '\'', '(', ')', '#'});
+                  charset_t<char_type, 20>{';', ',', '/', '?', ':', '@', '&',  '=', '+', '$',
+                                           '-', '_', '.', '!', '~', '*', '\'', '(', ')', '#'});
         /**
          * This is the character set corresponds to the second part
          * of the "scheme" syntax
          * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
          */
         static constexpr auto SCHEME_NOT_FIRST =
-          charset(ALPHA<char_type>, DIGIT<char_type>,
-                  charset_t<char_type, 3>{'+', '-', '.'});
+          charset(ALPHA<char_type>, DIGIT<char_type>, charset_t<char_type, 3>{'+', '-', '.'});
 
         /**
          * This is the character set corresponds to the "unreserved" syntax
          * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
          */
         static constexpr auto UNRESERVED =
-          charset(ALPHA<char_type>, DIGIT<char_type>,
-                  charset_t<char_type, 4>{'-', '.', '_', '~'});
+          charset(ALPHA<char_type>, DIGIT<char_type>, charset_t<char_type, 4>{'-', '.', '_', '~'});
 
         /**
          * This is the character set corresponds to the "sub-delims" syntax
          * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
          */
-        static constexpr auto SUB_DELIMS = charset_t<char_type, 11>(
-          '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
+        static constexpr auto SUB_DELIMS =
+          charset_t<char_type, 11>('!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
 
         /**
          * This is the character set corresponds to the "userinfo" syntax
@@ -227,16 +218,15 @@ namespace webpp {
          * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
          * leaving out "pct-encoded".
          */
-        static constexpr auto REG_NAME_NOT_PCT_ENCODED =
-          charset(UNRESERVED, SUB_DELIMS);
+        static constexpr auto REG_NAME_NOT_PCT_ENCODED = charset(UNRESERVED, SUB_DELIMS);
 
         /**
          * This is the character set corresponds to the "pchar" syntax
          * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
          * leaving out "pct-encoded".
          */
-        static constexpr auto PCHAR_NOT_PCT_ENCODED = charset(
-          UNRESERVED, SUB_DELIMS, webpp::charset_t<char_type, 2>{':', '@'});
+        static constexpr auto PCHAR_NOT_PCT_ENCODED =
+          charset(UNRESERVED, SUB_DELIMS, webpp::charset_t<char_type, 2>{':', '@'});
 
         /**
          * This is the character set corresponds to the "query" syntax
@@ -254,13 +244,10 @@ namespace webpp {
         storred_str_t data{};
 
 
-        mutable stl::size_t scheme_end      = str_view_t::npos,
-                            authority_start = str_view_t::npos,
-                            user_info_end   = str_view_t::npos,
-                            port_start      = str_view_t::npos,
-                            authority_end   = str_view_t::npos,
-                            query_start     = str_view_t::npos,
-                            fragment_start  = str_view_t::npos;
+        mutable stl::size_t scheme_end = str_view_t::npos, authority_start = str_view_t::npos,
+                            user_info_end = str_view_t::npos, port_start = str_view_t::npos,
+                            authority_end = str_view_t::npos, query_start = str_view_t::npos,
+                            fragment_start = str_view_t::npos;
 
         /**
          * scheme    :    start=0       end=[0]
@@ -287,14 +274,12 @@ namespace webpp {
             // extracting scheme
             if (starts_with<traits_type>(_data, "//")) {
                 authority_start = 2;
-                scheme_end = data.size(); // so we don't have to check again
+                scheme_end      = data.size(); // so we don't have to check again
                 return;
-            } else if (const auto colon = _data.find(':');
-                       colon != str_view_t::npos) {
+            } else if (const auto colon = _data.find(':'); colon != str_view_t::npos) {
                 auto __scheme = _data.substr(0, colon);
                 if (ALPHA<char_type>.contains(__scheme[0]) &&
-                    __scheme.substr(1).find_first_not_of(
-                      SCHEME_NOT_FIRST.string_view())) {
+                    __scheme.substr(1).find_first_not_of(SCHEME_NOT_FIRST.string_view())) {
                     scheme_end = colon;
 
                     if (_data.substr(colon + 1, 2) == "//") {
@@ -326,13 +311,9 @@ namespace webpp {
 
             parse_path(); // to get "authority_end"
 
-            auto _data =
-              (stl::is_same_v<storred_str_t, str_view_t> ? data
-                                                         : str_view_t(data));
+            auto _data = (stl::is_same_v<storred_str_t, str_view_t> ? data : str_view_t(data));
 
-            user_info_end =
-              _data.substr(authority_start, authority_end - authority_start)
-                .find_first_of('@');
+            user_info_end = _data.substr(authority_start, authority_end - authority_start).find_first_of('@');
             if (user_info_end == str_view_t::npos) {
                 user_info_end = data.size();
             } else {
@@ -356,12 +337,8 @@ namespace webpp {
             auto starting_point =
               authority_start != data.size()
                 ? authority_start
-                : (scheme_end != data.size() && scheme_end != str_view_t::npos
-                     ? scheme_end
-                     : 0);
-            authority_end =
-              _data.substr(starting_point, query_start - starting_point)
-                .find_first_of('/');
+                : (scheme_end != data.size() && scheme_end != str_view_t::npos ? scheme_end : 0);
+            authority_end = _data.substr(starting_point, query_start - starting_point).find_first_of('/');
             if (authority_end == str_view_t::npos) {
                 authority_end = data.size();
             } else {
@@ -388,17 +365,13 @@ namespace webpp {
 
             auto _data = this->string_view();
 
-            auto starting_point =
-              user_info_end != data.size() ? user_info_end : authority_start;
-            port_start =
-              _data.substr(starting_point, authority_end - starting_point)
-                .find_last_of(':');
+            auto starting_point = user_info_end != data.size() ? user_info_end : authority_start;
+            port_start = _data.substr(starting_point, authority_end - starting_point).find_last_of(':');
             if (port_start == str_view_t::npos) {
                 port_start = data.size(); // there's no port
             } else {
                 port_start += starting_point;
-                auto str_view = _data.substr(port_start + 1,
-                                             authority_end - (port_start + 1));
+                auto str_view = _data.substr(port_start + 1, authority_end - (port_start + 1));
                 if (!is::digit(str_view)) {
                     port_start = data.size();
                 }
@@ -573,8 +546,8 @@ namespace webpp {
          */
         void parse_host() const noexcept {
             parse_user_info(); // to get "authority_start" and "user_info_end"
-            parse_port(); // to get "port_start" and hopefully "authority_end"
-            parse_path(); // to make sure we have "authority_end"
+            parse_port();      // to get "port_start" and hopefully "authority_end"
+            parse_path();      // to make sure we have "authority_end"
         }
 
         /**
@@ -582,24 +555,20 @@ namespace webpp {
          * re-parsing the uri.
          */
         inline void unparse() const noexcept {
-            scheme_end = authority_start = user_info_end = port_start =
-              authority_end = query_start = fragment_start = str_view_t::npos;
+            scheme_end = authority_start = user_info_end = port_start = authority_end = query_start =
+              fragment_start                                                          = str_view_t::npos;
         }
 
         /**
          * Replace the specified part with the specified replacement
          */
-        void replace_value(stl::size_t start, stl::size_t len,
-                           str_view_t const& replacement) noexcept {
-            static_assert(is_mutable(),
-                          "You cannot change a const_uri (string_view is not "
-                          "modifiable)");
-            if (start == str_view_t::npos || len == str_view_t::npos ||
-                (len == 0 && replacement.empty()))
+        void replace_value(stl::size_t start, stl::size_t len, str_view_t const& replacement) noexcept {
+            static_assert(is_mutable(), "You cannot change a const_uri (string_view is not "
+                                        "modifiable)");
+            if (start == str_view_t::npos || len == str_view_t::npos || (len == 0 && replacement.empty()))
                 return;
             typename traits_type::stringstream_type _data;
-            _data << substr(0, start) << replacement
-                  << substr(stl::min(data.size(), start + len));
+            _data << substr(0, start) << replacement << substr(stl::min(data.size(), start + len));
             data = _data.str();
             unparse();
             // TODO: you may want to not unparse everything
@@ -607,11 +576,9 @@ namespace webpp {
 
       public:
         constexpr basic_uri() noexcept {
-            static_assert(
-              is_mutable(),
-              "You can't modify this basic_uri, there's no point in "
-              "default constructing this class since it can't be changed"
-              " and thus can't be used in any way.");
+            static_assert(is_mutable(), "You can't modify this basic_uri, there's no point in "
+                                        "default constructing this class since it can't be changed"
+                                        " and thus can't be used in any way.");
         }
 
         ~basic_uri() noexcept = default;
@@ -619,6 +586,11 @@ namespace webpp {
         static constexpr bool is_mutable() noexcept {
             return Mutable;
         }
+
+
+        constexpr basic_uri(const char_type* u) noexcept : data(u) {
+        }
+
 
         /**
          * @brief parse from string, it will trim the spaces for generality too
@@ -662,8 +634,7 @@ namespace webpp {
 
         // assignment operators
         template <bool UMutable = Mutable>
-        basic_uri&
-        operator=(basic_uri<TraitsType, UMutable> const& u) noexcept {
+        basic_uri& operator=(basic_uri<TraitsType, UMutable> const& u) noexcept {
             data            = u.data;
             scheme_end      = u.scheme_end;
             authority_start = u.authority_start;
@@ -699,14 +670,12 @@ namespace webpp {
         }
 
         template <bool UMutable = Mutable>
-        bool operator==(
-          const basic_uri<TraitsType, UMutable>& other) const noexcept {
+        bool operator==(const basic_uri<TraitsType, UMutable>& other) const noexcept {
             return str() == other.str();
         }
 
         template <bool UMutable = Mutable>
-        bool operator!=(
-          const basic_uri<TraitsType, UMutable>& other) const noexcept {
+        bool operator!=(const basic_uri<TraitsType, UMutable>& other) const noexcept {
             return str() != other.str();
         }
 
@@ -724,9 +693,8 @@ namespace webpp {
          * @param len
          * @return str_view_t
          */
-        [[nodiscard]] str_view_t
-        substr(stl::size_t const& start = 0,
-               stl::size_t const& len   = str_view_t::npos) const noexcept {
+        [[nodiscard]] str_view_t substr(stl::size_t const& start = 0,
+                                        stl::size_t const& len   = str_view_t::npos) const noexcept {
             if (len == 0)
                 return {};
             if constexpr (stl::is_same_v<storred_str_t, str_view_t>) {
@@ -740,8 +708,7 @@ namespace webpp {
          * @brief this function is the same as "encodeURI" in javascript
          */
         [[nodiscard]] str_t encoded_uri() noexcept {
-            return encode_uri_component<traits_type,
-                                        ALLOWED_CHARACTERS_IN_URI.size()>(
+            return encode_uri_component<traits_type, ALLOWED_CHARACTERS_IN_URI.size()>(
               str(), ALLOWED_CHARACTERS_IN_URI);
         }
 
@@ -751,8 +718,7 @@ namespace webpp {
          * be nullopt when the uri is not valid and has invalid characters
          */
         [[nodiscard]] auto decoded_uri() noexcept {
-            return decode_uri_component<traits_type,
-                                        ALLOWED_CHARACTERS_IN_URI.size()>(
+            return decode_uri_component<traits_type, ALLOWED_CHARACTERS_IN_URI.size()>(
               str(), ALLOWED_CHARACTERS_IN_URI);
         }
 
@@ -770,8 +736,7 @@ namespace webpp {
          */
         [[nodiscard]] str_view_t scheme() const noexcept {
             parse_scheme();
-            return scheme_end == data.size() ? str_view_t()
-                                             : substr(0, scheme_end);
+            return scheme_end == data.size() ? str_view_t() : substr(0, scheme_end);
         }
 
         /**
@@ -783,27 +748,20 @@ namespace webpp {
             if (ends_with<traits_type>(__scheme, ':'))
                 __scheme.remove_suffix(1);
             if (!is::scheme<traits_type>(__scheme))
-                throw stl::invalid_argument(
-                  "The specified scheme is not valid");
+                throw stl::invalid_argument("The specified scheme is not valid");
             parse_scheme();
             if (scheme_end != data.size()) {
                 replace_value(0,
-                              __scheme.empty() &&
-                                  data.size() > scheme_end + 1 &&
-                                  data[scheme_end] == ':'
+                              __scheme.empty() && data.size() > scheme_end + 1 && data[scheme_end] == ':'
                                 ? scheme_end + 1
                                 : scheme_end,
                               __scheme);
             } else {
                 // the URI doesn't have a scheme now, we have to put it in the
                 // right place
-                auto scheme_colon =
-                  __scheme.empty() ? "" : str_t(__scheme) + ':';
+                auto scheme_colon = __scheme.empty() ? "" : str_t(__scheme) + ':';
                 if (authority_start != data.size()) {
-                    replace_value(
-                      0, 0,
-                      scheme_colon +
-                        (starts_with<traits_type>(data, "//") ? "" : "//"));
+                    replace_value(0, 0, scheme_colon + (starts_with<traits_type>(data, "//") ? "" : "//"));
                 } else {
                     // It's a URN (or URN like URI)
                     replace_value(0, 0, scheme_colon);
@@ -824,8 +782,7 @@ namespace webpp {
          */
         [[nodiscard]] bool has_user_info() const noexcept {
             parse_user_info();
-            return user_info_end != data.size() &&
-                   authority_start != data.size();
+            return user_info_end != data.size() && authority_start != data.size();
         }
 
         /**
@@ -833,8 +790,7 @@ namespace webpp {
          */
         [[nodiscard]] str_view_t user_info() const noexcept {
             parse_user_info();
-            return (user_info_end == data.size() ||
-                    authority_start == data.size())
+            return (user_info_end == data.size() || authority_start == data.size())
                      ? str_view_t()
                      : substr(authority_start, user_info_end - authority_start);
         }
@@ -843,8 +799,7 @@ namespace webpp {
          * @brief decode user_info and return it as a string
          */
         [[nodiscard]] auto user_info_decoded() const noexcept {
-            return decode_uri_component<traits_type>(user_info(),
-                                                     USER_INFO_NOT_PCT_ENCODED);
+            return decode_uri_component<traits_type>(user_info(), USER_INFO_NOT_PCT_ENCODED);
         }
 
         /**
@@ -852,13 +807,10 @@ namespace webpp {
          */
         basic_uri& user_info(str_view_t const& info) noexcept {
             parse_user_info();
-            auto encoded_info = encode_uri_component<traits_type>(
-              info, USER_INFO_NOT_PCT_ENCODED);
-            if (user_info_end == data.size() ||
-                authority_start == data.size()) {
+            auto encoded_info = encode_uri_component<traits_type>(info, USER_INFO_NOT_PCT_ENCODED);
+            if (user_info_end == data.size() || authority_start == data.size()) {
                 // the URI already has user info, I just have to replace it
-                replace_value(authority_start, user_info_end - authority_start,
-                              encoded_info);
+                replace_value(authority_start, user_info_end - authority_start, encoded_info);
             } else {
                 // I don't know where is it, let's find it
 
@@ -874,8 +826,7 @@ namespace webpp {
                         replace_value(0, 0, str_t("//") + encoded_info + "@");
                     } else {
                         // there's scheme and we have to put it after that
-                        replace_value(scheme_end + 1, 0,
-                                      str_t("//") + encoded_info + "@");
+                        replace_value(scheme_end + 1, 0, str_t("//") + encoded_info + "@");
                     }
                 } else {
                     // there's authority start but there's no user_info_end
@@ -941,8 +892,7 @@ namespace webpp {
          * doesn't include invalid syntax.
          * @return
          */
-        [[nodiscard]] stl::variant<ipv4<traits_type>, ipv6<traits_type>,
-                                   str_view_t>
+        [[nodiscard]] stl::variant<ipv4<traits_type>, ipv6<traits_type>, str_view_t>
         host_structured() const noexcept {
             auto _host = host();
             if (is::ipv4<traits_type>(_host))
@@ -959,8 +909,7 @@ namespace webpp {
          * @return string
          */
         [[nodiscard]] auto host_decoded() const noexcept {
-            return decode_uri_component<traits_type>(host(),
-                                                     REG_NAME_NOT_PCT_ENCODED);
+            return decode_uri_component<traits_type>(host(), REG_NAME_NOT_PCT_ENCODED);
         }
 
         /**
@@ -979,10 +928,8 @@ namespace webpp {
             parse_host();
 
             // todo: are you sure it can handle punycode as well?
-            auto encoded_host = encode_uri_component<traits_type>(
-              new_host, REG_NAME_NOT_PCT_ENCODED);
-            if ((!starts_with<traits_type>(new_host, '[') ||
-                 !ends_with<traits_type>(new_host, ']')) &&
+            auto encoded_host = encode_uri_component<traits_type>(new_host, REG_NAME_NOT_PCT_ENCODED);
+            if ((!starts_with<traits_type>(new_host, '[') || !ends_with<traits_type>(new_host, ']')) &&
                 is::ipv6<traits_type>(new_host)) {
                 encoded_host = '[' + encoded_host + ']';
             }
@@ -1016,9 +963,7 @@ namespace webpp {
                 // there's no user info
                 if (scheme_end == data.size()) {
                     start = 0;
-                    if (!new_host.empty() &&
-                        !starts_with<traits_type>(str_view_t{encoded_host},
-                                                  "//")) {
+                    if (!new_host.empty() && !starts_with<traits_type>(str_view_t{encoded_host}, "//")) {
                         encoded_host = "//" + encoded_host;
                     }
                 } else {
@@ -1059,9 +1004,8 @@ namespace webpp {
         host_structured_decoded() const noexcept {
             if (auto _host_structured = host_structured();
                 stl::holds_alternative<str_view_t>(_host_structured))
-                return decode_uri_component<traits_type>(
-                  stl::get<str_view_t>(_host_structured),
-                  REG_NAME_NOT_PCT_ENCODED);
+                return decode_uri_component<traits_type>(stl::get<str_view_t>(_host_structured),
+                                                         REG_NAME_NOT_PCT_ENCODED);
             else
                 return _host_structured;
         }
@@ -1086,8 +1030,7 @@ namespace webpp {
         [[nodiscard]] bool is_ip() const noexcept {
             auto _host = host();
             return is::ipv4<traits_type>(_host) ||
-                   (starts_with<traits_type>(_host, '[') &&
-                    ends_with<traits_type>(_host, ']'));
+                   (starts_with<traits_type>(_host, '[') && ends_with<traits_type>(_host, ']'));
         }
 
         /**
@@ -1095,8 +1038,7 @@ namespace webpp {
          * will be the last one and Second Level Domain will be the one before
          * that and the rest will be subdomains.
          */
-        [[nodiscard]] istl::vector<traits_type, str_t>
-        domains() const noexcept {
+        [[nodiscard]] istl::vector<traits_type, str_t> domains() const noexcept {
             auto _host = host();
             if (_host.empty() || is_ip())
                 return {};
@@ -1140,8 +1082,7 @@ namespace webpp {
                 // instead of this method.
                 auto dot   = _host.find_last_of('.');
                 auto start = dot != str_view_t::npos ? dot + 1 : 0;
-                static_cast<void>(
-                  host(str_t(_host.substr(0, start)) + str_t(tld)));
+                static_cast<void>(host(str_t(_host.substr(0, start)) + str_t(tld)));
             }
             return *this;
         }
@@ -1165,9 +1106,8 @@ namespace webpp {
             if (last_dot == str_view_t::npos)
                 return {};
             auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
-            auto start =
-              bef_last_dot == str_view_t::npos ? 0 : bef_last_dot + 1;
-            auto sld = _host.substr(start, last_dot - start);
+            auto start        = bef_last_dot == str_view_t::npos ? 0 : bef_last_dot + 1;
+            auto sld          = _host.substr(start, last_dot - start);
             return sld;
         }
 
@@ -1192,12 +1132,10 @@ namespace webpp {
                 }
             } else {
                 auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
-                auto start =
-                  bef_last_dot == str_view_t::npos ? 0 : bef_last_dot + 1;
+                auto start        = bef_last_dot == str_view_t::npos ? 0 : bef_last_dot + 1;
                 if (!sld.empty())
-                    static_cast<void>(host(str_t(_host.substr(0, start)) +
-                                           str_t(sld) +
-                                           str_t(_host.substr(last_dot))));
+                    static_cast<void>(
+                      host(str_t(_host.substr(0, start)) + str_t(sld) + str_t(_host.substr(last_dot))));
                 else
                     static_cast<void>(host(str_t(_host.substr(last_dot + 1))));
             }
@@ -1255,8 +1193,7 @@ namespace webpp {
                 return *this;
             if (sds.empty()) // special check for when we want to remove the SDS
                 bef_last_dot++;
-            static_cast<void>(
-              host(str_t(sds) + str_t(_host.substr(bef_last_dot))));
+            static_cast<void>(host(str_t(sds) + str_t(_host.substr(bef_last_dot))));
             return *this;
         }
 
@@ -1324,10 +1261,8 @@ namespace webpp {
                 return {};
 
             // don't worry authority_end will be the end of the string anyway
-            return substr(port_start + 1,
-                          (authority_end == data.size() ? authority_end - 1
-                                                        : authority_end) -
-                            (port_start + 1));
+            return substr(port_start + 1, (authority_end == data.size() ? authority_end - 1 : authority_end) -
+                                            (port_start + 1));
         }
 
         /**
@@ -1367,12 +1302,10 @@ namespace webpp {
                     replace_value(authority_end, 0, ":" + str_t(new_port));
                 } else if (user_info_end != data.size()) {
                     // there's authority and there might be a host
-                    replace_value(user_info_end + 1, user_info_end + 1,
-                                  ":" + str_t(new_port));
+                    replace_value(user_info_end + 1, user_info_end + 1, ":" + str_t(new_port));
                 } else if (authority_start != data.size()) {
                     // there's a authority_start at least
-                    replace_value(authority_start + 1, 0,
-                                  ":" + str_t(new_port));
+                    replace_value(authority_start + 1, 0, ":" + str_t(new_port));
                 } else {
                     // there's no authority at all.
                     if (scheme_end == data.size()) {
@@ -1380,16 +1313,13 @@ namespace webpp {
                         replace_value(0, 0, "//:" + str_t(new_port));
                     } else {
                         // there's scheme
-                        replace_value(scheme_end + 1, 0,
-                                      "//:" + str_t(new_port));
+                        replace_value(scheme_end + 1, 0, "//:" + str_t(new_port));
                     }
                 }
             } else {
                 // there's a port and we are going to just replace it
                 replace_value(port_start + 1,
-                              authority_end == data.size() ? authority_end - 1
-                                                           : authority_end,
-                              new_port);
+                              authority_end == data.size() ? authority_end - 1 : authority_end, new_port);
             }
             return *this;
         }
@@ -1418,8 +1348,7 @@ namespace webpp {
         [[nodiscard]] str_view_t path() const noexcept {
             if (!has_path())
                 return {};
-            return substr(authority_end, stl::min(query_start, fragment_start) -
-                                           authority_end);
+            return substr(authority_end, stl::min(query_start, fragment_start) - authority_end);
         }
 
         /**
@@ -1428,8 +1357,7 @@ namespace webpp {
          */
         [[nodiscard]] auto path_decoded() const noexcept {
             return decode_uri_component<traits_type>(
-              path(),
-              charset(PCHAR_NOT_PCT_ENCODED, charset_t<char_type, 1>('/')));
+              path(), charset(PCHAR_NOT_PCT_ENCODED, charset_t<char_type, 1>('/')));
         }
 
         /**
@@ -1456,8 +1384,7 @@ namespace webpp {
             do {
                 slash_start = _path.find('/', last_slash_start + 1);
                 container.emplace_back(_path.data() + last_slash_start + 1,
-                                       stl::min(slash_start, _path_size) -
-                                         last_slash_start - 1);
+                                       stl::min(slash_start, _path_size) - last_slash_start - 1);
                 // if (slash_start != str_view_t::npos)
                 // _path.remove_prefix(slash_start + 1);
                 // else
@@ -1477,9 +1404,8 @@ namespace webpp {
         [[nodiscard]] Container path_structured_decoded() const noexcept {
             auto _slugs = path_structured<Container>();
             for (auto& slug : _slugs) {
-                slug =
-                  decode_uri_component<traits_type>(slug, PCHAR_NOT_PCT_ENCODED)
-                    .value_or((typename Container::value_type)(slug));
+                slug = decode_uri_component<traits_type>(slug, PCHAR_NOT_PCT_ENCODED)
+                         .value_or((typename Container::value_type)(slug));
             }
             return _slugs;
         }
@@ -1487,13 +1413,11 @@ namespace webpp {
         /**
          * @brief set path
          */
-        template <typename Container,
-                  typename = stl::enable_if_t<stl::negation_v<
-                    stl::is_convertible_v<Container::value_type, str_view_t>>>>
+        template <typename Container, typename = stl::enable_if_t<stl::negation_v<
+                                        stl::is_convertible_v<Container::value_type, str_view_t>>>>
         basic_uri& path(const Container& __path) noexcept {
-            static_assert(
-              stl::is_convertible_v<typename Container::value_type, str_view_t>,
-              "the specified container is not valid");
+            static_assert(stl::is_convertible_v<typename Container::value_type, str_view_t>,
+                          "the specified container is not valid");
             return path(__path.cbegin(), __path.cend());
         }
 
@@ -1506,8 +1430,7 @@ namespace webpp {
          */
         template <typename Iter>
         basic_uri& path(const Iter& _start, const Iter& _end) noexcept {
-            using ostream_iterator_t =
-              typename traits_type::ostream_iterator_type;
+            using ostream_iterator_t = typename traits_type::ostream_iterator_type;
             typename traits_type::ostringstream_type joined_path;
             // TODO: check if we need std::string here
             copy(_start, _end - 1, ostream_iterator_t(joined_path, "/"));
@@ -1522,14 +1445,11 @@ namespace webpp {
          */
         basic_uri& path(str_view_t const& __path) noexcept {
             parse_path();
-            auto _encoded_path =
-              (starts_with<traits_type>(__path, '/') ? "" : "/") +
-              encode_uri_component<traits_type>(
-                __path,
-                charset(PCHAR_NOT_PCT_ENCODED, charset_t<char_type, 1>('/')));
+            auto _encoded_path = (starts_with<traits_type>(__path, '/') ? "" : "/") +
+                                 encode_uri_component<traits_type>(
+                                   __path, charset(PCHAR_NOT_PCT_ENCODED, charset_t<char_type, 1>('/')));
 
-            replace_value(authority_end, query_start - authority_end,
-                          _encoded_path);
+            replace_value(authority_end, query_start - authority_end, _encoded_path);
             return *this;
         }
         /**
@@ -1579,13 +1499,11 @@ namespace webpp {
          */
         basic_uri& query(str_view_t const& __query) {
             if (!is::query(__query))
-                throw stl::invalid_argument(
-                  "The specified string is not a valid query");
+                throw stl::invalid_argument("The specified string is not a valid query");
 
             auto encoded_query =
               (starts_with<traits_type>(__query, '?') ? "" : "?") +
-              encode_uri_component<traits_type>(
-                __query, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
+              encode_uri_component<traits_type>(__query, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
 
             parse_query();
 
@@ -1604,27 +1522,23 @@ namespace webpp {
                                 // it's an empty string
                                 replace_value(0, 0, "///" + encoded_query);
                             } else {
-                                replace_value(scheme_end, 0,
-                                              "/" + encoded_query);
+                                replace_value(scheme_end, 0, "/" + encoded_query);
                             }
                         } else {
-                            replace_value(authority_start, 0,
-                                          "/" + encoded_query);
+                            replace_value(authority_start, 0, "/" + encoded_query);
                         }
                     } else {
                         // we have authority_end
                         if (data[authority_end] == '/') {
                             replace_value(authority_end + 1, 0, encoded_query);
                         } else {
-                            replace_value(authority_end + 1, 0,
-                                          "/" + encoded_query);
+                            replace_value(authority_end + 1, 0, "/" + encoded_query);
                         }
                     }
                 }
             } else {
                 // we have query
-                replace_value(query_start, fragment_start - query_start,
-                              encoded_query);
+                replace_value(query_start, fragment_start - query_start, encoded_query);
             }
             return *this;
         }
@@ -1636,21 +1550,18 @@ namespace webpp {
          */
         template <typename Map>
         basic_uri& query(Map const& _queries) noexcept {
-            static_assert(
-              stl::is_convertible_v<typename Map::key_type, str_view_t> &&
-                stl::is_convertible_v<typename Map::mapped_type, str_view_t>,
-              "The specified map is not valid");
+            static_assert(stl::is_convertible_v<typename Map::key_type, str_view_t> &&
+                            stl::is_convertible_v<typename Map::mapped_type, str_view_t>,
+                          "The specified map is not valid");
             str_t _query_data;
             bool  first = true;
             for (auto it = _queries.cbegin(); it != _queries.cend(); it++) {
-                auto name = encode_uri_component<traits_type>(
-                  it->first, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
-                auto value = encode_uri_component<traits_type>(
-                  it->second, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
+                auto name  = encode_uri_component<traits_type>(it->first, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
+                auto value = encode_uri_component<traits_type>(it->second, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
                 if (name.empty()) // when name is empty, we just don't care
                     continue;
-                _query_data = name + (value.empty() ? "" : ("=" + value)) +
-                              (stl::next(it) != _queries.cend() ? "&" : "");
+                _query_data =
+                  name + (value.empty() ? "" : ("=" + value)) + (stl::next(it) != _queries.cend() ? "&" : "");
             }
             query(_query_data);
             return *this;
@@ -1669,8 +1580,7 @@ namespace webpp {
          * @return optional<string>
          */
         [[nodiscard]] auto query_decoded() const noexcept {
-            return decode_uri_component<traits_type>(
-              query(), QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
+            return decode_uri_component<traits_type>(query(), QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
         }
 
         /**
@@ -1678,18 +1588,14 @@ namespace webpp {
          * It's also in a decoded format
          * @return unordered_map<string, string>
          */
-        [[nodiscard]] stl::map<traits_type, str_t, str_t>
-        query_structured() const noexcept {
+        [[nodiscard]] stl::map<traits_type, str_t, str_t> query_structured() const noexcept {
             stl::map<traits_type, str_t, str_t> q_structured;
             stl::size_t                         last_and_sep = 0;
             auto                                _query       = query();
             do {
-                auto and_sep =
-                  _query.find('&', last_and_sep); // find the delimiter
-                auto eq_sep =
-                  _query.find("=", last_and_sep, and_sep - last_and_sep);
-                auto name =
-                  _query.substr(last_and_sep + 1, stl::min(eq_sep, and_sep));
+                auto and_sep = _query.find('&', last_and_sep); // find the delimiter
+                auto eq_sep  = _query.find("=", last_and_sep, and_sep - last_and_sep);
+                auto name    = _query.substr(last_and_sep + 1, stl::min(eq_sep, and_sep));
                 last_and_sep = and_sep;
                 if (name.empty()) // a name should not be empty
                     continue;
@@ -1697,12 +1603,10 @@ namespace webpp {
                 if (and_sep != str_view_t::npos) { // we have a value as well
                     value = _query.substr(eq_sep + 1, and_sep);
                 }
-                auto d_name = decode_uri_component<traits_type>(
-                  name, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
+                auto d_name = decode_uri_component<traits_type>(name, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
                 if (d_name)
                     q_structured[d_name.value()] =
-                      decode_uri_component<traits_type>(
-                        value, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED)
+                      decode_uri_component<traits_type>(value, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED)
                         .value_or("");
             } while (last_and_sep != str_view_t::npos);
             return q_structured;
@@ -1715,11 +1619,9 @@ namespace webpp {
          */
         [[nodiscard]] bool is_normalized() const noexcept {
             auto __path = path_structured();
-            return __path.cend() != stl::find_if(__path.cbegin(), __path.cend(),
-                                                 [](auto const& p) {
-                                                     return p == "." ||
-                                                            p == "..";
-                                                 });
+            return __path.cend() != stl::find_if(__path.cbegin(), __path.cend(), [](auto const& p) {
+                       return p == "." || p == "..";
+                   });
         }
 
         /**
@@ -1810,8 +1712,7 @@ namespace webpp {
          *     (in which I mean, the base URI should be absolute,
          *     as in IsRelativeReference() should return false).
          */
-        [[nodiscard]] basic_uri
-        resolve(const basic_uri& relative_uri) const noexcept {
+        [[nodiscard]] basic_uri resolve(const basic_uri& relative_uri) const noexcept {
             // Resolve the reference by following the algorithm
             // from section 5.2.2 in
             // RFC 3986 (https://tools.ietf.org/html/rfc3986).
@@ -1851,14 +1752,12 @@ namespace webpp {
                             // RFC describes this as:
                             // "T.path = merge(Base.path, R.path);"
                             target.path(path());
-                            auto target_path = target.path_structured();
-                            auto relative_uri_path =
-                              relative_uri.path_structured();
+                            auto target_path       = target.path_structured();
+                            auto relative_uri_path = relative_uri.path_structured();
                             if (target_path.size() > 1) {
                                 target_path.pop_back();
                             }
-                            stl::copy(relative_uri_path.cbegin(),
-                                      relative_uri_path.cend(),
+                            stl::copy(relative_uri_path.cbegin(), relative_uri_path.cend(),
                                       stl::back_inserter(target_path));
                             target.path(target_path);
                             target.normalize_path();
@@ -1904,8 +1803,7 @@ namespace webpp {
          * Check if the specified string is a valid URI or not
          */
         [[nodiscard]] bool is_valid() const noexcept {
-            return has_scheme() || has_authority() || has_path() ||
-                   has_fragment();
+            return has_scheme() || has_authority() || has_path() || has_fragment();
         }
 
         /**
@@ -1933,8 +1831,7 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] str_t username_decoded() const noexcept {
-            return decode_uri_component<traits_type>(username(),
-                                                     USER_INFO_NOT_PCT_ENCODED);
+            return decode_uri_component<traits_type>(username(), USER_INFO_NOT_PCT_ENCODED);
         }
 
         /**
@@ -1962,8 +1859,7 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] str_t password_decoded() const noexcept {
-            return decode_uri_component<traits_type>(password(),
-                                                     USER_INFO_NOT_PCT_ENCODED);
+            return decode_uri_component<traits_type>(password(), USER_INFO_NOT_PCT_ENCODED);
         }
     };
 
@@ -1973,12 +1869,10 @@ namespace webpp {
     // basic_uri(const char[])->basic_uri<std::string_view>;
 
     template <typename CharT = char>
-    basic_uri(stl::basic_string_view<CharT>)
-      -> basic_uri<basic_std_traits<CharT>, false>;
+    basic_uri(stl::basic_string_view<CharT>) -> basic_uri<basic_std_traits<CharT>, false>;
 
     template <typename CharT = char>
-    basic_uri(stl::basic_string<CharT>)
-      -> basic_uri<basic_std_traits<CharT>, true>;
+    basic_uri(stl::basic_string<CharT>) -> basic_uri<basic_std_traits<CharT>, true>;
 
     using const_uri = basic_uri<std_traits, false>;
     using uri       = basic_uri<std_traits, true>;
@@ -2004,9 +1898,8 @@ namespace webpp {
     //    }
     //
     template <Traits TraitsType, bool Mutable1, bool Mutable2>
-    [[nodiscard]] bool
-    equal_path(basic_uri<TraitsType, Mutable1> const& p1,
-               basic_uri<TraitsType, Mutable2> const& p2) noexcept {
+    [[nodiscard]] bool equal_path(basic_uri<TraitsType, Mutable1> const& p1,
+                                  basic_uri<TraitsType, Mutable2> const& p2) noexcept {
         auto _p1 = p1.path_structured_decoded();
         auto _p2 = p2.path_structured_decoded();
         auto it2 = _p2.cbegin();
@@ -2042,23 +1935,19 @@ namespace webpp {
         return true;
     }
 
-    [[nodiscard]] inline auto equal_path(stl::string_view const& p1,
-                                         stl::string_view const& p2) noexcept {
-        return p1 == p2 || equal_path<std_traits, false, false>(const_uri{p1},
-                                                                const_uri{p2});
+    [[nodiscard]] inline auto equal_path(stl::string_view const& p1, stl::string_view const& p2) noexcept {
+        return p1 == p2 || equal_path<std_traits, false, false>(const_uri{p1}, const_uri{p2});
     }
 
     template <Traits TraitsType, bool Mutable>
-    [[nodiscard]] inline auto
-    equal_path(basic_uri<TraitsType, Mutable> const&        p1,
-               typename TraitsType::string_view_type const& p2) noexcept {
+    [[nodiscard]] inline auto equal_path(basic_uri<TraitsType, Mutable> const&        p1,
+                                         typename TraitsType::string_view_type const& p2) noexcept {
         return p1 == p2 || equal_path<TraitsType, false>(p1, const_uri{p2});
     }
 
     template <Traits TraitsType, bool Mutable>
-    [[nodiscard]] inline auto
-    equal_path(typename TraitsType::string_view_type const& p1,
-               basic_uri<TraitsType, Mutable> const&        p2) noexcept {
+    [[nodiscard]] inline auto equal_path(typename TraitsType::string_view_type const& p1,
+                                         basic_uri<TraitsType, Mutable> const&        p2) noexcept {
         return p2 == p1 || equal_path<TraitsType, false>(const_uri{p1}, p2);
     }
 

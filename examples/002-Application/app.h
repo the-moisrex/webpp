@@ -19,10 +19,11 @@ struct app {
     }
 
     Response auto operator()(Request auto& req) {
+        using extensions = extension_pack<string_response>;
         const auto admin = []() {
             return "Nice page.";
         };
-        const router<> _router{{this},
+        const router<extensions> _router{{this},
                               (get & root / "home") >>= [this] (Context auto & ctx) { return home(ctx); },
                               get & (root / "about" >>= [this] (Context auto & ctx) { return about(ctx); }),
                               root / "admin" >>= admin};
