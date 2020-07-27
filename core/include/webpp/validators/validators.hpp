@@ -32,7 +32,7 @@ namespace webpp {
         [[nodiscard]] constexpr bool
         contains(stl::basic_string_view<CharT> const& str,
                  stl::basic_string_view<CharT> const& seed) noexcept {
-            return str.find(seed) == stl::basic_string_view<CharT>::npos;
+            return str.find(seed) != stl::basic_string_view<CharT>::npos;
         }
 
         /**
@@ -278,9 +278,13 @@ namespace webpp {
         template <typename CharT = char>
         [[nodiscard]] constexpr bool
         hex(stl::basic_string_view<CharT> const& str) noexcept {
-            for (auto const& c : str)
-                if (!hex(c))
-                    return false;
+            auto first = stl::cbegin(str);
+            if(str.starts_with('-') || str.starts_with('+')){
+                ++first;
+            }
+            if (!stl::all_of(first, std::cend(str), [](CharT ch){return hex(ch);})){
+                return false;
+            }
             return !str.empty();
         }
 
