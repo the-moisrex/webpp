@@ -167,4 +167,10 @@ TEST(ValidationsTest, NumberFunctions) {
     EXPECT_FALSE(number('a'));
     EXPECT_TRUE(number('1'));
     EXPECT_TRUE(number('.'));
+    EXPECT_TRUE(hex('a'));
+    EXPECT_TRUE(hex('b'));
+    EXPECT_TRUE(hex('B'));
+    EXPECT_FALSE(hex('G'));
+    EXPECT_FALSE(hex("str"));
+    EXPECT_FALSE(hex(""));
 }

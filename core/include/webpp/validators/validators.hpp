@@ -236,8 +236,7 @@ namespace webpp {
          * @return bool
          */
         template <istl::CharType CharT = char, istl::CharTraits CTraits = stl::char_traits<CharT>>
-        requires(stl::is_integral_v<CharT>)
-          [[nodiscard]] constexpr bool uint8(stl::basic_string_view<CharT, CTraits> const& str) noexcept {
+        [[nodiscard]] constexpr bool uint8(stl::basic_string_view<CharT, CTraits> const& str) noexcept {
             return !str.empty() && str.size() <= 3 && digit(str) && to_uint(str) <= 255;
         }
 
@@ -247,7 +246,7 @@ namespace webpp {
          * @return bool
          */
         template <istl::CharType CharT = char>
-        requires(stl::is_integral_v<CharT>) [[nodiscard]] constexpr bool hex(CharT t) noexcept {
+        [[nodiscard]] constexpr bool hex(CharT t) noexcept {
             return (t >= '0' && t <= '9') || (t >= 'a' && t <= 'f') || (t >= 'A' && t <= 'F');
         }
 
@@ -296,8 +295,7 @@ namespace webpp {
          * @return
          */
         template <typename Integer>
-        requires(stl::is_integral_v<Integer>)
-        [[nodiscard]] constexpr bool subnet_octet(Integer o) noexcept {
+        requires(stl::is_integral_v<Integer>) [[nodiscard]] constexpr bool subnet_octet(Integer o) noexcept {
             constexpr auto mask = static_cast<Integer>(1) << ((sizeof(Integer) * 8) - 1);
             while ((o & mask) == mask)
                 o <<= 1;
@@ -311,7 +309,7 @@ namespace webpp {
          */
         template <Traits TraitsType>
         [[nodiscard]] constexpr bool ipv4(typename TraitsType::string_view_type str) noexcept {
-            using traits_type    = TraitsType;
+            using traits_type = TraitsType;
             stl::size_t next_dot;
             for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
                 next_dot       = str.find('.');
