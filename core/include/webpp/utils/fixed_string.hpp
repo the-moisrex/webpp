@@ -222,12 +222,9 @@ namespace webpp {
 
       public:
         template <typename T>
-        constexpr fixed_string(const T*) noexcept {
-        }
-        constexpr fixed_string(std::initializer_list<char32_t>) noexcept {
-        }
-        constexpr fixed_string(const fixed_string&) noexcept {
-        }
+        constexpr fixed_string(const T*) noexcept {}
+        constexpr fixed_string(std::initializer_list<char32_t>) noexcept {}
+        constexpr fixed_string(const fixed_string&) noexcept {}
         constexpr bool correct() const noexcept {
             return true;
         }
@@ -250,6 +247,7 @@ namespace webpp {
 
     template <typename CharT, size_t N>
     fixed_string(const CharT (&)[N]) -> fixed_string<N - 1>;
+
     template <size_t N>
     fixed_string(fixed_string<N>) -> fixed_string<N>;
 

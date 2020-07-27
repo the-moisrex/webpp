@@ -13,7 +13,6 @@
 #include <utility>
 
 using namespace webpp;
-using namespace webpp::routes;
 
 struct fake_app {
 
@@ -40,7 +39,6 @@ struct fake_mommy {
 };
 
 TEST(Routes, PathTests) {
-    using namespace webpp::routes;
 
     EXPECT_TRUE(static_cast<bool>(Interface<typename fake_request_type::interface_type>));
 

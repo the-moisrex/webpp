@@ -10,8 +10,7 @@ namespace webpp {
         const stl::string_view method_string;
 
       public:
-        constexpr method_route_condition(stl::string_view str) noexcept : method_string(stl::move(str)) {
-        }
+        constexpr method_route_condition(stl::string_view str) noexcept : method_string(stl::move(str)) {}
 
         constexpr method_route_condition() noexcept = default;
 

@@ -6,7 +6,6 @@
 #include "../../core/include/webpp.hpp"
 
 using namespace webpp;
-using namespace webpp::routes;
 
 struct app {
 
