@@ -117,8 +117,7 @@ namespace webpp::istl {
 
     struct fake_char_traits_type {
 
-        ~fake_char_traits_type() {
-        }
+        ~fake_char_traits_type() {}
 
         using char_type = char;
         using int_type  = int;
@@ -175,7 +174,7 @@ namespace webpp::istl {
     };
 
     template <typename T>
-    concept bool CharType = stl::is_integral_v<T>;
+    concept CharType = stl::is_integral_v<T>;
 
 
     template <typename A>

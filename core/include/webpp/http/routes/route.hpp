@@ -311,25 +311,32 @@ namespace webpp {
                 return set_next<logical_operators::XOR>(stl::forward<decltype(new_route)>(new_route));
             }
 
+          private:
+            template <typename AppType, typename NewRoutePtr, bool is_noexcept>
+            struct route_with_router_pointer {
+                NewRoutePtr        new_route;
+                AppType*           app = nullptr;
+                [[nodiscard]] auto operator()(auto... args) noexcept(is_noexcept) {
+                    // yes we know app must not be nullptr, but route should only be used with router,
+                    // and the router will set the app if it can otherwise the router can throw an
+                    // error at compile time or at least at initialization time instead of when the
+                    // a user's request comes to this specific route. This makes sure the developers
+                    // will catch this error sooner.
+                    assert(app != nullptr); // You did not supply the correct app to the router
+
+                    return (app->*new_route)(stl::forward<decltype(args)>(args)...);
+                }
+            };
+
+          public:
             [[nodiscard]] constexpr auto operator>>=(auto&& new_route) const noexcept {
                 using rt = decltype(new_route);
                 if constexpr (stl::is_member_function_pointer_v<rt>) {
                     using mem_func_ptr_t = member_function_pointer<rt>;
                     using app_type       = typename mem_func_ptr_t::type;
-                    struct route_with_router_pointer {
-                        app_type*          app = nullptr;
-                        [[nodiscard]] auto operator()(auto... args) noexcept(mem_func_ptr_t::is_noexcept) {
-                            // yes we know app must not be nullptr, but route should only be used with router,
-                            // and the router will set the app if it can otherwise the router can throw an
-                            // error at compile time or at least at initialization time instead of when the
-                            // a user's request comes to this specific route. This makes sure the developers
-                            // will catch this error sooner.
-                            assert(app != nullptr); // You did not supply the correct app to the router
-
-                            return (app->*new_route)(stl::forward<decltype(args)>(args)...);
-                        }
-                    };
-                    return set_next<logical_operators::none>(route_with_router_pointer{});
+                    return set_next<logical_operators::none>(
+                      route_with_router_pointer<app_type, stl::remove_cvref<decltype(new_route)>,
+                                                mem_func_ptr_t::is_noexcept>{});
                 } else if constexpr (PotentialRoute<rt, switched_context_type<fake_context_type>>) {
                     return set_next<logical_operators::none>(stl::forward<decltype(new_route)>(new_route));
                 } else {

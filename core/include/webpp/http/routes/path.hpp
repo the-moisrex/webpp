@@ -113,6 +113,23 @@ namespace webpp {
         using context_extensions = extension_pack<path_extension<TraitsType, ContextType>>;
     };
 
+    namespace details {
+        template <typename NextSegType>
+        struct make_a_path {
+            stl::decay_t<stl::remove_cvref_t<NextSegType>> new_next_segment;
+
+            auto operator()(PathContext auto const& ctx) const noexcept {
+                if constexpr (requires { {new_next_segment == ""}; }) {
+                    return new_next_segment == ctx.path.current_segment;
+                } else if constexpr (requires { {"" == new_next_segment}; }) {
+                    return ctx.path.current_segment == new_next_segment;
+                } else {
+                    return false; // should not happen
+                }
+            }
+        };
+    } // namespace details
+
     /**
      * Operator Path:
      *
@@ -143,8 +160,7 @@ namespace webpp {
           stl::same_as<segment_type,
                        path<typename segment_type::segment_type, typename segment_type::next_segment_type>>;
 
-        // if the NextSegmentType is itself a path (which normally should not
-        // happen)
+        // if the NextSegmentType is itself a path (which normally should not happen)
         static constexpr bool is_next_segment_nested =
           has_next_segment &&
           stl::same_as<next_segment_type, path<typename next_segment_type::segment_type,
@@ -176,21 +192,6 @@ namespace webpp {
         }
 
       private:
-        template <typename NextSegType>
-        struct make_a_path {
-            stl::decay_t<stl::remove_cvref_t<NextSegType>> new_next_segment;
-
-            auto operator()(PathContext auto const& ctx) const noexcept {
-                if constexpr (requires { {new_next_segment == ""}; }) {
-                    return new_next_segment == ctx.path.current_segment;
-                } else if constexpr (requires { {"" == new_next_segment}; }) {
-                    return ctx.path.current_segment == new_next_segment;
-                } else {
-                    return false; // should not happen
-                }
-            }
-        };
-
       public:
         /**
          * Convert those segments that can be compared with a string, to a normal segment type that have
@@ -211,7 +212,7 @@ namespace webpp {
             //                }
             //            });
             using type = stl::remove_cvref_t<NewSegType>;
-            return operator/(make_a_path<type>{.new_next_segment = stl::move(new_next_segment)});
+            return operator/(details::make_a_path<type>{.new_next_segment = stl::move(new_next_segment)});
         }
 
 

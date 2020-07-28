@@ -79,7 +79,7 @@ namespace webpp {
         template <typename First = void, typename... U>
         struct unique_types {
             using type = stl::conditional_t<
-              ((!std::is_same_v<First, U>)&&...),
+              ((!std::is_same_v<First, U>) &&...),
               typename prepend<extension_pack, First, typename unique_types<U...>::type>::type,
               typename unique_types<U...>::type>;
         };
@@ -213,14 +213,12 @@ namespace webpp {
 
             template <typename... Args>
             requires(stl::constructible_from<Parent, Args...>) constexpr vctor(Args&&... args) noexcept
-              : Parent{stl::forward<Args>(args)...} {
-            }
+              : Parent{stl::forward<Args>(args)...} {}
 
             template <typename... Args>
-            requires(!stl::constructible_from<Parent, Args...>) constexpr vctor([
-              [maybe_unused]] Args&&... args) noexcept
-              : Parent{} {
-            }
+            requires(!stl::constructible_from<Parent, Args...>) constexpr vctor(
+              [[maybe_unused]] Args&&... args) noexcept
+              : Parent{} {}
         };
 
         template <typename Parent>
@@ -228,14 +226,12 @@ namespace webpp {
 
             template <typename... Args>
             constexpr ctor(Args&&... args) noexcept requires(stl::constructible_from<Parent, Args...>)
-              : Parent{stl::forward<Args>(args)...} {
-            }
+              : Parent{stl::forward<Args>(args)...} {}
 
             template <typename... Args>
             constexpr ctor([[maybe_unused]] Args&&... args) noexcept
               requires(!stl::constructible_from<Parent, Args...> && stl::is_default_constructible_v<Parent>)
-              : Parent{} {
-            }
+              : Parent{} {}
         };
 
         template <Traits TraitsType>
@@ -243,8 +239,7 @@ namespace webpp {
 
             template <typename... Args>
             constexpr mother_inherited(Args&&... args) noexcept
-              : ctor<typename E::template type<TraitsType>>{stl::forward<Args>(args)...}... {
-            }
+              : ctor<typename E::template type<TraitsType>>{stl::forward<Args>(args)...}... {}
         };
 
         // with 2 or more kids
@@ -254,8 +249,7 @@ namespace webpp {
                 template <typename... Args>
                 constexpr type(Args&&... args) noexcept
                   : vctor<typename Kids::template type<TraitsType, vctor<Mother>>>{
-                      stl::forward<Args>(args)...}... {
-                }
+                      stl::forward<Args>(args)...}... {}
             };
         };
 
