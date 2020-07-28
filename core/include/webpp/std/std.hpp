@@ -1,6 +1,4 @@
-//
 // Created by moisrex on 4/4/20.
-//
 
 #ifndef WEBPP_STD_STD_H
 #define WEBPP_STD_STD_H

@@ -75,11 +75,11 @@ namespace webpp {
         }
 
         void calculate_default_headers() noexcept {
-            if (!header.contains("Content-Type"))
-                header.emplace("Content-Type", "text/html; charset=utf-8");
+            if (stl::find(header.cbegin(), header.cend(), "Content-Type") != header.cend())
+                header.emplace_back("Content-Type", "text/html; charset=utf-8");
 
-            if (!header.contains("Content-Length"))
-                header.emplace("Content-Length", stl::to_string(body.str().size() * sizeof(char)));
+            if (stl::find(header.cbegin(), header.cend(), "Content-Length") != header.cend())
+                header.emplace_back("Content-Length", stl::to_string(body.str().size() * sizeof(char)));
         }
 
 

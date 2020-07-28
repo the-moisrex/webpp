@@ -174,7 +174,7 @@ namespace webpp {
          * previous ones
          */
         template <Segment NewNextSegmentType>
-        constexpr auto operator/(NewNextSegmentType&& new_next_segment) const noexcept {
+        consteval auto operator/(NewNextSegmentType&& new_next_segment) const noexcept {
             if constexpr (!has_segment) {
                 return route<path<NewNextSegmentType, void>>{path<NewNextSegmentType, void>{
                   .segment = stl::forward<NewNextSegmentType>(new_next_segment)}};
@@ -191,8 +191,6 @@ namespace webpp {
             }
         }
 
-      private:
-      public:
         /**
          * Convert those segments that can be compared with a string, to a normal segment type that have
          * an operator(context)
@@ -200,7 +198,7 @@ namespace webpp {
         template <typename NewSegType>
         requires(ComparableToString<stl::remove_cvref_t<NewSegType>>&&
                    stl::is_class_v<stl::remove_cvref_t<NewSegType>> &&
-                 !Segment<stl::remove_cvref_t<NewSegType>>) constexpr auto
+                 !Segment<stl::remove_cvref_t<NewSegType>>) consteval auto
         operator/(NewSegType new_next_segment) const noexcept {
             //            return operator/([=](PathContext auto const& ctx) {
             //                if constexpr (requires { {next_segment == ""}; }) {
@@ -220,7 +218,7 @@ namespace webpp {
          * Convert different original types to normal callable segments
          */
         template <typename NewSegType>
-        constexpr auto operator/(NewSegType&& new_next_segment) const noexcept {
+        consteval auto operator/(NewSegType&& new_next_segment) const noexcept {
             using seg_type = stl::remove_cvref_t<NewSegType>;
 
             // int_type[N] => string_view
@@ -251,7 +249,7 @@ namespace webpp {
         /**
          * Get the number or segments in this path
          */
-        [[nodiscard]] static constexpr stl::size_t size() noexcept {
+        [[nodiscard]] static consteval stl::size_t size() noexcept {
             stl::size_t _size = 0;
             if constexpr (has_segment) {
                 if constexpr (requires { {segment_type::size()}; }) {
@@ -408,7 +406,7 @@ namespace webpp {
     constexpr auto root = path{} / "";
 
     // relative path
-    constexpr auto relative = path{};
+    constexpr path relative{};
 
 } // namespace webpp
 

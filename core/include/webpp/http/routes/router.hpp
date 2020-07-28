@@ -96,7 +96,7 @@ namespace webpp {
          */
         template <typename RequestType>
         requires(Request<stl::remove_cvref_t<RequestType>>) Response auto
-        operator()(RequestType& req) noexcept {
+        operator()(RequestType& req) const noexcept {
             using req_type     = stl::remove_cvref_t<RequestType>;
             using context_type = simple_context<req_type, ExtensionListType>;
             return this->operator()(context_type{req});
@@ -104,7 +104,7 @@ namespace webpp {
 
         template <typename ContextType, stl::size_t Index = 0>
         requires(Context<stl::remove_cvref_t<ContextType>>) Response auto
-        operator()(ContextType&& ctx) noexcept {
+        operator()(ContextType&& ctx) const noexcept {
 
             if constexpr (sizeof...(RouteType) == 0) {
                 return error(ctx, 404u);

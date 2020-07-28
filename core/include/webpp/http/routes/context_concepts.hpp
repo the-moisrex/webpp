@@ -86,8 +86,7 @@ namespace webpp {
     concept ContextExtension = Extension<T>;
 
     template <typename T>
-    concept Context = Traits<typename T::traits_type>&& Request<typename T::request_type>&&
-      stl::is_copy_constructible_v<T>&& stl::is_move_constructible_v<T>&& requires(T c) {
+    concept Context = Traits<typename T::traits_type>&& Request<typename T::request_type>&& requires(T c) {
         {c.request};
     };
 

@@ -166,8 +166,8 @@ namespace webpp {
             // todo: use <format> or {fmt}
             // todo: give the user the ability to change the status phrase
             stl::stringstream status_line;
-            status_line << "Status: " << res.header.status_code() << " "
-                        << status_reason_phrase(res.header.status_code()) << "\r\n";
+            status_line << "Status: " << res.header.status_code << " "
+                        << status_reason_phrase(res.header.status_code) << "\r\n";
 
             auto _status_line_str = status_line.str();
             write(_status_line_str.data(), _status_line_str.size());

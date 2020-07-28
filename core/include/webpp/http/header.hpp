@@ -4,7 +4,7 @@
 #include "../std/format.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
-#include "../std/unordered_set.hpp"
+#include "../std/vector.hpp"
 #include "../traits/traits_concepts.hpp"
 #include "./common.hpp"
 #include "./cookies/cookie.hpp"
@@ -155,28 +155,24 @@ namespace webpp {
         string_type name;
         string_type value;
 
-        constexpr response_header_field(string_type&& _name, string_type&& _value)
-          : name{stl::move(_name)},
-            value{stl::move(_value)} {
-        }
-
-        constexpr response_header_field(string_view_type _name, string_view_type _value,
-                                        alloc_type alloc = allocator_type{})
-          : name{_name, alloc},
-            value{_value, alloc} {
-        }
-
-        constexpr response_header_field(string_view_type _name, string_type&& _value,
-                                        alloc_type alloc = allocator_type{})
-          : name{_name, alloc},
-            value{stl::move(_value)} {
-        }
-
-        constexpr response_header_field(string_type&& _name, string_view_type _value,
-                                        alloc_type alloc = allocator_type{})
-          : name{stl::move(_name)},
-            value{_value, alloc} {
-        }
+//        constexpr response_header_field(string_type&& _name, string_type&& _value)
+//          : name{stl::move(_name)},
+//            value{stl::move(_value)} {}
+//
+//        constexpr response_header_field(string_view_type _name, string_view_type _value,
+//                                        alloc_type alloc = allocator_type{})
+//          : name{_name, alloc},
+//            value{_value, alloc} {}
+//
+//        constexpr response_header_field(string_view_type _name, string_type&& _value,
+//                                        alloc_type alloc = allocator_type{})
+//          : name{_name, alloc},
+//            value{stl::move(_value)} {}
+//
+//        constexpr response_header_field(string_type&& _name, string_view_type _value,
+//                                        alloc_type alloc = allocator_type{})
+//          : name{stl::move(_name)},
+//            value{_value, alloc} {}
 
 
         /**
@@ -184,17 +180,36 @@ namespace webpp {
          * It's not a good idea to compare the name directly; the header name is
          * case-insensitive.
          */
-        constexpr bool is_name(string_view_type const& str) const noexcept {
-            return to_lower_copy<string_type::value_type, string_type::traits_type,
-                                 string_type::allocator_type>(name) ==
-                   to_lower_copy<string_view_type::value_type, string_view_type::traits_type,
-                                 traits_type::allocator>(str);
+        constexpr bool is_name(string_type str) const noexcept {
+            return to_lower_copy<traits_type>(name) == to_lower_copy<traits_type>(str);
+        }
+
+        constexpr bool operator==(string_type str) const noexcept {
+            return is_name(str);
+        }
+
+        constexpr bool operator!=(string_type str) const noexcept {
+            return !operator==(str);
+        }
+
+        friend constexpr bool operator==(string_type                                str,
+                                         response_header_field<TraitsType, EList> const& field) noexcept {
+            return field == str;
+        }
+
+        friend constexpr bool operator!=(string_type                                str,
+                                         response_header_field<TraitsType, EList> const& field) noexcept {
+            return field != str;
         }
     };
 
 
 
-    // hash function of std::unordered_set<webpp::basic_cookie>
+    /**
+     * hash function of std::unordered_set<webpp::basic_cookie>
+     * Even though we're not using this, we put it here for when/if we changed our mind and wanted to use it
+     * later or even if someone else wanted this
+     */
     template <typename FieldType>
     struct response_header_field_hash {
         using field_type = FieldType;
@@ -237,14 +252,13 @@ namespace webpp {
      *
      */
     template <Traits TraitsType, typename HeaderEList, typename HeaderFieldType>
-    class response_headers : public istl::unordered_multiset<TraitsType, HeaderFieldType,
-                                                             response_header_field_hash<HeaderFieldType>,
-                                                             response_header_field_equals<HeaderFieldType>>,
-                             public HeaderEList {
+    class response_headers : public istl::vector<TraitsType, HeaderFieldType>, public HeaderEList {
 
-        using super =
-          istl::unordered_multiset<TraitsType, HeaderFieldType, response_header_field_hash<HeaderFieldType>,
-                                   response_header_field_equals<HeaderFieldType>>;
+        //        using super =
+        //          istl::unordered_multiset<TraitsType, HeaderFieldType,
+        //          response_header_field_hash<HeaderFieldType>,
+        //                                   response_header_field_equals<HeaderFieldType>>;
+        using super = istl::vector<TraitsType, HeaderFieldType>;
 
       public:
         using traits_type       = TraitsType;
@@ -254,8 +268,7 @@ namespace webpp {
         template <typename... Args>
         constexpr response_headers(Args&&... args) noexcept
           : super{stl::forward<Args>(args)...},
-            HeaderEList{} {
-        }
+            HeaderEList{} {}
 
         status_code_type status_code = 200u;
 

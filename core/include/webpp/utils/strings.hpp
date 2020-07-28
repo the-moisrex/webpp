@@ -151,7 +151,7 @@ namespace webpp {
     }
 
     template <Traits TraitsType>
-    inline void to_lower(typename TraitsType::stirng_type& str) noexcept {
+    inline void to_lower(typename TraitsType::string_type& str) noexcept {
         // FIXME: I think you can make this algorithm faster
         stl::transform(str.cbegin(), str.cend(), str.begin(), [](auto c) {
             return stl::tolower(c);
@@ -170,7 +170,7 @@ namespace webpp {
     template <Traits TraitsType>
     [[nodiscard]] inline typename TraitsType::string_type
     to_lower_copy(typename TraitsType::string_type str) noexcept {
-        to_lower(str);
+        to_lower<TraitsType>(str);
         return str;
     }
 
