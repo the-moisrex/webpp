@@ -155,24 +155,21 @@ namespace webpp {
         string_type name;
         string_type value;
 
-//        constexpr response_header_field(string_type&& _name, string_type&& _value)
-//          : name{stl::move(_name)},
-//            value{stl::move(_value)} {}
-//
-//        constexpr response_header_field(string_view_type _name, string_view_type _value,
-//                                        alloc_type alloc = allocator_type{})
-//          : name{_name, alloc},
-//            value{_value, alloc} {}
-//
-//        constexpr response_header_field(string_view_type _name, string_type&& _value,
-//                                        alloc_type alloc = allocator_type{})
-//          : name{_name, alloc},
-//            value{stl::move(_value)} {}
-//
-//        constexpr response_header_field(string_type&& _name, string_view_type _value,
-//                                        alloc_type alloc = allocator_type{})
-//          : name{stl::move(_name)},
-//            value{_value, alloc} {}
+        constexpr response_header_field(string_type&& _name, string_type&& _value)
+          : name{stl::move(_name)},
+            value{stl::move(_value)} {}
+
+        constexpr response_header_field(string_view_type _name, string_view_type _value, alloc_type alloc)
+          : name{_name, alloc},
+            value{_value, alloc} {}
+
+        constexpr response_header_field(string_view_type _name, string_type&& _value, alloc_type alloc)
+          : name{_name, alloc},
+            value{stl::move(_value)} {}
+
+        constexpr response_header_field(string_type&& _name, string_view_type _value, alloc_type alloc)
+          : name{stl::move(_name)},
+            value{_value, alloc} {}
 
 
         /**
@@ -192,12 +189,12 @@ namespace webpp {
             return !operator==(str);
         }
 
-        friend constexpr bool operator==(string_type                                str,
+        friend constexpr bool operator==(string_type                                     str,
                                          response_header_field<TraitsType, EList> const& field) noexcept {
             return field == str;
         }
 
-        friend constexpr bool operator!=(string_type                                str,
+        friend constexpr bool operator!=(string_type                                     str,
                                          response_header_field<TraitsType, EList> const& field) noexcept {
             return field != str;
         }
