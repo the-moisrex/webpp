@@ -2,6 +2,7 @@
 #define WEBPP_HTTP_RESPONSE_H
 
 #include "../traits/traits_concepts.hpp"
+#include "../utils/casts.hpp"
 #include "./response_concepts.hpp"
 #include "body.hpp"
 #include "header.hpp"
@@ -32,29 +33,22 @@ namespace webpp {
         basic_response(basic_response const& res) noexcept = default;
         basic_response(basic_response&& res) noexcept      = default;
 
-        basic_response(status_code_type err_code) noexcept : EList{}, header{err_code} {
-        }
+        basic_response(status_code_type err_code) noexcept : EList{}, header{err_code} {}
         basic_response(status_code_type err_code, string_type const& b) noexcept
           : EList{},
             header{err_code},
-            body{b} {
-        }
+            body{b} {}
         basic_response(status_code_type err_code, string_type&& b) noexcept
           : EList{},
             header{err_code},
-            body{stl::move(b)} {
-        }
-        basic_response(body_type const& b) noexcept : EList{}, body(b) {
-        }
+            body{stl::move(b)} {}
+        basic_response(body_type const& b) noexcept : EList{}, body(b) {}
 
-        basic_response(body_type&& b) noexcept : EList{}, body(stl::move(b)) {
-        }
+        basic_response(body_type&& b) noexcept : EList{}, body(stl::move(b)) {}
 
-        explicit basic_response(header_type&& e) noexcept : EList{}, header(stl::move(e)) {
-        }
+        explicit basic_response(header_type&& e) noexcept : EList{}, header(stl::move(e)) {}
 
-        explicit basic_response(header_type const& e) noexcept : EList{}, header(e) {
-        }
+        explicit basic_response(header_type const& e) noexcept : EList{}, header(e) {}
 
         basic_response& operator=(basic_response const&) = default;
         basic_response& operator=(basic_response&& res) noexcept = default;
@@ -75,11 +69,15 @@ namespace webpp {
         }
 
         void calculate_default_headers() noexcept {
+            using header_field_type = typename decltype(header)::field_type;
             if (stl::find(header.cbegin(), header.cend(), "Content-Type") != header.cend())
-                header.emplace_back("Content-Type", "text/html; charset=utf-8");
+                header.emplace_back(
+                  header_field_type{.name = "Content-Type", .value = "text/html; charset=utf-8"});
 
             if (stl::find(header.cbegin(), header.cend(), "Content-Length") != header.cend())
-                header.emplace_back("Content-Length", stl::to_string(body.str().size() * sizeof(char)));
+                header.emplace_back(
+                  header_field_type{.name  = "Content-Length",
+                                    .value = to_str<traits_type>(body.str().size() * sizeof(char))});
         }
 
 

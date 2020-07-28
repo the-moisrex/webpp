@@ -155,22 +155,22 @@ namespace webpp {
         string_type name;
         string_type value;
 
-        constexpr response_header_field(string_type&& _name, string_type&& _value)
-          : name{stl::move(_name)},
-            value{stl::move(_value)} {}
-
-        constexpr response_header_field(string_view_type _name, string_view_type _value, alloc_type alloc)
-          : name{_name, alloc},
-            value{_value, alloc} {}
-
-        constexpr response_header_field(string_view_type _name, string_type&& _value, alloc_type alloc)
-          : name{_name, alloc},
-            value{stl::move(_value)} {}
-
-        constexpr response_header_field(string_type&& _name, string_view_type _value, alloc_type alloc)
-          : name{stl::move(_name)},
-            value{_value, alloc} {}
-
+//        constexpr response_header_field(string_type&& _name, string_type&& _value)
+//          : name{stl::move(_name)},
+//            value{stl::move(_value)} {}
+//
+//        constexpr response_header_field(string_view_type _name, string_view_type _value, alloc_type alloc)
+//          : name{_name, alloc},
+//            value{_value, alloc} {}
+//
+//        constexpr response_header_field(string_view_type _name, string_type&& _value, alloc_type alloc)
+//          : name{_name, alloc},
+//            value{stl::move(_value)} {}
+//
+//        constexpr response_header_field(string_type&& _name, string_view_type _value, alloc_type alloc)
+//          : name{stl::move(_name)},
+//            value{_value, alloc} {}
+//
 
         /**
          * Check if the specified name is the same as the header name
@@ -260,7 +260,7 @@ namespace webpp {
       public:
         using traits_type       = TraitsType;
         using string_type       = typename traits_type::string_type;
-        using header_field_type = HeaderFieldType;
+        using field_type = HeaderFieldType;
 
         template <typename... Args>
         constexpr response_headers(Args&&... args) noexcept
