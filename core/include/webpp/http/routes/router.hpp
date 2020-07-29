@@ -39,25 +39,27 @@ namespace webpp {
         //        using additional_routes = ;
         const stl::tuple<RouteType...> routes;
 
-        constexpr router(RouteType&&... _route) noexcept : routes(stl::forward<RouteType>(_route)...) {
-        }
+        consteval router(ExtensionListType&&, RouteType&&... _route) noexcept
+          : routes(stl::forward<RouteType>(_route)...) {}
+        consteval router(RouteType&&... _route) noexcept : routes(stl::forward<RouteType>(_route)...) {}
 
-        template <typename... AppTypes>
-        requires((application_pointers<AppTypes>::value && ...))
-          constexpr router(stl::tuple<AppTypes...> const& _apps, RouteType&&... _route) noexcept
-          : routes(stl::forward<RouteType>(_route)...) {
-            stl::apply(
-              [this](auto&... _route) {
-                  (..., (requires { {_route.app}; } && (_route.app = this)));
-              },
-              routes);
-        }
+        //        template <typename... AppTypes>
+        //        requires((application_pointers<AppTypes>::value &&
+        //                  ...)) consteval router(stl::tuple<AppTypes...> const& _apps, RouteType&&...
+        //                  _route) noexcept
+        //          : routes(stl::forward<RouteType>(_route)...) {
+        //            stl::apply(
+        //              [&](auto&... app_ptr) {
+        //                  (..., (requires { {_route.app}; } && (_route.app = app_ptr)));
+        //              },
+        //              _apps);
+        //        }
 
 
         /**
          * @return how many routes are in this router
          */
-        constexpr auto route_count() const noexcept {
+        consteval auto route_count() const noexcept {
             return sizeof...(RouteType);
         }
 
@@ -68,7 +70,7 @@ namespace webpp {
          * @return
          */
         template <stl::size_t N = 0>
-        constexpr auto& operator[](stl::size_t i) const noexcept {
+        consteval auto& operator[](stl::size_t i) const noexcept {
             if (N == i) {
                 return stl::get<N>(routes);
             }
@@ -158,6 +160,10 @@ namespace webpp {
             }
         }
     };
+
+    template <ExtensionList ExtensionListType, Route... RouteType>
+    router(ExtensionListType&&, RouteType&&...) -> router<ExtensionListType, RouteType...>;
+
 
     /**
      * This is the router; the developers need this class to inject their routes
