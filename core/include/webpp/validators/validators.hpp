@@ -277,9 +277,11 @@ namespace webpp {
          */
         template <Traits TraitsType>
         [[nodiscard]] bool email(typename TraitsType::string_view_type str) noexcept {
-            constexpr auto pattern = ctll::fixed_string{"^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+"
-                                                        "(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"};
-            return ctre::match<pattern>(str);
+            //            constexpr auto pattern =
+            //            ctll::fixed_string{"^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+"
+            //                                                        "(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"};
+            //            return ctre::match<pattern>(str);
+            return false;
         }
 
         template <istl::CharType CharT = char, istl::CharTraits CTraits = stl::char_traits<CharT>>
