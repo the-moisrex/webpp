@@ -3,6 +3,8 @@
 #ifndef WEBPP_BASIC_INTERFACE_CONCEPTS_H
 #define WEBPP_BASIC_INTERFACE_CONCEPTS_H
 
+#include "../../traits/std_traits.hpp"
+
 namespace webpp {
 
     template <typename T>
@@ -11,7 +13,7 @@ namespace webpp {
     };
 
     struct fake_interface_type {
-        using traits_type = fake_traits_type;
+        using traits_type = std_traits;
         void operator()() noexcept {
         }
     };

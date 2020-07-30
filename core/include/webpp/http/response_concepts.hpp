@@ -8,13 +8,13 @@
 
 namespace webpp {
 
-    struct fake_response_type {
-        using body_type   = void;
-        using header_type = void;
-        using traits_type = fake_traits_type;
-        stl::true_type body;
-        stl::true_type header;
-    };
+//    struct fake_response_type {
+//        using body_type   = void;
+//        using header_type = void;
+//        using traits_type = fake_traits_type;
+//        stl::true_type body;
+//        stl::true_type header;
+//    };
 
     template <typename ResType>
     concept Response = requires (ResType res) {
@@ -22,7 +22,7 @@ namespace webpp {
         typename ResType::headers_type;
         typename ResType::traits_type;
         {res.body};
-        {res.header};
+        {res.headers};
     };
 
     template <typename T>

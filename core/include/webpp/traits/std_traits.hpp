@@ -61,6 +61,8 @@ namespace webpp {
           basic_std_traits<CharT, CharTraitsT, stl::allocator_traits<AllocatorType>::template rebind_alloc>;
     };
 
+    using fake_traits_type = std_traits;
+
 } // namespace webpp
 
 #endif // WEBPP_STD_TRAITS_H

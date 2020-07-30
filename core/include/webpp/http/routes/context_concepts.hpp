@@ -86,19 +86,29 @@ namespace webpp {
     concept ContextExtension = Extension<T>;
 
     template <typename T>
-    concept Context = Traits<typename T::traits_type>&& Request<typename T::request_type>&& requires(T c) {
+    concept Context = requires(T c) {
+        Traits<typename T::traits_type>;
+        Request<typename T::request_type>;
         {c.request};
     };
 
-    struct fake_context_type {
-        using traits_type  = fake_context_type;
-        using request_type = fake_request_type;
-        request_type request{};
-        fake_context_type() = default;
-        fake_context_type(request_type req) : request{req} {}
-        fake_context_type(fake_context_type const&)     = default;
-        fake_context_type(fake_context_type&&) noexcept = default;
-    };
+//    template <typename ...E>
+//    struct fake_context_type_impl: public E... {
+//        using traits_type  = std_traits;
+//        using request_type = fake_request_type;
+//        request_type request{};
+//        fake_context_type_impl() = default;
+//        fake_context_type_impl(request_type req) : request{req} {}
+//        fake_context_type_impl(fake_context_type_impl const&)     = default;
+//        fake_context_type_impl(fake_context_type_impl&&) noexcept = default;
+//
+//        template <Extension... EE>
+//        constexpr auto clone() const noexcept {
+//            return fake_context_type_impl<EE...>{*this};
+//        }
+//    };
+//
+//    using fake_context_type = fake_context_type_impl<>;
 
 } // namespace webpp
 

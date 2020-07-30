@@ -6,7 +6,7 @@
 #define WEBPP_REQUEST_CONCEPTS_H
 
 #include "../extensions/extension.hpp"
-#include "../traits/traits_concepts.hpp"
+#include "../traits/std_traits.hpp"
 #include "./interfaces/basic_interface_concepts.hpp"
 
 namespace webpp {

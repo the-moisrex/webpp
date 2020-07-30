@@ -12,18 +12,16 @@
 
 namespace webpp {
 
-    struct fake_path_context_type : public fake_context_type {
-        struct path_type {
-            const stl::string_view current_segment = "";
-        } path{};
-        using fake_context_type::fake_context_type;
-    };
-
-    template <typename T>
-    concept Segment = requires(T seg) {
-        seg.template operator()<fake_path_context_type>;
-    };
-
+    //    namespace details {
+    //        struct fake_appended_extension {
+    //            struct path_type {
+    //                const stl::string_view current_segment = "";
+    //            } path{};
+    //        };
+    //        using fake_path_context_type = typename fake_context_type::template
+    //        context_type_with_appended_extensions<fake_appended_extension>;
+    //    }
+    //
     template <typename T>
     concept ComparableToString = requires(T obj) {
         {obj == ""};
@@ -101,7 +99,7 @@ namespace webpp {
     struct path_context_extension {
 
         template <Traits TraitsType, typename ContextType>
-        struct path_extension : public virtual ContextType {
+        struct path_extension : public ContextType {
 
             template <typename... Args>
             constexpr path_extension(Args&&... args) noexcept : ContextType{stl::forward<Args>(args)...} {}
@@ -112,6 +110,12 @@ namespace webpp {
 
         template <Traits TraitsType, typename ContextType>
         using context_extensions = extension_pack<path_extension<TraitsType, ContextType>>;
+    };
+
+    template <typename T, typename PathType, typename UriSegmentsType>
+    concept Segment = requires(T seg) {
+        seg.template operator()<typename fake_context_type::template context_type_with_appended_extensions<
+          path_context_extension<PathType, UriSegmentsType>>>;
     };
 
     /**
@@ -177,7 +181,8 @@ namespace webpp {
         consteval auto operator/(NewSegType&& new_next_segment) const noexcept {
             using seg_type = stl::remove_cvref_t<NewSegType>;
 
-            if constexpr (Segment<seg_type>) {
+            if constexpr (Segment<seg_type, path_type,
+                                  decltype(basic_uri<fake_traits_type, false>{}.path_structured())>) {
                 // Add a new segment to the path and get a new path containing that specific segment
                 // and all the previous ones
                 if constexpr (!has_segment) {
@@ -362,7 +367,7 @@ namespace webpp {
                 // todo: we can optimize this, right? it parses the whole uri, do we need the whole uri? I think yes
                 // fixme: should we decode it? if we decode it we need to care about the UTF-8 stuff as well?
                 auto uri_segments =
-                  basic_uri<traits_type, false>{ctx.request.request_uri()}.path_structured();
+                  basic_uri<traits_type, false>{ctx.request->request_uri()}.path_structured();
                 using uri_segments_type = decltype(uri_segments);
 
                 // context switching

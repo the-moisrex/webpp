@@ -59,7 +59,7 @@ namespace webpp {
         /**
          * @return how many routes are in this router
          */
-        consteval auto route_count() const noexcept {
+        consteval stl::size_t route_count() const noexcept {
             return sizeof...(RouteType);
         }
 
@@ -108,7 +108,7 @@ namespace webpp {
         requires(Context<stl::remove_cvref_t<ContextType>>) Response auto
         operator()(ContextType&& ctx) const noexcept {
 
-            if constexpr (sizeof...(RouteType) == 0) {
+            if constexpr (route_count() == 0) {
                 return error(ctx, 404u);
             } else {
 

@@ -27,28 +27,28 @@ namespace webpp {
         using string_type      = typename traits_type::string_type;
 
         body_type    body{};
-        headers_type header{}; // todo: change this to headers
+        headers_type headers{};
 
         basic_response() noexcept                          = default;
         basic_response(basic_response const& res) noexcept = default;
         basic_response(basic_response&& res) noexcept      = default;
 
-        basic_response(status_code_type err_code) noexcept : EList{}, header{err_code} {}
+        basic_response(status_code_type err_code) noexcept : EList{}, headers{err_code} {}
         basic_response(status_code_type err_code, string_type const& b) noexcept
           : EList{},
-            header{err_code},
+            headers{err_code},
             body{b} {}
         basic_response(status_code_type err_code, string_type&& b) noexcept
           : EList{},
-            header{err_code},
+            headers{err_code},
             body{stl::move(b)} {}
         basic_response(body_type const& b) noexcept : EList{}, body(b) {}
 
         basic_response(body_type&& b) noexcept : EList{}, body(stl::move(b)) {}
 
-        explicit basic_response(header_type&& e) noexcept : EList{}, header(stl::move(e)) {}
+        explicit basic_response(header_type&& e) noexcept : EList{}, headers(stl::move(e)) {}
 
-        explicit basic_response(header_type const& e) noexcept : EList{}, header(e) {}
+        explicit basic_response(header_type const& e) noexcept : EList{}, headers(e) {}
 
         basic_response& operator=(basic_response const&) = default;
         basic_response& operator=(basic_response&& res) noexcept = default;
@@ -62,20 +62,20 @@ namespace webpp {
         }
 
         [[nodiscard]] bool operator==(basic_response const& res) const noexcept {
-            return body == res.body && header == res.header;
+            return body == res.body && headers == res.headers;
         }
         [[nodiscard]] bool operator!=(basic_response const& res) const noexcept {
-            return body != res.body || header != res.header;
+            return body != res.body || headers != res.headers;
         }
 
         void calculate_default_headers() noexcept {
-            using header_field_type = typename decltype(header)::field_type;
-            if (stl::find(header.cbegin(), header.cend(), "Content-Type") != header.cend())
-                header.emplace_back(
+            using header_field_type = typename decltype(headers)::field_type;
+            if (stl::find(headers.cbegin(), headers.cend(), "Content-Type") != headers.cend())
+                headers.emplace_back(
                   header_field_type{.name = "Content-Type", .value = "text/html; charset=utf-8"});
 
-            if (stl::find(header.cbegin(), header.cend(), "Content-Length") != header.cend())
-                header.emplace_back(
+            if (stl::find(headers.cbegin(), headers.cend(), "Content-Length") != headers.cend())
+                headers.emplace_back(
                   header_field_type{.name  = "Content-Length",
                                     .value = to_str<traits_type>(body.str().size() * sizeof(char))});
         }
@@ -141,6 +141,8 @@ namespace webpp {
     using simple_response =
       typename extension_pack<E...>::template extensie_type<TraitsType, basic_response_descriptor>;
 
+
+    using fake_response_type = simple_response<fake_traits_type>;
 
 } // namespace webpp
 #endif // WEBPP_HTTP_RESPONSE_H

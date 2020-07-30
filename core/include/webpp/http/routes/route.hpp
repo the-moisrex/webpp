@@ -189,12 +189,12 @@ namespace webpp {
 
             template <typename R, typename C>
             static constexpr bool is_switching_context =
-              !stl::is_void_v<R> && stl::is_invocable_v<R, C> && requires {
+              !stl::is_void_v<R> && stl::is_invocable_v<R, C>/* && requires {
                 requires requires(R _route, C _ctx) {
                     { _route.template operator()<C>(_ctx) }
                     ->Context;
                 };
-            };
+            }*/;
 
           private:
             using super_t = basic_route<RouteType, Op, NextRouteType>;
@@ -342,10 +342,21 @@ namespace webpp {
                 } else {
                     // todo: write tests for this:
                     return set_next<logical_operators::none>([=](auto... args) {
-                        static_assert(stl::is_invocable_v<decltype(new_route), decltype(args)...>,
-                                      "The specified route can't be called in any way that our router knows; "
-                                      "you might need to change the signature of your route.");
-                        return new_route(stl::forward<decltype(args)>(args)...);
+                        //                        static_assert(stl::is_invocable_v<decltype(new_route),
+                        //                        decltype(args)...>,
+                        //                                      "The specified route can't be called in any
+                        //                                      way that our router knows; " "you might need
+                        //                                      to change the signature of your route.");
+                        using nrtype = decltype(new_route);
+                        if constexpr (stl::is_invocable_v<nrtype, decltype(args)...>) {
+                            return new_route(stl::forward<decltype(args)>(args)...);
+                        } else if (stl::is_invocable_v<nrtype>) {
+                            return new_route();
+                        } else {
+                            stl::invalid_argument(
+                              "We're unable to run your route. We don't know how."
+                              " Make sure you're using a route signature that's familiar for us.");
+                        }
                     });
                 }
             }
