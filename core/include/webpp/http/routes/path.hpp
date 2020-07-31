@@ -315,47 +315,51 @@ namespace webpp {
         operator()(ContextType&& ctx) noexcept {
             // handle inside-sub-route internal segment is done in this method
 
-            using context_type                = stl::remove_cvref_t<ContextType>;
-            using traits_type                 = typename context_type::traits_type;
-            constexpr bool has_path_extension = requires {
+            using context_type                       = stl::remove_cvref_t<ContextType>;
+            using context_ref_type                   = stl::add_lvalue_reference_t<context_type>;
+            using traits_type                        = typename context_type::traits_type;
+            constexpr bool has_path_extension        = requires {
                 {ctx.path};
             };
 
             // run the user's codes; hopefully this will optimized away
             auto run = [&](auto&& ctx) {
                 if constexpr (has_segment) {
-                    using result_type = stl::invoke_result_t<segment_type, decltype(ctx)>;
+                    if constexpr (can_be_invoked_by_context) {
+                        using result_type = stl::invoke_result_t<segment_type, context_ref_type>;
 
-                    // if the result of this segment is void
-                    if constexpr (stl::is_void_v<result_type>) {
-                        segment(ctx);
+                        // if the result of this segment is void
+                        if constexpr (stl::is_void_v<result_type>) {
+                            segment(ctx);
+                            if constexpr (has_next_segment) {
+                                return next_segment(ctx);
+                            }
+                            return;
+                        }
+
+                        // if the result of calling this segment is NOT void
+                        auto res = segment(ctx);
+                        if constexpr (stl::is_same_v<result_type, bool>) {
+                            // don't check the rest of the segments if it's not a
+                            // match for the current segment
+                            if (!res)
+                                return false;
+                        }
                         if constexpr (has_next_segment) {
-                            return next_segment(ctx);
+                            if constexpr (Response<result_type>) {
+                                return res;
+                            } else if constexpr (Context<result_type>) {
+                                // context switching is happening
+                                return next_segment(stl::move(res));
+                            } else {
+                                return next_segment(ctx);
+                            }
                         }
-                        return;
-                    }
 
-                    // if the result of calling this segment is NOT void
-                    auto res = segment(ctx);
-                    if constexpr (stl::is_same_v<result_type, bool>) {
-                        // don't check the rest of the segments if it's not a
-                        // match for the current segment
-                        if (!res)
-                            return false;
+                        // return the results of the this segment because it's the last segment
+                        return res;
+                    } else if constexpr (can_be_invoked_by_void) {
                     }
-                    if constexpr (has_next_segment) {
-                        if constexpr (Response<result_type>) {
-                            return res;
-                        } else if constexpr (Context<result_type>) {
-                            // context switching is happening
-                            return next_segment(stl::move(res));
-                        }
-                        return next_segment(ctx);
-                    }
-
-                    // return the results of the this segment because it's the
-                    // last segment
-                    return res;
                 }
 
                 return; // explicitly saying that we have no return type

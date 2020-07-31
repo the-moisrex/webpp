@@ -12,11 +12,12 @@ namespace webpp {
     concept RouteResponse = Response<T> || ConvertibleToResponse<T> || Context<T> || stl::same_as<T, bool>;
 
     template <typename T, typename C = fake_context_type>
-    concept CallableWithContext = requires (T c) {
+    concept CallableWithContext = /*requires (T c) {
                                     c.template operator()<C>;
-                                  } /*|| (stl::is_class_v<stl::remove_cvref_t<T>> &&
-                                   stl::is_member_function_pointer_v<&T::template operator()<C>>)*/ ||
-                                  stl::is_invocable_v<T, C&>;
+                                  } || (stl::is_class_v<stl::remove_cvref_t<T>> &&
+                                   stl::is_member_function_pointer_v<&T::template operator()<C>>) ||*/
+      (stl::is_invocable_v<T, stl::add_lvalue_reference_t<C>>&&
+         RouteResponse<stl::invoke_result_t<T, stl::add_lvalue_reference_t<C>>>);
 
     template <typename T, typename C = fake_context_type>
     concept PotentialRoute = stl::is_void_v<T> || CallableWithContext<T, C>;

@@ -11,25 +11,6 @@
 
 namespace webpp {
 
-    struct router_stats {
-        // todo: add termination of routing here, so the user can terminate it with the context
-
-        enum class route_level : stl::uint8_t {
-            none              = 0x0u,
-            entryroute        = 0x1u,
-            subroute          = 0x2u,
-            internal_subroute = 0x3u,
-        };
-
-        // we specify the bit fields to reduce the padding
-        stl::uint16_t entryroute_index : 16        = 0;
-        stl::uint16_t subroute_index : 16          = 0;
-        stl::uint16_t internal_subroute_index : 16 = 0;
-        bool          last_entryroute : 1          = false;
-        bool          last_subroute : 1            = false;
-        bool          last_internal_subroute : 1   = false;
-        route_level   level : 2                    = route_level::none;
-    };
 
     /**
      *
@@ -146,36 +127,23 @@ namespace webpp {
         allocator_type alloc;
 
       public:
-        router_stats  router_features{};
-        request_type* request = nullptr;
-
         constexpr basic_context(allocator_type const& _alloc = allocator_type{}) noexcept
           : elist_type{},
             alloc{_alloc} {}
 
-        constexpr basic_context(request_type& req, allocator_type const& _alloc = allocator_type{}) noexcept
-          : elist_type{},
-            alloc{_alloc},
-            request(&req) {}
-
-        constexpr basic_context(request_type* req, allocator_type const& _alloc = allocator_type{}) noexcept
-          : elist_type{},
-            alloc{_alloc},
-            request(req) {}
-
 
         template <typename... Args>
-        constexpr basic_context(request_type& req, Args&&... args) noexcept
-          : elist_type{stl::forward<Args>(args)...},
-            request(&req) {}
+        constexpr basic_context(allocator_type const& _alloc, Args&&... args) noexcept
+          : alloc(_alloc), elist_type{stl::forward<Args>(args)...}
+            {}
 
         template <typename... Args>
-        constexpr basic_context(request_type* req, Args&&... args) noexcept
-          : elist_type{stl::forward<Args>(args)...},
-            request(req) {}
+        constexpr basic_context(Args&&... args) noexcept
+          : alloc{}, elist_type{stl::forward<Args>(args)...}
+        {}
 
         constexpr basic_context(basic_context&& ctx) noexcept
-          : request{std::move(ctx.request)},
+          : alloc(ctx.alloc),
             elist_type{std::move(ctx)} {}
 
         [[nodiscard]] auto const& get_allocator() const noexcept {
@@ -256,7 +224,7 @@ namespace webpp {
          * Clone this context and append the new extensions along the way.
          */
         template <Extension... E>
-        constexpr auto clone() const noexcept {
+        [[nodiscard]] constexpr auto clone() const noexcept {
             using context_type = context_type_with_appended_extensions<E...>;
             return context_type{*this};
         }
@@ -354,6 +322,7 @@ namespace webpp {
      * Used by routers, to be passed to the extension_pack.
      */
     struct context_descriptor {
+
         template <Extension ExtensionType>
         struct has_related_extension_pack {
             static constexpr bool value = requires {
@@ -361,8 +330,10 @@ namespace webpp {
             };
         };
 
+
         template <Extension ExtensionType>
         using related_extension_pack_type = typename ExtensionType::context_extensions;
+
 
         template <ExtensionList ExtensionListType, Traits TraitsType,
                   typename EList, // extension_pack
@@ -372,10 +343,13 @@ namespace webpp {
           // getting the extensie_type of the basic_response
           typename ExtensionListType::template extensie_type<TraitsType, basic_response_descriptor>>;
 
-        template <ExtensionList ExtensionListType, Traits TraitsType, typename EList, Request ReqType>
+
+        template <ExtensionList OriginalExtensionListType, Traits TraitsType, typename EList, Request ReqType>
         using final_extensie_type =
-          final_context<TraitsType, context_descriptor, ExtensionListType, EList, ReqType>;
+          final_context<TraitsType, context_descriptor, OriginalExtensionListType, EList, ReqType>;
     };
+
+
 
     template <Request ReqType, ExtensionList ExtensionListType = empty_extension_pack>
     using simple_context = typename ExtensionListType::template extensie_type<typename ReqType::traits_type,

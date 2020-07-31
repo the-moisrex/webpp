@@ -106,7 +106,7 @@ namespace webpp {
 
         template <typename ContextType, stl::size_t Index = 0>
         requires(Context<stl::remove_cvref_t<ContextType>>) Response auto
-        operator()(ContextType&& ctx) const noexcept {
+        operator()(ContextType&& ctx, Request auto const& req) const noexcept {
 
             if constexpr (route_count() == 0) {
                 return error(ctx, 404u);
@@ -119,43 +119,37 @@ namespace webpp {
                 constexpr bool is_last_route    = Index == route_count() - 1;
 
                 // setting the context features
-                ctx.router_features.level            = router_stats::route_level::entryroute;
-                ctx.router_features.last_entryroute  = is_last_route;
-                ctx.router_features.entryroute_index = Index;
+                //                ctx.router_features.level            =
+                //                router_stats::route_level::entryroute; ctx.router_features.last_entryroute
+                //                = is_last_route; ctx.router_features.entryroute_index = Index;
 
-                auto res          = route(ctx);
-                using result_type = decltype(res);
+                auto res          = call_route(route, ctx, req);
+                using result_type = stl::remove_cvref_t<decltype(res)>;
 
+                // Don't handle the edge cases of return types here, do it in the "call_route" function
+                // for example, a function that returns strings and can be converted into a response
+                // is going to be converted into a response in the "call_route" function
                 if constexpr (Response<result_type>) {
-
-                    // just call the context handlers
-                    ctx.call_post_entryroute_methods();
-
                     // we're done; don't call the next route
                     return res;
                 } else if constexpr (Context<result_type>) {
                     // context switching is happening here
-                    // just call the next route or finish it with calling the
-                    // context handlers
+                    // just call the next route or finish it with calling the context handlers
                     if constexpr (!is_last_route) {
-                        return operator()<next_route_index>(stl::move(res));
+                        return operator()<next_route_index>(stl::move(res), req);
                     } else {
-                        // call the context handlers
-                        ctx.call_post_entryroute_methods();
                         return error(ctx, 404u);
                     }
+                } else if constexpr (stl::is_same_v<result_type, bool>) {
+                    if (res) {
+                        return operator()<next_route_index>(stl::forward<decltype(ctx)>(ctx), req);
+                    } else {
+                        return error(ctx, 404u); // doesn't matter if it's the last route or not,
+                                                 // returning false just means finish it
+                    }
                 } else {
-                    // we just ignore anything else the user returns;
-                    // todo: add a warning or log here so the user can find the issue
-                }
-
-                // call the next route:
-                if constexpr (!is_last_route) {
-                    return operator()<next_route_index>(stl::forward<context_type>(ctx));
-                } else {
-                    // call the context
-                    ctx.call_post_entryroute_methods();
-                    return error(ctx, 404u);
+                    // we just ignore anything else the user returns
+                    // this part never happens because the "call_route" converts this part to the above parts
                 }
             }
         }

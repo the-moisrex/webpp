@@ -52,20 +52,23 @@ namespace webpp {
 
         basic_response& operator=(basic_response const&) = default;
         basic_response& operator=(basic_response&& res) noexcept = default;
-        basic_response& operator                                 =(string_type const& str) noexcept {
+
+        basic_response& operator=(string_type const& str) noexcept {
             body.replace_string(str);
             return *this;
         }
+
         basic_response& operator=(string_type&& str) noexcept {
             body.replace_string(stl::move(str));
             return *this;
         }
 
         [[nodiscard]] bool operator==(basic_response const& res) const noexcept {
-            return body == res.body && headers == res.headers;
+            return headers == res.headers && body == res.body;
         }
+
         [[nodiscard]] bool operator!=(basic_response const& res) const noexcept {
-            return body != res.body || headers != res.headers;
+            return headers != res.headers || body != res.body;
         }
 
         void calculate_default_headers() noexcept {

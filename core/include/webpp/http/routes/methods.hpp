@@ -14,8 +14,8 @@ namespace webpp {
 
         constexpr method_route_condition() noexcept = default;
 
-        [[nodiscard]] bool operator()(Context auto const& ctx) const noexcept {
-            return ctx.request.request_method() == method_string;
+        [[nodiscard]] bool operator()(Request auto const& req) const noexcept {
+            return req.request_method() == method_string;
         }
     };
 
