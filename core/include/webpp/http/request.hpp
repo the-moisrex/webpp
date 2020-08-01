@@ -35,14 +35,30 @@
 
 namespace webpp {
 
-    /**
-     * This class doesn't own its data (at least the ones that are important)
-     * @tparam Interface
-     */
-    template <Traits TraitsT, Interface InterfaceT, RequestExtensionList REL = empty_extension_pack>
-    struct basic_request : public stl::remove_cvref_t<REL> {
-        using traits_type    = TraitsT;
-        using interface_type = InterfaceT;
+    template <Request ReqType>
+    struct final_request : public ReqType {
+        using ReqType::basic_request;
+
+    };
+
+    template <template <typename, typename, typename ...> typename MidLevelRequestType, typename ...AdditionalReqArgs>
+    struct request_descriptor {
+        template <typename ExtensionType>
+        struct has_related_extension_pack {
+            static constexpr bool value = requires {
+                typename ExtensionType::request_extensions;
+            };
+        };
+
+        template <typename ExtensionType>
+        using related_extension_pack_type = typename ExtensionType::request_extensions;
+
+        template <typename ExtensionListType, typename TraitsType, typename EList>
+        using mid_level_extensie_type = MidLevelRequestType<TraitsType, EList, AdditionalReqArgs...>;
+
+        // empty final extensie
+        template <typename ExtensionListType, typename TraitsType, typename EList>
+        using final_extensie_type = final_request<EList>;
     };
 
 } // namespace webpp

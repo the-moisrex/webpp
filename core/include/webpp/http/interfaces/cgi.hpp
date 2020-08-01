@@ -21,219 +21,6 @@
 
 namespace webpp {
 
-
-    template <Traits TraitsType, Application App>
-    struct cgi {
-      public:
-        using traits_type      = TraitsType;
-        using application_type = App;
-        using interface_type   = cgi<traits_type, application_type>;
-        // todo: think about the extensions
-        using request_type  = basic_request<traits_type, interface_type>;
-        using str_view_type = typename TraitsType::string_view_type;
-        using str_type      = typename TraitsType::string_type;
-        using ostream_t     = typename TraitsType::ostream_type;
-
-        application_type app;
-
-        cgi() noexcept {
-            // I'm not using C here; so why should I pay for it!
-            // And also the user should not use cin and cout. so ...
-            stl::ios::sync_with_stdio(false);
-        }
-
-        /**
-         * Read the body of the string
-         * @param data
-         * @param length
-         * @return
-         */
-        static stl::streamsize read(char* data, stl::streamsize length) noexcept {
-            stl::cin.read(data, length);
-            return stl::cin.gcount();
-        }
-
-        /**
-         * Send the stream to the user
-         * @param stream
-         */
-        static void write(ostream_t& stream) noexcept {
-            // TODO: check if you need to ignore the input or not
-
-            // I think o-stream is not readable so we cannot do this:
-            // https://stackoverflow.com/questions/15629886/how-to-write-ostringstream-directly-to-cout
-            stl::cout << stream.rdbuf(); // TODO: test this, I don't trust myself :)
-        }
-
-        /**
-         * Send data to the user
-         * @param data
-         * @param length
-         */
-        static void write(char const* data, stl::streamsize length) noexcept {
-            stl::cout.write(data, length);
-        }
-
-        /**
-         * Get the environment value safely
-         * @param key
-         * @return
-         */
-        [[nodiscard]] static stl::string_view env(char const* key) noexcept {
-            if (auto value = getenv(key))
-                return value;
-            return {};
-        }
-
-        /**
-         * Get a specific header by it's name
-         * @param name
-         * @return
-         */
-        [[nodiscard]] static str_view_type header(stl::string name) noexcept {
-            // fixme: check if this is all we have to do or we have to do more too:
-            stl::transform(name.begin(), name.end(), name.begin(), [](auto const& c) {
-                if (c == '-')
-                    return '_';
-                return static_cast<char>(stl::toupper(c));
-            });
-
-            name.insert(0, "HTTP_");
-            return env(name.c_str());
-        }
-
-        /**
-         * Get a list of headers as a string
-         */
-        [[nodiscard]] static str_view_type headers() noexcept {
-            // we can do this only in CGI, we have to come up with new ways for
-            // long-running protocols:
-            static str_type headers_cache;
-            if (headers_cache.empty()) {
-                // TODO: this code won't work on windows. Change when you are worried
-                // about windows
-                for (auto it = ::environ; *it; it++) {
-                    str_view_type h{*it};
-                    if (starts_with<traits_type>(h, "HTTP_")) {
-                        headers_cache.append(h.substr(5));
-                        // FIXME: decide if you need to convert _ to - or not.
-                    }
-                }
-            }
-            return headers_cache;
-        }
-
-        /**
-         * Get the full body as a string_view
-         */
-        [[nodiscard]] static str_view_type body() noexcept {
-            // again, we can do this only in cgi protocol not in other
-            // interfaces:
-            static str_type body_cache;
-            if (body_cache.empty()) {
-                if (auto content_length_str = env("CONTENT_LENGTH"); !content_length_str.empty()) {
-                    // now we know how much content the user is going to send
-                    // so we just create a buffer with that size
-                    auto content_length = to_uint<traits_type>(content_length_str);
-
-                    char* buffer = new char[content_length];
-                    stl::cin.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
-                } else {
-                    // we don't know how much the user is going to send. so we
-                    // use a small size buffer:
-
-                    // TODO: add something here
-                }
-            }
-            return body_cache;
-        }
-
-
-        void operator()() noexcept {
-            request_type req;
-            auto         res = app(req);
-            res.calculate_default_headers();
-            auto header_str = res.header.str();
-            auto str        = res.body.str();
-
-            // From RFC: https://tools.ietf.org/html/rfc3875
-            // Send status code:
-            // Status         = "Status:" status-code SP reason-phrase NL
-            // status-code    = "200" | "302" | "400" | "501" | extension-code
-            // extension-code = 3digit
-            // reason-phrase  = *TEXT
-
-            // todo: use <format> or {fmt}
-            // todo: give the user the ability to change the status phrase
-            stl::stringstream status_line;
-            status_line << "Status: " << res.header.status_code << " "
-                        << status_reason_phrase(res.header.status_code) << "\r\n";
-
-            auto _status_line_str = status_line.str();
-            write(_status_line_str.data(), _status_line_str.size());
-
-            write(header_str.data(), header_str.size());
-            write("\r\n", 2);
-            write(str.data(), str.size());
-        }
-    };
-
-    // fixme: implement these too:
-    //    AUTH_PASSWORD
-    //    AUTH_TYPE
-    //    AUTH_USER
-    //    CERT_COOKIE
-    //    CERT_FLAGS
-    //    CERT_ISSUER
-    //    CERT_KEYSIZE
-    //    CERT_SECRETKEYSIZE
-    //    CERT_SERIALNUMBER
-    //    CERT_SERVER_ISSUER
-    //    CERT_SERVER_SUBJECT
-    //    CERT_SUBJECT
-    //    CF_TEMPLATE_PATH
-    //    CONTENT_LENGTH
-    //    CONTENT_TYPE
-    //    CONTEXT_PATH
-    //    GATEWAY_INTERFACE
-    //    HTTPS
-    //    HTTPS_KEYSIZE
-    //    HTTPS_SECRETKEYSIZE
-    //    HTTPS_SERVER_ISSUER
-    //    HTTPS_SERVER_SUBJECT
-    //    HTTP_ACCEPT
-    //    HTTP_ACCEPT_ENCODING
-    //    HTTP_ACCEPT_LANGUAGE
-    //    HTTP_CONNECTION
-    //    HTTP_COOKIE
-    //    HTTP_HOST
-    //    HTTP_REFERER
-    //    HTTP_USER_AGENT
-    //    QUERY_STRING
-    //    REMOTE_ADDR
-    //    REMOTE_HOST
-    //    REMOTE_USER
-    //    REQUEST_METHOD
-    //    SCRIPT_NAME
-    //    SERVER_NAME
-    //    SERVER_PORT
-    //    SERVER_PORT_SECURE
-    //    SERVER_PROTOCOL
-    //    SERVER_SOFTWARE
-    //    WEB_SERVER_API
-
-
-    // void cgi::run(router_t<cgi>& _router) noexcept {
-    //    auto self = std::make_shared<cgi>(this);
-    //    webpp::request<webpp::cgi> req(self);
-    //    auto res = _router.run(req);
-    //    std::ios_base::sync_with_stdio(false); // TODO: write tests for this
-    //    part for (auto const& [attr, value] : res.headers()) {
-    //        std::cout << attr << ": " << value << "\r\n";
-    //    }
-    //    std::cout << "\r\n" << res.body();
-    //}
-
     /**
      * Specializing the request_t<cgi> methods so the user can use them.
      * The request_t class is one of the important classes which that means It's
@@ -241,10 +28,11 @@ namespace webpp {
      * have to copy and paste lots of codes to make it happen) to make sure
      * the user is able to use this class properly and easily.
      */
-    template <Traits TraitsType, Application App>
-    struct basic_request<TraitsType, cgi<TraitsType, App>> {
-        using traits_type    = TraitsType;
-        using interface_type = cgi<TraitsType, App>;
+    template <Traits TraitsType, RequestExtensionList REL, Interface IfaceType>
+    struct cgi_request : public stl::remove_cvref_t<REL> {
+        using traits_type      = TraitsType;
+        using interface_type   = IfaceType;
+        using application_type = typename interface_type::application_type;
 
         /**
          * @brief get the server's software
@@ -521,6 +309,221 @@ namespace webpp {
             return interface_type::body();
         }
     };
+
+    // todo: add interface extensions as well
+    template <Traits TraitsType, Application App, ExtensionList EList>
+    struct cgi {
+      public:
+        using traits_type      = TraitsType;
+        using application_type = App;
+        using extension_list   = EList;
+        using interface_type   = cgi<traits_type, application_type, extension_list>;
+        using str_view_type    = typename TraitsType::string_view_type;
+        using str_type         = typename TraitsType::string_type;
+        using request_type =
+          typename EList::template extensie_type<traits_type,
+                                                 request_descriptor<cgi_request, interface_type>>;
+
+        application_type app;
+
+        cgi() noexcept {
+            // I'm not using C here; so why should I pay for it!
+            // And also the user should not use cin and cout. so ...
+            stl::ios::sync_with_stdio(false);
+        }
+
+        /**
+         * Read the body of the string
+         * @param data
+         * @param length
+         * @return
+         */
+        static stl::streamsize read(char* data, stl::streamsize length) noexcept {
+            stl::cin.read(data, length);
+            return stl::cin.gcount();
+        }
+
+        /**
+         * Send the stream to the user
+         * @param stream
+         */
+        static void write(ostream_t& stream) noexcept {
+            // TODO: check if you need to ignore the input or not
+
+            // I think o-stream is not readable so we cannot do this:
+            // https://stackoverflow.com/questions/15629886/how-to-write-ostringstream-directly-to-cout
+            stl::cout << stream.rdbuf(); // TODO: test this, I don't trust myself :)
+        }
+
+        /**
+         * Send data to the user
+         * @param data
+         * @param length
+         */
+        static void write(char const* data, stl::streamsize length) noexcept {
+            stl::cout.write(data, length);
+        }
+
+        /**
+         * Get the environment value safely
+         * @param key
+         * @return
+         */
+        [[nodiscard]] static stl::string_view env(char const* key) noexcept {
+            if (auto value = getenv(key))
+                return value;
+            return {};
+        }
+
+        /**
+         * Get a specific header by it's name
+         * @param name
+         * @return
+         */
+        [[nodiscard]] static str_view_type header(stl::string name) noexcept {
+            // fixme: check if this is all we have to do or we have to do more too:
+            stl::transform(name.begin(), name.end(), name.begin(), [](auto const& c) {
+                if (c == '-')
+                    return '_';
+                return static_cast<char>(stl::toupper(c));
+            });
+
+            name.insert(0, "HTTP_");
+            return env(name.c_str());
+        }
+
+        /**
+         * Get a list of headers as a string
+         */
+        [[nodiscard]] static str_view_type headers() noexcept {
+            // we can do this only in CGI, we have to come up with new ways for
+            // long-running protocols:
+            static str_type headers_cache;
+            if (headers_cache.empty()) {
+                // TODO: this code won't work on windows. Change when you are worried
+                // about windows
+                for (auto it = ::environ; *it; it++) {
+                    str_view_type h{*it};
+                    if (starts_with<traits_type>(h, "HTTP_")) {
+                        headers_cache.append(h.substr(5));
+                        // FIXME: decide if you need to convert _ to - or not.
+                    }
+                }
+            }
+            return headers_cache;
+        }
+
+        /**
+         * Get the full body as a string_view
+         */
+        [[nodiscard]] static str_view_type body() noexcept {
+            // again, we can do this only in cgi protocol not in other
+            // interfaces:
+            static str_type body_cache;
+            if (body_cache.empty()) {
+                if (auto content_length_str = env("CONTENT_LENGTH"); !content_length_str.empty()) {
+                    // now we know how much content the user is going to send
+                    // so we just create a buffer with that size
+                    auto content_length = to_uint<traits_type>(content_length_str);
+
+                    char* buffer = new char[content_length];
+                    stl::cin.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
+                } else {
+                    // we don't know how much the user is going to send. so we
+                    // use a small size buffer:
+
+                    // TODO: add something here
+                }
+            }
+            return body_cache;
+        }
+
+
+        void operator()() noexcept {
+            request_type req;
+            auto         res = app(req);
+            res.calculate_default_headers();
+            auto header_str = res.header.str();
+            auto str        = res.body.str();
+
+            // From RFC: https://tools.ietf.org/html/rfc3875
+            // Send status code:
+            // Status         = "Status:" status-code SP reason-phrase NL
+            // status-code    = "200" | "302" | "400" | "501" | extension-code
+            // extension-code = 3digit
+            // reason-phrase  = *TEXT
+
+            // todo: use <format> or {fmt}
+            // todo: give the user the ability to change the status phrase
+            stl::stringstream status_line;
+            status_line << "Status: " << res.header.status_code << " "
+                        << status_reason_phrase(res.header.status_code) << "\r\n";
+
+            auto _status_line_str = status_line.str();
+            write(_status_line_str.data(), _status_line_str.size());
+
+            write(header_str.data(), header_str.size());
+            write("\r\n", 2);
+            write(str.data(), str.size());
+        }
+    };
+
+    // fixme: implement these too:
+    //    AUTH_PASSWORD
+    //    AUTH_TYPE
+    //    AUTH_USER
+    //    CERT_COOKIE
+    //    CERT_FLAGS
+    //    CERT_ISSUER
+    //    CERT_KEYSIZE
+    //    CERT_SECRETKEYSIZE
+    //    CERT_SERIALNUMBER
+    //    CERT_SERVER_ISSUER
+    //    CERT_SERVER_SUBJECT
+    //    CERT_SUBJECT
+    //    CF_TEMPLATE_PATH
+    //    CONTENT_LENGTH
+    //    CONTENT_TYPE
+    //    CONTEXT_PATH
+    //    GATEWAY_INTERFACE
+    //    HTTPS
+    //    HTTPS_KEYSIZE
+    //    HTTPS_SECRETKEYSIZE
+    //    HTTPS_SERVER_ISSUER
+    //    HTTPS_SERVER_SUBJECT
+    //    HTTP_ACCEPT
+    //    HTTP_ACCEPT_ENCODING
+    //    HTTP_ACCEPT_LANGUAGE
+    //    HTTP_CONNECTION
+    //    HTTP_COOKIE
+    //    HTTP_HOST
+    //    HTTP_REFERER
+    //    HTTP_USER_AGENT
+    //    QUERY_STRING
+    //    REMOTE_ADDR
+    //    REMOTE_HOST
+    //    REMOTE_USER
+    //    REQUEST_METHOD
+    //    SCRIPT_NAME
+    //    SERVER_NAME
+    //    SERVER_PORT
+    //    SERVER_PORT_SECURE
+    //    SERVER_PROTOCOL
+    //    SERVER_SOFTWARE
+    //    WEB_SERVER_API
+
+
+    // void cgi::run(router_t<cgi>& _router) noexcept {
+    //    auto self = std::make_shared<cgi>(this);
+    //    webpp::request<webpp::cgi> req(self);
+    //    auto res = _router.run(req);
+    //    std::ios_base::sync_with_stdio(false); // TODO: write tests for this
+    //    part for (auto const& [attr, value] : res.headers()) {
+    //        std::cout << attr << ": " << value << "\r\n";
+    //    }
+    //    std::cout << "\r\n" << res.body();
+    //}
+
 
 } // namespace webpp
 
