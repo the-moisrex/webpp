@@ -210,6 +210,42 @@ Usage examples:
    - `(...) >> &non_templated_class_with_templated_callable_operator`
    - `get and "/profile/"_tpath and set_by_class_constructor`
  
+
+##### Entry-Route input & outputs:
+Possible arguments:
+
+- void
+- Context
+- Request reference
+
+Possible return types:
+
+- Context: entry-route-level context-switching
+- Response: send the response to the user, and terminate the routing
+- Convertible To Response: same as Response
+- void: ignored
+- bool: ignored
+
+Definitive return type of operator() of router: Response
+
+##### Sub-Route input & output:
+Possible arguments: same as Entry-Level-Routes
+
+Possible return types:
+
+- Context: sub-route-level context-switching
+- Response: terminate the routing, send the response to the router to be sent to the user
+- Convertible to response: same as response
+- void: ignored
+- bool: used in the &&, ||, ^ boolean routing operations
+
+Definitive return types of operator() of entry-route:
+
+- Context
+- Response
+- void
+- bool (probably a user mistake if used)
+
 ##### Context
 Contexts are a way of passing information from one route to another.
 The burden of carrying request and responses in the router is upon

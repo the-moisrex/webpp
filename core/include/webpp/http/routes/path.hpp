@@ -312,19 +312,52 @@ namespace webpp {
 
         template <typename ContextType>
         requires(Context<stl::remove_cvref_t<ContextType>>) [[nodiscard]] auto
-        operator()(ContextType&& ctx) noexcept {
+        operator()(ContextType&& ctx, Request auto const& req) noexcept {
             // handle inside-sub-route internal segment is done in this method
 
-            using context_type                       = stl::remove_cvref_t<ContextType>;
-            using context_ref_type                   = stl::add_lvalue_reference_t<context_type>;
-            using traits_type                        = typename context_type::traits_type;
-            constexpr bool has_path_extension        = requires {
+            using context_type                = stl::remove_cvref_t<ContextType>;
+            using context_ref_type            = stl::add_lvalue_reference_t<context_type>;
+            using traits_type                 = typename context_type::traits_type;
+            constexpr bool has_path_extension = requires {
                 {ctx.path};
             };
 
-            // run the user's codes; hopefully this will optimized away
-            auto run = [&](auto&& ctx) {
-                if constexpr (has_segment) {
+            if constexpr (!has_segment) {
+                return;
+            } else {
+
+                // Switching the context if it doesn't have a path in it
+                if constexpr (!has_path_extension) {
+
+                    // parse the uri
+                    // todo: we can optimize this, right? it parses the whole uri, do we need the whole uri? I think yes
+                    // fixme: should we decode it? if we decode it we need to care about the UTF-8 stuff as well?
+                    // todo: move this parsing into the request so we don't have to do it more than once for one request
+                    auto uri_segments = basic_uri<traits_type, false>{req->request_uri()}.path_structured();
+                    using uri_segments_type = decltype(uri_segments);
+
+                    // context switching
+                    auto new_ctx = ctx.template clone<path_context_extension<path_type, uri_segments_type>>();
+                    static_assert(
+                      requires { {new_ctx.path}; },
+                      "For some reason, we're not able to perform context switching.");
+
+                    new_ctx.path.segments        = stl::move(uri_segments);
+                    new_ctx.path.current_segment = new_ctx.path.segments.begin();
+                    new_ctx.path.pth             = this;
+
+                    // nothing to do if the segment counts don't match
+                    if (new_ctx.path.current_segment == new_ctx.path.current_segment.end())
+                        return false;
+
+                    // re-running the this member function with the new switched context type
+                    return operator()(stl::move(new_ctx), req);
+                } else {
+
+                    // nothing to do if we the user's requesting a segment that we don't have
+                    if (!ctx.path.next_segment())
+                        return false;
+
                     if constexpr (can_be_invoked_by_context) {
                         using result_type = stl::invoke_result_t<segment_type, context_ref_type>;
 
@@ -360,42 +393,9 @@ namespace webpp {
                         return res;
                     } else if constexpr (can_be_invoked_by_void) {
                     }
+
+                    return; // explicitly saying that we have no return type
                 }
-
-                return; // explicitly saying that we have no return type
-            };
-
-            if constexpr (!has_path_extension) {
-
-                // parse the uri
-                // todo: we can optimize this, right? it parses the whole uri, do we need the whole uri? I think yes
-                // fixme: should we decode it? if we decode it we need to care about the UTF-8 stuff as well?
-                auto uri_segments =
-                  basic_uri<traits_type, false>{ctx.request->request_uri()}.path_structured();
-                using uri_segments_type = decltype(uri_segments);
-
-                // context switching
-                auto new_ctx = ctx.template clone<path_context_extension<path_type, uri_segments_type>>();
-                static_assert(
-                  requires { {new_ctx.path}; },
-                  "For some reason, we're not able to perform context switching.");
-
-                new_ctx.path.segments        = stl::move(uri_segments);
-                new_ctx.path.current_segment = new_ctx.path.segments.begin();
-                new_ctx.path.pth             = this;
-
-                // nothing to do if the segment counts don't match
-                if (new_ctx.path.current_segment == new_ctx.path.current_segment.end())
-                    return false;
-
-                return run(stl::move(new_ctx));
-            } else {
-
-                // nothing to do if we the user's requesting a segment that we
-                // don't have
-                if (!ctx.path.next_segment())
-                    return false;
-                return run(stl::forward<context_type>(ctx));
             }
         }
     };

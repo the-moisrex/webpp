@@ -3,7 +3,9 @@
 #ifndef WEBPP_ROUTES_ROUTE_H
 #define WEBPP_ROUTES_ROUTE_H
 
+#include "../../logs/log_concepts.hpp"
 #include "../../utils/functional.hpp"
+#include "./context.hpp"
 #include "./route_concepts.hpp"
 
 #include <type_traits>
@@ -63,7 +65,6 @@ namespace webpp {
              * Handle special return types here
              */
             constexpr auto handle_results = [](auto& ctx, auto&& res) {
-                ctx.call_post_entryroute_methods();
                 using res_t = decltype(res);
                 if constexpr (stl::is_void_v<res_t>) {
                     return true;
@@ -81,18 +82,20 @@ namespace webpp {
                 }
             };
 
-            ctx.call_pre_entryroute_methods();
-            if constexpr (stl::is_invocable_v<route_type, context_type>) { //  gets a context
+            if constexpr (stl::is_invocable_v<route_type, context_type>) {
+                // gets a context
                 return handle_results(ctx, run_and_catch(_route, ctx, stl::forward<decltype(ctx)>(ctx)));
-            } else if constexpr (stl::is_invocable_v<route_type>) { // requires nothing
-                return handle_results(ctx.run_and_catch(_route, ctx));
-            } else if constexpr (stl::is_invocable_v<route_type, request_type>) { // requires a request
+            } else if constexpr (stl::is_invocable_v<route_type>) {
+                // requires nothing
+                return handle_results(ctx, run_and_catch(_route, ctx));
+            } else if constexpr (stl::is_invocable_v<route_type, request_type>) {
+                // requires a request
                 return handle_results(ctx, run_and_catch(_route, ctx, stl::forward<decltype(req)>(req)));
-            } else if constexpr (stl::is_invocable_v<route_type, context_type,
-                                                     request_type>) { // requires a context and a request
+            } else if constexpr (stl::is_invocable_v<route_type, context_type, request_type>) {
+                // requires a context and a request
                 return handle_results(ctx, run_and_catch(_route, ctx, stl::forward<decltype(ctx)>(ctx), req));
-            } else if constexpr (stl::is_invocable_v<route_type, request_type,
-                                                     context_type>) { // requires a request and a context
+            } else if constexpr (stl::is_invocable_v<route_type, request_type, context_type>) {
+                // requires a request and a context
                 return handle_results(ctx, run_and_catch(_route, ctx, req, stl::forward<decltype(ctx)>(ctx)));
             } else {
                 throw stl::invalid_argument(
@@ -250,6 +253,9 @@ namespace webpp {
             };
 
           public:
+            constexpr static bool is_route_valid      = !stl::is_void_v<route_type>;
+            constexpr static bool is_next_route_valid = !stl::is_void_v<next_route_type>;
+
             template <typename R, typename C>
             using route_switched_context_type =
               stl::conditional_t<stl::is_invocable_v<R, C>, typename lazy_switched_context_type<R, C>::type,
@@ -395,47 +401,122 @@ namespace webpp {
             //                return operator>>=<T, Ret, Args...>(mem_func_pointer);
             //            }
 
-            [[nodiscard]] bool call_this_route(Context auto&& ctx) const noexcept {
-                // todo handle the return types
-                return super_t::operator()(stl::forward<decltype(ctx)>(ctx));
-            }
 
-            [[nodiscard]] bool call_next_route(Context auto&& ctx) const noexcept {
-                // todo handle the return types
-                if constexpr (stl::is_void_v<next_route_type>) {
-                    return true; // it's the last route in this sub route, doesn't
-                                 // matter what I return here; at least not yet
+          private:
+            [[nodiscard]] inline auto run_route(Context auto&& ctx, Request auto const& req) const noexcept {
+                using context_type = stl::add_lvalue_reference_t<stl::remove_cvref_t<decltype(ctx)>>;
+                auto res           = call_this_route(ctx, req);
+                using res_t        = stl::remove_cvref_t<decltype(res)>;
+                if constexpr (stl::same_as<res_t, bool>) {
+                    // handling sub-route calls:
+                    if constexpr (logical_operators::none == op) {
+                        // practically the same as AND but without converting the result to boolean
+
+                        using n_res_t = stl::remove_cvref_t<decltype(call_next_route(ctx, req))>;
+                        if constexpr (stl::same_as<n_res_t, bool>) {
+                            if (res)
+                                return call_next_route(ctx, req);
+                            return false;
+                        } else if constexpr (stl::is_void_v<n_res_t>) {
+                            if (res)
+                                call_next_route(ctx, req);
+                            return;
+                        } else if constexpr (Response<n_res_t>) {
+
+                        } else if constexpr (Context<n_res_t>) {
+
+                        }
+                    } else if constexpr (logical_operators::AND == op) {
+                        // don't rely on operator && for not executing the next route, because the user may
+                        // have overloaded the operator &&
+                        if (!res)
+                            return false;
+                        return call_next_route_in_bool(ctx, req);
+                    } else if constexpr (logical_operators::OR == op) {
+                        // Same as "and", we will not use operator ||
+                        if (res)
+                            return true;
+                        return call_next_route_in_bool(ctx, req);
+                    } else if constexpr (logical_operators::XOR == op) {
+                        // In operator xor, the next route will be called no matter the result of the current
+                        // route so there's no need for doing the same thing that we did above, but since they
+                        // may have changed the meaning of the operator ^, it's not a bad idea to do so, but
+                        // I'm too lazy :)
+                        return res ^ call_next_route_in_bool(ctx, req);
+                    } else {
+                        // should not happen ever.
+                        return;
+                    }
+                } else if constexpr (Context<res_t>) {
+                    // perform sub-route context switching
+                    if constexpr (is_next_route_valid) {
+                        return call_next_route(res, req);
+                    } else {
+                        // entry-route level context-switching will going to happen in the router:
+                        return res;
+                    }
+                } else if constexpr (Response<res_t>) {
+                    // terminate the sub-route callings and return the response, don't even need to run the
+                    // rest of the routes
+                    // The strings, and other stuff that can be converted to a response have already been
+                    // converted to a response in the "call_route" function.
+                    return res;
                 } else {
-                    return super_t::next::operator()(stl::forward<decltype(ctx)>(ctx));
+                    // even though the user should not return something useless, and the "call_route" function
+                    // takes care of these stuff, we still ignore the result and just run the next routes
+                    return call_next_route(ctx, req);
                 }
             }
 
-            template <typename ContextType>
-            requires(Context<stl::remove_cvref_t<ContextType>>) [[nodiscard]] bool
-            operator()(ContextType&& ctx) const noexcept {
-                using context_type = stl::remove_cvref<ContextType>;
-                static_assert(stl::is_invocable_v<route_type, ContextType>,
-                              "The specified route is not capable of handling this context. "
-                              "Your route might be in the wrong place or previous routes in the router "
-                              "should've switched the context to something that this route is able to use.");
-
-                // handling sub-route calls:
-                if constexpr (logical_operators::none == op) {
-                    call_this_route(stl::forward<ContextType>(ctx));
-                    return call_next_route(stl::forward<ContextType>(ctx));
-                } else if constexpr (logical_operators::AND == op) {
-                    return call_this_route(stl::forward<ContextType>(ctx)) &&
-                           call_next_route(stl::forward<ContextType>(ctx));
-                } else if constexpr (logical_operators::OR == op) {
-                    return call_this_route(stl::forward<ContextType>(ctx)) ||
-                           call_next_route(stl::forward<ContextType>(ctx));
-                } else if constexpr (logical_operators::XOR == op) {
-                    return call_this_route(stl::forward<ContextType>(ctx)) ^
-                           call_next_route(stl::forward<ContextType>(ctx));
+            [[nodiscard]] inline auto call_this_route(Context auto&&      ctx,
+                                                      Request auto const& req) const noexcept {
+                if constexpr (is_route_valid) {
+                    return call_route(super_t::operator(), ctx, req);
                 } else {
-                    // should not happen ever.
+                    return; // void
+                }
+            }
+
+            [[nodiscard]] inline auto
+            call_next_route([[maybe_unused]] Context auto&&      ctx,
+                            [[maybe_unused]] Request auto const& req) const noexcept {
+                using context_type = stl::remove_cvref_t<decltype(ctx)>;
+                if constexpr (is_next_route_valid) {
+                    return call_route(super_t::next.operator(), ctx, req);
+                } else {
+                    return; // void
+                }
+            }
+
+            [[nodiscard]] inline bool call_next_route_in_bool(Context auto&&      ctx,
+                                                              Request auto const& req) const noexcept {
+                using context_type = stl::remove_cvref_t<decltype(ctx)>;
+                auto res           = call_next_route(ctx, req);
+                using res_t        = stl::remove_cvref_t<decltype(res)>;
+                if constexpr (stl::same_as<res_t, bool>) {
+                    return res;
+                } else if constexpr (stl::is_void_v<res_t>) {
+                    return false;
+                } else {
+                    // even if it's a response, we're going to treat it as a bool and just ignore the result
+                    // that's sounds harsh but a developer that's using "and", "or", "xor" in it's router and
+                    // returns a non-bool result is probably drunk.
+                    if constexpr (Logger<context_type>) {
+                        ctx.warning("This sub-route should return a boolean "
+                                    "because you've used it in a 'and', 'or', or 'xor' operation.");
+                    }
                     return true;
                 }
+            }
+
+          public:
+            template <typename ContextType>
+            requires(Context<stl::remove_cvref_t<ContextType>>) [[nodiscard]] bool
+            operator()(ContextType&& ctx, Request auto const& req) const noexcept {
+                using context_type = stl::remove_cvref_t<ContextType>;
+                using request_type = stl::remove_cvref_t<decltype(req)>;
+
+                return run_route(ctx, req);
             }
         };
     } // namespace details

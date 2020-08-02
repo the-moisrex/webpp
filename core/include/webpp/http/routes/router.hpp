@@ -123,8 +123,10 @@ namespace webpp {
                 //                router_stats::route_level::entryroute; ctx.router_features.last_entryroute
                 //                = is_last_route; ctx.router_features.entryroute_index = Index;
 
+                ctx.call_pre_entryroute_methods();
                 auto res          = call_route(route, ctx, req);
                 using result_type = stl::remove_cvref_t<decltype(res)>;
+                ctx.call_post_entryroute_methods(); // todo: we might have a context switching, what should we do?
 
                 // Don't handle the edge cases of return types here, do it in the "call_route" function
                 // for example, a function that returns strings and can be converted into a response

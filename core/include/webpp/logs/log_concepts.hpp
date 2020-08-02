@@ -3,6 +3,9 @@
 #ifndef WEBPP_LOG_CONCEPTS_HPP
 #define WEBPP_LOG_CONCEPTS_HPP
 
+#include "../std/std.hpp"
+#include <type_traits>
+
 namespace webpp {
 
     template <typename T>
