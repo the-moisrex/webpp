@@ -92,6 +92,11 @@ namespace webpp {
         {c.request};
     };
 
+    template <typename T>
+    struct ContextTempl {
+        static constexpr bool value = Context<T>;
+    };
+
 //    template <typename ...E>
 //    struct fake_context_type_impl: public E... {
 //        using traits_type  = std_traits;

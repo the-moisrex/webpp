@@ -311,7 +311,7 @@ namespace webpp {
     };
 
     // todo: add interface extensions as well
-    template <Traits TraitsType, Application App, ExtensionList EList>
+    template <Traits TraitsType, Application App, ExtensionList EList = empty_extension_pack>
     struct cgi {
       public:
         using traits_type      = TraitsType;
@@ -320,6 +320,7 @@ namespace webpp {
         using interface_type   = cgi<traits_type, application_type, extension_list>;
         using str_view_type    = typename TraitsType::string_view_type;
         using str_type         = typename TraitsType::string_type;
+        using ostream_t        = typename TraitsType::ostream_type;
         using request_type =
           typename EList::template extensie_type<traits_type,
                                                  request_descriptor<cgi_request, interface_type>>;

@@ -23,7 +23,7 @@ struct app {
             return "Nice page.";
         };
         router _router{extensions{},
-                                 (get & root / "home") >>=
+                                 (get and root / "home") >>=
                                  [this](Context auto& ctx) {
                                      return home(ctx);
                                  },

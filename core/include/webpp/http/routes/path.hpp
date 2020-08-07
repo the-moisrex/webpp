@@ -114,6 +114,7 @@ namespace webpp {
 
     template <typename T, typename PathType, typename UriSegmentsType>
     concept Segment = requires(T seg) {
+        // todo: update this
         seg.template operator()<typename fake_context_type::template context_type_with_appended_extensions<
           path_context_extension<PathType, UriSegmentsType>>>;
     };
@@ -310,8 +311,27 @@ namespace webpp {
             return stl::nullopt;
         }
 
+      private:
+        [[nodiscard]] static inline bool call_segment(auto&& seg, auto&& ctx, auto const& req) noexcept {
+            using context_type = decltype(ctx);
+            using req_type     = decltype(req);
+            using seg_type     = decltype(seg);
+            if constexpr (stl::is_invocable_v<seg_type, context_type, req_type>) {
+                return seg(ctx, req);
+            } else if constexpr (stl::is_invocable_v<seg_type, req_type, context_type>) {
+                return seg(req, ctx);
+            } else if constexpr (stl::is_invocable_v<seg_type, context_type>) {
+                return seg(ctx);
+            } else if constexpr (stl::is_invocable_v<seg_type>) {
+                return seg();
+            } else {
+                throw stl::invalid_argument("The specified segment in the path cannot be called.");
+            }
+        }
+
+      public:
         template <typename ContextType>
-        requires(Context<stl::remove_cvref_t<ContextType>>) [[nodiscard]] auto
+        requires(Context<stl::remove_cvref_t<ContextType>>) [[nodiscard]] bool
         operator()(ContextType&& ctx, Request auto const& req) noexcept {
             // handle inside-sub-route internal segment is done in this method
 
@@ -323,7 +343,7 @@ namespace webpp {
             };
 
             if constexpr (!has_segment) {
-                return;
+                return true;
             } else {
 
                 // Switching the context if it doesn't have a path in it
@@ -358,20 +378,20 @@ namespace webpp {
                     if (!ctx.path.next_segment())
                         return false;
 
-                    if constexpr (can_be_invoked_by_context) {
-                        using result_type = stl::invoke_result_t<segment_type, context_ref_type>;
+                    using result_type = stl::invoke_result_t<segment_type, context_ref_type>;
 
-                        // if the result of this segment is void
-                        if constexpr (stl::is_void_v<result_type>) {
-                            segment(ctx);
-                            if constexpr (has_next_segment) {
-                                return next_segment(ctx);
-                            }
-                            return;
+                    // if the result of this segment is void
+                    if constexpr (stl::is_void_v<result_type>) {
+                        call_segment(segment, ctx, req);
+                        if constexpr (has_next_segment) {
+                            return call_segment(next_segment, ctx, req);
+                        } else {
+                            return true;
                         }
+                    } else {
 
                         // if the result of calling this segment is NOT void
-                        auto res = segment(ctx);
+                        auto res = call_segment(segment, ctx, req);
                         if constexpr (stl::is_same_v<result_type, bool>) {
                             // don't check the rest of the segments if it's not a
                             // match for the current segment
@@ -379,22 +399,12 @@ namespace webpp {
                                 return false;
                         }
                         if constexpr (has_next_segment) {
-                            if constexpr (Response<result_type>) {
-                                return res;
-                            } else if constexpr (Context<result_type>) {
-                                // context switching is happening
-                                return next_segment(stl::move(res));
-                            } else {
-                                return next_segment(ctx);
-                            }
+                            return call_segment(next_segment, ctx, req);
+                        } else {
+                            // return the results of the this segment because it's the last segment
+                            return res;
                         }
-
-                        // return the results of the this segment because it's the last segment
-                        return res;
-                    } else if constexpr (can_be_invoked_by_void) {
                     }
-
-                    return; // explicitly saying that we have no return type
                 }
             }
         }

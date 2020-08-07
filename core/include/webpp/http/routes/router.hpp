@@ -104,6 +104,8 @@ namespace webpp {
             // for example, a function that returns strings and can be converted into a response
             // is going to be converted into a response in the "call_route" function
             if constexpr (istl::Optional<result_type>) {
+                // if res is a context, context switching is automatically happens here,
+                // the same goes for any other valid type
                 if (res) {
                     return handle_route_results<Index>(res.value(), stl::forward<decltype(ctx)>(ctx), req);
                 } else {
