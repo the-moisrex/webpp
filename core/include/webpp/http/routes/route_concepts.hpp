@@ -20,7 +20,23 @@ namespace webpp {
          RouteResponse<stl::invoke_result_t<T, stl::add_lvalue_reference_t<C>>>);
 
     template <typename T, typename C = fake_context_type>
-    concept PotentialRoute = stl::is_void_v<T> || CallableWithContext<T, C>;
+    concept PotentialRoute = requires(T route, C& ctx, typename C::request_type const& req) {
+        requires requires {
+            {route()};
+        }
+        || requires {
+            {route(ctx)};
+        }
+        || requires {
+            {route(req)};
+        }
+        || requires {
+            {route(ctx, req)};
+        }
+        || requires {
+            {route(req, ctx)};
+        };
+    };
 
     template <typename T, typename C = fake_context_type>
     concept Route = requires(T obj) {

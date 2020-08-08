@@ -28,11 +28,23 @@ namespace webpp {
      * have to copy and paste lots of codes to make it happen) to make sure
      * the user is able to use this class properly and easily.
      */
-    template <Traits TraitsType, RequestExtensionList REL, Interface IfaceType>
+    template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL, Interface IfaceType>
     struct cgi_request : public stl::remove_cvref_t<REL> {
         using traits_type      = TraitsType;
         using interface_type   = IfaceType;
+        using allocator_type   = typename traits_type::template allocator<typename traits_type::char_type>;
         using application_type = typename interface_type::application_type;
+
+      private:
+        allocator_type alloc;
+
+      public:
+
+        cgi_request(allocator_type const& alloc = allocator_type{}) noexcept : alloc(alloc) {}
+
+        auto const& get_allocator() const noexcept {
+            return alloc;
+        }
 
         /**
          * @brief get the server's software
@@ -324,13 +336,22 @@ namespace webpp {
         using request_type =
           typename EList::template extensie_type<traits_type,
                                                  request_descriptor<cgi_request, interface_type>>;
+        using allocator_type = typename request_type::allocator_type;
 
         application_type app;
+      private:
+        allocator_type alloc;
 
-        cgi() noexcept {
+      public:
+
+        cgi(allocator_type const&alloc = allocator_type{}) noexcept {
             // I'm not using C here; so why should I pay for it!
             // And also the user should not use cin and cout. so ...
             stl::ios::sync_with_stdio(false);
+        }
+
+        auto const& get_allocator() const noexcept {
+            return alloc;
         }
 
         /**
@@ -441,10 +462,10 @@ namespace webpp {
 
 
         void operator()() noexcept {
-            request_type req;
+            request_type req{alloc};
             auto         res = app(req);
             res.calculate_default_headers();
-            auto header_str = res.header.str();
+            auto header_str = res.headers.str();
             auto str        = res.body.str();
 
             // From RFC: https://tools.ietf.org/html/rfc3875
@@ -457,8 +478,8 @@ namespace webpp {
             // todo: use <format> or {fmt}
             // todo: give the user the ability to change the status phrase
             stl::stringstream status_line;
-            status_line << "Status: " << res.header.status_code << " "
-                        << status_reason_phrase(res.header.status_code) << "\r\n";
+            status_line << "Status: " << res.headers.status_code << " "
+                        << status_reason_phrase(res.headers.status_code) << "\r\n";
 
             auto _status_line_str = status_line.str();
             write(_status_line_str.data(), _status_line_str.size());

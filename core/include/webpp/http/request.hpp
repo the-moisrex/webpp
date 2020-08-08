@@ -35,13 +35,16 @@
 
 namespace webpp {
 
-    template <Request ReqType>
+    template <typename ReqType>
     struct final_request : public ReqType {
-        using ReqType::basic_request;
+        using traits_type = typename ReqType::traits_type;
+        using allocator_type = typename traits_type::template allocator<typename traits_type::char_type>;
+        using ReqType::ReqType;
 
     };
 
-    template <template <typename, typename, typename ...> typename MidLevelRequestType, typename ...AdditionalReqArgs>
+    template <template <typename, typename, typename...> typename MidLevelRequestType,
+              typename... AdditionalReqArgs>
     struct request_descriptor {
         template <typename ExtensionType>
         struct has_related_extension_pack {

@@ -312,18 +312,38 @@ namespace webpp {
         }
 
       private:
+
+        /**
+         * Call the segment and catch the exceptions if there are any
+         */
+        static inline bool call_and_catch(auto&& callable, auto&&... args) noexcept {
+            if constexpr (stl::is_nothrow_invocable_v<decltype(callable), decltype(args)...>) {
+                // It's noexcept, we call it knowing that.
+                return callable(stl::forward<decltype(args)>(args)...);
+            } else if constexpr (stl::is_invocable_v<decltype(callable), decltype(args)...>) {
+                try {
+                    return callable(stl::forward<decltype(args)>(args)...);
+                } catch (...) { return false; }
+            } else {
+                return false;
+            }
+        }
+
+        /**
+         * call the specified segment with the right argument and handle the exceptions
+         */
         [[nodiscard]] static inline bool call_segment(auto&& seg, auto&& ctx, auto const& req) noexcept {
             using context_type = decltype(ctx);
             using req_type     = decltype(req);
             using seg_type     = decltype(seg);
             if constexpr (stl::is_invocable_v<seg_type, context_type, req_type>) {
-                return seg(ctx, req);
+                return call_and_catch(seg, ctx, req);
             } else if constexpr (stl::is_invocable_v<seg_type, req_type, context_type>) {
-                return seg(req, ctx);
+                return call_and_catch(seg, req, ctx);
             } else if constexpr (stl::is_invocable_v<seg_type, context_type>) {
-                return seg(ctx);
+                return call_and_catch(seg, ctx);
             } else if constexpr (stl::is_invocable_v<seg_type>) {
-                return seg();
+                return call_and_catch(seg);
             } else {
                 throw stl::invalid_argument("The specified segment in the path cannot be called.");
             }
@@ -348,12 +368,14 @@ namespace webpp {
 
                 // Switching the context if it doesn't have a path in it
                 if constexpr (!has_path_extension) {
+                    // Performing in-place context switching (meaning we switch the context for the current
+                    // segment and not just the next segment)
 
                     // parse the uri
                     // todo: we can optimize this, right? it parses the whole uri, do we need the whole uri? I think yes
                     // fixme: should we decode it? if we decode it we need to care about the UTF-8 stuff as well?
                     // todo: move this parsing into the request so we don't have to do it more than once for one request
-                    auto uri_segments = basic_uri<traits_type, false>{req->request_uri()}.path_structured();
+                    auto uri_segments = basic_uri<traits_type, false>{req.request_uri()}.path_structured();
                     using uri_segments_type = decltype(uri_segments);
 
                     // context switching

@@ -22,14 +22,13 @@ struct app {
         const auto admin = []() {
             return "Nice page.";
         };
-        router _router{extensions{},
-                                 (get and root / "home") >>=
+        router _router{extensions{}, (get and root / "home") >>=
                                  [this](Context auto& ctx) {
-                                     return home(ctx);
+                                     return this->home(ctx);
                                  },
                                  get & (root / "about" >>=
                                         [this](Context auto& ctx) {
-                                            return about(ctx);
+                                            return this->about(ctx);
                                         }),
                                  root / "admin" >>= admin};
 

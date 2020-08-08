@@ -190,8 +190,8 @@ namespace webpp {
             traits_type, context_descriptor_type, request_type>;
 
         constexpr final_context(allocator_type const& alloc = allocator_type{}) noexcept
-          : basic_context_type{alloc},
-            EList{} {}
+          : /*basic_context_type{alloc},*/
+            EList(alloc) {}
 
         //        template <typename... Args>
         //        constexpr final_context(Args&&... args) noexcept : EList{stl::forward<Args>(args)...} {
@@ -218,7 +218,7 @@ namespace webpp {
                   typename NEList, typename NReqType>
         constexpr final_context(final_context<NTraitsType, NContextDescriptorType, NOriginalExtensionList,
                                               NEList, NReqType> const& ctx) noexcept
-          : basic_context_type{ctx.request} {}
+          : basic_context_type{ctx.get_allocator()} {}
 
         /**
          * Clone this context and append the new extensions along the way.

@@ -2,6 +2,7 @@
 #define WEBPP_ROUTER_H
 
 #include "../../extensions/extension.hpp"
+#include "../../std/optional.hpp"
 #include "../../std/tuple.hpp"
 #include "../../std/vector.hpp"
 #include "../bodies/string.hpp"
@@ -10,7 +11,6 @@
 #include "./context.hpp"
 #include "./route_concepts.hpp"
 #include "./router_concepts.hpp"
-#include "../../std/optional.hpp"
 
 #include <functional>
 #include <map>
@@ -32,7 +32,8 @@ namespace webpp {
      * @tparam ExtensionListType
      * @tparam RouteType
      */
-    template <ExtensionList ExtensionListType = empty_extension_pack, Route... RouteType>
+    template </*fixme: ExtensionList*/ typename ExtensionListType,
+              /*fixme: Route*/ typename... RouteType>
     struct router {
 
 
@@ -42,7 +43,12 @@ namespace webpp {
 
         consteval router(ExtensionListType&&, RouteType&&... _route) noexcept
           : routes(stl::forward<RouteType>(_route)...) {}
+
         consteval router(RouteType&&... _route) noexcept : routes(stl::forward<RouteType>(_route)...) {}
+
+        consteval router() noexcept              = default;
+        consteval router(router const&) noexcept = default;
+        consteval router(router&&) noexcept      = default;
 
         //        template <typename... AppTypes>
         //        requires((application_pointers<AppTypes>::value &&
@@ -60,7 +66,7 @@ namespace webpp {
         /**
          * @return how many routes are in this router
          */
-        consteval stl::size_t route_count() const noexcept {
+        [[nodiscard]] static consteval stl::size_t route_count() noexcept {
             return sizeof...(RouteType);
         }
 
@@ -160,30 +166,30 @@ namespace webpp {
         operator()(RequestType& req) const noexcept {
             using req_type     = stl::remove_cvref_t<RequestType>;
             using context_type = simple_context<req_type, ExtensionListType>;
-            return this->operator()(context_type{req});
+            return this->template operator()<0>(context_type{req.get_allocator()}, req);
         }
 
 
-        template <stl::size_t Index = 0, typename ContextType>
-        requires(Context<stl::remove_cvref_t<ContextType>>) Response auto
-        operator()(ContextType&& ctx, Request auto const& req) const noexcept {
+        template <stl::size_t Index = 0>
+        Response auto operator()(Context auto&& ctx, Request auto const& req) const noexcept {
 
             if constexpr ((route_count() == 0) || (Index >= (route_count() - 1))) {
                 return ctx.error(404u);
             } else {
 
                 // handling root-level route calls:
-                constexpr auto route = stl::get<Index>(routes);
+                auto route = stl::get<Index>(routes);
 
-                ctx.call_pre_entryroute_methods();
+                // todo
+                // ctx.call_pre_entryroute_methods();
                 auto res          = call_route(route, ctx, req);
                 using result_type = stl::remove_cvref_t<decltype(res)>;
-                ctx
-                  .call_post_entryroute_methods(); // todo: we might have a context switching, what should we do?
+                // todo: we might have a context switching, what should we do?
+                // ctx.call_post_entryroute_methods();
                 if constexpr (stl::is_void_v<result_type>) {
                     return ctx.error(404u);
                 } else {
-                    return handle_route_results<Index>(res);
+                    return handle_route_results<Index>(res, ctx, req);
                 }
             }
         }

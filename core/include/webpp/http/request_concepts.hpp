@@ -14,7 +14,8 @@ namespace webpp {
     template <typename T>
     concept Request = Traits<typename T::traits_type>&&
       Interface<typename T::interface_type>&& requires(T req) {
-        {req.request_uri()};
+        req.request_uri();
+        req.get_allocator();
     };
 
 
@@ -32,9 +33,14 @@ namespace webpp {
     struct fake_request_type {
         using interface_type = fake_interface_type;
         using traits_type    = fake_traits_type;
+        using allocator_type = typename traits_type::template allocator<typename traits_type::char_type>;
 
         auto request_uri() const noexcept {
             return "/";
+        }
+
+        auto get_allocator() const noexcept {
+            return allocator_type{};
         }
     };
 

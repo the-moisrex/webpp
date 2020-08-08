@@ -86,10 +86,10 @@ namespace webpp {
     concept ContextExtension = Extension<T>;
 
     template <typename T>
-    concept Context = requires(T c) {
-        Traits<typename T::traits_type>;
-        Request<typename T::request_type>;
-        {c.request};
+    concept Context = requires(stl::remove_cvref_t<T> c) {
+        Traits<typename stl::remove_cvref_t<T>::traits_type>;
+        Request<typename stl::remove_cvref_t<T>::request_type>;
+        //        {c.request};
     };
 
     template <typename T>
@@ -97,23 +97,23 @@ namespace webpp {
         static constexpr bool value = Context<T>;
     };
 
-//    template <typename ...E>
-//    struct fake_context_type_impl: public E... {
-//        using traits_type  = std_traits;
-//        using request_type = fake_request_type;
-//        request_type request{};
-//        fake_context_type_impl() = default;
-//        fake_context_type_impl(request_type req) : request{req} {}
-//        fake_context_type_impl(fake_context_type_impl const&)     = default;
-//        fake_context_type_impl(fake_context_type_impl&&) noexcept = default;
-//
-//        template <Extension... EE>
-//        constexpr auto clone() const noexcept {
-//            return fake_context_type_impl<EE...>{*this};
-//        }
-//    };
-//
-//    using fake_context_type = fake_context_type_impl<>;
+    //    template <typename ...E>
+    //    struct fake_context_type_impl: public E... {
+    //        using traits_type  = std_traits;
+    //        using request_type = fake_request_type;
+    //        request_type request{};
+    //        fake_context_type_impl() = default;
+    //        fake_context_type_impl(request_type req) : request{req} {}
+    //        fake_context_type_impl(fake_context_type_impl const&)     = default;
+    //        fake_context_type_impl(fake_context_type_impl&&) noexcept = default;
+    //
+    //        template <Extension... EE>
+    //        constexpr auto clone() const noexcept {
+    //            return fake_context_type_impl<EE...>{*this};
+    //        }
+    //    };
+    //
+    //    using fake_context_type = fake_context_type_impl<>;
 
 } // namespace webpp
 
