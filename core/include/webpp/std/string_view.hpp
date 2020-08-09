@@ -58,6 +58,11 @@ namespace webpp::istl {
             str.data();
             str.size();
             stl::basic_string_view{str.data(), str.size()};
+        }
+        || requires {
+            str.c_str();
+            str.size();
+            stl::basic_string_view{str.c_str(), str.size()};
         };
     };
 
