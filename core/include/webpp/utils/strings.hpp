@@ -178,7 +178,7 @@ namespace webpp {
 
     template <typename T>
     [[nodiscard]] constexpr bool starts_with(istl::ConvertibleToStringView auto&& _str, T&& data) noexcept {
-        stl::basic_string_view str{_str};
+        auto str = istl::to_string_view(_str);
 #ifdef CXX20
         return str.starts_with(stl::forward<T>(data));
 #else
@@ -188,13 +188,13 @@ namespace webpp {
 
     [[nodiscard]] constexpr bool ends_with(istl::ConvertibleToStringView auto&& _str,
                                            istl::char_type_of<decltype(_str)> c) noexcept {
-        stl::basic_string_view str{_str};
+        auto str = istl::to_string_view(_str);
         return !str.empty() && str.back() == c;
     }
 
     [[nodiscard]] constexpr bool ends_with(istl::ConvertibleToStringView auto&& _str,
                                            istl::ConvertibleToStringView auto&& _ending) noexcept {
-        stl::basic_string_view str{_str};
+        auto str = istl::to_string_view(_str);
         stl::basic_string_view ending{_ending};
 #ifdef CXX20
         return str.ends_with(ending);

@@ -16,16 +16,14 @@ using namespace webpp;
 
 struct fake_app {
 
-    router<> _router{
-
-    };
 
     Response auto operator()(Request auto&& req) {
+        router _router{[]() {}};
         return _router(req);
     }
 };
 
-using request_type = basic_request<std_traits, cgi<std_traits, fake_app>>;
+using request_type = typename cgi<std_traits, fake_app>::request_type;
 using context_type = simple_context<request_type>;
 
 struct fake_mommy {

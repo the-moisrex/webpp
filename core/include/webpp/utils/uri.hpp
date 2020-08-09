@@ -747,7 +747,7 @@ namespace webpp {
         basic_uri& scheme(str_view_t __scheme) {
             if (ends_with(__scheme, ':'))
                 __scheme.remove_suffix(1);
-            if (!is::scheme(__scheme))
+            if (!is::scheme<traits_type>(__scheme))
                 throw stl::invalid_argument("The specified scheme is not valid");
             parse_scheme();
             if (scheme_end != data.size()) {
@@ -1244,7 +1244,7 @@ namespace webpp {
          */
         [[nodiscard]] uint16_t port_uint16() const noexcept {
             if (has_port()) {
-                return static_cast<uint16_t>(to_uint<traits_type>(port()));
+                return static_cast<uint16_t>(to_uint(port()));
             }
             return default_port();
         }
