@@ -25,8 +25,7 @@ namespace webpp::stl {
 // Traits aware string_view:
 namespace webpp::istl {
 
-    template <Traits TraitsType,
-              typename CharT      = typename TraitsType::char_type,
+    template <Traits TraitsType, typename CharT = typename TraitsType::char_type,
               typename CharTraits = typename TraitsType::char_traits>
     using basic_string_view = ::std::basic_string_view<CharT, CharTraits>;
 
@@ -34,31 +33,62 @@ namespace webpp::istl {
 
     template <typename T>
     concept StringView = requires(T str) {
-        {T{"str"}};
-        {str.empty()};
-        {str.at(0)};
-        {str.data()};
-        {str.size()};
-        {str.remove_suffix(1)};
-        {str.remove_prefix(1)};
-        {str.starts_with('a')};
-        {str.ends_with('a')};
-        {str.substr('a')};
-        {T::npos};
+        T{"str"};
+        str.empty();
+        str.at(0);
+        str.data();
+        str.size();
+        str.remove_suffix(1);
+        str.remove_prefix(1);
+        str.starts_with('a');
+        str.ends_with('a');
+        str.substr('a');
+        T::npos;
 
         typename T::value_type;
     };
 
 
     template <typename T>
-    concept ConvertibleToStringView = requires (T str) {
-        stl::basic_string_view{str};
+    concept ConvertibleToStringView = requires(T str) {
+        requires requires {
+            stl::basic_string_view{str};
+        }
+        || requires {
+            str.data();
+            str.size();
+            stl::basic_string_view{str.data(), str.size()};
+        };
+    };
+
+
+    [[nodiscard]] constexpr auto to_string_view(ConvertibleToStringView auto&& str) noexcept {
+        if constexpr (StringView<decltype(str)>) {
+            return str;
+        } else if constexpr (requires { stl::basic_string_view{str}; }) {
+            return stl::basic_string_view{str};
+        } else if constexpr (requires {
+                                 str.c_str();
+                                 str.size();
+                                 stl::basic_string_view{str.c_str(), str.size()};
+                             }) {
+            return stl::basic_string_view{str.c_str(), str.size()};
+        } else if constexpr (requires {
+                                 str.data();
+                                 str.size();
+                                 stl::basic_string_view{str.data(), str.size()};
+                             }) {
+            return stl::basic_string_view{str.data(), str.size()};
+        } else if constexpr (requires { str.str(); }) {
+            return to_string_view(str.str());
+        } else {
+            throw stl::invalid_argument("The specified input is not convertible to string_view");
+        }
     };
 
     template <typename T>
-    using char_type_of = typename decltype(stl::basic_string_view{stl::declval<T>()})::value_type;
+    using char_type_of = typename decltype(to_string_view(stl::declval<T>()))::value_type;
 
-
-} // namespace webpp::stl
+} // namespace webpp::istl
 
 #endif // WEBPP_STRING_VIEW_H

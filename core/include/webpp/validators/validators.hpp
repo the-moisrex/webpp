@@ -32,8 +32,8 @@ namespace webpp {
 
         [[nodiscard]] constexpr bool contains(istl::ConvertibleToStringView auto&& _str,
                                               istl::ConvertibleToStringView auto&& _seed) noexcept {
-            stl::basic_string_view str{_str};
-            stl::basic_string_view seed{_seed};
+            auto str = istl::to_string_view(_str);
+            auto seed = istl::to_string_view(_seed);
             return str.find(seed) != decltype(str)::npos;
         }
 
@@ -83,7 +83,7 @@ namespace webpp {
          * @return true if there's no whitespaces in the right side of input
          */
         [[nodiscard]] constexpr bool rtrimmed(istl::ConvertibleToStringView auto&& _str) noexcept {
-            stl::basic_string_view str{_str};
+            auto str = istl::to_string_view(_str);
             return !whitespace(*str.rbegin());
         }
 
@@ -93,7 +93,7 @@ namespace webpp {
          * @return true if there's no whitespaces in the left side of input
          */
         [[nodiscard]] constexpr bool ltrimmed(istl::ConvertibleToStringView auto&& _str) noexcept {
-            stl::basic_string_view str{_str};
+            auto str = istl::to_string_view(_str);
             return !whitespace(str[0]);
         }
 
@@ -122,7 +122,7 @@ namespace webpp {
          * @return true/false
          */
         [[nodiscard]] constexpr bool digit(istl::ConvertibleToStringView auto&& _str) noexcept {
-            stl::basic_string_view str{_str};
+            auto str = istl::to_string_view(_str);
             for (auto c : str)
                 if (!digit(c))
                     return false;
@@ -145,7 +145,7 @@ namespace webpp {
          * @return true if the specified string is a number
          */
         [[nodiscard]] constexpr bool number(istl::ConvertibleToStringView auto&& _str) noexcept {
-            stl::basic_string_view str{_str};
+            auto str = istl::to_string_view(_str);
             bool                   is_first = true;
             for (auto const& c : str) {
                 if (!digit(c)) {
@@ -175,7 +175,7 @@ namespace webpp {
          */
 
         [[nodiscard]] constexpr bool lowercase(istl::ConvertibleToStringView auto&& _str) noexcept {
-            stl::basic_string_view str{_str};
+            auto str = istl::to_string_view(_str);
             for (auto const& c : str)
                 if (!lowercase(c))
                     return false;
@@ -197,7 +197,7 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] constexpr bool uppercase(istl::ConvertibleToStringView auto&& _str) noexcept {
-            stl::basic_string_view str{_str};
+            auto str = istl::to_string_view(_str);
             for (auto const& c : str)
                 if (!uppercase(c))
                     return false;
@@ -221,7 +221,7 @@ namespace webpp {
          */
 
         [[nodiscard]] constexpr bool uint8(istl::ConvertibleToStringView auto&& _str) noexcept {
-            stl::basic_string_view str{_str};
+            auto str = istl::to_string_view(_str);
             return !str.empty() && str.size() <= 3 && digit(str) && to_uint(str) <= 255;
         }
 
@@ -241,7 +241,7 @@ namespace webpp {
          * @return bool
          */
         [[nodiscard]] constexpr bool hex(istl::ConvertibleToStringView auto&& _str) noexcept {
-            auto str        = stl::basic_string_view{_str};
+            auto str        = istl::to_string_view(_str);
             using char_type = istl::char_type_of<decltype(str)>;
 
             auto first = stl::cbegin(str);
@@ -262,7 +262,7 @@ namespace webpp {
          * @return true if the specified str is an email
          */
         [[nodiscard]] bool email(istl::ConvertibleToStringView auto&& _str) noexcept {
-            stl::basic_string_view str{_str};
+            auto str = istl::to_string_view(_str);
             //            constexpr auto pattern =
             //            ctll::fixed_string{"^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+"
             //                                                        "(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"};
@@ -296,7 +296,7 @@ namespace webpp {
          * @return true if str is a valid ipv4
          */
         [[nodiscard]] constexpr bool ipv4(istl::ConvertibleToStringView auto&& _str) noexcept {
-            stl::basic_string_view str{_str};
+            auto str = istl::to_string_view(_str);
             stl::size_t            next_dot;
             for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
                 next_dot       = str.find('.');
@@ -315,7 +315,7 @@ namespace webpp {
          * valid ipv4 subnet mask or not
          */
         [[nodiscard]] constexpr bool subnet(istl::ConvertibleToStringView auto&& _str) noexcept {
-            stl::basic_string_view str{_str};
+            auto str = istl::to_string_view(_str);
             stl::size_t            next_dot = 0;
             for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
                 next_dot       = str.find('.');
@@ -353,7 +353,7 @@ namespace webpp {
         ipv4_prefix(istl::ConvertibleToStringView auto&&                     _str,
                     charset_t<istl::char_type_of<decltype(_str)>, N> const& divider_chars) noexcept {
 
-            stl::basic_string_view str{_str};
+            auto str = istl::to_string_view(_str);
 
             if (auto found = stl::find_if(stl::rbegin(str), stl::rend(str),
                                           [&](const auto& c) {
@@ -378,7 +378,7 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] constexpr bool ipv4_prefix(istl::ConvertibleToStringView auto&& _str) noexcept {
-            stl::basic_string_view str{_str};
+            auto str = istl::to_string_view(_str);
             using char_type = istl::char_type_of<decltype(str)>;
             return ipv4_prefix(str, charset_t<char_type, 2>{':', '/'});
         }
@@ -396,7 +396,7 @@ namespace webpp {
          *     is a valid IPv6 address is returned.
          */
         [[nodiscard]] constexpr bool ipv6(istl::ConvertibleToStringView auto&& _address) noexcept {
-            stl::basic_string_view address{_address};
+            auto address = istl::to_string_view(_address);
 
             using str_view_t = decltype(address);
 
@@ -455,7 +455,7 @@ namespace webpp {
                     charset_t<istl::char_type_of<decltype(_str)>, N> const& divider_chars =
                       charset_t<istl::char_type_of<decltype(_str)>, 1>('/')) noexcept {
 
-            stl::basic_string_view str{_str};
+            auto str = istl::to_string_view(_str);
 
             using char_type = istl::char_type_of<decltype(str)>;
 
@@ -495,7 +495,7 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] constexpr bool host(istl::ConvertibleToStringView auto&& _str) noexcept {
-            stl::basic_string_view str{_str};
+            auto str = istl::to_string_view(_str);
 
             using str_view_t = decltype(str);
             using char_type  = typename str_view_t::value_type;
@@ -564,7 +564,7 @@ namespace webpp {
          */
 
         [[nodiscard]] constexpr bool query(istl::ConvertibleToStringView auto&& _str) noexcept {
-            stl::basic_string_view str{_str};
+            auto str = istl::to_string_view(_str);
             using char_type = istl::char_type_of<decltype(str)>;
 
             /**
@@ -617,7 +617,7 @@ namespace webpp {
          */
 
         [[nodiscard]] constexpr bool hex_color(istl::ConvertibleToStringView auto&& _str) noexcept {
-            stl::basic_string_view str{_str};
+            auto str = istl::to_string_view(_str);
             if (!starts_with(str, '#'))
                 return false;
             switch (str.size()) {
@@ -636,7 +636,7 @@ namespace webpp {
         [[nodiscard]] bool rgb_color(istl::ConvertibleToStringView auto&& _sstr) noexcept {
             // TODO: there are better ways to do it, check performance
 
-            stl::basic_string_view sstr{_sstr};
+            auto sstr = istl::to_string_view(_sstr);
             using char_type = typename decltype(sstr)::value_type;
 
             constexpr stl::initializer_list<char_type const*> numbers = "0123456789";
@@ -681,7 +681,7 @@ namespace webpp {
 
         [[nodiscard]] bool rgba_color(istl::ConvertibleToStringView auto&& _str) noexcept {
             // TODO: there are better ways to do it, check performance
-            stl::basic_string_view str{_str};
+            auto str = istl::to_string_view(_str);
             using char_type                                           = typename decltype(str)::value_type;
             constexpr stl::initializer_list<char_type const*> numbers = "0123456789";
             return true; // TODO: I'm just gonna make it compilable
