@@ -67,40 +67,29 @@ namespace webpp::istl {
     };
 
 
-    [[nodiscard]] constexpr auto to_string_view(StringView auto&& str) noexcept {
-        return str;
-    }
-
-
-    [[nodiscard]] constexpr auto to_string_view(auto&& str) noexcept
-      requires(requires { stl::basic_string_view{str}; }) {
-        return stl::basic_string_view{str};
-    }
-
-    [[nodiscard]] constexpr auto to_string_view(auto&& str) noexcept requires(requires {
-        str.c_str();
-        str.size();
-        stl::basic_string_view{str.c_str(), str.size()};
-    }) {
-        return stl::basic_string_view{str.c_str(), str.size()};
-    }
-
-    [[nodiscard]] constexpr auto to_string_view(auto&& str) noexcept requires(requires {
-        str.data();
-        str.size();
-        stl::basic_string_view{str.data(), str.size()};
-    }) {
-        return stl::basic_string_view{str.data(), str.size()};
-    }
-
-    [[nodiscard]] constexpr auto to_string_view(auto&& str) noexcept requires(requires { str.str(); }) {
-        return to_string_view(str.str());
-    }
-
-
-    [[nodiscard]] constexpr auto to_string_view(auto&& str) noexcept(false) {
-        throw stl::invalid_argument("The specified input is not convertible to string_view");
-    }
+    [[nodiscard]] constexpr auto to_string_view(ConvertibleToStringView auto&& str) noexcept {
+        if constexpr (StringView<decltype(str)>) {
+            return str;
+        } else if constexpr (requires { stl::basic_string_view{str}; }) {
+            return stl::basic_string_view{str};
+        } else if constexpr (requires {
+                                 str.c_str();
+                                 str.size();
+                                 stl::basic_string_view{str.c_str(), str.size()};
+                             }) {
+            return stl::basic_string_view{str.c_str(), str.size()};
+        } else if constexpr (requires {
+                                 str.data();
+                                 str.size();
+                                 stl::basic_string_view{str.data(), str.size()};
+                             }) {
+            return stl::basic_string_view{str.data(), str.size()};
+        } else if constexpr (requires { str.str(); }) {
+            return to_string_view(str.str());
+        } else {
+            throw stl::invalid_argument("The specified input is not convertible to string_view");
+        }
+    };
 
     template <typename T>
     using char_type_of = typename decltype(to_string_view(stl::declval<T>()))::value_type;
