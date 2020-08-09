@@ -15,7 +15,7 @@ TEST(URITests, Creation) {
     EXPECT_TRUE(u.has_host());
     EXPECT_EQ(u.str(), "http://example.com/");
     EXPECT_EQ(u.host(), "example.com");
-    EXPECT_TRUE(is::host<std_traits>(u.host()));
+    EXPECT_TRUE(is::host(u.host()));
     EXPECT_TRUE(u.has_authority());
     EXPECT_TRUE(u.has_path()) << "the path is '/'";
     EXPECT_FALSE(u.has_port());
@@ -61,7 +61,7 @@ TEST(URITests, Creation) {
     EXPECT_EQ(u.str(), "http://eg2.com/");
 
     const_uri ipv4_host("https://192.168.1.1");
-    EXPECT_TRUE(is::ipv4<std_traits>(ipv4_host.host()));
+    EXPECT_TRUE(is::ipv4(ipv4_host.host()));
     EXPECT_EQ(ipv4_host.scheme(), "https");
     EXPECT_FALSE(ipv4_host.has_path());
     EXPECT_FALSE(ipv4_host.has_query());
@@ -111,7 +111,7 @@ TEST(URITests, IPv6HostName) {
     EXPECT_EQ(u.host(), "[::1]") << "host: " << u.host();
     EXPECT_EQ(u.port_uint16(), 8080);
     EXPECT_EQ(u.port(), "8080");
-    EXPECT_TRUE(std::holds_alternative<ipv6<std_traits>>(u.host_structured()))
+    EXPECT_TRUE(std::holds_alternative<ipv6>(u.host_structured()))
       << "index: " << u.host_structured().index();
     u.clear_path();
     EXPECT_EQ(u.str(), "//[::1]:8080/?name=value&name2=value2#str");

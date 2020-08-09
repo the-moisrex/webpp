@@ -104,7 +104,7 @@ namespace webpp {
 
             do {
                 if (it == data.cend() &&
-                    !starts_with<traits_type>(ipv6_data, '/')) {
+                    !starts_with(ipv6_data, '/')) {
                     _prefix = 254u; // the ip has too many octets
                     return;
                 }

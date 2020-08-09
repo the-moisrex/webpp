@@ -42,7 +42,7 @@ namespace webpp {
 
 
     constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto const& req) noexcept {
-        using route_type   = decltype(_route);
+        using route_type   = stl::remove_cvref_t<decltype(_route)>;
         using request_type = decltype(req);
         using ctx_type     = stl::remove_cvref_t<decltype(ctx)>;
         using context_type = stl::add_lvalue_reference_t<ctx_type>;
@@ -64,7 +64,7 @@ namespace webpp {
         /**
          * Handle special return types here
          */
-        constexpr auto handle_results = [](auto& ctx, auto&& res) {
+        constexpr auto handle_results = [](auto&& ctx, auto&& res) {
             using res_t = decltype(res);
             if constexpr (stl::is_void_v<res_t>) {
                 // router is capable of handling void
@@ -90,21 +90,21 @@ namespace webpp {
             }
         };
 
-        if constexpr (stl::is_invocable_v<route_type, context_type>) {
-            // gets a context
-            return handle_results(ctx, run_and_catch(_route, ctx, stl::forward<decltype(ctx)>(ctx)));
-        } else if constexpr (stl::is_invocable_v<route_type>) {
-            // requires nothing
-            return handle_results(ctx, run_and_catch(_route, ctx));
-        } else if constexpr (stl::is_invocable_v<route_type, request_type>) {
-            // requires a request
-            return handle_results(ctx, run_and_catch(_route, ctx, stl::forward<decltype(req)>(req)));
-        } else if constexpr (stl::is_invocable_v<route_type, context_type, request_type>) {
+        if constexpr (stl::is_invocable_v<route_type, context_type, request_type>) {
             // requires a context and a request
             return handle_results(ctx, run_and_catch(_route, ctx, stl::forward<decltype(ctx)>(ctx), req));
         } else if constexpr (stl::is_invocable_v<route_type, request_type, context_type>) {
             // requires a request and a context
             return handle_results(ctx, run_and_catch(_route, ctx, req, stl::forward<decltype(ctx)>(ctx)));
+        } else if constexpr (stl::is_invocable_v<route_type, context_type>) {
+            // gets a context
+            return handle_results(ctx, run_and_catch(_route, ctx, stl::forward<decltype(ctx)>(ctx)));
+        } else if constexpr (stl::is_invocable_v<route_type, request_type>) {
+            // requires a request
+            return handle_results(ctx, run_and_catch(_route, ctx, req));
+        } else if constexpr (stl::is_invocable_v<route_type>) {
+            // requires nothing
+            return handle_results(ctx, run_and_catch(_route, ctx));
         } else {
             throw stl::invalid_argument(
               "We don't know how to call your entry route. Change your route's signature.");

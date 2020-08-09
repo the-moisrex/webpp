@@ -3,7 +3,7 @@
 #ifndef WEBPP_TRAITS_CONCEPTS_H
 #define WEBPP_TRAITS_CONCEPTS_H
 
-#include "../std/concepts.hpp"
+#include "../std/string_concepts.hpp"
 
 namespace webpp {
 

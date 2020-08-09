@@ -43,13 +43,11 @@ namespace webpp {
     inline void ltrim(typename TraitsType::string_view_type& s) noexcept {
         if (auto found = stl::find_if_not(s.begin(), s.end(),
                                           [](auto const& c) -> bool {
-                                              return c == ' ' || c == '\n' ||
-                                                     c == '\r' || c == '\t' ||
+                                              return c == ' ' || c == '\n' || c == '\r' || c == '\t' ||
                                                      c == '\f' || c == '\v';
                                           });
             found != s.end()) {
-            s.remove_prefix(
-              static_cast<decltype(s.size())>(stl::distance(s.begin(), found)));
+            s.remove_prefix(static_cast<decltype(s.size())>(stl::distance(s.begin(), found)));
         }
     }
 
@@ -62,8 +60,7 @@ namespace webpp {
                                               return stl::isspace(c);
                                           });
             found != s.rend()) {
-            s.remove_suffix(static_cast<decltype(s.size())>(
-              stl::distance(s.rbegin(), found)));
+            s.remove_suffix(static_cast<decltype(s.size())>(stl::distance(s.rbegin(), found)));
         }
     }
 
@@ -102,8 +99,7 @@ namespace webpp {
     template <Traits TraitsType>
     inline void ltrim(typename TraitsType::string_type& s) noexcept {
         s.erase(s.begin(), stl::find_if(s.begin(), s.end(), [](auto c) {
-                    return c != ' ' && c != '\n' && c != '\r' && c != '\t' &&
-                           c != '\f' && c != '\v';
+                    return c != ' ' && c != '\n' && c != '\r' && c != '\t' && c != '\f' && c != '\v';
                 }));
     }
 
@@ -112,8 +108,8 @@ namespace webpp {
     inline void rtrim(typename TraitsType::string_type& s) noexcept {
         s.erase(stl::find_if(s.rbegin(), s.rend(),
                              [](auto c) {
-                                 return c != ' ' && c != '\n' && c != '\r' &&
-                                        c != '\t' && c != '\f' && c != '\v';
+                                 return c != ' ' && c != '\n' && c != '\r' && c != '\t' && c != '\f' &&
+                                        c != '\v';
                              })
                   .base(),
                 s.end());
@@ -161,10 +157,9 @@ namespace webpp {
     template <Traits TraitsType>
     inline void to_upper(typename TraitsType::string_type& str) noexcept {
         // FIXME: I think you can make this algorithm faster
-        stl::transform(str.cbegin(), str.cend(), str.begin(),
-                       [](auto const& c) {
-                           return stl::tolower(c);
-                       });
+        stl::transform(str.cbegin(), str.cend(), str.begin(), [](auto const& c) {
+            return stl::tolower(c);
+        });
     }
 
     template <Traits TraitsType>
@@ -181,10 +176,9 @@ namespace webpp {
         return str;
     }
 
-    template <Traits TraitsType, typename T>
-    [[nodiscard]] constexpr bool
-    starts_with(typename TraitsType::string_view_type const& str,
-                T&&                                          data) noexcept {
+    template <typename T>
+    [[nodiscard]] constexpr bool starts_with(istl::ConvertibleToStringView auto&& _str, T&& data) noexcept {
+        stl::basic_string_view str{_str};
 #ifdef CXX20
         return str.starts_with(stl::forward<T>(data));
 #else
@@ -192,23 +186,21 @@ namespace webpp {
 #endif
     }
 
-    template <Traits TraitsType>
-    [[nodiscard]] constexpr bool
-    ends_with(typename TraitsType::string_view_type const& str,
-              typename TraitsType::char_type               c) noexcept {
+    [[nodiscard]] constexpr bool ends_with(istl::ConvertibleToStringView auto&& _str,
+                                           istl::char_type_of<decltype(_str)> c) noexcept {
+        stl::basic_string_view str{_str};
         return !str.empty() && str.back() == c;
     }
 
-    template <Traits TraitsType>
-    [[nodiscard]] constexpr bool
-    ends_with(typename TraitsType::string_view_type const& str,
-              typename TraitsType::string_view_type const& ending) noexcept {
+    [[nodiscard]] constexpr bool ends_with(istl::ConvertibleToStringView auto&& _str,
+                                           istl::ConvertibleToStringView auto&& _ending) noexcept {
+        stl::basic_string_view str{_str};
+        stl::basic_string_view ending{_ending};
 #ifdef CXX20
         return str.ends_with(ending);
 #else
         if (str.length() >= ending.length()) {
-            return (0 == str.compare(str.length() - ending.length(),
-                                     ending.length(), ending));
+            return (0 == str.compare(str.length() - ending.length(), ending.length(), ending));
         }
         return false;
 #endif

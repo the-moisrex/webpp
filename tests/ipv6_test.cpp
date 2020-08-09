@@ -60,14 +60,14 @@ TEST(IPv6Tests, Validation) {
           << "ip: " << _ip << "\ncompiled ip: " << ipv6_t(_ip).short_str()
           << "\nlong ip: " << ipv6_t(_ip).str()
           << "\nshort long ip: " << ipv6_t(ipv6_t(_ip).short_str()).str();
-        EXPECT_TRUE(static_cast<bool>(is::ipv6<std_traits>(_ip)))
+        EXPECT_TRUE(static_cast<bool>(is::ipv6(_ip)))
           << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).short_str();
         EXPECT_TRUE(ipv6_t(_ip).is_valid())
           << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).short_str();
     }
 
     for (auto const& _ip : invalid_ipv6s) {
-        EXPECT_FALSE(is::ipv6<std_traits>(_ip))
+        EXPECT_FALSE(is::ipv6(_ip))
           << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).short_str();
         EXPECT_FALSE(ipv6_t(_ip).is_valid())
           << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).short_str();
@@ -91,8 +91,8 @@ TEST(IPv6Tests, CIDR) {
                           "0000:0000:0000:0000:0000:0000:0000:0000/130", ""};
 
     for (auto const& _ip : valid_ipv6s) {
-        EXPECT_FALSE(is::ipv6<std_traits>(_ip)) << _ip;
-        EXPECT_TRUE(is::ipv6_prefix<std_traits>(_ip)) << _ip;
+        EXPECT_FALSE(is::ipv6(_ip)) << _ip;
+        EXPECT_TRUE(is::ipv6_prefix(_ip)) << _ip;
         EXPECT_TRUE(ipv6_t(_ip).is_valid()) << _ip;
         EXPECT_TRUE(ipv6_t(_ip).has_prefix()) << _ip;
         EXPECT_GE(ipv6_t(_ip).prefix(), 0) << _ip;
@@ -100,8 +100,8 @@ TEST(IPv6Tests, CIDR) {
     }
 
     for (auto const& _ip : invalid_ipv6s) {
-        EXPECT_FALSE(is::ipv6<std_traits>(_ip)) << _ip;
-        EXPECT_FALSE(is::ipv6_prefix<std_traits>(_ip)) << _ip;
+        EXPECT_FALSE(is::ipv6(_ip)) << _ip;
+        EXPECT_FALSE(is::ipv6_prefix(_ip)) << _ip;
         EXPECT_FALSE(ipv6_t(_ip).is_valid()) << _ip;
         EXPECT_FALSE(ipv6_t(_ip).has_prefix()) << _ip;
         // TODO: check cidr(prefix) method

@@ -39,7 +39,6 @@ namespace webpp {
         allocator_type alloc;
 
       public:
-
         cgi_request(allocator_type const& alloc = allocator_type{}) noexcept : alloc(alloc) {}
 
         auto const& get_allocator() const noexcept {
@@ -333,18 +332,16 @@ namespace webpp {
         using str_view_type    = typename TraitsType::string_view_type;
         using str_type         = typename TraitsType::string_type;
         using ostream_t        = typename TraitsType::ostream_type;
-        using request_type =
-          typename EList::template extensie_type<traits_type,
-                                                 request_descriptor<cgi_request, interface_type>>;
-        using allocator_type = typename request_type::allocator_type;
+        using request_type     = simple_request<traits_type, cgi_request, interface_type, EList>;
+        using allocator_type   = typename request_type::allocator_type;
 
         application_type app;
+
       private:
         allocator_type alloc;
 
       public:
-
-        cgi(allocator_type const&alloc = allocator_type{}) noexcept {
+        cgi(allocator_type const& alloc = allocator_type{}) noexcept {
             // I'm not using C here; so why should I pay for it!
             // And also the user should not use cin and cout. so ...
             stl::ios::sync_with_stdio(false);

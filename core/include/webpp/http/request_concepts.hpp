@@ -12,8 +12,8 @@
 namespace webpp {
 
     template <typename T>
-    concept Request = Traits<typename T::traits_type>&&
-      Interface<typename T::interface_type>&& requires(T req) {
+    concept Request = Traits<typename stl::remove_cvref_t<T>::traits_type>&&
+      Interface<typename stl::remove_cvref_t<T>::interface_type>&& requires(stl::remove_cvref_t<T> req) {
         req.request_uri();
         req.get_allocator();
     };

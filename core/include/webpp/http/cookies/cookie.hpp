@@ -152,10 +152,10 @@ namespace webpp {
             if (!_valid)
                 return; // do not continue if there's no name
             ltrim<traits_type>(str);
-            if (starts_with<traits_type>(str, '='))
+            if (starts_with(str, '='))
                 str.remove_prefix(1);
             ltrim<traits_type>(str);
-            if (starts_with<traits_type>(str, '"')) {
+            if (starts_with(str, '"')) {
                 if (auto d_quote_end = str.find_first_not_of(VALID_COOKIE_VALUE.data(), 1);
                     d_quote_end != string_view_type::npos) {
                     if (str[d_quote_end] == '"') {

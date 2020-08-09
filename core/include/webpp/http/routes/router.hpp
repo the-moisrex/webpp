@@ -27,15 +27,11 @@ namespace webpp {
 
     /**
      * Const router is a router that satisfies that "Router" concept.
-     *
-     * @tparam InitialContextType
-     * @tparam ExtensionListType
-     * @tparam RouteType
      */
     template </*fixme: ExtensionList*/ typename ExtensionListType,
               /*fixme: Route*/ typename... RouteType>
     struct router {
-
+        using extension_list_type = stl::remove_cvref_t<ExtensionListType>;
 
         // todo: Additional routes extracted from the extensions
         //        using additional_routes = ;
@@ -161,11 +157,10 @@ namespace webpp {
          * @param req
          * @return final response
          */
-        template <typename RequestType>
-        requires(Request<stl::remove_cvref_t<RequestType>>) Response auto
-        operator()(RequestType& req) const noexcept {
+        template <Request RequestType>
+        Response auto operator()(RequestType& req) const noexcept {
             using req_type     = stl::remove_cvref_t<RequestType>;
-            using context_type = simple_context<req_type, ExtensionListType>;
+            using context_type = simple_context<req_type, extension_list_type>;
             return this->template operator()<0>(context_type{req.get_allocator()}, req);
         }
 
@@ -195,7 +190,7 @@ namespace webpp {
         }
     };
 
-    template <ExtensionList ExtensionListType, Route... RouteType>
+    template <typename ExtensionListType, typename... RouteType>
     router(ExtensionListType&&, RouteType&&...) -> router<ExtensionListType, RouteType...>;
 
 

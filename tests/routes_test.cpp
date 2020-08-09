@@ -17,16 +17,13 @@ using namespace webpp::routes;
 
 struct fake_app {
 
-    router<> _router{
-
-    };
-
     Response auto operator()(Request auto&& req) {
+        router _router{[]() {}};
         return _router(req);
     }
 };
 
-using request_type = basic_request<std_traits, cgi<std_traits, fake_app>>;
+using request_type = simple_request<std_traits, cgi_request, cgi<std_traits, fake_app>, empty_extension_pack>;
 using context_type = simple_context<request_type>;
 
 TEST(Routes, Path) {
@@ -36,9 +33,9 @@ TEST(Routes, Path) {
 
     constexpr auto root = path<void, void>();
 
-//    EXPECT_TRUE((root / number{"integer name"})(ctx));
-//    EXPECT_TRUE((root / number{"integer name"} / number{"2th num"})(ctx));
-//    EXPECT_TRUE((root / number{"integer name"} / number{"another number"} / number{"3th num"})(ctx));
+    //    EXPECT_TRUE((root / number{"integer name"})(ctx));
+    //    EXPECT_TRUE((root / number{"integer name"} / number{"2th num"})(ctx));
+    //    EXPECT_TRUE((root / number{"integer name"} / number{"another number"} / number{"3th num"})(ctx));
 }
 
 
@@ -126,4 +123,3 @@ TEST(Routes, Path) {
 //    req.set_uri("/home/one");
 //    EXPECT_TRUE("/home/{page}"_tpath(req));
 //}
-

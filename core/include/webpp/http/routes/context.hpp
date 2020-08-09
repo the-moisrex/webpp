@@ -174,7 +174,7 @@ namespace webpp {
         using traits_type                  = TraitsType;
         using context_descriptor_type      = ContextDescriptorType;
         using original_extension_pack_type = OriginalExtensionList;
-        using request_type                 = stl::decay_t<ReqType>;
+        using request_type                 = stl::remove_cvref_t<ReqType>;
         using basic_context_type           = typename EList::basic_context_type;
 
         // should we use a char_type as allocator? change this if you think it's not the correct type

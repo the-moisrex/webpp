@@ -37,10 +37,9 @@ namespace webpp {
 
     template <typename ReqType>
     struct final_request : public ReqType {
-        using traits_type = typename ReqType::traits_type;
+        using traits_type    = typename ReqType::traits_type;
         using allocator_type = typename traits_type::template allocator<typename traits_type::char_type>;
         using ReqType::ReqType;
-
     };
 
     template <template <typename, typename, typename...> typename MidLevelRequestType,
@@ -63,6 +62,13 @@ namespace webpp {
         template <typename ExtensionListType, typename TraitsType, typename EList>
         using final_extensie_type = final_request<EList>;
     };
+
+
+    template <Traits    TraitsType, template <typename, typename, typename...> typename MidLevelRequestType,
+              Interface InterfaceType, typename EList>
+    using simple_request =
+      typename EList::template extensie_type<TraitsType,
+                                             request_descriptor<MidLevelRequestType, InterfaceType>>;
 
 } // namespace webpp
 

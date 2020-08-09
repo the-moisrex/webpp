@@ -547,3 +547,6 @@ new [description:"add extension for session management" entry:"1590592182" modif
 time 1590592199
 new [description:"implement encrypted cookies" entry:"1590592199" modified:"1590592199" project:"cookies" status:"pending" uuid:"7d870903-14d1-4e0b-afab-58e20d981dc2"]
 ---
+time 1596961401
+new [description:"checkout -flto compiler option" entry:"1596961401" modified:"1596961401" project:"performance" status:"pending" uuid:"aa6df888-46bd-48ad-a110-369708f75a4e"]
+---

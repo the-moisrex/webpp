@@ -50,6 +50,15 @@ namespace webpp::istl {
     };
 
 
+    template <typename T>
+    concept ConvertibleToStringView = requires (T str) {
+        stl::basic_string_view{str};
+    };
+
+    template <typename T>
+    using char_type_of = typename decltype(stl::basic_string_view{stl::declval<T>()})::value_type;
+
+
 } // namespace webpp::stl
 
 #endif // WEBPP_STRING_VIEW_H

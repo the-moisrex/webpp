@@ -55,7 +55,7 @@ namespace webpp {
         auto octet_1 = _data.substr(0u, first_dot);
         if (first_dot == len || octet_1.empty() || octet_1.size() > 3 ||
             !is::digit(octet_1) ||
-            (starts_with<traits_type>(octet_1, '0') && octet_1 != "0")) {
+            (starts_with(octet_1, '0') && octet_1 != "0")) {
             return 0u;
         }
 
@@ -67,7 +67,7 @@ namespace webpp {
           _data.substr(first_dot + 1u, second_dot - (first_dot + 1));
         if (second_dot == len || octet_2.empty() || octet_2.size() > 3 ||
             !is::digit(octet_2) ||
-            (starts_with<traits_type>(octet_2, '0') && octet_2 != "0")) {
+            (starts_with(octet_2, '0') && octet_2 != "0")) {
             return 0u;
         }
 
@@ -79,20 +79,20 @@ namespace webpp {
           _data.substr(second_dot + 1u, third_dot - (second_dot + 1));
         if (first_dot == len || octet_3.empty() || octet_3.size() > 3 ||
             !is::digit(octet_3) ||
-            (starts_with<traits_type>(octet_3, '0') && octet_3 != "0")) {
+            (starts_with(octet_3, '0') && octet_3 != "0")) {
             return 0u; // parsing failed.
         }
 
         auto octet_4 = _data.substr(third_dot + 1u);
 
         if (octet_4.empty() || octet_4.size() > 3 || !is::digit(octet_4) ||
-            (starts_with<traits_type>(octet_4, '0') && octet_4 != "0")) {
+            (starts_with(octet_4, '0') && octet_4 != "0")) {
             return 0u;
         }
 
         return to_prefix(
-          {to_uint8<traits_type>(octet_1), to_uint8<traits_type>(octet_2),
-           to_uint8<traits_type>(octet_3), to_uint8<traits_type>(octet_4)});
+          {to_uint8(octet_1), to_uint8(octet_2),
+           to_uint8(octet_3), to_uint8(octet_4)});
     }
 
     /**
@@ -145,7 +145,7 @@ namespace webpp {
             auto octet_1 = _data.substr(0u, first_dot);
             if (first_dot == len || octet_1.empty() || octet_1.size() > 3 ||
                 !is::digit(octet_1) ||
-                (starts_with<traits_type>(octet_1, '0') && octet_1 != "0")) {
+                (starts_with(octet_1, '0') && octet_1 != "0")) {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
@@ -158,7 +158,7 @@ namespace webpp {
               _data.substr(first_dot + 1u, second_dot - (first_dot + 1));
             if (second_dot == len || octet_2.empty() || octet_2.size() > 3 ||
                 !is::digit(octet_2) ||
-                (starts_with<traits_type>(octet_2, '0') && octet_2 != "0")) {
+                (starts_with(octet_2, '0') && octet_2 != "0")) {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
@@ -171,7 +171,7 @@ namespace webpp {
               _data.substr(second_dot + 1u, third_dot - (second_dot + 1));
             if (third_dot == len || octet_3.empty() || octet_3.size() > 3 ||
                 !is::digit(octet_3) ||
-                (starts_with<traits_type>(octet_3, '0') && octet_3 != "0")) {
+                (starts_with(octet_3, '0') && octet_3 != "0")) {
                 _prefix = 254u; // the ip is not valid
                 return;         // parsing failed.
             }
@@ -184,7 +184,7 @@ namespace webpp {
               _data.substr(third_dot + 1u, slash - (third_dot + 1));
 
             if (octet_4.empty() || octet_4.size() > 3 || !is::digit(octet_4) ||
-                (starts_with<traits_type>(octet_4, '0') && octet_4 != "0")) {
+                (starts_with(octet_4, '0') && octet_4 != "0")) {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
@@ -192,13 +192,13 @@ namespace webpp {
             if (slash != len) {
                 auto prefix_str = _data.substr(slash + 1);
                 if (prefix_str.empty() ||
-                    (starts_with<traits_type>(prefix_str, '0') &&
+                    (starts_with(prefix_str, '0') &&
                      prefix_str != "0") ||
                     !is::digit(prefix_str)) {
                     _prefix = 254u; // the ip is not valid
                     return;
                 }
-                auto __prefix = to_uint<traits_type>(prefix_str);
+                auto __prefix = to_uint(prefix_str);
                 if (__prefix > 32) {
                     _prefix = 254; // the ip is not valid
                     return;
@@ -206,10 +206,10 @@ namespace webpp {
                 _prefix = static_cast<uint8_t>(__prefix);
             }
 
-            auto oc1 = to_uint<traits_type>(octet_1);
-            auto oc2 = to_uint<traits_type>(octet_2);
-            auto oc3 = to_uint<traits_type>(octet_3);
-            auto oc4 = to_uint<traits_type>(octet_4);
+            auto oc1 = to_uint(octet_1);
+            auto oc2 = to_uint(octet_2);
+            auto oc3 = to_uint(octet_3);
+            auto oc4 = to_uint(octet_4);
 
             if (oc1 > 255 || oc2 > 255 || oc3 > 255 || oc4 > 255) {
                 _prefix = 254u; // the ip is not valid

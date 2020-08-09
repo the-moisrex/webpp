@@ -99,3 +99,4 @@
 [description:"add cookie extensions" entry:"1590592167" modified:"1590592167" project:"cookies" status:"pending" uuid:"d76861c4-0eab-49ae-aa97-ec01d10b826b"]
 [description:"add extension for session management" entry:"1590592182" modified:"1590592182" project:"cookies" status:"pending" uuid:"2b08643f-3647-4bba-a920-1f5228042dad"]
 [description:"implement encrypted cookies" entry:"1590592199" modified:"1590592199" project:"cookies" status:"pending" uuid:"7d870903-14d1-4e0b-afab-58e20d981dc2"]
+[description:"checkout -flto compiler option" entry:"1596961401" modified:"1596961401" project:"performance" status:"pending" uuid:"aa6df888-46bd-48ad-a110-369708f75a4e"]

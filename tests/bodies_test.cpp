@@ -16,7 +16,7 @@ using namespace webpp;
 
 
 TEST(Body, Text) {
-    using body_t = simple_body<std_traits, string_body>;
+    using body_t = simple_body<std_traits, details::string_body>;
     body_t b = "Testing";
     EXPECT_EQ(b.str(), "Testing");
     EXPECT_TRUE(b == "Testing");
