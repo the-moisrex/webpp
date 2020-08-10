@@ -106,7 +106,7 @@ add_library(${PROJECT_NAME}::${LIB_NAME} ALIAS ${LIB_NAME})
 find_package(Boost REQUIRED)
 find_package(fmt REQUIRED)
 target_link_libraries(${LIB_NAME}
-        PRIVATE Boost::boost
+        PUBLIC Boost::boost
         PUBLIC fmt::fmt
         )
 

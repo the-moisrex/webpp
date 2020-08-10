@@ -2,7 +2,9 @@
 
 #include "../core/include/webpp/http/application_concepts.hpp"
 #include "../core/include/webpp/http/interfaces/cgi.hpp"
+#include "../core/include/webpp/http/routes/path.hpp"
 #include "../core/include/webpp/utils/const_list.hpp"
+#include "fake_interface.hpp"
 
 #include <gtest/gtest.h>
 #include <tuple>
@@ -11,43 +13,41 @@
 using namespace webpp;
 using namespace std;
 
-// TEST(Router, RouterConcepts) {
-//    EXPECT_TRUE(static_cast<bool>(Application<const_router>));
-//}
-//
-// TEST(Router, RouteCreation) {
-//    using request = basic_request<std_traits, cgi<std_traits>>;
-//
-//    // this will happen with a help of a little "user-defined template deduction
-//    // guide"
-//    constexpr auto about_page_callback =
-//      [](basic_response<std_traits>& res) noexcept {
-//          res << "About page\n";
-//      };
-//    route<std_traits, cgi<std_traits>, decltype(about_page_callback)>
-//      about_page{about_page_callback};
-//
-//    auto req = request_t<std_traits, cgi<std_traits>>{};
-//    auto res = basic_response<std_traits>();
-//
-//    about_page(req, res);
-//    EXPECT_EQ(res.body.str(""), "About page\n");
-//
-//    constexpr auto return_callback = [] {
-//        return basic_response("Hello");
-//    };
-//    route<std_traits, cgi<std_traits>, decltype(return_callback)> one{};
-//    one(req, res);
-//    EXPECT_EQ(std::string(res.body.str()), "Hello");
-//
-//    constexpr auto return_callback_string = [] {
-//        return "Hello String";
-//    };
-//    route<std_traits, cgi<std_traits>, decltype(return_callback_string)>
-//    two{}; two(req, res); EXPECT_EQ(std::string(res.body.str()), "Hello
-//    String");
-//}
-//
+constexpr auto _router = router{root / "page" >>=
+                                [] {
+                                    return "page 1";
+                                },
+                                relative / "test" >>=
+                                [] {
+                                    return "test 2";
+                                }};
+
+struct fake_app {
+    Response auto operator()(Request auto&& req) noexcept {
+        return _router(req);
+    }
+};
+
+TEST(Router, RouterConcepts) {
+    EXPECT_TRUE(static_cast<bool>(Application<decltype(_router)>));
+}
+
+TEST(Router, RouteCreation) {
+    using request = typename fake_iface<std_traits, fake_app>::request_type;
+
+    constexpr auto about_page = [](Context auto& ctx) noexcept {
+        return ctx.string("About page\n");
+    };
+
+    auto req = request{};
+    router router1{
+      extension_pack<string_response>{},
+      about_page
+    };
+    EXPECT_EQ(router1(req).body.str(), "About page\n");
+}
+
+
 // namespace webpp {
 //    class fake_cgi;
 //

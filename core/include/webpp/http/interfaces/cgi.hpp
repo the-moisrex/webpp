@@ -341,7 +341,7 @@ namespace webpp {
         allocator_type alloc;
 
       public:
-        cgi(allocator_type const& alloc = allocator_type{}) noexcept {
+        cgi(allocator_type const& alloc = allocator_type{}) noexcept : alloc(alloc) {
             // I'm not using C here; so why should I pay for it!
             // And also the user should not use cin and cout. so ...
             stl::ios::sync_with_stdio(false);
@@ -423,7 +423,7 @@ namespace webpp {
                 // about windows
                 for (auto it = ::environ; *it; it++) {
                     str_view_type h{*it};
-                    if (starts_with<traits_type>(h, "HTTP_")) {
+                    if (starts_with(h, "HTTP_")) {
                         headers_cache.append(h.substr(5));
                         // FIXME: decide if you need to convert _ to - or not.
                     }

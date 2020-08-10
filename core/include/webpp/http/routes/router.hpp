@@ -28,7 +28,7 @@ namespace webpp {
     /**
      * Const router is a router that satisfies that "Router" concept.
      */
-    template </*fixme: ExtensionList*/ typename ExtensionListType,
+    template </*fixme: ExtensionList*/ typename ExtensionListType = empty_extension_pack,
               /*fixme: Route*/ typename... RouteType>
     struct router {
         using extension_list_type = stl::remove_cvref_t<ExtensionListType>;
@@ -42,9 +42,9 @@ namespace webpp {
 
         consteval router(RouteType&&... _route) noexcept : routes(stl::forward<RouteType>(_route)...) {}
 
-        consteval router() noexcept              = default;
-        consteval router(router const&) noexcept = default;
-        consteval router(router&&) noexcept      = default;
+        //        consteval router() noexcept              = delete;
+        //        consteval router(router const&) noexcept = delete;
+        //        consteval router(router&&) noexcept      = delete;
 
         //        template <typename... AppTypes>
         //        requires((application_pointers<AppTypes>::value &&

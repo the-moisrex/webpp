@@ -8,6 +8,7 @@
 #include "../response.hpp"
 #include "./context_concepts.hpp"
 #include "./extensions/map.hpp"
+#include "../bodies/string.hpp"
 
 namespace webpp {
 
@@ -134,13 +135,12 @@ namespace webpp {
 
         template <typename... Args>
         constexpr basic_context(allocator_type const& _alloc, Args&&... args) noexcept
-          : alloc(_alloc), elist_type{stl::forward<Args>(args)...}
-            {}
+          : alloc(_alloc),
+            elist_type{stl::forward<Args>(args)...} {}
 
         template <typename... Args>
-        constexpr basic_context(Args&&... args) noexcept
-          : alloc{}, elist_type{stl::forward<Args>(args)...}
-        {}
+        constexpr basic_context(Args&&... args) noexcept : alloc{},
+                                                           elist_type{stl::forward<Args>(args)...} {}
 
         constexpr basic_context(basic_context&& ctx) noexcept
           : alloc(ctx.alloc),
@@ -162,6 +162,27 @@ namespace webpp {
               typename response_type::template apply_extensions_type<NewExtensions...>;
             // todo: write an auto extension finder based on the Args that get passed
             return new_response_type{stl::forward<Args>(args)...};
+        }
+
+        [[nodiscard]] Response auto error(status_code_type error_code) const noexcept {
+            return error(error_code, stl::format("Error %d: %s", error_code, status_reason_phrase(error_code)));
+        }
+
+        [[nodiscard]] Response auto error(status_code_type error_code, auto&& data) const noexcept {
+            using data_type = stl::remove_cvref_t<decltype(data)>;
+            if constexpr (istl::ConvertibleToStringView<data_type>) {
+                auto res = response<string_response>(istl::to_string_view(data));
+                res.headers.status_code = error_code;
+                return res;
+            } else if constexpr (requires { {data.what()} -> istl::ConvertibleToStringView; }) {
+                auto res = response<string_response>(data.what());
+                res.headers.status_code = error_code;
+                return res;
+            } else {
+                auto res = response<>();
+                res.headers.status_code = error_code;
+                return res;
+            }
         }
 
         // todo: add all the features of returning a response each body type should have at least one method here
@@ -213,6 +234,9 @@ namespace webpp {
         constexpr final_context(request_type* req) noexcept : basic_context_type{req} {}
 
         constexpr final_context(request_type& req) noexcept : basic_context_type{req} {}
+
+        constexpr final_context(final_context const&) noexcept = default;
+        constexpr final_context(final_context&&) noexcept      = default;
 
         template <Traits NTraitsType, typename NContextDescriptorType, typename NOriginalExtensionList,
                   typename NEList, typename NReqType>
@@ -351,7 +375,7 @@ namespace webpp {
 
 
 
-    template <Request ReqType, ExtensionList ExtensionListType = empty_extension_pack>
+    template <Request ReqType, /* fixme: ExtensionList */ typename ExtensionListType = empty_extension_pack>
     using simple_context = typename ExtensionListType::template extensie_type<typename ReqType::traits_type,
                                                                               context_descriptor, ReqType>;
 
