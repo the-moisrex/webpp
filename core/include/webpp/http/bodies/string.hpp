@@ -4,8 +4,8 @@
 #define WEBPP_HTTP_BODIES_STRING_H
 
 #include "../../extensions/extension.hpp"
-#include "../../traits/traits_concepts.hpp"
 #include "../../std/concepts.hpp"
+#include "../../traits/traits_concepts.hpp"
 #include "../routes/context_concepts.hpp"
 
 #include <type_traits>
@@ -32,12 +32,10 @@ namespace webpp {
 
               public:
                 constexpr type(string_view_type str, alloc_type alloc = allocator_type{}) noexcept
-                  : content{str, alloc} {
-                }
+                  : content{str, alloc} {}
 
                 template <typename... Args>
-                constexpr type(Args&&... args) noexcept : content{stl::forward<Args>(args)...} {
-                }
+                constexpr type(Args&&... args) noexcept : content{stl::forward<Args>(args)...} {}
 
                 /**
                  * @brief Get a reference to the body's string
@@ -62,18 +60,20 @@ namespace webpp {
         };
 
         template <Traits TraitsType>
-        [[nodiscard]] bool operator==(typename TraitsType::string_view_type                  str,
-                                      typename string_body::template type<TraitsType> const& strbody) noexcept {
+        [[nodiscard]] bool
+        operator==(typename TraitsType::string_view_type                  str,
+                   typename string_body::template type<TraitsType> const& strbody) noexcept {
             return strbody.str() == str;
         }
 
         template <Traits TraitsType>
-        [[nodiscard]] bool operator!=(typename TraitsType::string_view_type                  str,
-                                      typename string_body::template type<TraitsType> const& strbody) noexcept {
+        [[nodiscard]] bool
+        operator!=(typename TraitsType::string_view_type                  str,
+                   typename string_body::template type<TraitsType> const& strbody) noexcept {
             return strbody.str() != str;
         }
 
-    }
+    } // namespace details
 
     struct string_response {
 
@@ -88,15 +88,15 @@ namespace webpp {
          */
         struct string_context_extension {
             template <Traits TraitsType, Context ContextType>
-        struct type : public stl::remove_cvref_t<ContextType> {
+            struct type : public stl::remove_cvref_t<ContextType> {
                 using context_type = stl::remove_cvref_t<ContextType>;
                 using string_response =
                   typename context_type::response_type::template apply_extension_type<details::string_body>;
 
-                using ContextType::ContextType;
+                using context_type::constext_type;
 
                 template <typename... Args>
-                constexpr auto string(Args&&... args) const noexcept {
+                constexpr Response auto string(Args&&... args) const noexcept {
                     // check if there's an allocator in the args:
                     constexpr bool has_allocator = (istl::Allocator<Args> || ...);
                     if constexpr (has_allocator) {

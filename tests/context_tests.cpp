@@ -1,12 +1,5 @@
 // Created by moisrex on 7/1/20.
-#include "../core/include/webpp/http/interfaces/cgi.hpp"
-#include "../core/include/webpp/http/request.hpp"
-#include "../core/include/webpp/http/routes/context.hpp"
-#include "../core/include/webpp/http/routes/literals.hpp"
-#include "../core/include/webpp/http/routes/methods.hpp"
-#include "../core/include/webpp/http/routes/path.hpp"
-#include "../core/include/webpp/http/routes/path/number.hpp"
-#include "../core/include/webpp/traits/std_traits.hpp"
+#include "./fake_interface.hpp"
 
 #include <gtest/gtest.h>
 #include <string>
@@ -15,15 +8,13 @@
 using namespace webpp;
 
 struct fake_app {
-
-
     Response auto operator()(Request auto&& req) {
         router _router{[]() {}};
         return _router(req);
     }
 };
 
-using request_type = typename cgi<std_traits, fake_app>::request_type;
+using request_type = typename fake_iface<std_traits, fake_app>::request_type;
 using context_type = simple_context<request_type>;
 
 struct fake_mommy {
@@ -49,7 +40,8 @@ TEST(Routes, PathTests) {
     request_type req;
     context_type ctx{req};
 
-    auto nctx       = ctx.template clone<fake_mommy>();
+    auto nctx       = ctx.template clone<fake_mommy, string_response>();
     using nctx_type = decltype(nctx);
     EXPECT_TRUE(nctx.test);
+    EXPECT_EQ(nctx.string("test").body.str(), "test");
 }
