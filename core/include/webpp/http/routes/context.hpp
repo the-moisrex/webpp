@@ -4,11 +4,11 @@
 #define WEBPP_ROUTES_CONTEXT_H
 
 #include "../../extensions/extension.hpp"
+#include "../bodies/string.hpp"
 #include "../request.hpp"
 #include "../response.hpp"
 #include "./context_concepts.hpp"
 #include "./extensions/map.hpp"
-#include "../bodies/string.hpp"
 
 namespace webpp {
 
@@ -165,21 +165,25 @@ namespace webpp {
         }
 
         [[nodiscard]] Response auto error(status_code_type error_code) const noexcept {
-            return error(error_code, stl::format("Error %d: %s", error_code, status_reason_phrase(error_code)));
+            return error(error_code,
+                         stl::format("Error {}: {}", error_code, status_reason_phrase(error_code)));
         }
 
         [[nodiscard]] Response auto error(status_code_type error_code, auto&& data) const noexcept {
             using data_type = stl::remove_cvref_t<decltype(data)>;
             if constexpr (istl::ConvertibleToStringView<data_type>) {
-                auto res = response<string_response>(istl::to_string_view(data));
+                auto res                = response<string_response>(istl::to_string_view(data));
                 res.headers.status_code = error_code;
                 return res;
-            } else if constexpr (requires { {data.what()} -> istl::ConvertibleToStringView; }) {
-                auto res = response<string_response>(data.what());
+            } else if constexpr (requires {
+                                     { data.what() }
+                                     ->istl::ConvertibleToStringView;
+                                 }) {
+                auto res                = response<string_response>(data.what());
                 res.headers.status_code = error_code;
                 return res;
             } else {
-                auto res = response<>();
+                auto res                = response<>();
                 res.headers.status_code = error_code;
                 return res;
             }

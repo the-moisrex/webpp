@@ -168,7 +168,10 @@ namespace webpp {
         template <stl::size_t Index = 0>
         Response auto operator()(Context auto&& ctx, Request auto const& req) const noexcept {
 
-            if constexpr ((route_count() == 0) || (Index >= (route_count() - 1))) {
+            constexpr bool no_routes = route_count() == 0u;
+            constexpr bool past_last_route = Index > (route_count() - 1);
+
+            if constexpr (no_routes || past_last_route) {
                 return ctx.error(404u);
             } else {
 

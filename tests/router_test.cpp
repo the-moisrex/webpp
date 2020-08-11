@@ -44,6 +44,7 @@ TEST(Router, RouteCreation) {
       extension_pack<string_response>{},
       about_page
     };
+    EXPECT_EQ(router1.route_count(), 1);
     EXPECT_EQ(router1(req).body.str(), "About page\n");
 }
 
