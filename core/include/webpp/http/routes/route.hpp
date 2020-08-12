@@ -575,10 +575,7 @@ namespace webpp {
 
 
       private:
-        inline auto run_route(Context auto&& ctx, Request auto const& req) const
-          noexcept(stl::is_nothrow_invocable_v<call_this_route, ctx, req>&&
-                       stl::is_nothrow_invocable_v<call_next_route, ctx, req>&&
-                       stl::is_nothrow_invocable_v<call_next_route_in_bool, ctx, req>) {
+        inline auto run_route(Context auto&& ctx, Request auto const& req) const noexcept {
             // exceptions will be handled by the router, unfortunately we're not able to do that here
 
             using context_type = stl::add_lvalue_reference_t<stl::remove_cvref_t<decltype(ctx)>>;
@@ -671,8 +668,8 @@ namespace webpp {
             }
         }
 
-        [[nodiscard]] inline auto call_this_route(Context auto&& ctx, Request auto const& req) const
-          noexcept(stl::is_nothrow_invocable_v<call_route, static_cast<super_t>(*this), ctx, req>) {
+        [[nodiscard]] inline auto call_this_route(Context auto&&      ctx,
+                                                  Request auto const& req) const noexcept {
             if constexpr (is_route_valid) {
                 return call_route(static_cast<super_t>(*this), ctx, req);
             } else {
@@ -681,8 +678,7 @@ namespace webpp {
         }
 
         [[nodiscard]] inline auto call_next_route([[maybe_unused]] Context auto&&      ctx,
-                                                  [[maybe_unused]] Request auto const& req) const
-          noexcept(stl::is_nothrow_invocable_v<call_route, super_t::next, ctx, req>) {
+                                                  [[maybe_unused]] Request auto const& req) const noexcept {
             using context_type = stl::remove_cvref_t<decltype(ctx)>;
             if constexpr (is_next_route_valid) {
                 return call_route(super_t::next, ctx, req);
@@ -691,9 +687,9 @@ namespace webpp {
             }
         }
 
-        [[nodiscard]] inline bool call_next_route_in_bool([[maybe_unused]] Context auto&&      ctx,
-                                                          [[maybe_unused]] Request auto const& req) const
-          noexcept(stl::is_nothrow_invocable_v<call_next_route, ctx, req>) {
+        [[nodiscard]] inline bool
+        call_next_route_in_bool([[maybe_unused]] Context auto&&      ctx,
+                                [[maybe_unused]] Request auto const& req) const noexcept {
             auto res       = call_next_route(stl::forward<decltype(ctx)>(ctx), req);
             using res_type = stl::remove_cvref_t<decltype(res)>;
             if constexpr (stl::same_as<res_type, bool>) {
