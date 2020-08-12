@@ -44,7 +44,7 @@ namespace webpp {
     /**
      * Handle special return types here
      */
-    constexpr auto handle_route_results(auto&& ctx, auto&& res) noexcept {
+    constexpr auto handle_results(auto&& ctx, auto&& res) noexcept {
         using res_t    = decltype(res);
         using ctx_type = stl::remove_cvref_t<decltype(ctx)>;
         if constexpr (istl::Optional<res_t>) {
@@ -81,62 +81,180 @@ namespace webpp {
       stl::is_nothrow_invocable_v<stl::decay_t<Route>,
                                   stl::add_lvalue_reference_t<stl::remove_cvref_t<Args>>...>;
 
-    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto const& req) noexcept(
-      is_nothrow_callable_route<decltype(_route), decltype(ctx),
-                                decltype(req)>) requires(is_callable_route<decltype(_route), decltype(ctx),
-                                                                           decltype(req)>) {
-        // requires a context and a request
-        if constexpr (!stl::is_void_v<stl::invoke_result_t<decltype(_route), decltype(ctx), decltype(req)>>) {
-            return handle_route_results(ctx, _route(ctx, req));
+
+    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto const& req) noexcept {
+        using route_type   = decltype(_route);
+        using request_type = decltype(req);
+        using ctx_type     = stl::remove_cvref_t<decltype(ctx)>;
+        using context_type = stl::add_lvalue_reference_t<ctx_type>;
+
+        constexpr auto run_and_catch = [](auto&& callable, Context auto const& ctx, auto&&... args) noexcept {
+            using return_type = stl::invoke_result_t<decltype(callable), decltype(args)...>;
+            if constexpr (stl::is_nothrow_invocable_v<decltype(callable), decltype(args)...>) {
+                // It's noexcept, we call it knowing that.
+                return callable(stl::forward<decltype(args)>(args)...);
+            } else if constexpr (stl::is_invocable_v<decltype(callable), decltype(args)...>) {
+
+                if constexpr (stl::is_void_v<return_type>) {
+                    try {
+                        callable(stl::forward<decltype(args)>(args)...);
+                    } catch (...) {
+                        // nothing to do
+                    }
+                } else if constexpr (stl::same_as<return_type, bool>) {
+                    try {
+                        return callable(stl::forward<decltype(args)>(args)...);
+                    } catch (...) { return false; }
+                } else if constexpr (istl::Optional<return_type>) {
+                    try {
+                        return callable(stl::forward<decltype(args)>(args)...);
+                    } catch (...) { return stl::nullopt; }
+                } else {
+
+                    try {
+                        return stl::make_optional(callable(stl::forward<decltype(args)>(args)...));
+                    } catch (...) { return stl::nullopt; }
+                }
+
+            } else {
+                return ctx.error(500u, stl::invalid_argument(
+                                         "The specified route is not valid. We're not able to call it."));
+            }
+        };
+
+        /**
+         * Handle special return types here
+         */
+        constexpr auto handle_results = [](auto&& ctx, auto&& res) {
+            using res_t = decltype(res);
+            if constexpr (istl::Optional<res_t>) {
+                // pass it out to the router, we're not able to handle this here
+                return stl::forward<res_t>(res);
+            } else if constexpr (Context<res_t>) {
+                // we're not able to do a context switching here,
+                // route: is responsible for sub-route context switching
+                // router: is responsible for entry-route context switching
+                return stl::forward<res_t>(res);
+            } else if constexpr (stl::is_same_v<res_t, bool>) {
+                return stl::forward<res_t>(res);
+            } else if constexpr (Response<res_t>) {
+                return stl::forward<res_t>(res);
+            } else if constexpr (ConstructibleWithResponse<typename ctx_type::response_type, res_t>) {
+                return ctx.template response<>(stl::forward<res_t>(res));
+                // todo: consider "response extension" injection in order to get the right response type
+            } else {
+                // let's just ignore the result
+                return true;
+            }
+        };
+
+        if constexpr (stl::is_invocable_v<route_type, context_type, request_type>) {
+            // requires a context and a request
+            if constexpr (!stl::is_void_v<stl::invoke_result_t<route_type, context_type, request_type>>) {
+                return handle_results(ctx, run_and_catch(_route, ctx, ctx, req));
+            } else {
+                run_and_catch(_route, ctx, ctx, req);
+            }
+        } else if constexpr (stl::is_invocable_v<route_type, request_type, context_type>) {
+            // requires a request and a context
+            if constexpr (!stl::is_void_v<stl::invoke_result_t<route_type, request_type, context_type>>) {
+                return handle_results(ctx, run_and_catch(_route, ctx, req, ctx));
+            } else {
+                run_and_catch(_route, ctx, req, ctx);
+            }
+        } else if constexpr (stl::is_invocable_v<route_type, context_type>) {
+            // gets a context
+            if constexpr (!stl::is_void_v<stl::invoke_result_t<route_type, context_type>>) {
+                return handle_results(ctx, run_and_catch(_route, ctx, ctx));
+            } else {
+                run_and_catch(_route, ctx, ctx);
+            }
+        } else if constexpr (stl::is_invocable_v<route_type, request_type>) {
+            // requires a request
+            if constexpr (!stl::is_void_v<stl::invoke_result_t<route_type, request_type>>) {
+                return handle_results(ctx, run_and_catch(_route, ctx, req));
+            } else {
+                run_and_catch(_route, ctx, req);
+            }
+        } else if constexpr (stl::is_invocable_v<route_type>) {
+            // requires nothing
+            if constexpr (!stl::is_void_v<stl::invoke_result_t<route_type>>) {
+                return handle_results(ctx, run_and_catch(_route, ctx));
+            } else {
+                run_and_catch(_route, ctx);
+            }
         } else {
-            _route(ctx, req);
+            throw stl::invalid_argument(
+              "We don't know how to call your entry route. Change your route's signature.");
         }
     }
 
-    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto const& req) noexcept(
-      is_nothrow_callable_route<decltype(_route), decltype(req),
-                                decltype(ctx)>) requires(is_callable_route<decltype(_route), decltype(req),
-                                                                           decltype(ctx)>) {
-        // requires a request and a context
-        if constexpr (!stl::is_void_v<stl::invoke_result_t<decltype(_route), decltype(req), decltype(ctx)>>) {
-            return handle_route_results(ctx, _route(req, ctx));
-        } else {
-            _route(req, ctx);
-        }
-    }
 
-    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto const& req) noexcept(
-      is_nothrow_callable_route<decltype(_route), decltype(ctx)>) requires(is_callable_route<decltype(_route),
-                                                                                             decltype(ctx)>) {
-        // requires a context
-        if constexpr (!stl::is_void_v<stl::invoke_result_t<decltype(_route), decltype(ctx)>>) {
-            return handle_route_results(ctx, _route(stl::forward<decltype(ctx)>(ctx)));
-        } else {
-            _route(stl::forward<decltype(ctx)>(ctx));
-        }
-    }
-
-
-    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto const& req) noexcept(
-      is_nothrow_callable_route<decltype(_route), decltype(req)>) requires(is_callable_route<decltype(_route),
-                                                                                             decltype(req)>) {
-        // requires a request
-        if constexpr (!stl::is_void_v<stl::invoke_result_t<decltype(_route), decltype(req)>>) {
-            return handle_route_results(ctx, _route(req));
-        } else {
-            _route(req);
-        }
-    }
-
-    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto const& /* req */) noexcept(
-      is_nothrow_callable_route<decltype(_route)>) requires(is_callable_route<decltype(_route)>) {
-        // requires nothing
-        if constexpr (!stl::is_void_v<stl::invoke_result_t<decltype(_route)>>) {
-            return handle_route_results(ctx);
-        } else {
-            _route();
-        }
-    }
+    // constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto const& req) noexcept(
+    // is_nothrow_callable_route<decltype(_route), decltype(ctx),
+    //  decltype(req)>) requires(is_callable_route<decltype(_route), decltype(ctx),
+    //  decltype(req)>) {
+    //    // requires a context and a request
+    //    if constexpr (!stl::is_void_v<stl::invoke_result_t<decltype(_route), decltype(ctx), decltype(req)>>)
+    //    {
+    //        return handle_results(ctx, _route(ctx, req));
+    //    } else {
+    //        _route(ctx, req);
+    //    }
+    //}
+    //
+    // constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto const& req) noexcept(
+    //      is_nothrow_callable_route<decltype(_route), decltype(req),
+    //                                decltype(ctx)>) requires(is_callable_route<decltype(_route),
+    //                                decltype(req),
+    //                                                                           decltype(ctx)>) {
+    //        // requires a request and a context
+    //        if constexpr (!stl::is_void_v<stl::invoke_result_t<decltype(_route), decltype(req),
+    //        decltype(ctx)>>)
+    //        {
+    //            return handle_results(ctx, _route(req, ctx));
+    //        } else {
+    //            _route(req, ctx);
+    //        }
+    //    }
+    //
+    //    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto const& req) noexcept(
+    //      is_nothrow_callable_route<decltype(_route), decltype(ctx)>)
+    //      requires(is_callable_route<decltype(_route),
+    //                                                                                             decltype(ctx)>)
+    //                                                                                             {
+    //        // requires a context
+    //        if constexpr (!stl::is_void_v<stl::invoke_result_t<decltype(_route), decltype(ctx)>>) {
+    //            return handle_results(ctx, _route(stl::forward<decltype(ctx)>(ctx)));
+    //        } else {
+    //            _route(stl::forward<decltype(ctx)>(ctx));
+    //        }
+    //    }
+    //
+    //
+    //    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto const& req) noexcept(
+    //      is_nothrow_callable_route<decltype(_route), decltype(req)>)
+    //      requires(is_callable_route<decltype(_route),
+    //                                                                                             decltype(req)>)
+    //                                                                                             {
+    //        // requires a request
+    //        if constexpr (!stl::is_void_v<stl::invoke_result_t<decltype(_route), decltype(req)>>) {
+    //            return handle_results(ctx, _route(req));
+    //        } else {
+    //            _route(req);
+    //        }
+    //    }
+    //
+    //    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto const& /* req */)
+    //    noexcept(
+    //      is_nothrow_callable_route<decltype(_route)>) requires(is_callable_route<decltype(_route)>) {
+    //        // requires nothing
+    //        if constexpr (!stl::is_void_v<stl::invoke_result_t<decltype(_route)>>) {
+    //            return handle_results(ctx);
+    //        } else {
+    //            _route();
+    //        }
+    //    }
 
 
     //        template <typename C, Context ContextType>
