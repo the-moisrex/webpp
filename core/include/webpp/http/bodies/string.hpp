@@ -18,7 +18,6 @@ namespace webpp {
 
         struct string_body {
 
-
             template <Traits TraitsType>
             struct type {
                 using traits_type      = TraitsType;
@@ -87,10 +86,10 @@ namespace webpp {
          * The reason for preferring "string" over "string_type" is that the allocator is handled correctly.
          */
         struct string_context_extension {
-            template <Traits TraitsType, Context ContextType>
+            template <typename TraitsType, typename ContextType>
             struct type : public stl::remove_cvref_t<ContextType> {
                 using context_type = stl::remove_cvref_t<ContextType>;
-                using string_response =
+                using string_response_type =
                   typename context_type::response_type::template apply_extension_type<details::string_body>;
 
                 using context_type::constext_type;
@@ -100,9 +99,10 @@ namespace webpp {
                     // check if there's an allocator in the args:
                     constexpr bool has_allocator = (istl::Allocator<Args> || ...);
                     if constexpr (has_allocator) {
-                        return string_response{stl::forward<Args>(args)...};
+                        return string_response_type{stl::forward<Args>(args)...};
                     } else {
-                        return string_response{stl::forward<Args>(args)..., context_type::get_allocator()};
+                        return string_response_type{stl::forward<Args>(args)...,
+                                                    context_type::get_allocator()};
                     }
                 }
             };

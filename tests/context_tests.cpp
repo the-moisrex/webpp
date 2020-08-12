@@ -43,5 +43,7 @@ TEST(Routes, PathTests) {
     auto nctx       = ctx.template clone<fake_mommy, string_response>();
     using nctx_type = decltype(nctx);
     EXPECT_TRUE(nctx.test);
-//    EXPECT_EQ(nctx.string("test").body.str(), "test");
+    using context_type2 = simple_context<request_type, extension_pack<string_response>>;
+    auto ctx2 = context_type2{};
+    EXPECT_EQ(ctx2.string("test").body.str(), "test");
 }

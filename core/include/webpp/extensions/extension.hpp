@@ -5,8 +5,8 @@
 
 #include "../std/std.hpp"
 #include "../std/tuple.hpp"
-#include "../traits/traits_concepts.hpp"
 #include "../traits/std_traits.hpp"
+#include "../traits/traits_concepts.hpp"
 
 #include <cstdint>
 #include <type_traits>
@@ -27,14 +27,36 @@ namespace webpp {
       stl::is_move_constructible_v<T> && stl::is_move_assignable_v<T> && stl::is_copy_assignable_v<T> &&
       stl::is_class_v<T> && !stl::is_integral_v<T>;
 
-    template <typename T>
+    /*
+        template <template <typename...> typename T>
+        struct template_count {
+            static constexpr size_t value = 0;
+        };
+
+        template <template <typename> typename T>
+        struct template_count<T> {
+            static constexpr size_t value = 1;
+        };
+
+        template <template <typename, typename> typename T>
+        struct template_count<T> {
+            static constexpr size_t value = 2;
+        };
+
+        template <template <typename, typename, typename> typename T>
+        struct template_count<T> {
+            static constexpr size_t value = 3;
+        };
+    */
+
+    template <typename TraitsType, typename T>
     concept MotherExtension = Extension<T>&& requires {
-        typename T::template type<fake_traits_type>;
+        typename T::template type<TraitsType>;
     };
 
-    template <typename T>
+    template <typename TraitsType, typename Parent, typename T>
     concept ChildExtension = Extension<T>&& requires {
-        T::template type<fake_traits_type, fake_extensie>;
+        typename T::template type<TraitsType, Parent>;
     };
 
     template <Extension... E>
@@ -100,16 +122,22 @@ namespace webpp {
          */
         //        using unique = typename unique_types<E...>::type;
 
-        template <typename T>
+        template <Traits TraitsType>
         struct mother_type {
-            static constexpr bool value = MotherExtension<T>;
+            template <typename T>
+            struct type {
+                static constexpr bool value = MotherExtension<TraitsType, T>;
+            };
         };
 
-        template <typename T>
+        template <Traits TraitsType, typename Parent>
         struct child_type {
-            static constexpr bool value = ChildExtension<T>;
+            template <typename T>
+            struct type {
+                static constexpr bool value = ChildExtension<T, TraitsType, Parent>;
+            };
         };
-        //
+
         //        template <typename... E1>
         //        struct flatten_extensions {
         //            using type = extension_pack<>;
@@ -158,8 +186,14 @@ namespace webpp {
         //            }
         //        };
 
-        using mother_extensions = typename filter<extension_pack, mother_type, E...>::type;
-        using child_extensions  = typename filter<extension_pack, child_type, E...>::type;
+
+        template <Traits TraitsType>
+        using mother_extensions =
+          typename filter<extension_pack, mother_type<TraitsType>::template type, E...>::type;
+
+        template <Traits TraitsType, typename Parent>
+        using child_extensions =
+          typename filter<extension_pack, child_type<TraitsType, Parent>::template type, E...>::type;
 
         using this_epack = extension_pack<E...>;
 
@@ -275,6 +309,14 @@ namespace webpp {
         };
 
 
+        template <Traits TraitsType, typename ExtensieDescriptor, typename... ExtraArgs>
+        using mid_level_extensie_type = typename ExtensieDescriptor::template mid_level_extensie_type<
+          this_epack, TraitsType,
+          typename merge_extensions<ExtensieDescriptor, mother_type<TraitsType>::template type>::
+            template mother_extensions<TraitsType>::template mother_inherited<TraitsType>,
+          ExtraArgs...>;
+
+
         /**
          * Apply extensions into one type
          * todo: first filter based on extensie, then filter based on mother or child
@@ -285,13 +327,13 @@ namespace webpp {
 
           // child extensions + the mid-level extensie + mother extensions
           typename children_inherited<
-            TraitsType,
-            typename ExtensieDescriptor::template mid_level_extensie_type<
-              this_epack, TraitsType,
-              typename merge_extensions<
-                ExtensieDescriptor, mother_type>::mother_extensions::template mother_inherited<TraitsType>,
-              ExtraArgs...>,
-            typename merge_extensions<ExtensieDescriptor, child_type>::child_extensions>::type,
+            TraitsType, mid_level_extensie_type<TraitsType, ExtensieDescriptor, ExtraArgs...>,
+            typename merge_extensions<
+              ExtensieDescriptor,
+              child_type<TraitsType, mid_level_extensie_type<TraitsType, ExtensieDescriptor,
+                                                             ExtraArgs...>>::template type>::
+              template child_extensions<
+                TraitsType, mid_level_extensie_type<TraitsType, ExtensieDescriptor, ExtraArgs...>>>::type,
 
           ExtraArgs...>;
 
