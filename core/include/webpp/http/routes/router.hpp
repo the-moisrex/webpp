@@ -25,6 +25,8 @@ namespace webpp {
     };
 
 
+    constexpr auto run_and_catch(auto&& callable, Context auto const& ctx, auto&&... args) noexcept {};
+
     /**
      * Const router is a router that satisfies that "Router" concept.
      */
@@ -96,7 +98,9 @@ namespace webpp {
 
       private:
         template <stl::size_t Index = 0>
-        [[nodiscard]] inline auto handle_route_results(auto&& res, auto&& ctx, auto&& req) const noexcept {
+        [[nodiscard]] inline auto handle_route_results(auto&& res, auto&& ctx, auto&& req) const
+          noexcept((Index == route_count() - 1) ||
+                   noexcept(operator()<Index + 1>(stl::forward<decltype(ctx)>(ctx), req))) {
             using result_type               = stl::remove_cvref_t<decltype(res)>;
             using context_type              = stl::remove_cvref_t<decltype(ctx)>;
             constexpr auto next_route_index = Index + 1;
@@ -158,7 +162,9 @@ namespace webpp {
          * @return final response
          */
         template <Request RequestType>
-        Response auto operator()(RequestType& req) const noexcept {
+        Response auto operator()(RequestType& req) const noexcept(noexcept(this->template operator()<0>(
+          simple_context<stl::remove_cvref_t<RequestType>, extension_list_type>{req.get_allocator()}, req))) {
+
             using req_type     = stl::remove_cvref_t<RequestType>;
             using context_type = simple_context<req_type, extension_list_type>;
             return this->template operator()<0>(context_type{req.get_allocator()}, req);
@@ -166,9 +172,13 @@ namespace webpp {
 
 
         template <stl::size_t Index = 0>
-        Response auto operator()(Context auto&& ctx, Request auto const& req) const noexcept {
+        Response auto operator()(Context auto&& ctx, Request auto const& req) const
+          noexcept((route_count() == 0u || Index > (route_count() - 1)) ||
+            noexcept(call_route(stl::get<Index>(routes), ctx, req))
 
-            constexpr bool no_routes = route_count() == 0u;
+          ) {
+
+            constexpr bool no_routes       = route_count() == 0u;
             constexpr bool past_last_route = Index > (route_count() - 1);
 
             if constexpr (no_routes || past_last_route) {
@@ -178,16 +188,19 @@ namespace webpp {
                 // handling root-level route calls:
                 auto route = stl::get<Index>(routes);
 
+                // It's noexcept, we call it knowing that.
                 // todo
                 // ctx.call_pre_entryroute_methods();
-                auto res          = call_route(route, ctx, req);
-                using result_type = stl::remove_cvref_t<decltype(res)>;
                 // todo: we might have a context switching, what should we do?
                 // ctx.call_post_entryroute_methods();
-                if constexpr (stl::is_void_v<result_type>) {
+                if constexpr (requires {
+                                  { call_route(route, ctx, req) }
+                                  ->stl::same_as<void>;
+                              }) {
+                    call_route(route, ctx, req);
                     return ctx.error(404u);
                 } else {
-                    return handle_route_results<Index>(res, ctx, req);
+                    return handle_route_results<Index>(call_route(route, ctx, req), ctx, req);
                 }
             }
         }

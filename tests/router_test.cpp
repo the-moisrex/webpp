@@ -53,7 +53,7 @@ TEST(Router, RouteCreation) {
     router router2{
       extension_pack<string_response>{},
       [](Context auto&& ctx) {
-          return ctx.string("testing");
+//          return ctx.string("testing");
       }
     };
     auto res2 = router2(req);
