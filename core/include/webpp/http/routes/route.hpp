@@ -834,8 +834,7 @@ namespace webpp {
         //            }
 
 
-        [[nodiscard]] auto operator()(Context auto&& ctx, Request auto const& req) const
-          noexcept(stl::is_nothrow_invocable_v<run_route, ctx, req>) {
+        [[nodiscard]] auto operator()(Context auto&& ctx, Request auto const& req) const noexcept {
             using context_type = stl::remove_cvref_t<decltype(ctx)>;
             using request_type = stl::remove_cvref_t<decltype(req)>;
 
