@@ -142,9 +142,8 @@ namespace webpp {
         constexpr basic_context(Args&&... args) noexcept : alloc{},
                                                            elist_type{stl::forward<Args>(args)...} {}
 
-        constexpr basic_context(basic_context&& ctx) noexcept
-          : alloc(ctx.alloc),
-            elist_type{std::move(ctx)} {}
+        basic_context(basic_context&& ctx) noexcept      = default;
+        basic_context(basic_context const& ctx) noexcept = default;
 
         [[nodiscard]] auto const& get_allocator() const noexcept {
             return alloc;
@@ -152,9 +151,6 @@ namespace webpp {
 
         /**
          * Generate a response
-         * @tparam Args
-         * @param args
-         * @return
          */
         template <typename... NewExtensions, typename... Args>
         [[nodiscard]] Response auto response(Args&&... args) const noexcept {
@@ -211,7 +207,7 @@ namespace webpp {
          */
         template <typename... E>
         using context_type_with_appended_extensions =
-          typename original_extension_pack_type::template appended<E...>::template extensie_type<
+          typename original_extension_pack_type::template appended<E...>::unique::template extensie_type<
             traits_type, context_descriptor_type, request_type>;
 
         constexpr final_context(allocator_type const& alloc = allocator_type{}) noexcept
@@ -235,8 +231,8 @@ namespace webpp {
         //        }
 
 
-//        constexpr final_context(request_type* req) noexcept : basic_context_type{req} {}
-//        constexpr final_context(request_type& req) noexcept : basic_context_type{req} {}
+        //        constexpr final_context(request_type* req) noexcept : basic_context_type{req} {}
+        //        constexpr final_context(request_type& req) noexcept : basic_context_type{req} {}
 
         constexpr final_context(final_context const&) noexcept = default;
         constexpr final_context(final_context&&) noexcept      = default;

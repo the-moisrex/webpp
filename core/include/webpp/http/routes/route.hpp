@@ -108,12 +108,13 @@ namespace webpp {
                 } else if constexpr (istl::Optional<return_type>) {
                     try {
                         return callable(stl::forward<decltype(args)>(args)...);
-                    } catch (...) { return stl::nullopt; }
+                    } catch (...) { return decltype(callable(stl::forward<decltype(args)>(args)...)){stl::nullopt}; }
                 } else {
-
                     try {
                         return stl::make_optional(callable(stl::forward<decltype(args)>(args)...));
-                    } catch (...) { return stl::nullopt; }
+                    } catch (...) {
+                        return decltype(stl::make_optional(callable(stl::forward<decltype(args)>(args)...))){stl::nullopt};
+                    }
                 }
 
             } else {
@@ -140,7 +141,7 @@ namespace webpp {
             } else if constexpr (Response<res_t>) {
                 return stl::forward<res_t>(res);
             } else if constexpr (ConstructibleWithResponse<typename ctx_type::response_type, res_t>) {
-                return ctx.template response<>(stl::forward<res_t>(res));
+                return ctx.response(stl::forward<res_t>(res));
                 // todo: consider "response extension" injection in order to get the right response type
             } else {
                 // let's just ignore the result

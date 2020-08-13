@@ -29,6 +29,8 @@ namespace webpp {
         body_type    body{};
         headers_type headers{};
 
+        basic_response(auto&&... args) noexcept : EList{stl::forward<decltype(args)>(args)...} {}
+
         basic_response() noexcept                          = default;
         basic_response(basic_response const& res) noexcept = default;
         basic_response(basic_response&& res) noexcept      = default;
@@ -110,7 +112,7 @@ namespace webpp {
          */
         template <typename... E>
         using apply_extensions_type = typename original_extension_pack_type::template appended<
-          E...>::template extensie_type<traits_type, response_descriptor_type>;
+          E...>::unique::template extensie_type<traits_type, response_descriptor_type>;
     };
 
 

@@ -120,7 +120,7 @@ namespace webpp {
         /**
          * Get the unique types
          */
-        //        using unique = typename unique_types<E...>::type;
+        using unique = typename unique_types<E...>::type;
 
         template <Traits TraitsType>
         struct mother_type {
@@ -314,7 +314,7 @@ namespace webpp {
         using mid_level_extensie_type = typename ExtensieDescriptor::template mid_level_extensie_type<
           this_epack, TraitsType,
           typename merge_extensions<ExtensieDescriptor, mother_type<TraitsType>::template type>::
-            template mother_extensions<TraitsType>::template mother_inherited<TraitsType>,
+            template mother_extensions<TraitsType>::unique::template mother_inherited<TraitsType>,
           ExtraArgs...>;
 
 
