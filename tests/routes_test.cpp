@@ -29,7 +29,7 @@ using context_type = simple_context<request_type>;
 TEST(Routes, Path) {
     using namespace webpp::routes;
     request_type req;
-    context_type ctx{req};
+    context_type ctx{};
 
     constexpr auto root = path<void, void>();
 

@@ -235,9 +235,8 @@ namespace webpp {
         //        }
 
 
-        constexpr final_context(request_type* req) noexcept : basic_context_type{req} {}
-
-        constexpr final_context(request_type& req) noexcept : basic_context_type{req} {}
+//        constexpr final_context(request_type* req) noexcept : basic_context_type{req} {}
+//        constexpr final_context(request_type& req) noexcept : basic_context_type{req} {}
 
         constexpr final_context(final_context const&) noexcept = default;
         constexpr final_context(final_context&&) noexcept      = default;
@@ -246,7 +245,7 @@ namespace webpp {
                   typename NEList, typename NReqType>
         constexpr final_context(final_context<NTraitsType, NContextDescriptorType, NOriginalExtensionList,
                                               NEList, NReqType> const& ctx) noexcept
-          : basic_context_type{ctx.get_allocator()} {}
+          : EList{ctx.get_allocator()} {}
 
         /**
          * Clone this context and append the new extensions along the way.
