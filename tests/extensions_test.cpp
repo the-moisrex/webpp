@@ -39,6 +39,24 @@ struct three {
     };
 };
 
+struct child_one {
+    static constexpr bool item     = true;
+    static constexpr bool item_one = true;
+    template <typename tt, typename mommy>
+    struct type : mommy {
+        static constexpr bool value_one = true;
+    };
+};
+struct child_two {
+    static constexpr bool item     = true;
+    static constexpr bool item_two = true;
+    template <typename tt, typename mommy>
+    struct type : mommy {
+        static constexpr bool value_two = true;
+    };
+};
+
+
 struct cone {
     static constexpr bool item     = true;
     static constexpr bool item_one = true;
@@ -74,6 +92,10 @@ struct exes {
     using fake_extensions = extension_pack<one, two, three>;
 };
 
+struct exes_with_kids {
+    using fake_extensions = extension_pack<one, two, three, child_one, child_two>;
+};
+
 struct fake_descriptor {
     template <typename ExtensionType>
     struct has_related_extension_pack {
@@ -90,8 +112,7 @@ struct fake_descriptor {
         static constexpr bool mid_level = true;
 
         template <typename... Args>
-        mid_level_extensie_type(Args&&... args) noexcept : EList{std::forward<Args>(args)...} {
-        }
+        mid_level_extensie_type(Args&&... args) noexcept : EList{std::forward<Args>(args)...} {}
     };
 
     template <typename ExtensionListType, typename TraitsType, typename EList>
@@ -99,8 +120,7 @@ struct fake_descriptor {
         static constexpr bool final_level = true;
 
         template <typename... Args>
-        final_extensie_type(Args&&... args) noexcept : EList{std::forward<Args>(args)...} {
-        }
+        final_extensie_type(Args&&... args) noexcept : EList{std::forward<Args>(args)...} {}
     };
 };
 
@@ -115,18 +135,18 @@ TEST(ExtensionsTests, ExtensionPackStuff) {
     static_assert(stl::same_as<typename pack::mother_extensions<std_traits>, pack>,
                   "Extension system is not able to identify the mother extensions");
 
-//    static_assert(stl::same_as<typename pack::child_extensions, empty_extension_pack>,
-//                  "Extension system is not able to identify the child extensions");
+    //    static_assert(stl::same_as<typename pack::child_extensions, empty_extension_pack>,
+    //                  "Extension system is not able to identify the child extensions");
 
-//    static_assert(stl::same_as<typename extension_pack<exes>::merge_extensions<
-//                                 fake_descriptor, empty_extension_pack::template mother_type>,
-//                               pack>,
-//                  "Cannot merge the extensions");
+    //    static_assert(stl::same_as<typename extension_pack<exes>::merge_extensions<
+    //                                 fake_descriptor, empty_extension_pack::template mother_type>,
+    //                               pack>,
+    //                  "Cannot merge the extensions");
 
-//    static_assert(stl::same_as<typename extension_pack<exes, exes, exes>::merge_extensions<
-//                                 fake_descriptor, empty_extension_pack::template mother_type>,
-//                               pack>,
-//                  "epack is failing at making the extensions unique");
+    //    static_assert(stl::same_as<typename extension_pack<exes, exes, exes>::merge_extensions<
+    //                                 fake_descriptor, empty_extension_pack::template mother_type>,
+    //                               pack>,
+    //                  "epack is failing at making the extensions unique");
 
     typename pack::template mother_inherited<std_traits> ipack;
 
@@ -144,17 +164,35 @@ TEST(ExtensionsTests, ExtensionPackStuff) {
     EXPECT_TRUE(icpack.cvalue_three);
     EXPECT_TRUE(icpack.daddy_value);
 
+    typename empty_extension_pack::template children_inherited<std_traits, daddy, extension_pack<cone>>::type
+      icpack2;
 
-//    using iexpack = typename expack::template merge_extensions<
-//      fake_descriptor,
-//      empty_extension_pack::template mother_type>::mother_extensions::template mother_inherited<std_traits>;
-//    auto ii = iexpack{};
-//    EXPECT_TRUE(ii.value_one && ii.value_two && ii.value_three) << "Inherited is not working";
+    EXPECT_TRUE(icpack2.cvalue_one);
+    EXPECT_TRUE(icpack2.daddy_value);
+
+
+    //    using iexpack = typename expack::template merge_extensions<
+    //      fake_descriptor,
+    //      empty_extension_pack::template mother_type>::mother_extensions::template
+    //      mother_inherited<std_traits>;
+    //    auto ii = iexpack{};
+    //    EXPECT_TRUE(ii.value_one && ii.value_two && ii.value_three) << "Inherited is not working";
 
     using etype = typename expack::template extensie_type<std_traits, fake_descriptor>;
     etype e{};
     EXPECT_TRUE(e.mid_level);
     EXPECT_TRUE(e.final_level);
+
+
+
+    using mid_type = typename extension_pack<exes>::mid_level_extensie_type<std_traits, fake_descriptor>;
+    mid_type mid;
+    EXPECT_TRUE(mid.mid_level);
+
+    using mid_kids_type =
+      typename extension_pack<exes_with_kids>::mid_level_extensie_children<std_traits, fake_descriptor>;
+    static_assert(stl::same_as<mid_kids_type, extension_pack<child_one, child_two>>,
+                  "mid_level_extensie_children doesn't work properly");
 }
 
 struct ctor_one {
@@ -162,8 +200,7 @@ struct ctor_one {
     struct type {
         int a  = 1;
         type() = default;
-        type(int _a, int _b) : a{_a + _b} {
-        }
+        type(int _a, int _b) : a{_a + _b} {}
     };
 };
 

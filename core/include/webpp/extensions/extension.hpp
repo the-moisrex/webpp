@@ -134,7 +134,7 @@ namespace webpp {
         struct child_type {
             template <typename T>
             struct type {
-                static constexpr bool value = ChildExtension<T, TraitsType, Parent>;
+                static constexpr bool value = ChildExtension<TraitsType, Parent, T>;
             };
         };
 
@@ -302,19 +302,30 @@ namespace webpp {
             using type = typename Kid::template type<TraitsType, Mother>;
         };
 
-        // 2 or more kids, passed with an extension pack
+        // passed with an extension pack
         template <Traits TraitsType, typename Mother, typename... Kids>
         struct children_inherited<TraitsType, Mother, extension_pack<Kids...>> {
             using type = typename children_inherited<TraitsType, Mother, Kids...>::type;
         };
 
 
+        // Mid-Level extensie type
         template <Traits TraitsType, typename ExtensieDescriptor, typename... ExtraArgs>
         using mid_level_extensie_type = typename ExtensieDescriptor::template mid_level_extensie_type<
           this_epack, TraitsType,
           typename merge_extensions<ExtensieDescriptor, mother_type<TraitsType>::template type>::
             template mother_extensions<TraitsType>::template mother_inherited<TraitsType>,
           ExtraArgs...>;
+
+
+        // Mid-Level extensie children (will extend the mid-level extensie and will be extended by the final
+        // extensie)
+        template <Traits TraitsType, typename ExtensieDescriptor, typename... ExtraArgs>
+        using mid_level_extensie_children = typename merge_extensions<
+          ExtensieDescriptor, child_type<TraitsType, mid_level_extensie_type<TraitsType, ExtensieDescriptor,
+                                                                             ExtraArgs...>>::template type>::
+          template child_extensions<TraitsType,
+                                    mid_level_extensie_type<TraitsType, ExtensieDescriptor, ExtraArgs...>>;
 
 
         /**
@@ -328,12 +339,7 @@ namespace webpp {
           // child extensions + the mid-level extensie + mother extensions
           typename children_inherited<
             TraitsType, mid_level_extensie_type<TraitsType, ExtensieDescriptor, ExtraArgs...>,
-            typename merge_extensions<
-              ExtensieDescriptor,
-              child_type<TraitsType, mid_level_extensie_type<TraitsType, ExtensieDescriptor,
-                                                             ExtraArgs...>>::template type>::
-              template child_extensions<
-                TraitsType, mid_level_extensie_type<TraitsType, ExtensieDescriptor, ExtraArgs...>>>::type,
+            mid_level_extensie_children<TraitsType, ExtensieDescriptor, ExtraArgs...>>::type,
 
           ExtraArgs...>;
 
