@@ -98,18 +98,19 @@ namespace webpp {
     template <typename PathType, typename UriSegmentsType>
     struct path_context_extension {
 
-        template <Traits TraitsType, typename ContextType>
-        struct path_extension : public ContextType {
+        struct path_extension {
 
-            template <typename... Args>
-            constexpr path_extension(Args&&... args) noexcept : ContextType{stl::forward<Args>(args)...} {}
+            template <Traits TraitsType, typename ContextType>
+            struct type : public ContextType {
 
+                template <typename... Args>
+                constexpr type(Args&&... args) noexcept : ContextType{stl::forward<Args>(args)...} {}
 
-            path_field<ContextType, PathType, UriSegmentsType> path{};
+                path_field<ContextType, PathType, UriSegmentsType> path{};
+            };
         };
 
-        template <Traits TraitsType, typename ContextType>
-        using context_extensions = extension_pack<path_extension<TraitsType, ContextType>>;
+        using context_extensions = extension_pack<path_extension>;
     };
 
     template <typename T, typename PathType, typename UriSegmentsType>
@@ -312,7 +313,6 @@ namespace webpp {
         }
 
       private:
-
         /**
          * Call the segment and catch the exceptions if there are any
          */
