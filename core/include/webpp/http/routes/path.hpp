@@ -166,9 +166,9 @@ namespace webpp {
 
             [[nodiscard]] bool operator()(PathContext auto const& ctx) const noexcept {
                 if constexpr (requires { {new_next_segment == ""}; }) {
-                    return new_next_segment == ctx.path.current_segment;
+                    return new_next_segment == *ctx.path.current_segment;
                 } else if constexpr (requires { {"" == new_next_segment}; }) {
-                    return ctx.path.current_segment == new_next_segment;
+                    return *ctx.path.current_segment == new_next_segment;
                 } else {
                     return false; // should not happen
                 }
@@ -378,6 +378,7 @@ namespace webpp {
                     auto uri_segments = basic_uri<traits_type, false>{req.request_uri()}.path_structured();
                     using uri_segments_type = decltype(uri_segments);
 
+
                     // context switching
                     auto new_ctx = ctx.template clone<path_context_extension<path_type, uri_segments_type>>();
                     static_assert(
@@ -388,9 +389,7 @@ namespace webpp {
                     new_ctx.path.current_segment = new_ctx.path.segments.begin();
                     new_ctx.path.pth             = this;
 
-                    // nothing to do if the segment counts don't match
-                    if (new_ctx.path.current_segment == new_ctx.path.current_segment.end())
-                        return false;
+                    // todo: (is there something we should do here?) nothing to do if the segment counts don't match
 
                     // re-running the this member function with the new switched context type
                     return operator()(stl::move(new_ctx), req);
