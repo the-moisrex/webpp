@@ -31,7 +31,7 @@ TEST(Response, Type) {
     EXPECT_TRUE(three);
     //    EXPECT_TRUE(four);
     //    EXPECT_TRUE(five);
-    EXPECT_EQ("Hello", return_callback().body);
+    EXPECT_STREQ("Hello", return_callback().body.str().c_str());
 }
 
 // TEST(Response, Init) {

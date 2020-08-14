@@ -44,12 +44,10 @@ namespace webpp {
           : EList{},
             headers{err_code},
             body{stl::move(b)} {}
-        basic_response(body_type const& b) noexcept : EList{}, body(b) {}
-
-        basic_response(body_type&& b) noexcept : EList{}, body(stl::move(b)) {}
+        explicit basic_response(body_type const& b) noexcept : EList{}, body(b) {}
+        explicit basic_response(body_type&& b) noexcept : EList{}, body(stl::move(b)) {}
 
         explicit basic_response(header_type&& e) noexcept : EList{}, headers(stl::move(e)) {}
-
         explicit basic_response(header_type const& e) noexcept : EList{}, headers(e) {}
 
         basic_response& operator=(basic_response const&) = default;

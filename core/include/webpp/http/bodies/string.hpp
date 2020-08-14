@@ -5,6 +5,7 @@
 
 #include "../../extensions/extension.hpp"
 #include "../../std/concepts.hpp"
+#include "../../std/string_view.hpp"
 #include "../../traits/traits_concepts.hpp"
 #include "../routes/context_concepts.hpp"
 
@@ -109,7 +110,18 @@ namespace webpp {
             };
         };
 
+        struct string_response_extension {
+            template <Traits TraitsType, typename ResType>
+            struct type : public ResType {
+                using ResType::ResType;
+
+                constexpr type(istl::ConvertibleToStringView auto&& str_view) noexcept
+                  : ResType{typename ResType::body_type{stl::forward<decltype(str_view)>(str_view)}} {}
+            };
+        };
+
         using response_body_extensions = extension_pack<details::string_body>;
+        using response_extensions      = extension_pack<string_response_extension>;
         using context_extensions       = extension_pack<string_context_extension>;
     };
 
