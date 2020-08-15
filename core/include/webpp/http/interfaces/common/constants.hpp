@@ -1,7 +1,8 @@
 #ifndef WEBPP_INTERFACE_COMMON_CONSTANTS_H
 #define WEBPP_INTERFACE_COMMON_CONSTANTS_H
 
-constexpr std::size_t buffer_size = 1024 * 1024;
+
+constexpr unsigned buffer_size = 1024 * 1024;
 
 /**
  * This is the default address for listening on when using Self-Hosted protocols

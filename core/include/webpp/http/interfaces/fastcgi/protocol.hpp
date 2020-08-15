@@ -1,7 +1,7 @@
 #ifndef WEBPP_INTERFACE_FCGI_PROTOCOL
 #define WEBPP_INTERFACE_FCGI_PROTOCOL
 
-#include <string_view>
+#include "../../../std/string_view.hpp"
 
 namespace webpp::protocol {
 
@@ -48,15 +48,13 @@ namespace webpp::protocol {
         /* reserved for later use */
         uint8_t reserved = 0;
 
-        header(record_type _type, uint16_t _req_id, uint16_t _content_length,
-               uint8_t _padd_len) noexcept
+        header(record_type _type, uint16_t _req_id, uint16_t _content_length, uint8_t _padd_len) noexcept
           : type{_type},
             request_id_b1{static_cast<uint8_t>(_req_id >> 8u)},
             request_id_b0{static_cast<uint8_t>(_req_id)},
             content_length_b1{static_cast<uint8_t>(_content_length >> 8u)},
             content_length_b0{static_cast<uint8_t>(_content_length)},
-            padding_length{_padd_len} {
-        }
+            padding_length{_padd_len} {}
 
         inline uint16_t request_id() const noexcept {
             return (static_cast<uint16_t>(request_id_b1) << 8u) | request_id_b0;
@@ -68,8 +66,7 @@ namespace webpp::protocol {
         }
 
         inline uint16_t content_length() const noexcept {
-            return (static_cast<uint16_t>(content_length_b1) << 8u) |
-                   content_length_b0;
+            return (static_cast<uint16_t>(content_length_b1) << 8u) | content_length_b0;
         }
 
         inline void content_length(uint16_t _content_length) noexcept {
@@ -119,8 +116,7 @@ namespace webpp::protocol {
         uint8_t     reserved[7];
     };
 
-    template <std::size_t NAMELENGTH, std::size_t VALUELENGTH,
-              std::size_t PADDINGLENGTH>
+    template <stl::size_t NAMELENGTH, stl::size_t VALUELENGTH, stl::size_t PADDINGLENGTH>
     struct management_reply {
       private:
         header  _header;
@@ -131,10 +127,8 @@ namespace webpp::protocol {
         uint8_t padding[PADDINGLENGTH] = {};
 
       public:
-        constexpr management_reply(char const* _name,
-                                   char const* _value) noexcept
-          : _header{record_type::get_values_result, 0u,
-                    NAMELENGTH + VALUELENGTH, PADDINGLENGTH} {
+        constexpr management_reply(char const* _name, char const* _value) noexcept
+          : _header{record_type::get_values_result, 0u, NAMELENGTH + VALUELENGTH, PADDINGLENGTH} {
             auto _name_end  = _name + NAMELENGTH;
             auto _value_end = _value + VALUELENGTH;
             auto name_ptr   = name;
@@ -150,12 +144,12 @@ namespace webpp::protocol {
      * Automatically calculate the managemenr reply required tempate lengths
      */
     template <typename NameT, typename ValueT>
-    management_reply(NameT name, ValueT value) -> management_reply<
-      (sizeof(NameT) / sizeof(char)), (sizeof(ValueT) / sizeof(char)),
-      ((sizeof(int_fast8_t) * 8u) -
-       ((sizeof(management_reply<1, 1, 1>) - 3 +
-         (sizeof(NameT) / sizeof(char)) + (sizeof(ValueT) / sizeof(char))) %
-        (sizeof(int_fast8_t) * 8u)))>;
+    management_reply(NameT name, ValueT value)
+      -> management_reply<(sizeof(NameT) / sizeof(char)), (sizeof(ValueT) / sizeof(char)),
+                          ((sizeof(int_fast8_t) * 8u) -
+                           ((sizeof(management_reply<1, 1, 1>) - 3 + (sizeof(NameT) / sizeof(char)) +
+                             (sizeof(ValueT) / sizeof(char))) %
+                            (sizeof(int_fast8_t) * 8u)))>;
 
     management_reply default_max_conns_reply{"FCGI_MAX_CONNS", "10"};
     management_reply default_max_reqs_reply{"FCGI_MAX_REQS", "50"};

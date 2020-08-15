@@ -1,9 +1,9 @@
 #ifndef WEBPP_INTERFACES_COMMON_SERVER_H
 #define WEBPP_INTERFACES_COMMON_SERVER_H
 
-#include "../../std/buffer.hpp"
-#include "../../std/internet.hpp"
-#include "../../std/io_context.hpp"
+#include "../../../std/buffer.hpp"
+#include "../../../std/internet.hpp"
+#include "../../../std/io_context.hpp"
 #include "connection.hpp"
 #include "constants.hpp"
 
@@ -18,23 +18,23 @@ namespace webpp::common {
      */
     class server {
       public:
-        using socket_t     = std::net::ip::tcp::socket;
-        using endpoint_t   = std::net::ip::tcp::endpoint;
-        using io_context_t = std::net::io_context;
+        using socket_t     = stl::net::ip::tcp::socket;
+        using endpoint_t   = stl::net::ip::tcp::endpoint;
+        using io_context_t = stl::net::io_context;
 
         // I share this publicly because I know this file will not be used in a
         // header file so the final user doesn't have access to this class.
         io_context_t io;
 
       private:
-        std::vector<connection>                  connections;
-        std::vector<std::net::ip::tcp::acceptor> acceptors;
+        stl::vector<connection>                  connections;
+        stl::vector<stl::net::ip::tcp::acceptor> acceptors;
         boost::asio::thread_pool                 pool;
 
         void accept() noexcept {
             //            for (auto& acceptor : acceptors)
             //                acceptor.async_accept(
-            //                    [this](std::error_code const& ec, socket_t
+            //                    [this](stl::error_code const& ec, socket_t
             //                    socket) {
             //                        // Check whether the server was stopped by a signal
             //
@@ -44,7 +44,7 @@ namespace webpp::common {
             //                        }
             //
             //                        if (!ec) {
-            //                            connections.emplace_back(std::move(socket));
+            //                            connections.emplace_back(stl::move(socket));
             //                        } else {
             //                            // TODO: log
             //                        }
@@ -56,7 +56,7 @@ namespace webpp::common {
 
       public:
         // TODO: optimize this
-        server(std::vector<endpoint_t> endpoints) noexcept {};
+        server(stl::vector<endpoint_t> endpoints) noexcept {};
 
         void run() noexcept {
             // Run until the tasks finishes normally.
@@ -66,7 +66,7 @@ namespace webpp::common {
                 try {
                     io.run();
                     break;
-                } catch (std::exception const& err) {
+                } catch (stl::exception const& err) {
                     // todo: what should I do here?
                 }
             }

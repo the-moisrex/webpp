@@ -1,9 +1,9 @@
 #ifndef WEBPP_INTERFACE_COMMON_CONNECTION_H
 #define WEBPP_INTERFACE_COMMON_CONNECTION_H
 
-#include "../../std/buffer.hpp"
-#include "../../std/internet.hpp"
-#include "../../std/socket.hpp"
+#include "../../../std/buffer.hpp"
+#include "../../../std/internet.hpp"
+#include "../../../std/socket.hpp"
 #include "constants.hpp"
 
 #include <memory>
@@ -19,31 +19,27 @@ namespace webpp::common {
 
     class connection {
       public:
-        using socket_t = std::net::ip::tcp::socket;
+        using socket_t = stl::net::ip::tcp::socket;
 
       private:
         socket_t                      socket;
-        std::array<char, buffer_size> buffer;
+        stl::array<char, buffer_size> buffer;
 
         void read() noexcept {
             // we share ourselves, so the connection keeps itself alive.
-            socket.async_read_some(
-              std::net::buffer(buffer),
-              [this](std::error_code const& err,
-                     std::size_t            bytes_transferred) noexcept {
-                  if (!err) {
-                      // we need to parse, store, read more, or
-                      // write something
-                  }
-              });
+            socket.async_read_some(stl::net::buffer(buffer), [this](stl::error_code const& err,
+                                                                    stl::size_t bytes_transferred) noexcept {
+                if (!err) {
+                    // we need to parse, store, read more, or
+                    // write something
+                }
+            });
         }
 
-        void write() noexcept {
-        }
+        void write() noexcept {}
 
       public:
-        connection(socket_t socket) noexcept : socket(std::move(socket)) {
-        }
+        connection(socket_t socket) noexcept : socket(stl::move(socket)) {}
         connection(connection const&) = delete;
         connection(connection&&)      = default;
         connection& operator=(connection const&) = delete;

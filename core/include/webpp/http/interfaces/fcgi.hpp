@@ -6,23 +6,26 @@
 #include "../../std/vector.hpp"
 #include "../request.hpp"
 #include "./common/server.hpp"
-#include "basic_interface.hpp"
 
 
 namespace webpp {
 
-    template <typename Traits>
-    class fcgi : public basic_interface<Traits, fcgi<Traits>> {
+    template <Traits TraitsType>
+    struct fcgi_request {
+        using traits_type = TraitsType;
+
+
+    };
+
+    template <Traits TraitsType>
+    class fcgi {
       public:
-        static_assert(
-          is_traits_v<Traits>,
-          "The specified template parameter is not a valid traits type.");
-        using traits_type = Traits;
+        using traits_type = TraitsType;
         using endpoint_t  = stl::net::ip::tcp::endpoint;
 
       private:
         stl::set<traits_type, endpoint_t> _endpoints;
-        common::server               _server;
+        common::server                    _server;
 
         auto get_endpoints() noexcept {
             stl::net::ip::tcp::resolver resolver(_server.io);
@@ -40,8 +43,6 @@ namespace webpp {
 
 
       public:
-        webpp::router_t<traits_type, fcgi> router;
-
         fcgi() noexcept;
 
         void operator()() noexcept;
@@ -56,8 +57,7 @@ namespace webpp {
         /**
          * This will only work before you run the operator()
          */
-        void add_endpoint(stl::string_view const& addr,
-                          uint_fast8_t            port) noexcept {
+        void add_endpoint(stl::string_view const& addr, uint_fast8_t port) noexcept {
             _endpoints.emplace(stl::net::ip::make_address(addr), port);
         }
 

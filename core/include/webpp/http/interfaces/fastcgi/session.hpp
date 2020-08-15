@@ -1,33 +1,40 @@
-#include "../../std/internet.hpp"
-#include "../../std/socket.hpp"
+#ifndef WEBPP_FASTCGI_SESSION_HPP
+#define WEBPP_FASTCGI_SESSION_HPP
+
+#include "../../../std/internet.hpp"
+#include "../../../std/socket.hpp"
 
 #include <system_error>
 #include <utility>
 
-class session {
-  public:
-    using socket_t = std::net::ip::tcp::socket;
+namespace webpp {
+    class session {
+      public:
+        using socket_t = stl::net::ip::tcp::socket;
 
-  private:
-    socket_t _socket;
+      private:
+        socket_t _socket;
 
-    /**
-     * This function will read the data and pass it to read_callback to handle
-     * those data
-     */
-    void read() {
-    }
+        /**
+         * This function will read the data and pass it to read_callback to handle
+         * those data
+         */
+        void read() {}
 
-    void read_callback(std::error_code const&, std::size_t length) noexcept;
+        void read_callback(stl::error_code const&, stl::size_t length) noexcept;
 
-    /**
-     * This method will write the data and calls the write_callback to handle
-     * the next steps
-     */
-    void write();
-    void write_callback(std::error_code const&, std::size_t length) noexcept;
+        /**
+         * This method will write the data and calls the write_callback to handle
+         * the next steps
+         */
+        void write();
+        void write_callback(stl::error_code const&, stl::size_t length) noexcept;
 
-  public:
-    session(socket_t&& _socket) noexcept : _socket(std::move(_socket)) {
-    }
-};
+      public:
+        session(socket_t&& _socket) noexcept : _socket(stl::move(_socket)) {}
+    };
+
+} // namespace webpp
+
+
+#endif
