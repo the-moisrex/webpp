@@ -17,14 +17,16 @@ namespace webpp {
 
     };
 
+
     template <Traits TraitsType>
     class fcgi {
       public:
         using traits_type = TraitsType;
-        using endpoint_t  = stl::net::ip::tcp::endpoint;
+        using endpoint_type = stl::net::ip::tcp::endpoint;
+
+        stl::set<traits_type, endpoint_type> _endpoints;
 
       private:
-        stl::set<traits_type, endpoint_t> _endpoints;
         common::server                    _server;
 
         auto get_endpoints() noexcept {
@@ -50,37 +52,12 @@ namespace webpp {
         /**
          * This will only work before you run the operator()
          */
-        void add_endpoint(endpoint_t _endpoint) noexcept {
-            _endpoints.insert(stl::move(_endpoint));
-        }
-
-        /**
-         * This will only work before you run the operator()
-         */
         void add_endpoint(stl::string_view const& addr, uint_fast8_t port) noexcept {
             _endpoints.emplace(stl::net::ip::make_address(addr), port);
         }
 
-        /**
-         * Clear the endpoints
-         */
-        void clear_endpoints() noexcept {
-            _endpoints.clear();
-        }
-
-        /**
-         * Return the endpoints.
-         */
-        auto const& endpoints() const noexcept {
-            return _endpoints;
-        }
     };
 
-    template <typename Traits>
-    class basic_request<Traits, fcgi<Traits>> {
-      private:
-      public:
-    };
 
 } // namespace webpp
 
