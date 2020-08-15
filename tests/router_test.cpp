@@ -52,6 +52,13 @@ TEST(Router, RouteCreation) {
                    }};
     auto   res2 = router2(req);
     EXPECT_EQ(res2.body.str(), "testing");
+
+
+    router router3{extension_pack<string_response>{}, [](Context auto&& ctx) noexcept(false) {
+      return ctx.string("testing 2");
+    }};
+    auto   res3 = router3(req);
+    EXPECT_EQ(res3.body.str(), "testing 2");
 }
 
 

@@ -110,15 +110,22 @@ namespace webpp {
             if constexpr (istl::Optional<result_type>) {
                 // if res is a context, context switching is automatically happens here,
                 // the same goes for any other valid type
+
                 if (res) {
-                    return handle_route_results<Index>(res.value(), stl::forward<decltype(ctx)>(ctx), req);
+                    return handle_route_results<Index>(res.value(),
+                                                       stl::forward<decltype(ctx)>(ctx), req);
                 } else {
-                    if constexpr (is_passed_last_route) {
-                        return ctx.error(404u);
-                    } else {
-                        return operator()<next_route_index>(stl::forward<decltype(ctx)>(ctx), req);
-                    }
+                    // return a 500 error
+                    return handle_route_results<Index>(typename result_type::value_type{500u},
+                                                       stl::forward<decltype(ctx)>(ctx), req);
                 }
+                // todo: check if you can run the next route as well
+                //                if constexpr (is_passed_last_route) {
+                //                    return ctx.error(404u);
+                //                } else {
+                //                    return operator()<next_route_index>(stl::forward<decltype(ctx)>(ctx),
+                //                    req);
+                //                }
             } else if constexpr (Context<result_type>) {
                 // context switching is happening here
                 // just call the next route or finish it with calling the context handlers
