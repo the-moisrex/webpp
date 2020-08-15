@@ -109,7 +109,9 @@ namespace webpp {
                     try {
                         return callable(stl::forward<decltype(args)>(args)...);
                     } catch (...) {
-                        return decltype(callable(stl::forward<decltype(args)>(args)...)){stl::nullopt};
+                        // return 500 error on failure hoping the response type supports it
+                        // todo: add more error handling stuff here to the result
+                        return typename return_type::value_type{500u};
                     }
                 } else {
                     try {
@@ -617,7 +619,7 @@ namespace webpp {
                         return call_next_route_in_bool(ctx, req);
                     } else {
                         if (!res)
-                            return stl::nullopt;
+                            return decltype(stl::make_optional(call_next_route(ctx, req))){stl::nullopt};
                         return stl::make_optional(call_next_route(ctx, req));
                     }
                 } else if constexpr (logical_operators::OR == op) {
