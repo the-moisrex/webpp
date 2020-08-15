@@ -98,12 +98,11 @@ namespace webpp {
 
       private:
         template <stl::size_t Index = 0>
-        [[nodiscard]] inline auto handle_route_results(auto&& res, auto&& ctx, auto&& req) const
-          noexcept {
-            using result_type               = stl::remove_cvref_t<decltype(res)>;
-            using context_type              = stl::remove_cvref_t<decltype(ctx)>;
-            constexpr auto next_route_index = Index + 1;
-            constexpr bool is_last_route    = Index == route_count() - 1;
+        [[nodiscard]] inline auto handle_route_results(auto&& res, auto&& ctx, auto&& req) const noexcept {
+            using result_type                   = stl::remove_cvref_t<decltype(res)>;
+            using context_type                  = stl::remove_cvref_t<decltype(ctx)>;
+            constexpr auto next_route_index     = Index + 1;
+            constexpr bool is_passed_last_route = Index > (route_count() - 1);
 
             // Don't handle the edge cases of return types here, do it in the "call_route" function
             // for example, a function that returns strings and can be converted into a response
@@ -114,7 +113,7 @@ namespace webpp {
                 if (res) {
                     return handle_route_results<Index>(res.value(), stl::forward<decltype(ctx)>(ctx), req);
                 } else {
-                    if constexpr (is_last_route) {
+                    if constexpr (is_passed_last_route) {
                         return ctx.error(404u);
                     } else {
                         return operator()<next_route_index>(stl::forward<decltype(ctx)>(ctx), req);
@@ -123,7 +122,7 @@ namespace webpp {
             } else if constexpr (Context<result_type>) {
                 // context switching is happening here
                 // just call the next route or finish it with calling the context handlers
-                if constexpr (!is_last_route) {
+                if constexpr (!is_passed_last_route) {
                     return operator()<next_route_index>(stl::move(res), req);
                 } else {
                     return ctx.error(404u);
@@ -169,8 +168,7 @@ namespace webpp {
 
 
         template <stl::size_t Index = 0>
-        Response auto operator()(Context auto&& ctx, Request auto const& req) const
-          noexcept{
+        Response auto operator()(Context auto&& ctx, Request auto const& req) const noexcept {
 
             constexpr bool no_routes       = route_count() == 0u;
             constexpr bool past_last_route = Index > (route_count() - 1);

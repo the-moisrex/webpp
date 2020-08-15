@@ -90,6 +90,7 @@ namespace webpp {
             template <typename TraitsType, typename ContextType>
             struct type : public stl::remove_cvref_t<ContextType> {
                 using context_type = stl::remove_cvref_t<ContextType>;
+                using traits_type  = TraitsType;
                 using string_response_type =
                   typename context_type::response_type::template apply_extensions_type<details::string_body>;
 
@@ -100,11 +101,18 @@ namespace webpp {
                 constexpr Response auto string(Args&&... args) const noexcept {
                     // check if there's an allocator in the args:
                     constexpr bool has_allocator = (istl::Allocator<Args> || ...);
+                    using body_type              = typename string_response_type::body_type;
                     if constexpr (has_allocator) {
-                        return string_response_type{stl::forward<Args>(args)...};
+                        return string_response_type{body_type{stl::forward<Args>(args)...}};
+                    } else if constexpr (
+                      requires {
+                          body_type{stl::forward<Args>(args)..., context_type::get_allocator()};
+                      }) {
+                        auto body = body_type{stl::forward<Args>(args)..., context_type::get_allocator()};
+                        auto res  = string_response_type{body};
+                        return res;
                     } else {
-                        return string_response_type{stl::forward<Args>(args)...,
-                                                    context_type::get_allocator()};
+                        return string_response_type{body_type{stl::forward<Args>(args)...}};
                     }
                 }
             };
@@ -114,9 +122,14 @@ namespace webpp {
             template <Traits TraitsType, typename ResType>
             struct type : public ResType {
                 using ResType::ResType;
+                using body_type   = typename ResType::body_type;
+                using string_type = typename body_type::string_type;
 
                 constexpr type(istl::ConvertibleToStringView auto&& str_view) noexcept
-                  : ResType{typename ResType::body_type{stl::forward<decltype(str_view)>(str_view)}} {}
+                  : ResType{body_type{stl::forward<decltype(str_view)>(str_view)}} {}
+
+                constexpr type(string_type const& str) noexcept : ResType{body_type{str}} {}
+                constexpr type(string_type&& str) noexcept : ResType{body_type{stl::move(str)}} {}
             };
         };
 

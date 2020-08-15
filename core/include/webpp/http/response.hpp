@@ -13,6 +13,9 @@
 
 namespace webpp {
 
+    template <typename T, typename... E>
+    concept one_of = (stl::same_as<stl::remove_cvref_t<T>, E> || ...);
+
     /**
      * This class owns its data.
      */
@@ -29,7 +32,9 @@ namespace webpp {
         body_type    body{};
         headers_type headers{};
 
-        basic_response(auto&&... args) noexcept : EList{stl::forward<decltype(args)>(args)...} {}
+        basic_response(auto&& arg1, auto&&... args) noexcept
+          requires(!one_of<decltype(arg1), header_type, status_code_type, body_type>)
+          : EList{stl::forward<decltype(args)>(args)...} {}
 
         basic_response() noexcept                          = default;
         basic_response(basic_response const& res) noexcept = default;

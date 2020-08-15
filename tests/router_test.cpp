@@ -39,24 +39,18 @@ TEST(Router, RouteCreation) {
         return "About page\n";
     };
 
-    auto req = request{};
-    router router1{
-      extension_pack<string_response>{},
-      about_page
-    };
-    auto res = router1(req);
+    auto   req = request{};
+    router router1{extension_pack<string_response>{}, about_page};
+    auto   res = router1(req);
     res.calculate_default_headers();
     EXPECT_EQ(router1.route_count(), 1);
     EXPECT_EQ(res.body.str(), "About page\n");
     EXPECT_EQ(res.headers.status_code, 200);
 
-    router router2{
-      extension_pack<string_response>{},
-      [](Context auto&& ctx) {
-//          return ctx.string("testing");
-      }
-    };
-    auto res2 = router2(req);
+    router router2{extension_pack<string_response>{}, [](Context auto&& ctx) noexcept {
+                       return ctx.string("testing");
+                   }};
+    auto   res2 = router2(req);
     EXPECT_EQ(res2.body.str(), "testing");
 }
 

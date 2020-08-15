@@ -108,12 +108,15 @@ namespace webpp {
                 } else if constexpr (istl::Optional<return_type>) {
                     try {
                         return callable(stl::forward<decltype(args)>(args)...);
-                    } catch (...) { return decltype(callable(stl::forward<decltype(args)>(args)...)){stl::nullopt}; }
+                    } catch (...) {
+                        return decltype(callable(stl::forward<decltype(args)>(args)...)){stl::nullopt};
+                    }
                 } else {
                     try {
                         return stl::make_optional(callable(stl::forward<decltype(args)>(args)...));
                     } catch (...) {
-                        return decltype(stl::make_optional(callable(stl::forward<decltype(args)>(args)...))){stl::nullopt};
+                        return decltype(stl::make_optional(callable(stl::forward<decltype(args)>(args)...))){
+                          stl::nullopt};
                     }
                 }
 
@@ -127,21 +130,21 @@ namespace webpp {
          * Handle special return types here
          */
         constexpr auto handle_results = [](auto&& ctx, auto&& res) {
-            using res_t = decltype(res);
+            using res_t = stl::remove_cvref_t<decltype(res)>;
             if constexpr (istl::Optional<res_t>) {
                 // pass it out to the router, we're not able to handle this here
-                return stl::forward<res_t>(res);
+                return stl::forward<decltype(res)>(res);
             } else if constexpr (Context<res_t>) {
                 // we're not able to do a context switching here,
                 // route: is responsible for sub-route context switching
                 // router: is responsible for entry-route context switching
-                return stl::forward<res_t>(res);
+                return stl::forward<decltype(res)>(res);
             } else if constexpr (stl::is_same_v<res_t, bool>) {
-                return stl::forward<res_t>(res);
+                return stl::forward<decltype(res)>(res);
             } else if constexpr (Response<res_t>) {
-                return stl::forward<res_t>(res);
+                return stl::forward<decltype(res)>(res);
             } else if constexpr (ConstructibleWithResponse<typename ctx_type::response_type, res_t>) {
-                return ctx.response(stl::forward<res_t>(res));
+                return ctx.response(stl::forward<decltype(res)>(res));
                 // todo: consider "response extension" injection in order to get the right response type
             } else {
                 // let's just ignore the result

@@ -45,5 +45,5 @@ TEST(Routes, PathTests) {
     EXPECT_TRUE(nctx.test);
     using context_type2 = simple_context<request_type, extension_pack<string_response, fake_mommy>>;
     auto ctx2 = context_type2{};
-//    EXPECT_EQ(ctx2.string("test").body.str(), "test");
+    EXPECT_EQ(ctx2.string("test").body.str(), "test");
 }
