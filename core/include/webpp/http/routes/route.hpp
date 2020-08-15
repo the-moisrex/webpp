@@ -696,11 +696,13 @@ namespace webpp {
         [[nodiscard]] inline bool
         call_next_route_in_bool([[maybe_unused]] Context auto&&      ctx,
                                 [[maybe_unused]] Request auto const& req) const noexcept {
-            auto res       = call_next_route(stl::forward<decltype(ctx)>(ctx), req);
-            using res_type = stl::remove_cvref_t<decltype(res)>;
-            if constexpr (stl::same_as<res_type, bool>) {
-                return res;
+            using res_type = decltype(call_next_route(stl::forward<decltype(ctx)>(ctx), req));
+            using res_t    = stl::remove_cvref_t<res_type>;
+            if constexpr (stl::same_as<res_t, bool>) {
+                return call_next_route(stl::forward<decltype(ctx)>(ctx), req);
             } else {
+                // ignore the results
+                (void) call_next_route(stl::forward<decltype(ctx)>(ctx), req);
                 return true;
             }
         }

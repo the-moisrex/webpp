@@ -276,14 +276,14 @@ namespace webpp {
             // res << "HTTP/1.1" << " " << status_code() << " " <<
             // status_reason_phrase(status_code()) << "\r\n";
             stl::size_t size = 1;
-            for (auto const& [attr, val] : *this) {
-                size += attr.size() + val.size() + 4;
+            for (auto const& field : *this) {
+                size += field.name.size() + field.value.size() + 4;
             }
             string_type res{super::get_allocator()};
             res.reserve(size);
-            for (auto const& [attr, val] : *this) {
+            for (auto const& field : *this) {
                 // todo: make sure value is secure and doesn't have any newlines
-                stl::format_to(stl::back_insert_iterator<string_type>(res), "{}: {}\r\n", attr, val);
+                stl::format_to(stl::back_insert_iterator<string_type>(res), "{}: {}\r\n", field.name, field.value);
             }
             return res;
         }
