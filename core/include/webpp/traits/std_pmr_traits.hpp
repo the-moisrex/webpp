@@ -8,7 +8,7 @@
 namespace webpp {
 
     template <typename CharT, typename CharTraits = stl::char_traits<CharT>,
-              template <typename> typename Allocator = stl::pmr::polymorphic_allocator<T>>
+              template <typename> typename Allocator = stl::pmr::polymorphic_allocator>
     using basic_std_pmr_traits = basic_std_traits<CharT, CharTraits, Allocator>;
 
 

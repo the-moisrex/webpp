@@ -55,8 +55,7 @@ namespace webpp {
 
       public:
         template <typename... Args>
-        basic_cookie_jar(Args&&... args) : super{std::forward<Args>(args)...} {
-        }
+        basic_cookie_jar(Args&&... args) : super{std::forward<Args>(args)...} {}
 
         typename super::const_iterator find(typename cookie_type::name_t const& name) const noexcept {
             return stl::find_if(super::cbegin(), super::cend(), [&](auto const& a) {
@@ -161,8 +160,7 @@ namespace webpp {
 
       public:
         template <typename... Args>
-        response_cookie_jar(Args&&... args) : super{stl::forward<Args>(args)...} {
-        }
+        response_cookie_jar(Args&&... args) : super{stl::forward<Args>(args)...} {}
 
         template <typename Iter>
         explicit response_cookie_jar(Iter const& _start, Iter const& _end) noexcept : super{} {
@@ -205,14 +203,14 @@ namespace webpp {
                                                                                          \
     auto& method_name(cookie_iterator<cookie_jar_type> auto const& it,                   \
                       typename cookie_type::method_name##_t const& new_value) noexcept { \
-        if (auto iter = remove_const(it); iter != super::cend())                        \
+        if (auto iter = remove_const(it); iter != super::cend())                         \
             iter->method_name(new_value);                                                \
         return *this;                                                                    \
     }                                                                                    \
                                                                                          \
     auto& method_name(cookie_iterator<cookie_jar_type> auto&       it,                   \
                       typename cookie_type::method_name##_t const& new_value) noexcept { \
-        if (auto iter = remove_const(it); iter != super::cend())                        \
+        if (auto iter = remove_const(it); iter != super::cend())                         \
             iter->method_name(new_value);                                                \
         return *this;                                                                    \
     }                                                                                    \

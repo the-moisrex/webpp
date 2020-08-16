@@ -32,7 +32,7 @@ namespace webpp {
     struct cgi_request : public REL {
         using traits_type            = TraitsType;
         using interface_type         = IfaceType;
-        using request_extension_list = REH;
+        using request_extension_list = REL;
         using allocator_type   = typename traits_type::template allocator<typename traits_type::char_type>;
         using application_type = typename interface_type::application_type;
 

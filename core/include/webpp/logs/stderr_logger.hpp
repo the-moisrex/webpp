@@ -1,0 +1,71 @@
+// Created by moisrex on 8/16/20.
+
+#ifndef WEBPP_STDERR_LOGGER_HPP
+#define WEBPP_STDERR_LOGGER_HPP
+
+#include "../std/format.hpp"
+#include "../std/string_view.hpp"
+#include "../traits/traits_concepts.hpp"
+
+#include <cstdio>
+#ifndef WEBPP_FMT_LIB
+#    include <iostream>
+#endif
+
+namespace webpp {
+
+    template <auto stream_getter>
+    struct stderr_logger {
+        using logger_type = stderr_logger;
+        using logger_ref  = logger_type const; // copy the logger, there's nothing to copy
+        using logger_ptr  = logger_type*;      // there's a syntax difference, so we can't copy
+
+        static constexpr auto default_category_name = "Default";
+
+        enum struct logging_type : stl::uint_fast8_t { info, warning, error, critical, unknown };
+
+        static constexpr auto logging_type_to_string(logging_type lt) noexcept {
+            switch (lt) {
+                case logging_type::info: return "INFO";
+                case logging_type::warning: return "WARNING";
+                case logging_type::error: return "ERROR";
+                case logging_type::critical: return "CRITICAL";
+                case logging_type::unknown: return "UNKNOWN";
+            }
+            return "UNSPECIFIED";
+        }
+
+        void log(logging_type lt, istl::ConvertibleToStringView auto&& category,
+                 istl::ConvertibleToStringView auto&& details) const noexcept {
+#ifdef WEBPP_FMT_LIB
+            fmt::print(stream_getter(), "[{}, {}]: {}\n", logging_type_to_string(lt),
+                       stl::forward<decltype(category)>(category), stl::forward<decltype(details)>(details));
+#else
+            stl::printf(stream_getter(), "[{}, {}]: {}\n", logging_type_to_string(lt),
+                        stl::forward<decltype(category)>(category), stl::forward<decltype(details)>(details));
+#endif
+        }
+
+#define WEBPP_LOGGER_SHORTCUT(logging_name)                                                 \
+    inline void logging_name(istl::ConvertibleToStringView auto&& details) const noexcept { \
+        return log(logging_type::logging_name, default_category_name,                       \
+                   stl::forward<decltype(details)>(details));                               \
+    }                                                                                       \
+    inline void logging_name(istl::ConvertibleToStringView auto&& category,                 \
+                             istl::ConvertibleToStringView auto&& details) const noexcept { \
+        return log(logging_type::logging_name, stl::forward<decltype(category)>(category),  \
+                   stl::forward<decltype(details)>(details));                               \
+    }
+
+        WEBPP_LOGGER_SHORTCUT(info)
+        WEBPP_LOGGER_SHORTCUT(warning)
+        WEBPP_LOGGER_SHORTCUT(error)
+        WEBPP_LOGGER_SHORTCUT(critical)
+        WEBPP_LOGGER_SHORTCUT(unkown)
+
+#undef WEBPP_LOGGER_SHORTCUT
+    };
+
+} // namespace webpp
+
+#endif // WEBPP_STDERR_LOGGER_HPP

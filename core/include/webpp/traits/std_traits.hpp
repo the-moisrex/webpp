@@ -3,7 +3,7 @@
 #ifndef WEBPP_STD_TRAITS_H
 #define WEBPP_STD_TRAITS_H
 
-#include "./traits.hpp"
+#include "../logs/stderr_logger.hpp"
 
 #include <iterator>
 #include <ostream>
@@ -31,6 +31,11 @@ namespace webpp {
         using ostream_iterator_type = stl::ostream_iterator<Type, char_type, char_traits>;
 
         using ostream_type = stl::basic_ostream<char_type, char_traits>;
+        static auto constexpr stderr_func() noexcept {
+            return stderr;
+        };
+
+        using logger_type = stderr_logger<stderr_func>;
     };
 
     using std_traits = basic_std_traits<char, stl::char_traits<char>, stl::allocator>;

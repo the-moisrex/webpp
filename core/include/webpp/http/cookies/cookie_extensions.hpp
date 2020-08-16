@@ -14,13 +14,13 @@ namespace webpp {
     struct cookies {
 
         template <HeaderField HF>
-        struct cookie_header_field_extension : public virtual HF {
+        struct cookie_header_field_extension : public HF {
 
           private:
             using super = HF;
 
           public:
-            using traits_type = super::traits_type;
+            using traits_type = typename super::traits_type;
 
             /**
              * Check if the header value is a cookie; it only checks the key not

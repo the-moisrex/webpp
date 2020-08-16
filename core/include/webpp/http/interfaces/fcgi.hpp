@@ -7,6 +7,8 @@
 #include "../request.hpp"
 #include "./common/server.hpp"
 
+#include <type_traits>
+
 
 namespace webpp {
 
@@ -18,14 +20,15 @@ namespace webpp {
         using allocator_type   = typename traits_type::template allocator<typename traits_type::char_type>;
         using application_type = typename interface_type::application_type;
         using logger_type      = typename traits_type::logger;
+        using logger_type_ref      = typename traits_type::logger::logger_ref;
 
       private:
         allocator_type alloc;
 
       public:
-        logger_type& logger;
+        [[no_unique_address]] logger_type_ref logger;
 
-        fcgi_request(logger_type& logger, allocator_type const& alloc = allocator_type{}) noexcept
+        fcgi_request(logger_type_ref logger = logger_type{}, allocator_type const& alloc = allocator_type{}) noexcept
           : alloc(alloc),
             logger{logger} {}
 
@@ -45,16 +48,18 @@ namespace webpp {
         using interface_type   = fcgi<traits_type, application_type, extension_list>;
         using request_type     = simple_request<traits_type, fcgi_request, interface_type, extension_list>;
         using logger_type      = typename traits_type::logger;
+        using logger_type_ref  = typename traits_type::logger::logger_ref;
 
         static constexpr auto default_listen_address = "0.0.0.0";
         static constexpr auto default_listen_port    = 8080u;
+        static constexpr auto logging_category       = "FastCGI";
 
-        server_type                          server;
-        stl::set<traits_type, endpoint_type> endpoints;
-        application_type                     app;
-        logger_type                          logger;
+        server_type                           server;
+        stl::set<traits_type, endpoint_type>  endpoints;
+        application_type                      app;
+        [[no_unique_address]] logger_type_ref logger;
 
-        fcgi(logger_type logger = logger_type{}) noexcept : logger{logger} {};
+        fcgi(logger_type_ref logger = logger_type{}) noexcept : logger{logger} {};
 
         void operator()() noexcept {
             if (endpoints.empty()) {
@@ -62,9 +67,10 @@ namespace webpp {
                 endpoints.emplace(stl::net::ip::make_address(default_listen_address, ec),
                                   default_listen_port);
                 if (!ec) {
-                    logger.terminate(stl::format("We're not able to listen to {}:{}", default_listen_address,
-                                                 default_listen_port),
-                                     ec);
+                    logger.critical(logging_category,
+                                    stl::format("We're not able to listen to {}:{}", default_listen_address,
+                                                default_listen_port),
+                                    ec);
                     return;
                 }
             }

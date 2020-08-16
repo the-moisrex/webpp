@@ -9,6 +9,8 @@
 #    include <format>
 #elif __has_include(<fmt/format.h>)
 #    include <fmt/format.h>
+#    include <fmt/printf.h>
+#define WEBPP_FMT_LIB 1
 namespace webpp::stl {
 
     template <typename... Args>

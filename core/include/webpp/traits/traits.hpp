@@ -6,55 +6,48 @@
 
 namespace webpp {
 
-    /**
-     * Automatically choose a string type based on mutability requested
-     */
-    template <typename TraitsType, bool Mutable>
-    using auto_string_type =
-      stl::conditional_t<Mutable, typename TraitsType::string_type,
-                         typename TraitsType::string_view_type>;
 
 
-    /**
-     * todo: Use this, or remove this
-     */
-    template <typename FromTraits, typename ToTraits>
-    struct traits_convert {
-        using ft = FromTraits;
-        using tt = ToTraits;
-
-        using ft_char_type = typename ft::char_type;
-        using tt_char_type = typename tt::char_type;
-
-        using ft_string_view_type = typename ft::string_view_type;
-        using tt_string_view_type = typename tt::string_view_type;
-
-        using ft_string_type = typename ft::string_type;
-        using tt_string_type = typename tt::string_type;
-
-        /**
-         * Converting the char_type
-         */
-        static constexpr auto to_char_type(ft_char_type ch) noexcept {
-            return static_cast<tt_char_type>(ch);
-        }
-
-        //        static constexpr auto to_string_view(ft_string_view_type const
-        //        &sv) noexcept {
-        //            // todo: very bad thing:
-        //            return tt_string_view_type{sv.data(), sv.size()};
-        //        }
-        //
-        static constexpr auto to_string(ft_string_type const& str) noexcept {
-            tt_string_type res;
-            res.resize(str.size() + 1);
-            auto it = res.begin();
-            for (auto c : str)
-                *it++ = to_char_type(c);
-            *it = to_char_type('\0');
-            return res;
-        }
-    };
+    //    /**
+    //     * todo: Use this, or remove this
+    //     */
+    //    template <typename FromTraits, typename ToTraits>
+    //    struct traits_convert {
+    //        using ft = FromTraits;
+    //        using tt = ToTraits;
+    //
+    //        using ft_char_type = typename ft::char_type;
+    //        using tt_char_type = typename tt::char_type;
+    //
+    //        using ft_string_view_type = typename ft::string_view_type;
+    //        using tt_string_view_type = typename tt::string_view_type;
+    //
+    //        using ft_string_type = typename ft::string_type;
+    //        using tt_string_type = typename tt::string_type;
+    //
+    //        /**
+    //         * Converting the char_type
+    //         */
+    //        static constexpr auto to_char_type(ft_char_type ch) noexcept {
+    //            return static_cast<tt_char_type>(ch);
+    //        }
+    //
+    //        //        static constexpr auto to_string_view(ft_string_view_type const
+    //        //        &sv) noexcept {
+    //        //            // todo: very bad thing:
+    //        //            return tt_string_view_type{sv.data(), sv.size()};
+    //        //        }
+    //        //
+    //        static constexpr auto to_string(ft_string_type const& str) noexcept {
+    //            tt_string_type res;
+    //            res.resize(str.size() + 1);
+    //            auto it = res.begin();
+    //            for (auto c : str)
+    //                *it++ = to_char_type(c);
+    //            *it = to_char_type('\0');
+    //            return res;
+    //        }
+    //    };
 
 } // namespace webpp
 

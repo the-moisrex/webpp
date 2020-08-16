@@ -11,8 +11,8 @@ namespace webpp::istl {
     template <typename X>
     concept CharTraits = Destructible<typename X::state_type>&& CopyAssignable<typename X::state_type>&&
       CopyConstructible<typename X::state_type>&& DefaultConstructible<typename X::state_type>&& requires(
-      typename X::char_type c, typename X::char_type const* p, typename X::char_type* s, stl::size_t n,
-      typename X::int_type e, typename X::char_type const& ch) {
+        typename X::char_type c, typename X::char_type const* p, typename X::char_type* s, stl::size_t n,
+        typename X::int_type e, typename X::char_type const& ch) {
         typename X::char_type;
         typename X::int_type;
         typename X::off_type;
@@ -108,6 +108,22 @@ namespace webpp::istl {
 
     template <typename T>
     concept CharType = stl::is_integral_v<stl::decay_t<T>>;
-}
+
+
+
+
+
+} // namespace webpp::istl
+
+namespace webpp {
+
+    /**
+     * Automatically choose a string type based on mutability requested
+     */
+    template <typename TraitsType, bool Mutable>
+    using auto_string_type =
+      stl::conditional_t<Mutable, typename TraitsType::string_type, typename TraitsType::string_view_type>;
+
+} // namespace webpp
 
 #endif // WEBPP_STRING_CONCEPTS_HPP
