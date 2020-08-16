@@ -1,7 +1,7 @@
 // Created by moisrex on 8/16/20.
 
-#ifndef WEBPP_STDERR_LOGGER_HPP
-#define WEBPP_STDERR_LOGGER_HPP
+#ifndef WEBPP_STD_LOGGER_HPP
+#define WEBPP_STD_LOGGER_HPP
 
 #include "../std/format.hpp"
 #include "../std/string_view.hpp"
@@ -19,8 +19,8 @@ namespace webpp {
      * @tparam stream_getter is a callable that gets a FILE* (like stderr, stdin, stdout)
      */
     template <auto stream_getter>
-    struct stderr_logger {
-        using logger_type = stderr_logger;
+    struct std_logger {
+        using logger_type = std_logger;
         using logger_ref  = logger_type const; // copy the logger, there's nothing to copy
         using logger_ptr  = logger_type*;      // there's a syntax difference, so we can't copy
 
@@ -93,4 +93,4 @@ namespace webpp {
 
 } // namespace webpp
 
-#endif // WEBPP_STDERR_LOGGER_HPP
+#endif // WEBPP_STD_LOGGER_HPP

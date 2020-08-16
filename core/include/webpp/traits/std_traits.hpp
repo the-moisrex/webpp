@@ -3,7 +3,7 @@
 #ifndef WEBPP_STD_TRAITS_H
 #define WEBPP_STD_TRAITS_H
 
-#include "../logs/stderr_logger.hpp"
+#include "../logs/std_logger.hpp"
 
 #include <iterator>
 #include <ostream>
@@ -35,7 +35,7 @@ namespace webpp {
             return stderr;
         };
 
-        using logger_type = stderr_logger<stderr_func>;
+        using logger_type = std_logger<stderr_func>;
     };
 
     using std_traits = basic_std_traits<char, stl::char_traits<char>, stl::allocator>;
