@@ -39,6 +39,10 @@ namespace webpp {
             return "UNSPECIFIED";
         }
 
+        static constexpr stl::size_t logging_type_string_size(logging_type lt) noexcept {
+            return stl::string_view{logging_type_to_string(lt)}.size();
+        }
+
         void log(logging_type lt, istl::ConvertibleToStringView auto&& category,
                  istl::ConvertibleToStringView auto&& details) const noexcept {
 #ifdef WEBPP_FMT_LIB
@@ -50,35 +54,51 @@ namespace webpp {
 #endif
         }
 
-#define WEBPP_LOGGER_SHORTCUT(logging_name)                                                    \
-                                                                                               \
-    void logging_name(istl::ConvertibleToStringView auto&& details) const noexcept {           \
-        return log(logging_type::logging_name, default_category_name,                          \
-                   stl::forward<decltype(details)>(details));                                  \
-    }                                                                                          \
-                                                                                               \
-    void logging_name(istl::ConvertibleToStringView auto&& category,                           \
-                      istl::ConvertibleToStringView auto&& details) const noexcept {           \
-        return log(logging_type::logging_name, stl::forward<decltype(category)>(category),     \
-                   stl::forward<decltype(details)>(details));                                  \
-    }                                                                                          \
-                                                                                               \
-    void logging_name(istl::ConvertibleToStringView auto&& category,                           \
-                      istl::ConvertibleToStringView auto&& details, stl::error_code const& ec) \
-      const noexcept {                                                                         \
-        auto old_details = istl::to_string_view(stl::forward<decltype(details)>(details));     \
-        auto new_details = stl::format("{}\nerror message: {}", old_details, ec.message());    \
-        return log(logging_type::logging_name, stl::forward<decltype(category)>(category),     \
-                   stl::move(new_details));                                                    \
-    }                                                                                          \
-                                                                                               \
-    void logging_name(istl::ConvertibleToStringView auto&& category,                           \
-                      istl::ConvertibleToStringView auto&& details, stl::exception const& ex)  \
-      const noexcept {                                                                         \
-        auto old_details = istl::to_string_view(stl::forward<decltype(details)>(details));     \
-        auto new_details = stl::format("{}\nerror message: {}", old_details, ex.what());       \
-        return log(logging_type::logging_name, stl::forward<decltype(category)>(category),     \
-                   stl::move(new_details));                                                    \
+#define WEBPP_LOGGER_SHORTCUT(logging_name)                                                                 \
+                                                                                                            \
+    void logging_name(istl::ConvertibleToStringView auto&& details) const noexcept {                        \
+        return log(logging_type::logging_name, default_category_name,                                       \
+                   stl::forward<decltype(details)>(details));                                               \
+    }                                                                                                       \
+                                                                                                            \
+    void logging_name(istl::ConvertibleToStringView auto&& category,                                        \
+                      istl::ConvertibleToStringView auto&& details) const noexcept {                        \
+        return log(logging_type::logging_name, stl::forward<decltype(category)>(category),                  \
+                   stl::forward<decltype(details)>(details));                                               \
+    }                                                                                                       \
+                                                                                                            \
+    void logging_name(istl::ConvertibleToStringView auto&& category,                                        \
+                      istl::ConvertibleToStringView auto&& details, stl::error_code const& ec)              \
+      const noexcept {                                                                                      \
+        stl::size_t space_count =                                                                           \
+          6 + logging_type_string_size(logging_type::logging_name) + istl::to_string_view(category).size(); \
+        auto old_details = istl::to_string_view(stl::forward<decltype(details)>(details));                  \
+        auto new_details = stl::format("{2}\n{1: >{0}}error message: {3}", stl::move(space_count), "",      \
+                                       old_details, ec.message());                                          \
+        return log(logging_type::logging_name, stl::forward<decltype(category)>(category),                  \
+                   stl::move(new_details));                                                                 \
+    }                                                                                                       \
+                                                                                                            \
+    void logging_name(istl::ConvertibleToStringView auto&& category,                                        \
+                      istl::ConvertibleToStringView auto&& details, stl::exception const& ex)               \
+      const noexcept {                                                                                      \
+        stl::size_t space_count =                                                                           \
+          6 + logging_type_string_size(logging_type::logging_name) + istl::to_string_view(category).size(); \
+        auto old_details = istl::to_string_view(stl::forward<decltype(details)>(details));                  \
+        auto new_details = stl::format("{2}\n{1: >{0}}error message: {3}", stl::move(space_count), "",      \
+                                       old_details, ex.what());                                             \
+        return log(logging_type::logging_name, stl::forward<decltype(category)>(category),                  \
+                   stl::move(new_details));                                                                 \
+    }                                                                                                       \
+                                                                                                            \
+    void logging_name(istl::ConvertibleToStringView auto&& details, stl::error_code const& ec)              \
+      const noexcept {                                                                                      \
+        return logging_name(default_category_name, stl::forward<decltype(details)>(details), ec);           \
+    }                                                                                                       \
+                                                                                                            \
+    void logging_name(istl::ConvertibleToStringView auto&& details, stl::exception const& ex)               \
+      const noexcept {                                                                                      \
+        return logging_name(default_category_name, stl::forward<decltype(details)>(details), ex);           \
     }
 
 
@@ -91,6 +111,17 @@ namespace webpp {
 #undef WEBPP_LOGGER_SHORTCUT
     };
 
-} // namespace webpp
+    inline auto stderr_functor() noexcept {
+        return stderr;
+    }
+
+    inline auto stdout_functor() noexcept {
+        return stderr;
+    }
+
+    using stderr_logger = std_logger<stderr_functor>;
+    using stdout_logger = std_logger<stdout_functor>;
+
+}; // namespace webpp
 
 #endif // WEBPP_STD_LOGGER_HPP

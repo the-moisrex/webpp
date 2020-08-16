@@ -31,11 +31,8 @@ namespace webpp {
         using ostream_iterator_type = stl::ostream_iterator<Type, char_type, char_traits>;
 
         using ostream_type = stl::basic_ostream<char_type, char_traits>;
-        static auto constexpr stderr_func() noexcept {
-            return stderr;
-        };
 
-        using logger_type = std_logger<stderr_func>;
+        using logger_type = stderr_logger;
     };
 
     using std_traits = basic_std_traits<char, stl::char_traits<char>, stl::allocator>;
