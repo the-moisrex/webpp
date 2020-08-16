@@ -29,9 +29,10 @@ namespace webpp {
      * the user is able to use this class properly and easily.
      */
     template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL, Interface IfaceType>
-    struct cgi_request : public stl::remove_cvref_t<REL> {
-        using traits_type      = TraitsType;
-        using interface_type   = IfaceType;
+    struct cgi_request : public REL {
+        using traits_type            = TraitsType;
+        using interface_type         = IfaceType;
+        using request_extension_list = REH;
         using allocator_type   = typename traits_type::template allocator<typename traits_type::char_type>;
         using application_type = typename interface_type::application_type;
 
@@ -327,12 +328,12 @@ namespace webpp {
       public:
         using traits_type      = TraitsType;
         using application_type = App;
-        using extension_list   = EList;
+        using extension_list   = stl::remove_cvref_t<EList>;
         using interface_type   = cgi<traits_type, application_type, extension_list>;
         using str_view_type    = typename TraitsType::string_view_type;
         using str_type         = typename TraitsType::string_type;
         using ostream_t        = typename TraitsType::ostream_type;
-        using request_type     = simple_request<traits_type, cgi_request, interface_type, EList>;
+        using request_type     = simple_request<traits_type, cgi_request, interface_type, extension_list>;
         using allocator_type   = typename request_type::allocator_type;
 
         application_type app;

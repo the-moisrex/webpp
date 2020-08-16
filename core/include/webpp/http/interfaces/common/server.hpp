@@ -4,27 +4,30 @@
 #include "../../../std/buffer.hpp"
 #include "../../../std/internet.hpp"
 #include "../../../std/io_context.hpp"
+#include "../../../std/vector.hpp"
+#include "../../../traits/traits_concepts.hpp"
 #include "connection.hpp"
 #include "constants.hpp"
 
 #include <boost/asio/thread_pool.hpp>
 #include <memory>
-#include <vector>
 
 namespace webpp::common {
 
     /**
      * This class is the server and the connection manager.
      */
+    template <Traits TraitsType>
     class server {
       public:
-        using socket_t     = stl::net::ip::tcp::socket;
-        using endpoint_t   = stl::net::ip::tcp::endpoint;
-        using io_context_t = stl::net::io_context;
+        using traits_type     = TraitsType;
+        using socket_type     = stl::net::ip::tcp::socket;
+        using endpoint_type   = stl::net::ip::tcp::endpoint;
+        using io_context_type = stl::net::io_context;
 
         // I share this publicly because I know this file will not be used in a
         // header file so the final user doesn't have access to this class.
-        io_context_t io;
+        io_context_type io;
 
       private:
         stl::vector<connection>                  connections;
@@ -34,7 +37,7 @@ namespace webpp::common {
         void accept() noexcept {
             //            for (auto& acceptor : acceptors)
             //                acceptor.async_accept(
-            //                    [this](stl::error_code const& ec, socket_t
+            //                    [this](stl::error_code const& ec, socket_type
             //                    socket) {
             //                        // Check whether the server was stopped by a signal
             //
@@ -56,7 +59,7 @@ namespace webpp::common {
 
       public:
         // TODO: optimize this
-        server(stl::vector<endpoint_t> endpoints) noexcept {};
+        server(istl::vector<traits_type, endpoint_type> endpoints) noexcept {};
 
         void run() noexcept {
             // Run until the tasks finishes normally.
