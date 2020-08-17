@@ -15,41 +15,19 @@ namespace webpp {
         typename T::logger_ptr;
         typename T::logger_type;
 
-        {logger.info("log something")};
-        {logger.info("category", "log something")};
-        {logger.info("category", "Error.")};
-        {logger.info("category", "Error.", ec)};
-        {logger.info("category", "Error.", ex)};
+#define WEBPP_LOGGER_CONCEPT(logger_name)            \
+    logger.logger_name("log something");             \
+    logger.logger_name("category", "log something"); \
+    logger.logger_name("category", "Error.");        \
+    logger.logger_name("category", "Error.", ec);    \
+    logger.logger_name("category", "Error.", ex);
 
-        {logger.debug("log something")};
-        {logger.debug("category", "log something")};
-        {logger.debug("category", "Error.")};
-        {logger.debug("category", "Error.", ec)};
-        {logger.debug("category", "Error.", ex)};
+        WEBPP_LOGGER_CONCEPT(info)
+        WEBPP_LOGGER_CONCEPT(warning)
+        WEBPP_LOGGER_CONCEPT(error)
+        WEBPP_LOGGER_CONCEPT(critical)
 
-        {logger.error("log something")};
-        {logger.error("category", "log something")};
-        {logger.error("category", "Error.")};
-        {logger.error("category", "Error.", ec)};
-        {logger.error("category", "Error.", ex)};
-
-        {logger.warning("log something")};
-        {logger.warning("category", "log something")};
-        {logger.warning("category", "Error.")};
-        {logger.warning("category", "Error.", ec)};
-        {logger.warning("category", "Error.", ex)};
-
-        {logger.critical("log something")};
-        {logger.critical("category", "log something")};
-        {logger.critical("category", "Error.")};
-        {logger.critical("category", "Error.", ec)};
-        {logger.critical("category", "Error.", ex)};
-
-        {logger.terminate("log something")};
-        {logger.terminate("category", "log something")};
-        {logger.terminate("category", "Error.")};
-        {logger.terminate("category", "Error.", ec)};
-        {logger.terminate("category", "Error.", ex)};
+#undef WEBPP_LOGGER_CONCEPT
     };
 
 } // namespace webpp

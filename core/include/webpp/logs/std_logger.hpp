@@ -26,10 +26,11 @@ namespace webpp {
 
         static constexpr auto default_category_name = "Default";
 
-        enum struct logging_type : stl::uint_fast8_t { info, warning, error, critical, unknown };
+        enum struct logging_type : stl::uint_fast8_t { debug, info, warning, error, critical, unknown };
 
         static constexpr auto logging_type_to_string(logging_type lt) noexcept {
             switch (lt) {
+                case logging_type::debug: return "DEBUG";
                 case logging_type::info: return "INFO";
                 case logging_type::warning: return "WARNING";
                 case logging_type::error: return "ERROR";
@@ -102,6 +103,7 @@ namespace webpp {
     }
 
 
+        WEBPP_LOGGER_SHORTCUT(debug)
         WEBPP_LOGGER_SHORTCUT(info)
         WEBPP_LOGGER_SHORTCUT(warning)
         WEBPP_LOGGER_SHORTCUT(error)
