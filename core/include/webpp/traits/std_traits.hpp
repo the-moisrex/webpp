@@ -4,6 +4,7 @@
 #define WEBPP_STD_TRAITS_H
 
 #include "../logs/std_logger.hpp"
+#include "../server/asio/asio_thread_pool.hpp"
 
 #include <iterator>
 #include <ostream>
@@ -33,6 +34,8 @@ namespace webpp {
         using ostream_type = stl::basic_ostream<char_type, char_traits>;
 
         using logger_type = stderr_logger;
+
+        using thread_pool_type = asio_thread_pool;
     };
 
     using std_traits = basic_std_traits<char, stl::char_traits<char>, stl::allocator>;

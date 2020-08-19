@@ -1,7 +1,7 @@
-// Created by moisrex on 4/7/20.
+// Created by moisrex on 8/18/20.
 
-#ifndef WEBPP_THREAD_POOL_H
-#define WEBPP_THREAD_POOL_H
+#ifndef WEBPP_SERVER_CONCEPTS_HPP
+#define WEBPP_SERVER_CONCEPTS_HPP
 
 namespace webpp {
 
@@ -33,10 +33,19 @@ namespace webpp {
      * - [ ] Constexpr way to hash a function object into a known number in the
      * thread pool
      */
-    class thread_pool {
-      private:
-      public:
+    template <typename T>
+    concept ThreadPool = requires (T tp, decltype([]{}) lambda) {
+        tp.post(lambda);
+        tp.defer(lambda);
+        tp.dispatch(lambda);
     };
-} // namespace webpp
 
-#endif // WEBPP_THREAD_POOL_H
+
+    template <typename T>
+    concept Server = requires {
+      ThreadPool<typename T::thread_pool_type>;
+    };
+
+}
+
+#endif // WEBPP_THREAD_POOL_CONCEPTS_HPP

@@ -1,18 +1,19 @@
 #ifndef WEBPP_INTERFACES_COMMON_SERVER_H
 #define WEBPP_INTERFACES_COMMON_SERVER_H
 
-#include "connection.hpp"
-#include "constants.hpp"
-#include "webpp/std/buffer.hpp"
-#include "webpp/std/internet.hpp"
-#include "webpp/std/io_context.hpp"
-#include "webpp/std/vector.hpp"
-#include "webpp/traits/traits_concepts.hpp"
+#include "../../namespace.hpp"
+// clang-format off
+#include asio(ip/tcp)
+// clang-format on
 
-#include <boost/asio/thread_pool.hpp>
+#include "../../traits/traits_concepts.hpp"
+#include "./asio_thread_pool.hpp"
+#include "./connection.hpp"
+#include "./constants.hpp"
+
 #include <memory>
 
-namespace webpp::common {
+namespace webpp {
 
     /**
      * This class is the server and the connection manager.
@@ -20,19 +21,22 @@ namespace webpp::common {
     template <Traits TraitsType>
     class server {
       public:
-        using traits_type     = TraitsType;
-        using socket_type     = stl::net::ip::tcp::socket;
-        using endpoint_type   = stl::net::ip::tcp::endpoint;
-        using io_context_type = stl::net::io_context;
+        using traits_type      = TraitsType;
+        using socket_type      = asio::ip::tcp::socket;
+        using endpoint_type    = asio::ip::tcp::endpoint;
+        using acceptor_type    = asio::ip::tcp::acceptor;
+        using io_context_type  = asio::io_context;
+        using thread_pool_type = typename TraitsType::thread_pool_type;
+
 
         // I share this publicly because I know this file will not be used in a
         // header file so the final user doesn't have access to this class.
         io_context_type io;
 
       private:
-        stl::vector<connection>                  connections;
-        stl::vector<stl::net::ip::tcp::acceptor> acceptors;
-        boost::asio::thread_pool                 pool;
+        istl::vector<traits_type, connection>    connections;
+        istl::vector<traits_type, acceptor_type> acceptors;
+        thread_pool_type                         pool;
 
         void accept() noexcept {
             //            for (auto& acceptor : acceptors)
@@ -80,6 +84,6 @@ namespace webpp::common {
         }
     };
 
-} // namespace webpp::common
+} // namespace webpp
 
 #endif // WEBPP_INTERFACES_COMMON_SERVER_H

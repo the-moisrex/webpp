@@ -1,8 +1,10 @@
-#ifndef WEBPP_SESSION_HPP
-#define WEBPP_SESSION_HPP
+#ifndef WEBPP_ASIO_SESSION_HPP
+#define WEBPP_ASIO_SESSION_HPP
 
-#include "../std/internet.hpp"
-#include "../std/socket.hpp"
+#include "../../namespace.hpp"
+// clang-format off
+#include asio(ip/tcp)
+// clang-format on
 
 #include <system_error>
 #include <utility>
@@ -10,10 +12,10 @@
 namespace webpp {
     class session {
       public:
-        using socket_t = stl::net::ip::tcp::socket;
+        using socket_type = asio::ip::tcp::socket;
 
       private:
-        socket_t _socket;
+        socket_type socket;
 
         /**
          * This function will read the data and pass it to read_callback to handle
@@ -31,7 +33,7 @@ namespace webpp {
         void write_callback(stl::error_code const&, stl::size_t length) noexcept;
 
       public:
-        session(socket_t&& _socket) noexcept : _socket(stl::move(_socket)) {}
+        session(socket_type&& _socket) noexcept : socket(stl::move(_socket)) {}
     };
 
 } // namespace webpp
