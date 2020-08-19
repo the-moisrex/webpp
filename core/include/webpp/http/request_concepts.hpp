@@ -7,7 +7,7 @@
 
 #include "../extensions/extension.hpp"
 #include "../traits/std_traits.hpp"
-#include "./interfaces/basic_interface_concepts.hpp"
+#include "./interfaces/interface_concepts.hpp"
 
 namespace webpp {
 

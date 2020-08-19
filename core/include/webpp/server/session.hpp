@@ -1,8 +1,8 @@
-#ifndef WEBPP_FASTCGI_SESSION_HPP
-#define WEBPP_FASTCGI_SESSION_HPP
+#ifndef WEBPP_SESSION_HPP
+#define WEBPP_SESSION_HPP
 
-#include "../../../std/internet.hpp"
-#include "../../../std/socket.hpp"
+#include "../std/internet.hpp"
+#include "../std/socket.hpp"
 
 #include <system_error>
 #include <utility>

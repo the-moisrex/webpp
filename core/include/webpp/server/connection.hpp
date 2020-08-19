@@ -1,10 +1,10 @@
 #ifndef WEBPP_INTERFACE_COMMON_CONNECTION_H
 #define WEBPP_INTERFACE_COMMON_CONNECTION_H
 
-#include "../../../std/buffer.hpp"
-#include "../../../std/internet.hpp"
-#include "../../../std/socket.hpp"
-#include "constants.hpp"
+#include "../std/buffer.hpp"
+#include "../std/internet.hpp"
+#include "../std/socket.hpp"
+#include "./constants.hpp"
 
 #include <memory>
 #include <system_error>

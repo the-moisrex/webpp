@@ -5,7 +5,7 @@
 #include "../../std/set.hpp"
 #include "../../std/vector.hpp"
 #include "../request.hpp"
-#include "./common/server.hpp"
+#include "../../server/server.hpp"
 
 #include <type_traits>
 
@@ -20,7 +20,7 @@ namespace webpp {
         using allocator_type   = typename traits_type::template allocator<typename traits_type::char_type>;
         using application_type = typename interface_type::application_type;
         using logger_type      = typename traits_type::logger;
-        using logger_type_ref      = typename traits_type::logger::logger_ref;
+        using logger_type_ref  = typename traits_type::logger::logger_ref;
 
       private:
         allocator_type alloc;
@@ -28,7 +28,8 @@ namespace webpp {
       public:
         [[no_unique_address]] logger_type_ref logger;
 
-        fcgi_request(logger_type_ref logger = logger_type{}, allocator_type const& alloc = allocator_type{}) noexcept
+        fcgi_request(logger_type_ref       logger = logger_type{},
+                     allocator_type const& alloc  = allocator_type{}) noexcept
           : alloc(alloc),
             logger{logger} {}
 
@@ -75,20 +76,6 @@ namespace webpp {
                 }
             }
             server();
-        }
-
-        auto resolve_endpoints() noexcept {
-            stl::net::ip::tcp::resolver resolver(server.io);
-            stl::error_code             ec;
-            //        std::net::ip::tcp::resolver::results_type _endpoints;
-            //        if (_fcgi->endpoints().empty()) {
-            //            _endpoints = resolver.resolve(
-            //                default_fcgi_listen_addr,
-            //                std::to_string(default_fcgi_listen_port));
-            //        } else {
-            //            _endpoints = std::net::ip::tcp::v4();
-            //        }
-            return stl::vector<traits_type, stl::net::ip::tcp::endpoint>{};
         }
     };
 

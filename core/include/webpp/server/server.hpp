@@ -1,13 +1,13 @@
 #ifndef WEBPP_INTERFACES_COMMON_SERVER_H
 #define WEBPP_INTERFACES_COMMON_SERVER_H
 
-#include "../../../std/buffer.hpp"
-#include "../../../std/internet.hpp"
-#include "../../../std/io_context.hpp"
-#include "../../../std/vector.hpp"
-#include "../../../traits/traits_concepts.hpp"
 #include "connection.hpp"
 #include "constants.hpp"
+#include "webpp/std/buffer.hpp"
+#include "webpp/std/internet.hpp"
+#include "webpp/std/io_context.hpp"
+#include "webpp/std/vector.hpp"
+#include "webpp/traits/traits_concepts.hpp"
 
 #include <boost/asio/thread_pool.hpp>
 #include <memory>
