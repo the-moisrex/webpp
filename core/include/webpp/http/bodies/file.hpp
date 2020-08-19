@@ -1,6 +1,7 @@
 #ifndef WEBPP_HTTP_FILE_H
 #define WEBPP_HTTP_FILE_H
 
+#include "../../extensions/extension.hpp"
 #include "../../traits/traits_concepts.hpp"
 
 #include <filesystem>
@@ -66,25 +67,22 @@ namespace webpp {
             }
 
           public:
-            constexpr type(alloc_type alloc = allocator_type{}) noexcept : content{"", alloc} {
-            }
+            constexpr type(alloc_type alloc = allocator_type{}) noexcept : content{"", alloc} {}
 
             constexpr type(string_view_type filename, alloc_type alloc = allocator_type{}) noexcept {
                 load_file(filename, alloc);
             }
 
             // fixme: why? why can't I have non-constexpr constructor?
-//            type(stl::filesystem::path filename, alloc_type alloc = allocator_type{}) noexcept {
-//                load_file(filename, alloc);
-//            }
+            //            type(stl::filesystem::path filename, alloc_type alloc = allocator_type{}) noexcept {
+            //                load_file(filename, alloc);
+            //            }
 
-            constexpr type(type const& fbody) noexcept : content{fbody.content}, _error{fbody._error} {
-            }
+            constexpr type(type const& fbody) noexcept : content{fbody.content}, _error{fbody._error} {}
 
             constexpr type(type&& fbody) noexcept
               : content{stl::move(fbody.content)},
-                _error{stl::move(fbody._error)} {
-            }
+                _error{stl::move(fbody._error)} {}
 
             void load(stl::filesystem::path _file) noexcept {
                 load_file(_file, content.get_allocator());

@@ -84,7 +84,7 @@ namespace webpp {
 
 
 
-    struct response_header_descriptor {
+    struct response_headers_descriptor {
         template <typename ExtensionType>
         struct has_related_extension_pack {
             static constexpr bool value = requires {

@@ -32,8 +32,8 @@ namespace webpp::istl {
 
 
     template <typename T>
-    concept StringView = requires(T str) {
-        T{"str"};
+    concept StringView = requires(stl::remove_cvref_t<T> str) {
+        stl::remove_cvref_t<T>{"str"};
         str.empty();
         str.at(0);
         str.data();
@@ -43,9 +43,19 @@ namespace webpp::istl {
         str.starts_with('a');
         str.ends_with('a');
         str.substr('a');
-        T::npos;
+        str.begin();
+        str.end();
+        str.cbegin();
+        str.cend();
+        stl::remove_cvref_t<T>::npos;
 
-        typename T::value_type;
+        typename stl::remove_cvref_t<T>::value_type;
+    } && !requires (stl::remove_cvref_t<T> str){
+        // the things that std::string has
+        str.clear();
+        str.shrink_to_fit();
+        str.capacity();
+        {str = "str"};
     };
 
 

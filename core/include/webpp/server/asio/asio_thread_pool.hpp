@@ -3,7 +3,7 @@
 #ifndef WEBPP_THREAD_POOL_H
 #define WEBPP_THREAD_POOL_H
 
-#include "webpp/namespace.hpp"
+#include "../../namespace.hpp"
 
 #include asio(thread_pool)
 

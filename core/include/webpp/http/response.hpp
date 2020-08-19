@@ -4,6 +4,7 @@
 #include "../traits/traits_concepts.hpp"
 #include "../utils/casts.hpp"
 #include "./response_concepts.hpp"
+#include "./response_headers.hpp"
 #include "headers.hpp"
 #include "response_body.hpp"
 
@@ -33,7 +34,7 @@ namespace webpp {
         headers_type headers{};
 
         basic_response(auto&& arg1, auto&&... args) noexcept
-          requires(!one_of<decltype(arg1), header_type, status_code_type, body_type>)
+          requires(!one_of<decltype(arg1), headers_type, status_code_type, body_type>)
           : EList{stl::forward<decltype(args)>(args)...} {}
 
         basic_response() noexcept                          = default;
@@ -52,8 +53,8 @@ namespace webpp {
         explicit basic_response(body_type const& b) noexcept : EList{}, body(b) {}
         explicit basic_response(body_type&& b) noexcept : EList{}, body(stl::move(b)) {}
 
-        explicit basic_response(header_type&& e) noexcept : EList{}, headers(stl::move(e)) {}
-        explicit basic_response(header_type const& e) noexcept : EList{}, headers(e) {}
+        explicit basic_response(headers_type&& e) noexcept : EList{}, headers(stl::move(e)) {}
+        explicit basic_response(headers_type const& e) noexcept : EList{}, headers(e) {}
 
         basic_response& operator=(basic_response const&) = default;
         basic_response& operator=(basic_response&& res) noexcept = default;
@@ -134,7 +135,7 @@ namespace webpp {
         template <typename ExtensionListType, typename TraitsType, typename EList>
         using mid_level_extensie_type = basic_response<
           TraitsType, EList,
-          typename ExtensionListType::template extensie_type<TraitsType, response_header_descriptor>,
+          typename ExtensionListType::template extensie_type<TraitsType, response_headers_descriptor>,
 
           typename ExtensionListType::template extensie_type<TraitsType, response_body_descriptor>>;
 

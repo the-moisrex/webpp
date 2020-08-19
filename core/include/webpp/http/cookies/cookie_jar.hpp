@@ -71,7 +71,7 @@ namespace webpp {
 
         void remove_duplicates() noexcept {
             constexpr auto predicate = [](auto const& a, auto const& b) {
-                return trim_copy<traits_type>(a.name()) < trim_copy<traits_type>(b.name()) ||
+                return trim_copy(a.name()) < trim_copy(b.name()) ||
                        a.domain() < b.domain();
             };
             stl::sort(super::begin(), super::end(), predicate);

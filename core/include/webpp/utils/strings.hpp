@@ -39,8 +39,7 @@ namespace webpp {
     //        std::basic_string_view<CharT>, StringTypeRaw>>;
 
     // trim from start (in place)
-    template <Traits TraitsType>
-    inline void ltrim(typename TraitsType::string_view_type& s) noexcept {
+    inline void ltrim(istl::StringView auto& s) noexcept {
         if (auto found = stl::find_if_not(s.begin(), s.end(),
                                           [](auto const& c) -> bool {
                                               return c == ' ' || c == '\n' || c == '\r' || c == '\t' ||
@@ -53,8 +52,7 @@ namespace webpp {
 
 
     // trim from end (in place)
-    template <Traits TraitsType>
-    inline void rtrim(typename TraitsType::string_view_type& s) noexcept {
+    inline void rtrim(istl::StringView auto& s) noexcept {
         if (auto found = stl::find_if_not(s.rbegin(), s.rend(),
                                           [](auto const& c) -> bool {
                                               return stl::isspace(c);
@@ -65,47 +63,41 @@ namespace webpp {
     }
 
     // trim from both ends (in place)
-    template <Traits TraitsType>
-    inline void trim(typename TraitsType::string_view_type& s) noexcept {
-        ltrim<TraitsType>(s);
-        rtrim<TraitsType>(s);
+    inline void trim(istl::StringView auto& s) noexcept {
+        ltrim(s);
+        rtrim(s);
     }
 
     // trim from start (copying)
-    template <Traits TraitsType>
-    [[nodiscard]] inline typename TraitsType::string_view_type
-    ltrim_copy(typename TraitsType::string_view_type s) noexcept {
-        ltrim<TraitsType>(s);
-        return s;
+    [[nodiscard]] inline auto ltrim_copy(istl::ConvertibleToStringView auto&& s) noexcept {
+        auto str = istl::to_string_view(stl::forward<decltype(s)>(s));
+        ltrim(str);
+        return str;
     }
 
     // trim from end (copying)
-    template <Traits TraitsType>
-    [[nodiscard]] inline typename TraitsType::string_view_type
-    rtrim_copy(typename TraitsType::string_view_type s) noexcept {
-        rtrim<TraitsType>(s);
-        return s;
+    [[nodiscard]] inline auto rtrim_copy(istl::ConvertibleToStringView auto&& s) noexcept {
+        auto str = istl::to_string_view(stl::forward<decltype(s)>(s));
+        rtrim(str);
+        return str;
     }
 
     // trim from both ends (copying)
-    template <Traits TraitsType>
-    [[nodiscard]] inline typename TraitsType::string_view_type
-    trim_copy(typename TraitsType::string_view_type s) noexcept {
-        trim<TraitsType>(s);
-        return s;
+    [[nodiscard]] inline auto trim_copy(istl::ConvertibleToStringView auto&& s) noexcept {
+        auto str = istl::to_string_view(stl::forward<decltype(s)>(s));
+        trim(str);
+        return str;
     }
 
     // trim from start (in place)
-    template <Traits TraitsType>
-    inline void ltrim(typename TraitsType::string_type& s) noexcept {
+    inline void ltrim(istl::String auto& s) noexcept {
         s.erase(s.begin(), stl::find_if(s.begin(), s.end(), [](auto c) {
                     return c != ' ' && c != '\n' && c != '\r' && c != '\t' && c != '\f' && c != '\v';
                 }));
     }
 
     // trim from end (in place)
-    template <Traits TraitsType>
-    inline void rtrim(typename TraitsType::string_type& s) noexcept {
+    inline void rtrim(istl::String auto& s) noexcept {
         s.erase(stl::find_if(s.rbegin(), s.rend(),
                              [](auto c) {
                                  return c != ' ' && c != '\n' && c != '\r' && c != '\t' && c != '\f' &&
@@ -116,63 +108,66 @@ namespace webpp {
     }
 
     // trim from both ends (in place)
-    template <Traits TraitsType>
-    inline void trim(typename TraitsType::string_type& s) noexcept {
-        ltrim<TraitsType>(s);
-        rtrim<TraitsType>(s);
+    inline void trim(istl::String auto& s) noexcept {
+        ltrim(s);
+        rtrim(s);
     }
 
     // trim from start (copying)
-    template <Traits TraitsType>
-    [[nodiscard]] inline typename TraitsType::string_type
-    ltrim_copy(typename TraitsType::string_type s) noexcept {
-        ltrim<TraitsType>(s);
-        return s;
+    [[nodiscard]] inline auto ltrim_copy(istl::ConvertibleToString auto&& s, auto const& allocator) noexcept {
+        auto str = istl::to_string(stl::forward<decltype(s)>(s), allocator);
+        ltrim(str);
+        return str;
     }
 
     // trim from end (copying)
-    template <Traits TraitsType>
-    [[nodiscard]] inline typename TraitsType::string_type
-    rtrim_copy(typename TraitsType::string_type s) noexcept {
-        rtrim<TraitsType>(s);
-        return s;
+    [[nodiscard]] inline auto rtrim_copy(istl::ConvertibleToString auto&& s, auto const& allocator) noexcept {
+        auto str = istl::to_string(stl::forward<decltype(s)>(s), allocator);
+        rtrim(str);
+        return str;
     }
 
     // trim from both ends (copying)
-    template <Traits TraitsType>
-    [[nodiscard]] inline typename TraitsType::string_type
-    trim_copy(typename TraitsType::string_type s) noexcept {
-        trim<TraitsType>(s);
-        return s;
+    [[nodiscard]] inline auto trim_copy(istl::ConvertibleToString auto&& s, auto const& allocator) noexcept {
+        auto str = istl::to_string(stl::forward<decltype(s)>(s), allocator);
+        trim(str);
+        return str;
     }
 
-    template <Traits TraitsType>
-    inline void to_lower(typename TraitsType::string_type& str) noexcept {
+    inline void to_lower(istl::String auto& str) noexcept {
         // FIXME: I think you can make this algorithm faster
         stl::transform(str.cbegin(), str.cend(), str.begin(), [](auto c) {
             return stl::tolower(c);
         });
     }
 
-    template <Traits TraitsType>
-    inline void to_upper(typename TraitsType::string_type& str) noexcept {
+    inline void to_upper(istl::String auto& str) noexcept {
         // FIXME: I think you can make this algorithm faster
         stl::transform(str.cbegin(), str.cend(), str.begin(), [](auto const& c) {
             return stl::tolower(c);
         });
     }
 
-    template <Traits TraitsType>
-    [[nodiscard]] inline typename TraitsType::string_type
-    to_lower_copy(typename TraitsType::string_type str) noexcept {
-        to_lower<TraitsType>(str);
+    [[nodiscard]] inline auto to_lower_copy(istl::ConvertibleToString auto _str,
+                                            auto const&                      allocator) noexcept {
+        auto str = istl::to_string(stl::forward<decltype(_str)>(_str), allocator);
+        to_lower(str);
         return str;
     }
 
-    template <Traits TraitsType>
-    [[nodiscard]] inline typename TraitsType::string_type
-    to_upper_copy(typename TraitsType::string_type str) noexcept {
-        to_upper<TraitsType>(str);
+    [[nodiscard]] inline auto to_lower_copy(istl::String auto str) noexcept {
+        to_lower(str);
+        return str;
+    }
+
+    [[nodiscard]] auto to_upper_copy(istl::ConvertibleToString auto _str, auto const& allocator) noexcept {
+        auto str = istl::to_string(stl::forward<decltype(_str)>(_str), allocator);
+        to_upper(str);
+        return str;
+    }
+
+    [[nodiscard]] auto to_upper_copy(istl::String auto str) noexcept {
+        to_upper(str);
         return str;
     }
 
@@ -187,14 +182,14 @@ namespace webpp {
     }
 
     [[nodiscard]] constexpr bool ends_with(istl::ConvertibleToStringView auto&& _str,
-                                           istl::char_type_of<decltype(_str)> c) noexcept {
+                                           istl::char_type_of<decltype(_str)>   c) noexcept {
         auto str = istl::to_string_view(_str);
         return !str.empty() && str.back() == c;
     }
 
     [[nodiscard]] constexpr bool ends_with(istl::ConvertibleToStringView auto&& _str,
                                            istl::ConvertibleToStringView auto&& _ending) noexcept {
-        auto str = istl::to_string_view(_str);
+        auto                   str = istl::to_string_view(_str);
         stl::basic_string_view ending{_ending};
 #ifdef CXX20
         return str.ends_with(ending);

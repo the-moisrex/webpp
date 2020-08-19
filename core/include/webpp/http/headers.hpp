@@ -2,6 +2,7 @@
 #define WEBPP_HTTP_HEADERS_H
 
 #include "../std/std.hpp"
+#include "../utils/strings.hpp"
 
 #include <cstdint>
 
@@ -171,8 +172,8 @@ namespace webpp {
          * case-insensitive.
          */
         constexpr bool is_name(istl::ConvertibleToStringView auto&& str) const noexcept {
-            return to_lower_copy<traits_type>(name) ==
-                   to_lower_copy<traits_type>(istl::to_string_view(stl::forward<decltype(str)>(str)));
+            return to_lower_copy(name) ==
+                   to_lower_copy(stl::forward<decltype(str)>(str), name.get_allocator());
         }
 
         constexpr bool operator==(istl::ConvertibleToStringView auto&& str) const noexcept {

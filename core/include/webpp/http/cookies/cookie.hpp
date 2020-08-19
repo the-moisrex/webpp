@@ -81,13 +81,12 @@
  *    [ ] Does user's browser support cookies but now it's disabled
  */
 
+#include "../../std/optional.hpp"
 #include "../../std/unordered_map.hpp"
 #include "../../std/unordered_set.hpp"
-#include "../../std/optional.hpp"
 #include "../../traits/std_traits.hpp"
 #include "../../utils/charset.hpp"
 #include "../../utils/strings.hpp"
-#include "../common.hpp"
 #include "./cookies_concepts.hpp"
 
 #include <chrono>
@@ -96,47 +95,30 @@
 
 namespace webpp {
 
-    template <Traits TraitsType, bool Mutable>
-    struct basic_cookie_common {
 
-        using traits_type = TraitsType;
-        using char_type   = typename TraitsType::char_type;
+    namespace details {
 
-        /**
-         * Getting the appropriate string type to use.
-         * If the specified string type cannot be changed, the string_view will
-         * be used, otherwise, string itself.
-         */
-        using string_type         = typename TraitsType::string_type;
-        using string_view_type    = typename TraitsType::string_view_type;
-        using storing_string_type = stl::conditional_t<Mutable, string_type, string_view_type>;
+        template <istl::CharType CharT>
+        constexpr static auto VALID_COOKIE_NAME =
+          charset<CharT>(ALPHA_DIGIT<CharT>, charset_t<CharT, 16>{'!', '#', '$', '%', '&', '\'', '*', '+',
+                                                                  '-', '.', '^', '_', '`', '|', '~'});
 
-        enum class same_site_value { NONE, LAX, STRICT };
+        template <istl::CharType CharT>
+        constexpr static auto VALID_COOKIE_VALUE = charset<CharT>(
+          ALPHA_DIGIT<CharT>,
+          charset_t<CharT, 28>{'!', '#', '$', '%', '&', '\'', '(', ')', '*', '+', '-', '.', '/', ':',
+                               '<', '=', '>', '?', '@', '[',  ']', '^', '_', '`', '{', '|', '}', '~'});
 
-        using name_t         = storing_string_type;
-        using value_t        = storing_string_type;
-        using allocator_type = typename storing_string_type::allocator_type;
 
-      protected:
-        name_t  _name;
-        value_t _value;
-        bool    _valid = false;
-
-        constexpr static auto VALID_COOKIE_NAME = charset<char_type>(
-          ALPHA_DIGIT<char_type>, charset_t<char_type, 16>{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.',
-                                                           '^', '_', '`', '|', '~'});
-
-        constexpr static auto VALID_COOKIE_VALUE = charset<char_type>(
-          ALPHA_DIGIT<char_type>,
-          charset_t<char_type, 28>{'!', '#', '$', '%', '&', '\'', '(', ')', '*', '+', '-', '.', '/', ':',
-                                   '<', '=', '>', '?', '@', '[',  ']', '^', '_', '`', '{', '|', '}', '~'});
-
-        void parse_SE_name(string_view_type& str, allocator_type const& alloc) noexcept {
-            ltrim<traits_type>(str);
-            if (auto equal_pos = str.find_first_not_of(VALID_COOKIE_NAME.data());
+        inline void parse_SE_name(istl::StringView auto& str, auto& _name, bool& _valid) noexcept {
+            using name_t           = stl::remove_cvref_t<decltype(_name)>;
+            using string_view_type = stl::remove_cvref_t<decltype(str)>;
+            using char_type        = typename name_t::value_type;
+            ltrim(str);
+            if (auto equal_pos = str.find_first_not_of(VALID_COOKIE_NAME<char_type>.data());
                 equal_pos != string_view_type::npos) {
                 // setting the name we found it
-                _name = name_t{str.substr(0, equal_pos), alloc};
+                _name = name_t{str.substr(0, equal_pos)};
 
                 // prepare the string for the next value
                 str.remove_prefix(equal_pos);
@@ -147,19 +129,25 @@ namespace webpp {
             }
         }
 
-        void parse_SE_value(string_view_type& str, allocator_type const& alloc) noexcept {
-            parse_SE_name(str, alloc);
+        inline void parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value,
+                                   bool& _valid) noexcept {
+            using name_t           = stl::remove_cvref_t<decltype(_name)>;
+            using value_t          = stl::remove_cvref_t<decltype(_value)>;
+            using string_view_type = stl::remove_cvref_t<decltype(str)>;
+            using char_type        = typename name_t::value_type;
+
+            parse_SE_name(str);
             if (!_valid)
                 return; // do not continue if there's no name
-            ltrim<traits_type>(str);
+            ltrim(str);
             if (starts_with(str, '='))
                 str.remove_prefix(1);
-            ltrim<traits_type>(str);
+            ltrim(str);
             if (starts_with(str, '"')) {
-                if (auto d_quote_end = str.find_first_not_of(VALID_COOKIE_VALUE.data(), 1);
+                if (auto d_quote_end = str.find_first_not_of(VALID_COOKIE_VALUE<char_type>.data(), 1);
                     d_quote_end != string_view_type::npos) {
                     if (str[d_quote_end] == '"') {
-                        _value = value_t{str.substr(1, d_quote_end - 1), alloc};
+                        _value = str.substr(1, d_quote_end - 1);
                         str.remove_prefix(d_quote_end);
                     } else {
                         // You can't use non double quote chars when you used
@@ -176,12 +164,12 @@ namespace webpp {
                 }
             } else {
                 // there's no double quote in the value
-                if (auto semicolon_pos = str.find_first_not_of(VALID_COOKIE_VALUE.data());
+                if (auto semicolon_pos = str.find_first_not_of(VALID_COOKIE_VALUE<char_type>.data());
                     semicolon_pos != string_view_type::npos) {
-                    _value = value_t{str.substr(0, semicolon_pos), alloc};
+                    _value = str.substr(0, semicolon_pos);
                     str.remove_prefix(semicolon_pos);
                 } else {
-                    _value = value_t{str, alloc};
+                    _value = str;
                     str.remove_prefix(str.size() - 1);
                 }
             }
@@ -191,402 +179,23 @@ namespace webpp {
             // check the whole string for validation. But if it's determined
             // that it's invalid so far, it really is invalid.
         }
-
-      public:
-        /**
-         * empty basic_cookie
-         */
-        basic_cookie_common(allocator_type const& alloc = allocator_type{}) : _name{alloc}, _value{alloc} {};
-        basic_cookie_common(const basic_cookie_common& c)     = default;
-        basic_cookie_common(basic_cookie_common&& c) noexcept = default;
-
-        basic_cookie_common(name_t __name, value_t __value,
-                            allocator_type const& alloc = allocator_type{}) noexcept
-          : _name(trim_copy<traits_type>(__name), alloc),
-            _value(trim_copy<traits_type>(__value), alloc) {
-        }
-
-        basic_cookie_common& operator=(const basic_cookie_common& c) = default;
-        basic_cookie_common& operator=(basic_cookie_common&& c) noexcept = default;
-
-        explicit operator bool() {
-            return is_valid();
-        }
-
-        bool is_valid() const noexcept {
-            // todo
-            // The _valid may not catch all the validness conditions, so we have
-            // to do other validation checks ourselves.
-            if (!_valid)
-                return false;
-            return false;
-        }
-
-        auto const& name() const noexcept {
-            return _name;
-        }
-        auto const& value() const noexcept {
-            return _value;
-        }
-
-        auto& name(name_t __name) noexcept {
-            trim<traits_type>(__name);
-            this->_name = stl::move(__name);
-            return *this;
-        }
-
-        auto& value(value_t __value) noexcept {
-            trim<traits_type>(__value);
-            _value = stl::move(__value);
-            return *this;
-        }
-    };
-
-    template <Traits TraitsType>
-    struct request_cookie : public basic_cookie_common<TraitsType, false> {
-      private:
-        using super      = basic_cookie_common<TraitsType, false>;
-        using alloc_type = typename super::allocator_type;
-
-      public:
-        static constexpr auto header_direction = header_type::request;
-        static constexpr bool is_mutable       = false;
-
-        constexpr request_cookie(alloc_type const& alloc = {}) noexcept : super{alloc} {};
-
-        /**
-         * Source here is in "name = value" syntax and only one single cookie
-         * @param source
-         */
-        explicit request_cookie(typename super::string_view_type const& source,
-                                alloc_type const&                       alloc = {}) noexcept {
-            super::parse_SE_value(source, alloc); // parsing name and value
-        }
-    };
-
-    template <Traits TraitsType>
-    struct response_cookie : public basic_cookie_common<TraitsType, true> {
-      private:
-        using super      = basic_cookie_common<TraitsType, true>;
-        using self_t     = response_cookie<TraitsType>;
-        using alloc_type = typename super::allocator_type;
-
-        void parse_SE_options(typename super::string_view_type& str, alloc_type const& alloc) noexcept {
-            super::parse_SE_value(str, alloc);
-            // todo
-        }
-
-      public:
-        using traits_type        = TraitsType;
-        using date_t             = stl::chrono::time_point<stl::chrono::system_clock>;
-        using domain_t           = typename super::storing_string_type;
-        using path_t             = typename super::storing_string_type;
-        using expires_t          = date_t;
-        using optional_expires_t = stl::optional<date_t>;
-        using max_age_t          = unsigned long;
-        using same_site_t        = typename super::same_site_value;
-        using secure_t           = bool;
-        using host_only_t        = bool;
-        using prefix_t           = bool;
-        using encrypted_t        = bool;
-        using comment_t          = typename super::storing_string_type;
-
-        using attrs_t = stl::unordered_map<TraitsType, typename super::storing_string_type,
-                                           typename super::storing_string_type>;
+    } // namespace details
 
 
-      private:
-        domain_t           _domain;
-        path_t             _path;
-        optional_expires_t _expires;
-        comment_t          _comment;
-        max_age_t          _max_age   = 0;
-        same_site_t        _same_site = super::same_site_value::NONE;
-        secure_t           _secure    = false;
-        host_only_t        _host_only = false;
-        encrypted_t        _encrypted = false;
-        prefix_t           _prefix    = false;
-
-        // todo: encapsulate this
-        attrs_t attrs;
-
-      public:
-        static constexpr auto header_direction = header_type::response;
-        static constexpr bool is_mutable       = true;
-
-        constexpr response_cookie(alloc_type const& alloc = {}) noexcept : super{alloc} {};
 
 
-        explicit response_cookie(typename super::name_t name, typename super::value_t value,
-                                 alloc_type const& alloc = {}) noexcept
-          : super{stl::move(name), stl::move(value), alloc} {
-        }
-
-        /**
-         * Parse response cookie (A single Set-Cookie header value)
-         * There are not many reasons to use this constructor
-         * @param source
-         */
-        explicit response_cookie(typename super::string_view_type source,
-                                 alloc_type const&                alloc = {}) noexcept {
-            parse_SE_options(source, alloc); // parse name, value, and options
-        }
-
-        [[nodiscard]] auto const& comment() const noexcept {
-            return _comment;
-        }
-        [[nodiscard]] auto const& domain() const noexcept {
-            return _domain;
-        }
-        [[nodiscard]] auto const& max_age() const noexcept {
-            return _max_age;
-        }
-        [[nodiscard]] auto const& secure() const noexcept {
-            return _secure;
-        }
-        [[nodiscard]] auto const& host_only() const noexcept {
-            return _host_only;
-        }
-        [[nodiscard]] auto const& prefix() const noexcept {
-            return _prefix;
-        }
-        [[nodiscard]] auto const& expires() const noexcept {
-            return *_expires;
-        }
-        [[nodiscard]] auto const& same_site() const noexcept {
-            return _same_site;
-        }
-        [[nodiscard]] auto const& path() const noexcept {
-            return _path;
-        }
-        [[nodiscard]] auto const& encrypted() const noexcept {
-            return _encrypted;
-        }
-        [[nodiscard]] auto const& name() const noexcept {
-            return super::name();
-        }
-        [[nodiscard]] auto const& value() const noexcept {
-            return super::value();
-        }
-        self_t& name(typename super::name_t __name) noexcept {
-            return static_cast<self_t&>(super::name(__name));
-        }
-        self_t& value(typename super::value_t __value) noexcept {
-            return static_cast<self_t&>(super::value(__value));
-        }
-
-        auto& comment(comment_t __comment) noexcept {
-            _comment = stl::move(__comment);
-            return *this;
-        }
-
-        auto& domain(domain_t __domain) noexcept {
-            _domain = stl::move(__domain);
-            return *this;
-        }
-        auto& path(path_t __path) noexcept {
-            _path = stl::move(__path);
-            return *this;
-        }
-        auto& max_age(max_age_t __max_age) noexcept {
-            _max_age = __max_age;
-            return *this;
-        }
-        auto& prefix(prefix_t __prefix) noexcept {
-            _prefix = __prefix;
-            return *this;
-        }
-        auto& same_site(same_site_t __same_site) noexcept {
-            _same_site = __same_site;
-            return *this;
-        }
-        auto& secure(secure_t __secure) noexcept {
-            _secure = __secure;
-            return *this;
-        }
-        auto& host_only(host_only_t __host_only) noexcept {
-            _host_only = __host_only;
-            return *this;
-        }
-        auto& expires(date_t __expires) noexcept {
-            _expires = __expires;
-            return *this;
-        }
-
-        auto& remove(bool __remove = true) noexcept {
-            if (__remove) {
-                // set the expire date 10 year before now:
-                expires(stl::chrono::system_clock::now() -
-                        stl::chrono::duration<int, stl::ratio<60 * 60 * 24 * 365>>(10));
-            } else if (is_removed()) {
-                // set the expire date 1 year from now:
-                expires(stl::chrono::system_clock::now() +
-                        stl::chrono::duration<int, stl::ratio<60 * 60 * 24 * 365>>(1));
-            }
-            // remove max-age if it exists because we're going with expires
-            max_age(0);
-            return *this;
-        }
-
-        [[nodiscard]] bool is_removed() const noexcept {
-            return *_expires < stl::chrono::system_clock::now();
-        }
-
-        /**
-         * @brief sets expiration time relative to now.
-         */
-        template <typename D, typename T>
-        inline auto& expires_in(stl::chrono::duration<D, T> const& __dur) noexcept {
-            _expires = stl::chrono::system_clock::now() + __dur;
-            return *this;
-        }
-
-        /**
-         * @brief encrypt the value
-         * @param __encrypted
-         * @return
-         */
-        auto& encrypted(encrypted_t __encrypted) noexcept {
-            _encrypted = __encrypted;
-            return *this;
-        }
-
-        /**
-         * @brief decrypt-able encryption
-         */
-        typename super::value_t encrypted_value() const noexcept {
-            // todo implement this
-        }
-
-        stl::basic_ostream<typename super::char_type>&
-        operator<<(stl::basic_ostream<typename super::char_type>& out) const noexcept {
-            using namespace stl::chrono;
-            if (_prefix) {
-                if (_secure)
-                    out << "__Secure-";
-                else if (_host_only)
-                    out << "__Host-";
-            }
-            if (!super::_name.empty()) {
-                // FIXME: encode/... name and value here. Programmers are dumb!
-                out << super::_name << "=" << super::_value;
-
-                if (!_comment.empty())
-                    out << "; Comment=" << _comment;
-
-                if (!_domain.empty())
-                    out << "; Domain=" << _domain;
-
-                if (!_path.empty())
-                    out << "; Path=" << _path;
-
-                if (_expires) {
-                    stl::time_t expires_c  = system_clock::to_time_t(*_expires);
-                    stl::tm     expires_tm = *stl::localtime(&expires_c);
-                    char        buff[30];
-                    // FIXME: check time zone and see if it's ok
-                    //            setlocale(LC_ALL, "en_US.UTF-8");
-                    if (strftime(buff, sizeof buff, "%a, %d %b %Y %H:%M:%S GMT", &expires_tm))
-                        out << "; Expires=" << buff;
-                }
-
-                if (_secure)
-                    out << "; Secure";
-
-                if (_host_only)
-                    out << "; HttpOnly";
-
-                if (_max_age)
-                    out << "; Max-Age=" << _max_age;
-
-                if (_same_site != super::same_site_value::NONE)
-                    out << "; SameSite=" << (_same_site == super::same_site_value::STRICT ? "Strict" : "Lax");
-
-                // TODO: encode value and check the key here:
-                if (!attrs.empty())
-                    for (auto const& attr : attrs)
-                        out << "; " << attr.first << "=" << attr.second;
-            }
-            return out;
-        }
-
-        bool operator==(request_cookie<TraitsType> const& c) const noexcept {
-            return super::_name == c._name && super::_value == c._value;
-        }
-
-        bool operator==(response_cookie<TraitsType> const& c) const noexcept {
-            return super::_name == c._name && super::_value == c._value && _prefix == c._prefix &&
-                   _encrypted == c._encrypted && _secure == c._secure && _host_only == c._host_only &&
-                   _same_site == c._same_site && _comment == c._comment && _expires == c._expires &&
-                   _path == c._path && _domain == c._domain && attrs == c.attrs;
-        }
-
-        bool operator<(response_cookie<TraitsType> const& c) const noexcept {
-            return _expires < c._expires;
-        }
-
-        bool operator>(response_cookie<TraitsType> const& c) const noexcept {
-            return _expires > c._expires;
-        }
-
-        bool operator<=(response_cookie<TraitsType> const& c) const noexcept {
-            return _expires <= c._expires;
-        }
-
-        bool operator>=(response_cookie<TraitsType> const& c) const noexcept {
-            return _expires >= c._expires;
-        }
-
-        [[nodiscard]] typename super::string_type render() const noexcept {
-            // todo: don't use streams here
-            stl::basic_ostringstream<typename super::char_type> os;
-                                                                operator<<(os);
-            return os.str();
-        }
-
-        /**
-         * @brief this method will return true if the specified basic_cookie and
-         * this basic_cookie have the same  name, domain, and path. so they will
-         * replace each other if they put in the same basic_cookie jar
-         * @param c
-         * @return true if they have the same name, domain, and path
-         */
-        [[nodiscard]] bool same_as(response_cookie<TraitsType> const& c) const noexcept {
-            return trim_copy<traits_type>(super::_name) == trim_copy<traits_type>(c._name) &&
-                   _path == c._path && c._domain == _domain;
-        }
-
-        friend inline void swap(response_cookie<TraitsType>& first,
-                                response_cookie<TraitsType>& second) noexcept {
-            using stl::swap;
-            swap(first._valid, second._valid);
-            swap(first._name, second._name);
-            swap(first._value, second._value);
-            swap(first._comment, second._comment);
-            swap(first._domain, second._domain);
-            swap(first._path, second._path);
-            swap(first._max_age, second._max_age);
-            swap(first._secure, second._secure);
-            swap(first._host_only, second._host_only);
-            swap(first._expires, second._expires);
-            swap(first._encrypted, second._encrypted);
-            swap(first._prefix, second._prefix);
-            swap(first._same_site, second._same_site);
-        }
-    };
-
-    template <typename Traits, header_type HeaderType = header_type::response>
-    class basic_cookie : public stl::conditional_t<HeaderType == header_type::response,
-                                                   response_cookie<Traits>, request_cookie<Traits>> {
-        using super = stl::conditional_t<HeaderType == header_type::response, response_cookie<Traits>,
-                                         request_cookie<Traits>>;
-
-      public:
-        static constexpr auto header_direction = HeaderType;
-
-        using super::super;
-    };
-
+    //    template <typename Traits, header_type HeaderType = header_type::response>
+    //    class basic_cookie : public stl::conditional_t<HeaderType == header_type::response,
+    //                                                   response_cookie<Traits>, request_cookie<Traits>> {
+    //        using super = stl::conditional_t<HeaderType == header_type::response, response_cookie<Traits>,
+    //                                         request_cookie<Traits>>;
+    //
+    //      public:
+    ////        static constexpr auto header_direction = HeaderType;
+    //
+    //        using super::super;
+    //    };
+    //
     // hash function of std::unordered_set<webpp::basic_cookie>
     //    template <Cookie CookieType>
     //    struct cookie_hash {
