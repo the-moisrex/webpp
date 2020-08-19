@@ -3,7 +3,7 @@
 #include "../core/include/webpp/http/response.hpp"
 
 #include "../core/include/webpp/http/bodies/string.hpp"
-#include "../core/include/webpp/http/body.hpp"
+#include "../core/include/webpp/http/response_body.hpp"
 
 #include <cstdio>
 #include <fstream>

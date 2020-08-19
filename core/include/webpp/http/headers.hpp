@@ -1,18 +1,9 @@
 #ifndef WEBPP_HTTP_HEADERS_H
 #define WEBPP_HTTP_HEADERS_H
 
-#include "../std/format.hpp"
-#include "../std/string.hpp"
-#include "../std/string_view.hpp"
-#include "../std/vector.hpp"
-#include "../traits/traits_concepts.hpp"
-#include "./common.hpp"
-#include "./cookies/cookie.hpp"
+#include "../std/std.hpp"
 
 #include <cstdint>
-#include <iterator>
-#include <sstream>
-#include <type_traits>
 
 namespace webpp {
 
@@ -138,14 +129,13 @@ namespace webpp {
         }
     }
 
+
     /**
      * This is the header class witch will contain the name, and the value of
      * one single field of a header.
-     * @tparam TraitsType
-     * @tparam HeaderType
      */
     template <Traits TraitsType, typename EList>
-    struct response_header_field : public EList {
+    struct header_field : public EList {
         using traits_type      = TraitsType;
         using string_type      = typename traits_type::string_type;
         using string_view_type = typename traits_type::string_view_type;
@@ -155,48 +145,52 @@ namespace webpp {
         string_type name;
         string_type value;
 
-//        constexpr response_header_field(string_type&& _name, string_type&& _value)
-//          : name{stl::move(_name)},
-//            value{stl::move(_value)} {}
-//
-//        constexpr response_header_field(string_view_type _name, string_view_type _value, alloc_type alloc)
-//          : name{_name, alloc},
-//            value{_value, alloc} {}
-//
-//        constexpr response_header_field(string_view_type _name, string_type&& _value, alloc_type alloc)
-//          : name{_name, alloc},
-//            value{stl::move(_value)} {}
-//
-//        constexpr response_header_field(string_type&& _name, string_view_type _value, alloc_type alloc)
-//          : name{stl::move(_name)},
-//            value{_value, alloc} {}
-//
+        //        constexpr response_header_field(string_type&& _name, string_type&& _value)
+        //          : name{stl::move(_name)},
+        //            value{stl::move(_value)} {}
+        //
+        //        constexpr response_header_field(string_view_type _name, string_view_type _value, alloc_type
+        //        alloc)
+        //          : name{_name, alloc},
+        //            value{_value, alloc} {}
+        //
+        //        constexpr response_header_field(string_view_type _name, string_type&& _value, alloc_type
+        //        alloc)
+        //          : name{_name, alloc},
+        //            value{stl::move(_value)} {}
+        //
+        //        constexpr response_header_field(string_type&& _name, string_view_type _value, alloc_type
+        //        alloc)
+        //          : name{stl::move(_name)},
+        //            value{_value, alloc} {}
+        //
 
         /**
          * Check if the specified name is the same as the header name
          * It's not a good idea to compare the name directly; the header name is
          * case-insensitive.
          */
-        constexpr bool is_name(string_type str) const noexcept {
-            return to_lower_copy<traits_type>(name) == to_lower_copy<traits_type>(str);
+        constexpr bool is_name(istl::ConvertibleToStringView auto&& str) const noexcept {
+            return to_lower_copy<traits_type>(name) ==
+                   to_lower_copy<traits_type>(istl::to_string_view(stl::forward<decltype(str)>(str)));
         }
 
-        constexpr bool operator==(string_type str) const noexcept {
-            return is_name(str);
+        constexpr bool operator==(istl::ConvertibleToStringView auto&& str) const noexcept {
+            return is_name(stl::forward<decltype(str)>(str));
         }
 
-        constexpr bool operator!=(string_type str) const noexcept {
-            return !operator==(str);
+        constexpr bool operator!=(istl::ConvertibleToStringView auto&& str) const noexcept {
+            return !operator==(stl::forward<decltype(str)>(str));
         }
 
-        friend constexpr bool operator==(string_type                                     str,
-                                         response_header_field<TraitsType, EList> const& field) noexcept {
-            return field == str;
+        friend constexpr bool operator==(istl::ConvertibleToStringView auto&&   str,
+                                         header_field<TraitsType, EList> const& field) noexcept {
+            return field == istl::to_string_view(str);
         }
 
-        friend constexpr bool operator!=(string_type                                     str,
-                                         response_header_field<TraitsType, EList> const& field) noexcept {
-            return field != str;
+        friend constexpr bool operator!=(istl::ConvertibleToStringView auto&&   str,
+                                         header_field<TraitsType, EList> const& field) noexcept {
+            return field != istl::to_string_view(str);
         }
     };
 
@@ -208,7 +202,7 @@ namespace webpp {
      * later or even if someone else wanted this
      */
     template <typename FieldType>
-    struct response_header_field_hash {
+    struct header_field_hash {
         using field_type = FieldType;
 
         template <class T>
@@ -216,7 +210,6 @@ namespace webpp {
             stl::hash<T> hasher;
             seed ^= hasher(v) + 0x9e3779b9 + (seed << 6u) + (seed >> 2u);
         }
-
 
         using result_type = stl::size_t;
 
@@ -230,105 +223,14 @@ namespace webpp {
     };
 
     template <typename FieldType>
-    struct response_header_field_equals {
+    struct header_field_equals {
         using field_type = FieldType;
 
-        bool operator()(const field_type& lhs, const field_type& rhs) const noexcept {
+        [[nodiscard]] constexpr bool operator()(const field_type& lhs, const field_type& rhs) const noexcept {
             return lhs.name == rhs.name;
         }
     };
 
-
-
-    /**
-     * Setting non-ascii characters in the value section of the headers should
-     * result in transforming the value to the "Encoded-Word" syntax (RFC 2047).
-     * For example:
-     *   In the header:  "Subject: =?iso-8859-1?Q?=A1Hola,_se=F1or!?="
-     *   Interpreted as: "Subject: ¡Hola, señor!"
-     *
-     */
-    template <Traits TraitsType, typename HeaderEList, typename HeaderFieldType>
-    class response_headers : public istl::vector<TraitsType, HeaderFieldType>, public HeaderEList {
-
-        //        using super =
-        //          istl::unordered_multiset<TraitsType, HeaderFieldType,
-        //          response_header_field_hash<HeaderFieldType>,
-        //                                   response_header_field_equals<HeaderFieldType>>;
-        using super = istl::vector<TraitsType, HeaderFieldType>;
-
-      public:
-        using traits_type       = TraitsType;
-        using string_type       = typename traits_type::string_type;
-        using field_type = HeaderFieldType;
-
-        template <typename... Args>
-        constexpr response_headers(Args&&... args) noexcept
-          : super{stl::forward<Args>(args)...},
-            HeaderEList{} {}
-
-        status_code_type status_code = 200u;
-
-
-        auto str() const noexcept {
-            // todo check performance
-            // TODO: add support for other HTTP versions
-            // res << "HTTP/1.1" << " " << status_code() << " " <<
-            // status_reason_phrase(status_code()) << "\r\n";
-            stl::size_t size = 1;
-            for (auto const& field : *this) {
-                size += field.name.size() + field.value.size() + 4;
-            }
-            string_type res{super::get_allocator()};
-            res.reserve(size);
-            for (auto const& field : *this) {
-                // todo: make sure value is secure and doesn't have any newlines
-                stl::format_to(stl::back_insert_iterator<string_type>(res), "{}: {}\r\n", field.name, field.value);
-            }
-            return res;
-        }
-    };
-
-
-    struct response_header_field_descriptor {
-        template <typename ExtensionType>
-        struct has_related_extension_pack {
-            static constexpr bool value = requires {
-                typename ExtensionType::response_header_field_extensions;
-            };
-        };
-
-        template <typename ExtensionType>
-        using related_extension_pack_type = typename ExtensionType::response_header_field_extensions;
-
-        template <typename ExtensionListType, typename TraitsType, typename EList>
-        using mid_level_extensie_type = response_header_field<TraitsType, EList>;
-
-        // empty final extensie
-        template <typename ExtensionListType, typename TraitsType, typename EList>
-        using final_extensie_type = EList;
-    };
-
-    struct response_header_descriptor {
-        template <typename ExtensionType>
-        struct has_related_extension_pack {
-            static constexpr bool value = requires {
-                typename ExtensionType::response_headers_extensions;
-            };
-        };
-
-        template <typename ExtensionType>
-        using related_extension_pack_type = typename ExtensionType::response_headers_extensions;
-
-        template <typename ExtensionListType, typename TraitsType, typename EList>
-        using mid_level_extensie_type = response_headers<
-          TraitsType, EList,
-          typename ExtensionListType::template extensie_type<TraitsType, response_header_field_descriptor>>;
-
-        // empty final extensie
-        template <typename ExtensionListType, typename TraitsType, typename EList>
-        using final_extensie_type = EList;
-    };
 
 
 

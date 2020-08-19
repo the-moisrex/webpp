@@ -61,10 +61,12 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/cgi.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fcgi.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fastcgi/protocol.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/simple_server.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/http/body.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/header.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/response_body.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/request_body.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/headers.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/request_headers.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/response_headers.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/header_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/request.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/request_concepts.hpp
@@ -74,12 +76,22 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/application_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/http.hpp
 
+
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie_jar.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookies_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie_extensions.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/logs/log_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/logs/spdlog_logger.hpp
+        ${LIB_INCLUDE_DIR}/webpp/logs/std_logger.hpp
+
+        ${LIB_INCLUDE_DIR}/webpp/server/server_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_thread_pool.hpp
+        ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_connection.hpp
+        ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_constants.hpp
+        ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_server.hpp
+        ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_session.hpp
 
         ${LIB_INCLUDE_DIR}/main.hpp
         ${LIB_INCLUDE_DIR}/webpp.hpp

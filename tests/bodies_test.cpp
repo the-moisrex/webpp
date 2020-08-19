@@ -1,9 +1,9 @@
 // Created by moisrex on 2/4/20.
 
-#include "../core/include/webpp/http/bodies/string.hpp"
 #include "../core/include/webpp/http/bodies/file.hpp"
-#include "../core/include/webpp/http/body.hpp"
+#include "../core/include/webpp/http/bodies/string.hpp"
 #include "../core/include/webpp/http/response.hpp"
+#include "../core/include/webpp/http/response_body.hpp"
 
 #include <cstdio>
 #include <fstream>
@@ -16,7 +16,7 @@ using namespace webpp;
 
 
 TEST(Body, Text) {
-    using body_t = simple_body<std_traits, details::string_body>;
+    using body_t = simple_response_body<std_traits, details::string_body>;
     body_t b = "Testing";
     EXPECT_EQ(b.str(), "Testing");
     EXPECT_TRUE(b == "Testing");
@@ -46,7 +46,7 @@ TEST(Body, Text) {
 }
 
  TEST(Body, File) {
-    using body_t = simple_body<std_traits, file_response>;
+    using body_t = simple_response_body<std_traits, file_response>;
     std::filesystem::path file = std::filesystem::temp_directory_path();
     file.append("webpp_test_file");
     std::ofstream handle{file};

@@ -29,9 +29,9 @@
  */
 
 #include "../traits/traits_concepts.hpp"
-#include "./body.hpp"
-#include "./header.hpp"
+#include "./headers.hpp"
 #include "./request_concepts.hpp"
+#include "./response_body.hpp"
 
 namespace webpp {
 

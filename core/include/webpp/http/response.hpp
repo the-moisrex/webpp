@@ -4,8 +4,8 @@
 #include "../traits/traits_concepts.hpp"
 #include "../utils/casts.hpp"
 #include "./response_concepts.hpp"
-#include "body.hpp"
-#include "header.hpp"
+#include "headers.hpp"
+#include "response_body.hpp"
 
 #include <filesystem>
 #include <fstream>

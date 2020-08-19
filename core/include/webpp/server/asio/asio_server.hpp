@@ -8,8 +8,8 @@
 
 #include "../../traits/traits_concepts.hpp"
 #include "./asio_thread_pool.hpp"
-#include "./connection.hpp"
-#include "./constants.hpp"
+#include "./asio_connection.hpp"
+#include "./asio_constants.hpp"
 
 #include <memory>
 
