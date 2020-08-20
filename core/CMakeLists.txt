@@ -78,7 +78,11 @@ set(ALL_SOURCES
 
 
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/cookies/request_cookie.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/cookies/response_cookie.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie_jar.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/cookies/request_cookie_jar.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/cookies/response_cookie_jar.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookies_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie_extensions.hpp
 

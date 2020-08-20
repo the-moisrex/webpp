@@ -7,6 +7,8 @@
 namespace webpp {
 
 
+    template <typename From, typename To>
+    using to_alloc = typename stl::allocator_traits<From>::template rebind_alloc<To>;
 
     //    /**
     //     * todo: Use this, or remove this

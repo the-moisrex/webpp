@@ -96,6 +96,10 @@
 namespace webpp {
 
 
+    /**
+     * Even though these algorithms are capable of handling other char types than "char" itself, they
+     * don't need to. Other string types cannot be used in a HTTP header since HTTP header is using ASCII
+     */
     namespace details {
 
         template <istl::CharType CharT>

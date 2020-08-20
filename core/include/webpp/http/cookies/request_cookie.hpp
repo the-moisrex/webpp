@@ -7,7 +7,7 @@
 
 namespace webpp {
 
-    template <istl::StringView StringViewType>
+    template <istl::StringView StringViewType = stl::string_view>
     struct request_cookie {
         using string_view_type = stl::remove_cvref_t<StringViewType>;
         using char_type        = typename string_view_type::value_type;

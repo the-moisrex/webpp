@@ -12,9 +12,8 @@ namespace webpp {
         {cookie.name()};
         {cookie.value()};
 //        {T::header_direction};
-        typename T::traits_type;
-    }
-    &&Traits<typename T::traits_type>;
+//        typename T::traits_type;
+    };
 
     // todo: complete this
     template <typename T>

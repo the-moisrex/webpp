@@ -1,31 +1,36 @@
-#include "../core/include/webpp/http/cookies/cookie.hpp"
-#include "../core/include/webpp/http/cookies/cookie_jar.hpp"
+#include "../core/include/webpp/http/cookies/request_cookie_jar.hpp"
+#include "../core/include/webpp/http/cookies/response_cookie_jar.hpp"
 #include "../core/include/webpp/traits/std_traits.hpp"
 
 #include <gtest/gtest.h>
 #include <iostream>
 
 
-using res_cookie_t     = webpp::response_cookie<webpp::std_traits>;
-using res_cookie_jar_t = webpp::response_cookie_jar<webpp::std_traits>;
+using res_cookie_t     = webpp::response_cookie<>;
+using res_cookie_jar_t = webpp::response_cookie_jar<>;
 
 TEST(Cookie, ResponseCookiesCreation) {
     res_cookie_t c;
-    c.name("   test   ").value("  value  ");
+    c.name(" test ");
+    c.value("  value ");
+    c.trim_name();
+    c.trim_value();
     EXPECT_EQ(c.name(), "test");
     EXPECT_EQ(c.value(), "value");
-    EXPECT_EQ(res_cookie_t("  test  ", "  value ").name(), res_cookie_t("test", "value").name())
-      << "cookies should be trimmed";
-    EXPECT_EQ(res_cookie_t("  test  ", "  value  ").name(), res_cookie_t().name("  test  ").name())
-      << "name should trim it too.";
+    //    EXPECT_EQ(res_cookie_t{.name = "  test  ", .value = "  value "}.trimname().trimvalue().name,
+    //              res_cookie_t{.name = "test", .value = "value"}.name)
+    //      << "cookies should be trimmed";
+    //    EXPECT_EQ(res_cookie_t("  test  ", "  value  ").name(), res_cookie_t().name("  test  ").name())
+    //      << "name should trim it too.";
 }
 
 // TODO: fill here
 TEST(Cookie, CookieExpirationDate) {
     res_cookie_t c;
-    c.name("name").value("value");
+    c.name("name");
+    c.value("value");
     c.expires_in(std::chrono::minutes(1));
-    EXPECT_TRUE(c.expires().time_since_epoch().count() > 0);
+    EXPECT_TRUE(c.expires()->time_since_epoch().count() > 0);
 }
 
 // TEST(ResponseCookies, ResponseCookiesHash) {
@@ -153,13 +158,11 @@ TEST(ResponseCookies, CookieJarUniqeness) {
               std::end(cs));
 }
 
-TEST(ResponseCookies, Date) {
-}
+TEST(ResponseCookies, Date) {}
 
 TEST(ResponseCookies, StringParsing) {
 
     res_cookie_t c("name=value");
-    EXPECT_TRUE(c.is_valid());
     EXPECT_EQ("name", c.name());
     EXPECT_EQ("value", c.value());
 }
