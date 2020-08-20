@@ -5,10 +5,27 @@
 
 namespace webpp::protocol {
 
+    template <typename T, stl::size_t Index = 0>
+    struct indexed_value {
+        T                            value;
+        static constexpr stl::size_t index = Index;
+
+        constexpr indexed_value(T value) noexcept : value(value) {}
+    };
+
+    /**
+     * Join the pieces of integer into one bigger integer
+     */
+    template <typename Full, typename PieceType, uint8_t... Index>
+    constexpr Full join_pieces(indexed_value<PieceType, Index> const... pieces) noexcept {
+        constexpr stl::uint8_t piece_size = sizeof(PieceType) * 8u;
+        return ((static_cast<Full>(pieces.value) << (pieces.index * piece_size)) | ...);
+    }
+
     /**
      * It is very important that this record_type's size be uint8_t
      */
-    enum class record_type : uint8_t {
+    enum struct record_type : uint8_t {
         begin_request     = 1,
         abort_request     = 2,
         end_request       = 3,
@@ -57,7 +74,7 @@ namespace webpp::protocol {
             padding_length{_padd_len} {}
 
         inline uint16_t request_id() const noexcept {
-            return (static_cast<uint16_t>(request_id_b1) << 8u) | request_id_b0;
+            return join_pieces<uint16_t, uint8_t, 1, 0>(request_id_b1, request_id_b0);
         }
 
         inline void request_id(uint16_t req_id) noexcept {
@@ -66,7 +83,7 @@ namespace webpp::protocol {
         }
 
         inline uint16_t content_length() const noexcept {
-            return (static_cast<uint16_t>(content_length_b1) << 8u) | content_length_b0;
+            return join_pieces<uint16_t, uint8_t, 1, 0>(content_length_b1, content_length_b0);
         }
 
         inline void content_length(uint16_t _content_length) noexcept {
@@ -75,8 +92,7 @@ namespace webpp::protocol {
         }
 
         /**
-         * Generally there are two types of records, Managements and the
-         * Applocation.
+         * Generally there are two types of records, Managements and the Application.
          */
         inline bool is_management_record() const noexcept {
             return request_id() == 0;
@@ -84,30 +100,34 @@ namespace webpp::protocol {
     };
 
     class begin_request {
-      private:
-        uint8_t role_b1;
-        uint8_t role_b0;
-        uint8_t flags;
-        uint8_t reserved[5] = {};
+        uint8_t                  role_b1;
+        uint8_t                  role_b0;
+        uint8_t                  flags;
+        [[maybe_unused]] uint8_t reserved[5] = {};
 
-      public:
+        [[nodiscard]] uint16_t role() const noexcept {
+            return join_pieces<uint16_t, uint8_t, 1, 0>(role_b1, role_b0);
+        }
     };
 
-    class end_request {
-      private:
-        uint8_t app_status_b3;
-        uint8_t app_status_b2;
-        uint8_t app_status_b1;
-        uint8_t app_status_b0;
-        uint8_t protocol_status;
-        uint8_t reserved[3] = {};
+    struct end_request {
+        uint8_t                  app_status_b3;
+        uint8_t                  app_status_b2;
+        uint8_t                  app_status_b1;
+        uint8_t                  app_status_b0;
+        uint8_t                  protocol_status;
+        [[maybe_unused]] uint8_t reserved[3] = {};
 
-      public:
-        inline void app_status(uint32_t status_code) noexcept {
+        void app_status(uint32_t status_code) noexcept {
             app_status_b3 = static_cast<uint8_t>(status_code >> 24u);
             app_status_b2 = static_cast<uint8_t>(status_code >> 16u & 0xFFu);
             app_status_b1 = static_cast<uint8_t>(status_code >> 8u & 0xFFu);
             app_status_b0 = static_cast<uint8_t>(status_code);
+        }
+
+        [[nodiscard]] uint32_t app_status() const noexcept {
+            return join_pieces<uint32_t, uint8_t, 3, 2, 1, 0>(app_status_b3, app_status_b2, app_status_b1,
+                                                              app_status_b0);
         }
     };
 
@@ -141,7 +161,7 @@ namespace webpp::protocol {
     };
 
     /**
-     * Automatically calculate the managemenr reply required tempate lengths
+     * Automatically calculate the management reply required template lengths
      */
     template <typename NameT, typename ValueT>
     management_reply(NameT name, ValueT value)

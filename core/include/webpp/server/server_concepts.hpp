@@ -46,6 +46,12 @@ namespace webpp {
       ThreadPool<typename T::thread_pool_type>;
     };
 
+
+    template <typename T>
+    concept Session = requires {
+
+    };
+
 }
 
 #endif // WEBPP_THREAD_POOL_CONCEPTS_HPP

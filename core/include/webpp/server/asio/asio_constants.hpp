@@ -2,7 +2,7 @@
 #define WEBPP_SERVER_CONSTANTS_H
 
 
-constexpr unsigned buffer_size = 1024 * 1024;
+constexpr unsigned buffer_size = 1024 * 1024 * 1024; // 1MiB
 
 /**
  * This is the default address for listening on when using Self-Hosted protocols

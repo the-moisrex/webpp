@@ -26,13 +26,11 @@ namespace webpp {
             socket.async_read_some(asio::buffer(buffer), [this](stl::error_code const& err,
                                                                 stl::size_t bytes_transferred) noexcept {
                 if (!err) {
-                    // we need to parse, store, read more, or
-                    // write something
+                    // we need to parse, store, read more, or write something
                 }
             });
         }
 
-        void write() noexcept {}
 
       public:
         explicit connection(socket_type&& socket) noexcept : socket(stl::move(socket)) {}

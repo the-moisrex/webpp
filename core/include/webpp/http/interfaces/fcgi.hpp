@@ -21,29 +21,36 @@ namespace webpp {
         using application_type = typename interface_type::application_type;
         using logger_type      = typename traits_type::logger;
         using logger_type_ref  = typename traits_type::logger::logger_ref;
+        using string_type = typename traits_type::string_type;
 
       private:
-        allocator_type alloc;
+
 
       public:
         [[no_unique_address]] logger_type_ref logger;
 
-        fcgi_request(logger_type_ref       logger = logger_type{},
+        fcgi_request(string_type &&data, logger_type_ref       logger = logger_type{},
                      allocator_type const& alloc  = allocator_type{}) noexcept
-          : alloc(alloc),
+          : data{stl::move(data), alloc},
             logger{logger} {}
 
         auto const& get_allocator() const noexcept {
-            return alloc;
+            return data.get_allocator();
         }
     };
 
+
+
+    struct fcgi_session_handler {
+
+
+    };
 
     template <Traits TraitsType, typename App, typename EList = empty_extension_pack>
     struct fcgi {
         using traits_type      = stl::remove_cvref_t<TraitsType>;
         using endpoint_type    = stl::net::ip::tcp::endpoint;
-        using server_type      = common::server<traits_type>;
+        using server_type      = server<traits_type>;
         using application_type = stl::remove_cvref_t<App>;
         using extension_list   = stl::remove_cvref_t<EList>;
         using interface_type   = fcgi<traits_type, application_type, extension_list>;
@@ -55,10 +62,10 @@ namespace webpp {
         static constexpr auto default_listen_port    = 8080u;
         static constexpr auto logging_category       = "FastCGI";
 
-        server_type                           server;
         stl::set<traits_type, endpoint_type>  endpoints;
         application_type                      app;
         [[no_unique_address]] logger_type_ref logger;
+        server_type                           server;
 
         fcgi(logger_type_ref logger = logger_type{}) noexcept : logger{logger} {};
 
