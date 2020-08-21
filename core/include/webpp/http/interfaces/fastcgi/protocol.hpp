@@ -190,18 +190,12 @@ namespace webpp::protocol {
 
     template <stl::size_t NAME_LENGTH, stl::size_t VALUE_LENGTH>
     struct management_reply {
-      private:
-        static constexpr uint8_t real_name_length  = NAME_LENGTH - 1;
-        static constexpr uint8_t real_value_length = VALUE_LENGTH - 1;
-
-        // ((sizeof(int_fast8_t) * 8u) -
-        //                           ((sizeof(management_reply<1, 1, 1>) - 3 + (sizeof(NameT) / sizeof(char))
-        //                           +
-        //                             (sizeof(ValueT) / sizeof(char))) %
-        //                            (sizeof(int_fast8_t) * 8u)))
-        static constexpr unsigned    chunk_size = 8u;
+        static constexpr uint8_t     real_name_length  = NAME_LENGTH - 1;
+        static constexpr uint8_t     real_value_length = VALUE_LENGTH - 1;
+        static constexpr unsigned    fast_chunk_size   = sizeof(int_fast8_t) * 8u;
         static constexpr stl::size_t padding_length =
-          (chunk_size - 1) - (sizeof(header) + 2 + real_name_length + real_value_length - 1) % chunk_size;
+          (fast_chunk_size) -
+          (sizeof(header) + (2 * sizeof(uint8_t)) + real_name_length + real_value_length) % fast_chunk_size;
 
         header  _header;
         uint8_t name_length  = real_name_length;
@@ -221,7 +215,7 @@ namespace webpp::protocol {
     };
 
     constexpr management_reply default_max_conns_reply{"FCGI_MAX_CONNS", "10"};
-    constexpr management_reply default_max_reqs_reply {"FCGI_MAX_REQS", "50"};
+    constexpr management_reply default_max_reqs_reply{"FCGI_MAX_REQS", "50"};
     constexpr management_reply default_mpxs_conns_reply{"FCGI_MPXS_CONNS", "1"};
 
 } // namespace webpp::protocol
