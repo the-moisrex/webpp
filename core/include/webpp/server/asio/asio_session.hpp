@@ -10,7 +10,7 @@
 #include <utility>
 
 namespace webpp {
-    class session {
+    struct session {
       public:
         using socket_type = asio::ip::tcp::socket;
 
@@ -40,3 +40,4 @@ namespace webpp {
 
 
 #endif
+

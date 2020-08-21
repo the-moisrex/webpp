@@ -3,6 +3,11 @@
 
 #include "../../../std/string_view.hpp"
 
+#include <limits>
+
+// https://github.com/eddic/fastcgipp
+// http://www.mit.edu/~yandros/doc/specs/fcgi-spec.html
+
 namespace webpp::protocol {
 
     template <typename T, stl::size_t Index = 0>
@@ -22,6 +27,15 @@ namespace webpp::protocol {
         return ((static_cast<Full>(pieces.value) << (pieces.index * piece_size)) | ...);
     }
 
+
+    template <typename Full, typename PieceType, uint8_t... Index>
+    constexpr void split_pieces(Full value, indexed_value<PieceType&, Index>... pieces) noexcept {
+        constexpr uint8_t   pieces_size = sizeof(PieceType) * 8u;
+        constexpr PieceType mask        = stl::numeric_limits<PieceType>::max();
+        ((pieces.value = static_cast<PieceType>((value >> (pieces.index * pieces_size)) & mask)), ...);
+    }
+
+
     /**
      * It is very important that this record_type's size be uint8_t
      */
@@ -37,6 +51,27 @@ namespace webpp::protocol {
         get_values        = 9,
         get_values_result = 10,
         unknown_type      = 11
+    };
+
+    // Defines the possible roles a FastCGI application may play
+    enum struct role : uint16_t { responder = 1, authorizer = 2, filter = 3 };
+
+    //! possible statuses a request may declare when complete
+    enum struct protocol_status : uint8_t {
+        request_complete = 0,
+        cant_mpx_conn    = 1,
+        overloaded       = 2,
+        unknown_role     = 3
+    };
+
+    /**
+     * This structure defines the body used in FastCGI UNKNOWN_TYPE records.
+     * It can be casted to raw 8 byte blocks of data and transmitted as is.
+     * An UNKNOWN_TYPE record is sent as a reply to record types that are not recognized.
+     */
+    struct unknown_type {
+        record_type type;
+        uint8_t     reserved[7];
     };
 
     /**
@@ -65,7 +100,8 @@ namespace webpp::protocol {
         /* reserved for later use */
         uint8_t reserved = 0;
 
-        header(record_type _type, uint16_t _req_id, uint16_t _content_length, uint8_t _padd_len) noexcept
+        constexpr header(record_type _type, uint16_t _req_id, uint16_t _content_length,
+                         uint8_t _padd_len) noexcept
           : type{_type},
             request_id_b1{static_cast<uint8_t>(_req_id >> 8u)},
             request_id_b0{static_cast<uint8_t>(_req_id)},
@@ -73,107 +109,120 @@ namespace webpp::protocol {
             content_length_b0{static_cast<uint8_t>(_content_length)},
             padding_length{_padd_len} {}
 
-        inline uint16_t request_id() const noexcept {
+        [[nodiscard]] constexpr uint16_t request_id() const noexcept {
             return join_pieces<uint16_t, uint8_t, 1, 0>(request_id_b1, request_id_b0);
         }
 
-        inline void request_id(uint16_t req_id) noexcept {
-            request_id_b1 = static_cast<uint8_t>(req_id >> 8u);
-            request_id_b0 = static_cast<uint8_t>(req_id);
+        void request_id(uint16_t req_id) noexcept {
+            split_pieces<uint16_t, uint8_t, 1, 0>(req_id, request_id_b1, request_id_b0);
         }
 
-        inline uint16_t content_length() const noexcept {
+        [[nodiscard]] constexpr uint16_t content_length() const noexcept {
             return join_pieces<uint16_t, uint8_t, 1, 0>(content_length_b1, content_length_b0);
         }
 
-        inline void content_length(uint16_t _content_length) noexcept {
-            content_length_b1 = static_cast<uint8_t>(_content_length >> 8u);
-            content_length_b0 = static_cast<uint8_t>(_content_length);
+        void content_length(uint16_t _content_length) noexcept {
+            split_pieces<uint16_t, uint8_t, 1, 0>(_content_length, content_length_b1, content_length_b0);
         }
 
         /**
          * Generally there are two types of records, Managements and the Application.
          */
-        inline bool is_management_record() const noexcept {
+        [[nodiscard]] constexpr bool is_management_record() const noexcept {
             return request_id() == 0;
         }
     };
 
-    class begin_request {
-        uint8_t                  role_b1;
-        uint8_t                  role_b0;
-        uint8_t                  flags;
-        [[maybe_unused]] uint8_t reserved[5] = {};
+    struct begin_request {
+        static constexpr auto keep_connection_flag = 1u;
 
-        [[nodiscard]] uint16_t role() const noexcept {
+        uint8_t role_b1;
+        uint8_t role_b0;
+        uint8_t flags;
+        uint8_t reserved[5] = {};
+
+        [[nodiscard]] uint16_t role_value() const noexcept {
             return join_pieces<uint16_t, uint8_t, 1, 0>(role_b1, role_b0);
         }
-    };
 
+        [[nodiscard]] enum role role() const noexcept {
+            return static_cast<enum role>(role_value());
+        }
+        /*!
+         * If this value is false, the socket should be closed on our side when the request is complete.
+         * If true, the other side will close the socket when done and potentially reuse the socket and
+         * multiplex other requests on it.
+         *
+         * @return Boolean value as to whether or not the connection is kept alive.
+         */
+        [[nodiscard]] constexpr bool kill() const noexcept {
+            return !(flags & keep_connection_flag);
+        }
+    };
+    /*
+     * This structure defines the body used in FastCGI END_REQUEST records.
+     * It can be casted to raw 8 byte blocks of data and transmitted as is.
+     * An END_REQUEST record is sent when this side wishes to terminate a request.
+     * This can be simply because it is complete or because of a problem.
+     */
     struct end_request {
-        uint8_t                  app_status_b3;
-        uint8_t                  app_status_b2;
-        uint8_t                  app_status_b1;
-        uint8_t                  app_status_b0;
-        uint8_t                  protocol_status;
-        [[maybe_unused]] uint8_t reserved[3] = {};
+        uint8_t app_status_b3;
+        uint8_t app_status_b2;
+        uint8_t app_status_b1;
+        uint8_t app_status_b0;
+        uint8_t protocol_status_value;
+        uint8_t reserved[3] = {};
 
         void app_status(uint32_t status_code) noexcept {
-            app_status_b3 = static_cast<uint8_t>(status_code >> 24u);
-            app_status_b2 = static_cast<uint8_t>(status_code >> 16u & 0xFFu);
-            app_status_b1 = static_cast<uint8_t>(status_code >> 8u & 0xFFu);
-            app_status_b0 = static_cast<uint8_t>(status_code);
+            split_pieces<uint32_t, uint8_t, 3, 2, 1, 0>(status_code, app_status_b3, app_status_b2,
+                                                        app_status_b1, app_status_b0);
         }
 
         [[nodiscard]] uint32_t app_status() const noexcept {
             return join_pieces<uint32_t, uint8_t, 3, 2, 1, 0>(app_status_b3, app_status_b2, app_status_b1,
                                                               app_status_b0);
         }
-    };
 
-    struct unknown_type {
-        record_type type;
-        uint8_t     reserved[7];
-    };
-
-    template <stl::size_t NAMELENGTH, stl::size_t VALUELENGTH, stl::size_t PADDINGLENGTH>
-    struct management_reply {
-      private:
-        header  _header;
-        uint8_t name_length  = NAMELENGTH;
-        uint8_t value_length = VALUELENGTH;
-        uint8_t name[NAMELENGTH];
-        uint8_t value[VALUELENGTH];
-        uint8_t padding[PADDINGLENGTH] = {};
-
-      public:
-        constexpr management_reply(char const* _name, char const* _value) noexcept
-          : _header{record_type::get_values_result, 0u, NAMELENGTH + VALUELENGTH, PADDINGLENGTH} {
-            auto _name_end  = _name + NAMELENGTH;
-            auto _value_end = _value + VALUELENGTH;
-            auto name_ptr   = name;
-            auto value_ptr  = value;
-            while (_name != _name_end)
-                *name_ptr = *_name++;
-            while (_value != _value_end)
-                *value_ptr = *_value++;
+        [[nodiscard]] enum protocol_status protocol_status() const noexcept {
+            return static_cast<enum protocol_status>(protocol_status_value);
         }
     };
 
-    /**
-     * Automatically calculate the management reply required template lengths
-     */
-    template <typename NameT, typename ValueT>
-    management_reply(NameT name, ValueT value)
-      -> management_reply<(sizeof(NameT) / sizeof(char)), (sizeof(ValueT) / sizeof(char)),
-                          ((sizeof(int_fast8_t) * 8u) -
-                           ((sizeof(management_reply<1, 1, 1>) - 3 + (sizeof(NameT) / sizeof(char)) +
-                             (sizeof(ValueT) / sizeof(char))) %
-                            (sizeof(int_fast8_t) * 8u)))>;
+    template <stl::size_t NAME_LENGTH, stl::size_t VALUE_LENGTH>
+    struct management_reply {
+      private:
+        static constexpr uint8_t real_name_length  = NAME_LENGTH - 1;
+        static constexpr uint8_t real_value_length = VALUE_LENGTH - 1;
 
-    management_reply default_max_conns_reply{"FCGI_MAX_CONNS", "10"};
-    management_reply default_max_reqs_reply{"FCGI_MAX_REQS", "50"};
-    management_reply default_mpxs_conns_reply{"FCGI_MPXS_CONNS", "1"};
+        // ((sizeof(int_fast8_t) * 8u) -
+        //                           ((sizeof(management_reply<1, 1, 1>) - 3 + (sizeof(NameT) / sizeof(char))
+        //                           +
+        //                             (sizeof(ValueT) / sizeof(char))) %
+        //                            (sizeof(int_fast8_t) * 8u)))
+        static constexpr unsigned    chunk_size = 8u;
+        static constexpr stl::size_t padding_length =
+          (chunk_size - 1) - (sizeof(header) + 2 + real_name_length + real_value_length - 1) % chunk_size;
+
+        header  _header;
+        uint8_t name_length  = real_name_length;
+        uint8_t value_length = real_value_length;
+        uint8_t name[real_name_length];
+        uint8_t value[real_value_length];
+        uint8_t padding[padding_length] = {};
+
+      public:
+        constexpr management_reply(char const (&_name)[NAME_LENGTH],
+                                   char const (&_value)[VALUE_LENGTH]) noexcept
+          : _header{record_type::get_values_result, 0u, real_name_length + real_value_length,
+                    padding_length} {
+            stl::copy_n(_name, real_name_length, name);
+            stl::copy_n(_value, real_value_length, value);
+        }
+    };
+
+    constexpr management_reply default_max_conns_reply{"FCGI_MAX_CONNS", "10"};
+    constexpr management_reply default_max_reqs_reply {"FCGI_MAX_REQS", "50"};
+    constexpr management_reply default_mpxs_conns_reply{"FCGI_MPXS_CONNS", "1"};
 
 } // namespace webpp::protocol
 
