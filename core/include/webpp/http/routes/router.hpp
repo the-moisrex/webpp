@@ -39,10 +39,10 @@ namespace webpp {
         //        using additional_routes = ;
         const stl::tuple<RouteType...> routes;
 
-        consteval router(ExtensionListType&&, RouteType&&... _route) noexcept
+        constexpr router(ExtensionListType&&, RouteType&&... _route) noexcept
           : routes(stl::forward<RouteType>(_route)...) {}
 
-        consteval router(RouteType&&... _route) noexcept : routes(stl::forward<RouteType>(_route)...) {}
+        constexpr router(RouteType&&... _route) noexcept : routes(stl::forward<RouteType>(_route)...) {}
 
         //        consteval router() noexcept              = delete;
         //        consteval router(router const&) noexcept = delete;

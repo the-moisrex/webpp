@@ -3,8 +3,8 @@
 #ifndef WEBPP_RESPONSE_COOKIES_HPP
 #define WEBPP_RESPONSE_COOKIES_HPP
 
-#include "./cookie.hpp"
 #include "../../std/string.hpp"
+#include "./cookie.hpp"
 
 namespace webpp {
 
@@ -179,12 +179,14 @@ namespace webpp {
         WEBPP_METHOD_STRS(expires)
 
 #undef WEBPP_METHOD_STRS
-#define WEBPP_METHOD_BOOLS(name) \
-    bool name() const noexcept { \
-        return _##name;          \
-    }                            \
-    bool name(bool i_##name) {   \
-        _##name = i_##name;      \
+#define WEBPP_METHOD_BOOLS(name)         \
+    bool name() const noexcept {         \
+        return _##name;                  \
+    }                                    \
+                                         \
+    auto& name(bool i_##name) noexcept { \
+        _##name = i_##name;              \
+        return *this;                    \
     }
 
         WEBPP_METHOD_BOOLS(secure);

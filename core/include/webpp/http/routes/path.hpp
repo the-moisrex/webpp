@@ -23,14 +23,6 @@ namespace webpp {
     //    }
     //
     template <typename T>
-    concept ComparableToString = requires(T obj) {
-        {obj == ""};
-    }
-    || requires(T obj) {
-        {"" == obj};
-    };
-
-    template <typename T>
     concept PathContext = Context<T>&& requires(T ctx) {
         {ctx.path};
     };
@@ -183,24 +175,10 @@ namespace webpp {
         consteval auto operator/(NewSegType&& new_next_segment) const noexcept {
             using seg_type = stl::remove_cvref_t<NewSegType>;
 
-            if constexpr (Segment<seg_type, path_type,
+            /*if constexpr (Segment<seg_type, path_type,
                                   decltype(basic_uri<fake_traits_type, false>{}.path_structured())>) {
-                // Add a new segment to the path and get a new path containing that specific segment
-                // and all the previous ones
-                if constexpr (!has_segment) {
-                    return route<path<seg_type, void>>{
-                      path<seg_type, void>{.segment = stl::forward<NewSegType>(new_next_segment)}};
-                } else if constexpr (!has_next_segment) {
-                    return route<path<segment_type, seg_type>>{
-                      path<segment_type, seg_type>{.segment = segment, .next_segment = new_next_segment}};
-                } else {
-                    using next_segment_t   = seg_type;
-                    using new_segment_type = path<path<segment_type, next_segment_type>, next_segment_t>;
-                    return route<new_segment_type>{
-                      new_segment_type{.segment      = *this,
-                                       .next_segment = stl::forward<NewSegType>(new_next_segment)}};
-                }
-            } else if constexpr (stl::is_array_v<seg_type> &&
+            } else*/
+            if constexpr (stl::is_array_v<seg_type> &&
                                  stl::is_integral_v<stl::remove_all_extents_t<seg_type>>) {
                 // int_type[N] => string_view
                 using char_type = stl::remove_all_extents_t<seg_type>;
@@ -214,11 +192,10 @@ namespace webpp {
                   <stl::basic_string_view<char_type>>(stl::forward<NewSegType>(new_next_segment));
             } else if constexpr (stl::is_integral_v<seg_type>) {
                 // integral types
-                return operator/([=](PathContext auto& ctx) {
+                return operator/([=](PathContext auto const& ctx) constexpr noexcept->bool {
                     return to<seg_type>(ctx.path.current_segment) == new_next_segment;
                 });
-            } else if constexpr (ComparableToString<stl::remove_cvref_t<NewSegType>> &&
-                                 stl::is_class_v<stl::remove_cvref_t<NewSegType>>) {
+            } else if constexpr (istl::ComparableToString<seg_type> && stl::is_class_v<seg_type>) {
 
                 // Convert those segments that can be compared with a string, to a normal segment
                 // type that have an operator(context)
@@ -236,9 +213,32 @@ namespace webpp {
                 return operator/
                   (make_a_path<seg_type>{.new_next_segment = stl::forward<NewSegType>(new_next_segment)});
             } else {
-                throw stl::invalid_argument("The specified segment is not a valid segment type;"
-                                            " it should be callable or comparable to a string "
-                                            "or a known type that we can make it callable.");
+                // segment
+
+                // Add a new segment to the path and get a new path containing that specific segment
+                // and all the previous ones
+                if constexpr (!has_segment) {
+                    return route<path<seg_type, void>>{
+                      path<seg_type, void>{.segment = stl::forward<NewSegType>(new_next_segment)}};
+                } else if constexpr (!has_next_segment) {
+                    return route<path<segment_type, seg_type>>{
+                      path<segment_type, seg_type>{.segment = segment, .next_segment = new_next_segment}};
+                } else {
+                    using next_segment_t   = seg_type;
+                    using new_segment_type = path<path<segment_type, next_segment_type>, next_segment_t>;
+                    return route<new_segment_type>{
+                      new_segment_type{.segment      = *this,
+                        .next_segment = stl::forward<NewSegType>(new_next_segment)}};
+                }
+
+                // todo: or give a compile time error if you can
+//                return operator/([=](Context auto const& ctx) constexpr noexcept {
+//                    return ctx.error(500u,
+//                                     "The specified segment is not a valid segment type;"
+//                                     " it should be callable or comparable to a string "
+//                                     "or a known type that we can make it callable.",
+//                                     new_next_segment);
+//                });
             }
         }
 

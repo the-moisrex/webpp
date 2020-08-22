@@ -34,7 +34,7 @@ namespace webpp::istl {
 
     template <typename T>
     concept String = requires(stl::remove_cvref_t<T> str) {
-        stl::remove_cvref_t<T>{"str"};
+        //        { T{"str"} };
         str.empty();
         str.at(0);
         str.data();
@@ -98,6 +98,14 @@ namespace webpp::istl {
         } else {
             throw stl::invalid_argument("The specified input is not convertible to string_view");
         }
+    };
+
+    template <typename T>
+    concept ComparableToString = requires(T obj) {
+        {obj == ""};
+    }
+    || requires(T obj) {
+        {"" == obj};
     };
 
 } // namespace webpp::istl

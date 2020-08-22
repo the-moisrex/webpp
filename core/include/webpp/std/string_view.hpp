@@ -33,7 +33,7 @@ namespace webpp::istl {
 
     template <typename T>
     concept StringView = requires(stl::remove_cvref_t<T> str) {
-        stl::remove_cvref_t<T>{"str"};
+//        { T{"str"} };
         str.empty();
         str.at(0);
         str.data();

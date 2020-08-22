@@ -186,12 +186,12 @@ namespace webpp {
 
         friend constexpr bool operator==(istl::ConvertibleToStringView auto&&   str,
                                          header_field<TraitsType, EList> const& field) noexcept {
-            return field == istl::to_string_view(str);
+            return field.operator==(istl::to_string_view(str));
         }
 
         friend constexpr bool operator!=(istl::ConvertibleToStringView auto&&   str,
                                          header_field<TraitsType, EList> const& field) noexcept {
-            return field != istl::to_string_view(str);
+            return field.operator!=(istl::to_string_view(str));
         }
     };
 

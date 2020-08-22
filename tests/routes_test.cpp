@@ -1,19 +1,12 @@
 // Created by moisrex on 11/7/19.
-#include "../core/include/webpp/http/interfaces/cgi.hpp"
-#include "../core/include/webpp/http/request.hpp"
-#include "../core/include/webpp/http/routes/context.hpp"
-#include "../core/include/webpp/http/routes/literals.hpp"
+#include "./fake_interface.hpp"
 #include "../core/include/webpp/http/routes/methods.hpp"
 #include "../core/include/webpp/http/routes/path.hpp"
-#include "../core/include/webpp/http/routes/path/number.hpp"
-#include "../core/include/webpp/traits/std_traits.hpp"
 
 #include <gtest/gtest.h>
 #include <string>
-#include <utility>
 
 using namespace webpp;
-using namespace webpp::routes;
 
 struct fake_app {
 
@@ -23,15 +16,13 @@ struct fake_app {
     }
 };
 
-using request_type = simple_request<std_traits, cgi_request, cgi<std_traits, fake_app>, empty_extension_pack>;
+using request_type = fake_request_type;
 using context_type = simple_context<request_type>;
 
 TEST(Routes, Path) {
-    using namespace webpp::routes;
     request_type req;
     context_type ctx{};
 
-    constexpr auto root = path<void, void>();
 
     //    EXPECT_TRUE((root / number{"integer name"})(ctx));
     //    EXPECT_TRUE((root / number{"integer name"} / number{"2th num"})(ctx));
