@@ -60,7 +60,8 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/cgi.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fcgi.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fastcgi/protocol.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fastcgi/fcgi_protocols.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fastcgi/fcgi_manager.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/http/response_body.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/request_body.hpp
