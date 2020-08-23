@@ -60,8 +60,8 @@ namespace webpp::fcgi {
          *
          *
          */
-        static bool process_header_params(const char* data, const char* const data_end, const char*& name,
-                                          const char*& value, const char*& end) noexcept {
+        static bool process_header_params(const char* data, const char* const data_end, stl::string_view &name,
+                                          stl::string_view &value) noexcept {
             if (data >= data_end)
                 return false; // no more params for you
 
@@ -101,19 +101,48 @@ namespace webpp::fcgi {
                 ++data;
             }
 
-            name = static_cast<const char*>(data);
-            value = name + name_size;
-            end = value + value_size;
+            name = stl::string_view{static_cast<const char*>(data), name_size};
+            value = stl::string_view{name.data() + name_size, value_size};
+            auto end = value.data() + value_size;
 
             return end <= data_end;
         }
 
+        void send(auto&& block) const noexcept {
+            // todo
+        }
+
         void handle_header(header&& _header) noexcept {
             switch (_header.type) {
-                case record_type::get_values:
-                    const char* name;
-                    const char* value;
-                    const char* end;
+                case record_type::get_values: {
+                    stl::string_view name, value;
+                    while (process_header_params(data, data_end, name, value)) {
+                        switch (name.size()) {
+                            case decltype(max_conns_reply)::real_name_length:
+                                if (stl::equal(name.data(), name.data() + name.size(),
+                                               max_conns_reply.name)) {
+                                    send(max_conns_reply);
+                                }
+                                break;
+                            case decltype(max_reqs_reply)::real_name_length:
+                                if (stl::equal(name.data(), name.data() + name.size(), max_reqs_reply.name)) {
+                                    send(max_reqs_reply);
+                                }
+                                break;
+                            case decltype(mpxs_conns_reply)::real_name_length:
+                                if (stl::equal(name.data(), name.data() + name.size(),
+                                               mpxs_conns_reply.name)) {
+                                    send(max_reqs_reply);
+                                }
+                                break;
+                        }
+                    }
+                }
+                default: {
+                    unknown_type unknown;
+                    // todo
+                    send(unknown);
+                }
             }
         }
     };

@@ -45,12 +45,46 @@ namespace webpp::fcgi {
         }
     }
 
+    template <typename Full, typename PieceType1, typename... PieceType>
+    constexpr Full join_pieces(PieceType&... pieces) noexcept {
+        constexpr stl::uint8_t piece_count = sizeof(Full) / sizeof(PieceType1);
+        static_assert(sizeof...(pieces) == piece_count, "We can't handle this request, do it manually.");
+        if constexpr (piece_count == 4) {
+            return join_pieces<Full, PieceType1, 3, 2, 1, 0>(pieces...);
+        } else if constexpr (3 == piece_count) {
+            return join_pieces<Full, PieceType1, 2, 1, 0>(pieces...);
+        } else if constexpr (2 == piece_count) {
+            return join_pieces<Full, PieceType1, 1, 0>(pieces...);
+        } else if constexpr (1 == piece_count) {
+            return join_pieces<Full, PieceType1, 0>(pieces...);
+        } else {
+            throw stl::invalid_argument("We're not able to handle these types.");
+        }
+    }
+
 
     template <typename Full, typename PieceType, uint8_t... Index>
     constexpr void split_pieces(Full value, indexed_value<PieceType&, Index>... pieces) noexcept {
         constexpr uint8_t   pieces_size = sizeof(PieceType) * 8u;
         constexpr PieceType mask        = stl::numeric_limits<PieceType>::max();
         ((pieces.value = static_cast<PieceType>((value >> (pieces.index * pieces_size)) & mask)), ...);
+    }
+
+    template <typename Full, typename PieceType1, typename... PieceType>
+    constexpr void split_pieces(Full value, PieceType&... pieces) noexcept {
+        constexpr stl::uint8_t piece_count = sizeof(Full) / sizeof(PieceType1);
+        static_assert(sizeof...(pieces) == piece_count, "We can't handle this request, do it manually.");
+        if constexpr (piece_count == 4) {
+            return split_pieces<Full, PieceType1, 3, 2, 1, 0>(value, pieces...);
+        } else if constexpr (3 == piece_count) {
+            return split_pieces<Full, PieceType1, 2, 1, 0>(value, pieces...);
+        } else if constexpr (2 == piece_count) {
+            return split_pieces<Full, PieceType1, 1, 0>(value, pieces...);
+        } else if constexpr (1 == piece_count) {
+            return split_pieces<Full, PieceType1, 0>(value, pieces...);
+        } else {
+            throw stl::invalid_argument("We're not able to handle these types.");
+        }
     }
 
 
@@ -128,19 +162,19 @@ namespace webpp::fcgi {
             padding_length{_padd_len} {}
 
         [[nodiscard]] constexpr uint16_t request_id() const noexcept {
-            return join_pieces<uint16_t, uint8_t, 1, 0>(request_id_b1, request_id_b0);
+            return join_pieces<uint16_t, uint8_t>(request_id_b1, request_id_b0);
         }
 
         void request_id(uint16_t req_id) noexcept {
-            split_pieces<uint16_t, uint8_t, 1, 0>(req_id, request_id_b1, request_id_b0);
+            split_pieces<uint16_t, uint8_t>(req_id, request_id_b1, request_id_b0);
         }
 
         [[nodiscard]] constexpr uint16_t content_length() const noexcept {
-            return join_pieces<uint16_t, uint8_t, 1, 0>(content_length_b1, content_length_b0);
+            return join_pieces<uint16_t, uint8_t>(content_length_b1, content_length_b0);
         }
 
         void content_length(uint16_t _content_length) noexcept {
-            split_pieces<uint16_t, uint8_t, 1, 0>(_content_length, content_length_b1, content_length_b0);
+            split_pieces<uint16_t, uint8_t>(_content_length, content_length_b1, content_length_b0);
         }
 
         /**
@@ -160,7 +194,7 @@ namespace webpp::fcgi {
         uint8_t reserved[5] = {};
 
         [[nodiscard]] uint16_t role_value() const noexcept {
-            return join_pieces<uint16_t, uint8_t, 1, 0>(role_b1, role_b0);
+            return join_pieces<uint16_t, uint8_t>(role_b1, role_b0);
         }
 
         [[nodiscard]] enum role role() const noexcept {
@@ -192,13 +226,12 @@ namespace webpp::fcgi {
         uint8_t reserved[3] = {};
 
         void app_status(uint32_t status_code) noexcept {
-            split_pieces<uint32_t, uint8_t, 3, 2, 1, 0>(status_code, app_status_b3, app_status_b2,
-                                                        app_status_b1, app_status_b0);
+            split_pieces<uint32_t, uint8_t>(status_code, app_status_b3, app_status_b2, app_status_b1,
+                                            app_status_b0);
         }
 
         [[nodiscard]] uint32_t app_status() const noexcept {
-            return join_pieces<uint32_t, uint8_t, 3, 2, 1, 0>(app_status_b3, app_status_b2, app_status_b1,
-                                                              app_status_b0);
+            return join_pieces<uint32_t, uint8_t>(app_status_b3, app_status_b2, app_status_b1, app_status_b0);
         }
 
         [[nodiscard]] enum protocol_status protocol_status() const noexcept {
@@ -239,19 +272,18 @@ namespace webpp::fcgi {
          * @return Length of record including content, header and padding.
          */
         [[nodiscard]] stl::size_t record_size(stl::size_t content_length) noexcept {
-            // Of course the maximum content length is in fact 0xffff bytes so any passed content length > 0xffff will be assumed 0xffff.
+            // Of course the maximum content length is in fact 0xffff bytes so any passed content length >
+            // 0xffff will be assumed 0xffff.
             if (content_length > 0xFFFFu)
                 content_length = 0xFFFFU;
             return (content_length + sizeof(header) + chunk_size - 1) / chunk_size * chunk_size;
         }
-
-
     };
 
-    static constexpr management_reply default_max_conns_reply{"FCGI_MAX_CONNS", "10"};
-    static constexpr management_reply default_max_reqs_reply{"FCGI_MAX_REQS", "50"};
-    static constexpr management_reply default_mpxs_conns_reply{"FCGI_MPXS_CONNS", "1"};
+    static constexpr management_reply max_conns_reply{"FCGI_MAX_CONNS", "10"};
+    static constexpr management_reply max_reqs_reply{"FCGI_MAX_REQS", "50"};
+    static constexpr management_reply mpxs_conns_reply{"FCGI_MPXS_CONNS", "1"};
 
-} // namespace webpp::protocol
+} // namespace webpp::fcgi
 
 #endif
