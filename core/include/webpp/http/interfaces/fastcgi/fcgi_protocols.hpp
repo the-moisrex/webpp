@@ -243,9 +243,9 @@ namespace webpp::fcgi {
     struct management_reply {
         static constexpr uint8_t     real_name_length  = NAME_LENGTH - 1;
         static constexpr uint8_t     real_value_length = VALUE_LENGTH - 1;
-        static constexpr unsigned    fast_chunk_size   = sizeof(int_fast8_t) * chunk_size;
+        static constexpr stl::size_t fast_chunk_size   = sizeof(int_fast8_t) * chunk_size;
         static constexpr stl::size_t padding_length =
-          (fast_chunk_size) -
+          fast_chunk_size -
           (sizeof(header) + (2 * sizeof(uint8_t)) + real_name_length + real_value_length) % fast_chunk_size;
 
         header  _header;

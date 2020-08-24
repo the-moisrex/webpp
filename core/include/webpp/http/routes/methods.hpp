@@ -7,11 +7,12 @@ namespace webpp {
 
     struct method_route_condition {
       private:
-        const stl::string_view method_string;
+        stl::string_view method_string{};
 
       public:
         constexpr method_route_condition(stl::string_view str) noexcept : method_string(stl::move(str)) {}
-
+        constexpr method_route_condition(method_route_condition const&) = default;
+        constexpr method_route_condition(method_route_condition&&) noexcept = default;
         constexpr method_route_condition() noexcept = default;
 
         [[nodiscard]] bool operator()(Request auto const& req) const noexcept {

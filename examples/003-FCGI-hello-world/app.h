@@ -13,19 +13,21 @@ struct app {
         return ctx.string("Home page");
     }
 
-    auto about(Context auto& ctx) {
+    auto about(Context auto& ctx) noexcept {
         return ctx.string("About page");
     }
 
-    Response auto operator()(Request auto& req) {
+    Response auto operator()(Request auto& req) noexcept {
         using extensions = extension_pack<string_response>;
         const auto admin = []() {
             return "Nice page.";
         };
-        router _router{extensions{}, (get and root / "home") >>=
-                                 [this](Context auto& ctx) {
-                                     return this->home(ctx);
-                                 },
+        constexpr auto home_root = root / stl::string_view{"home"};
+        router _router{extensions{},
+                       home_root && get >>=
+                       [this](Context auto& ctx) {
+                           return this->home(ctx);
+                       },
                                  get & (root / "about" >>=
                                         [this](Context auto& ctx) {
                                             return this->about(ctx);

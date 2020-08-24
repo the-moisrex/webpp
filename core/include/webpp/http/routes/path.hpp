@@ -8,8 +8,6 @@
 #include "../../utils/uri.hpp"
 #include "route.hpp"
 
-#include <type_traits>
-
 namespace webpp {
 
     //    namespace details {
@@ -172,14 +170,14 @@ namespace webpp {
          * Convert different original types to normal callable segments
          */
         template <typename NewSegType>
-        consteval auto operator/(NewSegType&& new_next_segment) const noexcept {
+        constexpr auto operator/(NewSegType&& new_next_segment) const noexcept {
             using seg_type = stl::remove_cvref_t<NewSegType>;
 
             /*if constexpr (Segment<seg_type, path_type,
                                   decltype(basic_uri<fake_traits_type, false>{}.path_structured())>) {
             } else*/
             if constexpr (stl::is_array_v<seg_type> &&
-                                 stl::is_integral_v<stl::remove_all_extents_t<seg_type>>) {
+                          stl::is_integral_v<stl::remove_all_extents_t<seg_type>>) {
                 // int_type[N] => string_view
                 using char_type = stl::remove_all_extents_t<seg_type>;
                 return operator/
@@ -228,24 +226,24 @@ namespace webpp {
                     using new_segment_type = path<path<segment_type, next_segment_type>, next_segment_t>;
                     return route<new_segment_type>{
                       new_segment_type{.segment      = *this,
-                        .next_segment = stl::forward<NewSegType>(new_next_segment)}};
+                                       .next_segment = stl::forward<NewSegType>(new_next_segment)}};
                 }
 
                 // todo: or give a compile time error if you can
-//                return operator/([=](Context auto const& ctx) constexpr noexcept {
-//                    return ctx.error(500u,
-//                                     "The specified segment is not a valid segment type;"
-//                                     " it should be callable or comparable to a string "
-//                                     "or a known type that we can make it callable.",
-//                                     new_next_segment);
-//                });
+                //                return operator/([=](Context auto const& ctx) constexpr noexcept {
+                //                    return ctx.error(500u,
+                //                                     "The specified segment is not a valid segment type;"
+                //                                     " it should be callable or comparable to a string "
+                //                                     "or a known type that we can make it callable.",
+                //                                     new_next_segment);
+                //                });
             }
         }
 
         /**
          * Get the number or segments in this path
          */
-        [[nodiscard]] static consteval stl::size_t size() noexcept {
+        [[nodiscard]] static constexpr stl::size_t size() noexcept {
             stl::size_t _size = 0;
             if constexpr (has_segment) {
                 if constexpr (requires { {segment_type::size()}; }) {
