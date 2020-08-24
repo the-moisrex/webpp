@@ -48,8 +48,8 @@ namespace webpp {
 
 
     template <typename T>
-    concept Session = requires {
-
+    concept Session = requires (T ses) {
+        ses.read(); // todo
     };
 
 }

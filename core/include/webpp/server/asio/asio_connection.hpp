@@ -14,20 +14,22 @@
 
 namespace webpp {
 
+    template <typename SessionType>
     struct connection {
-        using socket_type = asio::ip::tcp::socket;
+        using session_type = SessionType;
+        using socket_type  = asio::ip::tcp::socket;
 
       private:
-        socket_type                   socket;
-        stl::array<char, buffer_size> buffer{};
+        [[no_unique_address]] session_type session;
+        socket_type                        socket;
+        stl::array<char, buffer_size>      buffer{};
 
         void read() noexcept {
             // we share ourselves, so the connection keeps itself alive.
             socket.async_read_some(asio::buffer(buffer), [this](stl::error_code const& err,
                                                                 stl::size_t bytes_transferred) noexcept {
-                if (!err) {
-                    // we need to parse, store, read more, or write something
-                }
+                // we need to parse, store, read more, or write something
+                session.read(err, bytes_transferred);
             });
         }
 
@@ -35,7 +37,7 @@ namespace webpp {
       public:
         explicit connection(socket_type&& socket) noexcept : socket(stl::move(socket)) {}
         connection(connection const&) = delete;
-        connection(connection&&)      = default;
+        connection(connection&&)  noexcept    = default;
         connection& operator=(connection const&) = delete;
         connection& operator=(connection&&) = default;
 

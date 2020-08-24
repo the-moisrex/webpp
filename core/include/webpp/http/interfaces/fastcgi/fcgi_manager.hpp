@@ -118,23 +118,27 @@ namespace webpp::fcgi {
                     stl::string_view name, value;
                     while (process_header_params(data, data_end, name, value)) {
                         switch (name.size()) {
+
                             case decltype(max_conns_reply)::real_name_length:
                                 if (stl::equal(name.data(), name.data() + name.size(),
                                                max_conns_reply.name)) {
                                     send(max_conns_reply);
                                 }
                                 break;
+
                             case decltype(max_reqs_reply)::real_name_length:
                                 if (stl::equal(name.data(), name.data() + name.size(), max_reqs_reply.name)) {
                                     send(max_reqs_reply);
                                 }
                                 break;
+
                             case decltype(mpxs_conns_reply)::real_name_length:
                                 if (stl::equal(name.data(), name.data() + name.size(),
                                                mpxs_conns_reply.name)) {
                                     send(max_reqs_reply);
                                 }
                                 break;
+
                         }
                     }
                 }
