@@ -5,9 +5,9 @@
 
 #include "./fcgi_protocols.hpp"
 
-namespace webpp::fcgi {
+namespace webpp::fastcgi {
 
-    struct manager {
+    struct fcgi_manager {
 
         /**
          * Explanation of this algorithm is in FastCGI specs:

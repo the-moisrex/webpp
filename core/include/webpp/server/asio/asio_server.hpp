@@ -10,6 +10,7 @@
 #include "./asio_thread_pool.hpp"
 #include "./asio_connection.hpp"
 #include "./asio_constants.hpp"
+#include "../../std/vector.hpp"
 
 #include <memory>
 
@@ -19,7 +20,7 @@ namespace webpp {
      * This class is the server and the connection manager.
      */
     template <Traits TraitsType, typename SessionType>
-    struct server {
+    struct asio_server {
         using traits_type      = TraitsType;
         using session_type     = SessionType;
         using connection_type  = connection<session_type>;
@@ -67,14 +68,13 @@ namespace webpp {
 
       public:
         template <typename Allocator = stl::remove_cvref_t<decltype(decltype(connections)::get_allocator())>>
-        explicit server(Allocator const& allocator = Allocator{}, logger_ref logger = logger_type{}) noexcept
+        explicit asio_server(logger_ref       logger    = logger_type{},
+                             Allocator const& allocator = Allocator{}) noexcept
           : connections{allocator},
             acceptors{allocator},
             logger{logger} {};
 
-        void listen(istl::vector<traits_type, endpoint_type> endpoints) noexcept {
-
-        }
+        void listen(istl::vector<traits_type, endpoint_type> endpoints) noexcept {}
 
         void run() noexcept {
             pool.post(

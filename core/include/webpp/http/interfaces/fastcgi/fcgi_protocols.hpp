@@ -8,7 +8,7 @@
 // https://github.com/eddic/fastcgipp
 // http://www.mit.edu/~yandros/doc/specs/fcgi-spec.html
 
-namespace webpp::fcgi {
+namespace webpp::fastcgi {
 
     static constexpr unsigned chunk_size = 8u;
 
