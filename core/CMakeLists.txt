@@ -93,6 +93,7 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/webpp/server/server_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_thread_pool.hpp
+        ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_traits.hpp
         ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_connection.hpp
         ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_constants.hpp
         ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_server.hpp

@@ -35,12 +35,19 @@ namespace webpp {
         using request_extension_list = REL;
         using allocator_type   = typename traits_type::template allocator<typename traits_type::char_type>;
         using application_type = typename interface_type::application_type;
+        using logger_type      = typename traits_type::logger_type;
+        using logger_ref       = typename logger_type::logger_ref;
 
       private:
         allocator_type alloc;
 
       public:
-        cgi_request(allocator_type const& alloc = allocator_type{}) noexcept : alloc(alloc) {}
+        [[no_unique_address]] logger_ref logger;
+
+        template <typename AlocType>
+        cgi_request(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{}) noexcept
+          : logger{logger},
+            alloc(alloc) {}
 
         auto const& get_allocator() const noexcept {
             return alloc;
@@ -335,18 +342,59 @@ namespace webpp {
         using ostream_t        = typename TraitsType::ostream_type;
         using request_type     = simple_request<traits_type, cgi_request, interface_type, extension_list>;
         using allocator_type   = typename request_type::allocator_type;
-
-        application_type app;
+        using logger_type      = typename traits_type::logger_type;
+        using logger_ref       = typename logger_type::logger_ref;
 
       private:
         allocator_type alloc;
 
-      public:
-        cgi(allocator_type const& alloc = allocator_type{}) noexcept : alloc(alloc) {
+        void ctor() noexcept {
             // I'm not using C here; so why should I pay for it!
             // And also the user should not use cin and cout. so ...
             stl::ios::sync_with_stdio(false);
         }
+
+      public:
+        application_type                 app;
+        [[no_unique_address]] logger_ref logger;
+
+
+      public:
+        template <typename AllocType>
+        requires(ConstructibleWithLoggerAndAllocator<application_type, logger_ref, AllocType>)
+          cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{}) noexcept
+          : alloc{alloc},
+            logger{logger},
+            app{logger, alloc} {
+            ctor();
+        };
+
+        template <typename AllocType>
+        requires(ConstructibleWithLogger<application_type, logger_ref>)
+          cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{}) noexcept
+          : alloc{alloc},
+            logger{logger},
+            app{logger} {
+            ctor();
+        };
+
+        template <typename AllocType>
+        requires(ConstructibleWithAllocator<application_type, AllocType>)
+          cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{}) noexcept
+          : alloc{alloc},
+            logger{logger},
+            app{alloc} {
+            ctor();
+        };
+
+        template <typename AllocType>
+        requires(stl::is_default_constructible_v<application_type>)
+          cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{}) noexcept
+          : alloc{alloc},
+            logger{logger},
+            app{} {
+            ctor();
+        };
 
         auto const& get_allocator() const noexcept {
             return alloc;
@@ -354,9 +402,6 @@ namespace webpp {
 
         /**
          * Read the body of the string
-         * @param data
-         * @param length
-         * @return
          */
         static stl::streamsize read(char* data, stl::streamsize length) noexcept {
             stl::cin.read(data, length);
@@ -377,8 +422,6 @@ namespace webpp {
 
         /**
          * Send data to the user
-         * @param data
-         * @param length
          */
         static void write(char const* data, stl::streamsize length) noexcept {
             stl::cout.write(data, length);
@@ -386,8 +429,6 @@ namespace webpp {
 
         /**
          * Get the environment value safely
-         * @param key
-         * @return
          */
         [[nodiscard]] static stl::string_view env(char const* key) noexcept {
             if (auto value = getenv(key))
@@ -397,8 +438,6 @@ namespace webpp {
 
         /**
          * Get a specific header by it's name
-         * @param name
-         * @return
          */
         [[nodiscard]] static str_view_type header(stl::string name) noexcept {
             // fixme: check if this is all we have to do or we have to do more too:
@@ -416,12 +455,10 @@ namespace webpp {
          * Get a list of headers as a string
          */
         [[nodiscard]] static str_view_type headers() noexcept {
-            // we can do this only in CGI, we have to come up with new ways for
-            // long-running protocols:
+            // we can do this only in CGI, we have to come up with new ways for long-running protocols:
             static str_type headers_cache;
             if (headers_cache.empty()) {
-                // TODO: this code won't work on windows. Change when you are worried
-                // about windows
+                // TODO: this code won't work on windows. Change when you are worried about windows
                 for (auto it = ::environ; *it; it++) {
                     str_view_type h{*it};
                     if (starts_with(h, "HTTP_")) {
@@ -437,8 +474,7 @@ namespace webpp {
          * Get the full body as a string_view
          */
         [[nodiscard]] static str_view_type body() noexcept {
-            // again, we can do this only in cgi protocol not in other
-            // interfaces:
+            // again, we can do this only in cgi protocol not in other interfaces:
             static str_type body_cache;
             if (body_cache.empty()) {
                 if (auto content_length_str = env("CONTENT_LENGTH"); !content_length_str.empty()) {
@@ -449,8 +485,7 @@ namespace webpp {
                     char* buffer = new char[content_length];
                     stl::cin.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
                 } else {
-                    // we don't know how much the user is going to send. so we
-                    // use a small size buffer:
+                    // we don't know how much the user is going to send. so we use a small size buffer:
 
                     // TODO: add something here
                 }

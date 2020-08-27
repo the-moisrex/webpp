@@ -6,6 +6,7 @@
 #define WEBPP_REQUEST_CONCEPTS_H
 
 #include "../extensions/extension.hpp"
+#include "../logs/log_concepts.hpp"
 #include "../traits/std_traits.hpp"
 #include "./interfaces/interface_concepts.hpp"
 
@@ -16,6 +17,8 @@ namespace webpp {
       Interface<typename stl::remove_cvref_t<T>::interface_type>&& requires(stl::remove_cvref_t<T> req) {
         req.request_uri();
         req.get_allocator();
+        Logger<typename T::logger_type>;
+        { req.logger } -> Logger;
     };
 
 

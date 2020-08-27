@@ -3,6 +3,8 @@
 #ifndef WEBPP_SERVER_CONCEPTS_HPP
 #define WEBPP_SERVER_CONCEPTS_HPP
 
+#include "../traits/traits_concepts.hpp"
+
 namespace webpp {
 
     /**
@@ -11,7 +13,7 @@ namespace webpp {
      *
      * Features of this thread pool:
      * - [ ] Fewer run-time overhead features:
-     *   - [ ] Register methods before using theme multiple times.
+     *   - [ ] Register methods before using them multiple times.
      *     Use cases:
      *     - [ ] Buffering the requests
      *     - [ ] Processing user requests (even parsing the request)
@@ -50,6 +52,14 @@ namespace webpp {
     template <typename T>
     concept Session = requires (T ses) {
         ses.read(); // todo
+    };
+
+
+    template <typename T>
+    concept ServerTraits = requires {
+        Traits<typename T::traits_type>;
+        Session<typename T::session_type>;
+        Server<typename T::server_type>;
     };
 
 }

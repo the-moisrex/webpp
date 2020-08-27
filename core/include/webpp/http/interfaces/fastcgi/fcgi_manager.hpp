@@ -60,8 +60,8 @@ namespace webpp::fastcgi {
          *
          *
          */
-        static bool process_header_params(const char* data, const char* const data_end, stl::string_view &name,
-                                          stl::string_view &value) noexcept {
+        static bool process_header_params(const char* data, const char* const data_end,
+                                          stl::string_view& name, stl::string_view& value) noexcept {
             if (data >= data_end)
                 return false; // no more params for you
 
@@ -101,8 +101,8 @@ namespace webpp::fastcgi {
                 ++data;
             }
 
-            name = stl::string_view{static_cast<const char*>(data), name_size};
-            value = stl::string_view{name.data() + name_size, value_size};
+            name     = stl::string_view{static_cast<const char*>(data), name_size};
+            value    = stl::string_view{name.data() + name_size, value_size};
             auto end = value.data() + value_size;
 
             return end <= data_end;
@@ -113,6 +113,8 @@ namespace webpp::fastcgi {
         }
 
         void handle_header(header&& _header) noexcept {
+            extern char* data; // todo
+            extern char* data_end;
             switch (_header.type) {
                 case record_type::get_values: {
                     stl::string_view name, value;
@@ -138,7 +140,6 @@ namespace webpp::fastcgi {
                                     send(max_reqs_reply);
                                 }
                                 break;
-
                         }
                     }
                 }
@@ -151,6 +152,6 @@ namespace webpp::fastcgi {
         }
     };
 
-} // namespace webpp::fcgi
+} // namespace webpp::fastcgi
 
 #endif // WEBPP_FCGI_MANAGER_HPP
