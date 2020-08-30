@@ -52,11 +52,30 @@ namespace webpp {
       requires {
         typename T::template allocator<typename T::char_traits>;
         typename T::string_type;
-        typename T::string_view_type;
+        typename T::string_view_type; // todo: do we need this here? should we remove this?
         typename T::logger_type;
         // todo: add Allocator<typename T::allocator>;
         // todo: add BasicString<typename T::string_type>;
         // todo: add BasicStringView<typename T::string_view_type>;
+    };
+
+
+    /**
+     * A traits enabled type is a type that supports everything that a traits type has to offer.
+     * This will probably have a run-time cost to instantiate.
+     *
+     * Two most used are:
+     *   - allocators
+     *   - loggers
+     */
+    template <typename T>
+    concept TraitsEnabled = requires(T t) {
+        typename T::logger_type;
+        typename T::traits_type;
+        typename T::string_type;
+        typename T::string_view_type; // do we need this here?
+        t.logger;
+        t.get_allocator();
     };
 
 
