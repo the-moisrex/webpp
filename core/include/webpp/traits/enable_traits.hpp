@@ -43,10 +43,11 @@ namespace webpp {
 
         template <typename AllocType = typename allocator_type::value_type>
         auto const& get_allocator() const noexcept {
-            if constexpr (stl::same_as<AllocType, typename allocator_type::value_type>) {
+            using new_alloc_type = stl::remove_cvref_t<AllocType>;
+            if constexpr (stl::same_as<new_alloc_type, typename allocator_type::value_type>) {
                 return alloc;
             } else {
-                return to_alloc<allocator_type, AllocType>{alloc};
+                return to_alloc<allocator_type, new_alloc_type>{alloc};
             }
         }
     };

@@ -11,7 +11,7 @@ namespace webpp {
      * Thread pool class helps to implement a vector/list of threads and push
      * tasks into this thread pool.
      *
-     * Features of this thread pool:
+     * List of features I'd like to see in the future:
      * - [ ] Fewer run-time overhead features:
      *   - [ ] Register methods before using them multiple times.
      *     Use cases:
@@ -32,29 +32,59 @@ namespace webpp {
      *   - [ ] std::jthread
      *   - [ ] boost::thread
      *   - [ ] POSIX
-     * - [ ] Constexpr way to hash a function object into a known number in the
-     * thread pool
+     * - [ ] Constexpr way to hash a function object into a known number in the thread pool
      */
     template <typename T>
     concept ThreadPool = requires (T tp, decltype([]{}) lambda) {
         tp.post(lambda);
-        tp.defer(lambda);
+        tp.defer(lambda); // todo: fix these 3; I don't think they have the correct args
         tp.dispatch(lambda);
     };
 
 
+    /**
+     * The server's job is to implement the server side stuff.
+     *   - open and close connections
+     *   - accept requests
+     *   - handle buffering
+     *   - handling multithreading and thread pools
+     *
+     * Handling other stuff like processing the request and generating a response is not the server's job.
+     * Those are the session manager's job in which they probably make those jobs easier for the final user
+     * to actually do.
+     */
     template <typename T>
     concept Server = requires {
       ThreadPool<typename T::thread_pool_type>;
     };
 
 
+    /**
+     * Session is a type in which helps the server to handle the input and output of all the communications
+     * with the outside world (through sockets of course). This API helps us to use the same server types
+     * for different usages.
+     *
+     * For example the FastCGI protocol can use "asio_server" as its back-end server or "posix_server";
+     * FastCGI just has to provide a "session manager" and specify it in the "server traits".
+     *
+     * This we don't have to implement two different "server" types for FastCGI and Self-Hosted servers.
+     *
+     */
     template <typename T>
     concept Session = requires (T ses) {
         ses.read(); // todo
     };
 
 
+    /**
+     * Server Traits:
+     * Server traits is a class which contains all the necessary tools for instantiating a valid and working
+     * server in which the session manager is going to handle the results of the server inputs and outputs.
+     *
+     * For example if you'd like to use "asio" as your interface for communicating with the outside world,
+     * you can use "asio_traits"; otherwise you can either write your own in which you can for example use
+     * the OS's APIs to access the outside world directly.
+     */
     template <typename T>
     concept ServerTraits = requires {
         Traits<typename T::traits_type>;
