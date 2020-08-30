@@ -4,6 +4,7 @@
 #define WEBPP_ROUTES_CONTEXT_H
 
 #include "../../extensions/extension.hpp"
+#include "../../traits/enable_traits.hpp"
 #include "../bodies/string.hpp"
 #include "../request.hpp"
 #include "../response.hpp"
@@ -116,38 +117,34 @@ namespace webpp {
      *
      */
     template <Traits TraitsType, typename EList, Request RequestType, Response ResponseType>
-    struct basic_context : public EList {
+    struct basic_context : public EList, public enable_traits<TraitsType> {
         using traits_type        = TraitsType;
         using allocator_type     = typename traits_type::template allocator<typename traits_type::char_type>;
         using elist_type         = EList;
         using request_type       = RequestType;
         using response_type      = ResponseType;
         using basic_context_type = basic_context<TraitsType, EList, RequestType, ResponseType>;
-
-      protected:
-        allocator_type alloc;
+        using logger_type        = typename traits_type::logger_type;
+        using logger_ref         = typename logger_type::logger_ref;
 
       public:
-        constexpr basic_context(allocator_type const& _alloc = allocator_type{}) noexcept
+        constexpr basic_context(logger_ref            logger = logger_type{},
+                                allocator_type const& _alloc = allocator_type{}) noexcept
           : elist_type{},
-            alloc{_alloc} {}
+            enable_traits<TraitsType>(logger, _alloc) {}
 
 
         template <typename... Args>
-        constexpr basic_context(allocator_type const& _alloc, Args&&... args) noexcept
-          : alloc(_alloc),
+        constexpr basic_context(logger_ref            logger = logger_type{},
+                                allocator_type const& _alloc = allocator_type{}, Args&&... args) noexcept
+          : enable_traits<TraitsType>(logger, _alloc),
             elist_type{stl::forward<Args>(args)...} {}
 
         template <typename... Args>
-        constexpr basic_context(Args&&... args) noexcept : alloc{},
-                                                           elist_type{stl::forward<Args>(args)...} {}
+        constexpr basic_context(Args&&... args) noexcept : elist_type{stl::forward<Args>(args)...} {}
 
         basic_context(basic_context&& ctx) noexcept      = default;
         basic_context(basic_context const& ctx) noexcept = default;
-
-        [[nodiscard]] auto const& get_allocator() const noexcept {
-            return alloc;
-        }
 
         /**
          * Generate a response
@@ -197,6 +194,8 @@ namespace webpp {
         using original_extension_pack_type = OriginalExtensionList;
         using request_type                 = stl::remove_cvref_t<ReqType>;
         using basic_context_type           = typename EList::basic_context_type;
+        using logger_type                  = typename traits_type::logger_type;
+        using logger_ref                   = typename logger_type::logger_ref;
 
         // should we use a char_type as allocator? change this if you think it's not the correct type
         using allocator_type = typename traits_type::template allocator<typename traits_type::char_type>;
@@ -210,9 +209,10 @@ namespace webpp {
           typename original_extension_pack_type::template appended<E...>::unique::template extensie_type<
             traits_type, context_descriptor_type, request_type>;
 
-        constexpr final_context(allocator_type const& alloc = allocator_type{}) noexcept
+        constexpr final_context(logger_ref            logger = logger_type{},
+                                allocator_type const& alloc  = allocator_type{}) noexcept
           : /*basic_context_type{alloc},*/
-            EList(alloc) {}
+            EList(logger, alloc) {}
 
         //        template <typename... Args>
         //        constexpr final_context(Args&&... args) noexcept : EList{stl::forward<Args>(args)...} {

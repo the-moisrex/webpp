@@ -31,8 +31,8 @@ namespace webpp {
       public:
         [[no_unique_address]] logger_ref logger;
 
-        constexpr explicit enable_traits(logger_ref            logger_obj = logger_type{},
-                                         allocator_type const& alloc_obj  = allocator_type{}) noexcept
+        constexpr explicit enable_traits(logger_ref  logger_obj = logger_type{},
+                                         auto const& alloc_obj  = allocator_type{}) noexcept
           : logger{logger_obj},
             alloc{alloc_obj} {}
 

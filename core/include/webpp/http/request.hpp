@@ -36,11 +36,7 @@
 namespace webpp {
 
     template <typename ReqType>
-    struct final_request : public ReqType {
-        using traits_type    = typename ReqType::traits_type;
-        using allocator_type = typename traits_type::template allocator<typename traits_type::char_type>;
-        using ReqType::ReqType;
-    };
+    using final_request = ReqType;
 
     template <template <typename, typename, typename...> typename MidLevelRequestType,
               typename... AdditionalReqArgs>

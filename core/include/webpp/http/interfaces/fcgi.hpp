@@ -6,13 +6,14 @@
 #include "../../std/map.hpp"
 #include "../../std/set.hpp"
 #include "../../std/vector.hpp"
+#include "../../traits/enable_traits.hpp"
 #include "../request.hpp"
 #include "./fastcgi/fcgi_manager.hpp"
 
 namespace webpp::fastcgi {
 
     template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL, Interface IfaceType>
-    struct fcgi_request : public REL {
+    struct fcgi_request : public REL, public enable_traits<TraitsType> {
         using traits_type            = TraitsType;
         using interface_type         = IfaceType;
         using request_extension_list = REL;
@@ -22,22 +23,17 @@ namespace webpp::fastcgi {
         using logger_ref       = typename traits_type::logger::logger_ref;
         using string_type      = typename traits_type::string_type;
 
-        [[no_unique_address]] logger_ref                 logger;
         istl::map<traits_type, string_type, string_type> data;
 
 
         fcgi_request(logger_ref logger = logger_type{}, auto const& alloc = allocator_type{}) noexcept
-          : logger{logger},
+          : enable_traits{logger, alloc},
             data{alloc} {}
-
-        auto const& get_allocator() const noexcept {
-            return data.get_allocator();
-        }
     };
 
 
     template <ServerTraits ServerType, typename App, typename EList = empty_extension_pack>
-    struct fcgi {
+    struct fcgi : public enable_traits<typename ServerType::traits_type> {
         using server_type      = ServerType;
         using traits_type      = typename server_type::traits_type;
         using endpoint_type    = stl::net::ip::tcp::endpoint;
@@ -47,6 +43,7 @@ namespace webpp::fastcgi {
         using request_type     = simple_request<traits_type, fcgi_request, interface_type, extension_list>;
         using logger_type      = typename traits_type::logger_type;
         using logger_ref       = typename logger_type::logger_ref;
+        using etraits          = typename enable_traits<traits_type>;
 
         static constexpr auto default_listen_address = "0.0.0.0";
         static constexpr auto default_listen_port    = 8080u;
@@ -55,12 +52,11 @@ namespace webpp::fastcgi {
         stl::set<traits_type, endpoint_type> endpoints;
         application_type                     app;
         server_type                          server;
-        [[no_unique_address]] logger_ref     logger;
 
         template <typename AllocType>
         requires(ConstructibleWithLoggerAndAllocator<application_type, logger_ref, AllocType>)
           fcgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : logger{logger},
+          : etraits{logger, alloc},
             endpoints{alloc},
             server{logger, alloc},
             app{logger, alloc} {};
@@ -68,7 +64,7 @@ namespace webpp::fastcgi {
         template <typename AllocType>
         requires(ConstructibleWithLogger<application_type, logger_ref>)
           fcgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : logger{logger},
+          : etraits{logger, alloc},
             endpoints{alloc},
             server{logger, alloc},
             app{logger} {};
@@ -76,7 +72,7 @@ namespace webpp::fastcgi {
         template <typename AllocType>
         requires(ConstructibleWithAllocator<application_type, AllocType>)
           fcgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : logger{logger},
+          : etraits{logger, alloc},
             endpoints{alloc},
             server{logger, alloc},
             app{alloc} {};
@@ -84,7 +80,7 @@ namespace webpp::fastcgi {
         template <typename AllocType>
         requires(stl::is_default_constructible<application_type>)
           fcgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : logger{logger},
+          : etraits{logger, alloc},
             endpoints{alloc},
             server{logger, alloc},
             app{} {};
@@ -95,10 +91,10 @@ namespace webpp::fastcgi {
                 endpoints.emplace(stl::net::ip::make_address(default_listen_address, ec),
                                   default_listen_port);
                 if (!ec) {
-                    logger.critical(logging_category,
-                                    stl::format("We're not able to listen to {}:{}", default_listen_address,
-                                                default_listen_port),
-                                    ec);
+                    etraits::logger.critical(logging_category,
+                                             stl::format("We're not able to listen to {}:{}",
+                                                         default_listen_address, default_listen_port),
+                                             ec);
                     return;
                 }
             }

@@ -29,7 +29,7 @@ namespace webpp {
      * the user is able to use this class properly and easily.
      */
     template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL, Interface IfaceType>
-    struct cgi_request : public REL {
+    struct cgi_request : public REL, public enable_traits<TraitsType> {
         using traits_type            = TraitsType;
         using interface_type         = IfaceType;
         using request_extension_list = REL;
@@ -38,20 +38,9 @@ namespace webpp {
         using logger_type      = typename traits_type::logger_type;
         using logger_ref       = typename logger_type::logger_ref;
 
-      private:
-        allocator_type alloc;
 
-      public:
-        [[no_unique_address]] logger_ref logger;
-
-        template <typename AlocType>
-        cgi_request(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{}) noexcept
-          : logger{logger},
-            alloc(alloc) {}
-
-        auto const& get_allocator() const noexcept {
-            return alloc;
-        }
+        cgi_request(logger_ref logger = logger_type{}, auto const& alloc = AllocType{}) noexcept
+          : enable_traits(logger, alloc) {}
 
         /**
          * @brief get the server's software
@@ -331,7 +320,7 @@ namespace webpp {
 
     // todo: add interface extensions as well
     template <Traits TraitsType, Application App, ExtensionList EList = empty_extension_pack>
-    struct cgi {
+    struct cgi : enable_traits<TraitsType> {
       public:
         using traits_type      = TraitsType;
         using application_type = App;
@@ -346,8 +335,6 @@ namespace webpp {
         using logger_ref       = typename logger_type::logger_ref;
 
       private:
-        allocator_type alloc;
-
         void ctor() noexcept {
             // I'm not using C here; so why should I pay for it!
             // And also the user should not use cin and cout. so ...
@@ -355,16 +342,14 @@ namespace webpp {
         }
 
       public:
-        application_type                 app;
-        [[no_unique_address]] logger_ref logger;
+        application_type app;
 
 
       public:
         template <typename AllocType>
         requires(ConstructibleWithLoggerAndAllocator<application_type, logger_ref, AllocType>)
           cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{}) noexcept
-          : alloc{alloc},
-            logger{logger},
+          : enable_traits<TraitsType>(logger, alloc),
             app{logger, alloc} {
             ctor();
         };
@@ -372,8 +357,7 @@ namespace webpp {
         template <typename AllocType>
         requires(ConstructibleWithLogger<application_type, logger_ref>)
           cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{}) noexcept
-          : alloc{alloc},
-            logger{logger},
+          : enable_traits<TraitsType>(logger, alloc),
             app{logger} {
             ctor();
         };
@@ -381,8 +365,7 @@ namespace webpp {
         template <typename AllocType>
         requires(ConstructibleWithAllocator<application_type, AllocType>)
           cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{}) noexcept
-          : alloc{alloc},
-            logger{logger},
+          : enable_traits<TraitsType>(logger, alloc),
             app{alloc} {
             ctor();
         };
@@ -390,15 +373,10 @@ namespace webpp {
         template <typename AllocType>
         requires(stl::is_default_constructible_v<application_type>)
           cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{}) noexcept
-          : alloc{alloc},
-            logger{logger},
+          : enable_traits<TraitsType>(logger, allco),
             app{} {
             ctor();
         };
-
-        auto const& get_allocator() const noexcept {
-            return alloc;
-        }
 
         /**
          * Read the body of the string
