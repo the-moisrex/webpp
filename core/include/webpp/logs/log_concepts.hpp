@@ -10,10 +10,10 @@
 namespace webpp {
 
     template <typename T>
-    concept Logger = requires(T logger, stl::error_code ec, stl::exception ex) {
-        typename T::logger_ref;
-        typename T::logger_ptr;
-        typename T::logger_type;
+    concept Logger = requires(stl::remove_cvref_t<T> logger, stl::error_code ec, stl::exception ex) {
+        typename stl::remove_cvref_t<T>::logger_ref;
+        typename stl::remove_cvref_t<T>::logger_ptr;
+        typename stl::remove_cvref_t<T>::logger_type;
 
 #define WEBPP_LOGGER_CONCEPT(logger_name)            \
     logger.logger_name("log something");             \

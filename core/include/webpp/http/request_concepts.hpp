@@ -7,6 +7,7 @@
 
 #include "../extensions/extension.hpp"
 #include "../logs/log_concepts.hpp"
+#include "../traits/enable_traits.hpp"
 #include "../traits/std_traits.hpp"
 #include "./interfaces/interface_concepts.hpp"
 
@@ -17,8 +18,6 @@ namespace webpp {
       Interface<typename stl::remove_cvref_t<T>::interface_type>&& requires(stl::remove_cvref_t<T> req) {
         req.request_uri();
         req.get_allocator();
-        Logger<typename T::logger_type>;
-        { req.logger } -> Logger;
     };
 
 
@@ -33,7 +32,7 @@ namespace webpp {
     template <typename T>
     concept RequestExtensionList = ExtensionListOf<T, is_request_extension_pack>;
 
-    struct fake_request_type {
+    struct fake_request_type : public enable_traits<fake_traits_type> {
         using interface_type = fake_interface_type;
         using traits_type    = fake_traits_type;
         using allocator_type = typename traits_type::template allocator<typename traits_type::char_type>;

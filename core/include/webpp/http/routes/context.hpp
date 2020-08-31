@@ -126,6 +126,7 @@ namespace webpp {
         using basic_context_type = basic_context<TraitsType, EList, RequestType, ResponseType>;
         using logger_type        = typename traits_type::logger_type;
         using logger_ref         = typename logger_type::logger_ref;
+        using etraits            = enable_traits<TraitsType>;
 
       public:
         constexpr basic_context(logger_ref            logger = logger_type{},
@@ -141,7 +142,9 @@ namespace webpp {
             elist_type{stl::forward<Args>(args)...} {}
 
         template <typename... Args>
-        constexpr basic_context(Args&&... args) noexcept : elist_type{stl::forward<Args>(args)...} {}
+        constexpr basic_context(Args&&... args) noexcept
+          : elist_type{stl::forward<Args>(args)...},
+            etraits{} {}
 
         basic_context(basic_context&& ctx) noexcept      = default;
         basic_context(basic_context const& ctx) noexcept = default;

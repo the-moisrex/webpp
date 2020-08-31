@@ -4,6 +4,7 @@
 #define WEBPP_TRAITS_CONCEPTS_H
 
 #include "../std/string_concepts.hpp"
+#include "../logs/log_concepts.hpp"
 
 namespace webpp {
 
@@ -40,7 +41,6 @@ namespace webpp {
      * The std_traits is just the default standard traits defined in the std
      * library.
      */
-
     template <typename T>
     concept Traits =
       // char_type:
@@ -69,12 +69,10 @@ namespace webpp {
      *   - loggers
      */
     template <typename T>
-    concept TraitsEnabled = requires(T t) {
-        typename T::logger_type;
-        typename T::traits_type;
-        typename T::string_type;
-        typename T::string_view_type; // do we need this here?
-        t.logger;
+    concept EnabledTraits = requires(T t) {
+        Logger<typename T::logger_type>;
+        Traits<typename T::traits_type>;
+        { t.logger } -> Logger;
         t.get_allocator();
     };
 
@@ -89,7 +87,7 @@ namespace webpp {
     //        struct string_view_type {};
     //        using char_traits = istl::fake_char_traits_type;
     //    };
-    //
+
 } // namespace webpp
 
 #endif // WEBPP_TRAITS_CONCEPTS_H
