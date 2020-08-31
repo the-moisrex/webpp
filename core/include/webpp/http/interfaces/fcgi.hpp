@@ -22,12 +22,13 @@ namespace webpp::fastcgi {
         using logger_type      = typename traits_type::logger;
         using logger_ref       = typename traits_type::logger::logger_ref;
         using string_type      = typename traits_type::string_type;
+        using etraits          = enable_traits<traits_type>;
 
         istl::map<traits_type, string_type, string_type> data;
 
 
         fcgi_request(logger_ref logger = logger_type{}, auto const& alloc = allocator_type{}) noexcept
-          : enable_traits{logger, alloc},
+          : etraits{logger, alloc},
             data{alloc} {}
     };
 
