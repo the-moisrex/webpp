@@ -37,7 +37,6 @@ TEST(Routes, PathTests) {
     EXPECT_TRUE(static_cast<bool>(std::is_move_constructible_v<fake_context_type>));
     EXPECT_TRUE(static_cast<bool>(Context<fake_context_type>));
 
-    request_type req;
     context_type ctx{};
 
     auto nctx       = ctx.template clone<fake_mommy, string_response>();

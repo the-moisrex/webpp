@@ -6,11 +6,10 @@
 #include "../core/include/webpp/http/response.hpp"
 #include "../core/include/webpp/http/routes/router.hpp"
 #include "../core/include/webpp/std/string_view.hpp"
+#include "../core/include/webpp/traits/enable_traits.hpp"
 #include "../core/include/webpp/traits/std_traits.hpp"
 #include "../core/include/webpp/utils/casts.hpp"
 #include "../core/include/webpp/utils/strings.hpp"
-#include "../core/include/webpp/traits/enable_traits.hpp"
-
 
 #include <cctype>
 #include <cstdlib>
@@ -28,21 +27,20 @@ namespace webpp {
         using interface_type   = IfaceType;
         using allocator_type   = typename traits_type::template allocator<typename traits_type::char_type>;
         using application_type = typename interface_type::application_type;
-        using string_type = typename traits_type::string_type;
-
-      private:
-        allocator_type alloc;
+        using string_type      = typename traits_type::string_type;
+        using etraits          = enable_traits<traits_type>;
+        using logger_type      = typename traits_type::logger_type;
+        using logger_ref       = typename logger_type::logger_ref;
 
       public:
-        fake_iface_request(allocator_type const& alloc = allocator_type{}) noexcept : alloc(alloc) {}
+        fake_iface_request() noexcept : etraits{} {}
+        fake_iface_request(logger_ref  logger_obj = logger_type{},
+                           auto const& alloc      = allocator_type{}) noexcept
+          : etraits{logger_obj, alloc} {}
 
-        auto const& get_allocator() const noexcept {
-            return alloc;
-        }
-        
-        istl::map<traits_type, string_type, string_type> data;
+        istl::map<traits_type, string_type, string_type> data{};
 
-        stl::string_view get_data(auto&& str) {
+        stl::string_view get_data(auto&& str) noexcept {
             if (auto res = stl::find(data.begin(), data.end(), str)) {
                 return *res;
             } else {
@@ -207,7 +205,7 @@ namespace webpp {
 
 
     template <Traits TraitsType, Application App, ExtensionList EList = empty_extension_pack>
-    struct fake_iface {
+    struct fake_iface : public enable_traits<TraitsType> {
       public:
         using traits_type      = TraitsType;
         using application_type = App;
@@ -218,31 +216,28 @@ namespace webpp {
         using ostream_t        = typename TraitsType::ostream_type;
         using request_type     = simple_request<traits_type, fake_iface_request, interface_type, EList>;
         using allocator_type   = typename request_type::allocator_type;
+        using etraits          = enable_traits<traits_type>;
+        using logger_type      = typename traits_type::logger_type;
+        using logger_ref       = typename logger_type::logger_ref;
 
         application_type app;
 
-      private:
-        allocator_type alloc;
-
       public:
-        fake_iface(allocator_type const& alloc = allocator_type{}) noexcept : alloc(alloc) {
-        }
+        fake_iface(logger_ref logger_obj = logger_type{}, auto const& alloc = allocator_type{}) noexcept
+          : etraits{logger_obj, alloc},
+            req{logger_obj, alloc} {}
 
-        auto const& get_allocator() const noexcept {
-            return alloc;
-        }
-
-        request_type req{alloc};
+        request_type req;
 
         void operator()() noexcept {
-            auto         res = app(req);
+            auto res = app(req);
             res.calculate_default_headers();
             auto header_str = res.headers.str();
             auto str        = res.body.str();
 
             stl::stringstream data;
             data << "Status: " << res.headers.status_code << " "
-                        << status_reason_phrase(res.headers.status_code) << "\r\n";
+                 << status_reason_phrase(res.headers.status_code) << "\r\n";
 
             data << header_str;
             data << str;
