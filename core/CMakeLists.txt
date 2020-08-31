@@ -99,7 +99,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_connection.hpp
         ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_constants.hpp
         ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_server.hpp
-        ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_session.hpp
 
         ${LIB_INCLUDE_DIR}/main.hpp
         ${LIB_INCLUDE_DIR}/webpp.hpp
