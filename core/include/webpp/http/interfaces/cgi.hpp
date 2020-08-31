@@ -37,10 +37,12 @@ namespace webpp {
         using application_type = typename interface_type::application_type;
         using logger_type      = typename traits_type::logger_type;
         using logger_ref       = typename logger_type::logger_ref;
+        using etraits          = enable_traits<traits_type>;
 
 
+        template <typename AllocType>
         cgi_request(logger_ref logger = logger_type{}, auto const& alloc = AllocType{}) noexcept
-          : enable_traits(logger, alloc) {}
+          : etraits(logger, alloc) {}
 
         /**
          * @brief get the server's software
@@ -320,7 +322,7 @@ namespace webpp {
 
     // todo: add interface extensions as well
     template <Traits TraitsType, Application App, ExtensionList EList = empty_extension_pack>
-    struct cgi : enable_traits<TraitsType> {
+    struct cgi : public enable_traits<TraitsType> {
       public:
         using traits_type      = TraitsType;
         using application_type = App;
@@ -333,6 +335,7 @@ namespace webpp {
         using allocator_type   = typename request_type::allocator_type;
         using logger_type      = typename traits_type::logger_type;
         using logger_ref       = typename logger_type::logger_ref;
+        using etraits          = enable_traits<traits_type>;
 
       private:
         void ctor() noexcept {
@@ -349,7 +352,7 @@ namespace webpp {
         template <typename AllocType>
         requires(ConstructibleWithLoggerAndAllocator<application_type, logger_ref, AllocType>)
           cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{}) noexcept
-          : enable_traits<TraitsType>(logger, alloc),
+          : etraits(logger, alloc),
             app{logger, alloc} {
             ctor();
         };
@@ -357,7 +360,7 @@ namespace webpp {
         template <typename AllocType>
         requires(ConstructibleWithLogger<application_type, logger_ref>)
           cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{}) noexcept
-          : enable_traits<TraitsType>(logger, alloc),
+          : etraits(logger, alloc),
             app{logger} {
             ctor();
         };
@@ -365,7 +368,7 @@ namespace webpp {
         template <typename AllocType>
         requires(ConstructibleWithAllocator<application_type, AllocType>)
           cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{}) noexcept
-          : enable_traits<TraitsType>(logger, alloc),
+          : etraits(logger, alloc),
             app{alloc} {
             ctor();
         };
@@ -373,7 +376,7 @@ namespace webpp {
         template <typename AllocType>
         requires(stl::is_default_constructible_v<application_type>)
           cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{}) noexcept
-          : enable_traits<TraitsType>(logger, allco),
+          : etraits(logger, alloc),
             app{} {
             ctor();
         };
@@ -473,7 +476,7 @@ namespace webpp {
 
 
         void operator()() noexcept {
-            request_type req{alloc};
+            request_type req{etraits::get_allocator()};
             auto         res = app(req);
             res.calculate_default_headers();
             auto header_str = res.headers.str();
