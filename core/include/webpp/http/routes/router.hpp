@@ -170,7 +170,7 @@ namespace webpp {
         Response auto operator()(RequestType& req) const noexcept {
             using req_type     = stl::remove_cvref_t<RequestType>;
             using context_type = simple_context<req_type, extension_list_type>;
-            return this->template operator()<0>(context_type{req.get_allocator()}, req);
+            return this->template operator()<0>(context_type{req.logger, req.get_allocator()}, req);
         }
 
 

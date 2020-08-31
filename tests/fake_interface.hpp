@@ -9,6 +9,8 @@
 #include "../core/include/webpp/traits/std_traits.hpp"
 #include "../core/include/webpp/utils/casts.hpp"
 #include "../core/include/webpp/utils/strings.hpp"
+#include "../core/include/webpp/traits/enable_traits.hpp"
+
 
 #include <cctype>
 #include <cstdlib>
@@ -21,7 +23,7 @@ namespace webpp {
 
 
     template <Traits TraitsType, typename REL, Interface IfaceType>
-    struct fake_iface_request : public stl::remove_cvref_t<REL> {
+    struct fake_iface_request : public stl::remove_cvref_t<REL>, public enable_traits<TraitsType> {
         using traits_type      = TraitsType;
         using interface_type   = IfaceType;
         using allocator_type   = typename traits_type::template allocator<typename traits_type::char_type>;

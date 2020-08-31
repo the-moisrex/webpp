@@ -26,10 +26,10 @@ namespace webpp {
         using allocator_type   = typename traits_type::template allocator<char_type>;
 
       private:
-        [[no_unique_address]] allocator_type alloc;
+        [[no_unique_address]] allocator_type alloc{};
 
       public:
-        [[no_unique_address]] logger_ref logger;
+        [[no_unique_address]] logger_ref logger{};
 
         constexpr explicit enable_traits(logger_ref  logger_obj = logger_type{},
                                          auto const& alloc_obj  = allocator_type{}) noexcept
