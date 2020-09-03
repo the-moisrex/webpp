@@ -38,44 +38,50 @@ namespace webpp {
         io_context_type io;
 
       private:
+        static constexpr auto                      logger_cat = "Asio/Server";
         istl::vector<traits_type, connection_type> connections;
         istl::vector<traits_type, acceptor_type>   acceptors;
         thread_pool_type                           pool{};
         [[no_unique_address]] logger_ref           logger;
 
-        void accept() noexcept {
-            //                        for (auto& acceptor : acceptors)
-            //                            acceptor.async_accept(
-            //                                [this](stl::error_code const& ec, socket_type
-            //                                socket) {
-            //                                    // Check whether the server was stopped by a signal
-            //
-            //                                    // before this completion handler had a chance to run
-            //                                    if (!acceptor.is_open()) {
-            //                                        return;
-            //                                    }
-            //
-            //                                    if (!ec) {
-            //                                        connections.emplace_back(stl::move(socket));
-            //                                    } else {
-            //                                        // TODO: log
-            //                                    }
-            //
-            //                                    if (!io.stopped())
-            //                                        accept();
-            //                                });
-        }
-
       public:
-        template <typename Allocator = stl::remove_cvref_t<decltype(decltype(connections)::get_allocator())>>
-        explicit asio_server(logger_ref       logger    = logger_type{},
-                             Allocator const& allocator = Allocator{}) noexcept
+        template <
+          typename AllocatorType = stl::remove_cvref_t<decltype(decltype(connections)::get_allocator())>>
+        explicit asio_server(logger_ref           logger    = logger_type{},
+                             AllocatorType const& allocator = Allocator{}) noexcept
           : connections{allocator},
             acceptors{allocator},
             logger{logger} {};
 
-        void listen(istl::vector<traits_type, endpoint_type> endpoints) noexcept {}
+      private:
+        void accept(asio::error_code const& ec, socket_type socket) noexcept {
+            // todo: check whether or not the server was stopped by a signal
 
+            // todo: before this completes, handler had a chance to run
+            //                                    if (!acceptor.is_open()) {
+            //                                        return;
+            //                                    }
+
+            if (!ec) {
+                connections.emplace_back(stl::move(socket));
+            } else {
+                logger.info(logger_cat, "Could not accept the user.", ec);
+            }
+        }
+
+        void start_accepting() noexcept {
+            // todo: locks and mutexes
+            acceptors.emplace_back(io);
+            auto acceptor = acceptors.back();
+            acceptor.async_accept([this](asio::error_code const& ec, socket_type socket) noexcept {
+                accept(ec, stl::move(socket));
+                if (!io.stopped()) {
+                    start_accepting();
+                }
+            });
+        }
+
+      public:
         void run() noexcept {
             pool.post(
               [this]() {
@@ -83,10 +89,13 @@ namespace webpp {
                   // Don't worry, we'll accept another connection when we finish one of them
                   for (;;) {
                       try {
+                          start_accepting();
+                          logger.info(logger_cat, "Starting running IO tasks in a thread.");
                           io.run();
+                          logger.info(logger_cat, "Finished all the IO tasks in the thread successfully.");
                           break;
                       } catch (stl::exception const& err) {
-                          logger.error("Server tasks finished with errors.", err);
+                          logger.error(logger_cat, "Server tasks finished with errors.", err);
                       }
                   }
               },
@@ -95,6 +104,7 @@ namespace webpp {
 
         void stop() noexcept {
             // this will stop all threads
+            logger.info(logger_cat, "Stopping all the IO tasks.");
             io.stop();
         }
     };

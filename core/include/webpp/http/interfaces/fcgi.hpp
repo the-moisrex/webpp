@@ -44,7 +44,7 @@ namespace webpp::fastcgi {
         using request_type     = simple_request<traits_type, fcgi_request, interface_type, extension_list>;
         using logger_type      = typename traits_type::logger_type;
         using logger_ref       = typename logger_type::logger_ref;
-        using etraits          = typename enable_traits<traits_type>;
+        using etraits          = enable_traits<traits_type>;
 
         static constexpr auto default_listen_address = "0.0.0.0";
         static constexpr auto default_listen_port    = 8080u;
@@ -79,7 +79,7 @@ namespace webpp::fastcgi {
             app{alloc} {};
 
         template <typename AllocType>
-        requires(stl::is_default_constructible<application_type>)
+        requires(stl::is_default_constructible_v<application_type>)
           fcgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
           : etraits{logger, alloc},
             endpoints{alloc},

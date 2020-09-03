@@ -36,20 +36,20 @@ namespace webpp {
 
       public:
         explicit connection(socket_type&& socket) noexcept : socket(stl::move(socket)) {}
-        connection(connection const&) = delete;
-        connection(connection&&)  noexcept    = default;
+        connection(connection const&)     = delete;
+        connection(connection&&) noexcept = default;
         connection& operator=(connection const&) = delete;
-        connection& operator=(connection&&) = default;
+        connection& operator=(connection&&) = delete;
 
         /**
          * Start async operations
          */
-        void start() noexcept;
+        void start() noexcept {}
 
         /**
          * We're shutting down everything, keep up!
          */
-        void stop() noexcept;
+        void stop() noexcept {}
     };
 
 } // namespace webpp
