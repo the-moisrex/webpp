@@ -14,15 +14,20 @@
 
 namespace webpp {
 
-    template <typename SessionType>
+    template <typename TraitsType, typename SessionType>
     struct connection {
-        using session_type = SessionType;
-        using socket_type  = asio::ip::tcp::socket;
+        using traits_type    = TraitsType;
+        using char_type      = typename traits_type::char_type;
+        using logger_type    = typename traits_type::logger_type;
+        using logger_ref     = typename logger_type::logger_ref;
+        using session_type   = SessionType;
+        using socket_type    = asio::ip::tcp::socket;
+        using allocator_type = typename traits_type::allocator<char_type>;
 
       private:
         [[no_unique_address]] session_type session;
         socket_type                        socket;
-        stl::array<char, buffer_size>      buffer{};
+        stl::array<char_type, buffer_size> buffer{}; // todo: should we use char_type here?
 
         void read() noexcept {
             // we share ourselves, so the connection keeps itself alive.
@@ -33,23 +38,23 @@ namespace webpp {
             });
         }
 
+        void start_reading() noexcept {
+            // todo: fill this
+        }
+
 
       public:
-        explicit connection(socket_type&& socket) noexcept : socket(stl::move(socket)) {}
+        explicit connection(socket_type&& socket, logger_ref logger_obj = logger_type{},
+                            auto const& alloc = allocator_type{}) noexcept
+          : socket(stl::move(socket)),
+            session{logger_obj, alloc} {
+
+            start_reading();
+        }
         connection(connection const&)     = delete;
         connection(connection&&) noexcept = default;
         connection& operator=(connection const&) = delete;
         connection& operator=(connection&&) = delete;
-
-        /**
-         * Start async operations
-         */
-        void start() noexcept {}
-
-        /**
-         * We're shutting down everything, keep up!
-         */
-        void stop() noexcept {}
     };
 
 } // namespace webpp

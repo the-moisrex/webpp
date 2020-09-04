@@ -44,9 +44,10 @@ namespace webpp {
         thread_pool_type                           pool{};
         [[no_unique_address]] logger_ref           logger;
 
+        using allocator_type = stl::remove_cvref_t<decltype(decltype(connections)::get_allocator())>;
+
       public:
-        template <
-          typename AllocatorType = stl::remove_cvref_t<decltype(decltype(connections)::get_allocator())>>
+        template <typename AllocatorType = allocator_type>
         explicit asio_server(logger_ref           logger    = logger_type{},
                              AllocatorType const& allocator = Allocator{}) noexcept
           : connections{allocator},
