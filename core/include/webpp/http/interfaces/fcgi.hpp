@@ -35,7 +35,7 @@ namespace webpp::fastcgi {
 
 
     template <ServerTraits ServerType, typename App, typename EList = empty_extension_pack>
-    struct fcgi : public application_wrapper<typename ServerType::traits_type, App> {
+    struct fcgi : public enable_traits<typename ServerType::traits_type> {
         using server_type      = ServerType;
         using traits_type      = typename server_type::traits_type;
         using endpoint_type    = stl::net::ip::tcp::endpoint;
@@ -45,8 +45,9 @@ namespace webpp::fastcgi {
         using request_type     = simple_request<traits_type, fcgi_request, interface_type, extension_list>;
         using logger_type      = typename traits_type::logger_type;
         using logger_ref       = typename logger_type::logger_ref;
-        using app_wrapper_type = application_wrapper<traits_type, application_type>;
         using allocator_type   = typename app_wrapper_type::allocator_type;
+        using etraits          = enable_traits<traits_type>;
+        using application_wrapper_type = application_wrapper<traits_type, application_type>;
 
         static constexpr auto default_listen_address = "0.0.0.0";
         static constexpr auto default_listen_port    = 8080u;
@@ -54,11 +55,13 @@ namespace webpp::fastcgi {
 
         stl::set<traits_type, endpoint_type> endpoints;
         server_type                          server;
+        application_wrapper_type             app;
 
 
         template <typename AllocType = allocator_type>
         fcgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : app_wrapper_type{logger, alloc},
+          : etraits{logger, alloc},
+            app{logger, alloc},
             endpoints{alloc},
             server{logger, alloc} {}
 

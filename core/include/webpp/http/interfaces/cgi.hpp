@@ -322,7 +322,7 @@ namespace webpp {
 
     // todo: add interface extensions as well
     template <Traits TraitsType, Application App, ExtensionList EList = empty_extension_pack>
-    struct cgi : public application_wrapper<TraitsType, App> {
+    struct cgi : public enable_traits<TraitsType> {
       public:
         using traits_type      = TraitsType;
         using application_type = App;
@@ -335,6 +335,7 @@ namespace webpp {
         using allocator_type   = typename request_type::allocator_type;
         using logger_type      = typename traits_type::logger_type;
         using logger_ref       = typename logger_type::logger_ref;
+        using etraits          = enable_traits<traits_type>;
         using application_wrapper_type = application_wrapper<traits_type, application_type>;
 
       private:
@@ -345,9 +346,12 @@ namespace webpp {
         }
 
       public:
+        application_wrapper_type app;
+
         template <typename AllocType>
         cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : application_wrapper_type(logger, alloc) {
+          : etraits{logger, alloc},
+            app{logger, alloc} {
             ctor();
         };
 

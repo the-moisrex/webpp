@@ -3,7 +3,6 @@
 #ifndef WEBPP_APPLICATION_H
 #define WEBPP_APPLICATION_H
 
-#include "../traits/enable_traits.hpp"
 #include "./application_concepts.hpp"
 #include "./routes/context_concepts.hpp"
 
@@ -25,16 +24,18 @@ namespace webpp {
     };
 
     /**
-     * This type is designed for the interfaces to inherit from in which it helps to initialize the
-     * application and make sure the correct things get passed to the application constructor.
+     * This type helps to initialize the application and make sure the correct things get passed to the
+     * application constructor.
+     *
+     * todo: add rebind feature here
+     * todo: add other version of constructor as well here
      */
     template <Traits TraitsType, typename AppType>
-    struct application_wrapper : public enable_traits<stl::remove_cvref_t<TraitsType>> {
+    struct application_wrapper : public stl::remove_cvref_t<AppType> {
         using application_type = stl::remove_cvref_t<AppType>;
         using traits_type      = stl::remove_cvref_t<TraitsType>;
-        using etraits          = enable_traits<traits_type>;
-        using logger_type      = typename etraits::logger_type;
-        using logger_ref       = typename etraits::logger_ref;
+        using logger_type      = typename traits_type::logger_type;
+        using logger_ref       = typename traits_type::logger_ref;
         using char_type        = typename traits_type::char_type;
         using allocator_type   = typename traits_type::template allocator<char_type>;
 
@@ -49,33 +50,28 @@ namespace webpp {
         static constexpr bool app_requires_logger  = ConstructibleWithLogger<application_type, logger_ref>;
         static constexpr bool app_requires_nothing = stl::is_default_constructible_v<application_type>;
 
-        application_type app;
 
         template <typename AllocType = allocator_type>
         requires(app_requires_logger_and_allocator<AllocType>)
           application_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : etraits{logger, alloc},
-            app{logger, alloc} {};
+          : application_type{logger, alloc} {};
 
         template <typename AllocType = allocator_type>
         requires(app_requires_logger && !app_requires_logger_and_allocator<AllocType>)
           application_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : etraits{logger, alloc},
-            app{logger} {};
+          : application_type{logger} {};
 
         template <typename AllocType = allocator_type>
         requires(app_requires_allocator<AllocType> && !app_requires_logger_and_allocator<AllocType> &&
                  !app_requires_logger)
           application_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : etraits{logger, alloc},
-            app{alloc} {};
+          : application_type{alloc} {};
 
         template <typename AllocType = allocator_type>
         requires(app_requires_nothing && !app_requires_allocator<AllocType> && !app_requires_logger &&
                  !app_requires_logger_and_allocator<AllocType>)
           application_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : etraits{logger, alloc},
-            app{} {};
+          : application_type{} {};
     };
 
 } // namespace webpp
