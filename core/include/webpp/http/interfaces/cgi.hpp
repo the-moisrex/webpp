@@ -5,7 +5,7 @@
 #include "../../traits/std_traits.hpp"
 #include "../../utils/casts.hpp"
 #include "../../utils/strings.hpp"
-#include "../application_concepts.hpp"
+#include "../application.hpp"
 #include "../request.hpp"
 #include "../response.hpp"
 #include "../routes/router.hpp"
@@ -322,7 +322,7 @@ namespace webpp {
 
     // todo: add interface extensions as well
     template <Traits TraitsType, Application App, ExtensionList EList = empty_extension_pack>
-    struct cgi : public enable_traits<TraitsType> {
+    struct cgi : public application_wrapper<TraitsType, App> {
       public:
         using traits_type      = TraitsType;
         using application_type = App;
@@ -335,7 +335,7 @@ namespace webpp {
         using allocator_type   = typename request_type::allocator_type;
         using logger_type      = typename traits_type::logger_type;
         using logger_ref       = typename logger_type::logger_ref;
-        using etraits          = enable_traits<traits_type>;
+        using application_wrapper_type = application_wrapper<traits_type, application_type>;
 
       private:
         void ctor() noexcept {
@@ -345,39 +345,9 @@ namespace webpp {
         }
 
       public:
-        application_type app;
-
-
-      public:
         template <typename AllocType>
-        requires(ConstructibleWithLoggerAndAllocator<application_type, logger_ref, AllocType>)
-          cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{}) noexcept
-          : etraits(logger, alloc),
-            app{logger, alloc} {
-            ctor();
-        };
-
-        template <typename AllocType>
-        requires(ConstructibleWithLogger<application_type, logger_ref>)
-          cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{}) noexcept
-          : etraits(logger, alloc),
-            app{logger} {
-            ctor();
-        };
-
-        template <typename AllocType>
-        requires(ConstructibleWithAllocator<application_type, AllocType>)
-          cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{}) noexcept
-          : etraits(logger, alloc),
-            app{alloc} {
-            ctor();
-        };
-
-        template <typename AllocType>
-        requires(stl::is_default_constructible_v<application_type>)
-          cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{}) noexcept
-          : etraits(logger, alloc),
-            app{} {
+        cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
+          : application_wrapper_type(logger, alloc) {
             ctor();
         };
 
