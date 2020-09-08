@@ -31,7 +31,7 @@ namespace webpp {
         void read() noexcept {
             // we share ourselves, so the connection keeps itself alive.
             socket.async_read_some(
-              asio::buffer(sesssion.buffer()),
+              asio::buffer(session.buffer()),
               [this](asio::error_code const& err, stl::size_t bytes_transferred) noexcept {
                   if (!err) {
                       // we need to parse, store, read more, or write something
