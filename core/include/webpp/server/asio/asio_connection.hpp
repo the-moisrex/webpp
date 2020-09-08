@@ -20,11 +20,9 @@ namespace webpp {
         using session_type   = SessionType;
         using socket_type    = asio::ip::tcp::socket;
         using allocator_type = typename traits_type::template allocator<char_type>;
-        using buffer_type    = typename session_type::buffer_type;
 
       private:
         socket_type                        socket;
-        buffer_type                        buffer{}; // todo: should we use char_type here?
         [[no_unique_address]] session_type session;
 
         /**
@@ -32,14 +30,23 @@ namespace webpp {
          */
         void read() noexcept {
             // we share ourselves, so the connection keeps itself alive.
-            socket.async_read_some(asio::buffer(buffer), [this](stl::error_code const& err,
+            socket.async_read_some(asio::buffer(sesssion.buffer()), [this](asio::error_code const& err,
                                                                 stl::size_t bytes_transferred) noexcept {
                 if (!err) {
                     // we need to parse, store, read more, or write something
-                    session.read(bytes_transferred, buffer);
+                    session.read(bytes_transferred);
                     read();
                 } else {
-                    session.logger.error(session.logger_category, "Error receiving data.", err);
+                    if (err.value() != EOF) { // todo: check if this works
+                        session.logger.error(session.logger_category, "Error receiving data.", err);
+                    }
+                    if (!session.keep_connection()) {
+                        asio::error_code ec;
+                        socket.close(ec);
+                        if (!ec) {
+                            session.logger.error(session.logger_category, "Problem with closing connection.", ec);
+                        }
+                    }
                 }
             });
         }

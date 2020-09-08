@@ -50,7 +50,7 @@ namespace webpp {
     };
 
     template <ServerTraits ServerTraitsType, Application App, ExtensionList EList = empty_extension_pack>
-    struct self_hosted {
+    struct self_hosted : public enable_traits<typename ServerTraitsType::traits_type> {
       public:
         using server_traits_type = SeverTraitsType;
         using traits_type        = typename server_traits_type::traits_type;
@@ -67,7 +67,7 @@ namespace webpp {
         using etraits                  = enable_traits<traits_type>;
         using application_wrapper_type = application_wrapper<traits_type, application_type>;
         using server_type              = typename server_traits_type::template server_type<
-          shosted::self_hosted_session_manager<traits_type>>;
+          shosted::self_hosted_session_manager<traits_type, request_type>>;
 
         server_type              server;
         application_wrapper_type app;
@@ -77,7 +77,9 @@ namespace webpp {
           : etraits{logger, alloc},
             app{logger, alloc} {}
 
-        void operator()() noexcept {}
+        void operator()() noexcept {
+            server();
+        }
     };
 
 } // namespace webpp

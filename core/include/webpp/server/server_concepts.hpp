@@ -77,12 +77,13 @@ namespace webpp {
      */
     template <typename T>
     concept SessionManager = requires(T ses) {
-        typename T::buffer_type;
         EnabledTraits<T>;
         stl::uses_allocator_v<T>;
-        ses.input(stl::error_code{}, stl::size_t);
+        ses.input(stl::size_t);
         ses.output();
         ses.logger_category;
+        ses.buffer();
+        {ses.keep_connection()} noexcept -> stl::same_as<bool>;
     };
 
 
