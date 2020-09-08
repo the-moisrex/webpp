@@ -86,7 +86,7 @@ namespace webpp {
             if (stl::find(headers.cbegin(), headers.cend(), "Content-Length") != headers.cend())
                 headers.emplace_back(
                   header_field_type{.name  = "Content-Length",
-                                    .value = to_str<traits_type>(body.str().size() * sizeof(char))});
+                                    .value = to_str_copy<traits_type>(body.str().size() * sizeof(char))});
         }
 
 
