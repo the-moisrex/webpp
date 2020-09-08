@@ -14,6 +14,6 @@ namespace webpp {
      *   - Standard Polymorphic Memory Resources (STD PMR): std::pmr memory resources
      */
     using asio_std_pmr_traits = asio_traits<std_pmr_traits>;
-}
+} // namespace webpp
 
 #endif // WEBPP_ASIO_STD_PMR_TRAITS_HPP

@@ -4,20 +4,21 @@
 #define WEBPP_CONSTEXPR_FORMAT_HPP
 
 #include "../std/string_view.hpp"
+
 #include <tuple>   // size_t forward_as_tuple
 #include <utility> // std::index_sequence
 
 namespace webpp {
 
 
-    constexpr auto constexpr_format(istl::ConvertibleToStringView auto &&format_str, auto&&...args) noexcept {
+    constexpr auto constexpr_format(istl::ConvertibleToStringView auto&& format_str,
+                                    auto&&... args) noexcept {
         auto format_string = istl::to_string_view(format_str);
-        using strv_t = stl::remove_cvref_t<decltype(format_string)>;
+        using strv_t       = stl::remove_cvref_t<decltype(format_string)>;
 
-        strv_t _to_str = [] (auto&& arg) constexpr noexcept {
-          using arg_t = stl::remove_cvref_t<decltype(arg)>;
-          if constexpr (stl::is_integral_v<arg_t>) {
-          }
+        strv_t _to_str = [](auto&& arg) constexpr noexcept {
+            using arg_t = stl::remove_cvref_t<decltype(arg)>;
+            if constexpr (stl::is_integral_v<arg_t>) {}
         };
     }
 

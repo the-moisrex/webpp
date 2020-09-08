@@ -77,9 +77,7 @@ namespace webpp {
           : etraits{logger, alloc},
             app{logger, alloc} {}
 
-        void operator()() noexcept {
-
-        }
+        void operator()() noexcept {}
     };
 
 } // namespace webpp

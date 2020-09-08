@@ -42,9 +42,9 @@ namespace webpp {
         return ret;
     }
 
-#define WEBPP_TO_FUNCTION(name, type) \
-    constexpr auto to_##name(istl::ConvertibleToStringView auto&& str) noexcept {\
-        return to<type>(str);\
+#define WEBPP_TO_FUNCTION(name, type)                                             \
+    constexpr auto to_##name(istl::ConvertibleToStringView auto&& str) noexcept { \
+        return to<type>(str);                                                     \
     }
 
     WEBPP_TO_FUNCTION(int, int);
@@ -88,7 +88,7 @@ namespace webpp {
         } else {
             char str[_size];
             auto [p, _]      = stl::to_chars(str, str + _size, value, stl::forward<R>(args)...);
-            auto the_size = static_cast<size_type>(p - str);
+            auto      the_size = static_cast<size_type>(p - str);
             str_t     res(the_size, '\0');
             auto      it = res.begin();
             for (auto _c = str; *_c; ++_c) {
