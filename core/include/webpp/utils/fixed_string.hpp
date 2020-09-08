@@ -1,9 +1,10 @@
 #ifndef WEBPP_FIXED_STRING_H
 #define WEBPP_FIXED_STRING_H
 
+#include "../std/string_view.hpp"
+
 #include <cstddef>
 #include <cstdint>
-#include <string_view>
 #include <utility>
 
 #if !((__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L)))
@@ -61,7 +62,7 @@ namespace webpp {
 
         template <typename T>
         constexpr fixed_string(const T (&input)[N + 1]) noexcept {
-            if constexpr (std::is_same_v<T, char>) {
+            if constexpr (stl::is_same_v<T, char>) {
 #if WEBPP_STRING_IS_UTF8
                 size_t out{0};
                 for (size_t i{0}; i < N; ++i) {
@@ -110,7 +111,7 @@ namespace webpp {
                 }
 #endif
 #if __cpp_char8_t
-            } else if constexpr (std::is_same_v<T, char8_t>) {
+            } else if constexpr (stl::is_same_v<T, char8_t>) {
                 size_t out{0};
                 for (size_t i{0}; i < N; ++i) {
                     if ((i == (N - 1)) && (input[i] == 0))
@@ -150,7 +151,7 @@ namespace webpp {
                     }
                 }
 #endif
-            } else if constexpr (std::is_same_v<T, char16_t>) {
+            } else if constexpr (stl::is_same_v<T, char16_t>) {
                 size_t out{0};
                 for (size_t i{0}; i < N; ++i) {
                     length_value_t info = length_and_value_of_utf16_code_point(input[i]);
@@ -170,7 +171,7 @@ namespace webpp {
                     }
                 }
                 real_size = out;
-            } else if constexpr (std::is_same_v<T, wchar_t> || std::is_same_v<T, char32_t>) {
+            } else if constexpr (stl::is_same_v<T, wchar_t> || stl::is_same_v<T, char32_t>) {
                 for (size_t i{0}; i < N; ++i) {
                     content[i] = input[i];
                     if ((i == (N - 1)) && (input[i] == 0))
@@ -211,8 +212,8 @@ namespace webpp {
             }
             return true;
         }
-        constexpr operator std::basic_string_view<char32_t>() const noexcept {
-            return std::basic_string_view<char32_t>{content, size()};
+        constexpr operator stl::basic_string_view<char32_t>() const noexcept {
+            return stl::basic_string_view<char32_t>{content, size()};
         }
     };
 
@@ -223,7 +224,7 @@ namespace webpp {
       public:
         template <typename T>
         constexpr fixed_string(const T*) noexcept {}
-        constexpr fixed_string(std::initializer_list<char32_t>) noexcept {}
+        constexpr fixed_string(stl::initializer_list<char32_t>) noexcept {}
         constexpr fixed_string(const fixed_string&) noexcept {}
         constexpr bool correct() const noexcept {
             return true;
@@ -240,8 +241,8 @@ namespace webpp {
         constexpr char32_t operator[](size_t) const noexcept {
             return 0;
         }
-        constexpr operator std::basic_string_view<char32_t>() const noexcept {
-            return std::basic_string_view<char32_t>{empty, 0};
+        constexpr operator stl::basic_string_view<char32_t>() const noexcept {
+            return stl::basic_string_view<char32_t>{empty, 0};
         }
     };
 

@@ -42,55 +42,23 @@ namespace webpp {
         return ret;
     }
 
-
-    constexpr auto to_int(istl::ConvertibleToStringView auto&& str) noexcept {
-        return to<int>(str);
+#define WEBPP_TO_FUNCTION(name, type) \
+    constexpr auto to_##name(istl::ConvertibleToStringView auto&& str) noexcept {\
+        return to<type>(str);\
     }
 
+    WEBPP_TO_FUNCTION(int, int);
+    WEBPP_TO_FUNCTION(int8, int8_t);
+    WEBPP_TO_FUNCTION(int16, int16_t);
+    WEBPP_TO_FUNCTION(int32, int32_t);
+    WEBPP_TO_FUNCTION(int64, int64_t);
+    WEBPP_TO_FUNCTION(uint, unsigned int);
+    WEBPP_TO_FUNCTION(uint8, uint8_t);
+    WEBPP_TO_FUNCTION(uint16, uint16_t);
+    WEBPP_TO_FUNCTION(uint32, uint32_t);
+    WEBPP_TO_FUNCTION(uint64, uint64_t);
 
-    constexpr auto to_int8(istl::ConvertibleToStringView auto&& str) noexcept {
-        return to<int8_t>(str);
-    }
-
-
-    constexpr auto to_int16(istl::ConvertibleToStringView auto&& str) noexcept {
-        return to<int16_t>(str);
-    }
-
-
-    constexpr auto to_int32(istl::ConvertibleToStringView auto&& str) noexcept {
-        return to<int32_t>(str);
-    }
-
-
-    constexpr auto to_int64(istl::ConvertibleToStringView auto&& str) noexcept {
-        return to<int64_t>(str);
-    }
-
-
-    constexpr auto to_uint(istl::ConvertibleToStringView auto&& str) noexcept {
-        return to<unsigned int>(str);
-    }
-
-
-    constexpr auto to_uint8(istl::ConvertibleToStringView auto&& str) noexcept {
-        return to<uint8_t>(str);
-    }
-
-
-    constexpr auto to_uint16(istl::ConvertibleToStringView auto&& str) noexcept {
-        return to<uint16_t>(str);
-    }
-
-
-    constexpr auto to_uint32(istl::ConvertibleToStringView auto&& str) noexcept {
-        return to<uint32_t>(str);
-    }
-
-
-    constexpr auto to_uint64(istl::ConvertibleToStringView auto&& str) noexcept {
-        return to<uint64_t>(str);
-    }
+#undef WEBPP_TO_FUNCTION
 
 
     //////////////////////////////////////////////////////////////////////
@@ -107,7 +75,7 @@ namespace webpp {
 
     // todo: add allocator support here:
     template <Traits TraitsType, typename ValueType, typename... R>
-    constexpr auto to_str(ValueType value, R&&... args) noexcept {
+    constexpr auto to_str_copy(ValueType value, R&&... args) noexcept {
         using char_type           = typename TraitsType::char_type;
         using str_t               = typename TraitsType::string_type;
         using size_type           = typename str_t::size_type;
@@ -120,8 +88,8 @@ namespace webpp {
         } else {
             char str[_size];
             auto [p, _]      = stl::to_chars(str, str + _size, value, stl::forward<R>(args)...);
-            size_type __size = static_cast<size_type>(p - str);
-            str_t     res(__size, '\0');
+            auto the_size = static_cast<size_type>(p - str);
+            str_t     res(the_size, '\0');
             auto      it = res.begin();
             for (auto _c = str; *_c; ++_c) {
                 *it++ = static_cast<char_type>(*_c);
@@ -129,6 +97,7 @@ namespace webpp {
             return res;
         }
     }
+
 
 
 

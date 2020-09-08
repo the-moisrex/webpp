@@ -8,7 +8,6 @@
 #include "../application.hpp"
 #include "../request.hpp"
 #include "../response.hpp"
-#include "../routes/router.hpp"
 
 #include <cctype>
 #include <cstdlib>
@@ -30,8 +29,8 @@ namespace webpp {
      */
     template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL, Interface IfaceType>
     struct cgi_request : public REL, public enable_traits<TraitsType> {
-        using traits_type            = TraitsType;
-        using interface_type         = IfaceType;
+        using traits_type            = stl::remove_cvref_t<TraitsType>;
+        using interface_type         = stl::remove_cvref_t<IfaceType>;
         using request_extension_list = REL;
         using allocator_type   = typename traits_type::template allocator<typename traits_type::char_type>;
         using application_type = typename interface_type::application_type;
@@ -47,8 +46,7 @@ namespace webpp {
         /**
          * @brief get the server's software
          * @details Name and version of the information server software
-         * answering the request (and running the gateway). Format:
-         * name/version.
+         * answering the request (and running the gateway). Format: name/version.
          * @example SERVER_SOFTWARE=Apache/2.4.41 (Unix) OpenSSL/1.1.1d
          */
         [[nodiscard]] stl::string_view server_software() const noexcept {
@@ -95,8 +93,7 @@ namespace webpp {
 
         /**
          * @brief Get the method
-         * @details Method with which the request was made. For HTTP, this is
-         * Get, Head, Post, and so on.
+         * @details Method with which the request was made. For HTTP, this is Get, Head, Post, and so on.
          */
         [[nodiscard]] stl::string_view request_method() const noexcept {
             return interface_type::env("REQUEST_METHOD");
@@ -348,12 +345,12 @@ namespace webpp {
       public:
         application_wrapper_type app;
 
-        template <typename AllocType>
+        template <typename AllocType = allocator_type>
         cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
           : etraits{logger, alloc},
             app{logger, alloc} {
             ctor();
-        };
+        }
 
         /**
          * Read the body of the string
@@ -435,7 +432,7 @@ namespace webpp {
                 if (auto content_length_str = env("CONTENT_LENGTH"); !content_length_str.empty()) {
                     // now we know how much content the user is going to send
                     // so we just create a buffer with that size
-                    auto content_length = to_uint<traits_type>(content_length_str);
+                    auto content_length = to_uint(content_length_str);
 
                     char* buffer = new char[content_length];
                     stl::cin.rdbuf()->pubsetbuf(buffer, sizeof(buffer));

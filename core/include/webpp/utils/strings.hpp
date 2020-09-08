@@ -149,7 +149,7 @@ namespace webpp {
     }
 
     [[nodiscard]] inline auto to_lower_copy(istl::ConvertibleToString auto _str,
-                                            auto const&                      allocator) noexcept {
+                                            auto const&                    allocator) noexcept {
         auto str = istl::to_string(stl::forward<decltype(_str)>(_str), allocator);
         to_lower(str);
         return str;
@@ -202,6 +202,32 @@ namespace webpp {
     }
 
 
+
+//    template <typename ValueType, typename... R>
+//    requires(stl::is_integral_v<stl::remove_cvref_t<ValueType>>)
+//    constexpr auto to_str(istl::String auto& output, ValueType value, R&&... args) noexcept {
+//        using str_t               = stl::remove_cvref_t<decltype(output)>;
+//        using char_type           = typename str_t::value_type;
+//        using size_type           = typename str_t::size_type;
+//        constexpr size_type _size = digit_count<ValueType>() + 1;
+//        if constexpr (stl::is_same_v<char_type, char>) {
+//            str_t str(_size, '\0');
+//            auto [p, _] = stl::to_chars(str.data(), str.data() + _size, value, stl::forward<R>(args)...);
+//            str.resize(p - str.data());
+//            return str;
+//        } else {
+//            char str[_size];
+//            auto [p, _]      = stl::to_chars(str, str + _size, value, stl::forward<R>(args)...);
+//            auto the_size = static_cast<size_type>(p - str);
+//            str_t     res(the_size, '\0');
+//            auto      it = res.begin();
+//            for (auto _c = str; *_c; ++_c) {
+//                *it++ = static_cast<char_type>(*_c);
+//            }
+//            return res;
+//        }
+//    }
+//
 
 } // namespace webpp
 

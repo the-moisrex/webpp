@@ -30,7 +30,7 @@ TEST(Casts, ToInt) {
 }
 
 TEST(Casts, ToStr) {
-    EXPECT_EQ("12", to_str<std_traits>(12));
-    EXPECT_EQ("-12", to_str<std_traits>(-12));
-    EXPECT_EQ(to_str<std_traits>(1222).size(), 4);
+    EXPECT_EQ("12", to_str_copy<std_traits>(12));
+    EXPECT_EQ("-12", to_str_copy<std_traits>(-12));
+    EXPECT_EQ(to_str_copy<std_traits>(1222).size(), 4);
 }

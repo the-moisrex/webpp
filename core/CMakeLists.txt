@@ -1,5 +1,6 @@
 set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp.hpp
+        ${LIB_INCLUDE_DIR}/version.hpp
         ${LIB_INCLUDE_DIR}/webpp/config.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/extensions/extension.hpp
@@ -62,6 +63,8 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/cgi.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fcgi.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/self_hosted.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/shosted/self_hosted_session_manager.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fastcgi/fcgi_protocols.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fastcgi/fcgi_manager.hpp
 
@@ -99,6 +102,8 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_connection.hpp
         ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_constants.hpp
         ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_server.hpp
+        ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_std_traits.hpp
+        ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_std_pmr_traits.hpp
 
         ${LIB_INCLUDE_DIR}/main.hpp
         ${LIB_INCLUDE_DIR}/webpp.hpp

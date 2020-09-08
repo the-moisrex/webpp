@@ -1277,7 +1277,7 @@ namespace webpp {
          * @param new_port
          */
         auto& port(uint16_t new_port) noexcept {
-            return port(to_str<traits_type>(new_port));
+            return port(to_str_copy<traits_type>(new_port));
         }
 
         /**

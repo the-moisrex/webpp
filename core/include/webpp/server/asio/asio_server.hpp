@@ -6,6 +6,7 @@
 #include asio(ip/tcp)
 // clang-format on
 
+#include "../server_concepts.hpp"
 #include "../../traits/traits_concepts.hpp"
 #include "./asio_thread_pool.hpp"
 #include "./asio_connection.hpp"
@@ -19,18 +20,18 @@ namespace webpp {
     /**
      * This class is the server and the connection manager.
      */
-    template <Traits TraitsType, typename SessionType>
+    template <Traits TraitsType, SessionManager SessionType, ThreadPool ThreadPoolType = asio_thread_pool>
     struct asio_server {
         using traits_type      = TraitsType;
         using session_type     = SessionType;
-        using connection_type  = connection<session_type>;
+        using connection_type  = asio_connection<traits_type, session_type>;
         using socket_type      = asio::ip::tcp::socket;
         using endpoint_type    = asio::ip::tcp::endpoint;
         using acceptor_type    = asio::ip::tcp::acceptor;
         using io_context_type  = asio::io_context;
         using logger_type      = typename traits_type::logger_type;
         using logger_ref       = typename logger_type::logger_ref;
-        using thread_pool_type = typename TraitsType::thread_pool_type;
+        using thread_pool_type = ThreadPoolType;
 
 
         // I share this publicly because I know this file will not be used in a
@@ -83,7 +84,7 @@ namespace webpp {
         }
 
       public:
-        void run() noexcept {
+        void operator()() noexcept {
             pool.post(
               [this]() {
                   // Run until the tasks finishes normally.
