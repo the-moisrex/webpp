@@ -22,8 +22,8 @@ namespace webpp {
         using allocator_type = typename traits_type::template allocator<char_type>;
 
       private:
-        socket_type                        socket;
-        [[no_unique_address]] session_type session;
+        socket_type  socket;
+        session_type session;
 
         /**
          * This function will read some bytes.
