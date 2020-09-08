@@ -83,7 +83,8 @@ namespace webpp {
         ses.output();
         ses.logger_category;
         ses.buffer();
-        {ses.keep_connection()} noexcept -> stl::same_as<bool>;
+        { ses.keep_connection() }
+        noexcept->stl::same_as<bool>;
     };
 
 

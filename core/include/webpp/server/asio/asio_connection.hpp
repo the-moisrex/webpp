@@ -30,25 +30,27 @@ namespace webpp {
          */
         void read() noexcept {
             // we share ourselves, so the connection keeps itself alive.
-            socket.async_read_some(asio::buffer(sesssion.buffer()), [this](asio::error_code const& err,
-                                                                stl::size_t bytes_transferred) noexcept {
-                if (!err) {
-                    // we need to parse, store, read more, or write something
-                    session.read(bytes_transferred);
-                    read();
-                } else {
-                    if (err.value() != EOF) { // todo: check if this works
-                        session.logger.error(session.logger_category, "Error receiving data.", err);
-                    }
-                    if (!session.keep_connection()) {
-                        asio::error_code ec;
-                        socket.close(ec);
-                        if (!ec) {
-                            session.logger.error(session.logger_category, "Problem with closing connection.", ec);
-                        }
-                    }
-                }
-            });
+            socket.async_read_some(
+              asio::buffer(sesssion.buffer()),
+              [this](asio::error_code const& err, stl::size_t bytes_transferred) noexcept {
+                  if (!err) {
+                      // we need to parse, store, read more, or write something
+                      session.read(bytes_transferred);
+                      read();
+                  } else {
+                      if (err.value() != EOF) { // todo: check if this works
+                          session.logger.error(session.logger_category, "Error receiving data.", err);
+                      }
+                      if (!session.keep_connection()) {
+                          asio::error_code ec;
+                          socket.close(ec);
+                          if (!ec) {
+                              session.logger.error(session.logger_category,
+                                                   "Problem with closing connection.", ec);
+                          }
+                      }
+                  }
+              });
         }
 
         /**
