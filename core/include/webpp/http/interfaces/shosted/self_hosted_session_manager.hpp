@@ -20,7 +20,7 @@ namespace webpp::shosted {
         using traits_type    = typename etraits::traits_type;
         using char_type      = typename traits_type::char_type;
         using string_view_type = typename traits_type::string_view_type;
-        using allocator_type = typename traits_type::template allocator<char_type>;
+        using allocator_type   = typename traits_type::template allocator<char_type>;
         using buffer_type    = stl::array<char_type, buffer_size>;
         using request_type   = RequestType;
 
