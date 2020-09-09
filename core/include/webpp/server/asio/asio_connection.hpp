@@ -7,6 +7,7 @@
 // clang-format on
 
 #include "./asio_constants.hpp"
+#include "../../std/format.hpp"
 
 
 namespace webpp {
@@ -53,13 +54,49 @@ namespace webpp {
               });
         }
 
+        void write() noexcept {
+            auto res = output();
+
+            // todo: do something about this
+            if (session.logger.enabled) {
+                asio::socket_base::keep_alive keep_alive_option;
+                socket.get_option(keep_alive_option);
+                session.logger.info(
+                  session.logger_category,
+                  stl::format("Session keep alive option: {}", keep_alive_option.value() ? "true" : "false"));
+            }
+
+            socket.async_write_some(
+              asio::buffer(session.buffer()),
+              [this](asio::error_code const& err, stl::size_t bytes_transferred) noexcept {
+                  if (!err) {
+                  } else {
+                      if (err.value() != EOF) { // todo: check if this works
+                          session.logger.error(session.logger_category, "Error receiving data.", err);
+                      }
+                      if (!session.keep_connection()) {
+                          asio::error_code ec;
+                          socket.close(ec);
+                          if (!ec) {
+                              session.logger.error(session.logger_category,
+                                                   "Problem with closing connection.", ec);
+                          }
+                      }
+                  }
+              });
+        }
+
         /**
          * This method will kick start the reading
          */
         void start_reading() noexcept {
             // todo: fill this
+            read();
         }
 
+        void start_writing() noexcept {
+            write();
+        }
 
       public:
         explicit asio_connection(socket_type&& socket, logger_ref logger_obj = logger_type{},

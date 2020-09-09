@@ -19,7 +19,8 @@ namespace webpp::shosted {
         using etraits        = enable_traits<TraitsType>;
         using traits_type    = typename etraits::traits_type;
         using char_type      = typename traits_type::char_type;
-        using allocator_type = typename traits_type::allocator<char_type>;
+        using string_view_type = typename traits_type::string_view_type;
+        using allocator_type = typename traits_type::template allocator<char_type>;
         using buffer_type    = stl::array<char_type, buffer_size>;
         using request_type   = RequestType;
 
@@ -35,10 +36,10 @@ namespace webpp::shosted {
         }
 
         // read a batch of input
-        void input(stl::size_t transferred_bytes) noexcept {}
+        void read_the_buffer(stl::size_t transferred_bytes) noexcept {}
 
         // making the output
-        auto output() noexcept {
+        string_view_type output() noexcept {
 
         };
 

@@ -79,7 +79,7 @@ namespace webpp {
     concept SessionManager = requires(T ses) {
         EnabledTraits<T>;
         stl::uses_allocator_v<T>;
-        ses.input(stl::size_t);
+        ses.read_the_buffer(stl::size_t);
         ses.output();
         ses.logger_category;
         ses.buffer();

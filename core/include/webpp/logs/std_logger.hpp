@@ -24,6 +24,7 @@ namespace webpp {
         using logger_ref  = logger_type const; // copy the logger, there's nothing to copy
         using logger_ptr  = logger_type*;      // there's a syntax difference, so we can't copy
 
+        static constexpr bool enabled = true; // todo: make this configurable by the user
         static constexpr auto default_category_name = "Default";
 
         enum struct logging_type : stl::uint_fast8_t { debug, info, warning, error, critical, unknown };

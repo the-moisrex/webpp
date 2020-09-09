@@ -20,6 +20,8 @@ namespace webpp {
         using logger_ref  = logger_type const&;
         using logger_ptr  = logger_type*;
 
+        static constexpr bool enabled = true;
+
         stl::shared_ptr<spdlog::logger> const spdlogger;
 
         spdlog_logger() : spdlogger{spdlog::default_logger()} {}
