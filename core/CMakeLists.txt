@@ -105,6 +105,8 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_std_traits.hpp
         ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_std_pmr_traits.hpp
 
+        ${LIB_INCLUDE_DIR}/webpp/json/json_concepts.hpp
+
         ${LIB_INCLUDE_DIR}/main.hpp
         ${LIB_INCLUDE_DIR}/webpp.hpp
         include/webpp/http/bodies/string.hpp)
