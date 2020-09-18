@@ -3,6 +3,7 @@
 
 #include "../common/meta.hpp"
 #include "../std/string.hpp"
+#include "../std/string_concepts.hpp"
 #include "../std/string_view.hpp"
 #include "../traits/std_traits.hpp"
 #include "../traits/traits_concepts.hpp"
@@ -134,17 +135,34 @@ namespace webpp {
         return str;
     }
 
+    /**
+     * This function does not work with the std::locale thus it's faster. It should only be used where
+     * you need the default locale in which uses 'A' and 'Z' chars. One example is in the HTTP headers
+     * which changing the locale should not affect that.
+     */
+    constexpr auto to_lower(istl::CharType auto &&c) noexcept {
+        using char_type = stl::remove_cvref_t<decltype(c)>;
+        constexpr char_type diff = static_cast<char_type>('A') - static_cast<char_type>('a');
+        return c >= static_cast<char_type>('A') && c <= static_cast<char_type>('Z') ? c - diff : c;
+    }
+
+    constexpr auto to_upper(istl::CharType auto &&c) noexcept {
+        using char_type = stl::remove_cvref_t<decltype(c)>;
+        constexpr char_type diff = static_cast<char_type>('A') - static_cast<char_type>('a');
+        return c >= static_cast<char_type>('a') && c <= static_cast<char_type>('z') ? c + diff : c;
+    }
+
     inline void to_lower(istl::String auto& str) noexcept {
         // FIXME: I think you can make this algorithm faster
         stl::transform(str.cbegin(), str.cend(), str.begin(), [](auto c) {
-            return stl::tolower(c);
+            return to_lower(c);
         });
     }
 
     inline void to_upper(istl::String auto& str) noexcept {
         // FIXME: I think you can make this algorithm faster
         stl::transform(str.cbegin(), str.cend(), str.begin(), [](auto const& c) {
-            return stl::tolower(c);
+            return to_upper(c);
         });
     }
 
@@ -201,7 +219,36 @@ namespace webpp {
 #endif
     }
 
+    /**
+     * todo: check performance of this and if all are the same, remove the unnecessary ones
+     */
+    constexpr bool iequal(istl::ConvertibleToStringView auto &&_str1, istl::ConvertibleToStringView auto &&_str2) noexcept {
+        using str1_type = decltype(_str1);
+        using str2_type = decltype(_str2);
+        using str1_t = stl::remove_cvref_t<str1_type>;
+        using str2_t = stl::remove_cvref_t<str2_type>;
 
+        auto str1 = istl::to_string_view(_str1);
+        auto str2 = istl::to_string_view(_str2);
+        if (str1.size() != str2.size())
+            return false;
+
+        if constexpr (istl::String<str1_t> && istl::String<str1_t> && stl::is_rvalue_reference_v<str1_type> && stl::is_rvalue_reference_v<str2_type>) {
+            to_lower(_str1);
+            to_lower(_str2);
+            return _str1 == _str2;
+        } else if constexpr (istl::String<str1_t> && stl::is_rvalue_reference_v<str1_type>) {
+            to_lower(_str1);
+            return _str1 == to_lower_copy(_str2, _str1.get_allocator());
+        } else if constexpr (istl::String<str2_t> && stl::is_rvalue_reference_v<str2_type>) {
+            to_lower(_str2);
+            return to_lower_copy(_str1, _str2.get_allocator()) == _str2;
+        } else {
+            return stl::equal(str1.cbegin(), str1.cend(), str2.cbegin(), [](auto &&c1, auto&& c2){
+              return c1 == c2 || to_lower(c1) == to_lower(c2);
+            });
+        }
+    }
 
     //    template <typename ValueType, typename... R>
     //    requires(stl::is_integral_v<stl::remove_cvref_t<ValueType>>)

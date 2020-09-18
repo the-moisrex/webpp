@@ -6,6 +6,8 @@
 
 #include <cstdint>
 
+
+#include <boost/algorithm/string.hpp>
 namespace webpp {
 
     using status_code_type = stl::uint_fast16_t;
@@ -135,16 +137,17 @@ namespace webpp {
      * This is the header class witch will contain the name, and the value of
      * one single field of a header.
      */
-    template <Traits TraitsType, typename EList>
-    struct header_field : public EList {
+    template <Traits TraitsType, typename EList, bool IsView>
+    struct basic_header_field : public EList {
         using traits_type      = TraitsType;
         using string_type      = typename traits_type::string_type;
         using string_view_type = typename traits_type::string_view_type;
         using allocator_type   = typename string_type::allocator_type;
         using alloc_type       = allocator_type const&;
+        using string_container = stl::conditional_t<IsView, string_view_type, string_type>;
 
-        string_type name;
-        string_type value;
+        string_container name;
+        string_container value;
 
         //        constexpr response_header_field(string_type&& _name, string_type&& _value)
         //          : name{stl::move(_name)},
@@ -171,9 +174,8 @@ namespace webpp {
          * It's not a good idea to compare the name directly; the header name is
          * case-insensitive.
          */
-        constexpr bool is_name(istl::ConvertibleToStringView auto&& str) const noexcept {
-            return to_lower_copy(name) ==
-                   to_lower_copy(stl::forward<decltype(str)>(str), name.get_allocator());
+        constexpr bool is_name(istl::ConvertibleToStringView auto&& _str) const noexcept {
+            return iequal(name, stl::forward<decltype(_str)>(_str));
         }
 
         constexpr bool operator==(istl::ConvertibleToStringView auto&& str) const noexcept {
@@ -185,17 +187,22 @@ namespace webpp {
         }
 
         friend constexpr bool operator==(istl::ConvertibleToStringView auto&&   str,
-                                         header_field<TraitsType, EList> const& field) noexcept {
+                                         basic_header_field<TraitsType, EList, IsView> const& field) noexcept {
             return field.operator==(istl::to_string_view(str));
         }
 
         friend constexpr bool operator!=(istl::ConvertibleToStringView auto&&   str,
-                                         header_field<TraitsType, EList> const& field) noexcept {
+                                         basic_header_field<TraitsType, EList, IsView> const& field) noexcept {
             return field.operator!=(istl::to_string_view(str));
         }
     };
 
 
+    template <Traits TraitsType, typename EList>
+    using header_field = basic_header_field<TraitsType, EList, false>;
+
+    template <Traits TraitsType, typename EList>
+    using header_field_view = basic_header_field<TraitsType, EList, true>;
 
     /**
      * hash function of std::unordered_set<webpp::basic_cookie>
