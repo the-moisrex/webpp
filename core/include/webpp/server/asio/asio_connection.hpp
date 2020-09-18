@@ -36,8 +36,11 @@ namespace webpp {
               [this](asio::error_code const& err, stl::size_t bytes_transferred) noexcept {
                   if (!err) {
                       // we need to parse, store, read more, or write something
-                      session.read(bytes_transferred);
-                      read();
+                      if (session.read(bytes_transferred)) {
+                          read();
+                      } else {
+                          write();
+                      }
                   } else {
                       if (err.value() != EOF) { // todo: check if this works
                           session.logger.error(session.logger_category, "Error receiving data.", err);
@@ -55,7 +58,7 @@ namespace webpp {
         }
 
         void write() noexcept {
-            auto res = output();
+            auto res = session.output();
 
             // todo: do something about this
             if (session.logger.enabled) {

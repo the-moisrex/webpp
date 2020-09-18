@@ -14,7 +14,7 @@ namespace webpp::shosted {
     template <Traits TraitsType, typename RequestType>
     struct self_hosted_session_manager : public enable_traits<TraitsType> {
         static constexpr unsigned buffer_size     = 1024 * 1024 * 1024; // 1 MiB
-        static constexpr auto     logger_category = "SHosted/Session";
+        static constexpr auto     logger_category = "SelfHosted/Session";
 
         using etraits          = enable_traits<TraitsType>;
         using traits_type      = typename etraits::traits_type;
@@ -36,7 +36,9 @@ namespace webpp::shosted {
         }
 
         // read a batch of input
-        void read_the_buffer(stl::size_t transferred_bytes) noexcept {}
+        bool read(stl::size_t transferred_bytes) noexcept {
+
+        }
 
         // making the output
         string_view_type output() noexcept {
