@@ -275,6 +275,32 @@ namespace webpp {
     //    }
     //
 
+
+    template <typename T, stl::size_t N>
+    constexpr stl::size_t size(const T (&array)[N]) noexcept {
+        return N;
+    }
+
+    template <typename T>
+    requires requires (T el) { el.size(); }
+    constexpr auto size(T&& str) noexcept {
+        return str.size();
+    }
+
+    template <typename T>
+    requires (istl::CharType<T>)
+    constexpr stl::size_t size(T const* str) noexcept {
+        if constexpr (stl::is_same_v<T, char>) {
+            return std::strlen(str);
+        } else {
+            const T* end = str;
+            while (*end++ != 0)
+                ;
+            return end - str - 1;
+        }
+    }
+
+
 } // namespace webpp
 
 #endif // WEBPP_UTILS_STRINGS_H

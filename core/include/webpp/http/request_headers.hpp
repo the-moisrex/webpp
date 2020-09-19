@@ -32,12 +32,21 @@ namespace webpp {
       public:
         using traits_type = TraitsType;
         using string_type = typename traits_type::string_type;
+        using string_view_type = typename traits_type::string_view_type;
         using field_type  = HeaderFieldType;
 
         template <typename... Args>
         constexpr request_headers(Args&&... args) noexcept
           : super{stl::forward<Args>(args)...},
             HeaderEList{} {}
+
+
+        // todo: fix this
+        constexpr request_headers(istl::ConvertibleToStringVeiw auto &&header_string, auto&&...args)
+        :   super{stl::forward< decltype(args)>(args)...}
+        {
+            parse_header_string(istl::to_string_view(header_string));
+        }
 
     };
 

@@ -82,6 +82,9 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/application_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/http.hpp
 
+        ${LIB_INCLUDE_DIR}/webpp/http/syntax/http_version.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/syntax/request_parser.hpp
+
 
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/request_cookie.hpp
