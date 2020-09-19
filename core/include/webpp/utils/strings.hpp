@@ -291,7 +291,7 @@ namespace webpp {
     requires (istl::CharType<T>)
     constexpr stl::size_t size(T const* str) noexcept {
         if constexpr (stl::is_same_v<T, char>) {
-            return std::strlen(str);
+            return stl::strlen(str);
         } else {
             const T* end = str;
             while (*end++ != 0)
