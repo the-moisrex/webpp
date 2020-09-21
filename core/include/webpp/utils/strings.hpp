@@ -173,10 +173,23 @@ namespace webpp {
     }
 
     inline void to_upper(istl::String auto& str) noexcept {
-        // FIXME: I think you can make this algorithm faster
-        stl::transform(str.cbegin(), str.cend(), str.begin(), [](auto c) {
-            return to_upper(c);
-        });
+        using str_t = stl::remove_cvref_t<decltype(str)>;
+        if constexpr (requires (str_t s) {s.data(); s.size(); }) {
+            using char_type = istl::char_type_of<str_t>;
+            char_type* it = str.data();
+            const char_type* end = it + str.size();
+            // we've tried to use SIMD, but GCC and Clang's optimization beats us with this algorithm:
+            for (; it != end; ++it)
+                *it = to_upper(*it);
+        } else if constexpr (requires(str_t s) { s.begin(); s.end();}) {
+            for (auto & c : str) {
+                c = to_upper(c);
+            }
+        } else {
+            auto* it = str;
+            for (; *it != '\0'; ++it)
+                *it = to_upper(*it);
+        }
     }
 
     [[nodiscard]] inline auto to_lower_copy(istl::ConvertibleToString auto _str,
