@@ -135,6 +135,12 @@ namespace webpp {
         return str;
     }
 
+    constexpr auto to_upper(istl::CharType auto &&c) noexcept {
+        using char_type = stl::remove_cvref_t<decltype(c)>;
+        constexpr char_type diff = 'a' - 'A';
+        return c >= 'a' && c <= 'z' ? c - diff : c;
+    }
+
     /**
      * This function does not work with the std::locale thus it's faster. It should only be used where
      * you need the default locale in which uses 'A' and 'Z' chars. One example is in the HTTP headers
@@ -142,26 +148,33 @@ namespace webpp {
      */
     constexpr auto to_lower(istl::CharType auto &&c) noexcept {
         using char_type = stl::remove_cvref_t<decltype(c)>;
-        constexpr char_type diff = static_cast<char_type>('A') - static_cast<char_type>('a');
-        return c >= static_cast<char_type>('A') && c <= static_cast<char_type>('Z') ? c - diff : c;
-    }
-
-    constexpr auto to_upper(istl::CharType auto &&c) noexcept {
-        using char_type = stl::remove_cvref_t<decltype(c)>;
-        constexpr char_type diff = static_cast<char_type>('A') - static_cast<char_type>('a');
-        return c >= static_cast<char_type>('a') && c <= static_cast<char_type>('z') ? c + diff : c;
+        constexpr char_type diff = 'a' - 'A';
+        return c >= 'A' && c <= 'Z' ? c + diff : c;
     }
 
     inline void to_lower(istl::String auto& str) noexcept {
-        // FIXME: I think you can make this algorithm faster
-        stl::transform(str.cbegin(), str.cend(), str.begin(), [](auto c) {
-            return to_lower(c);
-        });
+        using str_t = stl::remove_cvref_t<decltype(str)>;
+        if constexpr (requires (str_t s) {s.data(); s.size(); }) {
+            using char_type = istl::char_type_of<str_t>;
+            char_type* it = str.data();
+            const char_type* end = it + str.size();
+            // we've tried to use SIMD, but GCC and Clang's optimization beats us with this algorithm:
+            for (; it != end; ++it)
+                *it = to_lower(*it);
+        } else if constexpr (requires(str_t s) { s.begin(); s.end();}) {
+            for (auto & c : str) {
+                c = to_lower(c);
+            }
+        } else {
+            auto* it = str;
+            for (; *it != '\0'; ++it)
+                *it = to_lower(*it);
+        }
     }
 
     inline void to_upper(istl::String auto& str) noexcept {
         // FIXME: I think you can make this algorithm faster
-        stl::transform(str.cbegin(), str.cend(), str.begin(), [](auto const& c) {
+        stl::transform(str.cbegin(), str.cend(), str.begin(), [](auto c) {
             return to_upper(c);
         });
     }
