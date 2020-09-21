@@ -107,7 +107,7 @@ namespace webpp::istl {
     };
 
     template <typename T>
-    concept CharType = stl::is_integral_v<stl::decay_t<T>>;
+    concept CharType = stl::is_integral_v<stl::remove_cvref_t<T>>;
 
 
 

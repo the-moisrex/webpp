@@ -60,7 +60,7 @@ namespace webpp::istl {
 
 
     template <typename T>
-    concept ConvertibleToStringView = requires(T str) {
+    concept ConvertibleToStringView = !istl::CharType<T> && requires(stl::remove_cvref_t<T> str) {
         requires requires {
             stl::basic_string_view{str};
         }

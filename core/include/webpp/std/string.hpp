@@ -59,7 +59,7 @@ namespace webpp::istl {
     };
 
     template <typename T>
-    concept ConvertibleToString = requires(T str) {
+    concept ConvertibleToString = !istl::CharType<T> && requires(stl::remove_cvref_t<T> str) {
         requires requires {
             stl::basic_string{str};
         }
@@ -96,7 +96,24 @@ namespace webpp::istl {
         } else if constexpr (requires { str.str(); }) {
             return to_string(str.str(), allocator);
         } else {
-            throw stl::invalid_argument("The specified input is not convertible to string_view");
+            throw stl::invalid_argument("The specified input is not convertible to string");
+        }
+    };
+
+    /**
+     * Get the underlying data of the specified string
+     */
+    [[nodiscard]] constexpr auto* string_data(ConvertibleToString auto&& str) noexcept {
+        if constexpr (requires { str.data(); }) {
+            return str.data();
+        } else if constexpr (requires { str.c_str(); }) {
+            return str.c_str();
+        } else if constexpr (requires { str.str(); }) {
+            return string_data(str.str());
+        } else if constexpr (istl::CharType<decltype(str)>) {
+            return str;
+        } else {
+            throw stl::invalid_argument("We can't find the input's data.");
         }
     };
 
