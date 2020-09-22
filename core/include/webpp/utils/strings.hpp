@@ -147,7 +147,7 @@ namespace webpp {
     }
 
     template <typename CharT>
-    requires(stl::is_integral_v<CharT>) inline void to_upper(CharT& c) noexcept {
+    requires(stl::is_integral_v<CharT> && !stl::is_const_v<CharT>) inline void to_upper(CharT& c) noexcept {
         using char_type          = stl::remove_cvref_t<decltype(c)>;
         constexpr char_type diff = 'a' - 'A';
         c                        = c >= 'a' && c <= 'z' ? c - diff : c;
@@ -166,7 +166,7 @@ namespace webpp {
     }
 
     template <typename CharT>
-    requires(stl::is_integral_v<CharT>) inline void to_lower(CharT& c) noexcept {
+    requires(stl::is_integral_v<CharT> && !stl::is_const_v<CharT>) inline void to_lower(CharT& c) noexcept {
         using char_type          = stl::remove_cvref_t<decltype(c)>;
         constexpr char_type diff = 'a' - 'A';
         c                        = c >= 'A' && c <= 'Z' ? c + diff : c;
@@ -174,32 +174,40 @@ namespace webpp {
 
 // we've tried to use SIMD, but GCC and Clang's optimization beats us with this
 // algorithm:
-#define WEBPP_TO_METHOD(method)                                                  \
-    template <typename CharT>                                                    \
-    requires(stl::is_integral_v<CharT>) inline void method(CharT* it) noexcept { \
-        for (; *it != '\0'; ++it)                                                \
-            method(*it);                                                         \
-    }                                                                            \
-                                                                                 \
-    inline void method(istl::ConvertibleToString auto& str) noexcept {           \
-        using str_t          = stl::remove_cvref_t<decltype(str)>;               \
-        using char_type      = istl::char_type_of<str_t>;                        \
-        char_type*       it  = istl::string_data(str);                           \
-        const char_type* end = it + size(str);                                   \
-        for (; it != end; ++it)                                                  \
-            method(*it);                                                         \
-    }                                                                            \
-                                                                                 \
-    [[nodiscard]] inline auto method##_copy(istl::ConvertibleToString auto _str, \
-                                            auto const&                    allocator) noexcept {    \
-        auto str = istl::to_string(stl::move(_str), allocator);                  \
-        method(str);                                                             \
-        return str;                                                              \
-    }                                                                            \
-                                                                                 \
-    [[nodiscard]] inline auto method##_copy(istl::String auto str) noexcept {    \
-        method(str);                                                             \
-        return str;                                                              \
+#define WEBPP_TO_METHOD(method)                                                             \
+    template <typename CharT>                                                               \
+    requires(stl::is_integral_v<CharT>) inline void method(CharT* it) noexcept {            \
+        for (; *it != '\0'; ++it)                                                           \
+            method(*it);                                                                    \
+    }                                                                                       \
+                                                                                            \
+    inline void method(istl::ConvertibleToString auto& str) noexcept {                      \
+        using str_t          = stl::remove_cvref_t<decltype(str)>;                          \
+        using char_type      = istl::char_type_of<str_t>;                                   \
+        char_type*       it  = istl::string_data(str);                                      \
+        const char_type* end = it + size(str);                                              \
+        for (; it != end; ++it)                                                             \
+            method(*it);                                                                    \
+    }                                                                                       \
+                                                                                            \
+    [[nodiscard]] inline auto method##_copy(istl::ConvertibleToString auto _str,            \
+                                            auto const&                    allocator) noexcept {               \
+        auto str = istl::to_string(stl::move(_str), allocator);                             \
+        method(str);                                                                        \
+        return str;                                                                         \
+    }                                                                                       \
+                                                                                            \
+                                                                                            \
+    [[nodiscard]] inline auto method##_copy(istl::ConvertibleToString auto _str) noexcept { \
+        using char_type = istl::char_type_of<decltype(_str)>;                               \
+        auto str        = istl::to_string(stl::move(_str), stl::allocator<char_type>());    \
+        method(str);                                                                        \
+        return str;                                                                         \
+    }                                                                                       \
+                                                                                            \
+    [[nodiscard]] inline auto method##_copy(istl::String auto str) noexcept {               \
+        method(str);                                                                        \
+        return str;                                                                         \
     }
 
 
@@ -268,7 +276,7 @@ namespace webpp {
             return to_lower_copy(_str1, _str2.get_allocator()) == _str2;
         } else {
             return stl::equal(str1.cbegin(), str1.cend(), str2.cbegin(), [](auto&& c1, auto&& c2) {
-                return c1 == c2 || to_lower(c1) == to_lower(c2);
+                return c1 == c2 || to_lower_copy(c1) == to_lower_copy(c2);
             });
         }
     }
