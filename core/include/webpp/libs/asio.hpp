@@ -17,6 +17,8 @@
 #    define asio(asio_file) <boost/asio/asio_file.hpp>
 #elif defined(WEBPP_ASIO)
 #    define asio(asio_file) <asio/asio_file.hpp>
+#else
+#    define asio(asio_file) // nothing
 #endif
 
 #ifdef WEBPP_BOOST_ASIO

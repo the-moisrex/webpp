@@ -17,12 +17,15 @@
 
 #ifdef WEBPP_EVE
 #    define eve(eve_file) <eve/eve_file.hpp>
+#else
+#    define eve(eve_file) // nothing
 #endif
 
 #ifdef WEBPP_EVE
 namespace eve {}
 namespace webpp::eve {
     using namespace ::eve;
+    constexpr auto simd_size = 64;
 } // namespace webpp::eve
 #endif
 
