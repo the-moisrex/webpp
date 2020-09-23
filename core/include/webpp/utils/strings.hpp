@@ -24,15 +24,24 @@
 namespace webpp {
 
     template <typename T>
+    struct constexpr_array_type {
+        static constexpr bool is_array = false;
+    };
+
+    template <typename T, stl::size_t N>
+    struct constexpr_array_type<const T (&)[N]> {
+        using array_type = T;
+        static constexpr bool is_array = true;
+        static constexpr stl::size_t array_length = N;
+    };
+
+    template <typename T>
     [[nodiscard]] constexpr stl::size_t size(T&& str) noexcept {
-        auto arr_size_finder = [] <typename U, stl::size_t N> (const U (&array)[N]) constexpr noexcept {
-            return N;
-        };
         if constexpr (requires (T el) { el.size(); }) {
             return str.size();
-        } else if constexpr (stl::same_as<decltype(arr_size_finder(stl::forward<T>(str))), stl::size_t>) {
-            return arr_size_finder(stl::forward<T>(str));
-        } else if constexpr (stl::is_same_v<T, char>) {
+        } else if constexpr (constexpr_array_type<T>::is_array) {
+            return constexpr_array_type<T>::array_length;
+        } else if constexpr (stl::is_same_v<stl::remove_cvref_t<T>, char*>) {
             return stl::strlen(str);
         } else {
             // todo: is it possible to optimize this with SIMD?

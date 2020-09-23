@@ -103,17 +103,13 @@ namespace webpp::istl {
     /**
      * Get the underlying data of the specified string
      */
-    [[nodiscard]] constexpr auto* string_data(ConvertibleToString auto&& str) noexcept {
+    [[nodiscard]] constexpr auto string_data(ConvertibleToString auto&& str) noexcept {
         if constexpr (requires { str.data(); }) {
             return str.data();
         } else if constexpr (requires { str.c_str(); }) {
-            return str.c_str();
-        } else if constexpr (requires { str.str(); }) {
-            return string_data(str.str());
-        } else if constexpr (istl::CharType<decltype(str)>) {
-            return str;
+            return str.c_str(); // this is const, but that's that caller's problem now :)
         } else {
-            throw stl::invalid_argument("We can't find the input's data.");
+            return &str[0]; // it'll throw an error if it didn't work, wo let's do this
         }
     };
 
