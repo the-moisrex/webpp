@@ -66,3 +66,19 @@ TEST(Strings, EveToLowerToUpper) {
     EXPECT_EQ(long_str, long_str2) << "eve toupper doesn't work";
 }
 #endif
+
+
+TEST(Strings, IEqual) {
+    std::string str1 = "this is [1] long LONG long long long long string.";
+    std::string str2 = "this is [1] long LONG long long long long string.";
+    EXPECT_EQ(str1, str2);
+    EXPECT_TRUE(iequal(str1, str2));
+    to_lower(str1);
+    EXPECT_TRUE(iequal(str1, str2));
+    to_lower(str2);
+    EXPECT_TRUE(iequal(str1, str2));
+    to_upper(str1);
+    EXPECT_TRUE(iequal(str1, str2));
+    to_upper(str2);
+    EXPECT_TRUE(iequal(str1, str2));
+}

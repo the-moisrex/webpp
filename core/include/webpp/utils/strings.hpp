@@ -13,12 +13,37 @@
 #include eve(wide)
 #include eve(function/store)
 #include eve(function/add)
+#include eve(function/sub)
+#include eve(function/any)
+#include eve(function/is_less)
 // clang-format on
 
 #include <algorithm>
 #include <type_traits>
 
 namespace webpp {
+
+    template <typename T>
+    [[nodiscard]] constexpr stl::size_t size(T&& str) noexcept {
+        auto arr_size_finder = [] <typename U, stl::size_t N> (const U (&array)[N]) constexpr noexcept {
+            return N;
+        };
+        if constexpr (requires (T el) { el.size(); }) {
+            return str.size();
+        } else if constexpr (stl::same_as<decltype(arr_size_finder(stl::forward<T>(str))), stl::size_t>) {
+            return arr_size_finder(stl::forward<T>(str));
+        } else if constexpr (stl::is_same_v<T, char>) {
+            return stl::strlen(str);
+        } else {
+            // todo: is it possible to optimize this with SIMD?
+            const T* end = str;
+            while (*end++ != 0)
+                ;
+            return end - str - 1;
+        }
+    }
+
+
 
     /**
      * Getting the character type
@@ -147,7 +172,7 @@ namespace webpp {
      * chars. One example is in the HTTP headers which changing the locale should
      * not affect that.
      */
-    constexpr auto to_upper_copy(istl::CharType auto&& c) noexcept {
+    [[nodiscard]] constexpr auto to_upper_copy(istl::CharType auto&& c) noexcept {
         using char_type          = stl::remove_cvref_t<decltype(c)>;
         constexpr char_type diff = 'a' - 'A';
         return c >= 'a' && c <= 'z' ? c - diff : c;
@@ -167,7 +192,7 @@ namespace webpp {
      * chars. One example is in the HTTP headers which changing the locale should
      * not affect that.
      */
-    constexpr auto to_lower_copy(istl::CharType auto&& c) noexcept {
+    [[nodiscard]] constexpr auto to_lower_copy(istl::CharType auto&& c) noexcept {
         using char_type          = stl::remove_cvref_t<decltype(c)>;
         constexpr char_type diff = 'a' - 'A';
         return c >= 'A' && c <= 'Z' ? c + diff : c;
@@ -320,11 +345,6 @@ namespace webpp {
         auto str        = istl::to_string(stl::move(_str), stl::allocator<char_type>());    \
         method(str);                                                                        \
         return str;                                                                         \
-    }                                                                                       \
-                                                                                            \
-    [[nodiscard]] inline auto method##_copy(istl::String auto str) noexcept {               \
-        method(str);                                                                        \
-        return str;                                                                         \
     }
 
 #ifdef WEBPP_EVE
@@ -373,34 +393,82 @@ namespace webpp {
      * todo: check performance of this and if all are the same, remove the
      * unnecessary ones
      */
-    constexpr bool iequal(istl::ConvertibleToStringView auto&& _str1,
+    [[nodiscard]] constexpr bool iequal(istl::ConvertibleToStringView auto&& _str1,
                           istl::ConvertibleToStringView auto&& _str2) noexcept {
         using str1_type = decltype(_str1);
         using str2_type = decltype(_str2);
         using str1_t    = stl::remove_cvref_t<str1_type>;
         using str2_t    = stl::remove_cvref_t<str2_type>;
+        using char_type = istl::char_type_of<str1_t>;
+        using char_type2 = istl::char_type_of<str2_t>;
+        static_assert(stl::is_same_v<char_type, char_type2>, "The specified strings do not have the same character type, we're not able to compare them with this algorithm.");
 
-        auto str1 = istl::to_string_view(_str1);
-        auto str2 = istl::to_string_view(_str2);
-        if (str1.size() != str2.size())
+        auto _size = size(_str1);
+        if (_size != size(_str2))
             return false;
 
-        if constexpr (istl::String<str1_t> && istl::String<str1_t> && stl::is_rvalue_reference_v<str1_type> &&
-                      stl::is_rvalue_reference_v<str2_type>) {
-            to_lower(_str1);
-            to_lower(_str2);
-            return _str1 == _str2;
-        } else if constexpr (istl::String<str1_t> && stl::is_rvalue_reference_v<str1_type>) {
-            to_lower(_str1);
-            return _str1 == to_lower_copy(_str2, _str1.get_allocator());
-        } else if constexpr (istl::String<str2_t> && stl::is_rvalue_reference_v<str2_type>) {
-            to_lower(_str2);
-            return to_lower_copy(_str1, _str2.get_allocator()) == _str2;
-        } else {
-            return stl::equal(str1.cbegin(), str1.cend(), str2.cbegin(), [](auto&& c1, auto&& c2) {
-                return c1 == c2 || to_lower_copy(c1) == to_lower_copy(c2);
-            });
+        auto* it1 = istl::string_data(_str1);
+        auto* it2 = istl::string_data(_str2);
+        const auto* it1_end = it1 + _size;
+
+#ifdef WEBPP_EVE
+        using simd_type = eve::wide<char_type>;
+        using simd_utype = eve::wide<stl::make_unsigned_t<char_type>>;
+
+        constexpr auto simd_size = simd_type::size();
+        if (_size > simd_size) {
+            const auto*      almost_end = it1_end - (_size % simd_size);
+            const simd_utype big_a{'A'};
+            const simd_utype diff{'a' - 'A'};
+            for (; it1 != almost_end; it1 += simd_size, it2 += simd_size) {
+                const auto values1  = eve::bit_cast(simd_type{it1}, eve::as_<simd_utype>());
+                const auto values2  = eve::bit_cast(simd_type{it2}, eve::as_<simd_utype>());
+                const auto equality = eve::is_not_equal(values1, values2);
+                if (eve::any(equality)) {
+                    const auto val1_lowered = eve::logical_not(eve::if_else(
+                      eve::is_less(eve::sub(values1, big_a), 25), eve::add(values1, diff), values1));
+                    const auto val2_lowered = eve::logical_not(eve::if_else(
+                      eve::is_less(eve::sub(values1, big_a), 25), eve::add(values1, diff), values1));
+                    const auto equality2    = eve::is_not_equal(val1_lowered, val2_lowered);
+                    if (eve::any(equality2)) {
+                        return false;
+                    }
+                }
+            }
+            // do the rest
+            it1 -= simd_size;
+            it2 -= simd_size;
         }
+#endif
+        for (; it1 != it1_end; ++it1, ++it2) {
+            if (*it1 != *it2) {
+                // compiler seems to be able to optimize this better than us
+                auto ch1_lowered = to_lower_copy(*it1);
+                auto ch2_lowered = to_lower_copy(*it2);
+                if (ch1_lowered != ch2_lowered)
+                    return false;
+            }
+        }
+        return true;
+
+
+
+//        if constexpr (istl::String<str1_t> && istl::String<str1_t> && stl::is_rvalue_reference_v<str1_type> &&
+//                      stl::is_rvalue_reference_v<str2_type>) {
+//            to_lower(_str1);
+//            to_lower(_str2);
+//            return _str1 == _str2;
+//        } else if constexpr (istl::String<str1_t> && stl::is_rvalue_reference_v<str1_type>) {
+//            to_lower(_str1);
+//            return _str1 == to_lower_copy(_str2, _str1.get_allocator());
+//        } else if constexpr (istl::String<str2_t> && stl::is_rvalue_reference_v<str2_type>) {
+//            to_lower(_str2);
+//            return to_lower_copy(_str1, _str2.get_allocator()) == _str2;
+//        } else {
+//            return stl::equal(str1.cbegin(), str1.cend(), str2.cbegin(), [](auto&& c1, auto&& c2) {
+//                return c1 == c2 || to_lower_copy(c1) == to_lower_copy(c2);
+//            });
+//        }
     }
 
     //    template <typename ValueType, typename... R>
@@ -429,30 +497,6 @@ namespace webpp {
     //    }
     //
 
-    template <typename T, stl::size_t N>
-    constexpr stl::size_t size(const T (&array)[N]) noexcept {
-        return N;
-    }
-
-    template <typename T>
-    requires requires(T el) {
-        el.size();
-    }
-    constexpr auto size(T&& str) noexcept {
-        return str.size();
-    }
-
-    template <typename T>
-    requires(istl::CharType<T>) constexpr stl::size_t size(T const* str) noexcept {
-        if constexpr (stl::is_same_v<T, char>) {
-            return stl::strlen(str);
-        } else {
-            const T* end = str;
-            while (*end++ != 0)
-                ;
-            return end - str - 1;
-        }
-    }
 
 } // namespace webpp
 

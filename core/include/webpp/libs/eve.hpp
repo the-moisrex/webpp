@@ -25,7 +25,6 @@
 namespace eve {}
 namespace webpp::eve {
     using namespace ::eve;
-    constexpr auto simd_size = 64;
 } // namespace webpp::eve
 #endif
 
