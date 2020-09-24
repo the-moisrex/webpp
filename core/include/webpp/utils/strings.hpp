@@ -400,11 +400,10 @@ namespace webpp {
 #endif
     }
 
-    /**
-     * todo: check performance of this and if all are the same, remove the
-     * unnecessary ones
-     */
-    [[nodiscard]] constexpr bool iequal(istl::ConvertibleToStringView auto&& _str1,
+     /**
+      * Check if two strings are equal case-insensitively
+      */
+    [[nodiscard]] constexpr bool iequals(istl::ConvertibleToStringView auto&& _str1,
                                         istl::ConvertibleToStringView auto&& _str2) noexcept {
         using str1_type  = decltype(_str1);
         using str2_type  = decltype(_str2);
