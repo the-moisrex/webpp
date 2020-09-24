@@ -1,10 +1,15 @@
 #include "../core/include/webpp/http/http.hpp"
-#include "../core/include/webpp/http/routes/tpath.hpp"
 
 #include <gtest/gtest.h>
 #include <string>
 
 using namespace webpp;
+
+TEST(Server, Creation) {
+
+}
+
+
 //
 // namespace webpp {
 //

@@ -185,33 +185,39 @@ using namespace webpp;
 
 
 static void IEQ_Default(benchmark::State& state) {
-    std::string str   = str_generator();
-    auto        istr  = str;
-    auto        istr2 = webpp::to_lower_copy(istr);
     for (auto _ : state) {
+        std::string str   = str_generator();
+        auto        istr  = str;
+        auto        istr2 = webpp::to_lower_copy(istr);
         auto res = webpp::iequals(istr, istr2);
         benchmark::DoNotOptimize(res);
+        benchmark::DoNotOptimize(istr);
+        benchmark::DoNotOptimize(istr2);
     }
 }
 BENCHMARK(IEQ_Default);
 
 static void IEQ_SIMD(benchmark::State& state) {
-    std::string str   = str_generator();
-    auto        istr  = str;
-    auto        istr2 = webpp::to_lower_copy(istr);
     for (auto _ : state) {
+        std::string str   = str_generator();
+        auto        istr  = str;
+        auto        istr2 = webpp::to_lower_copy(istr);
         auto res = iequals_simd(istr, istr2);
         benchmark::DoNotOptimize(res);
+        benchmark::DoNotOptimize(istr);
+        benchmark::DoNotOptimize(istr2);
     }
 }
 BENCHMARK(IEQ_SIMD);
 
 static void IEQ_ToLowerAllTheWay(benchmark::State& state) {
-    std::string str   = str_generator();
-    auto        istr  = str;
-    auto        istr2 = webpp::to_lower_copy(istr);
     for (auto _ : state) {
+        std::string str   = str_generator();
+        auto        istr  = str;
+        auto        istr2 = webpp::to_lower_copy(istr);
         benchmark::DoNotOptimize(iequal_tolower_all_the_way(istr, istr2));
+        benchmark::DoNotOptimize(istr);
+        benchmark::DoNotOptimize(istr2);
     }
 }
 BENCHMARK(IEQ_ToLowerAllTheWay);
@@ -219,22 +225,26 @@ BENCHMARK(IEQ_ToLowerAllTheWay);
 
 
 static void IEQ_SimpleForLoop(benchmark::State& state) {
-    std::string str   = str_generator();
-    auto        istr  = str;
-    auto        istr2 = webpp::to_lower_copy(istr);
     for (auto _ : state) {
+        std::string str   = str_generator();
+        auto        istr  = str;
+        auto        istr2 = webpp::to_lower_copy(istr);
         benchmark::DoNotOptimize(simple_for_loop(istr, istr2));
+        benchmark::DoNotOptimize(istr);
+        benchmark::DoNotOptimize(istr2);
     }
 }
 BENCHMARK(IEQ_SimpleForLoop);
 
 
 static void IEQ_SimplerForLoop(benchmark::State& state) {
-    std::string str   = str_generator();
-    auto        istr  = str;
-    auto        istr2 = webpp::to_lower_copy(istr);
     for (auto _ : state) {
+        std::string str   = str_generator();
+        auto        istr  = str;
+        auto        istr2 = webpp::to_lower_copy(istr);
         benchmark::DoNotOptimize(simpler_for_loop(istr, istr2));
+        benchmark::DoNotOptimize(istr);
+        benchmark::DoNotOptimize(istr2);
     }
 }
 BENCHMARK(IEQ_SimplerForLoop);
@@ -243,11 +253,13 @@ BENCHMARK(IEQ_SimplerForLoop);
 
 
 static void IEQ_Boost(benchmark::State& state) {
-    std::string str   = str_generator();
-    auto        istr  = str;
-    auto        istr2 = webpp::to_lower_copy(istr);
     for (auto _ : state) {
+        std::string str   = str_generator();
+        auto        istr  = str;
+        auto        istr2 = webpp::to_lower_copy(istr);
         benchmark::DoNotOptimize(boost::iequals(istr, istr2));
+        benchmark::DoNotOptimize(istr);
+        benchmark::DoNotOptimize(istr2);
     }
 }
 BENCHMARK(IEQ_Boost);

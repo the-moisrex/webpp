@@ -4,7 +4,9 @@
 // clang-format off
 #include webpp_include(utils/ipv4)
 #include webpp_include(utils/ipv6)
+#include webpp_include(traits/std_traits)
 // clang-format on
+
 
 using namespace std;
 using namespace boost::asio;
@@ -19,7 +21,7 @@ BENCHMARK(IP_asio_v4);
 
 static void IP_webpp_v4(benchmark::State& state) {
     for (auto _ : state) {
-        auto addr = webpp::ipv4("192.168.1.8");
+        auto addr = webpp::ipv4<webpp::std_traits>("192.168.1.8");
         benchmark::DoNotOptimize(addr);
     }
 }
@@ -57,7 +59,7 @@ BENCHMARK(IP_asio_v4_random);
 static void IP_webpp_v4_random(benchmark::State& state) {
     ipv4_data();
     for (auto _ : state) {
-        auto addr = webpp::ipv4(ipv4_data());
+        auto addr = webpp::ipv4<webpp::std_traits>(ipv4_data());
         benchmark::DoNotOptimize(addr);
     }
 }
