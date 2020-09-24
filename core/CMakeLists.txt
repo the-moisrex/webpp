@@ -211,14 +211,4 @@ target_compile_features(${LIB_NAME} PUBLIC
         cxx_static_assert
         )
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 10.1.0)
-        message(FATAL_ERROR "This version of GCC is not supported. We need at least version 10.1.0.")
-    endif ()
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 10.0.0)
-        message(FATAL_ERROR "This version of Clang is not supported. We need at least version 10.0.0.")
-    endif ()
-endif ()
-
 ## todo: add write_basic_package_version_file and versioning stuff for exporting
