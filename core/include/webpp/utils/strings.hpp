@@ -190,7 +190,7 @@ namespace webpp {
     template <typename CharT>
     requires(stl::is_integral_v<CharT> && !stl::is_const_v<CharT>) inline void to_upper(CharT& c) noexcept {
         using char_type          = stl::remove_cvref_t<decltype(c)>;
-        constexpr char_type diff = 'a' - 'A';
+        static constexpr char_type diff = 'a' - 'A';
         if (c >= 'a' && c <= 'z')
             c -= diff;
     }
@@ -210,7 +210,7 @@ namespace webpp {
     template <typename CharT>
     requires(stl::is_integral_v<CharT> && !stl::is_const_v<CharT>) inline void to_lower(CharT& c) noexcept {
         using char_type          = stl::remove_cvref_t<decltype(c)>;
-        constexpr char_type diff = 'a' - 'A';
+        static constexpr char_type diff = 'a' - 'A';
         if (c >= 'A' && c <= 'Z')
             c += diff;
     }

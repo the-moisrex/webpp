@@ -81,4 +81,11 @@ TEST(Strings, IEqual) {
     EXPECT_TRUE(iequal(str1, str2));
     to_upper(str2);
     EXPECT_TRUE(iequal(str1, str2));
+    str1.append("a");
+    EXPECT_FALSE(iequal(str1, str2));
+    str2.append("a");
+    EXPECT_TRUE(iequal(str1, str2));
+    str1.append("c");
+    str2.append("x");
+    EXPECT_FALSE(iequal(str1, str2));
 }
