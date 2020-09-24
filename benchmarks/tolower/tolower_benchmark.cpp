@@ -1,5 +1,5 @@
 #include "../benchmark.hpp"
-#include "./simd.h" // std::experimental as of writing this
+#include "../simd_pch.hpp" // std::experimental as of writing this
 
 #include <algorithm>
 #include <string>
