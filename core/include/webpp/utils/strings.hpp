@@ -30,17 +30,17 @@ namespace webpp {
 
     template <typename T, stl::size_t N>
     struct constexpr_array_type<const T (&)[N]> {
-        using array_type = T;
-        static constexpr bool is_array = true;
+        using array_type                          = T;
+        static constexpr bool        is_array     = true;
         static constexpr stl::size_t array_length = N;
     };
 
     template <typename T>
     [[nodiscard]] constexpr stl::size_t size(T&& str) noexcept {
-        if constexpr (requires (T el) { el.size(); }) {
+        if constexpr (requires(T el) { el.size(); }) {
             return str.size();
         } else if constexpr (constexpr_array_type<T>::is_array) {
-            return constexpr_array_type<T>::array_length;
+            return constexpr_array_type<T>::array_length; // todo: I'm not sure if this works or not
         } else if constexpr (stl::is_same_v<stl::remove_cvref_t<T>, char*>) {
             return stl::strlen(str);
         } else {
@@ -280,17 +280,18 @@ namespace webpp {
             using simd_utype                = eve::wide<stl::make_unsigned_t<char_type>>;
             static constexpr auto simd_size = simd_type::size();
 
-            char_type*       it         = istl::string_data(str);
-            const auto       _size      = size(str);
-            const char_type* end        = it + _size;
+            char_type*       it    = istl::string_data(str);
+            const auto       _size = size(str);
+            const char_type* end   = it + _size;
             if (_size > simd_size) {
                 const char_type* almost_end = end - (_size % simd_size);
                 // const simd_utype shift(0b00100000);
                 const simd_utype diff('a' - 'A');
                 const simd_utype big_a('A');
                 for (; it != almost_end; it += simd_size) {
-                    const auto values  = eve::bit_cast(simd_type{it}, eve::as_<simd_utype>());
-                    const auto data = eve::if_else(eve::is_less(eve::sub(values, big_a), 25), eve::add(values, diff), values);
+                    const auto values = eve::bit_cast(simd_type{it}, eve::as_<simd_utype>());
+                    const auto data =
+                      eve::if_else(eve::is_less(eve::sub(values, big_a), 25), eve::add(values, diff), values);
                     eve::store(eve::bit_cast(data, eve::as_<simd_type>()), it);
                 }
                 // do the rest
@@ -306,18 +307,19 @@ namespace webpp {
             using simd_utype                = eve::wide<stl::make_unsigned_t<char_type>>;
             static constexpr auto simd_size = simd_type::size();
 
-            char_type*       it         = istl::string_data(str);
-            const auto       _size      = size(str);
-            const char_type* end        = it + _size;
+            char_type*       it    = istl::string_data(str);
+            const auto       _size = size(str);
+            const char_type* end   = it + _size;
             if (_size > simd_size) {
                 const char_type* almost_end = end - (_size % simd_size);
                 // const simd_utype shift(0b01011111);
                 const simd_utype diff('a' - 'A');
                 const simd_utype small_a('a');
                 for (; it != almost_end; it += simd_size) {
-                    const auto values  = eve::bit_cast(simd_type{it}, eve::as_<simd_utype>());
-                    //const auto shifted = values & shift;
-                    const auto data = eve::if_else(eve::is_less(eve::sub(values, small_a), 25), eve::sub(values, diff), values);
+                    const auto values = eve::bit_cast(simd_type{it}, eve::as_<simd_utype>());
+                    // const auto shifted = values & shift;
+                    const auto data = eve::if_else(eve::is_less(eve::sub(values, small_a), 25),
+                                                   eve::sub(values, diff), values);
                     eve::store(eve::bit_cast(data, eve::as_<simd_type>()), it);
                 }
                 // do the rest
@@ -403,25 +405,27 @@ namespace webpp {
      * unnecessary ones
      */
     [[nodiscard]] constexpr bool iequal(istl::ConvertibleToStringView auto&& _str1,
-                          istl::ConvertibleToStringView auto&& _str2) noexcept {
-        using str1_type = decltype(_str1);
-        using str2_type = decltype(_str2);
-        using str1_t    = stl::remove_cvref_t<str1_type>;
-        using str2_t    = stl::remove_cvref_t<str2_type>;
-        using char_type = istl::char_type_of<str1_t>;
+                                        istl::ConvertibleToStringView auto&& _str2) noexcept {
+        using str1_type  = decltype(_str1);
+        using str2_type  = decltype(_str2);
+        using str1_t     = stl::remove_cvref_t<str1_type>;
+        using str2_t     = stl::remove_cvref_t<str2_type>;
+        using char_type  = istl::char_type_of<str1_t>;
         using char_type2 = istl::char_type_of<str2_t>;
-        static_assert(stl::is_same_v<char_type, char_type2>, "The specified strings do not have the same character type, we're not able to compare them with this algorithm.");
+        static_assert(
+          stl::is_same_v<char_type, char_type2>,
+          "The specified strings do not have the same character type, we're not able to compare them with this algorithm.");
 
         auto _size = size(_str1);
         if (_size != size(_str2))
             return false;
 
-        auto* it1 = istl::string_data(_str1);
-        auto* it2 = istl::string_data(_str2);
+        auto*       it1     = istl::string_data(_str1);
+        auto*       it2     = istl::string_data(_str2);
         const auto* it1_end = it1 + _size;
 
 #ifdef WEBPP_EVE
-        using simd_type = eve::wide<char_type>;
+        using simd_type  = eve::wide<char_type>;
         using simd_utype = eve::wide<stl::make_unsigned_t<char_type>>;
 
         constexpr auto simd_size = simd_type::size();
@@ -462,22 +466,23 @@ namespace webpp {
 
 
 
-//        if constexpr (istl::String<str1_t> && istl::String<str1_t> && stl::is_rvalue_reference_v<str1_type> &&
-//                      stl::is_rvalue_reference_v<str2_type>) {
-//            to_lower(_str1);
-//            to_lower(_str2);
-//            return _str1 == _str2;
-//        } else if constexpr (istl::String<str1_t> && stl::is_rvalue_reference_v<str1_type>) {
-//            to_lower(_str1);
-//            return _str1 == to_lower_copy(_str2, _str1.get_allocator());
-//        } else if constexpr (istl::String<str2_t> && stl::is_rvalue_reference_v<str2_type>) {
-//            to_lower(_str2);
-//            return to_lower_copy(_str1, _str2.get_allocator()) == _str2;
-//        } else {
-//            return stl::equal(str1.cbegin(), str1.cend(), str2.cbegin(), [](auto&& c1, auto&& c2) {
-//                return c1 == c2 || to_lower_copy(c1) == to_lower_copy(c2);
-//            });
-//        }
+        //        if constexpr (istl::String<str1_t> && istl::String<str1_t> &&
+        //        stl::is_rvalue_reference_v<str1_type> &&
+        //                      stl::is_rvalue_reference_v<str2_type>) {
+        //            to_lower(_str1);
+        //            to_lower(_str2);
+        //            return _str1 == _str2;
+        //        } else if constexpr (istl::String<str1_t> && stl::is_rvalue_reference_v<str1_type>) {
+        //            to_lower(_str1);
+        //            return _str1 == to_lower_copy(_str2, _str1.get_allocator());
+        //        } else if constexpr (istl::String<str2_t> && stl::is_rvalue_reference_v<str2_type>) {
+        //            to_lower(_str2);
+        //            return to_lower_copy(_str1, _str2.get_allocator()) == _str2;
+        //        } else {
+        //            return stl::equal(str1.cbegin(), str1.cend(), str2.cbegin(), [](auto&& c1, auto&& c2) {
+        //                return c1 == c2 || to_lower_copy(c1) == to_lower_copy(c2);
+        //            });
+        //        }
     }
 
     //    template <typename ValueType, typename... R>
