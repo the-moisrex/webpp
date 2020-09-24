@@ -5,21 +5,7 @@
 
 #include "./std.hpp"
 
-#if __has_include(<string>)
-#    define STD_STRING STLLIB_STANDARD
-#    include <string>
-#elif __has_include(<experimental/string>)
-#    define STD_STRING STLLIB_EXPERIMENTAL
-#    include <experimental/string>
-#elif __has_include(<boost/utility/string.hpp>)
-#    define STD_STRING STLLIB_BOOST
-#    include <boost/utility/string.hpp>
-namespace webpp::stl {
-    using basic_string = boost::basic_string;
-    using string       = boost::string;
-} // namespace webpp::stl
-#endif
-
+#include <string>
 
 #include "../traits/traits_concepts.hpp"
 

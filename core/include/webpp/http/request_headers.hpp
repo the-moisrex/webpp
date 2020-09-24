@@ -12,7 +12,6 @@
 namespace webpp {
 
 
-
     /**
      * Setting non-ascii characters in the value section of the headers should
      * result in transforming the value to the "Encoded-Word" syntax (RFC 2047).
