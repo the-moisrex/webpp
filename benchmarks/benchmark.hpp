@@ -3,8 +3,8 @@
 #ifndef WEBPP_BENCHMARK_HPP
 #define WEBPP_BENCHMARK_HPP
 
-#include "./benchmark_pch.h"
-#include "./common_utils_pch.h"
+#include "./benchmark_pch.hpp"
+#include "./common_utils_pch.hpp"
 
 #ifndef WEBPP_PROJECT_ROOT
 #define WEBPP_PROJECT_ROOT "../../"

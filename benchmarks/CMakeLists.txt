@@ -16,8 +16,10 @@ set(FILE_SOURCES
         ieuqals/iequals_benchmark.cpp
         tolower/tolower_benchmark.cpp
         islower/islower_benchmark.cpp
+        ip/ipv4_benchmark.cpp
+        ip/ipv6_benchmark.cpp
         )
-file(GLOB FILE_PCH *_pch.h)
+file(GLOB FILE_PCH *_pch.hpp)
 
 find_package(benchmark REQUIRED)
 find_package(Boost REQUIRED)
