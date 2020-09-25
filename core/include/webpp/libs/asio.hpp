@@ -14,11 +14,11 @@
 #endif
 
 #ifdef WEBPP_BOOST_ASIO
-#    define asio(asio_file) <boost/asio/asio_file.hpp>
+#    define asio_include(asio_file) <boost/asio/asio_file.hpp>
 #elif defined(WEBPP_ASIO)
-#    define asio(asio_file) <asio/asio_file.hpp>
+#    define asio_include(asio_file) <asio/asio_file.hpp>
 #else
-#    define asio(asio_file) // nothing
+#    define asio_include(asio_file) // nothing
 #endif
 
 #ifdef WEBPP_BOOST_ASIO

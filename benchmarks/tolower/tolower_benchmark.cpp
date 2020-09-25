@@ -29,7 +29,7 @@ void to_lower_std_string(auto& str) noexcept {
     const auto size = str.size();
     const auto end  = it + size;
     for (; it != end; ++it) {
-        *it = std::tolower(*it);
+        *it = static_cast<char>(std::tolower(*it));
     }
 }
 

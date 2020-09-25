@@ -5,7 +5,9 @@
 
 #include "../../libs/asio.hpp"
 
-#include asio(thread_pool)
+// clang-format off
+#include asio_include(thread_pool)
+// clang-format on
 
 namespace webpp {
 
