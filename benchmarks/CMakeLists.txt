@@ -13,6 +13,7 @@ endif()
 
 
 set(FILE_SOURCES
+        str_find/str_find_benchmark.cpp
         equals/equals_benchmark.cpp
         ieuqals/iequals_benchmark.cpp
         tolower/tolower_benchmark.cpp
