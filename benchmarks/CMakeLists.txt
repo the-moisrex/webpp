@@ -5,7 +5,7 @@ include(../cmake/compilers.cmake)
 if (IS_GCC OR IS_CLANG)
     set(OPTIMIZATION_FLAGS "-s" "-Ofast" "-flto" "-DNDEBUG" "-Qy" "-ffunction-sections" "-fdata-sections" "-Wl,--gc-sections")
     if (NATIVE_ARCH)
-        set(OPTIMIZATION_FLAGS "${OPTIMIZATION_FLAGS} -march=native")
+        set(OPTIMIZATION_FLAGS "${OPTIMIZATION_FLAGS}" "-march=native" "-mtune=native")
     endif()
 else()
     message(ERROR "We don't know how to optimize benchmarks for your compiler, please helps us do it.")
@@ -13,6 +13,7 @@ endif()
 
 
 set(FILE_SOURCES
+        equals/equals_benchmark.cpp
         ieuqals/iequals_benchmark.cpp
         tolower/tolower_benchmark.cpp
         islower/islower_benchmark.cpp
