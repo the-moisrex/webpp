@@ -1,13 +1,14 @@
 #include "../benchmark.hpp"
-#include <cstring>
 #include <string>
 #include <random>
 #include <algorithm>
 #include <type_traits>
+#include <string_view>
 
+#include <eve/wide.hpp>
+#include <eve/function/any.hpp>
 #include <eve/function/any.hpp>
 #include <eve/wide.hpp>
-#include <eve/function/extract.hpp>
 
 using namespace std;
 
@@ -41,10 +42,6 @@ bool find_char(auto&& str, auto&&ch) noexcept {
   return true;
 }
 
-#include <string_view>
-#include <eve/wide.hpp>
-#include <eve/function/any.hpp>
-
 
 
 std::size_t find_str(std::string_view str1, std::string_view str2) noexcept {
@@ -69,7 +66,6 @@ std::size_t find_str(std::string_view str1, std::string_view str2) noexcept {
     auto it1 = str1.data();
     auto it2 = str2.data();
 
-    goto the_rest;
     if (size1 < simd_size || size2 < simd_size)
         goto the_rest;
 
@@ -80,7 +76,6 @@ std::size_t find_str(std::string_view str1, std::string_view str2) noexcept {
         auto const values2 = simd_type{it2[0]};
         auto const cmped = eve::is_equal(values1, values2);
 
-        // todo: is this part optimize-able?
         if (eve::any(cmped)) {
             const auto items = cmped.bits();
             const auto item_end = items.end();
@@ -200,25 +195,28 @@ BENCHMARK(StrFind_FindCharSIMD);
 //////////////////// String /////////////////////////////
 
 static void StrFind_FindStringString(benchmark::State& state) {
+    auto str1 = str_generator();
+    int i = 0;
     for (auto _ : state) {
-        auto str1 = str_generator();
-        benchmark::DoNotOptimize(str1.find("abc"));
+        benchmark::DoNotOptimize(str1.find(str1.substr(str1.size() - i++)));
     }
 }
 BENCHMARK(StrFind_FindCharString);
 
 static void StrFind_FindStringSimple(benchmark::State& state) {
+    auto str1 = str_generator();
+    int i = 0;
     for (auto _ : state) {
-        auto str1 = str_generator();
-        benchmark::DoNotOptimize(find_str_simple(str1, "abc"));
+        benchmark::DoNotOptimize(find_str_simple(str1, str1.substr(str1.size() - i++)));
     }
 }
 BENCHMARK(StrFind_FindCharSIMD);
 
 static void StrFind_FindStringSIMD(benchmark::State& state) {
+    auto str1 = str_generator();
+    int i = 0;
     for (auto _ : state) {
-        auto str1 = str_generator();
-        benchmark::DoNotOptimize(find_str(str1, "abc"));
+        benchmark::DoNotOptimize(find_str(str1, str1.substr(str1.size() - i++)));
     }
 }
 BENCHMARK(StrFind_FindCharSIMD);

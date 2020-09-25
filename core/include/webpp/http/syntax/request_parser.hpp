@@ -42,7 +42,7 @@ namespace webpp {
 
             // -------------------------------- parsing method ------------------------------------
 
-            if (auto sp = stl::find(str.substr(0, METHOD_LIMIT), ' '); sp != string_view_type::npos) { // find the first SP
+            if (auto sp = str.substr(0, METHOD_LIMIT).find(' '); sp != string_view_type::npos) { // find the first SP
                 method_view = str.substr(0, sp);
                 str.remove_prefix(sp + 1);
             } else {
@@ -51,7 +51,7 @@ namespace webpp {
 
             // ------------------------------ parsing request target (path) ------------------------------
 
-            if (auto sp = stl::find(str.substr(0, URI_LIMIT), ' '); sp != string_view_type::npos) { // find the second SP
+            if (auto sp = str.substr(0, URI_LIMIT).find(' '); sp != string_view_type::npos) { // find the second SP
                 request_target_view = str.substr(0, sp);
                 str.remove_prefix(sp + 1);
             } else {
