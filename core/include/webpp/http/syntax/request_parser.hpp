@@ -4,8 +4,8 @@
 #define WEBPP_REQUEST_PARSER_HPP
 
 #include "./http_version.hpp"
-#include "webpp/traits/traits_concepts.hpp"
-#include "webpp/utils/strings.hpp"
+#include "../../traits/traits_concepts.hpp"
+#include "../../utils/strings.hpp"
 
 namespace webpp {
 
