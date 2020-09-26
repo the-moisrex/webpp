@@ -116,23 +116,7 @@ std::size_t find_str(std::string_view str1, std::string_view str2) noexcept {
     it1 -= simd_size;
 
     the_rest:
-    const auto last_possible_end = it1start - last_possible_position;
-    decltype(it1) found = nullptr;
-    for (; it1 != last_possible_end; ++it1) {
-        if (*it1 == *it2) {
-            if (it2 == it2start) {
-                found = it1;
-            } else if (it2 == it2end - 1) {
-                return found - it1start;
-            }
-            ++it2;
-        } else {
-            found = nullptr;
-        }
-    }
-
-
-    return string_type::npos;
+    return str1.find(str2, it1 - it1start);
 }
 
 
@@ -198,27 +182,30 @@ static void StrFind_FindStringString(benchmark::State& state) {
     auto str1 = str_generator();
     int i = 0;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(str1.find(str1.substr(str1.size() - i++)));
+        const auto str2 = str1.substr(str1.size() - (i++ % str1.size()));
+        benchmark::DoNotOptimize(str1.find(str2));
     }
 }
-BENCHMARK(StrFind_FindCharString);
+BENCHMARK(StrFind_FindStringString);
 
-static void StrFind_FindStringSimple(benchmark::State& state) {
-    auto str1 = str_generator();
-    int i = 0;
-    for (auto _ : state) {
-        benchmark::DoNotOptimize(find_str_simple(str1, str1.substr(str1.size() - i++)));
-    }
-}
-BENCHMARK(StrFind_FindCharSIMD);
+//static void StrFind_FindStringSimple(benchmark::State& state) {
+//    auto str1 = str_generator();
+//    int i = 0;
+//    for (auto _ : state) {
+// const auto str2 = str1.substr(str1.size() - (i++ % str1.size()));
+//        benchmark::DoNotOptimize(find_str_simple(str1, str1.substr(str1.size() - i++)));
+//    }
+//}
+//BENCHMARK(StrFind_FindStringSimple);
 
 static void StrFind_FindStringSIMD(benchmark::State& state) {
     auto str1 = str_generator();
     int i = 0;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(find_str(str1, str1.substr(str1.size() - i++)));
+        const auto str2 = str1.substr(str1.size() - (i++ % str1.size()));
+        benchmark::DoNotOptimize(find_str(str1, str2));
     }
 }
-BENCHMARK(StrFind_FindCharSIMD);
+BENCHMARK(StrFind_FindStringSIMD);
 
 

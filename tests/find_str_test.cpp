@@ -25,9 +25,9 @@ namespace mtest {
         auto it1 = str1.data();
         auto it2 = str2.data();
 
-        const auto    last_possible_end = it1start - last_possible_position;
+        const auto    last_possible_end = it1end - last_possible_position;
         decltype(it1) found             = nullptr;
-        for (; it1 != last_possible_end; ++it1) {
+        for (; ; ++it1) {
             if (*it1 == *it2) {
                 if (it2 == it2start) {
                     found = it1;
@@ -36,7 +36,14 @@ namespace mtest {
                 }
                 ++it2;
             } else {
-                found = nullptr;
+                if (found != nullptr) {
+                    it1   = found + 1;
+                    it2   = it2start;
+                    found = nullptr;
+                } else {
+                    if (it1 == last_possible_end)
+                        break;
+                }
             }
         }
 
@@ -52,5 +59,10 @@ TEST(STRFinder, Simple) {
     EXPECT_EQ(1, find_str_simple("_string", "str"));
     EXPECT_EQ(2, find_str_simple("__string", "str"));
     EXPECT_EQ(2, find_str_simple("__string", "string"));
+    EXPECT_EQ(0, find_str_simple("012345678901234567890123456789", "0123456789"));
+    EXPECT_EQ(0, find_str_simple("00000000000000", "0"));
+    EXPECT_EQ(std::string_view::npos, find_str_simple("00-0000-000-00-000", "00000"));
     EXPECT_EQ(std::string_view::npos, find_str_simple("__string", "strings"));
+    EXPECT_EQ(std::string_view::npos, find_str_simple("ABC", "ABX"));
+    EXPECT_EQ(std::string_view::npos, find_str_simple("0ABC", "0ABX"));
 }
