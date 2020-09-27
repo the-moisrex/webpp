@@ -25,6 +25,23 @@ TEST(HTTPRequestParser, RequestLine) {
 
     for (std::string_view line : accepted_req_lines) {
         req_parser parser;
-        EXPECT_EQ(200, parser.parse_request_line(line)) << "Request Line: " << line;
+        auto original_line = line;
+        EXPECT_EQ(200, parser.parse_request_line(line)) << "Request Line: " << original_line;
+    }
+
+    std::vector<std::string_view> not_accepted_req_lines {
+      "SOME/THING / HTTP/1.1",
+      "SOMETHING # HTTP/1.1",
+      "TEST test",
+      "TEST",
+      "------",
+      "123",
+      // "GET1 / HTTP/1.1",
+    };
+
+    for (std::string_view line : not_accepted_req_lines) {
+        req_parser parser;
+        auto original_line = line;
+        EXPECT_NE(200, parser.parse_request_line(line)) << "Request Line: " << original_line;
     }
 }

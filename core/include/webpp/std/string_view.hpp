@@ -104,6 +104,9 @@ namespace webpp::istl {
     template <typename T>
     using char_type_of = typename decltype(to_string_view(stl::declval<T>()))::value_type;
 
+    template <typename T>
+    using char_traits_type_of = typename decltype(to_string_view(stl::declval<T>()))::traits_type;
+
 } // namespace webpp::istl
 
 #endif // WEBPP_STRING_VIEW_H

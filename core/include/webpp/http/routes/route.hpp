@@ -366,6 +366,7 @@ namespace webpp {
       private:
         using super_t = basic_route<RouteType, Op, NextRouteType>;
 
+        // todo: use the istl::lazy_conditional
         template <bool Condition, template <typename...> typename T1, typename T2, typename... C>
         struct lazy_conditional {};
 
@@ -378,6 +379,10 @@ namespace webpp {
         struct lazy_conditional<false, T1, T2, C...> {
             using type = T2;
         };
+
+        template <bool Condition, template <typename...> typename T1, typename T2, typename... C>
+        using lazy_conditional_t = typename lazy_conditional<Condition, T1, T2, C...>::type;
+
 
         template <typename R, typename C, bool IF>
         struct is_switching_context {
@@ -392,9 +397,6 @@ namespace webpp {
         template <typename R, typename C>
         static constexpr bool is_switching_context_v =
           is_switching_context<R, C, !stl::is_void_v<R> && stl::is_invocable_v<R, C>>::value;
-
-        template <bool Condition, template <typename...> typename T1, typename T2, typename... C>
-        using lazy_conditional_t = typename lazy_conditional<Condition, T1, T2, C...>::type;
 
 
         /**

@@ -10,6 +10,16 @@
 namespace webpp {
 
 
+    /**
+     * This class will parse HTTP requests but not fully. This class is designed to only parse the parts that
+     * are necessary to parse and avoid parsing places that you might not need them to be parsed and leaves
+     * those places to the other related classes.
+     * For example, even though this class parses the HTTP headers, but it doesn't understand each header
+     * attributes or values. For instance, the cookies will be parsed by the cookie class and this class
+     * will not parse those.
+     *
+     * @tparam TraitsType
+     */
     template <Traits TraitsType>
     struct http_request_parser {
         using traits_type = TraitsType;
@@ -60,12 +70,12 @@ namespace webpp {
 
             // ------------------------------ parsing http version ------------------------------
 
-            constexpr char http_prefix[] = "HTTP/";
-            if (!str.starts_with(http_prefix)) { // should be
+            static constexpr char http_prefix[]{"HTTP/"};
+            if (!str.starts_with(http_prefix)) {
                 return 400; // Bad Request
             }
 
-            auto CRLF = str.find("\r\n", size(http_prefix));
+            const auto CRLF = str.find("\r\n", size(http_prefix));
             if (CRLF == string_view_type::npos) {
                 return 400; // Bad Request
             }
