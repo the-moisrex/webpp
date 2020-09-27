@@ -64,7 +64,9 @@ target_compile_features(${exec_name} PUBLIC
 
 
 # optimize the file size
-target_compile_options(${exec_name} PUBLIC ${OPTIMIZATION_FLAGS})
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_compile_options(${exec_name} PUBLIC ${OPTIMIZATION_FLAGS})
+endif()
 
 target_precompile_headers(${exec_name} PUBLIC ${FILE_PCH})
 

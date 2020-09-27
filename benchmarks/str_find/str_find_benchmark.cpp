@@ -60,7 +60,7 @@ std::size_t find_str(std::string_view str1, std::string_view str2) noexcept {
     const auto it1end = it1start + size1;
     const auto it2end = it2start + size2;
     const auto last_possible_position = size1 - size2;
-    const auto finishline_size (last_possible_position % simd_size);
+    const auto finishline_size = last_possible_position - (last_possible_position % simd_size);
     const auto almost_end = it1end - finishline_size;
 
     auto it1 = str1.data();
@@ -180,7 +180,7 @@ BENCHMARK(StrFind_FindCharSIMD);
 
 static void StrFind_FindStringString(benchmark::State& state) {
     auto str1 = str_generator();
-    int i = 0;
+    int i = str1.size() / 3;
     for (auto _ : state) {
         const auto str2 = str1.substr(str1.size() - (i++ % str1.size()));
         benchmark::DoNotOptimize(str1.find(str2));
@@ -200,7 +200,7 @@ BENCHMARK(StrFind_FindStringString);
 
 static void StrFind_FindStringSIMD(benchmark::State& state) {
     auto str1 = str_generator();
-    int i = 0;
+    int i = str1.size() / 3;
     for (auto _ : state) {
         const auto str2 = str1.substr(str1.size() - (i++ % str1.size()));
         benchmark::DoNotOptimize(find_str(str1, str2));
