@@ -24,20 +24,20 @@ namespace webpp {
      *
      * @tparam StringType
      */
-    template <typename StringType, Traits TraitsType = typename std_traits_from<stl::remove_cvref_t<StringType>>::type>
+    template <typename StringType,
+              Traits TraitsType = typename std_traits_from<stl::remove_cvref_t<StringType>>::type>
     struct istring : public stl::remove_cvref_t<StringType> {
-        using traits_type = TraitsType;
-        using string_type = stl::remove_cvref_t<StringType>;
-        using char_type = istl::char_type_of<string_type>;
+        using traits_type      = TraitsType;
+        using string_type      = stl::remove_cvref_t<StringType>;
+        using char_type        = istl::char_type_of<string_type>;
         using char_traits_type = istl::char_traits_type_of<string_type>;
-        using istring_type = istring<StringType, TraitsType>;
+        using istring_type     = istring<StringType, TraitsType>;
 
         static constexpr bool has_allocator = requires {
-          typename string_type::allocator_type;
+            typename string_type::allocator_type;
         };
 
       private:
-
         // this will get you the allocator inside the StrT which should be the above "string_type"
         // this is aimed to find the allocator_type inside the string but make sure not to raise any errors,
         // when there's no allocator_type
@@ -47,22 +47,22 @@ namespace webpp {
         };
 
       public:
-
-        using allocator_type = istl::lazy_conditional_t<has_allocator,
-                                                        istl::lazy_type<typename traits_type::template allocator<char_type>>,
-                                                        istl::lazy_sub_type<allocator_extractor, string_type>
-                                                        >;
-        using alternate_std_string_type = stl::basic_string<char_type, char_traits_type, allocator_type>;
+        using allocator_type =
+          istl::lazy_conditional_t<has_allocator,
+                                   istl::lazy_type<typename traits_type::template allocator<char_type>>,
+                                   istl::lazy_sub_type<allocator_extractor, string_type>>;
+        using alternate_std_string_type      = stl::basic_string<char_type, char_traits_type, allocator_type>;
         using alternate_std_string_view_type = stl::basic_string_view<char_type, char_traits_type>;
 
       public:
-
         struct range {
             char_type* start;
             char_type* end;
 
             constexpr range(char_type* _start, char_type* _end) noexcept : start(_start), end(_end) {}
-            constexpr range(char_type* _start, stl::size_t _size) noexcept : start(_start), end(_start + _size) {}
+            constexpr range(char_type* _start, stl::size_t _size) noexcept
+              : start(_start),
+                end(_start + _size) {}
         };
 
         using string_type::string_type; // ctors of the daddy
@@ -92,48 +92,103 @@ namespace webpp {
             return std_string();
         }
 
-        void for_each(auto&& func, auto&&simd_func) noexcept(noexcept(func(this->data()))
+        void for_each(auto&& func, auto&& simd_func) noexcept(
+          noexcept(func(this->data()))
 #ifdef WEBPP_EVE
-                                                                && noexcept(simd_func(stl::declval<eve::wide<char_type>>()))
+            && noexcept(simd_func(stl::declval<eve::wide<char_type>>()))
 #endif
-                                                              ) {
+        ) {
             auto*       it     = this->data();
-            const auto _size = this->size();
+            const auto  _size  = this->size();
             const auto* it_end = it + _size;
 
 #ifdef WEBPP_EVE
-            using simd_type  = eve::wide<char_type>;
+            using simd_type          = eve::wide<char_type>;
             constexpr auto simd_size = simd_type::size();
 
             if (_size > simd_size) {
-                const auto*      almost_end = it_end - (_size % simd_size);
+                const auto* almost_end = it_end - (_size % simd_size);
                 for (; it != almost_end; it += simd_size) {
-                    simd_func(simd_type{it});
+                    stl::invoke(simd_func, simd_type{it});
                 }
                 // do the rest
                 it -= simd_size;
             }
 #endif
             for (; it != it_end; ++it) {
-                func(it);
+                stl::invoke(func, it);
             }
         }
 
         void for_each(auto&& func) noexcept(noexcept(func(this->data()))) {
             auto*       it     = this->data();
-            const auto _size = this->size();
+            const auto  _size  = this->size();
             const auto* it_end = it + _size;
             for (; it != it_end; ++it) {
                 func(it);
             }
         }
 
+        [[nodiscard]] constexpr auto if_all(auto&& func, auto&& simd_func) const noexcept {
+            auto*       it     = this->data();
+            const auto  _size  = this->size();
+            const auto* it_end = it + _size;
 
-        [[nodiscard]] constexpr bool is_lower() const noexcept;
-        [[nodiscard]] constexpr bool is_upper() const noexcept;
+#ifdef WEBPP_EVE
+            using simd_type          = eve::wide<char_type>;
+            constexpr auto simd_size = simd_type::size();
 
-        [[nodiscard]] constexpr bool is_lower(range) const noexcept;
-        [[nodiscard]] constexpr bool is_upper(range) const noexcept;
+            if (_size > simd_size) {
+                const auto* almost_end = it_end - (_size % simd_size);
+                for (; it != almost_end; it += simd_size) {
+                    if (!stl::invoke(simd_func, simd_type{it})) {
+                        return false;
+                    }
+                }
+                // do the rest
+                it -= simd_size;
+            }
+#endif
+            for (; it != it_end; ++it) {
+                if (!stl::invoke(func, it)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+
+
+        [[nodiscard]] constexpr bool is_lower() const noexcept {
+            return if_all(
+              [](auto* it) constexpr noexcept { return *it >= 'a' && *it <= 'z'; },
+              [](auto&& values) noexcept {
+#ifdef WEBPP_EVE
+                  using simd_utype = eve::wide<stl::make_unsigned_t<char_type>>;
+                  static const simd_utype small_a{'a'};
+                  const auto              u_values = eve::bit_cast(values, eve::as_<simd_utype>());
+                  const auto              res      = eve::is_less(eve::sub(u_values, small_a), 25);
+                  return eve::all(res);
+#endif
+              });
+        }
+
+        [[nodiscard]] constexpr bool is_upper() const noexcept {
+            return if_all(
+              [](auto* it) constexpr noexcept { return *it >= 'A' && *it <= 'Z'; },
+              [](auto&& values) noexcept {
+#ifdef WEBPP_EVE
+                  using simd_utype = eve::wide<stl::make_unsigned_t<char_type>>;
+                  static const simd_utype big_a{'A'};
+                  const auto              u_values = eve::bit_cast(values, eve::as_<simd_utype>());
+                  const auto              res      = eve::is_less(eve::sub(u_values, big_a), 25);
+                  return eve::all(res);
+#endif
+              });
+        }
+
+        //        [[nodiscard]] constexpr bool is_lower(range) const noexcept;
+        //        [[nodiscard]] constexpr bool is_upper(range) const noexcept;
 
         auto& to_upper() noexcept {
             webpp::to_upper(*this);
@@ -152,13 +207,12 @@ namespace webpp {
         [[nodiscard]] constexpr istring_type to_lower_copy() const noexcept {
             return istring_type{*this}.to_lower();
         }
-
     };
 
 
-    using std_istring = istring<stl::string>;
+    using std_istring      = istring<stl::string>;
     using std_istring_view = istring<stl::string_view>;
 
-}
+} // namespace webpp
 
 #endif // WEBPP_ISTRING_HPP
