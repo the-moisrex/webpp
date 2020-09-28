@@ -30,6 +30,7 @@ namespace webpp {
         using string_type = stl::remove_cvref_t<StringType>;
         using char_type = istl::char_type_of<string_type>;
         using char_traits_type = istl::char_traits_type_of<string_type>;
+        using istring_type = istring<StringType, TraitsType>;
 
         static constexpr bool has_allocator = requires {
           typename string_type::allocator_type;
@@ -133,6 +134,24 @@ namespace webpp {
 
         [[nodiscard]] constexpr bool is_lower(range) const noexcept;
         [[nodiscard]] constexpr bool is_upper(range) const noexcept;
+
+        auto& to_upper() noexcept {
+            webpp::to_upper(*this);
+            return *this;
+        }
+
+        auto& to_lower() noexcept {
+            webpp::to_lower(*this);
+            return *this;
+        }
+
+        [[nodiscard]] constexpr istring_type to_upper_copy() const noexcept {
+            return istring_type{*this}.to_upper();
+        }
+
+        [[nodiscard]] constexpr istring_type to_lower_copy() const noexcept {
+            return istring_type{*this}.to_lower();
+        }
 
     };
 
