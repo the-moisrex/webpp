@@ -8,6 +8,7 @@
 #include "../std/string_view.hpp"
 #include "../std/type_traits.hpp"
 #include "../traits/std_traits.hpp"
+#include "../utils/strings.hpp"
 
 namespace webpp {
 
@@ -23,7 +24,7 @@ namespace webpp {
      *
      * @tparam StringType
      */
-    template <typename StringType, Traits TraitsType = typename std_traits_from_string<stl::remove_cvref_t<StringType>>::type>
+    template <typename StringType, Traits TraitsType = typename std_traits_from<stl::remove_cvref_t<StringType>>::type>
     struct istring : public stl::remove_cvref_t<StringType> {
         using traits_type = TraitsType;
         using string_type = stl::remove_cvref_t<StringType>;
@@ -54,7 +55,24 @@ namespace webpp {
         using alternate_std_string_view_type = stl::basic_string_view<char_type, char_traits_type>;
 
       public:
+
+        struct range {
+            char_type* start;
+            char_type* end;
+
+            constexpr range(char_type* _start, char_type* _end) noexcept : start(_start), end(_end) {}
+            constexpr range(char_type* _start, stl::size_t _size) noexcept : start(_start), end(_start + _size) {}
+        };
+
         using string_type::string_type; // ctors of the daddy
+
+        auto get_allocator() const noexcept {
+            if constexpr (has_allocator) {
+                return this->get_allocator();
+            } else {
+                return allocator_type{};
+            }
+        }
 
         [[nodiscard]] constexpr alternate_std_string_view_type std_string_view() const noexcept {
             return istl::to_string_view(*this);
@@ -62,20 +80,65 @@ namespace webpp {
 
 
         [[nodiscard]] constexpr alternate_std_string_type std_string() const noexcept {
-            return istl::to_string(*this);
+            return istl::to_string(*this, get_allocator());
         }
 
-        operator alternate_std_string_view_type() const noexcept {
+        explicit operator alternate_std_string_view_type() const noexcept {
             return std_string_view();
         }
 
-        operator alternate_std_string_type() const noexcept {
+        explicit operator alternate_std_string_type() const noexcept {
             return std_string();
         }
 
+        void for_each(auto&& func, auto&&simd_func) noexcept(noexcept(func(this->data()))
+#ifdef WEBPP_EVE
+                                                                && noexcept(simd_func(stl::declval<eve::wide<char_type>>()))
+#endif
+                                                              ) {
+            auto*       it     = this->data();
+            const auto _size = this->size();
+            const auto* it_end = it + _size;
+
+#ifdef WEBPP_EVE
+            using simd_type  = eve::wide<char_type>;
+            constexpr auto simd_size = simd_type::size();
+
+            if (_size > simd_size) {
+                const auto*      almost_end = it_end - (_size % simd_size);
+                for (; it != almost_end; it += simd_size) {
+                    simd_func(simd_type{it});
+                }
+                // do the rest
+                it -= simd_size;
+            }
+#endif
+            for (; it != it_end; ++it) {
+                func(it);
+            }
+        }
+
+        void for_each(auto&& func) noexcept(noexcept(func(this->data()))) {
+            auto*       it     = this->data();
+            const auto _size = this->size();
+            const auto* it_end = it + _size;
+            for (; it != it_end; ++it) {
+                func(it);
+            }
+        }
+
+
+        [[nodiscard]] constexpr bool is_lower() const noexcept;
+        [[nodiscard]] constexpr bool is_upper() const noexcept;
+
+        [[nodiscard]] constexpr bool is_lower(range) const noexcept;
+        [[nodiscard]] constexpr bool is_upper(range) const noexcept;
 
     };
 
+
+    using std_istring = istring<stl::string>;
+    using std_istring_view = istring<stl::string_view>;
 
 }
 

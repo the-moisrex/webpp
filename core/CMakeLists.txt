@@ -9,6 +9,8 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/webpp/extensions/extension.hpp
 
+        ${LIB_INCLUDE_DIR}/webpp/strings/istring.hpp
+
         ${LIB_INCLUDE_DIR}/webpp/traits/traits.hpp
         ${LIB_INCLUDE_DIR}/webpp/traits/enable_traits.hpp
         ${LIB_INCLUDE_DIR}/webpp/traits/traits_concepts.hpp
