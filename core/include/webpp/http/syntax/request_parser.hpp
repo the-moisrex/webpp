@@ -41,7 +41,7 @@ namespace webpp {
         }
 
         // parse the request status line (the first line of the request)
-        status_code_type parse_request_line(string_view_type &str) noexcept  {
+        status_code_type parse_request_line(string_view_type str) noexcept  {
             // https://tools.ietf.org/html/rfc7230#section-3.1.1
             //
             // request-line   = method SP request-target SP HTTP-version CRLF
@@ -75,17 +75,17 @@ namespace webpp {
                 return 400; // Bad Request
             }
 
-            const auto CRLF = str.find("\r\n", size(http_prefix));
-            if (CRLF == string_view_type::npos) {
-                return 400; // Bad Request
-            }
+//            const auto CRLF = str.find("\r\n", size(http_prefix));
+//            if (CRLF == string_view_type::npos) {
+//                return 400; // Bad Request
+//            }
 
-            http_version_view = str.substr(size(http_prefix), CRLF);
-            if (http_version_view != "1.0" || http_version_view != "1.1") { // todo: add 2.0 and 0.9 and others as well
+            http_version_view = str.substr(size(http_prefix) - 1, 3); // 1.1 and 1.0 are 3 chars
+            if (http_version_view != "1.0" && http_version_view != "1.1") { // todo: add 2.0 and 0.9 and others as well
                 return 505; // HTTP Version Not Supported
             }
 
-            str.remove_prefix(CRLF + 2); // move the string_view to the next line
+            // str.remove_prefix(CRLF + 2); // move the string_view to the next line
 
             return 200; // so far, it's a good request
         }

@@ -31,7 +31,7 @@ TEST(HTTPRequestParser, RequestLine) {
 
     std::vector<std::string_view> not_accepted_req_lines {
       "SOME/THING / HTTP/1.1",
-      "SOMETHING # HTTP/1.1",
+      // "SOMETHING # HTTP/1.1", // we don't want this method to check if the uri is right or wrong
       "TEST test",
       "TEST",
       "------",
