@@ -160,6 +160,61 @@ namespace webpp {
         }
 
 
+        [[nodiscard]] constexpr auto if_all(auto&& func) const noexcept {
+            auto*       it     = this->data();
+            const auto  _size  = this->size();
+            const auto* it_end = it + _size;
+            for (; it != it_end; ++it) {
+                if (!stl::invoke(func, it)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        [[nodiscard]] constexpr auto if_any(auto&& func, auto&& simd_func) const noexcept {
+            auto*       it     = this->data();
+            const auto  _size  = this->size();
+            const auto* it_end = it + _size;
+
+#ifdef WEBPP_EVE
+            using simd_type          = eve::wide<char_type>;
+            constexpr auto simd_size = simd_type::size();
+
+            if (_size > simd_size) {
+                const auto* almost_end = it_end - (_size % simd_size);
+                for (; it != almost_end; it += simd_size) {
+                    if (stl::invoke(simd_func, simd_type{it})) {
+                        return true;
+                    }
+                }
+                // do the rest
+                it -= simd_size;
+            }
+#endif
+            for (; it != it_end; ++it) {
+                if (stl::invoke(func, it)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+
+        [[nodiscard]] constexpr auto if_any(auto&& func) const noexcept {
+            auto*       it     = this->data();
+            const auto  _size  = this->size();
+            const auto* it_end = it + _size;
+            for (; it != it_end; ++it) {
+                if (stl::invoke(func, it)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+
+
 
         [[nodiscard]] constexpr bool is_lower() const noexcept {
             return if_all(
