@@ -65,7 +65,9 @@ namespace webpp {
                 end(_start + _size) {}
         };
 
-        using string_type::string_type; // ctors of the daddy
+        template <typename ...Args>
+        constexpr istring(Args&& ...args) noexcept(noexcept(string_type(stl::forward<Args>(args)...))) :
+            string_type{stl::forward<Args>(args)...} {}
 
         auto get_allocator() const noexcept {
             if constexpr (has_allocator) {
@@ -174,6 +176,7 @@ namespace webpp {
         }
 
         [[nodiscard]] constexpr bool is_upper() const noexcept {
+            // todo: add a benchmark for this
             return if_all(
               [](auto* it) constexpr noexcept { return *it >= 'A' && *it <= 'Z'; },
               [](auto&& values) noexcept {
