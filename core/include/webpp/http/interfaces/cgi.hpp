@@ -39,9 +39,8 @@ namespace webpp {
         using etraits          = enable_traits<traits_type>;
 
 
-        template <typename AllocType>
-        cgi_request(logger_ref logger = logger_type{}, auto const& alloc = AllocType{}) noexcept
-          : etraits(logger, alloc) {}
+        cgi_request(auto&&...etraits_args) noexcept
+          : etraits(stl::forward<decltype(etraits_args)>(etraits_args)...) {}
 
         /**
          * @brief get the server's software
@@ -447,7 +446,7 @@ namespace webpp {
 
 
         void operator()() noexcept {
-            request_type req{etraits::get_allocator()};
+            auto req = etraits::template instantiate<request_type>();
             auto         res = app(req);
             res.calculate_default_headers();
             auto header_str = res.headers.str();

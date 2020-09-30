@@ -94,18 +94,6 @@ namespace webpp {
 
         // parse one line of a header (A header field as it called in the RFC)
         status_code_type parse_header_field(string_view_type &str) noexcept {
-            // https://tools.ietf.org/html/rfc7230#section-3.2
-            //
-            //     header-field   = field-name ":" OWS field-value OWS
-            //
-            //     field-name     = token
-            //     field-value    = *( field-content / obs-fold )
-            //     field-content  = field-vchar [ 1*( SP / HTAB ) field-vchar ]
-            //     field-vchar    = VCHAR / obs-text
-            //
-            //     obs-fold       = CRLF 1*( SP / HTAB )
-            //                    ; obsolete line folding
-            //                    ; see Section 3.2.4 in the RFC
 
 
         }

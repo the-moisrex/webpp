@@ -50,6 +50,18 @@ namespace webpp {
                 return to_alloc<allocator_type, new_alloc_type>{alloc};
             }
         }
+
+        /**
+         * This is designed to pass the allocator and logger and other necessary stuff from this traits
+         * enabled struct and create an object of the specified type and pass those traits to it.
+         * This is there to make sure we don't have to pass all these stuff around ourselves and this can
+         * manage those passings.
+         */
+        template <EnabledTraits T, typename ...Args>
+        [[nodiscard]] constexpr auto instantiate(Args&& ...args) noexcept {
+            return T{stl::forward<Args>(args)..., logger, get_allocator()};
+        }
+
     };
 
 } // namespace webpp
