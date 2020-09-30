@@ -15,7 +15,7 @@ namespace webpp {
       private:
         // parse version from string
         uint32_t parse_string(auto&& str) noexcept {
-            auto dot   = stl::find(str, '.');
+            auto dot   = str.find('.');
             auto major = to_uint16(str.substr(0, dot));
             auto minor = to_uint16(str.substr(dot + 1, str.size()));
             return major << 16u | minor;

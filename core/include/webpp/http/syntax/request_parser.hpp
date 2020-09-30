@@ -33,7 +33,7 @@ namespace webpp {
 
         string_view_type method_view{};
         string_view_type request_target_view{};
-        string_view_type http_version_view{};
+        string_view_type http_version_view{}; // only the number; doesn't include "HTTP/"
 
         // get the parsed http version
         [[nodiscard]] http_version get_http_version() const noexcept {
