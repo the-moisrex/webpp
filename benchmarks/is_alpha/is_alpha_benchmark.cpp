@@ -78,42 +78,42 @@ bool is_alpha_arithmetic2(char c) {
     return ((t & (uint64_t(1) << count)) >> count) == 0;
 }
 
-bool is_alpha_simd(auto&& str) noexcept {
-    using char_type                 = typename std::remove_cvref_t<decltype(str)>::value_type;
-    using simd_type                 = eve::wide<char_type>;
-    using simd_utype                = eve::wide<std::make_unsigned_t<char_type>>;
-    static constexpr auto simd_size = simd_type::size();
-    using simd64_t                  = eve::wide<uint64_t, eve::fixed<simd_size>>;
-
-    const auto _size = str.size();
-    auto it = str.data();
-    const auto* it_end = it + _size;
-
-    const auto              almost_end = it + (_size % simd_size);
-    static const simd64_t t{0b1111111111111111111111111100000011111111111111111111111111000000};
-    static const simd64_t ones{1};
-    static const simd_utype big_a{'A'};
-    for (; it != almost_end; it += simd_size) {
-        const auto values = eve::bit_cast(simd_type{it}, eve::as_<simd_utype>());
-        const auto counts = eve::sub(values, big_a);
-        const auto shifted = eve::shl(ones, counts);
-        const auto anded = eve::bit_and(t, shifted);
-        const auto shifted_again = eve::shr(anded, count);
-        const auto res = eve::is_equal(shifted_again, 0);
-        if (eve::any(res)) {
-            return false;
-        }
-    }
-
-    it -= simd_size;
-    for (; it != it_end; ++it) {
-        if (!is_alpha_arithmetic2(*it)) {
-            return false;
-        }
-    }
-    return true;
-}
-
+//bool is_alpha_simd(auto&& str) noexcept {
+//    using char_type                 = typename std::remove_cvref_t<decltype(str)>::value_type;
+//    using simd_type                 = eve::wide<char_type>;
+//    using simd_utype                = eve::wide<std::make_unsigned_t<char_type>>;
+//    static constexpr auto simd_size = simd_type::size();
+//    using simd64_t                  = eve::wide<uint64_t, eve::fixed<simd_size>>;
+//
+//    const auto _size = str.size();
+//    auto it = str.data();
+//    const auto* it_end = it + _size;
+//
+//    const auto              almost_end = it + (_size % simd_size);
+//    static const simd64_t t{0b1111111111111111111111111100000011111111111111111111111111000000};
+//    static const simd64_t ones{1};
+//    static const simd_utype big_a{'A'};
+//    for (; it != almost_end; it += simd_size) {
+//        const auto values = eve::bit_cast(simd_type{it}, eve::as_<simd_utype>());
+//        const auto counts = eve::sub(values, big_a);
+//        const auto shifted = eve::shl(ones, counts);
+//        const auto anded = eve::bit_and(t, shifted);
+//        const auto shifted_again = eve::shr(anded, count);
+//        const auto res = eve::is_equal(shifted_again, 0);
+//        if (eve::any(res)) {
+//            return false;
+//        }
+//    }
+//
+//    it -= simd_size;
+//    for (; it != it_end; ++it) {
+//        if (!is_alpha_arithmetic2(*it)) {
+//            return false;
+//        }
+//    }
+//    return true;
+//}
+//
 
 const auto is_alpha_strs =
   str_array_generator<256>(10000, std::string_view{"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"});
@@ -176,15 +176,15 @@ func(lookup, alpha)
 
 
 
-static void IsAlpha_string_SIMD(benchmark::State& state) {
-    auto          strs = is_alpha_strs;
-    unsigned char i    = 0;
-    for (auto _ : state) {
-        benchmark::DoNotOptimize(strs);
-        benchmark::DoNotOptimize(i);
-        benchmark::DoNotOptimize(strs[i % strs.size()]);
-        benchmark::DoNotOptimize(is_alpha_simd(strs[i++ % strs.size()]));
-    }
-}
-BENCHMARK(IsAlpha_string_SIMD);
-
+//static void IsAlpha_string_SIMD(benchmark::State& state) {
+//    auto          strs = is_alpha_strs;
+//    unsigned char i    = 0;
+//    for (auto _ : state) {
+//        benchmark::DoNotOptimize(strs);
+//        benchmark::DoNotOptimize(i);
+//        benchmark::DoNotOptimize(strs[i % strs.size()]);
+//        benchmark::DoNotOptimize(is_alpha_simd(strs[i++ % strs.size()]));
+//    }
+//}
+//BENCHMARK(IsAlpha_string_SIMD);
+//
