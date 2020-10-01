@@ -20,6 +20,7 @@ set(FILE_SOURCES
         islower/islower_benchmark.cpp
         ip/ipv4_benchmark.cpp
         ip/ipv6_benchmark.cpp
+        is_alpha/is_alpha_benchmark.cpp
         )
 file(GLOB FILE_PCH *_pch.hpp)
 
