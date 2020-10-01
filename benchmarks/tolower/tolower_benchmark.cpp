@@ -6,7 +6,7 @@
 #include <string_view>
 
 // clang-format off
-#include webpp_include(utils/strings)
+#include webpp_include(strings/ascii)
 // clang-format on
 
 
@@ -192,8 +192,8 @@ static void TLR_Webpp(benchmark::State& state) {
     std::string str = str_generator();
     for (auto _ : state) {
         for (auto c : str) {
-            // assert(webpp::to_lower_copy(c) == std::tolower(c));
-            benchmark::DoNotOptimize(webpp::to_lower_copy(c));
+            // assert(webpp::ascii::to_lower_copy(c) == std::tolower(c));
+            benchmark::DoNotOptimize(webpp::ascii::to_lower_copy(c));
         }
     }
 }
@@ -240,7 +240,7 @@ static void TLR_WebppToLowerString(benchmark::State& state) {
     std::string str = str_generator();
     for (auto _ : state) {
         std::string istr = str;
-        webpp::to_lower(istr);
+        webpp::ascii::to_lower(istr);
         benchmark::DoNotOptimize(istr);
     }
 }
@@ -259,34 +259,34 @@ BENCHMARK(TLR_WebppToLowerString);
     }                                                      \
     BENCHMARK(TLR_##name##str_count);
 
-TEST_SUITE(NWebppEveString, webpp::algo::eve_to_lower, 1)
+TEST_SUITE(NWebppEveString, webpp::ascii::algo::eve_to_lower, 1)
 TEST_SUITE(NJohnString, to_lower_string_john, 1)
 
-TEST_SUITE(NWebppEveString, webpp::algo::eve_to_lower, 16)
+TEST_SUITE(NWebppEveString, webpp::ascii::algo::eve_to_lower, 16)
 TEST_SUITE(NJohnString, to_lower_string_john, 16)
 
-TEST_SUITE(NWebppEveString, webpp::algo::eve_to_lower, 32)
+TEST_SUITE(NWebppEveString, webpp::ascii::algo::eve_to_lower, 32)
 TEST_SUITE(NJohnString, to_lower_string_john, 32)
 
-TEST_SUITE(NWebppEveString, webpp::algo::eve_to_lower, 64)
+TEST_SUITE(NWebppEveString, webpp::ascii::algo::eve_to_lower, 64)
 TEST_SUITE(NJohnString, to_lower_string_john, 64)
 
-TEST_SUITE(NWebppEveString, webpp::algo::eve_to_lower, 128)
+TEST_SUITE(NWebppEveString, webpp::ascii::algo::eve_to_lower, 128)
 TEST_SUITE(NJohnString, to_lower_string_john, 128)
 
-TEST_SUITE(NWebppEveString, webpp::algo::eve_to_lower, 256)
+TEST_SUITE(NWebppEveString, webpp::ascii::algo::eve_to_lower, 256)
 TEST_SUITE(NJohnString, to_lower_string_john, 256)
 
-TEST_SUITE(NWebppEveString, webpp::algo::eve_to_lower, 512)
+TEST_SUITE(NWebppEveString, webpp::ascii::algo::eve_to_lower, 512)
 TEST_SUITE(NJohnString, to_lower_string_john, 512)
 
-TEST_SUITE(NWebppEveString, webpp::algo::eve_to_lower, 1024)
+TEST_SUITE(NWebppEveString, webpp::ascii::algo::eve_to_lower, 1024)
 TEST_SUITE(NJohnString, to_lower_string_john, 1024)
 
-TEST_SUITE(NWebppEveString, webpp::algo::eve_to_lower, 2001)
+TEST_SUITE(NWebppEveString, webpp::ascii::algo::eve_to_lower, 2001)
 TEST_SUITE(NJohnString, to_lower_string_john, 2001)
 
-TEST_SUITE(NWebppEveString, webpp::algo::eve_to_lower, 10000)
+TEST_SUITE(NWebppEveString, webpp::ascii::algo::eve_to_lower, 10000)
 TEST_SUITE(NJohnString, to_lower_string_john, 10000)
 
 
@@ -297,7 +297,7 @@ static void TLR_WebppToLowerStringData(benchmark::State& state) {
     auto str = str_generator();
     for (auto _ : state) {
         std::string istr = str;
-        webpp::to_lower(istr.data());
+        webpp::ascii::to_lower(istr.data());
         benchmark::DoNotOptimize(istr);
     }
 }
@@ -312,7 +312,7 @@ inline void webpp_to_lower2(auto& str) noexcept {
     const auto       size = str.size();
     const char_type* end  = it + size;
     for (; it != end; ++it)
-        *it = webpp::to_lower_copy(*it);
+        *it = webpp::ascii::to_lower_copy(*it);
 }
 static void TLR_ToLowerString2(benchmark::State& state) {
     auto str = str_generator();
@@ -326,6 +326,7 @@ BENCHMARK(TLR_ToLowerString2);
 
 inline void webpp_to_lower3(auto& str) noexcept {
     using namespace webpp;
+    using namespace webpp::ascii;
     using str_t                 = stl::remove_cvref_t<decltype(str)>;
     using char_type             = istl::char_type_of<str_t>;
     char_type*       it         = str.data();
@@ -656,7 +657,7 @@ static void TLR_EveToLowerStringFixed(benchmark::State& state) {
     auto str = str_generator();
     for (auto _ : state) {
         std::string istr = str;
-        webpp::algo::eve_to_lower(istr);
+        webpp::ascii::algo::eve_to_lower(istr);
         benchmark::DoNotOptimize(istr);
     }
 }

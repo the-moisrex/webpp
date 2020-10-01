@@ -10,6 +10,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/extensions/extension.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/strings/istring.hpp
+        ${LIB_INCLUDE_DIR}/webpp/strings/ascii.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/traits/traits.hpp
         ${LIB_INCLUDE_DIR}/webpp/traits/enable_traits.hpp
@@ -63,7 +64,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/utils/ipv6.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/memory.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/property.hpp
-        ${LIB_INCLUDE_DIR}/webpp/utils/strings.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/uri.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/fixed_string.hpp
 
