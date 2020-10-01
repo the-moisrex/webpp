@@ -8,7 +8,7 @@
 #include "../std/string_view.hpp"
 #include "../std/type_traits.hpp"
 #include "../traits/std_traits.hpp"
-#include "../utils/strings.hpp"
+#include "ascii.hpp"
 
 namespace webpp {
 
@@ -55,6 +55,7 @@ namespace webpp {
         using alternate_std_string_view_type = stl::basic_string_view<char_type, char_traits_type>;
 
       public:
+        // todo
         struct range {
             char_type* start;
             char_type* end;
@@ -216,7 +217,7 @@ namespace webpp {
 
 
 
-        [[nodiscard]] constexpr bool is_lower() const noexcept {
+        [[nodiscard]] constexpr bool is_ascii_lower() const noexcept {
             return if_all(
               [](auto* it) constexpr noexcept { return *it >= 'a' && *it <= 'z'; },
               [](auto&& values) noexcept {
@@ -230,7 +231,7 @@ namespace webpp {
               });
         }
 
-        [[nodiscard]] constexpr bool is_upper() const noexcept {
+        [[nodiscard]] constexpr bool is_ascii_upper() const noexcept {
             // todo: add a benchmark for this
             return if_all(
               [](auto* it) constexpr noexcept { return *it >= 'A' && *it <= 'Z'; },
@@ -248,22 +249,22 @@ namespace webpp {
         //        [[nodiscard]] constexpr bool is_lower(range) const noexcept;
         //        [[nodiscard]] constexpr bool is_upper(range) const noexcept;
 
-        auto& to_upper() noexcept {
-            webpp::to_upper(*this);
+        auto& ascii_to_upper() noexcept {
+            webpp::ascii::to_upper(*this);
             return *this;
         }
 
-        auto& to_lower() noexcept {
-            webpp::to_lower(*this);
+        auto& ascii_to_lower() noexcept {
+            webpp::ascii::to_lower(*this);
             return *this;
         }
 
-        [[nodiscard]] constexpr istring_type to_upper_copy() const noexcept {
-            return istring_type{*this}.to_upper();
+        [[nodiscard]] constexpr istring_type ascii_to_upper_copy() const noexcept {
+            return istring_type{*this}.ascii_to_upper();
         }
 
-        [[nodiscard]] constexpr istring_type to_lower_copy() const noexcept {
-            return istring_type{*this}.to_lower();
+        [[nodiscard]] constexpr istring_type ascii_to_lower_copy() const noexcept {
+            return istring_type{*this}.ascii_to_lower();
         }
     };
 

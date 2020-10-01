@@ -1,9 +1,9 @@
 // Created by moisrex on 1/27/20.
-#include "../core/include/webpp/utils/strings.hpp"
+#include "../core/include/webpp/strings/ascii.hpp"
 
 #include <gtest/gtest.h>
 
-using namespace webpp;
+using namespace webpp::ascii;
 
 TEST(Strings, StartsEndsWith) {
     EXPECT_TRUE(starts_with("_one", '_'));

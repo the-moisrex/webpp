@@ -1,10 +1,15 @@
 #include "../benchmark.hpp"
 
 // clang-format off
-#include webpp_include(utils/strings)
+#include webpp_include(strings/ascii)
 // clang-format on
 
 #include <boost/algorithm/string/predicate.hpp>
+
+#if __has_include(<boost/beast/core/string.hpp>)
+#  include <boost/beast/core/string.hpp>
+#  define BEAST_IEQUALS
+#endif
 
 using namespace webpp;
 
@@ -34,18 +39,18 @@ using namespace webpp;
 
     if constexpr (istl::String<str1_t> && istl::String<str1_t> && stl::is_rvalue_reference_v<str1_type> &&
                   stl::is_rvalue_reference_v<str2_type>) {
-        to_lower(_str1);
-        to_lower(_str2);
+        ascii::to_lower(_str1);
+        ascii::to_lower(_str2);
         return _str1 == _str2;
     } else if constexpr (istl::String<str1_t> && stl::is_rvalue_reference_v<str1_type>) {
-        to_lower(_str1);
-        return _str1 == to_lower_copy(_str2, _str1.get_allocator());
+        ascii::to_lower(_str1);
+        return _str1 == ascii::to_lower_copy(_str2, _str1.get_allocator());
     } else if constexpr (istl::String<str2_t> && stl::is_rvalue_reference_v<str2_type>) {
-        to_lower(_str2);
-        return to_lower_copy(_str1, _str2.get_allocator()) == _str2;
+        ascii::to_lower(_str2);
+        return ascii::to_lower_copy(_str1, _str2.get_allocator()) == _str2;
     } else {
         return stl::equal(str1.cbegin(), str1.cend(), str2.cbegin(), [](auto&& c1, auto&& c2) {
-            return c1 == c2 || to_lower_copy(c1) == to_lower_copy(c2);
+            return c1 == c2 || ascii::to_lower_copy(c1) == ascii::to_lower_copy(c2);
         });
     }
 }
@@ -75,8 +80,8 @@ using namespace webpp;
     const auto* it1_end = it1 + _size;
     for (; it1 != it1_end; ++it1, ++it2) {
         if (*it1 != *it2) {
-            auto ch1_lowered = to_lower_copy(*it1);
-            auto ch2_lowered = to_lower_copy(*it2);
+            auto ch1_lowered = ascii::to_lower_copy(*it1);
+            auto ch2_lowered = ascii::to_lower_copy(*it2);
             if (ch1_lowered != ch2_lowered)
                 return false;
         }
@@ -107,8 +112,8 @@ using namespace webpp;
     const auto* it1_end = it1 + _size;
     for (; it1 != it1_end; ++it1, ++it2) {
         if (*it1 != *it2) {
-            auto ch1_lowered = to_lower_copy(*it1);
-            auto ch2_lowered = to_lower_copy(*it2);
+            auto ch1_lowered = ascii::to_lower_copy(*it1);
+            auto ch2_lowered = ascii::to_lower_copy(*it2);
             if (ch1_lowered != ch2_lowered)
                 return false;
         }
@@ -174,8 +179,8 @@ using namespace webpp;
     for (; it1 != it1_end; ++it1, ++it2) {
         if (*it1 != *it2) {
             // compiler seems to be able to optimize this better than us
-            auto ch1_lowered = to_lower_copy(*it1);
-            auto ch2_lowered = to_lower_copy(*it2);
+            auto ch1_lowered = ascii::to_lower_copy(*it1);
+            auto ch2_lowered = ascii::to_lower_copy(*it2);
             if (ch1_lowered != ch2_lowered)
                 return false;
         }
@@ -188,8 +193,8 @@ static void IEQ_Default(benchmark::State& state) {
     for (auto _ : state) {
         std::string str   = str_generator();
         auto        istr  = str;
-        auto        istr2 = webpp::to_lower_copy(istr);
-        auto res = webpp::iequals(istr, istr2);
+        auto        istr2 = webpp::ascii::to_lower_copy(istr);
+        auto res = webpp::ascii::iequals(istr, istr2);
         benchmark::DoNotOptimize(res);
         benchmark::DoNotOptimize(istr);
         benchmark::DoNotOptimize(istr2);
@@ -201,7 +206,7 @@ static void IEQ_SIMD(benchmark::State& state) {
     for (auto _ : state) {
         std::string str   = str_generator();
         auto        istr  = str;
-        auto        istr2 = webpp::to_lower_copy(istr);
+        auto        istr2 = webpp::ascii::to_lower_copy(istr);
         auto res = iequals_simd(istr, istr2);
         benchmark::DoNotOptimize(res);
         benchmark::DoNotOptimize(istr);
@@ -214,7 +219,7 @@ static void IEQ_ToLowerAllTheWay(benchmark::State& state) {
     for (auto _ : state) {
         std::string str   = str_generator();
         auto        istr  = str;
-        auto        istr2 = webpp::to_lower_copy(istr);
+        auto        istr2 = webpp::ascii::to_lower_copy(istr);
         benchmark::DoNotOptimize(iequal_tolower_all_the_way(istr, istr2));
         benchmark::DoNotOptimize(istr);
         benchmark::DoNotOptimize(istr2);
@@ -228,7 +233,7 @@ static void IEQ_SimpleForLoop(benchmark::State& state) {
     for (auto _ : state) {
         std::string str   = str_generator();
         auto        istr  = str;
-        auto        istr2 = webpp::to_lower_copy(istr);
+        auto        istr2 = webpp::ascii::to_lower_copy(istr);
         benchmark::DoNotOptimize(simple_for_loop(istr, istr2));
         benchmark::DoNotOptimize(istr);
         benchmark::DoNotOptimize(istr2);
@@ -241,7 +246,7 @@ static void IEQ_SimplerForLoop(benchmark::State& state) {
     for (auto _ : state) {
         std::string str   = str_generator();
         auto        istr  = str;
-        auto        istr2 = webpp::to_lower_copy(istr);
+        auto        istr2 = webpp::ascii::to_lower_copy(istr);
         benchmark::DoNotOptimize(simpler_for_loop(istr, istr2));
         benchmark::DoNotOptimize(istr);
         benchmark::DoNotOptimize(istr2);
@@ -256,10 +261,24 @@ static void IEQ_Boost(benchmark::State& state) {
     for (auto _ : state) {
         std::string str   = str_generator();
         auto        istr  = str;
-        auto        istr2 = webpp::to_lower_copy(istr);
+        auto        istr2 = webpp::ascii::to_lower_copy(istr);
         benchmark::DoNotOptimize(boost::iequals(istr, istr2));
         benchmark::DoNotOptimize(istr);
         benchmark::DoNotOptimize(istr2);
     }
 }
 BENCHMARK(IEQ_Boost);
+
+#ifdef BEAST_IEQUALS
+static void IEQ_Boost_Beast(benchmark::State& state) {
+    for (auto _ : state) {
+        std::string str   = str_generator();
+        auto        istr  = str;
+        auto        istr2 = webpp::ascii::to_lower_copy(istr);
+        benchmark::DoNotOptimize(boost::beast::iequals(istr, istr2));
+        benchmark::DoNotOptimize(istr);
+        benchmark::DoNotOptimize(istr2);
+    }
+}
+BENCHMARK(IEQ_Boost_Beast);
+#endif

@@ -2,9 +2,9 @@
 #define WEBPP_CGI_H
 
 #include "../../std/string_view.hpp"
+#include "../../strings/ascii.hpp"
 #include "../../traits/std_traits.hpp"
 #include "../../utils/casts.hpp"
-#include "../../utils/strings.hpp"
 #include "../application.hpp"
 #include "../request.hpp"
 #include "../response.hpp"

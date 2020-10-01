@@ -21,7 +21,7 @@
 #include <algorithm>
 #include <type_traits>
 
-namespace webpp {
+namespace webpp::ascii {
 
     template <typename T>
     struct constexpr_array_type {

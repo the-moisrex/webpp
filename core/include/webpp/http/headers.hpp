@@ -2,12 +2,10 @@
 #define WEBPP_HTTP_HEADERS_H
 
 #include "../std/std.hpp"
-#include "../utils/strings.hpp"
+#include "../strings/ascii.hpp"
 
 #include <cstdint>
 
-
-#include <boost/algorithm/string.hpp>
 namespace webpp {
 
     using status_code_type = stl::uint_fast16_t;

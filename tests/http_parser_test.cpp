@@ -1,9 +1,13 @@
 // Created by moisrex on 9/24/20.
 #include <gtest/gtest.h>
 #include "../core/include/webpp/http/syntax/request_parser.hpp"
+#include "../core/include/webpp/http/syntax/http_lexer.hpp"
 
 #include <vector>
 #include <string_view>
+#include <array>
+#include <tuple>
+#include <algorithm>
 
 using namespace webpp;
 
@@ -52,4 +56,30 @@ TEST(HTTPRequestParser, RequestLine) {
     http_version ver = parser1.get_http_version();
     EXPECT_EQ(ver.major_value(), 1);
     EXPECT_EQ(ver.minor_value(), 1);
+}
+
+
+TEST(HTTPRequestParser, HeaderLexer) {
+    using str = std::string_view;
+    using arr = std::array<str, 2>;
+    using vec = std::vector<std::tuple<str, arr>>;
+    vec headers({
+      {"one: string\r\n", arr{"one", "string"}},
+      {"Second-One:    String   \r\n", arr{"Second-One", "String"}}
+    });
+
+    str sample_request = "one: 1\r\n"
+    "two: 2\r\n"
+    "The-One:Yes,NoSpaceIsNeeded\r\n";
+    http_lexer<webpp::std_traits> lexer {
+      .raw_view = sample_request
+    };
+
+    lexer.consume_all();
+    EXPECT_EQ(std::count_if(std::begin(sample_request), std::end(sample_request), [] (auto c) {
+                  return c == '\r' || c == '\n';
+              }) / 2,lexer.header_views.size()) << "The lexer size is not a match";
+
+    EXPECT_EQ(lexer.header_views.at(0).at(0), "one");
+    EXPECT_EQ(lexer.header_views.at(0).at(1), "1");
 }

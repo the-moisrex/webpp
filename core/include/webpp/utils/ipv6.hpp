@@ -1,8 +1,8 @@
 #ifndef WEBPP_IPV6_H
 #define WEBPP_IPV6_H
 
+#include "../strings/ascii.hpp"
 #include "../traits/traits_concepts.hpp"
-#include "../utils/strings.hpp"
 #include "../validators/validators.hpp"
 #include "ipv4.hpp"
 
