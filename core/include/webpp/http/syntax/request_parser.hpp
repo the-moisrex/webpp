@@ -80,7 +80,7 @@ namespace webpp {
 //                return 400; // Bad Request
 //            }
 
-            http_version_view = str.substr(size(http_prefix) - 1, 3); // 1.1 and 1.0 are 3 chars
+            http_version_view = str.substr(ascii::size(http_prefix) - 1, 3); // 1.1 and 1.0 are 3 chars
             if (http_version_view != "1.0" && http_version_view != "1.1") { // todo: add 2.0 and 0.9 and others as well
                 return 505; // HTTP Version Not Supported
             }

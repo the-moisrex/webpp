@@ -104,7 +104,7 @@ namespace webpp {
 
             do {
                 if (it == data.cend() &&
-                    !starts_with(ipv6_data, '/')) {
+                    !ascii::starts_with(ipv6_data, '/')) {
                     _prefix = 254u; // the ip has too many octets
                     return;
                 }
@@ -169,7 +169,7 @@ namespace webpp {
                         break;          // let's not go all crazy just yet
                     }
                     auto __prefix = stl::stoul(string_type(prefix_str));
-                    // if (starts_with(prefix_str, '0') && __prefix != 0) {
+                    // if (ascii::starts_with(prefix_str, '0') && __prefix != 0) {
                     //     // there can't be a leading zero in the prefix string
                     //     _prefix = 253u;
                     //     return;

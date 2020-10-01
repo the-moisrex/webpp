@@ -173,7 +173,7 @@ namespace webpp {
          * case-insensitive.
          */
         constexpr bool is_name(istl::ConvertibleToStringView auto&& _str) const noexcept {
-            return iequals(name, stl::forward<decltype(_str)>(_str));
+            return ascii::iequals(name, stl::forward<decltype(_str)>(_str));
         }
 
         constexpr bool operator==(istl::ConvertibleToStringView auto&& str) const noexcept {

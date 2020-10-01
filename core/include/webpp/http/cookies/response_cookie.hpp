@@ -133,17 +133,17 @@ namespace webpp {
 
 #define WEBPP_METHOD_TRIM(name)     \
     auto& trim_##name() noexcept {  \
-        trim(_##name);              \
+        ascii::trim(_##name);              \
         return *this;               \
     }                               \
                                     \
     auto& ltrim_##name() noexcept { \
-        ltrim(_##name);             \
+        ascii::ltrim(_##name);             \
         return *this;               \
     }                               \
                                     \
     auto& rtrim_##name() noexcept { \
-        rtrim(_##name);             \
+        ascii::rtrim(_##name);             \
         return *this;               \
     }
 
@@ -299,7 +299,7 @@ namespace webpp {
          * @return true if they have the same name, domain, and path
          */
         [[nodiscard]] bool same_as(response_cookie const& c) const noexcept {
-            return trim_copy(_name, _name.get_allocator()) == trim_copy(c._name, c._name.get_allocator()) &&
+            return ascii::trim_copy(_name, _name.get_allocator()) == ascii::trim_copy(c._name, c._name.get_allocator()) &&
                    _path == c._path && c._domain == _domain;
         }
 
