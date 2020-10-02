@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <bitset>
-#include <cstring>
 #include <eve/function/any.hpp>
 #include <eve/wide.hpp>
 #include <random>
