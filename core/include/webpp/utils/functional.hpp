@@ -14,24 +14,27 @@ namespace webpp {
     template <typename Return, typename... Args>
     class function_ref<Return(Args...)> final {
       private:
-        using signature_type = Return(void*, Args...);
+        using sig_type = Return(*)(void*, Args...);
 
         void* _ptr;
 
-        Return (*_erased_fn)(void*, Args...);
+        // Return (*_erased_fn)(void*, Args...);
+        sig_type erased_func;
 
       public:
-        template <typename T, typename = stl::enable_if_t<stl::is_invocable<T&, Args...>{} &&
-                                                          !stl::is_same<stl::decay_t<T>, function_ref>{}>>
-        constexpr function_ref(T&& x) noexcept : _ptr{(void*) stl::addressof(x)} {
-            _erased_fn = [](void* ptr, Args... xs) -> Return {
+        template <typename T>
+        requires(stl::is_invocable_v<T&, Args...> && !stl::is_same_v<stl::decay_t<T>, function_ref>)
+        constexpr explicit function_ref(T&& x) noexcept : _ptr{(void*) stl::addressof(x)} {
+            erased_func = [](void* ptr, Args... xs) noexcept(
+                            noexcept((*reinterpret_cast<stl::add_pointer_t<T>>(ptr))(stl::forward<Args>(xs)...))
+                            ) -> Return {
                 return (*reinterpret_cast<stl::add_pointer_t<T>>(ptr))(stl::forward<Args>(xs)...);
             };
         }
 
         constexpr decltype(auto) operator()(Args... xs) const
-          noexcept(noexcept(_erased_fn(_ptr, stl::forward<Args>(xs)...))) {
-            return _erased_fn(_ptr, stl::forward<Args>(xs)...);
+          noexcept(noexcept(erased_func(_ptr, stl::forward<Args>(xs)...))) {
+            return erased_func(_ptr, stl::forward<Args>(xs)...);
         }
     };
 
@@ -50,7 +53,7 @@ namespace webpp {
             stl::remove_pointer_t<Callable>* func;
 
           public:
-            constexpr make_func_ptr_inheritable(stl::remove_pointer_t<Callable>* func) noexcept
+            constexpr explicit make_func_ptr_inheritable(stl::remove_pointer_t<Callable>* func) noexcept
               : func(func) {}
 
             template <typename... Args>
@@ -76,7 +79,7 @@ namespace webpp {
             mutable Callable_t callable;
 
             template <typename... Args>
-            constexpr callable_as_field(Args&&... args) noexcept : callable(stl::forward<Args>(args)...) {}
+            constexpr explicit  callable_as_field(Args&&... args) noexcept : callable(stl::forward<Args>(args)...) {}
 
             template <typename... Args>
             auto operator()(Args&&... args) const noexcept(stl::is_nothrow_invocable_v<Callable_t, Args...>) {
@@ -117,7 +120,7 @@ namespace webpp {
     using make_inheritable = istl::lazy_conditional_t<
       stl::is_class_v<Callable>, // if it's a class
 
-      istl::lazy_type< // it's the requirement of the istl::lazy_conditional_t, even though we could emit it,
+      istl::lazy_type< // it's the requirement of the istl::lazy_conditional_t, even though we could avoid it,
                        // but let's keep it because there might be changes later time
         istl::lazy_conditional_t<    // if
           stl::is_final_v<Callable>, // if it's final, we can use it as a field
@@ -153,6 +156,9 @@ namespace webpp {
     overloaded(Ts...) -> overloaded<Ts...>;
 
 
+    /**
+     * Details of a member function pointer is going to be here
+     */
     template <typename T>
     struct member_function_pointer {};
 
