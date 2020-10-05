@@ -33,8 +33,11 @@ namespace webpp {
     template <typename T>
     concept ConvertibleToResponse =
       !stl::is_same_v<T, bool> && stl::is_integral_v<T> &&
-      (Response<T> || stl::is_convertible_v<T, typename std_traits_from_string<T>::type> ||
-       stl::is_convertible_v<T, typename std_traits_from_string_view<T>::type>);
+      (Response<T> ||
+       // stl::is_convertible_v<T, typename std_traits_from_string<T>::type> ||
+       // stl::is_convertible_v<T, typename std_traits_from_string_view<T>::type>
+       istl::ConvertibleToStringView<T>
+       );
 
     template <typename ResponseType, typename T>
     concept ConstructibleWithResponse = stl::is_constructible_v<ResponseType, T>;

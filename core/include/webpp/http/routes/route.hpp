@@ -45,29 +45,29 @@ namespace webpp {
     /**
      * Handle special return types here
      */
-    constexpr auto handle_results(auto&& ctx, auto&& res) noexcept {
-        using res_t    = decltype(res);
-        using ctx_type = stl::remove_cvref_t<decltype(ctx)>;
-        if constexpr (istl::Optional<res_t>) {
-            // pass it out to the router, we're not able to handle this here
-            return stl::forward<res_t>(res);
-        } else if constexpr (Context<res_t>) {
-            // we're not able to do a context switching here,
-            // route: is responsible for sub-route context switching
-            // router: is responsible for entry-route context switching
-            return stl::forward<res_t>(res);
-        } else if constexpr (stl::is_same_v<res_t, bool>) {
-            return stl::forward<res_t>(res);
-        } else if constexpr (Response<res_t>) {
-            return stl::forward<res_t>(res);
-        } else if constexpr (ConstructibleWithResponse<typename ctx_type::response_type, res_t>) {
-            return ctx.template response<>(stl::forward<res_t>(res));
-            // todo: consider "response extension" injection in order to get the right response type
-        } else {
-            // let's just ignore the result
-            return true;
-        }
-    }
+//    constexpr auto handle_results(auto&& ctx, auto&& res) noexcept {
+//        using res_t    = decltype(res);
+//        using ctx_type = stl::remove_cvref_t<decltype(ctx)>;
+//        if constexpr (istl::Optional<res_t>) {
+//            // pass it out to the router, we're not able to handle this here
+//            return stl::forward<res_t>(res);
+//        } else if constexpr (Context<res_t>) {
+//            // we're not able to do a context switching here,
+//            // route: is responsible for sub-route context switching
+//            // router: is responsible for entry-route context switching
+//            return stl::forward<res_t>(res);
+//        } else if constexpr (stl::is_same_v<res_t, bool>) {
+//            return stl::forward<res_t>(res);
+//        } else if constexpr (Response<res_t>) {
+//            return stl::forward<res_t>(res);
+//        } else if constexpr (ConstructibleWithResponse<typename ctx_type::response_type, res_t>) {
+//            return ctx.template response<>(stl::forward<res_t>(res));
+//            // todo: consider "response extension" injection in order to get the right response type
+//        } else {
+//            // let's just ignore the result
+//            return true;
+//        }
+//    }
 
     template <typename Route, typename... Args>
     concept is_callable_route =
@@ -115,11 +115,11 @@ namespace webpp {
                         return typename return_type::value_type{500u};
                     }
                 } else {
+                    using optional_type = decltype(stl::make_optional(callable(stl::forward<decltype(args)>(args)...)));
                     try {
                         return stl::make_optional(callable(stl::forward<decltype(args)>(args)...));
                     } catch (...) {
-                        return decltype(stl::make_optional(callable(stl::forward<decltype(args)>(args)...))){
-                          stl::nullopt};
+                        return optional_type{stl::nullopt};
                     }
                 }
 
@@ -132,7 +132,7 @@ namespace webpp {
         /**
          * Handle special return types here
          */
-        constexpr auto handle_results = [](auto&& ctx, auto&& res) {
+        constexpr auto handle_results = [](auto&& ctx, auto&& res) noexcept {
             using res_t = stl::remove_cvref_t<decltype(res)>;
             if constexpr (istl::Optional<res_t>) {
                 // pass it out to the router, we're not able to handle this here
@@ -149,6 +149,8 @@ namespace webpp {
             } else if constexpr (ConstructibleWithResponse<typename ctx_type::response_type, res_t>) {
                 return ctx.response(stl::forward<decltype(res)>(res));
                 // todo: consider "response extension" injection in order to get the right response type
+//            } else if constexpr (istl::ConvertibleToStringView<res_t>) {
+//                return ctx.template response<string_response>(istl::to_string_view(stl::forward<decltype(res)>(res)));
             } else {
                 // let's just ignore the result
                 return true;
@@ -357,15 +359,15 @@ namespace webpp {
 
     template <typename RouteType = void, logical_operators Op = logical_operators::none,
               typename NextRouteType = void>
-    struct route : public basic_route<RouteType, Op, NextRouteType> {
+    struct route : public basic_route<stl::remove_cvref_t<RouteType>, Op, stl::remove_cvref_t<NextRouteType>> {
 
-        using route_type                      = RouteType;
-        using next_route_type                 = NextRouteType;
+        using route_type                      = stl::remove_cvref_t<RouteType>;
+        using next_route_type                 = stl::remove_cvref_t<NextRouteType>;
         using self_type                       = route<RouteType, Op, NextRouteType>;
         static constexpr logical_operators op = Op;
 
       private:
-        using super_t = basic_route<RouteType, Op, NextRouteType>;
+        using super_t = basic_route<route_type, Op, next_route_type>;
 
         // todo: use the istl::lazy_conditional
         template <bool Condition, template <typename...> typename T1, typename T2, typename... C>
@@ -718,131 +720,131 @@ namespace webpp {
          * The operator() is guaranteed not to run those routes that return bool so you can first check
          * this function, then if it returns true, you can call the route.
          */
-        //            template <typename ContextType>
-        //            requires(Context<stl::remove_cvref_t<ContextType>>)
-        //              [[nodiscard]] constexpr bool matches(ContextType&&       ctx,
-        //                                                   Request auto const& req) const noexcept {
-        //                using context_type  = decltype(ctx);
-        //                using request_type  = decltype(req);
-        //                using ret_type      = ;
-        //                using next_ret_type = ;
+        // template <typename ContextType>
+        // requires(Context<stl::remove_cvref_t<ContextType>>)
+        //   [[nodiscard]] constexpr bool matches(ContextType&&       ctx,
+        //                                        Request auto const& req) const noexcept {
+        //     using context_type  = decltype(ctx);
+        //     using request_type  = decltype(req);
+        //     using ret_type      = ;
+        //     using next_ret_type = ;
         //
-        //                // bool none/and/or/xor empty         => true,             don't run
-        //                // bool none/and void                 => bool,             run bool, but don't run void (?)
-        //                // bool or void                       => bool,             run bool, but don't run void (?)
-        //                // bool xor void                      => true,             run bool, but don't run void (?)
-        //                // bool none/and response             => bool,             run bool, but don't run response
-        //                // bool none/and context              => bool,             run bool, but don't run context
-        //                // bool none/and route                => bool and route.matches
+        //     // bool none/and/or/xor empty         => true,             don't run
+        //     // bool none/and void                 => bool,             run bool, but don't run void (?)
+        //     // bool or void                       => bool,             run bool, but don't run void (?)
+        //     // bool xor void                      => true,             run bool, but don't run void (?)
+        //     // bool none/and response             => bool,             run bool, but don't run response
+        //     // bool none/and context              => bool,             run bool, but don't run context
+        //     // bool none/and route                => bool and route.matches
         //
-        //                // bool or empty                      => bool,             run
-        //                // bool or void                       => bool,             run bool, but don't run void
-        //                // bool or response                   => bool,             run bool, but don't run response
-        //                // bool or context                    => bool,             run bool, but don't run context
-        //                // bool or route                      => bool and route.matches
+        //     // bool or empty                      => bool,             run
+        //     // bool or void                       => bool,             run bool, but don't run void
+        //     // bool or response                   => bool,             run bool, but don't run response
+        //     // bool or context                    => bool,             run bool, but don't run context
+        //     // bool or route                      => bool and route.matches
         //
-        //                constexpr auto is_next_route_match = [this](auto&& ctx,
-        //                                                        auto const& req) -> bool {
-        //                    if constexpr (requires(next_route_type _route) {
-        //                                      {_route.matches(stl::forward<decltype(ctx)>(ctx), req)};
-        //                                  }) {
-        //                        // if it's a route itself (nexted route), it'll use that matches member function
-        //                        return super_t::next.matches(stl::forward<decltype(ctx)>(ctx), req);
-        //                    } else if constexpr (stl::same_as<next_ret_type, bool>) {
-        //                        // call the route because it returns a bool, this route won't be run again in the operator()
-        //                        return call_next_route(stl::forward<decltype(ctx)>(ctx), req);
-        //                    } else { // Request, ConvertibleToRequest, Entry-Route level Context
-        //                    Switching, ...
-        //                        // there's not going to be a Sub-Route level Context Switching here, because if there's one,
-        //                        // it's a "route" and thus has a ".matches" member function.
-        //                        return true;
-        //                    }
-        //                };
+        //     constexpr auto is_next_route_match = [this](auto&& ctx,
+        //                                             auto const& req) -> bool {
+        //         if constexpr (requires(next_route_type _route) {
+        //                           {_route.matches(stl::forward<decltype(ctx)>(ctx), req)};
+        //                       }) {
+        //             // if it's a route itself (nexted route), it'll use that matches member function
+        //             return super_t::next.matches(stl::forward<decltype(ctx)>(ctx), req);
+        //         } else if constexpr (stl::same_as<next_ret_type, bool>) {
+        //             // call the route because it returns a bool, this route won't be run again in the operator()
+        //             return call_next_route(stl::forward<decltype(ctx)>(ctx), req);
+        //         } else { // Request, ConvertibleToRequest, Entry-Route level Context
+        //         Switching, ...
+        //             // there's not going to be a Sub-Route level Context Switching here, because if there's one,
+        //             // it's a "route" and thus has a ".matches" member function.
+        //             return true;
+        //         }
+        //     };
         //
-        //                if constexpr (!is_route_valid) {
-        //                    if constexpr (!is_next_route_valid) {
-        //                        return false;
-        //                    } else {
-        //                        return is_next_route_match(super_t::next,
-        //                        stl::forward<decltype(ctx)>(ctx), req);
-        //                    }
-        //                } else if constexpr (requires(route_type _route) {
-        //                        {_route.matches(stl::forward<decltype(ctx)>(ctx), req)};
-        //                    }) {
-        //                    // It's a nested route
-        //                    auto res = super_t::matches(stl::forward<decltype(ctx)>(ctx), req);
-        //                    if constexpr (logical_operators::none == op || logical_operators::AND == op)
-        //                    {
-        //                        if (!res) // not relying on && to not execute the next route
-        //                            return false;
-        //                        return is_next_route_match(ctx, req);
-        //                    } else if constexpr (logical_operators::OR == op) {
-        //                        if (res)
-        //                            return true;
-        //                        return is_next_route_match(ctx, req);
-        //                    } else if constexpr (logical_operators::XOR == op) {
-        //                        return res ^ is_next_route_match(ctx, req);
-        //                    } else {
-        //                        return false; // this should never happen
-        //                    }
-        //                } else if constexpr (stl::same_as<ret_type, bool>) {
-        //                    if constexpr (logical_operators::none == op || logical_operators::AND == op)
-        //                    {
-        //                        // don't rely on operator && for not executing the next route, because the user may
-        //                        // have overloaded the operator &&
-        //                        if (!call_this_route(ctx, req))
-        //                            return false;
-        //                        return is_next_route_match(ctx, req);
-        //                    } else if constexpr (logical_operators::OR == op) {
-        //                        // Same as "and", we will not use operator ||
-        //                        if (call_this_route(ctx, req))
-        //                            return true;
-        //                        return is_next_route_match(ctx, req);
-        //                    } else if constexpr (logical_operators::XOR == op) {
-        //                        // In operator xor, the next route will be called no matter the result of the current
-        //                        // route so there's no need for doing the same thing that we did above, but since they
-        //                        // may have changed the meaning of the operator ^, it's not a bad idea to do so, but
-        //                        // I'm too lazy :)
-        //                        return call_this_route(ctx, req) ^ is_next_route_match(ctx, req);
-        //                    } else {
-        //                        return false; // should not be possible
-        //                    }
-        //                } else if constexpr (Context<ret_type>) {
-        //                    // entry/sub-route level context switching
-        //                    // switch the context and try the next route if available
+        //     if constexpr (!is_route_valid) {
+        //         if constexpr (!is_next_route_valid) {
+        //             return false;
+        //         } else {
+        //             return is_next_route_match(super_t::next,
+        //             stl::forward<decltype(ctx)>(ctx), req);
+        //         }
+        //     } else if constexpr (requires(route_type _route) {
+        //             {_route.matches(stl::forward<decltype(ctx)>(ctx), req)};
+        //         }) {
+        //         // It's a nested route
+        //         auto res = super_t::matches(stl::forward<decltype(ctx)>(ctx), req);
+        //         if constexpr (logical_operators::none == op || logical_operators::AND == op)
+        //         {
+        //             if (!res) // not relying on && to not execute the next route
+        //                 return false;
+        //             return is_next_route_match(ctx, req);
+        //         } else if constexpr (logical_operators::OR == op) {
+        //             if (res)
+        //                 return true;
+        //             return is_next_route_match(ctx, req);
+        //         } else if constexpr (logical_operators::XOR == op) {
+        //             return res ^ is_next_route_match(ctx, req);
+        //         } else {
+        //             return false; // this should never happen
+        //         }
+        //     } else if constexpr (stl::same_as<ret_type, bool>) {
+        //         if constexpr (logical_operators::none == op || logical_operators::AND == op)
+        //         {
+        //             // don't rely on operator && for not executing the next route, because the user may
+        //             // have overloaded the operator &&
+        //             if (!call_this_route(ctx, req))
+        //                 return false;
+        //             return is_next_route_match(ctx, req);
+        //         } else if constexpr (logical_operators::OR == op) {
+        //             // Same as "and", we will not use operator ||
+        //             if (call_this_route(ctx, req))
+        //                 return true;
+        //             return is_next_route_match(ctx, req);
+        //         } else if constexpr (logical_operators::XOR == op) {
+        //             // In operator xor, the next route will be called no matter the result of the current
+        //             // route so there's no need for doing the same thing that we did above, but since they
+        //             // may have changed the meaning of the operator ^, it's not a bad idea to do so, but
+        //             // I'm too lazy :)
+        //             return call_this_route(ctx, req) ^ is_next_route_match(ctx, req);
+        //         } else {
+        //             return false; // should not be possible
+        //         }
+        //     } else if constexpr (Context<ret_type>) {
+        //         // entry/sub-route level context switching
+        //         // switch the context and try the next route if available
         //
-        //                    // switch_context none/and/or/xor empty    => true,                    don't run
-        //                    // switch_context none/and/or/xor void     => true,                    don't run
-        //                    // switch_context none/and/or/xor response => true,                    don't run
-        //                    // switch_context none/and/xor route       => true op route.matches,   run(?)
-        //                    // switch_context none/and bool            => true and bool,           run
-        //                    // switch_context none/and context         => (?)
+        //         // switch_context none/and/or/xor empty    => true,                    don't run
+        //         // switch_context none/and/or/xor void     => true,                    don't run
+        //         // switch_context none/and/or/xor response => true,                    don't run
+        //         // switch_context none/and/xor route       => true op route.matches,   run(?)
+        //         // switch_context none/and bool            => true and bool,           run
+        //         // switch_context none/and context         => (?)
         //
-        //                    // switch_context or bool                  => true,                    don't run
-        //                    // switch_context or route                 => true and route.matches,  run(?)
-        //                    // switch_context or context               => (?)
+        //         // switch_context or bool                  => true,                    don't run
+        //         // switch_context or route                 => true and route.matches,  run(?)
+        //         // switch_context or context               => (?)
         //
-        //                    // todo
-        //                    // switched_ctx >>= ((get and "testing" >>= switching_ctx >>= page1) || (post and "testing" >>= page2))
-        //                    // [switched_ctx none [[get and ["testing" none [switching_ctx none page1]]] or [post and ["testing" none page2]]]]
-        //                    if constexpr (logical_operators::none == op || logical_operators::AND == op)
-        //                    {
-        //                        auto nctx = call_this_route(ctx, req);
-        //                        using new_context_type = decltype(nctx);
-        //                        return is_next_route_match(nctx, req);
-        //                    } else if constexpr (logical_operators::OR == op) {
-        //                        // true || ... == true
-        //                        // so we don't need to call the this or next route at all, it's going to be a entry-route level context switching
-        //                        return true;
-        //                    } else if constexpr (logical_operators::XOR == op) {
-        //                    } else {
-        //                        return false; // should never happen
-        //                    }
-        //                } else { // void, Response, ConvertibleToResponse, ...
-        //                    return true; // we don't care about the next route, whatever it is, this
-        //                    route has to run
-        //                }
-        //            }
+        //         // todo
+        //         // switched_ctx >>= ((get and "testing" >>= switching_ctx >>= page1) || (post and "testing" >>= page2))
+        //         // [switched_ctx none [[get and ["testing" none [switching_ctx none page1]]] or [post and ["testing" none page2]]]]
+        //         if constexpr (logical_operators::none == op || logical_operators::AND == op)
+        //         {
+        //             auto nctx = call_this_route(ctx, req);
+        //             using new_context_type = decltype(nctx);
+        //             return is_next_route_match(nctx, req);
+        //         } else if constexpr (logical_operators::OR == op) {
+        //             // true || ... == true
+        //             // so we don't need to call the this or next route at all, it's going to be a entry-route level context switching
+        //             return true;
+        //         } else if constexpr (logical_operators::XOR == op) {
+        //         } else {
+        //             return false; // should never happen
+        //         }
+        //     } else { // void, Response, ConvertibleToResponse, ...
+        //         return true; // we don't care about the next route, whatever it is, this
+        //         route has to run
+        //     }
+        // }
 
 
         [[nodiscard]] auto operator()(Context auto&& ctx, Request auto const& req) const noexcept {

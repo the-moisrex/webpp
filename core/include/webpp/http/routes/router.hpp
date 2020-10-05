@@ -116,8 +116,13 @@ namespace webpp {
                                                        stl::forward<decltype(ctx)>(ctx), req);
                 } else {
                     // return a 500 error
-                    return handle_route_results<Index>(typename result_type::value_type{500u},
-                                                       stl::forward<decltype(ctx)>(ctx), req);
+                    if constexpr (stl::is_convertible_v<typename result_type::value_type, unsigned long>) {
+                        return handle_route_results<Index>(typename result_type::value_type{500u},
+                                                           stl::forward<decltype(ctx)>(ctx), req);
+                    } else {
+                        return handle_route_results<Index>(500u,
+                                                           stl::forward<decltype(ctx)>(ctx), req);
+                    }
                 }
                 // todo: check if you can run the next route as well
                 //                if constexpr (is_passed_last_route) {
@@ -130,7 +135,7 @@ namespace webpp {
                 // context switching is happening here
                 // just call the next route or finish it with calling the context handlers
                 if constexpr (!is_passed_last_route) {
-                    return operator()<next_route_index>(stl::move(res), req);
+                    return operator()<next_route_index>(stl::forward<decltype(res)>(res), req);
                 } else {
                     return ctx.error(404u);
                 }
@@ -177,8 +182,8 @@ namespace webpp {
         template <stl::size_t Index = 0>
         Response auto operator()(Context auto&& ctx, Request auto const& req) const noexcept {
 
-            constexpr bool no_routes       = route_count() == 0u;
-            constexpr bool past_last_route = Index > (route_count() - 1);
+            static constexpr bool no_routes       = route_count() == 0u;
+            static constexpr bool past_last_route = Index > (route_count() - 1);
 
             if constexpr (no_routes || past_last_route) {
                 return ctx.error(404u);
@@ -196,6 +201,7 @@ namespace webpp {
                                   { call_route(route, ctx, req) }
                                   ->stl::same_as<void>;
                               }) {
+                    // because "handle_route_results" can't handle void inputs, here's how we deal with it
                     call_route(route, ctx, req);
                     return ctx.error(404u);
                 } else {

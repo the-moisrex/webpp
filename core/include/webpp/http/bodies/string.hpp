@@ -95,7 +95,8 @@ namespace webpp {
                   typename context_type::response_type::template apply_extensions_type<details::string_body>;
 
                 template <typename... Args>
-                constexpr type(Args&&... args) noexcept : context_type{stl::forward<Args>(args)...} {}
+                constexpr type(Args&&... args) noexcept(noexcept(context_type{stl::forward<Args>(args)...})) :
+                    context_type{stl::forward<Args>(args)...} {}
 
                 template <typename... Args>
                 constexpr Response auto string(Args&&... args) const noexcept {
