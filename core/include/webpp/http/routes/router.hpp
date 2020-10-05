@@ -116,12 +116,16 @@ namespace webpp {
                                                        stl::forward<decltype(ctx)>(ctx), req);
                 } else {
                     // return a 500 error
+                    static constexpr auto err_code = 500u;
+                    using ret_type = decltype(handle_route_results<Index>(res.value(),
+                                                                          stl::forward<decltype(ctx)>(ctx), req));
                     if constexpr (stl::is_convertible_v<typename result_type::value_type, unsigned long>) {
-                        return handle_route_results<Index>(typename result_type::value_type{500u},
+                        return handle_route_results<Index>(typename result_type::value_type{err_code},
                                                            stl::forward<decltype(ctx)>(ctx), req);
+                    }  else if constexpr (stl::is_constructible_v<ret_type, decltype(err_code)>) {
+                        return ret_type{err_code};
                     } else {
-                        return handle_route_results<Index>(500u,
-                                                           stl::forward<decltype(ctx)>(ctx), req);
+                        return handle_route_results<Index>(err_code, stl::forward<decltype(ctx)>(ctx), req);
                     }
                 }
                 // todo: check if you can run the next route as well
@@ -147,8 +151,10 @@ namespace webpp {
                     return operator()<next_route_index>(stl::forward<decltype(ctx)>(ctx), req);
                 } else {
                     return ctx.error(404u); // doesn't matter if it's the last route or not,
-                                            // returning false just means finish it
+                    // returning false just means finish it
                 }
+            } else if constexpr (stl::is_integral_v<result_type>) {
+                return ctx.error(res); // error code
             } else if constexpr (Route<result_type>) {
                 auto res2       = call_route(res, ctx, req);
                 using res2_type = stl::remove_cvref_t<decltype(res2)>;
