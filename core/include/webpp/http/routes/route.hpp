@@ -7,8 +7,9 @@
 #include "../../utils/functional.hpp"
 #include "./context.hpp"
 #include "./route_concepts.hpp"
+#include "../../std/optional.hpp"
+#include "../../std/type_traits.hpp"
 
-#include <type_traits>
 #include <utility>
 
 namespace webpp {
@@ -34,8 +35,8 @@ namespace webpp {
      */
     template <typename Traits, typename U>
     struct can_convert_to_string
-      : stl::integral_constant<bool, (can_convert_v<Traits, U, typename Traits::string_type> ||
-                                      can_convert_v<Traits, U, typename Traits::string_view_type>)> {};
+      : stl::integral_constant<bool, (can_convert_v<U, typename Traits::string_type> ||
+                                      can_convert_v<U, typename Traits::string_view_type>)> {};
 
     template <typename Traits, typename U>
     constexpr bool can_convert_to_string_v = can_convert_to_string<Traits, U>::value;

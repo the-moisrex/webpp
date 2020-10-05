@@ -14,7 +14,7 @@ namespace webpp {
     template <typename Return, typename... Args>
     class function_ref<Return(Args...)> final {
       private:
-        using sig_type = Return(*)(void*, Args...);
+        using sig_type = Return (*)(void*, Args...);
 
         void* _ptr;
 
@@ -23,11 +23,13 @@ namespace webpp {
 
       public:
         template <typename T>
-        requires(stl::is_invocable_v<T&, Args...> && !stl::is_same_v<stl::decay_t<T>, function_ref>)
-        constexpr explicit function_ref(T&& x) noexcept : _ptr{(void*) stl::addressof(x)} {
-            erased_func = [](void* ptr, Args... xs) noexcept(
-                            noexcept((*reinterpret_cast<stl::add_pointer_t<T>>(ptr))(stl::forward<Args>(xs)...))
-                            ) -> Return {
+        requires(
+          stl::is_invocable_v<T&, Args...> &&
+          !stl::is_same_v<stl::decay_t<T>, function_ref>) constexpr explicit function_ref(T&& x) noexcept
+          : _ptr{(void*) stl::addressof(x)} {
+            erased_func =
+              [](void* ptr, Args... xs) noexcept(noexcept(
+                (*reinterpret_cast<stl::add_pointer_t<T>>(ptr))(stl::forward<Args>(xs)...))) -> Return {
                 return (*reinterpret_cast<stl::add_pointer_t<T>>(ptr))(stl::forward<Args>(xs)...);
             };
         }
@@ -79,7 +81,8 @@ namespace webpp {
             mutable Callable_t callable;
 
             template <typename... Args>
-            constexpr explicit  callable_as_field(Args&&... args) noexcept : callable(stl::forward<Args>(args)...) {}
+            constexpr explicit callable_as_field(Args&&... args) noexcept
+              : callable(stl::forward<Args>(args)...) {}
 
             template <typename... Args>
             auto operator()(Args&&... args) const noexcept(stl::is_nothrow_invocable_v<Callable_t, Args...>) {
@@ -124,18 +127,24 @@ namespace webpp {
                        // but let's keep it because there might be changes later time
         istl::lazy_conditional_t<    // if
           stl::is_final_v<Callable>, // if it's final, we can use it as a field
-          istl::lazy_sub_type<details::lazy_callable_as_field, Callable>, // making "callable_as_field" a lazy
-                                                                          // type so it wouldn't be evaluated
-                                                                          // if the conditions are not right
-          istl::lazy_type<                                                // if it's not final, and a class
-            istl::lazy_conditional_t<                                     // if
+          istl::templated_lazy_type<details::lazy_callable_as_field, Callable>, // making "callable_as_field"
+                                                                                // a lazy type so it wouldn't
+                                                                                // be evaluated if the
+                                                                                // conditions are not right
+          istl::lazy_type<                                // if it's not final, and a class
+            istl::lazy_conditional_t<                     // if
               !stl::is_default_constructible_v<Callable>, // if it's default constructible, we can just use it
-              istl::lazy_sub_type<details::lazy_callable_as_field, Callable>, // also I'm doing it lazy here
-              Callable>>>>,
+              istl::templated_lazy_type<details::lazy_callable_as_field, Callable>, // also I'm doing it lazy
+                                                                                    // here
+              istl::lazy_type<Callable>>                                            // lazy_conditional_t
+            >                                                                       // lazy_type
+          >                                                                         // lazy_conditional_t
+        >,                                                                          // lazy_type
 
-      istl::lazy_sub_type<details::lazy_func_ptr_inheritable,
-                          Callable> // making "make_func_ptr_inheritable" a lazy one so it doesn't go and
-                                    // evaluate that expression because if it's not, it might throw an error
+      istl::templated_lazy_type<details::lazy_func_ptr_inheritable,
+                                Callable> // making "make_func_ptr_inheritable" a lazy one so it doesn't go
+                                          // and evaluate that expression because if it's not, it might throw
+                                          // an error
       >;
 
     // Tests if T is a specialization of Template
