@@ -25,7 +25,7 @@ namespace webpp::istl {
 
         template <template<typename...>typename Extractor, typename ...Args>
         struct templated_lazy_evaluate<true, Extractor, Args...> {
-            using type = Extractor<Args...>;
+            using type = typename Extractor<Args...>::type;
         };
     }
 

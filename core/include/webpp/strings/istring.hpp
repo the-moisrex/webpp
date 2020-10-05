@@ -49,8 +49,8 @@ namespace webpp {
       public:
         using allocator_type =
           istl::lazy_conditional_t<has_allocator,
-                                   istl::lazy_type<typename traits_type::template allocator<char_type>>,
-                                   istl::lazy_sub_type<allocator_extractor, string_type>>;
+                                   istl::templated_lazy_type<allocator_extractor, string_type>,
+                                   istl::lazy_type<typename traits_type::template allocator<char_type>>>;
         using alternate_std_string_type      = stl::basic_string<char_type, char_traits_type, allocator_type>;
         using alternate_std_string_view_type = stl::basic_string_view<char_type, char_traits_type>;
 

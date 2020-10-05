@@ -26,183 +26,184 @@ namespace webpp {
         // Interval too
     };
 
-    /**
+    namespace details {
+
+        /**
      * Common functions between all types.
      * @tparam Callable
      * @tparam Rep
      * @tparam Period
      * @tparam Clock
-     */
-    template <typename Callable, typename Rep, typename Period, typename Clock>
-    struct debounce_ctors : public Callable {
-      protected:
-        using Interval           = stl::chrono::duration<Rep, Period>;
-        const Interval _interval = stl::chrono::duration<Rep, Period>{1000};
+         */
+        template <typename Callable, typename Rep, typename Period, typename Clock>
+        struct debounce_ctors : public Callable {
+          protected:
+            using Interval           = stl::chrono::duration<Rep, Period>;
+            const Interval _interval = stl::chrono::duration<Rep, Period>{1000};
 
-      public:
-        template <typename... Args>
-        constexpr debounce_ctors(Args&&... args) noexcept : Callable{stl::forward<Args>(args)...} {
-        }
+          public:
+            template <typename... Args>
+            constexpr debounce_ctors(Args&&... args) noexcept : Callable{stl::forward<Args>(args)...} {}
 
-        template <typename... Args>
-        constexpr debounce_ctors(Interval __interval, Args&&... args) noexcept
-          : Callable{stl::forward<Args>(args)...},
-            _interval(stl::move(__interval)) {
-        }
+            template <typename... Args>
+            constexpr debounce_ctors(Interval i_interval, Args&&... args) noexcept
+              : Callable{stl::forward<Args>(args)...},
+                _interval(stl::move(i_interval)) {}
 
-        constexpr void interval(Interval __interval) noexcept {
-            _interval = stl::move(__interval);
-        }
+            constexpr void interval(Interval i_interval) noexcept {
+                _interval = stl::move(i_interval);
+            }
 
-        [[nodiscard]] constexpr auto& interval() const noexcept {
-            return _interval;
-        }
-    };
+            [[nodiscard]] constexpr auto& interval() const noexcept {
+                return _interval;
+            }
+        };
 
-    /**************************************************************************
+        /**************************************************************************
      * Implementations
      **************************************************************************/
 
-    template <typename Callable, debounce_type DType, typename Rep, typename Period, typename Clock>
-    struct debounce_impl : public debounce_ctors<Callable, Rep, Period, Clock> {
-        using ctors = debounce_ctors<Callable, Rep, Period, Clock>;
-        using ctors::ctors;
-    };
+        template <typename Callable, debounce_type DType, typename Rep, typename Period, typename Clock>
+        struct debounce_impl : public debounce_ctors<Callable, Rep, Period, Clock> {
+            using ctors = debounce_ctors<Callable, Rep, Period, Clock>;
+            using ctors::ctors;
+        };
 
-    /**
+        /**
      * Debounce type implementation: leading
      * @tparam Callable
      * @tparam Rep
      * @tparam Period
      * @tparam Clock
-     */
-    template <typename Callable, typename Rep, typename Period, typename Clock>
-    struct debounce_impl<Callable, debounce_type::leading, Rep, Period, Clock>
-      : public debounce_ctors<Callable, Rep, Period, Clock> {
-        using ctors = debounce_ctors<Callable, Rep, Period, Clock>;
+         */
+        template <typename Callable, typename Rep, typename Period, typename Clock>
+        struct debounce_impl<Callable, debounce_type::leading, Rep, Period, Clock>
+          : public debounce_ctors<Callable, Rep, Period, Clock> {
+            using ctors = debounce_ctors<Callable, Rep, Period, Clock>;
 
-      protected:
-        mutable stl::chrono::time_point<Clock> last_invoke_time;
+          protected:
+            mutable stl::chrono::time_point<Clock> last_invoke_time;
 
-        // TODO: convert this to "void*"; but benchmark the performance first.
-        // and even if it's possible, make the whole thing "constexpr" friendly.
-        mutable stl::any res;
+            // TODO: convert this to "void*"; but benchmark the performance first.
+            // and even if it's possible, make the whole thing "constexpr" friendly.
+            mutable stl::any res;
 
-      public:
-        using ctors::ctors;
+          public:
+            using ctors::ctors;
 
-        template <typename... Args>
-        auto operator()(Args&&... args) noexcept(stl::is_nothrow_invocable_v<Callable, Args...>) {
-            using RetType = stl::invoke_result_t<Callable, Args...>;
+            template <typename... Args>
+            auto operator()(Args&&... args) noexcept(stl::is_nothrow_invocable_v<Callable, Args...>) {
+                using RetType = stl::invoke_result_t<Callable, Args...>;
 
-            if constexpr (stl::is_void_v<RetType>) {
-                if ((Clock::now() - last_invoke_time) > ctors::interval()) {
-                    Callable::operator()(stl::forward<Args>(args)...);
-                    last_invoke_time = Clock::now();
-                }
-            } else {
-                if ((Clock::now() - last_invoke_time) > ctors::interval()) {
-                    res              = Callable::operator()(stl::forward<Args>(args)...);
-                    last_invoke_time = Clock::now();
-                    return stl::any_cast<RetType>(res);
+                if constexpr (stl::is_void_v<RetType>) {
+                    if ((Clock::now() - last_invoke_time) > ctors::interval()) {
+                        Callable::operator()(stl::forward<Args>(args)...);
+                        last_invoke_time = Clock::now();
+                    }
                 } else {
-                    return stl::any_cast<RetType>(res);
+                    if ((Clock::now() - last_invoke_time) > ctors::interval()) {
+                        res              = Callable::operator()(stl::forward<Args>(args)...);
+                        last_invoke_time = Clock::now();
+                        return stl::any_cast<RetType>(res);
+                    } else {
+                        return stl::any_cast<RetType>(res);
+                    }
                 }
             }
-        }
 
 
-        template <typename... Args>
-        auto operator()(Args&&... args) const noexcept(stl::is_nothrow_invocable_v<Callable, Args...>) {
-            using RetType = stl::invoke_result_t<Callable, Args...>;
+            template <typename... Args>
+            auto operator()(Args&&... args) const noexcept(stl::is_nothrow_invocable_v<Callable, Args...>) {
+                using RetType = stl::invoke_result_t<Callable, Args...>;
 
-            if constexpr (stl::is_void_v<RetType>) {
-                if ((Clock::now() - last_invoke_time) > ctors::interval()) {
-                    Callable::operator()(stl::forward<Args>(args)...);
-                    last_invoke_time = Clock::now();
-                }
-            } else {
-                if ((Clock::now() - last_invoke_time) > ctors::interval()) {
-                    res              = Callable::operator()(stl::forward<Args>(args)...);
-                    last_invoke_time = Clock::now();
-                    return stl::any_cast<RetType>(res);
+                if constexpr (stl::is_void_v<RetType>) {
+                    if ((Clock::now() - last_invoke_time) > ctors::interval()) {
+                        Callable::operator()(stl::forward<Args>(args)...);
+                        last_invoke_time = Clock::now();
+                    }
                 } else {
-                    return stl::any_cast<RetType>(res);
+                    if ((Clock::now() - last_invoke_time) > ctors::interval()) {
+                        res              = Callable::operator()(stl::forward<Args>(args)...);
+                        last_invoke_time = Clock::now();
+                        return stl::any_cast<RetType>(res);
+                    } else {
+                        return stl::any_cast<RetType>(res);
+                    }
                 }
             }
-        }
-    };
+        };
 
-
-    /**
-     * This class will be async trailing implementation of the debounce class
-     */
-    template <typename Callable, typename Rep, typename Period, typename Clock>
-    struct debounce_impl<Callable, debounce_type::trailing, Rep, Period, Clock>
-      : public debounce_ctors<Callable, Rep, Period, Clock> {
-        using ctors = debounce_ctors<Callable, Rep, Period, Clock>;
-
-      protected:
-        stl::queue<stl::thread> trs;
-        stl::atomic<bool>       done = false;
-
-        template <typename RetType, typename... Args>
-        stl::future<RetType>
-        async_run_later(Args&&... args) noexcept(stl::is_nothrow_invocable_v<Callable, Args...>) {
-            stl::this_thread::sleep_for(ctors::interval());
-            return flush(stl::forward<Args>(args)...);
-        }
-
-      public:
-        using ctors::debounce_ctors;
-
-        template <typename RetType, typename... Args>
-        stl::future<RetType>
-        operator()(Args&&... args) noexcept(stl::is_nothrow_invocable_v<Callable, Args...>) {
-            trs.emplace(&debounce_impl::async_run_later, *this, stl::forward<Args>(args)...);
-        }
-
-        ~debounce_impl() noexcept {
-            // cancel everything and wait for the thread to join
-            done.store(true, stl::memory_order_relaxed);
-
-            // join all the threads
-            while (!trs.empty()) {
-                auto tr = stl::move(trs.front());
-                if (tr.joinable())
-                    tr.join();
-                trs.pop();
-            }
-        }
 
         /**
+     * This class will be async trailing implementation of the debounce class
+         */
+        template <typename Callable, typename Rep, typename Period, typename Clock>
+        struct debounce_impl<Callable, debounce_type::trailing, Rep, Period, Clock>
+          : public debounce_ctors<Callable, Rep, Period, Clock> {
+            using ctors = debounce_ctors<Callable, Rep, Period, Clock>;
+
+          protected:
+            stl::queue<stl::thread> trs;
+            stl::atomic<bool>       done = false;
+
+            template <typename RetType, typename... Args>
+            stl::future<RetType>
+            async_run_later(Args&&... args) noexcept(stl::is_nothrow_invocable_v<Callable, Args...>) {
+                stl::this_thread::sleep_for(ctors::interval());
+                return flush(stl::forward<Args>(args)...);
+            }
+
+          public:
+            using ctors::debounce_ctors;
+
+            template <typename RetType, typename... Args>
+            stl::future<RetType>
+            operator()(Args&&... args) noexcept(stl::is_nothrow_invocable_v<Callable, Args...>) {
+                trs.emplace(&debounce_impl::async_run_later, *this, stl::forward<Args>(args)...);
+            }
+
+            ~debounce_impl() noexcept {
+                // cancel everything and wait for the thread to join
+                done.store(true, stl::memory_order_relaxed);
+
+                // join all the threads
+                while (!trs.empty()) {
+                    auto tr = stl::move(trs.front());
+                    if (tr.joinable())
+                        tr.join();
+                    trs.pop();
+                }
+            }
+
+            /**
          * Cancel the operation
          * @param value
-         */
-        void cancel() noexcept {
-            done.store(true, stl::memory_order_relaxed);
-        }
+             */
+            void cancel() noexcept {
+                done.store(true, stl::memory_order_relaxed);
+            }
 
-        /**
+            /**
          * Call the callable now
-         */
-        template <typename... Args>
-        auto flush(Args&&... args) noexcept(stl::is_nothrow_invocable_v<Callable, Args...>)
-          -> stl::invoke_result_t<Callable, Args...> {
-            auto res = Callable::operator()(stl::forward<Args>(args)...);
-            done.store(true, stl::memory_order_relaxed);
-            return res;
-        }
+             */
+            template <typename... Args>
+            auto flush(Args&&... args) noexcept(stl::is_nothrow_invocable_v<Callable, Args...>)
+              -> stl::invoke_result_t<Callable, Args...> {
+                auto res = Callable::operator()(stl::forward<Args>(args)...);
+                done.store(true, stl::memory_order_relaxed);
+                return res;
+            }
 
-        /**
+            /**
          * Check if the function is done running or not.
          * @return true if the function is done, and false otherwise.
-         */
-        bool pending() noexcept {
-            return !done.load(stl::memory_order_relaxed);
-        }
-    };
+             */
+            bool pending() noexcept {
+                return !done.load(stl::memory_order_relaxed);
+            }
+        };
 
+    }
     /**************************************************************************
      * The base classes
      **************************************************************************/
@@ -234,8 +235,8 @@ namespace webpp {
     template <typename Callable, debounce_type DType = debounce_type::leading,
               typename Rep    = stl::chrono::milliseconds::rep,
               typename Period = stl::chrono::milliseconds::period, typename Clock = stl::chrono::steady_clock>
-    class debounce_t : public debounce_impl<make_inheritable<Callable>, DType, Rep, Period, Clock> {
-        using impl_t = debounce_impl<make_inheritable<Callable>, DType, Rep, Period, Clock>;
+    class debounce_t : public details::debounce_impl<make_inheritable<Callable>, DType, Rep, Period, Clock> {
+        using impl_t = details::debounce_impl<make_inheritable<Callable>, DType, Rep, Period, Clock>;
 
       public:
         using impl_t::impl_t;
