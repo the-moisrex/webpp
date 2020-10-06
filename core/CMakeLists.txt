@@ -1,6 +1,6 @@
 set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp.hpp
-        ${LIB_INCLUDE_DIR}/version.hpp
+        ${LIB_INCLUDE_DIR}/webpp/version.hpp
         ${LIB_INCLUDE_DIR}/webpp/config.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/libs/asio.hpp

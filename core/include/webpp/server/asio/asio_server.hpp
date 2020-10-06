@@ -12,6 +12,7 @@
 #include "./asio_connection.hpp"
 #include "./asio_constants.hpp"
 #include "../../std/vector.hpp"
+#include "../../traits/enable_traits.hpp"
 
 #include <memory>
 
@@ -21,16 +22,15 @@ namespace webpp {
      * This class is the server and the connection manager.
      */
     template <Traits TraitsType, SessionManager SessionType, ThreadPool ThreadPoolType = asio_thread_pool>
-    struct asio_server {
+    struct asio_server : public enable_traits<TraitsType> {
         using traits_type      = TraitsType;
+        using etraits          = enable_traits<traits_type>;
         using session_type     = SessionType;
         using connection_type  = asio_connection<traits_type, session_type>;
         using socket_type      = asio::ip::tcp::socket;
         using endpoint_type    = asio::ip::tcp::endpoint;
         using acceptor_type    = asio::ip::tcp::acceptor;
         using io_context_type  = asio::io_context;
-        using logger_type      = typename traits_type::logger_type;
-        using logger_ref       = typename logger_type::logger_ref;
         using thread_pool_type = ThreadPoolType;
 
 
@@ -43,17 +43,13 @@ namespace webpp {
         istl::vector<traits_type, connection_type> connections;
         istl::vector<traits_type, acceptor_type>   acceptors;
         thread_pool_type                           pool{};
-        [[no_unique_address]] logger_ref           logger;
-
-        using allocator_type = stl::remove_cvref_t<decltype(decltype(connections)::get_allocator())>;
 
       public:
-        template <typename AllocatorType = allocator_type>
-        explicit asio_server(logger_ref           logger    = logger_type{},
-                             AllocatorType const& allocator = Allocator{}) noexcept
-          : connections{allocator},
-            acceptors{allocator},
-            logger{logger} {};
+        asio_server(auto&&...args)
+          : etraits{stl::forward<decltype(args)>(args)...},
+            connections{etraits::get_allocator()}
+            acceptors{etraits::get_allocator()}
+            {};
 
       private:
         void accept(asio::error_code const& ec, socket_type socket) noexcept {
@@ -92,12 +88,12 @@ namespace webpp {
                   for (;;) {
                       try {
                           start_accepting();
-                          logger.info(logger_cat, "Starting running IO tasks in a thread.");
+                          etraits::logger.info(logger_cat, "Starting running IO tasks in a thread.");
                           io.run();
-                          logger.info(logger_cat, "Finished all the IO tasks in the thread successfully.");
+                          etraits::logger.info(logger_cat, "Finished all the IO tasks in the thread successfully.");
                           break;
                       } catch (stl::exception const& err) {
-                          logger.error(logger_cat, "Server tasks finished with errors.", err);
+                          etraits::logger.error(logger_cat, "Server tasks finished with errors.", err);
                       }
                   }
               },
@@ -106,7 +102,7 @@ namespace webpp {
 
         void stop() noexcept {
             // this will stop all threads
-            logger.info(logger_cat, "Stopping all the IO tasks.");
+            etraits::logger.info(logger_cat, "Stopping all the IO tasks.");
             io.stop();
         }
     };

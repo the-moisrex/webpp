@@ -3,9 +3,9 @@
 #ifndef WEBPP_SELF_HOSTED_HPP
 #define WEBPP_SELF_HOSTED_HPP
 
-#include "../../../version.hpp"
 #include "../../server/server_concepts.hpp"
 #include "../../std/string_view.hpp"
+#include "../../version.hpp"
 #include "../application.hpp"
 #include "../request.hpp"
 #include "../response.hpp"
@@ -72,10 +72,16 @@ namespace webpp {
         server_type              server;
         application_wrapper_type app;
 
+        // todo: SSL options and other options go here
+
         template <typename AllocType = allocator_type>
         self_hosted(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
           : etraits{logger, alloc},
             app{logger, alloc} {}
+
+        [[nodiscard]] static constexpr bool is_ssl_available() const noexcept {
+            return false; // todo: change this
+        }
 
         void operator()() noexcept {
             server();

@@ -1,5 +1,5 @@
-#ifndef WEBPP_MAIN_H
-#define WEBPP_MAIN_H
+#ifndef WEBPP_MAIN_HPP
+#define WEBPP_MAIN_HPP
 
 #ifdef __unix__
 extern "C" {
@@ -33,4 +33,4 @@ void __lib_main(void) {
 }
 }
 #endif
-#endif // WEBPP_MAIN_H
+#endif // WEBPP_MAIN_HPP

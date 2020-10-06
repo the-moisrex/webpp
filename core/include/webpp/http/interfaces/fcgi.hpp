@@ -65,6 +65,10 @@ namespace webpp::fastcgi {
             endpoints{alloc},
             server{logger, alloc} {}
 
+        static constexpr [[nodiscard]] bool is_ssl_available() const noexcept {
+            return false; // it's not, it's FCGI, we just don't know
+        }
+
         void operator()() noexcept {
             if (endpoints.empty()) {
                 stl::net::error_code ec;
