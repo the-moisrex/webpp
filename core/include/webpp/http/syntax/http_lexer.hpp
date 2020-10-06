@@ -80,7 +80,6 @@ namespace webpp {
         }
 
         status_code_type consume_all() noexcept {
-
         }
 
     };
