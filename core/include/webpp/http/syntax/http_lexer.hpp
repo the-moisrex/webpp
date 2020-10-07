@@ -5,6 +5,7 @@
 
 #include "../../traits/traits_concepts.hpp"
 #include "../../std/vector.hpp"
+#include "../../http/status_code.hpp"
 #include <array>
 
 namespace webpp {
@@ -42,7 +43,6 @@ namespace webpp {
         using string_type = typename traits_type::string_type;
         using string_view_type = typename traits_type::string_view_type;
         using char_type = typename string_view_type::value_type;
-        using status_code_type = uint_fast16_t;
 
         static constexpr stl::array<char_type, 2> CRLF{{0x0D, 0x0A}}; // CR(\r), LF(\n)
         static constexpr stl::array<char_type, 2> OWS{{0x20, 0x09}}; // SP, HTAB
@@ -50,7 +50,7 @@ namespace webpp {
         string_view_type raw_view{};
         string_view_type body_view{};
         istl::vector<traits_type, stl::array<string_view_type, 2>> header_views{};
-        status_code_type status_code = 200;
+        enum status_code status_code = status_code::ok;
 
         inline auto consume_next(auto &&...what_to_find) noexcept {
             auto res = raw_view.find(stl::forward<decltype(what_to_find)>(what_to_find)...);
@@ -59,10 +59,10 @@ namespace webpp {
             }
         }
 
-        status_code_type next_line() noexcept {
+        enum status_code next_line() noexcept {
             if (raw_view.starts_with(CRLF.data())) {
                 body_view = raw_view.substr(CRLF.size());
-                return 200;
+                return status_code::ok;
             }
             if (auto colon = raw_view.find(':'); colon != string_view_type::npos) {
                 if (auto after_spaces = raw_view.find_first_not(OWS.data(), colon + 1); after_spaces != string_view_type::npos) {
@@ -72,11 +72,11 @@ namespace webpp {
                           raw_view.substr(0, colon),
                           raw_view.substr(after_spaces, CRLF_found - after_spaces)
                         });
-                        return 200; // Good so far
+                        return status_code::ok; // Good so far
                     }
                 }
             }
-            return 400; // Bad Request
+            return status_code::bad_request; // Bad Request
         }
 
         status_code_type consume_all() noexcept {

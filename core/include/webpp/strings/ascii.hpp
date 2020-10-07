@@ -451,6 +451,7 @@ namespace webpp::ascii {
             it1 -= simd_size;
             it2 -= simd_size;
         }
+        // todo: SIMDify this part as well, you can do better by re-calculating: https://youtu.be/1ir_nEfKQ7A?t=402
 #endif
         for (; it1 != it1_end; ++it1, ++it2) {
             if (*it1 != *it2) {

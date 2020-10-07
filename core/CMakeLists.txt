@@ -38,18 +38,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/std/vector.hpp
         ${LIB_INCLUDE_DIR}/webpp/std/optional.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/http/routes/router.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/routes/route.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/routes/methods.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/routes/path.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/routes/tpath.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/routes/context.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/routes/literals.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/routes/path/number.hpp
-
-        ${LIB_INCLUDE_DIR}/webpp/http/bodies/file.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/bodies/string.hpp
-
         ${LIB_INCLUDE_DIR}/webpp/validators/validators.hpp
         ${LIB_INCLUDE_DIR}/webpp/validators/email.hpp
 
@@ -66,6 +54,18 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/utils/property.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/uri.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/fixed_string.hpp
+
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/router.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/route.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/methods.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/path.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/tpath.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/context.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/literals.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/path/number.hpp
+
+        ${LIB_INCLUDE_DIR}/webpp/http/bodies/file.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/bodies/string.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/cgi.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fcgi.hpp
@@ -88,6 +88,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/application_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/http.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/mime_types.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/status_code.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/http/syntax/http_version.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/syntax/request_parser.hpp
