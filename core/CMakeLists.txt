@@ -1,7 +1,9 @@
 set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp.hpp
         ${LIB_INCLUDE_DIR}/webpp/version.hpp
-        ${LIB_INCLUDE_DIR}/webpp/config.hpp
+
+        ${LIB_INCLUDE_DIR}/webpp/configs/config_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/configs/constants.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/libs/asio.hpp
         ${LIB_INCLUDE_DIR}/webpp/libs/eve.hpp
@@ -120,7 +122,7 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/main.hpp
         ${LIB_INCLUDE_DIR}/webpp.hpp
-        include/webpp/http/bodies/string.hpp)
+        )
 
 set(ALL_SOURCES_SHORT "")
 foreach (source ${ALL_SOURCES})

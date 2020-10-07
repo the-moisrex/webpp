@@ -6,6 +6,7 @@
 #include "../../../server/server_concepts.hpp"
 #include "../../../traits/enable_traits.hpp"
 #include "../../../traits/traits_concepts.hpp"
+#include "../../../configs/constants.hpp"
 
 #include <array>
 
@@ -13,7 +14,7 @@ namespace webpp::shosted {
 
     template <Traits TraitsType, typename RequestType>
     struct self_hosted_session_manager : public enable_traits<TraitsType> {
-        static constexpr unsigned buffer_size     = 1024 * 1024 * 1024; // 1 MiB
+        static constexpr auto buffer_size     = default_buffer_size;
         static constexpr auto     logger_category = "SelfHosted/Session";
 
         using etraits          = enable_traits<TraitsType>;
