@@ -72,8 +72,8 @@ namespace webpp::headers {
             _allowed_encodings.clear();
 
             base::StringTokenizer tokenizer(accept_encoding.begin(), accept_encoding.end(), ",");
-            while (tokenizer.GetNext()) {
-                base::StringPiece entry = tokenizer.token_piece();
+            while (tokenizer.get_next()) {
+                base::StringPiece entry = tokenizer.token_view();
                 entry                   = TrimLWS(entry);
                 size_t semicolon_pos    = entry.find(';');
                 if (semicolon_pos == base::StringPiece::npos) {
