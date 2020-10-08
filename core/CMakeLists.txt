@@ -13,6 +13,7 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/webpp/strings/istring.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/ascii.hpp
+        ${LIB_INCLUDE_DIR}/webpp/strings/trim.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/traits/traits.hpp
         ${LIB_INCLUDE_DIR}/webpp/traits/enable_traits.hpp
@@ -57,6 +58,10 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/utils/uri.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/fixed_string.hpp
 
+        ${LIB_INCLUDE_DIR}/webpp/crypto/brotli.hpp
+        ${LIB_INCLUDE_DIR}/webpp/crypto/gzip.hpp
+        ${LIB_INCLUDE_DIR}/webpp/crypto/encoded_word.hpp
+
         ${LIB_INCLUDE_DIR}/webpp/http/routes/router.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/routes/route.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/routes/methods.hpp
@@ -92,9 +97,13 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/mime_types.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/status_code.hpp
 
+        ${LIB_INCLUDE_DIR}/webpp/http/syntax/common.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/syntax/http_version.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/syntax/request_parser.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/syntax/http_lexer.hpp
+
+        ${LIB_INCLUDE_DIR}/webpp/http/headers/header_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/headers/accept_encoding.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/request_cookie.hpp
