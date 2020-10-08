@@ -6,9 +6,12 @@
 #include "../../std/string_view.hpp"
 #include "../../std/vector.hpp"
 #include "../../strings/ascii.hpp"
+#include "../../strings/string_tokenizer.hpp"
+#include "../../http/syntax/common.hpp"
 
 namespace webpp::headers {
     /**
+     * RFC:      https://tools.ietf.org/html/rfc7231#section-5.3.4
      * MDN Docs: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding
      *
      * Syntax:
@@ -27,6 +30,7 @@ namespace webpp::headers {
     struct accept_encoding {
         using str_v       = typename TraitsType::string_view_type;
         using traits_type = TraitsType;
+        using string_tokenizer_type = string_tokenizer<traits_type>;
 
         struct encoding {
             str_v name;
@@ -71,53 +75,51 @@ namespace webpp::headers {
             }
             _allowed_encodings.clear();
 
-            base::StringTokenizer tokenizer(accept_encoding.begin(), accept_encoding.end(), ",");
+            string_tokenizer_type tokenizer(data, ",");
             while (tokenizer.get_next()) {
-                base::StringPiece entry = tokenizer.token_view();
-                entry                   = TrimLWS(entry);
+                auto entry = tokenizer.token();
+                http::trim_lws(entry);
                 size_t semicolon_pos    = entry.find(';');
-                if (semicolon_pos == base::StringPiece::npos) {
-                    if (entry.find_first_of(HTTP_LWS) != base::StringPiece::npos) {
+                if (semicolon_pos == str_v::npos) {
+                    if (entry.find_first_of(http::http_lws) != str_v::npos) {
                         _is_valid = false;
                         return;
                     }
-                    _allowed_encodings.insert(base::ToLowerASCII(entry));
+                    _allowed_encodings.insert(ascii::to_lower_copy(entry));
                     continue;
                 }
-                base::StringPiece encoding = entry.substr(0, semicolon_pos);
-                encoding                   = TrimLWS(encoding);
-                if (encoding.find_first_of(HTTP_LWS) != base::StringPiece::npos) {
+                auto encoding = entry.substr(0, semicolon_pos);
+                http::trim_lws(encoding);
+                if (encoding.find_first_of(http::http_lws) != str_v::npos) {
                     _is_valid = false;
                     return;
                 }
-                base::StringPiece params = entry.substr(semicolon_pos + 1);
-                params                   = TrimLWS(params);
+                auto params = entry.substr(semicolon_pos + 1);
+                http::trim_lws(params);
                 size_t equals_pos        = params.find('=');
-                if (equals_pos == base::StringPiece::npos) {
+                if (equals_pos == str_v::npos) {
                     _is_valid = false;
                     return;
                 }
-                base::StringPiece param_name = params.substr(0, equals_pos);
-                param_name                   = TrimLWS(param_name);
+                auto param_name = params.substr(0, equals_pos);
+                http::trim_lws(param_name);
                 if (!base::LowerCaseEqualsASCII(param_name, "q")) {
                     _is_valid = false;
                     return;
                 }
-                base::StringPiece qvalue = params.substr(equals_pos + 1);
-                qvalue                   = TrimLWS(qvalue);
+                auto qvalue = params.substr(equals_pos + 1);
+                http::trim_lws(qvalue);
                 if (qvalue.empty()) {
                     _is_valid = false;
                     return;
                 }
                 if (qvalue[0] == '1') {
-                    if (base::StringPiece("1.000").starts_with(qvalue)) {
-                        _allowed_encodings.insert(base::ToLowerASCII(encoding));
+                    if (str_v("1.000").starts_with(qvalue)) {
+                        _allowed_encodings.insert(ascii::to_lower_copy(encoding));
                         continue;
                     }
-                    {
-                        _is_valid = false;
-                        return;
-                    }
+                    _is_valid = false;
+                    return;
                 }
                 if (qvalue[0] != '0') {
                     _is_valid = false;
@@ -143,7 +145,7 @@ namespace webpp::headers {
                         nonzero_number = true;
                 }
                 if (nonzero_number)
-                    _allowed_encodings.insert(base::ToLowerASCII(encoding));
+                    _allowed_encodings.insert(ascii::to_lower_copy(encoding));
             }
 
             // RFC 7231 5.3.4 "A request without an Accept-Encoding header field implies
