@@ -320,7 +320,7 @@ namespace webpp::ascii {
       * Check if two strings are equal case-insensitively
       */
     template <side Side = side::both_unknown>
-    [[nodiscard]] constexpr bool iequals(istl::ConvertibleToStringView auto&& _str1,
+    [[nodiscard]] static inline bool iequals(istl::ConvertibleToStringView auto&& _str1,
                                         istl::ConvertibleToStringView auto&& _str2) noexcept {
         using str1_type  = decltype(_str1);
         using str2_type  = decltype(_str2);
@@ -434,7 +434,6 @@ namespace webpp::ascii {
             }
             return true;
         }
-
 
 
         //        if constexpr (istl::String<str1_t> && istl::String<str1_t> &&
