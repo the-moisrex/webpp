@@ -8,6 +8,7 @@
 
 namespace webpp::ascii {
 
+    // todo: do we need \v in here? it's not in chromium source code I think
     static constexpr stl::string_view standard_whitespaces{" \n\r\t\f\v"};
 
     // trim from start (leading whitespaces)
@@ -25,6 +26,13 @@ namespace webpp::ascii {
             --(*end);
     }
 
+    template <typename Iter, istl::StringView StrViewType = decltype(standard_whitespaces)>
+    static inline void trim(Iter* begin, Iter* end,
+                             StrViewType whitespaces = standard_whitespaces) noexcept {
+        ltrim<Iter, StrViewType>(begin, end, whitespaces);
+        rtrim<Iter, StrViewType>(begin, end, whitespaces);
+    }
+
     // trim from start (in place)
     template <istl::StringView StrViewType = decltype(standard_whitespaces)>
     static inline void ltrim(StrViewType& str, StrViewType whitespaces = standard_whitespaces) noexcept {
@@ -36,10 +44,12 @@ namespace webpp::ascii {
         str.remove_suffix(stl::min(str.find_last_not_of(whitespaces.data()), str.size()));
     }
 
-    static inline void trim(auto&&... args) noexcept {
-        ltrim(stl::forward<decltype(args)>(args)...);
-        rtrim(stl::forward<decltype(args)>(args)...);
+    template <istl::StringView StrViewType = decltype(standard_whitespaces)>
+    static inline void trim(StrViewType& str, StrViewType whitespaces = standard_whitespaces) noexcept {
+        ltrim<StrViewType>(str, whitespaces);
+        rtrim<StrViewType>(str, whitespaces);
     }
+
 
     // trim from start (copying)
     template <istl::StringView StrViewType = decltype(standard_whitespaces)>

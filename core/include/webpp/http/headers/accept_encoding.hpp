@@ -10,7 +10,7 @@
 #include "../../strings/string_tokenizer.hpp"
 #include "../../http/syntax/common.hpp"
 
-namespace webpp::headers {
+namespace webpp::http {
     /**
      * RFC:      https://tools.ietf.org/html/rfc7231#section-5.3.4
      * MDN Docs: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding
@@ -44,9 +44,7 @@ namespace webpp::headers {
         using allowed_encodings_type = istl::vector<traits_type, encoding>;
 
         // ctor
-        constexpr accept_encoding(auto&&... args) noexcept(
-          noexcept(data(stl::forward<decltype(args)>(args)...)))
-          : data{stl::forward<decltype(args)>(args)...} {}
+        constexpr accept_encoding(auto&&... args) noexcept : data{stl::forward<decltype(args)>(args)...} {}
 
         /**
          * Known encoding types
@@ -86,7 +84,7 @@ namespace webpp::headers {
                         _is_valid = false;
                         return;
                     }
-                    _allowed_encodings.insert(ascii::to_lower_copy(entry));
+                    _allowed_encodings.emplace_back(ascii::to_lower_copy(entry));
                     continue;
                 }
                 auto encoding = entry.substr(0, semicolon_pos);
@@ -116,7 +114,7 @@ namespace webpp::headers {
                 }
                 if (qvalue[0] == '1') {
                     if (str_v("1.000").starts_with(qvalue)) {
-                        _allowed_encodings.insert(ascii::to_lower_copy(encoding));
+                        _allowed_encodings.emplace_back(ascii::to_lower_copy(encoding));
                         continue;
                     }
                     _is_valid = false;
@@ -146,37 +144,70 @@ namespace webpp::headers {
                         nonzero_number = true;
                 }
                 if (nonzero_number)
-                    _allowed_encodings.insert(ascii::to_lower_copy(encoding));
+                    _allowed_encodings.emplace_back(ascii::to_lower_copy(encoding));
             }
 
             // RFC 7231 5.3.4 "A request without an Accept-Encoding header field implies
             // that the user agent has no preferences regarding content-codings."
             if (_allowed_encodings.empty()) {
-                _allowed_encodings.insert("*");
+                _allowed_encodings.emplace_back("*");
                 _is_valid = true;
                 return;
             }
 
             // Any browser must support "identity".
-            _allowed_encodings.insert("identity");
+            _allowed_encodings.emplace_back("identity");
 
             // RFC says gzip == x-gzip; mirror it here for easier matching.
-            if (_allowed_encodings.find("gzip") != _allowed_encodings.end())
-                _allowed_encodings.insert("x-gzip");
-            if (_allowed_encodings.find("x-gzip") != _allowed_encodings.end())
-                _allowed_encodings.insert("gzip");
+            // if (_allowed_encodings.find("gzip") != _allowed_encodings.end())
+            //     _allowed_encodings.emplace_back("x-gzip");
+            // if (_allowed_encodings.find("x-gzip") != _allowed_encodings.end())
+            //     _allowed_encodings.emplace_back("gzip");
 
             // RFC says compress == x-compress; mirror it here for easier matching.
-            if (_allowed_encodings.find("compress") != _allowed_encodings.end())
-                _allowed_encodings.insert("x-compress");
-            if (_allowed_encodings.find("x-compress") != _allowed_encodings.end())
-                _allowed_encodings.insert("compress");
+            // if (_allowed_encodings.find("compress") != _allowed_encodings.end())
+            //     _allowed_encodings.emplace_back("x-compress");
+            // if (_allowed_encodings.find("x-compress") != _allowed_encodings.end())
+            //     _allowed_encodings.emplace_back("compress");
 
             _is_valid = true;
         }
 
         [[nodiscard]] allowed_encodings_type const& allowed_encodings() const noexcept {
             return _allowed_encodings;
+        }
+
+        /**
+         * Check if the specified string is allowed compression algorithm in the specified header
+         * @param str
+         * @return
+         */
+        [[nodiscard]] bool is_allowed(istl::ConvertibleToStringView auto&& ...str) const noexcept {
+            return _is_valid && // it's not allowed if the string is not a valid accept-encoding header value
+                   stl::find_if(_allowed_encodings.cbegin(), _allowed_encodings.cend(), [&] (auto &&item) {
+                       return (ascii::iequals<ascii::side::first_lowered>(item.name, str) || ...);
+                   }) == _allowed_encodings.cend();
+        }
+
+        template <encoding_types Type>
+        [[nodiscard]] bool is_allowed() const noexcept {
+            if constexpr (gzip == Type) {
+                // RFC says gzip == x-gzip; mirror it here for easier matching.
+                return is_allowed("gzip", "x-gzip");
+            } else if constexpr (br == Type) {
+                return is_allowed("br");
+            } else if constexpr (compress == Type) {
+                // RFC says compress == x-compress; mirror it here for easier matching.
+                return is_allowed("compress", "x-compress");
+            } else if constexpr (deflate == Type) {
+                return is_allowed("identity");
+            } else if constexpr (all == Type) {
+                return is_allowed("*");
+            } else if constexpr (identity == Type) {
+                return true;
+            } else {
+                return false;
+            }
         }
 
         [[nodiscard]] bool is_valid() const noexcept {

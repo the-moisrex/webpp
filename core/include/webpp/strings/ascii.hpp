@@ -360,38 +360,38 @@ namespace webpp::ascii {
                     const auto equality = eve::is_not_equal(values1, values2);
                     if (eve::any(equality)) {
                         if constexpr (side::first_lowered == Side) {
-                            const auto val2_lowered = eve::logical_not(eve::if_else(
-                              eve::is_less(eve::sub(values2, big_a), 25), eve::add(values2, diff), values2));
+                            const auto val2_lowered = eve::if_else(
+                              eve::is_less(eve::sub(values2, big_a), 25), eve::add(values2, diff), values2);
                             const auto equality2    = eve::is_not_equal(values1, val2_lowered);
                             if (eve::any(equality2)) {
                                 return false;
                             }
                         } else if constexpr (side::second_lowered == Side) {
-                            const auto val1_lowered = eve::logical_not(eve::if_else(
-                              eve::is_less(eve::sub(values1, big_a), 25), eve::add(values1, diff), values1));
+                            const auto val1_lowered = eve::if_else(
+                              eve::is_less(eve::sub(values1, big_a), 25), eve::add(values1, diff), values1);
                             const auto equality2    = eve::is_not_equal(val1_lowered, values2);
                             if (eve::any(equality2)) {
                                 return false;
                             }
                         } else if constexpr (side::first_uppered == Side) {
-                            const auto val2_uppered = eve::logical_not(eve::if_else(
-                              eve::is_less(eve::sub(values2, small_a), 25), eve::add(values2, diff), values2));
+                            const auto val2_uppered = eve::if_else(
+                              eve::is_less(eve::sub(values2, small_a), 25), eve::sub(values2, diff), values2);
                             const auto equality2    = eve::is_not_equal(values1, val2_uppered);
                             if (eve::any(equality2)) {
                                 return false;
                             }
                         } else if constexpr (side::second_uppered == Side) {
-                            const auto val1_uppered = eve::logical_not(eve::if_else(
-                              eve::is_less(eve::sub(values1, small_a), 25), eve::add(values1, diff), values1));
+                            const auto val1_uppered = eve::if_else(
+                              eve::is_less(eve::sub(values1, small_a), 25), eve::sub(values1, diff), values1);
                             const auto equality2    = eve::is_not_equal(val1_uppered, values2);
                             if (eve::any(equality2)) {
                                 return false;
                             }
                         } else {
-                            const auto val1_lowered = eve::logical_not(eve::if_else(
-                              eve::is_less(eve::sub(values1, big_a), 25), eve::add(values1, diff), values1));
-                            const auto val2_lowered = eve::logical_not(eve::if_else(
-                              eve::is_less(eve::sub(values2, big_a), 25), eve::add(values2, diff), values2));
+                            const auto val1_lowered = eve::if_else(
+                              eve::is_less(eve::sub(values1, big_a), 25), eve::add(values1, diff), values1);
+                            const auto val2_lowered = eve::if_else(
+                              eve::is_less(eve::sub(values2, big_a), 25), eve::add(values2, diff), values2);
                             const auto equality2    = eve::is_not_equal(val1_lowered, val2_lowered);
                             if (eve::any(equality2)) {
                                 return false;
