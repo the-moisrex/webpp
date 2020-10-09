@@ -4,6 +4,7 @@
 #define WEBPP_HTTP_COOKIE_JAR_H
 
 #include "../../std/vector.hpp"
+#include "../../strings/trim.hpp"
 #include "./cookie.hpp"
 
 #include <algorithm>

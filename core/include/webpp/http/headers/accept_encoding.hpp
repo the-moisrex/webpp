@@ -6,6 +6,7 @@
 #include "../../std/string_view.hpp"
 #include "../../std/vector.hpp"
 #include "../../strings/ascii.hpp"
+#include "../../strings/validators.hpp"
 #include "../../strings/string_tokenizer.hpp"
 #include "../../http/syntax/common.hpp"
 
@@ -103,7 +104,7 @@ namespace webpp::headers {
                 }
                 auto param_name = params.substr(0, equals_pos);
                 http::trim_lws(param_name);
-                if (!base::LowerCaseEqualsASCII(param_name, "q")) {
+                if (!ascii::iequals<ascii::side::second_lowered>(param_name, "q")) {
                     _is_valid = false;
                     return;
                 }
@@ -137,7 +138,7 @@ namespace webpp::headers {
                 }
                 bool nonzero_number = false;
                 for (size_t i = 2; i < qvalue.length(); ++i) {
-                    if (!base::IsAsciiDigit(qvalue[i])) {
+                    if (!ascii::is::digit(qvalue[i])) {
                         _is_valid = false;
                         return;
                     }

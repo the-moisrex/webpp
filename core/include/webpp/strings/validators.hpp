@@ -17,8 +17,8 @@ namespace webpp::ascii::is {
      * @return true if c is a whitespace
      */
     [[nodiscard]] constexpr bool whitespace(istl::CharType auto&& c) noexcept {
+        // todo: do we need '\v'?
         return c == ' ' || c == '\n' || c == '\r' || c == '\t' || c == '\f' || c == '\v';
-        // TODO: consider using std::isspace
     }
 
     /**

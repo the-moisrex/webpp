@@ -15,6 +15,8 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/strings/ascii.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/trim.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/string_tokenizer.hpp
+        ${LIB_INCLUDE_DIR}/webpp/strings/validators.hpp
+        ${LIB_INCLUDE_DIR}/webpp/strings/charset.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/traits/traits.hpp
         ${LIB_INCLUDE_DIR}/webpp/traits/enable_traits.hpp
@@ -47,7 +49,6 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/webpp/utils/casts.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/cfile.hpp
-        ${LIB_INCLUDE_DIR}/webpp/utils/charset.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/const_list.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/containers.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/debounce.hpp

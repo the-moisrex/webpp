@@ -306,9 +306,20 @@ namespace webpp::ascii {
 #endif
     }
 
+    enum struct side {
+        first_lowered,
+        second_lowered,
+        both_lowered,
+        first_uppered,
+        second_uppered,
+        both_uppered,
+        both_unknown
+    };
+
      /**
       * Check if two strings are equal case-insensitively
       */
+    template <side Side = side::both_unknown>
     [[nodiscard]] constexpr bool iequals(istl::ConvertibleToStringView auto&& _str1,
                                         istl::ConvertibleToStringView auto&& _str2) noexcept {
         using str1_type  = decltype(_str1);
@@ -325,50 +336,104 @@ namespace webpp::ascii {
         if (_size != size(_str2))
             return false;
 
-        auto*       it1     = istl::string_data(_str1);
-        auto*       it2     = istl::string_data(_str2);
-        const auto* it1_end = it1 + _size;
+        if constexpr (side::both_lowered == Side || side::both_uppered == Side) {
+            return istl::to_string_view(_str1) == istl::to_string_view(_str2);
+        } else {
+
+            auto*       it1     = istl::string_data(_str1);
+            auto*       it2     = istl::string_data(_str2);
+            const auto* it1_end = it1 + _size;
 
 #ifdef WEBPP_EVE
-        using simd_type  = eve::wide<char_type>;
-        using simd_utype = eve::wide<stl::make_unsigned_t<char_type>>;
+            using simd_type  = eve::wide<char_type>;
+            using simd_utype = eve::wide<stl::make_unsigned_t<char_type>>;
 
-        constexpr auto simd_size = simd_type::size();
-        if (_size > simd_size) {
-            const auto*      almost_end = it1_end - (_size % simd_size);
-            const simd_utype big_a{'A'};
-            const simd_utype diff{'a' - 'A'};
-            for (; it1 != almost_end; it1 += simd_size, it2 += simd_size) {
-                const auto values1  = eve::bit_cast(simd_type{it1}, eve::as_<simd_utype>());
-                const auto values2  = eve::bit_cast(simd_type{it2}, eve::as_<simd_utype>());
-                const auto equality = eve::is_not_equal(values1, values2);
-                if (eve::any(equality)) {
-                    const auto val1_lowered = eve::logical_not(eve::if_else(
-                      eve::is_less(eve::sub(values1, big_a), 25), eve::add(values1, diff), values1));
-                    const auto val2_lowered = eve::logical_not(eve::if_else(
-                      eve::is_less(eve::sub(values1, big_a), 25), eve::add(values1, diff), values1));
-                    const auto equality2    = eve::is_not_equal(val1_lowered, val2_lowered);
-                    if (eve::any(equality2)) {
-                        return false;
+            constexpr auto simd_size = simd_type::size();
+            if (_size > simd_size) {
+                const auto*      almost_end = it1_end - (_size % simd_size);
+                const simd_utype big_a{'A'};
+                const simd_utype small_a{'a'};
+                const simd_utype diff{'a' - 'A'};
+                for (; it1 != almost_end; it1 += simd_size, it2 += simd_size) {
+                    const auto values1  = eve::bit_cast(simd_type{it1}, eve::as_<simd_utype>());
+                    const auto values2  = eve::bit_cast(simd_type{it2}, eve::as_<simd_utype>());
+                    const auto equality = eve::is_not_equal(values1, values2);
+                    if (eve::any(equality)) {
+                        if constexpr (side::first_lowered == Side) {
+                            const auto val2_lowered = eve::logical_not(eve::if_else(
+                              eve::is_less(eve::sub(values2, big_a), 25), eve::add(values2, diff), values2));
+                            const auto equality2    = eve::is_not_equal(values1, val2_lowered);
+                            if (eve::any(equality2)) {
+                                return false;
+                            }
+                        } else if constexpr (side::second_lowered == Side) {
+                            const auto val1_lowered = eve::logical_not(eve::if_else(
+                              eve::is_less(eve::sub(values1, big_a), 25), eve::add(values1, diff), values1));
+                            const auto equality2    = eve::is_not_equal(val1_lowered, values2);
+                            if (eve::any(equality2)) {
+                                return false;
+                            }
+                        } else if constexpr (side::first_uppered == Side) {
+                            const auto val2_uppered = eve::logical_not(eve::if_else(
+                              eve::is_less(eve::sub(values2, small_a), 25), eve::add(values2, diff), values2));
+                            const auto equality2    = eve::is_not_equal(values1, val2_uppered);
+                            if (eve::any(equality2)) {
+                                return false;
+                            }
+                        } else if constexpr (side::second_uppered == Side) {
+                            const auto val1_uppered = eve::logical_not(eve::if_else(
+                              eve::is_less(eve::sub(values1, small_a), 25), eve::add(values1, diff), values1));
+                            const auto equality2    = eve::is_not_equal(val1_uppered, values2);
+                            if (eve::any(equality2)) {
+                                return false;
+                            }
+                        } else {
+                            const auto val1_lowered = eve::logical_not(eve::if_else(
+                              eve::is_less(eve::sub(values1, big_a), 25), eve::add(values1, diff), values1));
+                            const auto val2_lowered = eve::logical_not(eve::if_else(
+                              eve::is_less(eve::sub(values2, big_a), 25), eve::add(values2, diff), values2));
+                            const auto equality2    = eve::is_not_equal(val1_lowered, val2_lowered);
+                            if (eve::any(equality2)) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+                // do the rest
+                it1 -= simd_size;
+                it2 -= simd_size;
+            }
+            // todo: SIMDify this part as well, you can do better by re-calculating: https://youtu.be/1ir_nEfKQ7A?t=402
+#endif
+            for (; it1 != it1_end; ++it1, ++it2) {
+                if (*it1 != *it2) {
+                    // compiler seems to be able to optimize this better than us
+                    if constexpr (side::first_lowered == Side) {
+                        auto ch2_lowered = to_lower_copy(*it2);
+                        if (*it1 != ch2_lowered)
+                            return false;
+                    } else if constexpr (side::second_lowered == Side) {
+                        auto ch1_lowered = to_lower_copy(*it1);
+                        if (ch1_lowered != *it2)
+                            return false;
+                    } else if constexpr (side::first_uppered == Side) {
+                        auto ch2_uppered = to_upper_copy(*it2);
+                        if (*it1 != ch2_uppered)
+                            return false;
+                    } else if constexpr (side::second_uppered == Side) {
+                        auto ch1_uppered = to_upper_copy(*it1);
+                        if (ch1_uppered == *it2)
+                            return false;
+                    } else {
+                        auto ch1_lowered = to_lower_copy(*it1);
+                        auto ch2_lowered = to_lower_copy(*it2);
+                        if (ch1_lowered != ch2_lowered)
+                            return false;
                     }
                 }
             }
-            // do the rest
-            it1 -= simd_size;
-            it2 -= simd_size;
+            return true;
         }
-        // todo: SIMDify this part as well, you can do better by re-calculating: https://youtu.be/1ir_nEfKQ7A?t=402
-#endif
-        for (; it1 != it1_end; ++it1, ++it2) {
-            if (*it1 != *it2) {
-                // compiler seems to be able to optimize this better than us
-                auto ch1_lowered = to_lower_copy(*it1);
-                auto ch2_lowered = to_lower_copy(*it2);
-                if (ch1_lowered != ch2_lowered)
-                    return false;
-            }
-        }
-        return true;
 
 
 
@@ -390,6 +455,7 @@ namespace webpp::ascii {
         //            });
         //        }
     }
+
 
     //    template <typename ValueType, typename... R>
     //    requires(stl::is_integral_v<stl::remove_cvref_t<ValueType>>)
