@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+using namespace webpp::ascii::is;
 using namespace webpp::is;
 
 TEST(ValidationsTest, ContainsFunctions) {

@@ -5,6 +5,7 @@
 #include "../std/concepts.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/ascii.hpp"
+#include "../strings/validators.hpp"
 #include "../strings/charset.hpp"
 #include "../utils/casts.hpp"
 
@@ -110,7 +111,7 @@ namespace webpp {
             for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
                 next_dot       = str.find('.');
                 auto octet_str = str.substr(0, next_dot);
-                if (octet_str.size() > 3 || !is::digit(octet_str) || to_uint(octet_str) > 255)
+                if (octet_str.size() > 3 || !ascii::is::digit(octet_str) || to_uint(octet_str) > 255)
                     return false;
                 str.remove_prefix(octet_str.size() + (octet_index != 3));
             }
@@ -129,7 +130,7 @@ namespace webpp {
             for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
                 next_dot       = str.find('.');
                 auto octet_str = str.substr(0, next_dot);
-                if (octet_str.size() > 3 || !is::digit(octet_str)) {
+                if (octet_str.size() > 3 || !ascii::is::digit(octet_str)) {
                     return false;
                 }
                 if (auto octet_int = to_uint(octet_str); octet_int > 255 || subnet_octet(octet_int))
@@ -172,7 +173,7 @@ namespace webpp {
                 auto index = stl::distance(stl::begin(str), found.base()) - 1;
                 if (!is::ipv4(str.substr(0, index)))
                     return false;
-                if (auto prefix = str.substr(index + 1); is::digit(prefix)) {
+                if (auto prefix = str.substr(index + 1); ascii::is::digit(prefix)) {
                     auto _prefix = to_uint(prefix);
                     return _prefix >= 0 && _prefix <= 32;
                 }
@@ -244,7 +245,7 @@ namespace webpp {
                                ((!encountered_double_colons && index == 8u) || encountered_double_colons);
                     } else
                         return false;
-                } else if (!is::hex(octet)) {
+                } else if (!ascii::is::hex(octet)) {
                     return false;
                 }
                 if (next_colon != str_view_t::npos)
@@ -274,7 +275,7 @@ namespace webpp {
                                           });
                 found != stl::rend(str)) {
                 auto index = stl::distance(stl::begin(str), found.base()) - 1;
-                if (auto prefix = str.substr(index + 1); is::digit(prefix)) {
+                if (auto prefix = str.substr(index + 1); ascii::is::digit(prefix)) {
                     int _prefix = to_uint(prefix);
                     if (!(_prefix >= 0 && _prefix <= 128))
                         return false;
@@ -356,7 +357,7 @@ namespace webpp {
                 } else { // ipv6
                     return is::ipv6(str.substr(1, str.size() - 2));
                 }
-            } else if (is::digit(str[0]) && is::ipv4(str)) { // ipv4
+            } else if (ascii::is::digit(str[0]) && is::ipv4(str)) { // ipv4
                 return true;
             } else {
                 constexpr auto ccc =
@@ -432,7 +433,7 @@ namespace webpp {
             switch (str.size()) {
                 case 3 + 1:
                 case 6 + 1:
-                case 8 + 1: return is::hex(str.substr(1));
+                case 8 + 1: return ascii::is::hex(str.substr(1));
                 default: return false;
             }
         }
@@ -457,7 +458,7 @@ namespace webpp {
             sstr.remove_suffix(1);
             rtrim(sstr);
             auto it = sstr.find_first_not_of(numbers);
-            if (!is::uint8(sstr.substr(0, it)))
+            if (!ascii::is::uint8(sstr.substr(0, it)))
                 return false;
             sstr.remove_suffix(it);
             ltrim(sstr);
@@ -466,7 +467,7 @@ namespace webpp {
             sstr.remove_prefix(1);
             ltrim(sstr);
             it = sstr.find_first_not_of(numbers);
-            if (!is::uint8(sstr.substr(0, it)))
+            if (!ascii::is::uint8(sstr.substr(0, it)))
                 return false;
             sstr.remove_prefix(it);
             ltrim(sstr);
@@ -475,7 +476,7 @@ namespace webpp {
             sstr.remove_prefix(1);
             ltrim(sstr);
             it = sstr.find_first_not_of(numbers);
-            if (!is::uint8(sstr.substr(0, it)))
+            if (!ascii::is::uint8(sstr.substr(0, it)))
                 return false;
             sstr.remove_prefix(it);
             ltrim(sstr);

@@ -364,7 +364,7 @@ namespace webpp {
             } else {
                 port_start += starting_point;
                 auto str_view = _data.substr(port_start + 1, authority_end - (port_start + 1));
-                if (!is::digit(str_view)) {
+                if (!ascii::is::digit(str_view)) {
                     port_start = data.size();
                 }
             }
@@ -1282,7 +1282,7 @@ namespace webpp {
         basic_uri& port(str_view_t new_port) noexcept {
             if (ascii::starts_with(new_port, ':'))
                 new_port.remove_prefix(1);
-            if (!is::digit(new_port))
+            if (!ascii::is::digit(new_port))
                 throw stl::invalid_argument("The specified port is not valid");
             parse_port();
             if (port_start == data.size()) {

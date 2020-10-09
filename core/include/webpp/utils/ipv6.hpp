@@ -164,7 +164,7 @@ namespace webpp {
                 } else if (ipv6_data[colon] == '/') {
                     // we have a prefix
                     auto prefix_str = ipv6_data.substr(colon + 1);
-                    if (!is::digit(prefix_str)) {
+                    if (!ascii::is::digit(prefix_str)) {
                         _prefix = 253u; // the prefix is invalid
                         break;          // let's not go all crazy just yet
                     }

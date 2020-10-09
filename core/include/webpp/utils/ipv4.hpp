@@ -52,7 +52,7 @@ namespace webpp {
             first_dot++;
 
         auto octet_1 = _data.substr(0u, first_dot);
-        if (first_dot == len || octet_1.empty() || octet_1.size() > 3 || !is::digit(octet_1) ||
+        if (first_dot == len || octet_1.empty() || octet_1.size() > 3 || !ascii::is::digit(octet_1) ||
             (ascii::starts_with(octet_1, '0') && octet_1 != "0")) {
             return 0u;
         }
@@ -62,7 +62,7 @@ namespace webpp {
             second_dot++;
 
         auto octet_2 = _data.substr(first_dot + 1u, second_dot - (first_dot + 1));
-        if (second_dot == len || octet_2.empty() || octet_2.size() > 3 || !is::digit(octet_2) ||
+        if (second_dot == len || octet_2.empty() || octet_2.size() > 3 || !ascii::is::digit(octet_2) ||
             (ascii::starts_with(octet_2, '0') && octet_2 != "0")) {
             return 0u;
         }
@@ -72,14 +72,14 @@ namespace webpp {
             third_dot++;
 
         auto octet_3 = _data.substr(second_dot + 1u, third_dot - (second_dot + 1));
-        if (first_dot == len || octet_3.empty() || octet_3.size() > 3 || !is::digit(octet_3) ||
+        if (first_dot == len || octet_3.empty() || octet_3.size() > 3 || !ascii::is::digit(octet_3) ||
             (ascii::starts_with(octet_3, '0') && octet_3 != "0")) {
             return 0u; // parsing failed.
         }
 
         auto octet_4 = _data.substr(third_dot + 1u);
 
-        if (octet_4.empty() || octet_4.size() > 3 || !is::digit(octet_4) ||
+        if (octet_4.empty() || octet_4.size() > 3 || !ascii::is::digit(octet_4) ||
             (ascii::starts_with(octet_4, '0') && octet_4 != "0")) {
             return 0u;
         }
@@ -133,7 +133,7 @@ namespace webpp {
                 first_dot++;
 
             auto octet_1 = _data.substr(0u, first_dot);
-            if (first_dot == len || octet_1.empty() || octet_1.size() > 3 || !is::digit(octet_1) ||
+            if (first_dot == len || octet_1.empty() || octet_1.size() > 3 || !ascii::is::digit(octet_1) ||
                 (ascii::starts_with(octet_1, '0') && octet_1 != "0")) {
                 _prefix = 254u; // the ip is not valid
                 return;
@@ -144,7 +144,7 @@ namespace webpp {
                 second_dot++;
 
             auto octet_2 = _data.substr(first_dot + 1u, second_dot - (first_dot + 1));
-            if (second_dot == len || octet_2.empty() || octet_2.size() > 3 || !is::digit(octet_2) ||
+            if (second_dot == len || octet_2.empty() || octet_2.size() > 3 || !ascii::is::digit(octet_2) ||
                 (ascii::starts_with(octet_2, '0') && octet_2 != "0")) {
                 _prefix = 254u; // the ip is not valid
                 return;
@@ -155,7 +155,7 @@ namespace webpp {
                 third_dot++;
 
             auto octet_3 = _data.substr(second_dot + 1u, third_dot - (second_dot + 1));
-            if (third_dot == len || octet_3.empty() || octet_3.size() > 3 || !is::digit(octet_3) ||
+            if (third_dot == len || octet_3.empty() || octet_3.size() > 3 || !ascii::is::digit(octet_3) ||
                 (ascii::starts_with(octet_3, '0') && octet_3 != "0")) {
                 _prefix = 254u; // the ip is not valid
                 return;         // parsing failed.
@@ -167,7 +167,7 @@ namespace webpp {
 
             auto octet_4 = _data.substr(third_dot + 1u, slash - (third_dot + 1));
 
-            if (octet_4.empty() || octet_4.size() > 3 || !is::digit(octet_4) ||
+            if (octet_4.empty() || octet_4.size() > 3 || !ascii::is::digit(octet_4) ||
                 (ascii::starts_with(octet_4, '0') && octet_4 != "0")) {
                 _prefix = 254u; // the ip is not valid
                 return;
@@ -176,7 +176,7 @@ namespace webpp {
             if (slash != len) {
                 auto prefix_str = _data.substr(slash + 1);
                 if (prefix_str.empty() || (ascii::starts_with(prefix_str, '0') && prefix_str != "0") ||
-                    !is::digit(prefix_str)) {
+                    !ascii::is::digit(prefix_str)) {
                     _prefix = 254u; // the ip is not valid
                     return;
                 }
