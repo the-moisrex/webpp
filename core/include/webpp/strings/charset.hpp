@@ -1,5 +1,5 @@
-#ifndef CHARSET_H
-#define CHARSET_H
+#ifndef WEBPP_CHARSET_HPP
+#define WEBPP_CHARSET_HPP
 
 #include "../std/concepts.hpp"
 #include "../std/string_view.hpp"
@@ -181,4 +181,4 @@ namespace webpp {
     template <typename CharT = char>
     constexpr auto ALPHA_DIGIT = charset<CharT>(ALPHA<CharT>, DIGIT<CharT>);
 } // namespace webpp
-#endif // CHARSET_H
+#endif // WEBPP_CHARSET_HPP
