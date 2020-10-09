@@ -229,6 +229,19 @@ static void IEQ_Default(benchmark::State& state) {
 }
 BENCHMARK(IEQ_Default);
 
+static void IEQ_DefaultLowered(benchmark::State& state) {
+    for (auto _ : state) {
+        std::string str   = str_generator();
+        auto        istr  = str;
+        auto        istr2 = webpp::ascii::to_lower_copy(istr);
+        auto res = webpp::ascii::iequals<webpp::ascii::side::second_lowered>(istr, istr2);
+        benchmark::DoNotOptimize(res);
+        benchmark::DoNotOptimize(istr);
+        benchmark::DoNotOptimize(istr2);
+    }
+}
+BENCHMARK(IEQ_DefaultLowered);
+
 static void IEQ_SIMD(benchmark::State& state) {
     for (auto _ : state) {
         std::string str   = str_generator();
