@@ -1,4 +1,5 @@
 #include "../benchmark.hpp"
+#include <strings.h>
 
 // clang-format off
 #include webpp_include(strings/ascii)
@@ -188,6 +189,32 @@ using namespace webpp;
     return true;
 }
 
+
+static void IEQ_Strcasecmp(benchmark::State& state) {
+    for (auto _ : state) {
+        std::string str   = str_generator();
+        auto        istr  = str;
+        auto        istr2 = webpp::ascii::to_lower_copy(istr);
+        auto res = ::strcasecmp(istr.data(), istr2.data());
+        benchmark::DoNotOptimize(res == 0);
+        benchmark::DoNotOptimize(istr);
+        benchmark::DoNotOptimize(istr2);
+    }
+}
+BENCHMARK(IEQ_Strcasecmp);
+
+static void IEQ_Strncasecmp(benchmark::State& state) {
+    for (auto _ : state) {
+        std::string str   = str_generator();
+        auto        istr  = str;
+        auto        istr2 = webpp::ascii::to_lower_copy(istr);
+        auto res = ::strncasecmp(istr.data(), istr2.data(), istr.size());
+        benchmark::DoNotOptimize(res == 0);
+        benchmark::DoNotOptimize(istr);
+        benchmark::DoNotOptimize(istr2);
+    }
+}
+BENCHMARK(IEQ_Strncasecmp);
 
 static void IEQ_Default(benchmark::State& state) {
     for (auto _ : state) {
