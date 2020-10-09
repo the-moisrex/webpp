@@ -5,10 +5,10 @@
 #include "../std/optional.hpp"
 #include "../std/vector.hpp"
 #include "../strings/ascii.hpp"
+#include "../strings/charset.hpp"
 #include "../traits/traits_concepts.hpp"
 #include "../validators/validators.hpp"
 #include "./casts.hpp"
-#include "./charset.hpp"
 #include "./ipv4.hpp"
 #include "./ipv6.hpp"
 

@@ -5,8 +5,8 @@
 #include "../std/concepts.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/ascii.hpp"
+#include "../strings/charset.hpp"
 #include "../utils/casts.hpp"
-#include "../utils/charset.hpp"
 
 #include <algorithm>
 

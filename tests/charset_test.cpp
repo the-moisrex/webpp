@@ -1,4 +1,4 @@
-#include "../core/include/webpp/utils/charset.hpp"
+#include "../core/include/webpp/strings/charset.hpp"
 
 #include <gtest/gtest.h>
 

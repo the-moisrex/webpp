@@ -1,5 +1,5 @@
+#include "../core/include/webpp/strings/charset.hpp"
 #include "../core/include/webpp/traits/std_traits.hpp"
-#include "../core/include/webpp/utils/charset.hpp"
 #include "../core/include/webpp/validators/validators.hpp"
 
 #include <gtest/gtest.h>
