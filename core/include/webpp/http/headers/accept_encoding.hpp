@@ -282,7 +282,7 @@ namespace webpp::http {
                     // RFC says compress == x-compress; mirror it here for easier matching.
                     return get<ascii::char_case::lowered>("compress", "x-compress");
                 } else if constexpr (deflate == Type) {
-                    return get<ascii::char_case::lowered>("identity");
+                    return get<ascii::char_case::lowered>("deflate");
                 } else if constexpr (all == Type) {
                     return get<ascii::char_case::lowered>("*");
                 } else if constexpr (identity == Type) {
@@ -304,6 +304,10 @@ namespace webpp::http {
 
         [[nodiscard]] bool is_valid() const noexcept {
             return _is_valid;
+        }
+
+        [[nodiscard]] encoding_types best_algorithm() const noexcept {
+            // todo: fill this
         }
 
       private:
