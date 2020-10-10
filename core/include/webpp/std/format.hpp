@@ -4,12 +4,13 @@
 #define WEBPP_FORMAT_H
 
 #include "./std.hpp"
+#include "../libs/fmt.hpp"
 
 #if __cpp_lib_format
 #    include <format>
-#elif __has_include(<fmt/format.h>)
-#    include <fmt/format.h>
-#    include <fmt/printf.h>
+#elif __has_include(fmt(format))
+#    include fmt(format)
+#    include fmt(printf)
 #define WEBPP_FMT_LIB 1
 namespace webpp::stl {
 

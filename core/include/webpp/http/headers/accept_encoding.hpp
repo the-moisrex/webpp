@@ -15,6 +15,7 @@ namespace webpp::http {
     /**
      * RFC:      https://tools.ietf.org/html/rfc7231#section-5.3.4
      * MDN Docs: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding
+     * Wiki:     https://en.wikipedia.org/wiki/HTTP_compression
      *
      * Syntax:
      *   Accept-Encoding: gzip
@@ -26,6 +27,8 @@ namespace webpp::http {
      *
      * Multiple algorithms, weighted with the quality value syntax:
      *   Accept-Encoding: deflate, gzip;q=1.0, *;q=0.5
+     *
+     * todo: add support for pack200-gzip, exi, zstd
      */
 
     template <Traits TraitsType, bool AllowUnknownAlgos = false>
@@ -228,13 +231,13 @@ namespace webpp::http {
                     }
                     break;
                 [[unlikely]] case 'C':
-                case 'c':
+                [[unlikely]] case 'c': // unlikely because it's a deprecated algorithm
                     if (ascii::iequals<the_case>(str, "compress")) {
                         return compress;
                     }
                     break;
                 [[unlikely]] case 'x':
-                [[unlikely]] case 'X':
+                [[unlikely]] case 'X': // unlikely because browsers usually don't use x- prefix
                     if (ascii::iequals<the_case>(str, "x-gzip")) {
                         return gzip;
                     } else if (ascii::iequals<the_case>(str, "x-compress")) {

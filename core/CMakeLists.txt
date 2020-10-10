@@ -8,6 +8,9 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/libs/asio.hpp
         ${LIB_INCLUDE_DIR}/webpp/libs/eve.hpp
         ${LIB_INCLUDE_DIR}/webpp/libs/ctre.hpp
+        ${LIB_INCLUDE_DIR}/webpp/libs/cryptopp.hpp
+        ${LIB_INCLUDE_DIR}/webpp/libs/zlib.hpp
+        ${LIB_INCLUDE_DIR}/webpp/libs/fmt.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/extensions/extension.hpp
 
