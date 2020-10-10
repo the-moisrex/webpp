@@ -2,7 +2,7 @@
 #define WEBPP_HTTP_HEADERS_H
 
 #include "../std/std.hpp"
-#include "../strings/ascii.hpp"
+#include "../strings/iequals.hpp"
 
 #include <cstdint>
 

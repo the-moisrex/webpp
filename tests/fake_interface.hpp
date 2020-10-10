@@ -6,7 +6,7 @@
 #include "../core/include/webpp/http/response.hpp"
 #include "../core/include/webpp/http/routes/router.hpp"
 #include "../core/include/webpp/std/string_view.hpp"
-#include "../core/include/webpp/strings/ascii.hpp"
+#include "../core/include/webpp/strings/to_case.hpp"
 #include "../core/include/webpp/traits/enable_traits.hpp"
 #include "../core/include/webpp/traits/std_traits.hpp"
 #include "../core/include/webpp/utils/casts.hpp"

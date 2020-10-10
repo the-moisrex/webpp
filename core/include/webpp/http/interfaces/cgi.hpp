@@ -2,7 +2,7 @@
 #define WEBPP_CGI_H
 
 #include "../../std/string_view.hpp"
-#include "../../strings/ascii.hpp"
+#include "../../strings/to_case.hpp"
 #include "../../traits/std_traits.hpp"
 #include "../../utils/casts.hpp"
 #include "../application.hpp"

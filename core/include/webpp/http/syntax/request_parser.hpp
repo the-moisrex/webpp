@@ -3,7 +3,7 @@
 #ifndef WEBPP_REQUEST_PARSER_HPP
 #define WEBPP_REQUEST_PARSER_HPP
 
-#include "../../strings/ascii.hpp"
+#include "../../strings/to_case.hpp"
 #include "../../traits/traits_concepts.hpp"
 #include "./http_version.hpp"
 

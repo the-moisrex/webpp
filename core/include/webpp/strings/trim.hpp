@@ -41,7 +41,11 @@ namespace webpp::ascii {
 
     template <istl::StringView StrViewType = decltype(standard_whitespaces)>
     static inline void rtrim(StrViewType& str, StrViewType whitespaces = standard_whitespaces) noexcept {
-        str.remove_suffix(stl::min(str.find_last_not_of(whitespaces.data()), str.size()));
+        std::size_t found = str.find_last_not_of(whitespaces.data());
+        if (found != stl::remove_cvref_t<decltype(str)>::npos)
+            str.remove_suffix(str.size() - found - 1);
+        else
+            str.remove_suffix(str.size());
     }
 
     template <istl::StringView StrViewType = decltype(standard_whitespaces)>

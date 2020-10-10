@@ -12,7 +12,8 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/extensions/extension.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/strings/istring.hpp
-        ${LIB_INCLUDE_DIR}/webpp/strings/ascii.hpp
+        ${LIB_INCLUDE_DIR}/webpp/strings/to_case.hpp
+        ${LIB_INCLUDE_DIR}/webpp/strings/iequals.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/trim.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/string_tokenizer.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/validators.hpp

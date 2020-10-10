@@ -4,7 +4,7 @@
 #define WEBPP_MIME_TYPES_HPP
 
 #include "../std/string_view.hpp"
-#include "../strings/ascii.hpp"
+#include "../strings/to_case.hpp"
 
 namespace webpp {
 
