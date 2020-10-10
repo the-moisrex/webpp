@@ -19,4 +19,12 @@ TEST(Headers, AcceptEncoding) {
     EXPECT_TRUE(parser2.is_valid());
     EXPECT_TRUE(parser2.is_allowed<parser2.gzip>());
     EXPECT_FLOAT_EQ(parser2.get<parser2.gzip>()->quality, 0.05f);
+
+    accept_encoding<std_traits> parser3{"gzip; q=0.255, br, deflate"};
+    parser3.parse();
+    EXPECT_TRUE(parser3.is_valid());
+    EXPECT_TRUE(parser3.is_allowed<parser3.gzip>());
+    EXPECT_TRUE(parser3.is_allowed<parser3.br>());
+    EXPECT_TRUE(parser3.is_allowed<parser3.deflate>());
+    EXPECT_FLOAT_EQ(parser3.get<parser3.gzip>()->quality, 0.255f);
 }
