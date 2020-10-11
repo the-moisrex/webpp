@@ -11,6 +11,32 @@ This project on:
 * [GitHub](https://github.com/the-moisrex/webpp)
 * [GitLab](https://gitlab.com/webpp/webpp)
 
+Look at the [Core Readme file](./core/README.md) for the core concepts of the project.
+
+## Dependencies
+
+These are the dependencies this project requires for certain parts of the project
+to function properly. Some of these libraries haven't been integrated into the project
+yet since we're still working on this project.
+
+Some of these dependencies can replace other dependencies; the difference is usually in 
+their performance but other factors are in play as well.
+
+- `boost` (for SDK only)
+- `boost::asio` or `asio` (for FastCGI and Self-Hosted interfaces only)
+- `boost::beast` _(optional)_ (for benchmarking only)
+- `fmt`: as a fallback for `std::format`
+- `eve` _(optional)_: for better performance with SIMD
+- `openssl` (used by asio)
+- _(optional)_ for `gzip` support one of these:
+  - `zlib` _(optional)_
+  - `zlib-ng` _(optional)_
+  - `crypto++` _(optional)_
+  - `libdeflate` _(optional)_
+- `zstd` _(optional)_: for `zstd` compression support
+- `brotli` _(optional)_: for `br` compression support
+- `CTRE` _(optional)_: compile-time-regular-expression
+
 ## Development
 You can help us develop this project if you're familiar with C++ programming language and web development. Even if you're not really good at web development but you know C++ very well, specially C++17 and C++20 (clang and gcc c++2a is enough), then we have lots of things that you can help with which doesn't have anything to do with web development directly.
 
@@ -26,7 +52,6 @@ I'd appreciate any help of any kind. Even if you're not interested in coding, he
 - **Suggest someone** who can help: I'd appreciate any help on finding people who can help in any way.
 - **Write documentation**: writing documentation is so much fun that I don't want to do it alone! 😂
 
-Look at the [Core Readme file](./core/README.md) for the core concepts of the project.
 
 ### Examples
 In the `examples` directory you can find examples. That's not much but it'll give you they high level viewpoint. Take a look at them and you can be sure that we'll try to write tests for all of them; so if you read tests, you'll learn even more about the project.

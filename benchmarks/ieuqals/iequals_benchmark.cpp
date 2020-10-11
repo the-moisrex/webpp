@@ -6,7 +6,9 @@
 #include webpp_include(strings/iequals)
 // clang-format on
 
-#include <boost/algorithm/string/predicate.hpp>
+#if __has_include(<boost/algorithm/string/predicate.hpp>)
+#  include <boost/algorithm/string/predicate.hpp>
+#endif
 
 #if __has_include(<boost/beast/core/string.hpp>)
 #  include <boost/beast/core/string.hpp>
@@ -297,7 +299,7 @@ BENCHMARK(IEQ_SimplerForLoop);
 
 
 
-
+#ifdef BOOST_STRING_COMPARE_HPP
 static void IEQ_Boost(benchmark::State& state) {
     for (auto _ : state) {
         std::string str   = str_generator();
@@ -309,6 +311,7 @@ static void IEQ_Boost(benchmark::State& state) {
     }
 }
 BENCHMARK(IEQ_Boost);
+#endif
 
 #ifdef BEAST_IEQUALS
 static void IEQ_Boost_Beast(benchmark::State& state) {

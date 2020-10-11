@@ -3,6 +3,8 @@
 #ifndef WEBPP_CRYPTOPP_HPP
 #define WEBPP_CRYPTOPP_HPP
 
+// wiki: https://www.cryptopp.com/wiki/
+
 #if __has_include(<cryptopp/cryptlib.h>)
 #    define WEBPP_CRYPTOPP
 #endif
