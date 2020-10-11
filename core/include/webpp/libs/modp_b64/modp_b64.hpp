@@ -119,7 +119,7 @@ namespace webpp::modp_b64 {
 /**
  * you can control if we use padding by commenting out this
  * next line.  However, I highly recommend you use padding and not
- * using it should only be for compatability with a 3rd party.
+ * using it should only be for compatibility with a 3rd party.
  * Also, 'no padding' is not tested!
  */
 #define DOPAD 1
@@ -357,5 +357,7 @@ namespace webpp::modp_b64 {
     }
 
 } // namespace webpp::modp_b64
+
+#undef DOPAD
 
 #endif
