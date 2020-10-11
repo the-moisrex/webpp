@@ -53,9 +53,6 @@
 
 #include "modp_b64_data.hpp"
 
-#include <bit>
-#include <cstddef>
-
 namespace webpp::modp_b64 {
 
     /**
