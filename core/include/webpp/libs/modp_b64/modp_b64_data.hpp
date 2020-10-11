@@ -1,10 +1,14 @@
-#include "build/build_config.h"
-#include <stdint.h>
 
-#define CHAR62 '+'
-#define CHAR63 '/'
-#define CHARPAD '='
-static const char e0[256] = {
+#ifndef WEBPP_MODP_B64_DATA_HPP
+#define WEBPP_MODP_B64_DATA_HPP
+
+#include <cstdint>
+
+static constexpr auto CHAR62 = '+';
+static constexpr auto CHAR63 = '/';
+static constexpr auto CHARPAD = '=';
+
+static constexpr char e0[256] = {
  'A',  'A',  'A',  'A',  'B',  'B',  'B',  'B',  'C',  'C',
  'C',  'C',  'D',  'D',  'D',  'D',  'E',  'E',  'E',  'E',
  'F',  'F',  'F',  'F',  'G',  'G',  'G',  'G',  'H',  'H',
@@ -33,7 +37,7 @@ static const char e0[256] = {
  '+',  '+',  '/',  '/',  '/',  '/'
 };
 
-static const char e1[256] = {
+static constexpr char e1[256] = {
  'A',  'B',  'C',  'D',  'E',  'F',  'G',  'H',  'I',  'J',
  'K',  'L',  'M',  'N',  'O',  'P',  'Q',  'R',  'S',  'T',
  'U',  'V',  'W',  'X',  'Y',  'Z',  'a',  'b',  'c',  'd',
@@ -62,7 +66,7 @@ static const char e1[256] = {
  '6',  '7',  '8',  '9',  '+',  '/'
 };
 
-static const char e2[256] = {
+static constexpr char e2[256] = {
  'A',  'B',  'C',  'D',  'E',  'F',  'G',  'H',  'I',  'J',
  'K',  'L',  'M',  'N',  'O',  'P',  'Q',  'R',  'S',  'T',
  'U',  'V',  'W',  'X',  'Y',  'Z',  'a',  'b',  'c',  'd',
@@ -480,3 +484,6 @@ static const uint32_t d3[256] = {
 
 
 #endif
+
+
+#endif // WEBPP_MODP_B64_DATA_HPP

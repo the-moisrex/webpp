@@ -11,6 +11,8 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/libs/cryptopp.hpp
         ${LIB_INCLUDE_DIR}/webpp/libs/zlib.hpp
         ${LIB_INCLUDE_DIR}/webpp/libs/fmt.hpp
+        ${LIB_INCLUDE_DIR}/webpp/libs/modp_b64/modp_b64.hpp
+        ${LIB_INCLUDE_DIR}/webpp/libs/modp_b64/modp_b64_data.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/extensions/extension.hpp
 
@@ -64,6 +66,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/utils/uri.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/fixed_string.hpp
 
+        ${LIB_INCLUDE_DIR}/webpp/crypto/base64.hpp
         ${LIB_INCLUDE_DIR}/webpp/crypto/brotli.hpp
         ${LIB_INCLUDE_DIR}/webpp/crypto/gzip.hpp
         ${LIB_INCLUDE_DIR}/webpp/crypto/encoded_word.hpp
