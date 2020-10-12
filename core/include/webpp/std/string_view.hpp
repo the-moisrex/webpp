@@ -5,22 +5,8 @@
 
 #include "../traits/traits_concepts.hpp"
 #include "./std.hpp"
+#include <string_view>
 
-#if __has_include(<string_view>)
-#    define STD_STRING_VIEW STLLIB_STANDARD
-#    include <string_view>
-#elif __has_include(<experimental/string_view>)
-#    define STD_STRING_VIEW STLLIB_EXPERIMENTAL
-#    include <experimental/string_view>
-#elif __has_include(<boost/utility/string_view.hpp>)
-#    define STD_STRING_VIEW STLLIB_BOOST
-#    include <boost/utility/string_view.hpp>
-namespace webpp::stl {
-    template <typename... T>
-    using basic_string_view = boost::basic_string_view<T...>;
-    using string_view       = boost::string_view;
-} // namespace webpp::stl
-#endif
 
 // Traits aware string_view:
 namespace webpp::istl {

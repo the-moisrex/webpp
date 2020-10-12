@@ -114,7 +114,7 @@ namespace webpp {
                                '<', '=', '>', '?', '@', '[',  ']', '^', '_', '`', '{', '|', '}', '~'});
 
 
-        inline void parse_SE_name(istl::StringView auto& str, auto& _name, bool& _valid) noexcept {
+        void parse_SE_name(istl::StringView auto& str, auto& _name, bool& _valid) noexcept {
             using name_t           = stl::remove_cvref_t<decltype(_name)>;
             using string_view_type = stl::remove_cvref_t<decltype(str)>;
             using char_type        = typename name_t::value_type;
@@ -133,7 +133,7 @@ namespace webpp {
             }
         }
 
-        inline void parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value,
+        void parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value,
                                    bool& _valid) noexcept {
             using name_t           = stl::remove_cvref_t<decltype(_name)>;
             using value_t          = stl::remove_cvref_t<decltype(_value)>;

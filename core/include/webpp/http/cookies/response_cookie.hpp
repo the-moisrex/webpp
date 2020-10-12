@@ -203,6 +203,39 @@ namespace webpp {
             // todo implement this
         }
 
+
+            /*
+        * Escapes the given string by replacing all
+        * non-alphanumeric characters with escape
+        * sequences in the form %xx, where xx is the
+        * hexadecimal character code.
+        *
+        * The following characters will be replaced
+        * with escape sequences:
+        *   - percent sign %
+        *   - less-than and greater-than < and >
+        *   - curly brackets { and }
+        *   - square brackets [ and ]
+        *   - parenthesis ( and )
+        *   - solidus /
+        *   - vertical line |
+        *   - reverse solidus (backslash /)
+        *   - quotation mark "
+        *   - apostrophe '
+        *   - circumflex accent ^
+        *   - grave accent `
+        *   - comma and semicolon , and ;
+        *   - whitespace and control characters
+             */
+        static constexpr std::string escape(const std::string& str);
+
+        /*
+        * Unescapes the given string by replacing all
+        * escape sequences in the form %xx with the
+        * respective characters.
+         */
+        static std::string unescape(const std::string& str);
+
         stl::basic_ostream<char_type>& operator<<(stl::basic_ostream<char_type>& out) const noexcept {
             // todo: use std::format instead of streams
 

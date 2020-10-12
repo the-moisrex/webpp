@@ -27,20 +27,20 @@ namespace webpp {
 
     } // namespace is
 
+    enum struct uri_encoding_policy { allowed_chars, disallowed_chars };
+
     /**
      * @brief this function will decode parts of uri
-     * @details this function is almost the same as "decodeURIComponent" in
-     * javascript
+     * @details this function is almost the same as "decodeURIComponent" in javascript
      */
-    template <Traits TraitsType, stl::size_t N>
-    [[nodiscard]] stl::optional<typename TraitsType::string_type>
-    decode_uri_component(typename TraitsType::string_view_type const&        encoded_str,
-                         charset_t<typename TraitsType::char_type, N> const& allowed_chars) noexcept {
-        int                            digits_left  = 2;
-        typename TraitsType::char_type decoded_char = 0;
-        // FIXME: decoding is assigned but never used; check if the algorithm is correct
-        bool                             decoding = false;
-        typename TraitsType::string_type res;
+    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, stl::size_t N>
+    [[nodiscard]] bool
+    decode_uri_component(istl::ConvertibleToStringView auto&& encoded_str, istl::String auto& output,
+                         charset_t<istl::char_type_of<decltype(encoded_str)>, N>& chars) noexcept {
+        using char_type          = istl::char_type_of<stl::remove_cvref_t<decltype(encoded_str)>>;
+        stl::size_t digits_left  = 2;
+        char_type   decoded_char = 0;
+        bool        decoding     = false;
         for (const auto c : encoded_str) {
             if (decoding && digits_left) {
                 decoded_char <<= 4;
@@ -51,13 +51,13 @@ namespace webpp {
                 } else if (c >= 'a' && c <= 'f') { // LOWER_HEX
                     decoded_char += c - 'a' + 10;
                 } else {
-                    return stl::nullopt; // not encoded well
+                    return false;
                 }
                 --digits_left;
 
                 if (digits_left == 0) {
                     decoding = false;
-                    res.push_back(static_cast<typename TraitsType::char_type>(decoded_char));
+                    output += static_cast<char_type>(decoded_char);
                 }
             } else if (c == '%') {
                 decoding = true;
@@ -66,12 +66,17 @@ namespace webpp {
                 digits_left  = 2;
                 decoded_char = 0;
             } else {
-                if (!allowed_chars.contains(c))
-                    return stl::nullopt; // bad chars
-                res.push_back(c);
+                if constexpr (uri_encoding_policy::allowed_chars == Policy) {
+                    if (!chars.contains(c))
+                        return false; // bad chars
+                } else {
+                    if (chars.contains(c))
+                        return false; // bad chars
+                }
+                output += c;
             }
         }
-        return stl::move(res);
+        return true;
     }
 
     /**
@@ -81,10 +86,10 @@ namespace webpp {
      * - may be percent-encoded
      * - if not percent-encoded, are in a restricted set of characters
      *
-     * @param[in] element
+     * @param[in] src
      *     This is the element to encode.
      *
-     * @param[in] allowedCharacters
+     * @param[in] allowed_chars
      *     This is the set of characters that do not need to
      *     be percent-encoded.
      *
@@ -92,15 +97,17 @@ namespace webpp {
      *     The encoded element is returned.
      *
      *
-     * @details this function is almost the same as "encodeURIComponent" in
-     * javascript
+     * @details this function is almost the same as "encodeURIComponent" in javascript
      */
-    template <Traits TraitsType, stl::size_t N>
-    [[nodiscard]] typename TraitsType::string_type
-    encode_uri_component(const typename TraitsType::string_view_type&        element,
-                         const charset_t<typename TraitsType::char_type, N>& allowedCharacters) {
-        using char_type     = typename TraitsType::char_type;
-        auto make_hex_digit = [](unsigned int value) {
+    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, stl::size_t N>
+    static void encode_uri_component(istl::ConvertibleToStringView auto&& src, istl::String auto& output,
+                                     charset_t<istl::char_type_of<decltype(src)>, N> const& chars) {
+        using char_type   = istl::char_type_of<decltype(src)>;
+        using uchar_type  = stl::make_unsigned_t<char_type>;
+        using string_type = stl::remove_cvref_t<decltype(output)>;
+        static_assert(stl::is_same_v<char_type, typename string_type::value_type>,
+                      "The specified string do not have the same char type.");
+        static constexpr auto make_hex_digit = [](auto value) constexpr noexcept->char_type {
             if (value < 10) {
                 return static_cast<char_type>(value + '0');
             } else {
@@ -108,17 +115,27 @@ namespace webpp {
             }
         };
 
-        typename TraitsType::string_type encodedElement;
-        for (auto c : element) {
-            if (allowedCharacters.contains(c)) {
-                encodedElement.push_back(c);
+        const auto input      = istl::to_string_view(src);
+        const auto input_size = input.size();
+        auto       it         = input.data();
+        const auto input_end  = it + input_size;
+        output.reserve(output.size() + input_size * 1.5); // 1.5 is by chance
+        for (; it != input_end; ++it) {
+            bool need_conversion;
+            if constexpr (uri_encoding_policy::allowed_chars == Policy) {
+                need_conversion = chars.contains(*it);
             } else {
-                encodedElement.push_back('%');
-                encodedElement.push_back(make_hex_digit(static_cast<unsigned int>(c) >> 4u));
-                encodedElement.push_back(make_hex_digit(static_cast<unsigned int>(c) & 0x0Fu));
+                need_conversion = !chars.contains(*it);
+            }
+            if (need_conversion) {
+                output += *it;
+            } else {
+                output += '%';
+                output += make_hex_digit(static_cast<uchar_type>(*it) >> 4u);
+                output += make_hex_digit(static_cast<uchar_type>(*it) & 0x0Fu);
             }
         }
-        return encodedElement;
+        output.shrink_to_fit();
     }
 
     /**
@@ -269,9 +286,9 @@ namespace webpp {
                 scheme_end      = data.size(); // so we don't have to check again
                 return;
             } else if (const auto colon = _data.find(':'); colon != str_view_t::npos) {
-                auto __scheme = _data.substr(0, colon);
-                if (ALPHA<char_type>.contains(__scheme[0]) &&
-                    __scheme.substr(1).find_first_not_of(SCHEME_NOT_FIRST.string_view())) {
+                auto m_scheme = _data.substr(0, colon);
+                if (ALPHA<char_type>.contains(m_scheme[0]) &&
+                    m_scheme.substr(1).find_first_not_of(SCHEME_NOT_FIRST.string_view())) {
                     scheme_end = colon;
 
                     if (_data.substr(colon + 1, 2) == "//") {
@@ -580,23 +597,20 @@ namespace webpp {
         }
 
 
-        constexpr basic_uri(const char_type* u) noexcept : data(u) {
-        }
+        constexpr basic_uri(const char_type* u) noexcept : data(u) {}
 
 
         /**
          * @brief parse from string, it will trim the spaces for generality too
          * @param string_view URI string
          */
-        constexpr basic_uri(storred_str_t const& u) noexcept : data(u) {
-        }
+        constexpr basic_uri(storred_str_t const& u) noexcept : data(u) {}
 
         /**
          * If the user uses this
          * @param u
          */
-        constexpr basic_uri(storred_str_t&& u) noexcept : data(stl::move(u)) {
-        }
+        constexpr basic_uri(storred_str_t&& u) noexcept : data(stl::move(u)) {}
 
         template <bool UMutable = Mutable>
         constexpr basic_uri(basic_uri<TraitsType, UMutable> const& bu) noexcept
@@ -607,8 +621,7 @@ namespace webpp {
             port_start{bu.port_start},
             authority_end{bu.authority_end},
             query_start{bu.query_start},
-            fragment_start{bu.fragment_start} {
-        }
+            fragment_start{bu.fragment_start} {}
 
         template <bool UMutable = Mutable>
         constexpr basic_uri(basic_uri<TraitsType, UMutable>&& bu) noexcept
@@ -619,8 +632,7 @@ namespace webpp {
             port_start{stl::move(bu.port_start)},
             authority_end{stl::move(bu.authority_end)},
             query_start{stl::move(bu.query_start)},
-            fragment_start{stl::move(bu.fragment_start)} {
-        }
+            fragment_start{stl::move(bu.fragment_start)} {}
 
 
 
@@ -699,9 +711,8 @@ namespace webpp {
         /**
          * @brief this function is the same as "encodeURI" in javascript
          */
-        [[nodiscard]] str_t encoded_uri() noexcept {
-            return encode_uri_component<traits_type, ALLOWED_CHARACTERS_IN_URI.size()>(
-              str(), ALLOWED_CHARACTERS_IN_URI);
+        void encode_to(istl::String auto& output) const noexcept {
+            encode_uri_component(str(), output, ALLOWED_CHARACTERS_IN_URI);
         }
 
         /**
@@ -709,9 +720,8 @@ namespace webpp {
          * @return this function will return an optional<string> object. it will
          * be nullopt when the uri is not valid and has invalid characters
          */
-        [[nodiscard]] auto decoded_uri() noexcept {
-            return decode_uri_component<traits_type, ALLOWED_CHARACTERS_IN_URI.size()>(
-              str(), ALLOWED_CHARACTERS_IN_URI);
+        [[nodiscard]] bool decode_to(istl::String auto& output) const noexcept {
+            return decode_uri_component(str(), output, ALLOWED_CHARACTERS_IN_URI);
         }
 
         /**
@@ -736,22 +746,22 @@ namespace webpp {
          * @param _scheme
          * @throws logic_error if uri is const
          */
-        basic_uri& scheme(str_view_t __scheme) {
-            if (ascii::ends_with(__scheme, ':'))
-                __scheme.remove_suffix(1);
-            if (!is::scheme<traits_type>(__scheme))
+        basic_uri& scheme(str_view_t m_scheme) {
+            if (ascii::ends_with(m_scheme, ':'))
+                m_scheme.remove_suffix(1);
+            if (!is::scheme<traits_type>(m_scheme))
                 throw stl::invalid_argument("The specified scheme is not valid");
             parse_scheme();
             if (scheme_end != data.size()) {
                 replace_value(0,
-                              __scheme.empty() && data.size() > scheme_end + 1 && data[scheme_end] == ':'
+                              m_scheme.empty() && data.size() > scheme_end + 1 && data[scheme_end] == ':'
                                 ? scheme_end + 1
                                 : scheme_end,
-                              __scheme);
+                              m_scheme);
             } else {
                 // the URI doesn't have a scheme now, we have to put it in the
                 // right place
-                auto scheme_colon = __scheme.empty() ? "" : str_t(__scheme) + ':';
+                auto scheme_colon = m_scheme.empty() ? "" : str_t(m_scheme) + ':';
                 if (authority_start != data.size()) {
                     replace_value(0, 0, scheme_colon + (ascii::starts_with(data, "//") ? "" : "//"));
                 } else {
@@ -1021,8 +1031,7 @@ namespace webpp {
          */
         [[nodiscard]] bool is_ip() const noexcept {
             auto _host = host();
-            return is::ipv4(_host) ||
-                   (ascii::starts_with(_host, '[') && ascii::ends_with(_host, ']'));
+            return is::ipv4(_host) || (ascii::starts_with(_host, '[') && ascii::ends_with(_host, ']'));
         }
 
         /**
@@ -1363,11 +1372,11 @@ namespace webpp {
          * todo: should we rename path_structured to slugs?
          */
         template <typename Container = istl::vector<traits_type, str_view_t>>
-        [[nodiscard]] Container path_structured() const noexcept {
+        [[nodiscard]] Container path_structured(auto&&...args) const noexcept {
             auto _path = path();
             if (_path.empty())
                 return {};
-            Container   container;
+            Container   container(stl::forward<decltype(args)>(args)...);
             stl::size_t slash_start      = 0;
             stl::size_t last_slash_start = 0;
             auto        _path_size       = _path.size();
@@ -1387,17 +1396,20 @@ namespace webpp {
         }
 
         /**
-         * @brief this one will return a container containing decoded strings of
-         * the path.
+         * @brief this one will return a container containing decoded strings of the path.
          * @attention do not use string_view or any alternatives for this method
          * as this method should own its data.
          */
         template <typename Container = istl::vector<traits_type, str_t>>
-        [[nodiscard]] Container path_structured_decoded() const noexcept {
-            auto _slugs = path_structured<Container>();
+        [[nodiscard]] Container path_structured_decoded(auto&&...args) const noexcept {
+            auto _slugs = path_structured<Container>(stl::forward<decltype(args)>(args)...);
+            using vec_str_t = typename Container::value_type;
             for (auto& slug : _slugs) {
-                slug = decode_uri_component<traits_type>(slug, PCHAR_NOT_PCT_ENCODED)
-                         .value_or((typename Container::value_type)(slug));
+                vec_str_t tmp(_slugs.get_allocator());
+                if (!decode_uri_component(slug, tmp, PCHAR_NOT_PCT_ENCODED)) {
+                    return _slugs;
+                }
+                slug.swap(tmp);
             }
             return _slugs;
         }
@@ -1405,12 +1417,12 @@ namespace webpp {
         /**
          * @brief set path
          */
-        template <typename Container, typename = stl::enable_if_t<stl::negation_v<
-                                        stl::is_convertible_v<Container::value_type, str_view_t>>>>
-        basic_uri& path(const Container& __path) noexcept {
+        template <typename Container>
+        requires(!stl::is_convertible_v<typename Container::value_type, str_view_t>) basic_uri& path(
+          const Container& m_path) noexcept {
             static_assert(stl::is_convertible_v<typename Container::value_type, str_view_t>,
                           "the specified container is not valid");
-            return path(__path.cbegin(), __path.cend());
+            return path(m_path.cbegin(), m_path.cend());
         }
 
         /**
@@ -1435,11 +1447,11 @@ namespace webpp {
          * @param _path
          * @return
          */
-        basic_uri& path(str_view_t const& __path) noexcept {
+        basic_uri& path(str_view_t const& m_path) noexcept {
             parse_path();
-            auto _encoded_path = (ascii::starts_with(__path, '/') ? "" : "/") +
+            auto _encoded_path = (ascii::starts_with(m_path, '/') ? "" : "/") +
                                  encode_uri_component<traits_type>(
-                                   __path, charset(PCHAR_NOT_PCT_ENCODED, charset_t<char_type, 1>('/')));
+                                   m_path, charset(PCHAR_NOT_PCT_ENCODED, charset_t<char_type, 1>('/')));
 
             replace_value(authority_end, query_start - authority_end, _encoded_path);
             return *this;
@@ -1489,13 +1501,13 @@ namespace webpp {
          * @param _query
          * @return
          */
-        basic_uri& query(str_view_t const& __query) {
-            if (!is::query(__query))
+        basic_uri& query(str_view_t const& m_query) {
+            if (!is::query(m_query))
                 throw stl::invalid_argument("The specified string is not a valid query");
 
             auto encoded_query =
-              (ascii::starts_with(__query, '?') ? "" : "?") +
-              encode_uri_component<traits_type>(__query, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
+              (ascii::starts_with(m_query, '?') ? "" : "?") +
+              encode_uri_component<traits_type>(m_query, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
 
             parse_query();
 
@@ -1610,8 +1622,8 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] bool is_normalized() const noexcept {
-            auto __path = path_structured();
-            return __path.cend() != stl::find_if(__path.cbegin(), __path.cend(), [](auto const& p) {
+            auto m_path = path_structured();
+            return m_path.cend() != stl::find_if(m_path.cbegin(), m_path.cend(), [](auto const& p) {
                        return p == "." || p == "..";
                    });
         }
@@ -1855,9 +1867,8 @@ namespace webpp {
         }
     };
 
-    template <typename CharT = char>
-    basic_uri(stl::enable_if_t<stl::is_integral_v<CharT>, void> const* const)
-      -> basic_uri<basic_std_traits<CharT>, false>;
+    template <istl::CharType CharT = char>
+    basic_uri(CharT const*) -> basic_uri<basic_std_traits<CharT>, false>;
     // basic_uri(const char[])->basic_uri<std::string_view>;
 
     template <typename CharT = char>
@@ -1898,10 +1909,10 @@ namespace webpp {
         auto it1 = _p1.cbegin();
         while (it1 != _p1.cend() && it2 != _p2.cend()) {
             if (*it1 != *it2) {
-                if (*it1 == "") {
+                if (stl::empty(*it1)) {
                     ++it1;
                     continue;
-                } else if (*it2 == "") {
+                } else if (stl::empty(*it2)) {
                     ++it2;
                     continue;
                 }
@@ -1913,15 +1924,13 @@ namespace webpp {
         }
 
         if (it1 != _p1.cend()) {
-            if (!stl::all_of(it1, _p1.cend(), [](auto const& a) {
-                    return a == "";
-                }))
+            if (!stl::all_of(
+                  it1, _p1.cend(), [](auto const& a) constexpr noexcept { return stl::empty(a); }))
                 return false;
         }
         if (it1 != _p2.cend()) {
-            if (!stl::all_of(it2, _p2.cend(), [](auto const& a) {
-                    return a == "";
-                }))
+            if (!stl::all_of(
+                  it2, _p2.cend(), [](auto const& a) constexpr noexcept { return stl::empty(a); }))
                 return false;
         }
         return true;
