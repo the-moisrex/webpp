@@ -67,6 +67,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/utils/fixed_string.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/crypto/base64.hpp
+        ${LIB_INCLUDE_DIR}/webpp/crypto/base64_url.hpp
         ${LIB_INCLUDE_DIR}/webpp/crypto/brotli.hpp
         ${LIB_INCLUDE_DIR}/webpp/crypto/gzip.hpp
         ${LIB_INCLUDE_DIR}/webpp/crypto/encoded_word.hpp

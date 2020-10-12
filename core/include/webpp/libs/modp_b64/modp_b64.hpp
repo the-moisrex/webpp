@@ -65,7 +65,7 @@ namespace webpp::modp_b64 {
      *
      * +1 is for any extra null.
      */
-    static constexpr auto encode_len(auto A) noexcept {
+    static constexpr std::size_t encode_len(std::size_t A) noexcept {
         return (A + 2) / 3 * 4 + 1;
     }
 
@@ -78,8 +78,8 @@ namespace webpp::modp_b64 {
      * decode  4 chars turn into 3 bytes
      * floor[len * 3/4] + 2
      */
-    static constexpr auto decode_len(auto A) noexcept {
-        return (A / 4 * 3 + 2);
+    static constexpr std::size_t decode_len(std::size_t A) noexcept {
+        return A / 4 * 3 + 2;
     }
 
     /**
@@ -105,8 +105,8 @@ namespace webpp::modp_b64 {
      * // foo is filled out now
      * \endcode
      */
-    static constexpr auto encode_strlen(auto A) noexcept {
-        return ((A + 2) / 3 * 4);
+    static constexpr std::size_t encode_strlen(std::size_t A) noexcept {
+        return (A + 2) / 3 * 4;
     }
 
     static constexpr std::size_t error = static_cast<std::size_t>(-1);
@@ -155,9 +155,9 @@ namespace webpp::modp_b64 {
      * \endcode
      *
      */
-    [[nodiscard]] std::size_t encode(char* dest, const char* str, std::size_t len) {
+    [[nodiscard]] static std::size_t encode(char* dest, const char* str, std::size_t len) noexcept {
         std::size_t   i = 0;
-        std::uint8_t* p = (std::uint8_t*) dest;
+        auto* p = reinterpret_cast<std::uint8_t*>(dest);
 
         /* unsigned here is important! */
         std::uint8_t t1, t2, t3;
@@ -193,7 +193,7 @@ namespace webpp::modp_b64 {
         }
 
         *p = '\0';
-        return p - (std::uint8_t*) dest;
+        return p - reinterpret_cast<std::uint8_t*>(dest);
     }
 
 
@@ -218,33 +218,37 @@ namespace webpp::modp_b64 {
      * if (len == -1) { error }
      * \endcode
      */
-    [[nodiscard]] std::size_t decode(char* dest, const char* src, std::size_t len) {
+    [[nodiscard]] static std::size_t decode(char* dest, const char* src, std::size_t len) noexcept {
         if (len == 0)
             return 0;
-        if constexpr (std::endian::native == std::endian::big) { /* BIG ENDIAN -- SUN / IBM / MOTOROLA */
+
 
 #ifdef DOPAD
-            /* if padding is used, then the message must be at least
-               4 chars and be a multiple of 4.
-               there can be at most 2 pad chars at the end */
-            if (len < 4 || (len % 4 != 0))
-                return error;
+        /*
+         * if padding is used, then the message must be at least
+         * 4 chars and be a multiple of 4
+         */
+        if (len < 4 || (len % 4 != 0))
+            return error; /* error */
+        /* there can be at most 2 pad chars at the end */
+        if (src[len - 1] == CHARPAD) {
+            len--;
             if (src[len - 1] == CHARPAD) {
                 len--;
-                if (src[len - 1] == CHARPAD) {
-                    len--;
-                }
             }
-#endif /* DOPAD */
+        }
+#endif
+
+        if constexpr (std::endian::native == std::endian::big) { /* BIG ENDIAN -- SUN / IBM / MOTOROLA */
 
             std::size_t i;
-            int         leftover = len % 4;
+            std::size_t         leftover = len % 4;
             std::size_t chunks   = (leftover == 0) ? len / 4 - 1 : len / 4;
 
-            std::uint8_t*  p       = (std::uint8_t*) dest;
+            auto*  p       = reinterpret_cast<std::uint8_t*>(dest);
             std::uint32_t  x       = 0;
-            std::uint32_t* destInt = (std::uint32_t*) p;
-            std::uint32_t* srcInt  = (std::uint32_t*) src;
+            auto* destInt = reinterpret_cast<std::uint32_t*>(p);
+            const auto* srcInt  = reinterpret_cast<std::uint32_t const*>(src);
             std::uint32_t  y       = *srcInt++;
             for (i = 0; i < chunks; ++i) {
                 x = d0[y >> 24 & 0xff] | d1[y >> 16 & 0xff] | d2[y >> 8 & 0xff] | d3[y & 0xff];
@@ -288,29 +292,13 @@ namespace webpp::modp_b64 {
 
         } else { // Little Endian - Intel and Friends
 
-#ifdef DOPAD
-            /*
-             * if padding is used, then the message must be at least
-             * 4 chars and be a multiple of 4
-             */
-            if (len < 4 || (len % 4 != 0))
-                return error; /* error */
-            /* there can be at most 2 pad chars at the end */
-            if (src[len - 1] == CHARPAD) {
-                len--;
-                if (src[len - 1] == CHARPAD) {
-                    len--;
-                }
-            }
-#endif
-
             std::size_t i;
-            int         leftover = len % 4;
+            std::size_t         leftover = len % 4;
             std::size_t chunks   = (leftover == 0) ? len / 4 - 1 : len / 4;
 
-            std::uint8_t*       p = (std::uint8_t*) dest;
+            auto*       p = reinterpret_cast<std::uint8_t*>(dest);
             std::uint32_t       x = 0;
-            const std::uint8_t* y = (std::uint8_t*) src;
+            const auto* y = reinterpret_cast<std::uint8_t const*>(src);
             for (i = 0; i < chunks; ++i, y += 4) {
                 x = d0[y[0]] | d1[y[1]] | d2[y[2]] | d3[y[3]];
                 if (x >= BADCHAR)
@@ -330,7 +318,6 @@ namespace webpp::modp_b64 {
                     *p++ = ((std::uint8_t*) (&x))[1];
                     *p   = ((std::uint8_t*) (&x))[2];
                     return (chunks + 1) * 3;
-                    break;
                 case 1: /* with padding this is an impossible case */
                     x  = d0[y[0]];
                     *p = *((std::uint8_t*) (&x)); // i.e. first char/byte in int
