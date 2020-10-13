@@ -182,7 +182,7 @@ namespace webpp {
          */
         static constexpr auto ALLOWED_CHARACTERS_IN_URI =
           charset(ALPHA<char_type>, DIGIT<char_type>,
-                  charset<char_type, 20>{';', ',', '/', '?', ':', '@', '&',  '=', '+', '$',
+                  charset<char_type, 20>{';', ',', '/', '?', ':', '@', '&', '=', '+', '$',
                                            '-', '_', '.', '!', '~', '*', '\'', '(', ')', '#'});
         /**
          * This is the character set corresponds to the second part

@@ -19,8 +19,8 @@ namespace webpp {
      * This represents a set of characters which can be queried
      * to find out if a character is in the set or not.
      */
-    template <istl::CharType CharT = char, stl::size_t N = 0>
-    struct charset : public stl::array<CharT, N> {
+    template <istl::CharType CharT, stl::size_t N>
+    struct charset : public stl::array<stl::remove_cvref_t<CharT>, N> {
         using value_type = stl::remove_cvref_t<CharT>;
 
       private:
@@ -43,15 +43,30 @@ namespace webpp {
             return super{items[I]...};
         }
 
+        template <stl::size_t N1, stl::size_t N2, stl::size_t... NN>
+        constexpr auto merge(charset<value_type, N1> const& set1, charset<value_type, N2> const& set2,
+                          charset<value_type, NN> const&... c_sets) noexcept {
+            super data;
+            auto write = [&, i = 0u](auto const& set) mutable noexcept {
+              stl::copy(set.begin(), set.end(), data.begin() + i);
+              i += set.size();
+            };
+            write(set1);
+            write(set2);
+            (write(c_sets), ...);
+            return data;
+        }
+
 
       public:
-        constexpr charset(const value_type (&str)[N]) noexcept
+        // we use +1 so we don't copy the null terminator character as well
+        constexpr charset(const value_type (&str)[N + 1]) noexcept
           : super{to_array(stl::make_index_sequence<N>(), str)} {}
 
         template <typename... T>
-        requires((stl::same_as<T, value_type> && ...) &&
-                 sizeof...(T) <= N) constexpr charset(T... data) noexcept
-          : super{data...} {}
+        requires((stl::same_as<T, value_type> && ...) && sizeof...(T) <= N)
+          constexpr charset(T &&... data) noexcept
+          : super{stl::forward<T>(data)...} {}
 
         /**
          * This constructs a character set that contains all the
@@ -61,37 +76,11 @@ namespace webpp {
          *     These are the character sets to include.
          */
         template <stl::size_t N1, stl::size_t N2, stl::size_t... NN>
-        constexpr explicit charset(charset<value_type, N1> const& set1, charset<value_type, N2> const& set2,
-                                   charset<value_type, NN> const&... c_sets) noexcept {
-            auto write = [this, i = 0u](auto const& set) mutable noexcept {
-                for (auto c : set)
-                    super::operator[](i++) = c;
-            };
-            write(set1);
-            write(set2);
-            (write(c_sets), ...);
-        }
-
-        /**
-         * This constructs a character set that contains all the
-         * characters between the given "first" and "last"
-         * characters, inclusive.
-         *
-         * @param[in] first
-         *     This is the first of the range of characters
-         *     to put in the set.
-         *
-         * @param[in] last
-         *     This is the last of the range of characters
-         *     to put in the set.
-         */
-        template <value_type First, value_type Last>
-        [[nodiscard]] static constexpr auto range() noexcept {
-            constexpr auto the_size = static_cast<stl::size_t>(Last) - static_cast<stl::size_t>(First) + 1;
-            charset<value_type, the_size> data;
-            for (auto it = First; it != Last + 1; ++it)
-                data[it - First] = it;
-            return data;
+        constexpr charset(charset<value_type, N1> const& set1, charset<value_type, N2> const& set2,
+                                   charset<value_type, NN> const&... c_sets) noexcept :
+            super{merge<N1, N2, NN...>(set1, set2, c_sets...)}
+        {
+            static_assert(N == (N1 + N2 + (0 + ... + NN)), "The charsets don't fit in this charset.");
         }
 
 
@@ -134,6 +123,26 @@ namespace webpp {
         }
     };
 
+    /**
+     * This constructs a character set that contains all the characters between the given
+     * "first" and "last" characters, inclusive.
+     *
+     * @param[in] first
+     *     This is the first of the range of characters to put in the set.
+     *
+     * @param[in] last
+     *     This is the last of the range of characters to put in the set.
+     */
+    template <istl::CharType CharT = char, CharT First, CharT Last>
+    [[nodiscard]] static constexpr auto charset_range() noexcept {
+        constexpr auto the_size = static_cast<stl::size_t>(Last) - static_cast<stl::size_t>(First) + 1;
+        charset<CharT, the_size> data;
+        for (auto it = First; it != Last; ++it)
+            data[it - First] = it;
+        data[static_cast<stl::size_t>(Last - First)] = Last;
+        return data;
+    }
+
 
     /**
      * Type deduction. I stole this from a type deduction from std::array
@@ -141,47 +150,46 @@ namespace webpp {
     template <typename Tp, typename... Up>
     requires((stl::same_as<Tp, Up> && ...)) charset(Tp, Up...)->charset<Tp, 1 + sizeof...(Up)>;
 
-    template <typename Tp, stl::size_t N>
-    charset(const Tp (&)[N])
-      -> charset<stl::remove_cvref_t<Tp>, N - 1>; // minus 1 because we don't want to copy the null terminator character.
+    template <istl::CharType CharT = char, stl::size_t N>
+    charset(const CharT (&)[N]) -> charset<stl::remove_cvref_t<CharT>, N - 1>;
 
     template <istl::CharType CharT = char, stl::size_t N1, stl::size_t N2, stl::size_t... N>
-    charset(charset<CharT, N1>, charset<CharT, N2>, charset<CharT, N>...)
-      -> charset<CharT, N1 + N2 + (N + ...)>;
+    charset(charset<CharT, N1> const&, charset<CharT, N2> const&, charset<CharT, N> const&...)
+      -> charset<CharT, N1 + N2 + (0 + ... + N)>;
 
     // TODO: add non-constexpr (or constexpr if you can) charset(first, last) as well
 
 
     template <istl::CharType CharT = char>
-    constexpr auto LOWER_ALPHA = charset<CharT>::template range<'a', 'z'>();
+    static constexpr auto LOWER_ALPHA = charset_range<CharT, 'a', 'z'>();
 
     template <istl::CharType CharT = char>
-    constexpr auto UPPER_ALPHA = charset<CharT>::template range<'A', 'Z'>();
+    static constexpr auto UPPER_ALPHA = charset_range<CharT, 'A', 'Z'>();
 
     /**
      * This is the character set containing just the alphabetic characters
      * from the ASCII character set.
      */
     template <istl::CharType CharT = char>
-    constexpr auto ALPHA = charset<CharT>(LOWER_ALPHA<CharT>, UPPER_ALPHA<CharT>);
+    static constexpr auto ALPHA = charset(LOWER_ALPHA<CharT>, UPPER_ALPHA<CharT>);
 
     /**
      * This is the character set containing just numbers.
      */
     template <istl::CharType CharT = char>
-    constexpr auto DIGIT = charset<CharT>::template range<'0', '9'>();
+    static constexpr auto DIGIT = charset_range<CharT, '0', '9'>();
 
     /**
      * This is the character set containing just the characters allowed
      * in a hexadecimal digit.
      */
     template <istl::CharType CharT = char>
-    constexpr auto HEXDIG = charset(DIGIT<CharT>, charset<CharT>::template range<'A', 'F'>(),
-                                    charset<CharT>::template range<'a', 'f'>());
+    static constexpr auto HEXDIG = charset(DIGIT<CharT>, charset_range<CharT, 'A', 'F'>(),
+                                    charset_range<CharT, 'a', 'f'>());
 
 
     template <istl::CharType CharT = char>
-    constexpr auto ALPHA_DIGIT = charset<CharT>(ALPHA<CharT>, DIGIT<CharT>);
+    static constexpr auto ALPHA_DIGIT = charset(ALPHA<CharT>, DIGIT<CharT>);
 
 
 

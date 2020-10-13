@@ -5,7 +5,7 @@
 using namespace webpp;
 
 TEST(CharsetTest, CharsetCreation) {
-    constexpr auto chars = charset<>::template range<'a', 'z'>();
+    constexpr auto chars = charset_range<char, 'a', 'z'>();
     EXPECT_TRUE(chars.contains('a')) << "contains 'a'";
     EXPECT_TRUE(chars.contains('b')) << "contains 'b'";
     EXPECT_TRUE(chars.contains('z')) << "contains 'z'";

@@ -330,14 +330,14 @@ namespace webpp {
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
             constexpr auto IPV_FUTURE_LAST_PART =
-              charset<char_type>(UNRESERVED, SUB_DELIMS, charset<char_type, 1>{':'});
+              charset(UNRESERVED, SUB_DELIMS, charset<char_type, 1>{':'});
 
             /**
              * This is the character set corresponds to the "reg-name" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
              * leaving out "pct-encoded".
              */
-            constexpr auto REG_NAME_NOT_PCT_ENCODED = charset<char_type>(UNRESERVED, SUB_DELIMS);
+            constexpr auto REG_NAME_NOT_PCT_ENCODED = charset(UNRESERVED, SUB_DELIMS);
 
             if (str.empty())
                 return false;
@@ -361,7 +361,7 @@ namespace webpp {
                 return true;
             } else {
                 constexpr auto ccc =
-                  charset<char_type>(REG_NAME_NOT_PCT_ENCODED, charset<char_type, 1>({'%'}));
+                  charset(REG_NAME_NOT_PCT_ENCODED, charset<char_type, 1>({'%'}));
                 return ccc.contains(str);
             }
 
@@ -381,7 +381,7 @@ namespace webpp {
              * This is the character set corresponds to the "unreserved" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
-            constexpr auto UNRESERVED = charset<char_type>(ALPHA<char_type>, DIGIT<char_type>,
+            constexpr auto UNRESERVED = charset(ALPHA<char_type>, DIGIT<char_type>,
                                                            charset<char_type, 4>{'-', '.', '_', '~'});
 
             /**
@@ -396,7 +396,7 @@ namespace webpp {
              * leaving out "pct-encoded".
              */
             constexpr auto PCHAR_NOT_PCT_ENCODED =
-              charset<char_type>(UNRESERVED, SUB_DELIMS, charset<char_type, 2>{':', '@'});
+              charset(UNRESERVED, SUB_DELIMS, charset<char_type, 2>{':', '@'});
 
             /**
              * This is the character set corresponds to the "query" syntax
@@ -405,7 +405,7 @@ namespace webpp {
              * leaving out "pct-encoded".
              */
             constexpr auto QUERY_OR_FRAGMENT_NOT_PCT_ENCODED =
-              charset<char_type>(PCHAR_NOT_PCT_ENCODED, charset<char_type, 2>{'/', '?'});
+              charset(PCHAR_NOT_PCT_ENCODED, charset<char_type, 2>{'/', '?'});
 
             return QUERY_OR_FRAGMENT_NOT_PCT_ENCODED.contains(str);
         }
