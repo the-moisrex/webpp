@@ -104,13 +104,14 @@ namespace webpp {
 
         template <istl::CharType CharT>
         constexpr static auto VALID_COOKIE_NAME =
-          charset<CharT>(ALPHA_DIGIT<CharT>, charset_t<CharT, 16>{'!', '#', '$', '%', '&', '\'', '*', '+',
+          charset<CharT>(ALPHA_DIGIT<CharT>,
+                                                                 charset<CharT, 16>{'!', '#', '$', '%', '&', '\'', '*', '+',
                                                                   '-', '.', '^', '_', '`', '|', '~'});
 
         template <istl::CharType CharT>
         constexpr static auto VALID_COOKIE_VALUE = charset<CharT>(
           ALPHA_DIGIT<CharT>,
-          charset_t<CharT, 28>{'!', '#', '$', '%', '&', '\'', '(', ')', '*', '+', '-', '.', '/', ':',
+          charset<CharT, 28>{'!', '#', '$', '%', '&', '\'', '(', ')', '*', '+', '-', '.', '/', ':',
                                '<', '=', '>', '?', '@', '[',  ']', '^', '_', '`', '{', '|', '}', '~'});
 
 

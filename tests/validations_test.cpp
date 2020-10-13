@@ -45,7 +45,7 @@ TEST(ValidationsTest, IPv4Functions) {
     EXPECT_FALSE(ipv4_prefix("192.168.1.3/40"));
     EXPECT_FALSE(ipv4_prefix("192.168.1.3/false_prefix"));
     EXPECT_TRUE(ipv4_prefix("192.168.1.2-24",
-                                               webpp::charset_t<char, 1>('-')));
+                                               webpp::charset<char, 1>('-')));
 }
 
 TEST(ValidationTest, IPv6Functions) {
@@ -104,7 +104,7 @@ TEST(ValidationTest, IPv6Functions) {
         EXPECT_FALSE(ipv6_prefix(ip2));
         ip3.append("-128");
         EXPECT_TRUE(
-          ipv6_prefix(ip3, webpp::charset_t<char, 1>('-')));
+          ipv6_prefix(ip3, webpp::charset<char, 1>('-')));
         EXPECT_TRUE(host("[" + std::string(item) + "]"))
           << "ip: " << item;
     }

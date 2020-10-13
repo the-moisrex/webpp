@@ -36,7 +36,7 @@ namespace webpp {
     template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, stl::size_t N>
     [[nodiscard]] bool
     decode_uri_component(istl::ConvertibleToStringView auto&& encoded_str, istl::String auto& output,
-                         charset_t<istl::char_type_of<decltype(encoded_str)>, N>& chars) noexcept {
+                         charset<istl::char_type_of<decltype(encoded_str)>, N>& chars) noexcept {
         using char_type          = istl::char_type_of<stl::remove_cvref_t<decltype(encoded_str)>>;
         stl::size_t digits_left  = 2;
         char_type   decoded_char = 0;
@@ -101,7 +101,7 @@ namespace webpp {
      */
     template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, stl::size_t N>
     static void encode_uri_component(istl::ConvertibleToStringView auto&& src, istl::String auto& output,
-                                     charset_t<istl::char_type_of<decltype(src)>, N> const& chars) {
+                                     charset<istl::char_type_of<decltype(src)>, N> const& chars) {
         using char_type   = istl::char_type_of<decltype(src)>;
         using uchar_type  = stl::make_unsigned_t<char_type>;
         using string_type = stl::remove_cvref_t<decltype(output)>;
@@ -182,7 +182,7 @@ namespace webpp {
          */
         static constexpr auto ALLOWED_CHARACTERS_IN_URI =
           charset(ALPHA<char_type>, DIGIT<char_type>,
-                  charset_t<char_type, 20>{';', ',', '/', '?', ':', '@', '&',  '=', '+', '$',
+                  charset<char_type, 20>{';', ',', '/', '?', ':', '@', '&',  '=', '+', '$',
                                            '-', '_', '.', '!', '~', '*', '\'', '(', ')', '#'});
         /**
          * This is the character set corresponds to the second part
@@ -190,21 +190,21 @@ namespace webpp {
          * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
          */
         static constexpr auto SCHEME_NOT_FIRST =
-          charset(ALPHA<char_type>, DIGIT<char_type>, charset_t<char_type, 3>{'+', '-', '.'});
+          charset(ALPHA<char_type>, DIGIT<char_type>, charset<char_type, 3>{'+', '-', '.'});
 
         /**
          * This is the character set corresponds to the "unreserved" syntax
          * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
          */
         static constexpr auto UNRESERVED =
-          charset(ALPHA<char_type>, DIGIT<char_type>, charset_t<char_type, 4>{'-', '.', '_', '~'});
+          charset(ALPHA<char_type>, DIGIT<char_type>, charset<char_type, 4>{'-', '.', '_', '~'});
 
         /**
          * This is the character set corresponds to the "sub-delims" syntax
          * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
          */
         static constexpr auto SUB_DELIMS =
-          charset_t<char_type, 11>('!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
+          charset<char_type, 11>('!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
 
         /**
          * This is the character set corresponds to the "userinfo" syntax
@@ -212,7 +212,7 @@ namespace webpp {
          * leaving out "pct-encoded".
          */
         static constexpr auto USER_INFO_NOT_PCT_ENCODED =
-          charset(UNRESERVED, SUB_DELIMS, charset_t<char_type, 1>{':'});
+          charset(UNRESERVED, SUB_DELIMS, charset<char_type, 1>{':'});
 
         /**
          * This is the character set corresponds to the last part of
@@ -220,7 +220,7 @@ namespace webpp {
          * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
          */
         static constexpr auto IPV_FUTURE_LAST_PART =
-          charset(UNRESERVED, SUB_DELIMS, charset_t<char_type, 1>{':'});
+          charset(UNRESERVED, SUB_DELIMS, charset<char_type, 1>{':'});
 
         /**
          * This is the character set corresponds to the "reg-name" syntax
@@ -235,7 +235,7 @@ namespace webpp {
          * leaving out "pct-encoded".
          */
         static constexpr auto PCHAR_NOT_PCT_ENCODED =
-          charset(UNRESERVED, SUB_DELIMS, webpp::charset_t<char_type, 2>{':', '@'});
+          charset(UNRESERVED, SUB_DELIMS, webpp::charset<char_type, 2>{':', '@'});
 
         /**
          * This is the character set corresponds to the "query" syntax
@@ -244,7 +244,7 @@ namespace webpp {
          * leaving out "pct-encoded".
          */
         static constexpr auto QUERY_OR_FRAGMENT_NOT_PCT_ENCODED =
-          charset(PCHAR_NOT_PCT_ENCODED, charset_t<char_type, 2>{'/', '?'});
+          charset(PCHAR_NOT_PCT_ENCODED, charset<char_type, 2>{'/', '?'});
 
       private:
         /**
@@ -1358,7 +1358,7 @@ namespace webpp {
          */
         [[nodiscard]] auto path_decoded() const noexcept {
             return decode_uri_component<traits_type>(
-              path(), charset(PCHAR_NOT_PCT_ENCODED, charset_t<char_type, 1>('/')));
+              path(), charset(PCHAR_NOT_PCT_ENCODED, charset<char_type, 1>('/')));
         }
 
         /**
@@ -1451,7 +1451,7 @@ namespace webpp {
             parse_path();
             auto _encoded_path = (ascii::starts_with(m_path, '/') ? "" : "/") +
                                  encode_uri_component<traits_type>(
-                                   m_path, charset(PCHAR_NOT_PCT_ENCODED, charset_t<char_type, 1>('/')));
+                                   m_path, charset(PCHAR_NOT_PCT_ENCODED, charset<char_type, 1>('/')));
 
             replace_value(authority_end, query_start - authority_end, _encoded_path);
             return *this;

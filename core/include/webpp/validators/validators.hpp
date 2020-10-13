@@ -161,7 +161,7 @@ namespace webpp {
         template <stl::size_t N>
         [[nodiscard]] constexpr bool
         ipv4_prefix(istl::ConvertibleToStringView auto&&                     _str,
-                    charset_t<istl::char_type_of<decltype(_str)>, N> const& divider_chars) noexcept {
+                    charset<istl::char_type_of<decltype(_str)>, N> const& divider_chars) noexcept {
 
             auto str = istl::to_string_view(_str);
 
@@ -190,7 +190,7 @@ namespace webpp {
         [[nodiscard]] constexpr bool ipv4_prefix(istl::ConvertibleToStringView auto&& _str) noexcept {
             auto str = istl::to_string_view(_str);
             using char_type = istl::char_type_of<decltype(str)>;
-            return ipv4_prefix(str, charset_t<char_type, 2>{':', '/'});
+            return ipv4_prefix(str, charset<char_type, 2>{':', '/'});
         }
 
         /**
@@ -262,8 +262,8 @@ namespace webpp {
         template <stl::size_t N = 1>
         [[nodiscard]] constexpr bool
         ipv6_prefix(istl::ConvertibleToStringView auto&&                     _str,
-                    charset_t<istl::char_type_of<decltype(_str)>, N> const& divider_chars =
-                      charset_t<istl::char_type_of<decltype(_str)>, 1>('/')) noexcept {
+                    charset<istl::char_type_of<decltype(_str)>, N> const& divider_chars =
+                      charset<istl::char_type_of<decltype(_str)>, 1>('/')) noexcept {
 
             auto str = istl::to_string_view(_str);
 
@@ -315,13 +315,13 @@ namespace webpp {
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
             constexpr auto UNRESERVED =
-              charset(ALPHA<char_type>, DIGIT<char_type>, charset_t<char_type, 4>{'-', '.', '_', '~'});
+              charset(ALPHA<char_type>, DIGIT<char_type>, charset<char_type, 4>{'-', '.', '_', '~'});
 
             /**
              * This is the character set corresponds to the "sub-delims" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
-            constexpr charset_t<char_type, 11> SUB_DELIMS{'!', '$', '&', '\'', '(', ')',
+            constexpr charset<char_type, 11> SUB_DELIMS{'!', '$', '&', '\'', '(', ')',
                                                           '*', '+', ',', ';',  '='};
 
             /**
@@ -330,7 +330,7 @@ namespace webpp {
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
             constexpr auto IPV_FUTURE_LAST_PART =
-              charset<char_type>(UNRESERVED, SUB_DELIMS, charset_t<char_type, 1>{':'});
+              charset<char_type>(UNRESERVED, SUB_DELIMS, charset<char_type, 1>{':'});
 
             /**
              * This is the character set corresponds to the "reg-name" syntax
@@ -361,7 +361,7 @@ namespace webpp {
                 return true;
             } else {
                 constexpr auto ccc =
-                  charset<char_type>(REG_NAME_NOT_PCT_ENCODED, charset_t<char_type, 1>({'%'}));
+                  charset<char_type>(REG_NAME_NOT_PCT_ENCODED, charset<char_type, 1>({'%'}));
                 return ccc.contains(str);
             }
 
@@ -382,13 +382,13 @@ namespace webpp {
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
             constexpr auto UNRESERVED = charset<char_type>(ALPHA<char_type>, DIGIT<char_type>,
-                                                           charset_t<char_type, 4>{'-', '.', '_', '~'});
+                                                           charset<char_type, 4>{'-', '.', '_', '~'});
 
             /**
              * This is the character set corresponds to the "sub-delims" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
-            constexpr charset_t<char_type, 11> SUB_DELIMS{'!', '$', '&', '\'', '(', ')',
+            constexpr charset<char_type, 11> SUB_DELIMS{'!', '$', '&', '\'', '(', ')',
                                                           '*', '+', ',', ';',  '='};
             /**
              * This is the character set corresponds to the "pchar" syntax
@@ -396,7 +396,7 @@ namespace webpp {
              * leaving out "pct-encoded".
              */
             constexpr auto PCHAR_NOT_PCT_ENCODED =
-              charset<char_type>(UNRESERVED, SUB_DELIMS, charset_t<char_type, 2>{':', '@'});
+              charset<char_type>(UNRESERVED, SUB_DELIMS, charset<char_type, 2>{':', '@'});
 
             /**
              * This is the character set corresponds to the "query" syntax
@@ -405,7 +405,7 @@ namespace webpp {
              * leaving out "pct-encoded".
              */
             constexpr auto QUERY_OR_FRAGMENT_NOT_PCT_ENCODED =
-              charset<char_type>(PCHAR_NOT_PCT_ENCODED, charset_t<char_type, 2>{'/', '?'});
+              charset<char_type>(PCHAR_NOT_PCT_ENCODED, charset<char_type, 2>{'/', '?'});
 
             return QUERY_OR_FRAGMENT_NOT_PCT_ENCODED.contains(str);
         }
