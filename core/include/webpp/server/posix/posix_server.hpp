@@ -14,11 +14,107 @@
 #include "../../std/cassert.hpp"
 
 #include <memory>
+#include <list>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 
 namespace webpp::posix {
+
+
+    struct endpoint {
+      private:
+        addrinfo hints {
+          .ai_flags    = 0,
+          .ai_family   = AF_UNSPEC,   // enable IPv6 and IPv4
+            .ai_socktype = SOCK_STREAM, // TCP only
+            .ai_protocol = IPPROTO_TCP,
+            .ai_addrlen  = 0,
+            .ai_addr = nullptr,
+            .ai_canonname = nullptr,
+            .ai_next = nullptr
+        }
+
+
+        // yes, we're going to use std::string, we require "char", and not using allocators does not affect
+        // performance that much since this part of code is only needed to start the application and
+        // we don't care about its performance.
+        stl::string _server_name;
+        stl::string _service; // or port
+        addrinfo* _result = nullptr;
+
+      public:
+        endpoint(istl::ConvertibleToString auto &&v_server_name = "localhost", istl::ConvertibleToString auto&& v_service = "http") noexcept
+          : _server_name{istl::to_string(stl::forward<decltype(v_server_name)>(v_server_name))},
+            _service{istl::to_string(stl::forward<decltype(v_service)>(v_service))} {}
+
+        endpoint(endpoint const&) = delete; // I don't wanna deal with memory management for now
+        endpoint(endpoint&&) noexcept = default;
+
+        ~endpoint() noexcept {
+            // don't need to free anything in "hints" because it's pointers are always nullptr
+            if (result)
+                freeaddrinfo(result);
+        }
+
+        const addrinfo* result() const noexcept {
+            return _result;
+        }
+
+        const stl::string& service() const noexcept {
+            return _service;
+        }
+
+        const stl::string& server_name() const noexcept {
+            return _server_name;
+        }
+
+        void resolve() noexcept {
+            if (result == nullptr) {
+                int  res   = getaddrinfo(server_name.data(), service.data(), &hints, &result);
+                webpp_assert(res == 0, stl::format("posix::getaddrinfo error: {}", gai_strerror(res)));
+            }
+        }
+
+        void enable_ipv6() noexcept {
+            switch (hints->ai_family) {
+                case AF_INET6:
+                case AF_UNSPEC:
+                    break; // nothing to do
+                case AF_INET:
+                    hints->ai_family = AF_UNSPEC;
+                    break;
+            }
+        }
+
+        void disable_ipv6() noexcept {
+            webpp_assert(hints->ai_family != AF_INET6, "cannot disable both ipv4 and ipv6; "
+                                                                "enable ipv4 before disabling ipv6 to "
+                                                                "prevent this error from happening.");
+            hints->ai_family = AF_INET;
+        }
+
+        void enable_ipv4() noexcept {
+            switch (hints->ai_family) {
+                case AF_INET:
+                case AF_UNSPEC:
+                    break; // nothing to do
+                case AF_INET6:
+                    hints->ai_family = AF_UNSPEC;
+                    break;
+            }
+        }
+
+        void disable_ipv4() noexcept {
+            webpp_assert(hints->ai_family != AF_INET,  "cannot disable both ipv4 and ipv6; "
+                                                                "enable ipv6 before disabling ipv4 to "
+                                                                "prevent this error from happening.");
+            hints->ai_family = AF_INET6;
+        }
+
+
+    };
+
 
     /**
      * This class is the server and the connection manager.
@@ -30,7 +126,6 @@ namespace webpp::posix {
         using session_type     = SessionType;
         using connection_type  = posix_connection<traits_type, session_type>;
         using socket_type      = int;
-        using endpoint_type    = stl::unique_ptr<struct addrinfo>;
         using thread_pool_type = ThreadPoolType;
 
       private:
@@ -38,10 +133,10 @@ namespace webpp::posix {
         istl::vector<traits_type, connection_type> connections;
         istl::vector<traits_type, acceptor_type>   acceptors;
         thread_pool_type                           pool{};
-        endpoint_type endpoints = nullptr;
-        endpoint_type endpoint_hints = nullptr;
 
       public:
+        stl::list<endpoint> endpoints;
+
         posix_server(auto&&...args)
           : etraits{stl::forward<decltype(args)>(args)...},
             connections{etraits::get_allocator()}
@@ -63,69 +158,37 @@ namespace webpp::posix {
         void start_accepting() noexcept {
         }
 
-      public:
-
         /**
-         * Set endpoints directly; we suggest you not to use this unless you have a good reason. This is
-         * low level POSIX stuff.
-         * @param new_endpoints
+         * Initialize the connections based on the endpoints
          */
-        void set_endpoints(endpoint_type new_endpoints) noexcept {
-            endpoints = new_endpoints;
-        }
+        void bind() noexcept {
+            if (endpoints.empty()) {
+                etraits::logger.warning(logger_cat, "Call to bind without any endpoints specified.");
+                return;
+            }
+            for (auto& ep : endpoints) {
+                ep.resolve(); // resolve the servers
 
-        void resolve() noexcept {
-            getaddrinfo()
-        }
+                // looping over the results of a /etc/host or DNS query
+                for (auto* it = ep.result; it != NULL; it = it->ai_next) {
+                    socket_type sock = socket(it->ai_family, it->ai_socktype, it->ai_protocol);
+                    if (sock == -1) {
+                        etraits::logger.warning(logger_cat, stl::format("Can't open a socket for {}:{}; trying the next one if exists", ep.server_name(), ep.service()), errno);
+                        continue;
+                    }
 
-        void enable_ipv6() noexcept {
-            set_default_hints();
-            switch (endpoint_hints->ai_family) {
-                case AF_INET6:
-                case AF_UNSPEC:
-                    break; // nothing to do
-                case AF_INET:
-                    endpoint_hints->ai_family = AF_UNSPEC;
-                    break;
+                    if (bind(sock, it->ai_addr, it->ai_addrlen) == -1) {
+                        etraits::logger.warning(logger_cat, stl::format("Can't bind to a socket for {}:{}; trying the next one if exists", ep.server_name(), ep.service()), errno);
+                        close(sock); // close it because for some reason we can't bind to it
+                        continue;
+                    }
+
+                    connections.emplace_back(sock); // pass the socket to a connection
+                }
             }
         }
 
-        void disable_ipv6() noexcept {
-            set_default_hints();
-            webpp_assert(endpoint_hints->ai_family != AF_INET6, "cannot disable both ipv4 and ipv6; "
-                                                                "enable ipv4 before disabling ipv6 to "
-                                                                "prevent this error from happening.");
-            endpoint_hints->ai_family = AF_INET;
-        }
-
-        void enable_ipv4() noexcept {
-            set_default_hints();
-            switch (endpoint_hints->ai_family) {
-                case AF_INET:
-                case AF_UNSPEC:
-                    break; // nothing to do
-                case AF_INET6:
-                    endpoint_hints->ai_family = AF_UNSPEC;
-                    break;
-            }
-        }
-
-        void disable_ipv4() noexcept {
-            set_default_hints();
-            webpp_assert(endpoint_hints->ai_family != AF_INET,  "cannot disable both ipv4 and ipv6; "
-                                                                "enable ipv6 before disabling ipv4 to "
-                                                                "prevent this error from happening.");
-            endpoint_hints->ai_family = AF_INET6;
-        }
-
-        void set_default_hints() noexcept {
-            if (!endpoint_hints) {
-                endpoint_hints = stl::make_unique<struct addrinfo>();
-                endpoint_hints->ai_family = AF_UNSPEC; // enable IPv6 and IPv4
-                endpoint_hints->ai_socktype = SOCK_STREAM; // TCP only
-            }
-        }
-
+      public:
 
         void operator()() noexcept {
             pool.post(
