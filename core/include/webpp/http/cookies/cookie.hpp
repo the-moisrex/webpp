@@ -95,6 +95,10 @@
 
 namespace webpp {
 
+    enum struct cookie_version : stl::uint_fast8_t {
+        version_0 = 0,
+        version_1 = 1
+    };
 
     /**
      * Even though these algorithms are capable of handling other char types than "char" itself, they

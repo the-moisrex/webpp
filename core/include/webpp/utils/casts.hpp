@@ -98,6 +98,18 @@ namespace webpp {
         }
     }
 
+    template <typename ValueType, typename... R>
+    requires(stl::is_integral_v<ValueType>)
+    constexpr auto append_to(char* ptr, ValueType value, R&&... args) noexcept {
+        constexpr stl::size_t _size = digit_count<ValueType>() + 1;
+        return stl::to_chars(ptr, ptr + _size, value, stl::forward<R>(args)...);
+    }
+
+    template <typename ValueType, typename... R>
+    requires(stl::is_integral_v<ValueType>)
+    constexpr auto append_to(istl::String auto &str, ValueType value, R&&... args) noexcept {
+        return append_to(str.data() + str.size(), value, stl::forward<R>(args)...);
+    }
 
 
 
