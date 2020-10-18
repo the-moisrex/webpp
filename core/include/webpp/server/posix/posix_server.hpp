@@ -4,54 +4,66 @@
 #include "../../platform/posix.hpp"
 #ifdef webpp_posix // check if it's okay to use unix stuff here
 
-#include "../server_concepts.hpp"
-#include "../../traits/traits_concepts.hpp"
-#include "./posix_thread_pool.hpp"
-#include "./posix_connection.hpp"
-#include "./posix_constants.hpp"
-#include "../../std/vector.hpp"
-#include "../../traits/enable_traits.hpp"
-#include "../../std/cassert.hpp"
+#    include "../../std/cassert.hpp"
+#    include "../../std/vector.hpp"
+#    include "../../traits/enable_traits.hpp"
+#    include "../../traits/traits_concepts.hpp"
+#    include "../server_concepts.hpp"
+#    include "./posix_connection.hpp"
+#    include "./posix_constants.hpp"
+#    include "./posix_thread_pool.hpp"
 
-#include <memory>
-#include <list>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
+#    include <netdb.h>
+#    include <sys/socket.h>
+#    include <sys/types.h>
 
 namespace webpp::posix {
 
+    struct bindable_endpoint {
+        addrinfo* endpoint;
 
-    struct endpoint {
-      private:
-        addrinfo hints {
-          .ai_flags    = 0,
-          .ai_family   = AF_UNSPEC,   // enable IPv6 and IPv4
-            .ai_socktype = SOCK_STREAM, // TCP only
-            .ai_protocol = IPPROTO_TCP,
-            .ai_addrlen  = 0,
-            .ai_addr = nullptr,
-            .ai_canonname = nullptr,
-            .ai_next = nullptr
+        bool is_ipv6() const noexcept {
+
         }
+
+        bool is_ipv4() const noexcept {
+
+        }
+
+
+    };
+
+
+    /**
+     * This class has the ability to obtain all the IP addresses and Port number that the server can bind to
+     */
+    struct bindable_endpoints {
+      private:
+        addrinfo hints{.ai_flags     = AI_PASSIVE,  // passive to make it a server not a client
+                       .ai_family    = AF_UNSPEC,   // enable IPv6 and IPv4
+                       .ai_socktype  = SOCK_STREAM, // TCP only
+                       .ai_protocol  = 0,
+                       .ai_addrlen   = 0,
+                       .ai_addr      = nullptr,
+                       .ai_canonname = nullptr,
+                       .ai_next      = nullptr}
 
 
         // yes, we're going to use std::string, we require "char", and not using allocators does not affect
         // performance that much since this part of code is only needed to start the application and
         // we don't care about its performance.
-        stl::string _server_name;
         stl::string _service; // or port
-        addrinfo* _result = nullptr;
+        addrinfo*   _result = nullptr;
 
       public:
-        endpoint(istl::ConvertibleToString auto &&v_server_name = "localhost", istl::ConvertibleToString auto&& v_service = "http") noexcept
-          : _server_name{istl::to_string(stl::forward<decltype(v_server_name)>(v_server_name))},
-            _service{istl::to_string(stl::forward<decltype(v_service)>(v_service))} {}
+        bindable_endpoints(istl::ConvertibleToString auto&& v_service     = "http") noexcept
+          : _service{istl::to_string(stl::forward<decltype(v_service)>(v_service))} {}
 
-        endpoint(endpoint const&) = delete; // I don't wanna deal with memory management for now
-        endpoint(endpoint&&) noexcept = default;
+        bindable_endpoints(bindable_endpoints const&) =
+          delete; // I don't wanna deal with memory management for now
+        bindable_endpoints(bindable_endpoints&&) noexcept = default;
 
-        ~endpoint() noexcept {
+        ~bindable_endpoints() noexcept {
             // don't need to free anything in "hints" because it's pointers are always nullptr
             if (result)
                 freeaddrinfo(result);
@@ -65,54 +77,42 @@ namespace webpp::posix {
             return _service;
         }
 
-        const stl::string& server_name() const noexcept {
-            return _server_name;
-        }
-
         void resolve() noexcept {
             if (result == nullptr) {
-                int  res   = getaddrinfo(server_name.data(), service.data(), &hints, &result);
+                int res = getaddrinfo(nullptr, service.data(), &hints, &result);
                 webpp_assert(res == 0, stl::format("posix::getaddrinfo error: {}", gai_strerror(res)));
             }
         }
 
         void enable_ipv6() noexcept {
-            switch (hints->ai_family) {
+            switch (hints.ai_family) {
                 case AF_INET6:
-                case AF_UNSPEC:
-                    break; // nothing to do
-                case AF_INET:
-                    hints->ai_family = AF_UNSPEC;
-                    break;
+                case AF_UNSPEC: break; // nothing to do
+                case AF_INET: hints.ai_family = AF_UNSPEC; break;
             }
         }
 
         void disable_ipv6() noexcept {
-            webpp_assert(hints->ai_family != AF_INET6, "cannot disable both ipv4 and ipv6; "
-                                                                "enable ipv4 before disabling ipv6 to "
-                                                                "prevent this error from happening.");
-            hints->ai_family = AF_INET;
+            webpp_assert(hints.ai_family != AF_INET6, "cannot disable both ipv4 and ipv6; "
+                                                      "enable ipv4 before disabling ipv6 to "
+                                                      "prevent this error from happening.");
+            hints.ai_family = AF_INET;
         }
 
         void enable_ipv4() noexcept {
-            switch (hints->ai_family) {
+            switch (hints.ai_family) {
                 case AF_INET:
-                case AF_UNSPEC:
-                    break; // nothing to do
-                case AF_INET6:
-                    hints->ai_family = AF_UNSPEC;
-                    break;
+                case AF_UNSPEC: break; // nothing to do
+                case AF_INET6: hints.ai_family = AF_UNSPEC; break;
             }
         }
 
         void disable_ipv4() noexcept {
-            webpp_assert(hints->ai_family != AF_INET,  "cannot disable both ipv4 and ipv6; "
-                                                                "enable ipv6 before disabling ipv4 to "
-                                                                "prevent this error from happening.");
-            hints->ai_family = AF_INET6;
+            webpp_assert(hints.ai_family != AF_INET, "cannot disable both ipv4 and ipv6; "
+                                                     "enable ipv6 before disabling ipv4 to "
+                                                     "prevent this error from happening.");
+            hints.ai_family = AF_INET6;
         }
-
-
     };
 
 
@@ -135,13 +135,11 @@ namespace webpp::posix {
         thread_pool_type                           pool{};
 
       public:
-        stl::list<endpoint> endpoints;
+        bindable_endpoints endpoints;
 
-        posix_server(auto&&...args)
+        posix_server(auto&&... args)
           : etraits{stl::forward<decltype(args)>(args)...},
-            connections{etraits::get_allocator()}
-            acceptors{etraits::get_allocator()}
-            {};
+            connections{etraits::get_allocator()} acceptors{etraits::get_allocator()} {};
 
       private:
         void accept(socket_type socket) noexcept {
@@ -155,41 +153,41 @@ namespace webpp::posix {
             }
         }
 
-        void start_accepting() noexcept {
-        }
+        void start_accepting() noexcept {}
 
         /**
          * Initialize the connections based on the endpoints
          */
         void bind() noexcept {
-            if (endpoints.empty()) {
-                etraits::logger.warning(logger_cat, "Call to bind without any endpoints specified.");
-                return;
-            }
-            for (auto& ep : endpoints) {
-                ep.resolve(); // resolve the servers
+            endpoints.resolve(); // resolve the servers
 
-                // looping over the results of a /etc/host or DNS query
-                for (auto* it = ep.result; it != NULL; it = it->ai_next) {
-                    socket_type sock = socket(it->ai_family, it->ai_socktype, it->ai_protocol);
-                    if (sock == -1) {
-                        etraits::logger.warning(logger_cat, stl::format("Can't open a socket for {}:{}; trying the next one if exists", ep.server_name(), ep.service()), errno);
-                        continue;
-                    }
-
-                    if (bind(sock, it->ai_addr, it->ai_addrlen) == -1) {
-                        etraits::logger.warning(logger_cat, stl::format("Can't bind to a socket for {}:{}; trying the next one if exists", ep.server_name(), ep.service()), errno);
-                        close(sock); // close it because for some reason we can't bind to it
-                        continue;
-                    }
-
-                    connections.emplace_back(sock); // pass the socket to a connection
+            // looping over the results of a /etc/host or DNS query
+            for (auto* it = endpoints.result(); it != NULL; it = it->ai_next) {
+                socket_type sock = socket(it->ai_family, it->ai_socktype, it->ai_protocol);
+                if (sock == -1) {
+                    etraits::logger.warning(
+                      logger_cat,
+                      stl::format("Can't open a socket for {}:{}; trying the next one if exists",
+                                  ep.server_name(), ep.service()),
+                      errno);
+                    continue;
                 }
+
+                if (bind(sock, it->ai_addr, it->ai_addrlen) == -1) {
+                    etraits::logger.warning(
+                      logger_cat,
+                      stl::format("Can't bind to a socket for {}:{}; trying the next one if exists",
+                                  ep.server_name(), ep.service()),
+                      errno);
+                    close(sock); // close it because for some reason we can't bind to it
+                    continue;
+                }
+
+                connections.emplace_back(sock); // pass the socket to a connection
             }
         }
 
       public:
-
         void operator()() noexcept {
             pool.post(
               [this]() {
@@ -200,7 +198,8 @@ namespace webpp::posix {
                           start_accepting();
                           etraits::logger.info(logger_cat, "Starting running IO tasks in a thread.");
                           io.run();
-                          etraits::logger.info(logger_cat, "Finished all the IO tasks in the thread successfully.");
+                          etraits::logger.info(logger_cat,
+                                               "Finished all the IO tasks in the thread successfully.");
                           break;
                       } catch (stl::exception const& err) {
                           etraits::logger.error(logger_cat, "Server tasks finished with errors.", err);
@@ -216,7 +215,7 @@ namespace webpp::posix {
         }
     };
 
-} // namespace webpp
+} // namespace webpp::posix
 
 #endif // webpp_posix
 
