@@ -173,6 +173,16 @@ namespace webpp::posix {
                     continue;
                 }
 
+                int optval = 1;
+                if (setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1) {
+                    etraits::logger.warning(logger_cat,
+                                            "We weren't able to set necessary options for the specified socket",
+                                            errno
+                                            );
+                    close(sock);
+                    continue;
+                }
+
                 if (bind(sock, it->ai_addr, it->ai_addrlen) == -1) {
                     etraits::logger.warning(
                       logger_cat,
