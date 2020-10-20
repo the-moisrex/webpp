@@ -11,7 +11,7 @@
 namespace webpp {
 
 
-    constexpr auto constexpr_format(istl::ConvertibleToStringView auto&& format_str,
+    constexpr auto constexpr_format(istl::StringViewfiable auto&& format_str,
                                     auto&&... args) noexcept {
         auto format_string = istl::to_string_view(format_str);
         using strv_t       = stl::remove_cvref_t<decltype(format_string)>;

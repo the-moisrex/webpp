@@ -73,8 +73,8 @@ namespace webpp {
                       istl::StringViewfiable auto&& details, stl::error_code const& ec)              \
       const noexcept {                                                                                      \
         stl::size_t space_count =                                                                           \
-          6 + logging_type_string_size(logging_type::logging_name) + istl::to_string_view(category).size(); \
-        auto old_details = istl::to_string_view(stl::forward<decltype(details)>(details));                  \
+          6 + logging_type_string_size(logging_type::logging_name) + istl::string_viewify(category).size(); \
+        auto old_details = istl::string_viewify(stl::forward<decltype(details)>(details));                  \
         auto new_details = stl::format("{2}\n{1: >{0}}error message: {3}", stl::move(space_count), "",      \
                                        old_details, ec.message());                                          \
         return log(logging_type::logging_name, stl::forward<decltype(category)>(category),                  \
@@ -85,8 +85,8 @@ namespace webpp {
                       istl::StringViewfiable auto&& details, stl::exception const& ex)               \
       const noexcept {                                                                                      \
         stl::size_t space_count =                                                                           \
-          6 + logging_type_string_size(logging_type::logging_name) + istl::to_string_view(category).size(); \
-        auto old_details = istl::to_string_view(stl::forward<decltype(details)>(details));                  \
+          6 + logging_type_string_size(logging_type::logging_name) + istl::string_viewify(category).size(); \
+        auto old_details = istl::string_viewify(stl::forward<decltype(details)>(details));                  \
         auto new_details = stl::format("{2}\n{1: >{0}}error message: {3}", stl::move(space_count), "",      \
                                        old_details, ex.what());                                             \
         return log(logging_type::logging_name, stl::forward<decltype(category)>(category),                  \

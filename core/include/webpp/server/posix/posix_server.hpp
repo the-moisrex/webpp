@@ -56,7 +56,7 @@ namespace webpp::posix {
         addrinfo*   _result = nullptr;
 
       public:
-        bindable_endpoints(istl::ConvertibleToString auto&& v_service     = "http") noexcept
+        bindable_endpoints(istl::Stringifiable auto&& v_service     = "http") noexcept
           : _service{istl::to_string(stl::forward<decltype(v_service)>(v_service))} {}
 
         bindable_endpoints(bindable_endpoints const&) =

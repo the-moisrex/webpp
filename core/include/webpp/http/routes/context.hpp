@@ -167,7 +167,7 @@ namespace webpp {
 
         [[nodiscard]] Response auto error(status_code_type error_code, auto&& data) const noexcept {
             using data_type = stl::remove_cvref_t<decltype(data)>;
-            if constexpr (istl::ConvertibleToStringView<data_type>) {
+            if constexpr (istl::StringViewfiable<data_type>) {
                 auto res                = response<string_response>(istl::to_string_view(data));
                 res.headers.status_code = error_code;
                 return res;

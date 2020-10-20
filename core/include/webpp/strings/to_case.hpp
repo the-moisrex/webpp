@@ -252,7 +252,7 @@ namespace webpp::ascii {
                                                                                             \
     [[nodiscard]] inline auto method##_copy(istl::Stringifiable auto _str,            \
                                             auto const&                    allocator) noexcept {               \
-        auto str = istl::to_string(stl::move(_str), allocator);                             \
+        auto str = istl::stringify(stl::move(_str), allocator);                             \
         method(str);                                                                        \
         return str;                                                                         \
     }                                                                                       \
@@ -260,7 +260,7 @@ namespace webpp::ascii {
                                                                                             \
     [[nodiscard]] inline auto method##_copy(istl::Stringifiable auto _str) noexcept { \
         using char_type = istl::char_type_of<decltype(_str)>;                               \
-        auto str        = istl::to_string(stl::move(_str), stl::allocator<char_type>());    \
+        auto str        = istl::stringify(stl::move(_str), stl::allocator<char_type>());    \
         method(str);                                                                        \
         return str;                                                                         \
     }

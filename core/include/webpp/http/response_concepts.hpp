@@ -36,7 +36,7 @@ namespace webpp {
       (Response<T> ||
        // stl::is_convertible_v<T, typename std_traits_from_string<T>::type> ||
        // stl::is_convertible_v<T, typename std_traits_from_string_view<T>::type>
-       istl::ConvertibleToStringView<T>
+       istl::StringViewfiable<T>
        );
 
     template <typename ResponseType, typename T>
