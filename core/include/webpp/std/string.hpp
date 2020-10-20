@@ -45,7 +45,7 @@ namespace webpp::istl {
     };
 
     template <typename T>
-    concept ConvertibleToString = !istl::CharType<T> && requires(stl::remove_cvref_t<T> str) {
+    concept Stringifiable = !istl::CharType<T> && requires(stl::remove_cvref_t<T> str) {
         requires requires {
             stl::basic_string{str};
         }
@@ -62,7 +62,7 @@ namespace webpp::istl {
     };
 
 
-    [[nodiscard]] constexpr auto to_string(ConvertibleToString auto&& str, auto const& allocator) noexcept {
+    [[nodiscard]] constexpr auto stringify(Stringifiable auto&& str, auto const& allocator) noexcept {
         if constexpr (String<decltype(str)>) {
             return str;
         } else if constexpr (requires { stl::basic_string{str, allocator}; }) {
@@ -80,7 +80,7 @@ namespace webpp::istl {
                              }) {
             return stl::basic_string{str.data(), str.size(), allocator};
         } else if constexpr (requires { str.str(); }) {
-            return to_string(str.str(), allocator);
+            return stringify(str.str(), allocator);
         } else {
             throw stl::invalid_argument("The specified input is not convertible to string");
         }
@@ -89,7 +89,7 @@ namespace webpp::istl {
     /**
      * Get the underlying data of the specified string
      */
-    [[nodiscard]] constexpr auto string_data(ConvertibleToString auto&& str) noexcept {
+    [[nodiscard]] constexpr auto string_data(Stringifiable auto&& str) noexcept {
         if constexpr (requires { str.data(); }) {
             return str.data();
         } else if constexpr (requires { str.c_str(); }) {

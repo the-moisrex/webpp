@@ -82,11 +82,11 @@ namespace webpp {
             _comment{alloc},
             attrs{alloc} {};
 
-        constexpr response_cookie(istl::ConvertibleToString auto&& name,
-                                  istl::ConvertibleToString auto&& value,
+        constexpr response_cookie(istl::Stringifiable auto&& name,
+                                  istl::Stringifiable auto&& value,
                                   string_allocator_type const&     alloc = {}) noexcept
-          : _name{istl::to_string(stl::forward<decltype(name)>(name), alloc), alloc},
-            _value{istl::to_string(stl::forward<decltype(value)>(value), alloc), alloc},
+          : _name{istl::stringify(stl::forward<decltype(name)>(name), alloc), alloc},
+            _value{istl::stringify(stl::forward<decltype(value)>(value), alloc), alloc},
             _domain{alloc},
             _path{alloc},
             _comment{alloc},
@@ -98,7 +98,7 @@ namespace webpp {
          * There are not many reasons to use this constructor
          * @param source
          */
-        explicit response_cookie(istl::ConvertibleToStringView auto&& source,
+        explicit response_cookie(istl::StringViewfiable auto&& source,
                                  string_allocator_type const&         alloc = {}) noexcept
           : _name{alloc},
             _value{alloc},
@@ -106,7 +106,7 @@ namespace webpp {
             _path{alloc},
             _comment{alloc},
             attrs{alloc} {
-            auto src = istl::to_string_view(stl::forward<decltype(source)>(source));
+            auto src = istl::string_viewify(stl::forward<decltype(source)>(source));
             // todo: this doesn't work yet
             // parse_SE_options(src); // parse name, value, and options
         }

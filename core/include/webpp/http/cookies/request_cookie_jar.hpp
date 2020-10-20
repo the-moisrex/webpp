@@ -27,7 +27,7 @@ namespace webpp {
         /**
          * Parse Cookie header value
          */
-        explicit request_cookie_jar(istl::ConvertibleToStringView auto&& source) noexcept {
+        explicit request_cookie_jar(istl::StringViewfiable auto&& source) noexcept {
             // todo
         }
     };

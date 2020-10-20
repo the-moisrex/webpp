@@ -42,7 +42,7 @@ namespace webpp {
 
 
         // todo: fix this
-        constexpr request_headers(istl::ConvertibleToStringView auto &&header_string, auto&&...args)
+        constexpr request_headers(istl::StringViewfiable auto &&header_string, auto&&...args)
         :   super{stl::forward< decltype(args)>(args)...}
         {
             parse_header_string(istl::to_string_view(header_string));

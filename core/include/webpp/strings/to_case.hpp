@@ -137,7 +137,7 @@ namespace webpp::ascii {
             method(*it);                                                                                     \
     }                                                                                                        \
                                                                                                              \
-    inline void simple_##method(istl::ConvertibleToString auto& str) noexcept {                              \
+    inline void simple_##method(istl::Stringifiable auto& str) noexcept {                              \
         using str_t          = stl::remove_cvref_t<decltype(str)>;                                           \
         using char_type      = istl::char_type_of<str_t>;                                                    \
         char_type*       it  = istl::string_data(str);                                                       \
@@ -181,7 +181,7 @@ namespace webpp::ascii {
         //        }
 
 
-        inline void eve_to_lower(istl::ConvertibleToString auto& str) noexcept {
+        inline void eve_to_lower(istl::Stringifiable auto& str) noexcept {
             using char_type                 = istl::char_type_of<decltype(str)>;
             using simd_type                 = eve::wide<char_type>;
             using simd_utype                = eve::wide<stl::make_unsigned_t<char_type>>;
@@ -208,7 +208,7 @@ namespace webpp::ascii {
             }
         }
 
-        inline void eve_to_upper(istl::ConvertibleToString auto& str) noexcept {
+        inline void eve_to_upper(istl::Stringifiable auto& str) noexcept {
             using char_type                 = istl::char_type_of<decltype(str)>;
             using simd_type                 = eve::wide<char_type>;
             using simd_utype                = eve::wide<stl::make_unsigned_t<char_type>>;
@@ -246,11 +246,11 @@ namespace webpp::ascii {
             method(*it);                                                                    \
     }                                                                                       \
                                                                                             \
-    inline void method(istl::ConvertibleToString auto& str) noexcept {                      \
+    inline void method(istl::Stringifiable auto& str) noexcept {                      \
         algo::chosen_algorithm##_##method(stl::forward<decltype(str)>(str));                \
     }                                                                                       \
                                                                                             \
-    [[nodiscard]] inline auto method##_copy(istl::ConvertibleToString auto _str,            \
+    [[nodiscard]] inline auto method##_copy(istl::Stringifiable auto _str,            \
                                             auto const&                    allocator) noexcept {               \
         auto str = istl::to_string(stl::move(_str), allocator);                             \
         method(str);                                                                        \
@@ -258,7 +258,7 @@ namespace webpp::ascii {
     }                                                                                       \
                                                                                             \
                                                                                             \
-    [[nodiscard]] inline auto method##_copy(istl::ConvertibleToString auto _str) noexcept { \
+    [[nodiscard]] inline auto method##_copy(istl::Stringifiable auto _str) noexcept { \
         using char_type = istl::char_type_of<decltype(_str)>;                               \
         auto str        = istl::to_string(stl::move(_str), stl::allocator<char_type>());    \
         method(str);                                                                        \
@@ -278,8 +278,8 @@ namespace webpp::ascii {
 
 
     template <typename T>
-    [[nodiscard]] constexpr bool starts_with(istl::ConvertibleToStringView auto&& _str, T&& data) noexcept {
-        auto str = istl::to_string_view(_str);
+    [[nodiscard]] constexpr bool starts_with(istl::StringViewfiable auto&& _str, T&& data) noexcept {
+        auto str = istl::string_viewify(_str);
 #ifdef CXX20
         return str.starts_with(stl::forward<T>(data));
 #else
@@ -287,15 +287,15 @@ namespace webpp::ascii {
 #endif
     }
 
-    [[nodiscard]] constexpr bool ends_with(istl::ConvertibleToStringView auto&& _str,
+    [[nodiscard]] constexpr bool ends_with(istl::StringViewfiable auto&& _str,
                                            istl::char_type_of<decltype(_str)>   c) noexcept {
-        auto str = istl::to_string_view(_str);
+        auto str = istl::string_viewify(_str);
         return !str.empty() && str.back() == c;
     }
 
-    [[nodiscard]] constexpr bool ends_with(istl::ConvertibleToStringView auto&& _str,
-                                           istl::ConvertibleToStringView auto&& _ending) noexcept {
-        auto                   str = istl::to_string_view(_str);
+    [[nodiscard]] constexpr bool ends_with(istl::StringViewfiable auto&& _str,
+                                           istl::StringViewfiable auto&& _ending) noexcept {
+        auto                   str = istl::string_viewify(_str);
         stl::basic_string_view ending{_ending};
 #ifdef CXX20
         return str.ends_with(ending);

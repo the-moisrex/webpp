@@ -13,8 +13,8 @@ namespace webpp::base64 {
     /**
      * Encodes the input binary data in base64.
      */
-     void encode(istl::ConvertibleToStringView auto&& input, istl::String auto& output) {
-        auto input_view = istl::to_string_view(stl::forward<decltype(input)>(input));
+     void encode(istl::StringViewfiable auto&& input, istl::String auto& output) {
+        auto input_view = istl::string_viewify(stl::forward<decltype(input)>(input));
         output.resize(modp_b64::encode_len(input_view.size()));  // makes room for null byte
 
         // modp_b64::encode_len() returns at least 1, so output[0] is safe to use.
@@ -28,9 +28,9 @@ namespace webpp::base64 {
      * The output string is only modified if successful.
      * The decoding can be done in-place.
      */
-    [[nodiscard]] bool decode(istl::ConvertibleToStringView auto &&input, istl::String auto& output) {
+    [[nodiscard]] bool decode(istl::StringViewfiable auto &&input, istl::String auto& output) {
         using str_t = stl::remove_pointer_t<stl::remove_cvref_t<decltype(output)>>;
-        auto input_view = istl::to_string_view(stl::forward<decltype(input)>(input));
+        auto input_view = istl::string_viewify(stl::forward<decltype(input)>(input));
         str_t temp(output.get_allocator());
         temp.resize(modp_b64::decode_len(input_view.size()));
 

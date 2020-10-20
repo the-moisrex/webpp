@@ -57,27 +57,27 @@ namespace webpp::ascii {
 
     // trim from start (copying)
     template <istl::StringView StrViewType = decltype(standard_whitespaces)>
-    [[nodiscard]] static inline auto ltrim_copy(istl::ConvertibleToStringView auto&& s,
+    [[nodiscard]] static inline auto ltrim_copy(istl::StringViewfiable auto&& s,
                                                 StrViewType whitespaces = standard_whitespaces) noexcept {
-        auto str = istl::to_string_view(stl::forward<decltype(s)>(s));
+        auto str = istl::string_viewify(stl::forward<decltype(s)>(s));
         ltrim(str, whitespaces);
         return str;
     }
 
     // trim from end (copying)
     template <istl::StringView StrViewType = decltype(standard_whitespaces)>
-    [[nodiscard]] static inline auto rtrim_copy(istl::ConvertibleToStringView auto&& s,
+    [[nodiscard]] static inline auto rtrim_copy(istl::StringViewfiable auto&& s,
                                                 StrViewType whitespaces = standard_whitespaces) noexcept {
-        auto str = istl::to_string_view(stl::forward<decltype(s)>(s));
+        auto str = istl::string_viewify(stl::forward<decltype(s)>(s));
         rtrim(str, whitespaces);
         return str;
     }
 
     // trim from both ends (copying)
     template <istl::StringView StrViewType = decltype(standard_whitespaces)>
-    [[nodiscard]] static inline auto trim_copy(istl::ConvertibleToStringView auto&& s,
+    [[nodiscard]] static inline auto trim_copy(istl::StringViewfiable auto&& s,
                                                StrViewType whitespaces = standard_whitespaces) noexcept {
-        auto str = istl::to_string_view(stl::forward<decltype(s)>(s));
+        auto str = istl::string_viewify(stl::forward<decltype(s)>(s));
         trim(str, whitespaces);
         return str;
     }
@@ -103,27 +103,27 @@ namespace webpp::ascii {
 
     // trim from start (copying)
     template <istl::StringView StrViewType = decltype(standard_whitespaces)>
-    [[nodiscard]] static inline auto ltrim_copy(istl::ConvertibleToString auto&& s, auto const& allocator,
+    [[nodiscard]] static inline auto ltrim_copy(istl::Stringifiable auto&& s, auto const& allocator,
                                                 StrViewType whitespaces = standard_whitespaces) noexcept {
-        auto str = istl::to_string(stl::forward<decltype(s)>(s), allocator);
+        auto str = istl::stringify(stl::forward<decltype(s)>(s), allocator);
         ltrim(str, whitespaces);
         return str;
     }
 
     // trim from end (copying)
     template <istl::StringView StrViewType = decltype(standard_whitespaces)>
-    [[nodiscard]] static inline auto rtrim_copy(istl::ConvertibleToString auto&& s, auto const& allocator,
+    [[nodiscard]] static inline auto rtrim_copy(istl::Stringifiable auto&& s, auto const& allocator,
                                                 StrViewType whitespaces = standard_whitespaces) noexcept {
-        auto str = istl::to_string(stl::forward<decltype(s)>(s), allocator);
+        auto str = istl::stringify(stl::forward<decltype(s)>(s), allocator);
         rtrim(str, whitespaces);
         return str;
     }
 
     // trim from both ends (copying)
     template <istl::StringView StrViewType = decltype(standard_whitespaces)>
-    [[nodiscard]] inline auto trim_copy(istl::ConvertibleToString auto&& s, auto const& allocator,
+    [[nodiscard]] inline auto trim_copy(istl::Stringifiable auto&& s, auto const& allocator,
                                         StrViewType whitespaces = standard_whitespaces) noexcept {
-        auto str = istl::to_string(stl::forward<decltype(s)>(s), allocator);
+        auto str = istl::stringify(stl::forward<decltype(s)>(s), allocator);
         trim(str, whitespaces);
         return str;
     }

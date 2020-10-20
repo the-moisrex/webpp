@@ -398,10 +398,13 @@ TEST(URITests, Domains) {
     EXPECT_FALSE(u.has_top_level_domain());
 }
 
-TEST(URITests, EnDecoded) {
+TEST(URITests, EncodedDecoded) {
     // TODO
     uri u{"http://سلام.com"};
     EXPECT_TRUE(u.is_valid());
+
+    const_uri ducky = "https://duckduckgo.com/?q=%D8%AA%D8%B3%D8%AA+%D9%85%DB%8C%DA%A9%D9%86%D9%85";
+    EXPECT_EQ(ducky.query_decoded()["q"], "تست میکنم");
 }
 
 TEST(URITests, TypedVariables) {

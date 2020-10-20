@@ -172,26 +172,26 @@ namespace webpp {
          * It's not a good idea to compare the name directly; the header name is
          * case-insensitive.
          */
-        constexpr bool is_name(istl::ConvertibleToStringView auto&& _str) const noexcept {
+        constexpr bool is_name(istl::StringViewfiable auto&& _str) const noexcept {
             return ascii::iequals(name, stl::forward<decltype(_str)>(_str));
         }
 
-        constexpr bool operator==(istl::ConvertibleToStringView auto&& str) const noexcept {
+        constexpr bool operator==(istl::StringViewfiable auto&& str) const noexcept {
             return is_name(stl::forward<decltype(str)>(str));
         }
 
-        constexpr bool operator!=(istl::ConvertibleToStringView auto&& str) const noexcept {
+        constexpr bool operator!=(istl::StringViewfiable auto&& str) const noexcept {
             return !operator==(stl::forward<decltype(str)>(str));
         }
 
-        friend constexpr bool operator==(istl::ConvertibleToStringView auto&&   str,
+        friend constexpr bool operator==(istl::StringViewfiable auto&&   str,
                                          basic_header_field<TraitsType, EList, IsView> const& field) noexcept {
-            return field.operator==(istl::to_string_view(str));
+            return field.operator==(istl::string_viewify(str));
         }
 
-        friend constexpr bool operator!=(istl::ConvertibleToStringView auto&&   str,
+        friend constexpr bool operator!=(istl::StringViewfiable auto&&   str,
                                          basic_header_field<TraitsType, EList, IsView> const& field) noexcept {
-            return field.operator!=(istl::to_string_view(str));
+            return field.operator!=(istl::string_viewify(str));
         }
     };
 

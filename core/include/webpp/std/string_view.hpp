@@ -46,7 +46,7 @@ namespace webpp::istl {
 
 
     template <typename T>
-    concept ConvertibleToStringView = !istl::CharType<T> && requires(stl::remove_cvref_t<T> str) {
+    concept StringViewfiable = !istl::CharType<T> && requires(stl::remove_cvref_t<T> str) {
         requires requires {
             stl::basic_string_view{str};
         }
@@ -63,7 +63,7 @@ namespace webpp::istl {
     };
 
 
-    [[nodiscard]] constexpr auto to_string_view(ConvertibleToStringView auto&& str) noexcept {
+    [[nodiscard]] constexpr auto string_viewify(StringViewfiable auto&& str) noexcept {
         if constexpr (StringView<decltype(str)>) {
             return str;
         } else if constexpr (requires { stl::basic_string_view{str}; }) {
@@ -81,17 +81,17 @@ namespace webpp::istl {
                              }) {
             return stl::basic_string_view{str.data(), str.size()};
         } else if constexpr (requires { str.str(); }) {
-            return to_string_view(str.str());
+            return string_viewify(str.str());
         } else {
             throw stl::invalid_argument("The specified input is not convertible to string_view");
         }
     };
 
     template <typename T>
-    using char_type_of = typename decltype(to_string_view(stl::declval<T>()))::value_type;
+    using char_type_of = typename decltype(string_viewify(stl::declval<T>()))::value_type;
 
     template <typename T>
-    using char_traits_type_of = typename decltype(to_string_view(stl::declval<T>()))::traits_type;
+    using char_traits_type_of = typename decltype(string_viewify(stl::declval<T>()))::traits_type;
 
 } // namespace webpp::istl
 

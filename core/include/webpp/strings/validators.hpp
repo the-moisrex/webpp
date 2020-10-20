@@ -27,7 +27,7 @@ namespace webpp::ascii::is {
      * @return true if there's no whitespaces in the right side of input
      */
     [[nodiscard]] constexpr bool rtrimmed(istl::ConvertibleToStringView auto&& _str) noexcept {
-        auto str = istl::to_string_view(_str);
+        auto str = istl::string_viewify(_str);
         return !whitespace(*str.rbegin());
     }
 
@@ -37,7 +37,7 @@ namespace webpp::ascii::is {
      * @return true if there's no whitespaces in the left side of input
      */
     [[nodiscard]] constexpr bool ltrimmed(istl::ConvertibleToStringView auto&& _str) noexcept {
-        auto str = istl::to_string_view(_str);
+        auto str = istl::string_viewify(_str);
         return !whitespace(str[0]);
     }
 
@@ -67,7 +67,7 @@ namespace webpp::ascii::is {
      */
     [[nodiscard]] constexpr bool digit(istl::ConvertibleToStringView auto&& _str) noexcept {
         // todo: add SIMD
-        auto str = istl::to_string_view(_str);
+        auto str = istl::string_viewify(_str);
         for (auto c : str)
             if (!digit(c))
                 return false;
@@ -91,7 +91,7 @@ namespace webpp::ascii::is {
      */
     [[nodiscard]] constexpr bool number(istl::ConvertibleToStringView auto&& _str) noexcept {
         // todo: add SIMD
-        auto str = istl::to_string_view(_str);
+        auto str = istl::string_viewify(_str);
         bool                   is_first = true;
         for (auto const& c : str) {
             if (!digit(c)) {
@@ -122,7 +122,7 @@ namespace webpp::ascii::is {
 
     [[nodiscard]] constexpr bool lowercase(istl::ConvertibleToStringView auto&& _str) noexcept {
         // todo: add SIMD
-        auto str = istl::to_string_view(_str);
+        auto str = istl::string_viewify(_str);
         for (auto const& c : str)
             if (!lowercase(c))
                 return false;
@@ -145,7 +145,7 @@ namespace webpp::ascii::is {
      */
     [[nodiscard]] constexpr bool uppercase(istl::ConvertibleToStringView auto&& _str) noexcept {
         // todo: add SIMD
-        auto str = istl::to_string_view(_str);
+        auto str = istl::string_viewify(_str);
         for (auto const& c : str)
             if (!uppercase(c))
                 return false;
@@ -169,7 +169,7 @@ namespace webpp::ascii::is {
      */
 
     [[nodiscard]] constexpr bool uint8(istl::ConvertibleToStringView auto&& _str) noexcept {
-        auto str = istl::to_string_view(_str);
+        auto str = istl::string_viewify(_str);
         return !str.empty() && str.size() <= 3 && digit(str) && to_uint(str) <= 255;
     }
 
@@ -189,7 +189,7 @@ namespace webpp::ascii::is {
      * @return bool
      */
     [[nodiscard]] constexpr bool hex(istl::ConvertibleToStringView auto&& _str) noexcept {
-        auto str        = istl::to_string_view(_str);
+        auto str        = istl::string_viewify(_str);
         using char_type = istl::char_type_of<decltype(str)>;
 
         auto first = stl::cbegin(str);

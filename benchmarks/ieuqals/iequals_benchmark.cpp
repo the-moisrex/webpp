@@ -21,8 +21,8 @@ using namespace webpp;
 
 
 
-[[nodiscard]] constexpr bool iequal_tolower_all_the_way(istl::ConvertibleToStringView auto&& _str1,
-                                                        istl::ConvertibleToStringView auto&& _str2) noexcept {
+[[nodiscard]] constexpr bool iequal_tolower_all_the_way(istl::StringViewfiable auto&& _str1,
+                                                        istl::StringViewfiable auto&& _str2) noexcept {
     using str1_type  = decltype(_str1);
     using str2_type  = decltype(_str2);
     using str1_t     = stl::remove_cvref_t<str1_type>;
@@ -37,8 +37,8 @@ using namespace webpp;
     if (_size != size(_str2))
         return false;
 
-    auto str1 = istl::to_string_view(_str1);
-    auto str2 = istl::to_string_view(_str2);
+    auto str1 = istl::string_viewify(_str1);
+    auto str2 = istl::string_viewify(_str2);
 
 
     if constexpr (istl::String<str1_t> && istl::String<str1_t> && stl::is_rvalue_reference_v<str1_type> &&
@@ -63,8 +63,8 @@ using namespace webpp;
 
 
 
-[[nodiscard]] constexpr bool simple_for_loop(istl::ConvertibleToStringView auto&& _str1,
-                                             istl::ConvertibleToStringView auto&& _str2) noexcept {
+[[nodiscard]] constexpr bool simple_for_loop(istl::StringViewfiable auto&& _str1,
+                                             istl::StringViewfiable auto&& _str2) noexcept {
     using str1_type  = decltype(_str1);
     using str2_type  = decltype(_str2);
     using str1_t     = stl::remove_cvref_t<str1_type>;
@@ -95,8 +95,8 @@ using namespace webpp;
 
 
 
-[[nodiscard]] constexpr bool simpler_for_loop(istl::ConvertibleToStringView auto&& _str1,
-                                              istl::ConvertibleToStringView auto&& _str2) noexcept {
+[[nodiscard]] constexpr bool simpler_for_loop(istl::StringViewfiable auto&& _str1,
+                                              istl::StringViewfiable auto&& _str2) noexcept {
     using str1_type  = decltype(_str1);
     using str2_type  = decltype(_str2);
     using str1_t     = stl::remove_cvref_t<str1_type>;
@@ -129,8 +129,8 @@ using namespace webpp;
 /**
  * Check if two strings are equal case-insensitively
  */
-[[nodiscard]] constexpr bool iequals_simd(istl::ConvertibleToStringView auto&& _str1,
-                                          istl::ConvertibleToStringView auto&& _str2) noexcept {
+[[nodiscard]] constexpr bool iequals_simd(istl::StringViewfiable auto&& _str1,
+                                          istl::StringViewfiable auto&& _str2) noexcept {
     using str1_type  = decltype(_str1);
     using str2_type  = decltype(_str2);
     using str1_t     = stl::remove_cvref_t<str1_type>;

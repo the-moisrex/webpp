@@ -173,7 +173,7 @@ namespace webpp {
                 return res;
             } else if constexpr (requires {
                                      { data.what() }
-                                     ->istl::ConvertibleToStringView;
+                                     ->istl::StringViewfiable;
                                  }) {
                 auto res                = response<string_response>(data.what());
                 res.headers.status_code = error_code;

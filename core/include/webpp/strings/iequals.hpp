@@ -80,14 +80,14 @@ namespace webpp::ascii {
     }
 
     template <char_case_side Side = char_case_side::both_unknown, istl::CharType CharT>
-    [[nodiscard]] static constexpr bool iequals(istl::ConvertibleToStringView auto&& a, CharT b) noexcept {
+    [[nodiscard]] static constexpr bool iequals(istl::StringViewfiable auto&& a, CharT b) noexcept {
         if (a.size() != 1)
             return false;
         return iequals<Side, CharT>(a[0], b);
     }
 
     template <char_case_side Side = char_case_side::both_unknown, istl::CharType CharT>
-    [[nodiscard]] static constexpr bool iequals(CharT a, istl::ConvertibleToStringView auto&& b) noexcept {
+    [[nodiscard]] static constexpr bool iequals(CharT a, istl::StringViewfiable auto&& b) noexcept {
         if (a.size() != 1)
             return false;
         return iequals<Side, CharT>(a, b[0]);
@@ -97,8 +97,8 @@ namespace webpp::ascii {
      * Check if two strings are equal case-insensitively
      */
     template <char_case_side Side = char_case_side::both_unknown>
-    [[nodiscard]] static inline bool iequals(istl::ConvertibleToStringView auto&& _str1,
-                                             istl::ConvertibleToStringView auto&& _str2) noexcept {
+    [[nodiscard]] static inline bool iequals(istl::StringViewfiable auto&& _str1,
+                                             istl::StringViewfiable auto&& _str2) noexcept {
         using str1_type  = decltype(_str1);
         using str2_type  = decltype(_str2);
         using str1_t     = stl::remove_cvref_t<str1_type>;
@@ -114,7 +114,7 @@ namespace webpp::ascii {
             return false;
 
         if constexpr (char_case_side::both_lowered == Side || char_case_side::both_uppered == Side) {
-            return istl::to_string_view(_str1) == istl::to_string_view(_str2);
+            return istl::string_viewify(_str1) == istl::string_viewify(_str2);
         } else {
 
             auto*       it1     = istl::string_data(_str1);

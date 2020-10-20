@@ -25,8 +25,8 @@ namespace webpp {
         // Default constructor (major=0, minor=0).
         constexpr http_version() noexcept = default;
 
-        constexpr http_version(istl::ConvertibleToStringView auto&& str) noexcept
-          : value(parse_string(istl::to_string_view(str))) {}
+        constexpr http_version(istl::StringViewfiable auto&& str) noexcept
+          : value(parse_string(istl::string_viewify(str))) {}
 
         // Build from unsigned major/minor pair.
         constexpr http_version(uint16_t major, uint16_t minor) noexcept : value(major << 16u | minor) {}
