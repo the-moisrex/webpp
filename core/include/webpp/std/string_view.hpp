@@ -46,7 +46,7 @@ namespace webpp::istl {
 
 
     template <typename T>
-    concept StringViewfiable = !istl::CharType<T> && requires(stl::remove_cvref_t<T> str) {
+    concept StringViewifiable = !istl::CharType<T> && requires(stl::remove_cvref_t<T> str) {
         requires requires {
             stl::basic_string_view{str};
         }
@@ -63,7 +63,7 @@ namespace webpp::istl {
     };
 
 
-    [[nodiscard]] constexpr auto string_viewify(StringViewfiable auto&& str) noexcept {
+    [[nodiscard]] constexpr auto string_viewify(StringViewifiable auto&& str) noexcept {
         if constexpr (StringView<decltype(str)>) {
             return str;
         } else if constexpr (requires { stl::basic_string_view{str}; }) {

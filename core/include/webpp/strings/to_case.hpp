@@ -278,7 +278,7 @@ namespace webpp::ascii {
 
 
     template <typename T>
-    [[nodiscard]] constexpr bool starts_with(istl::StringViewfiable auto&& _str, T&& data) noexcept {
+    [[nodiscard]] constexpr bool starts_with(istl::StringViewifiable auto&& _str, T&& data) noexcept {
         auto str = istl::string_viewify(_str);
 #ifdef CXX20
         return str.starts_with(stl::forward<T>(data));
@@ -287,14 +287,14 @@ namespace webpp::ascii {
 #endif
     }
 
-    [[nodiscard]] constexpr bool ends_with(istl::StringViewfiable auto&& _str,
+    [[nodiscard]] constexpr bool ends_with(istl::StringViewifiable auto&& _str,
                                            istl::char_type_of<decltype(_str)>   c) noexcept {
         auto str = istl::string_viewify(_str);
         return !str.empty() && str.back() == c;
     }
 
-    [[nodiscard]] constexpr bool ends_with(istl::StringViewfiable auto&& _str,
-                                           istl::StringViewfiable auto&& _ending) noexcept {
+    [[nodiscard]] constexpr bool ends_with(istl::StringViewifiable auto&& _str,
+                                           istl::StringViewifiable auto&& _ending) noexcept {
         auto                   str = istl::string_viewify(_str);
         stl::basic_string_view ending{_ending};
 #ifdef CXX20

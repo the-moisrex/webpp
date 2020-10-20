@@ -26,44 +26,44 @@ namespace webpp {
 
         spdlog_logger() : spdlogger{spdlog::default_logger()} {}
         spdlog_logger(stl::shared_ptr<spdlog::logger> logger) noexcept : spdlogger{logger} {}
-        spdlog_logger(istl::StringViewfiable auto&& logger_name)
+        spdlog_logger(istl::StringViewifiable auto&& logger_name)
           : spdlogger{spdlog::get(istl::string_viewify(logger_name).c_str())} {}
 
 #    define WEBPP_LOGGER_SHORTCUT(func_name, logging_name)                                          \
                                                                                                     \
-        void func_name(istl::StringViewfiable auto&& details) const noexcept {               \
+        void func_name(istl::StringViewifiable auto&& details) const noexcept {               \
             return spdlogger->logging_name("{}", stl::forward<decltype(details)>(details));         \
         }                                                                                           \
                                                                                                     \
-        void func_name(istl::StringViewfiable auto&& category,                               \
-                       istl::StringViewfiable auto&& details) const noexcept {               \
+        void func_name(istl::StringViewifiable auto&& category,                               \
+                       istl::StringViewifiable auto&& details) const noexcept {               \
             return spdlogger->logging_name("[{}] {}", stl::forward<decltype(category)>(category),   \
                                            stl::forward<decltype(details)>(details));               \
         }                                                                                           \
                                                                                                     \
-        void func_name(istl::StringViewfiable auto&& category,                               \
-                       istl::StringViewfiable auto&& details, stl::error_code const& ec)     \
+        void func_name(istl::StringViewifiable auto&& category,                               \
+                       istl::StringViewifiable auto&& details, stl::error_code const& ec)     \
           const noexcept {                                                                          \
             return spdlogger->logging_name("[{}] {}; error message: {}",                            \
                                            stl::forward<decltype(category)>(category),              \
                                            stl::forward<decltype(details)>(details), ec.message()); \
         }                                                                                           \
                                                                                                     \
-        void func_name(istl::StringViewfiable auto&& category,                               \
-                       istl::StringViewfiable auto&& details, stl::exception const& ex)      \
+        void func_name(istl::StringViewifiable auto&& category,                               \
+                       istl::StringViewifiable auto&& details, stl::exception const& ex)      \
           const noexcept {                                                                          \
             return spdlogger->logging_name("[{}] {}; error message: {}",                            \
                                            stl::forward<decltype(category)>(category),              \
                                            stl::forward<decltype(details)>(details), ex.what());    \
         }                                                                                           \
                                                                                                     \
-        void func_name(istl::StringViewfiable auto&& details, stl::error_code const& ec)     \
+        void func_name(istl::StringViewifiable auto&& details, stl::error_code const& ec)     \
           const noexcept {                                                                          \
             return spdlogger->logging_name("{}; error message: {}",                                 \
                                            stl::forward<decltype(details)>(details), ec.message()); \
         }                                                                                           \
                                                                                                     \
-        void func_name(istl::StringViewfiable auto&& details, stl::exception const& ex)      \
+        void func_name(istl::StringViewifiable auto&& details, stl::exception const& ex)      \
           const noexcept {                                                                          \
             return spdlogger->logging_name("{}; error message: {}",                                 \
                                            stl::forward<decltype(details)>(details), ex.what());    \

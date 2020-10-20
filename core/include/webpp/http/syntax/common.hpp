@@ -57,19 +57,19 @@ namespace webpp::http {
 
     // trim from start (copying)
     template <istl::StringView StrViewType = decltype(http_lws)>
-    [[nodiscard]] static inline auto ltrim_copy_lws(istl::StringViewfiable auto&& s) noexcept {
+    [[nodiscard]] static inline auto ltrim_copy_lws(istl::StringViewifiable auto&& s) noexcept {
         return ascii::ltrim_copy<StrViewType>(stl::forward<decltype(s)>(s), http_lws);
     }
 
     // trim from end (copying)
     template <istl::StringView StrViewType = decltype(http_lws)>
-    [[nodiscard]] static inline auto rtrim_copy_lws(istl::StringViewfiable auto&& s) noexcept {
+    [[nodiscard]] static inline auto rtrim_copy_lws(istl::StringViewifiable auto&& s) noexcept {
         return ascii::rtrim_copy<StrViewType>(stl::forward<decltype(s)>(s), http_lws);
     }
 
     // trim from both ends (copying)
     template <istl::StringView StrViewType = decltype(http_lws)>
-    [[nodiscard]] static inline auto trim_copy_lws(istl::StringViewfiable auto&& s) noexcept {
+    [[nodiscard]] static inline auto trim_copy_lws(istl::StringViewifiable auto&& s) noexcept {
         return ascii::trim_copy<StrViewType>(stl::forward<decltype(s)>(s), http_lws);
     }
 

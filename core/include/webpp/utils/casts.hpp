@@ -11,7 +11,7 @@
 namespace webpp {
 
     template <typename T, bool is_signed = true, bool throw_mistakes = false>
-    constexpr T to(istl::StringViewfiable auto&& _str) noexcept(!throw_mistakes) {
+    constexpr T to(istl::StringViewifiable auto&& _str) noexcept(!throw_mistakes) {
         stl::basic_string_view str{_str};
         T                      ret = 0;
         if (str.size() > 0) {
@@ -44,7 +44,7 @@ namespace webpp {
     }
 
 #define WEBPP_TO_FUNCTION(name, type)                                             \
-    constexpr auto to_##name(istl::StringViewfiable auto&& str) noexcept { \
+    constexpr auto to_##name(istl::StringViewifiable auto&& str) noexcept { \
         return to<type>(str);                                                     \
     }
 

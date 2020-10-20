@@ -149,8 +149,8 @@ namespace webpp {
             } else if constexpr (ConstructibleWithResponse<typename ctx_type::response_type, res_t>) {
                 return ctx.response(stl::forward<decltype(res)>(res));
                 // todo: consider "response extension" injection in order to get the right response type
-//            } else if constexpr (istl::StringViewfiable<res_t>) {
-//                return ctx.template response<string_response>(istl::to_string_view(stl::forward<decltype(res)>(res)));
+//            } else if constexpr (istl::StringViewifiable<res_t>) {
+//                return ctx.template response<string_response>(istl::string_viewify(stl::forward<decltype(res)>(res)));
             } else {
                 // let's just ignore the result
                 return true;

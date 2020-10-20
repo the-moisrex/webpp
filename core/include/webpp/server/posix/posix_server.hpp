@@ -57,7 +57,7 @@ namespace webpp::posix {
 
       public:
         bindable_endpoints(istl::Stringifiable auto&& v_service     = "http") noexcept
-          : _service{istl::to_string(stl::forward<decltype(v_service)>(v_service))} {}
+          : _service{istl::stringify(stl::forward<decltype(v_service)>(v_service))} {}
 
         bindable_endpoints(bindable_endpoints const&) =
           delete; // I don't wanna deal with memory management for now

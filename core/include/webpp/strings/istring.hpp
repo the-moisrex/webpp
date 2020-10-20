@@ -79,12 +79,12 @@ namespace webpp {
         }
 
         [[nodiscard]] constexpr alternate_std_string_view_type std_string_view() const noexcept {
-            return istl::to_string_view(*this);
+            return istl::string_viewify(*this);
         }
 
 
         [[nodiscard]] constexpr alternate_std_string_type std_string() const noexcept {
-            return istl::to_string(*this, get_allocator());
+            return istl::stringify(*this, get_allocator());
         }
 
         explicit operator alternate_std_string_view_type() const noexcept {

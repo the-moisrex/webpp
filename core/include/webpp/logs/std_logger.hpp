@@ -45,8 +45,8 @@ namespace webpp {
             return stl::string_view{logging_type_to_string(lt)}.size();
         }
 
-        void log(logging_type lt, istl::StringViewfiable auto&& category,
-                 istl::StringViewfiable auto&& details) const noexcept {
+        void log(logging_type lt, istl::StringViewifiable auto&& category,
+                 istl::StringViewifiable auto&& details) const noexcept {
 #ifdef WEBPP_FMT_LIB
             fmt::print(stream_getter(), "[{}, {}]: {}\n", logging_type_to_string(lt),
                        stl::forward<decltype(category)>(category), stl::forward<decltype(details)>(details));
@@ -58,19 +58,19 @@ namespace webpp {
 
 #define WEBPP_LOGGER_SHORTCUT(logging_name)                                                                 \
                                                                                                             \
-    void logging_name(istl::StringViewfiable auto&& details) const noexcept {                        \
+    void logging_name(istl::StringViewifiable auto&& details) const noexcept {                        \
         return log(logging_type::logging_name, default_category_name,                                       \
                    stl::forward<decltype(details)>(details));                                               \
     }                                                                                                       \
                                                                                                             \
-    void logging_name(istl::StringViewfiable auto&& category,                                        \
-                      istl::StringViewfiable auto&& details) const noexcept {                        \
+    void logging_name(istl::StringViewifiable auto&& category,                                        \
+                      istl::StringViewifiable auto&& details) const noexcept {                        \
         return log(logging_type::logging_name, stl::forward<decltype(category)>(category),                  \
                    stl::forward<decltype(details)>(details));                                               \
     }                                                                                                       \
                                                                                                             \
-    void logging_name(istl::StringViewfiable auto&& category,                                        \
-                      istl::StringViewfiable auto&& details, stl::error_code const& ec)              \
+    void logging_name(istl::StringViewifiable auto&& category,                                        \
+                      istl::StringViewifiable auto&& details, stl::error_code const& ec)              \
       const noexcept {                                                                                      \
         stl::size_t space_count =                                                                           \
           6 + logging_type_string_size(logging_type::logging_name) + istl::string_viewify(category).size(); \
@@ -81,8 +81,8 @@ namespace webpp {
                    stl::move(new_details));                                                                 \
     }                                                                                                       \
                                                                                                             \
-    void logging_name(istl::StringViewfiable auto&& category,                                        \
-                      istl::StringViewfiable auto&& details, stl::exception const& ex)               \
+    void logging_name(istl::StringViewifiable auto&& category,                                        \
+                      istl::StringViewifiable auto&& details, stl::exception const& ex)               \
       const noexcept {                                                                                      \
         stl::size_t space_count =                                                                           \
           6 + logging_type_string_size(logging_type::logging_name) + istl::string_viewify(category).size(); \
@@ -93,12 +93,12 @@ namespace webpp {
                    stl::move(new_details));                                                                 \
     }                                                                                                       \
                                                                                                             \
-    void logging_name(istl::StringViewfiable auto&& details, stl::error_code const& ec)              \
+    void logging_name(istl::StringViewifiable auto&& details, stl::error_code const& ec)              \
       const noexcept {                                                                                      \
         return logging_name(default_category_name, stl::forward<decltype(details)>(details), ec);           \
     }                                                                                                       \
                                                                                                             \
-    void logging_name(istl::StringViewfiable auto&& details, stl::exception const& ex)               \
+    void logging_name(istl::StringViewifiable auto&& details, stl::exception const& ex)               \
       const noexcept {                                                                                      \
         return logging_name(default_category_name, stl::forward<decltype(details)>(details), ex);           \
     }

@@ -258,12 +258,12 @@ namespace webpp::http {
          * @return
          */
         template <ascii::char_case Case = ascii::char_case::unknown>
-        [[nodiscard]] bool is_allowed(istl::StringViewfiable auto&&... str) const noexcept {
+        [[nodiscard]] bool is_allowed(istl::StringViewifiable auto&&... str) const noexcept {
             return get<Case>(stl::forward<decltype(str)>(str)...) != _allowed_encodings.cend();
         }
 
         template <ascii::char_case Case = ascii::char_case::unknown>
-        [[nodiscard]] auto get(istl::StringViewfiable auto&&... str) const noexcept {
+        [[nodiscard]] auto get(istl::StringViewifiable auto&&... str) const noexcept {
             if (!_is_valid) { // it's not allowed if the string is not a valid accept-encoding header value
                 return _allowed_encodings.cend();
             }

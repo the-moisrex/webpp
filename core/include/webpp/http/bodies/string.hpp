@@ -126,7 +126,7 @@ namespace webpp {
                 using body_type   = typename ResType::body_type;
                 using string_type = typename body_type::string_type;
 
-                constexpr type(istl::StringViewfiable auto&& str_view) noexcept
+                constexpr type(istl::StringViewifiable auto&& str_view) noexcept
                   : ResType{body_type{stl::forward<decltype(str_view)>(str_view)}} {}
 
                 constexpr type(string_type const& str) noexcept : ResType{body_type{str}} {}

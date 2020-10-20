@@ -26,7 +26,7 @@ namespace webpp::ascii::is {
      * @param str
      * @return true if there's no whitespaces in the right side of input
      */
-    [[nodiscard]] constexpr bool rtrimmed(istl::StringViewfiable auto&& _str) noexcept {
+    [[nodiscard]] constexpr bool rtrimmed(istl::StringViewifiable auto&& _str) noexcept {
         auto str = istl::string_viewify(_str);
         return !whitespace(*str.rbegin());
     }
@@ -36,7 +36,7 @@ namespace webpp::ascii::is {
      * @param str
      * @return true if there's no whitespaces in the left side of input
      */
-    [[nodiscard]] constexpr bool ltrimmed(istl::StringViewfiable auto&& _str) noexcept {
+    [[nodiscard]] constexpr bool ltrimmed(istl::StringViewifiable auto&& _str) noexcept {
         auto str = istl::string_viewify(_str);
         return !whitespace(str[0]);
     }
@@ -47,7 +47,7 @@ namespace webpp::ascii::is {
      * @return true if there's no whitespaces in the right and left side of
      * input
      */
-    [[nodiscard]] constexpr bool trimmed(istl::StringViewfiable auto&& _str) noexcept {
+    [[nodiscard]] constexpr bool trimmed(istl::StringViewifiable auto&& _str) noexcept {
         return ltrimmed(_str) && rtrimmed(_str);
     }
 
@@ -65,7 +65,7 @@ namespace webpp::ascii::is {
      * @param str
      * @return true/false
      */
-    [[nodiscard]] constexpr bool digit(istl::StringViewfiable auto&& _str) noexcept {
+    [[nodiscard]] constexpr bool digit(istl::StringViewifiable auto&& _str) noexcept {
         // todo: add SIMD
         auto str = istl::string_viewify(_str);
         for (auto c : str)
@@ -89,7 +89,7 @@ namespace webpp::ascii::is {
      * @param str
      * @return true if the specified string is a number
      */
-    [[nodiscard]] constexpr bool number(istl::StringViewfiable auto&& _str) noexcept {
+    [[nodiscard]] constexpr bool number(istl::StringViewifiable auto&& _str) noexcept {
         // todo: add SIMD
         auto str = istl::string_viewify(_str);
         bool                   is_first = true;
@@ -120,7 +120,7 @@ namespace webpp::ascii::is {
      * @return
      */
 
-    [[nodiscard]] constexpr bool lowercase(istl::StringViewfiable auto&& _str) noexcept {
+    [[nodiscard]] constexpr bool lowercase(istl::StringViewifiable auto&& _str) noexcept {
         // todo: add SIMD
         auto str = istl::string_viewify(_str);
         for (auto const& c : str)
@@ -143,7 +143,7 @@ namespace webpp::ascii::is {
      * @param str
      * @return
      */
-    [[nodiscard]] constexpr bool uppercase(istl::StringViewfiable auto&& _str) noexcept {
+    [[nodiscard]] constexpr bool uppercase(istl::StringViewifiable auto&& _str) noexcept {
         // todo: add SIMD
         auto str = istl::string_viewify(_str);
         for (auto const& c : str)
@@ -157,7 +157,7 @@ namespace webpp::ascii::is {
      * @param str
      * @return true if the specified string is an integer
      */
-    [[nodiscard]] constexpr bool integer(istl::StringViewfiable auto&& str) noexcept {
+    [[nodiscard]] constexpr bool integer(istl::StringViewifiable auto&& str) noexcept {
         return digit(str);
     }
 
@@ -168,7 +168,7 @@ namespace webpp::ascii::is {
      * @return bool
      */
 
-    [[nodiscard]] constexpr bool uint8(istl::StringViewfiable auto&& _str) noexcept {
+    [[nodiscard]] constexpr bool uint8(istl::StringViewifiable auto&& _str) noexcept {
         auto str = istl::string_viewify(_str);
         return !str.empty() && str.size() <= 3 && digit(str) && to_uint(str) <= 255;
     }
@@ -188,7 +188,7 @@ namespace webpp::ascii::is {
      * @param str
      * @return bool
      */
-    [[nodiscard]] constexpr bool hex(istl::StringViewfiable auto&& _str) noexcept {
+    [[nodiscard]] constexpr bool hex(istl::StringViewifiable auto&& _str) noexcept {
         auto str        = istl::string_viewify(_str);
         using char_type = istl::char_type_of<decltype(str)>;
 

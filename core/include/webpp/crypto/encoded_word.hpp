@@ -62,7 +62,7 @@ namespace webpp::http {
 
       public:
 
-        encoded_word(istl::StringViewfiable auto&& _input, allocator_type const &alloc = allocator_type{})
+        encoded_word(istl::StringViewifiable auto&& _input, allocator_type const &alloc = allocator_type{})
           : input(istl::string_viewify(stl::forward<decltype(_input)>(input))),
             output(alloc)
         {}

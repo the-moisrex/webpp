@@ -38,7 +38,7 @@ namespace webpp::base64 {
      * encoded |*output|. |input| and |*output| may reference the same storage.
      */
     template <url_encode_policy Policy = url_encode_policy::include_padding>
-    static void url_encode(istl::StringViewfiable auto&& _input, istl::String auto& output) {
+    static void url_encode(istl::StringViewifiable auto&& _input, istl::String auto& output) {
         auto input = istl::string_viewify(stl::forward<decltype(_input)>(_input));
 
         base64::encode(input, output);
@@ -64,7 +64,7 @@ namespace webpp::base64 {
      * altogether. |input| and |*output| may reference the same storage.
      */
     template <url_decode_policy Policy = url_decode_policy::require_padding>
-    [[nodiscard]] bool url_decode(istl::StringViewfiable auto&& _input, istl::String auto& output) {
+    [[nodiscard]] bool url_decode(istl::StringViewifiable auto&& _input, istl::String auto& output) {
         auto input  = istl::string_viewify(stl::forward<decltype(_input)>(_input));
         using str_t = stl::remove_cvref_t<decltype(output)>;
         using str_v = stl::remove_cvref_t<decltype(input)>;

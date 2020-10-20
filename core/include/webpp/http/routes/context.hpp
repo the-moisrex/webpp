@@ -167,13 +167,13 @@ namespace webpp {
 
         [[nodiscard]] Response auto error(status_code_type error_code, auto&& data) const noexcept {
             using data_type = stl::remove_cvref_t<decltype(data)>;
-            if constexpr (istl::StringViewfiable<data_type>) {
-                auto res                = response<string_response>(istl::to_string_view(data));
+            if constexpr (istl::StringViewifiable<data_type>) {
+                auto res                = response<string_response>(istl::string_viewify(data));
                 res.headers.status_code = error_code;
                 return res;
             } else if constexpr (requires {
                                      { data.what() }
-                                     ->istl::StringViewfiable;
+                                     ->istl::StringViewifiable;
                                  }) {
                 auto res                = response<string_response>(data.what());
                 res.headers.status_code = error_code;

@@ -30,8 +30,8 @@ namespace webpp {
          * @return true if it does contain it
          */
 
-        [[nodiscard]] constexpr bool contains(istl::StringViewfiable auto&& _str,
-                                              istl::StringViewfiable auto&& _seed) noexcept {
+        [[nodiscard]] constexpr bool contains(istl::StringViewifiable auto&& _str,
+                                              istl::StringViewifiable auto&& _seed) noexcept {
             auto str = istl::string_viewify(_str);
             auto seed = istl::string_viewify(_seed);
             return str.find(seed) != decltype(str)::npos;
@@ -71,7 +71,7 @@ namespace webpp {
          * @param str
          * @return true if the specified str is an email
          */
-        [[nodiscard]] bool email(istl::StringViewfiable auto&& _str) noexcept {
+        [[nodiscard]] bool email(istl::StringViewifiable auto&& _str) noexcept {
             auto str = istl::string_viewify(_str);
             //            constexpr auto pattern =
             //            ctll::fixed_string{"^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+"
@@ -81,10 +81,10 @@ namespace webpp {
         }
 
 
-        [[nodiscard]] constexpr bool FQDN(istl::StringViewfiable auto&& _str) noexcept;
+        [[nodiscard]] constexpr bool FQDN(istl::StringViewifiable auto&& _str) noexcept;
 
 
-        [[nodiscard]] constexpr bool url(istl::StringViewfiable auto&& _str) noexcept;
+        [[nodiscard]] constexpr bool url(istl::StringViewifiable auto&& _str) noexcept;
 
         /**
          * Check if the specified Integer is an octet of a subnet mask
@@ -105,7 +105,7 @@ namespace webpp {
          * @param str
          * @return true if str is a valid ipv4
          */
-        [[nodiscard]] constexpr bool ipv4(istl::StringViewfiable auto&& _str) noexcept {
+        [[nodiscard]] constexpr bool ipv4(istl::StringViewifiable auto&& _str) noexcept {
             auto str = istl::string_viewify(_str);
             stl::size_t            next_dot;
             for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
@@ -124,7 +124,7 @@ namespace webpp {
          * @return bool an indication weather or not the specified string is a
          * valid ipv4 subnet mask or not
          */
-        [[nodiscard]] constexpr bool subnet(istl::StringViewfiable auto&& _str) noexcept {
+        [[nodiscard]] constexpr bool subnet(istl::StringViewifiable auto&& _str) noexcept {
             auto str = istl::string_viewify(_str);
             stl::size_t            next_dot = 0;
             for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
@@ -160,7 +160,7 @@ namespace webpp {
          */
         template <stl::size_t N>
         [[nodiscard]] constexpr bool
-        ipv4_prefix(istl::StringViewfiable auto&&                     _str,
+        ipv4_prefix(istl::StringViewifiable auto&&                     _str,
                     charset<istl::char_type_of<decltype(_str)>, N> const& divider_chars) noexcept {
 
             auto str = istl::string_viewify(_str);
@@ -187,7 +187,7 @@ namespace webpp {
          * @param str
          * @return
          */
-        [[nodiscard]] constexpr bool ipv4_prefix(istl::StringViewfiable auto&& _str) noexcept {
+        [[nodiscard]] constexpr bool ipv4_prefix(istl::StringViewifiable auto&& _str) noexcept {
             auto str = istl::string_viewify(_str);
             using char_type = istl::char_type_of<decltype(str)>;
             return ipv4_prefix(str, charset<char_type, 2>{':', '/'});
@@ -205,7 +205,7 @@ namespace webpp {
          *     An indication of whether or not the given address
          *     is a valid IPv6 address is returned.
          */
-        [[nodiscard]] constexpr bool ipv6(istl::StringViewfiable auto&& _address) noexcept {
+        [[nodiscard]] constexpr bool ipv6(istl::StringViewifiable auto&& _address) noexcept {
             auto address = istl::string_viewify(_address);
 
             using str_view_t = decltype(address);
@@ -261,7 +261,7 @@ namespace webpp {
 
         template <stl::size_t N = 1>
         [[nodiscard]] constexpr bool
-        ipv6_prefix(istl::StringViewfiable auto&&                     _str,
+        ipv6_prefix(istl::StringViewifiable auto&&                     _str,
                     charset<istl::char_type_of<decltype(_str)>, N> const& divider_chars =
                       charset<istl::char_type_of<decltype(_str)>, 1>('/')) noexcept {
 
@@ -294,7 +294,7 @@ namespace webpp {
          * @return true if str is ipv4 or ipv6
          * TODO: start supporting IPvF (IP version Future)
          */
-        [[nodiscard]] constexpr bool ip(istl::StringViewfiable auto&& _str) noexcept {
+        [[nodiscard]] constexpr bool ip(istl::StringViewifiable auto&& _str) noexcept {
             return is::ipv4(_str) || ipv6(_str);
         }
 
@@ -304,7 +304,7 @@ namespace webpp {
          * @param str
          * @return
          */
-        [[nodiscard]] constexpr bool host(istl::StringViewfiable auto&& _str) noexcept {
+        [[nodiscard]] constexpr bool host(istl::StringViewifiable auto&& _str) noexcept {
             auto str = istl::string_viewify(_str);
 
             using str_view_t = decltype(str);
@@ -373,7 +373,7 @@ namespace webpp {
          * @return bool true if it's a query
          */
 
-        [[nodiscard]] constexpr bool query(istl::StringViewfiable auto&& _str) noexcept {
+        [[nodiscard]] constexpr bool query(istl::StringViewifiable auto&& _str) noexcept {
             auto str = istl::string_viewify(_str);
             using char_type = istl::char_type_of<decltype(str)>;
 
@@ -411,13 +411,13 @@ namespace webpp {
         }
 
 
-        [[nodiscard]] constexpr bool ip_range(istl::StringViewfiable auto&& _str) noexcept;
+        [[nodiscard]] constexpr bool ip_range(istl::StringViewifiable auto&& _str) noexcept;
 
 
-        [[nodiscard]] constexpr bool ipv4_range(istl::StringViewfiable auto&& _str) noexcept;
+        [[nodiscard]] constexpr bool ipv4_range(istl::StringViewifiable auto&& _str) noexcept;
 
 
-        [[nodiscard]] constexpr bool ipv6_range(istl::StringViewfiable auto&& _str) noexcept;
+        [[nodiscard]] constexpr bool ipv6_range(istl::StringViewifiable auto&& _str) noexcept;
         // bool isImage(something) noexcept;
 
         /**
@@ -426,7 +426,7 @@ namespace webpp {
          * @return
          */
 
-        [[nodiscard]] constexpr bool hex_color(istl::StringViewfiable auto&& _str) noexcept {
+        [[nodiscard]] constexpr bool hex_color(istl::StringViewifiable auto&& _str) noexcept {
             auto str = istl::string_viewify(_str);
             if (!ascii::starts_with(str, '#'))
                 return false;
@@ -443,7 +443,7 @@ namespace webpp {
          * @param str
          * @return
          */
-        [[nodiscard]] bool rgb_color(istl::StringViewfiable auto&& _sstr) noexcept {
+        [[nodiscard]] bool rgb_color(istl::StringViewifiable auto&& _sstr) noexcept {
             // TODO: there are better ways to do it, check performance
 
             auto sstr = istl::string_viewify(_sstr);
@@ -489,7 +489,7 @@ namespace webpp {
          * @return bool
          */
 
-        [[nodiscard]] bool rgba_color(istl::StringViewfiable auto&& _str) noexcept {
+        [[nodiscard]] bool rgba_color(istl::StringViewifiable auto&& _str) noexcept {
             // TODO: there are better ways to do it, check performance
             auto str = istl::string_viewify(_str);
             using char_type                                           = typename decltype(str)::value_type;
@@ -503,7 +503,7 @@ namespace webpp {
          * @return bool
          */
 
-        [[nodiscard]] bool hsl_color(istl::StringViewfiable auto&& _str) noexcept {
+        [[nodiscard]] bool hsl_color(istl::StringViewifiable auto&& _str) noexcept {
             return true; // FIXME: implement this
         }
 
@@ -516,7 +516,7 @@ namespace webpp {
          * @return bool
          */
 
-        [[nodiscard]] bool hsla_color(istl::StringViewfiable auto&& _str) noexcept {
+        [[nodiscard]] bool hsla_color(istl::StringViewifiable auto&& _str) noexcept {
             return hsl_color(_str);
         }
 
@@ -528,7 +528,7 @@ namespace webpp {
          * todo: add allocator for the basic_string
          * todo: add Traits support
          */
-        [[nodiscard]] bool name_color(istl::StringViewfiable auto&& _str) noexcept {
+        [[nodiscard]] bool name_color(istl::StringViewifiable auto&& _str) noexcept {
             stl::basic_string str{_str};
             using char_type = istl::char_type_of<decltype(str)>;
 
@@ -893,81 +893,81 @@ namespace webpp {
          * @param str
          * @return bool
          */
-        [[nodiscard]] bool color(istl::StringViewfiable auto&& str) noexcept {
+        [[nodiscard]] bool color(istl::StringViewifiable auto&& str) noexcept {
             // todo: add traits/allocator support for basic_string here:
             return hex_color(str) || name_color(str) || rgb_color(str) || rgba_color(str) || hsl_color(str);
         }
 
-        [[nodiscard]] constexpr bool mimetype(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] constexpr bool mimetype(istl::StringViewifiable auto&& str) noexcept;
 
 
-        [[nodiscard]] constexpr bool UUID(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] constexpr bool UUID(istl::StringViewifiable auto&& str) noexcept;
 
 
-        [[nodiscard]] constexpr bool port(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] constexpr bool port(istl::StringViewifiable auto&& str) noexcept;
 
 
-        [[nodiscard]] constexpr bool mongoid(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] constexpr bool mongoid(istl::StringViewifiable auto&& str) noexcept;
 
 
         // you may want to change the string to a date of some sort or add both
 
-        [[nodiscard]] bool today(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] bool today(istl::StringViewifiable auto&& str) noexcept;
 
 
-        [[nodiscard]] bool tomorrow(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] bool tomorrow(istl::StringViewifiable auto&& str) noexcept;
 
 
-        [[nodiscard]] bool yesterday(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] bool yesterday(istl::StringViewifiable auto&& str) noexcept;
 
 
-        [[nodiscard]] bool this_year(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] bool this_year(istl::StringViewifiable auto&& str) noexcept;
 
 
-        [[nodiscard]] bool next_year(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] bool next_year(istl::StringViewifiable auto&& str) noexcept;
 
 
-        [[nodiscard]] bool prev_year(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] bool prev_year(istl::StringViewifiable auto&& str) noexcept;
 
 
-        [[nodiscard]] bool this_month(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] bool this_month(istl::StringViewifiable auto&& str) noexcept;
 
 
-        [[nodiscard]] bool next_month(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] bool next_month(istl::StringViewifiable auto&& str) noexcept;
 
 
-        [[nodiscard]] bool prev_month(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] bool prev_month(istl::StringViewifiable auto&& str) noexcept;
 
 
-        [[nodiscard]] bool this_week(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] bool this_week(istl::StringViewifiable auto&& str) noexcept;
 
 
-        [[nodiscard]] bool next_week(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] bool next_week(istl::StringViewifiable auto&& str) noexcept;
 
 
-        [[nodiscard]] bool prev_week(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] bool prev_week(istl::StringViewifiable auto&& str) noexcept;
 
 
-        [[nodiscard]] bool between(istl::StringViewfiable auto&& str,
-                                   istl::StringViewfiable auto&& from,
-                                   istl::StringViewfiable auto&& after) noexcept;
+        [[nodiscard]] bool between(istl::StringViewifiable auto&& str,
+                                   istl::StringViewifiable auto&& from,
+                                   istl::StringViewifiable auto&& after) noexcept;
 
 
-        [[nodiscard]] bool after(istl::StringViewfiable auto&& str,
-                                 istl::StringViewfiable auto&& pointintime) noexcept;
+        [[nodiscard]] bool after(istl::StringViewifiable auto&& str,
+                                 istl::StringViewifiable auto&& pointintime) noexcept;
 
 
-        [[nodiscard]] bool before(istl::StringViewfiable auto&& str,
-                                  istl::StringViewfiable auto&& pointintime) noexcept;
+        [[nodiscard]] bool before(istl::StringViewifiable auto&& str,
+                                  istl::StringViewifiable auto&& pointintime) noexcept;
 
 
-        [[nodiscard]] bool base64(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] bool base64(istl::StringViewifiable auto&& str) noexcept;
 
 
-        [[nodiscard]] bool escaped(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] bool escaped(istl::StringViewifiable auto&& str) noexcept;
 
 
-        [[nodiscard]] bool username(istl::StringViewfiable auto&& str) noexcept;
+        [[nodiscard]] bool username(istl::StringViewifiable auto&& str) noexcept;
     } // namespace is
 } // namespace webpp
 

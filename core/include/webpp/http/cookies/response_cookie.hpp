@@ -98,7 +98,7 @@ namespace webpp {
          * There are not many reasons to use this constructor
          * @param source
          */
-        explicit response_cookie(istl::StringViewfiable auto&& source,
+        explicit response_cookie(istl::StringViewifiable auto&& source,
                                  string_allocator_type const&         alloc = {}) noexcept
           : _name{alloc},
             _value{alloc},
