@@ -95,7 +95,7 @@ namespace webpp::istl {
         } else if constexpr (requires { str.c_str(); }) {
             return str.c_str(); // this is const, but that's that caller's problem now :)
         } else {
-            return &str[0]; // it'll throw an error if it didn't work, wo let's do this
+            return &str[0]; // it'll throw an error if it didn't work, so let's do this
         }
     };
 

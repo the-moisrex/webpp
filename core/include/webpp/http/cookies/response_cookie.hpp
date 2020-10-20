@@ -25,6 +25,9 @@ namespace webpp {
         using char_type             = typename string_type::value_type;
         using string_allocator_type = typename string_type::allocator_type;
 
+        static constexpr auto illegal_chars = charset("()[]/|\\',;");
+
+
         template <typename T>
         using allocator_type =
           typename stl::allocator_traits<string_allocator_type>::template rebind_alloc<T>;
@@ -240,7 +243,7 @@ namespace webpp {
          *   - comma and semicolon , and ;
          *   - whitespace and control characters
          */
-        static constexpr std::string escape(const std::string& str);
+        static constexpr std::string escape(const std::string& str) noexcept;
 
         /*
          * Unescapes the given string by replacing all
@@ -273,14 +276,15 @@ namespace webpp {
                     result.append(_path);
                 }
                 if (!_priority.empty()) {
-                    result.append("; Priority=");
+                    result.append("; priority=");
                     result.append(_priority);
                 }
                 if (_max_age != -1) {
-                    Timestamp ts;
-                    ts += _max_age * Timestamp::resolution();
+                    stl::time_t expires_c  = system_clock::to_time_t(*_expires);
                     result.append("; expires=");
-                    DateTimeFormatter::append(result, ts, DateTimeFormat::HTTP_FORMAT);
+                    stl::format_to(stl::back_inserter(result),
+                                   FMT_COMPILE("{:%a, %d %b %Y %H:%M:%S} GMT"),
+                                   istl::safe_localtime(expires_c));
                 }
                 switch (_same_site) {
                     case same_site_value::none: result.append("; SameSite=None"); break;
@@ -300,43 +304,38 @@ namespace webpp {
                 result.append(_value);
                 result.append("\"");
                 if (!_comment.empty()) {
-                    result.append("; Comment=\"");
+                    result.append("; comment=\"");
                     result.append(_comment);
                     result.append("\"");
                 }
                 if (!_domain.empty()) {
-                    result.append("; Domain=\"");
+                    result.append("; domain=\"");
                     result.append(_domain);
                     result.append("\"");
                 }
                 if (!_path.empty()) {
-                    result.append("; Path=\"");
+                    result.append("; path=\"");
                     result.append(_path);
                     result.append("\"");
                 }
                 if (!_priority.empty()) {
-                    result.append("; Priority=\"");
+                    result.append("; priority=\"");
                     result.append(_priority);
                     result.append("\"");
                 }
 
-                if (_expires) {
-                    stl::time_t expires_c  = system_clock::to_time_t(*_expires);
-                    stl::tm     expires_tm = *stl::localtime(&expires_c);
-                    char        buff[30];
-                    // FIXME: check time zone and see if it's ok
-                    //            setlocale(LC_ALL, "en_US.UTF-8");
-                    if (strftime(buff, sizeof buff, "%a, %d %b %Y %H:%M:%S GMT", &expires_tm)) {
-                        result.append("; Expires=");
-                        result.append(buff, 30); // todo
-                    }
-                }
-
                 if (_max_age != -1) {
-                    result.append("; Max-Age=\"");
+                    result.append("; max-age=\"");
                     append_to(result, _max_age);
                     result.append("\"");
+                } else if (_expires) {
+                    stl::time_t expires_c  = system_clock::to_time_t(*_expires);
+                    result.append("; expires=");
+                    stl::format_to(stl::back_inserter(result),
+                                   FMT_COMPILE("{:%a, %d %b %Y %H:%M:%S} GMT"),
+                                   istl::safe_localtime(expires_c));
                 }
+
                 switch (_same_site) {
                     case same_site_value::none: result.append("; SameSite=None"); break;
                     case same_site_value::lax: result.append("; SameSite=Lax"); break;
@@ -349,7 +348,7 @@ namespace webpp {
                 if (_http_only) {
                     result.append("; HttpOnly");
                 }
-                result.append("; Version=\"1\"");
+                result.append("; version=\"1\"");
             }
 
 

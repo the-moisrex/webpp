@@ -11,6 +11,7 @@
 #include "./casts.hpp"
 #include "./ipv4.hpp"
 #include "./ipv6.hpp"
+#include "./allocators.hpp"
 
 namespace webpp {
 
@@ -161,10 +162,12 @@ namespace webpp {
      *  [protocol"://"[username[":"password]"@"]hostname[":"port]"/"?][path]["?"querystring]["#"fragment]
      */
     template <Traits TraitsType, bool Mutable = true>
-    class basic_uri {
+      struct basic_uri : public allocator_holder<typename TraitsType::template allocator<typename TraitsType::char_type>> {
       public:
         using traits_type = TraitsType;
         using char_type   = typename traits_type::char_type;
+        using alloc_holder_type = allocator_holder<typename TraitsType::template allocator<typename TraitsType::char_type>>;
+        using allocator_type = typename alloc_holder_type::allocator_type;
 
         /**
          * Getting the appropriate string type to use.
@@ -584,7 +587,7 @@ namespace webpp {
         }
 
       public:
-        constexpr basic_uri() noexcept {
+        constexpr basic_uri(allocator_type const& alloc = allocator_type{}) noexcept : alloc_holder_type{alloc} {
             static_assert(is_mutable(), "You can't modify this basic_uri, there's no point in "
                                         "default constructing this class since it can't be changed"
                                         " and thus can't be used in any way.");
@@ -689,6 +692,14 @@ namespace webpp {
 
         bool operator!=(str_view_t const& u) const noexcept {
             return str() != u;
+        }
+
+        [[nodiscard]] auto const& get_allocator() const noexcept {
+            if constexpr (Mutable) {
+                return data.get_allocator();
+            } else {
+                return alloc_holder::get_allocator();
+            }
         }
 
         /**
@@ -915,8 +926,7 @@ namespace webpp {
         }
 
         /**
-         * @brief this method will check if the hostname/ip exists in the uri or
-         * not.
+         * @brief this method will check if the hostname/ip exists in the uri or not.
          * @return true if it find a hostname/ip in the uri
          */
         [[nodiscard]] bool has_host() const noexcept {
@@ -1449,10 +1459,9 @@ namespace webpp {
          */
         basic_uri& path(str_view_t const& m_path) noexcept {
             parse_path();
-            auto _encoded_path = (ascii::starts_with(m_path, '/') ? "" : "/") +
-                                 encode_uri_component<traits_type>(
-                                   m_path, charset(PCHAR_NOT_PCT_ENCODED, charset<char_type, 1>('/')));
-
+            str_t str(get_allocator());
+            encode_uri_component(m_path, str, charset(PCHAR_NOT_PCT_ENCODED, charset<char_type, 1>('/')));
+            auto _encoded_path = (ascii::starts_with(m_path, '/') ? "" : "/") + str;
             replace_value(authority_end, query_start - authority_end, _encoded_path);
             return *this;
         }
