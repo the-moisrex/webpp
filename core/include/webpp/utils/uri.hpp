@@ -36,13 +36,13 @@ namespace webpp {
      */
     template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, stl::size_t N>
     [[nodiscard]] bool
-    decode_uri_component(istl::ConvertibleToStringView auto&& encoded_str, istl::String auto& output,
+    decode_uri_component(istl::StringViewifiable auto&& encoded_str, istl::String auto& output,
                          charset<istl::char_type_of<decltype(encoded_str)>, N>& chars) noexcept {
         using char_type          = istl::char_type_of<stl::remove_cvref_t<decltype(encoded_str)>>;
         stl::size_t digits_left  = 2;
         char_type   decoded_char = 0;
         bool        decoding     = false;
-        for (const auto c : encoded_str) {
+        for (const auto c : istl::string_viewify(encoded_str)) {
             if (decoding && digits_left) {
                 decoded_char <<= 4;
                 if (c >= '0' && c <= '9') { // DIGITS
@@ -101,7 +101,7 @@ namespace webpp {
      * @details this function is almost the same as "encodeURIComponent" in javascript
      */
     template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, stl::size_t N>
-    static void encode_uri_component(istl::ConvertibleToStringView auto&& src, istl::String auto& output,
+    static void encode_uri_component(istl::StringViewifiable auto&& src, istl::String auto& output,
                                      charset<istl::char_type_of<decltype(src)>, N> const& chars) {
         using char_type   = istl::char_type_of<decltype(src)>;
         using uchar_type  = stl::make_unsigned_t<char_type>;
@@ -116,7 +116,7 @@ namespace webpp {
             }
         };
 
-        const auto input      = istl::to_string_view(src);
+        const auto input      = istl::string_viewify(src);
         const auto input_size = input.size();
         auto       it         = input.data();
         const auto input_end  = it + input_size;
@@ -692,14 +692,6 @@ namespace webpp {
 
         bool operator!=(str_view_t const& u) const noexcept {
             return str() != u;
-        }
-
-        [[nodiscard]] auto const& get_allocator() const noexcept {
-            if constexpr (Mutable) {
-                return data.get_allocator();
-            } else {
-                return alloc_holder::get_allocator();
-            }
         }
 
         /**
@@ -1459,7 +1451,7 @@ namespace webpp {
          */
         basic_uri& path(str_view_t const& m_path) noexcept {
             parse_path();
-            str_t str(get_allocator());
+            str_t str(alloc_holder_type::get_allocator());
             encode_uri_component(m_path, str, charset(PCHAR_NOT_PCT_ENCODED, charset<char_type, 1>('/')));
             auto _encoded_path = (ascii::starts_with(m_path, '/') ? "" : "/") + str;
             replace_value(authority_end, query_start - authority_end, _encoded_path);
@@ -1489,141 +1481,196 @@ namespace webpp {
             return !is_absolute();
         }
 
-        /**
-         * @brief checks if the uri has query or not
-         * @return
-         */
-        [[nodiscard]] bool has_query() const noexcept {
-            parse_query();
-            return query_start != data.size();
-        }
+        struct queries_type {
+            basic_uri& self;
 
-        [[nodiscard]] str_view_t query() const noexcept {
-            parse_query();
-            if (query_start == data.size())
-                return {};
-            return substr(query_start + 1, fragment_start - query_start - 1);
-        }
+            queries_type& operator=(istl::StringViewifiable auto&& str) {
+                set(stl::forward<decltype(str)>(str));
+                return *this;
+            }
 
-        /**
-         * @brief set query
-         * @param _query
-         * @return
-         */
-        basic_uri& query(str_view_t const& m_query) {
-            if (!is::query(m_query))
-                throw stl::invalid_argument("The specified string is not a valid query");
+            /**
+             * @brief checks if the uri has query or not
+             */
+            [[nodiscard]] bool empty() const noexcept {
+                self.parse_query();
+                return self.query_start != self.data.size();
+            }
 
-            auto encoded_query =
-              (ascii::starts_with(m_query, '?') ? "" : "?") +
-              encode_uri_component<traits_type>(m_query, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
+            [[nodiscard]] str_view_t raw() const noexcept {
+                self.parse_query();
+                if (self.query_start == self.data.size())
+                    return {};
+                return self.substr(self.query_start + 1, self.fragment_start - self.query_start - 1);
+            }
 
-            parse_query();
+            /**
+             * Get the query in a decoded string format
+             */
+            [[nodiscard]] stl::optional<str_t> decoded_string() const noexcept {
+                str_t d_queries{self.get_allocator()};
+                if (!decode_uri_component(raw(), d_queries, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED)) {
+                    return stl::nullopt;
+                }
+                return d_queries;
+            }
 
-            if (query_start != data.size()) {
-                // we don't have a query
-                if (fragment_start != data.size()) {
-                    replace_value(fragment_start, 0, encoded_query);
-                } else {
-                    parse_path();
-                    if (authority_end == data.size()) {
-                        // we don't even have authority_end
-                        parse_scheme();
-                        if (authority_start == data.size()) {
-                            // there's no authority_start
-                            if (scheme_end == data.size()) {
-                                // it's an empty string
-                                replace_value(0, 0, "///" + encoded_query);
+            template <typename MapType = istl::map<traits_type, str_t, str_t>>
+            [[nodiscard]] auto decoded() const noexcept {
+                MapType res(alloc_holder_type::get_allocator());
+                extract_queries_to(res);
+                return res;
+            }
+
+            /**
+             * Set queries
+             */
+            basic_uri& set(istl::StringViewifiable auto&& _queries) {
+                auto m_query = istl::string_viewify(stl::forward<decltype(_queries)>(_queries));
+                if (!is::query(m_query))
+                    throw stl::invalid_argument("The specified string is not a valid query");
+
+                str_t encoded_query(alloc_holder_type::get_allocator());
+                if (ascii::starts_with(m_query, '?')) {
+                    encoded_query.append('?');
+                }
+                encode_uri_component(m_query, encoded_query, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
+
+                self.parse_query();
+
+                if (self.query_start != self.data.size()) {
+                    // we don't have a query
+                    if (self.fragment_start != self.data.size()) {
+                        self.replace_value(self.fragment_start, 0, self.encoded_query);
+                    } else {
+                        self.parse_path();
+                        if (self.authority_end == self.data.size()) {
+                            // we don't even have authority_end
+                            self.parse_scheme();
+                            if (self.authority_start == self.data.size()) {
+                                // there's no authority_start
+                                if (self.scheme_end == self.data.size()) {
+                                    // it's an empty string
+                                    self.replace_value(0, 0, "///" + self.encoded_query);
+                                } else {
+                                    self.replace_value(self.scheme_end, 0, "/" + self.encoded_query);
+                                }
                             } else {
-                                replace_value(scheme_end, 0, "/" + encoded_query);
+                                self.replace_value(self.authority_start, 0, "/" + self.encoded_query);
                             }
                         } else {
-                            replace_value(authority_start, 0, "/" + encoded_query);
-                        }
-                    } else {
-                        // we have authority_end
-                        if (data[authority_end] == '/') {
-                            replace_value(authority_end + 1, 0, encoded_query);
-                        } else {
-                            replace_value(authority_end + 1, 0, "/" + encoded_query);
+                            // we have authority_end
+                            if (self.data[self.authority_end] == '/') {
+                                self.replace_value(self.authority_end + 1, 0, self.encoded_query);
+                            } else {
+                                self.replace_value(self.authority_end + 1, 0, "/" + self.encoded_query);
+                            }
                         }
                     }
+                } else {
+                    // we have query
+                    self.replace_value(self.query_start, self.fragment_start - self.query_start, self.encoded_query);
                 }
-            } else {
-                // we have query
-                replace_value(query_start, fragment_start - query_start, encoded_query);
+                return self;
             }
-            return *this;
-        }
 
-        /**
-         *
-         * @param queries
-         * @return
-         */
-        template <typename Map>
-        basic_uri& query(Map const& _queries) noexcept {
-            static_assert(stl::is_convertible_v<typename Map::key_type, str_view_t> &&
-                            stl::is_convertible_v<typename Map::mapped_type, str_view_t>,
-                          "The specified map is not valid");
-            str_t _query_data;
-            bool  first = true;
-            for (auto it = _queries.cbegin(); it != _queries.cend(); it++) {
-                auto name  = encode_uri_component<traits_type>(it->first, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
-                auto value = encode_uri_component<traits_type>(it->second, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
-                if (name.empty()) // when name is empty, we just don't care
-                    continue;
-                _query_data =
-                  name + (value.empty() ? "" : ("=" + value)) + (stl::next(it) != _queries.cend() ? "&" : "");
-            }
-            query(_query_data);
-            return *this;
-        }
+            /**
+             * Append queries from a container like std::map or std::multimap
+             */
+            template <typename MapIter>
+            basic_uri& set_from(MapIter const& _queries_begin, MapIter const& _queries_end) {
+                static_assert(is_mutable(), "You can't use this method on a non-modifiable uri struct.");
+                using map_key_type = typename MapIter::first_type;
+                using map_value_type = typename MapIter::second_type;
+                static_assert(istl::StringViewifiable<map_key_type> && istl::StringViewifiable<map_value_type>,
+                              "The specified map is not valid");
 
-        /**
-         * @brief clear the query section of the URI
-         * @return
-         */
-        basic_uri& clear_query() noexcept {
-            return query({});
-        }
+                stl::size_t reserved_size = 0;
+                for (auto it = _queries_begin; it != _queries_end; ++it)
+                    reserved_size += it->first->size() + it->second->size() + 2;
+                str_t _query_data(alloc_holder_type::get_allocator());
+                _query_data.reserve(reserved_size);
 
-        /**
-         * Get the query in a decoded string format
-         * @return optional<string>
-         */
-        [[nodiscard]] auto query_decoded() const noexcept {
-            return decode_uri_component<traits_type>(query(), QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
-        }
-
-        /**
-         * Get the query in as a map<string, string>
-         * It's also in a decoded format
-         * @return unordered_map<string, string>
-         */
-        [[nodiscard]] stl::map<traits_type, str_t, str_t> query_structured() const noexcept {
-            stl::map<traits_type, str_t, str_t> q_structured;
-            stl::size_t                         last_and_sep = 0;
-            auto                                _query       = query();
-            do {
-                auto and_sep = _query.find('&', last_and_sep); // find the delimiter
-                auto eq_sep  = _query.find("=", last_and_sep, and_sep - last_and_sep);
-                auto name    = _query.substr(last_and_sep + 1, stl::min(eq_sep, and_sep));
-                last_and_sep = and_sep;
-                if (name.empty()) // a name should not be empty
-                    continue;
-                str_t value;
-                if (and_sep != str_view_t::npos) { // we have a value as well
-                    value = _query.substr(eq_sep + 1, and_sep);
+                for (auto it = _queries_begin; it != _queries_end; ++it) {
+                    str_t name(alloc_holder_type::get_allocator());
+                    str_t value(alloc_holder_type::get_allocator());
+                    encode_uri_component(it->first, name, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
+                    encode_uri_component(it->second, value, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
+                    if (name.empty()) // when name is empty, we just don't care
+                        continue;
+                    _query_data.append(name);
+                    if (!value.empty()) {
+                        _query_data.append('=');
+                        _query_data.append(value);
+                    }
+                    if (stl::next(it) != _queries_end) {
+                        _query_data.append('&');
+                    }
                 }
-                auto d_name = decode_uri_component<traits_type>(name, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
-                if (d_name)
-                    q_structured[d_name.value()] =
-                      decode_uri_component<traits_type>(value, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED)
-                        .value_or("");
-            } while (last_and_sep != str_view_t::npos);
-            return q_structured;
-        }
+                set(stl::move(_query_data));
+                return self;
+            }
+
+            template <typename MapType>
+            basic_uri& set_from(MapType const& _queries) {
+                return set_from(_queries.begin(), _queries.end());
+            }
+
+            /**
+             * @brief clear the query section of the URI
+             */
+            basic_uri& clear() noexcept {
+                return set("");
+            }
+
+            /**
+             * Get the query in as a map<string, string>
+             * It's also in a decoded format
+             */
+            template <typename MapType = istl::map<traits_type, str_t, str_t>>
+            basic_uri& extract_to(MapType &q_structured) const noexcept {
+                using map_key_type = typename MapType::key_value;
+                using map_value_type = typename MapType::mapped_type;
+                static_assert(istl::String<map_key_type>,
+                              "The specified container can't hold the query keys.");
+                static_assert(istl::String<map_value_type>,
+                              "The specified container can't hold the query values.");
+                stl::size_t                         last_and_sep = 0;
+                auto                                _query       = raw();
+                do {
+                    auto and_sep = _query.find('&', last_and_sep); // find the delimiter
+                    auto eq_sep  = _query.find("=", last_and_sep, and_sep - last_and_sep);
+                    auto name    = _query.substr(last_and_sep + 1, stl::min(eq_sep, and_sep));
+                    last_and_sep = and_sep;
+                    if (name.empty()) // a name should not be empty
+                        continue;
+                    str_t d_value(alloc_holder_type::get_allocator());
+                    str_t d_name(alloc_holder_type::get_allocator());
+                    if (and_sep != str_view_t::npos) { // we have a value as well
+                        d_value = _query.substr(eq_sep + 1, and_sep);
+                    }
+                    if (!decode_uri_component(name, d_name, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED)) {
+                        d_name = name; // just put the non-decoded string there
+                    }
+                    if (!d_name.empty()) {
+                        map_value_type new_value(q_structured.get_allocator());
+                        if (decode_uri_component(d_value, new_value, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED)) {
+                            q_structured[d_name] = stl::move(new_value);
+                        } else {
+                            q_structured[d_name] = stl::move(d_value); // just put the non-decoded value here
+                        }
+                    }
+                } while (last_and_sep != str_view_t::npos);
+                return *this;
+            }
+
+            basic_uri& append(istl::StringViewifiable auto&& key, istl::StringViewifiable auto &&value) noexcept {
+                // todo
+            }
+
+        };
+
+        [[no_unique_address]] queries_type queries{*this};
 
         /**
          * @brief checks if the uri path is normalized or not (contains relative
@@ -1741,7 +1788,7 @@ namespace webpp {
                     target.port(relative_uri.port());
                     target.user_info(relative_uri.user_info());
                     target.path(relative_uri.path());
-                    target.query(relative_uri.query());
+                    target.set_queries(relative_uri.queries_raw());
                     target.normalize_path();
                 } else {
                     target.host(host());
@@ -1749,13 +1796,13 @@ namespace webpp {
                     target.port(port());
                     if (!relative_uri.has_path()) {
                         target.path(path());
-                        if (relative_uri.has_query()) {
-                            target.query(relative_uri.query());
+                        if (relative_uri.has_queries()) {
+                            target.set_queries(relative_uri.queries_raw());
                         } else {
-                            target.query(query());
+                            target.set_queries(queries_raw());
                         }
                     } else {
-                        target.query(relative_uri._query);
+                        target.set_queries(relative_uri._queries);
                         // RFC describes this as:
                         // "if (R.path starts-with "/") then"
                         if (relative_uri.is_absolute()) {

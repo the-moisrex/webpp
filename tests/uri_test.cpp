@@ -404,7 +404,7 @@ TEST(URITests, EncodedDecoded) {
     EXPECT_TRUE(u.is_valid());
 
     const_uri ducky = "https://duckduckgo.com/?q=%D8%AA%D8%B3%D8%AA+%D9%85%DB%8C%DA%A9%D9%86%D9%85";
-    EXPECT_EQ(ducky.query_decoded()["q"], "تست میکنم");
+    EXPECT_EQ(ducky.queries()["q"], "تست میکنم");
 }
 
 TEST(URITests, TypedVariables) {

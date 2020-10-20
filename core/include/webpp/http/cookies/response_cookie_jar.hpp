@@ -133,7 +133,7 @@ namespace webpp {
         DEFINE_METHOD(name)
         DEFINE_METHOD(value)
         DEFINE_METHOD(secure)
-        DEFINE_METHOD(host_only)
+        DEFINE_METHOD(http_only)
         DEFINE_METHOD(encrypted)
         DEFINE_METHOD(prefix)
         DEFINE_METHOD(comment)
