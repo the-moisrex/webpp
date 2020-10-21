@@ -1335,152 +1335,193 @@ namespace webpp {
             return port({});
         }
 
-        /**
-         * @brief check if the URI has a path or not
-         * @return
-         */
-        [[nodiscard]] bool has_path() const noexcept {
-            parse_path();
-            return authority_end != data.size();
-        }
+        struct path_type {
+            basic_uri& self;
 
-        /**
-         * @brief get path in non-decoded, string format
-         * @return
-         */
-        [[nodiscard]] str_view_t path() const noexcept {
-            if (!has_path())
-                return {};
-            return substr(authority_end, stl::min(query_start, fragment_start) - authority_end);
-        }
+            static constexpr auto LEGAL_PATH_CHARS = charset(PCHAR_NOT_PCT_ENCODED, charset<char_type, 1>('/'));
 
-        /**
-         * @brief decoded path as a string
-         * @return
-         */
-        [[nodiscard]] auto path_decoded() const noexcept {
-            return decode_uri_component<traits_type>(
-              path(), charset(PCHAR_NOT_PCT_ENCODED, charset<char_type, 1>('/')));
-        }
-
-        /**
-         * @brief get the path as the specified type
-         * @details this method will returns a vector/list/... of
-         * string/string_views
-         * this method does not just response to the fact that Container should
-         * be an std container, but if string/string_view is presented as a
-         * container, it will return the whole path.
-         *
-         * todo: should we rename path_structured to slugs?
-         */
-        template <typename Container = istl::vector<traits_type, str_view_t>>
-        [[nodiscard]] Container path_structured(auto&&...args) const noexcept {
-            auto _path = path();
-            if (_path.empty())
-                return {};
-            Container   container(stl::forward<decltype(args)>(args)...);
-            stl::size_t slash_start      = 0;
-            stl::size_t last_slash_start = 0;
-            auto        _path_size       = _path.size();
-            if (_path.front() == '/')
-                container.emplace_back(); // empty string
-            do {
-                slash_start = _path.find('/', last_slash_start + 1);
-                container.emplace_back(_path.data() + last_slash_start + 1,
-                                       stl::min(slash_start, _path_size) - last_slash_start - 1);
-                // if (slash_start != str_view_t::npos)
-                // _path.remove_prefix(slash_start + 1);
-                // else
-                // _path.remove_prefix(_path.size());
-                last_slash_start = slash_start;
-            } while (slash_start != str_view_t::npos);
-            return container;
-        }
-
-        /**
-         * @brief this one will return a container containing decoded strings of the path.
-         * @attention do not use string_view or any alternatives for this method
-         * as this method should own its data.
-         */
-        template <typename Container = istl::vector<traits_type, str_t>>
-        [[nodiscard]] Container path_structured_decoded(auto&&...args) const noexcept {
-            auto _slugs = path_structured<Container>(stl::forward<decltype(args)>(args)...);
-            using vec_str_t = typename Container::value_type;
-            for (auto& slug : _slugs) {
-                vec_str_t tmp(_slugs.get_allocator());
-                if (!decode_uri_component(slug, tmp, PCHAR_NOT_PCT_ENCODED)) {
-                    return _slugs;
-                }
-                slug.swap(tmp);
+            basic_uri& operator=(istl::StringViewifiable auto&& new_path) {
+                set(stl::forward<decltype(new_path)>(new_path));
+                return self;
             }
-            return _slugs;
-        }
+
+
+
+            /**
+             * @brief check if the URI has a path or not
+             * @return bool true if the URI doesn't have a path
+             */
+            [[nodiscard]] bool empty() const noexcept {
+                self.parse_path();
+                return self.authority_end != self.data.size();
+            }
+
+            /**
+             * @brief get path in non-decoded, string format
+             * @return
+             */
+            [[nodiscard]] str_view_t raw() const noexcept {
+                if (!empty())
+                    return {};
+                return self.substr(self.authority_end, stl::min(self.query_start, self.fragment_start) - self.authority_end);
+            }
+
+            /**
+             * @brief decoded path as a string
+             * @return std::optional<string> the string might not have the right format
+             */
+            [[nodiscard]] stl::optional<str_t> decoded() const noexcept {
+                str_t res{self.get_allocator()};
+                if (!decode_uri_component(raw(), res, LEGAL_PATH_CHARS)) {
+                    return stl::nullopt;
+                }
+                return res;
+            }
+
+            /**
+             * Get the decoded slugs with the specified container type
+             * We know how to get the allocator, don't worry.
+             * The specified container's string type should be a string and not a string_view
+             */
+            template <typename Container = istl::vector<traits_type, str_t>>
+            [[nodiscard]] Container slugs() const noexcept {
+            	Container container(self.get_allocator());
+            	extract_slugs_to<Container>(container);
+            	return container;
+            }
+
+            /**
+             * Get the non-decoded slugs.
+             * You can use string_view as the underlying string type of the container since we don't
+             * decode the string. As long as the class has access to the string_view, this method has too.
+             */
+            template <typename Container = istl::vector<traits_type, str_view_t>>
+            [[nodiscard]] Container raw_slugs() const noexcept {
+            	Container container(self.get_allocator());
+            	extract_raw_slugs_to<Container>(container);
+            	return container;
+            }
+
+            /**
+             * @brief get the path as the specified type
+             * @details this method will returns a vector/list/... of string/string_views
+             * this method does not just response to the fact that Container should
+             * be an std container, but if string/string_view is presented as a
+             * container, it will return the whole path.
+             */
+            template <typename Container = istl::vector<traits_type, str_view_t>>
+            basic_uri& extract_raw_slugs_to(Container &container) const noexcept {
+                auto _path = raw();
+                if (_path.empty())
+                    return self;
+                stl::size_t slash_start      = 0;
+                stl::size_t last_slash_start = 0;
+                auto        _path_size       = _path.size();
+                if (_path.front() == '/')
+                    container.emplace_back(); // empty string
+                do {
+                    slash_start = _path.find('/', self.last_slash_start + 1);
+                    container.emplace_back(_path.data() + self.last_slash_start + 1,
+                                           stl::min(self.slash_start, _path_size) - self.last_slash_start - 1);
+                    // if (slash_start != str_view_t::npos)
+                    // _path.remove_prefix(slash_start + 1);
+                    // else
+                    // _path.remove_prefix(_path.size());
+                    self.last_slash_start = self.slash_start;
+                } while (self.slash_start != str_view_t::npos);
+                return self;
+            }
+
+            /**
+             * @brief this one will return a container containing decoded strings of the path.
+             * @attention do not use string_view or any alternatives for this method
+             * as this method should own its data.
+             */
+            template <typename Container = istl::vector<traits_type, str_t>>
+            [[nodiscard]] bool extract_slugs_to(Container &container) const noexcept {
+                using vec_str_t = typename Container::value_type;
+                for (auto& slug : container) {
+                    vec_str_t tmp(container.get_allocator());
+                    if (!decode_uri_component(slug, tmp, PCHAR_NOT_PCT_ENCODED)) {
+                        return false;
+                    }
+                    slug.swap(tmp);
+                }
+                return true;
+            }
+
+            /**
+             * @brief set path
+             */
+            template <typename Container>
+            basic_uri& set_from(const Container& m_path) noexcept {
+                return set(m_path.begin(), m_path.end());
+            }
+
+            /**
+             * Set path by begin and end of an iterator
+             */
+            template <typename Iter>
+            basic_uri& set_from(const Iter& _start, const Iter& _end) noexcept {
+                const auto almost_end = stl::prev(_end);
+                str_t new_path{self.get_allocator()};
+                for (auto it = _start; it != almost_end; ++it) {
+                    encode_uri_component(*it, new_path, PCHAR_NOT_PCT_ENCODED);
+                    new_path.append('/');
+                }
+                // append the last slug
+                encode_uri_component(*almost_end, new_path, PCHAR_NOT_PCT_ENCODED);
+                return set(stl::move(new_path));
+            }
+
+            /**
+             * @brief set the path for the uri
+             * @param _path
+             * @return
+             */
+            basic_uri& set(istl::StringViewifiable auto&& m_path) noexcept {
+                self.parse_path();
+                str_t str(self.get_allocator());
+                encode_uri_component(m_path, str, charset(PCHAR_NOT_PCT_ENCODED, charset<char_type, 1>('/')));
+                auto _encoded_path = (ascii::starts_with(m_path, '/') ? "" : "/") + str;
+                self.replace_value(self.authority_end, self.query_start - self.authority_end, _encoded_path);
+                return *this;
+            }
+
+            /**
+             * @brief clear path from the URI
+             */
+            basic_uri& clear() noexcept {
+                return set("");
+            }
+
+            /**
+             * @brief checks if the path is an absolute path or relative path
+             * @return bool
+             */
+            [[nodiscard]] bool is_absolute() const noexcept {
+                return ascii::starts_with(raw(), '/');
+            }
+
+            /**
+             * @brief checks if the path is a relative path or an absolute one
+             * @return bool
+             */
+            [[nodiscard]] bool is_relative() const noexcept {
+                return !is_absolute();
+            }
+
+
+        };
+        path_type path{*this};
+
+
+
+
 
         /**
-         * @brief set path
+         * This is designed to separate the queries' methods from other uri methods
          */
-        template <typename Container>
-        requires(!stl::is_convertible_v<typename Container::value_type, str_view_t>) basic_uri& path(
-          const Container& m_path) noexcept {
-            static_assert(stl::is_convertible_v<typename Container::value_type, str_view_t>,
-                          "the specified container is not valid");
-            return path(m_path.cbegin(), m_path.cend());
-        }
-
-        /**
-         * Set path by begin and end of an iterator
-         * @tparam Iter
-         * @param _start
-         * @param _end
-         * @return
-         */
-        template <typename Iter>
-        basic_uri& path(const Iter& _start, const Iter& _end) noexcept {
-            using ostream_iterator_t = typename traits_type::ostream_iterator_type;
-            typename traits_type::ostringstream_type joined_path;
-            // TODO: check if we need std::string here
-            copy(_start, _end - 1, ostream_iterator_t(joined_path, "/"));
-            joined_path << *stl::prev(_end);
-            return path(str_view_t(joined_path.str()));
-        }
-
-        /**
-         * @brief set the path for the uri
-         * @param _path
-         * @return
-         */
-        basic_uri& path(str_view_t const& m_path) noexcept {
-            parse_path();
-            str_t str(alloc_holder_type::get_allocator());
-            encode_uri_component(m_path, str, charset(PCHAR_NOT_PCT_ENCODED, charset<char_type, 1>('/')));
-            auto _encoded_path = (ascii::starts_with(m_path, '/') ? "" : "/") + str;
-            replace_value(authority_end, query_start - authority_end, _encoded_path);
-            return *this;
-        }
-        /**
-         * @brief clear path from the URI
-         * @return
-         */
-        basic_uri& clear_path() noexcept {
-            return path(str_view_t{});
-        }
-
-        /**
-         * @brief checks if the path is an absolute path or relative path
-         * @return
-         */
-        [[nodiscard]] bool is_absolute() const noexcept {
-            return ascii::starts_with(path(), '/');
-        }
-
-        /**
-         * @brief checks if the path is a relative path or an absolute one
-         * @return
-         */
-        [[nodiscard]] bool is_relative() const noexcept {
-            return !is_absolute();
-        }
-
         struct queries_type {
             basic_uri& self;
 
