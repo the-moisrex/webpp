@@ -12,48 +12,48 @@ TEST(URITests, Creation) {
 
     uri u("http://example.com/");
     EXPECT_TRUE(u.has_scheme());
-    EXPECT_TRUE(u.has_host());
+    EXPECT_TRUE(!u.host.empty());
     EXPECT_EQ(u.str(), "http://example.com/");
-    EXPECT_EQ(u.host(), "example.com");
-    EXPECT_TRUE(is::host(u.host()));
+    EXPECT_EQ(u.host.raw(), "example.com");
+    EXPECT_TRUE(is::host(u.host.raw()));
     EXPECT_TRUE(u.has_authority());
-    EXPECT_TRUE(u.has_path()) << "the path is '/'";
+    EXPECT_TRUE(!u.path.empty()) << "the path is '/'";
     EXPECT_FALSE(u.has_port());
     EXPECT_FALSE(u.has_user_info());
     EXPECT_FALSE(u.has_fragment());
-    EXPECT_FALSE(u.has_query());
-    EXPECT_EQ(u.path_structured().size(), 1);
+    EXPECT_FALSE(!u.queries.empty());
+    EXPECT_EQ(u.path.raw_slugs().size(), 1);
     EXPECT_EQ(u.scheme(), "http");
     u.clear_scheme();
     u.clear_scheme();
     EXPECT_FALSE(u.has_scheme());
     EXPECT_EQ(u.scheme(), "");
     EXPECT_TRUE(u.has_authority());
-    EXPECT_TRUE(u.has_host());
-    EXPECT_TRUE(u.has_path());
+    EXPECT_TRUE(!u.host.empty());
+    EXPECT_TRUE(!u.path.empty());
     EXPECT_FALSE(u.has_port());
     EXPECT_EQ(u.str(), "//example.com/");
-    EXPECT_TRUE(u.is_normalized());
-    u.clear_host();
-    u.clear_host();
-    EXPECT_FALSE(u.has_host());
-    EXPECT_EQ(u.host(), "");
+    EXPECT_TRUE(u.path.is_normalized());
+    u.host.clear();
+    u.host.clear();
+    EXPECT_TRUE(u.host.empty());
+    EXPECT_EQ(u.host.raw(), "");
     EXPECT_EQ(u.str(), "/");
-    u.path("folder/file");
+    u.path = "folder/file";
     EXPECT_EQ(u.str(), "/folder/file");
-    u.path("folder/file");
-    EXPECT_FALSE(u.has_host());
-    u.host("eg2.com");
-    u.host("eg2.com");
-    EXPECT_TRUE(u.has_host());
-    EXPECT_TRUE(u.has_path());
-    EXPECT_EQ(u.host(), "eg2.com") << "host is: " << u.host();
+    u.path = "folder/file";
+    EXPECT_TRUE(u.host.empty());
+    u.host = "eg2.com";
+    u.host = "eg2.com";
+    EXPECT_FALSE(u.host.empty());
+    EXPECT_TRUE(!u.path.empty());
+    EXPECT_EQ(u.host.raw(), "eg2.com") << "host is: " << u.host.raw();
     EXPECT_EQ(u.str(), "//eg2.com/folder/file") << "str is: " << u.str();
     u.scheme("https:");
     u.scheme("https:");
     EXPECT_TRUE(u.has_scheme());
-    u.clear_path();
-    u.clear_path();
+    u.path.clear();
+    u.path.clear();
     EXPECT_EQ(u.str(), "https://eg2.com/");
     u.scheme("http");
     u.scheme("http");
@@ -61,35 +61,35 @@ TEST(URITests, Creation) {
     EXPECT_EQ(u.str(), "http://eg2.com/");
 
     const_uri ipv4_host("https://192.168.1.1");
-    EXPECT_TRUE(is::ipv4(ipv4_host.host()));
+    EXPECT_TRUE(is::ipv4(ipv4_host.host.raw()));
     EXPECT_EQ(ipv4_host.scheme(), "https");
-    EXPECT_FALSE(ipv4_host.has_path());
-    EXPECT_FALSE(ipv4_host.has_query());
+    EXPECT_FALSE(!ipv4_host.path.empty());
+    EXPECT_FALSE(!ipv4_host.queries.empty());
     EXPECT_FALSE(ipv4_host.has_port());
     EXPECT_TRUE(ipv4_host.has_authority());
-    EXPECT_TRUE(ipv4_host.has_host());
-    EXPECT_EQ(ipv4_host.host(), "192.168.1.1");
+    EXPECT_FALSE(ipv4_host.host.empty());
+    EXPECT_EQ(ipv4_host.host.raw(), "192.168.1.1");
 
     uri local_file("file:///home/test/folder/file.txt");
-    EXPECT_EQ(local_file.path(), "/home/test/folder/file.txt");
-    EXPECT_TRUE(local_file.has_path());
+    EXPECT_EQ(local_file.path.raw(), "/home/test/folder/file.txt");
+    EXPECT_TRUE(!local_file.path.empty());
     EXPECT_TRUE(local_file.has_scheme());
     EXPECT_FALSE(local_file.has_authority());
-    EXPECT_FALSE(local_file.has_host());
+    EXPECT_TRUE(local_file.host.empty());
     EXPECT_EQ(local_file.scheme(), "file");
-    EXPECT_EQ(local_file.host_decoded(), "");
-    auto path = local_file.path_structured_decoded();
-    EXPECT_EQ(local_file.path_structured().size(), 5);
+    EXPECT_EQ(local_file.host.decoded(), "");
+    auto path = local_file.path.slugs();
+    EXPECT_EQ(local_file.path.raw_slugs().size(), 5);
     EXPECT_EQ(path.size(), 5);
     EXPECT_EQ(path.at(0), "");
     EXPECT_EQ(path.at(1), "home");
     EXPECT_EQ(path.at(2), "test");
     EXPECT_EQ(path.at(3), "folder");
     EXPECT_EQ(path.at(4), "file.txt");
-    EXPECT_TRUE(local_file.is_absolute());
-    EXPECT_TRUE(local_file.is_normalized());
-    EXPECT_FALSE(local_file.is_relative());
-    local_file.clear_path();
+    EXPECT_TRUE(local_file.path.is_absolute());
+    EXPECT_TRUE(local_file.path.is_normalized());
+    EXPECT_FALSE(local_file.path.is_relative());
+    local_file.path.clear();
     EXPECT_EQ(local_file.str(), "file:///");
 }
 
@@ -100,33 +100,33 @@ TEST(URITests, IPv6HostName) {
     u = uri_str;
     EXPECT_EQ(u.str(), uri_str);
     EXPECT_FALSE(u.has_scheme()) << "scheme: " << u.scheme();
-    EXPECT_TRUE(u.has_host());
+    EXPECT_FALSE(u.host.empty());
     EXPECT_TRUE(u.has_port());
     EXPECT_TRUE(u.has_authority());
-    EXPECT_TRUE(u.has_path()) << "path: " << u.path();
-    EXPECT_TRUE(u.has_query());
+    EXPECT_TRUE(!u.path.empty()) << "path: " << u.path.raw();
+    EXPECT_TRUE(!u.queries.empty());
     EXPECT_TRUE(u.has_fragment());
     EXPECT_EQ(u.fragment(), "str");
-    EXPECT_EQ(u.path(), "/folder/file.md") << "path: " << u.path();
-    EXPECT_EQ(u.host(), "[::1]") << "host: " << u.host();
+    EXPECT_EQ(u.path.raw(), "/folder/file.md") << "path: " << u.path.raw();
+    EXPECT_EQ(u.host.raw(), "[::1]") << "host: " << u.host.raw();
     EXPECT_EQ(u.port_uint16(), 8080);
     EXPECT_EQ(u.port(), "8080");
-    EXPECT_TRUE(std::holds_alternative<ipv6<std_traits>>(u.host_structured()))
-      << "index: " << u.host_structured().index();
-    u.clear_path();
+    EXPECT_TRUE(std::holds_alternative<ipv6<std_traits>>(u.host.host.structured()))
+      << "index: " << u.host.structured().index();
+    u.path.clear();
     EXPECT_EQ(u.str(), "//[::1]:8080/?name=value&name2=value2#str");
 }
 
 TEST(URITests, WieredURIs) {
     const_uri u1("ftp://ftp.is.co.za/rfc/rfc1808.txt");
-    EXPECT_TRUE(u1.has_host());
+    EXPECT_FALSE(u1.host.empty());
     EXPECT_TRUE(u1.has_scheme());
     EXPECT_EQ(u1.scheme(), "ftp");
-    EXPECT_EQ(u1.host(), "ftp.is.co.za") << "host: " << u1.host();
-    EXPECT_FALSE(u1.host().empty());
-    EXPECT_NE(u1.host(), "");
-    EXPECT_TRUE(u1.has_path());
-    EXPECT_EQ(u1.path(), "/rfc/rfc1808.txt") << "path: " << u1.path();
+    EXPECT_EQ(u1.host.raw(), "ftp.is.co.za") << "host: " << u1.host.raw();
+    EXPECT_FALSE(u1.host.raw().empty());
+    EXPECT_NE(u1.host.raw(), "");
+    EXPECT_TRUE(!u1.path.empty());
+    EXPECT_EQ(u1.path.raw(), "/rfc/rfc1808.txt") << "path: " << u1.path.raw();
     EXPECT_TRUE(u1.is_url());
     EXPECT_TRUE(u1.is_valid());
     EXPECT_FALSE(u1.is_urn());
@@ -319,8 +319,8 @@ TEST(URITests, Set) {
 
 TEST(URITests, Domains) {
     uri u("http://coded.by.moisrex.localhost/path/to/something");
-    EXPECT_TRUE(u.has_host());
-    EXPECT_EQ("coded.by.moisrex.localhost", u.host());
+    EXPECT_FALSE(u.host.empty());
+    EXPECT_EQ("coded.by.moisrex.localhost", u.host.raw());
     EXPECT_TRUE(u.has_subdomains());
     EXPECT_TRUE(u.has_top_level_domain());
     EXPECT_TRUE(u.has_second_level_domain());
@@ -335,7 +335,7 @@ TEST(URITests, Domains) {
     EXPECT_EQ("localhost", domains[3]);
     u.top_level_domain("dev");
     EXPECT_TRUE(u.has_host());
-    EXPECT_TRUE(u.has_path());
+    EXPECT_TRUE(!u.path.empty());
     EXPECT_EQ("coded.by", u.subdomains());
     EXPECT_EQ("moisrex", u.second_level_domain());
     EXPECT_EQ("dev", u.top_level_domain());
@@ -343,7 +343,7 @@ TEST(URITests, Domains) {
     EXPECT_EQ("god", u.second_level_domain());
     EXPECT_EQ("dev", u.top_level_domain());
     EXPECT_TRUE(u.has_host());
-    EXPECT_TRUE(u.has_path());
+    EXPECT_TRUE(!u.path.empty());
     EXPECT_TRUE(u.has_scheme());
     EXPECT_EQ(u.scheme(), "http");
     u.clear_subdomains();
@@ -404,13 +404,13 @@ TEST(URITests, EncodedDecoded) {
     EXPECT_TRUE(u.is_valid());
 
     const_uri ducky = "https://duckduckgo.com/?q=%D8%AA%D8%B3%D8%AA+%D9%85%DB%8C%DA%A9%D9%86%D9%85";
-    EXPECT_EQ(ducky.queries()["q"], "تست میکنم");
+    EXPECT_EQ(ducky.queries.decoded()["q"], "تست میکنم");
 }
 
 TEST(URITests, TypedVariables) {
     uri u{"/user/{user_id}"};
-    EXPECT_TRUE(u.has_path());
-    auto _path = u.path_structured_decoded();
+    EXPECT_TRUE(!u.path.empty());
+    auto _path = u.path.slugs();
     EXPECT_EQ(_path[0], "");
     EXPECT_EQ(_path[1], "user");
     EXPECT_EQ(_path[2], "{user_id}");
@@ -418,7 +418,7 @@ TEST(URITests, TypedVariables) {
 
 TEST(URITests, StructuredPath) {
     uri  u{"/user/19"};
-    auto parsed = u.path_structured_decoded();
+    auto parsed = u.path.slugs();
     EXPECT_EQ(parsed[2], "19");
 }
 

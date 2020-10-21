@@ -8,10 +8,10 @@
 #include "../strings/to_case.hpp"
 #include "../traits/traits_concepts.hpp"
 #include "../validators/validators.hpp"
+#include "./allocators.hpp"
 #include "./casts.hpp"
 #include "./ipv4.hpp"
 #include "./ipv6.hpp"
-#include "./allocators.hpp"
 
 namespace webpp {
 
@@ -162,11 +162,13 @@ namespace webpp {
      *  [protocol"://"[username[":"password]"@"]hostname[":"port]"/"?][path]["?"querystring]["#"fragment]
      */
     template <Traits TraitsType, bool Mutable = true>
-      struct basic_uri : public allocator_holder<typename TraitsType::template allocator<typename TraitsType::char_type>> {
+    struct basic_uri
+      : public allocator_holder<typename TraitsType::template allocator<typename TraitsType::char_type>> {
       public:
         using traits_type = TraitsType;
         using char_type   = typename traits_type::char_type;
-        using alloc_holder_type = allocator_holder<typename TraitsType::template allocator<typename TraitsType::char_type>>;
+        using alloc_holder_type =
+          allocator_holder<typename TraitsType::template allocator<typename TraitsType::char_type>>;
         using allocator_type = typename alloc_holder_type::allocator_type;
 
         /**
@@ -185,8 +187,8 @@ namespace webpp {
          */
         static constexpr auto ALLOWED_CHARACTERS_IN_URI =
           charset(ALPHA<char_type>, DIGIT<char_type>,
-                  charset<char_type, 20>{';', ',', '/', '?', ':', '@', '&', '=', '+', '$',
-                                           '-', '_', '.', '!', '~', '*', '\'', '(', ')', '#'});
+                  charset<char_type, 20>{';', ',', '/', '?', ':', '@', '&',  '=', '+', '$',
+                                         '-', '_', '.', '!', '~', '*', '\'', '(', ')', '#'});
         /**
          * This is the character set corresponds to the second part
          * of the "scheme" syntax
@@ -587,7 +589,8 @@ namespace webpp {
         }
 
       public:
-        constexpr basic_uri(allocator_type const& alloc = allocator_type{}) noexcept : alloc_holder_type{alloc} {
+        constexpr basic_uri(allocator_type const& alloc = allocator_type{}) noexcept
+          : alloc_holder_type{alloc} {
             static_assert(is_mutable(), "You can't modify this basic_uri, there's no point in "
                                         "default constructing this class since it can't be changed"
                                         " and thus can't be used in any way.");
@@ -727,60 +730,72 @@ namespace webpp {
             return decode_uri_component(str(), output, ALLOWED_CHARACTERS_IN_URI);
         }
 
-        /**
-         * @brief check if the specified uri has a scheme or not
-         */
-        [[nodiscard]] bool has_scheme() const noexcept {
-            parse_scheme();
-            return scheme_end != data.size() || scheme_end == 0;
-        }
+        struct scheme_type {
+            basic_uri& self;
 
-        /**
-         * @brief scheme
-         * @return get scheme
-         */
-        [[nodiscard]] str_view_t scheme() const noexcept {
-            parse_scheme();
-            return scheme_end == data.size() ? str_view_t() : substr(0, scheme_end);
-        }
-
-        /**
-         * @brief set scheme
-         * @param _scheme
-         * @throws logic_error if uri is const
-         */
-        basic_uri& scheme(str_view_t m_scheme) {
-            if (ascii::ends_with(m_scheme, ':'))
-                m_scheme.remove_suffix(1);
-            if (!is::scheme<traits_type>(m_scheme))
-                throw stl::invalid_argument("The specified scheme is not valid");
-            parse_scheme();
-            if (scheme_end != data.size()) {
-                replace_value(0,
-                              m_scheme.empty() && data.size() > scheme_end + 1 && data[scheme_end] == ':'
-                                ? scheme_end + 1
-                                : scheme_end,
-                              m_scheme);
-            } else {
-                // the URI doesn't have a scheme now, we have to put it in the
-                // right place
-                auto scheme_colon = m_scheme.empty() ? "" : str_t(m_scheme) + ':';
-                if (authority_start != data.size()) {
-                    replace_value(0, 0, scheme_colon + (ascii::starts_with(data, "//") ? "" : "//"));
-                } else {
-                    // It's a URN (or URN like URI)
-                    replace_value(0, 0, scheme_colon);
-                }
+            auto& operator=(istl::StringViewifiable auto&& new_scheme) noexcept {
+                set(stl::forward<decltype(new_scheme)>(new_scheme));
+                return *this;
             }
-            return *this;
-        }
 
-        /**
-         * @brief clear scheme from uri
-         */
-        auto& clear_scheme() noexcept {
-            return scheme({});
-        }
+            /**
+             * @brief check if the specified uri has a scheme or not
+             */
+            [[nodiscard]] bool empty() const noexcept {
+                self.parse_scheme();
+                return self.scheme_end == self.data.size() && self.scheme_end != 0;
+            }
+
+            /**
+             * @brief scheme
+             * @return get scheme
+             */
+            [[nodiscard]] str_view_t value() const noexcept {
+                self.parse_scheme();
+                return self.scheme_end == self.data.size() ? str_view_t() : self.substr(0, self.scheme_end);
+            }
+
+            /**
+             * @brief set scheme
+             * @param _scheme
+             * @throws logic_error if uri is const
+             */
+            basic_uri& set(str_view_t m_scheme) {
+                if (ascii::ends_with(m_scheme, ':'))
+                    m_scheme.remove_suffix(1);
+                if (!is::scheme<traits_type>(m_scheme))
+                    throw stl::invalid_argument("The specified scheme is not valid");
+                self.parse_scheme();
+                if (self.scheme_end != self.data.size()) {
+                    self.replace_value(0,
+                                       m_scheme.empty() && self.data.size() > self.scheme_end + 1 &&
+                                           self.data[self.scheme_end] == ':'
+                                         ? self.scheme_end + 1
+                                         : self.scheme_end,
+                                       m_scheme);
+                } else {
+                    // the URI doesn't have a scheme now, we have to put it in the right place
+                    auto scheme_colon = m_scheme.empty() ? "" : str_t(m_scheme) + ':';
+                    if (self.authority_start != self.data.size()) {
+                        self.replace_value(0, 0,
+                                           scheme_colon + (ascii::starts_with(self.data, "//") ? "" : "//"));
+                    } else {
+                        // It's a URN (or URN like URI)
+                        self.replace_value(0, 0, scheme_colon);
+                    }
+                }
+                return *this;
+            }
+
+            /**
+             * @brief clear scheme from uri
+             */
+            basic_uri& clear() noexcept {
+                return set("");
+            }
+        };
+
+        scheme_type scheme{*this};
 
         /**
          * @brief checks if the uri has user info or not
@@ -848,374 +863,383 @@ namespace webpp {
             return user_info({});
         }
 
-        /**
-         * @brief return host as an string_view
-         * @return string_view
-         */
-        [[nodiscard]] str_view_t host() const noexcept {
-            parse_host();
-            if (authority_start == data.size()) {
-                // there will not be a host without the authority_start
-                return {};
-            }
+        struct host_type {
+            basic_uri& self;
 
-            stl::size_t start, len;
-
-            // you know I could do this in one line of code, but I did this
-            // because I don't want you to curse me :)
-
-            // we have authority_start, let's check user_info and port too
-            if (user_info_end == data.size()) {
-                // there's no user info
-                start = authority_start;
-            } else {
-                // there's a user info
-                start = user_info_end;
-            }
-
-            if (port_start != data.size()) {
-                // but there's a port
-                len = port_start - start;
-            } else {
-                // there's no port either
-                if (authority_end != data.size()) {
-                    // there's a path
-                    len = authority_end - start;
-                } else {
-                    // there's no path either
-                    len = data.size() - 1; // till the end
+            /**
+             * @brief return host as an string_view
+             * @return string_view
+             */
+            [[nodiscard]] str_view_t raw() const noexcept {
+                self.parse_host();
+                if (self.authority_start == self.data.size()) {
+                    // there will not be a host without the authority_start
+                    return {};
                 }
-            }
 
-            return substr(start, len);
-        }
+                stl::size_t start, len;
 
-        /**
-         * @brief returns const_ipv4/const_ipv6/hostname; if the URI doesn't
-         * include a valid ip/hostname you'll get an empty string. this method
-         * will only return the hostname/ip if it's in the correct format and
-         * doesn't include invalid syntax.
-         * @return
-         */
-        [[nodiscard]] stl::variant<ipv4<traits_type>, ipv6<traits_type>, str_view_t>
-        host_structured() const noexcept {
-            auto _host = host();
-            if (is::ipv4(_host))
-                return ipv4<traits_type>(_host);
-            if (is::ipv6(_host))
-                return ipv6<traits_type>(_host);
-            return _host;
-        }
+                // you know I could do this in one line of code, but I did this
+                // because I don't want you to curse me :)
 
-        /**
-         * @brief get the decoded version of hostname/ip of the uri or an empty
-         * string if the specified URI does not include a hostname/ip or its
-         * hostname has the wrong character encodings.
-         * @return string
-         */
-        [[nodiscard]] auto host_decoded() const noexcept {
-            return decode_uri_component<traits_type>(host(), REG_NAME_NOT_PCT_ENCODED);
-        }
-
-        /**
-         * @brief this method will check if the hostname/ip exists in the uri or not.
-         * @return true if it find a hostname/ip in the uri
-         */
-        [[nodiscard]] bool has_host() const noexcept {
-            return !host().empty();
-        }
-
-        /**
-         * @brief set the hostname/ip in the uri if possible
-         */
-        basic_uri& host(str_view_t const& new_host) noexcept {
-            parse_host();
-
-            // todo: are you sure it can handle punycode as well?
-            auto encoded_host = encode_uri_component<traits_type>(new_host, REG_NAME_NOT_PCT_ENCODED);
-            if ((!ascii::starts_with(new_host, '[') || !ascii::ends_with(new_host, ']')) &&
-                is::ipv6(new_host)) {
-                encoded_host = '[' + encoded_host + ']';
-            }
-
-            if (authority_start == data.size()) {
-                // there's no authority start
-
-                if (encoded_host.empty())
-                    return *this; // there's nothing to do here. It's already
-                                  // what the user wants
-
-                if (scheme_end == data.size()) {
-                    // there's no scheme either, so we just have to add to the
-                    // beginning of the string
-                    replace_value(0, 0, str_t("//") + encoded_host);
-                    return *this;
+                // we have authority_start, let's check user_info and port too
+                if (self.user_info_end == self.data.size()) {
+                    // there's no user info
+                    start = self.authority_start;
                 } else {
-                    // there's a scheme
-                    replace_value(scheme_end, 0, str_t("//") + encoded_host);
-                    return *this;
+                    // there's a user info
+                    start = self.user_info_end;
                 }
+
+                if (self.port_start != self.data.size()) {
+                    // but there's a port
+                    len = self.port_start - start;
+                } else {
+                    // there's no port either
+                    if (self.authority_end != self.data.size()) {
+                        // there's a path
+                        len = self.authority_end - start;
+                    } else {
+                        // there's no path either
+                        len = self.data.size() - 1; // till the end
+                    }
+                }
+
+                return self.substr(start, len);
             }
 
-            stl::size_t start, finish;
+            /**
+             * @brief returns const_ipv4/const_ipv6/hostname; if the URI doesn't
+             * include a valid ip/hostname you'll get an empty string. this method
+             * will only return the hostname/ip if it's in the correct format and
+             * doesn't include invalid syntax.
+             * @return
+             */
+            [[nodiscard]] stl::variant<ipv4<traits_type>, ipv6<traits_type>, str_view_t>
+            host_structured() const noexcept {
+                auto _host = raw();
+                if (is::ipv4(_host))
+                    return ipv4<traits_type>(_host);
+                if (is::ipv6(_host))
+                    return ipv6<traits_type>(_host);
+                return _host;
+            }
 
-            // you know I could do this in one line of code, but I did this
-            // because I don't want you to curse me :)
+            /**
+             * @brief get the decoded version of hostname/ip of the uri or an empty
+             * string if the specified URI does not include a hostname/ip or its
+             * hostname has the wrong character encodings.
+             * @return string
+             */
+            [[nodiscard]] stl::optional<str_t> decoded() const noexcept {
+                str_t d_host{this->get_allocator()};
+                if (decode_uri_component(raw(), d_host, REG_NAME_NOT_PCT_ENCODED))
+                    return d_host;
+                return stl::nullopt;
+            }
 
-            // we have authority_start, let's check user_info and port too
-            if (user_info_end == data.size()) {
-                // there's no user info
-                if (scheme_end == data.size()) {
-                    start = 0;
-                    if (!new_host.empty() && !ascii::starts_with(str_view_t{encoded_host}, "//")) {
-                        encoded_host = "//" + encoded_host;
+            /**
+             * @brief this method will check if the hostname/ip exists in the uri or not.
+             * @return true if it can't find a hostname/ip in the uri or it's empty
+             */
+            [[nodiscard]] bool empty() const noexcept {
+                return raw().empty();
+            }
+
+            /**
+             * @brief set the hostname/ip in the uri if possible
+             */
+            basic_uri& set(str_view_t const& new_host) noexcept {
+                self.parse_host();
+
+                // todo: are you sure it can handle punycode as well?
+                auto encoded_host = encode_uri_component<traits_type>(new_host, REG_NAME_NOT_PCT_ENCODED);
+                if ((!ascii::starts_with(new_host, '[') || !ascii::ends_with(new_host, ']')) &&
+                    is::ipv6(new_host)) {
+                    encoded_host = '[' + encoded_host + ']';
+                }
+
+                if (self.authority_start == self.data.size()) {
+                    // there's no authority start
+
+                    if (encoded_host.empty())
+                        return *this; // there's nothing to do here. It's already
+                                      // what the user wants
+
+                    if (self.scheme_end == self.data.size()) {
+                        // there's no scheme either, so we just have to add to the
+                        // beginning of the string
+                        self.replace_value(0, 0, str_t("//") + encoded_host);
+                        return *this;
+                    } else {
+                        // there's a scheme
+                        self.replace_value(self.scheme_end, 0, str_t("//") + encoded_host);
+                        return *this;
+                    }
+                }
+
+                stl::size_t start, finish;
+
+                // you know I could do this in one line of code, but I did this
+                // because I don't want you to curse me :)
+
+                // we have authority_start, let's check user_info and port too
+                if (self.user_info_end == self.data.size()) {
+                    // there's no user info
+                    if (self.scheme_end == self.data.size()) {
+                        start = 0;
+                        if (!new_host.empty() && !ascii::starts_with(str_view_t{encoded_host}, "//")) {
+                            encoded_host = "//" + encoded_host;
+                        }
+                    } else {
+                        start = self.authority_start;
                     }
                 } else {
-                    start = authority_start;
+                    // there's a user info
+                    start = self.user_info_end;
                 }
-            } else {
-                // there's a user info
-                start = user_info_end;
-            }
 
-            if (port_start != data.size()) {
-                // but there's a port
-                finish = port_start;
-            } else {
-                // there's no port either
-                if (authority_end != data.size()) {
-                    // there's a path
-                    finish = authority_end;
+                if (self.port_start != self.data.size()) {
+                    // but there's a port
+                    finish = self.port_start;
                 } else {
-                    // there's no path either
-                    finish = data.size() - 1; // till the end
+                    // there's no port either
+                    if (self.authority_end != self.data.size()) {
+                        // there's a path
+                        finish = self.authority_end;
+                    } else {
+                        // there's no path either
+                        finish = self.data.size() - 1; // till the end
+                    }
                 }
-            }
 
-            replace_value(start, finish - start, encoded_host);
+                self.replace_value(start, finish - start, encoded_host);
 
-            return *this;
-        }
-
-        /**
-         * @brief get the hostname/ipv4/ipv6 from the URI. if the URI doesn't
-         * include a hostname/ip or its hostname/ip is not in a valid shape, it
-         * will return an empty string
-         * @return string/ipv4/ipv6
-         * @default empty string
-         */
-        [[nodiscard]] stl::variant<ipv4<traits_type>, ipv6<traits_type>, str_t>
-        host_structured_decoded() const noexcept {
-            if (auto _host_structured = host_structured();
-                stl::holds_alternative<str_view_t>(_host_structured))
-                return decode_uri_component<traits_type>(stl::get<str_view_t>(_host_structured),
-                                                         REG_NAME_NOT_PCT_ENCODED);
-            else
-                return _host_structured;
-        }
-
-        /**
-         * @brief clear host part from URI
-         * @return
-         */
-        basic_uri& clear_host() noexcept {
-            return host({});
-        }
-
-        /**
-         * Check if the specified host is an IP address or not
-         * This method check if the specified host is a IPv4 Address or has a
-         * valid syntax for either IPv6 or Future version of IP addresses which
-         * also starts with "[" and ends with "]" with an unknown syntax (as of
-         * writing this code obv)
-         * @return an indication of weather or not the specified Hostname is a
-         * valid IP address or not
-         */
-        [[nodiscard]] bool is_ip() const noexcept {
-            auto _host = host();
-            return is::ipv4(_host) || (ascii::starts_with(_host, '[') && ascii::ends_with(_host, ']'));
-        }
-
-        /**
-         * Get the host and split it by dot separator. TLD (Top Level Domain)
-         * will be the last one and Second Level Domain will be the one before
-         * that and the rest will be subdomains.
-         */
-        [[nodiscard]] istl::vector<traits_type, str_t> domains() const noexcept {
-            auto _host = host();
-            if (_host.empty() || is_ip())
-                return {};
-            istl::vector<traits_type, str_t> subs;
-            for (;;) {
-                auto dot = _host.find('.');
-                auto sub = _host.substr(0, dot);
-                if (sub.empty())
-                    break;
-                subs.emplace_back(stl::move(sub));
-                if (dot == str_view_t::npos)
-                    break;
-                _host.remove_prefix(dot + 1);
-            }
-            return subs;
-        }
-
-        /**
-         * Get the TLD (top level domain) or sometimes called extension
-         */
-        [[nodiscard]] str_view_t top_level_domain() const noexcept {
-            auto _host = host();
-            if (_host.empty() || is_ip())
-                return {};
-            auto dot = _host.find_last_of('.');
-            return _host.substr(dot != str_view_t::npos ? dot + 1 : 0);
-        }
-
-        /**
-         * Set the TLD (Top Level Domain) in the uri
-         * @param tld
-         * @return
-         */
-        auto& top_level_domain(str_view_t const& tld) noexcept {
-            auto _host = host();
-            if (_host.empty()) {
-                // I've already written that code. Yay, I'm so happy
-                static_cast<void>(host(tld));
-            } else if (!is_ip() && !is::ip(tld)) {
-                // cannot put an ip address as a tld, user should use set host
-                // instead of this method.
-                auto dot   = _host.find_last_of('.');
-                auto start = dot != str_view_t::npos ? dot + 1 : 0;
-                static_cast<void>(host(str_t(_host.substr(0, start)) + str_t(tld)));
-            }
-            return *this;
-        }
-
-        /**
-         * Check if the specified uri has a top level domain (TLD) or not
-         * @return an indication of weather or not the URI has TLD or not
-         */
-        [[nodiscard]] bool has_top_level_domain() const noexcept {
-            return !top_level_domain().empty();
-        }
-
-        /**
-         * Get the second level domain out of the host
-         */
-        [[nodiscard]] str_view_t second_level_domain() const noexcept {
-            auto _host = host();
-            if (_host.empty() || is_ip())
-                return {};
-            auto last_dot = _host.find_last_of('.');
-            if (last_dot == str_view_t::npos)
-                return {};
-            auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
-            auto start        = bef_last_dot == str_view_t::npos ? 0 : bef_last_dot + 1;
-            auto sld          = _host.substr(start, last_dot - start);
-            return sld;
-        }
-
-        /**
-         * Set the second level domain to the specified string.
-         * Attention: this method will only work if Top Level Domain already
-         * exists
-         * @param sld
-         */
-        basic_uri& second_level_domain(str_view_t const& sld) noexcept {
-            auto _host = host();
-            if (_host.empty() || is_ip())
                 return *this;
+            }
 
-            auto last_dot = _host.find_last_of('.');
-            if (last_dot == str_view_t::npos) {
-                // we have to insert it at the beginning of the host string
+            /**
+             * @brief get the hostname/ipv4/ipv6 from the URI. if the URI doesn't
+             * include a hostname/ip or its hostname/ip is not in a valid shape, it
+             * will return an empty string
+             * @return string/ipv4/ipv6
+             * @default empty string
+             */
+            [[nodiscard]] stl::variant<ipv4<traits_type>, ipv6<traits_type>, str_t>
+            host_structured_decoded() const noexcept {
+                if (auto _host_structured = host_structured();
+                    stl::holds_alternative<str_view_t>(_host_structured))
+                    return decode_uri_component<traits_type>(stl::get<str_view_t>(_host_structured),
+                                                             REG_NAME_NOT_PCT_ENCODED);
+                else
+                    return _host_structured;
+            }
 
-                // there's nothing to do it's empty
-                if (!sld.empty()) {
-                    static_cast<void>(host(str_t(sld) + '.' + str_t(_host)));
+            /**
+             * @brief clear host part from URI
+             * @return
+             */
+            basic_uri& clear() noexcept {
+                return set("");
+            }
+
+            /**
+             * Check if the specified host is an IP address or not
+             * This method check if the specified host is a IPv4 Address or has a
+             * valid syntax for either IPv6 or Future version of IP addresses which
+             * also starts with "[" and ends with "]" with an unknown syntax (as of
+             * writing this code obv)
+             * @return an indication of weather or not the specified Hostname is a
+             * valid IP address or not
+             */
+            [[nodiscard]] bool is_ip() const noexcept {
+                auto _host = raw();
+                return is::ipv4(_host) || (ascii::starts_with(_host, '[') && ascii::ends_with(_host, ']'));
+            }
+
+            /**
+             * Get the host and split it by dot separator. TLD (Top Level Domain)
+             * will be the last one and Second Level Domain will be the one before
+             * that and the rest will be subdomains.
+             */
+            [[nodiscard]] istl::vector<traits_type, str_t> domains() const noexcept {
+                auto _host = raw();
+                if (_host.empty() || is_ip())
+                    return {};
+                istl::vector<traits_type, str_t> subs;
+                for (;;) {
+                    auto dot = _host.find('.');
+                    auto sub = _host.substr(0, dot);
+                    if (sub.empty())
+                        break;
+                    subs.emplace_back(stl::move(sub));
+                    if (dot == str_view_t::npos)
+                        break;
+                    _host.remove_prefix(dot + 1);
                 }
-            } else {
+                return subs;
+            }
+
+            /**
+             * Get the TLD (top level domain) or sometimes called extension
+             */
+            [[nodiscard]] str_view_t top_level_domain() const noexcept {
+                auto _host = raw();
+                if (_host.empty() || is_ip())
+                    return {};
+                auto dot = _host.find_last_of('.');
+                return _host.substr(dot != str_view_t::npos ? dot + 1 : 0);
+            }
+
+            /**
+             * Set the TLD (Top Level Domain) in the uri
+             * @param tld
+             * @return
+             */
+            auto& top_level_domain(str_view_t const& tld) noexcept {
+                auto _host = raw();
+                if (_host.empty()) {
+                    // I've already written that code. Yay, I'm so happy
+                    set(tld);
+                } else if (!is_ip() && !is::ip(tld)) {
+                    // cannot put an ip address as a tld, user should use set host
+                    // instead of this method.
+                    auto dot   = _host.find_last_of('.');
+                    auto start = dot != str_view_t::npos ? dot + 1 : 0;
+                    set(str_t(_host.substr(0, start)) + str_t(tld));
+                }
+                return *this;
+            }
+
+            /**
+             * Check if the specified uri has a top level domain (TLD) or not
+             * @return an indication of weather or not the URI has TLD or not
+             */
+            [[nodiscard]] bool has_top_level_domain() const noexcept {
+                return !top_level_domain().empty();
+            }
+
+            /**
+             * Get the second level domain out of the host
+             */
+            [[nodiscard]] str_view_t second_level_domain() const noexcept {
+                auto _host = raw();
+                if (_host.empty() || is_ip())
+                    return {};
+                auto last_dot = _host.find_last_of('.');
+                if (last_dot == str_view_t::npos)
+                    return {};
                 auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
                 auto start        = bef_last_dot == str_view_t::npos ? 0 : bef_last_dot + 1;
-                if (!sld.empty())
-                    static_cast<void>(
-                      host(str_t(_host.substr(0, start)) + str_t(sld) + str_t(_host.substr(last_dot))));
-                else
-                    static_cast<void>(host(str_t(_host.substr(last_dot + 1))));
+                auto sld          = _host.substr(start, last_dot - start);
+                return sld;
             }
-            return *this;
-        }
 
-        /**
-         * This method will remove the Second Level Domain and also any
-         * Sub-Domains if there are any.
-         */
-        basic_uri& clear_second_level_domain() noexcept {
-            return second_level_domain({});
-        }
+            /**
+             * Set the second level domain to the specified string.
+             * Attention: this method will only work if Top Level Domain already
+             * exists
+             * @param sld
+             */
+            basic_uri& second_level_domain(str_view_t const& sld) noexcept {
+                auto _host = raw();
+                if (_host.empty() || is_ip())
+                    return *this;
 
-        /**
-         * Check if the specified uri has a second level domain or not.
-         * @return An indication of weather or not the URI has SLD or not
-         */
-        [[nodiscard]] bool has_second_level_domain() const noexcept {
-            return !second_level_domain().empty();
-        }
+                auto last_dot = _host.find_last_of('.');
+                if (last_dot == str_view_t::npos) {
+                    // we have to insert it at the beginning of the host string
 
-        /**
-         * Get the sub-domain (with sub-sub-...-sub-domain)
-         * @return
-         */
-        [[nodiscard]] str_view_t subdomains() const noexcept {
-            auto _host = host();
-            if (_host.empty() || is_ip())
-                return {};
-            auto last_dot = _host.find_last_of('.');
-            if (last_dot == str_view_t::npos)
-                return {};
-            auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
-            if (bef_last_dot == str_view_t::npos)
-                return {};
-            return _host.substr(0, bef_last_dot);
-        }
-
-        /**
-         * Set the sub-domain part of the host name
-         * Attention: this method will only work if Top Level Domain and Second
-         * Level Domain already exists
-         * @param sds
-         */
-        auto& subdomains(str_view_t const& sds) noexcept {
-            auto _host = host();
-            if (_host.empty() || is_ip())
+                    // there's nothing to do it's empty
+                    if (!sld.empty()) {
+                        static_cast<void>(set(str_t(sld) + '.' + str_t(_host)));
+                    }
+                } else {
+                    auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
+                    auto start        = bef_last_dot == str_view_t::npos ? 0 : bef_last_dot + 1;
+                    if (!sld.empty())
+                        static_cast<void>(
+                          set(str_t(_host.substr(0, start)) + str_t(sld) + str_t(_host.substr(last_dot))));
+                    else
+                        static_cast<void>(set(str_t(_host.substr(last_dot + 1))));
+                }
                 return *this;
-            auto last_dot = _host.find_last_of('.');
-            if (last_dot == str_view_t::npos)
-                return *this;
-            auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
-            if (bef_last_dot == str_view_t::npos)
-                return *this;
-            if (sds.empty()) // special check for when we want to remove the SDS
-                bef_last_dot++;
-            static_cast<void>(host(str_t(sds) + str_t(_host.substr(bef_last_dot))));
-            return *this;
-        }
+            }
 
-        /**
-         * Remove the sub-domains if exists. This method should not have
-         * side-effects if there's no sub-domain
-         */
-        basic_uri& clear_subdomains() noexcept {
-            return subdomains({});
-        }
+            /**
+             * This method will remove the Second Level Domain and also any
+             * Sub-Domains if there are any.
+             */
+            basic_uri& clear_second_level_domain() noexcept {
+                return second_level_domain({});
+            }
 
-        /**
-         * Check if the specified uri has at least one sub-domain or not
-         * @return an indication of weather or not the URI has subdomains or not
-         * TODO: we could be smarter here
-         */
-        [[nodiscard]] bool has_subdomains() const noexcept {
-            return !subdomains().empty();
-        }
+            /**
+             * Check if the specified uri has a second level domain or not.
+             * @return An indication of weather or not the URI has SLD or not
+             */
+            [[nodiscard]] bool has_second_level_domain() const noexcept {
+                return !second_level_domain().empty();
+            }
+
+            /**
+             * Get the sub-domain (with sub-sub-...-sub-domain)
+             * @return
+             */
+            [[nodiscard]] str_view_t subdomains() const noexcept {
+                auto _host = raw();
+                if (_host.empty() || is_ip())
+                    return {};
+                auto last_dot = _host.find_last_of('.');
+                if (last_dot == str_view_t::npos)
+                    return {};
+                auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
+                if (bef_last_dot == str_view_t::npos)
+                    return {};
+                return _host.substr(0, bef_last_dot);
+            }
+
+            /**
+             * Set the sub-domain part of the host name
+             * Attention: this method will only work if Top Level Domain and Second
+             * Level Domain already exists
+             * @param sds
+             */
+            auto& subdomains(str_view_t const& sds) noexcept {
+                auto _host = raw();
+                if (_host.empty() || is_ip())
+                    return *this;
+                auto last_dot = _host.find_last_of('.');
+                if (last_dot == str_view_t::npos)
+                    return *this;
+                auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
+                if (bef_last_dot == str_view_t::npos)
+                    return *this;
+                if (sds.empty()) // special check for when we want to remove the SDS
+                    bef_last_dot++;
+                static_cast<void>(set(str_t(sds) + str_t(_host.substr(bef_last_dot))));
+                return *this;
+            }
+
+            /**
+             * Remove the sub-domains if exists. This method should not have
+             * side-effects if there's no sub-domain
+             */
+            basic_uri& clear_subdomains() noexcept {
+                return subdomains({});
+            }
+
+            /**
+             * Check if the specified uri has at least one sub-domain or not
+             * @return an indication of weather or not the URI has subdomains or not
+             * TODO: we could be smarter here
+             */
+            [[nodiscard]] bool has_subdomains() const noexcept {
+                return !subdomains().empty();
+            }
+        };
+
+        host_type host{*this};
 
         /**
          * Get the default port for the specified scheme
@@ -1338,11 +1362,13 @@ namespace webpp {
         struct path_type {
             basic_uri& self;
 
-            static constexpr auto LEGAL_PATH_CHARS = charset(PCHAR_NOT_PCT_ENCODED, charset<char_type, 1>('/'));
+            static constexpr auto LEGAL_PATH_CHARS =
+              charset(PCHAR_NOT_PCT_ENCODED, charset<char_type, 1>('/'));
 
-            basic_uri& operator=(istl::StringViewifiable auto&& new_path) {
+            auto& operator=(
+              istl::StringViewifiable auto&& new_path) { // NOLINT(misc-unconventional-assign-operator)
                 set(stl::forward<decltype(new_path)>(new_path));
-                return self;
+                return *this;
             }
 
 
@@ -1353,7 +1379,7 @@ namespace webpp {
              */
             [[nodiscard]] bool empty() const noexcept {
                 self.parse_path();
-                return self.authority_end != self.data.size();
+                return self.authority_end == self.data.size();
             }
 
             /**
@@ -1361,9 +1387,10 @@ namespace webpp {
              * @return
              */
             [[nodiscard]] str_view_t raw() const noexcept {
-                if (!empty())
+                if (empty())
                     return {};
-                return self.substr(self.authority_end, stl::min(self.query_start, self.fragment_start) - self.authority_end);
+                return self.substr(self.authority_end,
+                                   stl::min(self.query_start, self.fragment_start) - self.authority_end);
             }
 
             /**
@@ -1385,9 +1412,9 @@ namespace webpp {
              */
             template <typename Container = istl::vector<traits_type, str_t>>
             [[nodiscard]] Container slugs() const noexcept {
-            	Container container(self.get_allocator());
-            	extract_slugs_to<Container>(container);
-            	return container;
+                Container container(self.get_allocator());
+                extract_slugs_to<Container>(container);
+                return container;
             }
 
             /**
@@ -1397,9 +1424,9 @@ namespace webpp {
              */
             template <typename Container = istl::vector<traits_type, str_view_t>>
             [[nodiscard]] Container raw_slugs() const noexcept {
-            	Container container(self.get_allocator());
-            	extract_raw_slugs_to<Container>(container);
-            	return container;
+                Container container(self.get_allocator());
+                extract_raw_slugs_to<Container>(container);
+                return container;
             }
 
             /**
@@ -1410,7 +1437,7 @@ namespace webpp {
              * container, it will return the whole path.
              */
             template <typename Container = istl::vector<traits_type, str_view_t>>
-            basic_uri& extract_raw_slugs_to(Container &container) const noexcept {
+            basic_uri& extract_raw_slugs_to(Container& container) const noexcept {
                 auto _path = raw();
                 if (_path.empty())
                     return self;
@@ -1422,7 +1449,8 @@ namespace webpp {
                 do {
                     slash_start = _path.find('/', self.last_slash_start + 1);
                     container.emplace_back(_path.data() + self.last_slash_start + 1,
-                                           stl::min(self.slash_start, _path_size) - self.last_slash_start - 1);
+                                           stl::min(self.slash_start, _path_size) - self.last_slash_start -
+                                             1);
                     // if (slash_start != str_view_t::npos)
                     // _path.remove_prefix(slash_start + 1);
                     // else
@@ -1438,14 +1466,16 @@ namespace webpp {
              * as this method should own its data.
              */
             template <typename Container = istl::vector<traits_type, str_t>>
-            [[nodiscard]] bool extract_slugs_to(Container &container) const noexcept {
+            [[nodiscard]] bool extract_slugs_to(Container& container) const noexcept {
                 using vec_str_t = typename Container::value_type;
-                for (auto& slug : container) {
+                static_assert(istl::String<vec_str_t>,
+                              "The specified container doesn't hold a value type that we can understand.");
+                for (auto it = container.begin(); it != container.end(); ++it) {
                     vec_str_t tmp(container.get_allocator());
-                    if (!decode_uri_component(slug, tmp, PCHAR_NOT_PCT_ENCODED)) {
+                    if (!decode_uri_component(*it, tmp, PCHAR_NOT_PCT_ENCODED)) {
                         return false;
                     }
-                    slug.swap(tmp);
+                    it->swap(tmp);
                 }
                 return true;
             }
@@ -1464,7 +1494,7 @@ namespace webpp {
             template <typename Iter>
             basic_uri& set_from(const Iter& _start, const Iter& _end) noexcept {
                 const auto almost_end = stl::prev(_end);
-                str_t new_path{self.get_allocator()};
+                str_t      new_path{self.get_allocator()};
                 for (auto it = _start; it != almost_end; ++it) {
                     encode_uri_component(*it, new_path, PCHAR_NOT_PCT_ENCODED);
                     new_path.append('/');
@@ -1511,7 +1541,28 @@ namespace webpp {
                 return !is_absolute();
             }
 
+            /**
+             * @brief checks if the uri path is normalized or not (contains relative
+             * . or .. paths)
+             * @return
+             */
+            [[nodiscard]] bool is_normalized() const noexcept {
+                auto m_path = raw_slugs();
+                return m_path.cend() != stl::find_if(m_path.cbegin(), m_path.cend(), [](auto const& p) {
+                           return p == "." || p == "..";
+                       });
+            }
 
+            /**
+             * @details This method applies the "remove_dot_segments" routine talked
+             * about in RFC 3986 (https://tools.ietf.org/html/rfc3986) to the path
+             * segments of the URI, in order to normalize the path
+             * (apply and remove "." and ".." segments).
+             */
+            basic_uri& normalize_path() noexcept {
+                // TODO
+                return *this;
+            }
         };
         path_type path{*this};
 
@@ -1535,7 +1586,7 @@ namespace webpp {
              */
             [[nodiscard]] bool empty() const noexcept {
                 self.parse_query();
-                return self.query_start != self.data.size();
+                return self.query_start == self.data.size();
             }
 
             [[nodiscard]] str_view_t raw() const noexcept {
@@ -1610,7 +1661,8 @@ namespace webpp {
                     }
                 } else {
                     // we have query
-                    self.replace_value(self.query_start, self.fragment_start - self.query_start, self.encoded_query);
+                    self.replace_value(self.query_start, self.fragment_start - self.query_start,
+                                       self.encoded_query);
                 }
                 return self;
             }
@@ -1621,9 +1673,10 @@ namespace webpp {
             template <typename MapIter>
             basic_uri& set_from(MapIter const& _queries_begin, MapIter const& _queries_end) {
                 static_assert(is_mutable(), "You can't use this method on a non-modifiable uri struct.");
-                using map_key_type = typename MapIter::first_type;
+                using map_key_type   = typename MapIter::first_type;
                 using map_value_type = typename MapIter::second_type;
-                static_assert(istl::StringViewifiable<map_key_type> && istl::StringViewifiable<map_value_type>,
+                static_assert(istl::StringViewifiable<map_key_type> &&
+                                istl::StringViewifiable<map_value_type>,
                               "The specified map is not valid");
 
                 stl::size_t reserved_size = 0;
@@ -1669,15 +1722,15 @@ namespace webpp {
              * It's also in a decoded format
              */
             template <typename MapType = istl::map<traits_type, str_t, str_t>>
-            basic_uri& extract_to(MapType &q_structured) const noexcept {
-                using map_key_type = typename MapType::key_value;
+            basic_uri& extract_to(MapType& q_structured) const noexcept {
+                using map_key_type   = typename MapType::key_value;
                 using map_value_type = typename MapType::mapped_type;
                 static_assert(istl::String<map_key_type>,
                               "The specified container can't hold the query keys.");
                 static_assert(istl::String<map_value_type>,
                               "The specified container can't hold the query values.");
-                stl::size_t                         last_and_sep = 0;
-                auto                                _query       = raw();
+                stl::size_t last_and_sep = 0;
+                auto        _query       = raw();
                 do {
                     auto and_sep = _query.find('&', last_and_sep); // find the delimiter
                     auto eq_sep  = _query.find("=", last_and_sep, and_sep - last_and_sep);
@@ -1705,36 +1758,13 @@ namespace webpp {
                 return *this;
             }
 
-            basic_uri& append(istl::StringViewifiable auto&& key, istl::StringViewifiable auto &&value) noexcept {
+            basic_uri& append(istl::StringViewifiable auto&& key,
+                              istl::StringViewifiable auto&& value) noexcept {
                 // todo
             }
-
         };
 
         [[no_unique_address]] queries_type queries{*this};
-
-        /**
-         * @brief checks if the uri path is normalized or not (contains relative
-         * . or .. paths)
-         * @return
-         */
-        [[nodiscard]] bool is_normalized() const noexcept {
-            auto m_path = path_structured();
-            return m_path.cend() != stl::find_if(m_path.cbegin(), m_path.cend(), [](auto const& p) {
-                       return p == "." || p == "..";
-                   });
-        }
-
-        /**
-         * @details This method applies the "remove_dot_segments" routine talked
-         * about in RFC 3986 (https://tools.ietf.org/html/rfc3986) to the path
-         * segments of the URI, in order to normalize the path
-         * (apply and remove "." and ".." segments).
-         */
-        basic_uri& normalize_path() noexcept {
-            // TODO
-            return *this;
-        }
 
         /**
          * @brief get fragment
@@ -1775,7 +1805,7 @@ namespace webpp {
          * @return bool
          */
         [[nodiscard]] bool has_authority() const noexcept {
-            return has_host() || has_user_info() || has_port();
+            return !host.empty() || has_user_info() || has_port();
         }
 
         /**
@@ -1836,11 +1866,11 @@ namespace webpp {
                     target.user_info(user_info());
                     target.port(port());
                     if (!relative_uri.has_path()) {
-                        target.path(path());
+                        target.path(path.raw());
                         if (relative_uri.has_queries()) {
                             target.set_queries(relative_uri.queries_raw());
                         } else {
-                            target.set_queries(queries_raw());
+                            target.set_queries(queries.raw());
                         }
                     } else {
                         target.set_queries(relative_uri._queries);
@@ -1897,14 +1927,14 @@ namespace webpp {
          * Check if the specified URI is in fact a URL
          */
         [[nodiscard]] bool is_url() const noexcept {
-            return has_host();
+            return !host.empty();
         }
 
         /**
          * Check if the specified string is a valid URI or not
          */
         [[nodiscard]] bool is_valid() const noexcept {
-            return has_scheme() || has_authority() || has_path() || has_fragment();
+            return has_scheme() || has_authority() || !path.empty() || has_fragment();
         }
 
         /**
@@ -2000,8 +2030,8 @@ namespace webpp {
     template <Traits TraitsType, bool Mutable1, bool Mutable2>
     [[nodiscard]] bool equal_path(basic_uri<TraitsType, Mutable1> const& p1,
                                   basic_uri<TraitsType, Mutable2> const& p2) noexcept {
-        auto _p1 = p1.path_structured_decoded();
-        auto _p2 = p2.path_structured_decoded();
+        auto _p1 = p1.path.slugs();
+        auto _p2 = p2.path.slugs();
         auto it2 = _p2.cbegin();
         auto it1 = _p1.cbegin();
         while (it1 != _p1.cend() && it2 != _p2.cend()) {
