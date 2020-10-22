@@ -1,4 +1,4 @@
-#include "../core/include/webpp/utils/uri.hpp"
+#include "../core/include/webpp/uri/uri.hpp"
 
 #include "../core/include/webpp/traits/std_traits.hpp"
 

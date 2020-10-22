@@ -4,8 +4,8 @@
 #define WEBPP_PATH_H
 
 #include "../../std/optional.hpp"
+#include "../../uri/uri.hpp"
 #include "../../utils/fixed_string.hpp"
-#include "../../utils/uri.hpp"
 #include "route.hpp"
 
 namespace webpp {

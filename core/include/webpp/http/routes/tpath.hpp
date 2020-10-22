@@ -3,8 +3,8 @@
 #ifndef WEBPP_TPATH_H
 #define WEBPP_TPATH_H
 
-#include "../../utils/uri.hpp"
 #include "route.hpp"
+#include "webpp/uri/uri.hpp"
 
 #include <cassert>
 #include <cstddef> // for std::size_t

@@ -7,11 +7,11 @@
 #include "../strings/charset.hpp"
 #include "../strings/to_case.hpp"
 #include "../traits/traits_concepts.hpp"
+#include "../utils/allocators.hpp"
+#include "../utils/casts.hpp"
+#include "../utils/ipv4.hpp"
+#include "../utils/ipv6.hpp"
 #include "../validators/validators.hpp"
-#include "./allocators.hpp"
-#include "./casts.hpp"
-#include "./ipv4.hpp"
-#include "./ipv6.hpp"
 
 namespace webpp {
 
@@ -180,7 +180,6 @@ namespace webpp {
         using str_t         = typename traits_type::string_type;
         using str_view_t    = typename traits_type::string_view_type;
 
-      public:
         /**
          * source:
          * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI
@@ -252,16 +251,18 @@ namespace webpp {
           charset(PCHAR_NOT_PCT_ENCODED, charset<char_type, 2>{'/', '?'});
 
       private:
-        /**
+            /**
          * This is the whole url (if we need to own the uri ourselves)
-         */
-        storred_str_t data{};
+             */
+            storred_str_t data{};
 
 
-        mutable stl::size_t scheme_end = str_view_t::npos, authority_start = str_view_t::npos,
-                            user_info_end = str_view_t::npos, port_start = str_view_t::npos,
-                            authority_end = str_view_t::npos, query_start = str_view_t::npos,
-                            fragment_start = str_view_t::npos;
+            mutable stl::size_t scheme_end = str_view_t::npos, authority_start = str_view_t::npos,
+                                user_info_end = str_view_t::npos, port_start = str_view_t::npos,
+                                authority_end = str_view_t::npos, query_start = str_view_t::npos,
+                                fragment_start = str_view_t::npos;
+
+
 
         /**
          * scheme    :    start=0       end=[0]
@@ -350,8 +351,8 @@ namespace webpp {
 
             auto starting_point =
               authority_start != data.size()
-                ? authority_start
-                : (scheme_end != data.size() && scheme_end != str_view_t::npos ? scheme_end : 0);
+              ? authority_start
+              : (scheme_end != data.size() && scheme_end != str_view_t::npos ? scheme_end : 0);
             authority_end = _data.substr(starting_point, query_start - starting_point).find_first_of('/');
             if (authority_end == str_view_t::npos) {
                 authority_end = data.size();
@@ -570,7 +571,7 @@ namespace webpp {
          */
         inline void unparse() const noexcept {
             scheme_end = authority_start = user_info_end = port_start = authority_end = query_start =
-              fragment_start                                                          = str_view_t::npos;
+            fragment_start                                                          = str_view_t::npos;
         }
 
         /**
@@ -587,6 +588,7 @@ namespace webpp {
             unparse();
             // TODO: you may want to not unparse everything
         }
+
 
       public:
         constexpr basic_uri(allocator_type const& alloc = allocator_type{}) noexcept
