@@ -827,7 +827,8 @@ namespace webpp {
          */
         basic_uri& user_info(str_view_t const& info) noexcept {
             parse_user_info();
-            auto encoded_info = encode_uri_component<traits_type>(info, USER_INFO_NOT_PCT_ENCODED);
+            str_t encoded_info{this->get_allocator()};
+            encode_uri_component(info, encoded_info, USER_INFO_NOT_PCT_ENCODED);
             if (user_info_end == data.size() || authority_start == data.size()) {
                 // the URI already has user info, I just have to replace it
                 replace_value(authority_start, user_info_end - authority_start, encoded_info);
@@ -953,7 +954,8 @@ namespace webpp {
                 self.parse_host();
 
                 // todo: are you sure it can handle punycode as well?
-                auto encoded_host = encode_uri_component<traits_type>(new_host, REG_NAME_NOT_PCT_ENCODED);
+                str_t encoded_host{self.get_allocator()};
+                encode_uri_component(new_host, encoded_host, REG_NAME_NOT_PCT_ENCODED);
                 if ((!ascii::starts_with(new_host, '[') || !ascii::ends_with(new_host, ']')) &&
                     is::ipv6(new_host)) {
                     encoded_host = '[' + encoded_host + ']';
