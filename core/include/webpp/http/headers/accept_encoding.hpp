@@ -12,6 +12,8 @@
 #include "../../strings/validators.hpp"
 
 namespace webpp::http {
+
+
     /**
      * RFC:      https://tools.ietf.org/html/rfc7231#section-5.3.4
      * MDN Docs: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding
@@ -30,7 +32,6 @@ namespace webpp::http {
      *
      * todo: add support for pack200-gzip, exi, zstd
      */
-
     template <Traits TraitsType, bool AllowUnknownAlgos = false>
     struct accept_encoding {
         using str_v                 = typename TraitsType::string_view_type;

@@ -78,13 +78,11 @@ namespace webpp {
     template <typename T>
     concept SessionManager = requires(T ses) {
         EnabledTraits<T>;
-        stl::uses_allocator_v<T>;
         {ses.read(1)} -> stl::same_as<bool>;
         ses.output();
         ses.logger_category;
         ses.buffer();
-        { ses.keep_connection() }
-        noexcept->stl::same_as<bool>;
+        { ses.keep_connection() } noexcept -> stl::same_as<bool>;
     };
 
 
@@ -102,6 +100,13 @@ namespace webpp {
         Traits<typename T::traits_type>;
         ThreadPool<typename T::thread_pool_type>;
         T::template server_type; // <session_manager, thread_pool_type>
+    };
+
+    enum struct session_output_source {
+        memory, // the output source is RAM
+        file    // the output source is a file, it's possible to optimize a little more when it's a file
+                // for example we can ignore copying it to user-space from the kernel space back and forth
+                // in the Linux or Unix operating systems.
     };
 
 } // namespace webpp

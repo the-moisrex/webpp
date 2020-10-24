@@ -2,7 +2,15 @@
 #define WEBPP_INTERFACE_COMMON_CONNECTION_H
 
 #include "../../std/format.hpp"
+#include "../../platform/posix.hpp"
+#include "../server_concepts.hpp"
+#ifdef webpp_posix
+
+#include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
+#include <netinet/in.h>
+#include <unistd.h>
 
 namespace webpp::posix {
 
@@ -24,54 +32,53 @@ namespace webpp::posix {
          * This function will read some bytes.
          */
         void read() noexcept {
+
         }
 
         void write() noexcept {
-            auto res = session.output();
 
-            // todo: do something about this
-            if (session.logger.enabled) {
-                posix::socket_base::keep_alive keep_alive_option;
-                socket.get_option(keep_alive_option);
-                session.logger.info(
-                  session.logger_category,
-                  stl::format("Session keep alive option: {}", keep_alive_option.value() ? "true" : "false"));
+            switch (session.output_source_type()) {
+                case session_output_source::memory: {
+
+                } break;
+
+                    // we can send a file faster
+                case session_output_source::file: {
+
+                    // Enable TCP_CORK option on 'sock' - subsequent TCP output is corked
+                    // until this option is disabled or the socket is closed
+                    int optval = 1; // true
+                    if (setsockopt(sock, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval)) == -1) {
+                        session.logger.error(session.logger_category, "Problem setting socket option TCP_CORK.", errno);
+                        this->done();
+                        return;
+                    }
+
+                    // first send the header
+                    if (::write(sock, session.buffer() ) == -1) {
+                        if (!session.keep_connection()) {
+                            this->done();
+                        }
+                    }
+
+                    // then send the file
+                    sendfile(sock, );
+                } break;
             }
 
-            if (::read(sock, session.buffer(), ) == -1) {
-                      if (err.value() != EOF) { // todo: check if this works
-                          session.logger.error(session.logger_category, "Error receiving data.", err);
-                      }
-                      if (!session.keep_connection()) {
-                          posix::error_code ec;
-                          socket.close(ec);
-                          if (!ec) {
-                              session.logger.error(session.logger_category,
-                                                   "Problem with closing connection.", ec);
-                          }
-                      }
-                  }
-              }
-        }
-
-        /**
-         * This method will kick start the reading
-         */
-        void start_reading() noexcept {
-            // todo: fill this
-            read();
-        }
-
-        void start_writing() noexcept {
-            write();
         }
 
       public:
-        explicit posix_connection(socket_type&& socket, logger_ref logger_obj = logger_type{},
-                                 auto const& alloc = allocator_type{}) noexcept
-          : socket(stl::move(socket)),
-            session{logger_obj, alloc} {
-            start_reading();
+        explicit posix_connection(socket_type _sock, auto&&...args) noexcept
+          : sock(_sock),
+            session{stl::forward<decltype(args)>(args)...} {
+        }
+
+        void done() {
+            if (close(sock) == -1) {
+                session.logger.error(session.logger_category, "Problem with closing connection.", errno);
+            }
+            // todo: remove the connection from the connection list
         }
 
         // move-able, non-copy-able
@@ -79,8 +86,16 @@ namespace webpp::posix {
         posix_connection(posix_connection const&)     = delete;
         posix_connection& operator=(posix_connection const&) = delete;
         posix_connection& operator=(posix_connection&&) = delete;
+
+        void swap(posix_connection& con) noexcept {
+            using stl::swap;
+            swap(sock, con.sock);
+            swap(session, con.session);
+        }
     };
 
 } // namespace webpp
+
+#endif // webpp_posix
 
 #endif // WEBPP_INTERFACE_COMMON_CONNECTION_H

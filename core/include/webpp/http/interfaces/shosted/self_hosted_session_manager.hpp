@@ -7,6 +7,7 @@
 #include "../../../traits/enable_traits.hpp"
 #include "../../../traits/traits_concepts.hpp"
 #include "../../../configs/constants.hpp"
+#include "../../status_code.hpp"
 
 #include <array>
 
@@ -15,7 +16,7 @@ namespace webpp::shosted {
     template <Traits TraitsType, typename RequestType>
     struct self_hosted_session_manager : public enable_traits<TraitsType> {
         static constexpr auto buffer_size     = default_buffer_size;
-        static constexpr auto     logger_category = "SelfHosted/Session";
+        static constexpr auto logger_category = "SelfHosted/Session";
 
         using etraits          = enable_traits<TraitsType>;
         using traits_type      = typename etraits::traits_type;
@@ -30,23 +31,35 @@ namespace webpp::shosted {
       private:
         buffer_type _buffer{}; // todo: should we use char_type here?
         bool        _keep_connection = false;
+        session_output_source output_source = session_output_source::memory;
 
       public:
         buffer_type& buffer() noexcept {
             return _buffer;
         }
 
-        // read a batch of input
-        bool read(stl::size_t transferred_bytes) noexcept {
+        /**
+         * read a batch of input
+         *
+         * Errors that this method should identify:
+         *   - 413 (Entity Too Large): max http header values is about 4k usually
+         *
+         * But this method is in charge of identifying some error codes, but it doesn't produce the output
+         */
+        status_code read(stl::size_t transferred_bytes) noexcept {
 
         }
 
         // making the output
         string_view_type output() noexcept {
 
-        };
+        }
 
-        bool keep_connection() const noexcept {
+        [[nodiscard]] session_output_source output_source_type() const noexcept {
+            return output_source;
+        }
+
+        [[nodiscard]] bool keep_connection() const noexcept {
             return _keep_connection;
         }
     };
