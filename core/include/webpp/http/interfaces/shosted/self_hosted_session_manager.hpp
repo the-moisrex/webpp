@@ -50,6 +50,10 @@ namespace webpp::shosted {
 
         }
 
+        auto remote_addr() const {
+
+        }
+
         // making the output
         string_view_type output() noexcept {
 

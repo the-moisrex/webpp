@@ -10,7 +10,7 @@
 namespace webpp {
 
 
-    template <Traits TraitsType, typename REL, Interface IfaceType>
+    template <Traits TraitsType, typename REL, Interface IfaceType, typename SessionManager>
     struct self_hosted_request : public REL, enable_traits<TraitsType> {
         using traits_type            = stl::remove_cvref_t<TraitsType>;
         using interface_type         = stl::remove_cvref_t<IfaceType>;
@@ -22,11 +22,17 @@ namespace webpp {
         using etraits          = enable_traits<traits_type>;
         using string_type = typename traits_type::string_type;
         using string_view_type = typename traits_type::string_view_type;
+        using session_manager_type = SessionManager;
+
+      private:
+        session_manager_type& session;
+
+      public:
 
 
         template <typename AllocType>
-        self_hosted_request(auto&&...args) noexcept
-          : etraits(stl::forward<decltype(args)>(args)...) {}
+        self_hosted_request(session_manager_type& _session, auto&&...args) noexcept
+          : etraits(stl::forward<decltype(args)>(args)...), session{_session} {}
 
 
 #define WEBPP_SHOSTED_HEADER(name, value)                  \

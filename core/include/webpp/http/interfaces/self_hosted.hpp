@@ -23,7 +23,6 @@ namespace webpp {
         using interface_type     = self_hosted<traits_type, application_type, extension_list>;
         using str_view_type      = typename TraitsType::string_view_type;
         using str_type           = typename TraitsType::string_type;
-        using ostream_t          = typename TraitsType::ostream_type;
         using request_type = simple_request<traits_type, self_hosted_request, interface_type, extension_list>;
         using allocator_type           = typename request_type::allocator_type;
         using logger_type              = typename traits_type::logger_type;
@@ -34,13 +33,14 @@ namespace webpp {
           shosted::self_hosted_session_manager<traits_type, request_type>>;
 
         server_type              server;
-        application_wrapper_type app;
+        application_wrapper_type app
 
         // todo: SSL options and other options go here
 
         template <typename AllocType = allocator_type>
         self_hosted(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
           : etraits{logger, alloc},
+            server{logger, alloc},
             app{logger, alloc} {}
 
         [[nodiscard]] static constexpr bool is_ssl_available() const noexcept {

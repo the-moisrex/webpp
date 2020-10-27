@@ -63,8 +63,9 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/utils/ipv6.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/memory.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/property.hpp
-        ${LIB_INCLUDE_DIR}/webpp/utils/uri.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/fixed_string.hpp
+
+        ${LIB_INCLUDE_DIR}/webpp/uri/uri.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/crypto/base64.hpp
         ${LIB_INCLUDE_DIR}/webpp/crypto/base64_url.hpp
@@ -87,6 +88,9 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/cgi.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fcgi.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/self_hosted.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/cgi_request.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fcgi_request.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/self_hosted_request.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/shosted/self_hosted_session_manager.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fastcgi/fcgi_protocols.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fastcgi/fcgi_manager.hpp
