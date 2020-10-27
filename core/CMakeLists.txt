@@ -85,15 +85,16 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/bodies/file.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/bodies/string.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/cgi.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fcgi.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/self_hosted.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/cgi_request.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fcgi_request.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/self_hosted_request.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/shosted/self_hosted_session_manager.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fastcgi/fcgi_protocols.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/interfaces/fastcgi/fcgi_manager.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/protocol_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/cgi.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/fcgi.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/self_hosted.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/cgi_request.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/fcgi_request.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/self_hosted_request.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/shosted/self_hosted_session_manager.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/fastcgi/fcgi_protocols.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/fastcgi/fcgi_manager.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/http/response_body.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/request_body.hpp

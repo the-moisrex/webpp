@@ -1,6 +1,7 @@
 #ifndef WEBPP_FAKE_INTERFACE_H
 #define WEBPP_FAKE_INTERFACE_H
 
+#include "../core/include/webpp/http/protocols/protocol_concepts.hpp"
 #include "../core/include/webpp/http/application_concepts.hpp"
 #include "../core/include/webpp/http/request.hpp"
 #include "../core/include/webpp/http/response.hpp"
@@ -21,20 +22,20 @@
 namespace webpp {
 
 
-    template <Traits TraitsType, typename REL, Interface IfaceType>
-    struct fake_iface_request : public stl::remove_cvref_t<REL>, public enable_traits<TraitsType> {
+    template <Traits TraitsType, typename REL, Protocol ProtoType>
+    struct fake_proto_request : public stl::remove_cvref_t<REL>, public enable_traits<TraitsType> {
         using traits_type      = TraitsType;
-        using interface_type   = IfaceType;
+        using protocol_type    = ProtoType;
         using allocator_type   = typename traits_type::template allocator<typename traits_type::char_type>;
-        using application_type = typename interface_type::application_type;
+        using application_type = typename protocol_type::application_type;
         using string_type      = typename traits_type::string_type;
         using etraits          = enable_traits<traits_type>;
         using logger_type      = typename traits_type::logger_type;
         using logger_ref       = typename logger_type::logger_ref;
 
       public:
-        fake_iface_request() noexcept : etraits{} {}
-        fake_iface_request(logger_ref  logger_obj = logger_type{},
+        fake_proto_request() noexcept : etraits{} {}
+        fake_proto_request(logger_ref  logger_obj = logger_type{},
                            auto const& alloc      = allocator_type{}) noexcept
           : etraits{logger_obj, alloc} {}
 
@@ -189,32 +190,32 @@ namespace webpp {
 
 
         [[nodiscard]] stl::string_view header(stl::string_view const& name) const noexcept {
-            return interface_type::header(stl::string(name));
+            return protocol_type::header(stl::string(name));
         }
 
 
         [[nodiscard]] stl::string_view headers() const noexcept {
-            return interface_type::headers();
+            return protocol_type::headers();
         }
 
 
         [[nodiscard]] stl::string_view body() const noexcept {
-            return interface_type::body();
+            return protocol_type::body();
         }
     };
 
 
     template <Traits TraitsType, Application App, ExtensionList EList = empty_extension_pack>
-    struct fake_iface : public enable_traits<TraitsType> {
+    struct fake_proto : public enable_traits<TraitsType> {
       public:
         using traits_type      = TraitsType;
         using application_type = App;
         using extension_list   = EList;
-        using interface_type   = fake_iface<traits_type, application_type, extension_list>;
+        using interface_type   = fake_proto<traits_type, application_type, extension_list>;
         using str_view_type    = typename TraitsType::string_view_type;
         using str_type         = typename TraitsType::string_type;
         using ostream_t        = typename TraitsType::ostream_type;
-        using request_type     = simple_request<traits_type, fake_iface_request, interface_type, EList>;
+        using request_type     = simple_request<traits_type, fake_proto_request, interface_type, EList>;
         using allocator_type   = typename request_type::allocator_type;
         using etraits          = enable_traits<traits_type>;
         using logger_type      = typename traits_type::logger_type;
@@ -223,7 +224,7 @@ namespace webpp {
         application_type app;
 
       public:
-        fake_iface(logger_ref logger_obj = logger_type{}, auto const& alloc = allocator_type{}) noexcept
+        fake_proto(logger_ref logger_obj = logger_type{}, auto const& alloc = allocator_type{}) noexcept
           : etraits{logger_obj, alloc},
             req{logger_obj, alloc} {}
 

@@ -1,7 +1,7 @@
 // Created by moisrex on 11/7/19.
-#include "./fake_interface.hpp"
 #include "../core/include/webpp/http/routes/methods.hpp"
 #include "../core/include/webpp/http/routes/path.hpp"
+#include "./fake_protocol.hpp"
 
 #include <gtest/gtest.h>
 #include <string>

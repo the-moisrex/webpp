@@ -15,7 +15,7 @@ namespace webpp {
 
     template <typename T>
     concept Request = Traits<typename stl::remove_cvref_t<T>::traits_type>&&
-      Interface<typename stl::remove_cvref_t<T>::interface_type>&& requires(stl::remove_cvref_t<T> req) {
+      Protocol<typename stl::remove_cvref_t<T>::interface_type>&& requires(stl::remove_cvref_t<T> req) {
         req.request_uri();
         req.get_allocator();
     };
@@ -33,7 +33,7 @@ namespace webpp {
     concept RequestExtensionList = ExtensionListOf<T, is_request_extension_pack>;
 
     struct fake_request_type : public enable_traits<fake_traits_type> {
-        using interface_type = fake_interface_type;
+        using interface_type = fake_protocol_type;
         using traits_type    = fake_traits_type;
         using allocator_type = typename traits_type::template allocator<typename traits_type::char_type>;
 

@@ -4,7 +4,7 @@
 #include "../core/include/webpp/http/interfaces/cgi.hpp"
 #include "../core/include/webpp/http/routes/path.hpp"
 #include "../core/include/webpp/utils/const_list.hpp"
-#include "fake_interface.hpp"
+#include "fake_protocol.hpp"
 
 #include <gtest/gtest.h>
 #include <tuple>
@@ -33,7 +33,7 @@ TEST(Router, RouterConcepts) {
 }
 
 TEST(Router, RouteCreation) {
-    using request = typename fake_iface<std_traits, fake_app>::request_type;
+    using request = typename fake_proto<std_traits, fake_app>::request_type;
 
     constexpr auto about_page = [](Context auto& ctx) noexcept {
         return "About page\n";

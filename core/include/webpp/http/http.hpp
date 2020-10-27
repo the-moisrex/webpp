@@ -3,12 +3,12 @@
 
 #include "../traits/traits_concepts.hpp"
 #include "./application_concepts.hpp"
-#include "./interfaces/interface_concepts.hpp"
+#include "./protocols/protocol_concepts.hpp"
 #include "./routes/router.hpp"
 
 namespace webpp {
 
-    template <Interface InterfaceType>
+    template <Protocol InterfaceType>
     class http : public InterfaceType {
 
       public:

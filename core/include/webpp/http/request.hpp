@@ -32,6 +32,7 @@
 #include "./headers.hpp"
 #include "./request_concepts.hpp"
 #include "./response_body.hpp"
+#include "./protocols/protocol_concepts.hpp"
 
 namespace webpp {
 
@@ -61,7 +62,7 @@ namespace webpp {
 
 
     template <Traits    TraitsType, template <typename, typename, typename...> typename MidLevelRequestType,
-              Interface InterfaceType, typename EList>
+              Protocol InterfaceType, typename EList>
     using simple_request =
       typename EList::template extensie_type<TraitsType,
                                              request_descriptor<MidLevelRequestType, InterfaceType>>;

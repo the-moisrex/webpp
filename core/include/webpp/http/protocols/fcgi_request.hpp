@@ -4,8 +4,8 @@
 #define WEBPP_FCGI_REQUEST_HPP
 
 #include "../../std/map.hpp"
-#include "./interface_concepts.hpp"
 #include "../../traits/enable_traits.hpp"
+#include "./protocol_concepts.hpp"
 
 namespace webpp {
 

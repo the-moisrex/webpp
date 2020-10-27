@@ -7,7 +7,26 @@
 
 #include <memory>
 
+/**
+ * There are 3 type of types in our server abstractions:
+ *   1. Library User Types
+ *        - the types that the library users' provide like:
+ *          - Response
+ *          - Application
+ *   2. Protocol Types
+ *        - the types that implement a protocol (only those that require servers of course) like:
+ *          - self_hosted (HTTP)
+ *          - fcgi        (FastCGI)
+ *   3. Platform Types
+ *        - the types that talk to the operating system or a library that talks to the operating system; like:
+ *          - posix_...
+ *          - asio_...
+ */
+
 namespace webpp {
+
+
+
 
     /**
      * Thread pool class helps to implement a vector/list of threads and push
@@ -46,9 +65,8 @@ namespace webpp {
 
     /**
      * The server's job is to implement the server side stuff.
-     *   - open and close connections
+     *   - open connections
      *   - accept requests
-     *   - handle buffering
      *   - handling multithreading and thread pools
      *
      * Handling other stuff like processing the request and generating a response is not the server's job.
@@ -57,6 +75,7 @@ namespace webpp {
      */
     template <typename T>
     concept Server = requires(T server) {
+        typename T::connection_type;
         ThreadPool<typename T::thread_pool_type>;
         server();
     };
@@ -83,6 +102,14 @@ namespace webpp {
         ses.logger_category;
         ses.buffer();
         { ses.keep_connection() } noexcept -> stl::same_as<bool>;
+    };
+
+    /**
+     * Connection is an "OS Type";
+     */
+    template <typename T>
+    concept Connection = requires(T conn) {
+
     };
 
 

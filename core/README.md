@@ -54,7 +54,7 @@ The `interface`:
  - Implements and creates a `request`;
  - Passes it to the `Applicaton` as a reference;
  - `Application` returns a `response`;
- - `Interface` sends that `response` to the outside world.
+ - `Protocol` sends that `response` to the outside world.
 
 The `interface` instantiates the `Application`.
 
@@ -135,7 +135,7 @@ Definitions:
        that routes will need including:
         - some types:
           - Traits
-          - Interface
+          - Protocol
           - Next sub route
         - references to:
           - Request
@@ -257,7 +257,7 @@ Definitions:
                 that routes will need including:
       - some types:
         - Traits
-        - Interface
+        - Protocol
         - Next sub route
       - references to:
         - Request

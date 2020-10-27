@@ -1,5 +1,5 @@
 // Created by moisrex on 7/1/20.
-#include "./fake_interface.hpp"
+#include "./fake_protocol.hpp"
 
 #include <gtest/gtest.h>
 #include <string>
@@ -14,7 +14,7 @@ struct fake_app {
     }
 };
 
-using request_type = typename fake_iface<std_traits, fake_app>::request_type;
+using request_type = typename fake_proto<std_traits, fake_app>::request_type;
 using context_type = simple_context<request_type>;
 
 struct fake_mommy {
@@ -29,7 +29,7 @@ struct fake_mommy {
 
 TEST(Routes, PathTests) {
 
-    EXPECT_TRUE(static_cast<bool>(Interface<typename fake_request_type::interface_type>));
+    EXPECT_TRUE(static_cast<bool>(Protocol<typename fake_request_type::interface_type>));
 
     EXPECT_TRUE(static_cast<bool>(Traits<typename fake_context_type::traits_type>));
     EXPECT_TRUE(static_cast<bool>(Request<typename fake_context_type::request_type>));

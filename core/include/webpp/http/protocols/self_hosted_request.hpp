@@ -4,14 +4,14 @@
 #define WEBPP_SELF_HOSTED_REQUEST_HPP
 
 #include "../../traits/enable_traits.hpp"
-#include "./interface_concepts.hpp"
 #include "../../version.hpp"
+#include "./protocol_concepts.hpp"
 
 namespace webpp {
 
 
-    template <Traits TraitsType, typename REL, Interface IfaceType, typename SessionManager>
-    struct self_hosted_request : public REL, enable_traits<TraitsType> {
+    template <Traits TraitsType, typename REL, Protocol IfaceType, typename SessionManager, typename ConnectionType>
+    struct self_hosted_request : public REL, public enable_traits<TraitsType>, private ConnectionType {
         using traits_type            = stl::remove_cvref_t<TraitsType>;
         using interface_type         = stl::remove_cvref_t<IfaceType>;
         using request_extension_list = REL;
