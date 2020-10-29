@@ -62,6 +62,12 @@ namespace webpp {
             return T{stl::forward<Args>(args)..., logger, get_allocator()};
         }
 
+        void swap(EnabledTraits auto& other) {
+            using stl::swap;
+            swap(alloc, other.alloc);
+            swap(logger, other.logger);
+        }
+
     };
 
 } // namespace webpp

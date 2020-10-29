@@ -26,8 +26,6 @@
 namespace webpp {
 
 
-
-
     /**
      * Thread pool class helps to implement a vector/list of threads and push
      * tasks into this thread pool.
@@ -80,11 +78,54 @@ namespace webpp {
         server();
     };
 
+    /**
+     * The concept for Server types that are designed to run for ever (unless stopped explicitly of course).
+     * Like:
+     *   - FastCGI
+     *   - Long Running CGI
+     *   - Self Hosting
+     */
+    template <typename T>
+    concept LongRunningServer = Server<T> && requires(T srv) {
+      srv.sync_app(true); // enable or disable "Thread Sync for app"
+    };
 
     /**
-     * Session is a type in which helps the server to handle the input and output of all the communications
-     * with the outside world (through sockets of course). This API helps us to use the same server types
-     * for different usages.
+     * The concept for Server types that are designed to handle only one request only and they just shutdown
+     * after they handled that one request.
+     * Like:
+     *   - CGI
+     *   - xinetd protocol
+     */
+    template <typename T>
+    concept SingleRequestServer = Server<T> && requires(T srv) {
+        srv.enable_std_stealing(); // steal cout and cin and cerr guts
+        srv.disable_std_stealing();
+    };
+
+
+    /**
+     * Connection is an "OS Type" or "Platform Type" if you it makes more sense.
+     * This type is given the necessary inputs from its corresponding server type (for example posix_server)
+     * which is passed down to it from a "SessionManager"'s constructor.
+     *
+     * Connection is only designed to be inherited by SessionManager types. It handles the OS/Platform
+     * specific actions that relate to a single connection to the outside world.
+     */
+    template <typename T>
+    concept Connection = requires(T conn) {
+        EnabledTraits<T>;
+        conn.remote_addr();
+        conn.logger_category; // a string for logging
+        // conn.read(buffer)
+        // conn.write(data, data_size)
+        // conn.write_file(header_buffer, header_buffer_size, file)
+        conn.done(); // close connection
+    };
+
+    /**
+     * SessionManager is considered a "Protocol Type" which inherits a "Connection" type which itself is a
+     * "Platform Type"; this is the way we connect the "Protocol Types" to the "OS or Platform types".
      *
      * For example the FastCGI protocol can use "asio_server" as its back-end server or "posix_server";
      * FastCGI just has to provide a "session manager" and specify it in the "server traits".
@@ -93,23 +134,22 @@ namespace webpp {
      *
      * Session Manager can only handle one single request. For each connection, a new session manager has to
      * be created.
+     *
+     * SessionManager is designed to answer the needs of the Protocol types and has access to:
+     *   - app (as a reference)
+     *   - connection (inherits it)
+     *
+     * Session Manager's jobs:
+     *   - create the corresponding request
+     *   - pass the request to the app
+     *   - get the generated response and give it to the "Connection Type" to be sent to the client
+     *
+     * Multithreading considerations:
+     *   Session managers might be initialized from any thread.
      */
     template <typename T>
     concept SessionManager = requires(T ses) {
-        EnabledTraits<T>;
-        {ses.read(1)} -> stl::same_as<bool>;
-        ses.output();
-        ses.logger_category;
-        ses.buffer();
-        { ses.keep_connection() } noexcept -> stl::same_as<bool>;
-    };
-
-    /**
-     * Connection is an "OS Type";
-     */
-    template <typename T>
-    concept Connection = requires(T conn) {
-
+        Connection<T>;
     };
 
 

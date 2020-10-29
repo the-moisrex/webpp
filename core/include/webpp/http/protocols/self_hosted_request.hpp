@@ -6,6 +6,7 @@
 #include "../../traits/enable_traits.hpp"
 #include "../../version.hpp"
 #include "./protocol_concepts.hpp"
+#include "../../std/format.hpp"
 
 namespace webpp {
 
