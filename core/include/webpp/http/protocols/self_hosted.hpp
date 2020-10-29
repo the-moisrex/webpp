@@ -28,12 +28,12 @@ namespace webpp {
         using logger_type              = typename traits_type::logger_type;
         using logger_ref               = typename logger_type::logger_ref;
         using etraits                  = enable_traits<traits_type>;
-        using application_wrapper_type = application_wrapper<traits_type, application_type>;
+        using app_wrapper_type         = http_app_wrapper<traits_type, application_type>;
         using server_type              = typename server_traits_type::template server_type<
           shosted::self_hosted_session_manager<traits_type, request_type>>;
 
         server_type              server;
-        application_wrapper_type app
+        app_wrapper_type         app
 
         // todo: SSL options and other options go here
 

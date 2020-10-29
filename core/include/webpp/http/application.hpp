@@ -34,7 +34,7 @@ namespace webpp {
      * todo: add other version of constructor as well here
      */
     template <Traits TraitsType, typename AppType>
-    struct application_wrapper : public stl::remove_cvref_t<AppType> {
+    struct http_app_wrapper : public stl::remove_cvref_t<AppType> {
         using application_type = stl::remove_cvref_t<AppType>;
         using traits_type      = stl::remove_cvref_t<TraitsType>;
         using logger_type      = typename traits_type::logger_type;
@@ -52,46 +52,53 @@ namespace webpp {
 
         static constexpr bool app_requires_logger  = ConstructibleWithLogger<application_type, logger_ref>;
         static constexpr bool app_requires_nothing = stl::is_default_constructible_v<application_type>;
-        static constexpr bool can_handle_errors = requires (application_type app) {
-          app.error; // app.error(Request, status_code);
-        };
 
 
         template <typename AllocType = allocator_type>
         requires(app_requires_logger_and_allocator<AllocType>)
-          application_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
+          http_app_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
           : application_type{logger, alloc} {};
 
         template <typename AllocType = allocator_type>
         requires(app_requires_logger && !app_requires_logger_and_allocator<AllocType>)
-          application_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
+          http_app_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
           : application_type{logger} {};
 
         template <typename AllocType = allocator_type>
         requires(app_requires_allocator<AllocType> && !app_requires_logger_and_allocator<AllocType> &&
                  !app_requires_logger)
-          application_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
+          http_app_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
           : application_type{alloc} {};
 
         template <typename AllocType = allocator_type>
         requires(app_requires_nothing && !app_requires_allocator<AllocType> && !app_requires_logger &&
                  !app_requires_logger_and_allocator<AllocType>)
-          application_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
+          http_app_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
           : application_type{} {};
 
 
+        /**
+         * The default error message provider; if the application doesn't provide one, we use this as the
+         * default message provider function to generate error messages.
+         *
+         * todo: replace status code with a more sophisticated error type that can hold more information
+         */
         [[nodiscard]] Response auto error(Request auto const& req, status_code err) {
-            if constexpr (can_handle_errors) {
+            if constexpr (requires{
+                            {application_type::error(req, err)} -> Response;
+                          }) {
                 return application_type::error(req, err);
             } else {
                 return stl::format(FMT_COMPILE(
-                  "<!DOCTYPE html>"
-                  "<html>"
-                  "  <head>"
-                  "    <title>{}</title>"
-                  "  <head>"
-                  "</html>"
-                  ""
+                                  "<!doctype html>\n"
+                                     "<html>\n"
+                                     "  <head>\n"
+                                     "    <title>{0} - {1}</title>\n"
+                                     "  <head>\n"
+                                     "  <body>\n"
+                                     "    <h1>{0} - {1}</h1>\n"
+                                     "  </body>\n"
+                                     "</html>\n"
                 ), err, status_code_reason_phrase(err));
             }
         }

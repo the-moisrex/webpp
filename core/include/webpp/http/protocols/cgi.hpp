@@ -37,7 +37,7 @@ namespace webpp {
         using logger_type      = typename traits_type::logger_type;
         using logger_ref       = typename logger_type::logger_ref;
         using etraits          = enable_traits<traits_type>;
-        using application_wrapper_type = application_wrapper<traits_type, application_type>;
+        using app_wrapper_type         = http_app_wrapper<traits_type, application_type>;
 
       private:
         void ctor() noexcept {
@@ -47,7 +47,7 @@ namespace webpp {
         }
 
       public:
-        application_wrapper_type app;
+        app_wrapper_type app;
 
         template <typename AllocType = allocator_type>
         cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})

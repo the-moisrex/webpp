@@ -26,7 +26,7 @@ namespace webpp::fastcgi {
         using logger_ref       = typename logger_type::logger_ref;
         using allocator_type   = typename app_wrapper_type::allocator_type;
         using etraits          = enable_traits<traits_type>;
-        using application_wrapper_type = application_wrapper<traits_type, application_type>;
+        using app_wrapper_type = http_app_wrapper<traits_type, application_type>;
 
         static constexpr auto default_listen_address = "0.0.0.0";
         static constexpr auto default_listen_port    = 8080u;
@@ -34,7 +34,7 @@ namespace webpp::fastcgi {
 
         stl::set<traits_type, endpoint_type> endpoints;
         server_type                          server;
-        application_wrapper_type             app;
+        app_wrapper_type                     app;
 
 
         template <typename AllocType = allocator_type>
