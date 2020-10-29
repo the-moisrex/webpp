@@ -5,6 +5,9 @@
 
 #include "./application_concepts.hpp"
 #include "./routes/context_concepts.hpp"
+#include "./status_code.hpp"
+#include "./response_concepts.hpp"
+#include "./request_concepts.hpp"
 
 #include <cstdint>
 #include <type_traits>
@@ -49,6 +52,9 @@ namespace webpp {
 
         static constexpr bool app_requires_logger  = ConstructibleWithLogger<application_type, logger_ref>;
         static constexpr bool app_requires_nothing = stl::is_default_constructible_v<application_type>;
+        static constexpr bool can_handle_errors = requires (application_type app) {
+          app.error; // app.error(Request, status_code);
+        };
 
 
         template <typename AllocType = allocator_type>
@@ -72,6 +78,24 @@ namespace webpp {
                  !app_requires_logger_and_allocator<AllocType>)
           application_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
           : application_type{} {};
+
+
+        [[nodiscard]] Response auto error(Request auto const& req, status_code err) {
+            if constexpr (can_handle_errors) {
+                return application_type::error(req, err);
+            } else {
+                return stl::format(FMT_COMPILE(
+                  "<!DOCTYPE html>"
+                  "<html>"
+                  "  <head>"
+                  "    <title>{}</title>"
+                  "  <head>"
+                  "</html>"
+                  ""
+                ), err, status_code_reason_phrase(err));
+            }
+        }
+
     };
 
 } // namespace webpp

@@ -3,11 +3,12 @@
 #ifndef WEBPP_HEADER_CONCEPTS_HPP
 #define WEBPP_HEADER_CONCEPTS_HPP
 
-namespace webpp::headers {
+namespace webpp::http::headers {
 
     template <typename T>
-    concept header = requires (T h) {
+    concept Header = requires (T h) {
         T{"Content-Type: string"};
+        T::versions;
         h.parse();
         h.is_valid();
     };

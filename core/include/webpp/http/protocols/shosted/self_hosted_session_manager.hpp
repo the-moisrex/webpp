@@ -13,12 +13,11 @@
 
 namespace webpp::shosted {
 
-    template <Traits TraitsType, typename RequestType>
-    struct self_hosted_session_manager : public enable_traits<TraitsType> {
+    template <Traits TraitsType, Connection ConnectionType, Request RequestType>
+    struct self_hosted_session_manager : public ConnectionType {
         static constexpr auto buffer_size     = default_buffer_size;
         static constexpr auto logger_category = "SelfHosted/Session";
 
-        using etraits          = enable_traits<TraitsType>;
         using traits_type      = typename etraits::traits_type;
         using char_type        = typename traits_type::char_type;
         using string_view_type = typename traits_type::string_view_type;
@@ -26,17 +25,16 @@ namespace webpp::shosted {
         using buffer_type      = stl::array<char_type, buffer_size>;
         using request_type     = RequestType;
 
-        using etraits::etraits;
 
       private:
         buffer_type _buffer{}; // todo: should we use char_type here?
-        bool        _keep_connection = false;
-        session_output_source output_source = session_output_source::memory;
+        request_type const& initial_request;
+
+        [[nodiscard]] request_type copy_request() {
+            return initial_request;
+        }
 
       public:
-        buffer_type& buffer() noexcept {
-            return _buffer;
-        }
 
         /**
          * read a batch of input
@@ -59,12 +57,8 @@ namespace webpp::shosted {
 
         }
 
-        [[nodiscard]] session_output_source output_source_type() const noexcept {
-            return output_source;
-        }
-
         [[nodiscard]] bool keep_connection() const noexcept {
-            return _keep_connection;
+            return false;
         }
     };
 

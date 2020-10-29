@@ -30,6 +30,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/traits/std_traits.hpp
         ${LIB_INCLUDE_DIR}/webpp/traits/std_pmr_traits.hpp
 
+        ${LIB_INCLUDE_DIR}/webpp/std/enum.hpp
         ${LIB_INCLUDE_DIR}/webpp/std/buffer.hpp
         ${LIB_INCLUDE_DIR}/webpp/std/executor.hpp
         ${LIB_INCLUDE_DIR}/webpp/std/format.hpp
@@ -111,9 +112,9 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/http.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/mime_types.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/status_code.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/version.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/http/syntax/common.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/syntax/http_version.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/syntax/request_parser.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/syntax/http_lexer.hpp
 

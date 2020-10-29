@@ -9,7 +9,7 @@
 #include "../logs/log_concepts.hpp"
 #include "../traits/enable_traits.hpp"
 #include "../traits/std_traits.hpp"
-#include "./interfaces/interface_concepts.hpp"
+#include "./protocols/protocol_concepts.hpp"
 
 namespace webpp {
 
@@ -33,7 +33,7 @@ namespace webpp {
     concept RequestExtensionList = ExtensionListOf<T, is_request_extension_pack>;
 
     struct fake_request_type : public enable_traits<fake_traits_type> {
-        using interface_type = fake_protocol_type;
+        struct interface_type {};
         using traits_type    = fake_traits_type;
         using allocator_type = typename traits_type::template allocator<typename traits_type::char_type>;
 

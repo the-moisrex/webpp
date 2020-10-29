@@ -53,7 +53,8 @@ namespace webpp::posix {
             }
 
             // first send the header
-            if (ssize_t written = ::write(sock, header_buffer, header_buffer_size); written != header_buffer_size) {
+            if (ssize_t written = ::write(sock, header_buffer, header_buffer_size);
+                written != header_buffer_size) {
                 // todo: handle half writes first
                 return false;
             }
