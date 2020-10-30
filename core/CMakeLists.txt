@@ -143,6 +143,13 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_std_traits.hpp
         ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_std_pmr_traits.hpp
 
+        ${LIB_INCLUDE_DIR}/webpp/server/posix/posix_thread_pool.hpp
+        ${LIB_INCLUDE_DIR}/webpp/server/posix/posix_traits.hpp
+        ${LIB_INCLUDE_DIR}/webpp/server/posix/posix_connection.hpp
+        ${LIB_INCLUDE_DIR}/webpp/server/posix/posix_server.hpp
+        ${LIB_INCLUDE_DIR}/webpp/server/posix/posix_std_traits.hpp
+        ${LIB_INCLUDE_DIR}/webpp/server/posix/posix_std_pmr_traits.hpp
+
         ${LIB_INCLUDE_DIR}/webpp/json/json_concepts.hpp
 
         ${LIB_INCLUDE_DIR}/main.hpp

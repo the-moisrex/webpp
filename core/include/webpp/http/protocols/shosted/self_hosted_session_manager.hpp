@@ -13,28 +13,44 @@
 
 namespace webpp::shosted {
 
-    template <Traits TraitsType, Connection ConnectionType, Request RequestType>
+    /**
+     * For a self hosted server, the session manager class will be created once for each request (well,
+     * actually for each connection to be exact); this might not be the case for other server types.
+     *
+     * todo: see if we need a "shosted request manager" type too because of HTTP/2.0 that can handle multiple requests within one connection
+     */
+    template <Traits TraitsType, AppWrapperType, Request RequestType, Connection ConnectionType>
     struct self_hosted_session_manager : public ConnectionType {
         static constexpr auto buffer_size     = default_buffer_size;
         static constexpr auto logger_category = "SelfHosted/Session";
 
+        using connection_type = ConnectionType;
         using traits_type      = typename etraits::traits_type;
         using char_type        = typename traits_type::char_type;
         using string_view_type = typename traits_type::string_view_type;
         using allocator_type   = typename traits_type::template allocator<char_type>;
         using buffer_type      = stl::array<char_type, buffer_size>;
         using request_type     = RequestType;
+        using app_wrapper_type = AppWrapperType;
+
+        // we use this way so if the application doesn't have any fields, it'll be easier just to
+        // use a copy of it instead of using a reference
+        using app_wrapper_ref  = stl::conditional_t<sizeof(app_wrapper_type) == 0 && stl::is_move_constructible_v<app_wrapper_type>,
+                                                   app_wrapper_type,
+                                                   app_wrapper_type&>;
 
 
       private:
+        [[no_unique_address]] app_wrapper_ref app;
+        request_type req;
         buffer_type _buffer{}; // todo: should we use char_type here?
-        request_type const& initial_request;
-
-        [[nodiscard]] request_type copy_request() {
-            return initial_request;
-        }
 
       public:
+
+        self_hosted_session_manager(app_wrapper_ref the_app, request_type request, auto&&...args) :
+            app{the_app},
+            req{stl::move(request)},
+            connection_type{stl::forward<decltype(args)>(args)...} {}
 
         /**
          * read a batch of input
@@ -45,10 +61,6 @@ namespace webpp::shosted {
          * But this method is in charge of identifying some error codes, but it doesn't produce the output
          */
         status_code read(stl::size_t transferred_bytes) noexcept {
-
-        }
-
-        auto remote_addr() const {
 
         }
 

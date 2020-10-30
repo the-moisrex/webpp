@@ -57,24 +57,24 @@ namespace webpp {
         template <typename AllocType = allocator_type>
         requires(app_requires_logger_and_allocator<AllocType>)
           http_app_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : application_type{logger, alloc} {};
+          : application_type{logger, alloc} {}
 
         template <typename AllocType = allocator_type>
         requires(app_requires_logger && !app_requires_logger_and_allocator<AllocType>)
           http_app_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : application_type{logger} {};
+          : application_type{logger} {}
 
         template <typename AllocType = allocator_type>
         requires(app_requires_allocator<AllocType> && !app_requires_logger_and_allocator<AllocType> &&
                  !app_requires_logger)
           http_app_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : application_type{alloc} {};
+          : application_type{alloc} {}
 
         template <typename AllocType = allocator_type>
         requires(app_requires_nothing && !app_requires_allocator<AllocType> && !app_requires_logger &&
                  !app_requires_logger_and_allocator<AllocType>)
           http_app_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : application_type{} {};
+          : application_type{} {}
 
 
         /**

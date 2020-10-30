@@ -149,6 +149,9 @@ namespace webpp {
      */
     template <typename T>
     concept SessionManager = requires(T ses) {
+        // privately:
+        //   ses.app
+        //   ses.req
         Connection<T>;
     };
 
