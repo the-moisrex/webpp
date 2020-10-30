@@ -88,7 +88,7 @@ namespace webpp {
         auto error(Context auto const& ctx, status_code_type error_code,
                    stl::string_view phrase = "") const noexcept {
             // todo: add methods to change the default error template and individual ones
-            stl::string_view _phrase = phrase.empty() ? status_reason_phrase(error_code) : phrase;
+            stl::string_view _phrase = phrase.empty() ? status_code_reason_phrase(error_code) : phrase;
             return ctx.template response<string_response>(
               error_code,
               stl::format(

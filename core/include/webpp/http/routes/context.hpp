@@ -162,7 +162,7 @@ namespace webpp {
 
         [[nodiscard]] Response auto error(status_code_type error_code) const noexcept {
             return error(error_code,
-                         stl::format("Error {}: {}", error_code, status_reason_phrase(error_code)));
+                         stl::format("Error {}: {}", error_code, status_code_reason_phrase(error_code)));
         }
 
         [[nodiscard]] Response auto error(status_code_type error_code, auto&& data) const noexcept {

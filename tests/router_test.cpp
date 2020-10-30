@@ -1,7 +1,7 @@
 #include "../core/include/webpp/http/routes/router.hpp"
 
 #include "../core/include/webpp/http/application_concepts.hpp"
-#include "../core/include/webpp/http/interfaces/cgi.hpp"
+#include "../core/include/webpp/http/protocols/cgi.hpp"
 #include "../core/include/webpp/http/routes/path.hpp"
 #include "../core/include/webpp/utils/const_list.hpp"
 #include "fake_protocol.hpp"

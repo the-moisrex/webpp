@@ -14,7 +14,6 @@ namespace webpp {
     template <typename T>
     concept Protocol = requires (T proto) {
       EnabledTraits<T>;
-      proto();
       proto.app; // get the app
       // should be able to pass an app to it as well
     };

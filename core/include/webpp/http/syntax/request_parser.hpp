@@ -5,7 +5,7 @@
 
 #include "../../strings/to_case.hpp"
 #include "../../traits/traits_concepts.hpp"
-#include "./http_version.hpp"
+#include "../version.hpp"
 
 namespace webpp {
 
@@ -36,7 +36,7 @@ namespace webpp {
         string_view_type http_version_view{}; // only the number; doesn't include "HTTP/"
 
         // get the parsed http version
-        [[nodiscard]] http_version get_http_version() const noexcept {
+        [[nodiscard]] http::version get_http_version() const noexcept {
             return {http_version_view};
         }
 

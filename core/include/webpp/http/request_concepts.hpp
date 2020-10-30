@@ -33,7 +33,10 @@ namespace webpp {
     concept RequestExtensionList = ExtensionListOf<T, is_request_extension_pack>;
 
     struct fake_request_type : public enable_traits<fake_traits_type> {
-        struct interface_type {};
+        struct interface_type {
+            interface_type() = default;
+            struct app_type {} app;
+        };
         using traits_type    = fake_traits_type;
         using allocator_type = typename traits_type::template allocator<typename traits_type::char_type>;
 
