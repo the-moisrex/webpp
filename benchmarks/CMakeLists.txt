@@ -21,6 +21,8 @@ set(FILE_SOURCES
         ip/ipv4_benchmark.cpp
         ip/ipv6_benchmark.cpp
         is_alpha/is_alpha_benchmark.cpp
+        vector_erase/vector_erase_benchmark.cpp
+        uri_normalize/uri_normalize_benchmark.cpp
         )
 file(GLOB FILE_PCH *_pch.hpp)
 
