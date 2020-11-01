@@ -15,9 +15,9 @@ namespace webpp::uri {
     template <typename T>
     concept Slug = requires (T slug) {
         typename T::value_type;
-      slug.empty();
-      T{""};
-      slug.size();
+        slug.empty();
+        T{""};
+        slug.size();
     };
 
     template <Slug SlugType = stl::string, typename AllocType = stl::allocator<SlugType>>
@@ -25,7 +25,8 @@ namespace webpp::uri {
         using container_type = stl::vector<SlugType, AllocType>;
         using allocator_type = AllocType;
         using char_type = typename SlugType::value_type;
-        using string_type = stl::conditional_t<istl::String<SlugType>, SlugType, stl::basic_string<char_type, allocator_type>>;
+        using string_type = stl::conditional_t<istl::String<SlugType>, SlugType,
+                                               stl::basic_string<char_type, allocator_type>>;
 
         template <typename ...T>
         constexpr basic_path(T&&...args) :
@@ -47,10 +48,10 @@ namespace webpp::uri {
         /**
          * Remove Dot Segments from https://tools.ietf.org/html/rfc3986#section-5.2.4
          * Refer to uri_normalize_benchmark for more related algorithms of this
-         * todo: check if "erase", "shift_left" or "rotate" is better
          */
         void remove_dot_segments(bool remove_leading) {
-            if (this->empty()) return;
+            if (this->empty())
+                return;
 
             auto it = this->begin();
 

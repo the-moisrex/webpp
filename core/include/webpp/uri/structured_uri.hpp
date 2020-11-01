@@ -3,7 +3,7 @@
 #ifndef WEBPP_STRUCTURED_URI_HPP
 #define WEBPP_STRUCTURED_URI_HPP
 
-namespace webpp {
+namespace webpp::uri {
 
     template <typename StringType>
     struct structured_uri {

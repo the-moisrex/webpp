@@ -3,6 +3,9 @@
 #ifndef WEBPP_ENCODING_HPP
 #define WEBPP_ENCODING_HPP
 
+#include "../std/string_view.hpp"
+#include "../strings/charset.hpp"
+
 namespace webpp {
 
     enum struct uri_encoding_policy { allowed_chars, disallowed_chars };

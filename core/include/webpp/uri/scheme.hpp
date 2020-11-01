@@ -3,6 +3,8 @@
 #ifndef WEBPP_SCHEME_HPP
 #define WEBPP_SCHEME_HPP
 
+#include "../std/string_view.hpp"
+#include "../strings/charset.hpp"
 
 namespace webpp {
 
