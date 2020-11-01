@@ -46,41 +46,39 @@ namespace webpp::uri {
 
         /**
          * Remove Dot Segments from https://tools.ietf.org/html/rfc3986#section-5.2.4
+         * Refer to uri_normalize_benchmark for more related algorithms of this
          * todo: check if "erase", "shift_left" or "rotate" is better
          */
         void remove_dot_segments(bool remove_leading) {
             if (this->empty()) return;
 
-            auto the_end = this->end();
             auto it = this->begin();
 
             // handle the first part
-            while (it < the_end) {
-                if (*it == ".") {
-                    // remove it (move it to the last element)
-                    the_end = stl::rotate(it, stl::next(it), the_end);
+            while (it < this->end()) {
+                if (*it == current_dir) {
+                    this->erase(it);
                     continue;
-                } else if (*it == "..") {
+                } else if (*it == parent_dir) {
                     if (it != this->begin()) {
-                        const auto p = stl::prev(it);
+                        const auto p = std::prev(it);
                         if (p->empty()) {
                             // remove just this one
-                            the_end = stl::rotate(it, stl::next(it), the_end);
+                            this->erase(it);
                             continue;
-                        } else if (*p != "..") {
+                        } else if (*p != parent_dir) {
                             // remove the previous one and this one
-                            the_end = stl::rotate(p, stl::next(it), the_end);
+                            this->erase(p, std::next(it));
                             --it;
                             continue;
                         }
                     } else if (remove_leading) {
-                        the_end = stl::rotate(it, stl::next(it), the_end);
+                        this->erase(it);
                         continue;
                     }
                 }
                 it++;
             }
-            this->erase(the_end, this->end()); // actually remove them from the vector
         }
 
         string_type to_string() const {
