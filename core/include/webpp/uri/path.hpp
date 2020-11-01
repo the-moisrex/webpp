@@ -46,6 +46,7 @@ namespace webpp::uri {
 
         /**
          * Remove Dot Segments from https://tools.ietf.org/html/rfc3986#section-5.2.4
+         * todo: check if "erase", "shift_left" or "rotate" is better
          */
         void remove_dot_segments(bool remove_leading) {
             if (this->empty()) return;

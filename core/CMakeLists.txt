@@ -67,6 +67,13 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/utils/fixed_string.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/uri/uri.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/encoding.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/host.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/parser.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/queries.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/scheme.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/structured_uri.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/path.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/crypto/base64.hpp
         ${LIB_INCLUDE_DIR}/webpp/crypto/base64_url.hpp
