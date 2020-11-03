@@ -4,16 +4,20 @@
 #define WEBPP_URI_STRUCTURE_HPP
 
 #include "../strings/charset.hpp"
-
+#include "../utils/allocators.hpp"
 
 namespace webpp::uri {
 
-    template <typename StringType, typename StringViewType>
-    struct uri_structure {
-        using string_type = StringType;
-        using string_view_type = StringViewType;
-        using char_type = typename string_type::value_type;
+    template <Traits TraitsType>
+    struct uri_structure : public allocator_holder<typename TraitsType::allocator<typename TraitsType::char_type>> {
+        using traits_type = TraitsType;
+        using string_type = typename traits_type::string_type;
+        using string_view_type = typename traits_type::string_view_type;
+        using char_type = typename traits_type::char_type;
+        using allocator_type = typename traits_type::allocator<char_type>;
+        using alloc_holder_type = allocator_holder<allocator_type>;
 
+        explicit uri_structure(auto&& alloc) : alloc_holder_type{alloc} {}
         constexpr uri_structure() noexcept = default;
         constexpr uri_structure(uri_structure const&) = default;
         constexpr uri_structure(uri_structure&&) noexcept = default;
