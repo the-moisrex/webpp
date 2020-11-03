@@ -403,13 +403,6 @@ namespace webpp {
         basic_uri& clear_port() noexcept {
             return port({});
         }
-        path_type path{*this};
-
-
-
-
-
-        [[no_unique_address]] queries_type queries{*this};
 
         /**
          * @brief get fragment

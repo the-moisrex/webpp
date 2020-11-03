@@ -3,13 +3,19 @@
 #ifndef WEBPP_QUERIES_HPP
 #define WEBPP_QUERIES_HPP
 
+#include "./parser.hpp"
+
 namespace webpp {
 
     /**
      * This is designed to separate the queries' methods from other uri methods
      */
-    struct queries_type {
-        basic_uri& self;
+    template <typename ...T>
+    struct queries_type : public uri_parser<T...> {
+        using super = uri_parser<T...>;
+        using string_view_type = typename super::string_view_type;
+        using string_type = typename super::string_type;
+
 
         queries_type& operator=(istl::StringViewifiable auto&& str) {
             set(stl::forward<decltype(str)>(str));
@@ -20,31 +26,31 @@ namespace webpp {
          * @brief checks if the uri has query or not
          */
         [[nodiscard]] bool empty() const noexcept {
-            self.parse_query();
-            return self.query_start == self.data.size();
+            this->parse_query();
+            return this->query_start == this->data.size();
         }
 
-        [[nodiscard]] str_view_t raw() const noexcept {
-            self.parse_query();
-            if (self.query_start == self.data.size())
+        [[nodiscard]] string_view_type raw() const noexcept {
+            this->parse_query();
+            if (this->query_start == this->data.size())
                 return {};
-            return self.substr(self.query_start + 1, self.fragment_start - self.query_start - 1);
+            return this->substr(this->query_start + 1, this->fragment_start - this->query_start - 1);
         }
 
         /**
          * Get the query in a decoded string format
          */
-        [[nodiscard]] stl::optional<str_t> decoded_string() const noexcept {
-            str_t d_queries{self.get_allocator()};
+        [[nodiscard]] stl::optional<string_type> decoded_string() const noexcept {
+            string_type d_queries{this->get_allocator()};
             if (!decode_uri_component(raw(), d_queries, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED)) {
                 return stl::nullopt;
             }
             return d_queries;
         }
 
-        template <typename MapType = istl::map<traits_type, str_t, str_t>>
+        template <typename MapType = istl::map<traits_type, string_type, string_type>>
         [[nodiscard]] auto decoded() const noexcept {
-            MapType res(alloc_holder_type::get_allocator());
+            MapType res(this->get_allocator());
             extract_queries_to(res);
             return res;
         }
@@ -52,52 +58,52 @@ namespace webpp {
         /**
          * Set queries
          */
-        basic_uri& set(istl::StringViewifiable auto&& _queries) {
+        auto& set(istl::StringViewifiable auto&& _queries) {
             auto m_query = istl::string_viewify(stl::forward<decltype(_queries)>(_queries));
             if (!is::query(m_query))
                 throw stl::invalid_argument("The specified string is not a valid query");
 
-            str_t encoded_query(alloc_holder_type::get_allocator());
+            string_type encoded_query(this->get_allocator());
             if (ascii::starts_with(m_query, '?')) {
                 encoded_query.append('?');
             }
             encode_uri_component(m_query, encoded_query, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
 
-            self.parse_query();
+            this->parse_query();
 
-            if (self.query_start != self.data.size()) {
+            if (this->query_start != this->data.size()) {
                 // we don't have a query
-                if (self.fragment_start != self.data.size()) {
-                    self.replace_value(self.fragment_start, 0, self.encoded_query);
+                if (this->fragment_start != this->data.size()) {
+                    this->replace_value(this->fragment_start, 0, this->encoded_query);
                 } else {
-                    self.parse_path();
-                    if (self.authority_end == self.data.size()) {
+                    this->parse_path();
+                    if (this->authority_end == this->data.size()) {
                         // we don't even have authority_end
-                        self.parse_scheme();
-                        if (self.authority_start == self.data.size()) {
+                        this->parse_scheme();
+                        if (this->authority_start == this->data.size()) {
                             // there's no authority_start
-                            if (self.scheme_end == self.data.size()) {
+                            if (this->scheme_end == this->data.size()) {
                                 // it's an empty string
-                                self.replace_value(0, 0, "///" + self.encoded_query);
+                                this->replace_value(0, 0, "///" + this->encoded_query);
                             } else {
-                                self.replace_value(self.scheme_end, 0, "/" + self.encoded_query);
+                                this->replace_value(this->scheme_end, 0, "/" + this->encoded_query);
                             }
                         } else {
-                            self.replace_value(self.authority_start, 0, "/" + self.encoded_query);
+                            this->replace_value(this->authority_start, 0, "/" + this->encoded_query);
                         }
                     } else {
                         // we have authority_end
-                        if (self.data[self.authority_end] == '/') {
-                            self.replace_value(self.authority_end + 1, 0, self.encoded_query);
+                        if (this->data[this->authority_end] == '/') {
+                            this->replace_value(this->authority_end + 1, 0, this->encoded_query);
                         } else {
-                            self.replace_value(self.authority_end + 1, 0, "/" + self.encoded_query);
+                            this->replace_value(this->authority_end + 1, 0, "/" + this->encoded_query);
                         }
                     }
                 }
             } else {
                 // we have query
-                self.replace_value(self.query_start, self.fragment_start - self.query_start,
-                                   self.encoded_query);
+                this->replace_value(this->query_start, this->fragment_start - this->query_start,
+                                   this->encoded_query);
             }
             return self;
         }
@@ -106,7 +112,7 @@ namespace webpp {
          * Append queries from a container like std::map or std::multimap
          */
         template <typename MapIter>
-        basic_uri& set_from(MapIter const& _queries_begin, MapIter const& _queries_end) {
+        auto& set_from(MapIter const& _queries_begin, MapIter const& _queries_end) {
             static_assert(is_mutable(), "You can't use this method on a non-modifiable uri struct.");
             using map_key_type   = typename MapIter::first_type;
             using map_value_type = typename MapIter::second_type;
@@ -117,12 +123,12 @@ namespace webpp {
             stl::size_t reserved_size = 0;
             for (auto it = _queries_begin; it != _queries_end; ++it)
                 reserved_size += it->first->size() + it->second->size() + 2;
-            str_t _query_data(alloc_holder_type::get_allocator());
+            string_type _query_data(this->get_allocator());
             _query_data.reserve(reserved_size);
 
             for (auto it = _queries_begin; it != _queries_end; ++it) {
-                str_t name(alloc_holder_type::get_allocator());
-                str_t value(alloc_holder_type::get_allocator());
+                string_type name(this->get_allocator());
+                string_type value(this->get_allocator());
                 encode_uri_component(it->first, name, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
                 encode_uri_component(it->second, value, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
                 if (name.empty()) // when name is empty, we just don't care
@@ -141,14 +147,14 @@ namespace webpp {
         }
 
         template <typename MapType>
-        basic_uri& set_from(MapType const& _queries) {
+        auto& set_from(MapType const& _queries) {
             return set_from(_queries.begin(), _queries.end());
         }
 
         /**
          * @brief clear the query section of the URI
          */
-        basic_uri& clear() noexcept {
+        auto& clear() noexcept {
             return set("");
         }
 
@@ -156,8 +162,8 @@ namespace webpp {
          * Get the query in as a map<string, string>
          * It's also in a decoded format
          */
-        template <typename MapType = istl::map<traits_type, str_t, str_t>>
-        basic_uri& extract_to(MapType& q_structured) const noexcept {
+        template <typename MapType = istl::map<traits_type, string_type, string_type>>
+        auto& extract_to(MapType& q_structured) const noexcept {
             using map_key_type   = typename MapType::key_value;
             using map_value_type = typename MapType::mapped_type;
             static_assert(istl::String<map_key_type>,
@@ -173,9 +179,9 @@ namespace webpp {
                 last_and_sep = and_sep;
                 if (name.empty()) // a name should not be empty
                     continue;
-                str_t d_value(alloc_holder_type::get_allocator());
-                str_t d_name(alloc_holder_type::get_allocator());
-                if (and_sep != str_view_t::npos) { // we have a value as well
+                string_type d_value(this->get_allocator());
+                string_type d_name(this->get_allocator());
+                if (and_sep != string_view_type::npos) { // we have a value as well
                     d_value = _query.substr(eq_sep + 1, and_sep);
                 }
                 if (!decode_uri_component(name, d_name, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED)) {
@@ -189,11 +195,11 @@ namespace webpp {
                         q_structured[d_name] = stl::move(d_value); // just put the non-decoded value here
                     }
                 }
-            } while (last_and_sep != str_view_t::npos);
+            } while (last_and_sep != string_view_type::npos);
             return *this;
         }
 
-        basic_uri& append(istl::StringViewifiable auto&& key,
+        auto& append(istl::StringViewifiable auto&& key,
                           istl::StringViewifiable auto&& value) noexcept {
             // todo
         }

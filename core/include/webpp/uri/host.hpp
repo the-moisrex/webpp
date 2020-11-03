@@ -83,7 +83,7 @@ namespace webpp {
          */
         [[nodiscard]] stl::optional<string_type> decoded() const noexcept {
             string_type d_host{this->get_allocator()};
-            if (decode_uri_component(raw(), d_host, REG_NAME_NOT_PCT_ENCODED))
+            if (decode_uri_component(raw(), d_host, super::REG_NAME_NOT_PCT_ENCODED))
                 return d_host;
             return stl::nullopt;
         }
@@ -104,7 +104,7 @@ namespace webpp {
 
             // todo: are you sure it can handle punycode as well?
             string_type encoded_host{this->get_allocator()};
-            encode_uri_component(new_host, encoded_host, REG_NAME_NOT_PCT_ENCODED);
+            encode_uri_component(new_host, encoded_host, super::REG_NAME_NOT_PCT_ENCODED);
             if ((!ascii::starts_with(new_host, '[') || !ascii::ends_with(new_host, ']')) &&
                 is::ipv6(new_host)) {
                 encoded_host = '[' + encoded_host + ']';
@@ -181,7 +181,7 @@ namespace webpp {
             if (auto _host_structured = host_structured();
               stl::holds_alternative<string_view_type>(_host_structured))
                 return decode_uri_component<traits_type>(stl::get<string_view_type>(_host_structured),
-                                                         REG_NAME_NOT_PCT_ENCODED);
+                                                         super::REG_NAME_NOT_PCT_ENCODED);
             else
                 return _host_structured;
         }
