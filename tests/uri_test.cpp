@@ -429,3 +429,6 @@ TEST(URITests, EqualPaths) {
     EXPECT_TRUE(equal_path("/two//", "/two//"));
     EXPECT_TRUE(equal_path("/two//three", "/two/three"));
 }
+TEST(URITests, Normalize) {
+
+}

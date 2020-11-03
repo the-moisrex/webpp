@@ -72,7 +72,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/uri/parser.hpp
         ${LIB_INCLUDE_DIR}/webpp/uri/queries.hpp
         ${LIB_INCLUDE_DIR}/webpp/uri/scheme.hpp
-        ${LIB_INCLUDE_DIR}/webpp/uri/structured_uri.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/uri_structure.hpp
         ${LIB_INCLUDE_DIR}/webpp/uri/path.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/crypto/base64.hpp
