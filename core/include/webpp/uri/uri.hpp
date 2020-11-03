@@ -285,7 +285,6 @@ namespace webpp {
             return user_info({});
         }
 
-        host_type host{*this};
 
         /**
          * Get the default port for the specified scheme

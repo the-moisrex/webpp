@@ -1,22 +1,28 @@
-//
 // Created by moisrex on 10/30/20.
-//
 
 #ifndef WEBPP_HOST_HPP
 #define WEBPP_HOST_HPP
 
+#include <variant>
+#include "../std/optional.hpp"
+#include "./parser.hpp"
+#include "../utils/ipv6.hpp"
+
 namespace webpp {
 
-    struct host_type {
-        basic_uri& self;
+    template <typename ...T>
+    struct host_type : public uri_parser<T...> {
+        using super = uri_parser<T...>;
+        using string_view_type = typename super::string_view_type;
+        using string_type = typename super::string_type;
 
         /**
          * @brief return host as an string_view
          * @return string_view
          */
-        [[nodiscard]] str_view_t raw() const noexcept {
-            self.parse_host();
-            if (self.authority_start == self.data.size()) {
+        [[nodiscard]] string_view_type raw() const noexcept {
+            this->parse_host();
+            if (this->authority_start == this->data.size()) {
                 // there will not be a host without the authority_start
                 return {};
             }
@@ -27,29 +33,29 @@ namespace webpp {
             // because I don't want you to curse me :)
 
             // we have authority_start, let's check user_info and port too
-            if (self.user_info_end == self.data.size()) {
+            if (this->user_info_end == this->data.size()) {
                 // there's no user info
-                start = self.authority_start;
+                start = this->authority_start;
             } else {
                 // there's a user info
-                start = self.user_info_end;
+                start = this->user_info_end;
             }
 
-            if (self.port_start != self.data.size()) {
+            if (this->port_start != this->data.size()) {
                 // but there's a port
-                len = self.port_start - start;
+                len = this->port_start - start;
             } else {
                 // there's no port either
-                if (self.authority_end != self.data.size()) {
+                if (this->authority_end != this->data.size()) {
                     // there's a path
-                    len = self.authority_end - start;
+                    len = this->authority_end - start;
                 } else {
                     // there's no path either
-                    len = self.data.size() - 1; // till the end
+                    len = this->data.size() - 1; // till the end
                 }
             }
 
-            return self.substr(start, len);
+            return this->substr(start, len);
         }
 
         /**
@@ -59,7 +65,7 @@ namespace webpp {
          * doesn't include invalid syntax.
          * @return
          */
-        [[nodiscard]] stl::variant<ipv4<traits_type>, ipv6<traits_type>, str_view_t>
+        [[nodiscard]] stl::variant<ipv4<traits_type>, ipv6<traits_type>, string_view_type>
         host_structured() const noexcept {
             auto _host = raw();
             if (is::ipv4(_host))
@@ -75,8 +81,8 @@ namespace webpp {
          * hostname has the wrong character encodings.
          * @return string
          */
-        [[nodiscard]] stl::optional<str_t> decoded() const noexcept {
-            str_t d_host{this->get_allocator()};
+        [[nodiscard]] stl::optional<string_type> decoded() const noexcept {
+            string_type d_host{this->get_allocator()};
             if (decode_uri_component(raw(), d_host, REG_NAME_NOT_PCT_ENCODED))
                 return d_host;
             return stl::nullopt;
@@ -93,32 +99,32 @@ namespace webpp {
         /**
          * @brief set the hostname/ip in the uri if possible
          */
-        basic_uri& set(str_view_t const& new_host) noexcept {
-            self.parse_host();
+        auto& set(string_view_type const& new_host) noexcept {
+            this->parse_host();
 
             // todo: are you sure it can handle punycode as well?
-            str_t encoded_host{self.get_allocator()};
+            string_type encoded_host{this->get_allocator()};
             encode_uri_component(new_host, encoded_host, REG_NAME_NOT_PCT_ENCODED);
             if ((!ascii::starts_with(new_host, '[') || !ascii::ends_with(new_host, ']')) &&
                 is::ipv6(new_host)) {
                 encoded_host = '[' + encoded_host + ']';
             }
 
-            if (self.authority_start == self.data.size()) {
+            if (this->authority_start == this->data.size()) {
                 // there's no authority start
 
                 if (encoded_host.empty())
                     return *this; // there's nothing to do here. It's already
                 // what the user wants
 
-                if (self.scheme_end == self.data.size()) {
+                if (this->scheme_end == this->data.size()) {
                     // there's no scheme either, so we just have to add to the
                     // beginning of the string
-                    self.replace_value(0, 0, str_t("//") + encoded_host);
+                    this->replace_value(0, 0, string_type("//") + encoded_host);
                     return *this;
                 } else {
                     // there's a scheme
-                    self.replace_value(self.scheme_end, 0, str_t("//") + encoded_host);
+                    this->replace_value(this->scheme_end, 0, string_type("//") + encoded_host);
                     return *this;
                 }
             }
@@ -129,36 +135,36 @@ namespace webpp {
             // because I don't want you to curse me :)
 
             // we have authority_start, let's check user_info and port too
-            if (self.user_info_end == self.data.size()) {
+            if (this->user_info_end == this->data.size()) {
                 // there's no user info
-                if (self.scheme_end == self.data.size()) {
+                if (this->scheme_end == this->data.size()) {
                     start = 0;
-                    if (!new_host.empty() && !ascii::starts_with(str_view_t{encoded_host}, "//")) {
+                    if (!new_host.empty() && !ascii::starts_with(string_view_type{encoded_host}, "//")) {
                         encoded_host = "//" + encoded_host;
                     }
                 } else {
-                    start = self.authority_start;
+                    start = this->authority_start;
                 }
             } else {
                 // there's a user info
-                start = self.user_info_end;
+                start = this->user_info_end;
             }
 
-            if (self.port_start != self.data.size()) {
+            if (this->port_start != this->data.size()) {
                 // but there's a port
-                finish = self.port_start;
+                finish = this->port_start;
             } else {
                 // there's no port either
-                if (self.authority_end != self.data.size()) {
+                if (this->authority_end != this->data.size()) {
                     // there's a path
-                    finish = self.authority_end;
+                    finish = this->authority_end;
                 } else {
                     // there's no path either
-                    finish = self.data.size() - 1; // till the end
+                    finish = this->data.size() - 1; // till the end
                 }
             }
 
-            self.replace_value(start, finish - start, encoded_host);
+            this->replace_value(start, finish - start, encoded_host);
 
             return *this;
         }
@@ -170,11 +176,11 @@ namespace webpp {
          * @return string/ipv4/ipv6
          * @default empty string
          */
-        [[nodiscard]] stl::variant<ipv4<traits_type>, ipv6<traits_type>, str_t>
+        [[nodiscard]] stl::variant<ipv4<traits_type>, ipv6<traits_type>, string_type>
         host_structured_decoded() const noexcept {
             if (auto _host_structured = host_structured();
-              stl::holds_alternative<str_view_t>(_host_structured))
-                return decode_uri_component<traits_type>(stl::get<str_view_t>(_host_structured),
+              stl::holds_alternative<string_view_type>(_host_structured))
+                return decode_uri_component<traits_type>(stl::get<string_view_type>(_host_structured),
                                                          REG_NAME_NOT_PCT_ENCODED);
             else
                 return _host_structured;
@@ -184,7 +190,7 @@ namespace webpp {
          * @brief clear host part from URI
          * @return
          */
-        basic_uri& clear() noexcept {
+        auto& clear() noexcept {
             return set("");
         }
 
@@ -207,18 +213,18 @@ namespace webpp {
          * will be the last one and Second Level Domain will be the one before
          * that and the rest will be subdomains.
          */
-        [[nodiscard]] istl::vector<traits_type, str_t> domains() const noexcept {
+        [[nodiscard]] istl::vector<traits_type, string_type> domains() const noexcept {
             auto _host = raw();
             if (_host.empty() || is_ip())
                 return {};
-            istl::vector<traits_type, str_t> subs;
+            istl::vector<traits_type, string_type> subs;
             for (;;) {
                 auto dot = _host.find('.');
                 auto sub = _host.substr(0, dot);
                 if (sub.empty())
                     break;
                 subs.emplace_back(stl::move(sub));
-                if (dot == str_view_t::npos)
+                if (dot == string_view_type::npos)
                     break;
                 _host.remove_prefix(dot + 1);
             }
@@ -228,12 +234,12 @@ namespace webpp {
         /**
          * Get the TLD (top level domain) or sometimes called extension
          */
-        [[nodiscard]] str_view_t top_level_domain() const noexcept {
+        [[nodiscard]] string_view_type top_level_domain() const noexcept {
             auto _host = raw();
             if (_host.empty() || is_ip())
                 return {};
             auto dot = _host.find_last_of('.');
-            return _host.substr(dot != str_view_t::npos ? dot + 1 : 0);
+            return _host.substr(dot != string_view_type::npos ? dot + 1 : 0);
         }
 
         /**
@@ -241,7 +247,7 @@ namespace webpp {
          * @param tld
          * @return
          */
-        auto& top_level_domain(str_view_t const& tld) noexcept {
+        auto& top_level_domain(string_view_type const& tld) noexcept {
             auto _host = raw();
             if (_host.empty()) {
                 // I've already written that code. Yay, I'm so happy
@@ -250,8 +256,8 @@ namespace webpp {
                 // cannot put an ip address as a tld, user should use set host
                 // instead of this method.
                 auto dot   = _host.find_last_of('.');
-                auto start = dot != str_view_t::npos ? dot + 1 : 0;
-                set(str_t(_host.substr(0, start)) + str_t(tld));
+                auto start = dot != string_view_type::npos ? dot + 1 : 0;
+                set(string_type(_host.substr(0, start)) + string_type(tld));
             }
             return *this;
         }
@@ -267,15 +273,15 @@ namespace webpp {
         /**
          * Get the second level domain out of the host
          */
-        [[nodiscard]] str_view_t second_level_domain() const noexcept {
+        [[nodiscard]] string_view_type second_level_domain() const noexcept {
             auto _host = raw();
             if (_host.empty() || is_ip())
                 return {};
             auto last_dot = _host.find_last_of('.');
-            if (last_dot == str_view_t::npos)
+            if (last_dot == string_view_type::npos)
                 return {};
             auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
-            auto start        = bef_last_dot == str_view_t::npos ? 0 : bef_last_dot + 1;
+            auto start        = bef_last_dot == string_view_type::npos ? 0 : bef_last_dot + 1;
             auto sld          = _host.substr(start, last_dot - start);
             return sld;
         }
@@ -286,27 +292,27 @@ namespace webpp {
          * exists
          * @param sld
          */
-        basic_uri& second_level_domain(str_view_t const& sld) noexcept {
+        auto& second_level_domain(string_view_type sld) noexcept {
             auto _host = raw();
             if (_host.empty() || is_ip())
                 return *this;
 
             auto last_dot = _host.find_last_of('.');
-            if (last_dot == str_view_t::npos) {
+            if (last_dot == string_view_type::npos) {
                 // we have to insert it at the beginning of the host string
 
                 // there's nothing to do it's empty
                 if (!sld.empty()) {
-                    static_cast<void>(set(str_t(sld) + '.' + str_t(_host)));
+                    static_cast<void>(set(string_type(sld) + '.' + string_type(_host)));
                 }
             } else {
                 auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
-                auto start        = bef_last_dot == str_view_t::npos ? 0 : bef_last_dot + 1;
+                auto start        = bef_last_dot == string_view_type::npos ? 0 : bef_last_dot + 1;
                 if (!sld.empty())
                     static_cast<void>(
-                      set(str_t(_host.substr(0, start)) + str_t(sld) + str_t(_host.substr(last_dot))));
+                      set(string_type(_host.substr(0, start)) + string_type(sld) + string_type(_host.substr(last_dot))));
                 else
-                    static_cast<void>(set(str_t(_host.substr(last_dot + 1))));
+                    static_cast<void>(set(string_type(_host.substr(last_dot + 1))));
             }
             return *this;
         }
@@ -315,7 +321,7 @@ namespace webpp {
          * This method will remove the Second Level Domain and also any
          * Sub-Domains if there are any.
          */
-        basic_uri& clear_second_level_domain() noexcept {
+        auto& clear_second_level_domain() noexcept {
             return second_level_domain({});
         }
 
@@ -331,15 +337,15 @@ namespace webpp {
          * Get the sub-domain (with sub-sub-...-sub-domain)
          * @return
          */
-        [[nodiscard]] str_view_t subdomains() const noexcept {
+        [[nodiscard]] string_view_type subdomains() const noexcept {
             auto _host = raw();
             if (_host.empty() || is_ip())
                 return {};
             auto last_dot = _host.find_last_of('.');
-            if (last_dot == str_view_t::npos)
+            if (last_dot == string_view_type::npos)
                 return {};
             auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
-            if (bef_last_dot == str_view_t::npos)
+            if (bef_last_dot == string_view_type::npos)
                 return {};
             return _host.substr(0, bef_last_dot);
         }
@@ -350,19 +356,19 @@ namespace webpp {
          * Level Domain already exists
          * @param sds
          */
-        auto& subdomains(str_view_t const& sds) noexcept {
+        auto& subdomains(string_view_type sds) noexcept {
             auto _host = raw();
             if (_host.empty() || is_ip())
                 return *this;
             auto last_dot = _host.find_last_of('.');
-            if (last_dot == str_view_t::npos)
+            if (last_dot == string_view_type::npos)
                 return *this;
             auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
-            if (bef_last_dot == str_view_t::npos)
+            if (bef_last_dot == string_view_type::npos)
                 return *this;
             if (sds.empty()) // special check for when we want to remove the SDS
                 bef_last_dot++;
-            static_cast<void>(set(str_t(sds) + str_t(_host.substr(bef_last_dot))));
+            static_cast<void>(set(string_type(sds) + string_type(_host.substr(bef_last_dot))));
             return *this;
         }
 
@@ -370,7 +376,7 @@ namespace webpp {
          * Remove the sub-domains if exists. This method should not have
          * side-effects if there's no sub-domain
          */
-        basic_uri& clear_subdomains() noexcept {
+        auto& clear_subdomains() noexcept {
             return subdomains({});
         }
 
