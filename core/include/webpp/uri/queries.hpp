@@ -4,20 +4,33 @@
 #define WEBPP_QUERIES_HPP
 
 #include "./parser.hpp"
+#include "../std/optional.hpp"
+#include "../std/map.hpp"
 
-namespace webpp {
+namespace webpp::uri {
+
+    // todo: complete this and use it in the uri_queries
+    template <typename StringType = stl::string, typename AllocType = stl::allocator<StringType>>
+    struct structured_queries : stl::map<StringType, StringType, stl::less<StringType>, AllocType> {
+        using super = stl::map<StringType, StringType, stl::less<StringType>, AllocType>;
+
+        template <typename ...Args>
+        structured_queries(Args&& ...args) : super {stl::forward<Args>(args)...} {}
+
+
+    };
 
     /**
      * This is designed to separate the queries' methods from other uri methods
      */
     template <typename ...T>
-    struct queries_type : public uri_parser<T...> {
+    struct string_queries : public uri_parser<T...> {
         using super = uri_parser<T...>;
         using string_view_type = typename super::string_view_type;
         using string_type = typename super::string_type;
 
 
-        queries_type& operator=(istl::StringViewifiable auto&& str) {
+        string_queries& operator=(istl::StringViewifiable auto&& str) {
             set(stl::forward<decltype(str)>(str));
             return *this;
         }
