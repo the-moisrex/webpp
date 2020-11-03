@@ -217,7 +217,6 @@ namespace webpp {
             return decode_uri_component(str(), output, ALLOWED_CHARACTERS_IN_URI);
         }
 
-        scheme_type scheme{*this};
 
         /**
          * @brief checks if the uri has user info or not

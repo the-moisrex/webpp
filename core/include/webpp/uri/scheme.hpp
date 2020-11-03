@@ -3,29 +3,26 @@
 #ifndef WEBPP_SCHEME_HPP
 #define WEBPP_SCHEME_HPP
 
-#include "../std/string_view.hpp"
-#include "../strings/charset.hpp"
+#include "./parser.hpp"
 
 namespace webpp {
 
     namespace is {
         /**
          * @brief check if scheme is correct or not
-         * @param _scheme
-         * @return
          */
-        template <Traits TraitsType>
-        [[nodiscard]] constexpr bool scheme(typename TraitsType::string_view_type const& _scheme) noexcept {
-            return ALPHA<typename TraitsType::char_type>.contains(_scheme);
+        [[nodiscard]] constexpr bool scheme(istl::StringView auto&& _scheme) noexcept {
+            using str_v = stl::remove_cvref_t<decltype(_scheme)>;
+            return ALPHA<typename str_v::value_type>.contains(_scheme);
         }
 
     } // namespace is
 
 
-    struct uri_scheme {
-        using uri_type = basic_uri;
-
-        uri_type self;
+    template <typename ...T>
+    struct uri_scheme : public uri_parser<T...> {
+        using super = uri_parser<T...>;
+        using string_view_type = super::string_view_type;
 
         constexpr uri_scheme(uri_type the_uri) = default;
 
@@ -38,17 +35,17 @@ namespace webpp {
          * @brief check if the specified uri has a scheme or not
          */
         [[nodiscard]] bool empty() const noexcept {
-            self.parse_scheme();
-            return self.scheme_end == self.data.size() && self.scheme_end != 0;
+            this->parse_scheme();
+            return this->scheme_end == this->data.size() && this->scheme_end != 0;
         }
 
         /**
          * @brief scheme
          * @return get scheme
          */
-        [[nodiscard]] str_view_t value() const noexcept {
-            self.parse_scheme();
-            return self.scheme_end == self.data.size() ? str_view_t() : self.substr(0, self.scheme_end);
+        [[nodiscard]] string_view_type value() const noexcept {
+            this->parse_scheme();
+            return this->scheme_end == this->data.size() ? string_view_type() : this->substr(0, this->scheme_end);
         }
 
         /**
@@ -56,28 +53,28 @@ namespace webpp {
          * @param _scheme
          * @throws logic_error if uri is const
          */
-        basic_uri& set(str_view_t m_scheme) {
+        auto& set(string_view_type m_scheme) {
             if (ascii::ends_with(m_scheme, ':'))
                 m_scheme.remove_suffix(1);
-            if (!is::scheme<traits_type>(m_scheme))
+            if (!is::scheme(m_scheme))
                 throw stl::invalid_argument("The specified scheme is not valid");
-            self.parse_scheme();
-            if (self.scheme_end != self.data.size()) {
-                self.replace_value(0,
-                                   m_scheme.empty() && self.data.size() > self.scheme_end + 1 &&
-                                   self.data[self.scheme_end] == ':'
-                                   ? self.scheme_end + 1
-                                   : self.scheme_end,
+            this->parse_scheme();
+            if (this->scheme_end != this->data.size()) {
+                this->replace_value(0,
+                                   m_scheme.empty() && this->data.size() > this->scheme_end + 1 &&
+                                   this->data[this->scheme_end] == ':'
+                                   ? this->scheme_end + 1
+                                   : this->scheme_end,
                                    m_scheme);
             } else {
                 // the URI doesn't have a scheme now, we have to put it in the right place
                 auto scheme_colon = m_scheme.empty() ? "" : str_t(m_scheme) + ':';
-                if (self.authority_start != self.data.size()) {
-                    self.replace_value(0, 0,
-                                       scheme_colon + (ascii::starts_with(self.data, "//") ? "" : "//"));
+                if (this->authority_start != this->data.size()) {
+                    this->replace_value(0, 0,
+                                       scheme_colon + (ascii::starts_with(this->data, "//") ? "" : "//"));
                 } else {
                     // It's a URN (or URN like URI)
-                    self.replace_value(0, 0, scheme_colon);
+                    this->replace_value(0, 0, scheme_colon);
                 }
             }
             return *this;
@@ -86,7 +83,7 @@ namespace webpp {
         /**
          * @brief clear scheme from uri
          */
-        basic_uri& clear() noexcept {
+        auto& clear() noexcept {
             return set("");
         }
     };

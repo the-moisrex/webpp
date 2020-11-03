@@ -129,7 +129,6 @@ namespace webpp::uri {
 
         /**
          * @brief get path in non-decoded, string format
-         * @return
          */
         [[nodiscard]] str_view_t raw() const noexcept {
             if (empty())
@@ -251,8 +250,6 @@ namespace webpp::uri {
 
         /**
          * @brief set the path for the uri
-         * @param _path
-         * @return
          */
         auto& set(istl::StringViewifiable auto&& m_path) noexcept {
             this->parse_path();
@@ -289,7 +286,7 @@ namespace webpp::uri {
         /**
          * @brief checks if the uri path is normalized or not (contains relative
          * . or .. paths)
-         * @return
+         * @return bool
          */
         [[nodiscard]] bool is_normalized() const noexcept {
             auto m_path = raw_slugs();
