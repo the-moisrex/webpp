@@ -15,6 +15,7 @@ namespace webpp {
         using super = uri_parser<T...>;
         using string_view_type = typename super::string_view_type;
         using string_type = typename super::string_type;
+        using traits_type = typename super::traits_type;
 
         /**
          * @brief return host as an string_view
@@ -174,16 +175,21 @@ namespace webpp {
          * include a hostname/ip or its hostname/ip is not in a valid shape, it
          * will return an empty string
          * @return string/ipv4/ipv6
-         * @default empty string
          */
         [[nodiscard]] stl::variant<ipv4<traits_type>, ipv6<traits_type>, string_type>
         host_structured_decoded() const noexcept {
             if (auto _host_structured = host_structured();
-              stl::holds_alternative<string_view_type>(_host_structured))
-                return decode_uri_component<traits_type>(stl::get<string_view_type>(_host_structured),
-                                                         super::REG_NAME_NOT_PCT_ENCODED);
-            else
+              stl::holds_alternative<string_view_type>(_host_structured)) {
+                // convert string_view to string and then decode it
+                string_type output{this->get_allocator()};
+                if (decode_uri_component(stl::get<string_view_type>(_host_structured), output,
+                                                         super::REG_NAME_NOT_PCT_ENCODED)) {
+                    return output;
+                }
+                return {}; // as in an empty one
+            } else {
                 return _host_structured;
+            }
         }
 
         /**
@@ -217,13 +223,13 @@ namespace webpp {
             auto _host = raw();
             if (_host.empty() || is_ip())
                 return {};
-            istl::vector<traits_type, string_type> subs;
+            istl::vector<traits_type, string_type> subs{this->get_allocator_as<string_type>()};
             for (;;) {
                 auto dot = _host.find('.');
                 auto sub = _host.substr(0, dot);
                 if (sub.empty())
                     break;
-                subs.emplace_back(stl::move(sub));
+                subs.emplace_back(sub, this->get_allocator_as<char_type>());
                 if (dot == string_view_type::npos)
                     break;
                 _host.remove_prefix(dot + 1);
@@ -247,7 +253,7 @@ namespace webpp {
          * @param tld
          * @return
          */
-        auto& top_level_domain(string_view_type const& tld) noexcept {
+        auto& top_level_domain(string_view_type tld) noexcept {
             auto _host = raw();
             if (_host.empty()) {
                 // I've already written that code. Yay, I'm so happy
@@ -257,7 +263,7 @@ namespace webpp {
                 // instead of this method.
                 auto dot   = _host.find_last_of('.');
                 auto start = dot != string_view_type::npos ? dot + 1 : 0;
-                set(string_type(_host.substr(0, start)) + string_type(tld));
+                set(string_type(_host.substr(0, start), this->get_allocator()) + string_type(tld, this->get_allocator()));
             }
             return *this;
         }
@@ -303,16 +309,16 @@ namespace webpp {
 
                 // there's nothing to do it's empty
                 if (!sld.empty()) {
-                    static_cast<void>(set(string_type(sld) + '.' + string_type(_host)));
+                    static_cast<void>(set(string_type(sld, this->get_allocator()) + '.' + string_type(_host, this->get_allocator())));
                 }
             } else {
                 auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
                 auto start        = bef_last_dot == string_view_type::npos ? 0 : bef_last_dot + 1;
                 if (!sld.empty())
                     static_cast<void>(
-                      set(string_type(_host.substr(0, start)) + string_type(sld) + string_type(_host.substr(last_dot))));
+                      set(string_type(_host.substr(0, start), this->get_allocator()) + string_type(sld, this->get_allocator()) + string_type(_host.substr(last_dot), this->get_allocator())));
                 else
-                    static_cast<void>(set(string_type(_host.substr(last_dot + 1))));
+                    static_cast<void>(set(string_type(_host.substr(last_dot + 1), this->get_allocator())));
             }
             return *this;
         }

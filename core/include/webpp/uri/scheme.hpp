@@ -22,7 +22,8 @@ namespace webpp {
     template <typename ...T>
     struct uri_scheme : public uri_parser<T...> {
         using super = uri_parser<T...>;
-        using string_view_type = super::string_view_type;
+        using string_view_type = typename super::string_view_type;
+        using traits_type = typename super::traits_type;
 
         constexpr uri_scheme(uri_type the_uri) = default;
 
