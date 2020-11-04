@@ -4,7 +4,7 @@
 #define WEBPP_PATH_H
 
 #include "../../std/optional.hpp"
-#include "../../uri/uri.hpp"
+#include "../../uri/uri_string.hpp"
 #include "../../utils/fixed_string.hpp"
 #include "route.hpp"
 

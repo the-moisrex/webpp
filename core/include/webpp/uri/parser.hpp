@@ -6,12 +6,12 @@
 #define WEBPP_PARSER_HPP
 
 #include "./encoding.hpp"
-#include "./uri_structure.hpp"
+#include "./string_uri_data.hpp"
 
 namespace webpp {
 
     template <typename ...T>
-    struct uri_parser : uri_structure<T...> {
+    struct uri_parser : string_uri_data<T...> {
 
 
         /**

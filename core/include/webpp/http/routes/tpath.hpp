@@ -4,7 +4,7 @@
 #define WEBPP_TPATH_H
 
 #include "route.hpp"
-#include "webpp/uri/uri.hpp"
+#include "webpp/uri/uri_string.hpp"
 
 #include <cassert>
 #include <cstddef> // for std::size_t
