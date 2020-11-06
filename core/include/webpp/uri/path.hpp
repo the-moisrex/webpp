@@ -7,6 +7,8 @@
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
 
+#include <numeric>
+
 namespace webpp::uri {
 
     /**
@@ -95,6 +97,17 @@ namespace webpp::uri {
             }
             return str;
         }
+
+
+        /**
+         * Get the raw string non-decoded size
+         */
+        [[nodiscard]] stl::size_t raw_string_size() const noexcept {
+            return stl::reduce(this->cbegin(), this->cend(), 0ull, [] (string_type const& item) {
+                return item.size();
+            }) + this->size() - 1;
+        }
+
     };
 
 

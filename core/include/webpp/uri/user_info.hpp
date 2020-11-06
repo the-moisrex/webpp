@@ -5,7 +5,7 @@
 
 #include "../std/string.hpp"
 #include "./encoding.hpp"
-#include "./constants.hpp"
+#include "details/constants.hpp"
 
 namespace webpp::uri {
 
@@ -23,12 +23,12 @@ namespace webpp::uri {
          */
         void append_to(istl::String auto& out) const {
             if (!username.empty()) {
-                encode_uri_component(username, out, USER_INFO_NOT_PCT_ENCODED<char_type>);
+                encode_uri_component(username, out, details::USER_INFO_NOT_PCT_ENCODED<char_type>);
             }
             if (!password.empty()) {
                 out.reserve(password.size() + 1); // much better chance of removing one memory allocation
                 out += '@';
-                encode_uri_component(password, out, USER_INFO_NOT_PCT_ENCODED<char_type>);
+                encode_uri_component(password, out, details::USER_INFO_NOT_PCT_ENCODED<char_type>);
             }
         }
 

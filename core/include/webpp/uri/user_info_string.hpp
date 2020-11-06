@@ -3,6 +3,9 @@
 #ifndef WEBPP_USER_INFO_STRING_HPP
 #define WEBPP_USER_INFO_STRING_HPP
 
+#include "./details/constants.hpp"
+
+
 namespace webpp::uri {
 
 
@@ -19,7 +22,7 @@ namespace webpp::uri {
         /**
          * @brief get the user info or an empty value
          */
-        [[nodiscard]] str_view_t user_info() const noexcept {
+        [[nodiscard]] str_view_t user_info_raw() const noexcept {
             parse_user_info();
             return (user_info_end == data.size() || authority_start == data.size())
                    ? str_view_t()
@@ -29,8 +32,12 @@ namespace webpp::uri {
         /**
          * @brief decode user_info and return it as a string
          */
-        [[nodiscard]] auto user_info_decoded() const noexcept {
-            return decode_uri_component<traits_type>(user_info(), USER_INFO_NOT_PCT_ENCODED);
+        [[nodiscard]] auto user_info() const noexcept {
+            str_t out{this->get_allocator()};
+            if (decode_uri_component(user_info(), out, details::USER_INFO_NOT_PCT_ENCODED<char_type>)) {
+                return out;
+            }
+            return stl::nullopt;
         }
 
         /**
@@ -39,7 +46,7 @@ namespace webpp::uri {
         uri_string& user_info(str_view_t const& info) noexcept {
             parse_user_info();
             str_t encoded_info{this->get_allocator()};
-            encode_uri_component(info, encoded_info, USER_INFO_NOT_PCT_ENCODED);
+            encode_uri_component(info, encoded_info, details::USER_INFO_NOT_PCT_ENCODED<char_type>);
             if (user_info_end == data.size() || authority_start == data.size()) {
                 // the URI already has user info, I just have to replace it
                 replace_value(authority_start, user_info_end - authority_start, encoded_info);
@@ -89,7 +96,7 @@ namespace webpp::uri {
          * string view
          * @return
          */
-        [[nodiscard]] str_view_t username() const noexcept {
+        [[nodiscard]] str_view_t username_raw() const noexcept {
             auto _userinfo = user_info();
             if (auto colon = _userinfo.find(':'); colon != str_view_t::npos)
                 _userinfo.remove_suffix(_userinfo.size() - colon);
@@ -100,8 +107,12 @@ namespace webpp::uri {
          * Get the decoded version of the username if it exists
          * @return
          */
-        [[nodiscard]] str_t username_decoded() const noexcept {
-            return decode_uri_component<traits_type>(username(), USER_INFO_NOT_PCT_ENCODED);
+        [[nodiscard]] stl::optional<str_t> username() const noexcept {
+            str_t out{this->get_allocator()};
+            if (decode_uri_component(username(), out, details::USER_INFO_NOT_PCT_ENCODED<char_type>)) {
+                return out;
+            }
+            return stl::nullopt;
         }
 
         /**
@@ -116,7 +127,7 @@ namespace webpp::uri {
          * The password in the user info
          * @return
          */
-        [[nodiscard]] str_view_t password() const noexcept {
+        [[nodiscard]] str_view_t password_raw() const noexcept {
             auto _user_info = user_info();
             if (auto found = _user_info.find(':'); found != str_view_t::npos) {
                 return _user_info.substr(found + 1);
@@ -128,8 +139,12 @@ namespace webpp::uri {
          * The decoded version of the password
          * @return
          */
-        [[nodiscard]] str_t password_decoded() const noexcept {
-            return decode_uri_component<traits_type>(password(), USER_INFO_NOT_PCT_ENCODED);
+        [[nodiscard]] stl::optional<str_t> password() const noexcept {
+            str_t out{this->get_allocator()};
+            if (decode_uri_component(password(), out, details::USER_INFO_NOT_PCT_ENCODED<char_type>)){
+                return out;
+            }
+            return stl::nullopt;
         }
 
     };

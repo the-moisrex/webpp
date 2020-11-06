@@ -1,11 +1,9 @@
-//
 // Created by moisrex on 11/4/20.
-//
 
 #ifndef WEBPP_CONSTANTS_HPP
 #define WEBPP_CONSTANTS_HPP
 
-#include "../strings/charset.hpp"
+#include "../../strings/charset.hpp"
 
 namespace webpp::uri::details {
 
@@ -49,7 +47,7 @@ namespace webpp::uri::details {
      */
     template<istl::CharType char_type>
     static constexpr auto USER_INFO_NOT_PCT_ENCODED =
-      charset(UNRESERVED, SUB_DELIMS, charset<char_type, 1>{':'});
+      charset(UNRESERVED<char_type>, SUB_DELIMS<char_type>, charset<char_type, 1>{':'});
 
     /**
      * This is the character set corresponds to the last part of the "IPvFuture" syntax
@@ -57,7 +55,7 @@ namespace webpp::uri::details {
      */
     template<istl::CharType char_type>
     static constexpr auto IPV_FUTURE_LAST_PART =
-      charset(UNRESERVED, SUB_DELIMS, charset<char_type, 1>{':'});
+      charset(UNRESERVED<char_type>, SUB_DELIMS<char_type>, charset<char_type, 1>{':'});
 
     /**
      * This is the character set corresponds to the "reg-name" syntax
@@ -65,7 +63,7 @@ namespace webpp::uri::details {
      * leaving out "pct-encoded".
      */
     template<istl::CharType char_type>
-    static constexpr auto REG_NAME_NOT_PCT_ENCODED = charset(UNRESERVED, SUB_DELIMS);
+    static constexpr auto REG_NAME_NOT_PCT_ENCODED = charset(UNRESERVED<char_type>, SUB_DELIMS<char_type>);
 
     /**
      * This is the character set corresponds to the "pchar" syntax
@@ -74,7 +72,7 @@ namespace webpp::uri::details {
      */
     template<istl::CharType char_type>
     static constexpr auto PCHAR_NOT_PCT_ENCODED =
-      charset(UNRESERVED, SUB_DELIMS, webpp::charset<char_type, 2>{':', '@'});
+      charset(UNRESERVED<char_type>, SUB_DELIMS<char_type>, charset<char_type, 2>{':', '@'});
 
     /**
      * This is the character set corresponds to the "query" syntax and the "fragment" syntax
@@ -83,7 +81,7 @@ namespace webpp::uri::details {
      */
     template<istl::CharType char_type>
     static constexpr auto QUERY_OR_FRAGMENT_NOT_PCT_ENCODED =
-      charset(PCHAR_NOT_PCT_ENCODED, charset<char_type, 2>{'/', '?'});
+      charset(PCHAR_NOT_PCT_ENCODED<char_type>, charset<char_type, 2>{'/', '?'});
 }
 
 #endif // WEBPP_CONSTANTS_HPP

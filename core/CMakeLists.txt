@@ -66,14 +66,25 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/utils/property.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/fixed_string.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/uri/uri.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/details/constants.hpp
         ${LIB_INCLUDE_DIR}/webpp/uri/encoding.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/fragments.hpp
         ${LIB_INCLUDE_DIR}/webpp/uri/host.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/host_string.hpp
         ${LIB_INCLUDE_DIR}/webpp/uri/parser.hpp
-        ${LIB_INCLUDE_DIR}/webpp/uri/queries.hpp
-        ${LIB_INCLUDE_DIR}/webpp/uri/scheme.hpp
-        ${LIB_INCLUDE_DIR}/webpp/uri/uri_structure.hpp
         ${LIB_INCLUDE_DIR}/webpp/uri/path.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/path_string.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/port.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/port_string.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/queries.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/queries_string.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/scheme.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/scheme_string.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/string_uri_data.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/uri.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/uri_string.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/user_info.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/user_info_string.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/crypto/base64.hpp
         ${LIB_INCLUDE_DIR}/webpp/crypto/base64_url.hpp
