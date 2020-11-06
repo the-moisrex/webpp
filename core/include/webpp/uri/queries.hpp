@@ -8,26 +8,30 @@
 namespace webpp::uri {
 
     // todo: complete this and use it in the uri_queries
-    template <typename StringType = stl::string, typename AllocType = typename StringType::allocator_type>
-    struct basic_queries : stl::map<StringType, StringType, stl::less<StringType>, AllocType> {
-        using super = stl::map<StringType, StringType, stl::less<StringType>, AllocType>;
+    template <typename StringType = stl::string,
+              typename AllocType  = typename stl::remove_cvref_t<StringType>::allocator_type>
+    struct basic_queries : stl::map<stl::remove_cvref_t<StringType>, stl::remove_cvref_t<StringType>,
+                                    stl::less<stl::remove_cvref_t<StringType>>, AllocType> {
+        using string_type    = stl::remove_cvref_t<StringType>;
+        using allocator_type = AllocType;
+        using super          = stl::map<string_type, string_type, stl::less<string_type>, allocator_type>;
 
-        template <typename ...Args>
-        basic_queries(Args&& ...args) : super {stl::forward<Args>(args)...} {}
+        template <typename... Args>
+        basic_queries(Args&&... args) : super{stl::forward<Args>(args)...} {}
 
 
         /**
          * Get the raw string non-decoded size
          */
         [[nodiscard]] stl::size_t raw_string_size() const noexcept {
-            return stl::reduce(this->cbegin(), this->cend(), 0ull, [] (string_type const& item) {
-              return item.first.size() + item.second.size();
-            }) + (this->size() * 2) - 2;
+            return stl::reduce(this->cbegin(), this->cend(), 0ull,
+                               [](string_type const& item) {
+                                   return item.first.size() + item.second.size();
+                               }) +
+                   (this->size() * 2) - 2;
         }
-
-
     };
 
-}
+} // namespace webpp::uri
 
 #endif // WEBPP_QUERIES_HPP
