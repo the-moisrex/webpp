@@ -13,6 +13,16 @@ namespace webpp::uri {
 
         template <typename ...T>
         constexpr basic_scheme(T&&...args) : string_type{stl::forward<T>(args)...} {}
+
+
+
+        /**
+         * @brief checks if the URI is a relative reference
+         */
+        [[nodiscard]] constexpr bool is_relative_reference() const noexcept {
+            return this->empty();
+        }
+
     };
 
 }

@@ -5,7 +5,7 @@
 
 #include "../std/string.hpp"
 #include "./encoding.hpp"
-#include "details/constants.hpp"
+#include "./details/constants.hpp"
 
 namespace webpp::uri {
 
@@ -42,14 +42,14 @@ namespace webpp::uri {
             const bool user_empty = !username.empty();
             const bool pass_empty = !password.empty();
             if (user_empty && pass_empty) {
-                out.resize(out.size() + username.size() + password.size() + 1);
+                out.reserve(out.size() + username.size() + password.size() + 1);
                 out += username;
                 out += '@';
                 out += password;
             } else if (pass_empty) {
                 out += username;
             } else if (user_empty) {
-                out.resize(out.size() + password.size() + 1);
+                out.reserve(out.size() + password.size() + 1);
                 out += '@';
                 out += password;
             }

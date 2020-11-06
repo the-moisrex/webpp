@@ -5,6 +5,7 @@
 
 #include "../std/string.hpp"
 #include "../utils/casts.hpp"
+#include "../validators/validators.hpp"
 
 #include <charconv>
 
@@ -23,7 +24,12 @@ namespace webpp::uri {
         using string_type = stl::remove_cvref_t<StringType>;
 
         template <typename ...T>
-        constexpr basic_fragments(T&&...args) : string_type{stl::forward<T>(args)...} {}
+        constexpr basic_fragments(T&&...args) : string_type{stl::forward<T>(args)...} {
+            // todo: make sure if it's a valid port number
+            if (!is::digit(*this)) {
+                // convert the service name to port number
+            }
+        }
 
         template <typename T>
         requires(stl::is_integral_v<stl::remove_cvref_t<T>>
@@ -39,26 +45,13 @@ namespace webpp::uri {
         void append_to(istl::String auto&out) {
             if (this->empty())
                 return; // nothing to add
-
-            integerize();
+            out.reserve(out.size() + this->size() + 1);
+            out += ':';
             out += *this;
         }
 
-        [[nodiscard]] constexpr bool is_valid() {
-            return integerize();
-        }
-
-      protected:
-
-        /**
-         * Convert the service to port number and validate it
-         */
-        bool integerize() {
-            if (!is::digits(*this)) {
-                return false;
-            }
-            // todo: convert service names to port number
-            return true;
+        [[nodiscard]] constexpr uint16_t value() const {
+            return to_uint16(*this);
         }
 
     };

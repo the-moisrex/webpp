@@ -261,39 +261,6 @@ namespace webpp::uri {
         }
 
         /**
-         * @brief get fragment
-         */
-        [[nodiscard]] str_view_t fragment() const noexcept {
-            parse_fragment();
-            return substr(fragment_start + 1);
-        }
-
-        /**
-         * @brief an indication of whether the URI has fragment or not.
-         * @return
-         */
-        [[nodiscard]] bool has_fragment() const noexcept {
-            parse_fragment();
-            return fragment_start != data.size();
-        }
-
-        /**
-         * @brief clear the fragment part of the uri
-         * @return
-         */
-        uri_string& clear_fragment() noexcept {
-            return fragment({});
-        }
-
-        /**
-         * @brief checks if the URI is a relative reference
-         * @return
-         */
-        [[nodiscard]] bool is_relative_reference() const noexcept {
-            return !has_scheme();
-        }
-
-        /**
          * This method returns an indication of whether or not the URI includes
          * any element that is part of the authority URI.
          * @return bool

@@ -32,6 +32,13 @@ namespace webpp::uri {
         }
 
         /**
+         * @brief checks if the URI is a relative reference
+         */
+        [[nodiscard]] bool is_relative_reference() const noexcept {
+            return empty();
+        }
+
+        /**
          * @brief check if the specified uri has a scheme or not
          */
         [[nodiscard]] bool empty() const noexcept {
