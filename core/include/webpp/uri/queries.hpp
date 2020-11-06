@@ -16,6 +16,16 @@ namespace webpp::uri {
         basic_queries(Args&& ...args) : super {stl::forward<Args>(args)...} {}
 
 
+        /**
+         * Get the raw string non-decoded size
+         */
+        [[nodiscard]] stl::size_t raw_string_size() const noexcept {
+            return stl::reduce(this->cbegin(), this->cend(), 0ull, [] (string_type const& item) {
+              return item.first.size() + item.second.size();
+            }) + (this->size() * 2) - 2;
+        }
+
+
     };
 
 }
