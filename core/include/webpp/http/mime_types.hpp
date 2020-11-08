@@ -4,7 +4,7 @@
 #define WEBPP_MIME_TYPES_HPP
 
 #include "../std/string_view.hpp"
-#include "../strings/to_case.hpp"
+#include "../strings/iequals.hpp"
 
 namespace webpp {
 
@@ -23,11 +23,9 @@ namespace webpp {
         };
     }
 
-    auto extension_to_type(istl::String auto extension) {
-        ascii::to_lower(extension);
-
+    auto mime_type_of(istl::StringViewifiable auto &&extension) {
         for (details::mapping const* m = details::mappings; m->extension; ++m) {
-            if (strcmp(m->extension, extension)) {
+            if (ascii::iequals<ascii::char_case_side::second_lowered>(m->extension, extension)) {
                 return m->mime_type;
             }
         }
