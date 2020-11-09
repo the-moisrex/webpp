@@ -5,12 +5,13 @@
 
 #include "../traits/traits_concepts.hpp"
 #include "./std.hpp"
+
 #include <string_view>
 
 
-// Traits aware string_view:
 namespace webpp::istl {
 
+    // Traits aware string_view:
     template <Traits TraitsType, typename CharT = typename TraitsType::char_type,
               typename CharTraits = typename TraitsType::char_traits>
     using basic_string_view = ::std::basic_string_view<CharT, CharTraits>;
@@ -19,7 +20,7 @@ namespace webpp::istl {
 
     template <typename T>
     concept StringView = requires(stl::remove_cvref_t<T> str) {
-//        { T{"str"} };
+        //        { T{"str"} };
         str.empty();
         str.at(0);
         str.data();
@@ -36,7 +37,8 @@ namespace webpp::istl {
         stl::remove_cvref_t<T>::npos;
 
         typename stl::remove_cvref_t<T>::value_type;
-    } && !requires (stl::remove_cvref_t<T> str){
+    }
+    &&!requires(stl::remove_cvref_t<T> str) {
         // the things that std::string has
         str.clear();
         str.shrink_to_fit();
@@ -44,48 +46,88 @@ namespace webpp::istl {
         {str = "str"};
     };
 
+    namespace details::string_view {
+        /**
+         * Due to a GCC bug in 10.2.0, we're doing this to deduce the template type, because GCC doesn't
+         * seem to be able to deduce a template type in a concept but it can do it from here.
+         */
+        template <template <typename...> typename TT, typename... T>
+        using deduced_type = decltype(TT{stl::declval<stl::remove_cvref_t<T>>()...});
 
-    template <typename T>
-    concept StringViewifiable = !istl::CharType<T> && requires(stl::remove_cvref_t<T> str) {
+    } // namespace details
+
+    /**
+     * Check if T is a "string view" of type "StringViewType"
+     */
+    template <typename StrViewType, typename T>
+    concept StringViewifiableOf = !istl::CharType<T> && requires(stl::remove_cvref_t<T> str) {
         requires requires {
-            stl::basic_string_view{str};
+            StrViewType{str};
         }
         || requires {
             str.data();
             str.size();
-            stl::basic_string_view{str.data(), str.size()};
+            StrViewType{str.data(), str.size()};
         }
         || requires {
             str.c_str();
             str.size();
-            stl::basic_string_view{str.c_str(), str.size()};
+            StrViewType{str.c_str(), str.size()};
         };
     };
 
+    template <template <typename...> typename StrViewType, typename T>
+    concept StringViewifiableOfTemplate = StringViewifiableOf<details::string_view::deduced_type<StrViewType, T>, T>;
 
-    [[nodiscard]] constexpr auto string_viewify(StringViewifiable auto&& str) noexcept {
-        if constexpr (StringView<decltype(str)>) {
+    template <typename T>
+    concept StringViewifiable = StringViewifiableOfTemplate<stl::basic_string_view, T>;
+
+    /**
+     * Convert the string value specified to a "string view" of type StrViewT
+     */
+    template <typename StrViewT, typename StrT>
+    requires(StringViewifiableOf<StrViewT, StrT>)
+      [[nodiscard]] constexpr auto string_viewify_of(StrT&& str) noexcept {
+        if constexpr (StringView<StrT>) {
             return str;
-        } else if constexpr (requires { stl::basic_string_view{str}; }) {
-            return stl::basic_string_view{str};
+        } else if constexpr (requires { StrViewT{str}; }) {
+            return StrViewT{str};
         } else if constexpr (requires {
                                  str.c_str();
                                  str.size();
-                                 stl::basic_string_view{str.c_str(), str.size()};
+                                 StrViewT{str.c_str(), str.size()};
                              }) {
-            return stl::basic_string_view{str.c_str(), str.size()};
+            return StrViewT{str.c_str(), str.size()};
         } else if constexpr (requires {
                                  str.data();
                                  str.size();
-                                 stl::basic_string_view{str.data(), str.size()};
+                                 StrViewT{str.data(), str.size()};
                              }) {
-            return stl::basic_string_view{str.data(), str.size()};
+            return StrViewT{str.data(), str.size()};
         } else if constexpr (requires { str.str(); }) {
-            return string_viewify(str.str());
+            return string_viewify_of<StrViewT>(str.str());
         } else {
-            throw stl::invalid_argument("The specified input is not convertible to string_view");
+            throw stl::invalid_argument("The specified input is not convertible to string view");
         }
-    };
+    }
+
+    /**
+     * Convert to string view of the specified template type
+     * @example string_viewify_of<std::basic_string_view>("convert to string view")
+     */
+    template <template <typename...> typename StrViewT, typename StrT>
+    requires(StringViewifiableOfTemplate<StrViewT, StrT>)
+      [[nodiscard]] constexpr auto string_viewify_of(StrT&& str) noexcept {
+        return string_viewify_of<details::string_view::deduced_type<StrViewT, StrT>>(stl::forward<StrT>(str));
+    }
+
+
+    /**
+     * Convert to string view (if itself is one, return itself, otherwise get one of the basic_string_view)
+     */
+    [[nodiscard]] constexpr auto string_viewify(StringViewifiable auto&& str) noexcept {
+        return string_viewify_of<stl::basic_string_view>(stl::forward<decltype(str)>(str));
+    }
 
     template <typename T>
     using char_type_of = typename decltype(string_viewify(stl::declval<T>()))::value_type;

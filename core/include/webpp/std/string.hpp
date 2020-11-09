@@ -44,47 +44,74 @@ namespace webpp::istl {
         typename stl::remove_cvref_t<T>::allocator_type;
     };
 
-    template <typename T>
-    concept Stringifiable = !istl::CharType<T> && requires(stl::remove_cvref_t<T> str) {
+    namespace details::string {
+        /**
+         * Due to a GCC bug in 10.2.0, we're doing this to deduce the template type, because GCC doesn't
+         * seem to be able to deduce a template type in a concept but it can do it from here.
+         */
+        template <template <typename...> typename TT, typename... T>
+        using deduced_type = decltype(TT{stl::declval<stl::remove_cvref_t<T>>()...});
+
+    } // namespace details
+
+    template <typename StrT, typename T>
+    concept StringifiableOf = !istl::CharType<T> && requires(stl::remove_cvref_t<T> str) {
         requires requires {
-            stl::basic_string{str};
+            StrT{str};
         }
         || requires {
             str.data();
             str.size();
-            stl::basic_string{str.data(), str.size()};
+            StrT{str.data(), str.size()};
         }
         || requires {
             str.c_str();
             str.size();
-            stl::basic_string{str.c_str(), str.size()};
+            StrT{str.c_str(), str.size()};
         };
     };
 
 
-    [[nodiscard]] constexpr auto stringify(Stringifiable auto&& str, auto const& allocator) noexcept {
+    template <template <typename...> typename StrType, typename T>
+    concept StringifiableOfTemplate = StringifiableOf<details::string::deduced_type<StrType, T>, T>;
+
+    template <typename T>
+    concept Stringifiable = StringifiableOfTemplate<stl::basic_string, T>;
+
+
+    template <typename StrT, typename Strifiable>
+    requires(StringifiableOf<StrT, Strifiable>)
+    [[nodiscard]] constexpr auto stringify_of(Strifiable&& str, auto const& allocator) noexcept {
         if constexpr (String<decltype(str)>) {
             return str;
-        } else if constexpr (requires { stl::basic_string{str, allocator}; }) {
-            return stl::basic_string{str, allocator};
+        } else if constexpr (requires { StrT{str, allocator}; }) {
+            return StrT{str, allocator};
         } else if constexpr (requires {
                                  str.c_str();
                                  str.size();
-                                 stl::basic_string{str.c_str(), str.size(), allocator};
+                                 StrT{str.c_str(), str.size(), allocator};
                              }) {
-            return stl::basic_string{str.c_str(), str.size(), allocator};
+            return StrT{str.c_str(), str.size(), allocator};
         } else if constexpr (requires {
                                  str.data();
                                  str.size();
-                                 stl::basic_string{str.data(), str.size(), allocator};
+                                 StrT{str.data(), str.size(), allocator};
                              }) {
-            return stl::basic_string{str.data(), str.size(), allocator};
+            return StrT{str.data(), str.size(), allocator};
         } else if constexpr (requires { str.str(); }) {
-            return stringify(str.str(), allocator);
+            return stringify_of<StrT>(str.str(), allocator);
         } else {
             throw stl::invalid_argument("The specified input is not convertible to string");
         }
     };
+
+    template <template <typename...> typename StrT, typename Strifiable>
+    requires(StringifiableOfTemplate<StrT, Strifiable>)
+    [[nodiscard]] constexpr auto stringify(Strifiable&& str, auto const& allocator) noexcept {
+        return stringify_of<details::string::deduced_type<stl::basic_string, Strifiable>>(
+          stl::forward<Strifiable>(str), allocator);
+    }
+
 
     /**
      * Get the underlying data of the specified string
