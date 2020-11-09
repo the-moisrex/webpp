@@ -50,7 +50,7 @@ namespace webpp::istl {
          * seem to be able to deduce a template type in a concept but it can do it from here.
          */
         template <template <typename...> typename TT, typename... T>
-        using deduced_type = decltype(TT{stl::declval<stl::remove_cvref_t<T>>()...});
+        using deduced_type = decltype(TT{T{}...});
 
     } // namespace details
 
@@ -103,7 +103,15 @@ namespace webpp::istl {
         } else {
             throw stl::invalid_argument("The specified input is not convertible to string");
         }
-    };
+    }
+
+    template <template <typename...> typename StrT, typename Strifiable>
+    requires(StringifiableOfTemplate<StrT, Strifiable>)
+    [[nodiscard]] constexpr auto stringify_of(Strifiable&& str, auto const& allocator) noexcept {
+        return stringify_of<details::string::deduced_type<StrT, Strifiable>>(
+          stl::forward<Strifiable>(str), allocator);
+    }
+
 
     template <template <typename...> typename StrT, typename Strifiable>
     requires(StringifiableOfTemplate<StrT, Strifiable>)

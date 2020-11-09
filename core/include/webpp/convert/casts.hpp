@@ -100,16 +100,22 @@ namespace webpp {
     }
 
     template <typename ValueType, typename... R>
-    requires(stl::is_integral_v<ValueType>)
     constexpr auto append_to(char* ptr, ValueType value, R&&... args) noexcept {
         constexpr stl::size_t _size = digit_count<ValueType>() + 1;
         return stl::to_chars(ptr, ptr + _size, value, stl::forward<R>(args)...);
     }
 
+    // todo: GCC's to_chars implementation doesn't support floating point numbers
     template <typename ValueType, typename... R>
-    requires(stl::is_integral_v<ValueType>)
-    constexpr auto append_to(istl::String auto &str, ValueType value, R&&... args) noexcept {
-        return append_to(str.data() + str.size(), value, stl::forward<R>(args)...);
+    constexpr bool append_to(istl::String auto &str, ValueType value, R&&... args) noexcept {
+        constexpr stl::size_t _size = digit_count<ValueType>() + 1;
+        stl::array<char, _size> chars;
+        if (auto res = stl::to_chars(chars.data(), chars.data() + _size, value, stl::forward<R>(args)...);
+            res.ec == stl::errc()) {
+            str.append(chars.data(), (res.ptr - chars.data()));
+            return true;
+        }
+        return false;
     }
 
 
