@@ -1,10 +1,10 @@
 #ifndef WEBPP_CGI_H
 #define WEBPP_CGI_H
 
+#include "../../convert/casts.hpp"
 #include "../../std/string_view.hpp"
 #include "../../strings/to_case.hpp"
 #include "../../traits/std_traits.hpp"
-#include "../../utils/casts.hpp"
 #include "../application.hpp"
 #include "../request.hpp"
 #include "../response.hpp"

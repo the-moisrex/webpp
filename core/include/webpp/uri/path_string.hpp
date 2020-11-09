@@ -3,7 +3,9 @@
 #ifndef WEBPP_PATH_STRING_HPP
 #define WEBPP_PATH_STRING_HPP
 
-#include "./parser.hpp"
+#include "./details/constants.hpp"
+#include "./details/parser.hpp"
+#include "./path.hpp"
 
 namespace webpp::uri {
 
@@ -11,12 +13,15 @@ namespace webpp::uri {
     struct string_path : public uri_parser<T...> {
         using super = uri_parser<T...>;
         using char_type = typename super::char_type;
+        using str_t = typename super::string_type;
+        using str_view_t = typename super::string_view_type;
+        using allocator_type = typename super::allocator_type;
 
         template <typename ...Args>
         constexpr string_path(Args&& ...args) : super{stl::forward<Args>(args)...} {}
 
         static constexpr auto LEGAL_PATH_CHARS =
-          charset(super::PCHAR_NOT_PCT_ENCODED, charset<char_type, 1>('/'));
+          charset(details::PCHAR_NOT_PCT_ENCODED<char_type>, charset<char_type, 1>('/'));
 
         auto& operator=(
           istl::StringViewifiable auto&& new_path) { // NOLINT(misc-unconventional-assign-operator)
@@ -62,7 +67,7 @@ namespace webpp::uri {
          * We know how to get the allocator, don't worry.
          * The specified container's string type should be a string and not a string_view
          */
-        template <typename Container = path<str_t, allocator_type>>
+        template <typename Container = basic_path<str_t, allocator_type>>
         [[nodiscard]] Container slugs() const noexcept {
             Container container(this->get_allocator());
             extract_slugs_to<Container>(container);
@@ -74,7 +79,7 @@ namespace webpp::uri {
          * You can use string_view as the underlying string type of the container since we don't
          * decode the string. As long as the class has access to the string_view, this method has too.
          */
-        template <typename Container = istl::vector<traits_type, str_view_t>>
+        template <typename Container = basic_path<str_view_t, allocator_type>>
         [[nodiscard]] Container raw_slugs() const noexcept {
             Container container(this->get_allocator());
             extract_raw_slugs_to<Container>(container);
@@ -88,7 +93,7 @@ namespace webpp::uri {
          * be an std container, but if string/string_view is presented as a
          * container, it will return the whole path.
          */
-        template <typename Container = istl::vector<traits_type, str_view_t>>
+        template <typename Container = basic_path<str_view_t, allocator_type>>
         auto& extract_raw_slugs_to(Container& container) const noexcept {
             auto _path = raw();
             if (_path.empty())
@@ -117,7 +122,7 @@ namespace webpp::uri {
          * @attention do not use string_view or any alternatives for this method
          * as this method should own its data.
          */
-        template <typename Container = istl::vector<traits_type, str_t>>
+        template <typename Container = basic_path<str_t, allocator_type>>
         [[nodiscard]] bool extract_slugs_to(Container& container) const noexcept {
             using vec_str_t = typename Container::value_type;
             static_assert(istl::String<vec_str_t>,
@@ -162,7 +167,7 @@ namespace webpp::uri {
         auto& set(istl::StringViewifiable auto&& m_path) noexcept {
             this->parse_path();
             str_t str(this->get_allocator());
-            encode_uri_component(m_path, str, charset(PCHAR_NOT_PCT_ENCODED, charset<char_type, 1>('/')));
+            encode_uri_component(m_path, str, charset(details::PCHAR_NOT_PCT_ENCODED<char_type>, charset<char_type, 1>('/')));
             auto _encoded_path = (ascii::starts_with(m_path, '/') ? "" : "/") + str;
             this->replace_value(this->authority_end, this->query_start - this->authority_end, _encoded_path);
             return *this;
@@ -209,7 +214,7 @@ namespace webpp::uri {
          * segments of the URI, in order to normalize the path
          * (apply and remove "." and ".." segments).
          */
-        auto& normalize_path() noexcept {
+        auto& normalize() noexcept {
             // TODO
             return *this;
         }

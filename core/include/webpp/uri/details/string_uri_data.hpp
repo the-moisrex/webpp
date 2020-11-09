@@ -3,10 +3,10 @@
 #ifndef WEBPP_STRING_URI_DATA_HPP
 #define WEBPP_STRING_URI_DATA_HPP
 
-#include "../strings/charset.hpp"
-#include "../utils/allocators.hpp"
+#include "../../strings/charset.hpp"
+#include "../../utils/allocators.hpp"
 
-namespace webpp::uri {
+namespace webpp::uri::details {
 
     template <Traits TraitsType, bool Mutable>
     struct string_uri_data
@@ -31,7 +31,6 @@ namespace webpp::uri {
 
         /**
          * If the user uses this
-         * @param u
          */
         constexpr string_uri_data(storred_str_t&& u) noexcept : data(stl::move(u)) {}
 

@@ -3,8 +3,8 @@
 #ifndef WEBPP_QUERIES_STRING_HPP
 #define WEBPP_QUERIES_STRING_HPP
 
-#include "./parser.hpp"
 #include "../std/optional.hpp"
+#include "details/parser.hpp"
 
 namespace webpp::uri {
 

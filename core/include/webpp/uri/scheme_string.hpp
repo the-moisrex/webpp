@@ -3,7 +3,8 @@
 #ifndef WEBPP_SCHEME_STRING_HPP
 #define WEBPP_SCHEME_STRING_HPP
 
-#include "./parser.hpp"
+
+#include "details/parser.hpp"
 
 namespace webpp::uri {
 

@@ -24,6 +24,7 @@ namespace webpp {
     }
 
     auto mime_type_of(istl::StringViewifiable auto &&extension) {
+        // todo: optimize this based on first character of the extension
         for (details::mapping const* m = details::mappings; m->extension; ++m) {
             if (ascii::iequals<ascii::char_case_side::second_lowered>(m->extension, extension)) {
                 return m->mime_type;

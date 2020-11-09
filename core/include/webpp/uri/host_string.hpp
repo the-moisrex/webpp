@@ -3,10 +3,11 @@
 #ifndef WEBPP_HOST_STRING_HPP
 #define WEBPP_HOST_STRING_HPP
 
-#include <variant>
 #include "../std/optional.hpp"
-#include "./parser.hpp"
 #include "../utils/ipv6.hpp"
+#include "details/parser.hpp"
+
+#include <variant>
 
 namespace webpp::uri {
 

@@ -5,13 +5,16 @@
 #ifndef WEBPP_PARSER_HPP
 #define WEBPP_PARSER_HPP
 
-#include "./encoding.hpp"
-#include "./string_uri_data.hpp"
+#include "../../strings/to_case.hpp"
+#include "../encoding.hpp"
+#include "string_uri_data.hpp"
 
 namespace webpp {
 
     template <typename ...T>
     struct uri_parser : string_uri_data<T...> {
+        using super = string_uri_data<T...>;
+        using str_view_t = typename super::string_view_type;
 
 
         /**
@@ -290,8 +293,7 @@ namespace webpp {
         }
 
         /**
-         * parse query; it ensures that query_start and fragment_start are
-         * changed
+         * parse query; it ensures that query_start and fragment_start are changed
          */
         void parse_query() const noexcept {
             if (this->query_start != str_view_t::npos)

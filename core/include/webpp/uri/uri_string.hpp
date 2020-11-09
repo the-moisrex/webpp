@@ -1,6 +1,7 @@
 #ifndef WEBPP_UTILS_URI_H
 #define WEBPP_UTILS_URI_H
 
+#include "../convert/casts.hpp"
 #include "../std/map.hpp"
 #include "../std/optional.hpp"
 #include "../std/vector.hpp"
@@ -8,7 +9,6 @@
 #include "../strings/to_case.hpp"
 #include "../traits/traits_concepts.hpp"
 #include "../utils/allocators.hpp"
-#include "../utils/casts.hpp"
 #include "../utils/ipv4.hpp"
 #include "../utils/ipv6.hpp"
 #include "../validators/validators.hpp"
@@ -124,7 +124,7 @@ namespace webpp::uri {
          * @brief this function is the same as "encodeURI" in javascript
          */
         void encode_to(istl::String auto& output) const noexcept {
-            encode_uri_component(str(), output, ALLOWED_CHARACTERS_IN_URI);
+            encode_uri_component(str(), output, details::ALLOWED_CHARACTERS_IN_URI<char_type>);
         }
 
         /**
@@ -133,7 +133,7 @@ namespace webpp::uri {
          * be nullopt when the uri is not valid and has invalid characters
          */
         [[nodiscard]] bool decode_to(istl::String auto& output) const noexcept {
-            return decode_uri_component(str(), output, ALLOWED_CHARACTERS_IN_URI);
+            return decode_uri_component(str(), output, details::ALLOWED_CHARACTERS_IN_URI<char_type>);
         }
 
         /**
