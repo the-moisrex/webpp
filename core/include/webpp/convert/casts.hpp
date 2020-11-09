@@ -12,7 +12,7 @@ namespace webpp {
 
     template <typename T, bool is_signed = true, bool throw_mistakes = false>
     constexpr T to(istl::StringViewifiable auto&& _str) noexcept(!throw_mistakes) {
-        stl::basic_string_view str{_str};
+        const auto str = istl::string_viewify(stl::forward<decltype(_str)>(_str));
         T                      ret = 0;
         if (str.size() > 0) {
             // todo: minus is not used!!
