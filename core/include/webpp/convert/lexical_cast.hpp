@@ -41,7 +41,7 @@ namespace webpp::lexical {
             append_to(res, stl::forward<Source>(source));
             return res;
         } else if constexpr (istl::String<target_t> && stl::is_floating_point_v<src_t>) {
-            // todo: doesn't work at all now because GCC doesn't implement it
+            // todo: doesn't work at all now because GCC has not implement it yet after 4 years
             const auto the_alloc = extract_allocator_or_default(allocs..., source);
             Target res{the_alloc};
             append_to(res, stl::forward<Source>(source), stl::chars_format::fixed);
@@ -105,6 +105,7 @@ namespace webpp::lexical {
     // todo: implement complex numbers
     // todo: implement bool special cases
     // todo: implement other integer types than "char" as string's character
+    // todo: implement locale-aware casts as well
 
 } // namespace webpp::lexical
 

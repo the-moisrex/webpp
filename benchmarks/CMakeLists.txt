@@ -23,6 +23,7 @@ set(FILE_SOURCES
         is_alpha/is_alpha_benchmark.cpp
         vector_erase/vector_erase_benchmark.cpp
         uri_normalize/uri_normalize_benchmark.cpp
+        lexical_cast/lexical_cast_benchmark.cpp
         )
 file(GLOB FILE_PCH *_pch.hpp)
 

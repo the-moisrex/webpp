@@ -26,4 +26,17 @@ static std::array<std::string, count> str_array_generator(std::size_t size = 100
     return strs;
 }
 
+
+
+static std::vector<int> int_generator(std::size_t size = 10000) {
+  std::vector<int> ints;
+  ints.reserve(size);
+  for (std::size_t i = 0 ; i < size; i++) {
+    ints.push_back(i);
+  }
+  std::shuffle(ints.begin(), ints.end(), std::mt19937(std::random_device()()));
+  return ints;
+}
+
+
 #endif // WEBPP_COMMON_URILS_PCH_H
