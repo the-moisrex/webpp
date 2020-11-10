@@ -7,6 +7,7 @@
 #include "../std/string_view.hpp"
 #include "../utils/allocators.hpp"
 #include "./casts.hpp"
+#include "../std/format.hpp"
 
 namespace webpp::lexical {
 
@@ -26,10 +27,7 @@ namespace webpp::lexical {
         using target_t = stl::remove_cvref_t<Target>;
 
         if constexpr (stl::same_as<target_t, src_t>) {
-            if constexpr (stl::same_as<Target, Source>) {
-                return stl::forward<Source>(source);
-            } else {
-            }
+            return stl::forward<Source>(source);
         } else if constexpr (istl::StringView<target_t> && istl::StringViewifiableOf<target_t, src_t>) {
             return istl::string_viewify_of<Target>(stl::forward<Source>(source));
         } else if constexpr (istl::String<target_t> && istl::StringifiableOf<target_t, src_t>) {
@@ -41,10 +39,11 @@ namespace webpp::lexical {
             append_to(res, stl::forward<Source>(source));
             return res;
         } else if constexpr (istl::String<target_t> && stl::is_floating_point_v<src_t>) {
-            // todo: doesn't work at all now because GCC has not implement it yet after 4 years
             const auto the_alloc = extract_allocator_or_default(allocs..., source);
+            // todo: you can make this faster
             Target res{the_alloc};
-            append_to(res, stl::forward<Source>(source), stl::chars_format::fixed);
+            stl::format_to(stl::back_inserter(res), FMT_COMPILE("{}"),
+                           stl::forward<Source>(source));
             return res;
         } else if constexpr (stl::is_integral_v<target_t>) {
             if constexpr (stl::is_integral_v<src_t>) {
