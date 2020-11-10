@@ -38,7 +38,7 @@ namespace webpp::uri {
             return res;
         }
 
-        void append_raw_to(istl::String &out) const {
+        void append_raw_to(istl::String auto &out) const {
             const bool user_empty = !username.empty();
             const bool pass_empty = !password.empty();
             if (user_empty && pass_empty) {

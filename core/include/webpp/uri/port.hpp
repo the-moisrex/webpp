@@ -24,11 +24,11 @@ namespace webpp::uri {
         using string_type = stl::remove_cvref_t<StringType>;
 
         template <typename ...T>
-        constexpr basic_fragments(T&&...args) : string_type{stl::forward<T>(args)...} {
+        constexpr basic_port(T&&...args) : string_type{stl::forward<T>(args)...} {
             // todo: make sure if it's a valid port number
-            if (!is::digit(*this)) {
+            // if (!is::digit(*this)) {
                 // convert the service name to port number
-            }
+            // }
         }
 
         template <typename T>

@@ -18,15 +18,15 @@ namespace webpp::uri {
     struct basic_uri {
         using string_type    = stl::remove_cvref_t<StringType>;
         using char_type      = typename string_type::value_type;
-        using allocator_type = typename stirng_type::allocator_type;
+        using allocator_type = typename string_type::allocator_type;
 
         using scheme_type    = basic_scheme<string_type>;
-        using user_info_type = basic_uri_info<string_type>;
+        using user_info_type = basic_user_info<string_type>;
         using host_type      = basic_host<string_type>;
         using port_type      = basic_port<string_type>;
         using path_type      = basic_path<string_type>;
         using queries_type   = basic_queries<string_type>;
-        using fragment_type  = basic_fragment<stirng_type>;
+        using fragment_type  = basic_fragment<string_type>;
 
         scheme_type    scheme{};
         user_info_type user_info{};
@@ -50,6 +50,18 @@ namespace webpp::uri {
         }
 
 
+        auto const& get_allocator() const noexcept {
+            return extract_allocator_of<allocator_type>(scheme,
+                                                        user_info.username,
+                                                        user_info.password,
+                                                        host,
+                                                        port,
+                                                        path,
+                                                        queries,
+                                                        fragment);
+        }
+
+
         void append_to(istl::String auto& out) {
             // estimate the size
             // todo: check if it has a good impact on performance or it's just in the way
@@ -70,6 +82,13 @@ namespace webpp::uri {
             path.append_to(out);
             queries.append_to(out);
             fragment.append_to(out);
+        }
+
+        template <istl::String StrT = string_type>
+        [[nodiscard]] constexpr StrT to_string() {
+            StrT str{get_allocator()};
+            append_to(str);
+            return str;
         }
 
 

@@ -47,7 +47,7 @@ namespace webpp {
             } else if (const auto colon = _data.find(':'); colon != str_view_t::npos) {
                 auto m_scheme = _data.substr(0, colon);
                 if (ALPHA<char_type>.contains(m_scheme[0]) &&
-                                     m_scheme.substr(1).find_first_not_of(SCHEME_NOT_FIRST.string_view())) {
+                                     m_scheme.substr(1).find_first_not_of(details::SCHEME_NOT_FIRST<char_type>.string_view())) {
                     this->scheme_end = colon;
 
                     if (_data.substr(colon + 1, 2) == "//") {

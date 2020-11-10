@@ -30,6 +30,9 @@ namespace webpp::uri {
         using string_type = stl::conditional_t<istl::String<SlugType>, SlugType,
         stl::basic_string<char_type, allocator_type>>;
 
+        static constexpr std::string_view parent_dir= "..";
+        static constexpr std::string_view current_dir = ".";
+
         template <typename ...T>
         constexpr basic_path(T&&...args) :
           container_type{stl::forward<T>(args)...} {}
