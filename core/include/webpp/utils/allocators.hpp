@@ -26,10 +26,12 @@ namespace webpp {
 
         template <typename AllocType = void>
         struct alloc_finder_type {
+            using alloc_type = stl::remove_cvref_t<AllocType>;
+
             auto operator()(auto&& arg) const noexcept {
                 using U = stl::remove_cvref_t<decltype(arg)>;
-                if constexpr (!stl::is_void_v<AllocType>) {
-                    if constexpr (stl::uses_allocator_v<U, AllocType> &&
+                if constexpr (!stl::is_void_v<alloc_type>) {
+                    if constexpr (/* stl::uses_allocator_v<U, alloc_type> && */
                                   requires(U n_alloc) { n_alloc.get_allocator(); }) {
                         // I have to explicitly use decltype here because of a clang bug
                         return temp_alloc_holder<decltype(arg.get_allocator())>{arg.get_allocator()};
@@ -38,7 +40,7 @@ namespace webpp {
                     }
                 } else {
                     if constexpr (requires(U n_alloc) {
-                                      typename U::allocator_type;
+                                      // typename U::allocator_type;
                                       n_alloc.get_allocator();
                                   }) {
                         // I have to use decltype because of a clang bug
@@ -101,6 +103,18 @@ namespace webpp {
         return res;
     }
 
+    template <typename AllocType, typename... T>
+    [[nodiscard]] inline auto extract_allocator_of_or_default(T&&... args) noexcept {
+        details::alloc_finder_type<AllocType> finder;
+        const auto                            res = (finder | ... | finder(stl::forward<T>(args)));
+        if constexpr (
+          stl::is_same_v<stl::remove_cvref_t<decltype(res)>, details::temp_alloc_holder<AllocType>>) {
+            return res;
+        } else {
+            // todo: we might be able to find and convert an allocator and not just re-create it
+            return AllocType{};
+        }
+    }
 
 
     template <typename AllocType>

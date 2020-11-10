@@ -4,12 +4,13 @@
 #define WEBPP_QUERIES_HPP
 
 #include "../std/map.hpp"
+#include "../utils/allocators.hpp"
 
 namespace webpp::uri {
 
-    // todo: complete this and use it in the uri_queries
     template <typename StringType = stl::string,
-              typename AllocType  = typename stl::remove_cvref_t<StringType>::allocator_type>
+              typename AllocType  = rebind_allocator<typename stl::remove_cvref_t<StringType>::allocator_type,
+                                                    stl::pair<stl::add_const_t<stl::remove_cvref_t<StringType>>, stl::remove_cvref_t<StringType>>>>
     struct basic_queries : stl::map<stl::remove_cvref_t<StringType>, stl::remove_cvref_t<StringType>,
                                     stl::less<stl::remove_cvref_t<StringType>>, AllocType> {
         using string_type    = stl::remove_cvref_t<StringType>;

@@ -6,6 +6,7 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
+#include "../utils/allocators.hpp"
 
 #include <numeric>
 
@@ -22,7 +23,7 @@ namespace webpp::uri {
         slug.size();
     };
 
-    template <Slug SlugType = stl::string, typename AllocType = typename SlugType::allocator_type>
+    template <Slug SlugType = stl::string, typename AllocType = rebind_allocator<typename SlugType::allocator_type, SlugType>>
     struct basic_path : public stl::vector<SlugType, AllocType> {
         using container_type = stl::vector<SlugType, AllocType>;
         using allocator_type = AllocType;

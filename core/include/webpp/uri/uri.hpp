@@ -50,8 +50,9 @@ namespace webpp::uri {
         }
 
 
-        auto const& get_allocator() const noexcept {
-            return extract_allocator_of<allocator_type>(scheme,
+        template <typename T = allocator_type>
+        auto get_allocator() const noexcept {
+            return extract_allocator_of_or_default<T>(scheme,
                                                         user_info.username,
                                                         user_info.password,
                                                         host,
@@ -86,7 +87,7 @@ namespace webpp::uri {
 
         template <istl::String StrT = string_type>
         [[nodiscard]] constexpr StrT to_string() {
-            StrT str{get_allocator()};
+            StrT str{get_allocator<typename StrT::value_type>()};
             append_to(str);
             return str;
         }
