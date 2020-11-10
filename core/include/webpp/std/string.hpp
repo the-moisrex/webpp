@@ -113,8 +113,7 @@ namespace webpp::istl {
     }
 
 
-    template <template <typename...> typename StrT, typename Strifiable>
-    requires(StringifiableOfTemplate<StrT, Strifiable>)
+    template <typename Strifiable>
     [[nodiscard]] constexpr auto stringify(Strifiable&& str, auto const& allocator) noexcept {
         return stringify_of<details::string::deduced_type<stl::basic_string, Strifiable>>(
           stl::forward<Strifiable>(str), allocator);
