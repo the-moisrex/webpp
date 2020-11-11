@@ -43,7 +43,7 @@ namespace webpp::uri {
          */
         [[nodiscard]] stl::optional<string_type> decoded_string() const noexcept {
             string_type d_queries{this->get_allocator()};
-            if (!decode_uri_component(raw(), d_queries, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED)) {
+            if (!decode_uri_component(raw(), d_queries, details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>)) {
                 return stl::nullopt;
             }
             return d_queries;
@@ -68,7 +68,7 @@ namespace webpp::uri {
             if (ascii::starts_with(m_query, '?')) {
                 encoded_query.append('?');
             }
-            encode_uri_component(m_query, encoded_query, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
+            encode_uri_component(m_query, encoded_query, details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>);
 
             this->parse_query();
 
@@ -130,8 +130,8 @@ namespace webpp::uri {
             for (auto it = _queries_begin; it != _queries_end; ++it) {
                 string_type name(this->get_allocator());
                 string_type value(this->get_allocator());
-                encode_uri_component(it->first, name, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
-                encode_uri_component(it->second, value, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED);
+                encode_uri_component(it->first, name, details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>);
+                encode_uri_component(it->second, value, details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>);
                 if (name.empty()) // when name is empty, we just don't care
                     continue;
                 _query_data.append(name);
@@ -185,12 +185,12 @@ namespace webpp::uri {
                 if (and_sep != string_view_type::npos) { // we have a value as well
                     d_value = _query.substr(eq_sep + 1, and_sep);
                 }
-                if (!decode_uri_component(name, d_name, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED)) {
+                if (!decode_uri_component(name, d_name, details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>)) {
                     d_name = name; // just put the non-decoded string there
                 }
                 if (!d_name.empty()) {
                     map_value_type new_value(q_structured.get_allocator());
-                    if (decode_uri_component(d_value, new_value, QUERY_OR_FRAGMENT_NOT_PCT_ENCODED)) {
+                    if (decode_uri_component(d_value, new_value, details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>)) {
                         q_structured[d_name] = stl::move(new_value);
                     } else {
                         q_structured[d_name] = stl::move(d_value); // just put the non-decoded value here

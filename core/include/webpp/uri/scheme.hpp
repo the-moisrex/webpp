@@ -23,6 +23,14 @@ namespace webpp::uri {
             return this->empty();
         }
 
+        void append_to(istl::String auto& out) const {
+            if (!this->empty()) {
+                // out.reserve(out.size() + this->size() + 1);
+                out += *this;
+                out += ':';
+            }
+        }
+
     };
 
 }

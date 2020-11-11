@@ -27,6 +27,12 @@ namespace webpp::uri {
             return this->back();
         }
 
+        void append_to(istl::String auto&str) const {
+            for (auto const& subdomain : *this) {
+                str.append(subdomain);
+            }
+        }
+
     };
 
 }

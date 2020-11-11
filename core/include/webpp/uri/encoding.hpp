@@ -100,7 +100,11 @@ namespace webpp {
         const auto input_size = input.size();
         auto       it         = input.data();
         const auto input_end  = it + input_size;
-        output.reserve(output.size() + input_size * 1.5); // 1.5 is by chance
+        { // todo: see if this is necessary/performant
+            const auto new_capacity = output.size() + input_size * 1.5; // 1.5 is by chance
+            if (output.capacity() < new_capacity)
+                output.reserve(new_capacity);
+        }
         for (; it != input_end; ++it) {
             bool need_conversion;
             if constexpr (uri_encoding_policy::allowed_chars == Policy) {

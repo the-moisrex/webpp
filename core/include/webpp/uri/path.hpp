@@ -7,6 +7,7 @@
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
 #include "../utils/allocators.hpp"
+#include "./details/constants.hpp"
 
 #include <numeric>
 
@@ -33,6 +34,7 @@ namespace webpp::uri {
 
         static constexpr std::string_view parent_dir= "..";
         static constexpr std::string_view current_dir = ".";
+        static constexpr auto allowed_chars = details::PCHAR_NOT_PCT_ENCODED<char_type>; // except slash char
 
         template <typename ...T>
         constexpr basic_path(T&&...args) :
@@ -88,8 +90,7 @@ namespace webpp::uri {
             }
         }
 
-        string_type to_string() const {
-            string_type str{this->get_allocator()};
+        void append_to(istl::String auto& str) const {
             if (this->size() == 0)
                 return str;
 
@@ -97,8 +98,15 @@ namespace webpp::uri {
             str.append(*it++);
             for (; it != this->cend(); ++it) {
                 str.append("/");
-                str.append(*it);
+                encode_uri_component(*it, str, allowed_chars);
             }
+            return str;
+        }
+
+
+        string_type to_string() const {
+            string_type str{this->get_allocator()};
+            append_to(str);
             return str;
         }
 
