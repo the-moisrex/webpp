@@ -19,7 +19,6 @@
 // clang-format on
 
 #include <algorithm>
-#include <type_traits>
 
 namespace webpp::ascii {
 

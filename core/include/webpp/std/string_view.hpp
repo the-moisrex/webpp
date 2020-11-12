@@ -4,7 +4,7 @@
 #define WEBPP_STRING_VIEW_H
 
 #include "../traits/traits_concepts.hpp"
-#include "./std.hpp"
+#include "./string_concepts.hpp"
 
 #include <string_view>
 
@@ -52,7 +52,7 @@ namespace webpp::istl {
          * seem to be able to deduce a template type in a concept but it can do it from here.
          */
         template <template <typename...> typename TT, typename... T>
-        using deduced_type = decltype(TT{stl::declval<stl::remove_cvref_t<T>>()...});
+        using deduced_type = decltype(TT{T{}...});
 
     } // namespace details
 
@@ -125,15 +125,20 @@ namespace webpp::istl {
     /**
      * Convert to string view (if itself is one, return itself, otherwise get one of the basic_string_view)
      */
-    [[nodiscard]] constexpr auto string_viewify(StringViewifiable auto&& str) noexcept {
-        return string_viewify_of<stl::basic_string_view>(stl::forward<decltype(str)>(str));
+     template <StringViewifiable StrT>
+    [[nodiscard]] constexpr auto string_viewify(StrT&& str) noexcept {
+        using char_type = typename stl::remove_cvref_t<StrT>::value_type;
+        using str_view_t = stl::basic_string_view<char_type, stl::char_traits<char_type>>;
+        return string_viewify_of<str_view_t>(stl::forward<StrT>(str));
     }
 
-    template <typename T>
-    using char_type_of = typename decltype(string_viewify(stl::declval<T>()))::value_type;
+    // template <typename T>
+    // using char_type_of = typename decltype(string_viewify(stl::declval<stl::remove_cvref_t<T>>()))::value_type;
 
-    template <typename T>
-    using char_traits_type_of = typename decltype(string_viewify(stl::declval<T>()))::traits_type;
+
+
+//    template <typename T>
+//    using char_traits_type_of = typename decltype(string_viewify(stl::declval<T>()))::traits_type;
 
 } // namespace webpp::istl
 

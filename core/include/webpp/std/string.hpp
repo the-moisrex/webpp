@@ -123,7 +123,7 @@ namespace webpp::istl {
     /**
      * Get the underlying data of the specified string
      */
-    [[nodiscard]] constexpr auto string_data(Stringifiable auto&& str) noexcept {
+    [[nodiscard]] constexpr auto string_data(auto&& str) noexcept {
         if constexpr (requires { str.data(); }) {
             return str.data();
         } else if constexpr (requires { str.c_str(); }) {

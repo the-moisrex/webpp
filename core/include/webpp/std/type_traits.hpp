@@ -36,13 +36,7 @@ namespace webpp::istl {
         using evaluate = details::templated_lazy_evaluate<Condition, Extractor, Args...>;
     };
 
-    /*
-    template <typename T>
-    concept LazyType = requires {
-      typename T::template evaluated<true>::type;
-      typename T::template evaluated<false>::type;
-    };
-*/
+
 
     /**
      * Lazy Conditional is a class type that is designed to have the same usage as std::conditional but

@@ -12,6 +12,9 @@
 
 namespace webpp {
 
+    template <typename T>
+    concept TraitsOrVoid = stl::is_void_v<stl::remove_cvref_t<T>> || Traits<stl::remove_cvref_t<T>>;
+
     /**
      * istring = improved string
      *
@@ -25,7 +28,7 @@ namespace webpp {
      * @tparam StringType
      */
     template <typename StringType,
-              Traits TraitsType = typename std_traits_from<stl::remove_cvref_t<StringType>>::type>
+              TraitsOrVoid TraitsType = typename std_traits_from<stl::remove_cvref_t<StringType>>::type>
     struct istring : public stl::remove_cvref_t<StringType> {
         using traits_type      = TraitsType;
         using string_type      = stl::remove_cvref_t<StringType>;
@@ -35,6 +38,10 @@ namespace webpp {
 
         static constexpr bool has_allocator = requires {
             typename string_type::allocator_type;
+        };
+        static constexpr bool has_traits = stl::is_void_v<traits_type>;
+        static constexpr bool is_mutable = requires (string_type str) {
+          str.clear();
         };
 
       private:
@@ -79,12 +86,12 @@ namespace webpp {
         }
 
         [[nodiscard]] constexpr alternate_std_string_view_type std_string_view() const noexcept {
-            return istl::string_viewify(*this);
+            return istl::string_viewify_of<alternate_std_string_view_type>(*this);
         }
 
 
         [[nodiscard]] constexpr alternate_std_string_type std_string() const noexcept {
-            return istl::stringify(*this, get_allocator());
+            return istl::stringify_of<alternate_std_string_type>(*this, get_allocator());
         }
 
         explicit operator alternate_std_string_view_type() const noexcept {
@@ -271,6 +278,10 @@ namespace webpp {
 
     using std_istring      = istring<stl::string>;
     using std_istring_view = istring<stl::string_view>;
+
+    template <istl::CharType CharT, stl::size_t size>
+    istring(const CharT(&)[size]) -> istring<stl::basic_string_view<CharT>>;
+
 
 } // namespace webpp
 
