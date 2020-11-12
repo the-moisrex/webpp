@@ -52,7 +52,7 @@ namespace webpp::istl {
          * seem to be able to deduce a template type in a concept but it can do it from here.
          */
         template <template <typename...> typename TT, typename... T>
-        using deduced_type = decltype(TT{T{}...});
+        using deduced_type = decltype(TT{stl::declval<T>()...});
 
     } // namespace details
 
@@ -60,7 +60,7 @@ namespace webpp::istl {
      * Check if T is a "string view" of type "StringViewType"
      */
     template <typename StrViewType, typename T>
-    concept StringViewifiableOf = !istl::CharType<T> && requires(stl::remove_cvref_t<T> str) {
+    concept StringViewifiableOf = !istl::CharType<stl::remove_cvref_t<T>> && requires(stl::remove_cvref_t<T> str) {
         requires requires {
             StrViewType{str};
         }
@@ -127,7 +127,7 @@ namespace webpp::istl {
      */
      template <StringViewifiable StrT>
     [[nodiscard]] constexpr auto string_viewify(StrT&& str) noexcept {
-        using char_type = typename stl::remove_cvref_t<StrT>::value_type;
+        using char_type = char_type_of<StrT>;
         using str_view_t = stl::basic_string_view<char_type, stl::char_traits<char_type>>;
         return string_viewify_of<str_view_t>(stl::forward<StrT>(str));
     }

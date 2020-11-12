@@ -8,6 +8,7 @@
 #include "../std/string_view.hpp"
 #include "../std/type_traits.hpp"
 #include "../traits/std_traits.hpp"
+#include "./trim.hpp"
 #include "to_case.hpp"
 
 namespace webpp {
@@ -272,6 +273,21 @@ namespace webpp {
 
         [[nodiscard]] constexpr istring_type ascii_to_lower_copy() const noexcept {
             return istring_type{*this}.ascii_to_lower();
+        }
+
+        auto& ltrim() noexcept {
+            ascii::ltrim(*this);
+            return *this;
+        }
+
+        auto& rtrim() noexcept {
+            ascii::rtrim(*this);
+            return *this;
+        }
+
+        auto& trim() noexcept {
+            ltrim();
+            return rtrim();
         }
     };
 

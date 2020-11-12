@@ -11,6 +11,9 @@ TEST(IString, Creation) {
 
     std_istring_view test_view = "test view";
     EXPECT_EQ(test_view, "test view");
+
+    istring hello = "hello";
+    EXPECT_EQ(hello, "hello");
 }
 
 TEST(IString, TOLowerToUpper) {

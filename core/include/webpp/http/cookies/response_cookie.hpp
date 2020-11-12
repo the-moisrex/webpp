@@ -85,8 +85,8 @@ namespace webpp {
         constexpr response_cookie(istl::Stringifiable auto&& name,
                                   istl::Stringifiable auto&& value,
                                   string_allocator_type const&     alloc = {}) noexcept
-          : _name{istl::stringify(stl::forward<decltype(name)>(name), alloc), alloc},
-            _value{istl::stringify(stl::forward<decltype(value)>(value), alloc), alloc},
+          : _name{istl::stringify_of<name_t>(stl::forward<decltype(name)>(name), alloc), alloc},
+            _value{istl::stringify_of<value_t>(stl::forward<decltype(value)>(value), alloc), alloc},
             _domain{alloc},
             _path{alloc},
             _comment{alloc},
