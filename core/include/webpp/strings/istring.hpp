@@ -275,20 +275,39 @@ namespace webpp {
             return istring_type{*this}.ascii_to_lower();
         }
 
-        auto& ltrim() noexcept {
-            ascii::ltrim(*this);
+        auto& ltrim(istl::StringView auto&& whitespaces = ascii::standard_whitespaces) noexcept {
+            ascii::ltrim(*this, stl::forward<decltype(whitespaces)>(whitespaces));
             return *this;
         }
 
-        auto& rtrim() noexcept {
-            ascii::rtrim(*this);
+        auto& rtrim(istl::StringView auto&& whitespaces = ascii::standard_whitespaces) noexcept {
+            ascii::rtrim(*this, stl::forward<decltype(whitespaces)>(whitespaces));
             return *this;
         }
 
-        auto& trim() noexcept {
-            ltrim();
-            return rtrim();
+        auto& trim(istl::StringView auto&& whitespaces = ascii::standard_whitespaces) noexcept {
+            ascii::trim(*this, stl::forward<decltype(whitespaces)>(whitespaces));
+            return *this;
         }
+
+        auto ltrim_copy(istl::StringView auto&& whitespaces = ascii::standard_whitespaces) noexcept {
+            istring str = *this;
+            str.ltrim(stl::forward<decltype(whitespaces)>(whitespaces));
+            return str;
+        }
+
+        auto rtrim_copy(istl::StringView auto&& whitespaces = ascii::standard_whitespaces) noexcept {
+            istring str = *this;
+            str.rtrim(stl::forward<decltype(whitespaces)>(whitespaces));
+            return str;
+        }
+
+        auto trim_copy(istl::StringView auto&& whitespaces = ascii::standard_whitespaces) noexcept {
+            istring str = *this;
+            str.trim(stl::forward<decltype(whitespaces)>(whitespaces));
+            return str;
+        }
+
     };
 
 
