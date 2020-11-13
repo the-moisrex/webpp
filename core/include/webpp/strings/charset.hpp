@@ -22,6 +22,7 @@ namespace webpp {
     template <istl::CharType CharT, stl::size_t N>
     struct charset : public stl::array<stl::remove_cvref_t<CharT>, N> {
         using value_type = stl::remove_cvref_t<CharT>;
+        static constexpr stl::size_t size = N;
 
       private:
         template <typename Tpl, typename Callable, stl::size_t... I>
@@ -121,6 +122,14 @@ namespace webpp {
           typename StrType::allocator_type const& alloc = typename StrType::allocator_type{}) const noexcept {
             return StrType{super::data(), super::size(), alloc};
         }
+    };
+
+    template <typename T>
+    concept CharSet = requires {
+      typename stl::remove_cvref_t<T>::value_type;
+      stl::remove_cvref_t<T>::size;
+      stl::same_as<stl::remove_cvref_t<T>,
+                   charset<typename stl::remove_cvref_t<T>::value_type, stl::remove_cvref_t<T>::size>>;
     };
 
     /**

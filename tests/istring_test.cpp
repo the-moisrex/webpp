@@ -27,3 +27,8 @@ TEST(IString, TOLowerToUpper) {
     EXPECT_TRUE(test.is_ascii_lower());
 }
 
+TEST(IString, Trim) {
+    std_istring test = "test";
+    EXPECT_EQ("test", test.trim_copy());
+}
+
