@@ -2,7 +2,7 @@
 
 #include "../core/include/webpp/logs/std_logger.hpp"
 
-#include <gtest/gtest.h>
+#include "./common_pch.hpp"
 
 using namespace webpp;
 

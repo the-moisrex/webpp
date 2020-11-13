@@ -3,7 +3,7 @@
 #include "../core/include/webpp/http/routes/path.hpp"
 #include "./fake_protocol.hpp"
 
-#include <gtest/gtest.h>
+#include "./common_pch.hpp"
 #include <string>
 
 using namespace webpp;

@@ -3,7 +3,7 @@
 #include "../core/include/webpp/traits/std_traits.hpp"
 #include "../core/include/webpp/validators/validators.hpp"
 
-#include <gtest/gtest.h>
+#include "./common_pch.hpp"
 
 using namespace webpp;
 

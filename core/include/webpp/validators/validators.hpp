@@ -270,7 +270,7 @@ namespace webpp {
             using char_type = istl::char_type_of<decltype(str)>;
 
             if (auto found = stl::find_if(stl::rbegin(str), stl::rend(str),
-                                          [&](const auto& c) {
+                                          [&](auto&& c) {
                                               return divider_chars.contains(c);
                                           });
                 found != stl::rend(str)) {

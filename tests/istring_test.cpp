@@ -1,7 +1,7 @@
 // Created by moisrex on 9/28/20.
 
 #include "../core/include/webpp/strings/istring.hpp"
-#include <gtest/gtest.h>
+#include "./common_pch.hpp"
 
 using namespace webpp;
 

@@ -2,7 +2,7 @@
 
 #include "../core/include/webpp/utils/memory.hpp"
 
-#include <gtest/gtest.h>
+#include "./common_pch.hpp"
 #include <string>
 
 using namespace webpp;

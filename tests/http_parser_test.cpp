@@ -1,5 +1,5 @@
 // Created by moisrex on 9/24/20.
-#include <gtest/gtest.h>
+#include "./common_pch.hpp"
 #include "../core/include/webpp/http/syntax/request_parser.hpp"
 #include "../core/include/webpp/http/syntax/http_lexer.hpp"
 

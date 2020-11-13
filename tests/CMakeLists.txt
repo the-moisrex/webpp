@@ -13,6 +13,7 @@ endif ()
 find_package(GTest REQUIRED)
 find_package(fmt REQUIRED)
 
+
 add_executable(${TEST_NAME} ${TEST_SOURCES})
 target_link_libraries(${TEST_NAME}
         PRIVATE ${SLIB_NAME}
@@ -23,3 +24,5 @@ target_link_libraries(${TEST_NAME}
 add_test(${TEST_NAME} ${TEST_NAME})
 #target_include_directories(${TEST_NAME}
 #        PRIVATE ${LIB_INCLUDE_DIR})
+
+target_precompile_headers(${TEST_NAME} PUBLIC common_pch.hpp)

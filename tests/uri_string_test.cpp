@@ -1,7 +1,7 @@
 #include "../core/include/webpp/traits/std_traits.hpp"
 #include "../core/include/webpp/uri/uri_string.hpp"
 
-#include <gtest/gtest.h>
+#include "./common_pch.hpp"
 #include <string>
 
 using namespace webpp;

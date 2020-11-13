@@ -2,7 +2,7 @@
 #include "../core/include/webpp/strings/iequals.hpp"
 #include "../core/include/webpp/strings/to_case.hpp"
 
-#include <gtest/gtest.h>
+#include "./common_pch.hpp"
 
 using namespace webpp::ascii;
 

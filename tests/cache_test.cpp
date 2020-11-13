@@ -1,6 +1,6 @@
 #include "../core/include/webpp/cache/cache.hpp"
 
-#include <gtest/gtest.h>
+#include "./common_pch.hpp"
 
 using namespace webpp;
 

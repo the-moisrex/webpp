@@ -4,7 +4,7 @@
 #include "../core/include/webpp/utils/debounce.hpp"
 
 #include <array>
-#include <gtest/gtest.h>
+#include "./common_pch.hpp"
 
 using namespace webpp;
 

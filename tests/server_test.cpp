@@ -1,6 +1,6 @@
 #include "../core/include/webpp/http/http.hpp"
 
-#include <gtest/gtest.h>
+#include "./common_pch.hpp"
 #include <string>
 
 using namespace webpp;
