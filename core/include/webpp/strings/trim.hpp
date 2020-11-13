@@ -86,7 +86,7 @@ namespace webpp::ascii {
     // trim from start (in place)
     template <CharSet CS = decltype(standard_whitespaces)>
     static inline void ltrim(istl::String auto& s, CS whitespaces = standard_whitespaces) noexcept {
-        const auto pos = s.find_first_not_of(whitespaces.data(), 0, whitespaces.size());
+        const auto pos = s.find_first_not_of(whitespaces.data());
         if (pos != stl::remove_cvref_t<decltype(s)>::npos)
             s.erase(0, pos);
     }
@@ -94,9 +94,12 @@ namespace webpp::ascii {
     // trim from end (in place)
     template <CharSet CS = decltype(standard_whitespaces)>
     static inline void rtrim(istl::String auto& s, CS whitespaces = standard_whitespaces) noexcept {
-        const auto pos = s.find_last_not_of(whitespaces.data(), 0, whitespaces.size());
-        if (pos != stl::remove_cvref_t<decltype(s)>::npos)
-            s.erase(pos);
+        const auto pos = s.find_last_not_of(whitespaces.data());
+        if (pos == stl::remove_cvref_t<decltype(s)>::npos) {
+            s.clear();
+        } else {
+            s.erase(pos + 1);
+        }
     }
 
     // trim from both ends (in place)
