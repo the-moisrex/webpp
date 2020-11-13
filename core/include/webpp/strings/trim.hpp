@@ -16,14 +16,14 @@ namespace webpp::ascii {
     template <typename Iter, CharSet CS = decltype(ascii::standard_whitespaces)>
     static inline void ltrim(Iter* begin, Iter const* end,
                              CS whitespaces = standard_whitespaces) noexcept {
-        while (*begin < *end && whitespaces.find((*begin)[0]) != decltype(whitespaces)::npos)
+        while (*begin < *end && whitespaces.contains((*begin)[0]))
             ++(*begin);
     }
 
     template <typename Iter, CharSet CS = decltype(ascii::standard_whitespaces)>
     static inline void rtrim(Iter const* begin, Iter* end,
                              CS whitespaces = standard_whitespaces) noexcept {
-        while (*begin < *end && whitespaces.find((*end)[-1]) != decltype(whitespaces)::npos)
+        while (*begin < *end && whitespaces.contains((*end)[-1]))
             --(*end);
     }
 
@@ -37,7 +37,7 @@ namespace webpp::ascii {
     // trim from start (in place)
     template <istl::StringView StrViewType, CharSet CS = decltype(standard_whitespaces)>
     static inline void ltrim(StrViewType& str, CS whitespaces = standard_whitespaces) noexcept {
-        str.remove_prefix(stl::min(str.find_first_not_of(whitespaces.data()), str.size()));
+        str.remove_prefix(stl::min(str.find_first_not_of(whitespaces.data(), 0, whitespaces.size()), str.size()));
     }
 
     template <istl::StringView StrViewType, CharSet CS = decltype(standard_whitespaces)>
@@ -86,13 +86,17 @@ namespace webpp::ascii {
     // trim from start (in place)
     template <CharSet CS = decltype(standard_whitespaces)>
     static inline void ltrim(istl::String auto& s, CS whitespaces = standard_whitespaces) noexcept {
-        s.erase(0, s.find_first_not_of(whitespaces.data()));
+        const auto pos = s.find_first_not_of(whitespaces.data(), 0, whitespaces.size());
+        if (pos != stl::remove_cvref_t<decltype(s)>::npos)
+            s.erase(0, pos);
     }
 
     // trim from end (in place)
     template <CharSet CS = decltype(standard_whitespaces)>
     static inline void rtrim(istl::String auto& s, CS whitespaces = standard_whitespaces) noexcept {
-        s.erase(s.find_last_not_of(whitespaces.data()));
+        const auto pos = s.find_last_not_of(whitespaces.data(), 0, whitespaces.size());
+        if (pos != stl::remove_cvref_t<decltype(s)>::npos)
+            s.erase(pos);
     }
 
     // trim from both ends (in place)

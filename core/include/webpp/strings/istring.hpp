@@ -277,40 +277,40 @@ namespace webpp {
 
         template <CharSet CS = decltype(ascii::standard_whitespaces)>
         auto& ltrim(CS whitespaces = ascii::standard_whitespaces) noexcept {
-            ascii::ltrim(*this, stl::forward<decltype(whitespaces)>(whitespaces));
+            ascii::ltrim(*this, whitespaces);
             return *this;
         }
 
         template <CharSet CS = decltype(ascii::standard_whitespaces)>
         auto& rtrim(CS whitespaces = ascii::standard_whitespaces) noexcept {
-            ascii::rtrim(*this, stl::forward<decltype(whitespaces)>(whitespaces));
+            ascii::rtrim(*this, whitespaces);
             return *this;
         }
 
         template <CharSet CS = decltype(ascii::standard_whitespaces)>
         auto& trim(CS whitespaces = ascii::standard_whitespaces) noexcept {
-            ascii::trim(*this, stl::forward<decltype(whitespaces)>(whitespaces));
+            ascii::trim(*this, whitespaces);
             return *this;
         }
 
         template <CharSet CS = decltype(ascii::standard_whitespaces)>
         auto ltrim_copy(CS whitespaces = ascii::standard_whitespaces) noexcept {
             istring str = *this;
-            str.ltrim(stl::forward<decltype(whitespaces)>(whitespaces));
+            str.ltrim(whitespaces);
             return str;
         }
 
         template <CharSet CS = decltype(ascii::standard_whitespaces)>
         auto rtrim_copy(CS whitespaces = ascii::standard_whitespaces) noexcept {
             istring str = *this;
-            str.rtrim(stl::forward<decltype(whitespaces)>(whitespaces));
+            str.rtrim(whitespaces);
             return str;
         }
 
         template <CharSet CS = decltype(ascii::standard_whitespaces)>
         auto trim_copy(CS whitespaces = ascii::standard_whitespaces) noexcept {
             istring str = *this;
-            str.trim(stl::forward<decltype(whitespaces)>(whitespaces));
+            str.trim(whitespaces);
             return str;
         }
 

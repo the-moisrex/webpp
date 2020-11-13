@@ -30,5 +30,9 @@ TEST(IString, TOLowerToUpper) {
 TEST(IString, Trim) {
     std_istring test = "test";
     EXPECT_EQ("test", test.trim_copy());
+    test = "  ";
+    EXPECT_TRUE(test.trim_copy().empty());
+    test = " t";
+    EXPECT_EQ("t", test.trim_copy());
 }
 

@@ -22,7 +22,7 @@ namespace webpp {
     template <istl::CharType CharT, stl::size_t N>
     struct charset : public stl::array<stl::remove_cvref_t<CharT>, N> {
         using value_type = stl::remove_cvref_t<CharT>;
-        static constexpr stl::size_t size = N;
+        static constexpr stl::size_t array_size = N;
 
       private:
         template <typename Tpl, typename Callable, stl::size_t... I>
@@ -125,11 +125,11 @@ namespace webpp {
     };
 
     template <typename T>
-    concept CharSet = requires {
+    concept CharSet = requires (T cs) {
       typename stl::remove_cvref_t<T>::value_type;
-      stl::remove_cvref_t<T>::size;
+      stl::remove_cvref_t<T>::array_size;
       stl::same_as<stl::remove_cvref_t<T>,
-                   charset<typename stl::remove_cvref_t<T>::value_type, stl::remove_cvref_t<T>::size>>;
+                   charset<typename stl::remove_cvref_t<T>::value_type, stl::remove_cvref_t<T>::array_size>>;
     };
 
     /**
