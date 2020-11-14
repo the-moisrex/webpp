@@ -18,6 +18,7 @@ namespace webpp::uri {
         using string_type    = stl::remove_cvref_t<StringType>;
         using char_type = typename string_type::value_type;
         using allocator_type = AllocType;
+        using value_type = stl::pair<const string_type, string_type>;
         using super          = stl::map<string_type, string_type, stl::less<string_type>, allocator_type>;
         static constexpr auto allowed_chars = details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>;
 
@@ -29,11 +30,15 @@ namespace webpp::uri {
          * Get the raw string non-decoded size
          */
         [[nodiscard]] stl::size_t raw_string_size() const noexcept {
-            return stl::reduce(this->cbegin(), this->cend(), 0ull,
-                               [](string_type const& item) {
-                                   return item.first.size() + item.second.size();
-                               }) +
-                   (this->size() * 2) - 2;
+            // todo: we could remove lambda; or we even can use an iterator_wrapper and use "std::reduce"
+            return [this]() noexcept -> stl::size_t {
+                stl::size_t sum = 0;
+                for (auto const& [key, value] : *this) {
+                    sum += key.size();
+                    sum += value.size();
+                }
+                return sum;
+            }() + (this->size() * 2) - 2;
         }
 
         void append_to(istl::String auto&str) const {

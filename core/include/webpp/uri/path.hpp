@@ -115,9 +115,13 @@ namespace webpp::uri {
          * Get the raw string non-decoded size
          */
         [[nodiscard]] stl::size_t raw_string_size() const noexcept {
-            return stl::reduce(this->cbegin(), this->cend(), 0ull, [] (string_type const& item) {
-                return item.size();
-            }) + this->size() - 1;
+            // todo: we could remove lambda; or we even can use an iterator_wrapper and use "std::reduce"
+            return [this] () noexcept -> stl::size_t {
+                stl::size_t sum = 0;
+                for (auto const& slug : *this)
+                    sum += slug.size();
+                return sum;
+            }() + this->size() - 1;
         }
 
     };

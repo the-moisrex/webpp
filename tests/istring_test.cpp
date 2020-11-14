@@ -34,5 +34,7 @@ TEST(IString, Trim) {
     EXPECT_TRUE(test.trim_copy().empty());
     test = " t";
     EXPECT_EQ("t", test.trim_copy());
+    test = "t    \t";
+    EXPECT_EQ("t", test.rtrim_copy());
 }
 

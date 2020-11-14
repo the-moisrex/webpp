@@ -120,6 +120,13 @@ namespace webpp::istl {
         struct traits_extractor {
             using type = typename T::traits_type;
         };
+
+        // separated this because of Clang error; clang gives errors if I use the requires clause directly
+        template <typename T>
+        static constexpr bool has_value_type = requires {
+            typename stl::remove_cvref_t<T>::value_type;
+        };
+
     }
 
     /**
@@ -127,9 +134,7 @@ namespace webpp::istl {
      */
     template <typename T>
     using char_type_of = lazy_conditional_t<
-      requires {
-          typename stl::remove_cvref_t<T>::value_type;
-      },
+        details::has_value_type<T>,
         templated_lazy_type<details::char_extractor, stl::decay_t<stl::remove_cvref_t<T>>>,
         lazy_type<stl::remove_cvref_t<stl::remove_pointer_t<stl::decay_t<T>>>>
     >;

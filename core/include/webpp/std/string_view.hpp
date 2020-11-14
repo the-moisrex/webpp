@@ -80,7 +80,7 @@ namespace webpp::istl {
     concept StringViewifiableOfTemplate = StringViewifiableOf<details::string_view::deduced_type<StrViewType, T>, T>;
 
     template <typename T>
-    concept StringViewifiable = StringViewifiableOfTemplate<stl::basic_string_view, T>;
+    concept StringViewifiable = StringViewifiableOfTemplate<stl::basic_string_view, stl::remove_cvref_t<T>>;
 
     /**
      * Convert the string value specified to a "string view" of type StrViewT
