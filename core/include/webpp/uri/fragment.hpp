@@ -22,9 +22,13 @@ namespace webpp::uri {
 
 
         void append_to(istl::String auto&str) const {
-            str += '#';
-            encode_uri_component(*this, str, allowed_chars);
+            if (!this->empty()) {
+                str += '#';
+                encode_uri_component(*this, str, allowed_chars);
+            }
         }
+
+        // todo: add to and from json, xml, and other string types that makes sense to use in uri's fragments
     };
 
 
