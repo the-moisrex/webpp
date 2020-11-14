@@ -76,7 +76,10 @@ namespace webpp::istl {
     concept StringifiableOfTemplate = StringifiableOf<details::string::deduced_type<StrType, T>, T>;
 
     template <typename T>
-    concept Stringifiable = StringifiableOfTemplate<stl::basic_string, T>;
+    concept Stringifiable = StringifiableOf<
+      stl::basic_string<char_type_of<T>, char_traits_type_of<T>, allocator_type_of<T>>,
+        stl::remove_cvref_t<T>
+      >;
 
 
     template <typename StrT, typename Strifiable>

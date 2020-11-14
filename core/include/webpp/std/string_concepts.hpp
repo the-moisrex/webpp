@@ -127,7 +127,27 @@ namespace webpp::istl {
             typename stl::remove_cvref_t<T>::value_type;
         };
 
+
+        template <typename T>
+        struct allocator_type_extractor {
+            using type = typename T::allocator_type;
+        };
+
+        template <typename T>
+        static constexpr bool has_allocator_type = requires {
+            typename stl::remove_cvref_t<T>::allocator_type;
+        };
     }
+
+    /**
+     * Get the underlying allocator_type
+     */
+    template <typename T, typename DefaultAllocator = stl::allocator<T>>
+    using allocator_type_of = lazy_conditional_t<
+      details::has_allocator_type<T>,
+      templated_lazy_type<details::allocator_type_extractor, stl::decay_t<stl::remove_cvref_t<T>>>,
+      lazy_type<DefaultAllocator>
+    >;
 
     /**
      * Get the underlying character type in a string/string view/c style string
