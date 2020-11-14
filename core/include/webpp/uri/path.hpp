@@ -92,7 +92,7 @@ namespace webpp::uri {
 
         void append_to(istl::String auto& str) const {
             if (this->size() == 0)
-                return str;
+                return;
 
             auto it = this->cbegin();
             str.append(*it++);
@@ -100,7 +100,6 @@ namespace webpp::uri {
                 str.append("/");
                 encode_uri_component(*it, str, allowed_chars);
             }
-            return str;
         }
 
 
