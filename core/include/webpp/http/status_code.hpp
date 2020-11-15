@@ -7,9 +7,18 @@
 
 #include <cstdint>
 
-namespace webpp {
+namespace webpp::http {
 
     using status_code_type = stl::uint_fast16_t;
+
+    enum struct status_code_category : stl::uint_fast16_t {
+        unknown       = 0,
+        informational = 100,
+        successful    = 200,
+        redirection   = 300,
+        client_error  = 400,
+        server_error  = 500
+    };
 
     enum struct status_code : status_code_type {
         /** An unknown status-code.
@@ -219,8 +228,21 @@ namespace webpp {
         }
     }
 
-    constexpr auto status_code_reason_phrase(status_code code) noexcept {
+    static constexpr auto status_code_reason_phrase(status_code code) noexcept {
         return status_code_reason_phrase(static_cast<status_code_type>(code));
+    }
+
+    static constexpr status_code_category get_status_code_category(status_code_type code) noexcept {
+        if (code >= 100 && code < 200) {
+            return status_code_category::informational;
+        } else if (code >= 200 && code < 300) {
+            return status_code_category::successful;
+        } else if (code >= 300 && code < 400) {
+            return status_code_category::client_error;
+        } else if (code >= 400 && code < 500) {
+            return status_code_category::server_error;
+        }
+        return status_code_category::unknown;
     }
 
 
