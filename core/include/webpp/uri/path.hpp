@@ -115,6 +115,7 @@ namespace webpp::uri {
          */
         [[nodiscard]] stl::size_t raw_string_size() const noexcept {
             // todo: we could remove lambda; or we even can use an iterator_wrapper and use "std::reduce"
+            // http://www.boost.org/doc/libs/1_64_0/libs/iterator/doc/transform_iterator.html
             return [this] () noexcept -> stl::size_t {
                 stl::size_t sum = 0;
                 for (auto const& slug : *this)

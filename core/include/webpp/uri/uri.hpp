@@ -87,7 +87,7 @@ namespace webpp::uri {
 
         template <istl::String StrT = string_type>
         [[nodiscard]] constexpr StrT to_string() {
-            StrT str{get_allocator<typename StrT::value_type>()};
+            StrT str{get_allocator<typename StrT::allocator_type>()};
             append_to(str);
             return str;
         }

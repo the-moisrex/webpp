@@ -18,6 +18,7 @@ namespace webpp::shosted {
      * actually for each connection to be exact); this might not be the case for other server types.
      *
      * todo: see if we need a "shosted request manager" type too because of HTTP/2.0 that can handle multiple requests within one connection
+     * todo: Send 204 (No Content) when you don't the application fails to get you a body
      */
     template <Traits TraitsType, AppWrapperType, Request RequestType, Connection ConnectionType>
     struct self_hosted_session_manager : public ConnectionType {

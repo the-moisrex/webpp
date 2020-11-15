@@ -28,7 +28,7 @@ namespace webpp {
         struct alloc_finder_type {
             using alloc_type = stl::remove_cvref_t<AllocType>;
 
-            auto operator()(auto&& arg) const noexcept {
+            constexpr auto operator()(auto&& arg) const noexcept {
                 using U = stl::remove_cvref_t<decltype(arg)>;
                 if constexpr (!stl::is_void_v<alloc_type>) {
                     if constexpr (/* stl::uses_allocator_v<U, alloc_type> && */
@@ -51,7 +51,7 @@ namespace webpp {
                 }
             }
 
-            auto operator|(auto&& finder_res) const noexcept { // NOLINT(misc-unconventional-assign-operator)
+            constexpr auto operator|(auto&& finder_res) const noexcept { // NOLINT(misc-unconventional-assign-operator)
                 using U = stl::remove_cvref_t<decltype(finder_res)>;
                 if constexpr (stl::is_integral_v<U>) {
                     return *this;
