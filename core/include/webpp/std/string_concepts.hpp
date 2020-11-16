@@ -137,7 +137,7 @@ namespace webpp::istl {
         static constexpr bool has_allocator_type = requires {
             typename stl::remove_cvref_t<T>::allocator_type;
         };
-    }
+    } // namespace details
 
     /**
      * Get the underlying allocator_type
@@ -146,39 +146,35 @@ namespace webpp::istl {
     using allocator_type_of = lazy_conditional_t<
       details::has_allocator_type<T>,
       templated_lazy_type<details::allocator_type_extractor, stl::decay_t<stl::remove_cvref_t<T>>>,
-      lazy_type<DefaultAllocator>
-    >;
+      lazy_type<DefaultAllocator>>;
 
     /**
      * Get the underlying character type in a string/string view/c style string
      */
     template <typename T>
-    using char_type_of = lazy_conditional_t<
-        details::has_value_type<T>,
-        templated_lazy_type<details::char_extractor, stl::decay_t<stl::remove_cvref_t<T>>>,
-        lazy_type<stl::remove_cvref_t<stl::remove_pointer_t<stl::decay_t<T>>>>
-    >;
+    using char_type_of =
+      lazy_conditional_t<details::has_value_type<T>,
+                         templated_lazy_type<details::char_extractor, stl::decay_t<stl::remove_cvref_t<T>>>,
+                         lazy_type<stl::remove_cvref_t<stl::remove_pointer_t<stl::decay_t<T>>>>>;
 
 #ifndef NDEBUG
     static_assert(stl::is_same_v<int, char_type_of<int*>>);
     static_assert(stl::is_same_v<char, char_type_of<char[]>>);
     static_assert(stl::is_same_v<char, char_type_of<char[10]>>);
     static_assert(stl::is_same_v<char, char_type_of<const char[10]>>);
-    static_assert(stl::is_same_v<char, char_type_of<const char(&)[20]>>);
+    static_assert(stl::is_same_v<char, char_type_of<const char (&)[20]>>);
     static_assert(stl::is_same_v<wchar_t, char_type_of<const wchar_t*>>);
     static_assert(stl::is_same_v<char, char_type_of<std::string>>);
     static_assert(stl::is_same_v<int, char_type_of<std::basic_string_view<int>>>);
 #endif
 
 
-    template <typename T>
-    using char_traits_type_of = lazy_conditional_t<
-      requires{
+    template <typename T, typename Default = stl::char_traits<char_type_of<T>>>
+    using char_traits_type_of = lazy_conditional_t < requires {
         typename stl::remove_cvref_t<T>::traits_type;
-      },
-      templated_lazy_type<details::traits_extractor, stl::remove_cvref_t<T>>,
-      lazy_type<stl::char_traits<stl::remove_cvref_t<T>>>
-      >;
+    }
+    , templated_lazy_type<details::traits_extractor, stl::remove_cvref_t<T>>,
+      lazy_type<Default> >;
 
 } // namespace webpp::istl
 

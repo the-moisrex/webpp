@@ -1,8 +1,8 @@
 #ifndef WEBPP_CASTS_H
 #define WEBPP_CASTS_H
 
-#include "../std/string_view.hpp"
 #include "../std/string.hpp"
+#include "../std/string_view.hpp"
 #include "../traits/traits_concepts.hpp"
 
 #include <charconv>
@@ -13,9 +13,8 @@ namespace webpp {
     template <typename T, bool is_signed = true, bool throw_mistakes = false>
     constexpr T to(istl::StringViewifiable auto&& _str) noexcept(!throw_mistakes) {
         const auto str = istl::string_viewify(stl::forward<decltype(_str)>(_str));
-        T                      ret = 0;
+        T          ret = 0;
         if (str.size() > 0) {
-            // todo: minus is not used!!
             if constexpr (is_signed) {
                 auto c = str.cbegin();
                 if (*c == '-' || *c == '+')
@@ -43,9 +42,9 @@ namespace webpp {
         return ret;
     }
 
-#define WEBPP_TO_FUNCTION(name, type)                                             \
+#define WEBPP_TO_FUNCTION(name, type)                                       \
     constexpr auto to_##name(istl::StringViewifiable auto&& str) noexcept { \
-        return to<type>(str);                                                     \
+        return to<type>(str);                                               \
     }
 
     WEBPP_TO_FUNCTION(int, int);
@@ -88,10 +87,10 @@ namespace webpp {
             return str;
         } else {
             char str[_size];
-            auto [p, _]      = stl::to_chars(str, str + _size, value, stl::forward<R>(args)...);
-            auto      the_size = static_cast<size_type>(p - str);
-            str_t     res(the_size, '\0');
-            auto      it = res.begin();
+            auto [p, _]    = stl::to_chars(str, str + _size, value, stl::forward<R>(args)...);
+            auto  the_size = static_cast<size_type>(p - str);
+            str_t res(the_size, '\0');
+            auto  it = res.begin();
             for (auto _c = str; *_c; ++_c) {
                 *it++ = static_cast<char_type>(*_c);
             }
@@ -107,8 +106,8 @@ namespace webpp {
 
     // todo: GCC's to_chars implementation doesn't support floating point numbers
     template <typename ValueType, typename... R>
-    constexpr bool append_to(istl::String auto &str, ValueType value, R&&... args) noexcept {
-        constexpr stl::size_t _size = digit_count<ValueType>() + 1;
+    constexpr bool append_to(istl::String auto& str, ValueType value, R&&... args) noexcept {
+        constexpr stl::size_t   _size = digit_count<ValueType>() + 1;
         stl::array<char, _size> chars;
         if (auto res = stl::to_chars(chars.data(), chars.data() + _size, value, stl::forward<R>(args)...);
             res.ec == stl::errc()) {
