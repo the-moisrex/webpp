@@ -23,16 +23,12 @@ namespace webpp {
         template <typename Type>
         using allocator = Allocator<Type>;
 
+        // todo: implement the pmr::monotonic_buffer_resource features and use std::allocator as upstream
+        template <typename T>
+        using monotonic_allocator = Allocator<T>;
+
         using string_view_type = stl::basic_string_view<char_type, char_traits>;
         using string_type      = stl::basic_string<char_type, char_traits, allocator<char_type>>;
-
-        using stringstream_type  = stl::basic_stringstream<char_type, char_traits, allocator<char_type>>;
-        using ostringstream_type = stl::basic_ostringstream<char_type, char_traits, allocator<char_type>>;
-
-        template <typename Type>
-        using ostream_iterator_type = stl::ostream_iterator<Type, char_type, char_traits>;
-
-        using ostream_type = stl::basic_ostream<char_type, char_traits>;
 
         using logger_type = stderr_logger;
     };

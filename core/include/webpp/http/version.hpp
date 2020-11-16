@@ -25,7 +25,9 @@ namespace webpp::http {
         // Default constructor (major=0, minor=0).
         constexpr version() noexcept = default;
 
-        constexpr version(istl::StringViewifiable auto&& str) noexcept
+        template <typename T>
+        requires (!stl::same_as<stl::remove_cvref_t<T>, version> && istl::StringViewifiable<T>)
+        constexpr version(T&& str) noexcept
           : value(parse_string(istl::string_viewify(stl::forward<decltype(str)>(str)))) {}
 
         constexpr version(version const&) noexcept = default;
@@ -93,10 +95,13 @@ namespace webpp::http {
     static constexpr version http_1_0{"1.0"};
     static constexpr version http_1_1{"1.1"};
     static constexpr version http_2_0{"2.0"};
+    // todo: add version 3
 
     static constexpr version_list<4> all_http_versions{
       http_0_9, http_1_0, http_1_1, http_2_0
     };
+
+    // todo: create a supported version list (exclude http/0.9 since no one is using it anymore)
 
 }
 

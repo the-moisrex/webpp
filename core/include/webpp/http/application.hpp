@@ -83,7 +83,7 @@ namespace webpp {
          *
          * todo: replace status code with a more sophisticated error type that can hold more information
          */
-        [[nodiscard]] Response auto error(Request auto const& req, status_code err) {
+        [[nodiscard]] Response auto error(Request auto const& req, http::status_code err) {
             if constexpr (requires{
                             {application_type::error(req, err)} -> Response;
                           }) {
@@ -99,7 +99,7 @@ namespace webpp {
                                      "    <h1>{0} - {1}</h1>\n"
                                      "  </body>\n"
                                      "</html>\n"
-                ), err, status_code_reason_phrase(err));
+                ), err, http::status_code_reason_phrase(err));
             }
         }
 

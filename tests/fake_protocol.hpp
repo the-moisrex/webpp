@@ -11,6 +11,7 @@
 #include "../core/include/webpp/strings/to_case.hpp"
 #include "../core/include/webpp/traits/enable_traits.hpp"
 #include "../core/include/webpp/traits/std_traits.hpp"
+#include "../core/include/webpp/http/application.hpp"
 
 #include <cctype>
 #include <cstdlib>
@@ -209,26 +210,25 @@ namespace webpp {
     struct fake_proto : public enable_traits<TraitsType> {
       public:
         using traits_type      = TraitsType;
-        using application_type = App;
+        using application_type = http_app_wrapper<traits_type, App>;
         using extension_list   = EList;
-        using interface_type   = fake_proto<traits_type, application_type, extension_list>;
+        using protocol_type    = fake_proto<traits_type, App, extension_list>;
         using str_view_type    = typename TraitsType::string_view_type;
         using str_type         = typename TraitsType::string_type;
-        using ostream_t        = typename TraitsType::ostream_type;
-        using request_type     = simple_request<traits_type, fake_proto_request, interface_type, EList>;
+        using request_type     = simple_request<traits_type, fake_proto_request, protocol_type, EList>;
         using allocator_type   = typename request_type::allocator_type;
         using etraits          = enable_traits<traits_type>;
         using logger_type      = typename traits_type::logger_type;
         using logger_ref       = typename logger_type::logger_ref;
 
         application_type app;
+        request_type req;
 
-      public:
         fake_proto(logger_ref logger_obj = logger_type{}, auto const& alloc = allocator_type{}) noexcept
           : etraits{logger_obj, alloc},
+            app{logger_obj, alloc},
             req{logger_obj, alloc} {}
 
-        request_type req;
 
         void operator()() noexcept {
             auto res = app(req);

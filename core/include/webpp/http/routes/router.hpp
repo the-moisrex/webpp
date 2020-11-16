@@ -64,7 +64,7 @@ namespace webpp {
         /**
          * @return how many routes are in this router
          */
-        [[nodiscard]] static consteval stl::size_t route_count() noexcept {
+        [[nodiscard]] static constexpr stl::size_t route_count() noexcept {
             return sizeof...(RouteType);
         }
 
@@ -92,7 +92,7 @@ namespace webpp {
             return ctx.template response<string_response>(
               error_code,
               stl::format(
-                R"html(<!doctype html><html><head><title>{1} {2}!</title></head><body><h1>{1} {2}</h1></body></html>)html",
+                R"html(<!doctype html><html><head><title>{0} {1}!</title></head><body><h1>{0} {1}</h1></body></html>)html",
                 error_code, _phrase));
         }
 

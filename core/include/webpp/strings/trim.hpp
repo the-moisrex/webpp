@@ -49,7 +49,7 @@ namespace webpp::ascii {
             str.remove_suffix(str.size());
     }
 
-    template <istl::StringViewifiable StrViewType, CharSet CS = decltype(standard_whitespaces)>
+    template <istl::StringView StrViewType, CharSet CS = decltype(standard_whitespaces)>
     static inline void trim(StrViewType& str, CS whitespaces = standard_whitespaces) noexcept {
         ltrim<StrViewType>(str, whitespaces);
         rtrim<StrViewType>(str, whitespaces);

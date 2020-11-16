@@ -62,10 +62,10 @@ namespace webpp {
 
 
     template <Traits    TraitsType, template <typename, typename, typename...> typename MidLevelRequestType,
-              Protocol InterfaceType, typename EList>
+              Protocol ProtocolType, typename EList>
     using simple_request =
       typename EList::template extensie_type<TraitsType,
-                                             request_descriptor<MidLevelRequestType, InterfaceType>>;
+                                             request_descriptor<MidLevelRequestType, ProtocolType>>;
 
 } // namespace webpp
 

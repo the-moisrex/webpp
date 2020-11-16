@@ -140,15 +140,6 @@ namespace webpp::istl {
     } // namespace details
 
     /**
-     * Get the underlying allocator_type
-     */
-    template <typename T, typename DefaultAllocator = stl::allocator<T>>
-    using allocator_type_of = lazy_conditional_t<
-      details::has_allocator_type<T>,
-      templated_lazy_type<details::allocator_type_extractor, stl::decay_t<stl::remove_cvref_t<T>>>,
-      lazy_type<DefaultAllocator>>;
-
-    /**
      * Get the underlying character type in a string/string view/c style string
      */
     template <typename T>
@@ -167,6 +158,15 @@ namespace webpp::istl {
     static_assert(stl::is_same_v<char, char_type_of<std::string>>);
     static_assert(stl::is_same_v<int, char_type_of<std::basic_string_view<int>>>);
 #endif
+
+    /**
+     * Get the underlying allocator_type
+     */
+    template <typename T, typename DefaultAllocator = stl::allocator<char_type_of<T>>>
+    using allocator_type_of = lazy_conditional_t<
+      details::has_allocator_type<T>,
+      templated_lazy_type<details::allocator_type_extractor, stl::decay_t<stl::remove_cvref_t<T>>>,
+      lazy_type<DefaultAllocator>>;
 
 
     template <typename T, typename Default = stl::char_traits<char_type_of<T>>>

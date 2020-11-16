@@ -53,7 +53,7 @@ TEST(HTTPRequestParser, RequestLine) {
     EXPECT_EQ(parser1.http_version_view, "1.1");
     EXPECT_EQ(parser1.request_target_view, "/home");
     EXPECT_EQ(parser1.method_view, "GET");
-    http_version ver = parser1.get_http_version();
+    http::version ver = parser1.get_http_version();
     EXPECT_EQ(ver.major_value(), 1);
     EXPECT_EQ(ver.minor_value(), 1);
 }
