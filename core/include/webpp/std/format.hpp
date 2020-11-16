@@ -18,29 +18,30 @@
 namespace webpp::stl {
 
     // from: https://twitter.com/vzverovich/status/1327762206734237698?s=20
-    namespace details {
-        template <typename... Args>
-        struct format_str {
-            fmt::string_view str;
-
-            template <size_t N>
-            consteval format_str(const char (&s)[N]) : str(s) {
-                using checker = fmt::detail::format_string_checker<char, fmt::detail::error_handler, Args...>;
-                fmt::detail::parse_format_string<true>(fmt::string_view(s, N), checker(s, {}));
-            }
-        };
-    }
-
-    template <class... Args>
-    std::string format(details::format_str<std::type_identity_t<Args>...> fmt, const Args&... args) {
-        return fmt::format(fmt.str, args...);
-    }
-
-
-//    template <typename... Args>
-//    inline auto format(Args&&... args) {
-//        return fmt::format(stl::forward<Args>(args)...);
+    // no need for this after this tweet: https://twitter.com/vzverovich/status/1328345929758375946?s=20
+//    namespace details {
+//        template <typename... Args>
+//        struct format_str {
+//            fmt::string_view str;
+//
+//            template <size_t N>
+//            consteval format_str(const char (&s)[N]) : str(s) {
+//                using checker = fmt::detail::format_string_checker<char, fmt::detail::error_handler, Args...>;
+//                fmt::detail::parse_format_string<true>(fmt::string_view(s, N), checker(s, {}));
+//            }
+//        };
 //    }
+//
+//    template <class... Args>
+//    std::string format(details::format_str<std::type_identity_t<Args>...> fmt, const Args&... args) {
+//        return fmt::format(fmt.str, args...);
+//    }
+
+
+    template <typename... Args>
+    inline auto format(Args&&... args) {
+        return fmt::format(stl::forward<Args>(args)...);
+    }
 
     template <typename... Args>
     inline auto format_to(Args&&... args) {
