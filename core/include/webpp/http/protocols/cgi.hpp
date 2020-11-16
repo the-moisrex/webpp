@@ -28,7 +28,7 @@ namespace webpp {
         using traits_type      = TraitsType;
         using application_type = App;
         using extension_list   = stl::remove_cvref_t<EList>;
-        using protocol_type            = cgi<traits_type, application_type, extension_list>;
+        using protocol_type    = cgi<traits_type, application_type, extension_list>;
         using str_view_type    = typename TraitsType::string_view_type;
         using str_type         = typename TraitsType::string_type;
         using ostream_t        = typename TraitsType::ostream_type;

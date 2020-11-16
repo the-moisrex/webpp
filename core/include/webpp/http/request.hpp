@@ -61,8 +61,10 @@ namespace webpp {
     };
 
 
+    // the reason that I commented the "Protocol" out is because the ProtocolType is most likely
+    // a not-fully-known type at that point.
     template <Traits    TraitsType, template <typename, typename, typename...> typename MidLevelRequestType,
-              Protocol ProtocolType, typename EList>
+              /* Protocol */ typename ProtocolType, typename EList>
     using simple_request =
       typename EList::template extensie_type<TraitsType,
                                              request_descriptor<MidLevelRequestType, ProtocolType>>;

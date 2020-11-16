@@ -23,7 +23,8 @@
 namespace webpp {
 
 
-    template <Traits TraitsType, typename REL, Protocol ProtoType>
+    // I'm not using "Protocol" here because it's most likely a non-complete-type when it's passed
+    template <Traits TraitsType, typename REL, /* Protocol */ typename ProtoType>
     struct fake_proto_request : public stl::remove_cvref_t<REL>, public enable_traits<TraitsType> {
         using traits_type      = TraitsType;
         using protocol_type    = ProtoType;
