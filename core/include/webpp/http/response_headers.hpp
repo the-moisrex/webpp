@@ -38,7 +38,7 @@ namespace webpp {
           : super{stl::forward<Args>(args)...},
             HeaderEList{} {}
 
-        status_code_type status_code = 200u;
+        http::status_code_type status_code = 200u;
 
 
         auto str() const noexcept {

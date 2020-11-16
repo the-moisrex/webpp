@@ -85,14 +85,14 @@ namespace webpp {
             throw stl::invalid_argument("The specified index is not valid");
         }
 
-        auto error(Context auto const& ctx, status_code_type error_code,
+        auto error(Context auto const& ctx, http::status_code_type error_code,
                    stl::string_view phrase = "") const noexcept {
             // todo: add methods to change the default error template and individual ones
-            stl::string_view _phrase = phrase.empty() ? status_code_reason_phrase(error_code) : phrase;
+            stl::string_view _phrase = phrase.empty() ? http::status_code_reason_phrase(error_code) : phrase;
             return ctx.template response<string_response>(
               error_code,
               stl::format(
-                R"html(<!doctype html><html><head><meta charset="utf-8"><title>{1} {2}!</title></head><body><h1>{1} {2}</h1></body></html>)html",
+                R"html(<!doctype html><html><head><title>{1} {2}!</title></head><body><h1>{1} {2}</h1></body></html>)html",
                 error_code, _phrase));
         }
 

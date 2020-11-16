@@ -34,19 +34,19 @@ namespace webpp {
         headers_type headers{};
 
         basic_response(auto&& arg1, auto&&... args) noexcept
-          requires(!one_of<decltype(arg1), headers_type, status_code_type, body_type>)
+          requires(!one_of<decltype(arg1), headers_type, http::status_code_type, body_type>)
           : EList{stl::forward<decltype(args)>(args)...} {}
 
         basic_response() noexcept                          = default;
         basic_response(basic_response const& res) noexcept = default;
         basic_response(basic_response&& res) noexcept      = default;
 
-        basic_response(status_code_type err_code) noexcept : EList{}, headers{err_code} {}
-        basic_response(status_code_type err_code, string_type const& b) noexcept
+        basic_response(http::status_code_type err_code) noexcept : EList{}, headers{err_code} {}
+        basic_response(http::status_code_type err_code, string_type const& b) noexcept
           : EList{},
             headers{err_code},
             body{b} {}
-        basic_response(status_code_type err_code, string_type&& b) noexcept
+        basic_response(http::status_code_type err_code, string_type&& b) noexcept
           : EList{},
             headers{err_code},
             body{stl::move(b)} {}

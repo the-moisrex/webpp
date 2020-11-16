@@ -160,12 +160,12 @@ namespace webpp {
             return new_response_type{stl::forward<Args>(args)...};
         }
 
-        [[nodiscard]] Response auto error(status_code_type error_code) const noexcept {
+        [[nodiscard]] Response auto error(http::status_code_type error_code) const noexcept {
             return error(error_code,
-                         stl::format("Error {}: {}", error_code, status_code_reason_phrase(error_code)));
+                         stl::format("Error {}: {}", error_code, http::status_code_reason_phrase(error_code)));
         }
 
-        [[nodiscard]] Response auto error(status_code_type error_code, auto&& data) const noexcept {
+        [[nodiscard]] Response auto error(http::status_code_type error_code, auto&& data) const noexcept {
             using data_type = stl::remove_cvref_t<decltype(data)>;
             if constexpr (istl::StringViewifiable<data_type>) {
                 auto res                = response<string_response>(istl::string_viewify(data));
