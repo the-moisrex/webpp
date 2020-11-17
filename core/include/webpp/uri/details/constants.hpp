@@ -82,6 +82,14 @@ namespace webpp::uri::details {
     template<istl::CharType char_type>
     static constexpr auto QUERY_OR_FRAGMENT_NOT_PCT_ENCODED =
       charset(PCHAR_NOT_PCT_ENCODED<char_type>, charset<char_type, 2>{'/', '?'});
+
+
+
+    template <istl::CharType char_type>
+    static constexpr auto LEGAL_PATH_CHARS =
+      charset(PCHAR_NOT_PCT_ENCODED<char_type>, charset<char_type, 1>('/'));
+
+
 }
 
 #endif // WEBPP_CONSTANTS_HPP

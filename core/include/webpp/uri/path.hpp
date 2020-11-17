@@ -28,6 +28,7 @@ namespace webpp::uri {
     struct basic_path : public stl::vector<SlugType, AllocType> {
         using container_type = stl::vector<SlugType, AllocType>;
         using allocator_type = AllocType;
+        using value_type = SlugType;
         using char_type = typename SlugType::value_type;
         using string_type = stl::conditional_t<istl::String<SlugType>, SlugType,
         stl::basic_string<char_type, allocator_type>>;

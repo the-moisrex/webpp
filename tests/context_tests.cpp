@@ -29,7 +29,7 @@ struct fake_mommy {
 
 TEST(Routes, PathTests) {
 
-    EXPECT_TRUE(static_cast<bool>(Protocol<typename fake_request_type::interface_type>));
+    EXPECT_TRUE(static_cast<bool>(Protocol<typename fake_request_type::protocol_type>));
 
     EXPECT_TRUE(static_cast<bool>(Traits<typename fake_context_type::traits_type>));
     EXPECT_TRUE(static_cast<bool>(Request<typename fake_context_type::request_type>));
