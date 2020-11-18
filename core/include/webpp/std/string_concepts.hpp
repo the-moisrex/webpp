@@ -142,11 +142,12 @@ namespace webpp::istl {
     /**
      * Get the underlying character type in a string/string view/c style string
      */
-    template <typename T>
+    template <typename T, typename BestGuess = stl::remove_cvref_t<stl::remove_all_extents_t<stl::remove_pointer_t<stl::decay_t<T>>>>>
     using char_type_of =
       lazy_conditional_t<details::has_value_type<T>,
-                         templated_lazy_type<details::char_extractor, stl::decay_t<stl::remove_cvref_t<T>>>,
-                         lazy_type<stl::remove_cvref_t<stl::remove_pointer_t<stl::decay_t<T>>>>>;
+                         templated_lazy_type<details::char_extractor, BestGuess>,
+                         lazy_type<stl::conditional_t<CharType<BestGuess>, BestGuess, void>>
+                         >;
 
 #ifndef NDEBUG
     static_assert(stl::is_same_v<int, char_type_of<int*>>);

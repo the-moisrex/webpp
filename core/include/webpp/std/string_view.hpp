@@ -60,7 +60,13 @@ namespace webpp::istl {
      * Check if T is a "string view" of type "StringViewType"
      */
     template <typename StrViewType, typename T>
-    concept StringViewifiableOf = !istl::CharType<stl::remove_cvref_t<T>> && requires(stl::remove_cvref_t<T> str) {
+    concept StringViewifiableOf = !stl::is_void_v<StrViewType> &&
+                                  !istl::CharType<stl::remove_cvref_t<T>> &&
+                                  requires {stl::remove_cvref_t<T>{};} &&
+                                  !stl::is_void_v<char_type_of<T>> &&
+                                  requires(stl::remove_cvref_t<T> str) {
+        stl::is_trivial_v<typename stl::remove_cvref_t<StrViewType>::value_type>;
+        stl::is_standard_layout_v<typename stl::remove_cvref_t<StrViewType>::value_type>;
         requires requires {
             StrViewType{str};
         }
@@ -81,7 +87,11 @@ namespace webpp::istl {
 
     template <typename T>
     concept StringViewifiable = StringViewifiableOf<
-      stl::basic_string_view<char_type_of<T>, char_traits_type_of<T>>,
+      stl::conditional_t<
+        StringView<T>,
+          stl::remove_cvref_t<T>,
+        stl::basic_string_view<char_type_of<T>, char_traits_type_of<T>>
+                         >,
       stl::remove_cvref_t<T>>;
 
     /**

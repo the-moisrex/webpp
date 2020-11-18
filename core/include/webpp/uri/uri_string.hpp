@@ -1327,8 +1327,10 @@ namespace webpp::uri {
         template <typename Container = basic_path<string_type, allocator_type>>
         [[nodiscard]] Container slugs() const noexcept {
             using value_type = typename Container::value_type;
-            Container container(this->get_allocator_of<value_type>());
-            extract_slugs_to<Container>(container);
+            Container container(this->template get_allocator_as<value_type>());
+            if (!extract_slugs_to<Container>(container)) {
+                return container; // yes, an empty container
+            }
             return container;
         }
 
@@ -1687,7 +1689,7 @@ namespace webpp::uri {
             if (str.empty()) {
                 // remove fragment
                 this->replace_value(this->fragment_start, this->data.size() - this->fragment_start, "");
-                return;
+                return *this;
             }
             string_type encoded_fragment{this->get_allocator()};
             if (!ascii::starts_with(str, '#'))
@@ -1851,7 +1853,7 @@ namespace webpp::uri {
          * Check if the specified string is a valid URI or not
          */
         [[nodiscard]] bool is_valid() const noexcept {
-            return has_scheme() || has_authority() || !path.empty() || has_fragment();
+            return has_scheme() || has_authority() || has_path() || has_fragment();
         }
 
     };
