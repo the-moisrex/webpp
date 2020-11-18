@@ -93,10 +93,11 @@ namespace webpp::http {
                         return;
                     }
                     if constexpr (allow_unknown_algos) {
-                        _allowed_encodings.emplace_back(entry);
+                        _allowed_encodings.push_back(compression_algo_type{.encoding = entry});
                     } else {
-                        _allowed_encodings.emplace_back(
-                          to_known_algo(entry)); // identity will be used if it's unknown
+                        _allowed_encodings.push_back(compression_algo_type{
+                          .encoding = to_known_algo(entry)  // identity will be used if it's unknown
+                        });
                     }
                     continue;
                 }

@@ -50,9 +50,9 @@ namespace webpp::uri {
         }
 
 
-        template <typename T = allocator_type>
+        template <typename DefaultAlloc = allocator_type>
         auto get_allocator() const noexcept {
-            return extract_allocator_of_or_default<T>(scheme,
+            return extract_allocator_of_or_default<DefaultAlloc>(scheme,
                                                         user_info.username,
                                                         user_info.password,
                                                         host,

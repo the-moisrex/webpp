@@ -9,6 +9,7 @@
 
 namespace webpp {
 
+    // todo: see if it's the right choice to use rebind_alloc
     template <typename AllocType, typename NewValueType>
     using rebind_allocator = typename stl::allocator_traits<AllocType>::template rebind_alloc<NewValueType>;
 
@@ -100,7 +101,7 @@ namespace webpp {
         static_assert(
           stl::is_same_v<stl::remove_cvref_t<decltype(res)>, details::temp_alloc_holder<AllocType>>,
           "We didn't find any allocator in the inputs.");
-        return res;
+        return res.alloc;
     }
 
     template <typename AllocType, typename... T>
@@ -109,7 +110,7 @@ namespace webpp {
         const auto                            res = (finder | ... | finder(stl::forward<T>(args)));
         if constexpr (
           stl::is_same_v<stl::remove_cvref_t<decltype(res)>, details::temp_alloc_holder<AllocType>>) {
-            return res;
+            return res.alloc;
         } else {
             // todo: we might be able to find and convert an allocator and not just re-create it
             return AllocType{};
