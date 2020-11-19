@@ -69,7 +69,7 @@ namespace webpp::uri {
      *
      *  [protocol"://"[username[":"password]"@"]hostname[":"port]"/"?][path]["?"querystring]["#"fragment]
      */
-    template <Traits TraitsType, bool Mutable = true>
+    template <Traits TraitsType = std_traits, bool Mutable = true>
     struct uri_string : public allocator_holder<typename TraitsType::template allocator<typename TraitsType::char_type>>  {
         using traits_type       = TraitsType;
         using string_type       = typename traits_type::string_type;
@@ -603,7 +603,7 @@ namespace webpp::uri {
          * @param _scheme
          * @throws logic_error if uri is const
          */
-        auto& scheme_set(string_view_type m_scheme) {
+        auto& scheme(string_view_type m_scheme) {
             if (ascii::ends_with(m_scheme, ':'))
                 m_scheme.remove_suffix(1);
             if (!is::scheme(m_scheme))
@@ -633,8 +633,8 @@ namespace webpp::uri {
         /**
          * @brief clear scheme from uri
          */
-        auto& scheme_clear() noexcept {
-            return scheme_set("");
+        auto& clear_scheme() noexcept {
+            return scheme("");
         }
 
         ///////////////////////////////////////////// User Info /////////////////////////////////////////////
@@ -957,9 +957,8 @@ namespace webpp::uri {
 
         /**
          * @brief clear host part from URI
-         * @return
          */
-        auto& host_clear() noexcept {
+        auto& clear_host() noexcept {
             return host("");
         }
 
@@ -1868,8 +1867,7 @@ namespace webpp::uri {
     template <typename CharT = char>
     uri_string(stl::basic_string<CharT>) -> uri_string<basic_std_traits<CharT>, true>;
 
-    using const_uri = uri_string<std_traits, false>;
-    using uri       = uri_string<std_traits, true>;
+    using uri_view  = uri_string<std_traits, false>;
 
 
     template <Traits TraitsType, bool Mutable1, bool Mutable2>
@@ -1928,19 +1926,19 @@ namespace webpp::uri {
     }
 
     [[nodiscard]] inline auto equal_path(stl::string_view const& p1, stl::string_view const& p2) noexcept {
-        return p1 == p2 || equal_path<std_traits, false, false>(const_uri{p1}, const_uri{p2});
+        return p1 == p2 || equal_path<std_traits, false, false>(uri_view{p1}, uri_view{p2});
     }
 
     template <Traits TraitsType, bool Mutable>
     [[nodiscard]] inline auto equal_path(uri_string<TraitsType, Mutable> const&        p1,
                                          typename TraitsType::string_view_type const& p2) noexcept {
-        return p1 == p2 || equal_path<TraitsType, false>(p1, const_uri{p2});
+        return p1 == p2 || equal_path<TraitsType, false>(p1, uri_view{p2});
     }
 
     template <Traits TraitsType, bool Mutable>
     [[nodiscard]] inline auto equal_path(typename TraitsType::string_view_type const& p1,
                                          uri_string<TraitsType, Mutable> const&        p2) noexcept {
-        return p2 == p1 || equal_path<TraitsType, false>(const_uri{p1}, p2);
+        return p2 == p1 || equal_path<TraitsType, false>(uri_view{p1}, p2);
     }
 
 } // namespace webpp
