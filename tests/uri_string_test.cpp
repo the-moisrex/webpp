@@ -113,7 +113,7 @@ TEST(URITests, IPv6HostName) {
     EXPECT_EQ(u.port(), "8080");
     EXPECT_TRUE(std::holds_alternative<ipv6<std_traits>>(u.host_structured()))
       << "index: " << u.host_structured().index();
-    u.path.clear();
+    u.clear_path();
     EXPECT_EQ(u.str(), "//[::1]:8080/?name=value&name2=value2#str");
 }
 
