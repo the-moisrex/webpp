@@ -55,7 +55,12 @@ namespace webpp::istl {
     } // namespace details
 
     template <typename StrT, typename T>
-    concept StringifiableOf = !istl::CharType<T> && requires(stl::remove_cvref_t<T> str) {
+    concept StringifiableOf = !stl::is_void_v<StrT> &&
+    !istl::CharType<stl::remove_cvref_t<T>> &&
+    requires {stl::remove_cvref_t<T>{};} &&
+    !stl::is_void_v<char_type_of<T>> && requires(stl::remove_cvref_t<T> str) {
+        stl::is_trivial_v<typename stl::remove_cvref_t<StrT>::value_type>;
+        stl::is_standard_layout_v<typename stl::remove_cvref_t<StrT>::value_type>;
         requires requires {
             StrT{str};
         }
@@ -77,7 +82,11 @@ namespace webpp::istl {
 
     template <typename T>
     concept Stringifiable = StringifiableOf<
-      stl::basic_string<char_type_of<T>, char_traits_type_of<T>, allocator_type_of<T>>,
+      stl::conditional_t<
+        String<T>,
+          stl::remove_cvref_t<T>,
+        stl::basic_string<char_type_of<T>, char_traits_type_of<T>, allocator_type_of<T>>
+        >,
         stl::remove_cvref_t<T>
       >;
 
