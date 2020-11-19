@@ -17,7 +17,7 @@ namespace webpp {
     template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, stl::size_t N>
     [[nodiscard]] bool
     decode_uri_component(istl::StringViewifiable auto&& encoded_str, istl::String auto& output,
-                         charset<istl::char_type_of<decltype(encoded_str)>, N>& chars) noexcept {
+                         charset<istl::char_type_of<decltype(encoded_str)>, N> const& chars) noexcept {
         using char_type          = istl::char_type_of<stl::remove_cvref_t<decltype(encoded_str)>>;
         stl::size_t digits_left  = 2;
         char_type   decoded_char = 0;

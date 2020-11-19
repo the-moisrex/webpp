@@ -130,9 +130,12 @@ namespace webpp::http {
                 if (qvalue[0] == '1') {
                     if (str_v("1.000").starts_with(qvalue)) {
                         if constexpr (allow_unknown_algos) {
-                            _allowed_encodings.emplace_back(encoding, 1);
+                            _allowed_encodings.push_back(compression_algo_type{.encoding = encoding, .quality = 1.0 });
                         } else {
-                            _allowed_encodings.emplace_back(to_known_algo(encoding), 1);
+                            _allowed_encodings.push_back(compression_algo_type{
+                                .encoding = to_known_algo(encoding),
+                                .quality = 1.0f
+                            });
                         }
                         continue;
                     }
@@ -166,9 +169,15 @@ namespace webpp::http {
                 }
                 if (qval != 0) {
                     if constexpr (allow_unknown_algos) {
-                        _allowed_encodings.emplace_back(encoding, qval);
+                        _allowed_encodings.push_back(compression_algo_type{
+                          .encoding = encoding,
+                          .quality = qval
+                        });
                     } else {
-                        _allowed_encodings.emplace_back(to_known_algo(encoding), qval);
+                        _allowed_encodings.push_back(compression_algo_type{
+                          .encoding = to_known_algo(encoding),
+                          .quality = qval
+                        });
                     }
                 }
             }
@@ -177,9 +186,9 @@ namespace webpp::http {
             // that the user agent has no preferences regarding content-codings."
             if (_allowed_encodings.empty()) {
                 if constexpr (allow_unknown_algos) {
-                    _allowed_encodings.emplace_back("*");
+                    _allowed_encodings.push_back(compression_algo_type{.encoding = "*" });
                 } else {
-                    _allowed_encodings.emplace_back(all);
+                    _allowed_encodings.push_back(compression_algo_type{.encoding = all });
                 }
                 _is_valid = true;
                 return;
@@ -187,9 +196,9 @@ namespace webpp::http {
 
             // Any browser must support "identity".
             if constexpr (allow_unknown_algos) {
-                _allowed_encodings.emplace_back("identity");
+                _allowed_encodings.push_back(compression_algo_type{.encoding = "identity" });
             } else {
-                _allowed_encodings.emplace_back(identity);
+                _allowed_encodings.push_back(compression_algo_type{.encoding = identity });
             }
 
             // RFC says gzip == x-gzip; mirror it here for easier matching.

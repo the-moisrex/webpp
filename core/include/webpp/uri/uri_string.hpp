@@ -117,58 +117,58 @@ namespace webpp::uri {
          * this method will fill the "authority_start" and "scheme_end" vars
          */
         void parse_scheme() const noexcept {
-            if (this->scheme_end != string_view_type::npos)
+            if (scheme_end != string_view_type::npos)
                 return; // It's already parsed
 
-            auto _data = this->string_view();
+            auto _data = string_view();
 
             // extracting scheme
             if (ascii::starts_with(_data, "//")) {
-                this->authority_start = 2;
-                this->scheme_end      = this->data.size(); // so we don't have to check again
+                authority_start = 2;
+                scheme_end      = data.size(); // so we don't have to check again
                 return;
             } else if (const auto colon = _data.find(':'); colon != string_view_type::npos) {
                 auto m_scheme = _data.substr(0, colon);
                 if (ALPHA<char_type>.contains(m_scheme[0]) &&
                     m_scheme.substr(1).find_first_not_of(details::SCHEME_NOT_FIRST<char_type>.string_view())) {
-                    this->scheme_end = colon;
+                    scheme_end = colon;
 
                     if (_data.substr(colon + 1, 2) == "//") {
-                        this->authority_start = colon + 3;
+                        authority_start = colon + 3;
                     } else {
                         // it should be a URN or an invalid URI at this point
-                        this->authority_start = this->data.size();
+                        authority_start = data.size();
                     }
                     return;
                 }
             }
 
-            this->scheme_end = this->authority_start = this->data.size();
+            scheme_end = authority_start = data.size();
         }
 
         /**
          * parse user info
          */
         void parse_user_info() const noexcept {
-            if (this->user_info_end != string_view_type::npos)
+            if (user_info_end != string_view_type::npos)
                 return; // It's already parsed
 
             parse_scheme(); // to get "authority_start"
 
-            if (this->authority_start == this->data.size()) {
-                this->user_info_end = this->data.size();
-                return; // there's no this->user_info_end without authority_start
+            if (authority_start == data.size()) {
+                user_info_end = data.size();
+                return; // there's no user_info_end without authority_start
             }
 
             parse_path(); // to get "authority_end"
 
-            auto _data = (stl::is_same_v<storred_str_t, string_view_type> ? this->data : string_view_type(this->data));
+            auto _data = (stl::is_same_v<storred_str_t, string_view_type> ? data : string_view_type(data));
 
-            this->user_info_end = _data.substr(this->authority_start, this->authority_end - this->authority_start).find_first_of('@');
-            if (this->user_info_end == string_view_type::npos) {
-                this->user_info_end = this->data.size();
+            user_info_end = _data.substr(authority_start, authority_end - authority_start).find_first_of('@');
+            if (user_info_end == string_view_type::npos) {
+                user_info_end = data.size();
             } else {
-                this->user_info_end += this->authority_start;
+                user_info_end += authority_start;
             }
         }
 
@@ -183,17 +183,17 @@ namespace webpp::uri {
             parse_scheme(); // to get "authority_start"
             parse_query();  // to get "query_start"
 
-            auto _data = this->string_view();
+            auto _data = string_view();
 
             auto starting_point =
-              this->authority_start != this->data.size()
-              ? this->authority_start
-              : (this->scheme_end != this->data.size() && this->scheme_end != string_view_type::npos ? this->scheme_end : 0);
-            this->authority_end = _data.substr(starting_point, this->query_start - starting_point).find_first_of('/');
-            if (this->authority_end == string_view_type::npos) {
-                this->authority_end = this->data.size();
+              authority_start != data.size()
+              ? authority_start
+              : (scheme_end != data.size() && scheme_end != string_view_type::npos ? scheme_end : 0);
+            authority_end = _data.substr(starting_point, query_start - starting_point).find_first_of('/');
+            if (authority_end == string_view_type::npos) {
+                authority_end = data.size();
             } else {
-                this->authority_end += starting_point;
+                authority_end += starting_point;
             }
         }
 
@@ -202,29 +202,29 @@ namespace webpp::uri {
          * this makes sure that the "port_start" variable is filled
          */
         void parse_port() const noexcept {
-            if (this->port_start != string_view_type::npos)
+            if (port_start != string_view_type::npos)
                 return; // It's already parsed
 
-            parse_user_info(); // to get "this->authority_start" and "this->user_info_end"
+            parse_user_info(); // to get "authority_start" and "user_info_end"
 
-            if (this->authority_start == this->data.size()) {
-                this->port_start = this->data.size();
-                return; // there's no this->user_info_end without this->authority_start
+            if (authority_start == data.size()) {
+                port_start = data.size();
+                return; // there's no user_info_end without authority_start
             }
 
             parse_path(); // to get "authority_end"
 
-            auto _data = this->string_view();
+            auto _data = string_view();
 
-            auto starting_point = this->user_info_end != this->data.size() ? this->user_info_end : this->authority_start;
-            this->port_start = _data.substr(starting_point, this->authority_end - starting_point).find_last_of(':');
-            if (this->port_start == string_view_type::npos) {
-                this->port_start = this->data.size(); // there's no port
+            auto starting_point = user_info_end != data.size() ? user_info_end : authority_start;
+            port_start = _data.substr(starting_point, authority_end - starting_point).find_last_of(':');
+            if (port_start == string_view_type::npos) {
+                port_start = data.size(); // there's no port
             } else {
-                this->port_start += starting_point;
-                auto str_view = _data.substr(this->port_start + 1, this->authority_end - (this->port_start + 1));
+                port_start += starting_point;
+                auto str_view = _data.substr(port_start + 1, authority_end - (port_start + 1));
                 if (!ascii::is::digit(str_view)) {
-                    this->port_start = this->data.size();
+                    port_start = data.size();
                 }
             }
         }
@@ -239,11 +239,11 @@ namespace webpp::uri {
         //
         //            auto _data = (std::is_same_v<string_type,
         //            string_view_type>
-        //                              ? this->data
-        //                              : string_view_type(this->data))
-        //                             .substr(this->authority_start, this->authority_end);
+        //                              ? data
+        //                              : string_view_type(data))
+        //                             .substr(authority_start, authority_end);
         //
-        //            auto _authority_start = this->data.find("//");
+        //            auto _authority_start = data.find("//");
         //            if (_authority_start != string_view_type::npos) {
         //                _data.remove_prefix(_authority_start + 2);
         //            }
@@ -252,7 +252,7 @@ namespace webpp::uri {
         //            if (_authority_start != string_view_type::npos &&
         //            path_start != 0) {
         //
-        //                auto this->port_start = _data.find(":", 0, path_start);
+        //                auto port_start = _data.find(":", 0, path_start);
         //
         //                // extracting user info
         //                if (auto delim = _data.find("@", 0, path_start);
@@ -323,8 +323,8 @@ namespace webpp::uri {
         //                    }
         //                } else { // Not IP Literal
         //                    auto port_or_path_start =
-        //                        this->port_start != string_view_type::npos ?
-        //                        this->port_start
+        //                        port_start != string_view_type::npos ?
+        //                        port_start
         //                                                             :
         //                                                             path_start;
         //                    auto hostname = _data.substr(0,
@@ -351,11 +351,11 @@ namespace webpp::uri {
         //                }
         //
         //                // extracting port
-        //                if (this->port_start != string_view_type::npos) {
-        //                    auto this->port_end =
+        //                if (port_start != string_view_type::npos) {
+        //                    auto port_end =
         //                        _data.find_first_not_of(DIGIT.string_view());
-        //                    _port = _data.substr(this->port_start + 1, this->port_end);
-        //                    _data.remove_prefix(this->port_end);
+        //                    _port = _data.substr(port_start + 1, port_end);
+        //                    _data.remove_prefix(port_end);
         //                }
         //            }
         //        }
@@ -364,14 +364,14 @@ namespace webpp::uri {
          * parse fragment (it finds fragment_start)
          */
         void parse_fragment() const noexcept {
-            if (this->fragment_start != string_view_type::npos)
+            if (fragment_start != string_view_type::npos)
                 return; // It's already parsed
 
-            auto _data = this->string_view();
+            auto _data = string_view();
 
-            this->fragment_start = _data.find_first_of('#');
-            if (this->fragment_start == string_view_type::npos) {
-                this->fragment_start = this->data.size();
+            fragment_start = _data.find_first_of('#');
+            if (fragment_start == string_view_type::npos) {
+                fragment_start = data.size();
             }
         }
 
@@ -379,15 +379,15 @@ namespace webpp::uri {
          * parse query; it ensures that query_start and fragment_start are changed
          */
         void parse_query() const noexcept {
-            if (this->query_start != string_view_type::npos)
+            if (query_start != string_view_type::npos)
                 return; // there's nothing to do
 
             parse_fragment();
 
-            auto _data  = this->string_view();
-            this->query_start = _data.substr(0, this->fragment_start).find_first_of('?');
-            if (this->query_start == string_view_type::npos) {
-                this->query_start = this->data.size();
+            auto _data  = string_view();
+            query_start = _data.substr(0, fragment_start).find_first_of('?');
+            if (query_start == string_view_type::npos) {
+                query_start = data.size();
             }
         }
 
@@ -395,7 +395,7 @@ namespace webpp::uri {
          * parse the host
          */
         void parse_host() const noexcept {
-            parse_user_info(); // to get "authority_start" and "this->user_info_end"
+            parse_user_info(); // to get "authority_start" and "user_info_end"
             parse_port();      // to get "port_start" and hopefully "authority_end"
             parse_path();      // to make sure we have "authority_end"
         }
@@ -405,8 +405,8 @@ namespace webpp::uri {
          * re-parsing the uri.
          */
         inline void unparse() const noexcept {
-            this->scheme_end = this->authority_start = this->user_info_end = this->port_start = this->authority_end = this->query_start =
-            this->fragment_start                                                          = string_view_type::npos;
+            scheme_end = authority_start = user_info_end = port_start = authority_end = query_start =
+            fragment_start                                                          = string_view_type::npos;
         }
 
         /**
@@ -417,11 +417,11 @@ namespace webpp::uri {
             if (start == string_view_type::npos || len == string_view_type::npos || (len == 0 && replacement.empty()))
                 return;
             // todo: check performance of this
-            auto const after_replacement_start = stl::min(this->data.size(), start + len);
-            this->data.reserve(start + replacement.size() + (this->data.size() - after_replacement_start));
-            this->data = substr(0, start);
-            this->data += stl::forward<decltype(replacement)>(replacement);
-            this->data += substr(after_replacement_start);
+            auto const after_replacement_start = stl::min(data.size(), start + len);
+            data.reserve(start + replacement.size() + (data.size() - after_replacement_start));
+            data = substr(0, start);
+            data += stl::forward<decltype(replacement)>(replacement);
+            data += substr(after_replacement_start);
             unparse();
             // TODO: you may want to not unparse everything
         }
@@ -585,8 +585,8 @@ namespace webpp::uri {
          * @brief check if the specified uri has a scheme or not
          */
         [[nodiscard]] bool has_scheme() const noexcept {
-            this->parse_scheme();
-            return !(this->scheme_end == this->data.size() && this->scheme_end != 0);
+            parse_scheme();
+            return !(scheme_end == data.size() && scheme_end != 0);
         }
 
         /**
@@ -594,8 +594,8 @@ namespace webpp::uri {
          * @return get scheme
          */
         [[nodiscard]] string_view_type scheme() const noexcept {
-            this->parse_scheme();
-            return this->scheme_end == this->data.size() ? string_view_type() : this->substr(0, this->scheme_end);
+            parse_scheme();
+            return scheme_end == data.size() ? string_view_type() : substr(0, scheme_end);
         }
 
         /**
@@ -608,23 +608,23 @@ namespace webpp::uri {
                 m_scheme.remove_suffix(1);
             if (!is::scheme(m_scheme))
                 throw stl::invalid_argument("The specified scheme is not valid");
-            this->parse_scheme();
-            if (this->scheme_end != this->data.size()) {
-                this->replace_value(0,
-                                    m_scheme.empty() && this->data.size() > this->scheme_end + 1 &&
-                                    this->data[this->scheme_end] == ':'
-                                    ? this->scheme_end + 1
-                                    : this->scheme_end,
+            parse_scheme();
+            if (scheme_end != data.size()) {
+                replace_value(0,
+                                    m_scheme.empty() && data.size() > scheme_end + 1 &&
+                                    data[scheme_end] == ':'
+                                    ? scheme_end + 1
+                                    : scheme_end,
                                     m_scheme);
             } else {
                 // the URI doesn't have a scheme now, we have to put it in the right place
                 auto scheme_colon = m_scheme.empty() ? "" : string_type(m_scheme) + ':';
-                if (this->authority_start != this->data.size()) {
-                    this->replace_value(0, 0,
-                                        scheme_colon + (ascii::starts_with(this->data, "//") ? "" : "//"));
+                if (authority_start != data.size()) {
+                    replace_value(0, 0,
+                                        scheme_colon + (ascii::starts_with(data, "//") ? "" : "//"));
                 } else {
                     // It's a URN (or URN like URI)
-                    this->replace_value(0, 0, scheme_colon);
+                    replace_value(0, 0, scheme_colon);
                 }
             }
             return *this;
@@ -662,9 +662,9 @@ namespace webpp::uri {
         /**
          * @brief decode user_info and return it as a string
          */
-        [[nodiscard]] auto user_info() const noexcept {
+        [[nodiscard]] stl::optional<string_type> user_info() const noexcept {
             string_type out{this->get_allocator()};
-            if (decode_uri_component(user_info(), out, details::USER_INFO_NOT_PCT_ENCODED<char_type>)) {
+            if (decode_uri_component(user_info_raw(), out, details::USER_INFO_NOT_PCT_ENCODED<char_type>)) {
                 return out;
             }
             return stl::nullopt;
@@ -727,7 +727,7 @@ namespace webpp::uri {
          * @return
          */
         [[nodiscard]] string_view_type username_raw() const noexcept {
-            auto _userinfo = user_info();
+            auto _userinfo = user_info_raw();
             if (auto colon = _userinfo.find(':'); colon != string_view_type::npos)
                 _userinfo.remove_suffix(_userinfo.size() - colon);
             return _userinfo;
@@ -739,7 +739,7 @@ namespace webpp::uri {
          */
         [[nodiscard]] stl::optional<string_type> username() const noexcept {
             string_type out{this->get_allocator()};
-            if (decode_uri_component(username(), out, details::USER_INFO_NOT_PCT_ENCODED<char_type>)) {
+            if (decode_uri_component(username_raw(), out, details::USER_INFO_NOT_PCT_ENCODED<char_type>)) {
                 return out;
             }
             return stl::nullopt;
@@ -750,7 +750,7 @@ namespace webpp::uri {
          * @return
          */
         [[nodiscard]] bool has_password() const noexcept {
-            return user_info().find(':') != string_view_type::npos;
+            return user_info_raw().find(':') != string_view_type::npos;
         }
 
         /**
@@ -758,7 +758,7 @@ namespace webpp::uri {
          * @return
          */
         [[nodiscard]] string_view_type password_raw() const noexcept {
-            auto _user_info = user_info();
+            auto _user_info = user_info_raw();
             if (auto found = _user_info.find(':'); found != string_view_type::npos) {
                 return _user_info.substr(found + 1);
             }
@@ -771,7 +771,7 @@ namespace webpp::uri {
          */
         [[nodiscard]] stl::optional<string_type> password() const noexcept {
             string_type out{this->get_allocator()};
-            if (decode_uri_component(password(), out, details::USER_INFO_NOT_PCT_ENCODED<char_type>)){
+            if (decode_uri_component(password_raw(), out, details::USER_INFO_NOT_PCT_ENCODED<char_type>)){
                 return out;
             }
             return stl::nullopt;
@@ -785,8 +785,8 @@ namespace webpp::uri {
          * @return string_view
          */
         [[nodiscard]] string_view_type host_raw() const noexcept {
-            this->parse_host();
-            if (this->authority_start == this->data.size()) {
+            parse_host();
+            if (authority_start == data.size()) {
                 // there will not be a host without the authority_start
                 return {};
             }
@@ -797,29 +797,29 @@ namespace webpp::uri {
             // because I don't want you to curse me :)
 
             // we have authority_start, let's check user_info and port too
-            if (this->user_info_end == this->data.size()) {
+            if (user_info_end == data.size()) {
                 // there's no user info
-                start = this->authority_start;
+                start = authority_start;
             } else {
                 // there's a user info
-                start = this->user_info_end;
+                start = user_info_end;
             }
 
-            if (this->port_start != this->data.size()) {
+            if (port_start != data.size()) {
                 // but there's a port
-                len = this->port_start - start;
+                len = port_start - start;
             } else {
                 // there's no port either
-                if (this->authority_end != this->data.size()) {
+                if (authority_end != data.size()) {
                     // there's a path
-                    len = this->authority_end - start;
+                    len = authority_end - start;
                 } else {
                     // there's no path either
-                    len = this->data.size() - 1; // till the end
+                    len = data.size() - 1; // till the end
                 }
             }
 
-            return this->substr(start, len);
+            return substr(start, len);
         }
 
         /**
@@ -864,7 +864,7 @@ namespace webpp::uri {
          * @brief set the hostname/ip in the uri if possible
          */
         auto& host(string_view_type const& new_host) noexcept {
-            this->parse_host();
+            parse_host();
 
             // todo: are you sure it can handle punycode as well?
             string_type encoded_host{this->get_allocator()};
@@ -874,21 +874,21 @@ namespace webpp::uri {
                 encoded_host = '[' + encoded_host + ']';
             }
 
-            if (this->authority_start == this->data.size()) {
+            if (authority_start == data.size()) {
                 // there's no authority start
 
                 if (encoded_host.empty())
                     return *this; // there's nothing to do here. It's already
                 // what the user wants
 
-                if (this->scheme_end == this->data.size()) {
+                if (scheme_end == data.size()) {
                     // there's no scheme either, so we just have to add to the
                     // beginning of the string
-                    this->replace_value(0, 0, string_type("//") + encoded_host);
+                    replace_value(0, 0, string_type("//") + encoded_host);
                     return *this;
                 } else {
                     // there's a scheme
-                    this->replace_value(this->scheme_end, 0, string_type("//") + encoded_host);
+                    replace_value(scheme_end, 0, string_type("//") + encoded_host);
                     return *this;
                 }
             }
@@ -899,36 +899,36 @@ namespace webpp::uri {
             // because I don't want you to curse me :)
 
             // we have authority_start, let's check user_info and port too
-            if (this->user_info_end == this->data.size()) {
+            if (user_info_end == data.size()) {
                 // there's no user info
-                if (this->scheme_end == this->data.size()) {
+                if (scheme_end == data.size()) {
                     start = 0;
                     if (!new_host.empty() && !ascii::starts_with(string_view_type{encoded_host}, "//")) {
                         encoded_host = "//" + encoded_host;
                     }
                 } else {
-                    start = this->authority_start;
+                    start = authority_start;
                 }
             } else {
                 // there's a user info
-                start = this->user_info_end;
+                start = user_info_end;
             }
 
-            if (this->port_start != this->data.size()) {
+            if (port_start != data.size()) {
                 // but there's a port
-                finish = this->port_start;
+                finish = port_start;
             } else {
                 // there's no port either
-                if (this->authority_end != this->data.size()) {
+                if (authority_end != data.size()) {
                     // there's a path
-                    finish = this->authority_end;
+                    finish = authority_end;
                 } else {
                     // there's no path either
-                    finish = this->data.size() - 1; // till the end
+                    finish = data.size() - 1; // till the end
                 }
             }
 
-            this->replace_value(start, finish - start, encoded_host);
+            replace_value(start, finish - start, encoded_host);
 
             return *this;
         }
@@ -1292,8 +1292,8 @@ namespace webpp::uri {
          * @return bool true if the URI doesn't have a path
          */
         [[nodiscard]] bool has_path() const noexcept {
-            this->parse_path();
-            return this->authority_end != this->data.size();
+            parse_path();
+            return authority_end != data.size();
         }
 
         /**
@@ -1302,8 +1302,8 @@ namespace webpp::uri {
         [[nodiscard]] string_view_type path_raw() const noexcept {
             if (!has_path())
                 return {};
-            return this->substr(this->authority_end,
-                                stl::min(this->query_start, this->fragment_start) - this->authority_end);
+            return substr(authority_end,
+                                stl::min(query_start, fragment_start) - authority_end);
         }
 
         /**
@@ -1363,16 +1363,16 @@ namespace webpp::uri {
             if (_path.front() == '/')
                 container.emplace_back(); // empty string
             do {
-                slash_start = _path.find('/', this->last_slash_start + 1);
-                container.emplace_back(_path.data() + this->last_slash_start + 1,
-                                       stl::min(this->slash_start, _path_size) - this->last_slash_start -
+                slash_start = _path.find('/', last_slash_start + 1);
+                container.emplace_back(_path.data() + last_slash_start + 1,
+                                       stl::min(slash_start, _path_size) - last_slash_start -
                                        1);
                 // if (slash_start != string_view_type::npos)
                 // _path.remove_prefix(slash_start + 1);
                 // else
                 // _path.remove_prefix(_path.size());
-                this->last_slash_start = this->slash_start;
-            } while (this->slash_start != string_view_type::npos);
+                last_slash_start = slash_start;
+            } while (slash_start != string_view_type::npos);
             return *this;
         }
 
@@ -1424,11 +1424,11 @@ namespace webpp::uri {
          * @brief set the path for the uri
          */
         auto& path(istl::StringViewifiable auto&& m_path) noexcept {
-            this->parse_path();
+            parse_path();
             string_type str(this->get_allocator());
             encode_uri_component(m_path, str, charset(details::PCHAR_NOT_PCT_ENCODED<char_type>, charset<char_type, 1>('/')));
             auto _encoded_path = (ascii::starts_with(m_path, '/') ? "" : "/") + str;
-            this->replace_value(this->authority_end, this->query_start - this->authority_end, _encoded_path);
+            replace_value(authority_end, query_start - authority_end, _encoded_path);
             return *this;
         }
 
@@ -1487,15 +1487,15 @@ namespace webpp::uri {
          * @brief checks if the uri has query or not
          */
         [[nodiscard]] bool has_queries() const noexcept {
-            this->parse_query();
-            return this->query_start != this->data.size();
+            parse_query();
+            return query_start != data.size();
         }
 
         [[nodiscard]] string_view_type queries_raw() const noexcept {
-            this->parse_query();
-            if (this->query_start == this->data.size())
+            parse_query();
+            if (query_start == data.size())
                 return {};
-            return this->substr(this->query_start + 1, this->fragment_start - this->query_start - 1);
+            return substr(query_start + 1, fragment_start - query_start - 1);
         }
 
         /**
@@ -1530,41 +1530,41 @@ namespace webpp::uri {
             }
             encode_uri_component(m_query, encoded_query, details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>);
 
-            this->parse_query();
+            parse_query();
 
-            if (this->query_start != this->data.size()) {
+            if (query_start != data.size()) {
                 // we don't have a query
-                if (this->fragment_start != this->data.size()) {
-                    this->replace_value(this->fragment_start, 0, this->encoded_query);
+                if (fragment_start != data.size()) {
+                    replace_value(fragment_start, 0, encoded_query);
                 } else {
-                    this->parse_path();
-                    if (this->authority_end == this->data.size()) {
+                    parse_path();
+                    if (authority_end == data.size()) {
                         // we don't even have authority_end
-                        this->parse_scheme();
-                        if (this->authority_start == this->data.size()) {
+                        parse_scheme();
+                        if (authority_start == data.size()) {
                             // there's no authority_start
-                            if (this->scheme_end == this->data.size()) {
+                            if (scheme_end == data.size()) {
                                 // it's an empty string
-                                this->replace_value(0, 0, "///" + this->encoded_query);
+                                replace_value(0, 0, "///" + encoded_query);
                             } else {
-                                this->replace_value(this->scheme_end, 0, "/" + this->encoded_query);
+                                replace_value(scheme_end, 0, "/" + encoded_query);
                             }
                         } else {
-                            this->replace_value(this->authority_start, 0, "/" + this->encoded_query);
+                            replace_value(authority_start, 0, "/" + encoded_query);
                         }
                     } else {
                         // we have authority_end
-                        if (this->data[this->authority_end] == '/') {
-                            this->replace_value(this->authority_end + 1, 0, this->encoded_query);
+                        if (data[authority_end] == '/') {
+                            replace_value(authority_end + 1, 0, encoded_query);
                         } else {
-                            this->replace_value(this->authority_end + 1, 0, "/" + this->encoded_query);
+                            replace_value(authority_end + 1, 0, "/" + encoded_query);
                         }
                     }
                 }
             } else {
                 // we have query
-                this->replace_value(this->query_start, this->fragment_start - this->query_start,
-                                    this->encoded_query);
+                replace_value(query_start, fragment_start - query_start,
+                                    encoded_query);
             }
             return *this;
         }
@@ -1625,7 +1625,7 @@ namespace webpp::uri {
          */
         template <typename MapType = basic_queries<string_type, allocator_type>>
         auto& extract_queries_to(MapType& q_structured) const noexcept {
-            using map_key_type   = typename MapType::key_value;
+            using map_key_type   = typename MapType::key_type;
             using map_value_type = typename MapType::mapped_type;
             static_assert(istl::String<map_key_type>,
                           "The specified container can't hold the query keys.");
@@ -1687,14 +1687,14 @@ namespace webpp::uri {
             auto str = istl::string_viewify(stl::forward<decltype(_str)>(_str));
             if (str.empty()) {
                 // remove fragment
-                this->replace_value(this->fragment_start, this->data.size() - this->fragment_start, "");
+                replace_value(fragment_start, data.size() - fragment_start, "");
                 return *this;
             }
             string_type encoded_fragment{this->get_allocator()};
             if (!ascii::starts_with(str, '#'))
                 encoded_fragment += '#';
             encode_uri_component(str, encoded_fragment, details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>);
-            this->replace_value(this->fragment_start, this->data.size() - this->fragment_start, stl::move(encoded_fragment));
+            replace_value(fragment_start, data.size() - fragment_start, stl::move(encoded_fragment));
             return *this;
         }
 

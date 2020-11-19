@@ -86,13 +86,14 @@ namespace webpp::istl {
     concept StringViewifiableOfTemplate = StringViewifiableOf<details::string_view::deduced_type<StrViewType, T>, T>;
 
     template <typename T>
-    concept StringViewifiable = StringViewifiableOf<
-      stl::conditional_t<
-        StringView<T>,
+    using defaulted_string_view = stl::conditional_t<
+          StringView<T>,
           stl::remove_cvref_t<T>,
-        stl::basic_string_view<char_type_of<T>, char_traits_type_of<T>>
-                         >,
-      stl::remove_cvref_t<T>>;
+          stl::basic_string_view<char_type_of<T>, char_traits_type_of<T>>
+    >;
+
+    template <typename T>
+    concept StringViewifiable = StringViewifiableOf<defaulted_string_view<T>, stl::remove_cvref_t<T>>;
 
     /**
      * Convert the string value specified to a "string view" of type StrViewT
@@ -130,7 +131,8 @@ namespace webpp::istl {
     template <template <typename...> typename StrViewT, typename StrT>
     requires(StringViewifiableOfTemplate<StrViewT, StrT>)
       [[nodiscard]] constexpr auto string_viewify_of(StrT&& str) noexcept {
-        return string_viewify_of<details::string_view::deduced_type<StrViewT, StrT>>(stl::forward<StrT>(str));
+        using deduced_type = details::string_view::deduced_type<StrViewT, StrT>;
+        return string_viewify_of<deduced_type>(stl::forward<StrT>(str));
     }
 
 
@@ -139,8 +141,7 @@ namespace webpp::istl {
      */
      template <StringViewifiable StrT>
     [[nodiscard]] constexpr auto string_viewify(StrT&& str) noexcept {
-        using char_type = char_type_of<StrT>;
-        using str_view_t = stl::basic_string_view<char_type, stl::char_traits<char_type>>;
+        using str_view_t = defaulted_string_view<StrT>;
         return string_viewify_of<str_view_t>(stl::forward<StrT>(str));
     }
 

@@ -33,7 +33,7 @@ TEST(Strings, ToLowerToUpper) {
     EXPECT_EQ(to_upper_copy('a'), 'A');
     EXPECT_EQ(to_upper_copy('1'), '1');
     EXPECT_EQ(to_upper_copy("ABC"), "ABC");
-    EXPECT_EQ(to_upper_copy("ABC"), "ABC");
+    EXPECT_EQ(to_upper_copy("AbC"), "ABC");
 
     std::string str = "this is [1] STRING";
     to_lower(str);

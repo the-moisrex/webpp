@@ -80,15 +80,15 @@ namespace webpp::istl {
     template <template <typename...> typename StrType, typename T>
     concept StringifiableOfTemplate = StringifiableOf<details::string::deduced_type<StrType, T>, T>;
 
-    template <typename T>
-    concept Stringifiable = StringifiableOf<
-      stl::conditional_t<
+    template <typename T, typename AllocType = allocator_type_of<T>>
+    using defaulted_string = stl::conditional_t<
         String<T>,
-          stl::remove_cvref_t<T>,
-        stl::basic_string<char_type_of<T>, char_traits_type_of<T>, allocator_type_of<T>>
-        >,
-        stl::remove_cvref_t<T>
-      >;
+        stl::remove_cvref_t<T>,
+        stl::basic_string<char_type_of<T>, char_traits_type_of<T>, stl::remove_cvref_t<AllocType>>
+    >;
+
+    template <typename T>
+    concept Stringifiable = StringifiableOf<defaulted_string<T>, stl::remove_cvref_t<T>>;
 
 
     template <typename StrT, typename Strifiable>
@@ -117,18 +117,19 @@ namespace webpp::istl {
         }
     }
 
-    template <template <typename...> typename StrT, typename Strifiable>
+    template <template <typename...> typename StrT, typename Strifiable, typename AllocType>
     requires(StringifiableOfTemplate<StrT, Strifiable>)
-    [[nodiscard]] constexpr auto stringify_of(Strifiable&& str, auto const& allocator) noexcept {
-        return stringify_of<details::string::deduced_type<StrT, Strifiable>>(
-          stl::forward<Strifiable>(str), allocator);
+    [[nodiscard]] constexpr auto stringify_of(Strifiable&& str, AllocType const& allocator) noexcept {
+        using alloc_type = stl::add_lvalue_reference_t<stl::add_const_t<AllocType>>;
+        using deduced_type = details::string::deduced_type<StrT, Strifiable, alloc_type>;
+        return stringify_of<deduced_type>(stl::forward<Strifiable>(str), allocator);
     }
 
 
-    template <typename Strifiable>
-    [[nodiscard]] constexpr auto stringify(Strifiable&& str, auto const& allocator) noexcept {
-        return stringify_of<details::string::deduced_type<stl::basic_string, Strifiable>>(
-          stl::forward<Strifiable>(str), allocator);
+    template <typename Strifiable, typename AllocType>
+    [[nodiscard]] constexpr auto stringify(Strifiable&& str, AllocType const& allocator) noexcept {
+        using deduced_type = defaulted_string<Strifiable, AllocType>;
+        return stringify_of<deduced_type>(stl::forward<Strifiable>(str), allocator);
     }
 
 
