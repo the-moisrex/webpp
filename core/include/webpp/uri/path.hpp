@@ -95,6 +95,13 @@ namespace webpp::uri {
                 return;
 
             auto it = this->cbegin();
+
+            // handling empty this special path: "/"
+            if (it->empty() && this->size() == 1) {
+                str.append("/");
+                return;
+            }
+
             str.append(*it++);
             for (; it != this->cend(); ++it) {
                 str.append("/");

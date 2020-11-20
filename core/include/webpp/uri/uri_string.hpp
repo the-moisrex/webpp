@@ -1361,19 +1361,19 @@ namespace webpp::uri {
             stl::size_t slash_start      = 0;
             stl::size_t last_slash_start = 0;
             auto        _path_size       = _path.size();
-            if (_path.front() == '/')
+            if (_path.front() == '/') {
                 container.emplace_back(); // empty string
-            do {
+                last_slash_start = 1;
+            }
+            for(;;) {
                 slash_start = _path.find('/', last_slash_start + 1);
+                if (slash_start == string_view_type::npos) {
+                    break;
+                }
                 container.emplace_back(_path.data() + last_slash_start + 1,
-                                       stl::min(slash_start, _path_size) - last_slash_start -
-                                       1);
-                // if (slash_start != string_view_type::npos)
-                // _path.remove_prefix(slash_start + 1);
-                // else
-                // _path.remove_prefix(_path.size());
+                                       stl::min(slash_start, _path_size) - last_slash_start - 1);
                 last_slash_start = slash_start;
-            } while (slash_start != string_view_type::npos);
+            };
             return *this;
         }
 
