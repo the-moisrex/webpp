@@ -1457,14 +1457,14 @@ namespace webpp::uri {
         }
 
         /**
-         * @brief checks if the uri path is normalized or not (contains relative
-         * . or .. paths)
+         * @brief checks if the uri path is normalized or not (contains relative . or .. paths)
+         * @details since this is supposed to be a URI, this check doesn't care if the path is relative or not
          * @return bool
          */
         [[nodiscard]] bool is_normalized() const noexcept {
             auto m_path = raw_slugs();
-            return m_path.cend() != stl::find_if(m_path.cbegin(), m_path.cend(), [](auto const& p) {
-              return p == "." || p == "..";
+            return stl::all_of(m_path.cbegin(), m_path.cend(), [](auto const& p) constexpr noexcept {
+              return p != "." && p != "..";
             });
         }
 
