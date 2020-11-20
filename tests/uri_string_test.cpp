@@ -23,6 +23,7 @@ TEST(URITests, Creation) {
     EXPECT_FALSE(u.has_fragment());
     EXPECT_FALSE(u.has_queries());
     EXPECT_EQ(u.raw_slugs().size(), 1);
+    EXPECT_EQ(u.raw_slugs().to_string(), "/");
     EXPECT_EQ(u.scheme(), "http");
     u.clear_scheme();
     u.clear_scheme();

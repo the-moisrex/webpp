@@ -1338,7 +1338,7 @@ namespace webpp::uri {
          * You can use string_view as the underlying string type of the container since we don't
          * decode the string. As long as the class has access to the string_view, this method has too.
          */
-        template <typename Container = basic_path<string_view_type, allocator_type>>
+        template <typename Container = basic_path<string_type, allocator_type>>
         [[nodiscard]] Container raw_slugs() const noexcept {
             Container container(this->get_allocator());
             extract_raw_slugs_to<Container>(container);

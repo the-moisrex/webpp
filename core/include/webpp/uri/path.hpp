@@ -24,13 +24,13 @@ namespace webpp::uri {
         slug.size();
     };
 
-    template <Slug SlugType = stl::string, typename AllocType = typename SlugType::allocator_type>
-    struct basic_path : public stl::vector<SlugType, rebind_allocator<AllocType, SlugType>> {
-        using container_type = stl::vector<SlugType, rebind_allocator<AllocType, SlugType>>;
-        using allocator_type = rebind_allocator<AllocType, SlugType>;
-        using value_type = SlugType;
+    template <Slug SlugType = stl::string, typename AllocType = typename stl::remove_cvref_t<SlugType>::allocator_type>
+    struct basic_path : public stl::vector<stl::remove_cvref_t<SlugType>, rebind_allocator<AllocType, stl::remove_cvref_t<SlugType>>> {
+        using container_type = stl::vector<stl::remove_cvref_t<SlugType>, rebind_allocator<AllocType, stl::remove_cvref_t<SlugType>>>;
+        using value_type = stl::remove_cvref_t<SlugType>;
+        using allocator_type = rebind_allocator<AllocType, value_type>;
         using char_type = typename SlugType::value_type;
-        using string_type = stl::conditional_t<istl::String<SlugType>, SlugType, stl::basic_string<char_type, allocator_type>>;
+        using string_type = stl::conditional_t<istl::String<value_type>, value_type, stl::basic_string<char_type, allocator_type>>;
 
         static constexpr std::string_view parent_dir= "..";
         static constexpr std::string_view current_dir = ".";
