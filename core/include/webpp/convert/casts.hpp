@@ -4,6 +4,7 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../traits/traits_concepts.hpp"
+#include "../strings/size.hpp"
 
 #include <charconv>
 #include <stdexcept>
@@ -63,15 +64,6 @@ namespace webpp {
 
     //////////////////////////////////////////////////////////////////////
 
-    template <typename INT>
-    constexpr auto digit_count() noexcept {
-        uint_fast8_t t = 0;
-        INT          a = stl::numeric_limits<int>::max();
-        while (a /= 10)
-            ++t;
-        return t;
-    }
-
 
     // todo: add allocator support here:
     template <Traits TraitsType, typename ValueType, typename... R>
@@ -79,7 +71,7 @@ namespace webpp {
         using char_type           = typename TraitsType::char_type;
         using str_t               = typename TraitsType::string_type;
         using size_type           = typename str_t::size_type;
-        constexpr size_type _size = digit_count<ValueType>() + 1;
+        constexpr size_type _size = ascii::digit_count<ValueType>() + 1;
         if constexpr (stl::is_same_v<char_type, char>) {
             str_t str(_size, '\0');
             auto [p, _] = stl::to_chars(str.data(), str.data() + _size, value, stl::forward<R>(args)...);
@@ -100,14 +92,14 @@ namespace webpp {
 
     template <typename ValueType, typename... R>
     constexpr auto append_to(char* ptr, ValueType value, R&&... args) noexcept {
-        constexpr stl::size_t _size = digit_count<ValueType>() + 1;
+        constexpr stl::size_t _size = ascii::digit_count<ValueType>() + 1;
         return stl::to_chars(ptr, ptr + _size, value, stl::forward<R>(args)...);
     }
 
     // todo: GCC's to_chars implementation doesn't support floating point numbers
     template <typename ValueType, typename... R>
     constexpr bool append_to(istl::String auto& str, ValueType value, R&&... args) noexcept {
-        constexpr stl::size_t   _size = digit_count<ValueType>() + 1;
+        constexpr stl::size_t   _size = ascii::digit_count<ValueType>() + 1;
         stl::array<char, _size> chars;
         if (auto res = stl::to_chars(chars.data(), chars.data() + _size, value, stl::forward<R>(args)...);
             res.ec == stl::errc()) {

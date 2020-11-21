@@ -34,7 +34,7 @@ namespace webpp::lexical {
             return istl::string_viewify_of<Target>(stl::forward<Source>(source));
         } else if constexpr (istl::String<target_t>) {
             // Target == string
-            const auto the_alloc = extract_allocator_or_default(allocs..., source);
+            const auto the_alloc = extract_allocator_of_or_default<istl::allocator_type_of<target_t>>(allocs..., source);
             if constexpr (istl::StringifiableOf<target_t, src_t>) {
                 // Source is convertible to string
                 return istl::stringify_of<Target>(stl::forward<Source>(source), the_alloc);

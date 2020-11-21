@@ -3,9 +3,10 @@
 #ifndef WEBPP_JOIN_HPP
 #define WEBPP_JOIN_HPP
 
+#include "../std/format.hpp"
 #include "../std/string.hpp"
 #include "./size.hpp"
-#include "../std/format.hpp"
+#include "../convert/lexical_cast.hpp"
 
 namespace webpp::string {
 
@@ -31,33 +32,39 @@ namespace webpp::string {
         };
     } // namespace details
 
-    template <istl::Stringifiable... T>
+    template <typename... T>
     constexpr auto join(T&&... strs) {
-        stl::size_t const merged_size = (ascii::size(strs) + ...);
+        stl::size_t const merged_size = (ascii::max_size(strs) + ...);
         using best_str_t              = typename istl::ranked_types<details::string_type_ranker, T...>::best;
-        using str_type = stl::remove_cvref_t<typename best_str_t::type>;
-        auto str = [&]() -> str_type {
-            if constexpr (requires {str_type::allocator_type; }) { // has allocator
-                using best_alloc_type  = typename str_type::allocator_type;
+        using str_type                = stl::remove_cvref_t<typename best_str_t::type>;
+        auto const alloc = [&]() noexcept {
+            if constexpr (requires { str_type::allocator_type; }) { // has allocator
+                using best_alloc_type = typename str_type::allocator_type;
                 const auto best_alloc = best_str_t::get(stl::forward<T>(strs)...).get_allocator();
-                return str_type{best_alloc};
+                return best_alloc;
             } else { // use default allocator
-                return str_type{};
+                return typename str_type::allocator_type{};
             }
         }();
-        if constexpr (requires {str.reserve(merged_size);}) {
+        str_type str{alloc};
+        if constexpr (requires { str.reserve(merged_size); }) {
             str.reserve(merged_size);
-        } else if constexpr (requires { str.resize(merged_size); }) {
-            str.resize(merged_size);
+//        } else if constexpr (requires { str.resize(merged_size); }) {
+//            str.resize(merged_size); //
         }
         (([&]() noexcept {
-             // todo: add istl::to_string and lexical::cast<str_type>
-             if constexpr (requires { str.append(stl::forward<T>(strs)); }) {
+             /* if constexpr (requires { str.append(stl::forward<T>(strs)); }) {
                  str.append(stl::forward<T>(strs));
              } else if constexpr (requires { str += stl::forward<T>(strs); }) {
                  str += stl::forward<T>(strs);
              } else if constexpr (requires { str.push_back(stl::forward<T>(strs)); }) {
                  str.push_back(stl::forward<T>(strs));
+             } else */ if constexpr (requires { str.append(lexical::cast<str_type>(stl::forward<T>(strs), alloc)); }) {
+                 str.append(lexical::cast<str_type>(stl::forward<T>(strs), alloc));
+             } else if constexpr (requires { str += lexical::cast<str_type>(stl::forward<T>(strs), alloc); }) {
+                 str += lexical::cast<str_type>(stl::forward<T>(strs), alloc);
+             } else if constexpr (requires { str.push_back(lexical::cast<str_type>(stl::forward<T>(strs), alloc)); }) {
+                 str.push_back(lexical::cast<str_type>(stl::forward<T>(strs), alloc));
              } else if constexpr (requires {
                                       stl::format_to(stl::back_inserter(str), FMT_COMPILE("{}"),
                                                      stl::forward<T>(strs));
@@ -81,6 +88,6 @@ namespace webpp::string {
     //        return result;
     //    };
 
-} // namespace webpp
+} // namespace webpp::string
 
 #endif // WEBPP_JOIN_HPP

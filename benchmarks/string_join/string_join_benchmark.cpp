@@ -7,15 +7,14 @@
 #include <string_view>
 
 using namespace webpp;
-using namespace std;
 
 static void StrJoin_Webpp(benchmark::State& state) {
   for (auto _ : state) {
-    string str1 = str_generator();
-    string_view str2 = "two ";
-    pmr::string str3 = str_generator<pmr::string>();
+    std::string str1 = str_generator();
+    std::string_view str2 = "two ";
+    std::pmr::string str3 = str_generator<std::pmr::string>();
 
-    auto res = join(str1, str2, str3, "; done");
+    auto res = string::join(str1, str2, str3, "; done");
     benchmark::DoNotOptimize(res);
   }
 }
@@ -25,11 +24,11 @@ BENCHMARK(StrJoin_Webpp);
 
 static void StrJoin_STD(benchmark::State& state) {
   for (auto _ : state) {
-    string str1 = str_generator();
-    string_view str2 = "two ";
-    pmr::string str3 = str_generator<pmr::string>();
+    std::string str1 = str_generator();
+    std::string_view str2 = "two ";
+    std::pmr::string str3 = str_generator<std::pmr::string>();
 
-    pmr::string res;
+    std::pmr::string res;
     res.reserve(str1.size() + str2.size() + str3.size() + 6);
     res += str1;
     res += str2;
