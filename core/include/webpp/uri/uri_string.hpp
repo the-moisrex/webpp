@@ -8,6 +8,7 @@
 #include "../strings/charset.hpp"
 #include "../strings/join.hpp"
 #include "../strings/to_case.hpp"
+#include "../strings/iequals.hpp"
 #include "../traits/traits_concepts.hpp"
 #include "../utils/allocators.hpp"
 #include "../utils/ipv4.hpp"
@@ -523,20 +524,20 @@ namespace webpp::uri {
 
         template <bool UMutable = Mutable>
         bool operator==(const uri_string<TraitsType, UMutable>& other) const noexcept {
-            return str() == other.str();
+            return ascii::iequals(str(), other.str());
         }
 
         template <bool UMutable = Mutable>
         bool operator!=(const uri_string<TraitsType, UMutable>& other) const noexcept {
-            return str() != other.str();
+            return !ascii::iequals(str(), other.str());
         }
 
         bool operator==(string_view_type const& u) const noexcept {
-            return str() == u;
+            return ascii::iequals(str(), u);
         }
 
         bool operator!=(string_view_type const& u) const noexcept {
-            return str() != u;
+            return !ascii::iequals(str(), u);
         }
 
         /**
@@ -1852,7 +1853,7 @@ namespace webpp::uri {
          *
          */
         [[nodiscard]] bool is_urn() const noexcept {
-            return scheme() == "urn" && authority_start == data.size();
+            return ascii::iequals<ascii::char_case_side::second_lowered>(scheme(), "urn") && authority_start == data.size();
         }
 
         /**

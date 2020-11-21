@@ -199,9 +199,9 @@ TEST(URITests, URN) {
     uri_string       b{"URN:example:a123,z456"};
     uri_string       c{"urn:EXAMPLE:a123,z456"};
 
-    EXPECT_EQ(a, b);
-    EXPECT_EQ(a, c);
-    EXPECT_EQ(b, c);
+    EXPECT_TRUE(a == b);
+    EXPECT_TRUE(a == c);
+    EXPECT_TRUE(b == c);
     EXPECT_TRUE(a.is_urn());
     EXPECT_TRUE(b.is_urn());
     EXPECT_TRUE(c.is_urn());
