@@ -420,10 +420,11 @@ namespace webpp::uri {
             // todo: check performance of this
             auto const after_replacement_start = stl::min(data.size(), start + len);
             data.reserve(start + replacement.size() + (data.size() - after_replacement_start));
-            auto the_rest = substr(after_replacement_start);
-            data = substr(0, start);
-            data += stl::forward<decltype(replacement)>(replacement);
-            data += stl::move(the_rest);
+            data = string::join<storred_str_t>(
+                substr(0, start), // first part
+                stl::forward<decltype(replacement)>(replacement), // replacement part
+                substr(after_replacement_start) // the rest
+              );
             unparse();
             // TODO: you may want to not unparse everything
         }

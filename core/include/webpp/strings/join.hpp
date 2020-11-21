@@ -32,13 +32,16 @@ namespace webpp::string {
         };
     } // namespace details
 
-    template <typename... T>
+    template <typename StringType = void, typename... T>
     constexpr auto join(T&&... strs) {
         stl::size_t const merged_size = (ascii::max_size(strs) + ...);
         using best_str_t              = typename istl::ranked_types<details::string_type_ranker, T...>::best;
-        using str_type                = stl::remove_cvref_t<typename best_str_t::type>;
+        using str_type                = stl::conditional_t<stl::is_void_v<StringType>,
+          stl::remove_cvref_t<typename best_str_t::type>, StringType>;
         auto const alloc = [&]() noexcept {
-            if constexpr (requires { str_type::allocator_type; }) { // has allocator
+            if constexpr (!stl::is_void_v<StringType>) {
+                return extract_allocator_of_or_default<istl::allocator_type_of<str_type>>(strs...);
+            } else if constexpr (requires { str_type::allocator_type; }) { // has allocator
                 using best_alloc_type = typename str_type::allocator_type;
                 const auto best_alloc = best_str_t::get(stl::forward<T>(strs)...).get_allocator();
                 return best_alloc;
@@ -46,11 +49,12 @@ namespace webpp::string {
                 return typename str_type::allocator_type{};
             }
         }();
+        // todo: use stl::format if the elected allocator and string type are default
         str_type str{alloc};
         if constexpr (requires { str.reserve(merged_size); }) {
             str.reserve(merged_size);
 //        } else if constexpr (requires { str.resize(merged_size); }) {
-//            str.resize(merged_size); //
+//            str.resize(merged_size);
         }
         (([&]() noexcept {
              /* if constexpr (requires { str.append(stl::forward<T>(strs)); }) {

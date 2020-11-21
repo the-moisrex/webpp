@@ -412,15 +412,21 @@ TEST(URITests, TypedVariables) {
     uri_string u{"/user/{user_id}"};
     EXPECT_TRUE(u.has_path());
     auto _path = u.slugs();
-    EXPECT_EQ(_path[0], "");
-    EXPECT_EQ(_path[1], "user");
-    EXPECT_EQ(_path[2], "{user_id}");
+    EXPECT_EQ(_path.size(), 3);
+    if (_path.size() == 3) { // to stop breaking other tests
+        EXPECT_EQ(_path[0], "");
+        EXPECT_EQ(_path[1], "user");
+        EXPECT_EQ(_path[2], "{user_id}");
+    }
 }
 
 TEST(URITests, StructuredPath) {
     uri_string  u{"/user/19"};
     auto parsed = u.slugs();
-    EXPECT_EQ(parsed[2], "19");
+    EXPECT_EQ(parsed.size(), 3);
+    if (parsed.size() == 3) { // don't break other tests if this one is failing
+        EXPECT_EQ(parsed[2], "19");
+    }
 }
 
 TEST(URITests, EqualPaths) {
