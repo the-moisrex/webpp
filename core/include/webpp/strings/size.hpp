@@ -15,7 +15,7 @@ namespace webpp::ascii {
     template <typename INT>
     constexpr auto digit_count() noexcept {
         uint_fast8_t t = 0;
-        INT          a = stl::numeric_limits<int>::max();
+        INT          a = stl::numeric_limits<INT>::max();
         while (a /= 10)
             ++t;
         return t;
@@ -47,7 +47,7 @@ namespace webpp::ascii {
             return str.length();
         } else if constexpr (constexpr_array_type<T>::is_array) {
             return constexpr_array_type<T>::array_length; // todo: I'm not sure if this works or not
-        } else if constexpr (stl::is_same_v<stl::remove_cvref_t<T>, char*>) {
+        } else if constexpr (requires {stl::strlen(str);}) {
             return stl::strlen(str);
         } else {
             // todo: is it possible to optimize this with SIMD?
@@ -62,8 +62,9 @@ namespace webpp::ascii {
 
     template <typename T>
     [[nodiscard]] constexpr stl::size_t max_size(T&& val) noexcept {
-        if constexpr (stl::is_integral_v<stl::remove_cvref_t<T>>) {
-            constexpr auto res = digit_count<stl::remove_cvref_t<T>>();
+        using type = stl::remove_cvref_t<T>;
+        if constexpr (stl::is_integral_v<type>) {
+            constexpr auto res = digit_count<type>();
             return res;
             // todo: add floats as well
         } else {

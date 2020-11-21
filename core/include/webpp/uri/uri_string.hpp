@@ -6,6 +6,7 @@
 #include "../std/optional.hpp"
 #include "../std/vector.hpp"
 #include "../strings/charset.hpp"
+#include "../strings/join.hpp"
 #include "../strings/to_case.hpp"
 #include "../traits/traits_concepts.hpp"
 #include "../utils/allocators.hpp"
@@ -13,9 +14,9 @@
 #include "../utils/ipv6.hpp"
 #include "../validators/validators.hpp"
 #include "./details/constants.hpp"
+#include "./encoding.hpp"
 #include "./path.hpp"
 #include "./queries.hpp"
-#include "./encoding.hpp"
 
 
 /**
@@ -619,10 +620,10 @@ namespace webpp::uri {
                                     m_scheme);
             } else {
                 // the URI doesn't have a scheme now, we have to put it in the right place
-                auto scheme_colon = m_scheme.empty() ? "" : string_type(m_scheme) + ':';
+                auto scheme_colon = m_scheme.empty() ? "" : string::join(string_type(m_scheme), ':');
                 if (authority_start != data.size()) {
                     replace_value(0, 0,
-                                        scheme_colon + (ascii::starts_with(data, "//") ? "" : "//"));
+                                        string::join(scheme_colon, (ascii::starts_with(data, "//") ? "" : "//")));
                 } else {
                     // It's a URN (or URN like URI)
                     replace_value(0, 0, scheme_colon);
@@ -693,14 +694,14 @@ namespace webpp::uri {
                     parse_scheme(); // to get "scheme_end"
                     if (scheme_end == data.size()) {
                         // there's no scheme either
-                        replace_value(0, 0, string_type("//") + encoded_info + "@");
+                        replace_value(0, 0, string::join(string_type("//"), encoded_info, "@"));
                     } else {
                         // there's scheme and we have to put it after that
-                        replace_value(scheme_end + 1, 0, string_type("//") + encoded_info + "@");
+                        replace_value(scheme_end + 1, 0, string::join(string_type("//"), encoded_info, "@"));
                     }
                 } else {
                     // there's authority start but there's no user_info_end
-                    replace_value(authority_start, 0, encoded_info + "@");
+                    replace_value(authority_start, 0, string::join(encoded_info, "@"));
                 }
             }
             return *this;
@@ -872,7 +873,7 @@ namespace webpp::uri {
             encode_uri_component(new_host, encoded_host, details::REG_NAME_NOT_PCT_ENCODED<char_type>);
             if ((!ascii::starts_with(new_host, '[') || !ascii::ends_with(new_host, ']')) &&
                 webpp::is::ipv6(new_host)) {
-                encoded_host = '[' + encoded_host + ']';
+                encoded_host = string::join('[', encoded_host, ']');
             }
 
             if (authority_start == data.size()) {
@@ -885,11 +886,11 @@ namespace webpp::uri {
                 if (scheme_end == data.size()) {
                     // there's no scheme either, so we just have to add to the
                     // beginning of the string
-                    replace_value(0, 0, string_type("//") + encoded_host);
+                    replace_value(0, 0, string::join("//", encoded_host));
                     return *this;
                 } else {
                     // there's a scheme
-                    replace_value(scheme_end, 0, string_type("//") + encoded_host);
+                    replace_value(scheme_end, 0, string::join("//", encoded_host));
                     return *this;
                 }
             }
@@ -905,7 +906,7 @@ namespace webpp::uri {
                 if (scheme_end == data.size()) {
                     start = 0;
                     if (!new_host.empty() && !ascii::starts_with(string_view_type{encoded_host}, "//")) {
-                        encoded_host = "//" + encoded_host;
+                        encoded_host = string::join("//", encoded_host);
                     }
                 } else {
                     start = authority_start;
@@ -1026,7 +1027,10 @@ namespace webpp::uri {
                 // instead of this method.
                 auto dot   = _host.find_last_of('.');
                 auto start = dot != string_view_type::npos ? dot + 1 : 0;
-                host(string_type(_host.substr(0, start), this->get_allocator()) + string_type(tld, this->get_allocator()));
+                host(string::join(
+                  string_type(_host.substr(0, start), this->get_allocator()),
+                  string_type(tld, this->get_allocator())
+                  ));
             }
             return *this;
         }
@@ -1072,14 +1076,21 @@ namespace webpp::uri {
 
                 // there's nothing to do it's empty
                 if (!sld.empty()) {
-                    static_cast<void>(host(string_type(sld, this->get_allocator()) + '.' + string_type(_host, this->get_allocator())));
+                    static_cast<void>(host(string::join(
+                        string_type(sld, this->get_allocator()),
+                        '.',
+                        string_type(_host, this->get_allocator()))
+                                           ));
                 }
             } else {
                 auto bef_last_dot = _host.find_last_of('.', last_dot - 1);
                 auto start        = bef_last_dot == string_view_type::npos ? 0 : bef_last_dot + 1;
                 if (!sld.empty())
                     static_cast<void>(
-                      host(string_type(_host.substr(0, start), this->get_allocator()) + string_type(sld, this->get_allocator()) + string_type(_host.substr(last_dot), this->get_allocator())));
+                      host(string::join(
+                        string_type(_host.substr(0, start), this->get_allocator()),
+                        string_type(sld, this->get_allocator()),
+                        string_type(_host.substr(last_dot), this->get_allocator()))));
                 else
                     static_cast<void>(host(string_type(_host.substr(last_dot + 1), this->get_allocator())));
             }
@@ -1137,7 +1148,7 @@ namespace webpp::uri {
                 return *this;
             if (sds.empty()) // special check for when we want to remove the SDS
                 bef_last_dot++;
-            static_cast<void>(host(string_type(sds) + string_type(_host.substr(bef_last_dot))));
+            static_cast<void>(host(string::join(string_type(sds), string_type(_host.substr(bef_last_dot)))));
             return *this;
         }
 
@@ -1247,21 +1258,21 @@ namespace webpp::uri {
 
                 if (authority_end != data.size()) {
                     // found it at the end of the line
-                    replace_value(authority_end, 0, ":" + string_type(new_port));
+                    replace_value(authority_end, 0, string::join(':', string_type(new_port)));
                 } else if (user_info_end != data.size()) {
                     // there's authority and there might be a host
-                    replace_value(user_info_end + 1, user_info_end + 1, ":" + string_type(new_port));
+                    replace_value(user_info_end + 1, user_info_end + 1, string::join(':', string_type(new_port)));
                 } else if (authority_start != data.size()) {
                     // there's a authority_start at least
-                    replace_value(authority_start + 1, 0, ":" + string_type(new_port));
+                    replace_value(authority_start + 1, 0, string::join(':', string_type(new_port)));
                 } else {
                     // there's no authority at all.
                     if (scheme_end == data.size()) {
                         // there's no scheme either
-                        replace_value(0, 0, "//:" + string_type(new_port));
+                        replace_value(0, 0, string::join("//:", string_type(new_port)));
                     } else {
                         // there's scheme
-                        replace_value(scheme_end + 1, 0, "//:" + string_type(new_port));
+                        replace_value(scheme_end + 1, 0, string::join("//:", string_type(new_port)));
                     }
                 }
             } else {
@@ -1428,7 +1439,7 @@ namespace webpp::uri {
             parse_path();
             string_type str(this->get_allocator());
             encode_uri_component(m_path, str, charset(details::PCHAR_NOT_PCT_ENCODED<char_type>, charset<char_type, 1>('/')));
-            auto _encoded_path = (ascii::starts_with(m_path, '/') ? "" : "/") + str;
+            auto _encoded_path = string::join((ascii::starts_with(m_path, '/') ? "" : "/"), str);
             replace_value(authority_end, query_start - authority_end, _encoded_path);
             return *this;
         }
@@ -1546,19 +1557,19 @@ namespace webpp::uri {
                             // there's no authority_start
                             if (scheme_end == data.size()) {
                                 // it's an empty string
-                                replace_value(0, 0, "///" + encoded_query);
+                                replace_value(0, 0, string::join("///", encoded_query));
                             } else {
-                                replace_value(scheme_end, 0, "/" + encoded_query);
+                                replace_value(scheme_end, 0, string::join("/", encoded_query));
                             }
                         } else {
-                            replace_value(authority_start, 0, "/" + encoded_query);
+                            replace_value(authority_start, 0, string::join("/", encoded_query));
                         }
                     } else {
                         // we have authority_end
                         if (data[authority_end] == '/') {
                             replace_value(authority_end + 1, 0, encoded_query);
                         } else {
-                            replace_value(authority_end + 1, 0, "/" + encoded_query);
+                            replace_value(authority_end + 1, 0, string::join("/", encoded_query));
                         }
                     }
                 }

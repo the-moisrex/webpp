@@ -39,10 +39,16 @@ namespace webpp::lexical {
                 // Source is convertible to string
                 return istl::stringify_of<Target>(stl::forward<Source>(source), the_alloc);
             } else if constexpr (istl::String<target_t> && stl::is_integral_v<src_t>) {
-                // Source is integer type
-                Target     res{the_alloc};
-                append_to(res, stl::forward<Source>(source));
-                return res;
+                if constexpr (stl::same_as<src_t, char> || stl::same_as<src_t, char8_t> || stl::same_as<src_t, char16_t> || stl::same_as<src_t, char32_t>) {
+                    // don't need to convert, it's a char type
+                    using char_type = istl::char_type_of<target_t>;
+                    return Target{1, static_cast<char_type>(source), the_alloc};
+                } else { // convert
+                    // Source is integer type
+                    Target res{the_alloc};
+                    append_to(res, stl::forward<Source>(source));
+                    return res;
+                }
             } else if constexpr (istl::String<target_t> && stl::is_floating_point_v<src_t>) {
                 // Source is floating type
                 // technically we should be able to use std::to_chars for floats too but it's not yet
