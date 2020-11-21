@@ -1332,7 +1332,7 @@ namespace webpp::uri {
         }
 
         /**
-         * Get the host slugs with the specified container type
+         * Get the path slugs with the specified container type
          * We know how to get the allocator, don't worry.
          * The specified container's string type should be a string and not a string_view
          */
@@ -1370,21 +1370,20 @@ namespace webpp::uri {
             auto _path = path_raw();
             if (_path.empty())
                 return *this;
-            stl::size_t slash_start      = 0;
+            stl::size_t slash_start;
             stl::size_t last_slash_start = 0;
             auto        _path_size       = _path.size();
-            if (_path.front() == '/') {
-                container.emplace_back(); // empty string
-                last_slash_start = 1;
-            }
+//            if (_path.front() == '/') {
+//                container.emplace_back(); // empty string
+//            }
             for(;;) {
-                slash_start = _path.find('/', last_slash_start + 1);
+                slash_start = _path.find('/', last_slash_start);
+                const stl::size_t the_size = stl::min(slash_start, _path_size) - last_slash_start;
+                container.emplace_back(_path.data() + last_slash_start, the_size);
                 if (slash_start == string_view_type::npos) {
                     break;
                 }
-                container.emplace_back(_path.data() + last_slash_start + 1,
-                                       stl::min(slash_start, _path_size) - last_slash_start - 1);
-                last_slash_start = slash_start;
+                last_slash_start = slash_start + 1;
             };
             return *this;
         }
@@ -1399,7 +1398,9 @@ namespace webpp::uri {
             using vec_str_t = typename Container::value_type;
             static_assert(istl::String<vec_str_t>,
                           "The specified container doesn't hold a value type that we can understand.");
-            for (auto it = container.begin(); it != container.end(); ++it) {
+            const auto beg_it = container.size();
+            extract_raw_slugs_to(container);
+            for (auto it = container.begin() + beg_it; it != container.end(); ++it) {
                 vec_str_t tmp(container.get_allocator());
                 if (!decode_uri_component(*it, tmp, details::PCHAR_NOT_PCT_ENCODED<char_type>)) {
                     return false;
