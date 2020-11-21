@@ -7,8 +7,9 @@
 #include <string>
 #include <algorithm>
 
-static std::string str_generator(std::size_t size = 10000, std::string_view chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") {
-  std::string str;
+template <typename StrType = std::string>
+static StrType str_generator(std::size_t size = 10000, std::string_view chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") {
+  StrType str;
   str.reserve(size);
   for (std::size_t i = 0 ; i < size / chars.size(); i++) {
       str.append(chars);

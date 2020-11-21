@@ -24,6 +24,7 @@ set(FILE_SOURCES
         vector_erase/vector_erase_benchmark.cpp
         uri_normalize/uri_normalize_benchmark.cpp
         lexical_cast/lexical_cast_benchmark.cpp
+        string_join/string_join_benchmark.cpp
         )
 file(GLOB FILE_PCH *_pch.hpp)
 

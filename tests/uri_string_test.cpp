@@ -46,9 +46,9 @@ TEST(URITests, Creation) {
     EXPECT_TRUE(!u.has_host());
     u.host("eg2.com");
     u.host("eg2.com");
-    EXPECT_FALSE(!u.has_host());
+    EXPECT_TRUE(u.has_host());
     EXPECT_TRUE(u.has_path());
-    EXPECT_EQ(u.host_raw(), "eg2.com") << "host is: " << u.host_raw();
+    EXPECT_EQ(u.host_raw(), "eg2.com") << "host is: " << u.host_raw() << "\nsize: " << u.host_raw().size();
     EXPECT_EQ(u.str(), "//eg2.com/folder/file") << "str is: " << u.str();
     u.scheme("https:");
     u.scheme("https:");
