@@ -1,6 +1,6 @@
 flags = -std=c++20 -isystem /usr/local/include -L/usr/local/lib -lpthread -lbenchmark_main -lbenchmark
 optflags = -flto -Ofast -DNDEBUG -march=native -mtune=native
-files = string_join_benchmark.cpp
+files = string_join_benchmark.cpp /usr/local/lib/libfmt.a
 
 all: gcc
 .PHONY: all
