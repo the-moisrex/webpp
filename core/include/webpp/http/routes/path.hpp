@@ -373,7 +373,7 @@ namespace webpp {
                     // todo: we can optimize this, right? it parses the whole uri, do we need the whole uri? I think yes
                     // fixme: should we decode it? if we decode it we need to care about the UTF-8 stuff as well?
                     // todo: move this parsing into the request so we don't have to do it more than once for one request
-                    auto uri_segments = uri::uri_string<traits_type, false>{req.request_uri()}.path_structured();
+                    auto uri_segments = uri::uri_string<traits_type, false>{req.request_uri()}.slugs();
                     using uri_segments_type = decltype(uri_segments);
 
 

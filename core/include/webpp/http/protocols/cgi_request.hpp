@@ -17,7 +17,7 @@ namespace webpp {
      * have to copy and paste lots of codes to make it happen) to make sure
      * the user is able to use this class properly and easily.
      */
-    template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL, Protocol ProtoType>
+    template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL, /* Protocol */ typename ProtoType>
     struct cgi_request : public REL, public enable_traits<TraitsType> {
         using traits_type            = stl::remove_cvref_t<TraitsType>;
         using protocol_type          = stl::remove_cvref_t<ProtoType>;

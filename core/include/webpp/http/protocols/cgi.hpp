@@ -31,7 +31,6 @@ namespace webpp {
         using protocol_type    = cgi<traits_type, application_type, extension_list>;
         using str_view_type    = typename TraitsType::string_view_type;
         using str_type         = typename TraitsType::string_type;
-        using ostream_t        = typename TraitsType::ostream_type;
         using request_type     = simple_request<traits_type, cgi_request, protocol_type, extension_list>;
         using allocator_type   = typename request_type::allocator_type;
         using logger_type      = typename traits_type::logger_type;
@@ -68,7 +67,7 @@ namespace webpp {
          * Send the stream to the user
          * @param stream
          */
-        static void write(ostream_t& stream) noexcept {
+        static void write(auto& stream) noexcept {
             // TODO: check if you need to ignore the input or not
 
             // I think o-stream is not readable so we cannot do this:
@@ -168,7 +167,7 @@ namespace webpp {
             // todo: give the user the ability to change the status phrase
             stl::stringstream status_line;
             status_line << "Status: " << res.headers.status_code << " "
-                        << status_reason_phrase(res.headers.status_code) << "\r\n";
+                        << http::status_code_reason_phrase(res.headers.status_code) << "\r\n";
 
             auto _status_line_str = status_line.str();
             write(_status_line_str.data(), _status_line_str.size());

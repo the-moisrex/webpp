@@ -1,9 +1,9 @@
 #include "./app.h"
-#include "../../core/include/webpp/http/interfaces/cgi.hpp"
+#include "../../core/include/webpp/http/protocols/cgi.hpp"
 
 int main() {
     using namespace webpp;
-    http<cgi<std_traits, app>> my_app;
+    cgi<std_traits, app> my_app;
     my_app();
     return 0;
 }
