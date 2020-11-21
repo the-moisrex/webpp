@@ -9,6 +9,7 @@
  * http://modp.com/release/base64
  *
  * Copyright &copy; 2005, 2006  Nick Galbreath -- nickg [at] modp [dot] com
+ * Copyright &copy; 2020 Mohammad Bahoosh -- moisrex [at] gmail
  * All rights reserved.
  *
  * 2020: C++ification is done by Mohammad Bahoosh (checkout web++ project for more information)

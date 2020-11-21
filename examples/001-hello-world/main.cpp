@@ -1,31 +1,30 @@
-#include <webpp/http/request>
-#include <webpp/http/response>
-#include <webpp/interfaces/cgi>
-#include <webpp/router>
-#include <webpp/server>
-#include <webpp/utils/traits>
-#include <webpp/valves/methods>
-#include <webpp/valves/uri>
+#include "../../core/include/webpp/http/request.hpp"
+#include "../../core/include/webpp/http/response.hpp"
+#include "../../core/include/webpp/http/protocols/cgi.hpp"
+#include "../../core/include/webpp/http/routes/router.hpp"
+//#include "../../core/include/webpp/server"
+#include "../../core/include/webpp/traits/std_traits.hpp"
+#include "../../core/include/webpp/http/routes/path.hpp"
+#include "../../core/include/webpp/http/routes/methods.hpp"
 
 using namespace webpp;
-using namespace webpp::valves;
-using iface   = cgi<std_traits>;
-using request = request_t<iface>;
 
-response about_page(request req) {
-    return response::file("about.html");
+auto about_page(auto ctx) {
+    return ctx.file("about.html");
 }
 
 int main() {
-    server<iface> app;
-    app.router.on("/"_path, [] {
-        return "main page";
-    });
-    app.router.on(get and "/cgi-bin/webpp_helloworld"_path,
-                  [](request const& req, response& res) noexcept {
-                      res << "Hello world";
-                  });
-    app.router.on("/about"_path, &about_page);
-    app.router.on(get and "/cgi-bin/webpp_helloworld/about"_path, &about_page);
-    return app.run();
+    router _router {
+        root >>= [] {
+            return "main page";
+        },
+        get and root / "cgi-bin" / "webpp_helloworld" >>= [](auto ctx) noexcept {
+            return "Hello world";
+        },
+        root / "about" >>= &about_page,
+        get and root / "cgi-bin" / "webpp_helloworld" / "about" >>= &about_page
+    };
+    cgi<decltype(_router)> app(_router);
+    app();
+    return 0;
 }

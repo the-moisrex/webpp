@@ -22,13 +22,13 @@
 namespace webpp {
 
     // todo: add protocol extensions as well
-    template <Traits TraitsType, Application App, ExtensionList EList = empty_extension_pack>
+    template <Application App, Traits TraitsType = std_traits, ExtensionList EList = empty_extension_pack>
     struct cgi : public enable_traits<TraitsType> {
       public:
         using traits_type      = TraitsType;
         using application_type = App;
         using extension_list   = stl::remove_cvref_t<EList>;
-        using protocol_type    = cgi<traits_type, application_type, extension_list>;
+        using protocol_type    = cgi<application_type, traits_type , extension_list>;
         using str_view_type    = typename TraitsType::string_view_type;
         using str_type         = typename TraitsType::string_type;
         using request_type     = simple_request<traits_type, cgi_request, protocol_type, extension_list>;
@@ -36,7 +36,7 @@ namespace webpp {
         using logger_type      = typename traits_type::logger_type;
         using logger_ref       = typename logger_type::logger_ref;
         using etraits          = enable_traits<traits_type>;
-        using app_wrapper_type         = http_app_wrapper<traits_type, application_type>;
+        using app_wrapper_type = http_app_wrapper<traits_type, application_type>;
 
       private:
         void ctor() noexcept {
