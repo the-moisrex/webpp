@@ -1780,6 +1780,7 @@ namespace webpp::uri {
             // Resolve the reference by following the algorithm
             // from section 5.2.2 in
             // RFC 3986 (https://tools.ietf.org/html/rfc3986).
+            // todo: the names of these functions may not work
             uri_string target;
             if (relative_uri.has_scheme()) {
                 target = relative_uri;
@@ -1792,7 +1793,7 @@ namespace webpp::uri {
                     target.port(relative_uri.port());
                     target.user_info(relative_uri.user_info());
                     target.path(relative_uri.path());
-                    target.set_queries(relative_uri.queries_raw());
+                    target.queries(relative_uri.queries_raw());
                     target.normalize_path();
                 } else {
                     target.host(host());

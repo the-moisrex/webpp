@@ -4,9 +4,6 @@
 #define WEBPP_APPLICATION_CONCEPTS_H
 
 #include "../std/concepts.hpp"
-#include "./request_concepts.hpp"
-#include "./response_concepts.hpp"
-#include "./routes/context.hpp"
 
 namespace webpp {
 
@@ -33,6 +30,13 @@ namespace webpp {
     concept ConstructibleWithLogger = requires(LoggerType logger) {
         T{logger};
     };
+
+    template <typename T>
+    concept ApplicationWrapper = Application<stl::remove_cvref_t<T>> && ConstructibleWithLoggerAndAllocator<
+        stl::remove_cvref_t<T>,
+        typename stl::remove_cvref_t<T>::logger_type,
+        typename stl::remove_cvref_t<T>::allocator_type
+    >;
 
 } // namespace webpp
 

@@ -5,6 +5,8 @@
 
 #include "../extensions/extension.hpp"
 #include "../traits/std_traits.hpp"
+#include "./header_concepts.hpp"
+#include "./body_concepts.hpp"
 
 namespace webpp {
 
@@ -16,14 +18,21 @@ namespace webpp {
     //        stl::true_type header;
     //    };
 
+    namespace details {
+
+        template <typename ResType>
+        concept Response = requires(ResType res) {
+            requires ResponseBody<typename ResType::body_type>;
+            requires ResponseHeader<typename ResType::headers_type>;
+            requires Traits<typename ResType::traits_type>;
+            {res.body};
+            {res.headers};
+        };
+
+    }
+
     template <typename ResType>
-    concept Response = requires(ResType res) {
-        typename ResType::body_type;
-        typename ResType::headers_type;
-        typename ResType::traits_type;
-        {res.body};
-        {res.headers};
-    };
+    concept Response = details::Response<stl::remove_cvref_t<ResType>>;
 
     template <typename T>
     struct ResponseTempl {

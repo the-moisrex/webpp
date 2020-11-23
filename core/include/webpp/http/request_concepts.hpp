@@ -9,15 +9,24 @@
 #include "../logs/log_concepts.hpp"
 #include "../traits/enable_traits.hpp"
 #include "../traits/std_traits.hpp"
-#include "./protocols/protocol_concepts.hpp"
+//#include "./protocols/protocol_concepts.hpp"
 
 namespace webpp {
 
+    /**
+     * Request types:
+     *
+     * Initial Request: some protocols may use copy constructor to make a copy of the initial request object
+     * instead of re-constructing the request from scratch each time. With this, it's possible to calculate
+     * anything that you need for every request in the request's constructor.
+     */
     template <typename T>
-    concept Request = Traits<typename stl::remove_cvref_t<T>::traits_type>&&
-      Protocol<typename stl::remove_cvref_t<T>::protocol_type>&& requires(stl::remove_cvref_t<T> req) {
+    concept Request = requires(stl::remove_cvref_t<T> req) {
+        /* requires Protocol<typename stl::remove_cvref_t<T>::protocol_type>&& */
+        requires Traits<typename stl::remove_cvref_t<T>::traits_type>;
+        requires EnabledTraits<stl::remove_cvref_t<T>>;
+        requires stl::copy_constructible<stl::remove_cvref_t<T>>; // so we can make a copy of it (initial request)
         req.request_uri();
-        req.get_allocator();
     };
 
 
