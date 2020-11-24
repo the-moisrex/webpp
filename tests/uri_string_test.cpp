@@ -1,8 +1,10 @@
-#include "../core/include/webpp/traits/std_traits.hpp"
-#include "../core/include/webpp/uri/uri_string.hpp"
-
 #include "./common_pch.hpp"
-#include <string>
+
+// clang-format off
+#include webpp_include(traits/std_traits)
+#include webpp_include(uri/uri_string)
+// clang-format on
+
 
 using namespace webpp;
 using namespace webpp::uri;

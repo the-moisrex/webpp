@@ -1,9 +1,10 @@
 // Created by moisrex on 1/27/20.
 
-#include "../core/include/webpp/utils/memory.hpp"
-
 #include "./common_pch.hpp"
-#include <string>
+
+// clang-format off
+#include webpp_include(utils/memory)
+// clang-format on
 
 using namespace webpp;
 using namespace std;

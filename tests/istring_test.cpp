@@ -1,7 +1,11 @@
 // Created by moisrex on 9/28/20.
 
-#include "../core/include/webpp/strings/istring.hpp"
 #include "./common_pch.hpp"
+
+// clang-format off
+#include webpp_include(strings/istring)
+// clang-format on
+
 
 using namespace webpp;
 

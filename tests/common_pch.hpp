@@ -16,4 +16,27 @@
 #define webpp_include(file_path) <WEBPP_PROJECT_ROOT/core/include/webpp/file_path.hpp>
 
 
+#include <iostream>
+#include <cstdio>
+#include <fstream>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <utility>
+#include <cctype>
+#include <array>
+#include <vector>
+#include <string_view>
+#include <array>
+#include <tuple>
+#include <algorithm>
+#include <cstdlib>
+#include <functional>
+#include <iostream>
+#include <sstream>
+#include <unistd.h>
+#include <memory_resource>
+#include <limits>
+#include <map>
+
 #endif // WEBPP_COMMON_PCH_HPP

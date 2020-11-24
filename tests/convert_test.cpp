@@ -1,6 +1,10 @@
-#include "../core/include/webpp/convert/lexical_cast.hpp"
 
 #include "./common_pch.hpp"
+
+// clang-format off
+#include webpp_include(convert/lexical_cast)
+// clang-format on
+
 
 using namespace webpp;
 

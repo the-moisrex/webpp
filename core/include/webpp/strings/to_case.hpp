@@ -11,12 +11,12 @@
 #include "./size.hpp"
 
 // clang-format off
-#include eve(wide)
-#include eve(function/store)
-#include eve(function/add)
-#include eve(function/sub)
-#include eve(function/any)
-#include eve(function/is_less)
+#include eve_include(wide)
+#include eve_include(function/store)
+#include eve_include(function/add)
+#include eve_include(function/sub)
+#include eve_include(function/any)
+#include eve_include(function/is_less)
 // clang-format on
 
 #include <algorithm>
@@ -236,8 +236,8 @@ namespace webpp::ascii {
     }
 
 #ifdef WEBPP_EVE
-    WEBPP_TO_METHOD(to_upper, eve)
-    WEBPP_TO_METHOD(to_lower, eve)
+    WEBPP_TO_METHOD(to_upper, eve_include)
+    WEBPP_TO_METHOD(to_lower, eve_include)
 #else
     WEBPP_TO_METHOD(to_upper, simple)
     WEBPP_TO_METHOD(to_lower, simple)

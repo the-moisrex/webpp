@@ -1,9 +1,15 @@
 // Created by moisrex on 9/25/20.
 #include "./common_pch.hpp"
-#include <string_view>
-#include <eve/wide.hpp>
-#include <eve/function/any.hpp>
 
+// clang-format off
+#include webpp_include(libs/eve)
+#ifdef WEBPP_EVE
+#   include eve_include(wide)
+#   include eve_include(function/any)
+#endif
+// clang-format on
+
+#ifdef WEBPP_EVE
 namespace mtest {
     std::size_t find_str_simple(std::string_view str1, std::string_view str2) noexcept {
         using char_type                 = typename std::remove_cvref_t<decltype(str1)>::value_type;
@@ -68,3 +74,6 @@ namespace mtest {
 //    EXPECT_EQ(std::string_view::npos, find_str_simple("ABC", "ABX"));
 //    EXPECT_EQ(std::string_view::npos, find_str_simple("0ABC", "0ABX"));
 //}
+
+
+#endif

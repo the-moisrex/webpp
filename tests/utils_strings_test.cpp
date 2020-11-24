@@ -1,8 +1,11 @@
 // Created by moisrex on 1/27/20.
-#include "../core/include/webpp/strings/iequals.hpp"
-#include "../core/include/webpp/strings/to_case.hpp"
-
 #include "./common_pch.hpp"
+
+// clang-format off
+#include webpp_include(strings/iequals)
+#include webpp_include(strings/to_case)
+// clang-format on
+
 
 using namespace webpp::ascii;
 

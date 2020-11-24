@@ -1,7 +1,9 @@
-#include "../core/include/webpp/utils/property.hpp"
 
 #include "./common_pch.hpp"
-#include <string>
+
+// clang-format off
+#include webpp_include(utils/property)
+// clang-format on
 
 using namespace webpp;
 using namespace std;

@@ -1,16 +1,10 @@
 // Created by moisrex on 2/4/20.
 
-#include "../core/include/webpp/http/response.hpp"
-
-#include "../core/include/webpp/http/bodies/string.hpp"
-#include "../core/include/webpp/http/response_body.hpp"
-
-#include <cstdio>
-#include <fstream>
-#include "./common_pch.hpp"
-#include <string>
-#include <string_view>
-#include <type_traits>
+// clang-format off
+#include webpp_include(http/response)
+#include webpp_include(http/bodies/string)
+#include webpp_include(http/response_body)
+// clang-format on
 
 using namespace webpp;
 

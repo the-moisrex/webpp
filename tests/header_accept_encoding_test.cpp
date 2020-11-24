@@ -1,8 +1,10 @@
 // Created by moisrex on 10/9/20.
 #include "./common_pch.hpp"
 
-#include "../core/include/webpp/http/headers/accept_encoding.hpp"
-#include "../core/include/webpp/traits/std_traits.hpp"
+// clang-format off
+#include webpp_include(http/headers/accept_encoding)
+#include webpp_include(traits/std_traits)
+// clang-format on
 
 using namespace webpp::http;
 using namespace webpp;

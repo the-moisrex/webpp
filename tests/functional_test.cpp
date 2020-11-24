@@ -1,10 +1,12 @@
 // Created by moisrex on 12/10/19.
-#include "../core/include/webpp/utils/functional.hpp"
 
-#include "../core/include/webpp/utils/debounce.hpp"
-
-#include <array>
 #include "./common_pch.hpp"
+
+// clang-format off
+#include webpp_include(utils/functional)
+#include webpp_include(utils/debounce)
+// clang-format on
+
 
 using namespace webpp;
 

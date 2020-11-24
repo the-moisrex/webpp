@@ -1,13 +1,10 @@
 // Created by moisrex on 9/24/20.
 #include "./common_pch.hpp"
-#include "../core/include/webpp/http/syntax/request_parser.hpp"
-#include "../core/include/webpp/http/syntax/http_lexer.hpp"
 
-#include <vector>
-#include <string_view>
-#include <array>
-#include <tuple>
-#include <algorithm>
+// clang-format off
+#include webpp_include(http/syntax/request_parser)
+#include webpp_include(http/syntax/http_lexer)
+// clang-format on
 
 using namespace webpp;
 

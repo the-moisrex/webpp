@@ -1,8 +1,11 @@
-#include "../core/include/webpp/extensions/extension.hpp"
-#include "../core/include/webpp/std/concepts.hpp"
-#include "../core/include/webpp/traits/std_traits.hpp"
-
 #include "./common_pch.hpp"
+
+// clang-format off
+#include webpp_include(extensions/extension)
+#include webpp_include(std/concepts)
+#include webpp_include(traits/std_traits)
+// clang-format on
+
 
 using namespace webpp;
 
