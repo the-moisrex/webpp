@@ -6,7 +6,7 @@
 // clang-format off
 #include webpp_include(application/application_concepts)
 #include webpp_include(convert/casts)
-#include webpp_include(http/application)
+#include webpp_include(http/app_wrapper)
 #include webpp_include(http/protocols/protocol_concepts)
 #include webpp_include(http/request)
 #include webpp_include(http/response)

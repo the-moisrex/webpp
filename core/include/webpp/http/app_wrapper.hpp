@@ -1,7 +1,7 @@
 // Created by moisrex on 5/5/20.
 
-#ifndef WEBPP_APPLICATION_H
-#define WEBPP_APPLICATION_H
+#ifndef WEBPP_HTTP_APPLICATION_WRAPPER_H
+#define WEBPP_HTTP_APPLICATION_WRAPPER_H
 
 #include "./request_concepts.hpp"
 #include "./response_concepts.hpp"
@@ -107,4 +107,4 @@ namespace webpp {
 
 } // namespace webpp
 
-#endif // WEBPP_APPLICATION_H
+#endif

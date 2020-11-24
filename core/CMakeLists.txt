@@ -17,6 +17,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/extensions/extension.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/strings/istring.hpp
+        ${LIB_INCLUDE_DIR}/webpp/strings/fixed_string.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/to_case.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/iequals.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/trim.hpp
@@ -62,11 +63,12 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/utils/containers.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/debounce.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/functional.hpp
-        ${LIB_INCLUDE_DIR}/webpp/utils/ipv4.hpp
-        ${LIB_INCLUDE_DIR}/webpp/utils/ipv6.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/memory.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/property.hpp
-        ${LIB_INCLUDE_DIR}/webpp/utils/fixed_string.hpp
+
+
+        ${LIB_INCLUDE_DIR}/webpp/ip/ipv4.hpp
+        ${LIB_INCLUDE_DIR}/webpp/ip/ipv6.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/uri/details/constants.hpp
         ${LIB_INCLUDE_DIR}/webpp/uri/encoding.hpp
@@ -119,7 +121,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/request_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/response.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/response_concepts.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/application.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/app_wrapper.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/http.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/mime_types.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/status_code.hpp

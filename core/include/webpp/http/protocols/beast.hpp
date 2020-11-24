@@ -4,7 +4,7 @@
 #define WEBPP_BEAST_HPP
 
 #include "../../std/string_view.hpp"
-#include "../application.hpp"
+#include "../app_wrapper.hpp"
 #include "../request.hpp"
 #include "../response.hpp"
 

@@ -1,7 +1,6 @@
 #ifndef WEBPP_WEBPP_H
 #define WEBPP_WEBPP_H
 
-#include "./webpp/http/application.hpp"
 #include "./webpp/http/bodies/file.hpp"
 #include "./webpp/http/bodies/string.hpp"
 #include "./webpp/http/headers.hpp"

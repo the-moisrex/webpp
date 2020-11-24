@@ -5,7 +5,7 @@
 #include "../../std/string_view.hpp"
 #include "../../strings/to_case.hpp"
 #include "../../traits/std_traits.hpp"
-#include "../application.hpp"
+#include "../app_wrapper.hpp"
 #include "../request.hpp"
 #include "../response.hpp"
 #include "./cgi_request.hpp"

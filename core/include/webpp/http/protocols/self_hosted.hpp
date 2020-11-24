@@ -5,11 +5,11 @@
 
 #include "../../server/server_concepts.hpp"
 #include "../../std/string_view.hpp"
-#include "../application.hpp"
+#include "../app_wrapper.hpp"
 #include "../request.hpp"
 #include "../response.hpp"
-#include "./shosted/self_hosted_session_manager.hpp"
 #include "./self_hosted_request.hpp"
+#include "./shosted/self_hosted_session_manager.hpp"
 
 namespace webpp {
 

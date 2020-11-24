@@ -5,7 +5,7 @@
 #include "../../std/internet.hpp"
 #include "../../std/set.hpp"
 #include "../../traits/enable_traits.hpp"
-#include "../application.hpp"
+#include "../app_wrapper.hpp"
 #include "../request.hpp"
 #include "./fastcgi/fcgi_manager.hpp"
 #include "./fcgi_request.hpp"
