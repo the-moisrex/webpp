@@ -5,6 +5,7 @@
 
 #include "../../traits/enable_traits.hpp"
 #include "../../application/application_concepts.hpp"
+#include "../request_concepts.hpp"
 
 namespace webpp {
 

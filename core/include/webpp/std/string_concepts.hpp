@@ -125,6 +125,7 @@ namespace webpp::istl {
         template <typename T>
         static constexpr bool has_value_type = requires {
             typename stl::remove_cvref_t<T>::value_type;
+            requires stl::integral<typename stl::remove_cvref_t<T>::value_type>;
         };
 
 

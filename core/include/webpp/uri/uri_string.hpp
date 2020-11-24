@@ -414,8 +414,11 @@ namespace webpp::uri {
         /**
          * Replace the specified part with the specified replacement
          */
-        void replace_value(stl::size_t start, stl::size_t len, auto&& replacement) noexcept {
+        template <typename RT>
+        requires (istl::StringifiableOf<string_type, RT>)
+        void replace_value(stl::size_t start, stl::size_t len, RT&& _replacement) noexcept {
             static_assert(is_mutable(), "You cannot change a const_uri (string_view is not modifiable)");
+            auto replacement = istl::stringify_of<string_type>(stl::forward<RT>(_replacement), this->get_allocator());
             if (start == string_view_type::npos || len == string_view_type::npos || (len == 0 && replacement.empty()))
                 return;
             // todo: check performance of this
@@ -423,7 +426,7 @@ namespace webpp::uri {
             data.reserve(start + replacement.size() + (data.size() - after_replacement_start));
             data = string::join<storred_str_t>(
                 substr(0, start), // first part
-                stl::forward<decltype(replacement)>(replacement), // replacement part
+                stl::move(replacement), // replacement part
                 substr(after_replacement_start) // the rest
               );
             unparse();
@@ -436,7 +439,6 @@ namespace webpp::uri {
 
 
 
-        explicit uri_string(auto&& alloc) : alloc_holder_type{alloc} {}
         constexpr uri_string(const char_type* u) noexcept : data(u) {}
 
 
@@ -483,6 +485,7 @@ namespace webpp::uri {
             authority_end   = u.authority_end;
             query_start     = u.query_start;
             fragment_start  = u.fragment_start;
+            return *this;
         }
 
         uri_string& operator=(uri_string&& u) noexcept {
@@ -494,19 +497,20 @@ namespace webpp::uri {
             authority_end   = stl::move(u.authority_end);
             query_start     = stl::move(u.query_start);
             fragment_start  = stl::move(u.fragment_start);
-        }
-
-        uri_string& operator=(storred_str_t const& u) noexcept {
-            data = u;
-            unparse();
             return *this;
         }
 
-        uri_string& operator=(storred_str_t&& u) noexcept {
-            data = stl::move(u);
-            unparse();
-            return *this;
-        }
+//        uri_string& operator=(storred_str_t const& u) noexcept {
+//            data = u;
+//            unparse();
+//            return *this;
+//        }
+//
+//        uri_string& operator=(storred_str_t&& u) noexcept {
+//            data = stl::move(u);
+//            unparse();
+//            return *this;
+//        }
 
         constexpr uri_string(allocator_type const& alloc = allocator_type{}) noexcept
           : alloc_holder_type{alloc} {
@@ -546,9 +550,9 @@ namespace webpp::uri {
          * @param len
          * @return string_view_type
          */
-        [[nodiscard]] string_view_type substr(stl::size_t const& start = 0,
-                                        stl::size_t const& len   = string_view_type::npos) const noexcept {
-            if (len == 0)
+        [[nodiscard]] string_view_type substr(stl::size_t start = 0,
+                                              stl::size_t len = string_view_type::npos) const noexcept {
+            if ((len == 0) || (start > data.size()))
                 return {};
             if constexpr (stl::is_same_v<storred_str_t, string_view_type>) {
                 return data.substr(start, len);
@@ -666,12 +670,10 @@ namespace webpp::uri {
         /**
          * @brief decode user_info and return it as a string
          */
-        [[nodiscard]] stl::optional<string_type> user_info() const noexcept {
+        [[nodiscard]] string_type user_info() const noexcept {
             string_type out{this->get_allocator()};
-            if (decode_uri_component(user_info_raw(), out, details::USER_INFO_NOT_PCT_ENCODED<char_type>)) {
-                return out;
-            }
-            return stl::nullopt;
+            (void)decode_uri_component(user_info_raw(), out, details::USER_INFO_NOT_PCT_ENCODED<char_type>);
+            return out;
         }
 
         /**
@@ -849,11 +851,10 @@ namespace webpp::uri {
          * hostname has the wrong character encodings.
          * @return string
          */
-        [[nodiscard]] stl::optional<string_type> host() const noexcept {
+        [[nodiscard]] string_type host() const noexcept {
             string_type d_host{this->get_allocator()};
-            if (decode_uri_component(host_raw(), d_host, details::REG_NAME_NOT_PCT_ENCODED<char_type>))
-                return d_host;
-            return stl::nullopt;
+            (void)decode_uri_component(host_raw(), d_host, details::REG_NAME_NOT_PCT_ENCODED<char_type>);
+            return d_host;
         }
 
         /**
@@ -1248,7 +1249,7 @@ namespace webpp::uri {
          * Set new port value
          * @param new_port
          */
-        uri_string& port(string_view_type new_port) noexcept {
+        uri_string& port(string_view_type new_port) {
             if (ascii::starts_with(new_port, ':'))
                 new_port.remove_prefix(1);
             if (!ascii::is::digit(new_port))
@@ -1289,7 +1290,7 @@ namespace webpp::uri {
          * @brief clear the port number from the uri and defaults to 80
          * @return self
          */
-        uri_string& clear_port() noexcept {
+        uri_string& clear_port() {
             return port({});
         }
 
@@ -1324,11 +1325,9 @@ namespace webpp::uri {
          * @brief host path as a string
          * @return std::optional<string> the string might not have the right format
          */
-        [[nodiscard]] stl::optional<string_type> path() const noexcept {
+        [[nodiscard]] string_type path() const noexcept {
             string_type res{this->get_allocator()};
-            if (!decode_uri_component(path_raw(), res, details::LEGAL_PATH_CHARS<char_type>)) {
-                return stl::nullopt;
-            }
+            (void)decode_uri_component(path_raw(), res, details::LEGAL_PATH_CHARS<char_type>);
             return res;
         }
 
@@ -1415,7 +1414,8 @@ namespace webpp::uri {
          * @brief set path
          */
         template <typename Container>
-        auto& set_path_from(const Container& m_path) noexcept {
+        requires (!istl::StringViewifiable<Container> && requires (Container c) {c.begin(); c.end();})
+        auto& path(const Container& m_path) noexcept {
             return path(m_path.begin(), m_path.end());
         }
 
@@ -1423,16 +1423,16 @@ namespace webpp::uri {
          * Set path by begin and end of an iterator
          */
         template <typename Iter>
-        auto& set_path_from(const Iter& _start, const Iter& _end) noexcept {
+        auto& path(const Iter& _start, const Iter& _end) noexcept {
             const auto almost_end = stl::prev(_end);
             string_type      new_path{this->get_allocator()};
             for (auto it = _start; it != almost_end; ++it) {
                 encode_uri_component(*it, new_path, details::PCHAR_NOT_PCT_ENCODED<char_type>);
-                new_path.append('/');
+                new_path.append("/");
             }
             // append the last slug
             encode_uri_component(*almost_end, new_path, details::PCHAR_NOT_PCT_ENCODED<char_type>);
-            return set(stl::move(new_path));
+            return path(stl::move(new_path));
         }
 
         /**
@@ -1458,7 +1458,7 @@ namespace webpp::uri {
          * @brief checks if the path is an absolute path or relative path
          * @return bool
          */
-        [[nodiscard]] bool is_absolute() const noexcept {
+        [[nodiscard]] bool is_path_absolute() const noexcept {
             return ascii::starts_with(path_raw(), '/');
         }
 
@@ -1466,8 +1466,8 @@ namespace webpp::uri {
          * @brief checks if the path is a relative path or an absolute one
          * @return bool
          */
-        [[nodiscard]] bool is_relative() const noexcept {
-            return !is_absolute();
+        [[nodiscard]] bool is_path_relative() const noexcept {
+            return !is_path_absolute();
         }
 
         /**
@@ -1516,11 +1516,9 @@ namespace webpp::uri {
         /**
          * Get the query in a decoded string format
          */
-        [[nodiscard]] stl::optional<string_type> queries_string() const noexcept {
+        [[nodiscard]] string_type queries_string() const noexcept {
             string_type d_queries{this->get_allocator()};
-            if (!decode_uri_component(queries_raw(), d_queries, details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>)) {
-                return stl::nullopt;
-            }
+            (void)decode_uri_component(queries_raw(), d_queries, details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>);
             return d_queries;
         }
 
@@ -1541,7 +1539,7 @@ namespace webpp::uri {
 
             string_type encoded_query(this->get_allocator());
             if (ascii::starts_with(m_query, '?')) {
-                encoded_query.append('?');
+                encoded_query.append("?");
             }
             encode_uri_component(m_query, encoded_query, details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>);
 
@@ -1578,8 +1576,7 @@ namespace webpp::uri {
                 }
             } else {
                 // we have query
-                replace_value(query_start, fragment_start - query_start,
-                                    encoded_query);
+                replace_value(query_start, fragment_start - query_start, encoded_query);
             }
             return *this;
         }
@@ -1611,11 +1608,11 @@ namespace webpp::uri {
                     continue;
                 _query_data.append(name);
                 if (!value.empty()) {
-                    _query_data.append('=');
+                    _query_data.append("=");
                     _query_data.append(value);
                 }
                 if (stl::next(it) != _queries_end) {
-                    _query_data.append('&');
+                    _query_data.append("&");
                 }
             }
             set(stl::move(_query_data));
@@ -1698,7 +1695,7 @@ namespace webpp::uri {
          * @brief replace the old fragment
          * todo: write tests for this
          */
-        auto& fragment(istl::StringViewifiable auto&& _str) const noexcept {
+        auto& fragment(istl::StringViewifiable auto&& _str) noexcept {
             auto str = istl::string_viewify(stl::forward<decltype(_str)>(_str));
             if (str.empty()) {
                 // remove fragment
@@ -1749,6 +1746,10 @@ namespace webpp::uri {
             return data;
         }
 
+        [[nodiscard]] storred_str_t const& to_string() const noexcept {
+            return data;
+        }
+
         /**
          * Get a string_view version of the uri
          * @return string_view_type
@@ -1781,51 +1782,51 @@ namespace webpp::uri {
             // from section 5.2.2 in
             // RFC 3986 (https://tools.ietf.org/html/rfc3986).
             // todo: the names of these functions may not work
-            uri_string target;
+            uri_string target(this->get_allocator());
             if (relative_uri.has_scheme()) {
                 target = relative_uri;
-                target.normalize_path();
+                target.normalize();
             } else {
                 target.scheme(scheme());
                 target.fragment(relative_uri.fragment());
                 if (relative_uri.has_host()) {
-                    target.host(relative_uri.host());
+                    target.host(relative_uri.host_raw());
                     target.port(relative_uri.port());
-                    target.user_info(relative_uri.user_info());
-                    target.path(relative_uri.path());
+                    target.user_info(relative_uri.user_info_raw());
+                    target.path(relative_uri.path_raw());
                     target.queries(relative_uri.queries_raw());
-                    target.normalize_path();
+                    target.normalize();
                 } else {
-                    target.host(host());
-                    target.user_info(user_info());
+                    target.host(host_raw());
+                    target.user_info(user_info_raw());
                     target.port(port());
                     if (!relative_uri.has_path()) {
                         target.path(path_raw());
                         if (relative_uri.has_queries()) {
-                            target.set_queries(relative_uri.queries_raw());
+                            target.queries(relative_uri.queries_raw());
                         } else {
-                            target.set_queries(queries_raw());
+                            target.queries(queries_raw());
                         }
                     } else {
-                        target.set_queries(relative_uri._queries);
+                        target.queries(relative_uri.queries_raw());
                         // RFC describes this as:
                         // "if (R.path starts-with "/") then"
-                        if (relative_uri.is_absolute()) {
-                            target.path(relative_uri._path);
-                            target.normalize_path();
+                        if (relative_uri.is_path_absolute()) {
+                            target.path(relative_uri.path_raw());
+                            target.normalize();
                         } else {
                             // RFC describes this as:
                             // "T.path = merge(Base.path, R.path);"
-                            target.path(path());
-                            auto target_path       = target.path_structured();
-                            auto relative_uri_path = relative_uri.path_structured();
+                            target.path(path_raw());
+                            auto target_path       = target.slugs();
+                            auto relative_uri_path = relative_uri.slugs();
                             if (target_path.size() > 1) {
                                 target_path.pop_back();
                             }
                             stl::copy(relative_uri_path.cbegin(), relative_uri_path.cend(),
                                       stl::back_inserter(target_path));
                             target.path(target_path);
-                            target.normalize_path();
+                            target.normalize();
                         }
                     }
                 }

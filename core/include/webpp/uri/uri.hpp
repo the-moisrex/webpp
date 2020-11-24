@@ -154,7 +154,7 @@ namespace webpp::uri {
                         target.queries = relative_uri.queries;
                         // RFC describes this as:
                         // "if (R.path starts-with "/") then"
-                        if (relative_uri.path.is_absolute()) {
+                        if (relative_uri.path.is_path_absolute()) {
                             target.path = relative_uri.path;
                             target.path.normalize();
                         } else {

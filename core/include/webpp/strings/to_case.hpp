@@ -236,8 +236,8 @@ namespace webpp::ascii {
     }
 
 #ifdef WEBPP_EVE
-    WEBPP_TO_METHOD(to_upper, eve_include)
-    WEBPP_TO_METHOD(to_lower, eve_include)
+    WEBPP_TO_METHOD(to_upper, eve)
+    WEBPP_TO_METHOD(to_lower, eve)
 #else
     WEBPP_TO_METHOD(to_upper, simple)
     WEBPP_TO_METHOD(to_lower, simple)

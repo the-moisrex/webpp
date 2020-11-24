@@ -8,6 +8,7 @@
 #include "../../std/string_view.hpp"
 #include "../../traits/traits_concepts.hpp"
 #include "../routes/context_concepts.hpp"
+#include "../response_concepts.hpp"
 
 #include <type_traits>
 #include <utility>

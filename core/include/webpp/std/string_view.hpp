@@ -65,6 +65,7 @@ namespace webpp::istl {
                                   requires {stl::remove_cvref_t<T>{};} &&
                                   !stl::is_void_v<char_type_of<T>> &&
                                   requires(stl::remove_cvref_t<T> str) {
+        typename stl::remove_cvref_t<StrViewType>;
         stl::is_trivial_v<typename stl::remove_cvref_t<StrViewType>::value_type>;
         stl::is_standard_layout_v<typename stl::remove_cvref_t<StrViewType>::value_type>;
         requires requires {
@@ -93,7 +94,8 @@ namespace webpp::istl {
     >;
 
     template <typename T>
-    concept StringViewifiable = StringViewifiableOf<defaulted_string_view<T>, stl::remove_cvref_t<T>>;
+    concept StringViewifiable = !stl::is_void_v<char_type_of<T>> &&
+                                  StringViewifiableOf<defaulted_string_view<T>, stl::remove_cvref_t<T>>;
 
     /**
      * Convert the string value specified to a "string view" of type StrViewT

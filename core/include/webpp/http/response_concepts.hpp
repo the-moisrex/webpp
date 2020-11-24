@@ -22,8 +22,8 @@ namespace webpp {
 
         template <typename ResType>
         concept Response = requires(ResType res) {
-            requires ResponseBody<typename ResType::body_type>;
-            requires ResponseHeader<typename ResType::headers_type>;
+//            requires ResponseBody<typename ResType::body_type>;
+//            requires ResponseHeader<typename ResType::headers_type>;
             requires Traits<typename ResType::traits_type>;
             {res.body};
             {res.headers};
