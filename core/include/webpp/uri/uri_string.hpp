@@ -6,18 +6,18 @@
 #include "../std/optional.hpp"
 #include "../std/vector.hpp"
 #include "../strings/charset.hpp"
+#include "../strings/iequals.hpp"
 #include "../strings/join.hpp"
 #include "../strings/to_case.hpp"
-#include "../strings/iequals.hpp"
 #include "../traits/traits_concepts.hpp"
 #include "../utils/allocators.hpp"
-#include "../utils/ipv4.hpp"
-#include "../utils/ipv6.hpp"
 #include "../validators/validators.hpp"
 #include "./details/constants.hpp"
 #include "./encoding.hpp"
 #include "./path.hpp"
 #include "./queries.hpp"
+#include "../ip/ipv4.hpp"
+#include "../ip/ipv6.hpp"
 
 
 /**

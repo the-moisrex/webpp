@@ -2,7 +2,7 @@
 #include "./common_pch.hpp"
 
 // clang-format off
-#include webpp_include(utils/ipv6)
+#include webpp_include(ip/ipv6)
 #include webpp_include(traits/std_traits)
 #include webpp_include(validators/validators)
 // clang-format on

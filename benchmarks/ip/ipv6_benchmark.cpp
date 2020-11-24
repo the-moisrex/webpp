@@ -2,8 +2,8 @@
 #include "../boost_pch.hpp"
 
 // clang-format off
-#include webpp_include(utils/ipv4)
-#include webpp_include(utils/ipv6)
+#include webpp_include(ip/ipv4)
+#include webpp_include(ip/ipv6)
 #include webpp_include(traits/std_traits)
 // clang-format on
 

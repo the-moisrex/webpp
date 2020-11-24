@@ -1,10 +1,10 @@
 #ifndef WEBPP_IPV6_H
 #define WEBPP_IPV6_H
 
+#include "ipv4.hpp"
 #include "../strings/to_case.hpp"
 #include "../traits/traits_concepts.hpp"
 #include "../validators/validators.hpp"
-#include "ipv4.hpp"
 
 #include <algorithm>
 #include <array>
