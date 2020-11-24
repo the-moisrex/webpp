@@ -19,11 +19,10 @@ namespace webpp {
     decode_uri_component(istl::StringViewifiable auto&& encoded_str, istl::String auto& output,
                          charset<istl::char_type_of<decltype(encoded_str)>, N> const& chars) noexcept {
         using char_type          = istl::char_type_of<stl::remove_cvref_t<decltype(encoded_str)>>;
-        stl::size_t digits_left  = 2;
+        stl::size_t digits_left  = 0;
         char_type   decoded_char = 0;
-        bool        decoding     = false;
         for (const auto c : istl::string_viewify(encoded_str)) {
-            if (decoding && digits_left) {
+            if (digits_left) {
                 decoded_char <<= 4;
                 if (c >= '0' && c <= '9') { // DIGITS
                     decoded_char += c - '0';
@@ -37,12 +36,9 @@ namespace webpp {
                 --digits_left;
 
                 if (digits_left == 0) {
-                    decoding = false;
                     output += static_cast<char_type>(decoded_char);
                 }
             } else if (c == '%') {
-                decoding = true;
-
                 // resetting:
                 digits_left  = 2;
                 decoded_char = 0;

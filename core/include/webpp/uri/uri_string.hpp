@@ -672,7 +672,9 @@ namespace webpp::uri {
          */
         [[nodiscard]] string_type user_info() const noexcept {
             string_type out{this->get_allocator()};
-            (void)decode_uri_component(user_info_raw(), out, details::USER_INFO_NOT_PCT_ENCODED<char_type>);
+            if (!decode_uri_component(user_info_raw(), out, details::USER_INFO_NOT_PCT_ENCODED<char_type>)) {
+                out.clear();
+            }
             return out;
         }
 
@@ -853,7 +855,9 @@ namespace webpp::uri {
          */
         [[nodiscard]] string_type host() const noexcept {
             string_type d_host{this->get_allocator()};
-            (void)decode_uri_component(host_raw(), d_host, details::REG_NAME_NOT_PCT_ENCODED<char_type>);
+            if (!decode_uri_component(host_raw(), d_host, details::REG_NAME_NOT_PCT_ENCODED<char_type>)) {
+                d_host.clear();
+            }
             return d_host;
         }
 
@@ -1327,7 +1331,9 @@ namespace webpp::uri {
          */
         [[nodiscard]] string_type path() const noexcept {
             string_type res{this->get_allocator()};
-            (void)decode_uri_component(path_raw(), res, details::LEGAL_PATH_CHARS<char_type>);
+            if (!decode_uri_component(path_raw(), res, details::LEGAL_PATH_CHARS<char_type>)) {
+                res.clear();
+            }
             return res;
         }
 
@@ -1341,7 +1347,7 @@ namespace webpp::uri {
             using value_type = typename Container::value_type;
             Container container(this->template get_allocator_as<value_type>());
             if (!extract_slugs_to<Container>(container)) {
-                return container; // yes, an empty container
+                container.clear();
             }
             return container;
         }
@@ -1370,20 +1376,17 @@ namespace webpp::uri {
             auto _path = path_raw();
             if (_path.empty())
                 return *this;
-            stl::size_t slash_start;
-            stl::size_t last_slash_start = 0;
-            auto        _path_size       = _path.size();
 //            if (_path.front() == '/') {
 //                container.emplace_back(); // empty string
 //            }
             for(;;) {
-                slash_start = _path.find('/', last_slash_start);
-                const stl::size_t the_size = stl::min(slash_start, _path_size) - last_slash_start;
-                container.emplace_back(_path.data() + last_slash_start, the_size);
+                const stl::size_t slash_start = _path.find('/');
+                const stl::size_t the_size = stl::min(slash_start, _path.size());
+                container.emplace_back(_path.data(), the_size);
                 if (slash_start == string_view_type::npos) {
                     break;
                 }
-                last_slash_start = slash_start + 1;
+                _path.remove_prefix(slash_start + 1);
             };
             return *this;
         }
@@ -1518,7 +1521,9 @@ namespace webpp::uri {
          */
         [[nodiscard]] string_type queries_string() const noexcept {
             string_type d_queries{this->get_allocator()};
-            (void)decode_uri_component(queries_raw(), d_queries, details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>);
+            if (!decode_uri_component(queries_raw(), d_queries, details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>)){
+                d_queries.clear();
+            }
             return d_queries;
         }
 
@@ -1643,32 +1648,34 @@ namespace webpp::uri {
                           "The specified container can't hold the query keys.");
             static_assert(istl::String<map_value_type>,
                           "The specified container can't hold the query values.");
-            stl::size_t last_and_sep = 0;
-            auto        _query       = queries_raw();
-            do {
-                auto and_sep = _query.find('&', last_and_sep); // find the delimiter
-                auto eq_sep  = _query.find("=", last_and_sep, and_sep - last_and_sep);
-                auto name    = _query.substr(last_and_sep + 1, stl::min(eq_sep, and_sep));
-                last_and_sep = and_sep;
+            auto       _query       = queries_raw();
+            for (;;) {
+                const auto and_sep = _query.find('&'); // find the delimiter
+                const auto eq_sep  = _query.find('=');
+                const auto name    = _query.substr(0, stl::min(eq_sep, and_sep));
                 if (name.empty()) // a name should not be empty
                     continue;
-                string_type d_value(this->get_allocator());
-                string_type d_name(this->get_allocator());
-                if (and_sep != string_view_type::npos) { // we have a value as well
-                    d_value = _query.substr(eq_sep + 1, and_sep);
-                }
+                map_value_type d_name(this->get_allocator());
+                map_key_type d_value(this->get_allocator());
                 if (!decode_uri_component(name, d_name, details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>)) {
                     d_name = name; // just put the non-decoded string there
                 }
-                if (!d_name.empty()) {
-                    map_value_type new_value(q_structured.get_allocator());
-                    if (decode_uri_component(d_value, new_value, details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>)) {
-                        q_structured[d_name] = stl::move(new_value);
-                    } else {
-                        q_structured[d_name] = stl::move(d_value); // just put the non-decoded value here
+                if (eq_sep != string_view_type::npos) { // we have a value as well
+                    auto const value = _query.substr(eq_sep + 1, and_sep);
+                    if (!decode_uri_component(value, d_value, details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>)) {
+                        d_value = value;
                     }
                 }
-            } while (last_and_sep != string_view_type::npos);
+
+                if (!d_name.empty())
+                    q_structured[d_name] = stl::move(d_value);
+
+                if (and_sep != string_view_type::npos) {
+                    _query.remove_prefix(and_sep + 1);
+                } else {
+                    break;
+                }
+            }
             return *this;
         }
 

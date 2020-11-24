@@ -84,6 +84,23 @@ namespace webpp::uri::details {
       charset(PCHAR_NOT_PCT_ENCODED<char_type>, charset<char_type, 2>{'/', '?'});
 
 
+    /**
+     * This is the character set almost corresponds to the "query" syntax
+     * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
+     * leaving out "pct-encoded", except that '+' is also excluded, because
+     * for some web services (e.g. AWS S3) a '+' is treated as
+     * synonymous with a space (' ') and thus gets misinterpreted.
+     */
+    template <istl::CharType char_type>
+    static constexpr auto QUERY_NOT_PCT_ENCODED_WITHOUT_PLUS = charset(
+            UNRESERVED<char_type>,
+            charset(
+                '!', '$', '&', '\'', '(', ')',
+                '*', ',', ';', '=',
+                ':', '@',
+                '/', '?'
+            )
+    );
 
     template <istl::CharType char_type>
     static constexpr auto LEGAL_PATH_CHARS =
