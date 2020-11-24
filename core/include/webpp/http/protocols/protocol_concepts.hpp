@@ -4,7 +4,7 @@
 #define WEBPP_PROTOCOL_CONCEPTS_H
 
 #include "../../traits/enable_traits.hpp"
-#include "../application_concepts.hpp"
+#include "../../application/application_concepts.hpp"
 
 namespace webpp {
 

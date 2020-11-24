@@ -120,11 +120,12 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/response.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/response_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/application.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/application_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/http.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/mime_types.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/status_code.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/version.hpp
+
+        ${LIB_INCLUDE_DIR}/webpp/application/application_concepts.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/http/syntax/common.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/syntax/request_parser.hpp

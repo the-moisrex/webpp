@@ -1,8 +1,9 @@
 #ifndef WEBPP_FAKE_INTERFACE_H
 #define WEBPP_FAKE_INTERFACE_H
 
+#include "../core/include/webpp/application/application_concepts.hpp"
 #include "../core/include/webpp/convert/casts.hpp"
-#include "../core/include/webpp/http/application_concepts.hpp"
+#include "../core/include/webpp/http/application.hpp"
 #include "../core/include/webpp/http/protocols/protocol_concepts.hpp"
 #include "../core/include/webpp/http/request.hpp"
 #include "../core/include/webpp/http/response.hpp"
@@ -11,7 +12,6 @@
 #include "../core/include/webpp/strings/to_case.hpp"
 #include "../core/include/webpp/traits/enable_traits.hpp"
 #include "../core/include/webpp/traits/std_traits.hpp"
-#include "../core/include/webpp/http/application.hpp"
 
 #include <cctype>
 #include <cstdlib>

@@ -2,9 +2,9 @@
 #define WEBPP_HTTP_HTTP_H
 
 #include "../traits/traits_concepts.hpp"
-#include "./application_concepts.hpp"
 #include "./protocols/protocol_concepts.hpp"
 #include "./routes/router.hpp"
+#include "../application/application_concepts.hpp"
 
 namespace webpp {
 
