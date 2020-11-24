@@ -3,17 +3,14 @@
 #ifndef WEBPP_CONTEXT_CONCEPTS_H
 #define WEBPP_CONTEXT_CONCEPTS_H
 
-#include "../../extensions/extension.hpp"
-#include "../../traits/traits_concepts.hpp"
-#include "../protocols/protocol_concepts.hpp"
 #include "../request_concepts.hpp"
-#include "../response_concepts.hpp"
+//#include "../response_concepts.hpp"
+#include "../../traits/enable_traits.hpp"
 
-#include <type_traits>
 
 namespace webpp {
 
-    enum class extension_method : uint_fast8_t {
+    enum struct extension_method {
         pre_subroute,
         post_subroute,
         pre_entryroute,
@@ -22,80 +19,58 @@ namespace webpp {
         post_lastroute
     };
 
-    template <typename A, extension_method em, typename ContextArgType, typename = void>
-    struct has_context_extension_method : stl::false_type {};
+    namespace details {
+        template <typename A, extension_method em, typename ContextArgType>
+        static constexpr bool has_method() noexcept {
+            switch (em) {
+                case extension_method::pre_subroute:
+                    return requires(A obj, ContextArgType & ctx) {
+                        obj.pre_subroute(ctx);
+                    };
+                case extension_method::post_subroute:
+                    return requires(A obj, ContextArgType & ctx) {
+                        obj.post_subroute(ctx);
+                    };
+                case extension_method::pre_entryroute:
+                    return requires(A obj, ContextArgType & ctx) {
+                        obj.pre_entryroute(ctx);
+                    };
+                case extension_method::post_entryroute:
+                    return requires(A obj, ContextArgType & ctx) {
+                        obj.post_entryroute(ctx);
+                    };
+                case extension_method::pre_firstroute:
+                    return requires(A obj, ContextArgType & ctx) {
+                        obj.pre_firstroute(ctx);
+                    };
+                case extension_method::post_lastroute:
+                    return requires(A obj, ContextArgType & ctx) {
+                        obj.post_lastroute(ctx);
+                    };
+                default: return false;
+            }
+        }
+    } // namespace details
 
-    /**
-     * pre_subroute
-     */
-    template <typename A, typename ContextArgType>
-    struct has_context_extension_method<
-      A, extension_method::pre_subroute, ContextArgType,
-      stl::void_t<decltype(stl::declval<A>().pre_subroute(stl::declval<ContextArgType&>()), (void) 0)>>
-      : stl::true_type {};
-
-    /**
-     * post_subroute
-     */
-    template <typename A, typename ContextArgType>
-    struct has_context_extension_method<
-      A, extension_method::post_subroute, ContextArgType,
-      stl::void_t<decltype(stl::declval<A>().post_subroute(stl::declval<ContextArgType&>()), (void) 0)>>
-      : stl::true_type {};
-
-
-    /**
-     * pre_entryroute
-     */
-    template <typename A, typename ContextArgType>
-    struct has_context_extension_method<
-      A, extension_method::pre_entryroute, ContextArgType,
-      stl::void_t<decltype(stl::declval<A>().pre_entryroute(stl::declval<ContextArgType&>()), (void) 0)>>
-      : stl::true_type {};
-
-    /**
-     * post_entryroute
-     */
-    template <typename A, typename ContextArgType>
-    struct has_context_extension_method<
-      A, extension_method::post_entryroute, ContextArgType,
-      stl::void_t<decltype(stl::declval<A>().post_entryroute(stl::declval<ContextArgType&>()), (void) 0)>>
-      : stl::true_type {};
-
-    /**
-     * pre first route
-     */
-    template <typename A, typename ContextArgType>
-    struct has_context_extension_method<
-      A, extension_method::pre_firstroute, ContextArgType,
-      stl::void_t<decltype(stl::declval<A>().pre_firstroute(stl::declval<ContextArgType&>()), (void) 0)>>
-      : stl::true_type {};
-
-    /**
-     * post last route
-     */
-    template <typename A, typename ContextArgType>
-    struct has_context_extension_method<
-      A, extension_method::post_lastroute, ContextArgType,
-      stl::void_t<decltype(stl::declval<A>().post_lastroute(stl::declval<ContextArgType&>()), (void) 0)>>
-      : stl::true_type {};
+    template <typename A, extension_method em, typename ContextArgType>
+    concept has_context_extension_method = details::has_method<A, em, ContextArgType>();
 
     ///////////////////////////////////////////////////////////////////////////
 
-    template <typename T>
-    concept ContextExtension = Extension<T>;
+        template <typename T>
+        concept ContextExtension = Extension<T>;
 
-    template <typename T>
-    concept Context = requires(stl::remove_cvref_t<T> c) {
-        Traits<typename stl::remove_cvref_t<T>::traits_type>;
-        Request<typename stl::remove_cvref_t<T>::request_type>;
-        //        {c.request};
-    };
+        template <typename T>
+        concept Context = requires(stl::remove_cvref_t<T> c) {
+            requires EnabledTraits<typename stl::remove_cvref_t<T>>;
+            requires Request<typename stl::remove_cvref_t<T>::request_type>;
+            //        {c.request};
+        };
 
-    template <typename T>
-    struct ContextTempl {
-        static constexpr bool value = Context<T>;
-    };
+        template <typename T>
+        struct ContextTempl {
+            static constexpr bool value = Context<T>;
+        };
 
     //    template <typename ...E>
     //    struct fake_context_type_impl: public E... {

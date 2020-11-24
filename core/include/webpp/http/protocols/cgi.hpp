@@ -149,7 +149,7 @@ namespace webpp {
         }
 
 
-        void operator()() noexcept {
+        int operator()() noexcept {
             auto req = etraits::template instantiate<request_type>();
             auto         res = app(req);
             res.calculate_default_headers();
@@ -175,6 +175,7 @@ namespace webpp {
             write(header_str.data(), header_str.size());
             write("\r\n", 2);
             write(str.data(), str.size());
+            return EXIT_SUCCESS;
         }
     };
 

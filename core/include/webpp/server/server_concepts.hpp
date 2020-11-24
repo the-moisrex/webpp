@@ -74,7 +74,7 @@ namespace webpp {
     template <typename T>
     concept Server = requires(T server) {
         typename T::connection_type;
-        ThreadPool<typename T::thread_pool_type>;
+        requires ThreadPool<typename T::thread_pool_type>;
         server();
     };
 
@@ -114,7 +114,7 @@ namespace webpp {
      */
     template <typename T>
     concept Connection = requires(T conn) {
-        EnabledTraits<T>;
+        requires EnabledTraits<T>;
         conn.remote_addr();
         conn.logger_category; // a string for logging
         // conn.read(buffer)
