@@ -14,8 +14,6 @@ namespace webpp {
     using basic_std_pmr_traits = basic_std_traits<CharT, CharTraits, Allocator>;
 
 
-    using std_pmr_traits =
-      basic_std_pmr_traits<char, stl::char_traits<char>, stl::pmr::polymorphic_allocator>;
 
     template <typename T>
     struct std_pmr_traits_from_string_view {
@@ -43,6 +41,13 @@ namespace webpp {
         using type = basic_std_pmr_traits<CharT, CharTraitsT,
                                           stl::allocator_traits<AllocatorType>::template rebind_alloc>;
     };
+
+
+    using std_pmr_traits = basic_std_pmr_traits<char>;
+    using std_pmr_wtraits = basic_std_pmr_traits<wchar_t>;
+    using std_pmr_u8traits = basic_std_pmr_traits<char8_t>;
+    using std_pmr_u16traits = basic_std_pmr_traits<char16_t>;
+    using std_pmr_u32traits = basic_std_pmr_traits<char32_t>;
 
 } // namespace webpp
 

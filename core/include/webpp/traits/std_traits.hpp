@@ -33,7 +33,6 @@ namespace webpp {
         using logger_type = stderr_logger;
     };
 
-    using std_traits = basic_std_traits<char, stl::char_traits<char>, stl::allocator>;
 
     template <typename T>
     struct std_traits_from_string_view {
@@ -60,6 +59,13 @@ namespace webpp {
         using type =
           basic_std_traits<CharT, CharTraitsT, stl::allocator_traits<AllocatorType>::template rebind_alloc>;
     };
+
+
+    using std_traits = basic_std_traits<char>;
+    using std_wtraits = basic_std_traits<wchar_t>;
+    using std_u8traits = basic_std_traits<char8_t>;
+    using std_u16traits = basic_std_traits<char16_t>;
+    using std_u32traits = basic_std_traits<char32_t>;
 
     using fake_traits_type = std_traits;
 
