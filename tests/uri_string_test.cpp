@@ -499,7 +499,6 @@ TEST(UriTests, ParseFromStringUrnDefaultPathDelimiter) {
     );
 }
 
-
 TEST(UriTests, ParseFromStringPathCornerCases) {
     struct TestVector {
         std::string pathIn;
@@ -543,8 +542,12 @@ TEST(UriTests, ParseFromStringTwiceFirstWithPortNumberThenWithout) {
 }
 
 TEST(UriTests, ParseFromStringBadPortNumberPurelyAlphabetic) {
-    uri_string uri;
-    ASSERT_FALSE(uri.operator=("http://www.example.com:spam/foo/bar").is_valid());
+    uri_string uri = "http://www.example.com:spam/foo/bar";
+    ASSERT_TRUE(uri.has_scheme());
+    ASSERT_TRUE(uri.has_host());
+    ASSERT_TRUE(uri.has_path());
+    ASSERT_FALSE(uri.has_port());
+    ASSERT_FALSE(uri.is_valid());
 }
 
 TEST(UriTests, ParseFromStringBadPortNumberStartsNumericEndsAlphabetic) {
