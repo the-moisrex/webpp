@@ -72,7 +72,7 @@ TEST(HTTPRequestParser, HeaderLexer) {
       .raw_view = sample_request
     };
 
-    lexer.consume_all();
+    ASSERT_NO_THROW(lexer.consume_all());
     EXPECT_EQ(std::count_if(std::begin(sample_request), std::end(sample_request), [] (auto c) {
                   return c == '\r' || c == '\n';
               }) / 2,lexer.header_views.size()) << "The lexer size is not a match";

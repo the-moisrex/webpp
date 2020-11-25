@@ -250,7 +250,6 @@ namespace webpp::uri {
                 const auto str_view = _data.substr(port_start + 1, authority_end - (port_start + 1));
                 if (!ascii::is::digit(str_view)) {
                     port_start = data.size();
-                } else {
                     errors.on(error_type::port);
                 }
             }
