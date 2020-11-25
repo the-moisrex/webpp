@@ -92,8 +92,8 @@ namespace webpp::uri {
       private:
 
         enum struct error_type : stl::uint8_t {
-            none = flags::item(0),
-            scheme = flags::item(1),
+            scheme = flags::item(0),
+            user_info = flags::item(1),
             host = flags::item(2),
             port = flags::item(3),
             path = flags::item(4),
@@ -113,7 +113,7 @@ namespace webpp::uri {
         mutable stl::size_t authority_end   = string_view_type::npos;
         mutable stl::size_t query_start     = string_view_type::npos;
         mutable stl::size_t fragment_start  = string_view_type::npos;
-        mutable flags::manager<error_type> errors = error_type::none;
+        mutable flags::manager<error_type> errors = flags::none;
 
         /**
          * scheme    :    start=0       end=[0]
@@ -153,8 +153,13 @@ namespace webpp::uri {
                     } else {
                         // it should be a URN or an invalid URI at this point
                         authority_start = data.size();
+                        if (!ascii::iequals<ascii::char_case_side::second_lowered>(_data.substr(0, scheme_end), "urn")) {
+                            errors.on(error_type::scheme);
+                        }
                     }
                     return;
+                } else {
+                    errors.on(error_type::scheme);
                 }
             }
 
@@ -184,6 +189,7 @@ namespace webpp::uri {
                 user_info_end = data.size();
             } else {
                 user_info_end += authority_start;
+                // todo: evaluate the user info here
             }
         }
 
@@ -199,7 +205,7 @@ namespace webpp::uri {
             parse_query();  // to get "query_start"
 
             auto _data = string_view();
-            const auto scheme_value = substr(0, scheme_end);
+            const auto scheme_value = _data.substr(0, scheme_end);
 
             const bool is_urn = ascii::iequals<ascii::char_case_side::second_lowered>(scheme_value, "urn");
 
@@ -241,143 +247,14 @@ namespace webpp::uri {
                 port_start = data.size(); // there's no port
             } else {
                 port_start += starting_point;
-                auto str_view = _data.substr(port_start + 1, authority_end - (port_start + 1));
+                const auto str_view = _data.substr(port_start + 1, authority_end - (port_start + 1));
                 if (!ascii::is::digit(str_view)) {
                     port_start = data.size();
+                } else {
+                    errors.on(error_type::port);
                 }
             }
         }
-
-        //        /**
-        //         * parsing the authority parts of the basic_uri
-        //         */
-        //        void parse_authority_full() const noexcept {
-        //
-        //            parse_scheme();
-        //            parse_path();
-        //
-        //            auto _data = (std::is_same_v<string_type,
-        //            string_view_type>
-        //                              ? data
-        //                              : string_view_type(data))
-        //                             .substr(authority_start, authority_end);
-        //
-        //            auto _authority_start = data.find("//");
-        //            if (_authority_start != string_view_type::npos) {
-        //                _data.remove_prefix(_authority_start + 2);
-        //            }
-        //            auto path_start = _data.find('/');
-        //
-        //            if (_authority_start != string_view_type::npos &&
-        //            path_start != 0) {
-        //
-        //                auto port_start = _data.find(":", 0, path_start);
-        //
-        //                // extracting user info
-        //                if (auto delim = _data.find("@", 0, path_start);
-        //                    delim != string_view_type::npos) {
-        //
-        //                    pieces[_user_info] = delim;
-        //                    _data.remove_prefix(delim + 1);
-        //                }
-        //
-        //                // extracting host
-        //
-        //                /* IP future versions can be specified like this:
-        //                 * (RFC 3986)
-        //                 *
-        //                 * IP-literal = "[" ( IPv6address / IPvFuture  ) "]"
-        //                 * IPvFuture = "v" 1*HEXDIG "." 1*( unreserved /
-        //                 sub-delims
-        //                 * / ":" )
-        //                 */
-        //                if (ascii::starts_with(_data, '[')) { // IP
-        //                Literal
-        //                    if (_data.size() > 2 &&
-        //                        _data[1] == 'v') { // IPv Future Number
-        //                        if (auto dot_delim = _data.find('.');
-        //                            dot_delim != string_view_type::npos) {
-        //
-        //                            auto ipvf_version = _data.substr(2,
-        //                            dot_delim); if
-        //                            (HEXDIG.contains(ipvf_version)) {
-        //
-        //                                if (auto ipvf_end = _data.find(']');
-        //                                    ipvf_end !=
-        //                                    string_view_type::npos) { auto
-        //                                    ipvf =
-        //                                        _data.substr(dot_delim + 1,
-        //                                        ipvf_end);
-        //                                    if
-        //                                    (IPV_FUTURE_LAST_PART.contains(ipvf))
-        //                                    {
-        //                                        // returning the ipvf and it's
-        //                                        // version
-        //                                        _host = _data.substr(1,
-        //                                        ipvf_end + 1);
-        //                                    }
-        //                                } else {
-        //                                    // totally not a URI
-        //                                    return;
-        //                                }
-        //                            }
-        //                        }
-        //                    } else if (_data.size() >= 5) { // IPv6
-        //
-        //                        if (auto ipv6_end = _data.find(']');
-        //                            ipv6_end != string_view_type::npos) {
-        //
-        //                            if (auto ipv6_view = _data.substr(1,
-        //                            ipv6_end);
-        //                                is::ipv6(ipv6_view)) {
-        //                                // TODO: probably use
-        //                                std::variant<ipv6,
-        //                                // ipv4, string>
-        //                                _host = ipv6_view;
-        //                                _data.remove_prefix(ipv6_end + 1);
-        //                            }
-        //                        } else {
-        //                            return; // totally not a valid URI
-        //                        }
-        //                    }
-        //                } else { // Not IP Literal
-        //                    auto port_or_path_start =
-        //                        port_start != string_view_type::npos ?
-        //                        port_start
-        //                                                             :
-        //                                                             path_start;
-        //                    auto hostname = _data.substr(0,
-        //                    port_or_path_start);
-        //                    // we're not going to decode hostname here. We'll
-        //                    do
-        //                    // this in another method because this function is
-        //                    //  and will only return const stuff
-        //
-        //                    // we have our answer but we will check for the
-        //                    // correctness of the hostname now
-        //                    auto HOSTNAME_CHARS =
-        //                        charset(REG_NAME_NOT_PCT_ENCODED,
-        //                        charset('%'));
-        //                    if (HOSTNAME_CHARS.contains(hostname)) {
-        //                        _host = hostname;
-        //                        if (port_or_path_start !=
-        //                        string_view_type::npos)
-        //                            _data.remove_prefix(port_or_path_start);
-        //                        else {
-        //                            return;
-        //                        }
-        //                    }
-        //                }
-        //
-        //                // extracting port
-        //                if (port_start != string_view_type::npos) {
-        //                    auto port_end =
-        //                        _data.find_first_not_of(DIGIT.string_view());
-        //                    _port = _data.substr(port_start + 1, port_end);
-        //                    _data.remove_prefix(port_end);
-        //                }
-        //            }
-        //        }
 
         /**
          * parse fragment (it finds fragment_start)
@@ -388,6 +265,7 @@ namespace webpp::uri {
 
             auto _data = string_view();
 
+            // todo: evaluate fragment here
             fragment_start = _data.find_first_of('#');
             if (fragment_start == string_view_type::npos) {
                 fragment_start = data.size();
@@ -405,6 +283,7 @@ namespace webpp::uri {
 
             auto _data  = string_view();
             query_start = _data.substr(0, fragment_start).find_first_of('?');
+            // todo: evaluate queries here
             if (query_start == string_view_type::npos) {
                 query_start = data.size();
             }
@@ -426,6 +305,7 @@ namespace webpp::uri {
         inline void unparse() const noexcept {
             scheme_end = authority_start = user_info_end = port_start = authority_end = query_start =
             fragment_start                                                          = string_view_type::npos;
+            errors.reset();
         }
 
         /**
@@ -1893,7 +1773,38 @@ namespace webpp::uri {
          * Check if the specified string is a valid URI or not
          */
         [[nodiscard]] bool is_valid() const noexcept {
-            return has_scheme() || has_authority() || has_path() || has_fragment();
+            return errors == flags::none;
+        }
+
+        [[nodiscard]] bool has_valid_scheme() const noexcept {
+            return !scheme().empty() && errors.is_off(error_type::scheme);
+        }
+
+        [[nodiscard]] bool has_valid_host() const noexcept {
+            return !host_raw().empty() && errors.is_off(error_type::host);
+        }
+
+        [[nodiscard]] bool has_valid_path() const noexcept {
+            return !path_raw().empty() && errors.is_off(error_type::path);
+        }
+
+        [[nodiscard]] bool has_valid_port() const noexcept {
+            return !port().empty() && errors.is_off(error_type::port);
+        }
+
+        [[nodiscard]] bool has_valid_queries() const noexcept {
+            // todo: evaluate queries as well, query parser doesn't evaluate it
+            return !queries_raw().empty() && errors.is_off(error_type::queries);
+        }
+
+        [[nodiscard]] bool has_valid_fargment() const noexcept {
+            // todo: evaluate fragment as well, fragment parser doesn't evaluate it
+            return !fragment().empty() && errors.is_off(error_type::fargment);
+        }
+
+        [[nodiscard]] bool has_valid_user_info() const noexcept {
+            // todo: evaluate user_info as well, user_info parser doesn't evaluate it
+            return !user_info_raw().empty() && errors.is_off(error_type::user_info);
         }
 
     };

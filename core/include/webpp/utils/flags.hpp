@@ -8,6 +8,8 @@
 
 namespace webpp::flags {
 
+    static constexpr stl::uint8_t none = 0u;
+
     [[nodiscard]]
 #ifdef __cpp_consteval
     consteval
@@ -32,10 +34,8 @@ namespace webpp::flags {
 #ifdef __cpp_using_enum
         using enum type;
 #endif
-      private:
         base_type value;
 
-      public:
         constexpr manager() = default;
         constexpr manager(base_type val) noexcept : value{val} {}
         constexpr manager(type val) noexcept : value{static_cast<base_type>(val)} {}
@@ -43,6 +43,24 @@ namespace webpp::flags {
         operator base_type() const noexcept {
             return value;
         }
+
+        [[nodiscard]] constexpr bool operator==(base_type v) const noexcept { return value == v; }
+        [[nodiscard]] constexpr bool operator==(type v) const noexcept { return operator==(static_cast<base_type>(v)); }
+
+        [[nodiscard]] constexpr bool operator!=(base_type v) const noexcept { return value != v; }
+        [[nodiscard]] constexpr bool operator!=(type v) const noexcept { return operator!=(static_cast<base_type>(v)); }
+
+        [[nodiscard]] constexpr bool operator<(base_type v) const noexcept { return value < v; }
+        [[nodiscard]] constexpr bool operator<(type v) const noexcept { return operator<(static_cast<base_type>(v)); }
+
+        [[nodiscard]] constexpr bool operator>(base_type v) const noexcept { return value > v; }
+        [[nodiscard]] constexpr bool operator>(type v) const noexcept { return operator>(static_cast<base_type>(v)); }
+
+        [[nodiscard]] constexpr bool operator>=(base_type v) const noexcept { return value >= v; }
+        [[nodiscard]] constexpr bool operator>=(type v) const noexcept { return operator>=(static_cast<base_type>(v)); }
+
+        [[nodiscard]] constexpr bool operator<=(base_type v) const noexcept { return value <= v; }
+        [[nodiscard]] constexpr bool operator<=(type v) const noexcept { return operator<=(static_cast<base_type>(v)); }
 
         constexpr manager& operator^=(type b) noexcept { value ^= static_cast<base_type>(b); return *this; }
         constexpr manager& operator^=(base_type b) noexcept { value ^= b; return *this; }
@@ -76,8 +94,12 @@ namespace webpp::flags {
             return is_off(static_cast<base_type>(v));
         }
 
-        [[nodiscard]] constexpr bool is_ff(base_type v) const noexcept {
+        [[nodiscard]] constexpr bool is_off(base_type v) const noexcept {
             return (value & v) != v;
+        }
+
+        constexpr void reset() noexcept {
+            value = none;
         }
 
     };

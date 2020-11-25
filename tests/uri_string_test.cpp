@@ -543,11 +543,11 @@ TEST(UriTests, ParseFromStringTwiceFirstWithPortNumberThenWithout) {
 
 TEST(UriTests, ParseFromStringBadPortNumberPurelyAlphabetic) {
     uri_string uri = "http://www.example.com:spam/foo/bar";
-    ASSERT_TRUE(uri.has_scheme());
-    ASSERT_TRUE(uri.has_host());
-    ASSERT_TRUE(uri.has_path());
-    ASSERT_FALSE(uri.has_port());
-    ASSERT_FALSE(uri.is_valid());
+    EXPECT_TRUE(uri.has_valid_scheme());
+    EXPECT_TRUE(uri.has_valid_host());
+    EXPECT_TRUE(uri.has_valid_path());
+    EXPECT_FALSE(uri.has_valid_port());
+    EXPECT_FALSE(uri.is_valid()) << uri.port();
 }
 
 TEST(UriTests, ParseFromStringBadPortNumberStartsNumericEndsAlphabetic) {
