@@ -5,6 +5,7 @@
 
 #include "../std/type_traits.hpp"
 #include <cstdint>
+#include "../libs/magic_enum/include/magic_enum.hpp"
 
 namespace webpp::flags {
 
@@ -27,63 +28,81 @@ namespace webpp::flags {
     template <typename Values>
     struct manager {
         using type = Values;
-        static constexpr stl::size_t base_size = sizeof(type);
-        using base_type = stl::conditional_t<(base_size <= sizeof(stl::uint8_t)), stl::uint8_t,
-                          stl::conditional_t<(base_size <= sizeof(stl::uint16_t)), stl::uint16_t,
-              stl::conditional_t<(base_size <= sizeof(stl::uint32_t)), stl::uint32_t, stl::uint64_t>>>;
+        static constexpr stl::size_t base_size = magic_enum::enum_count<type>();
+        using base_type = stl::conditional_t<(base_size <= sizeof(stl::uint8_t) * 8), stl::uint8_t,
+                          stl::conditional_t<(base_size <= sizeof(stl::uint16_t) * 8), stl::uint16_t,
+              stl::conditional_t<(base_size <= sizeof(stl::uint32_t) * 8), stl::uint32_t, stl::uint64_t>>>;
+        // There is a clang bug (or magic_enum bug)
+        // GitHub issue: https://github.com/Neargye/magic_enum/issues/65
+        static constexpr bool are_values_sequential = []() constexpr noexcept -> bool {
+            const auto vals = magic_enum::enum_values<type>();
+            for (stl::size_t i = 0; i < vals.size(); ++i)
+                if (magic_enum::enum_integer(vals[i]) != i)
+                    return false;
+            return true;
+        }();
+
 #ifdef __cpp_using_enum
         using enum type;
 #endif
-        base_type value;
+        base_type value = none;
 
         constexpr manager() = default;
         constexpr manager(base_type val) noexcept : value{val} {}
-        constexpr manager(type val) noexcept : value{static_cast<base_type>(val)} {}
+        constexpr manager(type val) noexcept : value{value_of(val)} {}
 
         operator base_type() const noexcept {
             return value;
         }
 
+        [[nodiscard]] static constexpr base_type value_of(type v) noexcept {
+            if constexpr (are_values_sequential) {
+                return item(magic_enum::enum_integer(v));
+            } else {
+                return item(magic_enum::enum_index(v).value());
+            }
+        }
+
         [[nodiscard]] constexpr bool operator==(base_type v) const noexcept { return value == v; }
-        [[nodiscard]] constexpr bool operator==(type v) const noexcept { return operator==(static_cast<base_type>(v)); }
+        [[nodiscard]] constexpr bool operator==(type v) const noexcept { return operator==(value_of(v)); }
 
         [[nodiscard]] constexpr bool operator!=(base_type v) const noexcept { return value != v; }
-        [[nodiscard]] constexpr bool operator!=(type v) const noexcept { return operator!=(static_cast<base_type>(v)); }
+        [[nodiscard]] constexpr bool operator!=(type v) const noexcept { return operator!=(value_of(v)); }
 
         [[nodiscard]] constexpr bool operator<(base_type v) const noexcept { return value < v; }
-        [[nodiscard]] constexpr bool operator<(type v) const noexcept { return operator<(static_cast<base_type>(v)); }
+        [[nodiscard]] constexpr bool operator<(type v) const noexcept { return operator<(value_of(v)); }
 
         [[nodiscard]] constexpr bool operator>(base_type v) const noexcept { return value > v; }
-        [[nodiscard]] constexpr bool operator>(type v) const noexcept { return operator>(static_cast<base_type>(v)); }
+        [[nodiscard]] constexpr bool operator>(type v) const noexcept { return operator>(value_of(v)); }
 
         [[nodiscard]] constexpr bool operator>=(base_type v) const noexcept { return value >= v; }
-        [[nodiscard]] constexpr bool operator>=(type v) const noexcept { return operator>=(static_cast<base_type>(v)); }
+        [[nodiscard]] constexpr bool operator>=(type v) const noexcept { return operator>=(value_of(v)); }
 
         [[nodiscard]] constexpr bool operator<=(base_type v) const noexcept { return value <= v; }
-        [[nodiscard]] constexpr bool operator<=(type v) const noexcept { return operator<=(static_cast<base_type>(v)); }
+        [[nodiscard]] constexpr bool operator<=(type v) const noexcept { return operator<=(value_of(v)); }
 
-        constexpr manager& operator^=(type b) noexcept { value ^= static_cast<base_type>(b); return *this; }
+        constexpr manager& operator^=(type b) noexcept { value ^= value_of(b); return *this; }
         constexpr manager& operator^=(base_type b) noexcept { value ^= b; return *this; }
 
-        constexpr manager& operator&=(type b) noexcept { value &= static_cast<base_type>(b); return *this; }
+        constexpr manager& operator&=(type b) noexcept { value &= value_of(b); return *this; }
         constexpr manager& operator&=(base_type b) noexcept { value &= b; return *this; }
 
-        constexpr manager& operator|=(type b) noexcept { value |= static_cast<base_type>(b); return *this; }
+        constexpr manager& operator|=(type b) noexcept { value |= value_of(b); return *this; }
         constexpr manager& operator|=(base_type b) noexcept { value |= b; return *this; }
 
-        constexpr manager& operator=(type b) noexcept { value = static_cast<base_type>(b); return *this; }
+        constexpr manager& operator=(type b) noexcept { value = value_of(b); return *this; }
         constexpr manager& operator=(base_type b) noexcept { value = b; return *this; }
 
         constexpr void on(type v) noexcept {
-            value |= static_cast<base_type>(v);
+            value |= value_of(v);
         }
 
         constexpr void off(type v) noexcept {
-            value &= ~static_cast<base_type>(v);
+            value &= ~value_of(v);
         }
 
         [[nodiscard]] constexpr bool is_on(type v) const noexcept {
-            return is_on(static_cast<base_type>(v));
+            return is_on(value_of(v));
         }
 
         [[nodiscard]] constexpr bool is_on(base_type v) const noexcept {
@@ -91,7 +110,7 @@ namespace webpp::flags {
         }
 
         [[nodiscard]] constexpr bool is_off(type v) const noexcept {
-            return is_off(static_cast<base_type>(v));
+            return is_off(value_of(v));
         }
 
         [[nodiscard]] constexpr bool is_off(base_type v) const noexcept {

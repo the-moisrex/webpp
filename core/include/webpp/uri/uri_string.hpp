@@ -39,6 +39,16 @@
 
 namespace webpp::uri {
 
+    enum struct error_type : stl::uint8_t {
+        scheme,
+        user_info,
+        host,
+        port,
+        path,
+        queries,
+        fragment
+    };
+
     namespace is {
         /**
          * @brief check if scheme is correct or not
@@ -90,16 +100,6 @@ namespace webpp::uri {
 
 
       private:
-
-        enum struct error_type : stl::uint8_t {
-            scheme = flags::item(0),
-            user_info = flags::item(1),
-            host = flags::item(2),
-            port = flags::item(3),
-            path = flags::item(4),
-            queries = flags::item(5),
-            fragment = flags::item(6)
-        };
 
         /**
          * This is the whole url (if we need to own the uri ourselves)
@@ -1777,34 +1777,34 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] bool has_valid_scheme() const noexcept {
-            return !scheme().empty() && errors.is_off(error_type::scheme);
+            return !scheme().empty() || errors.is_off(error_type::scheme);
         }
 
         [[nodiscard]] bool has_valid_host() const noexcept {
-            return !host_raw().empty() && errors.is_off(error_type::host);
+            return !host_raw().empty() || errors.is_off(error_type::host);
         }
 
         [[nodiscard]] bool has_valid_path() const noexcept {
-            return !path_raw().empty() && errors.is_off(error_type::path);
+            return !path_raw().empty() || errors.is_off(error_type::path);
         }
 
         [[nodiscard]] bool has_valid_port() const noexcept {
-            return !port().empty() && errors.is_off(error_type::port);
+            return !port().empty() || errors.is_off(error_type::port);
         }
 
         [[nodiscard]] bool has_valid_queries() const noexcept {
             // todo: evaluate queries as well, query parser doesn't evaluate it
-            return !queries_raw().empty() && errors.is_off(error_type::queries);
+            return !queries_raw().empty() || errors.is_off(error_type::queries);
         }
 
         [[nodiscard]] bool has_valid_fargment() const noexcept {
             // todo: evaluate fragment as well, fragment parser doesn't evaluate it
-            return !fragment().empty() && errors.is_off(error_type::fargment);
+            return !fragment().empty() || errors.is_off(error_type::fragment);
         }
 
         [[nodiscard]] bool has_valid_user_info() const noexcept {
             // todo: evaluate user_info as well, user_info parser doesn't evaluate it
-            return !user_info_raw().empty() && errors.is_off(error_type::user_info);
+            return !user_info_raw().empty() || errors.is_off(error_type::user_info);
         }
 
     };
