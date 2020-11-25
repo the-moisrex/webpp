@@ -18,6 +18,7 @@
 #include "./queries.hpp"
 #include "../ip/ipv4.hpp"
 #include "../ip/ipv6.hpp"
+#include "../utils/flags.hpp"
 
 
 /**
@@ -89,6 +90,17 @@ namespace webpp::uri {
 
 
       private:
+
+        enum struct error_type : stl::uint8_t {
+            none = flags::item(0),
+            scheme = flags::item(1),
+            host = flags::item(2),
+            port = flags::item(3),
+            path = flags::item(4),
+            queries = flags::item(5),
+            fragment = flags::item(6)
+        };
+
         /**
          * This is the whole url (if we need to own the uri ourselves)
          */
@@ -101,6 +113,7 @@ namespace webpp::uri {
         mutable stl::size_t authority_end   = string_view_type::npos;
         mutable stl::size_t query_start     = string_view_type::npos;
         mutable stl::size_t fragment_start  = string_view_type::npos;
+        mutable flags::manager<error_type> errors = error_type::none;
 
         /**
          * scheme    :    start=0       end=[0]

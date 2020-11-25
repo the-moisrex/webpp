@@ -59,6 +59,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/convert/lexical_cast.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/utils/cfile.hpp
+        ${LIB_INCLUDE_DIR}/webpp/utils/flags.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/const_list.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/containers.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/debounce.hpp
