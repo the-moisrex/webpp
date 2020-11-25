@@ -485,6 +485,12 @@ TEST(UriTests, ParseFromStringUrnDefaultPathDelimiter) {
     ASSERT_TRUE(uri.operator=("urn:book:fantasy:Hobbit").is_valid());
     ASSERT_EQ("urn", uri.scheme());
     ASSERT_EQ("", uri.host());
+    ASSERT_FALSE(uri.has_user_info());
+    ASSERT_FALSE(uri.has_authority());
+    ASSERT_FALSE(uri.has_fragment());
+    ASSERT_FALSE(uri.has_password());
+    ASSERT_FALSE(uri.has_queries());
+    ASSERT_FALSE(uri.has_second_level_domain());
     ASSERT_EQ(
       (std::vector< std::string >{
         "book:fantasy:Hobbit",
@@ -493,6 +499,7 @@ TEST(UriTests, ParseFromStringUrnDefaultPathDelimiter) {
     );
 }
 
+
 TEST(UriTests, ParseFromStringPathCornerCases) {
     struct TestVector {
         std::string pathIn;
@@ -500,7 +507,7 @@ TEST(UriTests, ParseFromStringPathCornerCases) {
     };
     const std::vector< TestVector > testVectors{
       {"", {}},
-      {"/", {""}},
+      {"/", {""}}, // todo: should this be "" / "" or ""?
       {"/foo", {"", "foo"} },
       {"foo/", {"foo", ""} },
     };
@@ -1247,7 +1254,7 @@ TEST(UriTests, IPvFutureAddress) {
     }
 }
 
-TEST(UriTests, to_string) {
+TEST(UriTests, ToString) {
     struct TestVector {
         std::string scheme;
         std::string userinfo;

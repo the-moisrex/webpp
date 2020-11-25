@@ -186,15 +186,19 @@ namespace webpp::uri {
             parse_query();  // to get "query_start"
 
             auto _data = string_view();
+            const auto scheme_value = substr(0, scheme_end);
+
+            const bool is_urn = ascii::iequals<ascii::char_case_side::second_lowered>(scheme_value, "urn");
 
             auto starting_point =
               authority_start != data.size()
-              ? authority_start
-              : (scheme_end != data.size() && scheme_end != string_view_type::npos ? scheme_end : 0);
-            authority_end = _data.substr(starting_point, query_start - starting_point).find_first_of('/');
+                ? authority_start
+                : (scheme_end != data.size() && scheme_end != string_view_type::npos ? scheme_end : 0);
+            authority_end = _data.substr(starting_point, query_start - starting_point).find_first_of(is_urn ? ':' : '/');
             if (authority_end == string_view_type::npos) {
                 authority_end = data.size();
             } else {
+                starting_point += is_urn; // we don't want the first ":" to be in the path of a urn
                 authority_end += starting_point;
             }
         }
