@@ -79,7 +79,8 @@ namespace webpp {
             return http::status_code::bad_request; // Bad Request
         }
 
-        http::status_code_type consume_all() noexcept {
+        http::status_code consume_all() noexcept {
+            return http::status_code::ok;
         }
 
     };
