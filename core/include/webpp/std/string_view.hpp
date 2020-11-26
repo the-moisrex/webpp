@@ -155,6 +155,9 @@ namespace webpp::istl {
 //    template <typename T>
 //    using char_traits_type_of = typename decltype(string_viewify(stl::declval<T>()))::traits_type;
 
+    template <typename T>
+    using string_view_type_of = stl::conditional_t<StringView<T>, T, stl::basic_string_view<char_type_of<T>>>;
+
 } // namespace webpp::istl
 
 #endif // WEBPP_STRING_VIEW_H

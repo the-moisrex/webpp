@@ -1090,7 +1090,7 @@ TEST(UriTests, NormalizePath) {
         uri_string uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         uri.normalize();
-        ASSERT_EQ(testVector.normalizedPathSegments, uri.slugs<std::vector<std::string>>()) << index;
+        EXPECT_EQ(testVector.normalizedPathSegments, uri.slugs<std::vector<std::string>>()) << index << " " << testVector.uriString;
         ++index;
     }
 }

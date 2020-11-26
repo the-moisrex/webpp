@@ -22,3 +22,12 @@ TEST(URITests, Generation) {
     u.host = "webpp.dev";
     EXPECT_EQ(u.to_string(), "https://webpp.dev");
 }
+
+TEST(URITests, PathFromString) {
+    uri::basic_path path = "/a/b/c/../d";
+    EXPECT_EQ(path.size(), 6);
+    EXPECT_EQ(path[0], "");
+    EXPECT_EQ(path[1], "a");
+}
+
+
