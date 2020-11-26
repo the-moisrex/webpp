@@ -34,7 +34,7 @@ namespace webpp::string {
 
     template <typename StringType = void, typename... T>
     constexpr auto join(T&&... strs) {
-        stl::size_t const merged_size = (ascii::max_size(strs) + ...);
+        stl::size_t const merged_size = ((istl::Stringifiable<T> ? ascii::max_size(strs) : 0) + ...);
         using best_str_t              = typename istl::ranked_types<details::string_type_ranker, T...>::best;
         using str_type                = stl::conditional_t<stl::is_void_v<StringType>,
           stl::remove_cvref_t<typename best_str_t::type>, StringType>;

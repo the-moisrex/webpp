@@ -205,14 +205,18 @@ namespace webpp::uri {
             parse_query();  // to get "query_start"
 
             auto _data = string_view();
-            const auto scheme_value = _data.substr(0, scheme_end);
 
-            const bool is_urn = ascii::iequals<ascii::char_case_side::second_lowered>(scheme_value, "urn");
-
-            auto starting_point =
-              authority_start != data.size()
-                ? authority_start
-                : (scheme_end != data.size() && scheme_end != string_view_type::npos ? scheme_end : 0);
+            const bool is_urn = scheme_end != data.size() &&
+                                ascii::iequals<ascii::char_case_side::second_lowered>( _data.substr(0, scheme_end), "urn");
+            stl::size_t starting_point;
+            if (authority_start != data.size()) {
+                starting_point = authority_start;
+            } else if (scheme_end != data.size()) {
+                starting_point = scheme_end;
+            } else {
+                authority_end = 0; // probably the whole string is a path
+                return;
+            }
             authority_end = _data.substr(starting_point, query_start - starting_point).find_first_of(is_urn ? ':' : '/');
             if (authority_end == string_view_type::npos) {
                 authority_end = data.size();
@@ -1318,6 +1322,12 @@ namespace webpp::uri {
             return path(m_path.begin(), m_path.end());
         }
 
+        template <typename Container>
+        requires (!istl::StringViewifiable<Container> && requires (Container c) {c.begin(); c.end();})
+        auto& path_raw(const Container& m_path) noexcept {
+            return path_raw(m_path.begin(), m_path.end());
+        }
+
         /**
          * Set path by begin and end of an iterator
          */
@@ -1325,24 +1335,59 @@ namespace webpp::uri {
         auto& path(const Iter& _start, const Iter& _end) noexcept {
             const auto almost_end = stl::prev(_end);
             string_type      new_path{this->get_allocator()};
+
+            // reserve
+            stl::size_t new_path_size = 0;
+            for (auto it = _start; it != _end; ++it) {
+                new_path_size += ascii::size(*it);
+            }
+            new_path_size += stl::distance(_start, _end);
+            new_path.reserve(new_path_size * 1.5); // add 1.5 because encoding is going to need space
+
             for (auto it = _start; it != almost_end; ++it) {
                 encode_uri_component(*it, new_path, details::PCHAR_NOT_PCT_ENCODED<char_type>);
                 new_path.append("/");
             }
             // append the last slug
             encode_uri_component(*almost_end, new_path, details::PCHAR_NOT_PCT_ENCODED<char_type>);
-            return path(stl::move(new_path));
+            return path_raw(stl::move(new_path));
+        }
+
+        template <typename Iter>
+        auto& path_raw(const Iter& _start, const Iter& _end) noexcept {
+            const auto almost_end = stl::prev(_end);
+            string_type      new_path{this->get_allocator()};
+
+            // do it in one allocation
+            stl::size_t new_path_size = 0;
+            for (auto it = _start; it != _end; ++it) {
+                new_path_size += ascii::size(*it);
+            }
+            new_path_size += stl::distance(_start, _end);
+            new_path.reserve(new_path_size);
+
+            for (auto it = _start; it != almost_end; ++it) {
+                new_path.append(*it);
+                new_path.append("/");
+            }
+            new_path.append(*almost_end);
+            return path_raw(stl::move(new_path));
         }
 
         /**
          * @brief set the path for the uri
          */
         auto& path(istl::StringViewifiable auto&& m_path) noexcept {
-            parse_path();
             string_type str(this->get_allocator());
             encode_uri_component(m_path, str, charset(details::PCHAR_NOT_PCT_ENCODED<char_type>, charset<char_type, 1>('/')));
-            auto _encoded_path = string::join((ascii::starts_with(m_path, '/') ? "" : "/"), str);
-            replace_value(authority_end, query_start - authority_end, _encoded_path);
+            return path_raw(stl::move(str));
+        }
+
+        auto& path_raw(istl::StringViewifiable auto&& m_path) noexcept {
+            parse_path();
+            auto _encoded_path = string::join((authority_end != 0 && !ascii::starts_with(m_path, '/') ? "/" : ""),
+                                              istl::stringify_of<string_type>(stl::forward<decltype(m_path)>(m_path), this->get_allocator()));
+            replace_value(authority_end, query_start - authority_end, stl::move(_encoded_path));
             return *this;
         }
 
@@ -1350,7 +1395,7 @@ namespace webpp::uri {
          * @brief clear path from the URI
          */
         auto& clear_path() noexcept {
-            return path("");
+            return path_raw("");
         }
 
         /**
@@ -1388,8 +1433,10 @@ namespace webpp::uri {
          * (apply and remove "." and ".." segments).
          */
         auto& normalize() noexcept {
-            // TODO
-            return *this;
+            // todo: you can use a better algorithm!
+            auto the_slugs = raw_slugs();
+            the_slugs.normalize();
+            return path_raw(the_slugs);
         }
 
 
