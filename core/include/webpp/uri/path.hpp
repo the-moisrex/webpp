@@ -3,10 +3,10 @@
 #ifndef WEBPP_PATH_HPP
 #define WEBPP_PATH_HPP
 
+#include "../memory/allocators.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
-#include "../utils/allocators.hpp"
 #include "../utils/errors.hpp"
 #include "./details/constants.hpp"
 

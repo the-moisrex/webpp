@@ -3,9 +3,9 @@
 #ifndef WEBPP_HOST_HPP
 #define WEBPP_HOST_HPP
 
+#include "../memory/allocators.hpp"
 #include "../std/string.hpp"
 #include "../std/vector.hpp"
-#include "../utils/allocators.hpp"
 
 namespace webpp::uri {
 

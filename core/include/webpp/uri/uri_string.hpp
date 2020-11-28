@@ -2,6 +2,9 @@
 #define WEBPP_UTILS_URI_H
 
 #include "../convert/casts.hpp"
+#include "../ip/ipv4.hpp"
+#include "../ip/ipv6.hpp"
+#include "../memory/allocators.hpp"
 #include "../std/map.hpp"
 #include "../std/optional.hpp"
 #include "../std/vector.hpp"
@@ -10,15 +13,12 @@
 #include "../strings/join.hpp"
 #include "../strings/to_case.hpp"
 #include "../traits/traits_concepts.hpp"
-#include "../utils/allocators.hpp"
+#include "../utils/flags.hpp"
 #include "../validators/validators.hpp"
 #include "./details/constants.hpp"
 #include "./encoding.hpp"
 #include "./path.hpp"
 #include "./queries.hpp"
-#include "../ip/ipv4.hpp"
-#include "../ip/ipv6.hpp"
-#include "../utils/flags.hpp"
 
 
 /**
