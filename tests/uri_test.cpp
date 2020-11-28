@@ -29,5 +29,3 @@ TEST(URITests, PathFromString) {
     EXPECT_EQ(path[0], "");
     EXPECT_EQ(path[1], "a");
 }
-
-
