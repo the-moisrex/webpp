@@ -3,11 +3,11 @@
 #ifndef WEBPP_LEXICAL_CAST_HPP
 #define WEBPP_LEXICAL_CAST_HPP
 
+#include "../memory/allocators.hpp"
+#include "../std/format.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
-#include "../utils/allocators.hpp"
 #include "./casts.hpp"
-#include "../std/format.hpp"
 
 namespace webpp::lexical {
 

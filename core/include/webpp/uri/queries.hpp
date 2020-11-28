@@ -3,8 +3,8 @@
 #ifndef WEBPP_QUERIES_HPP
 #define WEBPP_QUERIES_HPP
 
+#include "../memory/allocators.hpp"
 #include "../std/map.hpp"
-#include "../utils/allocators.hpp"
 #include "./details/constants.hpp"
 #include "./encoding.hpp"
 
