@@ -4,7 +4,7 @@
 #define WEBPP_PATH_H
 
 #include "../../std/optional.hpp"
-#include "../../uri/uri_string.hpp"
+#include "../../uri/path.hpp"
 #include "route.hpp"
 #include "../../strings/fixed_string.hpp"
 
@@ -356,6 +356,7 @@ namespace webpp {
             using context_type                = stl::remove_cvref_t<ContextType>;
             using context_ref_type            = stl::add_lvalue_reference_t<context_type>;
             using traits_type                 = typename context_type::traits_type;
+            using string_type                 = typename traits_type::string_type;
             constexpr bool has_path_extension = requires {
                 {ctx.path};
             };
@@ -373,7 +374,8 @@ namespace webpp {
                     // todo: we can optimize this, right? it parses the whole uri, do we need the whole uri? I think yes
                     // fixme: should we decode it? if we decode it we need to care about the UTF-8 stuff as well?
                     // todo: move this parsing into the request so we don't have to do it more than once for one request
-                    auto uri_segments = uri::uri_string<traits_type, false>{req.request_uri()}.slugs();
+                    auto uri_segments = uri::basic_path<string_type>{req.request_uri(), ctx.get_allocator()};
+                    // auto uri_segments = uri::uri_string<traits_type, false>{req.request_uri()}.slugs();
                     using uri_segments_type = decltype(uri_segments);
 
 
