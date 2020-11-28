@@ -52,7 +52,7 @@ namespace webpp::uri {
 
         template <typename T>
         requires (!stl::is_same_v<stl::remove_cvref_t<T>, basic_path> && istl::StringViewifiable<T>)
-        constexpr basic_path(T&& str) : container_type{} {
+        constexpr basic_path(T&& str, allocator_type const & alloc = allocator_type{}) : container_type{alloc} {
             parse(istl::string_viewify_of<string_view_type>(str));
         }
 
