@@ -47,11 +47,12 @@ namespace webpp::uri {
         error_handler<path_error> errors;
 
         template <typename ...T>
-        requires ((!istl::StringViewifiableOf<string_view_type, T> && ...))
         constexpr basic_path(T&&...args) :
           container_type{stl::forward<T>(args)...} {}
 
-        constexpr basic_path(istl::StringViewifiable auto&& str) : container_type{} {
+        template <typename T>
+        requires (!stl::is_same_v<stl::remove_cvref_t<T>, basic_path> && istl::StringViewifiable<T>)
+        constexpr basic_path(T&& str) : container_type{} {
             parse(istl::string_viewify_of<string_view_type>(str));
         }
 
@@ -64,7 +65,7 @@ namespace webpp::uri {
                 const stl::size_t slash_start = path.find(separator);
                 const stl::size_t the_size = stl::min(slash_start, path.size());
                 value_type val{this->get_allocator()}; // todo: how to get another allocator here?
-                if (decode_uri_component(path.substr(0, the_size), val, allowed_chars)) {
+                if (!decode_uri_component(path.substr(0, the_size), val, allowed_chars)) {
                     this->clear();
                     errors.failure(path_error::invalid_string);
                     val = path.substr(0, the_size); // put the non-decoded value
@@ -75,7 +76,7 @@ namespace webpp::uri {
                     break;
                 }
                 path.remove_prefix(slash_start + 1);
-            };
+            }
         }
 
         basic_path& operator=(value_type str) {
