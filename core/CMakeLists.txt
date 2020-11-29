@@ -70,7 +70,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/memory/allocators.hpp
         ${LIB_INCLUDE_DIR}/webpp/memory/available_memory.hpp
 
-
         ${LIB_INCLUDE_DIR}/webpp/ip/ipv4.hpp
         ${LIB_INCLUDE_DIR}/webpp/ip/ipv6.hpp
 
@@ -114,6 +113,10 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/shosted/self_hosted_session_manager.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/fastcgi/fcgi_protocols.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/fastcgi/fcgi_manager.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/beast.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/beast_request.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/common/common_request.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/common/common_protocol.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/http/response_body.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/request_body.hpp

@@ -9,6 +9,7 @@
 #include "../request.hpp"
 #include "../response.hpp"
 #include "./cgi_request.hpp"
+#include "common/common_protocol.hpp"
 
 #include <cctype>
 #include <cstdlib>
@@ -23,12 +24,12 @@ namespace webpp {
 
     // todo: add protocol extensions as well
     template <Application App, Traits TraitsType = std_traits, ExtensionList EList = empty_extension_pack>
-    struct cgi : public enable_traits<TraitsType> {
+    struct cgi : public common_protocol<cgi<App, TraitsType, EList>> {
       public:
         using traits_type      = TraitsType;
         using application_type = App;
         using extension_list   = stl::remove_cvref_t<EList>;
-        using protocol_type    = cgi<application_type, traits_type , extension_list>;
+        using protocol_type    = cgi<application_type, traits_type, extension_list>;
         using str_view_type    = typename TraitsType::string_view_type;
         using str_type         = typename TraitsType::string_type;
         using request_type     = simple_request<traits_type, cgi_request, protocol_type, extension_list>;

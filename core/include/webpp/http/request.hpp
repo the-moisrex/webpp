@@ -30,12 +30,15 @@
 
 #include "../traits/traits_concepts.hpp"
 #include "./headers.hpp"
+#include "./protocols/protocol_concepts.hpp"
 #include "./request_concepts.hpp"
 #include "./response_body.hpp"
-#include "./protocols/protocol_concepts.hpp"
 
 namespace webpp {
 
+    /**
+     * If you want to add features to all of the request types, you can use this type
+     */
     template <typename ReqType>
     using final_request = ReqType;
 
@@ -63,11 +66,11 @@ namespace webpp {
 
     // the reason that I commented the "Protocol" out is because the ProtocolType is most likely
     // a not-fully-known type at that point.
-    template <Traits    TraitsType, template <typename, typename, typename...> typename MidLevelRequestType,
-              /* Protocol */ typename ProtocolType, typename EList>
-    using simple_request =
-      typename EList::template extensie_type<TraitsType,
-                                             request_descriptor<MidLevelRequestType, ProtocolType>>;
+    template <Traits TraitsType, typename EList, template <typename, typename, typename...> typename MidLevelRequestType,
+              typename... MidLevelRequestTemplateArgs>
+    using simple_request = typename EList::template extensie_type<
+      TraitsType, request_descriptor<MidLevelRequestType, MidLevelRequestTemplateArgs...>>;
+
 
 } // namespace webpp
 
