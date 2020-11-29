@@ -10,13 +10,6 @@
 
 namespace webpp {
 
-    /**
-     * Specializing the request_t<cgi> methods so the user can use them.
-     * The request_t class is one of the important classes which that means It's
-     * going to be used a lot so, we will do everything (even if it means we
-     * have to copy and paste lots of codes to make it happen) to make sure
-     * the user is able to use this class properly and easily.
-     */
     template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL, /* Protocol */ typename ProtoType>
     struct cgi_request : public REL, public enable_traits<TraitsType> {
         using traits_type            = stl::remove_cvref_t<TraitsType>;
