@@ -2,8 +2,8 @@
 #include "../core/include/webpp/libs/eve.hpp"
 #include "./common_pch.hpp"
 #ifdef WEBPP_EVE
-#    include eve_include(wide)
-#    include eve_include(function / any)
+#    include <eve/wide.hpp>
+#    include <eve/function/any.hpp>
 #endif
 // clang-format on
 

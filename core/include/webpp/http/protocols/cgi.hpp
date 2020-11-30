@@ -24,22 +24,19 @@ namespace webpp {
 
     // todo: add protocol extensions as well
     template <Application App, Traits TraitsType = std_traits, ExtensionList EList = empty_extension_pack>
-    struct cgi : public common_protocol<cgi<App, TraitsType, EList>> {
-      public:
+    struct cgi : public common_protocol<TraitsType, App, EList> {
         using traits_type      = TraitsType;
         using application_type = App;
         using extension_list   = stl::remove_cvref_t<EList>;
-        using protocol_type    = cgi<application_type, traits_type, extension_list>;
         using str_view_type    = typename TraitsType::string_view_type;
         using str_type         = typename TraitsType::string_type;
-        using request_type     = simple_request<traits_type, cgi_request, protocol_type, extension_list>;
+        using request_type     = simple_request<traits_type, extension_list, cgi_request>;
         using allocator_type   = typename request_type::allocator_type;
-        using logger_type      = typename traits_type::logger_type;
-        using logger_ref       = typename logger_type::logger_ref;
-        using etraits          = enable_traits<traits_type>;
         using app_wrapper_type = http_app_wrapper<traits_type, application_type>;
 
       private:
+        using super = common_protocol<TraitsType, App, EList>;
+
         void ctor() noexcept {
             // I'm not using C here; so why should I pay for it!
             // And also the user should not use cin and cout. so ...
@@ -49,10 +46,8 @@ namespace webpp {
       public:
         app_wrapper_type app;
 
-        template <typename AllocType = allocator_type>
-        cgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : etraits{logger, alloc},
-            app{logger, alloc} {
+        template <typename ...Args>
+        cgi(Args&&...args) : super{stl::forward<Args>(args)...} {
             ctor();
         }
 
@@ -87,9 +82,7 @@ namespace webpp {
          * Get the environment value safely
          */
         [[nodiscard]] static stl::string_view env(char const* key) noexcept {
-            if (auto value = getenv(key))
-                return value;
-            return {};
+            return request_type::env(key);
         }
 
         /**
@@ -151,7 +144,7 @@ namespace webpp {
 
 
         int operator()() noexcept {
-            auto req = etraits::template instantiate<request_type>();
+            auto req = super::etraits::template instantiate<request_type>();
             auto         res = app(req);
             res.calculate_default_headers();
             auto header_str = res.headers.str();
