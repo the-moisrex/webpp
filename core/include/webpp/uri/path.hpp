@@ -18,7 +18,7 @@ namespace webpp::uri {
      * Including normal string and string view types
      */
     template <typename T>
-    concept Slug = requires (T slug) {
+    concept Slug = requires(T slug) {
         typename T::value_type;
         slug.empty();
         T{""};
@@ -26,33 +26,39 @@ namespace webpp::uri {
     };
 
     enum struct path_error : stl::uint8_t {
-        none            = success<path_error>(),
-        invalid_string  = failure<path_error>("Parts of the specified string cannot be decoded to a valid path.")
+        none = success<path_error>(),
+        invalid_string =
+          failure<path_error>("Parts of the specified string cannot be decoded to a valid path.")
     };
 
-    template <Slug SlugType = stl::string, typename AllocType = typename stl::remove_cvref_t<SlugType>::allocator_type>
-    struct basic_path : public stl::vector<stl::remove_cvref_t<SlugType>, rebind_allocator<AllocType, stl::remove_cvref_t<SlugType>>> {
-        using container_type = stl::vector<stl::remove_cvref_t<SlugType>, rebind_allocator<AllocType, stl::remove_cvref_t<SlugType>>>;
-        using value_type = stl::remove_cvref_t<SlugType>;
-        using allocator_type = rebind_allocator<AllocType, value_type>;
-        using char_type = typename SlugType::value_type;
-        using string_type = stl::conditional_t<istl::String<value_type>, value_type, stl::basic_string<char_type, allocator_type>>;
+    template <Slug SlugType      = stl::string,
+              typename AllocType = typename stl::remove_cvref_t<SlugType>::allocator_type>
+    struct basic_path : public stl::vector<stl::remove_cvref_t<SlugType>,
+                                           rebind_allocator<AllocType, stl::remove_cvref_t<SlugType>>> {
+        using container_type   = stl::vector<stl::remove_cvref_t<SlugType>,
+                                           rebind_allocator<AllocType, stl::remove_cvref_t<SlugType>>>;
+        using value_type       = stl::remove_cvref_t<SlugType>;
+        using allocator_type   = rebind_allocator<AllocType, value_type>;
+        using char_type        = typename SlugType::value_type;
+        using string_type      = stl::conditional_t<istl::String<value_type>, value_type,
+                                               stl::basic_string<char_type, allocator_type>>;
         using string_view_type = istl::string_view_type_of<value_type>;
 
-        static constexpr string_view_type parent_dir = "..";
+        static constexpr string_view_type parent_dir  = "..";
         static constexpr string_view_type current_dir = ".";
-        static constexpr string_view_type separator = "/"; // todo: make sure the user can use ":" as well
+        static constexpr string_view_type separator   = "/"; // todo: make sure the user can use ":" as well
         static constexpr auto allowed_chars = details::PCHAR_NOT_PCT_ENCODED<char_type>; // except slash char
 
         error_handler<path_error> errors;
 
-        template <typename ...T>
-        constexpr basic_path(T&&...args) :
-          container_type{stl::forward<T>(args)...} {}
+        template <typename... T>
+        constexpr basic_path(T&&... args) : container_type{stl::forward<T>(args)...} {}
 
         template <typename T>
-        requires (!stl::is_same_v<stl::remove_cvref_t<T>, basic_path> && istl::StringViewifiable<T>)
-        constexpr basic_path(T&& str, allocator_type const & alloc = allocator_type{}) : container_type{alloc} {
+        requires(!stl::is_same_v<stl::remove_cvref_t<T>, basic_path> &&
+                 istl::StringViewifiable<T>) constexpr basic_path(T&& str, allocator_type const& alloc =
+                                                                             allocator_type{})
+          : container_type{alloc} {
             parse(istl::string_viewify_of<string_view_type>(str));
         }
 
@@ -61,10 +67,10 @@ namespace webpp::uri {
             if (path.empty())
                 return;
 
-            for(;;) {
+            for (;;) {
                 const stl::size_t slash_start = path.find(separator);
-                const stl::size_t the_size = stl::min(slash_start, path.size());
-                value_type val{this->get_allocator()}; // todo: how to get another allocator here?
+                const stl::size_t the_size    = stl::min(slash_start, path.size());
+                value_type        val{this->get_allocator()}; // todo: how to get another allocator here?
                 if (!decode_uri_component(path.substr(0, the_size), val, allowed_chars)) {
                     this->clear();
                     errors.failure(path_error::invalid_string);
@@ -167,20 +173,19 @@ namespace webpp::uri {
         [[nodiscard]] stl::size_t raw_string_size() const noexcept {
             // todo: we could remove lambda; or we even can use an iterator_wrapper and use "std::reduce"
             // http://www.boost.org/doc/libs/1_64_0/libs/iterator/doc/transform_iterator.html
-            return [this] () noexcept -> stl::size_t {
+            return [this]() noexcept -> stl::size_t {
                 stl::size_t sum = 0;
                 for (auto const& slug : *this)
                     sum += slug.size();
                 return sum;
             }() + this->size() - 1;
         }
-
     };
 
 
     template <istl::Stringifiable S>
     basic_path(S&& str) -> basic_path<decltype(istl::stringify(stl::forward<S>(str)))>;
 
-}
+} // namespace webpp::uri
 
 #endif // WEBPP_PATH_HPP
