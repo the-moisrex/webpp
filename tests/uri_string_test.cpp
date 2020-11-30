@@ -1,9 +1,8 @@
+#include "../core/include/webpp/uri/uri_string.hpp"
+
+#include "../core/include/webpp/traits/std_traits.hpp"
 #include "./common_pch.hpp"
 
-// clang-format off
-#include webpp_include(traits/std_traits)
-#include webpp_include(uri/uri_string)
-// clang-format on
 
 
 using namespace webpp;
@@ -97,10 +96,9 @@ TEST(URITests, Creation) {
 }
 
 TEST(URITests, IPv6HostName) {
-    uri_string         u;
-    std::string uri_str =
-      "//[::1]:8080/folder/file.md?name=value&name2=value2#str";
-    u = uri_str;
+    uri_string  u;
+    std::string uri_str = "//[::1]:8080/folder/file.md?name=value&name2=value2#str";
+    u                   = uri_str;
     EXPECT_EQ(u.str(), uri_str);
     EXPECT_FALSE(u.has_scheme()) << "scheme: " << u.scheme();
     EXPECT_FALSE(!u.has_host());
@@ -135,29 +133,28 @@ TEST(URITests, WieredURIs) {
     EXPECT_FALSE(u1.is_urn());
 
     // some examples from https://rosettacode.org/wiki/URL_parser
-    auto _uris = {
-      "ftp://ftp.is.co.za/rfc/rfc1808.txt",
-      "http://www.ietf.org/rfc/rfc2396.txt",
-      "ldap://[2001:db8::7]/c=GB?objectClass?one",
-      "mailto:John.Doe@example.com",
-      "news:comp.infosystems.www.servers.unix",
-      "tel:+1-816-555-1212",
-      "telnet://192.0.2.16:80/",
-      "urn:oasis:names:specification:docbook:dtd:xml:4.1.2",
-      "foo://example.com:8042/over/there?name=ferret#nose",
-      "urn:example:animal:ferret:nose",
-      "jdbc:mysql://test_user:test@test.com:3306/sakila?profileSQL=true",
-      "ftp://ftp.is.co.za/rfc/rfc1808.txt",
-      "http://www.ietf.org/rfc/rfc2396.txt#header1",
-      "ldap://[2001:db8::7]/c=GB?objectClass=one&objectClass=two",
-      "mailto:example@email.com",
-      "news:comp.infosystems.www.servers.unix",
-      "tel:+1-816-555-1212",
-      "telnet://192.0.2.16:80/",
-      "urn:oasis:names:specification:docbook:dtd:xml:4.1.2",
-      "ssh://test@test.com",
-      "https://bob:pass@test.com/place",
-      "http://example.com/?a=1&b=2+2&c=3&c=4&d=%65%6e%63%6F%64%65%64"};
+    auto _uris = {"ftp://ftp.is.co.za/rfc/rfc1808.txt",
+                  "http://www.ietf.org/rfc/rfc2396.txt",
+                  "ldap://[2001:db8::7]/c=GB?objectClass?one",
+                  "mailto:John.Doe@example.com",
+                  "news:comp.infosystems.www.servers.unix",
+                  "tel:+1-816-555-1212",
+                  "telnet://192.0.2.16:80/",
+                  "urn:oasis:names:specification:docbook:dtd:xml:4.1.2",
+                  "foo://example.com:8042/over/there?name=ferret#nose",
+                  "urn:example:animal:ferret:nose",
+                  "jdbc:mysql://test_user:test@test.com:3306/sakila?profileSQL=true",
+                  "ftp://ftp.is.co.za/rfc/rfc1808.txt",
+                  "http://www.ietf.org/rfc/rfc2396.txt#header1",
+                  "ldap://[2001:db8::7]/c=GB?objectClass=one&objectClass=two",
+                  "mailto:example@email.com",
+                  "news:comp.infosystems.www.servers.unix",
+                  "tel:+1-816-555-1212",
+                  "telnet://192.0.2.16:80/",
+                  "urn:oasis:names:specification:docbook:dtd:xml:4.1.2",
+                  "ssh://test@test.com",
+                  "https://bob:pass@test.com/place",
+                  "http://example.com/?a=1&b=2+2&c=3&c=4&d=%65%6e%63%6F%64%65%64"};
 
     for (auto const& _uri : _uris) {
         EXPECT_TRUE(uri_view(_uri).is_valid()) << "uri: " << _uri;
@@ -173,23 +170,22 @@ TEST(URITests, WieredURIs) {
 }
 
 TEST(URITests, URN) {
-    auto valid_urns = {
-      "urn:isbn:0451450523",
-      "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66",
-      "urn:publishing:book",
-      "urn:isbn:0451450523",
-      "urn:isan:0000-0000-2CEA-0000-1-0000-0000-Y",
-      "urn:ISSN:0167-6423",
-      "urn:ietf:rfc:2648",
-      "urn:mpeg:mpeg7:schema:2001",
-      "urn:oid:2.16.840",
-      "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66",
-      "urn:nbn:de:bvb:19-146642",
-      "urn:lex:eu:council:directive:2010-03-09;2010-19-UE",
-      "urn:lsid:zoobank.org:pub:CDC8D258-8F57-41DC-B560-247E17D3DC8C",
-      "urn:mpeg:mpeg7:schema:2001urn:isbn:0451450523",
-      "urn:sha1:YNCKHTQCWBTRNJIV4WNAE52SJUQCZO5C",
-      "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66"};
+    auto valid_urns = {"urn:isbn:0451450523",
+                       "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66",
+                       "urn:publishing:book",
+                       "urn:isbn:0451450523",
+                       "urn:isan:0000-0000-2CEA-0000-1-0000-0000-Y",
+                       "urn:ISSN:0167-6423",
+                       "urn:ietf:rfc:2648",
+                       "urn:mpeg:mpeg7:schema:2001",
+                       "urn:oid:2.16.840",
+                       "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66",
+                       "urn:nbn:de:bvb:19-146642",
+                       "urn:lex:eu:council:directive:2010-03-09;2010-19-UE",
+                       "urn:lsid:zoobank.org:pub:CDC8D258-8F57-41DC-B560-247E17D3DC8C",
+                       "urn:mpeg:mpeg7:schema:2001urn:isbn:0451450523",
+                       "urn:sha1:YNCKHTQCWBTRNJIV4WNAE52SJUQCZO5C",
+                       "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66"};
 
     for (auto const& _urn : valid_urns) {
         EXPECT_TRUE(uri_string(_urn).is_valid());
@@ -197,9 +193,9 @@ TEST(URITests, URN) {
         EXPECT_FALSE(uri_string(_urn).is_url());
     }
 
-    uri_view  a("urn:example:a123,z456");
-    uri_string       b{"URN:example:a123,z456"};
-    uri_string       c{"urn:EXAMPLE:a123,z456"};
+    uri_view   a("urn:example:a123,z456");
+    uri_string b{"URN:example:a123,z456"};
+    uri_string c{"urn:EXAMPLE:a123,z456"};
 
     EXPECT_TRUE(a == b);
     EXPECT_TRUE(a == c);
@@ -312,12 +308,10 @@ TEST(URITests, Set) {
               "something_else:someone@example.com");
 
     // TODO: should this be allowed even???
-    EXPECT_EQ(
-      uri_string("urn:mpeg:mpeg7:schema:2001urn:isbn:0451450523").scheme("ftp").str(),
-      "ftp:mpeg:mpeg7:schema:2001urn:isbn:0451450523");
+    EXPECT_EQ(uri_string("urn:mpeg:mpeg7:schema:2001urn:isbn:0451450523").scheme("ftp").str(),
+              "ftp:mpeg:mpeg7:schema:2001urn:isbn:0451450523");
 
-    EXPECT_EQ(uri_string("http://example.com/").scheme("ftp").str(),
-              "ftp://example.com/");
+    EXPECT_EQ(uri_string("http://example.com/").scheme("ftp").str(), "ftp://example.com/");
 }
 
 TEST(URITests, Domains) {
@@ -426,8 +420,8 @@ TEST(URITests, TypedVariables) {
 }
 
 TEST(URITests, StructuredPath) {
-    uri_string  u{"/user/19"};
-    auto parsed = u.slugs();
+    uri_string u{"/user/19"};
+    auto       parsed = u.slugs();
     EXPECT_EQ(parsed.size(), 3);
     if (parsed.size() == 3) { // don't break other tests if this one is failing
         EXPECT_EQ(parsed[2], "19");
@@ -441,9 +435,7 @@ TEST(URITests, EqualPaths) {
     EXPECT_TRUE(equal_path("/two//", "/two//"));
     EXPECT_TRUE(equal_path("/two//three", "/two/three"));
 }
-TEST(URITests, Normalize) {
-
-}
+TEST(URITests, Normalize) {}
 
 
 
@@ -456,13 +448,11 @@ TEST(UriTests, ParseFromStringNoScheme) {
     ASSERT_TRUE(uri.operator=("foo/bar").is_valid());
     ASSERT_EQ("", uri.scheme());
     // fixme: the bug is in the parsing section, but I'm not worried about this bug that much for now
-    ASSERT_EQ(
-      (std::vector< std::string >{
-        "foo",
-        "bar",
-      }),
-      uri.slugs<std::vector<std::string>>()
-    );
+    ASSERT_EQ((std::vector<std::string>{
+                "foo",
+                "bar",
+              }),
+              uri.slugs<std::vector<std::string>>());
 }
 
 TEST(UriTests, ParseFromStringUrl) {
@@ -470,14 +460,12 @@ TEST(UriTests, ParseFromStringUrl) {
     ASSERT_TRUE(uri.operator=("http://www.example.com/foo/bar").is_valid());
     ASSERT_EQ("http", uri.scheme());
     ASSERT_EQ("www.example.com", uri.host());
-    ASSERT_EQ(
-      (std::vector< std::string >{
-        "",
-        "foo",
-        "bar",
-      }),
-      uri.slugs<std::vector<std::string>>()
-    );
+    ASSERT_EQ((std::vector<std::string>{
+                "",
+                "foo",
+                "bar",
+              }),
+              uri.slugs<std::vector<std::string>>());
 }
 
 TEST(UriTests, ParseFromStringUrnDefaultPathDelimiter) {
@@ -491,24 +479,22 @@ TEST(UriTests, ParseFromStringUrnDefaultPathDelimiter) {
     ASSERT_FALSE(uri.has_password());
     ASSERT_FALSE(uri.has_queries());
     ASSERT_FALSE(uri.has_second_level_domain());
-    ASSERT_EQ(
-      (std::vector< std::string >{
-        "book:fantasy:Hobbit",
-      }),
-      uri.slugs<std::vector<std::string>>()
-    );
+    ASSERT_EQ((std::vector<std::string>{
+                "book:fantasy:Hobbit",
+              }),
+              uri.slugs<std::vector<std::string>>());
 }
 
 TEST(UriTests, ParseFromStringPathCornerCases) {
     struct TestVector {
-        std::string pathIn;
-        std::vector< std::string > pathOut;
+        std::string              pathIn;
+        std::vector<std::string> pathOut;
     };
-    const std::vector< TestVector > testVectors{
+    const std::vector<TestVector> testVectors{
       {"", {}},
       {"/", {""}}, // todo: should this be "" / "" or ""?
-      {"/foo", {"", "foo"} },
-      {"foo/", {"foo", ""} },
+      {"/foo", {"", "foo"}},
+      {"foo/", {"foo", ""}},
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
@@ -580,9 +566,9 @@ TEST(UriTests, ParseFromStringEndsAfterAuthority) {
 TEST(UriTests, ParseFromStringRelativeVsNonRelativeReferences) {
     struct TestVector {
         std::string uriString;
-        bool isRelativeReference;
+        bool        isRelativeReference;
     };
-    const std::vector< TestVector > testVectors{
+    const std::vector<TestVector> testVectors{
       {"http://www.example.com/", false},
       {"http://www.example.com", false},
       {"/", true},
@@ -600,9 +586,9 @@ TEST(UriTests, ParseFromStringRelativeVsNonRelativeReferences) {
 TEST(UriTests, ParseFromStringRelativeVsNonRelativePaths) {
     struct TestVector {
         std::string uriString;
-        bool containsRelativePath;
+        bool        containsRelativePath;
     };
-    const std::vector< TestVector > testVectors{
+    const std::vector<TestVector> testVectors{
       {"http://www.example.com/", false},
       {"http://www.example.com", false},
       {"/", false},
@@ -631,7 +617,7 @@ TEST(UriTests, ParseFromStringQueryAndFragmentElements) {
         std::string query;
         std::string fragment;
     };
-    const std::vector< TestVector > testVectors{
+    const std::vector<TestVector> testVectors{
       {"http://www.example.com/", "www.example.com", "", ""},
       {"http://example.com?foo", "example.com", "foo", ""},
       {"http://www.example.com#foo", "www.example.com", "", "foo"},
@@ -664,7 +650,7 @@ TEST(UriTests, ParseFromStringUserInfo) {
         std::string uriString;
         std::string userInfo;
     };
-    const std::vector< TestVector > testVectors{
+    const std::vector<TestVector> testVectors{
       {"http://www.example.com/", ""},
       {"http://joe@www.example.com", "joe"},
       {"http://pepe:feelsbadman@www.example.com", "pepe:feelsbadman"},
@@ -690,13 +676,9 @@ TEST(UriTests, ParseFromStringTwiceFirstUserInfoThenWithout) {
 }
 
 TEST(UriTests, ParseFromStringSchemeIllegalCharacters) {
-    const std::vector< std::string > testVectors{
-      {"://www.example.com/"},
-      {"0://www.example.com/"},
-      {"+://www.example.com/"},
-      {"@://www.example.com/"},
-      {".://www.example.com/"},
-      {"h@://www.example.com/"},
+    const std::vector<std::string> testVectors{
+      {"://www.example.com/"},  {"0://www.example.com/"}, {"+://www.example.com/"},
+      {"@://www.example.com/"}, {".://www.example.com/"}, {"h@://www.example.com/"},
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
@@ -711,13 +693,9 @@ TEST(UriTests, ParseFromStringSchemeBarelyLegal) {
         std::string uriString;
         std::string scheme;
     };
-    const std::vector< TestVector > testVectors{
-      {"h://www.example.com/", "h"},
-      {"x+://www.example.com/", "x+"},
-      {"y-://www.example.com/", "y-"},
-      {"z.://www.example.com/", "z."},
-      {"aa://www.example.com/", "aa"},
-      {"a0://www.example.com/", "a0"},
+    const std::vector<TestVector> testVectors{
+      {"h://www.example.com/", "h"},   {"x+://www.example.com/", "x+"}, {"y-://www.example.com/", "y-"},
+      {"z.://www.example.com/", "z."}, {"aa://www.example.com/", "aa"}, {"a0://www.example.com/", "a0"},
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
@@ -729,12 +707,9 @@ TEST(UriTests, ParseFromStringSchemeBarelyLegal) {
 }
 
 TEST(UriTests, ParseFromStringSchemeMixedCase) {
-    const std::vector< std::string > testVectors{
-      {"http://www.example.com/"},
-      {"hTtp://www.example.com/"},
-      {"HTTP://www.example.com/"},
-      {"Http://www.example.com/"},
-      {"HttP://www.example.com/"},
+    const std::vector<std::string> testVectors{
+      {"http://www.example.com/"}, {"hTtp://www.example.com/"}, {"HTTP://www.example.com/"},
+      {"Http://www.example.com/"}, {"HttP://www.example.com/"},
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
@@ -752,7 +727,7 @@ TEST(UriTests, ParseFromStringHostEndsInDot) {
 }
 
 TEST(UriTests, ParseFromStringUserInfoIllegalCharacters) {
-    const std::vector< std::string > testVectors{
+    const std::vector<std::string> testVectors{
       {"//%X@www.example.com/"},
       {"//{@www.example.com/"},
     };
@@ -769,13 +744,9 @@ TEST(UriTests, ParseFromStringUserInfoBarelyLegal) {
         std::string uriString;
         std::string userInfo;
     };
-    const std::vector< TestVector > testVectors{
-      {"//%41@www.example.com/", "A"},
-      {"//@www.example.com/", ""},
-      {"//!@www.example.com/", "!"},
-      {"//'@www.example.com/", "'"},
-      {"//(@www.example.com/", "("},
-      {"//;@www.example.com/", ";"},
+    const std::vector<TestVector> testVectors{
+      {"//%41@www.example.com/", "A"},    {"//@www.example.com/", ""},   {"//!@www.example.com/", "!"},
+      {"//'@www.example.com/", "'"},      {"//(@www.example.com/", "("}, {"//;@www.example.com/", ";"},
       {"http://:@www.example.com/", ":"},
     };
     size_t index = 0;
@@ -788,7 +759,7 @@ TEST(UriTests, ParseFromStringUserInfoBarelyLegal) {
 }
 
 TEST(UriTests, ParseFromStringHostIllegalCharacters) {
-    const std::vector< std::string > testVectors{
+    const std::vector<std::string> testVectors{
       {"//%X@www.example.com/"},
       {"//@www:example.com/"},
       {"//[vX.:]/"},
@@ -806,7 +777,7 @@ TEST(UriTests, ParseFromStringHostBarelyLegal) {
         std::string uriString;
         std::string host;
     };
-    const std::vector< TestVector > testVectors{
+    const std::vector<TestVector> testVectors{
       {"//%41/", "a"},
       {"///", ""},
       {"//!/", "!"},
@@ -827,12 +798,9 @@ TEST(UriTests, ParseFromStringHostBarelyLegal) {
 }
 
 TEST(UriTests, ParseFromStringHostMixedCase) {
-    const std::vector< std::string > testVectors{
-      {"http://www.example.com/"},
-      {"http://www.EXAMPLE.com/"},
-      {"http://www.exAMple.com/"},
-      {"http://www.example.cOM/"},
-      {"http://wWw.exampLe.Com/"},
+    const std::vector<std::string> testVectors{
+      {"http://www.example.com/"}, {"http://www.EXAMPLE.com/"}, {"http://www.exAMple.com/"},
+      {"http://www.example.cOM/"}, {"http://wWw.exampLe.Com/"},
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
@@ -844,7 +812,7 @@ TEST(UriTests, ParseFromStringHostMixedCase) {
 }
 
 TEST(UriTests, ParseFromStringDontMisinterpretColonInOtherPlacesAsSchemeDelimiter) {
-    const std::vector< std::string > testVectors{
+    const std::vector<std::string> testVectors{
       {"//foo:bar@www.example.com/"},
       {"//www.example.com/a:b"},
       {"//www.example.com/foo?a:b"},
@@ -862,7 +830,7 @@ TEST(UriTests, ParseFromStringDontMisinterpretColonInOtherPlacesAsSchemeDelimite
 }
 
 TEST(UriTests, ParseFromStringPathIllegalCharacters) {
-    const std::vector< std::string > testVectors{
+    const std::vector<std::string> testVectors{
       {"http://www.example.com/foo[bar"},
       {"http://www.example.com/]bar"},
       {"http://www.example.com/foo]"},
@@ -894,10 +862,10 @@ TEST(UriTests, ParseFromStringPathIllegalCharacters) {
 
 TEST(UriTests, ParseFromStringPathBarelyLegal) {
     struct TestVector {
-        std::string uriString;
-        std::vector< std::string > path;
+        std::string              uriString;
+        std::vector<std::string> path;
     };
-    const std::vector< TestVector > testVectors{
+    const std::vector<TestVector> testVectors{
       {"/:/foo", {"", ":", "foo"}},
       {"bob@/foo", {"bob@", "foo"}},
       {"hello!", {"hello!"}},
@@ -914,7 +882,7 @@ TEST(UriTests, ParseFromStringPathBarelyLegal) {
 }
 
 TEST(UriTests, ParseFromStringQueryIllegalCharacters) {
-    const std::vector< std::string > testVectors{
+    const std::vector<std::string> testVectors{
       {"http://www.example.com/?foo[bar"},
       {"http://www.example.com/?]bar"},
       {"http://www.example.com/?foo]"},
@@ -949,13 +917,13 @@ TEST(UriTests, ParseFromStringQueryBarelyLegal) {
         std::string uriString;
         std::string query;
     };
-    const std::vector< TestVector > testVectors{
+    const std::vector<TestVector> testVectors{
       {"/?:/foo", ":/foo"},
       {"?bob@/foo", "bob@/foo"},
       {"?hello!", "hello!"},
       {"urn:?hello,%20w%6Frld", "hello, world"},
       {"//example.com/foo?(bar)/", "(bar)/"},
-      {"http://www.example.com/?foo?bar", "foo?bar" },
+      {"http://www.example.com/?foo?bar", "foo?bar"},
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
@@ -967,7 +935,7 @@ TEST(UriTests, ParseFromStringQueryBarelyLegal) {
 }
 
 TEST(UriTests, ParseFromStringFragmentIllegalCharacters) {
-    const std::vector< std::string > testVectors{
+    const std::vector<std::string> testVectors{
       {"http://www.example.com/#foo[bar"},
       {"http://www.example.com/#]bar"},
       {"http://www.example.com/#foo]"},
@@ -1002,13 +970,13 @@ TEST(UriTests, ParseFromStringFragmentBarelyLegal) {
         std::string uriString;
         std::string fragment;
     };
-    const std::vector< TestVector > testVectors{
+    const std::vector<TestVector> testVectors{
       {"/#:/foo", ":/foo"},
       {"#bob@/foo", "bob@/foo"},
       {"#hello!", "hello!"},
       {"urn:#hello,%20w%6Frld", "hello, world"},
       {"//example.com/foo#(bar)/", "(bar)/"},
-      {"http://www.example.com/#foo?bar", "foo?bar" },
+      {"http://www.example.com/#foo?bar", "foo?bar"},
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
@@ -1024,16 +992,9 @@ TEST(UriTests, ParseFromStringPathsWithPercentEncodedCharacters) {
         std::string uriString;
         std::string pathFirstSegment;
     };
-    const std::vector< TestVector > testVectors{
-      {"%41", "A"},
-      {"%4A", "J"},
-      {"%4a", "J"},
-      {"%bc", "\xbc"},
-      {"%Bc", "\xbc"},
-      {"%bC", "\xbc"},
-      {"%BC", "\xbc"},
-      {"%41%42%43", "ABC"},
-      {"%41%4A%43%4b", "AJCK"},
+    const std::vector<TestVector> testVectors{
+      {"%41", "A"},    {"%4A", "J"},    {"%4a", "J"},         {"%bc", "\xbc"},          {"%Bc", "\xbc"},
+      {"%bC", "\xbc"}, {"%BC", "\xbc"}, {"%41%42%43", "ABC"}, {"%41%4A%43%4b", "AJCK"},
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
@@ -1046,10 +1007,10 @@ TEST(UriTests, ParseFromStringPathsWithPercentEncodedCharacters) {
 
 TEST(UriTests, NormalizePath) {
     struct TestVector {
-        std::string uriString;
-        std::vector< std::string > normalizedPathSegments;
+        std::string              uriString;
+        std::vector<std::string> normalizedPathSegments;
     };
-    const std::vector< TestVector > testVectors{
+    const std::vector<TestVector> testVectors{
       {"/a/b/c/./../../g", {"", "a", "g"}},
       {"mid/content=5/../6", {"mid", "6"}},
       {"http://example.com/a/../b", {"", "b"}},
@@ -1090,7 +1051,8 @@ TEST(UriTests, NormalizePath) {
         uri_string uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         uri.normalize();
-        EXPECT_EQ(testVector.normalizedPathSegments, uri.slugs<std::vector<std::string>>()) << index << " " << testVector.uriString;
+        EXPECT_EQ(testVector.normalizedPathSegments, uri.slugs<std::vector<std::string>>())
+          << index << " " << testVector.uriString;
         ++index;
     }
 }
@@ -1112,7 +1074,7 @@ TEST(UriTests, ReferenceResolution) {
         std::string relativeReferenceString;
         std::string targetString;
     };
-    const std::vector< TestVector > testVectors{
+    const std::vector<TestVector> testVectors{
       // These are all taken from section 5.4.1
       // of RFC 3986 (https://tools.ietf.org/html/rfc3986).
       {"http://a/b/c/d;p?q", "g:h", "g:h"},
@@ -1176,9 +1138,9 @@ TEST(UriTests, IPv6Address) {
     struct TestVector {
         std::string uriString;
         std::string expectedHost;
-        bool isValid;
+        bool        isValid;
     };
-    const std::vector< TestVector > testVectors{
+    const std::vector<TestVector> testVectors{
       // valid
       {"http://[::1]/", "::1", true},
       {"http://[::ffff:1.2.3.4]/", "::ffff:1.2.3.4", true},
@@ -1231,9 +1193,9 @@ TEST(UriTests, IPvFutureAddress) {
     struct TestVector {
         std::string uriString;
         std::string expectedHost;
-        bool isValid;
+        bool        isValid;
     };
-    const std::vector< TestVector > testVectors{
+    const std::vector<TestVector> testVectors{
       // valid
       {"http://[v1.x]/", "v1.x", true},
       {"http://[vf.xy]/", "vf.xy", true},
@@ -1259,56 +1221,156 @@ TEST(UriTests, IPvFutureAddress) {
 
 TEST(UriTests, ToString) {
     struct TestVector {
-        std::string scheme;
-        std::string userinfo;
-        std::string host;
-        bool has_port;
-        uint16_t port;
-        std::vector< std::string > path;
-        bool has_queries;
-        std::string query;
-        bool has_fragment;
-        std::string fragment;
-        std::string expectedUriString;
+        std::string              scheme;
+        std::string              userinfo;
+        std::string              host;
+        bool                     has_port;
+        uint16_t                 port;
+        std::vector<std::string> path;
+        bool                     has_queries;
+        std::string              query;
+        bool                     has_fragment;
+        std::string              fragment;
+        std::string              expectedUriString;
     };
-    const std::vector< TestVector > testVectors{
+    const std::vector<TestVector> testVectors{
       // general test vectors
-      {"http", "bob", "www.example.com", true,  8080, {"", "abc", "def"}, true,  "foobar", true,  "ch2", "http://bob@www.example.com:8080/abc/def?foobar#ch2"},
-      {"http", "bob", "www.example.com", true,  0,    {},                 true,  "foobar", true,  "ch2", "http://bob@www.example.com:0?foobar#ch2"},
-      {"http", "bob", "www.example.com", true,  0,    {},                 true,  "foobar", true,  "",    "http://bob@www.example.com:0?foobar#"},
-      {"",     "",    "example.com",     false, 0,    {},                 true,  "bar",    false, "",    "//example.com?bar"},
-      {"",     "",    "example.com",     false, 0,    {},                 true,  ""   ,    false, "",    "//example.com?"},
-      {"",     "",    "example.com",     false, 0,    {},                 false, "",       false, "",    "//example.com"},
-      {"",     "",    "example.com",     false, 0,    {""},               false, "",       false, "",    "//example.com/"},
-      {"",     "",    "example.com",     false, 0,    {"", "xyz"},        false, "",       false, "",    "//example.com/xyz"},
-      {"",     "",    "example.com",     false, 0,    {"", "xyz", ""},    false, "",       false, "",    "//example.com/xyz/"},
-      {"",     "",    "",                false, 0,    {""},               false, "",       false, "",    "/"},
-      {"",     "",    "",                false, 0,    {"", "xyz"},        false, "",       false, "",    "/xyz"},
-      {"",     "",    "",                false, 0,    {"", "xyz", ""},    false, "",       false, "",    "/xyz/"},
-      {"",     "",    "",                false, 0,    {},                 false, "",       false, "",    ""},
-      {"",     "",    "",                false, 0,    {"xyz"},            false, "",       false, "",    "xyz"},
-      {"",     "",    "",                false, 0,    {"xyz", ""},        false, "",       false, "",    "xyz/"},
-      {"",     "",    "",                false, 0,    {},                 true,  "bar",    false, "",    "?bar"},
-      {"http", "",    "",                false, 0,    {},                 true,  "bar",    false, "",    "http:?bar"},
-      {"http", "",    "",                false, 0,    {},                 false, "",       false, "",    "http:"},
-      {"http", "",    "::1",             false, 0,    {},                 false, "",       false, "",    "http://[::1]"},
-      {"http", "",    "::1.2.3.4",       false, 0,    {},                 false, "",       false, "",    "http://[::1.2.3.4]"},
-      {"http", "",    "1.2.3.4",         false, 0,    {},                 false, "",       false, "",    "http://1.2.3.4"},
-      {"",     "",    "",                false, 0,    {},                 false, "",       false, "",    ""},
-      {"http", "bob", "",                false, 0,    {},                 true,  "foobar", false, "",    "http://bob@?foobar"},
-      {"",     "bob", "",                false, 0,    {},                 true,  "foobar", false, "",    "//bob@?foobar"},
-      {"",     "bob", "",                false, 0,    {},                 false, "",       false, "",    "//bob@"},
+      {"http",
+       "bob",
+       "www.example.com",
+       true,
+       8080,
+       {"", "abc", "def"},
+       true,
+       "foobar",
+       true,
+       "ch2",
+       "http://bob@www.example.com:8080/abc/def?foobar#ch2"},
+      {"http",
+       "bob",
+       "www.example.com",
+       true,
+       0,
+       {},
+       true,
+       "foobar",
+       true,
+       "ch2",
+       "http://bob@www.example.com:0?foobar#ch2"},
+      {"http",
+       "bob",
+       "www.example.com",
+       true,
+       0,
+       {},
+       true,
+       "foobar",
+       true,
+       "",
+       "http://bob@www.example.com:0?foobar#"},
+      {"", "", "example.com", false, 0, {}, true, "bar", false, "", "//example.com?bar"},
+      {"", "", "example.com", false, 0, {}, true, "", false, "", "//example.com?"},
+      {"", "", "example.com", false, 0, {}, false, "", false, "", "//example.com"},
+      {"", "", "example.com", false, 0, {""}, false, "", false, "", "//example.com/"},
+      {"", "", "example.com", false, 0, {"", "xyz"}, false, "", false, "", "//example.com/xyz"},
+      {"", "", "example.com", false, 0, {"", "xyz", ""}, false, "", false, "", "//example.com/xyz/"},
+      {"", "", "", false, 0, {""}, false, "", false, "", "/"},
+      {"", "", "", false, 0, {"", "xyz"}, false, "", false, "", "/xyz"},
+      {"", "", "", false, 0, {"", "xyz", ""}, false, "", false, "", "/xyz/"},
+      {"", "", "", false, 0, {}, false, "", false, "", ""},
+      {"", "", "", false, 0, {"xyz"}, false, "", false, "", "xyz"},
+      {"", "", "", false, 0, {"xyz", ""}, false, "", false, "", "xyz/"},
+      {"", "", "", false, 0, {}, true, "bar", false, "", "?bar"},
+      {"http", "", "", false, 0, {}, true, "bar", false, "", "http:?bar"},
+      {"http", "", "", false, 0, {}, false, "", false, "", "http:"},
+      {"http", "", "::1", false, 0, {}, false, "", false, "", "http://[::1]"},
+      {"http", "", "::1.2.3.4", false, 0, {}, false, "", false, "", "http://[::1.2.3.4]"},
+      {"http", "", "1.2.3.4", false, 0, {}, false, "", false, "", "http://1.2.3.4"},
+      {"", "", "", false, 0, {}, false, "", false, "", ""},
+      {"http", "bob", "", false, 0, {}, true, "foobar", false, "", "http://bob@?foobar"},
+      {"", "bob", "", false, 0, {}, true, "foobar", false, "", "//bob@?foobar"},
+      {"", "bob", "", false, 0, {}, false, "", false, "", "//bob@"},
 
       // percent-encoded character test vectors
-      {"http", "b b", "www.example.com", true,  8080, {"", "abc", "def"}, true,  "foobar", true,  "ch2", "http://b%20b@www.example.com:8080/abc/def?foobar#ch2"},
-      {"http", "bob", "www.e ample.com", true,  8080, {"", "abc", "def"}, true,  "foobar", true,  "ch2", "http://bob@www.e%20ample.com:8080/abc/def?foobar#ch2"},
-      {"http", "bob", "www.example.com", true,  8080, {"", "a c", "def"}, true,  "foobar", true,  "ch2", "http://bob@www.example.com:8080/a%20c/def?foobar#ch2"},
-      {"http", "bob", "www.example.com", true,  8080, {"", "abc", "def"}, true,  "foo ar", true,  "ch2", "http://bob@www.example.com:8080/abc/def?foo%20ar#ch2"},
-      {"http", "bob", "www.example.com", true,  8080, {"", "abc", "def"}, true,  "foobar", true,  "c 2", "http://bob@www.example.com:8080/abc/def?foobar#c%202"},
-      {"http", "bob", "ሴ.example.com",   true,  8080, {"", "abc", "def"}, true,  "foobar", false, "",    "http://bob@%E1%88%B4.example.com:8080/abc/def?foobar"},
+      {"http",
+       "b b",
+       "www.example.com",
+       true,
+       8080,
+       {"", "abc", "def"},
+       true,
+       "foobar",
+       true,
+       "ch2",
+       "http://b%20b@www.example.com:8080/abc/def?foobar#ch2"},
+      {"http",
+       "bob",
+       "www.e ample.com",
+       true,
+       8080,
+       {"", "abc", "def"},
+       true,
+       "foobar",
+       true,
+       "ch2",
+       "http://bob@www.e%20ample.com:8080/abc/def?foobar#ch2"},
+      {"http",
+       "bob",
+       "www.example.com",
+       true,
+       8080,
+       {"", "a c", "def"},
+       true,
+       "foobar",
+       true,
+       "ch2",
+       "http://bob@www.example.com:8080/a%20c/def?foobar#ch2"},
+      {"http",
+       "bob",
+       "www.example.com",
+       true,
+       8080,
+       {"", "abc", "def"},
+       true,
+       "foo ar",
+       true,
+       "ch2",
+       "http://bob@www.example.com:8080/abc/def?foo%20ar#ch2"},
+      {"http",
+       "bob",
+       "www.example.com",
+       true,
+       8080,
+       {"", "abc", "def"},
+       true,
+       "foobar",
+       true,
+       "c 2",
+       "http://bob@www.example.com:8080/abc/def?foobar#c%202"},
+      {"http",
+       "bob",
+       "ሴ.example.com",
+       true,
+       8080,
+       {"", "abc", "def"},
+       true,
+       "foobar",
+       false,
+       "",
+       "http://bob@%E1%88%B4.example.com:8080/abc/def?foobar"},
 
       // normalization of IPv6 address hex digits
-      {"http", "bob", "fFfF::1", true,  8080, {"", "abc", "def"}, true,  "foobar", true,  "c 2", "http://bob@[ffff::1]:8080/abc/def?foobar#c%202"},
+      {"http",
+       "bob",
+       "fFfF::1",
+       true,
+       8080,
+       {"", "abc", "def"},
+       true,
+       "foobar",
+       true,
+       "c 2",
+       "http://bob@[ffff::1]:8080/abc/def?foobar#c%202"},
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
@@ -1415,11 +1477,3 @@ TEST(UriTests, PercentEncodePlusInQueries) {
     uri.queries("foo+bar");
     EXPECT_EQ("?foo%2Bbar", uri.to_string());
 }
-
-
-
-
-
-
-
-

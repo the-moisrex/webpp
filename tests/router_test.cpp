@@ -1,12 +1,11 @@
+#include "../core/include/webpp/http/routes/router.hpp"
+
+#include "../core/include/webpp/application/application_concepts.hpp"
+#include "../core/include/webpp/http/protocols/cgi.hpp"
+#include "../core/include/webpp/http/routes/path.hpp"
+#include "../core/include/webpp/utils/const_list.hpp"
 #include "fake_protocol.hpp"
 
-// clang-format off
-#include webpp_include(http/routes/router)
-#include webpp_include(application/application_concepts)
-#include webpp_include(http/protocols/cgi)
-#include webpp_include(http/routes/path)
-#include webpp_include(utils/const_list)
-// clang-format on
 
 using namespace webpp;
 using namespace std;
@@ -53,8 +52,8 @@ TEST(Router, RouteCreation) {
 
 
     router router3{extension_pack<string_response>{}, [](Context auto&& ctx) noexcept(false) {
-      return ctx.string("testing 2");
-    }};
+                       return ctx.string("testing 2");
+                   }};
     auto   res3 = router3(req);
     EXPECT_EQ(res3.body.str(), "testing 2");
 }

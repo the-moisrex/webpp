@@ -1,10 +1,9 @@
 // Created by moisrex on 11/29/19.
 
+#include "../core/include/webpp/utils/const_list.hpp"
+
 #include "./common_pch.hpp"
 
-// clang-format off
-#include webpp_include(utils/const_list)
-// clang-format on
 
 using namespace webpp;
 using namespace std;
@@ -15,9 +14,7 @@ TEST(ConstListTest, ConstList) {
     EXPECT_EQ(one.next().value(), "two");
     EXPECT_EQ(one.next().next().value(), 3);
 
-    one.for_each([&](auto const& value) constexpr {
-        EXPECT_TRUE(one.has(value));
-    });
+    one.for_each([&](auto const& value) constexpr { EXPECT_TRUE(one.has(value)); });
 
     auto str_one = one.reduce(
       [](string const& data, auto const& value) {

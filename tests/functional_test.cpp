@@ -1,11 +1,10 @@
 // Created by moisrex on 12/10/19.
 
+#include "../core/include/webpp/utils/functional.hpp"
+
+#include "../core/include/webpp/utils/debounce.hpp"
 #include "./common_pch.hpp"
 
-// clang-format off
-#include webpp_include(utils/functional)
-#include webpp_include(utils/debounce)
-// clang-format on
 
 
 using namespace webpp;
@@ -39,7 +38,7 @@ TEST(FunctionalTests, DebouncedFunctions) {
     constexpr auto limit = 1000;
 
     auto checking_deduction_for_function_pointers = debounce(test);
-    auto debounced_test = debounce(milliseconds(10), test);
+    auto debounced_test                           = debounce(milliseconds(10), test);
     for (int i = 0; i < limit; i++)
         debounced_test(limit);
 

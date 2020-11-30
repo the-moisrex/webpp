@@ -1,10 +1,8 @@
 // Created by moisrex on 1/27/20.
+#include "../core/include/webpp/strings/iequals.hpp"
+#include "../core/include/webpp/strings/to_case.hpp"
 #include "./common_pch.hpp"
 
-// clang-format off
-#include webpp_include(strings/iequals)
-#include webpp_include(strings/to_case)
-// clang-format on
 
 
 using namespace webpp::ascii;
@@ -54,9 +52,9 @@ TEST(Strings, EveToLowerToUpper) {
     EXPECT_EQ(str, "THIS [IS] 1 STRING");
 
     // a long string
-    constexpr auto times = 1023;
+    constexpr auto times       = 1023;
     constexpr auto long_string = "1 LONG [STRING] is a short string WHICH IS REPEATED MANY TIMES";
-    std::string long_str = long_string;
+    std::string    long_str    = long_string;
     long_str.reserve(long_str.size() * times);
     for (auto i = 0; i < times; i++)
         long_str.append(long_string);

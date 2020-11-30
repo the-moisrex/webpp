@@ -1,11 +1,10 @@
 
+#include "../core/include/webpp/ip/ipv6.hpp"
+
+#include "../core/include/webpp/traits/std_traits.hpp"
+#include "../core/include/webpp/validators/validators.hpp"
 #include "./common_pch.hpp"
 
-// clang-format off
-#include webpp_include(ip/ipv6)
-#include webpp_include(traits/std_traits)
-#include webpp_include(validators/validators)
-// clang-format on
 
 
 using namespace webpp;
@@ -32,10 +31,8 @@ TEST(IPv6Tests, Creation) {
 }
 
 TEST(IPv6Tests, Validation) {
-    auto valid_ipv6s = {"0000:0000:0000:0000:0000:0000:0000:0000", "fe00::1",
-                        "fe80::217:f2ff:fe07:ed62",
-                        "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
-                        "2001:0db8:0000:85a3:0000:0000:ac1f:8001"};
+    auto valid_ipv6s = {"0000:0000:0000:0000:0000:0000:0000:0000", "fe00::1", "fe80::217:f2ff:fe07:ed62",
+                        "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "2001:0db8:0000:85a3:0000:0000:ac1f:8001"};
 
     auto invalid_ipv6s = {"02001:0000:1234:0000:0000:C1C0:ABCD:0876",
                           "2001:0000:1234:0000:00001:C1C0:ABCD:0876",
@@ -65,15 +62,12 @@ TEST(IPv6Tests, Validation) {
           << "\nshort long ip: " << ipv6_t(ipv6_t(_ip).short_str()).str();
         EXPECT_TRUE(static_cast<bool>(is::ipv6(_ip)))
           << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).short_str();
-        EXPECT_TRUE(ipv6_t(_ip).is_valid())
-          << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).short_str();
+        EXPECT_TRUE(ipv6_t(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).short_str();
     }
 
     for (auto const& _ip : invalid_ipv6s) {
-        EXPECT_FALSE(is::ipv6(_ip))
-          << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).short_str();
-        EXPECT_FALSE(ipv6_t(_ip).is_valid())
-          << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).short_str();
+        EXPECT_FALSE(is::ipv6(_ip)) << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).short_str();
+        EXPECT_FALSE(ipv6_t(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).short_str();
     }
 }
 

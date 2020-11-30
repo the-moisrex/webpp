@@ -1,11 +1,9 @@
 // Created by moisrex on 9/25/20.
+#include "../core/include/webpp/libs/eve.hpp"
 #include "./common_pch.hpp"
-
-// clang-format off
-#include webpp_include(libs/eve)
 #ifdef WEBPP_EVE
-#   include eve_include(wide)
-#   include eve_include(function/any)
+#    include eve_include(wide)
+#    include eve_include(function / any)
 #endif
 // clang-format on
 
@@ -33,7 +31,7 @@ namespace mtest {
 
         const auto    last_possible_end = it1end - last_possible_position;
         decltype(it1) found             = nullptr;
-        for (; ; ++it1) {
+        for (;; ++it1) {
             if (*it1 == *it2) {
                 if (it2 == it2start) {
                     found = it1;
@@ -56,11 +54,11 @@ namespace mtest {
 
         return string_type::npos;
     }
-}
+} // namespace mtest
 
 // The above algorithm is buggy, so let's not run the tests when we don't need them
 
-//TEST(STRFinder, Simple) {
+// TEST(STRFinder, Simple) {
 //    using namespace mtest;
 //
 //    EXPECT_EQ(0, find_str_simple("string", "str"));

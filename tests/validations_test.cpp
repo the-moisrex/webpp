@@ -1,10 +1,8 @@
+#include "../core/include/webpp/strings/charset.hpp"
+#include "../core/include/webpp/traits/std_traits.hpp"
+#include "../core/include/webpp/validators/validators.hpp"
 #include "./common_pch.hpp"
 
-// clang-format off
-#include webpp_include(strings/charset)
-#include webpp_include(traits/std_traits)
-#include webpp_include(validators/validators)
-// clang-format on
 
 using namespace webpp::ascii::is;
 using namespace webpp::is;
@@ -43,8 +41,7 @@ TEST(ValidationsTest, IPv4Functions) {
     EXPECT_FALSE(ipv4_prefix("false_ip/24"));
     EXPECT_FALSE(ipv4_prefix("192.168.1.3/40"));
     EXPECT_FALSE(ipv4_prefix("192.168.1.3/false_prefix"));
-    EXPECT_TRUE(ipv4_prefix("192.168.1.2-24",
-                                               webpp::charset<char, 1>('-')));
+    EXPECT_TRUE(ipv4_prefix("192.168.1.2-24", webpp::charset<char, 1>('-')));
 }
 
 TEST(ValidationTest, IPv6Functions) {
@@ -97,15 +94,12 @@ TEST(ValidationTest, IPv6Functions) {
         std::string ip2 = item;
         std::string ip3 = item;
         ip.append("/64");
-        EXPECT_TRUE(ipv6_prefix(ip))
-          << "ip has a prefix: " << ip;
+        EXPECT_TRUE(ipv6_prefix(ip)) << "ip has a prefix: " << ip;
         ip2.append("/something bad");
         EXPECT_FALSE(ipv6_prefix(ip2));
         ip3.append("-128");
-        EXPECT_TRUE(
-          ipv6_prefix(ip3, webpp::charset<char, 1>('-')));
-        EXPECT_TRUE(host("[" + std::string(item) + "]"))
-          << "ip: " << item;
+        EXPECT_TRUE(ipv6_prefix(ip3, webpp::charset<char, 1>('-')));
+        EXPECT_TRUE(host("[" + std::string(item) + "]")) << "ip: " << item;
     }
 
     for (auto const& item : invalids) {
@@ -113,15 +107,13 @@ TEST(ValidationTest, IPv6Functions) {
         std::string ip = item;
         ip.append("/64");
         EXPECT_FALSE(ipv6_prefix(ip));
-        EXPECT_FALSE(host("[" + std::string(item) + "]"))
-          << "ip: " << item;
+        EXPECT_FALSE(host("[" + std::string(item) + "]")) << "ip: " << item;
     }
 }
 
 TEST(ValidationsTest, HostFunction) {
     auto valids = {
-      "localhost",       "one.com", "example.notcom", "192.168.0.1",
-      "255.255.255.255", "[::1]",   "127.0.0.1",
+      "localhost", "one.com", "example.notcom", "192.168.0.1", "255.255.255.255", "[::1]", "127.0.0.1",
     };
     auto invalids = {"&^%&^%$&^%&^%$&^%$#@%$#@@!~#!@"};
 
@@ -134,12 +126,9 @@ TEST(ValidationsTest, HostFunction) {
 }
 
 TEST(ValidationsTest, EmailFunction) {
-    EXPECT_TRUE(email("moisrex@gmail.com"))
-      << "moisrex@gmail.com should be valid";
-    EXPECT_TRUE(email("moisrex.test@gmail.com"))
-      << "moisrex.test@gmail.com should be valid";
-    EXPECT_FALSE(email("not an.email@123.com"))
-      << "spaces are not allowed in emails";
+    EXPECT_TRUE(email("moisrex@gmail.com")) << "moisrex@gmail.com should be valid";
+    EXPECT_TRUE(email("moisrex.test@gmail.com")) << "moisrex.test@gmail.com should be valid";
+    EXPECT_FALSE(email("not an.email@123.com")) << "spaces are not allowed in emails";
 }
 
 TEST(ValidationsTest, NumberFunctions) {
