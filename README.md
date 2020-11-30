@@ -90,7 +90,8 @@ sudo ninja install # needed only for building the examples
 
 And then in order to run the tests, you just have to run the `webpptest` binary in that directory. You don't need to build tests individually but you have to build examples individually; but this may change when we hit our first production-ready version.
 
-## About GTASK (task management tool)
+## TODO
+About GTask (task management tool) (Git + TaskWarrior)
 
 We use `gtask` (a custom script built on top of [TaskWarrior](https://taskwarrior.org/) for task management) as a ToDo list. Of course long-term todos will not be there so the ideas don't get out before they need to.
 
@@ -102,6 +103,119 @@ gtask add project:net "This is a todo"
 ```
 
 Learn more about TaskWarrior in their own documentation.
+
+
+Current Todo List:
+
+
+
+| ID | Age  | Project     | Description                                                            | Urg |
+| -- | ---- | ----------- | ---------------------------------------------------------------------- | ---- |
+|  5 | 1.4y |             | learn more:                                                            |    2 |
+|    |      |             | http://www.yolinux.com/TUTORIALS/LibraryArchives-StaticAndDynamic.html |
+| 14 | 1.2y |             | put the validations in their own file                                  |    2 |
+| 21 | 10mo |             | Use Steganography in your project, it's cool                           | 1.76 |
+| 34 | 8mo  |             | check for memory leaks in body                                         | 1.44 |
+| 60 | 7mo  |             | add thread_pool support                                                |  1.3 |
+| 69 | 7mo  |             | add defined(__has_include) macro for safty                             | 1.25 |
+| 75 | 7mo  |             | add jetbrains logo                                                     | 1.24 |
+| 11 | 1.2y | ams         | consider help functions for webassembly                                |    3 |
+| 57 | 8mo  | ci_cd       | add CI/CD Auto DevOps into the project                                 | 2.35 |
+| 83 | 6mo  | clang       | Add custom clang-check matchers to chatch some bugs before they happen | 2.13 |
+|    |      |             | for the final user |
+| 63 | 7mo  | cluster     | add clustering comminication base classes                              | 2.27 |
+| 64 | 7mo  | cluster     | clusters can run a thread_pool too                                     | 2.27 |
+| 65 | 7mo  | cluster     | implement thread_pool classes                                          | 2.27 |
+| 66 | 7mo  | cluster     | thread-safe properties with the help of marcos or pre-compile code     | 2.25 |
+|    |      |             | generation based on the spacified class or type |
+| 67 | 7mo  | cluster     | see if it's possible to use operator overloading magics to implement   | 2.25 |
+|    |      |             | threadsafe properties |
+|  4 | 1.4y | cmake       | use components like cefeika                                            |    3 |
+|  9 | 1.2y | cmake       | consider cpp modules                                                   |    3 |
+| 10 | 1.2y | cmake       | add different packages for distribution                                |    3 |
+| 32 | 9mo  | cmake       | add pre-compiling the static files feature in the cmake for different  | 2.51 |
+|    |      |             | file types in the generate_static_file function |
+| 35 | 8mo  | cmake       | configure and use sanitizers                                           | 2.35 |
+| 33 | 9mo  | codegen     | forms for auto code generation, so the user can easily write a         | 2.49 |
+|    |      |             | boilerplate and change the code later. |
+| 85 | 6mo  | cookies     | parse request cookie                                                   | 2.02 |
+| 86 | 6mo  | cookies     | parse response cookies                                                 | 2.02 |
+| 87 | 6mo  | cookies     | add cookie extensions                                                  | 2.02 |
+| 88 | 6mo  | cookies     | add extension for session management                                   | 2.02 |
+| 89 | 6mo  | cookies     | implement encrypted cookies                                            | 2.02 |
+| 37 | 8mo  | fcgi        | convert endpoint fromats                                               | 2.35 |
+| 38 | 8mo  | fcgi        | learn boost::thread_pool                                               | 2.35 |
+| 39 | 8mo  | fcgi        | find where to add the thread_pool                                      | 2.35 |
+| 40 | 8mo  | fcgi        | add the ctor of threadpool                                             | 2.35 |
+| 41 | 8mo  | fcgi        | use threadpool in running the io_context                               | 2.35 |
+| 42 | 8mo  | fcgi        | restart the server when the endpoints change                           | 2.35 |
+| 43 | 8mo  | fcgi        | learn boost::cpp03::server4::server::operator() example                | 2.35 |
+| 44 | 8mo  | fcgi        | add thread_count in fcgi class                                         | 2.35 |
+| 45 | 8mo  | fcgi        | implement request methods in fcgi                                      | 2.35 |
+| 46 | 8mo  | fcgi        | write a fcgi hello world example                                       | 2.35 |
+| 47 | 8mo  | fcgi        | write fcgi tests                                                       | 2.35 |
+| 48 | 8mo  | fcgi        | read the fcgi header async                                             | 2.35 |
+| 49 | 8mo  | fcgi        | parse the fcgi header                                                  | 2.35 |
+| 50 | 8mo  | fcgi        | read the rest of the fcgi request                                      | 2.35 |
+| 51 | 8mo  | fcgi        | parse the rest of the fcgi request                                     | 2.35 |
+| 52 | 8mo  | fcgi        | add constructors for protocols' file's classes                         | 2.35 |
+| 53 | 8mo  | fcgi        | remove enable_shared_from_this<server>                                 | 2.35 |
+| 54 | 8mo  | fcgi        | add fcgi files in cmake                                                | 2.35 |
+| 55 | 8mo  | fcgi        | figure out a way to listen on multiple endpoints                       | 2.35 |
+| 15 | 11mo | functional  | implement trailing in debounce class                                   | 2.94 |
+| 16 | 11mo | functional  | add a way to use a thread pool in the debounce class                   | 2.94 |
+| 17 | 11mo | functional  | make property class thread safe if the user wants it                   | 2.94 |
+| 18 | 11mo | functional  | add functionality to check if the user is running the program in debug | 2.94 |
+|    |      |             | mode or release mode |
+| 19 | 11mo | functional  | add functionality to the properties class and debounced class to check | 2.94 |
+|    |      |             | if the user is going to have a race condition or not if all possible |
+| 20 | 11mo | functional  | check if you actually need the function_ref class or not               | 2.94 |
+| 56 | 8mo  | gtask       | add tasks in the README file                                           | 2.35 |
+| 84 | 6mo  | headers     | give the user the ability to change the status phrase of status code   | 2.03 |
+|  2 | 1.4y | interfaces  | implement fcgi                                                         |    3 |
+|  8 | 1.2y | interfaces  | implement wsgi                                                         |    3 |
+| 22 | 9mo  | modules     | add mother modules to the server's templtes                            | 2.56 |
+| 23 | 9mo  | modules     | add 'server' arg to the router signitures                              | 2.56 |
+| 13 | 1.2y | net         | add mac address class                                                  |    3 |
+| 25 | 9mo  | net         | add fragment routing methods in uri (think about it first)             | 2.56 |
+| 26 | 9mo  | net         | implement put_query in uri                                             | 2.56 |
+| 27 | 9mo  | net         | implement get_query in uri                                             | 2.56 |
+| 28 | 9mo  | net         | implement remove_query in uri                                          | 2.56 |
+| 29 | 9mo  | net         | implement append_query in uri                                          | 2.56 |
+| 30 | 9mo  | net         | implement pop_path in uri                                              | 2.56 |
+| 31 | 9mo  | net         | implement append_path in uri                                           | 2.56 |
+|  3 | 1.4y | performance | implement half-lazy loading of images/... stuff                        |    3 |
+|  6 | 1.3y | performance | watch tutorial named Pluralsight Web Performance                       |    3 |
+| 59 | 7mo  | performance | optimize ipv6 and checkout the benchmark                               | 2.31 |
+| 90 | 3mo  | performance | checkout -flto compiler option                                         | 1.62 |
+| 58 | 8mo  | pub         | Make travis build successful                                           | 2.33 |
+| 24 | 9mo  | request     | sort paths in router based on views and how much time it takes for     | 2.56 |
+|    |      |             | them to be evaluated |
+| 80 | 7mo  | routes      | rename the routes to entry_route or entryroute or root_route or        | 2.17 |
+|    |      |             | rootroute |
+| 81 | 7mo  | routes      | rename the valves to route or subroute                                 | 2.17 |
+| 82 | 7mo  | routes      | create the context template class                                      | 2.17 |
+|  1 | 1.5y | sessions    | learn more about sessions                                              |    3 |
+| 61 | 7mo  | tests       | add a high level testing library that uses gtest and catch2 and        |  2.3 |
+|    |      |             | boost.test and others |
+| 62 | 7mo  | tests       | convert existing tests into your own testing library                   |  2.3 |
+| 91 | 3h   | tests       | write tests for utils/errors                                           |    1 |
+| 68 | 7mo  | thread      | add fast and thread-safe class template for containers                 | 2.25 |
+| 76 | 7mo  | traits      | convert to_uint and friend. I mean their usage                         | 2.19 |
+| 77 | 7mo  | traits      | convert ipv4                                                           | 2.19 |
+| 78 | 7mo  | traits      | convert validators                                                     | 2.19 |
+| 79 | 7mo  | traits      | convert utils/string.h file.                                           | 2.19 |
+| 36 | 8mo  | uri         | add support for encrypted URIs                                         | 2.35 |
+| 12 | 1.2y | utils       | implement property class                                               |    3 |
+| 70 | 7mo  | valves      | a valve that limits user visits                                        | 2.24 |
+| 71 | 7mo  | valves      | a valve that only allows guests                                        | 2.24 |
+| 72 | 7mo  | valves      | a valve that only allows registered users                              | 2.24 |
+| 73 | 7mo  | valves      | a valve that wraps a function                                          | 2.24 |
+| 74 | 7mo  | valves      | find a better way to specialize empty_t                                | 2.24 |
+|  7 | 1.3y | webrtc      | watch WebRTC tutorials                                                 |    3 |
+
+
+
 
 ## Supported by:
 [JetBrains](https://www.jetbrains.com/?from=webpp)

@@ -550,3 +550,58 @@ new [description:"implement encrypted cookies" entry:"1590592199" modified:"1590
 time 1596961401
 new [description:"checkout -flto compiler option" entry:"1596961401" modified:"1596961401" project:"performance" status:"pending" uuid:"aa6df888-46bd-48ad-a110-369708f75a4e"]
 ---
+time 1606755129
+new [description:"write tests for utils\/errors" entry:"1606755129" modified:"1606755129" project:"tests" status:"pending" uuid:"11466f25-4df9-458a-a871-45a706e5f5fc"]
+---
+time 1606755179
+old [description:"implement normalize path in uri class" entry:"1582219451" modified:"1582219451" project:"net" status:"pending" uuid:"5bc72080-218b-42d6-b82d-a86213c4a241"]
+new [description:"implement normalize path in uri class" end:"1606755179" entry:"1582219451" modified:"1606755179" project:"net" status:"completed" uuid:"5bc72080-218b-42d6-b82d-a86213c4a241"]
+---
+time 1606755293
+old [description:"you may need to change the response::body to be able to handle streams not just strings" entry:"1562330997" modified:"1562330997" project:"response" status:"pending" uuid:"5c442841-6bb9-44f0-8b35-56f32f9a9e09"]
+new [description:"you may need to change the response::body to be able to handle streams not just strings" end:"1606755291" entry:"1562330997" modified:"1606755293" project:"response" status:"deleted" uuid:"5c442841-6bb9-44f0-8b35-56f32f9a9e09"]
+---
+time 1606755329
+old [description:"check for memory usage and use allocators if needed" entry:"1567682381" modified:"1567682381" project:"performance" status:"pending" uuid:"04e7db86-699d-40ef-9ef7-8b00adf4974d"]
+new [description:"check for memory usage and use allocators if needed" end:"1606755329" entry:"1567682381" modified:"1606755329" project:"performance" status:"completed" uuid:"04e7db86-699d-40ef-9ef7-8b00adf4974d"]
+---
+time 1606755338
+old [description:"write benchmarks for every part of the framework" entry:"1567682443" modified:"1567683056" project:"performance" status:"pending" uuid:"15d4e821-1ed8-4bda-bfc2-6fbe21b9dbbd"]
+new [description:"write benchmarks for every part of the framework" end:"1606755338" entry:"1567682443" modified:"1606755338" project:"performance" status:"completed" uuid:"15d4e821-1ed8-4bda-bfc2-6fbe21b9dbbd"]
+---
+time 1606755360
+old [description:"move ipv4 and ipv6 implementations to the cpp files if necessary" entry:"1567682618" modified:"1567682618" project:"net" status:"pending" uuid:"5ad078c7-1157-4458-b2bd-a71e101dca51"]
+new [description:"move ipv4 and ipv6 implementations to the cpp files if necessary" end:"1606755359" entry:"1567682618" modified:"1606755360" project:"net" status:"deleted" uuid:"5ad078c7-1157-4458-b2bd-a71e101dca51"]
+---
+time 1606755376
+old [description:"add header only to the build options" entry:"1567682643" modified:"1567682643" project:"cmake" status:"pending" uuid:"c0a20808-ee41-46a5-ad2a-b1526f92792f"]
+new [description:"add header only to the build options" end:"1606755376" entry:"1567682643" modified:"1606755376" project:"cmake" status:"completed" uuid:"c0a20808-ee41-46a5-ad2a-b1526f92792f"]
+---
+time 1606755450
+old [description:"add config .h file in cmake for versioning" entry:"1582219014" modified:"1582219014" project:"cmake" status:"pending" uuid:"3242884a-3786-416e-b78b-6f82fc02ccd0"]
+new [description:"add config .h file in cmake for versioning" end:"1606755450" entry:"1582219014" modified:"1606755450" project:"cmake" status:"completed" uuid:"3242884a-3786-416e-b78b-6f82fc02ccd0"]
+---
+time 1606755486
+old [description:"remove c++20 in cmake and replce with the features that the project requires" entry:"1582219403" modified:"1582219403" project:"cmake" status:"pending" uuid:"aa61ab85-5f5e-4900-b46c-7b3c077118c2"]
+new [description:"remove c++20 in cmake and replce with the features that the project requires" end:"1606755486" entry:"1582219403" modified:"1606755486" project:"cmake" status:"completed" uuid:"aa61ab85-5f5e-4900-b46c-7b3c077118c2"]
+---
+time 1606755537
+old [description:"fix .cmake file paths when install command" entry:"1582218826" modified:"1582218826" project:"cmake" status:"pending" uuid:"054165b9-3083-4ca8-9cd6-bc4b2bd938e6"]
+new [description:"fix .cmake file paths when install command" end:"1606755537" entry:"1582218826" modified:"1606755537" project:"cmake" status:"completed" uuid:"054165b9-3083-4ca8-9cd6-bc4b2bd938e6"]
+---
+time 1606755617
+old [description:"cannot use dynamic linking" entry:"1582805023" modified:"1582805023" project:"cmake" status:"pending" uuid:"919ee841-88fa-4d1f-aa8a-ee9e30a7fb7a"]
+new [description:"cannot use dynamic linking" end:"1606755616" entry:"1582805023" modified:"1606755617" project:"cmake" status:"deleted" uuid:"919ee841-88fa-4d1f-aa8a-ee9e30a7fb7a"]
+---
+time 1606755632
+old [description:"add PCH (pre compiled headers) support" entry:"1583074340" modified:"1583074340" project:"cmake" status:"pending" uuid:"e8f50f78-006a-4002-9293-98e6fe0166e8"]
+new [description:"add PCH (pre compiled headers) support" end:"1606755632" entry:"1583074340" modified:"1606755632" project:"cmake" status:"completed" uuid:"e8f50f78-006a-4002-9293-98e6fe0166e8"]
+---
+time 1606755690
+old [description:"change the replace_string with replace_string_view when the file is cachable in response constructor" entry:"1584062102" modified:"1584062102" project:"response" status:"pending" uuid:"2aee8c97-082b-4a12-840b-8cfdc76427c5"]
+new [description:"change the replace_string with replace_string_view when the file is cachable in response constructor" end:"1606755689" entry:"1584062102" modified:"1606755690" project:"response" status:"deleted" uuid:"2aee8c97-082b-4a12-840b-8cfdc76427c5"]
+---
+time 1606755747
+old [description:"learn more about fcgi" entry:"1562323388" modified:"1562323458" project:"interfaces" status:"pending" uuid:"a62e1a95-9a63-4157-993a-a19e117a1998"]
+new [description:"implement fcgi" entry:"1562323388" modified:"1606755747" project:"interfaces" status:"pending" uuid:"a62e1a95-9a63-4157-993a-a19e117a1998"]
+---
