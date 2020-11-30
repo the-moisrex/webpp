@@ -1,0 +1,51 @@
+#!/usr/bin/bash
+
+# this script will help converting the "gtask" output in a format that is printable in
+# a markdown format so it'll be easier to be printed in the README.md file.
+output=$(./gtask rc.color=off $@ 2>/dev/null | head -n -1)
+
+positions=()
+
+while read -r line; do
+  if [ "${line:0:1}" == "-" ]; then
+    # it's the Header Table
+    for (( i=0; i<${#line}; i++ )) do
+      ch="${line:$i:1}"
+      if [[ $ch == " " ]]; then
+        positions+=($i)
+      fi
+    done
+  fi
+done < <(echo -e "$output")
+
+
+while IFS="|||" read -r line ; do
+
+  if [[ ${#line} == 0 ]]; then
+    echo
+    continue
+  fi
+
+  len=${positions[0]}
+  echo -ne "| ${line:0:$len} "
+
+  for (( i=0; i<${#positions[@]}; i++ )) do
+    pos=${positions[$i]}
+    next_pos=${positions[$(( i + 1 ))]}
+    if [[ $next_pos ]]; then
+      len=$(( next_pos - pos ))
+    else
+      line_count=${#line}
+      len=$(( line_count - pos ))
+    fi
+    pos=$(( pos + 1 ))
+    len=$(( len - 1 ))
+    if [[ $len -le 0 ]]; then
+      continue
+    fi
+    echo -n "| ${line:$pos:$len} "
+  done
+  echo "|"
+
+done < <(echo -e "$output")
+
