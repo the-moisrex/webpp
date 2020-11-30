@@ -5,5 +5,4 @@
 using namespace webpp;
 
 
-TEST(Cache, CacheSystemInit) {
-}
+TEST(Cache, CacheSystemInit) {}

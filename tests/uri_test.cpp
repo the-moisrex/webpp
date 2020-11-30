@@ -1,10 +1,9 @@
 // Created by moisrex on 11/9/20.
 
+#include "../core/include/webpp/uri/uri.hpp"
+
 #include "./common_pch.hpp"
 
-// clang-format off
-#include webpp_include(uri/uri)
-// clang-format on
 
 using namespace webpp;
 

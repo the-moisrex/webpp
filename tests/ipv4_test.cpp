@@ -1,10 +1,9 @@
+#include "../core/include/webpp/ip/ipv4.hpp"
+
+#include "../core/include/webpp/traits/std_traits.hpp"
+#include "../core/include/webpp/validators/validators.hpp"
 #include "./common_pch.hpp"
 
-// clang-format off
-#include webpp_include(ip/ipv4)
-#include webpp_include(traits/std_traits)
-#include webpp_include(validators/validators)
-// clang-format on
 
 
 using namespace webpp;

@@ -1,14 +1,10 @@
+#include "../core/include/webpp/http/http.hpp"
 #include "./common_pch.hpp"
 
-// clang-format off
-#include webpp_include(http/http)
-// clang-format on
 
 using namespace webpp;
 
-TEST(Server, Creation) {
-
-}
+TEST(Server, Creation) {}
 
 
 //
