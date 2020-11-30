@@ -2,7 +2,7 @@
 
 # this script will help converting the "gtask" output in a format that is printable in
 # a markdown format so it'll be easier to be printed in the README.md file.
-output=$(./gtask rc.color=off $@ 2>/dev/null | head -n -1)
+output=$(./gtask rc.color=off rc.defaultwidth=0 $@ 2>/dev/null | head -n -1)
 
 positions=()
 
