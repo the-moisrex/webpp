@@ -13,14 +13,13 @@ namespace webpp {
 
     template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL>
     struct cgi_request : common_request<TraitsType, REL> {
-        using traits_type            = stl::remove_cvref_t<TraitsType>;
-        using allocator_type   = typename traits_type::template allocator<typename traits_type::char_type>;
+        using traits_type    = stl::remove_cvref_t<TraitsType>;
+        using allocator_type = typename traits_type::template allocator<typename traits_type::char_type>;
 
       private:
         using super = common_request<TraitsType, REL>;
 
       public:
-
         /**
          * Get the environment value safely
          */
@@ -31,8 +30,8 @@ namespace webpp {
         }
 
 
-        template <typename ...Args>
-        cgi_request(Args&&...args) : super(stl::forward<Args>(args)...) {}
+        template <typename... Args>
+        cgi_request(Args&&... args) : super(stl::forward<Args>(args)...) {}
 
         /**
          * @brief get the server's software
@@ -308,6 +307,6 @@ namespace webpp {
         }
     };
 
-}
+} // namespace webpp
 
 #endif // WEBPP_CGI_REQUEST_HPP

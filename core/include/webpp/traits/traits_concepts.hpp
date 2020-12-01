@@ -8,7 +8,6 @@
 
 namespace webpp {
 
-
     /**
      * This struct will define any traits related or required by others so the
      * final user can use more customized versions of the classes provided by

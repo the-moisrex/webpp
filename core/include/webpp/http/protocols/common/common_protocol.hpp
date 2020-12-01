@@ -11,16 +11,14 @@
 namespace webpp {
 
 
+    // todo: should we inherit from EList? I don't think
     template <Traits TraitsType, Application App, ExtensionList EList>
     struct common_protocol : public enable_traits<TraitsType>, public stl::remove_cvref_t<EList> {
-        using traits_type      = TraitsType;
+        using traits_type      = stl::remove_cvref_t<TraitsType>;
         using application_type = App;
         using extension_list   = stl::remove_cvref_t<EList>;
         using string_view_type = typename traits_type::string_view_type;
         using string_type      = typename traits_type::string_type;
-        using allocator_type   = typename traits_type::allocator<typename traits_type::char_type>;
-        using logger_type      = typename traits_type::logger_type;
-        using logger_ref       = typename logger_type::logger_ref;
         using etraits          = enable_traits<traits_type>;
         using app_wrapper_type = http_app_wrapper<traits_type, application_type>;
 
