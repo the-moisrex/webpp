@@ -107,7 +107,8 @@ Learn more about TaskWarrior in their own documentation.
 
 Current Todo List (use `./gtask-markdown list` to generate this table again):
 
-Last updated time: Tue Dec  1 12:23:19 PM UTC 2020
+### Todo List
+Last updated time: Tue Dec  1 12:44:14 PM UTC 2020
 
 
 | ID | Age  | Project     | Description                                                                                                                                     | Urg |
@@ -169,6 +170,10 @@ Last updated time: Tue Dec  1 12:23:19 PM UTC 2020
 | 27 | 9mo  | net         | implement append_path in uri                                                                                                                    | 2.56 |
 |  2 | 1.4y | performance | implement half-lazy loading of images/... stuff                                                                                                 |    3 |
 | 49 | 7mo  | performance | optimize ipv6 and checkout the benchmark                                                                                                        | 2.31 |
+| 70 | 8min | performance | add logger_allocator custom allocator                                                                                                           |    1 |
+| 71 | 6min | performance | add add null_allocator custom allocator to help debug allocations                                                                               |    1 |
+| 72 | 5min | performance | add add allocator category concept                                                                                                              |    1 |
+| 73 | 4min | performance | add add allocator categories to the traits                                                                                                      |    1 |
 | 48 | 8mo  | pub         | Make travis build successful                                                                                                                    | 2.33 |
 | 20 | 9mo  | request     | sort paths in router based on views and how much time it takes for them to be evaluated                                                         | 2.56 |
 | 51 | 7mo  | tests       | add a high level testing library that uses gtest and catch2 and boost.test and others                                                           |  2.3 |
