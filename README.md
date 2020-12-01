@@ -105,7 +105,7 @@ gtask add project:net "This is a todo"
 Learn more about TaskWarrior in their own documentation.
 
 
-Current Todo List (use `gtask-markdown list` to generate this table again):
+Current Todo List (use `./gtask-markdown list` to generate this table again):
 
 
 
