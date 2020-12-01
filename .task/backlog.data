@@ -206,3 +206,8 @@
 {"description":"parse request cookie","end":"20201201T120818Z","entry":"20200527T150906Z","modified":"20201201T120818Z","project":"cookies","status":"completed","uuid":"fa45e209-fd9d-46e7-a7ee-b0e6f412838d"}
 {"description":"a valve that wraps a function","end":"20201201T121013Z","entry":"20200417T143339Z","modified":"20201201T121013Z","project":"valves","status":"completed","uuid":"48c08fbb-9cfe-4be3-b20b-703415927613"}
 {"description":"find a better way to specialize empty_t","end":"20201201T121032Z","entry":"20200417T173632Z","modified":"20201201T121032Z","project":"valves","status":"completed","uuid":"725c4707-29eb-4549-94c2-615190b86ae8"}
+{"description":"logger_allocator custom allocator","entry":"20201201T123548Z","modified":"20201201T123548Z","project":"performance","status":"pending","uuid":"68582000-c8ba-4f80-997b-0707a9772828"}
+{"description":"add logger_allocator custom allocator","entry":"20201201T123548Z","modified":"20201201T123654Z","project":"performance","status":"pending","uuid":"68582000-c8ba-4f80-997b-0707a9772828"}
+{"description":"add add null_allocator custom allocator to help debug allocations","entry":"20201201T123728Z","modified":"20201201T123728Z","project":"performance","status":"pending","uuid":"9e5d03b5-7d69-494f-a86a-e83072ee4400"}
+{"description":"add add allocator category concept","entry":"20201201T123843Z","modified":"20201201T123843Z","project":"performance","status":"pending","uuid":"f95ed9ed-2ed0-4b70-9204-d4e363b61dea"}
+{"description":"add add allocator categories to the traits","entry":"20201201T123916Z","modified":"20201201T123916Z","project":"performance","status":"pending","uuid":"b3a3224a-babd-4a47-bddf-c4a4a3638380"}

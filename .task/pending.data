@@ -67,3 +67,7 @@
 [description:"add extension for session management" entry:"1590592182" modified:"1590592182" project:"cookies" status:"pending" uuid:"2b08643f-3647-4bba-a920-1f5228042dad"]
 [description:"implement encrypted cookies" entry:"1590592199" modified:"1590592199" project:"cookies" status:"pending" uuid:"7d870903-14d1-4e0b-afab-58e20d981dc2"]
 [description:"write tests for utils\/errors" entry:"1606755129" modified:"1606755129" project:"tests" status:"pending" uuid:"11466f25-4df9-458a-a871-45a706e5f5fc"]
+[description:"add logger_allocator custom allocator" entry:"1606826148" modified:"1606826214" project:"performance" status:"pending" uuid:"68582000-c8ba-4f80-997b-0707a9772828"]
+[description:"add add null_allocator custom allocator to help debug allocations" entry:"1606826248" modified:"1606826248" project:"performance" status:"pending" uuid:"9e5d03b5-7d69-494f-a86a-e83072ee4400"]
+[description:"add add allocator category concept" entry:"1606826323" modified:"1606826323" project:"performance" status:"pending" uuid:"f95ed9ed-2ed0-4b70-9204-d4e363b61dea"]
+[description:"add add allocator categories to the traits" entry:"1606826356" modified:"1606826356" project:"performance" status:"pending" uuid:"b3a3224a-babd-4a47-bddf-c4a4a3638380"]
