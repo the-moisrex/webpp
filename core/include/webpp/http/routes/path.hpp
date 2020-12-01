@@ -4,9 +4,9 @@
 #define WEBPP_PATH_H
 
 #include "../../std/optional.hpp"
+#include "../../strings/fixed_string.hpp"
 #include "../../uri/path.hpp"
 #include "route.hpp"
-#include "../../strings/fixed_string.hpp"
 
 namespace webpp {
 
@@ -19,7 +19,7 @@ namespace webpp {
     //        using fake_path_context_type = typename fake_context_type::template
     //        context_type_with_appended_extensions<fake_appended_extension>;
     //    }
-    //
+
     template <typename T>
     concept PathContext = Context<T>&& requires(T ctx) {
         {ctx.path};

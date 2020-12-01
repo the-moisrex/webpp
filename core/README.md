@@ -605,11 +605,116 @@ But that's the decision that I made from almost the beginnings of this project
 because implementing that much code with `virtual` being allowed, there's no going
 back that easily.
 
-### Allocator Category
+### Allocator Pack
 
 There are a few places that one type of allocator can help more than the others.
+The `trait`s type that the user provides uses an allocator pack instead of just one
+allocator type.
+
+This way, the core library can pick the best allocator from that allocator pack.
 
 - __New And Delete Allocators__: the `std::allocator` essentially
 - __Linear Allocators__: it only `free`s the memory only on destruction. Useful for _buffers_, _string generators_, ...
 - __Simple Segregated Storage__: like `boost.pool`
 - ...
+
+### Allocator features
+
+These are the features that each type can choose between them, or 
+combine them so the allocator pack can choose the best allocator from
+the allocator pack.
+
+- __noop_free__: don't need to `free` on `deallocate`; but only on destroy.
+- __equal_sizes__: we're going to allocate lots of stuff with equal sizes.
+- __contagious__: we need to use it in contagious memory
+- __non_contagious__: the opposite of _contagious_.
+- __sync__: is going to be used in a multi-threaded environment
+- __no_sync__: don't care about thread-synchronization.
+- __fixed__: fixed size, don't need more than specified size.
+- __local__: not good for the duration of the process (https://youtu.be/nZNd5FjSquk?t=1009)
+- __global__: good for duration of the process
+- __monotonic__:
+  
+From (https://youtu.be/nZNd5FjSquk?t=355):
+- __fast__
+- __shared__
+- __protected__
+- __mapped__
+- __testing__
+- __debugging__
+- __measuring__
+- __better_locality__
+- __less_connections__
+
+### some types of allocators:
+https://slembcke.github.io/2020/10/12/CustomAllocators.html
+
+- Slab Allocator
+- Linear Allocator
+- Zone Allocator
+- Buddy Block Allocator
+
+### Some implementations
+https://github.com/mtrebi/memory-allocators
+https://github.com/foonathan/memory
+https://godbolt.org/z/rvfofv
+
+### Allocation strategies:
+https://youtu.be/nZNd5FjSquk?t=1894
+
+- Fragmentablity
+- Density
+- Variation
+- Locality
+- Utilization
+- Contention
+
+### Density
+
+### Variation
+
+### Locality
+https://youtu.be/CFzuFNSpycI?t=2865
+for long-running systems, locality matters and how long the
+allocation and deallocation took don't.
+
+### Utilization
+https://youtu.be/CFzuFNSpycI?t=3195
+Never use monotonic allocator by itself when the utilization
+is low and total number of bytes allocated is large
+
+### Contention
+https://youtu.be/CFzuFNSpycI?t=3372
+
+### Fragmentability
+https://youtu.be/CFzuFNSpycI?t=3473
+
+### Performance improvements
+https://youtu.be/CFzuFNSpycI?t=3547
+
+- Ensure physical locality of allocated memory
+- Avoid memory diffusion in long-running systems
+- Obviate deallocation of individual allocations
+- Sidestep contention during concurrent allocations
+- Separate unrelated data to avoid false sharing
+- Compose effective allocation strategies
+
+### Kinds of memories
+https://youtu.be/CFzuFNSpycI
+
+- Static memory
+- Memory-mapped memory
+- Read/Write protectable memory
+- Fast memory (special architectures)
+- Shared memory (special allocators)
+
+
+### Debugging allocators
+https://youtu.be/CFzuFNSpycI?t=3564
+
+- Counting (auditing) allocator
+- Test allocator
+- Limit allocator
+- Read/Write protectable memory allocator
+- Alarm allocator (if monotonic allocator overflows)
+
