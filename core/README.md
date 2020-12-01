@@ -1,25 +1,33 @@
 # Core specifications
 
+__Attention__: some of the things that is written here are outdated and obsolete.
+
 ## Examples
 
 ```c++
-struct app {
+struct application {
     using namespace webpp;
 
     router _router {
-        path() / number("user_id") / "page" / number("page_num") >> app::page
+        get and root / number("user_id") / "page" / number("page_num") >> &app::page
     };
 
     auto page(Context auto& ctx) const noexcept {
         auto page_num = ctx.path.template get<int>("page_num");
         auto _user = ctx.path.template get<user>("user_id");
-        return ctx.response.file("page.html", _user, page_num);
+        return ctx.file("page.html", _user, page_num);
     }
     
     Response auto operator()(Request auto&& req) noexcept {
         return _router(req);
     }
 };
+
+int main() {
+    webpp::cgi<application> app;
+    return app();
+}
+
 ```
 
 ## Protocols
@@ -171,7 +179,7 @@ Features we need:
      - [ ] Auto prioritization
      - [ ] Manual prioritization
      - [ ] Hinted prioritization
-     - [ ] On-The-Fly Re-Prioritization
+     - [ ] On-The-Fly (runtime) Re-Prioritization
    - [ ] Dynamic route generation / Dynamic route switching
    - [ ] Context Passing pattern
    - [ ] Context extensions
@@ -572,3 +580,36 @@ To assemble the extensions and the extensies into one single type we have to:
 12. [X] Extract the _final extensie_ from the _extensie descriptor_
 13. [X] Apply _child extension_ to the _final extensie_
 
+
+
+## Allocator System
+
+The reason behind the whole project being a header-only project is originally lies around
+the allocators. Even though allocators are cheap enough for a web server and other programming
+languages don't even have such a thing, and honestly it's a little hard to have them all over
+the code base, I decided that it's too good of a thing to just dismiss.
+
+### Why not polymorphic allocators only?
+
+With dynamic allocators are great, but the thing is that they usually require
+at least one more indirection and I promised myself that I will not put any
+unnecessary indirections in the project specially in high performance places
+(which means no `virtual` keyword in high throughput places of the core library).
+
+We totally could've avoided `trait` types if we wanted to use `virtual`s and thus
+we probably could've saved ourselves lots of meta programmings as well and we also
+could've been able to use dynamic linking as well as static linking (thus the project
+could become non-header-only library as well).
+
+But that's the decision that I made from almost the beginnings of this project
+because implementing that much code with `virtual` being allowed, there's no going
+back that easily.
+
+### Allocator Category
+
+There are a few places that one type of allocator can help more than the others.
+
+- __New And Delete Allocators__: the `std::allocator` essentially
+- __Linear Allocators__: it only `free`s the memory only on destruction. Useful for _buffers_, _string generators_, ...
+- __Simple Segregated Storage__: like `boost.pool`
+- ...
