@@ -19,6 +19,9 @@ while read -r line; do
   fi
 done < <(echo -e "$output")
 
+echo -n "Last updated time: "
+date -u; # print the date
+echo
 
 while IFS="|||" read -r line ; do
 
