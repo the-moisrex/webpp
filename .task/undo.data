@@ -605,3 +605,95 @@ time 1606755747
 old [description:"learn more about fcgi" entry:"1562323388" modified:"1562323458" project:"interfaces" status:"pending" uuid:"a62e1a95-9a63-4157-993a-a19e117a1998"]
 new [description:"implement fcgi" entry:"1562323388" modified:"1606755747" project:"interfaces" status:"pending" uuid:"a62e1a95-9a63-4157-993a-a19e117a1998"]
 ---
+time 1606823845
+old [description:"add clustering comminication base classes" entry:"1586651504" modified:"1586651504" project:"cluster" status:"pending" uuid:"1fdff8a6-273f-4a52-88c3-ff88cea9fb2e"]
+new [description:"add clustering communication base classes" entry:"1586651504" modified:"1606823845" project:"cluster" status:"pending" uuid:"1fdff8a6-273f-4a52-88c3-ff88cea9fb2e"]
+---
+time 1606823881
+old [description:"convert utils\/string.h file." entry:"1587983058" modified:"1587983058" project:"traits" status:"pending" uuid:"7c7837e7-6803-4b7f-ac37-76fc1b478ee9"]
+new [description:"convert utils\/string.h file." end:"1606823881" entry:"1587983058" modified:"1606823881" project:"traits" status:"completed" uuid:"7c7837e7-6803-4b7f-ac37-76fc1b478ee9"]
+---
+time 1606823910
+old [description:"learn more about sessions" entry:"1560691992" modified:"1560691992" project:"sessions" status:"pending" uuid:"01baaddf-ce26-4def-b50e-8bb657b536cd"]
+new [description:"learn more about sessions" end:"1606823910" entry:"1560691992" modified:"1606823910" project:"sessions" status:"completed" uuid:"01baaddf-ce26-4def-b50e-8bb657b536cd"]
+---
+time 1606823926
+old [description:"checkout -flto compiler option" entry:"1596961401" modified:"1596961401" project:"performance" status:"pending" uuid:"aa6df888-46bd-48ad-a110-369708f75a4e"]
+new [description:"checkout -flto compiler option" end:"1606823926" entry:"1596961401" modified:"1606823926" project:"performance" status:"completed" uuid:"aa6df888-46bd-48ad-a110-369708f75a4e"]
+---
+time 1606823945
+old [description:"watch tutorial named Pluralsight Web Performance" entry:"1567260685" modified:"1567682509" project:"performance" status:"pending" uuid:"cd287d23-e515-486a-9ea9-ef97fe5c0c73"]
+new [description:"watch tutorial named Pluralsight Web Performance" end:"1606823945" entry:"1567260685" modified:"1606823945" project:"performance" status:"completed" uuid:"cd287d23-e515-486a-9ea9-ef97fe5c0c73"]
+---
+time 1606824014
+old [description:"convert to_uint and friend. I mean their usage" entry:"1587982952" modified:"1587982952" project:"traits" status:"pending" uuid:"89885db7-3262-48e9-88d1-f40f1e2d0e3f"]
+new [description:"convert to_uint and friend. I mean their usage" end:"1606824014" entry:"1587982952" modified:"1606824014" project:"traits" status:"completed" uuid:"89885db7-3262-48e9-88d1-f40f1e2d0e3f"]
+---
+time 1606824050
+old [description:"rename the routes to entry_route or entryroute or root_route or rootroute" entry:"1588343006" modified:"1588343006" project:"routes" status:"pending" uuid:"f69f9adf-93a4-4f72-b176-246295a2d786"]
+new [description:"rename the routes to entry_route or entryroute or root_route or rootroute" end:"1606824050" entry:"1588343006" modified:"1606824050" project:"routes" status:"completed" uuid:"f69f9adf-93a4-4f72-b176-246295a2d786"]
+---
+time 1606824069
+old [description:"rename the valves to route or subroute" entry:"1588343063" modified:"1588343063" project:"routes" status:"pending" uuid:"9f6d01ad-0b48-44c5-96a6-2ce5310ded4b"]
+new [description:"rename the valves to route or subroute" end:"1606824069" entry:"1588343063" modified:"1606824069" project:"routes" status:"completed" uuid:"9f6d01ad-0b48-44c5-96a6-2ce5310ded4b"]
+---
+time 1606824083
+old [description:"create the context template class" entry:"1588359953" modified:"1588359953" project:"routes" status:"pending" uuid:"48b5a27b-7f0a-431a-a826-e05f5e920032"]
+new [description:"create the context template class" end:"1606824083" entry:"1588359953" modified:"1606824083" project:"routes" status:"completed" uuid:"48b5a27b-7f0a-431a-a826-e05f5e920032"]
+---
+time 1606824100
+old [description:"add 'server' arg to the router signitures" entry:"1582219157" modified:"1582219157" project:"modules" status:"pending" uuid:"f94dc762-d8ff-40b8-988c-edaa71acd324"]
+new [description:"add 'server' arg to the router signitures" end:"1606824100" entry:"1582219157" modified:"1606824100" project:"modules" status:"completed" uuid:"f94dc762-d8ff-40b8-988c-edaa71acd324"]
+---
+time 1606824142
+old [description:"convert ipv4" entry:"1587982966" modified:"1587982966" project:"traits" status:"pending" uuid:"9f0a7c72-3b23-45b8-af1c-00c549c6fa63"]
+new [description:"convert ipv4" end:"1606824142" entry:"1587982966" modified:"1606824142" project:"traits" status:"completed" uuid:"9f0a7c72-3b23-45b8-af1c-00c549c6fa63"]
+---
+time 1606824142
+old [description:"convert validators" entry:"1587982986" modified:"1587982986" project:"traits" status:"pending" uuid:"bbfdc424-1325-4c03-b853-f26519e7453f"]
+new [description:"convert validators" end:"1606824142" entry:"1587982986" modified:"1606824142" project:"traits" status:"completed" uuid:"bbfdc424-1325-4c03-b853-f26519e7453f"]
+---
+time 1606824170
+old [description:"add tasks in the README file" entry:"1585513329" modified:"1585513329" project:"gtask" status:"pending" uuid:"834eb337-f189-4c45-a195-46f1a81dd30e"]
+new [description:"add tasks in the README file" end:"1606824170" entry:"1585513329" modified:"1606824170" project:"gtask" status:"completed" uuid:"834eb337-f189-4c45-a195-46f1a81dd30e"]
+---
+time 1606824183
+old [description:"add fcgi files in cmake" entry:"1585509124" modified:"1585509124" project:"fcgi" status:"pending" uuid:"ad9e5913-4289-4ff5-83d1-ed7d102f9b73"]
+new [description:"add fcgi files in cmake" end:"1606824183" entry:"1585509124" modified:"1606824183" project:"fcgi" status:"completed" uuid:"ad9e5913-4289-4ff5-83d1-ed7d102f9b73"]
+---
+time 1606824196
+old [description:"remove enable_shared_from_this<server>" entry:"1585509103" modified:"1585509103" project:"fcgi" status:"pending" uuid:"66e8aed1-e9ef-4b3b-93f9-0e884e897448"]
+new [description:"remove enable_shared_from_this<server>" end:"1606824196" entry:"1585509103" modified:"1606824196" project:"fcgi" status:"completed" uuid:"66e8aed1-e9ef-4b3b-93f9-0e884e897448"]
+---
+time 1606824304
+old [description:"learn boost::thread_pool" entry:"1585508239" modified:"1585508239" project:"fcgi" status:"pending" uuid:"3fc70a1c-c87c-4009-9879-6734035bbc4d"]
+new [description:"learn boost::thread_pool" end:"1606824304" entry:"1585508239" modified:"1606824304" project:"fcgi" status:"completed" uuid:"3fc70a1c-c87c-4009-9879-6734035bbc4d"]
+---
+time 1606824357
+old [description:"add CI\/CD Auto DevOps into the project" entry:"1585513401" modified:"1585513401" project:"ci_cd" status:"pending" uuid:"59a5bc8f-447f-47e7-8050-c0201ce00ba6"]
+new [description:"add CI\/CD Auto DevOps into the project" end:"1606824357" entry:"1585513401" modified:"1606824357" project:"ci_cd" status:"completed" uuid:"59a5bc8f-447f-47e7-8050-c0201ce00ba6"]
+---
+time 1606824390
+old [description:"learn more: http:\/\/www.yolinux.com\/TUTORIALS\/LibraryArchives-StaticAndDynamic.html" entry:"1563827999" modified:"1563827999" status:"pending" uuid:"3f3a2322-d418-4bc1-8634-eed3a501a233"]
+new [description:"learn more: http:\/\/www.yolinux.com\/TUTORIALS\/LibraryArchives-StaticAndDynamic.html" end:"1606824390" entry:"1563827999" modified:"1606824390" status:"completed" uuid:"3f3a2322-d418-4bc1-8634-eed3a501a233"]
+---
+time 1606824414
+old [description:"check for memory leaks in body" entry:"1584098316" modified:"1584098316" status:"pending" uuid:"64eac3f4-0854-430c-8cc6-dfd656e0b411"]
+new [description:"check for memory leaks in body" end:"1606824414" entry:"1584098316" modified:"1606824414" status:"completed" uuid:"64eac3f4-0854-430c-8cc6-dfd656e0b411"]
+---
+time 1606824433
+old [description:"add defined(__has_include) macro for safty" entry:"1587047171" modified:"1587047171" status:"pending" uuid:"c648e333-3205-47ae-9f4a-243758ddb3f7"]
+new [description:"add defined(__has_include) macro for safty" end:"1606824433" entry:"1587047171" modified:"1606824433" status:"completed" uuid:"c648e333-3205-47ae-9f4a-243758ddb3f7"]
+---
+time 1606824498
+old [description:"parse request cookie" entry:"1590592146" modified:"1590592146" project:"cookies" status:"pending" uuid:"fa45e209-fd9d-46e7-a7ee-b0e6f412838d"]
+new [description:"parse request cookie" end:"1606824498" entry:"1590592146" modified:"1606824498" project:"cookies" status:"completed" uuid:"fa45e209-fd9d-46e7-a7ee-b0e6f412838d"]
+---
+time 1606824613
+old [description:"a valve that wraps a function" entry:"1587134019" modified:"1587134019" project:"valves" status:"pending" uuid:"48c08fbb-9cfe-4be3-b20b-703415927613"]
+new [description:"a valve that wraps a function" end:"1606824613" entry:"1587134019" modified:"1606824613" project:"valves" status:"completed" uuid:"48c08fbb-9cfe-4be3-b20b-703415927613"]
+---
+time 1606824632
+old [description:"find a better way to specialize empty_t" entry:"1587144992" modified:"1587144992" project:"valves" status:"pending" uuid:"725c4707-29eb-4549-94c2-615190b86ae8"]
+new [description:"find a better way to specialize empty_t" end:"1606824632" entry:"1587144992" modified:"1606824632" project:"valves" status:"completed" uuid:"725c4707-29eb-4549-94c2-615190b86ae8"]
+---
