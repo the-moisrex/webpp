@@ -39,6 +39,8 @@
  * Class Errors:
  * These are the error types that use `class` types as their error types.
  *
+ * Fixme: the success and failure functions don't work. It's better to use 0, and 1 directly in enums
+ *
  */
 namespace webpp {
 
@@ -113,13 +115,24 @@ namespace webpp {
         constexpr error_handler() : super{success_value} {};
         constexpr error_handler(auto val) noexcept : super{val} {}
 
+        operator bool() const noexcept {
+            return is_success();
+        }
+
+        [[nodiscard]] constexpr bool is_success() const noexcept {
+            return *this == success_value;
+        }
+
+        [[nodiscard]] constexpr bool is_failure() const noexcept {
+            return *this != success_value;
+        }
+
 
         /**
          * Set success
          */
         auto& success() noexcept {
-            this->reset();
-            this->on(success_value);
+            this->reset(success_value);
             return *this;
         }
 
@@ -130,7 +143,6 @@ namespace webpp {
             }
             return *this;
         }
-
     };
 
 

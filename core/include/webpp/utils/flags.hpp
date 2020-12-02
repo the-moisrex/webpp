@@ -117,8 +117,12 @@ namespace webpp::flags {
             return (value & v) != v;
         }
 
-        constexpr void reset() noexcept {
-            value = none;
+        constexpr void reset(base_type v = none) noexcept {
+            value = v;
+        }
+
+        constexpr void reset(type v) noexcept {
+            value = value_of(v);
         }
 
     };

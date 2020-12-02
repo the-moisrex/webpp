@@ -144,7 +144,8 @@ namespace webpp {
 
 
         int operator()() noexcept {
-            auto req = super::etraits::template instantiate<request_type>();
+            // todo: use a monotonic allocator
+            auto req = this->template instantiate<request_type>();
             auto         res = app(req);
             res.calculate_default_headers();
             auto header_str = res.headers.str();
