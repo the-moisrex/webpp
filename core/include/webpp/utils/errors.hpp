@@ -39,7 +39,8 @@
  * Class Errors:
  * These are the error types that use `class` types as their error types.
  *
- * Fixme: the success and failure functions don't work. It's better to use 0, and 1 directly in enums
+ * Fixme: the success and failure functions don't work. It's better to use 0, and 1 directly in enums,
+ *        or maybe it's the magic_enum::details::max_v's problem; I'm not sure yet.
  *
  */
 namespace webpp {

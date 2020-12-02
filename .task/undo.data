@@ -713,3 +713,6 @@ new [description:"add add allocator category concept" entry:"1606826323" modifie
 time 1606826356
 new [description:"add add allocator categories to the traits" entry:"1606826356" modified:"1606826356" project:"performance" status:"pending" uuid:"b3a3224a-babd-4a47-bddf-c4a4a3638380"]
 ---
+time 1606929125
+new [description:"add errors.hpp success and failure functions are useless" entry:"1606929125" modified:"1606929125" project:"bugs" status:"pending" uuid:"9926f34f-ae50-4967-9c12-9f0b54986dd3"]
+---
