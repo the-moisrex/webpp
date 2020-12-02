@@ -30,43 +30,41 @@ int main() {
 
 ```
 
+## Servers
+Even though it's not the best name for it, we do call them _servers_ because
+they don't know about the protocol that they're transferring (except TCP/UDP/...);
+but they know how to __communicate with the operating system__.
+
+Examples used in the [server](./webpp/server) directory:
+
+- __asio__: utilizing `boost::asio` or `asio` or `std::net` (when it comes)
+- __posix__: communicating directly with the *nix OSes to do the same thing.
+
 ## Protocols
 Protocols are usually a way of communication between the high level application layer,
 and the low level transmission layers.
 
-Protocols:
+The protocols that interests us in this project know what will the other side
+understands so they can __convert the request and responses from and to their corresponding
+data structures known to the framework__.
 
-- Can depend on another protocols.
+But those are not what we call protocols in this project. These are:
 
-Examples of protocols:
+- __CGI__: A _CGI_ client. (doesn't use _servers_)
+- __FastCGI__: A _FastCGI_ client. (uses _servers_)
+- __Self Hosted__: HTTP protocol (utilizing _servers_)
+- __Beast__: a wrapper for `boost::beast` (has its own `boost::asio` _server_)
 
-- **HTTP**
-- **HTTPS**
-- **WebRTC**
-- **FTP**
+The _Protocol_:
+- Creates a `request` from user requests;
+- Passes the `request` to the `Applicaton`;
+- `Application` returns a `response`;
+- `Protocol` converts the `response` to the known format by the client;
+- `Protocol` sends that `response` to the outside world.
 
-## HTTP Protocol
-The rest of this article is about HTTP protocol.
+The `Protocol` instantiates the `Application` so it does have access to it.
 
-### Interfaces
-Interfaces are part of the HTTP protocol and they are the part 
-that have contact with the outside world.
-
-Each interface implements an specific communication protocol. Including:
-
- - CGI
- - FastCGI
- - Self Hosted
-
-The `interface`:
- - Implements and creates a `request`;
- - Passes it to the `Applicaton` as a reference;
- - `Application` returns a `response`;
- - `Protocol` sends that `response` to the outside world.
-
-The `interface` instantiates the `Application`.
-
-There can be more than one `interface` inside an executable.
+There can be more than one _protocol_ inside an executable.
 For example you can accept request from a FastCGI on port 2020,
 and at the same time you can accept HTTP request on port 80.
 
@@ -320,6 +318,8 @@ public methods:
 
 
 ###### Context Extensions
+_first read more about the extension system in [extensions/readme](./webpp/extensions/README.md) file._
+
 Context extensions are added features to the contexts. These features
 will be used by the routes in order to have a easier way of doing
 things. For example you could use a context extension to parse
@@ -369,352 +369,12 @@ We need a way to achieve this; we need a way to specify the initial
 context type that will be used for every single time.
 
 
+## Traits System
+Explained in [traits/readme](./webpp/traits/README.md) file.
 
-## traits
-_Traits_ are special types that contain other types and static methods
-that will help the users of the library to customize the library through
-using other types for specific purposes. Fox example to use a different
-`Allocator` STL uses or a different _character type_ in the strings or
-even configure UTF-8.
+## Extension System
+Explained in [extensions/readme](./webpp/extensions/README.md) file.
 
-------------------------------------------------------------------
 
-
-
-
-
-## Extension system
-
-Definitions:
-
-- __Extension__: some type that adds features to the extensie, e.g.: cookie
-- __Extensie__: the type that extensions will add features to; e.g.: request, response, context
-
-There are 2 types of extensions:
-
-- Mother extensions
-- Child extensions
-
-**Mother Extensions** are the type of extensions that the extensies will extend from.
-
-__Child Extensions__ are the type of extensions that will inherit extensies;
-they will replace the original extension type, but they have access to
-the extensie.
-
-### Extension syntax
-The extensions are just a type that has a __templated using statement__.
-The difference between extension types are just which extension they have
-access to.
-
-
-__Mother Extension__:
-
-Can only have access to _traits type_.
-```c++
-struct mother_extension {
-    
-    template <Traits TraitsType>
-    using type {
-        // has to have at least a default constructor
-        // features ...
-    };
-};
-
-struct portable_extension_packs {
-    using context_extensions = extension_pack<mother_extension>;
-};
-```
-
-__Attention__: mother extensions are not able to require other child extensions as dependencies.
-
-__Child Extension__:
-
-Child extensions have access to the _traits type_ and also the _extensie_.
-Using child extensions are a big harder because they need to have access to their
-parents' fields and methods.
-
-```c++
-template <Traits TraitsType, ResponseHeaders C>
-struct cookies : public virtual C {
-  // has to have a default constructor
-  auto get_cookies() { ... }
-};
-
-struct cookies_child_extensions {
-
-  template <Traits TraitsType, ResponseHeaders C>
-  using type = cookies<TraitsType, C>;
-};
-
-struct router_level_extensions {
-    using response_header_extensions = extension_pack<cookies_child_extension>;
-};
-```
-
-or the shortened version:
-
-```c++
-template <Traits TraitsType = std_traits, ResponseHeader C = default_response_header>
-struct cookies : public virtual C {
-    
-    template <Traits TT, Context CC>
-    using type = cookies<TT, CC>;
-};
-
-struct router_level_extension {
-    using header_extensions = extension_pack<cookies<>>;
-};
-```
-
-### Unified extension type
-With a __unified extension type__, you can have an extension that can
-introduce other extensions or require other extensions to be presented.
-
-A unified extension will be passed to routers; so unified extensions are
-only able to add extensions to the types that are being created by router
-or any type down its chain.
-
-Features of a unified extension type:
-
-- `router_extensions`: a pack of router extensions
-- `context_extensions`: a pack of context extensions
-- `response_extensions`: a pack of response extensions
-- `response_header_extensions`: a pack of response header extensions
-- `response_header_field_extensions`: a pack of response header field extensions
-- `response_body_extensions`: a pack of response body extensions
-
-
-### Extension usage
-Here's an example of how you can use extensions inside your application layer:
-
-```c++
-struct app {
-  using extensions = extension_pack<cookies, sqlite>;
-  
-  const_router<extensions> router {
-      path() / "home" >> app::home
-  };
-
-  app () {
-    router.sqlite.username = "admin";
-    router.sqlite.password = "password";
-    router.sqlite.file = "file.sqlite";
-    router.sqlite.connect();
-  }
-
-  auto home(auto Context& ctx) {
-    return "Home Page";
-  }
-
-  auto Response operator()(auto Context& ctx) {
-    return router(ctx);
-  }
-
-};
-```
-
-### Extensies
-
-Extensies are these types:
-
-- const_router / dynamic_router
-- context
-- response
-- response_headers
-- response_header_field
-- response_body
-
-There are two level for each extensies:
-
-- Mid-Level extensie
-- Final extensie
-
-
-__Mid-Level__ extensies are extensies which:
-
-- can extend from _mother extensions_
-- _child extensions_ can extend from it
-- are not a __final__
-- can specify a _final extensie_
-
-__Final Extensies__ are the extensies that:
-
-- cannot be extended from
-- inherits from all the _child extensions_ and the _mid-level extensie_
-
-
-### Extension hierarchy 
-The hierarchy of the extensions is like this:
-
-1. The _Mother Extensions_ (optional)
-2. The _Mid-Level Extensie_ (required)
-3. The _Child Extensions_ (optional)
-4. The _Final Extensie_ (optional)
-
-### Extensie descriptor type (internal usage)
-For each extensie, it is required to write a type with these types in them so the extension pack
-can detect which extensions should be used where.
-
-- `has_related_extension_pack` (required)
-- `related_extension_pack_type` (required)
-- `mid_level_extensie_type` (required)
-- `final_extensie_type` (required) (could be optional, but that's for later)
-
-### Extensie descriptor carry dependencies
-
-
-### Extension hierarchy assembly (internal usage)
-To assemble the extensions and the extensies into one single type we have to:
-
-1. [ ] Extract the type _extension pack_ from the router level extensions
-2. [X] Extract _mother extensions_ from the extension pack
-3. [X] Filter the _mother extensions_ that have extensions for this extensie
-4. [X] Extract the extension packs of the extensie, from the extracted _mother extensions_
-5. [X] Merge the extracted extension packs into one extension pack
-6. [X] Apply the _mother extensions_ to the _mid-level extensie_
-7. [X] Extract the _child extensions_ from the extension pack
-8. [X] Filter the _child extensions_ that have extensions for this extensie
-9. [X] Extract the extension packs of the extensie, from the extracted _child extensions_
-10. [X] Merge the extracted extension packs into one extension pack
-11. [X] Apply the _mid-level extensie_ to all the _child extension_
-12. [X] Extract the _final extensie_ from the _extensie descriptor_
-13. [X] Apply _child extension_ to the _final extensie_
-
-
-
-## Allocator System
-
-The reason behind the whole project being a header-only project is originally lies around
-the allocators. Even though allocators are cheap enough for a web server and other programming
-languages don't even have such a thing, and honestly it's a little hard to have them all over
-the code base, I decided that it's too good of a thing to just dismiss.
-
-### Why not polymorphic allocators only?
-
-With dynamic allocators are great, but the thing is that they usually require
-at least one more indirection and I promised myself that I will not put any
-unnecessary indirections in the project specially in high performance places
-(which means no `virtual` keyword in high throughput places of the core library).
-
-We totally could've avoided `trait` types if we wanted to use `virtual`s and thus
-we probably could've saved ourselves lots of meta programmings as well and we also
-could've been able to use dynamic linking as well as static linking (thus the project
-could become non-header-only library as well).
-
-But that's the decision that I made from almost the beginnings of this project
-because implementing that much code with `virtual` being allowed, there's no going
-back that easily.
-
-### Allocator Pack
-
-There are a few places that one type of allocator can help more than the others.
-The `trait`s type that the user provides uses an allocator pack instead of just one
-allocator type.
-
-This way, the core library can pick the best allocator from that allocator pack.
-
-- __New And Delete Allocators__: the `std::allocator` essentially
-- __Linear Allocators__: it only `free`s the memory only on destruction. Useful for _buffers_, _string generators_, ...
-- __Simple Segregated Storage__: like `boost.pool`
-- ...
-
-### Allocator features
-
-These are the features that each type can choose between them, or 
-combine them so the allocator pack can choose the best allocator from
-the allocator pack.
-
-- __noop_free__: don't need to `free` on `deallocate`; but only on destroy.
-- __equal_sizes__: we're going to allocate lots of stuff with equal sizes.
-- __contagious__: we need to use it in contagious memory
-- __non_contagious__: the opposite of _contagious_.
-- __sync__: is going to be used in a multi-threaded environment
-- __no_sync__: don't care about thread-synchronization.
-- __fixed__: fixed size, don't need more than specified size.
-- __local__: not good for the duration of the process (https://youtu.be/nZNd5FjSquk?t=1009)
-- __global__: good for duration of the process
-- __monotonic__:
-  
-From (https://youtu.be/nZNd5FjSquk?t=355):
-- __fast__
-- __shared__
-- __protected__
-- __mapped__
-- __testing__
-- __debugging__
-- __measuring__
-- __better_locality__
-- __less_connections__
-
-### some types of allocators:
-https://slembcke.github.io/2020/10/12/CustomAllocators.html
-
-- Slab Allocator
-- Linear Allocator
-- Zone Allocator
-- Buddy Block Allocator
-
-### Some implementations
-https://github.com/mtrebi/memory-allocators
-https://github.com/foonathan/memory
-https://godbolt.org/z/rvfofv
-
-### Allocation strategies:
-https://youtu.be/nZNd5FjSquk?t=1894
-
-- Fragmentablity
-- Density
-- Variation
-- Locality
-- Utilization
-- Contention
-
-### Density
-
-### Variation
-
-### Locality
-https://youtu.be/CFzuFNSpycI?t=2865
-for long-running systems, locality matters and how long the
-allocation and deallocation took don't.
-
-### Utilization
-https://youtu.be/CFzuFNSpycI?t=3195
-Never use monotonic allocator by itself when the utilization
-is low and total number of bytes allocated is large
-
-### Contention
-https://youtu.be/CFzuFNSpycI?t=3372
-
-### Fragmentability
-https://youtu.be/CFzuFNSpycI?t=3473
-
-### Performance improvements
-https://youtu.be/CFzuFNSpycI?t=3547
-
-- Ensure physical locality of allocated memory
-- Avoid memory diffusion in long-running systems
-- Obviate deallocation of individual allocations
-- Sidestep contention during concurrent allocations
-- Separate unrelated data to avoid false sharing
-- Compose effective allocation strategies
-
-### Kinds of memories
-https://youtu.be/CFzuFNSpycI
-
-- Static memory
-- Memory-mapped memory
-- Read/Write protectable memory
-- Fast memory (special architectures)
-- Shared memory (special allocators)
-
-
-### Debugging allocators
-https://youtu.be/CFzuFNSpycI?t=3564
-
-- Counting (auditing) allocator
-- Test allocator
-- Limit allocator
-- Read/Write protectable memory allocator
-- Alarm allocator (if monotonic allocator overflows)
-
+## Allocator system
+Explained in [memory/readme](./webpp/memory/README.md) file.
