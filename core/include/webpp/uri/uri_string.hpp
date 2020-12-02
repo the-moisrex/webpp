@@ -256,10 +256,18 @@ namespace webpp::uri {
                 port_start = data.size(); // there's no port
             } else {
                 port_start += starting_point;
-                const auto str_view = _data.substr(port_start + 1, authority_end - (port_start + 1));
-                if (!ascii::is::digit(str_view)) {
+                const auto port_view = _data.substr(port_start + 1, authority_end - (port_start + 1));
+                if (!ascii::is::digit(port_view)) {
                     port_start = data.size();
                     errors.failure(uri_error_type::port);
+                } else {
+                    // unfortunately this is the best way that I could think of
+                    // but if the user wants the port as well, then we have converted this value twice
+                    // not efficient; I know. I should probably implement a better version of uri in the future
+                    auto const p = to_int(port_view);
+                    if (p < 0 || p > 65535) {
+                        errors.failure(uri_error_type::port);
+                    }
                 }
             }
         }
@@ -304,6 +312,10 @@ namespace webpp::uri {
             parse_user_info(); // to get "authority_start" and "user_info_end"
             parse_port();      // to get "port_start" and hopefully "authority_end"
             parse_path();      // to make sure we have "authority_end"
+        }
+
+        void parse_all() const noexcept {
+            parse_host();
         }
 
         /**
@@ -1834,6 +1846,7 @@ namespace webpp::uri {
          * Check if the specified string is a valid URI or not
          */
         [[nodiscard]] bool is_valid() const noexcept {
+            parse_all();
             return errors.is_success();
         }
 
@@ -1850,7 +1863,7 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] bool has_valid_port() const noexcept {
-            return !port().empty() || errors.is_off(uri_error_type::port);
+            return !port().empty() || (errors.is_off(uri_error_type::port) && port_uint16());
         }
 
         [[nodiscard]] bool has_valid_queries() const noexcept {
