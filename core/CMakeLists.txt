@@ -67,6 +67,8 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/utils/functional.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/property.hpp
 
+        ${LIB_INCLUDE_DIR}/webpp/memory/allocator_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/memory/allocator_pack.hpp
         ${LIB_INCLUDE_DIR}/webpp/memory/allocators.hpp
         ${LIB_INCLUDE_DIR}/webpp/memory/available_memory.hpp
 
