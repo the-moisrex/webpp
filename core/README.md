@@ -35,7 +35,7 @@ Even though it's not the best name for it, we do call them _servers_ because
 they don't know about the protocol that they're transferring (except TCP/UDP/...);
 but they know how to __communicate with the operating system__.
 
-Examples used in the [server](./webpp/server) directory:
+Examples used in the [server](./include/webpp/server) directory:
 
 - __asio__: utilizing `boost::asio` or `asio` or `std::net` (when it comes)
 - __posix__: communicating directly with the *nix OSes to do the same thing.
@@ -318,7 +318,7 @@ public methods:
 
 
 ###### Context Extensions
-_first read more about the extension system in [extensions/readme](./webpp/extensions/README.md) file._
+_first read more about the extension system in [extensions/readme](./include/webpp/extensions/README.md) file._
 
 Context extensions are added features to the contexts. These features
 will be used by the routes in order to have a easier way of doing
@@ -370,11 +370,11 @@ context type that will be used for every single time.
 
 
 ## Traits System
-Explained in [traits/readme](./webpp/traits/README.md) file.
+Explained in [traits/readme](./include/webpp/traits/README.md) file.
 
 ## Extension System
-Explained in [extensions/readme](./webpp/extensions/README.md) file.
+Explained in [extensions/readme](./include/webpp/extensions/README.md) file.
 
 
 ## Allocator system
-Explained in [memory/readme](./webpp/memory/README.md) file.
+Explained in [memory/readme](./include/webpp/memory/README.md) file.
