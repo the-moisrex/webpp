@@ -58,6 +58,43 @@ namespace webpp {
               stl::pmr::unsynchronized_pool_resource, stl::allocator<T>>::best::type;
         };
 
+        struct monotonic_buffer_resource_descriptor {
+
+            template <typename T>
+            using type = stl::pmr::monotonic_buffer_resource;
+
+            static constexpr alloc::feature_pack features{alloc::noop_dealloc};
+        };
+
+        struct synchronized_pool_resource_descriptor {
+
+            template <typename T>
+            using type = stl::pmr::synchronized_pool_resource;
+
+            static constexpr alloc::feature_pack features{alloc::sync};
+        };
+
+        struct unsynchronized_pool_resource_descriptor {
+
+            template <typename T>
+            using type = stl::pmr::unsynchronized_pool_resource;
+
+            static constexpr alloc::feature_pack features{};
+        };
+
+        struct std_allocator_descriptor {
+
+            template <typename T>
+            using type = stl::allocator<T>;
+
+            static constexpr alloc::feature_pack features{alloc::default_ctor, alloc::sync};
+        };
+
+        using list = alloc::allocator_list<monotonic_buffer_resource_descriptor,
+                                    synchronized_pool_resource_descriptor,
+                                    unsynchronized_pool_resource_descriptor,
+                                    std_allocator_descriptor>;
+
         template <typename T>
         using local = stl::pmr::monotonic_buffer_resource;
 

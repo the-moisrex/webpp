@@ -4,9 +4,8 @@
 #define WEBPP_STD_TRAITS_H
 
 #include "../logs/std_logger.hpp"
+#include "../memory/std_allocator_pack.hpp"
 
-#include <iterator>
-#include <ostream>
 #include <string>
 #include <string_view>
 
@@ -19,6 +18,8 @@ namespace webpp {
 
         using char_type   = CharT;
         using char_traits = CharTraits;
+
+        using allocator_pack = std_allocator_pack;
 
         template <typename Type>
         using allocator = Allocator<Type>;
