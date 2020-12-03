@@ -106,7 +106,7 @@ namespace webpp::istl {
      *   - if it's a string (2 times more important that the other rules)
      *   - if it's allocator is not the std::allocator<char_type>
      * @code
-     * template <typename T>
+     *   template <typename T>
      *   struct Cond {
      *       static constexpr stl::size_t value = int(istl::String<T>) * 2 + !requires {
      *           stl::same_as<typename T::allocator_type, stl::allocator<typename T::value_type>>;

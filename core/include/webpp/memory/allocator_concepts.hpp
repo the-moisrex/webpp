@@ -37,20 +37,18 @@ namespace webpp {
             {A(a)};
             {a1 = a};
             // A a(b)};
-            {A(std::move(a))};
-            {a1 = std::move(a)};
-            // {A a(std::move(b))};
+            {A(stl::move(a))};
+            {a1 = stl::move(a)};
+            // {A a(stl::move(b))};
         };
     };
 
     static_assert(Allocator<stl::allocator<int>>, "There's a problem with Allocator concept");
 
-
-    //    template <typename T>
-    //    concept AllocatorPack = requires {
-    //
-    //    };
-
+    template <typename D>
+    concept AllocatorPack = requires {
+      template D::ranker; // < feature_pack FPack > A Cond for "ranked_types" type trait (in std/type_traits.hpp file)
+    };
 
 } // namespace webpp
 

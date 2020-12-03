@@ -8,7 +8,7 @@
 #include <variant>
 
 /**
- * Todo: update the error system if you ever see Matching got into C++ (hopefully in c++23)
+ * Todo: update the error system if you ever see Pattern Matching got into C++ (hopefully in c++23)
  *
  * # Error Category:
  * These are a series of error types that are related to each other.
