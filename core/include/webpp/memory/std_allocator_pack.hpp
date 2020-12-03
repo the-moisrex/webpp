@@ -15,6 +15,16 @@ namespace webpp {
             using type = stl::allocator<T>;
         };
 
+        struct std_allocator_descriptor {
+
+            template <typename T>
+            using type = stl::allocator<T>;
+
+            static constexpr alloc::feature_pack features{alloc::default_ctor, alloc::sync};
+        };
+
+        using list = alloc::allocator_list<std_allocator_descriptor>;
+
         template <typename T>
         using local = stl::allocator<T>;
 

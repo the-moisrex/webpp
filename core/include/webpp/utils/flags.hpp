@@ -48,8 +48,14 @@ namespace webpp::flags {
         base_type value = none;
 
         constexpr manager() = default;
-        constexpr manager(base_type val) noexcept : value{val} {}
-        constexpr manager(type val) noexcept : value{value_of(val)} {}
+
+        template <typename ...T>
+        requires (stl::same_as<stl::remove_cvref_t<T>, base_type>)
+        constexpr manager(T ...val) noexcept : value{(none | ... | val)} {}
+
+        template <typename ...T>
+        requires (stl::same_as<stl::remove_cvref_t<T>, type>)
+        constexpr manager(T ...val) noexcept : value{(none | ... | value_of(val))} {}
 
         operator base_type() const noexcept {
             return value;
