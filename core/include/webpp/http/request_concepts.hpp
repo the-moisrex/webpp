@@ -41,22 +41,22 @@ namespace webpp {
     template <typename T>
     concept RequestExtensionList = ExtensionListOf<T, is_request_extension_pack>;
 
-    struct fake_request_type : public enable_traits<fake_traits_type> {
-        struct protocol_type {
-            protocol_type() = default;
-            struct app_type {} app;
-        };
-        using traits_type    = fake_traits_type;
-        using allocator_type = typename traits_type::template allocator<typename traits_type::char_type>;
-
-        auto request_uri() const noexcept {
-            return "/";
-        }
-
-        auto get_allocator() const noexcept {
-            return allocator_type{};
-        }
-    };
+//    struct fake_request_type : public enable_traits<fake_traits_type> {
+//        struct protocol_type {
+//            protocol_type() = default;
+//            struct app_type {} app;
+//        };
+//        using traits_type    = fake_traits_type;
+//        using allocator_type = typename traits_type::template allocator<typename traits_type::char_type>;
+//
+//        auto request_uri() const noexcept {
+//            return "/";
+//        }
+//
+//        auto get_allocator() const noexcept {
+//            return allocator_type{};
+//        }
+//    };
 
 } // namespace webpp
 

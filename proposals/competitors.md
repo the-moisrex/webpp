@@ -105,6 +105,9 @@ I think the source code is wired. I should look into it more to see if it's good
 ### libhttpserver
 [GitHub](https://github.com/etr/libhttpserver)
 
+### libmicrohttpd
+[WebSite](https://www.gnu.org/software/libmicrohttpd/)
+
 
 ### cpp-jwt
 [GitHub](https://github.com/arun11299/cpp-jwt)
