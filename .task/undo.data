@@ -716,3 +716,13 @@ new [description:"add add allocator categories to the traits" entry:"1606826356"
 time 1606929125
 new [description:"add errors.hpp success and failure functions are useless" entry:"1606929125" modified:"1606929125" project:"bugs" status:"pending" uuid:"9926f34f-ae50-4967-9c12-9f0b54986dd3"]
 ---
+time 1607022725
+new [description:"projects" entry:"1607022725" modified:"1607022725" status:"pending" uuid:"27286d5e-96ff-4c8a-b3d1-dbed6a527d12"]
+---
+time 1607022742
+old [description:"projects" entry:"1607022725" modified:"1607022725" status:"pending" uuid:"27286d5e-96ff-4c8a-b3d1-dbed6a527d12"]
+new [description:"projects" end:"1607022740" entry:"1607022725" modified:"1607022742" status:"deleted" uuid:"27286d5e-96ff-4c8a-b3d1-dbed6a527d12"]
+---
+time 1607022801
+new [description:"remove magic_enums as dependency" entry:"1607022801" modified:"1607022801" status:"pending" uuid:"349645bd-0ee8-4bf0-b6ad-ed05f9840065"]
+---

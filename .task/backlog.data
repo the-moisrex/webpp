@@ -212,3 +212,6 @@
 {"description":"add add allocator category concept","entry":"20201201T123843Z","modified":"20201201T123843Z","project":"performance","status":"pending","uuid":"f95ed9ed-2ed0-4b70-9204-d4e363b61dea"}
 {"description":"add add allocator categories to the traits","entry":"20201201T123916Z","modified":"20201201T123916Z","project":"performance","status":"pending","uuid":"b3a3224a-babd-4a47-bddf-c4a4a3638380"}
 {"description":"add errors.hpp success and failure functions are useless","entry":"20201202T171205Z","modified":"20201202T171205Z","project":"bugs","status":"pending","uuid":"9926f34f-ae50-4967-9c12-9f0b54986dd3"}
+{"description":"projects","entry":"20201203T191205Z","modified":"20201203T191205Z","status":"pending","uuid":"27286d5e-96ff-4c8a-b3d1-dbed6a527d12"}
+{"description":"projects","end":"20201203T191220Z","entry":"20201203T191205Z","modified":"20201203T191222Z","status":"deleted","uuid":"27286d5e-96ff-4c8a-b3d1-dbed6a527d12"}
+{"description":"remove magic_enums as dependency","entry":"20201203T191321Z","modified":"20201203T191321Z","status":"pending","uuid":"349645bd-0ee8-4bf0-b6ad-ed05f9840065"}

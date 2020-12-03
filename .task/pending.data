@@ -72,3 +72,4 @@
 [description:"add add allocator category concept" entry:"1606826323" modified:"1606826323" project:"performance" status:"pending" uuid:"f95ed9ed-2ed0-4b70-9204-d4e363b61dea"]
 [description:"add add allocator categories to the traits" entry:"1606826356" modified:"1606826356" project:"performance" status:"pending" uuid:"b3a3224a-babd-4a47-bddf-c4a4a3638380"]
 [description:"add errors.hpp success and failure functions are useless" entry:"1606929125" modified:"1606929125" project:"bugs" status:"pending" uuid:"9926f34f-ae50-4967-9c12-9f0b54986dd3"]
+[description:"remove magic_enums as dependency" entry:"1607022801" modified:"1607022801" status:"pending" uuid:"349645bd-0ee8-4bf0-b6ad-ed05f9840065"]
