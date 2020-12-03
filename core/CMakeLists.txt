@@ -71,6 +71,8 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/memory/allocator_pack.hpp
         ${LIB_INCLUDE_DIR}/webpp/memory/allocators.hpp
         ${LIB_INCLUDE_DIR}/webpp/memory/available_memory.hpp
+        ${LIB_INCLUDE_DIR}/webpp/memory/std_pmr_allocator_pack.hpp
+        ${LIB_INCLUDE_DIR}/webpp/memory/std_allocator_pack.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/ip/ipv4.hpp
         ${LIB_INCLUDE_DIR}/webpp/ip/ipv6.hpp
