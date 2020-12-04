@@ -11,8 +11,7 @@
 namespace webpp {
 
     /**
-     * @brief considers this ip as a subnet and converts it into a int
-     * prefix
+     * @brief considers this ip as a subnet and converts it into a int prefix
      */
     constexpr uint8_t to_prefix(uint32_t octets) noexcept {
         uint8_t prefix = 0u;
@@ -39,9 +38,8 @@ namespace webpp {
      * Convert string to prefix
      * @param octets
      */
-    template <Traits TraitsType>
-    constexpr uint8_t to_prefix(typename TraitsType::string_view_type const& _data) noexcept {
-        using traits_type = TraitsType;
+    constexpr uint8_t to_prefix(istl::StringViewifiable auto&& m_data) noexcept {
+        const auto _data = istl::string_viewify(stl::forward<decltype(m_data)>(m_data));
 
         if (_data.size() > 15 || _data.size() < 7) {
             return 0u;
@@ -107,22 +105,17 @@ namespace webpp {
                 static_cast<uint8_t>(subnet >> 8u & 0xFFu), static_cast<uint8_t>(subnet & 0xFFu)};
     }
 
-    template <Traits TraitsType>
     struct ipv4 {
-        using traits_type      = TraitsType;
-        using string_view_type = typename traits_type::string_view_type;
-        using string_type      = typename traits_type::string_type;
-        using char_type        = typename traits_type::char_type;
-
       private:
-        mutable uint32_t data = 0u; // all bits are used
+        uint32_t data = 0u; // all bits are used
 
         // 255 means that the ip doesn't have a prefix
         // 254 means the ip is not valid
         // 253 means the prefix was not valid
-        mutable uint8_t _prefix = 255u;
+        uint8_t _prefix = 255u;
 
-        constexpr void parse(string_view_type const& _data) const noexcept {
+        constexpr void parse(istl::StringViewifiable auto&& m_data) noexcept {
+            const auto _data = istl::string_viewify(stl::forward<decltype(m_data)>(m_data));
             if (_data.size() > 15 || _data.size() < 7) {
                 _prefix = 254u; // the ip is not valid
                 return;
@@ -132,9 +125,9 @@ namespace webpp {
             while (_data[first_dot] != '.' && first_dot != len)
                 first_dot++;
 
-            auto octet_1 = _data.substr(0u, first_dot);
+            const auto octet_1 = _data.substr(0u, first_dot);
             if (first_dot == len || octet_1.empty() || octet_1.size() > 3 || !ascii::is::digit(octet_1) ||
-                (ascii::starts_with(octet_1, '0') && octet_1 != "0")) {
+                (ascii::starts_with(octet_1, '0') && octet_1.size() != 1)) {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
@@ -143,9 +136,9 @@ namespace webpp {
             while (_data[second_dot] != '.' && second_dot != len)
                 second_dot++;
 
-            auto octet_2 = _data.substr(first_dot + 1u, second_dot - (first_dot + 1));
+            const auto octet_2 = _data.substr(first_dot + 1u, second_dot - (first_dot + 1));
             if (second_dot == len || octet_2.empty() || octet_2.size() > 3 || !ascii::is::digit(octet_2) ||
-                (ascii::starts_with(octet_2, '0') && octet_2 != "0")) {
+                (ascii::starts_with(octet_2, '0') && octet_2.size() != 1)) {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
@@ -154,9 +147,9 @@ namespace webpp {
             while (_data[third_dot] != '.' && third_dot != len)
                 third_dot++;
 
-            auto octet_3 = _data.substr(second_dot + 1u, third_dot - (second_dot + 1));
+            const auto octet_3 = _data.substr(second_dot + 1u, third_dot - (second_dot + 1));
             if (third_dot == len || octet_3.empty() || octet_3.size() > 3 || !ascii::is::digit(octet_3) ||
-                (ascii::starts_with(octet_3, '0') && octet_3 != "0")) {
+                (ascii::starts_with(octet_3, '0') && octet_3.size() != 1)) {
                 _prefix = 254u; // the ip is not valid
                 return;         // parsing failed.
             }
@@ -165,33 +158,33 @@ namespace webpp {
             while (slash != len && _data[slash] != '/')
                 slash++;
 
-            auto octet_4 = _data.substr(third_dot + 1u, slash - (third_dot + 1));
+            const auto octet_4 = _data.substr(third_dot + 1u, slash - (third_dot + 1));
 
             if (octet_4.empty() || octet_4.size() > 3 || !ascii::is::digit(octet_4) ||
-                (ascii::starts_with(octet_4, '0') && octet_4 != "0")) {
+                (ascii::starts_with(octet_4, '0') && octet_4.size() != 1)) {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
 
             if (slash != len) {
-                auto prefix_str = _data.substr(slash + 1);
-                if (prefix_str.empty() || (ascii::starts_with(prefix_str, '0') && prefix_str != "0") ||
+                const auto prefix_str = _data.substr(slash + 1);
+                if (prefix_str.empty() || (ascii::starts_with(prefix_str, '0') && prefix_str.size() != 1) ||
                     !ascii::is::digit(prefix_str)) {
                     _prefix = 254u; // the ip is not valid
                     return;
                 }
-                auto __prefix = to_uint(prefix_str);
-                if (__prefix > 32) {
+                const auto prefix_val = to_uint(prefix_str);
+                if (prefix_val > 32) {
                     _prefix = 254; // the ip is not valid
                     return;
                 }
-                _prefix = static_cast<uint8_t>(__prefix);
+                _prefix = static_cast<uint8_t>(prefix_val);
             }
 
-            auto oc1 = to_uint(octet_1);
-            auto oc2 = to_uint(octet_2);
-            auto oc3 = to_uint(octet_3);
-            auto oc4 = to_uint(octet_4);
+            const auto oc1 = to_uint(octet_1);
+            const auto oc2 = to_uint(octet_2);
+            const auto oc3 = to_uint(octet_3);
+            const auto oc4 = to_uint(octet_4);
 
             if (oc1 > 255 || oc2 > 255 || oc3 > 255 || oc4 > 255) {
                 _prefix = 254u; // the ip is not valid
@@ -205,7 +198,7 @@ namespace webpp {
                 _prefix = 255u; // the ip is valid
         }
 
-        constexpr uint32_t parse(stl::array<uint8_t, 4u> const& ip) const noexcept {
+        static constexpr uint32_t parse(stl::array<uint8_t, 4u> ip) noexcept {
             return static_cast<uint32_t>(ip[0] << 24u) | static_cast<uint32_t>(ip[1] << 16u) |
                    static_cast<uint32_t>(ip[2] << 8u) | static_cast<uint32_t>(ip[3]);
         }
@@ -215,27 +208,25 @@ namespace webpp {
 
         constexpr ipv4(ipv4&& ip) = default;
 
-        constexpr explicit ipv4(string_view_type const& ip) noexcept : _prefix(255) {
-            parse(ip);
+        template <typename T>
+        requires (!stl::same_as<stl::remove_cvref_t<T>, ipv4> && istl::StringViewifiable<T>)
+        constexpr explicit ipv4(T&& ip) noexcept : _prefix(255) {
+            parse(stl::forward<decltype(ip)>(ip));
         }
 
-        constexpr explicit ipv4(char_type const* const ip) noexcept : _prefix(255) {
-            parse(ip);
+        constexpr ipv4(istl::StringViewifiable auto&& ip, istl::StringViewifiable auto&& subnet) noexcept
+          : _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {
+            parse(stl::forward<decltype(ip)>(ip));
         }
 
-        constexpr ipv4(string_view_type const& ip, string_view_type const& subnet) noexcept
-          : _prefix(is::subnet<traits_type>(subnet) ? to_prefix<traits_type>(subnet) : 253u) {
-            parse(ip);
+        constexpr ipv4(istl::StringViewifiable auto&& ip, stl::array<uint8_t, 4> subnet) noexcept
+          : _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {
+            parse(stl::forward<decltype(ip)>(ip));
         }
 
-        constexpr ipv4(string_view_type const& ip, stl::array<uint8_t, 4> const& subnet) noexcept
-          : _prefix(is::subnet<traits_type>(subnet) ? to_prefix<traits_type>(subnet) : 253u) {
-            parse(ip);
-        }
-
-        constexpr ipv4(string_view_type const& ip, uint8_t __prefix) noexcept
+        constexpr ipv4(istl::StringViewifiable auto&& ip, uint8_t __prefix) noexcept
           : _prefix(__prefix > 32 && __prefix != 255u ? 253u : __prefix) {
-            parse(ip);
+            parse(stl::forward<decltype(ip)>(ip));
         }
 
         constexpr ipv4(uint8_t octet1, uint8_t octet2, uint8_t octet3, uint8_t octet4,
@@ -246,45 +237,37 @@ namespace webpp {
         constexpr ipv4(uint8_t octet1, uint8_t octet2, uint8_t octet3, uint8_t octet4,
                        stl::string_view const& subnet) noexcept
           : data(parse({octet1, octet2, octet3, octet4})),
-            _prefix(is::subnet<traits_type>(subnet) ? to_prefix<traits_type>(subnet) : 253u) {}
+            _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {}
 
         constexpr explicit ipv4(uint32_t const& ip, uint8_t prefix = 255) noexcept
           : data(ip),
             _prefix(prefix > 32 && prefix != 255u ? 253u : prefix) {}
 
-        constexpr explicit ipv4(uint32_t const& ip, string_view_type subnet) noexcept
+        constexpr explicit ipv4(uint32_t const& ip, istl::StringViewifiable auto&& subnet) noexcept
           : data(ip),
-            _prefix(is::subnet<traits_type>(subnet) ? to_prefix<traits_type>(subnet) : 253u) {}
+            _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {}
 
-        constexpr ipv4(stl::array<uint8_t, 4> const& ip, uint8_t prefix = 255) noexcept
+        constexpr ipv4(stl::array<uint8_t, 4> ip, uint8_t prefix = 255) noexcept
           : data(parse(ip)),
             _prefix(prefix > 32 && prefix != 255u ? 253u : prefix) {}
 
-        constexpr ipv4(stl::array<uint8_t, 4> const& ip, string_view_type const& subnet) noexcept
+        constexpr ipv4(stl::array<uint8_t, 4> ip, istl::StringViewifiable auto&& subnet) noexcept
           : data(parse(ip)),
-            _prefix(is::subnet<traits_type>(subnet) ? to_prefix<traits_type>(subnet) : 253u) {}
+            _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {}
 
-        constexpr ipv4(stl::array<uint8_t, 4> const& ip, stl::array<uint8_t, 4> const& subnet) noexcept
+        constexpr ipv4(stl::array<uint8_t, 4> ip, stl::array<uint8_t, 4> subnet) noexcept
           : data(parse(ip)),
-            _prefix(is::subnet<traits_type>(subnet) ? to_prefix<traits_type>(subnet) : 253u) {}
+            _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {}
 
-        explicit operator string_type() {
-            return str();
-        }
-
-        explicit operator const stl::enable_if_t<stl::is_integral_v<char_type>, void>*() {
-            return str().c_str();
-        }
-
-        explicit operator uint32_t() {
+        constexpr explicit operator uint32_t() const noexcept {
             return integer();
         }
 
         ipv4& operator=(ipv4 const& ip) = default;
-        ipv4& operator=(ipv4&& ip) = default;
+        ipv4& operator=(ipv4&& ip) noexcept = default;
 
-        ipv4& operator=(string_view_type const& ip) noexcept {
-            parse(ip);
+        ipv4& operator=(istl::StringViewifiable auto&& ip) noexcept {
+            parse(stl::forward<decltype(ip)>(ip));
             _prefix = 255u;
             return *this;
         }
@@ -295,27 +278,27 @@ namespace webpp {
             return *this;
         }
 
-        constexpr bool operator==(stl::array<uint8_t, 4> const& other) const noexcept {
+        constexpr bool operator==(stl::array<uint8_t, 4> other) const noexcept {
             return data == parse(other);
         }
 
-        constexpr bool operator!=(stl::array<uint8_t, 4> const& other) const noexcept {
+        constexpr bool operator!=(stl::array<uint8_t, 4> other) const noexcept {
             return data != parse(other);
         }
 
-        constexpr bool operator<(stl::array<uint8_t, 4> const& other) const noexcept {
+        constexpr bool operator<(stl::array<uint8_t, 4> other) const noexcept {
             return data < parse(other);
         }
 
-        constexpr bool operator>(stl::array<uint8_t, 4> const& other) const noexcept {
+        constexpr bool operator>(stl::array<uint8_t, 4> other) const noexcept {
             return data > parse(other);
         }
 
-        constexpr bool operator<=(stl::array<uint8_t, 4> const& other) const noexcept {
+        constexpr bool operator<=(stl::array<uint8_t, 4> other) const noexcept {
             return data <= parse(other);
         }
 
-        constexpr bool operator>=(stl::array<uint8_t, 4> const& other) const noexcept {
+        constexpr bool operator>=(stl::array<uint8_t, 4> other) const noexcept {
             return data >= parse(other);
         }
 
@@ -343,28 +326,28 @@ namespace webpp {
             return data <= other.data;
         }
 
-        constexpr bool operator!=(string_view_type const& ip) const noexcept {
-            return operator!=(ipv4<traits_type>(ip));
+        constexpr bool operator!=(istl::StringViewifiable auto&& ip) const noexcept {
+            return operator!=(ipv4(stl::forward<decltype(ip)>(ip)));
         }
 
-        constexpr bool operator==(string_view_type const& ip) const noexcept {
-            return operator==(ipv4<traits_type>(ip));
+        constexpr bool operator==(istl::StringViewifiable auto&& ip) const noexcept {
+            return operator==(ipv4(stl::forward<decltype(ip)>(ip)));
         }
 
-        constexpr bool operator<(string_view_type const& ip) const noexcept {
-            return operator<(ipv4<traits_type>(ip));
+        constexpr bool operator<(istl::StringViewifiable auto&& ip) const noexcept {
+            return operator<(ipv4(stl::forward<decltype(ip)>(ip)));
         }
 
-        constexpr bool operator>(string_view_type const& ip) const noexcept {
-            return operator>(ipv4<traits_type>(ip));
+        constexpr bool operator>(istl::StringViewifiable auto&& ip) const noexcept {
+            return operator>(ipv4(stl::forward<decltype(ip)>(ip)));
         }
 
-        constexpr bool operator<=(string_view_type const& ip) const noexcept {
-            return operator<=(ipv4<traits_type>(ip));
+        constexpr bool operator<=(istl::StringViewifiable auto&& ip) const noexcept {
+            return operator<=(ipv4(stl::forward<decltype(ip)>(ip)));
         }
 
-        constexpr bool operator>=(string_view_type const& ip) const noexcept {
-            return operator>=(ipv4<traits_type>(ip));
+        constexpr bool operator>=(istl::StringViewifiable auto&& ip) const noexcept {
+            return operator>=(ipv4(stl::forward<decltype(ip)>(ip)));
         }
 
         constexpr bool operator==(uint32_t const& ip) const noexcept {
@@ -391,31 +374,18 @@ namespace webpp {
             return integer() >= ip;
         }
 
-        friend stl::basic_ostream<char_type>& operator<<(stl::basic_ostream<char_type>& stream,
-                                                         ipv4<traits_type> const&       ip) {
-            stream << ip.str();
-            return stream;
-        }
-
-        friend stl::basic_istream<char_type>& operator>>(stl::basic_istream<char_type>& stream,
-                                                         ipv4<traits_type>&             ip) {
-            stl::basic_string<char_type> str;
-            stream >> str;
-            ip = str;
-            return stream;
-        }
-
         /**
          * @brief get string representation of the ip
-         * @return
          */
-        [[nodiscard]] string_type str() const noexcept {
-            auto _octets = octets();
-            // todo: use lib{fmt}
-            stl::basic_ostringstream<char_type> s;
-            s << static_cast<unsigned int>(_octets[0]) << '.' << static_cast<unsigned int>(_octets[1]) << '.'
-              << static_cast<unsigned int>(_octets[2]) << '.' << static_cast<unsigned int>(_octets[3]);
-            return s.str();
+        [[nodiscard]] auto str() const noexcept {
+            const auto _octets = octets();
+            return stl::format(FMT_COMPILE("{}.{}.{}.{}"), _octets[0], _octets[1], _octets[2], _octets[3]);
+        }
+
+        void str_to(istl::String auto& str) const noexcept {
+            const auto _octets = octets();
+            stl::format_to(stl::back_inserter(str), FMT_COMPILE("{}.{}.{}.{}"), _octets[0], _octets[1],
+                           _octets[2], _octets[3]);
         }
 
         /**
@@ -443,8 +413,7 @@ namespace webpp {
          * @param finish
          * @return
          */
-        [[nodiscard]] constexpr bool in_range(ipv4<traits_type> const& start,
-                                              ipv4<traits_type> const& finish) const noexcept {
+        [[nodiscard]] constexpr bool in_range(ipv4 const& start, ipv4 const& finish) const noexcept {
             return *this >= start && *this <= finish;
         }
 
@@ -460,7 +429,7 @@ namespace webpp {
          * Change the prefix of the ip
          * @param __prefix
          */
-        ipv4<traits_type>& prefix(uint8_t __prefix) noexcept {
+        constexpr ipv4& prefix(uint8_t __prefix) noexcept {
             _prefix = __prefix > 32 && __prefix != 255u ? 253u : __prefix;
             return *this;
         }
@@ -469,29 +438,28 @@ namespace webpp {
          * Set prefix with a subnet string
          * @param _subnet
          */
-        ipv4<traits_type>& prefix(string_view_type const& _subnet) noexcept {
-            return prefix(to_prefix<traits_type>(_subnet));
+        constexpr ipv4& prefix(istl::StringViewifiable auto&& _subnet) noexcept {
+            return prefix(to_prefix(stl::forward<decltype(_subnet)>(_subnet)));
         }
 
         /**
          * Set prefix with a subnet array
          * @param _subnet
          */
-        ipv4<traits_type>& prefix(stl::array<uint8_t, 4> const& _subnet) noexcept {
-            return prefix(to_prefix<traits_type>(_subnet));
+        constexpr ipv4& prefix(stl::array<uint8_t, 4> _subnet) noexcept {
+            return prefix(to_prefix(_subnet));
         }
 
         /**
          * Remove prefix from the ip address
          */
-        ipv4& clear_prefix() noexcept {
+        constexpr ipv4& clear_prefix() noexcept {
             return prefix(255u);
         }
 
         /**
          * Check if the ip contains a prefix or not
-         * @return bool an indication on weather or not the ip contains a prefix
-         * or not
+         * @return bool an indication on weather or not the ip contains a prefix or not
          */
         [[nodiscard]] constexpr bool has_prefix() const noexcept {
             return _prefix <= 32;
@@ -526,10 +494,10 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] constexpr bool is_private() const noexcept {
-            constexpr ipv4<traits_type> class_C(stl::array<uint8_t, 4u>{192, 168, 0, 0}, 16);
-            constexpr ipv4<traits_type> class_B_start(stl::array<uint8_t, 4u>{172, 16, 0, 0});
-            constexpr ipv4              class_B_finish(stl::array<uint8_t, 4u>{172, 31, 255, 255});
-            constexpr ipv4<traits_type> class_A(stl::array<uint8_t, 4u>{10, 0, 0, 0}, 8);
+            constexpr ipv4 class_C(stl::array<uint8_t, 4u>{192, 168, 0, 0}, 16);
+            constexpr ipv4 class_B_start(stl::array<uint8_t, 4u>{172, 16, 0, 0});
+            constexpr ipv4 class_B_finish(stl::array<uint8_t, 4u>{172, 31, 255, 255});
+            constexpr ipv4 class_A(stl::array<uint8_t, 4u>{10, 0, 0, 0}, 8);
             return is_in_subnet(class_C) || in_range(class_B_start, class_B_finish) || is_in_subnet(class_A);
         }
 
@@ -577,94 +545,76 @@ namespace webpp {
         // [[nodiscard]] string_type geographic_location() const noexcept;
     };
 
-    template <Traits TraitsType>
-    constexpr bool operator==(uint32_t const& one, ipv4<TraitsType> const& two) {
+    constexpr bool operator==(uint32_t const& one, ipv4 const& two) noexcept {
         return two == one;
     }
 
-    template <Traits TraitsType>
-    constexpr bool operator!=(uint32_t const& one, ipv4<TraitsType> const& two) {
+    constexpr bool operator!=(uint32_t const& one, ipv4 const& two) noexcept {
         return two == one;
     }
 
-    template <Traits TraitsType>
-    constexpr bool operator<(uint32_t const& one, ipv4<TraitsType> const& two) {
+    constexpr bool operator<(uint32_t const& one, ipv4 const& two) noexcept {
         return one < two.integer();
     }
 
-    template <Traits TraitsType>
-    constexpr bool operator>(uint32_t const& one, ipv4<TraitsType> const& two) {
+    constexpr bool operator>(uint32_t const& one, ipv4 const& two) noexcept {
         return one > two.integer();
     }
 
-    template <Traits TraitsType>
-    constexpr bool operator<=(uint32_t const& one, ipv4<TraitsType> const& two) {
+    constexpr bool operator<=(uint32_t const& one, ipv4 const& two) noexcept {
         return one <= two.integer();
     }
 
-    template <Traits TraitsType>
-    constexpr bool operator>=(uint32_t const& one, ipv4<TraitsType> const& two) {
+    constexpr bool operator>=(uint32_t const& one, ipv4 const& two) noexcept {
         return one >= two.integer();
     }
 
-    template <Traits TraitsType>
-    constexpr bool operator==(typename TraitsType::string_view_type const& one, ipv4<TraitsType> const& two) {
+    constexpr bool operator==(istl::StringViewifiable auto&& one, ipv4 const& two) noexcept {
         return two == one;
     }
 
-    template <Traits TraitsType>
-    constexpr bool operator!=(typename TraitsType::string_view_type const& one, ipv4<TraitsType> const& two) {
+    constexpr bool operator!=(istl::StringViewifiable auto&& one, ipv4 const& two) noexcept {
         return two != one;
     }
 
-    template <Traits TraitsType>
-    constexpr bool operator<(typename TraitsType::string_view_type const& one, ipv4<TraitsType> const& two) {
+    constexpr bool operator<(istl::StringViewifiable auto&& one, ipv4 const& two) noexcept {
+        return ipv4(stl::forward<decltype(one)>(one)) < two;
+    }
+
+    constexpr bool operator>(istl::StringViewifiable auto&& one, ipv4 const& two) noexcept {
+        return ipv4(stl::forward<decltype(one)>(one)) > two;
+    }
+
+    constexpr bool operator<=(istl::StringViewifiable auto&& one, ipv4 const& two) noexcept {
+        return ipv4(stl::forward<decltype(one)>(one)) <= two;
+    }
+
+    constexpr bool operator>=(istl::StringViewifiable auto&& one, ipv4 const& two) noexcept {
+        return ipv4(stl::forward<decltype(one)>(one)) >= two;
+    }
+
+    constexpr bool operator==(stl::array<uint8_t, 4> one, ipv4 const& two) noexcept {
+        return two == one;
+    }
+
+    constexpr bool operator!=(stl::array<uint8_t, 4> one, ipv4 const& two) noexcept {
+        return two != one;
+    }
+
+    constexpr bool operator<(stl::array<uint8_t, 4> one, ipv4 const& two) noexcept {
         return ipv4(one) < two;
     }
 
-    template <Traits TraitsType>
-    constexpr bool operator>(typename TraitsType::string_view_type const& one, ipv4<TraitsType> const& two) {
+    constexpr bool operator>(stl::array<uint8_t, 4> one, ipv4 const& two) noexcept {
         return ipv4(one) > two;
     }
 
-    template <Traits TraitsType>
-    constexpr bool operator<=(typename TraitsType::string_view_type const& one, ipv4<TraitsType> const& two) {
+    constexpr bool operator<=(stl::array<uint8_t, 4> one, ipv4 const& two) noexcept {
         return ipv4(one) <= two;
     }
 
-    template <Traits TraitsType>
-    constexpr bool operator>=(typename TraitsType::stirng_view_type const& one, ipv4<TraitsType> const& two) {
+    constexpr bool operator>=(stl::array<uint8_t, 4> one, ipv4 const& two) noexcept {
         return ipv4(one) >= two;
-    }
-
-    template <Traits TraitsType>
-    constexpr bool operator==(stl::array<uint8_t, 4> const& one, ipv4<TraitsType> const& two) {
-        return two == one;
-    }
-
-    template <Traits TraitsType>
-    constexpr bool operator!=(stl::array<uint8_t, 4> const& one, ipv4<TraitsType> const& two) {
-        return two != one;
-    }
-
-    template <Traits TraitsType>
-    constexpr bool operator<(stl::array<uint8_t, 4> const& one, ipv4<TraitsType> const& two) {
-        return ipv4<TraitsType>(one) < two;
-    }
-
-    template <Traits TraitsType>
-    constexpr bool operator>(stl::array<uint8_t, 4> const& one, ipv4<TraitsType> const& two) {
-        return ipv4<TraitsType>(one) > two;
-    }
-
-    template <Traits TraitsType>
-    constexpr bool operator<=(stl::array<uint8_t, 4> const& one, ipv4<TraitsType> const& two) {
-        return ipv4<TraitsType>(one) <= two;
-    }
-
-    template <Traits TraitsType>
-    constexpr bool operator>=(stl::array<uint8_t, 4> const& one, ipv4<TraitsType> const& two) {
-        return ipv4<TraitsType>(one) >= two;
     }
 
 } // namespace webpp

@@ -4,6 +4,7 @@
 #define WEBPP_STD_ALLOCATOR_HPP
 
 #include "allocator_pack.hpp"
+
 #include <memory>
 
 namespace webpp {
@@ -20,7 +21,7 @@ namespace webpp {
             template <typename T>
             using type = stl::allocator<T>;
 
-            static constexpr alloc::feature_pack features{alloc::default_ctor, alloc::sync};
+            static constexpr alloc::feature_pack features{alloc::requires_default_ctor, alloc::requires_sync};
         };
 
         using list = alloc::allocator_list<std_allocator_descriptor>;
@@ -32,6 +33,6 @@ namespace webpp {
         using pool = stl::allocator<T>;
     };
 
-}
+} // namespace webpp
 
 #endif

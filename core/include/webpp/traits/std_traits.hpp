@@ -19,10 +19,10 @@ namespace webpp {
         using char_type   = CharT;
         using char_traits = CharTraits;
 
-        using allocator_pack = std_allocator_pack;
+        using alloc_pack = std_allocator_pack;
 
-        template <typename Type>
-        using allocator = Allocator<Type>;
+//        template <typename Type>
+//        using allocator = Allocator<Type>;
 
         // todo: implement the pmr::monotonic_buffer_resource features and use std::allocator as upstream
         template <typename T>

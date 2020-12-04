@@ -3,13 +3,12 @@
 #ifndef WEBPP_ALLOCATOR_PACK_HPP
 #define WEBPP_ALLOCATOR_PACK_HPP
 
-#include "../std/type_traits.hpp"
-#include "allocator_concepts.hpp"
-#include "../utils/flags.hpp"
 #include "../std/tuple.hpp"
+#include "../std/type_traits.hpp"
+#include "../utils/flags.hpp"
+#include "allocator_concepts.hpp"
 
 namespace webpp::alloc {
-
 
     /**
      * Features:
@@ -18,17 +17,16 @@ namespace webpp::alloc {
      *   - default_ctor: must have a default constructor
      */
     enum features : unsigned short {
-        sync,
+        requires_sync,
+        requires_default_ctor,
         noop_dealloc,
-        default_ctor,
     };
 
     using feature_pack = flags::manager<features>;
 
-    template <typename ...AllocatorDescriptors>
-    struct allocator_list : public stl::tuple<AllocatorDescriptors...> {
-    };
+    template <typename... AllocatorDescriptors>
+    struct allocator_list : public stl::tuple<AllocatorDescriptors...> {};
 
-}
+} // namespace webpp::alloc
 
 #endif // WEBPP_ALLOCATOR_PACK_HPP
