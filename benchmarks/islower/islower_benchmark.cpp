@@ -1,7 +1,7 @@
 #include "../benchmark.hpp"
-// clang-format off
-#include webpp_include(strings/istring)
-// clang-format on
+
+#include "../../core/include/webpp/strings/istring.hpp"
+
 
 #include <algorithm>
 

@@ -3,49 +3,73 @@
 
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
-#include "../traits/traits_concepts.hpp"
 #include "../strings/size.hpp"
+#include "../traits/traits_concepts.hpp"
 
 #include <charconv>
 #include <stdexcept>
 
 namespace webpp {
 
-    template <typename T, bool is_signed = true, bool throw_mistakes = false>
+    /**
+     * In this algorithm we're using begin, end, ... because in some string types (like utf-8), the chars
+     * are not exactly stored the way we want them to be for that.
+     *
+     * todo: check overflows as well
+     * todo: add another error system as well (that is not using exceptions)
+     */
+    template <typename T, T base = 10, bool throw_mistakes = false>
     constexpr T to(istl::StringViewifiable auto&& _str) noexcept(!throw_mistakes) {
-        const auto str = istl::string_viewify(stl::forward<decltype(_str)>(_str));
-        T          ret = 0;
-        if (str.size() > 0) {
-            if constexpr (is_signed) {
-                auto c = str.cbegin();
-                if (*c == '-' || *c == '+')
-                    c++; // first character can be - or +
-                for (; c != str.cend(); c++) {
-                    if constexpr (throw_mistakes) {
-                        if (*c <= '0' || *c >= '9')
-                            throw stl::invalid_argument("The specified string is not a number");
-                    }
-                    ret *= 10;
-                    ret += static_cast<T>(*c - '0');
+        /**
+         * glib's implementation if you need help: https://fossies.org/linux/glib/glib/gstrfuncs.c
+         */
+
+        constexpr bool is_signed = stl::is_same_v<T, stl::make_signed_t<T>>;
+        const auto     str       = istl::string_viewify(stl::forward<decltype(_str)>(_str));
+        using char_type          = istl::char_type_of<decltype(str)>;
+        T    ret                 = 0;
+        if (!str.size())
+            return ret;
+
+        auto c                   = str.begin();
+        if constexpr (is_signed) {
+            if (*c == '-' || *c == '+')
+                c++; // first character can be - or +
+        }
+        for (; c != str.end(); c++) {
+            auto ch = *c;
+            if constexpr (base <= 10) {
+                ch -= '0';
+                if constexpr (throw_mistakes) {
+                    if (ch <= '0' || ch >= '9')
+                        throw stl::invalid_argument("The specified string is not a number");
                 }
-                ret *= str.front() == '-' ? -1 : 1;
-            } else {
-                for (auto const& c : str) {
-                    if constexpr (throw_mistakes) {
-                        if (c <= '0' || c >= '9')
-                            throw stl::invalid_argument("The specified string is not a number");
+            } else if (base > 10) {
+                if (ch >= 'a')
+                    ch -= 'a' - 10;
+                else if (ch >= 'A')
+                    ch -= 'A' - 10;
+                else
+                    ch -= '0';
+                if constexpr (throw_mistakes) {
+                    if (ch > base) {
+                        throw stl::invalid_argument("The specified string is not a number");
                     }
-                    ret *= 10;
-                    ret += static_cast<T>(c - '0');
                 }
             }
+            ret *= base;
+            ret += static_cast<T>(ch);
+        }
+        if constexpr (is_signed) {
+            ret *= str.front() == '-' ? -1 : 1;
         }
         return ret;
     }
 
-#define WEBPP_TO_FUNCTION(name, type)                                       \
-    constexpr auto to_##name(istl::StringViewifiable auto&& str) noexcept { \
-        return to<type>(str);                                               \
+#define WEBPP_TO_FUNCTION(name, type)                                            \
+    template <type base = 10, bool throw_mistakes = false>                       \
+    constexpr auto to_##name(istl::StringViewifiable auto&& str) noexcept {      \
+        return to<type, base, throw_mistakes>(stl::forward<decltype(str)>(str)); \
     }
 
     WEBPP_TO_FUNCTION(int, int);

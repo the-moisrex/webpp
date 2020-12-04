@@ -1,11 +1,11 @@
 #include "../benchmark.hpp"
 #include "../boost_pch.hpp"
 
-// clang-format off
-#include webpp_include(ip/ipv4)
-#include webpp_include(ip/ipv6)
-#include webpp_include(traits/std_traits)
-// clang-format on
+
+#include "../../core/include/webpp/ip/ipv4.hpp"
+#include "../../core/include/webpp/ip/ipv6.hpp"
+#include "../../core/include/webpp/traits/std_traits.hpp"
+
 
 using namespace std;
 using namespace boost::asio;

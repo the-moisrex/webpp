@@ -25,6 +25,7 @@ set(FILE_SOURCES
         uri_normalize/uri_normalize_benchmark.cpp
         lexical_cast/lexical_cast_benchmark.cpp
         string_join/string_join_benchmark.cpp
+        str_to_integral_types/str_to_integral_types_benchmark.cpp
         )
 file(GLOB FILE_PCH *_pch.hpp)
 
