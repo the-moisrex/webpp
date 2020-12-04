@@ -29,7 +29,7 @@ namespace webpp {
         using monotonic_allocator = Allocator<T>;
 
         using string_view_type = stl::basic_string_view<char_type, char_traits>;
-        using string_type      = stl::basic_string<char_type, char_traits, allocator<char_type>>;
+        using string_type      = stl::basic_string<char_type, char_traits, stl::allocator<char_type>>;
 
         using logger_type = stderr_logger;
     };

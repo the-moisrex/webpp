@@ -83,22 +83,27 @@ namespace webpp::uri {
      *
      *  [protocol"://"[username[":"password]"@"]hostname[":"port]"/"?][path]["?"querystring]["#"fragment]
      */
-    template <Traits TraitsType = std_traits, bool Mutable = true>
-    struct uri_string
-      : public allocator_holder<typename TraitsType::template allocator<typename TraitsType::char_type>> {
-        using traits_type       = TraitsType;
-        using string_type       = typename traits_type::string_type;
-        using string_view_type  = typename traits_type::string_view_type;
-        using char_type         = typename traits_type::char_type;
-        using allocator_type    = typename traits_type::template allocator<char_type>;
+    template <typename StrT, istl::StringView StrViewT = istl::string_view_type_of<StrT>>
+    struct uri_string : public allocator_holder<typename StrT::allocator_type> {
+        using string_type       = StrT;
+        using string_view_type  = StrViewT;
+        using char_type         = istl::char_type_of<StrT>;
+        using allocator_type    = typename string_type::allocator_type;
         using alloc_holder_type = allocator_holder<allocator_type>;
+
+        static constexpr bool Mutable = istl::StringView<string_type> && !istl::String<string_type>;
+
+        static_assert(istl::String<string_type> || istl::StringView<string_type>,
+                      "The specified StrT is not a string nor a string_view type.");
+        static_assert(stl::same_as<char_type, istl::char_type_of<string_view_type>>,
+                      "The specified string types do not have the same character type.");
 
         /**
          * Getting the appropriate string type to use.
          * If the specified string type cannot be changed, the string_view will be used,
          * otherwise, string itself.
          */
-        using storred_str_t = auto_string_type<TraitsType, Mutable>;
+        using storred_str_t = stl::conditional_t<Mutable, string_type, string_view_type>;
 
 
       private:
@@ -263,7 +268,8 @@ namespace webpp::uri {
                 } else {
                     // unfortunately this is the best way that I could think of
                     // but if the user wants the port as well, then we have converted this value twice
-                    // not efficient; I know. I should probably implement a better version of uri in the future
+                    // not efficient; I know. I should probably implement a better version of uri in the
+                    // future
                     auto const p = to_int(port_view);
                     if (p < 0 || p > 65535) {
                         errors.failure(uri_error_type::port);
@@ -442,13 +448,11 @@ namespace webpp::uri {
         }
 
 
-        template <bool UMutable = Mutable>
-        bool operator==(const uri_string<TraitsType, UMutable>& other) const noexcept {
+        bool operator==(const uri_string& other) const noexcept {
             return ascii::iequals(str(), other.str());
         }
 
-        template <bool UMutable = Mutable>
-        bool operator!=(const uri_string<TraitsType, UMutable>& other) const noexcept {
+        bool operator!=(const uri_string& other) const noexcept {
             return !ascii::iequals(str(), other.str());
         }
 
@@ -750,15 +754,13 @@ namespace webpp::uri {
          * include a valid ip/hostname you'll get an empty string. this method
          * will only return the hostname/ip if it's in the correct format and
          * doesn't include invalid syntax.
-         * @return
          */
-        [[nodiscard]] stl::variant<ipv4<traits_type>, ipv6<traits_type>, string_view_type>
-        host_structured() const noexcept {
+        [[nodiscard]] stl::variant<ipv4, ipv6, string_view_type> host_structured() const noexcept {
             auto _host = host_raw();
             if (webpp::is::ipv4(_host))
-                return ipv4<traits_type>(_host);
+                return ipv4(_host);
             if (webpp::is::ipv6(_host))
-                return ipv6<traits_type>(_host);
+                return ipv6(_host);
             return _host;
         }
 
@@ -863,8 +865,7 @@ namespace webpp::uri {
          * will return an empty string
          * @return string/ipv4/ipv6
          */
-        [[nodiscard]] stl::variant<ipv4<traits_type>, ipv6<traits_type>, string_type>
-        host_structured_decoded() const noexcept {
+        [[nodiscard]] stl::variant<ipv4, ipv6, string_type> host_structured_decoded() const noexcept {
             if (auto _host_structured = host_structured();
                 stl::holds_alternative<string_view_type>(_host_structured)) {
                 // convert string_view to string and then decode it
@@ -905,17 +906,19 @@ namespace webpp::uri {
          * will be the last one and Second Level Domain will be the one before
          * that and the rest will be subdomains.
          */
-        [[nodiscard]] istl::vector<traits_type, string_type> domains() const noexcept {
-            auto _host = host_raw();
+        [[nodiscard]] auto domains() const noexcept {
+            using vec_type =
+              stl::vector<string_type, typename alloc_holder_type::template allocator_type_as<string_type>>;
+            auto     _host = host_raw();
+            vec_type subs{this->template get_allocator_as<string_type>()};
             if (_host.empty() || is_ip())
-                return {};
-            istl::vector<traits_type, string_type> subs{this->template get_allocator_as<string_type>()};
+                return subs;
             for (;;) {
                 auto dot = _host.find('.');
                 auto sub = _host.substr(0, dot);
                 if (sub.empty())
                     break;
-                subs.emplace_back(sub, this->template get_allocator_as<char_type>());
+                subs.emplace_back(sub, this->get_allocator());
                 if (dot == string_view_type::npos)
                     break;
                 _host.remove_prefix(dot + 1);
@@ -1155,7 +1158,9 @@ namespace webpp::uri {
          * @param new_port
          */
         auto& port(uint16_t new_port) noexcept {
-            return port(to_str_copy<traits_type>(new_port));
+            string_type str{this->get_allocator()};
+            append_to(str, new_port);
+            return port(str);
         }
 
         /**
@@ -1883,23 +1888,26 @@ namespace webpp::uri {
     };
 
     template <istl::CharType CharT = char>
-    uri_string(CharT const*) -> uri_string<basic_std_traits<CharT>, false>;
+    uri_string(CharT const*) -> uri_string<stl::basic_string<CharT>, stl::basic_string_view<CharT>>;
     // basic_uri(const char[])->basic_uri<std::string_view>;
 
     template <typename CharT = char>
-    uri_string(stl::basic_string_view<CharT>) -> uri_string<basic_std_traits<CharT>, false>;
+    uri_string(stl::basic_string_view<CharT>)
+      -> uri_string<stl::basic_string_view<CharT>, stl::basic_string_view<CharT>>;
 
     template <typename CharT = char>
-    uri_string(stl::basic_string<CharT>) -> uri_string<basic_std_traits<CharT>, true>;
+    uri_string(stl::basic_string<CharT>)
+      -> uri_string<stl::basic_string<CharT>, stl::basic_string_view<CharT>>;
 
-    using uri_view = uri_string<std_traits, false>;
+    template <istl::CharType CharT = char>
+    using uri_view = uri_string<stl::basic_string_view<CharT>, stl::basic_string_view<CharT>>;
 
 
-    template <Traits TraitsType, bool Mutable1, bool Mutable2>
-    bool operator==(uri_string<TraitsType, Mutable1> const& one,
-                    uri_string<TraitsType, Mutable2> const& two) noexcept {
-        return one.operator==(two.str());
-    }
+    //    template <typename StrT, typename StrViewT>
+    //    bool operator==(uri_string<StrT, StrViewT> const& one,
+    //                    uri_string<StrT, StrViewT> const& two) noexcept {
+    //        return one.operator==(two.str());
+    //    }
 
 
     //    template <typename CharT>
@@ -1914,9 +1922,9 @@ namespace webpp::uri {
     //        return one.operator==(two.str());
     //    }
     //
-    template <Traits TraitsType, bool Mutable1, bool Mutable2>
-    [[nodiscard]] bool equal_path(uri_string<TraitsType, Mutable1> const& p1,
-                                  uri_string<TraitsType, Mutable2> const& p2) noexcept {
+    template <typename Str1T, typename StrView1T, typename Str2T, typename StrView2T>
+    [[nodiscard]] bool equal_path(uri_string<Str1T, StrView1T> const& p1,
+                                  uri_string<Str2T, StrView2T> const& p2) noexcept {
         auto _p1 = p1.slugs();
         auto _p2 = p2.slugs();
         auto it2 = _p2.cbegin();
@@ -1950,20 +1958,24 @@ namespace webpp::uri {
         return true;
     }
 
-    [[nodiscard]] inline auto equal_path(stl::string_view const& p1, stl::string_view const& p2) noexcept {
-        return p1 == p2 || equal_path<std_traits, false, false>(uri_view{p1}, uri_view{p2});
+    [[nodiscard]] inline auto equal_path(istl::StringViewifiable auto&& _p1,
+                                         istl::StringViewifiable auto&& _p2) noexcept {
+        const auto p1 = istl::string_viewify(stl::forward<decltype(_p1)>(_p1));
+        const auto p2 = istl::string_viewify(stl::forward<decltype(_p2)>(_p2));
+        using str_v   = stl::remove_cvref_t<decltype(p1)>;
+        return p1 == p2 || equal_path(uri_string<str_v, str_v>{p1}, uri_string<str_v, str_v>{p2});
     }
 
-    template <Traits TraitsType, bool Mutable>
-    [[nodiscard]] inline auto equal_path(uri_string<TraitsType, Mutable> const&       p1,
-                                         typename TraitsType::string_view_type const& p2) noexcept {
-        return p1 == p2 || equal_path<TraitsType, false>(p1, uri_view{p2});
+    template <typename StrT, typename StrViewT>
+    [[nodiscard]] inline auto equal_path(uri_string<StrT, StrViewT> const& p1,
+                                         istl::StringViewifiable auto&&    p2) noexcept {
+        return p1 == p2 || equal_path(p1, uri_string{stl::forward<decltype(p2)>(p2)});
     }
 
-    template <Traits TraitsType, bool Mutable>
-    [[nodiscard]] inline auto equal_path(typename TraitsType::string_view_type const& p1,
-                                         uri_string<TraitsType, Mutable> const&       p2) noexcept {
-        return p2 == p1 || equal_path<TraitsType, false>(uri_view{p1}, p2);
+    template <typename StrT, typename StrViewT>
+    [[nodiscard]] inline auto equal_path(istl::StringViewifiable auto&&    p1,
+                                         uri_string<StrT, StrViewT> const& p2) noexcept {
+        return p2 == p1 || equal_path(uri_string{stl::forward<decltype(p1)>(p1)}, p2);
     }
 
 } // namespace webpp::uri

@@ -123,6 +123,9 @@ namespace webpp {
         using allocator_type       = stl::remove_cvref_t<AllocType>;
         using allocator_value_type = typename allocator_type::value_type;
 
+        template <typename T>
+        using allocator_type_as = rebind_allocator<allocator_type, T>;
+
         template <typename... T>
         constexpr allocator_holder(T&&... alloc_holders) noexcept
           : alloc{extract_allocator_of<AllocType, T...>(stl::forward<T>(alloc_holders)...)} {}
@@ -135,7 +138,7 @@ namespace webpp {
             if constexpr (stl::is_same_v<T, allocator_value_type>) {
                 return alloc;
             } else {
-                return rebind_allocator<allocator_type, T>(alloc);
+                return rebind_allocator<allocator_type, T>(alloc); // using copy ctor, so this should work for most allocator types
             }
         }
 
