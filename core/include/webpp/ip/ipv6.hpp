@@ -15,13 +15,8 @@
 
 namespace webpp {
 
-    template <Traits TraitsType>
-    class ipv6 {
-      public:
-        using traits_type      = TraitsType;
-        using string_type      = typename traits_type::string_type;
-        using string_view_type = typename traits_type::string_view_type;
-        using char_type        = typename traits_type::char_type;
+    struct ipv6 {
+        // todo: add support for systems that support 128bit integer types
 
         static constexpr auto IPV6_ADDR_SIZE = 16u; // Bytes
         using octets8_t                      = stl::array<uint8_t, 16u>;
@@ -29,6 +24,7 @@ namespace webpp {
         using octets32_t                     = stl::array<uint32_t, 4u>;
         using octets64_t                     = stl::array<uint64_t, 2u>;
         using octets_t                       = octets8_t;
+        using octets_value_t = typename octets_t::value_type;
 
         /**
          * IPv6 Address Scopes
@@ -54,12 +50,12 @@ namespace webpp {
         // byte order. Network's byte order is big endian btw, but here we just
         // have to worry about the host's byte order because we are not sending
         // these data over the network.
-        mutable octets_t data = {}; // filled with zeros
+        octets_t data = {}; // filled with zeros
 
         // 255 means it's doesn't have prefix
         // 254 means the ip is not valid
         // 253 means the prefix is not valid (it's not being used for now)
-        mutable uint8_t _prefix = 255u;
+        uint8_t _prefix = 255u;
 
         /**
          * converts 16/32/64/... bit arrays to 8bit
@@ -87,7 +83,10 @@ namespace webpp {
         /**
          * parses the string_view to the uint8 structure
          */
-        constexpr void parse(string_view_type ipv6_data) const noexcept {
+        constexpr void parse(istl::StringViewifiable auto&& _ipv6_data) noexcept {
+            auto ipv6_data = istl::string_viewify(stl::forward<decltype(_ipv6_data)>(_ipv6_data));
+            using char_type = istl::char_type_of<decltype(ipv6_data)>;
+            using string_view_type = stl::remove_cvref_t<decltype(ipv6_data)>;
             constexpr auto hexes = HEXDIG<char_type>.string_view();
 
             if (ipv6_data.empty()) {
@@ -110,16 +109,16 @@ namespace webpp {
                     // it's an octet
                     switch (colon == string_view_type::npos ? ipv6_data.size() : colon) {
                         case 4:
-                            *(it++) = stl::stoul(string_type(ipv6_data.substr(0, 2)), nullptr, 16);
-                            *(it++) = stl::stoul(string_type(ipv6_data.substr(2, 2)), nullptr, 16);
+                            *(it++) = to<octets_value_t, 16u>(ipv6_data.substr(0, 2));
+                            *(it++) = to<octets_value_t, 16u>(ipv6_data.substr(2, 2));
                             break;
                         case 3:
-                            *(it++) = stl::stoul(string_type(ipv6_data.substr(0, 1)), nullptr, 16);
-                            *(it++) = stl::stoul(string_type(ipv6_data.substr(1, 2)), nullptr, 16);
+                            *(it++) = to<octets_value_t, 16u>(ipv6_data.substr(0, 1));
+                            *(it++) = to<octets_value_t, 16u>(ipv6_data.substr(1, 2));
                             break;
                         case 2:
                         case 1:
-                            *((++it)++) = stl::stoul(string_type(ipv6_data.substr(0, colon)), nullptr, 16);
+                            *((++it)++) = to<octets_value_t, 16u>(ipv6_data.substr(0, colon));
                             break;
                         case 0:
                             // we've reached the double colon rule
@@ -155,13 +154,13 @@ namespace webpp {
                         _prefix = 253u; // the prefix is invalid
                         break;          // let's not go all crazy just yet
                     }
-                    auto __prefix = stl::stoul(string_type(prefix_str));
-                    // if (ascii::starts_with(prefix_str, '0') && __prefix != 0) {
+                    auto prefix_value = to<octets_value_t, 16u>(prefix_str);
+                    // if (ascii::starts_with(prefix_str, '0') && prefix_value != 0) {
                     //     // there can't be a leading zero in the prefix string
                     //     _prefix = 253u;
                     //     return;
                     // }
-                    _prefix = __prefix > 128u ? 253u : static_cast<decltype(_prefix)>(__prefix);
+                    _prefix = prefix_value > 128u ? 253u : static_cast<decltype(_prefix)>(prefix_value);
                     ipv6_data.remove_prefix(prefix_str.size() + 1);
                     if (!ipv6_data.empty()) {
                         _prefix = 254u; // there can't be more stuff in the ip
@@ -192,30 +191,30 @@ namespace webpp {
         }
 
       public:
-        constexpr explicit ipv6(string_view_type const& str, uint8_t __prefix = 255u) noexcept
-          : _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {
-            parse(str);
+        constexpr explicit ipv6(istl::StringViewifiable auto&& str, uint8_t prefix_value = 255u) noexcept
+          : _prefix(prefix_value > 128u && prefix_value != 255u ? 253u : prefix_value) {
+            parse(stl::forward<decltype(str)>(str));
         }
-        constexpr explicit ipv6(octets8_t const& _octets, uint8_t __prefix = 255u) noexcept
+        constexpr explicit ipv6(octets8_t const& _octets, uint8_t prefix_value = 255u) noexcept
           : data(_octets),
-            _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {}
-        constexpr explicit ipv6(octets16_t const& _octets, uint8_t __prefix = 255u) noexcept
+            _prefix(prefix_value > 128u && prefix_value != 255u ? 253u : prefix_value) {}
+        constexpr explicit ipv6(octets16_t const& _octets, uint8_t prefix_value = 255u) noexcept
           : data{to_octets_t(_octets)},
-            _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {}
+            _prefix(prefix_value > 128u && prefix_value != 255u ? 253u : prefix_value) {}
 
-        constexpr explicit ipv6(octets32_t const& _octets, uint8_t __prefix = 255u) noexcept
+        constexpr explicit ipv6(octets32_t const& _octets, uint8_t prefix_value = 255u) noexcept
           : data{to_octets_t(_octets)},
-            _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {}
-        constexpr explicit ipv6(octets64_t const& _octets, uint8_t __prefix = 255u) noexcept
+            _prefix(prefix_value > 128u && prefix_value != 255u ? 253u : prefix_value) {}
+        constexpr explicit ipv6(octets64_t const& _octets, uint8_t prefix_value = 255u) noexcept
           : data{to_octets_t(_octets)},
-            _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {}
+            _prefix(prefix_value > 128u && prefix_value != 255u ? 253u : prefix_value) {}
         constexpr ipv6(ipv6 const& ip) noexcept = default;
         constexpr ipv6(ipv6&& ip) noexcept      = default;
 
         ipv6& operator=(ipv6 const& ip) noexcept = default;
 
-        ipv6& operator=(string_view_type const& str) noexcept {
-            parse(str);
+        ipv6& operator=(istl::StringViewifiable auto&& str) noexcept {
+            parse(stl::forward<decltype(str)>(str));
             _prefix = 255u;
             return *this;
         }
@@ -268,15 +267,6 @@ namespace webpp {
 
         explicit operator octets64_t() const noexcept {
             return octets64();
-        }
-
-
-        explicit operator char_type const *() const noexcept {
-            return short_str().c_str();
-        }
-
-        explicit operator string_type() const noexcept {
-            return short_str();
         }
 
         /**
@@ -492,8 +482,9 @@ namespace webpp {
          * @retval TRUE   If the IPv6 address scope is Interface-Local.
          * @retval FALSE  If the IPv6 address scope is not Interface-Local.
          *
+         * todo: implement this method
          */
-        [[nodiscard]] constexpr bool IsInterfaceLocal() const noexcept;
+        [[nodiscard]] constexpr bool is_interface_local() const noexcept;
 
         /**
          * Determine whether the address is site local
@@ -663,8 +654,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is an Anycast
-         * RLOC address.
+         * This method indicates whether or not the IPv6 address is an Anycast RLOC address.
          *
          * @retval TRUE   If the IPv6 address is an Anycast RLOC address.
          * @retval FALSE  If the IPv6 address is not an Anycast RLOC address.
@@ -683,8 +673,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is an Anycast
-         * Service Locator.
+         * This method indicates whether or not the IPv6 address is an Anycast Service Locator.
          *
          * @retval TRUE   If the IPv6 address is an Anycast Service Locator.
          * @retval FALSE  If the IPv6 address is not an Anycast Service Locator.
@@ -700,8 +689,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is
-         * Subnet-Router Anycast (RFC 4291),
+         * This method indicates whether or not the IPv6 address is Subnet-Router Anycast (RFC 4291),
          *
          * @retval TRUE   If the IPv6 address is a Subnet-Router Anycast
          * address.
@@ -721,8 +709,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is Reserved
-         * Subnet Anycast (RFC 2526),
+         * This method indicates whether or not the IPv6 address is Reserved Subnet Anycast (RFC 2526),
          *
          * @retval TRUE   If the IPv6 address is a Reserved Subnet Anycast
          * address.
@@ -743,12 +730,10 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address contains
-         * Reserved IPv6 IID (RFC 5453),
+         * This method indicates whether or not the IPv6 address contains Reserved IPv6 IID (RFC 5453),
          *
          * @retval TRUE   If the IPv6 address contains a reserved IPv6 IID.
-         * @retval FALSE  If the IPv6 address does not contain a reserved IPv6
-         * IID.
+         * @retval FALSE  If the IPv6 address does not contain a reserved IPv6 IID.
          *
          */
         [[nodiscard]] constexpr bool is_iid_reserved() const noexcept {
@@ -849,20 +834,23 @@ namespace webpp {
         /**
          * @brief long string representation of the ip
          */
-        string_type str() const noexcept {
+        void str(istl::String auto& output) const noexcept {
+            using char_type = istl::char_type_of<decltype(output)>;
             char_type buffer[40] = {};
             auto      _octets    = octets16();
             sprintf(buffer, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", _octets[0], _octets[1], _octets[2],
                     _octets[3], _octets[4], _octets[5], _octets[6], _octets[7]);
             buffer[39] = '\0';
-            return string_type(buffer);
+            output.append(buffer, 40);
         }
 
         /**
          * @brief return the short string representation of ip version 6
          * TODO: all zero ip prints in a wrong format
          */
-        string_type short_str() const noexcept {
+        void short_str(istl::String auto& output) const noexcept {
+            using char_type = istl::char_type_of<decltype(output)>;
+
             auto _octets = octets16();
 
             // finding all of the ranges that are zero filled
@@ -892,6 +880,7 @@ namespace webpp {
 
             // I'm not gonna use std::string here because most small object
             // optimizations are smaller than 48bit (16 or 20 mostly)
+            // I should be using a string with local-allocator in it but I've already written this algo
             char_type   buffer[IPV6_ADDR_SIZE * 2 + (IPV6_ADDR_SIZE - 1) + 1];
             stl::size_t index = 0;
 
@@ -943,7 +932,7 @@ namespace webpp {
             }
 
             buffer[index++] = '\0';
-            return string_type(buffer, index);
+            output.append(buffer, index);
         }
 
         /**
@@ -966,11 +955,11 @@ namespace webpp {
          * Set prefix for this ip address
          * @param prefix
          */
-        ipv6& prefix(uint8_t __prefix) noexcept {
-            if (__prefix == 254u) {
+        ipv6& prefix(uint8_t prefix_value) noexcept {
+            if (prefix_value == 254u) {
                 data = {}; // reset the ip if it was not valid
             }
-            _prefix = __prefix > 128u && __prefix != 255u ? 253u : __prefix;
+            _prefix = prefix_value > 128u && prefix_value != 255u ? 253u : prefix_value;
             return *this;
         }
 

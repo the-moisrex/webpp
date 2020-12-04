@@ -5,9 +5,9 @@
 #include <string>
 #include <string_view>
 
-// clang-format off
-#include webpp_include(strings/to_case)
-// clang-format on
+
+#include "../../core/include/webpp/strings/to_case.hpp"
+
 
 
 using namespace std;

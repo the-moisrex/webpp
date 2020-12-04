@@ -1,11 +1,11 @@
 #include "../benchmark.hpp"
 #include <strings.h>
 
-// clang-format off
-#include webpp_include(strings/to_case)
-#include webpp_include(strings/iequals)
-#include webpp_include(std/string_view)
-// clang-format on
+
+#include "../../core/include/webpp/strings/to_case.hpp"
+#include "../../core/include/webpp/strings/iequals.hpp"
+#include "../../core/include/webpp/std/string_view.hpp"
+
 
 #if __has_include(<boost/algorithm/string/predicate.hpp>)
 #  include <boost/algorithm/string/predicate.hpp>
