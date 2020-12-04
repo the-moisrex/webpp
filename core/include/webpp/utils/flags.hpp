@@ -3,9 +3,10 @@
 #ifndef WEBPP_FLAGS_HPP
 #define WEBPP_FLAGS_HPP
 
-#include "../std/type_traits.hpp"
-#include <cstdint>
 #include "../libs/magic_enum/include/magic_enum.hpp"
+#include "../std/type_traits.hpp"
+
+#include <cstdint>
 
 namespace webpp::flags {
 
@@ -17,7 +18,8 @@ namespace webpp::flags {
 #else
     constexpr
 #endif
-    auto item(stl::size_t index) noexcept {
+      auto
+      item(stl::size_t index) noexcept {
         return 0x1u << index;
     }
 
@@ -27,20 +29,23 @@ namespace webpp::flags {
      */
     template <typename Values>
     struct manager {
-        using type = Values;
+        using type                             = Values;
         static constexpr stl::size_t base_size = magic_enum::enum_count<type>();
-        using base_type = stl::conditional_t<(base_size <= sizeof(stl::uint8_t) * 8), stl::uint8_t,
-                          stl::conditional_t<(base_size <= sizeof(stl::uint16_t) * 8), stl::uint16_t,
-              stl::conditional_t<(base_size <= sizeof(stl::uint32_t) * 8), stl::uint32_t, stl::uint64_t>>>;
+        using base_type =
+          stl::conditional_t<(base_size <= sizeof(stl::uint8_t) * 8), stl::uint8_t,
+                             stl::conditional_t<(base_size <= sizeof(stl::uint16_t) * 8), stl::uint16_t,
+                                                stl::conditional_t<(base_size <= sizeof(stl::uint32_t) * 8),
+                                                                   stl::uint32_t, stl::uint64_t>>>;
         // There is a clang bug (or magic_enum bug)
         // GitHub issue: https://github.com/Neargye/magic_enum/issues/65
-        static constexpr bool are_values_sequential = []() constexpr noexcept -> bool {
+        static constexpr bool are_values_sequential = []() constexpr noexcept->bool {
             const auto vals = magic_enum::enum_values<type>();
             for (stl::size_t i = 0; i < vals.size(); ++i)
                 if (magic_enum::enum_integer(vals[i]) != i)
                     return false;
             return true;
-        }();
+        }
+        ();
 
 #ifdef __cpp_using_enum
         using enum type;
@@ -49,13 +54,14 @@ namespace webpp::flags {
 
         constexpr manager() = default;
 
-        template <typename ...T>
-        requires (stl::same_as<stl::remove_cvref_t<T>, base_type> && ...)
-        constexpr explicit manager(T ...val) noexcept : value{(... | val)} {}
+        template <typename... T>
+        requires(stl::same_as<stl::remove_cvref_t<T>, base_type>&&...) constexpr explicit manager(
+          T... val) noexcept
+          : value{(... | val)} {}
 
-        template <typename ...T>
-        requires ((stl::same_as<stl::remove_cvref_t<T>, type> && ...))
-        constexpr manager(T ...val) noexcept : value{(... | value_of(val))} {}
+        template <typename... T>
+        requires((stl::same_as<stl::remove_cvref_t<T>, type> && ...)) constexpr manager(T... val) noexcept
+          : value{(... | value_of(val))} {}
 
         operator base_type() const noexcept {
             return value;
@@ -69,35 +75,83 @@ namespace webpp::flags {
             }
         }
 
-        [[nodiscard]] constexpr bool operator==(base_type v) const noexcept { return value == v; }
-        [[nodiscard]] constexpr bool operator==(type v) const noexcept { return operator==(value_of(v)); }
+        [[nodiscard]] constexpr bool operator==(base_type v) const noexcept {
+            return value == v;
+        }
+        [[nodiscard]] constexpr bool operator==(type v) const noexcept {
+            return operator==(value_of(v));
+        }
 
-        [[nodiscard]] constexpr bool operator!=(base_type v) const noexcept { return value != v; }
-        [[nodiscard]] constexpr bool operator!=(type v) const noexcept { return operator!=(value_of(v)); }
+        [[nodiscard]] constexpr bool operator!=(base_type v) const noexcept {
+            return value != v;
+        }
+        [[nodiscard]] constexpr bool operator!=(type v) const noexcept {
+            return operator!=(value_of(v));
+        }
 
-        [[nodiscard]] constexpr bool operator<(base_type v) const noexcept { return value < v; }
-        [[nodiscard]] constexpr bool operator<(type v) const noexcept { return operator<(value_of(v)); }
+        [[nodiscard]] constexpr bool operator<(base_type v) const noexcept {
+            return value < v;
+        }
+        [[nodiscard]] constexpr bool operator<(type v) const noexcept {
+            return operator<(value_of(v));
+        }
 
-        [[nodiscard]] constexpr bool operator>(base_type v) const noexcept { return value > v; }
-        [[nodiscard]] constexpr bool operator>(type v) const noexcept { return operator>(value_of(v)); }
+        [[nodiscard]] constexpr bool operator>(base_type v) const noexcept {
+            return value > v;
+        }
+        [[nodiscard]] constexpr bool operator>(type v) const noexcept {
+            return operator>(value_of(v));
+        }
 
-        [[nodiscard]] constexpr bool operator>=(base_type v) const noexcept { return value >= v; }
-        [[nodiscard]] constexpr bool operator>=(type v) const noexcept { return operator>=(value_of(v)); }
+        [[nodiscard]] constexpr bool operator>=(base_type v) const noexcept {
+            return value >= v;
+        }
+        [[nodiscard]] constexpr bool operator>=(type v) const noexcept {
+            return operator>=(value_of(v));
+        }
 
-        [[nodiscard]] constexpr bool operator<=(base_type v) const noexcept { return value <= v; }
-        [[nodiscard]] constexpr bool operator<=(type v) const noexcept { return operator<=(value_of(v)); }
+        [[nodiscard]] constexpr bool operator<=(base_type v) const noexcept {
+            return value <= v;
+        }
+        [[nodiscard]] constexpr bool operator<=(type v) const noexcept {
+            return operator<=(value_of(v));
+        }
 
-        constexpr manager& operator^=(type b) noexcept { value ^= value_of(b); return *this; }
-        constexpr manager& operator^=(base_type b) noexcept { value ^= b; return *this; }
+        constexpr manager& operator^=(type b) noexcept {
+            value ^= value_of(b);
+            return *this;
+        }
+        constexpr manager& operator^=(base_type b) noexcept {
+            value ^= b;
+            return *this;
+        }
 
-        constexpr manager& operator&=(type b) noexcept { value &= value_of(b); return *this; }
-        constexpr manager& operator&=(base_type b) noexcept { value &= b; return *this; }
+        constexpr manager& operator&=(type b) noexcept {
+            value &= value_of(b);
+            return *this;
+        }
+        constexpr manager& operator&=(base_type b) noexcept {
+            value &= b;
+            return *this;
+        }
 
-        constexpr manager& operator|=(type b) noexcept { value |= value_of(b); return *this; }
-        constexpr manager& operator|=(base_type b) noexcept { value |= b; return *this; }
+        constexpr manager& operator|=(type b) noexcept {
+            value |= value_of(b);
+            return *this;
+        }
+        constexpr manager& operator|=(base_type b) noexcept {
+            value |= b;
+            return *this;
+        }
 
-        constexpr manager& operator=(type b) noexcept { value = value_of(b); return *this; }
-        constexpr manager& operator=(base_type b) noexcept { value = b; return *this; }
+        constexpr manager& operator=(type b) noexcept {
+            value = value_of(b);
+            return *this;
+        }
+        constexpr manager& operator=(base_type b) noexcept {
+            value = b;
+            return *this;
+        }
 
         constexpr void on(type v) noexcept {
             value |= value_of(v);
@@ -130,9 +184,8 @@ namespace webpp::flags {
         constexpr void reset(type v) noexcept {
             value = value_of(v);
         }
-
     };
 
-}
+} // namespace webpp::flags
 
 #endif // WEBPP_FLAGS_HPP

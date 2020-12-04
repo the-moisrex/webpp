@@ -24,7 +24,7 @@ namespace webpp {
         using octets32_t                     = stl::array<uint32_t, 4u>;
         using octets64_t                     = stl::array<uint64_t, 2u>;
         using octets_t                       = octets8_t;
-        using octets_value_t = typename octets_t::value_type;
+        using octets_value_t                 = typename octets_t::value_type;
 
         /**
          * IPv6 Address Scopes
@@ -84,10 +84,10 @@ namespace webpp {
          * parses the string_view to the uint8 structure
          */
         constexpr void parse(istl::StringViewifiable auto&& _ipv6_data) noexcept {
-            auto ipv6_data = istl::string_viewify(stl::forward<decltype(_ipv6_data)>(_ipv6_data));
-            using char_type = istl::char_type_of<decltype(ipv6_data)>;
+            auto ipv6_data         = istl::string_viewify(stl::forward<decltype(_ipv6_data)>(_ipv6_data));
+            using char_type        = istl::char_type_of<decltype(ipv6_data)>;
             using string_view_type = stl::remove_cvref_t<decltype(ipv6_data)>;
-            constexpr auto hexes = HEXDIG<char_type>.string_view();
+            constexpr auto hexes   = HEXDIG<char_type>.string_view();
 
             if (ipv6_data.empty()) {
                 _prefix = 254u;
@@ -117,9 +117,7 @@ namespace webpp {
                             *(it++) = to<octets_value_t, 16u>(ipv6_data.substr(1, 2));
                             break;
                         case 2:
-                        case 1:
-                            *((++it)++) = to<octets_value_t, 16u>(ipv6_data.substr(0, colon));
-                            break;
+                        case 1: *((++it)++) = to<octets_value_t, 16u>(ipv6_data.substr(0, colon)); break;
                         case 0:
                             // we've reached the double colon rule
                             if (double_colon_point != data.end()) {
@@ -835,11 +833,11 @@ namespace webpp {
          * @brief long string representation of the ip
          */
         void str(istl::String auto& output) const noexcept {
-            using char_type = istl::char_type_of<decltype(output)>;
+            using char_type      = istl::char_type_of<decltype(output)>;
             char_type buffer[40] = {};
             auto      _octets    = octets16();
-            sprintf(buffer, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", _octets[0], _octets[1], _octets[2],
-                    _octets[3], _octets[4], _octets[5], _octets[6], _octets[7]);
+            stl::format_to(buffer, "{:x}:{:x}:{:x}:{:x}:{:x}:{:x}:{:x}:{:x}", _octets[0], _octets[1],
+                           _octets[2], _octets[3], _octets[4], _octets[5], _octets[6], _octets[7]);
             buffer[39] = '\0';
             output.append(buffer, 40);
         }
