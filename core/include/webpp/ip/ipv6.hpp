@@ -1,10 +1,10 @@
 #ifndef WEBPP_IPV6_H
 #define WEBPP_IPV6_H
 
-#include "ipv4.hpp"
 #include "../strings/to_case.hpp"
 #include "../traits/traits_concepts.hpp"
 #include "../validators/validators.hpp"
+#include "ipv4.hpp"
 
 #include <algorithm>
 #include <array>
@@ -45,10 +45,8 @@ namespace webpp {
         };
 
       private:
-        static constexpr auto interface_identifier_offset =
-          8u; // Interface Identifier offset in bytes
-        static constexpr auto interface_identifier_size =
-          8u; // Interface Identifier size in bytes
+        static constexpr auto interface_identifier_offset = 8u; // Interface Identifier offset in bytes
+        static constexpr auto interface_identifier_size   = 8u; // Interface Identifier size in bytes
 
         // I didn't go with a union because in OpenThread project they did and
         // they had to deal with endianness of their data. I rather use shifts
@@ -70,8 +68,7 @@ namespace webpp {
          * @return octets8_t so I could put it in the "data"
          */
         template <typename OCTET>
-        [[nodiscard]] static constexpr octets_t
-        to_octets_t(OCTET const& _octets) noexcept {
+        [[nodiscard]] static constexpr octets_t to_octets_t(OCTET const& _octets) noexcept {
             octets_t _data           = {};
             auto     _octets_it      = _octets.cbegin();
             auto     _data_it        = _data.begin();
@@ -103,41 +100,31 @@ namespace webpp {
             auto double_colon_point = data.end();
 
             do {
-                if (it == data.cend() &&
-                    !ascii::starts_with(ipv6_data, '/')) {
+                if (it == data.cend() && !ascii::starts_with(ipv6_data, '/')) {
                     _prefix = 254u; // the ip has too many octets
                     return;
                 }
                 auto colon = ipv6_data.find_first_not_of(hexes);
-                if (colon == string_view_type::npos ||
-                    ipv6_data[colon] == ':' ||
+                if (colon == string_view_type::npos || ipv6_data[colon] == ':' ||
                     (colon != 0 && ipv6_data[colon] == '/')) {
                     // it's an octet
-                    switch (colon == string_view_type::npos ? ipv6_data.size()
-                                                            : colon) {
+                    switch (colon == string_view_type::npos ? ipv6_data.size() : colon) {
                         case 4:
-                            *(it++) = stl::stoul(
-                              string_type(ipv6_data.substr(0, 2)), nullptr, 16);
-                            *(it++) = stl::stoul(
-                              string_type(ipv6_data.substr(2, 2)), nullptr, 16);
+                            *(it++) = stl::stoul(string_type(ipv6_data.substr(0, 2)), nullptr, 16);
+                            *(it++) = stl::stoul(string_type(ipv6_data.substr(2, 2)), nullptr, 16);
                             break;
                         case 3:
-                            *(it++) = stl::stoul(
-                              string_type(ipv6_data.substr(0, 1)), nullptr, 16);
-                            *(it++) = stl::stoul(
-                              string_type(ipv6_data.substr(1, 2)), nullptr, 16);
+                            *(it++) = stl::stoul(string_type(ipv6_data.substr(0, 1)), nullptr, 16);
+                            *(it++) = stl::stoul(string_type(ipv6_data.substr(1, 2)), nullptr, 16);
                             break;
                         case 2:
                         case 1:
-                            *((++it)++) = stl::stoul(
-                              string_type(ipv6_data.substr(0, colon)), nullptr,
-                              16);
+                            *((++it)++) = stl::stoul(string_type(ipv6_data.substr(0, colon)), nullptr, 16);
                             break;
                         case 0:
                             // we've reached the double colon rule
                             if (double_colon_point != data.end()) {
-                                _prefix =
-                                  254u; // we can't have two double colons
+                                _prefix = 254u; // we can't have two double colons
                                 return;
                             } else {
                                 double_colon_point = it;
@@ -153,7 +140,7 @@ namespace webpp {
                         colon--;
                 } else if (ipv6_data[colon] == '.') {
                     // we found an ipv4 address
-                    ipv4<traits_type> ip(ipv6_data);
+                    ipv4 ip(ipv6_data);
                     if (!ip.is_valid()) {
                         _prefix = 254u; // the ip is not valid
                         return;
@@ -174,9 +161,7 @@ namespace webpp {
                     //     _prefix = 253u;
                     //     return;
                     // }
-                    _prefix = __prefix > 128u
-                                ? 253u
-                                : static_cast<decltype(_prefix)>(__prefix);
+                    _prefix = __prefix > 128u ? 253u : static_cast<decltype(_prefix)>(__prefix);
                     ipv6_data.remove_prefix(prefix_str.size() + 1);
                     if (!ipv6_data.empty()) {
                         _prefix = 254u; // there can't be more stuff in the ip
@@ -207,32 +192,23 @@ namespace webpp {
         }
 
       public:
-        constexpr explicit ipv6(string_view_type const& str,
-                                uint8_t __prefix = 255u) noexcept
+        constexpr explicit ipv6(string_view_type const& str, uint8_t __prefix = 255u) noexcept
           : _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {
             parse(str);
         }
-        constexpr explicit ipv6(octets8_t const& _octets,
-                                uint8_t          __prefix = 255u) noexcept
+        constexpr explicit ipv6(octets8_t const& _octets, uint8_t __prefix = 255u) noexcept
           : data(_octets),
-            _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {
-        }
-        constexpr explicit ipv6(octets16_t const& _octets,
-                                uint8_t           __prefix = 255u) noexcept
+            _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {}
+        constexpr explicit ipv6(octets16_t const& _octets, uint8_t __prefix = 255u) noexcept
           : data{to_octets_t(_octets)},
-            _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {
-        }
+            _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {}
 
-        constexpr explicit ipv6(octets32_t const& _octets,
-                                uint8_t           __prefix = 255u) noexcept
+        constexpr explicit ipv6(octets32_t const& _octets, uint8_t __prefix = 255u) noexcept
           : data{to_octets_t(_octets)},
-            _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {
-        }
-        constexpr explicit ipv6(octets64_t const& _octets,
-                                uint8_t           __prefix = 255u) noexcept
+            _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {}
+        constexpr explicit ipv6(octets64_t const& _octets, uint8_t __prefix = 255u) noexcept
           : data{to_octets_t(_octets)},
-            _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {
-        }
+            _prefix(__prefix > 128u && __prefix != 255u ? 253u : __prefix) {}
         constexpr ipv6(ipv6 const& ip) noexcept = default;
         constexpr ipv6(ipv6&& ip) noexcept      = default;
 
@@ -334,9 +310,8 @@ namespace webpp {
             constexpr stl::size_t len     = ndata.size();
             using t                       = uint16_t;
             for (stl::size_t i = 0; i < len; i++) {
-                ndata[i] =
-                  (static_cast<t>(_octets[i * 2u + 0u]) << (16u - 8u * 1u)) |
-                  (static_cast<t>(_octets[i * 2u + 1u]) << (16u - 8u * 2u));
+                ndata[i] = (static_cast<t>(_octets[i * 2u + 0u]) << (16u - 8u * 1u)) |
+                           (static_cast<t>(_octets[i * 2u + 1u]) << (16u - 8u * 2u));
             }
             return ndata;
         }
@@ -356,11 +331,10 @@ namespace webpp {
             constexpr stl::size_t len     = ndata.size();
             using t                       = uint32_t;
             for (stl::size_t i = 0; i < len; i++) {
-                ndata[i] =
-                  (static_cast<t>(_octets[i * 2u + 0u]) << (32u - 8u * 1u)) |
-                  (static_cast<t>(_octets[i * 2u + 1u]) << (32u - 8u * 2u)) |
-                  (static_cast<t>(_octets[i * 2u + 2u]) << (32u - 8u * 3u)) |
-                  (static_cast<t>(_octets[i * 2u + 3u]) << (32u - 8u * 4u));
+                ndata[i] = (static_cast<t>(_octets[i * 2u + 0u]) << (32u - 8u * 1u)) |
+                           (static_cast<t>(_octets[i * 2u + 1u]) << (32u - 8u * 2u)) |
+                           (static_cast<t>(_octets[i * 2u + 2u]) << (32u - 8u * 3u)) |
+                           (static_cast<t>(_octets[i * 2u + 3u]) << (32u - 8u * 4u));
             }
             return ndata;
         }
@@ -380,15 +354,14 @@ namespace webpp {
             constexpr stl::size_t len     = ndata.size();
             using t                       = uint64_t;
             for (stl::size_t i = 0; i < len; i++) {
-                ndata[i] =
-                  (static_cast<t>(_octets[i * 2u + 0u]) << (64u - 8u * 1u)) |
-                  (static_cast<t>(_octets[i * 2u + 1u]) << (64u - 8u * 2u)) |
-                  (static_cast<t>(_octets[i * 2u + 2u]) << (64u - 8u * 3u)) |
-                  (static_cast<t>(_octets[i * 2u + 3u]) << (64u - 8u * 4u)) |
-                  (static_cast<t>(_octets[i * 2u + 4u]) << (64u - 8u * 5u)) |
-                  (static_cast<t>(_octets[i * 2u + 5u]) << (64u - 8u * 6u)) |
-                  (static_cast<t>(_octets[i * 2u + 6u]) << (64u - 8u * 7u)) |
-                  (static_cast<t>(_octets[i * 2u + 7u]) << (64u - 8u * 8u));
+                ndata[i] = (static_cast<t>(_octets[i * 2u + 0u]) << (64u - 8u * 1u)) |
+                           (static_cast<t>(_octets[i * 2u + 1u]) << (64u - 8u * 2u)) |
+                           (static_cast<t>(_octets[i * 2u + 2u]) << (64u - 8u * 3u)) |
+                           (static_cast<t>(_octets[i * 2u + 3u]) << (64u - 8u * 4u)) |
+                           (static_cast<t>(_octets[i * 2u + 4u]) << (64u - 8u * 5u)) |
+                           (static_cast<t>(_octets[i * 2u + 5u]) << (64u - 8u * 6u)) |
+                           (static_cast<t>(_octets[i * 2u + 6u]) << (64u - 8u * 7u)) |
+                           (static_cast<t>(_octets[i * 2u + 7u]) << (64u - 8u * 8u));
             }
             return ndata;
         }
@@ -419,14 +392,10 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_unspecified() const noexcept {
             auto _octets = octets8();
-            return (_octets[0] == 0) && (_octets[1] == 0) &&
-                   (_octets[2] == 0) && (_octets[3] == 0) &&
-                   (_octets[4] == 0) && (_octets[5] == 0) &&
-                   (_octets[6] == 0) && (_octets[7] == 0) &&
-                   (_octets[8] == 0) && (_octets[9] == 0) &&
-                   (_octets[10] == 0) && (_octets[11] == 0) &&
-                   (_octets[12] == 0) && (_octets[13] == 0) &&
-                   (_octets[14] == 0) && (_octets[15] == 0);
+            return (_octets[0] == 0) && (_octets[1] == 0) && (_octets[2] == 0) && (_octets[3] == 0) &&
+                   (_octets[4] == 0) && (_octets[5] == 0) && (_octets[6] == 0) && (_octets[7] == 0) &&
+                   (_octets[8] == 0) && (_octets[9] == 0) && (_octets[10] == 0) && (_octets[11] == 0) &&
+                   (_octets[12] == 0) && (_octets[13] == 0) && (_octets[14] == 0) && (_octets[15] == 0);
         }
 
         /**
@@ -439,14 +408,10 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_loopback() const noexcept {
             auto _octets = octets8();
-            return (_octets[0] == 0) && (_octets[1] == 0) &&
-                   (_octets[2] == 0) && (_octets[3] == 0) &&
-                   (_octets[4] == 0) && (_octets[5] == 0) &&
-                   (_octets[6] == 0) && (_octets[7] == 0) &&
-                   (_octets[8] == 0) && (_octets[9] == 0) &&
-                   (_octets[10] == 0) && (_octets[11] == 0) &&
-                   (_octets[12] == 0) && (_octets[13] == 0) &&
-                   (_octets[14] == 0) && (_octets[15] == 1);
+            return (_octets[0] == 0) && (_octets[1] == 0) && (_octets[2] == 0) && (_octets[3] == 0) &&
+                   (_octets[4] == 0) && (_octets[5] == 0) && (_octets[6] == 0) && (_octets[7] == 0) &&
+                   (_octets[8] == 0) && (_octets[9] == 0) && (_octets[10] == 0) && (_octets[11] == 0) &&
+                   (_octets[12] == 0) && (_octets[13] == 0) && (_octets[14] == 0) && (_octets[15] == 1);
         }
 
         /**
@@ -545,12 +510,9 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_v4_mapped() const noexcept {
             auto _octets = octets8();
-            return (_octets[0] == 0) && (_octets[1] == 0) &&
-                   (_octets[2] == 0) && (_octets[3] == 0) &&
-                   (_octets[4] == 0) && (_octets[5] == 0) &&
-                   (_octets[6] == 0) && (_octets[7] == 0) &&
-                   (_octets[8] == 0) && (_octets[9] == 0) &&
-                   (_octets[10] == 0xff) && (_octets[11] == 0xff);
+            return (_octets[0] == 0) && (_octets[1] == 0) && (_octets[2] == 0) && (_octets[3] == 0) &&
+                   (_octets[4] == 0) && (_octets[5] == 0) && (_octets[6] == 0) && (_octets[7] == 0) &&
+                   (_octets[8] == 0) && (_octets[9] == 0) && (_octets[10] == 0xff) && (_octets[11] == 0xff);
         }
 
         /**
@@ -563,8 +525,7 @@ namespace webpp {
          *
          */
         [[nodiscard]] constexpr bool is_link_local_multicast() const noexcept {
-            return is_multicast() &&
-                   scope() == static_cast<uint8_t>(scope::link_local);
+            return is_multicast() && scope() == static_cast<uint8_t>(scope::link_local);
         }
 
         /**
@@ -577,17 +538,12 @@ namespace webpp {
          * multicast address.
          *
          */
-        [[nodiscard]] constexpr bool
-        is_link_local_all_nodes_multicast() const noexcept {
+        [[nodiscard]] constexpr bool is_link_local_all_nodes_multicast() const noexcept {
             auto _octets = octets8();
-            return _octets[0] == 0xFFu && _octets[1] == 0x02u &&
-                   (_octets[2] == 0) && (_octets[3] == 0) &&
-                   (_octets[4] == 0) && (_octets[5] == 0) &&
-                   (_octets[6] == 0) && (_octets[7] == 0) &&
-                   (_octets[8] == 0) && (_octets[9] == 0) &&
-                   (_octets[10] == 0) && (_octets[11] == 0) &&
-                   (_octets[12] == 0) && (_octets[13] == 0) &&
-                   (_octets[14] == 0) && (_octets[15] == 0x01u);
+            return _octets[0] == 0xFFu && _octets[1] == 0x02u && (_octets[2] == 0) && (_octets[3] == 0) &&
+                   (_octets[4] == 0) && (_octets[5] == 0) && (_octets[6] == 0) && (_octets[7] == 0) &&
+                   (_octets[8] == 0) && (_octets[9] == 0) && (_octets[10] == 0) && (_octets[11] == 0) &&
+                   (_octets[12] == 0) && (_octets[13] == 0) && (_octets[14] == 0) && (_octets[15] == 0x01u);
         }
 
         /**
@@ -600,17 +556,12 @@ namespace webpp {
          * multicast address.
          *
          */
-        [[nodiscard]] constexpr bool
-        is_link_local_all_routers_multicast() const noexcept {
+        [[nodiscard]] constexpr bool is_link_local_all_routers_multicast() const noexcept {
             auto _octets = octets();
-            return _octets[0] == 0xFFu && _octets[1] == 0x02u &&
-                   (_octets[2] == 0) && (_octets[3] == 0) &&
-                   (_octets[4] == 0) && (_octets[5] == 0) &&
-                   (_octets[6] == 0) && (_octets[7] == 0) &&
-                   (_octets[8] == 0) && (_octets[9] == 0) &&
-                   (_octets[10] == 0) && (_octets[11] == 0) &&
-                   (_octets[12] == 0) && (_octets[13] == 0) &&
-                   (_octets[14] == 0) && (_octets[15] == 0x02u);
+            return _octets[0] == 0xFFu && _octets[1] == 0x02u && (_octets[2] == 0) && (_octets[3] == 0) &&
+                   (_octets[4] == 0) && (_octets[5] == 0) && (_octets[6] == 0) && (_octets[7] == 0) &&
+                   (_octets[8] == 0) && (_octets[9] == 0) && (_octets[10] == 0) && (_octets[11] == 0) &&
+                   (_octets[12] == 0) && (_octets[13] == 0) && (_octets[14] == 0) && (_octets[15] == 0x02u);
         }
 
         /**
@@ -624,8 +575,7 @@ namespace webpp {
          *
          */
         [[nodiscard]] constexpr bool is_realm_local_multicast() const noexcept {
-            return is_multicast() &&
-                   (scope() == static_cast<uint8_t>(scope::realm_local));
+            return is_multicast() && (scope() == static_cast<uint8_t>(scope::realm_local));
         }
 
         /**
@@ -638,10 +588,8 @@ namespace webpp {
          * multicast address.
          *
          */
-        [[nodiscard]] constexpr bool
-        is_realm_local_all_nodes_multicast() const noexcept {
-            return is_multicast() &&
-                   scope() == static_cast<uint8_t>(scope::realm_local);
+        [[nodiscard]] constexpr bool is_realm_local_all_nodes_multicast() const noexcept {
+            return is_multicast() && scope() == static_cast<uint8_t>(scope::realm_local);
         }
 
         /**
@@ -654,17 +602,12 @@ namespace webpp {
          * multicast address.
          *
          */
-        [[nodiscard]] constexpr bool
-        is_realm_local_all_routers_multicast() const noexcept {
+        [[nodiscard]] constexpr bool is_realm_local_all_routers_multicast() const noexcept {
             auto _octets = octets();
-            return _octets[0] == 0xFFu && _octets[1] == 0x03u &&
-                   (_octets[2] == 0) && (_octets[3] == 0) &&
-                   (_octets[4] == 0) && (_octets[5] == 0) &&
-                   (_octets[6] == 0) && (_octets[7] == 0) &&
-                   (_octets[8] == 0) && (_octets[9] == 0) &&
-                   (_octets[10] == 0) && (_octets[11] == 0) &&
-                   (_octets[12] == 0) && (_octets[13] == 0) &&
-                   (_octets[14] == 0) && (_octets[15] == 0x02u);
+            return _octets[0] == 0xFFu && _octets[1] == 0x03u && (_octets[2] == 0) && (_octets[3] == 0) &&
+                   (_octets[4] == 0) && (_octets[5] == 0) && (_octets[6] == 0) && (_octets[7] == 0) &&
+                   (_octets[8] == 0) && (_octets[9] == 0) && (_octets[10] == 0) && (_octets[11] == 0) &&
+                   (_octets[12] == 0) && (_octets[13] == 0) && (_octets[14] == 0) && (_octets[15] == 0x02u);
         }
 
         /**
@@ -677,17 +620,12 @@ namespace webpp {
          * forwarders address.
          *
          */
-        [[nodiscard]] constexpr bool
-        is_realm_local_all_mpl_forwarders() const noexcept {
+        [[nodiscard]] constexpr bool is_realm_local_all_mpl_forwarders() const noexcept {
             auto _octets = octets8();
-            return _octets[0] == 0xFFu && _octets[1] == 0x03u &&
-                   (_octets[2] == 0) && (_octets[3] == 0) &&
-                   (_octets[4] == 0) && (_octets[5] == 0) &&
-                   (_octets[6] == 0) && (_octets[7] == 0) &&
-                   (_octets[8] == 0) && (_octets[9] == 0) &&
-                   (_octets[10] == 0) && (_octets[11] == 0) &&
-                   (_octets[12] == 0) && (_octets[13] == 0) &&
-                   (_octets[14] == 0) && (_octets[15] == 0xfcu);
+            return _octets[0] == 0xFFu && _octets[1] == 0x03u && (_octets[2] == 0) && (_octets[3] == 0) &&
+                   (_octets[4] == 0) && (_octets[5] == 0) && (_octets[6] == 0) && (_octets[7] == 0) &&
+                   (_octets[8] == 0) && (_octets[9] == 0) && (_octets[10] == 0) && (_octets[11] == 0) &&
+                   (_octets[12] == 0) && (_octets[13] == 0) && (_octets[14] == 0) && (_octets[15] == 0xfcu);
         }
 
         /**
@@ -700,10 +638,8 @@ namespace webpp {
          * not larger than realm local.
          *
          */
-        [[nodiscard]] constexpr bool
-        is_multicast_larger_than_realm_local() const noexcept {
-            return is_multicast() &&
-                   scope() > static_cast<uint8_t>(scope::realm_local);
+        [[nodiscard]] constexpr bool is_multicast_larger_than_realm_local() const noexcept {
+            return is_multicast() && scope() > static_cast<uint8_t>(scope::realm_local);
         }
 
         /**
@@ -715,16 +651,14 @@ namespace webpp {
          *
          */
         [[nodiscard]] constexpr bool is_routing_locator() const noexcept {
-            constexpr auto aloc_16_mask = 0xFCu; // The mask for Aloc16
-            constexpr auto rloc16_reserved_bit_mask =
-              0x02u; // The mask for the reserved bit of Rloc16
-            auto _octets = octets();
+            constexpr auto aloc_16_mask             = 0xFCu; // The mask for Aloc16
+            constexpr auto rloc16_reserved_bit_mask = 0x02u; // The mask for the reserved bit of Rloc16
+            auto           _octets                  = octets();
             // XX XX XX XX XX XX XX XX 00 00 00 FF FE 00 YY YY
             // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
-            return _octets[8] == 0 && _octets[9] == 0 && _octets[10] == 0 &&
-                   _octets[11] == 0xFF && _octets[12] == 0xFE &&
-                   _octets[13] == 0 && (_octets[14] < aloc_16_mask) &&
+            return _octets[8] == 0 && _octets[9] == 0 && _octets[10] == 0 && _octets[11] == 0xFF &&
+                   _octets[12] == 0xFE && _octets[13] == 0 && (_octets[14] < aloc_16_mask) &&
                    ((_octets[14] & rloc16_reserved_bit_mask) == 0);
         }
 
@@ -736,8 +670,7 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address is not an Anycast RLOC address.
          *
          */
-        [[nodiscard]] constexpr bool
-        is_anycast_routing_locator() const noexcept {
+        [[nodiscard]] constexpr bool is_anycast_routing_locator() const noexcept {
             constexpr auto aloc_16_mask = 0xFC; // The mask for Aloc16
             auto           _octets      = octets();
 
@@ -745,9 +678,8 @@ namespace webpp {
             // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
 
-            return _octets[8] == 0 && _octets[9] == 0 && _octets[10] == 0 &&
-                   _octets[11] == 0xFF && _octets[12] == 0xFE &&
-                   _octets[13] == 0 && _octets[14] == aloc_16_mask;
+            return _octets[8] == 0 && _octets[9] == 0 && _octets[10] == 0 && _octets[11] == 0xFF &&
+                   _octets[12] == 0xFE && _octets[13] == 0 && _octets[14] == aloc_16_mask;
         }
 
         /**
@@ -758,13 +690,11 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address is not an Anycast Service Locator.
          *
          */
-        [[nodiscard]] constexpr bool
-        is_anycast_service_locator() const noexcept {
+        [[nodiscard]] constexpr bool is_anycast_service_locator() const noexcept {
             constexpr auto aloc8_service_start = 0x10;
             constexpr auto aloc8_service_end   = 0x2f;
             auto           _octets             = octets();
-            return is_anycast_routing_locator() &&
-                   (_octets[IPV6_ADDR_SIZE - 2] == 0xfc) &&
+            return is_anycast_routing_locator() && (_octets[IPV6_ADDR_SIZE - 2] == 0xfc) &&
                    (_octets[IPV6_ADDR_SIZE - 1] >= aloc8_service_start) &&
                    (_octets[IPV6_ADDR_SIZE - 1] <= aloc8_service_end);
         }
@@ -786,10 +716,8 @@ namespace webpp {
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
             auto _octets = octets();
-            return (_octets[8] == 0) && (_octets[9] == 0) &&
-                   (_octets[10] == 0) && (_octets[11] == 0) &&
-                   (_octets[12] == 0) && (_octets[13] == 0) &&
-                   (_octets[14] == 0) && (_octets[15] == 0);
+            return (_octets[8] == 0) && (_octets[9] == 0) && (_octets[10] == 0) && (_octets[11] == 0) &&
+                   (_octets[12] == 0) && (_octets[13] == 0) && (_octets[14] == 0) && (_octets[15] == 0);
         }
 
         /**
@@ -802,17 +730,15 @@ namespace webpp {
          * address.
          *
          */
-        [[nodiscard]] constexpr bool
-        is_reserved_subnet_anycast() const noexcept {
+        [[nodiscard]] constexpr bool is_reserved_subnet_anycast() const noexcept {
             // IP: XX XX XX XX XX XX XX XX FD FF FF FF FF FF FF 80
             // 08: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // 16: --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
             auto _octets = octets8();
-            return _octets[8] == 0xFD && _octets[15] == 0x80 &&
-                   (_octets[9] == 0xFFu) && (_octets[10] == 0xFFu) &&
-                   (_octets[11] == 0xFFu) && (_octets[12] == 0xFFu) &&
+            return _octets[8] == 0xFD && _octets[15] == 0x80 && (_octets[9] == 0xFFu) &&
+                   (_octets[10] == 0xFFu) && (_octets[11] == 0xFFu) && (_octets[12] == 0xFFu) &&
                    (_octets[13] == 0xFFu) && (_octets[14] == 0xFFu);
         }
 
@@ -826,8 +752,7 @@ namespace webpp {
          *
          */
         [[nodiscard]] constexpr bool is_iid_reserved() const noexcept {
-            return is_subnet_router_anycast() || is_reserved_subnet_anycast() ||
-                   is_anycast_routing_locator();
+            return is_subnet_router_anycast() || is_reserved_subnet_anycast() || is_anycast_routing_locator();
         }
 
         /**
@@ -927,9 +852,8 @@ namespace webpp {
         string_type str() const noexcept {
             char_type buffer[40] = {};
             auto      _octets    = octets16();
-            sprintf(buffer, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x",
-                    _octets[0], _octets[1], _octets[2], _octets[3], _octets[4],
-                    _octets[5], _octets[6], _octets[7]);
+            sprintf(buffer, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", _octets[0], _octets[1], _octets[2],
+                    _octets[3], _octets[4], _octets[5], _octets[6], _octets[7]);
             buffer[39] = '\0';
             return string_type(buffer);
         }
@@ -942,10 +866,9 @@ namespace webpp {
             auto _octets = octets16();
 
             // finding all of the ranges that are zero filled
-            typename decltype(
-              _octets)::const_iterator range_start = _octets.cend(),
-                                       range_end   = _octets.cend(), start,
-                                       finish      = _octets.cbegin();
+            typename decltype(_octets)::const_iterator range_start = _octets.cend(),
+                                                       range_end   = _octets.cend(), start,
+                                                       finish      = _octets.cbegin();
             do {
                 start = stl::find(finish, _octets.cend(), 0u);
                 if (start == _octets.cend()) {
@@ -955,8 +878,7 @@ namespace webpp {
                     return a != 0;
                 });
                 if (range_start == _octets.cend() ||
-                    stl::distance(start, finish) >
-                      stl::distance(range_start, range_end)) {
+                    stl::distance(start, finish) > stl::distance(range_start, range_end)) {
                     range_start = start;
                     range_end   = finish;
                 }
@@ -975,22 +897,21 @@ namespace webpp {
 
 
             auto append_to_buffer = [&](uint16_t octet) {
-                constexpr auto hex_table =
-                  "000102030405060708090a0b0c0d0e0f1011"
-                  "12131415161718191a1b1c1d1e1f20212223"
-                  "2425262728292a2b2c2d2e2f303132333435"
-                  "363738393a3b3c3d3e3f4041424344454647"
-                  "48494a4b4c4d4e4f50515253545556575859"
-                  "5a5b5c5d5e5f606162636465666768696a6b"
-                  "6c6d6e6f707172737475767778797a7b7c7d"
-                  "7e7f808182838485868788898a8b8c8d8e8f"
-                  "909192939495969798999a9b9c9d9e9fa0a1"
-                  "a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3"
-                  "b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5"
-                  "c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7"
-                  "d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9"
-                  "eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafb"
-                  "fcfdfeff";
+                constexpr auto hex_table = "000102030405060708090a0b0c0d0e0f1011"
+                                           "12131415161718191a1b1c1d1e1f20212223"
+                                           "2425262728292a2b2c2d2e2f303132333435"
+                                           "363738393a3b3c3d3e3f4041424344454647"
+                                           "48494a4b4c4d4e4f50515253545556575859"
+                                           "5a5b5c5d5e5f606162636465666768696a6b"
+                                           "6c6d6e6f707172737475767778797a7b7c7d"
+                                           "7e7f808182838485868788898a8b8c8d8e8f"
+                                           "909192939495969798999a9b9c9d9e9fa0a1"
+                                           "a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3"
+                                           "b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5"
+                                           "c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7"
+                                           "d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9"
+                                           "eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafb"
+                                           "fcfdfeff";
                 auto hex_val = hex_table + octet;
                 if (octet > 0xfu)
                     buffer[index++] = *hex_val;
@@ -1065,10 +986,8 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] ipv6 reversed() const noexcept {
-            return ipv6{octets_t{data[14], data[15], data[12], data[13],
-                                 data[10], data[11], data[8], data[9], data[6],
-                                 data[7], data[4], data[5], data[2], data[3],
-                                 data[0], data[1]},
+            return ipv6{octets_t{data[14], data[15], data[12], data[13], data[10], data[11], data[8], data[9],
+                                 data[6], data[7], data[4], data[5], data[2], data[3], data[0], data[1]},
                         _prefix};
         }
     };
