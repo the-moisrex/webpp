@@ -48,7 +48,7 @@ namespace webpp {
         requires istl::CharTraits<typename T::char_traits>;
 
         // allocator pack
-        requires AllocatorPack<typename T::allocator_pack>;
+        requires AllocatorPack<typename T::alloc_pack>;
 
         // typename T::template allocator<typename T::char_traits>;
         typename T::string_type;

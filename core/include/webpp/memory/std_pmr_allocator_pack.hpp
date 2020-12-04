@@ -18,35 +18,58 @@ namespace webpp {
      */
 
     struct std_allocator_pack {
+        struct monotonic_buffer_resource_descriptor {
+            static constexpr alloc::feature_pack features{alloc::noop_dealloc};
+
+            template <typename T>
+            using type = stl::pmr::monotonic_buffer_resource;
+        };
+
+        struct synchronized_pool_resource_descriptor {
+            static constexpr alloc::feature_pack features{alloc::requires_sync};
+
+            template <typename T>
+            using type = stl::pmr::requires_synchronized_pool_resource;
+        };
+
+        struct unsynchronized_pool_resource_descriptor {
+            static constexpr alloc::feature_pack features{};
+
+            template <typename T>
+            using type = stl::pmr::unsynchronized_pool_resource;
+        };
+
+        struct std_allocator_descriptor {
+            static constexpr alloc::feature_pack features{alloc::requires_default_ctor, alloc::requires_sync};
+
+            template <typename T>
+            using type = stl::allocator<T>;
+        };
+
+        using list =
+          alloc::allocator_list<monotonic_buffer_resource_descriptor, synchronized_pool_resource_descriptor,
+                                unsynchronized_pool_resource_descriptor, std_allocator_descriptor>;
+
         template <alloc::feature_pack FPack>
         struct ranker {
 
             template <typename T>
             struct cond {
-                using value_type = stl::allocator_traits<T>::value_type;
-
-                static constexpr long long int require_def_ctor = FPack.is_on(alloc::default_ctor);
-                static constexpr long long int require_sync     = FPack.is_on(alloc::sync);
-                static constexpr long long int is_monotonic =
-                  stl::same_as<T, stl::pmr::monotonic_buffer_resource>;
-                static constexpr long long int is_sync =
-                  stl::same_as<T, stl::pmr::synchronized_pool_resource>;
-                static constexpr long long int is_unsync =
-                  stl::same_as<T, stl::pmr::unsynchronized_pool_resource>;
-                static constexpr long long int is_std_alloc = stl::same_as<T, stl::allocator<value_type>>;
+                static constexpr alloc::feature_pack alloc_features = T::features;
 
                 static constexpr long long int value = ([]() constexpr noexcept {
                     // only std::allocator in this pack supports this feature
-                    if (require_def_ctor && !is_std_alloc) {
+                    if (FPack.is_on(alloc::requires_default_ctor) &&
+                        alloc_features.is_off(alloc::requires_default_ctor))
                         return -1;
-                    }
 
                     // unsync and monotonic cannot be used in multi-threaded environments
-                    if (require_sync && (is_monotonic || is_unsync))
+                    if (FPack.is_on(alloc::requires_sync) && alloc_features.is_off(alloc::requires_sync))
                         return -1;
 
                     // only monotonic supports noop de-alloc
-                    long long int noop_dealloc = 10 * FPack.is_on(alloc::noop_dealloc) * is_monotonic;
+                    long long int noop_dealloc =
+                      10 * FPack.is_on(alloc::noop_dealloc) * alloc_features.is_on(alloc::noop_dealloc);
 
                     return noop_dealloc;
                 })();
@@ -54,52 +77,15 @@ namespace webpp {
 
             template <typename T>
             using type = typename istl::ranked_types<
-              cond, stl::pmr::monotonic_buffer_resource, stl::pmr::synchronized_pool_resource,
-              stl::pmr::unsynchronized_pool_resource, stl::allocator<T>>::best::type;
+              cond, monotonic_buffer_resource_descriptor, synchronized_pool_resource_descriptor,
+              unsynchronized_pool_resource_descriptor, std_allocator_descriptor>::best::type::type<T>;
         };
-
-        struct monotonic_buffer_resource_descriptor {
-
-            template <typename T>
-            using type = stl::pmr::monotonic_buffer_resource;
-
-            static constexpr alloc::feature_pack features{alloc::noop_dealloc};
-        };
-
-        struct synchronized_pool_resource_descriptor {
-
-            template <typename T>
-            using type = stl::pmr::synchronized_pool_resource;
-
-            static constexpr alloc::feature_pack features{alloc::sync};
-        };
-
-        struct unsynchronized_pool_resource_descriptor {
-
-            template <typename T>
-            using type = stl::pmr::unsynchronized_pool_resource;
-
-            static constexpr alloc::feature_pack features{};
-        };
-
-        struct std_allocator_descriptor {
-
-            template <typename T>
-            using type = stl::allocator<T>;
-
-            static constexpr alloc::feature_pack features{alloc::default_ctor, alloc::sync};
-        };
-
-        using list = alloc::allocator_list<monotonic_buffer_resource_descriptor,
-                                    synchronized_pool_resource_descriptor,
-                                    unsynchronized_pool_resource_descriptor,
-                                    std_allocator_descriptor>;
 
         template <typename T>
         using local = stl::pmr::monotonic_buffer_resource;
 
         template <typename T>
-        using pool = stl::pmr::synchronized_pool_resource;
+        using pool = stl::pmr::requires_synchronized_pool_resource;
     };
 
 } // namespace webpp
