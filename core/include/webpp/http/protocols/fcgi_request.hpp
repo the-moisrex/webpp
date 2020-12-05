@@ -15,11 +15,11 @@ namespace webpp {
         using traits_type            = TraitsType;
         using interface_type         = IfaceType;
         using request_extension_list = REL;
-        using allocator_type   = typename traits_type::template allocator<typename traits_type::char_type>;
+        using allocator_type   = typename traits_type::template allocator<traits::char_type<traits_type>>;
         using application_type = typename interface_type::application_type;
         using logger_type      = typename traits_type::logger;
         using logger_ref       = typename traits_type::logger::logger_ref;
-        using string_type      = typename traits_type::string_type;
+        using string_type      = traits::string<traits_type>;
         using etraits          = enable_traits<traits_type>;
 
         istl::map<traits_type, string_type, string_type> data;

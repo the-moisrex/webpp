@@ -12,7 +12,7 @@
 #include "../strings/iequals.hpp"
 #include "../strings/join.hpp"
 #include "../strings/to_case.hpp"
-#include "../traits/traits_concepts.hpp"
+#include "../traits/traits.hpp"
 #include "../utils/errors.hpp"
 #include "../validators/validators.hpp"
 #include "./details/constants.hpp"

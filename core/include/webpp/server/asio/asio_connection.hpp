@@ -15,8 +15,8 @@ namespace webpp {
     template <typename TraitsType, typename SessionType>
     struct asio_connection {
         using traits_type    = TraitsType;
-        using char_type      = typename traits_type::char_type;
-        using logger_type    = typename traits_type::logger_type;
+        using char_type      = traits::char_type<traits_type>;
+        using logger_type    = traits::logger<traits_type>;
         using logger_ref     = typename logger_type::logger_ref;
         using session_type   = SessionType;
         using socket_type    = asio::ip::tcp::socket;

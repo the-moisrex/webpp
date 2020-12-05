@@ -7,7 +7,7 @@
 
 #include <string>
 
-#include "../traits/traits_concepts.hpp"
+#include "../traits/traits.hpp"
 
 // Traits aware string:
 namespace webpp::istl {

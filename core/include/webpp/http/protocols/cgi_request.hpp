@@ -4,7 +4,7 @@
 #define WEBPP_CGI_REQUEST_HPP
 
 #include "../../std/string_view.hpp"
-#include "../../traits/traits_concepts.hpp"
+#include "../../traits/traits.hpp"
 #include "./protocol_concepts.hpp"
 #include "common/common_request.hpp"
 
@@ -14,7 +14,7 @@ namespace webpp {
     template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL>
     struct cgi_request : common_request<TraitsType, REL> {
         using traits_type    = stl::remove_cvref_t<TraitsType>;
-        using allocator_type = typename traits_type::template allocator<typename traits_type::char_type>;
+        using allocator_type = typename traits_type::template allocator<traits::char_type<traits_type>>;
 
       private:
         using super = common_request<TraitsType, REL>;

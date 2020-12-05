@@ -27,7 +27,6 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/webpp/traits/traits.hpp
         ${LIB_INCLUDE_DIR}/webpp/traits/enable_traits.hpp
-        ${LIB_INCLUDE_DIR}/webpp/traits/traits_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/traits/std_traits.hpp
         ${LIB_INCLUDE_DIR}/webpp/traits/std_pmr_traits.hpp
 

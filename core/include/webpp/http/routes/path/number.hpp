@@ -26,7 +26,7 @@ namespace webpp::routes {
           [[nodiscard]] stl::optional<T> parse(Context auto const& ctx) const noexcept {
             using context_type     = decltype(ctx);
             using traits_type      = typename context_type::traits_type;
-            using string_view_type = typename traits_type::string_view_type;
+            using string_view_type = traits::string_view<traits_type>;
 
             auto const str = *ctx.current_segment;
 

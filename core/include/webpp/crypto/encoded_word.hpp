@@ -51,8 +51,8 @@ namespace webpp::http {
     template <Traits TraitsType>
     struct encoded_word {
         using traits_type = TraitsType;
-        using string_view_type = typename traits_type::string_view_type;
-        using string_type = typename traits_type::string_type;
+        using string_view_type = traits::string_view<traits_type>;
+        using string_type = traits::string<traits_type>;
         using char_type = typename string_type::value_type;
         using allocator_type = typename traits_type::template allocator<typename string_type::value_type>;
 

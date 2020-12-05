@@ -22,7 +22,7 @@ namespace webpp::fastcgi {
         using extension_list   = stl::remove_cvref_t<EList>;
         using interface_type   = fcgi<server_type, application_type, extension_list>;
         using request_type     = simple_request<traits_type, fcgi_request, interface_type, extension_list>;
-        using logger_type      = typename traits_type::logger_type;
+        using logger_type      = traits::logger<traits_type>;
         using logger_ref       = typename logger_type::logger_ref;
         using allocator_type   = typename app_wrapper_type::allocator_type;
         using etraits          = enable_traits<traits_type>;

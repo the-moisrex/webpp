@@ -5,7 +5,7 @@
 
 #include "../../../server/server_concepts.hpp"
 #include "../../../traits/enable_traits.hpp"
-#include "../../../traits/traits_concepts.hpp"
+#include "../../../traits/traits.hpp"
 #include "../../../configs/constants.hpp"
 #include "../../status_code.hpp"
 
@@ -27,8 +27,8 @@ namespace webpp::shosted {
 
         using connection_type = ConnectionType;
         using traits_type      = typename etraits::traits_type;
-        using char_type        = typename traits_type::char_type;
-        using string_view_type = typename traits_type::string_view_type;
+        using char_type        = traits::char_type<traits_type>;
+        using string_view_type = traits::string_view<traits_type>;
         using allocator_type   = typename traits_type::template allocator<char_type>;
         using buffer_type      = stl::array<char_type, buffer_size>;
         using request_type     = RequestType;

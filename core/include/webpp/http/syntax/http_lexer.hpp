@@ -3,7 +3,7 @@
 #ifndef WEBPP_HTTP_LEXER_HPP
 #define WEBPP_HTTP_LEXER_HPP
 
-#include "../../traits/traits_concepts.hpp"
+#include "../../traits/traits.hpp"
 #include "../../std/vector.hpp"
 #include "../../http/status_code.hpp"
 #include <array>
@@ -40,8 +40,8 @@ namespace webpp {
     template <Traits TraitsType>
     struct http_lexer {
         using traits_type = TraitsType;
-        using string_type = typename traits_type::string_type;
-        using string_view_type = typename traits_type::string_view_type;
+        using string_type = traits::string<traits_type>;
+        using string_view_type = traits::string_view<traits_type>;
         using char_type = typename string_view_type::value_type;
 
         static constexpr stl::array<char_type, 2> CRLF{{0x0D, 0x0A}}; // CR(\r), LF(\n)

@@ -6,7 +6,7 @@
 #include "../../extensions/extension.hpp"
 #include "../../std/concepts.hpp"
 #include "../../std/string_view.hpp"
-#include "../../traits/traits_concepts.hpp"
+#include "../../traits/traits.hpp"
 #include "../routes/context_concepts.hpp"
 #include "../response_concepts.hpp"
 
@@ -23,8 +23,8 @@ namespace webpp {
             template <Traits TraitsType>
             struct type {
                 using traits_type      = TraitsType;
-                using string_type      = typename traits_type::string_type;
-                using string_view_type = typename traits_type::string_view_type;
+                using string_type      = traits::string<traits_type>;
+                using string_view_type = traits::string_view<traits_type>;
                 using allocator_type   = typename string_type::allocator_type;
 
               private:

@@ -7,7 +7,7 @@
 #include "../std/string_concepts.hpp"
 #include "../std/string_view.hpp"
 #include "../traits/std_traits.hpp"
-#include "../traits/traits_concepts.hpp"
+#include "../traits/traits.hpp"
 #include "./size.hpp"
 
 // clang-format off

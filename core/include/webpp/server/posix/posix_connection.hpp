@@ -18,8 +18,8 @@ namespace webpp::posix {
     template <typename TraitsType>
     struct posix_connection : public enable_traits<TraitsType> {
         using traits_type    = TraitsType;
-        using char_type      = typename traits_type::char_type;
-        using logger_type    = typename traits_type::logger_type;
+        using char_type      = traits::char_type<traits_type>;
+        using logger_type    = traits::logger<traits_type>;
         using logger_ref     = typename logger_type::logger_ref;
         using socket_type    = int;
         using allocator_type = typename traits_type::template allocator<char_type>;

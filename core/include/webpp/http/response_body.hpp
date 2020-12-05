@@ -70,8 +70,8 @@ namespace webpp {
     template <Traits TraitsType, typename EList = empty_extension_pack>
     struct response_body : public EList {
         using traits_type      = TraitsType;
-        using string_type      = typename traits_type::string_type;
-        using string_view_type = typename traits_type::string_view_type;
+        using string_type      = traits::string<traits_type>;
+        using string_view_type = traits::string_view<traits_type>;
         using elist_type       = EList;
         /*
               private:

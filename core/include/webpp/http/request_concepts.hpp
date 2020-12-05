@@ -47,7 +47,7 @@ namespace webpp {
 //            struct app_type {} app;
 //        };
 //        using traits_type    = fake_traits_type;
-//        using allocator_type = typename traits_type::template allocator<typename traits_type::char_type>;
+//        using allocator_type = typename traits_type::template allocator<traits::char_type<traits_type>>;
 //
 //        auto request_uri() const noexcept {
 //            return "/";

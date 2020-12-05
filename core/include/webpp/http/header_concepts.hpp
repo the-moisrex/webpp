@@ -5,7 +5,7 @@
 
 #include "../extensions/extension.hpp"
 #include "../std/concepts.hpp"
-#include "../traits/traits_concepts.hpp"
+#include "../traits/traits.hpp"
 
 namespace webpp {
 

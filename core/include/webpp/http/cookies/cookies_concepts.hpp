@@ -3,7 +3,7 @@
 #ifndef WEBPP_COOKIES_CONCEPTS_H
 #define WEBPP_COOKIES_CONCEPTS_H
 
-#include "../../traits/traits_concepts.hpp"
+#include "../../traits/traits.hpp"
 
 namespace webpp {
 

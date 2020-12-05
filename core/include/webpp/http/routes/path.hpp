@@ -52,7 +52,7 @@ namespace webpp {
     struct path_field {
         using context_type           = ContextType;
         using traits_type            = typename context_type::traits_type;
-        using string_view_type       = typename traits_type::string_view_type;
+        using string_view_type       = traits::string_view<traits_type>;
         using path_type              = PathType;
         using segments_type          = UriSegmentsType;
         using segments_iterator_type = typename segments_type::iterator;
@@ -356,7 +356,7 @@ namespace webpp {
             using context_type                = stl::remove_cvref_t<ContextType>;
             using context_ref_type            = stl::add_lvalue_reference_t<context_type>;
             using traits_type                 = typename context_type::traits_type;
-            using string_type                 = typename traits_type::string_type;
+            using string_type                 = traits::string<traits_type>;
             constexpr bool has_path_extension = requires {
                 {ctx.path};
             };
