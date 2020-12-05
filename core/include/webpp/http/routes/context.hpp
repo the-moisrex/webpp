@@ -119,12 +119,12 @@ namespace webpp {
     template <Traits TraitsType, typename EList, Request RequestType, Response ResponseType>
     struct basic_context : public EList, public enable_traits<TraitsType> {
         using traits_type        = TraitsType;
-        using allocator_type     = typename traits_type::template allocator<typename traits_type::char_type>;
+        using allocator_type     = typename traits_type::template allocator<traits::char_type<traits_type>>;
         using elist_type         = EList;
         using request_type       = RequestType;
         using response_type      = ResponseType;
         using basic_context_type = basic_context<TraitsType, EList, RequestType, ResponseType>;
-        using logger_type        = typename traits_type::logger_type;
+        using logger_type        = traits::logger<traits_type>;
         using logger_ref         = typename logger_type::logger_ref;
         using etraits            = enable_traits<TraitsType>;
 
@@ -197,11 +197,11 @@ namespace webpp {
         using original_extension_pack_type = OriginalExtensionList;
         using request_type                 = stl::remove_cvref_t<ReqType>;
         using basic_context_type           = typename EList::basic_context_type;
-        using logger_type                  = typename traits_type::logger_type;
+        using logger_type                  = traits::logger<traits_type>;
         using logger_ref                   = typename logger_type::logger_ref;
 
         // should we use a char_type as allocator? change this if you think it's not the correct type
-        using allocator_type = typename traits_type::template allocator<typename traits_type::char_type>;
+        using allocator_type = typename traits_type::template allocator<traits::char_type<traits_type>>;
 
 
         /**

@@ -60,8 +60,8 @@ namespace webpp {
         template <Header H>
         struct cookie_header_extension : public virtual H {
             using traits_type      = typename H::traits_type;
-            using string_type      = typename traits_type::string_type;
-            using string_view_type = typename traits_type::string_view_type;
+            using string_type      = traits::string<traits_type>;
+            using string_view_type = traits::string_view<traits_type>;
 
           private:
             using super = H;

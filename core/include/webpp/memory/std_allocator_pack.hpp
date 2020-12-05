@@ -33,6 +33,9 @@ namespace webpp {
         using pool = stl::allocator<T>;
     };
 
+
+    static_assert(AllocatorPack<std_allocator_pack>, "The specified allocator pack is not really one");
+
 } // namespace webpp
 
 #endif

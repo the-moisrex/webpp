@@ -17,8 +17,8 @@ namespace webpp {
     template <Traits TraitsType, typename EList, bool IsView>
     struct basic_header_field : public EList {
         using traits_type      = TraitsType;
-        using string_type      = typename traits_type::string_type;
-        using string_view_type = typename traits_type::string_view_type;
+        using string_type      = traits::string<traits_type>;
+        using string_view_type = traits::string_view<traits_type>;
         using allocator_type   = typename string_type::allocator_type;
         using alloc_type       = allocator_type const&;
         using string_container = stl::conditional_t<IsView, string_view_type, string_type>;

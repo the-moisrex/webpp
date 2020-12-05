@@ -47,9 +47,9 @@ namespace webpp {
 
     template <typename D>
     concept AllocatorPack = requires {
-        // template D::ranker; // < feature_pack FPack > A Cond for "ranked_types" type trait (in
-        //                     // std/type_traits.hpp file)
-        requires Allocator<typename D::template local<void>>; // void here is just an example; local should
+        // typename D::template ranker<0>::type; // template <feature_pack> A Cond for "ranked_types" type trait (in std/type_traits.hpp file)
+        typename D::template local<char>;
+        requires Allocator<typename D::template local<char>>; // void here is just an example; local should
                                                               // give you an allocator that's good for local
                                                               // use in functions and what not!
 

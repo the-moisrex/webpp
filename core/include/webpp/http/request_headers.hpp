@@ -5,7 +5,7 @@
 
 #include "../std/format.hpp"
 #include "../std/vector.hpp"
-#include "../traits/traits_concepts.hpp"
+#include "../traits/traits.hpp"
 #include "./headers.hpp"
 #include "../std/string_view.hpp"
 
@@ -31,8 +31,8 @@ namespace webpp {
 
       public:
         using traits_type = TraitsType;
-        using string_type = typename traits_type::string_type;
-        using string_view_type = typename traits_type::string_view_type;
+        using string_type = traits::string<traits_type>;
+        using string_view_type = traits::string_view<traits_type>;
         using field_type  = HeaderFieldType;
 
         template <typename... Args>

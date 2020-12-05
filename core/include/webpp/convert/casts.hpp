@@ -4,7 +4,7 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/size.hpp"
-#include "../traits/traits_concepts.hpp"
+#include "../traits/traits.hpp"
 
 #include <charconv>
 #include <stdexcept>

@@ -5,7 +5,7 @@
 
 #include "../std/format.hpp"
 #include "../std/string_view.hpp"
-#include "../traits/traits_concepts.hpp"
+#include "../traits/traits.hpp"
 
 #include <cstdio>
 #ifndef WEBPP_FMT_LIB

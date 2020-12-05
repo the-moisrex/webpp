@@ -7,7 +7,7 @@
 // clang-format on
 
 #include "../server_concepts.hpp"
-#include "../../traits/traits_concepts.hpp"
+#include "../../traits/traits.hpp"
 #include "./asio_thread_pool.hpp"
 #include "./asio_connection.hpp"
 #include "./asio_constants.hpp"

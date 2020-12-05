@@ -28,8 +28,12 @@ namespace webpp {
         template <typename T>
         using monotonic_allocator = Allocator<T>;
 
-        using string_view_type = stl::basic_string_view<char_type, char_traits>;
-        using string_type      = stl::basic_string<char_type, char_traits, stl::allocator<char_type>>;
+
+        template <typename ChT>
+        using string_view = stl::basic_string_view<ChT, char_traits>;
+
+        template <typename ChT, typename AllocT>
+        using string = stl::basic_string<ChT, char_traits, AllocT>;
 
         using logger_type = stderr_logger;
     };

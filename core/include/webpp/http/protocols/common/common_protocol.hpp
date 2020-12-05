@@ -17,8 +17,8 @@ namespace webpp {
         using traits_type      = stl::remove_cvref_t<TraitsType>;
         using application_type = App;
         using extension_list   = stl::remove_cvref_t<EList>;
-        using string_view_type = typename traits_type::string_view_type;
-        using string_type      = typename traits_type::string_type;
+        using string_view_type = traits::string_view<traits_type>;
+        using string_type      = traits::string<traits_type>;
         using etraits          = enable_traits<traits_type>;
         using app_wrapper_type = http_app_wrapper<traits_type, application_type>;
 

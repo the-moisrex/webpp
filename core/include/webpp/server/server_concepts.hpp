@@ -3,7 +3,7 @@
 #ifndef WEBPP_SERVER_CONCEPTS_HPP
 #define WEBPP_SERVER_CONCEPTS_HPP
 
-#include "../traits/traits_concepts.hpp"
+#include "../traits/traits.hpp"
 
 #include <memory>
 
@@ -54,7 +54,7 @@ namespace webpp {
      * - [ ] Constexpr way to hash a function object into a known number in the thread pool
      */
     template <typename T>
-    concept ThreadPool = requires(T tp, decltype([] {}) lambda) {
+    concept ThreadPool = requires(T tp, stl::true_type lambda) {
         tp.post(lambda);
         tp.defer(lambda); // todo: fix these 3; I don't think they have the correct args
         tp.dispatch(lambda);

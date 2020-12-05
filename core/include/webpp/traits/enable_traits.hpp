@@ -6,7 +6,7 @@
 #include "../std/concepts.hpp"
 #include "../std/std.hpp"
 #include "traits.hpp"
-#include "traits_concepts.hpp"
+#include "traits.hpp"
 
 #include <type_traits>
 
@@ -18,11 +18,11 @@ namespace webpp {
     template <Traits TraitsType>
     struct enable_traits {
         using traits_type      = stl::remove_cvref_t<TraitsType>;
-        using logger_type      = typename traits_type::logger_type;
+        using logger_type      = traits::logger<traits_type>;
         using logger_ref       = typename logger_type::logger_ref;
-        using char_type        = typename traits_type::char_type;
-        using string_type      = typename traits_type::string_type;
-        using string_view_type = typename traits_type::string_view_type;
+        using char_type        = traits::char_type<traits_type>;
+        using string_type      = traits::string<traits_type>;
+        using string_view_type = traits::string_view<traits_type>;
         using allocator_type   = typename traits_type::template allocator<char_type>;
 
       private:

@@ -37,9 +37,9 @@ namespace webpp {
     struct http_app_wrapper : public stl::remove_cvref_t<AppType> {
         using application_type = stl::remove_cvref_t<AppType>;
         using traits_type      = stl::remove_cvref_t<TraitsType>;
-        using logger_type      = typename traits_type::logger_type;
+        using logger_type      = traits::logger<traits_type>;
         using logger_ref       = typename logger_type::logger_ref;
-        using char_type        = typename traits_type::char_type;
+        using char_type        = traits::char_type<traits_type>;
         using allocator_type   = typename traits_type::template allocator<char_type>;
 
         template <typename AllocType>

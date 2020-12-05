@@ -24,8 +24,8 @@ namespace webpp {
     struct fake_proto_request : public common_request<TraitsType, REL> {
         using super          = common_request<TraitsType, REL>;
         using traits_type    = TraitsType;
-        using allocator_type = typename traits_type::template allocator<typename traits_type::char_type>;
-        using string_type    = typename traits_type::string_type;
+        using allocator_type = typename traits_type::template allocator<traits::char_type<traits_type>>;
+        using string_type    = traits::string<traits_type>;
 
         template <typename ...Args>
         fake_proto_request(Args&&...args) noexcept

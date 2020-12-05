@@ -52,21 +52,6 @@ namespace webpp::flags {
 #endif
         base_type value = none;
 
-        constexpr manager() = default;
-
-        template <typename... T>
-        requires(stl::same_as<stl::remove_cvref_t<T>, base_type>&&...) constexpr explicit manager(
-          T... val) noexcept
-          : value{(... | val)} {}
-
-        template <typename... T>
-        requires((stl::same_as<stl::remove_cvref_t<T>, type> && ...)) constexpr manager(T... val) noexcept
-          : value{(... | value_of(val))} {}
-
-        operator base_type() const noexcept {
-            return value;
-        }
-
         [[nodiscard]] static constexpr base_type value_of(type v) noexcept {
             if constexpr (are_values_sequential) {
                 return item(magic_enum::enum_integer(v));
@@ -74,6 +59,29 @@ namespace webpp::flags {
                 return item(magic_enum::enum_index(v).value());
             }
         }
+
+        constexpr manager() = default;
+        constexpr manager(manager const&) = default;
+        constexpr manager(manager&&) noexcept = default;
+
+        constexpr manager& operator=(manager const&) = default;
+        constexpr manager& operator=(manager&&) noexcept = default;
+
+        template <typename... T>
+        requires(stl::same_as<stl::remove_cvref_t<T>, base_type> && ...) constexpr manager(
+          T... val) noexcept
+          : value{static_cast<base_type>((base_type(0) | ... | static_cast<base_type>(val)))} {}
+
+        template <typename... T>
+        requires((stl::same_as<stl::remove_cvref_t<T>, type> && ...)) constexpr manager(T... val) noexcept
+          : value{static_cast<base_type>((base_type(0) | ... | value_of(val)))} {}
+
+        operator base_type() const noexcept {
+            return value;
+        }
+
+        [[nodiscard]] friend constexpr bool operator==(manager a, manager b) noexcept = default;
+        [[nodiscard]] friend constexpr bool operator!=(manager a, manager b) noexcept = default;
 
         [[nodiscard]] constexpr bool operator==(base_type v) const noexcept {
             return value == v;

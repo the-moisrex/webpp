@@ -2,7 +2,7 @@
 #define WEBPP_HTTP_RESPONSE_H
 
 #include "../convert/casts.hpp"
-#include "../traits/traits_concepts.hpp"
+#include "../traits/traits.hpp"
 #include "./response_concepts.hpp"
 #include "./response_headers.hpp"
 #include "headers.hpp"
@@ -27,8 +27,8 @@ namespace webpp {
         using traits_type      = TraitsType;
         using body_type        = BodyType;
         using headers_type     = ResponseHeaderType;
-        using string_view_type = typename traits_type::string_view_type;
-        using string_type      = typename traits_type::string_type;
+        using string_view_type = traits::string_view<traits_type>;
+        using string_type      = traits::string<traits_type>;
 
         body_type    body{};
         headers_type headers{};

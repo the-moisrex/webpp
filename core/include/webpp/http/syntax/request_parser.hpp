@@ -4,7 +4,7 @@
 #define WEBPP_REQUEST_PARSER_HPP
 
 #include "../../strings/to_case.hpp"
-#include "../../traits/traits_concepts.hpp"
+#include "../../traits/traits.hpp"
 #include "../version.hpp"
 
 namespace webpp {
@@ -23,8 +23,8 @@ namespace webpp {
     template <Traits TraitsType>
     struct http_request_parser {
         using traits_type = TraitsType;
-        using string_type = typename traits_type::string_type;
-        using string_view_type = typename traits_type::string_view_type;
+        using string_type = traits::string<traits_type>;
+        using string_view_type = traits::string_view<traits_type>;
         using status_code_type = uint_fast16_t;
 
         // todo: add utilities so the user is able to change these limits

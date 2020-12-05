@@ -6,7 +6,7 @@
 #if __has_include(<spdlog/spdlog.h>)
 #    define WEBPP_SPDLOG 1
 #    include "../std/string_view.hpp"
-#    include "../traits/traits_concepts.hpp"
+#    include "../traits/traits.hpp"
 
 #    include <memory>
 #    include <spdlog/spdlog.h>

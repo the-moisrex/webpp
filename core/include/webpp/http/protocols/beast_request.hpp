@@ -4,7 +4,7 @@
 #define WEBPP_BEAST_REQUEST_HPP
 
 #include "../../std/string_view.hpp"
-#include "../../traits/traits_concepts.hpp"
+#include "../../traits/traits.hpp"
 #include "./protocol_concepts.hpp"
 #include "common/common_request.hpp"
 
@@ -22,8 +22,8 @@ namespace webpp {
                            public beast::http::request<BodyType, FieldType> {
         using traits_type            = stl::remove_cvref_t<TraitsType>;
         using request_extension_list = REL;
-        using string_type            = typename traits_type::string_type;
-        using string_view_type       = typename traits_type::string_view_type;
+        using string_type            = traits::string<traits_type>;
+        using string_view_type       = traits::string_view<traits_type>;
         using beast_request_type     = beast::http::request<BodyType, FieldType>;
         using body_type              = BodyType;
         using field_type             = FieldType;

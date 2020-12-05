@@ -2,7 +2,7 @@
 #define WEBPP_HTTP_FILE_H
 
 #include "../../extensions/extension.hpp"
-#include "../../traits/traits_concepts.hpp"
+#include "../../traits/traits.hpp"
 
 #include <filesystem>
 
@@ -20,8 +20,8 @@ namespace webpp {
         template <Traits TraitsType>
         struct type {
             using traits_type      = TraitsType;
-            using string_type      = typename traits_type::string_type;
-            using string_view_type = typename traits_type::string_view_type;
+            using string_type      = traits::string<traits_type>;
+            using string_view_type = traits::string_view<traits_type>;
             using char_type        = typename string_type::value_type;
             using allocator_type   = typename traits_type::template allocator<char_type>;
             using alloc_type       = allocator_type const&;
@@ -63,7 +63,6 @@ namespace webpp {
                     // todo: retry feature
                 }
 
-                return;
             }
 
           public:
