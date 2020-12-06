@@ -66,6 +66,43 @@ namespace webpp::istl {
     };
 
 
+    namespace details {
+        template <typename TupleT, typename no_order_tuple, stl::size_t index>
+        constexpr auto tuple_get_value(no_order_tuple& bad_tuple) noexcept {
+            using this_type = stl::tuple_element_t<index, TupleT>;
+            if constexpr (tuple_contains<no_order_tuple, this_type>::value) {
+                return stl::get<this_type>(bad_tuple);
+            } else {
+                // default construct the type
+                return this_type{};
+            }
+        }
+    } // namespace details
+
+    /**
+     * With tuples that have no similar types, this function will able to help you pass the arguments of the
+     * tuple in the right oder if you give the arguments in the wrong order.
+     * The types that don't exists in the args, will be default constructed.
+     */
+    template <Tuple TupleT, typename... T>
+    requires((tuple_contains<TupleT, T>::value && ...)) // check if the types are okay
+      [[nodiscard]] constexpr TupleT make_tuple_no_order(T&&... args) noexcept {
+        using no_order_tuple = stl::tuple<T...>;
+        if constexpr (stl::same_as<TupleT, no_order_tuple>) {
+            // It's in order, so there's no need of re-ordering
+            return TupleT{stl::forward<T>(args)...};
+        } else {
+            // re-order, and default-construct those that don't exists in the args
+            return ([]<stl::size_t... ints>(stl::index_sequence<ints...>, T && ... args) constexpr noexcept {
+                no_order_tuple bad_tuple{stl::forward<T>(args)...};
+                // It's a free function and not a lambda because C++ is stupid and doesn't
+                // understand that "ints" in the lambda template is a parameter pack
+                return TupleT{details::tuple_get_value<TupleT, no_order_tuple, ints>(bad_tuple)...};
+            })(stl::make_index_sequence<stl::tuple_size_v<TupleT>>{}, stl::forward<T>(args)...);
+        }
+    }
+
+
 } // namespace webpp::istl
 
 #endif // WEBPP_TUPLE_H
