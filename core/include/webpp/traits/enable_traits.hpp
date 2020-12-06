@@ -20,18 +20,20 @@ namespace webpp {
         using string_view_type  = traits::string_view<traits_type>;
         using local_allocator   = traits::local_allocator<traits_type, char_type>;
         using general_allocator = traits::general_allocator<traits_type, char_type>;
-        using alloc_list =
-          traits::alloc_list<char_type>; // It's a tuple-like type capable of containing multiple allocators
+        using alloc_list        = traits::char_alloc_list<traits_type>; // It's a tuple-like type capable of
+                                                                        // containing multiple allocators
 
         [[no_unique_address]] alloc_list allocs{};
         [[no_unique_address]] logger_ref logger{};
 
+        // ctor for when the allocators are not passed in the right order or they are short a few
+        // and also for those that have been passed in the right order. We will know :)
         template <Allocator... AllocT>
         requires((istl::tuple_contains<alloc_list, AllocT>::value &&
                   ...)) constexpr explicit enable_traits(logger_ref logger_obj = logger_type{},
                                                          AllocT const&... alloc) noexcept
           : logger{logger_obj},
-            allocs{alloc...} {}
+            allocs{istl::make_tuple_no_order<alloc_list>(alloc...)} {}
 
         constexpr explicit enable_traits(logger_ref logger_obj, alloc_list const& the_allocs) noexcept
           : logger{logger_obj},
@@ -85,6 +87,9 @@ namespace webpp {
         [[nodiscard]] auto const& general_alloc() const noexcept {
             return alloc<traits::general_allocator, T>();
         }
+
+
+        // todo: add method for getting the allocator with specific features
 
 
         /**

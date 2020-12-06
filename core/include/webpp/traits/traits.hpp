@@ -75,7 +75,8 @@ namespace webpp {
         requires Traits<typename T::traits_type>;
         { t.logger }
         ->Logger;
-        t.get_allocator();
+        t.template local_alloc<char>();
+        t.template general_alloc<char>();
     };
 
 
@@ -107,8 +108,11 @@ namespace webpp {
         template <Traits TT>
         using general_char_allocator = general_allocator<TT, char_type<TT>>;
 
+        template <Traits TT, typename T>
+        using alloc_list = typename TT::alloc_pack::template list<T>;
+
         template <Traits TT>
-        using alloc_list = typename TT::alloc_pack::list;
+        using char_alloc_list = alloc_list<TT, char_type<TT>>;
 
         template <Traits TT>
         using string = typename TT::template string<char_type<TT>, general_char_allocator<TT>>;
