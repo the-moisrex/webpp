@@ -46,9 +46,15 @@ namespace webpp {
             using type = stl::allocator<T>;
         };
 
-        using list =
+        using descriptor_list =
           alloc::allocator_list<monotonic_buffer_resource_descriptor, synchronized_pool_resource_descriptor,
                                 unsynchronized_pool_resource_descriptor, std_allocator_descriptor>;
+
+        // todo add new_delete_resource
+        template <typename T>
+        using list =
+          alloc::allocator_list<stl::pmr::monotonic_buffer_resource, stl::pmr::synchronized_pool_resource,
+                                stl::pmr::unsynchronized_pool_resource>;
 
         template <alloc::feature_pack FPack>
         struct ranker {
@@ -85,7 +91,7 @@ namespace webpp {
         using local = stl::pmr::monotonic_buffer_resource;
 
         template <typename T>
-        using pool = stl::pmr::requires_synchronized_pool_resource;
+        using general = stl::pmr::requires_synchronized_pool_resource;
     };
 
 } // namespace webpp

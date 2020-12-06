@@ -82,21 +82,39 @@ namespace webpp {
     template <typename From, typename To>
     using to_alloc = typename stl::allocator_traits<From>::template rebind_alloc<To>;
 
+    /**
+     * Middle man type aliases.
+     *   Seriously pro tip in C++20 concepts:
+     *   Do NOT use your instances of your concepts (the types that match your concepts) directly if they're
+     *   going to be all over the place. You WILL change the concept at some point. Use middle-man type
+     *   aliases to extract information out of them.
+     *     - from: https://twitter.com/the_moisrex/status/1335540447566049282?s=20
+     */
     namespace traits {
 
         template <Traits TT>
         using char_type = typename TT::char_type;
 
-        template <Traits TT>
-        using string =
-          typename TT::template string<char_type<TT>,
-                                       typename TT::alloc_pack::template general<typename TT::char_type>>;
+        template <Traits TT, typename T>
+        using local_allocator = typename TT::alloc_pack::template local<T>;
 
         template <Traits TT>
-        using local_string =
-          typename TT::template string<char_type<TT>,
-                                       typename TT::alloc_pack::template local<typename TT::char_type>>;
+        using local_char_allocator = local_allocator<TT, char_type<TT>>;
 
+        template <Traits TT, typename T>
+        using general_allocator = typename TT::alloc_pack::template general<T>;
+
+        template <Traits TT>
+        using general_char_allocator = general_allocator<TT, char_type<TT>>;
+
+        template <Traits TT>
+        using alloc_list = typename TT::alloc_pack::list;
+
+        template <Traits TT>
+        using string = typename TT::template string<char_type<TT>, general_char_allocator<TT>>;
+
+        template <Traits TT>
+        using local_string = typename TT::template string<char_type<TT>, local_char_allocator<TT>>;
 
         template <Traits TT>
         using string_view = typename TT::template string_view<char_type<TT>>;

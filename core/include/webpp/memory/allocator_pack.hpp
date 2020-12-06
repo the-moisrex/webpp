@@ -25,7 +25,7 @@ namespace webpp::alloc {
     using feature_pack = flags::manager<features>;
 
     template <typename... AllocatorDescriptors>
-    struct allocator_list : public stl::tuple<AllocatorDescriptors...> {};
+    using allocator_list = stl::tuple<AllocatorDescriptors...>;
 
 } // namespace webpp::alloc
 
