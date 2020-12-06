@@ -24,13 +24,16 @@ namespace webpp {
             static constexpr alloc::feature_pack features{alloc::requires_default_ctor, alloc::requires_sync};
         };
 
-        using list = alloc::allocator_list<std_allocator_descriptor>;
+        using descriptor_list = alloc::allocator_list<std_allocator_descriptor>;
+
+        template <typename T>
+        using list = alloc::allocator_list<stl::allocator<T>>;
 
         template <typename T>
         using local = stl::allocator<T>;
 
         template <typename T>
-        using pool = stl::allocator<T>;
+        using general = stl::allocator<T>;
     };
 
 

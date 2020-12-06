@@ -48,6 +48,24 @@ namespace webpp::istl {
     concept TupleOf = is_tuple_of<Concept, Tup>::value;
 
 
+    /**
+     * Check if the type T is one of the TupleT's elements.
+     * I'm short on internet bandwidth as of writing this; so forgive me if there's already another solution
+     * of this in the STL, I don't have the luxury of searching it; so I'm just gonna implement it :)
+     */
+    template <typename TupleT, typename T, stl::size_t I = stl::tuple_size_v<TupleT> - 1>
+    struct tuple_contains {
+        static constexpr bool value =
+          stl::is_same_v<stl::tuple_element_t<I, TupleT>, T> || tuple_contains<TupleT, T, I - 1>::value;
+    };
+
+
+    template <typename TupleT, typename T>
+    struct tuple_contains<TupleT, T, 0> {
+        static constexpr bool value = stl::is_same_v<stl::tuple_element_t<0, TupleT>, T>;
+    };
+
+
 } // namespace webpp::istl
 
 #endif // WEBPP_TUPLE_H
