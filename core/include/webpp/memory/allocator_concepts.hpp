@@ -43,6 +43,9 @@ namespace webpp {
         };
     };
 
+    template <typename T, typename Alloc>
+    concept AllocatorOf = Allocator<Alloc> && stl::same_as<typename Alloc::value_type, T>;
+
     // static_assert(Allocator<stl::allocator<int>>, "There's a problem with Allocator concept");
 
     template <typename D>

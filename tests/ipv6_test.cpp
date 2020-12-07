@@ -9,7 +9,7 @@
 
 using namespace webpp;
 
-using ipv6_t = ipv6<std_traits>;
+using ipv6_t = ipv6;
 
 TEST(IPv6Tests, Creation) {
     ipv6_t ip1{"::"};

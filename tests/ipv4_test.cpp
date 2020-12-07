@@ -8,12 +8,12 @@
 
 using namespace webpp;
 
-using ipv4_t = ipv4<std_traits>;
+using ipv4_t = ipv4;
 
 TEST(IPv4Tests, FreeFunctions) {
-    EXPECT_EQ(to_prefix<std_traits>("255.255.255.0"), 24);
-    EXPECT_EQ(to_prefix<std_traits>("255.255.255.128"), 25);
-    EXPECT_EQ(to_prefix<std_traits>("0.255.255.128"), 0);
+    EXPECT_EQ(to_prefix("255.255.255.0"), 24);
+    EXPECT_EQ(to_prefix("255.255.255.128"), 25);
+    EXPECT_EQ(to_prefix("0.255.255.128"), 0);
     EXPECT_EQ(to_prefix({255, 255, 255, 128}), 25);
     EXPECT_EQ(to_prefix({0, 255, 255, 128}), 0);
     EXPECT_EQ(to_prefix(0xFF'FF'FF'00u), 24);
@@ -63,8 +63,8 @@ TEST(IPv4Tests, Validation) {
 
     for (auto const& _ip : valid_ipv4s) {
         EXPECT_TRUE(static_cast<bool>(is::ipv4(_ip)));
-        EXPECT_TRUE(ipv4<std_traits>(_ip).is_valid())
-          << "ip: " << _ip << "; compiled ip: " << ipv4<std_traits>(_ip);
+        EXPECT_TRUE(ipv4(_ip).is_valid())
+          << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).str();
         ipv4_t ip{_ip};
         (void) ip.integer(); // just to make sure it's parsed
         EXPECT_TRUE(ip.is_valid());

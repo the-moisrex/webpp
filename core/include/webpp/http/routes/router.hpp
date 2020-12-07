@@ -155,7 +155,7 @@ namespace webpp {
                 }
             } else if constexpr (stl::is_integral_v<result_type>) {
                 return ctx.error(res); // error code
-            } else if constexpr (Route<result_type>) {
+            } else if constexpr (Route<result_type, context_type>) {
                 auto res2       = call_route(res, ctx, req);
                 using res2_type = stl::remove_cvref_t<decltype(res2)>;
                 if constexpr (stl::is_void_v<res2_type>) {

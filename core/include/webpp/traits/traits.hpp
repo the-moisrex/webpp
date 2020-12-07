@@ -37,8 +37,7 @@ namespace webpp {
      * Any other custom traits must include the traits above so it can be used
      * through out the templated classes inside the webpp project.
      *
-     * The std_traits is just the default standard traits defined in the std
-     * library.
+     * The std_traits is just the default standard traits defined in the std library.
      */
     template <typename T>
     concept Traits = requires {
@@ -60,6 +59,20 @@ namespace webpp {
         // todo: add StringView<typename T::string_view_type>; without adding a circular dependency
     };
 
+    /**
+     * This is what other types need. A subset of traits type. For example only contains one allocator not
+     * a whole package of allocators.
+     */
+    template <typename T>
+    concept SubTraits = requires {
+        requires istl::CharType<typename T::char_type>;
+        requires Allocator<typename T::allocator_type>;
+
+        typename T::template string<typename T::char_type,
+                                    typename T::alloc_pack::template local<typename T::char_type>>;
+        typename T::template string_view<typename T::char_type>;
+        requires Logger<typename T::logger_type>;
+    };
 
     /**
      * A traits enabled type is a type that supports everything that a traits type has to offer.

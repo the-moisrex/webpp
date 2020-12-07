@@ -27,11 +27,11 @@ namespace webpp {
         constexpr bool is_signed = stl::is_same_v<T, stl::make_signed_t<T>>;
         const auto     str       = istl::string_viewify(stl::forward<decltype(_str)>(_str));
         using char_type          = istl::char_type_of<decltype(str)>;
-        T    ret                 = 0;
+        T ret                    = 0;
         if (!str.size())
             return ret;
 
-        auto c                   = str.begin();
+        auto c = str.begin();
         if constexpr (is_signed) {
             if (*c == '-' || *c == '+')
                 c++; // first character can be - or +
@@ -92,8 +92,9 @@ namespace webpp {
     // todo: add allocator support here:
     template <Traits TraitsType, typename ValueType, typename... R>
     constexpr auto to_str_copy(ValueType value, R&&... args) noexcept {
-        using char_type           = typename TraitsType::char_type;
-        using str_t               = typename TraitsType::string_type;
+        using traits_type         = TraitsType;
+        using char_type           = traits::char_type<traits_type>;
+        using str_t               = traits::string<traits_type>;
         using size_type           = typename str_t::size_type;
         constexpr size_type _size = ascii::digit_count<ValueType>() + 1;
         if constexpr (stl::is_same_v<char_type, char>) {

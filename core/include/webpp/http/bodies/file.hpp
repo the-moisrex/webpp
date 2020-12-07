@@ -22,9 +22,10 @@ namespace webpp {
             using traits_type      = TraitsType;
             using string_type      = traits::string<traits_type>;
             using string_view_type = traits::string_view<traits_type>;
-            using char_type        = typename string_type::value_type;
-            using allocator_type   = typename traits_type::template allocator<char_type>;
+            using char_type        = traits::char_type<traits_type>;
+            using allocator_type   = traits::general_char_allocator<traits_type>;
             using alloc_type       = allocator_type const&;
+            // todo: char_traits
             using ifstream_type = typename stl::basic_ifstream<char_type, typename traits_type::char_traits>;
 
           private:
@@ -62,7 +63,6 @@ namespace webpp {
                     // todo: error code here
                     // todo: retry feature
                 }
-
             }
 
           public:

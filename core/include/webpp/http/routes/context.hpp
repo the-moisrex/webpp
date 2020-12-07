@@ -387,7 +387,7 @@ namespace webpp {
     //          basic_context<empty_extension_pack, fake_request_type, fake_response_type>,
     //          fake_request_type>;
 
-    using fake_context_type = simple_context<fake_request_type>;
+    //    using fake_context_type = simple_context<fake_request_type>;
 } // namespace webpp
 
 #endif // WEBPP_ROUTES_CONTEXT_H
