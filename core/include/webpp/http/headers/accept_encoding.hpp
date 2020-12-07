@@ -10,9 +10,13 @@
 #include "../../strings/string_tokenizer.hpp"
 #include "../../strings/to_case.hpp"
 #include "../../strings/validators.hpp"
+#include "../../utils/flags.hpp"
 
 namespace webpp::http {
 
+
+    enum struct accept_encoding_options { none, allow_unknown_algorithms };
+    using accept_encoding_option_manager = flags::manager<accept_encoding_options>;
 
     /**
      * RFC:      https://tools.ietf.org/html/rfc7231#section-5.3.4
@@ -32,11 +36,15 @@ namespace webpp::http {
      *
      * todo: add support for pack200-gzip, exi, zstd
      */
-    template <Traits TraitsType, bool AllowUnknownAlgos = false>
-    struct accept_encoding {
-        using str_v                 = typename TraitsType::string_view_type;
-        using traits_type           = TraitsType;
-        using string_tokenizer_type = string_tokenizer<traits_type>;
+    template <Allocator AllocT, istl::StringView StrViewT = stl::string_view,
+              accept_encoding_option_manager Options =
+                accept_encoding_option_manager{accept_encoding_options::none}>
+    struct basic_accept_encoding {
+        using str_v                 = StrViewT;
+        using str_const_iterator    = typename str_v::const_iterator;
+        using allocator_type        = AllocT;
+        using string_tokenizer_type = basic_string_tokenizer<str_v, str_const_iterator>;
+        static constexpr flags::manager<accept_encoding_options> options = Options;
 
         /**
          * Known encoding types
@@ -58,7 +66,8 @@ namespace webpp::http {
             // preference is expressed.
         };
 
-        static constexpr bool allow_unknown_algos = AllowUnknownAlgos;
+        static constexpr bool allow_unknown_algos =
+          options.is_on(accept_encoding_options::allow_unknown_algorithms);
         using encoding_type = stl::conditional_t<allow_unknown_algos, str_v, encoding_types>;
 
         struct compression_algo_type {
@@ -69,10 +78,12 @@ namespace webpp::http {
                                   // https://developer.mozilla.org/en-US/docs/Glossary/Quality_values
         };
 
-        using allowed_encodings_type = istl::vector<traits_type, compression_algo_type>;
+        using allowed_encodings_type =
+          stl::vector<compression_algo_type, to_alloc<allocator_type, compression_algo_type>>;
 
         // ctor
-        constexpr accept_encoding(auto&&... args) noexcept : data{stl::forward<decltype(args)>(args)...} {}
+        constexpr basic_accept_encoding(auto&&... args) noexcept
+          : data{stl::forward<decltype(args)>(args)...} {}
 
 
         void parse() noexcept {
@@ -96,7 +107,7 @@ namespace webpp::http {
                         _allowed_encodings.push_back(compression_algo_type{.encoding = entry});
                     } else {
                         _allowed_encodings.push_back(compression_algo_type{
-                          .encoding = to_known_algo(entry)  // identity will be used if it's unknown
+                          .encoding = to_known_algo(entry) // identity will be used if it's unknown
                         });
                     }
                     continue;
@@ -130,12 +141,11 @@ namespace webpp::http {
                 if (qvalue[0] == '1') {
                     if (str_v("1.000").starts_with(qvalue)) {
                         if constexpr (allow_unknown_algos) {
-                            _allowed_encodings.push_back(compression_algo_type{.encoding = encoding, .quality = 1.0 });
+                            _allowed_encodings.push_back(
+                              compression_algo_type{.encoding = encoding, .quality = 1.0});
                         } else {
-                            _allowed_encodings.push_back(compression_algo_type{
-                                .encoding = to_known_algo(encoding),
-                                .quality = 1.0f
-                            });
+                            _allowed_encodings.push_back(
+                              compression_algo_type{.encoding = to_known_algo(encoding), .quality = 1.0f});
                         }
                         continue;
                     }
@@ -158,7 +168,7 @@ namespace webpp::http {
                     return;
                 }
                 float qval = 0.0f;
-                float d = 0.1f;
+                float d    = 0.1f;
                 for (size_t i = 2; i < len; ++i) {
                     if (!ascii::is::digit(qvalue[i])) {
                         _is_valid = false;
@@ -169,15 +179,11 @@ namespace webpp::http {
                 }
                 if (qval != 0) {
                     if constexpr (allow_unknown_algos) {
-                        _allowed_encodings.push_back(compression_algo_type{
-                          .encoding = encoding,
-                          .quality = qval
-                        });
+                        _allowed_encodings.push_back(
+                          compression_algo_type{.encoding = encoding, .quality = qval});
                     } else {
-                        _allowed_encodings.push_back(compression_algo_type{
-                          .encoding = to_known_algo(encoding),
-                          .quality = qval
-                        });
+                        _allowed_encodings.push_back(
+                          compression_algo_type{.encoding = to_known_algo(encoding), .quality = qval});
                     }
                 }
             }
@@ -186,9 +192,9 @@ namespace webpp::http {
             // that the user agent has no preferences regarding content-codings."
             if (_allowed_encodings.empty()) {
                 if constexpr (allow_unknown_algos) {
-                    _allowed_encodings.push_back(compression_algo_type{.encoding = "*" });
+                    _allowed_encodings.push_back(compression_algo_type{.encoding = "*"});
                 } else {
-                    _allowed_encodings.push_back(compression_algo_type{.encoding = all });
+                    _allowed_encodings.push_back(compression_algo_type{.encoding = all});
                 }
                 _is_valid = true;
                 return;
@@ -196,9 +202,9 @@ namespace webpp::http {
 
             // Any browser must support "identity".
             if constexpr (allow_unknown_algos) {
-                _allowed_encodings.push_back(compression_algo_type{.encoding = "identity" });
+                _allowed_encodings.push_back(compression_algo_type{.encoding = "identity"});
             } else {
-                _allowed_encodings.push_back(compression_algo_type{.encoding = identity });
+                _allowed_encodings.push_back(compression_algo_type{.encoding = identity});
             }
 
             // RFC says gzip == x-gzip; mirror it here for easier matching.
@@ -222,6 +228,7 @@ namespace webpp::http {
             if (str.empty()) {
                 return all;
             }
+            // clang-format off
             switch(str[0]) {
                 [[unlikely]] case 'G':
                 [[likely]] case 'g':
@@ -256,6 +263,7 @@ namespace webpp::http {
                     }
                     break;
             }
+            // clang-format on
             return all;
         }
 
@@ -278,9 +286,12 @@ namespace webpp::http {
             if (!_is_valid) { // it's not allowed if the string is not a valid accept-encoding header value
                 return _allowed_encodings.cend();
             }
-            return stl::find_if(_allowed_encodings.cbegin(), _allowed_encodings.cend(), [&](auto&& item) noexcept {
-                return (ascii::iequals<ascii::char_case_to_side(ascii::char_case::unknown, Case)>(item.encoding, str) || ...);
-            });
+            return stl::find_if(
+              _allowed_encodings.cbegin(), _allowed_encodings.cend(), [&](auto&& item) noexcept {
+                  return (ascii::iequals<ascii::char_case_to_side(ascii::char_case::unknown, Case)>(
+                            item.encoding, str) ||
+                          ...);
+              });
         }
 
         template <encoding_types Type>
@@ -305,9 +316,10 @@ namespace webpp::http {
                     return _allowed_encodings.cend();
                 }
             } else {
-                return stl::find_if(_allowed_encodings.cbegin(), _allowed_encodings.cend(), [](auto&& item) noexcept {
-                    return item.encoding == Type;
-                });
+                return stl::find_if(_allowed_encodings.cbegin(), _allowed_encodings.cend(),
+                                    [](auto&& item) noexcept {
+                                        return item.encoding == Type;
+                                    });
             }
         }
 
@@ -329,6 +341,10 @@ namespace webpp::http {
         allowed_encodings_type _allowed_encodings{};
         bool                   _is_valid = false;
     };
+
+    template <Traits TraitsType>
+    using accept_encoding =
+      basic_accept_encoding<traits::local_char_allocator<TraitsType>, traits::string_view<TraitsType>>;
 
 } // namespace webpp::http
 

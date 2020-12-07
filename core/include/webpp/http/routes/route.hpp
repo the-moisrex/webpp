@@ -413,7 +413,8 @@ namespace webpp {
             using type = lazy_conditional_t<is_switching_context_v<R, C>, stl::invoke_result_t, C, R, C>;
         };
 
-        template <Route R, typename C>
+        template <typename R, typename C>
+        requires (Route<R, C>)
         struct lazy_switched_context_type<R, C> {
             using type = typename R::template switched_context_type<C>;
         };

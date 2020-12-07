@@ -827,7 +827,7 @@ namespace webpp {
         /**
          * @brief long string representation of the ip
          */
-        void str(istl::String auto& output) const noexcept {
+        void str_to(istl::String auto& output) const noexcept {
             using char_type      = istl::char_type_of<decltype(output)>;
             char_type buffer[40] = {};
             auto      _octets    = octets16();
@@ -837,11 +837,18 @@ namespace webpp {
             output.append(buffer, 40);
         }
 
+        template <istl::String StrT = stl::string>
+        [[nodiscard]] StrT str(auto&&...str_args) const noexcept {
+            StrT output{stl::forward<decltype(str_args)>(str_args)...};
+            str_to(output);
+            return output;
+        }
+
         /**
          * @brief return the short string representation of ip version 6
          * TODO: all zero ip prints in a wrong format
          */
-        void short_str(istl::String auto& output) const noexcept {
+        void short_str_to(istl::String auto& output) const noexcept {
             using char_type = istl::char_type_of<decltype(output)>;
 
             auto _octets = octets16();
@@ -926,6 +933,14 @@ namespace webpp {
 
             buffer[index++] = '\0';
             output.append(buffer, index);
+        }
+
+
+        template <istl::String StrT = stl::string>
+        [[nodiscard]] StrT short_str(auto&&...str_args) const noexcept {
+            StrT output{stl::forward<decltype(str_args)>(str_args)...};
+            short_str_to(output);
+            return output;
         }
 
         /**

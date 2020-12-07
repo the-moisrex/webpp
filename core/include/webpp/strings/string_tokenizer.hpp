@@ -298,11 +298,13 @@ namespace webpp {
     };
 
     template <Traits TraitsType>
-    using string_tokenizer = basic_string_tokenizer<typename TraitsType::string_view_type,
-                                                    typename TraitsType::string_type::const_iterator>;
+    using string_tokenizer =
+      basic_string_tokenizer<traits::string_view<TraitsType>,
+                             typename traits::template string_view<TraitsType>::const_iterator>;
+
     template <Traits TraitsType>
     using c_string_tokenizer =
-      basic_string_tokenizer<typename TraitsType::string_view_type, typename TraitsType::char_type const*>;
+      basic_string_tokenizer<traits::string_view<TraitsType>, traits::char_type<TraitsType> const*>;
 } // namespace webpp
 
 #endif // WEBPP_STRING_TOKENIZER_HPP

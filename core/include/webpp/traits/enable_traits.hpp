@@ -4,6 +4,7 @@
 #define WEBPP_ENABLE_TRAITS_HPP
 
 #include "traits.hpp"
+#include "../std/tuple.hpp"
 
 namespace webpp {
 
