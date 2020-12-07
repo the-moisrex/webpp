@@ -3,12 +3,12 @@
 #ifndef WEBPP_HTTP_APPLICATION_WRAPPER_H
 #define WEBPP_HTTP_APPLICATION_WRAPPER_H
 
+#include "../application/application_concepts.hpp"
+#include "../std/type_traits.hpp"
 #include "./request_concepts.hpp"
 #include "./response_concepts.hpp"
 #include "./routes/context_concepts.hpp"
 #include "./status_code.hpp"
-#include "../application/application_concepts.hpp"
-#include "../std/type_traits.hpp"
 
 #include <cstdint>
 
@@ -35,12 +35,12 @@ namespace webpp {
      */
     template <Traits TraitsType, typename AppType>
     struct http_app_wrapper : public stl::remove_cvref_t<AppType> {
-        using application_type = stl::remove_cvref_t<AppType>;
-        using traits_type      = stl::remove_cvref_t<TraitsType>;
-        using logger_type      = traits::logger<traits_type>;
-        using logger_ref       = typename logger_type::logger_ref;
-        using char_type        = traits::char_type<traits_type>;
-        using allocator_type   = typename traits_type::template allocator<char_type>;
+        using application_type        = stl::remove_cvref_t<AppType>;
+        using traits_type             = stl::remove_cvref_t<TraitsType>;
+        using logger_type             = traits::logger<traits_type>;
+        using logger_ref              = typename logger_type::logger_ref;
+        using char_type               = traits::char_type<traits_type>;
+        using general_char_alloc_type = traits::general_char_allocator<traits_type>;
 
         template <typename AllocType>
         static constexpr bool app_requires_logger_and_allocator =
@@ -54,23 +54,34 @@ namespace webpp {
         static constexpr bool app_requires_nothing = stl::is_default_constructible_v<application_type>;
 
 
-        template <typename AllocType = allocator_type>
+        // ctor that passes the enabled_traits object to daddy :)
+        template <typename T>
+        requires(!stl::same_as<http_app_wrapper, stl::remove_cvref_t<T>> && EnabledTraits<application_type> &&
+                 EnabledTraits<stl::remove_cvref_t<T>> &&
+                 requires(T tt) {
+                     application_type{stl::forward<T>(tt)};
+                 }) constexpr http_app_wrapper(T&& traits_enabled_obj) noexcept
+          : application_type{stl::forward<T>(traits_enabled_obj)} {}
+
+        // todo: add support for other types of allocators and allocator packs
+
+        template <typename AllocType = general_char_alloc_type>
         requires(app_requires_logger_and_allocator<AllocType>)
           http_app_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
           : application_type{logger, alloc} {}
 
-        template <typename AllocType = allocator_type>
+        template <typename AllocType = general_char_alloc_type>
         requires(app_requires_logger && !app_requires_logger_and_allocator<AllocType>)
           http_app_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
           : application_type{logger} {}
 
-        template <typename AllocType = allocator_type>
+        template <typename AllocType = general_char_alloc_type>
         requires(app_requires_allocator<AllocType> && !app_requires_logger_and_allocator<AllocType> &&
                  !app_requires_logger)
           http_app_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
           : application_type{alloc} {}
 
-        template <typename AllocType = allocator_type>
+        template <typename AllocType = general_char_alloc_type>
         requires(app_requires_nothing && !app_requires_allocator<AllocType> && !app_requires_logger &&
                  !app_requires_logger_and_allocator<AllocType>)
           http_app_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
@@ -84,25 +95,24 @@ namespace webpp {
          * todo: replace status code with a more sophisticated error type that can hold more information
          */
         [[nodiscard]] Response auto error(Request auto const& req, http::status_code err) {
-            if constexpr (requires{
-                            {application_type::error(req, err)} -> Response;
+            if constexpr (requires {
+                              { application_type::error(req, err) }
+                              ->Response;
                           }) {
                 return application_type::error(req, err);
             } else {
-                return stl::format(FMT_COMPILE(
-                                  "<!doctype html>\n"
-                                     "<html>\n"
-                                     "  <head>\n"
-                                     "    <title>{0} - {1}</title>\n"
-                                     "  <head>\n"
-                                     "  <body>\n"
-                                     "    <h1>{0} - {1}</h1>\n"
-                                     "  </body>\n"
-                                     "</html>\n"
-                ), err, http::status_code_reason_phrase(err));
+                return stl::format(FMT_COMPILE("<!doctype html>\n"
+                                               "<html>\n"
+                                               "  <head>\n"
+                                               "    <title>{0} - {1}</title>\n"
+                                               "  <head>\n"
+                                               "  <body>\n"
+                                               "    <h1>{0} - {1}</h1>\n"
+                                               "  </body>\n"
+                                               "</html>\n"),
+                                   err, http::status_code_reason_phrase(err));
             }
         }
-
     };
 
 } // namespace webpp
