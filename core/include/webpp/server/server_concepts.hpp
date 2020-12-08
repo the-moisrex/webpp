@@ -26,40 +26,6 @@
 namespace webpp {
 
 
-    /**
-     * Thread pool class helps to implement a vector/list of threads and push
-     * tasks into this thread pool.
-     *
-     * List of features I'd like to see in the future:
-     * - [ ] Fewer run-time overhead features:
-     *   - [ ] Register methods before using them multiple times.
-     *     Use cases:
-     *     - [ ] Buffering the requests
-     *     - [ ] Processing user requests (even parsing the request)
-     * - [ ] Priority scheduling:
-     *   - [ ] defer
-     *   - [ ] dispatch
-     *   - [ ] post
-     * - [ ] Run in a specific thread
-     *   - [ ] By thread id
-     *   - [ ] By thread index
-     *   - [ ] In the last thread which that function was processed on
-     * - [ ] Stop, Pause, Continue, Start methods
-     * - [ ] Join threads
-     * - [ ] Underlying thread class:
-     *   - [ ] std::thread
-     *   - [ ] std::jthread
-     *   - [ ] boost::thread
-     *   - [ ] POSIX
-     * - [ ] Constexpr way to hash a function object into a known number in the thread pool
-     */
-    template <typename T>
-    concept ThreadPool = requires(T tp, stl::true_type lambda) {
-        tp.post(lambda);
-        tp.defer(lambda); // todo: fix these 3; I don't think they have the correct args
-        tp.dispatch(lambda);
-    };
-
 
     /**
      * The server's job is to implement the server side stuff.
@@ -167,8 +133,8 @@ namespace webpp {
      */
     template <typename T>
     concept ServerTraits = requires {
-        Traits<typename T::traits_type>;
-        ThreadPool<typename T::thread_pool_type>;
+        requires Traits<typename T::traits_type>;
+        requires ThreadPool<typename T::thread_pool_type>;
         T::template server_type; // <session_manager, thread_pool_type>
     };
 
