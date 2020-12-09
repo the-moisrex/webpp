@@ -7,8 +7,8 @@
 #include "../../std/concepts.hpp"
 #include "../../std/string_view.hpp"
 #include "../../traits/traits.hpp"
-#include "../routes/context_concepts.hpp"
 #include "../response_concepts.hpp"
+#include "../routes/context_concepts.hpp"
 
 #include <type_traits>
 #include <utility>
@@ -23,9 +23,10 @@ namespace webpp {
             template <Traits TraitsType>
             struct type {
                 using traits_type      = TraitsType;
-                using string_type      = traits::string<traits_type>;
                 using string_view_type = traits::string_view<traits_type>;
-                using allocator_type   = typename string_type::allocator_type;
+                using char_type        = istl::char_type_of<string_view_type>;
+                using allocator_type   = traits::general_allocator<traits_type, char_type>;
+                using string_type      = traits::string<traits_type, allocator_type>;
 
               private:
                 using alloc_type    = allocator_type const&;
@@ -96,8 +97,8 @@ namespace webpp {
                   typename context_type::response_type::template apply_extensions_type<details::string_body>;
 
                 template <typename... Args>
-                constexpr type(Args&&... args) noexcept(noexcept(context_type{stl::forward<Args>(args)...})) :
-                    context_type{stl::forward<Args>(args)...} {}
+                constexpr type(Args&&... args) noexcept(noexcept(context_type{stl::forward<Args>(args)...}))
+                  : context_type{stl::forward<Args>(args)...} {}
 
                 template <typename... Args>
                 constexpr Response auto string(Args&&... args) const noexcept {
@@ -128,8 +129,8 @@ namespace webpp {
                 using string_type = typename body_type::string_type;
 
                 template <typename T>
-                requires(!stl::is_same_v<stl::remove_cvref_t<T>, type> && istl::StringViewifiable<T>)
-                constexpr type(T&& str_view) noexcept
+                requires(!stl::is_same_v<stl::remove_cvref_t<T>, type> &&
+                         istl::StringViewifiable<T>) constexpr type(T&& str_view) noexcept
                   : ResType{body_type{stl::forward<T>(str_view)}} {}
 
                 constexpr type(string_type const& str) noexcept : ResType{body_type{str}} {}

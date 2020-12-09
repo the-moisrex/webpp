@@ -155,8 +155,10 @@ namespace webpp {
         requires Logger<typename T::logger_type>;       // logger type
         // requires ThreadPool<typename T::thread_pool>;   // thread pool
 
-        typename T::template string<typename T::template allocator<typename T::char_type>>;
         typename T::string_view;
+        typename T::template string<
+          typename T::alloc_pack::template general<istl::char_type_of<typename T::string_view>>>;
+
         // todo: add String<typename T::string_type>; without adding a circular dependency
         // todo: add StringView<typename T::string_view_type>; without adding a circular dependency
     };

@@ -133,7 +133,7 @@ using expack = extension_pack<exes>;
 TEST(ExtensionsTests, ExtensionPackStuff) {
     EXPECT_TRUE(pack::template is_all<has_item>::value);
 
-    static_assert(stl::same_as<typename pack::mother_extensions<std_traits>, pack>,
+    static_assert(stl::same_as<typename pack::template mother_extensions<std_traits>, pack>,
                   "Extension system is not able to identify the mother extensions");
 
     //    static_assert(stl::same_as<typename pack::child_extensions, empty_extension_pack>,
