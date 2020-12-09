@@ -1,45 +1,39 @@
 #ifndef WEBPP_INTERFACE_COMMON_CONNECTION_H
 #define WEBPP_INTERFACE_COMMON_CONNECTION_H
 
-#include "../../std/format.hpp"
 #include "../../platform/posix.hpp"
-#include "../server_concepts.hpp"
-#include "../../traits/enable_traits.hpp"
+
 #ifdef webpp_posix
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/tcp.h>
-#include <netinet/in.h>
-#include <unistd.h>
+#    include "../../std/format.hpp"
+#    include "../../traits/enable_traits.hpp"
+#    include "../server_concepts.hpp"
+
+#    include <netinet/in.h>
+#    include <netinet/tcp.h>
+#    include <sys/socket.h>
+#    include <sys/types.h>
+#    include <unistd.h>
 
 namespace webpp::posix {
 
     template <typename TraitsType>
     struct posix_connection : public enable_traits<TraitsType> {
-        using traits_type    = TraitsType;
-        using char_type      = traits::char_type<traits_type>;
-        using logger_type    = traits::logger<traits_type>;
-        using logger_ref     = typename logger_type::logger_ref;
-        using socket_type    = int;
-        using allocator_type = typename traits_type::template allocator<char_type>;
-        using etraits =  enable_traits<traits_type>;
+        using traits_type = TraitsType;
+        using socket_type = int;
+        using etraits     = enable_traits<traits_type>;
 
         static constexpr auto logger_category = "Posix/Connection";
 
       private:
-        socket_type  sock;
+        socket_type sock;
 
         /**
          * This function will read some bytes.
          */
-        void read() noexcept {
+        void read() noexcept {}
 
-        }
-
-        bool write(auto data, stl::size_t data_size) noexcept {
-
-        }
+        bool write(auto data, stl::size_t data_size) noexcept {}
 
         bool write_file(auto&& header_buffer, stl::size_t header_buffer_size, auto&& file) noexcept {
 
@@ -65,10 +59,9 @@ namespace webpp::posix {
         }
 
       public:
-        explicit posix_connection(socket_type _sock, auto&&...args) noexcept
+        explicit posix_connection(socket_type _sock, auto&&... args) noexcept
           : sock(_sock),
-            etraits{stl::forward<decltype(args)>(args)...} {
-        }
+            etraits{stl::forward<decltype(args)>(args)...} {}
 
         void done() {
             if (close(sock) == -1) {
@@ -90,7 +83,7 @@ namespace webpp::posix {
         }
     };
 
-} // namespace webpp
+} // namespace webpp::posix
 
 #endif // webpp_posix
 

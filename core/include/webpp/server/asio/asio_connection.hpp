@@ -14,13 +14,14 @@ namespace webpp {
 
     template <typename TraitsType, typename SessionType>
     struct asio_connection {
-        using traits_type    = TraitsType;
-        using char_type      = traits::char_type<traits_type>;
-        using logger_type    = traits::logger<traits_type>;
-        using logger_ref     = typename logger_type::logger_ref;
-        using session_type   = SessionType;
-        using socket_type    = asio::ip::tcp::socket;
-        using allocator_type = typename traits_type::template allocator<char_type>;
+        using traits_type      = TraitsType;
+        using string_view_type = traits::string_view<traits_type>;
+        using char_type        = istl::char_type_of<string_view_type>;
+        using logger_type      = traits::logger<traits_type>;
+        using logger_ref       = typename logger_type::logger_ref;
+        using session_type     = SessionType;
+        using socket_type      = asio::ip::tcp::socket;
+        using allocator_type   = traits::general_allocator<traits_type, char_type>;
 
       private:
         socket_type  socket;

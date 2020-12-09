@@ -3,8 +3,8 @@
 #ifndef WEBPP_ENABLE_TRAITS_HPP
 #define WEBPP_ENABLE_TRAITS_HPP
 
-#include "traits.hpp"
 #include "../std/tuple.hpp"
+#include "traits.hpp"
 
 namespace webpp {
 
@@ -16,13 +16,13 @@ namespace webpp {
         using traits_type       = TraitsType;
         using logger_type       = traits::logger<traits_type>;
         using logger_ref        = typename logger_type::logger_ref;
-        using char_type         = traits::char_type<traits_type>;
-        using string_type       = traits::string<traits_type>;
         using string_view_type  = traits::string_view<traits_type>;
+        using char_type         = istl::char_type_of<string_view_type>;
         using local_allocator   = traits::local_allocator<traits_type, char_type>;
         using general_allocator = traits::general_allocator<traits_type, char_type>;
-        using alloc_list        = traits::char_alloc_list<traits_type>; // It's a tuple-like type capable of
-                                                                        // containing multiple allocators
+        using string_type       = traits::string<traits_type, general_allocator>;
+        using alloc_list = traits::alloc_list<traits_type, char_type>; // It's a tuple-like type capable of
+                                                                       // containing multiple allocators
 
         [[no_unique_address]] alloc_list allocs{};
         [[no_unique_address]] logger_ref logger{};

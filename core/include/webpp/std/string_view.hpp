@@ -12,9 +12,11 @@
 namespace webpp::istl {
 
     // Traits aware string_view:
-    template <Traits TraitsType, typename CharT = typename TraitsType::char_type,
-              typename CharTraits = typename TraitsType::char_traits>
-    using basic_string_view = ::std::basic_string_view<CharT, CharTraits>;
+    // removed basic_string_view<traits_type>, "traits::string_view" should be used
+    //
+    //    template <Traits TraitsType, typename CharT = istl::char_type_of<typename TraitsType::string_view>,
+    //              typename CharTraits = stl::char_traits<CharT>>
+    //    using basic_string_view = ::std::basic_string_view<CharT, CharTraits>;
 
 
 
@@ -54,17 +56,17 @@ namespace webpp::istl {
         template <template <typename...> typename TT, typename... T>
         using deduced_type = decltype(TT{stl::declval<T>()...});
 
-    } // namespace details
+    } // namespace details::string_view
 
     /**
      * Check if T is a "string view" of type "StringViewType"
      */
     template <typename StrViewType, typename T>
-    concept StringViewifiableOf = !stl::is_void_v<StrViewType> &&
-                                  !istl::CharType<stl::remove_cvref_t<T>> &&
-                                  requires {stl::remove_cvref_t<T>{};} &&
-                                  !stl::is_void_v<char_type_of<T>> &&
-                                  requires(stl::remove_cvref_t<T> str) {
+    concept StringViewifiableOf =
+      !stl::is_void_v<StrViewType> && !istl::CharType<stl::remove_cvref_t<T>> && requires {
+        stl::remove_cvref_t<T>{};
+    }
+    &&!stl::is_void_v<char_type_of<T>> && requires(stl::remove_cvref_t<T> str) {
         typename stl::remove_cvref_t<StrViewType>;
         stl::is_trivial_v<typename stl::remove_cvref_t<StrViewType>::value_type>;
         stl::is_standard_layout_v<typename stl::remove_cvref_t<StrViewType>::value_type>;
@@ -84,18 +86,17 @@ namespace webpp::istl {
     };
 
     template <template <typename...> typename StrViewType, typename T>
-    concept StringViewifiableOfTemplate = StringViewifiableOf<details::string_view::deduced_type<StrViewType, T>, T>;
+    concept StringViewifiableOfTemplate =
+      StringViewifiableOf<details::string_view::deduced_type<StrViewType, T>, T>;
 
     template <typename T>
-    using defaulted_string_view = stl::conditional_t<
-          StringView<T>,
-          stl::remove_cvref_t<T>,
-          stl::basic_string_view<char_type_of<T>, char_traits_type_of<T>>
-    >;
+    using defaulted_string_view =
+      stl::conditional_t<StringView<T>, stl::remove_cvref_t<T>,
+                         stl::basic_string_view<char_type_of<T>, char_traits_type_of<T>>>;
 
     template <typename T>
     concept StringViewifiable = !stl::is_void_v<char_type_of<T>> &&
-                                  StringViewifiableOf<defaulted_string_view<T>, stl::remove_cvref_t<T>>;
+                                StringViewifiableOf<defaulted_string_view<T>, stl::remove_cvref_t<T>>;
 
     /**
      * Convert the string value specified to a "string view" of type StrViewT
@@ -141,19 +142,20 @@ namespace webpp::istl {
     /**
      * Convert to string view (if itself is one, return itself, otherwise get one of the basic_string_view)
      */
-     template <StringViewifiable StrT>
+    template <StringViewifiable StrT>
     [[nodiscard]] constexpr auto string_viewify(StrT&& str) noexcept {
         using str_view_t = defaulted_string_view<StrT>;
         return string_viewify_of<str_view_t>(stl::forward<StrT>(str));
     }
 
     // template <typename T>
-    // using char_type_of = typename decltype(string_viewify(stl::declval<stl::remove_cvref_t<T>>()))::value_type;
+    // using char_type_of = typename
+    // decltype(string_viewify(stl::declval<stl::remove_cvref_t<T>>()))::value_type;
 
 
 
-//    template <typename T>
-//    using char_traits_type_of = typename decltype(string_viewify(stl::declval<T>()))::traits_type;
+    //    template <typename T>
+    //    using char_traits_type_of = typename decltype(string_viewify(stl::declval<T>()))::traits_type;
 
     template <typename T>
     using string_view_type_of = stl::conditional_t<StringView<T>, T, stl::basic_string_view<char_type_of<T>>>;
