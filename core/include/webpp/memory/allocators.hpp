@@ -13,7 +13,6 @@ namespace webpp {
     template <typename AllocType, typename NewValueType>
     using rebind_allocator = typename stl::allocator_traits<AllocType>::template rebind_alloc<NewValueType>;
 
-
     namespace details {
         template <typename T>
         struct temp_alloc_holder {

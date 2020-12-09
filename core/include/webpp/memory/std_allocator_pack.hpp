@@ -10,30 +10,15 @@
 namespace webpp {
 
     struct std_allocator_pack {
-        template <alloc::feature_pack FPack>
-        struct ranker {
-            template <typename T>
-            using type = stl::allocator<T>;
-        };
-
         struct std_allocator_descriptor {
 
             template <typename T>
             using type = stl::allocator<T>;
 
-            static constexpr alloc::feature_pack features{alloc::requires_default_ctor, alloc::requires_sync};
+            static constexpr alloc::feature_pack features{alloc::stateless, alloc::sync, alloc::low_locality};
         };
 
         using descriptor_list = alloc::allocator_list<std_allocator_descriptor>;
-
-        template <typename T>
-        using list = alloc::allocator_list<stl::allocator<T>>;
-
-        template <typename T>
-        using local = stl::allocator<T>;
-
-        template <typename T>
-        using general = stl::allocator<T>;
     };
 
 
