@@ -114,16 +114,16 @@ namespace webpp {
      *
      * Types:
      *
-     *   string<CharType, AllocatorType>:
-     *     Usage: ASCII only
-     *     The CharType and AllocatorType has nothing to do with "alloc_pack" and "char_type". Even though
-     *     you probably should use the CharType and AllocatorType, but you are free not to use them in your
+     *   string<AllocatorType>:
+     *     Usage: ASCII strings only
+     *     The AllocatorType has nothing to do with "alloc_pack". Even though
+     *     you probably should use the AllocatorType, but you are free not to use them in your
      *     type and we're okay with that. For example you might use QString without using any allocator; but
      *     you have to then use a wrapper for QString to make sure the constructors are a match to the
      *     std::basic_string's constructors.
      *
-     *   string_view<CharType>:
-     *     Usage: ASCII only
+     *   string_view:
+     *     Usage: ASCII strings only
      *     A string_view match for the `string` type above.
      *
      *   logger_type:
@@ -155,9 +155,8 @@ namespace webpp {
         requires Logger<typename T::logger_type>;       // logger type
         requires ThreadPool<typename T::thread_pool>;   // thread pool
 
-        typename T::template string<typename T::char_type,
-                                    typename T::template allocator<typename T::char_type>>;
-        typename T::template string_view<typename T::char_type>;
+        typename T::template string<typename T::template allocator<typename T::char_type>>;
+        typename T::string_view;
         // todo: add String<typename T::string_type>; without adding a circular dependency
         // todo: add StringView<typename T::string_view_type>; without adding a circular dependency
     };
@@ -178,9 +177,6 @@ namespace webpp {
     };
 
 
-    template <typename AllocType, typename To>
-    using to_alloc = typename stl::allocator_traits<AllocType>::template rebind_alloc<To>;
-
     /**
      * Middle man type aliases.
      *   Seriously pro tip in C++20 concepts:
@@ -192,16 +188,10 @@ namespace webpp {
     namespace traits {
 
         template <Traits TT>
-        using char_type = typename TT::char_type;
+        using string_view = typename TT::string_view;
 
-        template <Traits TT, typename T>
-        using allocator = typename TT::template allocator<T>;
-
-        template <Traits TT>
-        using string_view = typename TT::template string_view<char_type<TT>>;
-
-        template <Traits TT>
-        using string = typename TT::template string<char_type<TT>, allocator<TT, char_type<TT>>>;
+        template <Traits TT, Allocator AllocT>
+        using string = typename TT::template string<AllocT>;
 
         template <Traits TT>
         using logger = typename TT::logger_type;
@@ -210,25 +200,22 @@ namespace webpp {
         using local_allocator = typename TT::alloc_pack::template local<T>;
 
         template <Traits TT>
-        using local_char_allocator = local_allocator<TT, char_type<TT>>;
+        using local_string_allocator = local_allocator<TT, istl::char_type_of<string_view<TT>>>;
 
         template <Traits TT, typename T>
         using general_allocator = typename TT::alloc_pack::template general<T>;
 
         template <Traits TT>
-        using general_char_allocator = general_allocator<TT, char_type<TT>>;
+        using general_string_allocator = general_allocator<TT, istl::char_type_of<string_view<TT>>>;
+
+        template <Traits TT>
+        using general_string = typename TT::template string<general_string_allocator<TT>>;
+
+        template <Traits TT>
+        using local_string = typename TT::template string<local_string_allocator<TT>>;
 
         template <Traits TT, typename T>
         using alloc_list = typename TT::alloc_pack::template list<T>;
-
-        template <Traits TT>
-        using char_alloc_list = alloc_list<TT, char_type<TT>>;
-
-        template <Traits TT>
-        using general_string = typename TT::template string<char_type<TT>, general_char_allocator<TT>>;
-
-        template <Traits TT>
-        using local_string = typename TT::template string<char_type<TT>, local_char_allocator<TT>>;
 
     } // namespace traits
 

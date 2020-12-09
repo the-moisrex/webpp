@@ -16,20 +16,20 @@ namespace webpp {
      *
      * fixme: see if you can add those two allocators in this as well by adding wrappers for them
      */
-
-    struct std_allocator_pack {
+    struct std_pmr_allocator_pack {
         struct monotonic_buffer_resource_descriptor {
-            static constexpr alloc::feature_pack features{alloc::noop_dealloc};
+            static constexpr alloc::feature_pack features{alloc::noop_dealloc, alloc::stateful,
+                                                          alloc::unsync};
 
             template <typename T>
             using type = stl::pmr::monotonic_buffer_resource;
         };
 
         struct synchronized_pool_resource_descriptor {
-            static constexpr alloc::feature_pack features{alloc::requires_sync};
+            static constexpr alloc::feature_pack features{alloc::sync, alloc::stateful};
 
             template <typename T>
-            using type = stl::pmr::requires_synchronized_pool_resource;
+            using type = stl::pmr::synchronized_pool_resource;
         };
 
         struct unsynchronized_pool_resource_descriptor {
@@ -40,59 +40,19 @@ namespace webpp {
         };
 
         struct std_allocator_descriptor {
-            static constexpr alloc::feature_pack features{alloc::requires_default_ctor, alloc::requires_sync};
+            static constexpr alloc::feature_pack features{alloc::stateless, alloc::sync, alloc::low_locality};
 
             template <typename T>
             using type = stl::allocator<T>;
         };
 
+        // todo: add new_delete_resource
         using descriptor_list =
           alloc::allocator_list<monotonic_buffer_resource_descriptor, synchronized_pool_resource_descriptor,
                                 unsynchronized_pool_resource_descriptor, std_allocator_descriptor>;
-
-        // todo add new_delete_resource
-        template <typename T>
-        using list =
-          alloc::allocator_list<stl::pmr::monotonic_buffer_resource, stl::pmr::synchronized_pool_resource,
-                                stl::pmr::unsynchronized_pool_resource>;
-
-        template <alloc::feature_pack FPack>
-        struct ranker {
-
-            template <typename T>
-            struct cond {
-                static constexpr alloc::feature_pack alloc_features = T::features;
-
-                static constexpr long long int value = ([]() constexpr noexcept {
-                    // only std::allocator in this pack supports this feature
-                    if (FPack.is_on(alloc::requires_default_ctor) &&
-                        alloc_features.is_off(alloc::requires_default_ctor))
-                        return -1;
-
-                    // unsync and monotonic cannot be used in multi-threaded environments
-                    if (FPack.is_on(alloc::requires_sync) && alloc_features.is_off(alloc::requires_sync))
-                        return -1;
-
-                    // only monotonic supports noop de-alloc
-                    long long int noop_dealloc =
-                      10 * FPack.is_on(alloc::noop_dealloc) * alloc_features.is_on(alloc::noop_dealloc);
-
-                    return noop_dealloc;
-                })();
-            };
-
-            template <typename T>
-            using type = typename istl::ranked_types<
-              cond, monotonic_buffer_resource_descriptor, synchronized_pool_resource_descriptor,
-              unsynchronized_pool_resource_descriptor, std_allocator_descriptor>::best::type::type<T>;
-        };
-
-        template <typename T>
-        using local = stl::pmr::monotonic_buffer_resource;
-
-        template <typename T>
-        using general = stl::pmr::requires_synchronized_pool_resource;
     };
+
+    static_assert(AllocatorPack<std_pmr_allocator_pack>, "The specified allocator pack is not really one");
 
 } // namespace webpp
 
