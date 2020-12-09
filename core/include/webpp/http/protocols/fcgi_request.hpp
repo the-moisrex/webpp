@@ -3,31 +3,20 @@
 #ifndef WEBPP_FCGI_REQUEST_HPP
 #define WEBPP_FCGI_REQUEST_HPP
 
+#include "./common/common_request.hpp"
 #include "../../std/map.hpp"
-#include "../../traits/enable_traits.hpp"
-#include "./protocol_concepts.hpp"
 
 namespace webpp {
 
 
-    template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL, Interface IfaceType>
-    struct fcgi_request : public REL, public enable_traits<TraitsType> {
-        using traits_type            = TraitsType;
-        using interface_type         = IfaceType;
-        using request_extension_list = REL;
-        using allocator_type   = typename traits_type::template allocator<traits::char_type<traits_type>>;
-        using application_type = typename interface_type::application_type;
-        using logger_type      = typename traits_type::logger;
-        using logger_ref       = typename traits_type::logger::logger_ref;
-        using string_type      = traits::string<traits_type>;
-        using etraits          = enable_traits<traits_type>;
+    template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL, Protocol ProtoType>
+    struct fcgi_request : public common_request<TraitsType, REL> {
+        using traits_type           = TraitsType;
+        using protocol_type         = ProtoType;
 
         istl::map<traits_type, string_type, string_type> data;
 
 
-        fcgi_request(logger_ref logger = logger_type{}, auto const& alloc = allocator_type{}) noexcept
-          : etraits{logger, alloc},
-            data{alloc} {}
     };
 
 

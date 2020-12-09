@@ -22,14 +22,12 @@ namespace webpp {
     // I'm not using "Protocol" here because it's most likely a non-complete-type when it's passed
     template <Traits TraitsType, typename REL>
     struct fake_proto_request : public common_request<TraitsType, REL> {
-        using super          = common_request<TraitsType, REL>;
-        using traits_type    = TraitsType;
-        using allocator_type = typename traits_type::template allocator<traits::char_type<traits_type>>;
-        using string_type    = traits::string<traits_type>;
+        using super       = common_request<TraitsType, REL>;
+        using traits_type = TraitsType;
+        using string_type = typename super::string_type;
 
-        template <typename ...Args>
-        fake_proto_request(Args&&...args) noexcept
-          : super{stl::forward<Args>(args)...} {}
+        template <typename... Args>
+        fake_proto_request(Args&&... args) noexcept : super{stl::forward<Args>(args)...} {}
 
         istl::map<traits_type, string_type, string_type> data{};
 
@@ -199,9 +197,9 @@ namespace webpp {
 
     template <Traits TraitsType, Application App, ExtensionList EList = empty_extension_pack>
     struct fake_proto : public common_protocol<TraitsType, App, EList> {
-        using super         = common_protocol<TraitsType, App, EList>;
-        using traits_type   = TraitsType;
-        using request_type  = simple_request<traits_type, EList, fake_proto_request>;
+        using super        = common_protocol<TraitsType, App, EList>;
+        using traits_type  = TraitsType;
+        using request_type = simple_request<traits_type, EList, fake_proto_request>;
 
         request_type req;
 

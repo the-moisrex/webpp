@@ -20,13 +20,12 @@ namespace webpp {
         template <Traits TraitsType>
         struct type {
             using traits_type      = TraitsType;
-            using string_type      = traits::string<traits_type>;
             using string_view_type = traits::string_view<traits_type>;
-            using char_type        = traits::char_type<traits_type>;
-            using allocator_type   = traits::general_char_allocator<traits_type>;
+            using char_type        = istl::char_type_of<string_view_type>;
+            using allocator_type   = traits::general_allocator<traits_type, char_type>;
+            using string_type      = traits::string<traits_type, allocator_type>;
             using alloc_type       = allocator_type const&;
-            // todo: char_traits
-            using ifstream_type = typename stl::basic_ifstream<char_type, typename traits_type::char_traits>;
+            using ifstream_type = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
 
           private:
             string_type     content;

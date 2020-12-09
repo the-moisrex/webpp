@@ -10,6 +10,7 @@
 
 namespace webpp::alloc {
 
+    // todo: see if you need to add low&high "variation" and "density" or not
     enum features : unsigned short {
         sync,
         unsync,
@@ -30,6 +31,7 @@ namespace webpp::alloc {
     using allocator_list = stl::tuple<AllocatorDescriptors...>;
 
     // common allocator features
+    // todo: complete this list
     static constexpr auto monotonic   = feature_pack{stateful, noop_dealloc, unsync};
     static constexpr auto sync_pool   = feature_pack{sync, stateful};
     static constexpr auto unsync_pool = feature_pack{stateful, unsync};
@@ -133,6 +135,8 @@ namespace webpp::alloc {
     }) struct ranker<AllocatorPack, AskedFeatures>
       : ranker<typename AllocatorPack::descriptor_list, AskedFeatures> {};
 
+
+    // todo: add "allocator pack" merger mechanism that helps in merging two or more packs of allocators
 
 } // namespace webpp::alloc
 

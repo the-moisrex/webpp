@@ -15,12 +15,8 @@ namespace webpp {
     struct common_request : public stl::remove_cvref_t<REL>, public enable_traits<TraitsType> {
         using traits_type            = stl::remove_cvref_t<TraitsType>;
         using request_extension_list = stl::remove_cvref_t<REL>;
-        using logger_type            = traits::logger<traits_type>;
-        using logger_ref             = typename logger_type::logger_ref;
         using etraits                = enable_traits<TraitsType>;
-        using string_type            = traits::string<traits_type>;
-        using string_view_type       = traits::string_view<traits_type>;
-        using allocator_type = typename traits_type::template allocator<traits::char_type<traits_type>>;
+        using string_type            = typename etraits::string_type;
 
 
         template <typename... Args>

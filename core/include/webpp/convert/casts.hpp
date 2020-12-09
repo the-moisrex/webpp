@@ -89,31 +89,31 @@ namespace webpp {
     //////////////////////////////////////////////////////////////////////
 
 
-    // todo: add allocator support here:
-    template <Traits TraitsType, typename ValueType, typename... R>
-    constexpr auto to_str_copy(ValueType value, R&&... args) noexcept {
-        using traits_type         = TraitsType;
-        using char_type           = traits::char_type<traits_type>;
-        using str_t               = traits::string<traits_type>;
-        using size_type           = typename str_t::size_type;
-        constexpr size_type _size = ascii::digit_count<ValueType>() + 1;
-        if constexpr (stl::is_same_v<char_type, char>) {
-            str_t str(_size, '\0');
-            auto [p, _] = stl::to_chars(str.data(), str.data() + _size, value, stl::forward<R>(args)...);
-            str.resize(p - str.data());
-            return str;
-        } else {
-            char str[_size];
-            auto [p, _]    = stl::to_chars(str, str + _size, value, stl::forward<R>(args)...);
-            auto  the_size = static_cast<size_type>(p - str);
-            str_t res(the_size, '\0');
-            auto  it = res.begin();
-            for (auto _c = str; *_c; ++_c) {
-                *it++ = static_cast<char_type>(*_c);
-            }
-            return res;
-        }
-    }
+    // todo: add allocator support here and remove the traits:
+    //
+    //    template <Traits TraitsType, typename ValueType, typename... R>
+    //    constexpr auto to_str_copy(ValueType value, R&&... args) noexcept {
+    //        using traits_type         = TraitsType;
+    //        using char_type           = traits::char_type<traits_type>;
+    //        using str_t               = traits::string<traits_type>;
+    //        using size_type           = typename str_t::size_type;
+    //        constexpr size_type _size = ascii::digit_count<ValueType>() + 1;
+    //        if constexpr (stl::is_same_v<char_type, char>) {
+    //            str_t str(_size, '\0');
+    //            auto [p, _] = stl::to_chars(str.data(), str.data() + _size, value,
+    //            stl::forward<R>(args)...); str.resize(p - str.data()); return str;
+    //        } else {
+    //            char str[_size];
+    //            auto [p, _]    = stl::to_chars(str, str + _size, value, stl::forward<R>(args)...);
+    //            auto  the_size = static_cast<size_type>(p - str);
+    //            str_t res(the_size, '\0');
+    //            auto  it = res.begin();
+    //            for (auto _c = str; *_c; ++_c) {
+    //                *it++ = static_cast<char_type>(*_c);
+    //            }
+    //            return res;
+    //        }
+    //    }
 
     template <typename ValueType, typename... R>
     constexpr auto append_to(char* ptr, ValueType value, R&&... args) noexcept {

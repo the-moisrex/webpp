@@ -119,35 +119,26 @@ namespace webpp {
     template <Traits TraitsType, typename EList, Request RequestType, Response ResponseType>
     struct basic_context : public EList, public enable_traits<TraitsType> {
         using traits_type        = TraitsType;
-        using allocator_type     = typename traits_type::template allocator<traits::char_type<traits_type>>;
         using elist_type         = EList;
         using request_type       = RequestType;
         using response_type      = ResponseType;
         using basic_context_type = basic_context<TraitsType, EList, RequestType, ResponseType>;
-        using logger_type        = traits::logger<traits_type>;
-        using logger_ref         = typename logger_type::logger_ref;
         using etraits            = enable_traits<TraitsType>;
+        using logger_type        = typename etraits::logger_type;
+        using logger_ref         = typename etraits::logger_ref;
 
       public:
-        constexpr basic_context(logger_ref            logger = logger_type{},
-                                allocator_type const& _alloc = allocator_type{}) noexcept
-          : elist_type{},
-            enable_traits<TraitsType>(logger, _alloc) {}
-
-
-        template <typename... Args>
-        constexpr basic_context(logger_ref            logger = logger_type{},
-                                allocator_type const& _alloc = allocator_type{}, Args&&... args) noexcept
-          : enable_traits<TraitsType>(logger, _alloc),
-            elist_type{stl::forward<Args>(args)...} {}
-
+        // todo: fix this ctor
         template <typename... Args>
         constexpr basic_context(Args&&... args) noexcept
-          : elist_type{stl::forward<Args>(args)...},
-            etraits{} {}
+          : etraits(args...),
+            elist_type{stl::forward<Args>(args)...} {}
 
-        basic_context(basic_context&& ctx) noexcept      = default;
-        basic_context(basic_context const& ctx) noexcept = default;
+        constexpr basic_context(basic_context&& ctx) noexcept      = default;
+        constexpr basic_context(basic_context const& ctx) noexcept = default;
+        constexpr basic_context& operator=(basic_context const&) = default;
+        constexpr basic_context& operator=(basic_context&&) noexcept = default;
+
 
         /**
          * Generate a response
@@ -161,8 +152,8 @@ namespace webpp {
         }
 
         [[nodiscard]] Response auto error(http::status_code_type error_code) const noexcept {
-            return error(error_code,
-                         stl::format("Error {}: {}", error_code, http::status_code_reason_phrase(error_code)));
+            return error(error_code, stl::format("Error {}: {}", error_code,
+                                                 http::status_code_reason_phrase(error_code)));
         }
 
         [[nodiscard]] Response auto error(http::status_code_type error_code, auto&& data) const noexcept {
@@ -197,12 +188,6 @@ namespace webpp {
         using original_extension_pack_type = OriginalExtensionList;
         using request_type                 = stl::remove_cvref_t<ReqType>;
         using basic_context_type           = typename EList::basic_context_type;
-        using logger_type                  = traits::logger<traits_type>;
-        using logger_ref                   = typename logger_type::logger_ref;
-
-        // should we use a char_type as allocator? change this if you think it's not the correct type
-        using allocator_type = typename traits_type::template allocator<traits::char_type<traits_type>>;
-
 
         /**
          * Append some extensions to this context type and get the type back
@@ -212,39 +197,13 @@ namespace webpp {
           typename original_extension_pack_type::template appended<E...>::unique::template extensie_type<
             traits_type, context_descriptor_type, request_type>;
 
-        constexpr final_context(logger_ref            logger = logger_type{},
-                                allocator_type const& alloc  = allocator_type{}) noexcept
-          : /*basic_context_type{alloc},*/
-            EList(logger, alloc) {}
-
-        //        template <typename... Args>
-        //        constexpr final_context(Args&&... args) noexcept : EList{stl::forward<Args>(args)...} {
-        //        }
-        //
-        //        template <typename... Args>
-        //        constexpr final_context(request_type* req, Args&&... args) noexcept
-        //          : basic_context_type{req},
-        //            EList{stl::forward<Args>(args)...} {
-        //        }
-
-        //        template <typename... Args>
-        //        constexpr final_context(request_type& req, Args&&... args) noexcept
-        //          : basic_context_type{req},
-        //            EList{stl::forward<Args>(args)...} {
-        //        }
-
-
-        //        constexpr final_context(request_type* req) noexcept : basic_context_type{req} {}
-        //        constexpr final_context(request_type& req) noexcept : basic_context_type{req} {}
+        template <typename... Args>
+        constexpr final_context(Args&&... args) noexcept : EList(stl::forward<Args>(args)...) {}
 
         constexpr final_context(final_context const&) noexcept = default;
         constexpr final_context(final_context&&) noexcept      = default;
-
-        template <Traits NTraitsType, typename NContextDescriptorType, typename NOriginalExtensionList,
-                  typename NEList, typename NReqType>
-        constexpr final_context(final_context<NTraitsType, NContextDescriptorType, NOriginalExtensionList,
-                                              NEList, NReqType> const& ctx) noexcept
-          : EList{ctx.get_allocator()} {}
+        constexpr final_context& operator=(final_context const&) = default;
+        constexpr final_context& operator=(final_context&&) noexcept = default;
 
         /**
          * Clone this context and append the new extensions along the way.

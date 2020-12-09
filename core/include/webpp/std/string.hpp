@@ -3,19 +3,19 @@
 #ifndef WEBPP_STRING_H
 #define WEBPP_STRING_H
 
+#include "../traits/traits.hpp"
 #include "./std.hpp"
 
 #include <string>
 
-#include "../traits/traits.hpp"
-
 // Traits aware string:
 namespace webpp::istl {
 
-    template <Traits TraitsType, typename CharT = typename TraitsType::char_type,
-              typename CharTraits = typename TraitsType::char_traits,
-              typename Allocator  = typename TraitsType::allocator>
-    using basic_string = stl::basic_string<CharT, CharTraits, Allocator>;
+
+    //    template <Traits TraitsType, typename CharT = typename TraitsType::char_type,
+    //              typename CharTraits = typename TraitsType::char_traits,
+    //              typename Allocator  = typename TraitsType::allocator>
+    //    using basic_string = stl::basic_string<CharT, CharTraits, Allocator>;
 
 
     template <typename T>
@@ -52,13 +52,13 @@ namespace webpp::istl {
         template <template <typename...> typename TT, typename... T>
         using deduced_type = decltype(TT{T{}...});
 
-    } // namespace details
+    } // namespace details::string
 
     template <typename StrT, typename T>
-    concept StringifiableOf = !stl::is_void_v<StrT> &&
-    !istl::CharType<stl::remove_cvref_t<T>> &&
-    requires {stl::remove_cvref_t<T>{};} &&
-    !stl::is_void_v<char_type_of<T>> && requires(stl::remove_cvref_t<T> str) {
+    concept StringifiableOf = !stl::is_void_v<StrT> && !istl::CharType<stl::remove_cvref_t<T>> && requires {
+        stl::remove_cvref_t<T>{};
+    }
+    &&!stl::is_void_v<char_type_of<T>> && requires(stl::remove_cvref_t<T> str) {
         stl::is_trivial_v<typename stl::remove_cvref_t<StrT>::value_type>;
         stl::is_standard_layout_v<typename stl::remove_cvref_t<StrT>::value_type>;
         requires requires {
@@ -82,10 +82,8 @@ namespace webpp::istl {
 
     template <typename T, typename AllocType = allocator_type_of<T>>
     using defaulted_string = stl::conditional_t<
-        String<T>,
-        stl::remove_cvref_t<T>,
-        stl::basic_string<char_type_of<T>, char_traits_type_of<T>, stl::remove_cvref_t<AllocType>>
-    >;
+      String<T>, stl::remove_cvref_t<T>,
+      stl::basic_string<char_type_of<T>, char_traits_type_of<T>, stl::remove_cvref_t<AllocType>>>;
 
     template <typename T>
     concept Stringifiable = StringifiableOf<defaulted_string<T>, stl::remove_cvref_t<T>>;
@@ -93,9 +91,10 @@ namespace webpp::istl {
 
     template <typename StrT, typename Strifiable>
     requires(StringifiableOf<StrT, Strifiable>)
-    [[nodiscard]] constexpr auto stringify_of(Strifiable&& str, auto const& allocator) noexcept {
-        if constexpr (String<Strifiable> && (stl::is_same_v<stl::remove_cvref_t<StrT>, stl::remove_cvref_t<Strifiable>> ||
-                                             stl::is_convertible_v<stl::remove_cvref_t<StrT>, stl::remove_cvref_t<Strifiable>>)) {
+      [[nodiscard]] constexpr auto stringify_of(Strifiable&& str, auto const& allocator) noexcept {
+        if constexpr (String<Strifiable> &&
+                      (stl::is_same_v<stl::remove_cvref_t<StrT>, stl::remove_cvref_t<Strifiable>> ||
+                       stl::is_convertible_v<stl::remove_cvref_t<StrT>, stl::remove_cvref_t<Strifiable>>) ) {
             return str;
         } else if constexpr (requires { StrT{str, allocator}; }) {
             return StrT{str, allocator};
@@ -120,8 +119,8 @@ namespace webpp::istl {
 
     template <template <typename...> typename StrT, typename Strifiable, typename AllocType>
     requires(StringifiableOfTemplate<StrT, Strifiable>)
-    [[nodiscard]] constexpr auto stringify_of(Strifiable&& str, AllocType const& allocator) noexcept {
-        using alloc_type = stl::add_lvalue_reference_t<stl::add_const_t<AllocType>>;
+      [[nodiscard]] constexpr auto stringify_of(Strifiable&& str, AllocType const& allocator) noexcept {
+        using alloc_type   = stl::add_lvalue_reference_t<stl::add_const_t<AllocType>>;
         using deduced_type = details::string::deduced_type<StrT, Strifiable, alloc_type>;
         return stringify_of<deduced_type>(stl::forward<Strifiable>(str), allocator);
     }

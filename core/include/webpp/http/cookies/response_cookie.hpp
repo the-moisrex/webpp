@@ -6,6 +6,7 @@
 #include "../../convert/casts.hpp"
 #include "../../std/string.hpp"
 #include "./cookie.hpp"
+#include "../../memory/allocators.hpp"
 
 namespace webpp {
 
@@ -21,16 +22,11 @@ namespace webpp {
         //        }
 
       public:
-        using string_type           = stl::remove_cvref_t<StringType>;
-        using char_type             = typename string_type::value_type;
+        using string_type           = StringType;
+        using char_type             = istl::char_type_of<string_type>;
         using string_allocator_type = typename string_type::allocator_type;
 
         static constexpr auto illegal_chars = charset("()[]/|\\',;");
-
-
-        template <typename T>
-        using allocator_type =
-          typename stl::allocator_traits<string_allocator_type>::template rebind_alloc<T>;
 
         using date_t             = stl::chrono::time_point<stl::chrono::system_clock>;
         using name_t             = string_type;
@@ -49,9 +45,9 @@ namespace webpp {
         using comment_t          = string_type;
         using version_t          = cookie_version;
 
-        using attrs_t =
-          stl::unordered_map<string_type, string_type, stl::hash<string_type>, stl::equal_to<string_type>,
-                             allocator_type<stl::pair<const string_type, string_type>>>;
+        using attrs_t = stl::unordered_map<
+          string_type, string_type, stl::hash<string_type>, stl::equal_to<string_type>,
+          rebind_allocator<string_allocator_type, stl::pair<const string_type, string_type>>>;
 
 
       private:
@@ -82,9 +78,8 @@ namespace webpp {
             _comment{alloc},
             attrs{alloc} {};
 
-        constexpr response_cookie(istl::Stringifiable auto&& name,
-                                  istl::Stringifiable auto&& value,
-                                  string_allocator_type const&     alloc = {}) noexcept
+        constexpr response_cookie(istl::Stringifiable auto&& name, istl::Stringifiable auto&& value,
+                                  string_allocator_type const& alloc = {}) noexcept
           : _name{istl::stringify_of<name_t>(stl::forward<decltype(name)>(name), alloc), alloc},
             _value{istl::stringify_of<value_t>(stl::forward<decltype(value)>(value), alloc), alloc},
             _domain{alloc},
@@ -99,7 +94,7 @@ namespace webpp {
          * @param source
          */
         explicit response_cookie(istl::StringViewifiable auto&& source,
-                                 string_allocator_type const&         alloc = {}) noexcept
+                                 string_allocator_type const&   alloc = {}) noexcept
           : _name{alloc},
             _value{alloc},
             _domain{alloc},
@@ -132,7 +127,8 @@ namespace webpp {
         }
 
         [[nodiscard]] bool is_removed() const noexcept {
-            return *_expires < stl::chrono::system_clock::now();
+            // todo: clang-tidy says "Use nullptr"; why?
+            return _expires && _expires.value() < stl::chrono::system_clock::now();
         }
 
         /**
@@ -258,7 +254,7 @@ namespace webpp {
             return res;
         }
 
-        void to_string(string_type &result) const {
+        void to_string(string_type& result) const {
             using namespace stl::chrono;
 
             result.reserve(result.size() + 256);
@@ -280,10 +276,9 @@ namespace webpp {
                     result.append(_priority);
                 }
                 if (_max_age != -1) {
-                    stl::time_t expires_c  = system_clock::to_time_t(*_expires);
+                    stl::time_t expires_c = system_clock::to_time_t(*_expires);
                     result.append("; expires=");
-                    stl::format_to(stl::back_inserter(result),
-                                   FMT_COMPILE("{:%a, %d %b %Y %H:%M:%S} GMT"),
+                    stl::format_to(stl::back_inserter(result), FMT_COMPILE("{:%a, %d %b %Y %H:%M:%S} GMT"),
                                    istl::safe_localtime(expires_c));
                 }
                 switch (_same_site) {
@@ -329,10 +324,9 @@ namespace webpp {
                     append_to(result, _max_age);
                     result.append("\"");
                 } else if (_expires) {
-                    stl::time_t expires_c  = system_clock::to_time_t(*_expires);
+                    stl::time_t expires_c = system_clock::to_time_t(*_expires);
                     result.append("; expires=");
-                    stl::format_to(stl::back_inserter(result),
-                                   FMT_COMPILE("{:%a, %d %b %Y %H:%M:%S} GMT"),
+                    stl::format_to(stl::back_inserter(result), FMT_COMPILE("{:%a, %d %b %Y %H:%M:%S} GMT"),
                                    istl::safe_localtime(expires_c));
                 }
 
@@ -372,10 +366,10 @@ namespace webpp {
 
         bool operator==(response_cookie const& c) const noexcept {
             return _name == c._name && _value == c._value && _prefix == c._prefix &&
-                   _priority == c._priority && _version == c._version &&
-                   _encrypted == c._encrypted && _secure == c._secure && _http_only == c._http_only &&
-                   _same_site == c._same_site && _comment == c._comment && _expires == c._expires &&
-                   _path == c._path && _domain == c._domain && attrs == c.attrs;
+                   _priority == c._priority && _version == c._version && _encrypted == c._encrypted &&
+                   _secure == c._secure && _http_only == c._http_only && _same_site == c._same_site &&
+                   _comment == c._comment && _expires == c._expires && _path == c._path &&
+                   _domain == c._domain && attrs == c.attrs;
         }
 
         bool operator<(response_cookie const& c) const noexcept {

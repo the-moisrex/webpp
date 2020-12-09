@@ -39,8 +39,9 @@ namespace webpp {
         using traits_type             = stl::remove_cvref_t<TraitsType>;
         using logger_type             = traits::logger<traits_type>;
         using logger_ref              = typename logger_type::logger_ref;
-        using char_type               = traits::char_type<traits_type>;
-        using general_char_alloc_type = traits::general_char_allocator<traits_type>;
+        using string_view_type        = traits::string_view<traits_type>;
+        using char_type               = istl::char_type_of<string_view_type>;
+        using general_char_alloc_type = traits::general_allocator<traits_type, char_type>;
 
         template <typename AllocType>
         static constexpr bool app_requires_logger_and_allocator =

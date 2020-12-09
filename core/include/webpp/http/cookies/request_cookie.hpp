@@ -9,8 +9,8 @@ namespace webpp {
 
     template <istl::StringView StringViewType = stl::string_view>
     struct request_cookie {
-        using string_view_type = stl::remove_cvref_t<StringViewType>;
-        using char_type        = typename string_view_type::value_type;
+        using string_view_type = StringViewType;
+        using char_type        = istl::char_type_of<string_view_type>;
 
         static constexpr auto valid_cookie_name_chars  = details::VALID_COOKIE_NAME<char_type>;
         static constexpr auto valid_cookie_value_chars = details::VALID_COOKIE_VALUE<char_type>;
