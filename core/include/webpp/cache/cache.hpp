@@ -57,9 +57,7 @@ namespace webpp {
          */
         template <typename KeyType>
         static constexpr bool can_use_as_key() noexcept {
-            return (
-              std::is_convertible_v<KeyType, typename CacheSystem::key_type> ||
-              ...);
+            return (std::is_convertible_v<KeyType, typename CacheSystem::key_type> || ...);
         }
 
         /**
@@ -70,18 +68,16 @@ namespace webpp {
          */
         template <typename ValueType>
         static constexpr bool can_use_as_value() noexcept {
-            return (std::is_convertible_v<ValueType,
-                                          typename CacheSystem::value_type> ||
-                    ...);
+            return (std::is_convertible_v<ValueType, typename CacheSystem::value_type> || ...);
         }
     };
 
     template <typename CacheSystem>
-    auto set(CacheSystem& cache_system, typename CacheSystem::key_type&& key,
+    auto set(CacheSystem&                       cache_system,
+             typename CacheSystem::key_type&&   key,
              typename CacheSystem::value_type&& value) {
-        return cache_system.set(
-          std::forward<typename CacheSystem::key_type>(key),
-          std::forward<typename CacheSystem::value_type>(value));
+        return cache_system.set(std::forward<typename CacheSystem::key_type>(key),
+                                std::forward<typename CacheSystem::value_type>(value));
     }
 
 } // namespace webpp

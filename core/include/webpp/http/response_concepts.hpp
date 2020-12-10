@@ -5,8 +5,8 @@
 
 #include "../extensions/extension.hpp"
 #include "../traits/std_traits.hpp"
-#include "./header_concepts.hpp"
 #include "./body_concepts.hpp"
+#include "./header_concepts.hpp"
 
 namespace webpp {
 
@@ -22,14 +22,14 @@ namespace webpp {
 
         template <typename ResType>
         concept Response = requires(ResType res) {
-//            requires ResponseBody<typename ResType::body_type>;
-//            requires ResponseHeader<typename ResType::headers_type>;
+            //            requires ResponseBody<typename ResType::body_type>;
+            //            requires ResponseHeader<typename ResType::headers_type>;
             requires Traits<typename ResType::traits_type>;
             {res.body};
             {res.headers};
         };
 
-    }
+    } // namespace details
 
     template <typename ResType>
     concept Response = details::Response<stl::remove_cvref_t<ResType>>;
@@ -45,13 +45,12 @@ namespace webpp {
       (Response<T> ||
        // stl::is_convertible_v<T, typename std_traits_from_string<T>::type> ||
        // stl::is_convertible_v<T, typename std_traits_from_string_view<T>::type>
-       istl::StringViewifiable<T>
-       );
+       istl::StringViewifiable<T>);
 
     template <typename ResponseType, typename T>
     concept ConstructibleWithResponse = stl::is_constructible_v<ResponseType, T>;
 
-      template <typename T>
+    template <typename T>
     concept ResponseExtension = Extension<T>;
 
     template <typename E>

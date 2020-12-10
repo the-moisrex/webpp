@@ -26,12 +26,12 @@ namespace webpp::http {
         constexpr version() noexcept = default;
 
         template <typename T>
-        requires (!stl::same_as<stl::remove_cvref_t<T>, version> && istl::StringViewifiable<T>)
-        constexpr version(T&& str) noexcept
+        requires(!stl::same_as<stl::remove_cvref_t<T>, version> &&
+                 istl::StringViewifiable<T>) constexpr version(T&& str) noexcept
           : value(parse_string(istl::string_viewify(stl::forward<decltype(str)>(str)))) {}
 
         constexpr version(version const&) noexcept = default;
-        constexpr version(version &&) noexcept = default;
+        constexpr version(version&&) noexcept      = default;
         version& operator=(version const&) noexcept = default;
         version& operator=(version&&) noexcept = default;
 
@@ -78,8 +78,8 @@ namespace webpp::http {
     struct version_list : public stl::array<version, N> {
         using array_type = stl::array<version, N>;
 
-        template <typename ...T>
-        constexpr version_list(T&& ...versions) noexcept : array_type{stl::forward<T>(versions)...} {}
+        template <typename... T>
+        constexpr version_list(T&&... versions) noexcept : array_type{stl::forward<T>(versions)...} {}
 
         [[nodiscard]] constexpr bool include_version(version ver) noexcept {
             for (auto const& v : *this) {
@@ -97,13 +97,11 @@ namespace webpp::http {
     static constexpr version http_2_0{"2.0"};
     // todo: add version 3
 
-    static constexpr version_list<4> all_http_versions{
-      http_0_9, http_1_0, http_1_1, http_2_0
-    };
+    static constexpr version_list<4> all_http_versions{http_0_9, http_1_0, http_1_1, http_2_0};
 
     // todo: create a supported version list (exclude http/0.9 since no one is using it anymore)
 
-}
+} // namespace webpp::http
 
 
 #endif // WEBPP_VERSION_HPP

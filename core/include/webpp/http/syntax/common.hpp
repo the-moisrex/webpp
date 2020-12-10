@@ -8,7 +8,7 @@
 namespace webpp::http {
 
     static constexpr auto http_lws = charset(" \t");
-    using http_lws_type = stl::remove_cvref_t<decltype(http_lws)>;
+    using http_lws_type            = stl::remove_cvref_t<decltype(http_lws)>;
 
 
     // Return true if the character is HTTP "linear white space" (SP | HT).
@@ -16,7 +16,7 @@ namespace webpp::http {
     // newlines.
     static constexpr bool is_lws(istl::CharType auto c) noexcept {
         using char_type = stl::remove_cvref_t<decltype(c)>;
-        using str_v = stl::basic_string_view<char_type>;
+        using str_v     = stl::basic_string_view<char_type>;
         constexpr str_v whitespaces(http_lws);
         return whitespaces.find(c) != str_v::npos;
     }
@@ -83,12 +83,14 @@ namespace webpp::http {
     }
 
     // trim from start (copying)
-    [[nodiscard]] static inline auto ltrim_copy_lws(istl::Stringifiable auto&& s, auto const& allocator) noexcept {
+    [[nodiscard]] static inline auto ltrim_copy_lws(istl::Stringifiable auto&& s,
+                                                    auto const&                allocator) noexcept {
         return ascii::ltrim_copy(stl::forward<decltype(s)>(s), allocator, http_lws);
     }
 
     // trim from end (copying)
-    [[nodiscard]] static inline auto rtrim_copy_lws(istl::Stringifiable auto&& s, auto const& allocator) noexcept {
+    [[nodiscard]] static inline auto rtrim_copy_lws(istl::Stringifiable auto&& s,
+                                                    auto const&                allocator) noexcept {
         return ascii::rtrim_copy(stl::forward<decltype(s)>(s), allocator, http_lws);
     }
 
@@ -96,6 +98,6 @@ namespace webpp::http {
     [[nodiscard]] inline auto trim_copy_lws(istl::Stringifiable auto&& s, auto const& allocator) noexcept {
         return ascii::trim_copy(stl::forward<decltype(s)>(s), allocator, http_lws);
     }
-}
+} // namespace webpp::http
 
 #endif // WEBPP_COMMON_HPP

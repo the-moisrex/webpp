@@ -3,8 +3,9 @@
 #ifndef WEBPP_THREAD_POOL_HPP
 #define WEBPP_THREAD_POOL_HPP
 
-#include <thread>
 #include "../std/vector.hpp"
+
+#include <thread>
 
 namespace webpp {
 
@@ -13,6 +14,6 @@ namespace webpp {
         stl::vector<stl::thread, AllocType> threads;
     };
 
-}
+} // namespace webpp
 
 #endif // WEBPP_THREAD_POOL_HPP

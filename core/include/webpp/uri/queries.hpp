@@ -13,13 +13,13 @@ namespace webpp::uri {
     template <typename StringType = stl::string,
               typename AllocType  = typename stl::remove_cvref_t<StringType>::allocator_type>
     struct basic_queries : public istl::map_of_strings<StringType, AllocType> {
-        using super      = istl::map_of_strings<StringType, AllocType>;
-        using string_type = stl::remove_cvref_t<StringType>;
-        using key_type = typename super::key_type;
-        using mapped_type = typename super::mapped_type;
-        using char_type   = typename string_type::value_type;
-        using value_type = stl::pair<key_type, mapped_type>;
-        using allocator_type = typename super::allocator_type;
+        using super                         = istl::map_of_strings<StringType, AllocType>;
+        using string_type                   = stl::remove_cvref_t<StringType>;
+        using key_type                      = typename super::key_type;
+        using mapped_type                   = typename super::mapped_type;
+        using char_type                     = typename string_type::value_type;
+        using value_type                    = stl::pair<key_type, mapped_type>;
+        using allocator_type                = typename super::allocator_type;
         static constexpr auto allowed_chars = details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>;
 
         template <typename... Args>

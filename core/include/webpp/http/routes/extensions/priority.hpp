@@ -52,98 +52,80 @@ namespace webpp::extensions {
             _level = _new_level;
         }
 
-        [[nodiscard]] constexpr bool
-        operator<(priority __level) const noexcept {
+        [[nodiscard]] constexpr bool operator<(priority __level) const noexcept {
             return this->_level < __level.level();
         }
 
-        [[nodiscard]] constexpr bool
-        operator>(priority __level) const noexcept {
+        [[nodiscard]] constexpr bool operator>(priority __level) const noexcept {
             return this->_level > __level.level();
         }
 
-        [[nodiscard]] constexpr bool
-        operator<=(priority __level) const noexcept {
+        [[nodiscard]] constexpr bool operator<=(priority __level) const noexcept {
             return this->_level <= __level.level();
         }
 
-        [[nodiscard]] constexpr bool
-        operator>=(priority __level) const noexcept {
+        [[nodiscard]] constexpr bool operator>=(priority __level) const noexcept {
             return this->_level >= __level.level();
         }
 
-        [[nodiscard]] constexpr bool
-        operator!=(priority __level) const noexcept {
+        [[nodiscard]] constexpr bool operator!=(priority __level) const noexcept {
             return this->_level != __level.level();
         }
 
-        [[nodiscard]] constexpr bool
-        operator==(priority __level) const noexcept {
+        [[nodiscard]] constexpr bool operator==(priority __level) const noexcept {
             return this->_level == __level.level();
         }
 
         ///////////////////////////////////////////////////////////////////////
 
-        [[nodiscard]] constexpr bool
-        operator<(decltype(_level) __level) const noexcept {
+        [[nodiscard]] constexpr bool operator<(decltype(_level) __level) const noexcept {
             return this->_level < __level;
         }
 
-        [[nodiscard]] constexpr bool
-        operator>(decltype(_level) __level) const noexcept {
+        [[nodiscard]] constexpr bool operator>(decltype(_level) __level) const noexcept {
             return this->_level > __level;
         }
 
-        [[nodiscard]] constexpr bool
-        operator<=(decltype(_level) __level) const noexcept {
+        [[nodiscard]] constexpr bool operator<=(decltype(_level) __level) const noexcept {
             return this->_level <= __level;
         }
 
-        [[nodiscard]] constexpr bool
-        operator>=(decltype(_level) __level) const noexcept {
+        [[nodiscard]] constexpr bool operator>=(decltype(_level) __level) const noexcept {
             return this->_level >= __level;
         }
 
-        [[nodiscard]] constexpr bool
-        operator!=(decltype(_level) __level) const noexcept {
+        [[nodiscard]] constexpr bool operator!=(decltype(_level) __level) const noexcept {
             return this->_level != __level;
         }
 
-        [[nodiscard]] constexpr bool
-        operator==(decltype(_level) __level) const noexcept {
+        [[nodiscard]] constexpr bool operator==(decltype(_level) __level) const noexcept {
             return this->_level == __level;
         }
     };
 
 
 
-    [[nodiscard]] constexpr bool operator<(uint_fast8_t lhs,
-                                           priority     rhs) noexcept {
+    [[nodiscard]] constexpr bool operator<(uint_fast8_t lhs, priority rhs) noexcept {
         return lhs < rhs.level();
     }
 
-    [[nodiscard]] constexpr bool operator>(uint_fast16_t lhs,
-                                           priority      rhs) noexcept {
+    [[nodiscard]] constexpr bool operator>(uint_fast16_t lhs, priority rhs) noexcept {
         return lhs > rhs.level();
     }
 
-    [[nodiscard]] constexpr bool operator<=(uint_fast16_t lhs,
-                                            priority      rhs) noexcept {
+    [[nodiscard]] constexpr bool operator<=(uint_fast16_t lhs, priority rhs) noexcept {
         return lhs <= rhs.level();
     }
 
-    [[nodiscard]] constexpr bool operator>=(uint_fast16_t lhs,
-                                            priority      rhs) noexcept {
+    [[nodiscard]] constexpr bool operator>=(uint_fast16_t lhs, priority rhs) noexcept {
         return lhs >= rhs.level();
     }
 
-    [[nodiscard]] constexpr bool operator!=(uint_fast16_t lhs,
-                                            priority      rhs) noexcept {
+    [[nodiscard]] constexpr bool operator!=(uint_fast16_t lhs, priority rhs) noexcept {
         return lhs != rhs.level();
     }
 
-    [[nodiscard]] constexpr bool operator==(uint_fast16_t lhs,
-                                            priority      rhs) noexcept {
+    [[nodiscard]] constexpr bool operator==(uint_fast16_t lhs, priority rhs) noexcept {
         return lhs == rhs.level();
     }
 
@@ -169,20 +151,17 @@ namespace webpp::extensions {
             ::std::size_t    index;
 
           public:
-            constexpr iterator(
-              routes_ptr_t     _routes_ptr     = nullptr,
-              priorities_ptr_t _priorities_ptr = nullptr,
-              ::std::size_t    _index          = sizeof...(RouteType)) noexcept
+            constexpr iterator(routes_ptr_t     _routes_ptr     = nullptr,
+                               priorities_ptr_t _priorities_ptr = nullptr,
+                               ::std::size_t    _index          = sizeof...(RouteType)) noexcept
               : routes_ptr{_routes_ptr},
                 priorities_ptr{_priorities_ptr},
-                index(_index) {
-            }
+                index(_index) {}
 
             constexpr iterator(iterator const& iter) noexcept
               : routes_ptr{iter.routes_ptr},
                 priorities_ptr{iter.priorities_ptr},
-                index{iter.index} {
-            }
+                index{iter.index} {}
 
             auto& operator=(iterator const& iter) noexcept {
                 if (iter != *this) {
@@ -193,8 +172,7 @@ namespace webpp::extensions {
                 return *this;
             }
 
-            ~iterator() noexcept {
-            }
+            ~iterator() noexcept {}
 
             auto& operator++() noexcept {
                 ++index;
@@ -212,14 +190,12 @@ namespace webpp::extensions {
             }
 
             constexpr bool operator==(iterator const& iter) const noexcept {
-                return routes_ptr == iter.routes_ptr &&
-                       priorities_ptr == iter.priorities_ptr &&
+                return routes_ptr == iter.routes_ptr && priorities_ptr == iter.priorities_ptr &&
                        index == iter.index;
             }
 
             constexpr bool operator!=(iterator const& iter) const noexcept {
-                return routes_ptr != iter.routes_ptr ||
-                       priorities_ptr != iter.priorities_ptr ||
+                return routes_ptr != iter.routes_ptr || priorities_ptr != iter.priorities_ptr ||
                        index != iter.index;
             }
 

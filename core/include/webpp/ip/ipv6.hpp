@@ -831,14 +831,22 @@ namespace webpp {
             using char_type      = istl::char_type_of<decltype(output)>;
             char_type buffer[40] = {};
             auto      _octets    = octets16();
-            stl::format_to(buffer, "{:x}:{:x}:{:x}:{:x}:{:x}:{:x}:{:x}:{:x}", _octets[0], _octets[1],
-                           _octets[2], _octets[3], _octets[4], _octets[5], _octets[6], _octets[7]);
+            stl::format_to(buffer,
+                           "{:x}:{:x}:{:x}:{:x}:{:x}:{:x}:{:x}:{:x}",
+                           _octets[0],
+                           _octets[1],
+                           _octets[2],
+                           _octets[3],
+                           _octets[4],
+                           _octets[5],
+                           _octets[6],
+                           _octets[7]);
             buffer[39] = '\0';
             output.append(buffer, 40);
         }
 
         template <istl::String StrT = stl::string>
-        [[nodiscard]] StrT str(auto&&...str_args) const noexcept {
+        [[nodiscard]] StrT str(auto&&... str_args) const noexcept {
             StrT output{stl::forward<decltype(str_args)>(str_args)...};
             str_to(output);
             return output;
@@ -937,7 +945,7 @@ namespace webpp {
 
 
         template <istl::String StrT = stl::string>
-        [[nodiscard]] StrT short_str(auto&&...str_args) const noexcept {
+        [[nodiscard]] StrT short_str(auto&&... str_args) const noexcept {
             StrT output{stl::forward<decltype(str_args)>(str_args)...};
             short_str_to(output);
             return output;
@@ -983,8 +991,22 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] ipv6 reversed() const noexcept {
-            return ipv6{octets_t{data[14], data[15], data[12], data[13], data[10], data[11], data[8], data[9],
-                                 data[6], data[7], data[4], data[5], data[2], data[3], data[0], data[1]},
+            return ipv6{octets_t{data[14],
+                                 data[15],
+                                 data[12],
+                                 data[13],
+                                 data[10],
+                                 data[11],
+                                 data[8],
+                                 data[9],
+                                 data[6],
+                                 data[7],
+                                 data[4],
+                                 data[5],
+                                 data[2],
+                                 data[3],
+                                 data[0],
+                                 data[1]},
                         _prefix};
         }
     };

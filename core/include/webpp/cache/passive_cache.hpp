@@ -24,8 +24,7 @@ namespace webpp {
         passive_cache() noexcept;
 
         template <typename KeyValue, typename DataType>
-        auto get(KeyValue&& /* key */,
-                 DataType const& default_value) const noexcept {
+        auto get(KeyValue&& /* key */, DataType const& default_value) const noexcept {
             // yes, that's how useless this class is!
             return default_value;
         }

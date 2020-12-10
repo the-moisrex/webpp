@@ -16,9 +16,8 @@ namespace webpp {
     /**
      * TODO: add types to the "{user_id}" to be able to use it as "{int:user_id}"
      */
-    stl::map<stl::string_view, stl::string_view>
-    parse_vars(stl::string_view const& _templ,
-               stl::string_view const& _path) noexcept {
+    stl::map<stl::string_view, stl::string_view> parse_vars(stl::string_view const& _templ,
+                                                            stl::string_view const& _path) noexcept {
         using namespace webpp;
 
         stl::map<stl::string_view, stl::string_view> res;
@@ -51,19 +50,16 @@ namespace webpp {
                 case '}':
                     // check if we are in a curly braces
                     if (curly_start != templ_end) {
-                        stl::string_view key{
-                          colon + 1, static_cast<stl::string_view::size_type>(
-                                       c - colon - 1)};
+                        stl::string_view key{colon + 1,
+                                             static_cast<stl::string_view::size_type>(c - colon - 1)};
 
                         // find _ in "{var}_" inside path
                         // this doesn't take the / in account
-                        auto next_char_path =
-                          stl::string_view{path_char}.find(*(c + 1));
+                        auto next_char_path = stl::string_view{path_char}.find(*(c + 1));
 
                         stl::string_view value{
                           path_char,
-                          stl::min(next_char_path,
-                                   _path.size() - (path_char - _path.data()))};
+                          stl::min(next_char_path, _path.size() - (path_char - _path.data()))};
                         /*
                         std::string_view type{curly_start + 1,
                                               static_cast<std::string_view::size_type>(
@@ -95,9 +91,8 @@ namespace webpp {
      * @return
      */
     template <typename CharT>
-    [[nodiscard]] bool
-    tpath_check(stl::basic_string_view<CharT> const& templated_path,
-                stl::basic_string_view<CharT> const& _path) noexcept {
+    [[nodiscard]] bool tpath_check(stl::basic_string_view<CharT> const& templated_path,
+                                   stl::basic_string_view<CharT> const& _path) noexcept {
         //        auto          tit        = templated_path.data(); // templated
         //        iterator auto          pit        = _path.data();          //
         //        path iterator decltype(tit) seg_start  = nullptr; stl::size_t
@@ -193,15 +188,12 @@ namespace webpp {
         stl::string_view tpath_str;
 
       public:
-        constexpr tpath_condition(stl::string_view str) noexcept
-          : tpath_str(str) {
-        }
+        constexpr tpath_condition(stl::string_view str) noexcept : tpath_str(str) {}
 
         constexpr tpath_condition() noexcept = default;
 
         template <typename RequestType>
-        [[nodiscard]] inline bool
-        operator()(RequestType const& req) const noexcept {
+        [[nodiscard]] inline bool operator()(RequestType const& req) const noexcept {
             return tpath_check(tpath_str, req.request_uri());
         }
     };

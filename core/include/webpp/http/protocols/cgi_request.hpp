@@ -20,7 +20,7 @@ namespace webpp {
 
       public:
         using string_view_type = typename super::string_view_type;
-        
+
         /**
          * Get the environment value safely
          */

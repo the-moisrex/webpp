@@ -27,7 +27,10 @@ TEST(HTTPRequestParser, RequestLine) {
     std::vector<std::string_view> not_accepted_req_lines{
       "SOME/THING / HTTP/1.1",
       // "SOMETHING # HTTP/1.1", // we don't want this method to check if the uri is right or wrong
-      "TEST test", "TEST", "------", "123",
+      "TEST test",
+      "TEST",
+      "------",
+      "123",
       // "GET1 / HTTP/1.1",
     };
 
@@ -62,7 +65,8 @@ TEST(HTTPRequestParser, HeaderLexer) {
     http_lexer<webpp::std_traits> lexer{.raw_view = sample_request};
 
     ASSERT_NO_THROW(lexer.consume_all());
-    EXPECT_EQ(std::count_if(std::begin(sample_request), std::end(sample_request),
+    EXPECT_EQ(std::count_if(std::begin(sample_request),
+                            std::end(sample_request),
                             [](auto c) {
                                 return c == '\r' || c == '\n';
                             }) /

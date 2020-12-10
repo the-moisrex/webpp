@@ -152,8 +152,9 @@ namespace webpp {
         }
 
         [[nodiscard]] Response auto error(http::status_code_type error_code) const noexcept {
-            return error(error_code, stl::format("Error {}: {}", error_code,
-                                                 http::status_code_reason_phrase(error_code)));
+            return error(
+              error_code,
+              stl::format("Error {}: {}", error_code, http::status_code_reason_phrase(error_code)));
         }
 
         [[nodiscard]] Response auto error(http::status_code_type error_code, auto&& data) const noexcept {
@@ -179,8 +180,11 @@ namespace webpp {
         // todo: add all the features of returning a response each body type should have at least one method here
     };
 
-    template <Traits TraitsType, typename ContextDescriptorType, typename OriginalExtensionList,
-              typename EList, typename ReqType>
+    template <Traits TraitsType,
+              typename ContextDescriptorType,
+              typename OriginalExtensionList,
+              typename EList,
+              typename ReqType>
     struct final_context final : public EList {
         using elist_type                   = EList;
         using traits_type                  = TraitsType;
@@ -194,8 +198,8 @@ namespace webpp {
          */
         template <typename... E>
         using context_type_with_appended_extensions =
-          typename original_extension_pack_type::template appended<E...>::unique::template extensie_type<
-            traits_type, context_descriptor_type, request_type>;
+          typename original_extension_pack_type::template appended<
+            E...>::unique::template extensie_type<traits_type, context_descriptor_type, request_type>;
 
         template <typename... Args>
         constexpr final_context(Args&&... args) noexcept : EList(stl::forward<Args>(args)...) {}
@@ -320,11 +324,14 @@ namespace webpp {
         using related_extension_pack_type = typename ExtensionType::context_extensions;
 
 
-        template <ExtensionList ExtensionListType, Traits TraitsType,
+        template <ExtensionList ExtensionListType,
+                  Traits        TraitsType,
                   typename EList, // extension_pack
                   typename ReqType>
         using mid_level_extensie_type = basic_context<
-          TraitsType, EList, ReqType,
+          TraitsType,
+          EList,
+          ReqType,
           // getting the extensie_type of the basic_response
           typename ExtensionListType::template extensie_type<TraitsType, basic_response_descriptor>>;
 
@@ -337,8 +344,8 @@ namespace webpp {
 
 
     template <Request ReqType, /* fixme: ExtensionList */ typename ExtensionListType = empty_extension_pack>
-    using simple_context = typename ExtensionListType::template extensie_type<typename ReqType::traits_type,
-                                                                              context_descriptor, ReqType>;
+    using simple_context = typename ExtensionListType::
+      template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
 
     // todo: move this into "context_concepts.h" file
     //        using std_context_type = typename context_descriptor::template final_extensie_type<

@@ -21,9 +21,9 @@ namespace webpp {
           {"svg", "image/svg+xml"},   {"webm", "video/webm"},       {"xml", "application/xml"},
           {"pdf", "application/pdf"}, {"txt", "text/plain"},        {0, 0} // Marks end of list.
         };
-    }
+    } // namespace details
 
-    auto mime_type_of(istl::StringViewifiable auto &&extension) {
+    auto mime_type_of(istl::StringViewifiable auto&& extension) {
         // todo: optimize this based on first character of the extension
         for (details::mapping const* m = details::mappings; m->extension; ++m) {
             if (ascii::iequals<ascii::char_case_side::second_lowered>(m->extension, extension)) {
@@ -35,6 +35,6 @@ namespace webpp {
     }
 
 
-}
+} // namespace webpp
 
 #endif // WEBPP_MIME_TYPES_HPP

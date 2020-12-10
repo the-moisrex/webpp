@@ -23,26 +23,26 @@ namespace webpp::uri {
     struct basic_port : stl::remove_cvref_t<StringType> {
         using string_type = stl::remove_cvref_t<StringType>;
 
-        template <typename ...T>
-        constexpr basic_port(T&&...args) : string_type{stl::forward<T>(args)...} {
+        template <typename... T>
+        constexpr basic_port(T&&... args) : string_type{stl::forward<T>(args)...} {
             // todo: make sure if it's a valid port number
             // if (!is::digit(*this)) {
-                // convert the service name to port number
+            // convert the service name to port number
             // }
         }
 
         template <typename T>
-        requires(stl::is_integral_v<stl::remove_cvref_t<T>>
-                 && (sizeof(stl::remove_cvref_t<T>) > sizeof(char))
-                 && !stl::is_floating_point_v<stl::remove_cvref_t<T>>)
-        constexpr basic_port(T port_num) : string_type{} {
+        requires(stl::is_integral_v<stl::remove_cvref_t<T>> &&
+                 (sizeof(stl::remove_cvref_t<T>) > sizeof(char)) &&
+                 !stl::is_floating_point_v<stl::remove_cvref_t<T>>) constexpr basic_port(T port_num)
+          : string_type{} {
             if (port_num < 0 || port_num > 65535)
                 throw stl::invalid_argument("The specified port number is not in a valid range.");
 
             append_to(*this, port_num, stl::chars_format::fixed);
         }
 
-        void append_to(istl::String auto&out) {
+        void append_to(istl::String auto& out) {
             if (this->empty())
                 return; // nothing to add
             // out.reserve(out.size() + this->size() + 1);
@@ -53,10 +53,9 @@ namespace webpp::uri {
         [[nodiscard]] constexpr uint16_t value() const {
             return to_uint16(*this);
         }
-
     };
 
 
-}
+} // namespace webpp::uri
 
 #endif // WEBPP_PORT_HPP

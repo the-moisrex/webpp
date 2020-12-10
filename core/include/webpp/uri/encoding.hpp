@@ -16,7 +16,8 @@ namespace webpp {
      */
     template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, stl::size_t N>
     [[nodiscard]] bool
-    decode_uri_component(istl::StringViewifiable auto&& encoded_str, istl::String auto& output,
+    decode_uri_component(istl::StringViewifiable auto&&                               encoded_str,
+                         istl::String auto&                                           output,
                          charset<istl::char_type_of<decltype(encoded_str)>, N> const& chars) noexcept {
         using char_type          = istl::char_type_of<stl::remove_cvref_t<decltype(encoded_str)>>;
         stl::size_t digits_left  = 0;
@@ -77,7 +78,8 @@ namespace webpp {
      * @details this function is almost the same as "encodeURIComponent" in javascript
      */
     template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, stl::size_t N>
-    static void encode_uri_component(istl::StringViewifiable auto&& src, istl::String auto& output,
+    static void encode_uri_component(istl::StringViewifiable auto&&                       src,
+                                     istl::String auto&                                   output,
                                      charset<istl::char_type_of<decltype(src)>, N> const& chars) {
         using char_type   = istl::char_type_of<decltype(src)>;
         using uchar_type  = stl::make_unsigned_t<char_type>;
@@ -85,11 +87,11 @@ namespace webpp {
         static_assert(stl::is_same_v<char_type, typename string_type::value_type>,
                       "The specified string do not have the same char type.");
         static constexpr auto make_hex_digit = [](auto value) constexpr noexcept->char_type {
-          if (value < 10) {
-              return static_cast<char_type>(value + '0');
-          } else {
-              return static_cast<char_type>(value - 10 + 'A');
-          }
+            if (value < 10) {
+                return static_cast<char_type>(value + '0');
+            } else {
+                return static_cast<char_type>(value - 10 + 'A');
+            }
         };
 
         const auto input      = istl::string_viewify(src);
@@ -119,6 +121,6 @@ namespace webpp {
         output.shrink_to_fit();
     }
 
-}
+} // namespace webpp
 
 #endif // WEBPP_ENCODING_HPP

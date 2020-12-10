@@ -66,7 +66,7 @@ namespace webpp::ascii {
 
     template <typename CharT>
     requires(stl::is_integral_v<CharT> && !stl::is_const_v<CharT>) inline void to_upper(CharT& c) noexcept {
-        using char_type          = stl::remove_cvref_t<decltype(c)>;
+        using char_type                 = stl::remove_cvref_t<decltype(c)>;
         static constexpr char_type diff = 'a' - 'A';
         if (c >= 'a' && c <= 'z')
             c -= diff;
@@ -86,7 +86,7 @@ namespace webpp::ascii {
 
     template <typename CharT>
     requires(stl::is_integral_v<CharT> && !stl::is_const_v<CharT>) inline void to_lower(CharT& c) noexcept {
-        using char_type          = stl::remove_cvref_t<decltype(c)>;
+        using char_type                 = stl::remove_cvref_t<decltype(c)>;
         static constexpr char_type diff = 'a' - 'A';
         if (c >= 'A' && c <= 'Z')
             c += diff;
@@ -107,7 +107,7 @@ namespace webpp::ascii {
             method(*it);                                                                                     \
     }                                                                                                        \
                                                                                                              \
-    inline void simple_##method(istl::Stringifiable auto& str) noexcept {                              \
+    inline void simple_##method(istl::Stringifiable auto& str) noexcept {                                    \
         using str_t          = stl::remove_cvref_t<decltype(str)>;                                           \
         using char_type      = istl::char_type_of<str_t>;                                                    \
         char_type*       it  = istl::string_data(str);                                                       \
@@ -196,7 +196,8 @@ namespace webpp::ascii {
                     const auto values = eve::bit_cast(simd_type{it}, eve::as_<simd_utype>());
                     // const auto shifted = values & shift;
                     const auto data = eve::if_else(eve::is_less(eve::sub(values, small_a), 25),
-                                                   eve::sub(values, diff), values);
+                                                   eve::sub(values, diff),
+                                                   values);
                     eve::store(eve::bit_cast(data, eve::as_<simd_type>()), it);
                 }
                 // do the rest
@@ -209,30 +210,29 @@ namespace webpp::ascii {
     } // namespace algo
 
 
-#define WEBPP_TO_METHOD(method, chosen_algorithm)                                           \
-    template <typename CharT>                                                               \
-    requires(stl::is_integral_v<CharT>) inline void method(CharT* it) noexcept {            \
-        for (; *it != '\0'; ++it)                                                           \
-            method(*it);                                                                    \
-    }                                                                                       \
-                                                                                            \
-    inline void method(istl::Stringifiable auto& str) noexcept {                      \
-        algo::chosen_algorithm##_##method(stl::forward<decltype(str)>(str));                \
-    }                                                                                       \
-                                                                                            \
-    [[nodiscard]] inline auto method##_copy(istl::Stringifiable auto _str,            \
-                                            auto const&                    allocator) noexcept {               \
-        auto str = istl::stringify(stl::move(_str), allocator);                             \
-        method(str);                                                                        \
-        return str;                                                                         \
-    }                                                                                       \
-                                                                                            \
-                                                                                            \
-    [[nodiscard]] inline auto method##_copy(istl::Stringifiable auto _str) noexcept { \
-        using char_type = istl::char_type_of<decltype(_str)>;                               \
-        auto str        = istl::stringify(stl::move(_str), stl::allocator<char_type>());    \
-        method(str);                                                                        \
-        return str;                                                                         \
+#define WEBPP_TO_METHOD(method, chosen_algorithm)                                                            \
+    template <typename CharT>                                                                                \
+    requires(stl::is_integral_v<CharT>) inline void method(CharT* it) noexcept {                             \
+        for (; *it != '\0'; ++it)                                                                            \
+            method(*it);                                                                                     \
+    }                                                                                                        \
+                                                                                                             \
+    inline void method(istl::Stringifiable auto& str) noexcept {                                             \
+        algo::chosen_algorithm##_##method(stl::forward<decltype(str)>(str));                                 \
+    }                                                                                                        \
+                                                                                                             \
+    [[nodiscard]] inline auto method##_copy(istl::Stringifiable auto _str, auto const& allocator) noexcept { \
+        auto str = istl::stringify(stl::move(_str), allocator);                                              \
+        method(str);                                                                                         \
+        return str;                                                                                          \
+    }                                                                                                        \
+                                                                                                             \
+                                                                                                             \
+    [[nodiscard]] inline auto method##_copy(istl::Stringifiable auto _str) noexcept {                        \
+        using char_type = istl::char_type_of<decltype(_str)>;                                                \
+        auto str        = istl::stringify(stl::move(_str), stl::allocator<char_type>());                     \
+        method(str);                                                                                         \
+        return str;                                                                                          \
     }
 
 #ifdef WEBPP_EVE
@@ -257,8 +257,8 @@ namespace webpp::ascii {
 #endif
     }
 
-    [[nodiscard]] constexpr bool ends_with(istl::StringViewifiable auto&& _str,
-                                           istl::char_type_of<decltype(_str)>   c) noexcept {
+    [[nodiscard]] constexpr bool ends_with(istl::StringViewifiable auto&&     _str,
+                                           istl::char_type_of<decltype(_str)> c) noexcept {
         auto str = istl::string_viewify(_str);
         return !str.empty() && str.back() == c;
     }
@@ -305,6 +305,6 @@ namespace webpp::ascii {
     //
 
 
-} // namespace webpp
+} // namespace webpp::ascii
 
 #endif // WEBPP_UTILS_STRINGS_H

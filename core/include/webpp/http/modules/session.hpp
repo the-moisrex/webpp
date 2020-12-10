@@ -38,8 +38,7 @@
 
 namespace webpp {
 
-    template <class ServerAdapter = webpp::memory_adapter,
-              class ClientAdapter = webpp::cookie_adapter>
+    template <class ServerAdapter = webpp::memory_adapter, class ClientAdapter = webpp::cookie_adapter>
     class session {
       public:
         using key_t = std::string;
@@ -51,14 +50,10 @@ namespace webpp {
         class cache_proxy_t {
           private:
             std::thread tr;
-            bool        _cache_enabled =
-              !std::is_same<ServerAdapter, memory_adapter>::value;
+            bool        _cache_enabled = !std::is_same<ServerAdapter, memory_adapter>::value;
 
           public:
-            cache_proxy_t(
-              std::unique_ptr<ServerAdapter>&& server_adapter) noexcept
-              : tr(server_adapter) {
-            }
+            cache_proxy_t(std::unique_ptr<ServerAdapter>&& server_adapter) noexcept : tr(server_adapter) {}
 
             ~cache_proxy_t() noexcept {
                 if (tr.joinable())

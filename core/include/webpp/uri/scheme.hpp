@@ -11,8 +11,8 @@ namespace webpp::uri {
     struct basic_scheme : stl::remove_cvref_t<StringType> {
         using string_type = stl::remove_cvref_t<StringType>;
 
-        template <typename ...T>
-        constexpr basic_scheme(T&&...args) : string_type{stl::forward<T>(args)...} {}
+        template <typename... T>
+        constexpr basic_scheme(T&&... args) : string_type{stl::forward<T>(args)...} {}
 
 
 
@@ -30,9 +30,8 @@ namespace webpp::uri {
                 out += ':';
             }
         }
-
     };
 
-}
+} // namespace webpp::uri
 
 #endif // WEBPP_SCHEME_HPP

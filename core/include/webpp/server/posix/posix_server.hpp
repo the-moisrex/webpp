@@ -22,15 +22,9 @@ namespace webpp::posix {
     struct bindable_endpoint {
         addrinfo* endpoint;
 
-        bool is_ipv6() const noexcept {
+        bool is_ipv6() const noexcept {}
 
-        }
-
-        bool is_ipv4() const noexcept {
-
-        }
-
-
+        bool is_ipv4() const noexcept {}
     };
 
 
@@ -56,7 +50,7 @@ namespace webpp::posix {
         addrinfo*   _result = nullptr;
 
       public:
-        bindable_endpoints(istl::Stringifiable auto&& v_service     = "http") noexcept
+        bindable_endpoints(istl::Stringifiable auto&& v_service = "http") noexcept
           : _service{istl::stringify(stl::forward<decltype(v_service)>(v_service))} {}
 
         bindable_endpoints(bindable_endpoints const&) =
@@ -93,9 +87,10 @@ namespace webpp::posix {
         }
 
         void disable_ipv6() noexcept {
-            webpp_assert(hints.ai_family != AF_INET6, "cannot disable both ipv4 and ipv6; "
-                                                      "enable ipv4 before disabling ipv6 to "
-                                                      "prevent this error from happening.");
+            webpp_assert(hints.ai_family != AF_INET6,
+                         "cannot disable both ipv4 and ipv6; "
+                         "enable ipv4 before disabling ipv6 to "
+                         "prevent this error from happening.");
             hints.ai_family = AF_INET;
         }
 
@@ -108,9 +103,10 @@ namespace webpp::posix {
         }
 
         void disable_ipv4() noexcept {
-            webpp_assert(hints.ai_family != AF_INET, "cannot disable both ipv4 and ipv6; "
-                                                     "enable ipv6 before disabling ipv4 to "
-                                                     "prevent this error from happening.");
+            webpp_assert(hints.ai_family != AF_INET,
+                         "cannot disable both ipv4 and ipv6; "
+                         "enable ipv6 before disabling ipv4 to "
+                         "prevent this error from happening.");
             hints.ai_family = AF_INET6;
         }
     };
@@ -168,17 +164,18 @@ namespace webpp::posix {
                     etraits::logger.warning(
                       logger_cat,
                       stl::format("Can't open a socket for {}:{}; trying the next one if exists",
-                                  ep.server_name(), ep.service()),
+                                  ep.server_name(),
+                                  ep.service()),
                       errno);
                     continue;
                 }
 
                 int optval = 1;
                 if (setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1) {
-                    etraits::logger.warning(logger_cat,
-                                            "We weren't able to set necessary options for the specified socket",
-                                            errno
-                                            );
+                    etraits::logger.warning(
+                      logger_cat,
+                      "We weren't able to set necessary options for the specified socket",
+                      errno);
                     close(sock);
                     continue;
                 }
@@ -187,7 +184,8 @@ namespace webpp::posix {
                     etraits::logger.warning(
                       logger_cat,
                       stl::format("Can't bind to a socket for {}:{}; trying the next one if exists",
-                                  ep.server_name(), ep.service()),
+                                  ep.server_name(),
+                                  ep.service()),
                       errno);
                     close(sock); // close it because for some reason we can't bind to it
                     continue;

@@ -41,8 +41,8 @@ namespace webpp {
             typename string_type::allocator_type;
         };
         static constexpr bool has_traits = stl::is_void_v<traits_type>;
-        static constexpr bool is_mutable = requires (string_type str) {
-          str.clear();
+        static constexpr bool is_mutable = requires(string_type str) {
+            str.clear();
         };
 
       private:
@@ -74,9 +74,9 @@ namespace webpp {
                 end(_start + _size) {}
         };
 
-        template <typename ...Args>
-        constexpr istring(Args&& ...args) noexcept(noexcept(string_type(stl::forward<Args>(args)...))) :
-            string_type{stl::forward<Args>(args)...} {}
+        template <typename... Args>
+        constexpr istring(Args&&... args) noexcept(noexcept(string_type(stl::forward<Args>(args)...)))
+          : string_type{stl::forward<Args>(args)...} {}
 
         auto get_allocator() const noexcept {
             if constexpr (has_allocator) {
@@ -315,7 +315,6 @@ namespace webpp {
         }
 
         // todo: prepend
-
     };
 
 
@@ -323,7 +322,7 @@ namespace webpp {
     using std_istring_view = istring<stl::string_view>;
 
     template <istl::CharType CharT, stl::size_t size>
-    istring(const CharT(&)[size]) -> istring<stl::basic_string_view<CharT>>;
+    istring(const CharT (&)[size]) -> istring<stl::basic_string_view<CharT>>;
 
 
 } // namespace webpp

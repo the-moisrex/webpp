@@ -9,7 +9,11 @@
 using namespace webpp;
 
 
-enum struct e1 : stl::uint64_t { one = success<e1>(), two = failure<e1>("two"), three = failure<e1>("three") };
+enum struct e1 : stl::uint64_t {
+    one   = success<e1>(),
+    two   = failure<e1>("two"),
+    three = failure<e1>("three")
+};
 
 
 TEST(Errors, Handler) {

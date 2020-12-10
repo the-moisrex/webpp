@@ -95,10 +95,7 @@
 
 namespace webpp {
 
-    enum struct cookie_version : stl::uint_fast8_t {
-        version_0 = 0,
-        version_1 = 1
-    };
+    enum struct cookie_version : stl::uint_fast8_t { version_0 = 0, version_1 = 1 };
 
     /**
      * Even though these algorithms are capable of handling other char types than "char" itself, they
@@ -107,15 +104,15 @@ namespace webpp {
     namespace details {
 
         template <istl::CharType CharT>
-        constexpr static auto VALID_COOKIE_NAME =
-          charset(ALPHA_DIGIT<CharT>, charset<CharT, 16>{'!', '#', '$', '%', '&', '\'', '*', '+',
-                                                                  '-', '.', '^', '_', '`', '|', '~'});
+        constexpr static auto VALID_COOKIE_NAME = charset(
+          ALPHA_DIGIT<CharT>,
+          charset<CharT, 16>{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'});
 
         template <istl::CharType CharT>
-        constexpr static auto VALID_COOKIE_VALUE = charset(
-          ALPHA_DIGIT<CharT>,
-          charset<CharT, 28>{'!', '#', '$', '%', '&', '\'', '(', ')', '*', '+', '-', '.', '/', ':',
-                               '<', '=', '>', '?', '@', '[',  ']', '^', '_', '`', '{', '|', '}', '~'});
+        constexpr static auto VALID_COOKIE_VALUE =
+          charset(ALPHA_DIGIT<CharT>,
+                  charset<CharT, 28>{'!', '#', '$', '%', '&', '\'', '(', ')', '*', '+', '-', '.', '/', ':',
+                                     '<', '=', '>', '?', '@', '[',  ']', '^', '_', '`', '{', '|', '}', '~'});
 
 
         void parse_SE_name(istl::StringView auto& str, auto& _name, bool& _valid) noexcept {
@@ -137,8 +134,7 @@ namespace webpp {
             }
         }
 
-        void parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value,
-                                   bool& _valid) noexcept {
+        void parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value, bool& _valid) noexcept {
             using name_t           = stl::remove_cvref_t<decltype(_name)>;
             using value_t          = stl::remove_cvref_t<decltype(_value)>;
             using string_view_type = stl::remove_cvref_t<decltype(str)>;

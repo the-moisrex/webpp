@@ -4,9 +4,9 @@
 #define WEBPP_RESPONSE_COOKIES_HPP
 
 #include "../../convert/casts.hpp"
+#include "../../memory/allocators.hpp"
 #include "../../std/string.hpp"
 #include "./cookie.hpp"
-#include "../../memory/allocators.hpp"
 
 namespace webpp {
 
@@ -46,7 +46,10 @@ namespace webpp {
         using version_t          = cookie_version;
 
         using attrs_t = stl::unordered_map<
-          string_type, string_type, stl::hash<string_type>, stl::equal_to<string_type>,
+          string_type,
+          string_type,
+          stl::hash<string_type>,
+          stl::equal_to<string_type>,
           rebind_allocator<string_allocator_type, stl::pair<const string_type, string_type>>>;
 
 
@@ -78,7 +81,8 @@ namespace webpp {
             _comment{alloc},
             attrs{alloc} {};
 
-        constexpr response_cookie(istl::Stringifiable auto&& name, istl::Stringifiable auto&& value,
+        constexpr response_cookie(istl::Stringifiable auto&&   name,
+                                  istl::Stringifiable auto&&   value,
                                   string_allocator_type const& alloc = {}) noexcept
           : _name{istl::stringify_of<name_t>(stl::forward<decltype(name)>(name), alloc), alloc},
             _value{istl::stringify_of<value_t>(stl::forward<decltype(value)>(value), alloc), alloc},
@@ -278,7 +282,8 @@ namespace webpp {
                 if (_max_age != -1) {
                     stl::time_t expires_c = system_clock::to_time_t(*_expires);
                     result.append("; expires=");
-                    stl::format_to(stl::back_inserter(result), FMT_COMPILE("{:%a, %d %b %Y %H:%M:%S} GMT"),
+                    stl::format_to(stl::back_inserter(result),
+                                   FMT_COMPILE("{:%a, %d %b %Y %H:%M:%S} GMT"),
                                    istl::safe_localtime(expires_c));
                 }
                 switch (_same_site) {
@@ -326,7 +331,8 @@ namespace webpp {
                 } else if (_expires) {
                     stl::time_t expires_c = system_clock::to_time_t(*_expires);
                     result.append("; expires=");
-                    stl::format_to(stl::back_inserter(result), FMT_COMPILE("{:%a, %d %b %Y %H:%M:%S} GMT"),
+                    stl::format_to(stl::back_inserter(result),
+                                   FMT_COMPILE("{:%a, %d %b %Y %H:%M:%S} GMT"),
                                    istl::safe_localtime(expires_c));
                 }
 

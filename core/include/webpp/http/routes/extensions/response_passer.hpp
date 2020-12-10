@@ -4,9 +4,7 @@
 #define WEBPP_RESPONSE_PASSER_HPP
 
 namespace webpp::inline extensions {
-    struct response_passer {
-
-    };
-}
+    struct response_passer {};
+} // namespace webpp::inline extensions
 
 #endif // WEBPP_RESPONSE_PASSER_HPP

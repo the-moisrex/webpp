@@ -45,11 +45,9 @@ namespace webpp {
         thread_pool_type                           pool{};
 
       public:
-        asio_server(auto&&...args)
+        asio_server(auto&&... args)
           : etraits{stl::forward<decltype(args)>(args)...},
-            connections{etraits::get_allocator()}
-            acceptors{etraits::get_allocator()}
-            {};
+            connections{etraits::get_allocator()} acceptors{etraits::get_allocator()} {};
 
       private:
         void accept(asio::error_code const& ec, socket_type socket) noexcept {
@@ -90,7 +88,8 @@ namespace webpp {
                           start_accepting();
                           etraits::logger.info(logger_cat, "Starting running IO tasks in a thread.");
                           io.run();
-                          etraits::logger.info(logger_cat, "Finished all the IO tasks in the thread successfully.");
+                          etraits::logger.info(logger_cat,
+                                               "Finished all the IO tasks in the thread successfully.");
                           break;
                       } catch (stl::exception const& err) {
                           etraits::logger.error(logger_cat, "Server tasks finished with errors.", err);

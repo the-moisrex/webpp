@@ -81,9 +81,7 @@ namespace webpp {
 
         type _value;
 
-        constexpr explicit const_list_value(type value) noexcept
-          : _value(std::move(value)) {
-        }
+        constexpr explicit const_list_value(type value) noexcept : _value(std::move(value)) {}
     };
 
     template <>
@@ -97,9 +95,7 @@ namespace webpp {
 
         type _next;
 
-        constexpr explicit const_list_next_value(type next) noexcept
-          : _next(std::move(next)) {
-        }
+        constexpr explicit const_list_next_value(type next) noexcept : _next(std::move(next)) {}
     };
 
     template <>
@@ -108,8 +104,7 @@ namespace webpp {
     };
 
     template <typename Type = void, typename NextType = void>
-    class const_list : public const_list_value<Type>,
-                       public const_list_next_value<NextType> {
+    class const_list : public const_list_value<Type>, public const_list_next_value<NextType> {
       public:
         // static_assert(std::negation_v<std::is_void<Type>>, "Type cannot be
         // void");
@@ -123,16 +118,12 @@ namespace webpp {
 
         constexpr explicit const_list() noexcept = default;
 
-        constexpr explicit const_list(type value) noexcept
-          : value_t(std::move(value)) {
-        }
+        constexpr explicit const_list(type value) noexcept : value_t(std::move(value)) {}
 
-        template <typename T,
-                  typename = std::enable_if_t<std::negation_v<std::is_void<T>>>>
+        template <typename T, typename = std::enable_if_t<std::negation_v<std::is_void<T>>>>
         constexpr const_list(type value, T next) noexcept
           : value_t(std::move(value)),
-            next_value_t(std::move(next)) {
-        }
+            next_value_t(std::move(next)) {}
 
         constexpr const_list(const_list const& v) noexcept = default;
 
@@ -200,8 +191,7 @@ namespace webpp {
         }
 
         template <typename NewValueType>
-        [[nodiscard]] constexpr auto
-        operator+(NewValueType&& v) const noexcept {
+        [[nodiscard]] constexpr auto operator+(NewValueType&& v) const noexcept {
             return append(std::forward<NewValueType>(v));
         }
 
@@ -290,8 +280,7 @@ namespace webpp {
          * @return
          */
         template <typename Callable, typename RetType>
-        constexpr RetType reduce(Callable const& callable,
-                                 RetType const&  first_element) const noexcept {
+        constexpr RetType reduce(Callable const& callable, RetType const& first_element) const noexcept {
             auto v = first_element;
             if constexpr (!std::is_void_v<type>) {
                 v = callable(v, value());
@@ -311,8 +300,7 @@ namespace webpp {
          */
         template <typename T>
         constexpr bool has(T const& _value) const noexcept {
-            if constexpr (!std::is_void_v<type> &&
-                          std::is_convertible_v<type, T>) {
+            if constexpr (!std::is_void_v<type> && std::is_convertible_v<type, T>) {
                 if (value() == _value)
                     return true;
             }
@@ -327,8 +315,7 @@ namespace webpp {
         }
 
         template <typename NType, typename NNextType>
-        constexpr bool
-        operator==(const_list<NType, NNextType> const& l) const noexcept {
+        constexpr bool operator==(const_list<NType, NNextType> const& l) const noexcept {
             if constexpr (!std::is_same_v<type, NType>) {
                 if (value() != l.value())
                     return false;
@@ -343,8 +330,7 @@ namespace webpp {
         }
 
         template <typename NType, typename NNextType>
-        constexpr bool
-        operator!=(const_list<NType, NNextType> const& l) const noexcept {
+        constexpr bool operator!=(const_list<NType, NNextType> const& l) const noexcept {
             return !operator==<NType, NNextType>(l);
         }
     };
@@ -356,8 +342,7 @@ namespace webpp {
 
     template <typename First, typename... Args>
     constexpr auto make_const_list(First&& first, Args&&... args) noexcept {
-        return (const_list(std::forward<First>(first)) + ... +
-                std::forward<Args>(args));
+        return (const_list(std::forward<First>(first)) + ... + std::forward<Args>(args));
     }
 } // namespace webpp
 #endif // WEBPP_CONST_LIST_H

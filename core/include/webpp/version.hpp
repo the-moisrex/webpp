@@ -6,6 +6,6 @@
 namespace webpp {
     // todo: automate this
     constexpr auto webpp_version = "1.0.0";
-}
+} // namespace webpp
 
 #endif // WEBPP_VERSION_HPP

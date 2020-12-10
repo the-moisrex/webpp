@@ -20,12 +20,14 @@ namespace webpp::extensions {
      */
 
 
-    template <typename Traits, typename KeyType = typename Traits::string_type,
+    template <typename Traits,
+              typename KeyType   = typename Traits::string_type,
               typename ValueType = typename Traits::string_type>
     struct map : public stl::map<Traits, KeyType, ValueType> {};
 
 
-    template <typename Traits, typename KeyType = typename Traits::string_type,
+    template <typename Traits,
+              typename KeyType   = typename Traits::string_type,
               typename ValueType = typename Traits::string_type>
     struct multimap : public stl::multimap<Traits, KeyType, ValueType> {};
 
@@ -41,6 +43,6 @@ namespace webpp::extensions {
         T data;
     };
 
-} // namespace webpp::routes::extensions
+} // namespace webpp::extensions
 
 #endif // WEBPP_CONTEXT_EXTENSION_MAP

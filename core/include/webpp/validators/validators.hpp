@@ -32,7 +32,7 @@ namespace webpp {
 
         [[nodiscard]] constexpr bool contains(istl::StringViewifiable auto&& _str,
                                               istl::StringViewifiable auto&& _seed) noexcept {
-            auto str = istl::string_viewify(_str);
+            auto str  = istl::string_viewify(_str);
             auto seed = istl::string_viewify(_seed);
             return str.find(seed) != decltype(str)::npos;
         }
@@ -106,8 +106,8 @@ namespace webpp {
          * @return true if str is a valid ipv4
          */
         [[nodiscard]] constexpr bool ipv4(istl::StringViewifiable auto&& _str) noexcept {
-            auto str = istl::string_viewify(_str);
-            stl::size_t            next_dot;
+            auto        str = istl::string_viewify(_str);
+            stl::size_t next_dot;
             for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
                 next_dot       = str.find('.');
                 auto octet_str = str.substr(0, next_dot);
@@ -125,8 +125,8 @@ namespace webpp {
          * valid ipv4 subnet mask or not
          */
         [[nodiscard]] constexpr bool subnet(istl::StringViewifiable auto&& _str) noexcept {
-            auto str = istl::string_viewify(_str);
-            stl::size_t            next_dot = 0;
+            auto        str      = istl::string_viewify(_str);
+            stl::size_t next_dot = 0;
             for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
                 next_dot       = str.find('.');
                 auto octet_str = str.substr(0, next_dot);
@@ -160,12 +160,13 @@ namespace webpp {
          */
         template <stl::size_t N>
         [[nodiscard]] constexpr bool
-        ipv4_prefix(istl::StringViewifiable auto&&                     _str,
+        ipv4_prefix(istl::StringViewifiable auto&&                        _str,
                     charset<istl::char_type_of<decltype(_str)>, N> const& divider_chars) noexcept {
 
             auto str = istl::string_viewify(_str);
 
-            if (auto found = stl::find_if(stl::rbegin(str), stl::rend(str),
+            if (auto found = stl::find_if(stl::rbegin(str),
+                                          stl::rend(str),
                                           [&](const auto& c) {
                                               return divider_chars.contains(c);
                                           });
@@ -188,7 +189,7 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] constexpr bool ipv4_prefix(istl::StringViewifiable auto&& _str) noexcept {
-            auto str = istl::string_viewify(_str);
+            auto str        = istl::string_viewify(_str);
             using char_type = istl::char_type_of<decltype(str)>;
             return ipv4_prefix(str, charset<char_type, 2>{':', '/'});
         }
@@ -261,7 +262,7 @@ namespace webpp {
 
         template <stl::size_t N = 1>
         [[nodiscard]] constexpr bool
-        ipv6_prefix(istl::StringViewifiable auto&&                     _str,
+        ipv6_prefix(istl::StringViewifiable auto&&                        _str,
                     charset<istl::char_type_of<decltype(_str)>, N> const& divider_chars =
                       charset<istl::char_type_of<decltype(_str)>, 1>('/')) noexcept {
 
@@ -269,7 +270,8 @@ namespace webpp {
 
             using char_type = istl::char_type_of<decltype(str)>;
 
-            if (auto found = stl::find_if(stl::rbegin(str), stl::rend(str),
+            if (auto found = stl::find_if(stl::rbegin(str),
+                                          stl::rend(str),
                                           [&](auto&& c) {
                                               return divider_chars.contains(c);
                                           });
@@ -321,16 +323,15 @@ namespace webpp {
              * This is the character set corresponds to the "sub-delims" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
-            constexpr charset<char_type, 11> SUB_DELIMS{'!', '$', '&', '\'', '(', ')',
-                                                          '*', '+', ',', ';',  '='};
+            constexpr charset<char_type, 11>
+              SUB_DELIMS{'!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '='};
 
             /**
              * This is the character set corresponds to the last part of
              * the "IPvFuture" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
-            constexpr auto IPV_FUTURE_LAST_PART =
-              charset(UNRESERVED, SUB_DELIMS, charset<char_type, 1>{':'});
+            constexpr auto IPV_FUTURE_LAST_PART = charset(UNRESERVED, SUB_DELIMS, charset<char_type, 1>{':'});
 
             /**
              * This is the character set corresponds to the "reg-name" syntax
@@ -360,8 +361,7 @@ namespace webpp {
             } else if (ascii::is::digit(str[0]) && is::ipv4(str)) { // ipv4
                 return true;
             } else {
-                constexpr auto ccc =
-                  charset(REG_NAME_NOT_PCT_ENCODED, charset<char_type, 1>({'%'}));
+                constexpr auto ccc = charset(REG_NAME_NOT_PCT_ENCODED, charset<char_type, 1>({'%'}));
                 return ccc.contains(str);
             }
 
@@ -374,22 +374,22 @@ namespace webpp {
          */
 
         [[nodiscard]] constexpr bool query(istl::StringViewifiable auto&& _str) noexcept {
-            auto str = istl::string_viewify(_str);
+            auto str        = istl::string_viewify(_str);
             using char_type = istl::char_type_of<decltype(str)>;
 
             /**
              * This is the character set corresponds to the "unreserved" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
-            constexpr auto UNRESERVED = charset(ALPHA<char_type>, DIGIT<char_type>,
-                                                           charset<char_type, 4>{'-', '.', '_', '~'});
+            constexpr auto UNRESERVED =
+              charset(ALPHA<char_type>, DIGIT<char_type>, charset<char_type, 4>{'-', '.', '_', '~'});
 
             /**
              * This is the character set corresponds to the "sub-delims" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
              */
-            constexpr charset<char_type, 11> SUB_DELIMS{'!', '$', '&', '\'', '(', ')',
-                                                          '*', '+', ',', ';',  '='};
+            constexpr charset<char_type, 11>
+              SUB_DELIMS{'!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '='};
             /**
              * This is the character set corresponds to the "pchar" syntax
              * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
@@ -446,7 +446,7 @@ namespace webpp {
         [[nodiscard]] bool rgb_color(istl::StringViewifiable auto&& _sstr) noexcept {
             // TODO: there are better ways to do it, check performance
 
-            auto sstr = istl::string_viewify(_sstr);
+            auto sstr       = istl::string_viewify(_sstr);
             using char_type = typename decltype(sstr)::value_type;
 
             constexpr stl::initializer_list<char_type const*> numbers = "0123456789";
@@ -491,7 +491,7 @@ namespace webpp {
 
         [[nodiscard]] bool rgba_color(istl::StringViewifiable auto&& _str) noexcept {
             // TODO: there are better ways to do it, check performance
-            auto str = istl::string_viewify(_str);
+            auto str                                                  = istl::string_viewify(_str);
             using char_type                                           = typename decltype(str)::value_type;
             constexpr stl::initializer_list<char_type const*> numbers = "0123456789";
             return true; // TODO: I'm just gonna make it compilable

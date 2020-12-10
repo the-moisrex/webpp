@@ -82,7 +82,8 @@ namespace webpp::istl {
 
     template <typename T, typename AllocType = allocator_type_of<T>>
     using defaulted_string = stl::conditional_t<
-      String<T>, stl::remove_cvref_t<T>,
+      String<T>,
+      stl::remove_cvref_t<T>,
       stl::basic_string<char_type_of<T>, char_traits_type_of<T>, stl::remove_cvref_t<AllocType>>>;
 
     template <typename T>

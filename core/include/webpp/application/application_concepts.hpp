@@ -32,11 +32,10 @@ namespace webpp {
     };
 
     template <typename T>
-    concept ApplicationWrapper = Application<stl::remove_cvref_t<T>> && ConstructibleWithLoggerAndAllocator<
-        stl::remove_cvref_t<T>,
-        typename stl::remove_cvref_t<T>::logger_type,
-        typename stl::remove_cvref_t<T>::allocator_type
-    >;
+    concept ApplicationWrapper = Application<stl::remove_cvref_t<T>>&&
+      ConstructibleWithLoggerAndAllocator<stl::remove_cvref_t<T>,
+                                          typename stl::remove_cvref_t<T>::logger_type,
+                                          typename stl::remove_cvref_t<T>::allocator_type>;
 
 } // namespace webpp
 

@@ -28,29 +28,22 @@ namespace webpp::ascii {
     }
 
     [[nodiscard]] static constexpr char_case_side char_case_to_side(char_case a, char_case b) noexcept {
-        switch(a) {
+        switch (a) {
             case char_case::lowered:
-                switch(b) {
-                    case char_case::lowered:
-                        return char_case_side::both_lowered;
-                    default:
-                        return char_case_side::first_lowered;
+                switch (b) {
+                    case char_case::lowered: return char_case_side::both_lowered;
+                    default: return char_case_side::first_lowered;
                 }
             case char_case::uppered:
                 switch (b) {
-                    case char_case::uppered:
-                        return char_case_side::both_uppered;
-                    default:
-                        return char_case_side::first_uppered;
+                    case char_case::uppered: return char_case_side::both_uppered;
+                    default: return char_case_side::first_uppered;
                 }
             case char_case::unknown:
                 switch (b) {
-                    case char_case::lowered:
-                        return char_case_side::second_lowered;
-                    case char_case::uppered:
-                        return char_case_side::second_uppered;
-                    case char_case::unknown:
-                        return char_case_side::both_unknown;
+                    case char_case::lowered: return char_case_side::second_lowered;
+                    case char_case::uppered: return char_case_side::second_uppered;
+                    case char_case::unknown: return char_case_side::both_unknown;
                 }
         }
     }
@@ -138,37 +131,45 @@ namespace webpp::ascii {
                     if (eve::any(equality)) {
                         if constexpr (char_case_side::first_lowered == Side) {
                             const auto val2_lowered = eve::if_else(eve::is_less(eve::sub(values2, big_a), 25),
-                                                                   eve::add(values2, diff), values2);
+                                                                   eve::add(values2, diff),
+                                                                   values2);
                             const auto equality2    = eve::is_not_equal(values1, val2_lowered);
                             if (eve::any(equality2)) {
                                 return false;
                             }
                         } else if constexpr (char_case_side::second_lowered == Side) {
                             const auto val1_lowered = eve::if_else(eve::is_less(eve::sub(values1, big_a), 25),
-                                                                   eve::add(values1, diff), values1);
+                                                                   eve::add(values1, diff),
+                                                                   values1);
                             const auto equality2    = eve::is_not_equal(val1_lowered, values2);
                             if (eve::any(equality2)) {
                                 return false;
                             }
                         } else if constexpr (char_case_side::first_uppered == Side) {
-                            const auto val2_uppered = eve::if_else(
-                              eve::is_less(eve::sub(values2, small_a), 25), eve::sub(values2, diff), values2);
+                            const auto val2_uppered =
+                              eve::if_else(eve::is_less(eve::sub(values2, small_a), 25),
+                                           eve::sub(values2, diff),
+                                           values2);
                             const auto equality2 = eve::is_not_equal(values1, val2_uppered);
                             if (eve::any(equality2)) {
                                 return false;
                             }
                         } else if constexpr (char_case_side::second_uppered == Side) {
-                            const auto val1_uppered = eve::if_else(
-                              eve::is_less(eve::sub(values1, small_a), 25), eve::sub(values1, diff), values1);
+                            const auto val1_uppered =
+                              eve::if_else(eve::is_less(eve::sub(values1, small_a), 25),
+                                           eve::sub(values1, diff),
+                                           values1);
                             const auto equality2 = eve::is_not_equal(val1_uppered, values2);
                             if (eve::any(equality2)) {
                                 return false;
                             }
                         } else {
                             const auto val1_lowered = eve::if_else(eve::is_less(eve::sub(values1, big_a), 25),
-                                                                   eve::add(values1, diff), values1);
+                                                                   eve::add(values1, diff),
+                                                                   values1);
                             const auto val2_lowered = eve::if_else(eve::is_less(eve::sub(values2, big_a), 25),
-                                                                   eve::add(values2, diff), values2);
+                                                                   eve::add(values2, diff),
+                                                                   values2);
                             const auto equality2    = eve::is_not_equal(val1_lowered, val2_lowered);
                             if (eve::any(equality2)) {
                                 return false;

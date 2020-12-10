@@ -12,10 +12,8 @@ namespace webpp {
      *
      * So FastCGI Request Manager is designed to handle only one request at a time.
      */
-    struct fcgi_request_manager {
+    struct fcgi_request_manager {};
 
-    };
-
-}
+} // namespace webpp
 
 #endif // WEBPP_FCGI_REQUEST_MANAGER_HPP

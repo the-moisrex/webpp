@@ -42,4 +42,3 @@ static void StrToInt_stoull(benchmark::State& state) {
     }
 }
 BENCHMARK(StrToInt_stoull);
-

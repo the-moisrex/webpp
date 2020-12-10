@@ -77,7 +77,7 @@ bool is_alpha_arithmetic2(char c) {
     return ((t & (uint64_t(1) << count)) >> count) == 0;
 }
 
-//bool is_alpha_simd(auto&& str) noexcept {
+// bool is_alpha_simd(auto&& str) noexcept {
 //    using char_type                 = typename std::remove_cvref_t<decltype(str)>::value_type;
 //    using simd_type                 = eve::wide<char_type>;
 //    using simd_utype                = eve::wide<std::make_unsigned_t<char_type>>;
@@ -175,15 +175,15 @@ func(lookup, alpha)
 
 
 
-//static void IsAlpha_string_SIMD(benchmark::State& state) {
-//    auto          strs = is_alpha_strs;
-//    unsigned char i    = 0;
-//    for (auto _ : state) {
-//        benchmark::DoNotOptimize(strs);
-//        benchmark::DoNotOptimize(i);
-//        benchmark::DoNotOptimize(strs[i % strs.size()]);
-//        benchmark::DoNotOptimize(is_alpha_simd(strs[i++ % strs.size()]));
-//    }
-//}
-//BENCHMARK(IsAlpha_string_SIMD);
-//
+  // static void IsAlpha_string_SIMD(benchmark::State& state) {
+  //    auto          strs = is_alpha_strs;
+  //    unsigned char i    = 0;
+  //    for (auto _ : state) {
+  //        benchmark::DoNotOptimize(strs);
+  //        benchmark::DoNotOptimize(i);
+  //        benchmark::DoNotOptimize(strs[i % strs.size()]);
+  //        benchmark::DoNotOptimize(is_alpha_simd(strs[i++ % strs.size()]));
+  //    }
+  //}
+  // BENCHMARK(IsAlpha_string_SIMD);
+  //

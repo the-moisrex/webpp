@@ -13,10 +13,8 @@ namespace webpp {
      * manager should be able to handle multiple HTTP requests and not just one.
      * To solve this issue, it's better to have a "request manager" class as well.
      */
-    struct fcgi_session_manager {
+    struct fcgi_session_manager {};
 
-    };
-
-}
+} // namespace webpp
 
 #endif // WEBPP_FCGI_SESSION_MANAGER_HPP

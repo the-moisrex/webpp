@@ -5,7 +5,7 @@ using namespace std;
 
 namespace test {
     struct basic_path : public std::vector<std::string> {
-        static constexpr std::string_view parent_dir= "..";
+        static constexpr std::string_view parent_dir  = "..";
         static constexpr std::string_view current_dir = ".";
 
         template <typename... T>
@@ -66,23 +66,22 @@ namespace test {
 
         // from poco library (with a little optimization)
         void remove_dot_segments_poco(bool removeLeading) {
-            if (this->empty()) return;
+            if (this->empty())
+                return;
 
             std::vector<std::string> normalizedSegments;
             normalizedSegments.reserve(this->size());
-            for (const auto& s: *this) {
+            for (const auto& s : *this) {
                 if (s == "..") {
                     if (!normalizedSegments.empty()) {
                         if (normalizedSegments.back() == "..")
                             normalizedSegments.push_back(s);
                         else
                             normalizedSegments.pop_back();
-                    }
-                    else if (!removeLeading) {
+                    } else if (!removeLeading) {
                         normalizedSegments.push_back(s);
                     }
-                }
-                else if (s != ".") {
+                } else if (s != ".") {
                     normalizedSegments.push_back(s);
                 }
             }
@@ -130,25 +129,23 @@ namespace test {
         }
 
         void normalize_utopia() {
-            this->erase(
-              this->begin(),
-              (this->rend() -
-               std::remove_if(this->rbegin(), this->rend(),
-                              [borrowed_paths = 0](const auto &element) mutable {
+            this->erase(this->begin(),
+                        (this->rend() - std::remove_if(this->rbegin(),
+                                                       this->rend(),
+                                                       [borrowed_paths = 0](const auto& element) mutable {
+                                                           if (element == current_dir) {
+                                                               return true;
+                                                           } else if (element == parent_dir) {
+                                                               borrowed_paths++;
+                                                               return true;
+                                                           } else if (borrowed_paths) {
+                                                               borrowed_paths--;
+                                                               return true;
+                                                           }
 
-                                if (element == current_dir) {
-                                    return true;
-                                } else if (element == parent_dir) {
-                                    borrowed_paths++;
-                                    return true;
-                                } else if (borrowed_paths) {
-                                    borrowed_paths--;
-                                    return true;
-                                }
-
-                                return false;
-                              })) +
-              this->begin());
+                                                           return false;
+                                                       })) +
+                          this->begin());
         }
 
 
@@ -166,21 +163,19 @@ namespace test {
             return str;
         }
     };
-}
+} // namespace test
 
 
 auto const paths = []() {
-  vector<test::basic_path> _paths {
-    test::basic_path {"..", "home", "..", ".", "test"},
-    test::basic_path {".", "home", "..", ".", "test"},
-    test::basic_path {"..", "home", "...", ".", "test"},
-    test::basic_path {"", "home", ".", ".", "test", ".."},
-    test::basic_path {"..", "home", "..", ".", "test", "."},
-    test::basic_path {"", "..", "home", "..", ".", "test"},
-    test::basic_path {"", ".", "home", "..", ".", "test", "."},
-    test::basic_path {"..", "home", "..", ".", "test", ""}
-    };
-  return _paths;
+    vector<test::basic_path> _paths{test::basic_path{"..", "home", "..", ".", "test"},
+                                    test::basic_path{".", "home", "..", ".", "test"},
+                                    test::basic_path{"..", "home", "...", ".", "test"},
+                                    test::basic_path{"", "home", ".", ".", "test", ".."},
+                                    test::basic_path{"..", "home", "..", ".", "test", "."},
+                                    test::basic_path{"", "..", "home", "..", ".", "test"},
+                                    test::basic_path{"", ".", "home", "..", ".", "test", "."},
+                                    test::basic_path{"..", "home", "..", ".", "test", ""}};
+    return _paths;
 }();
 
 static void URINormalize_Rotate(benchmark::State& state) {
@@ -230,4 +225,3 @@ static void URINormalize_SimpleRemoveIf(benchmark::State& state) {
     }
 }
 BENCHMARK(URINormalize_SimpleRemoveIf);
-

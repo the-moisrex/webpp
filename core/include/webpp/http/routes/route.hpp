@@ -4,11 +4,11 @@
 #define WEBPP_ROUTES_ROUTE_H
 
 #include "../../logs/log_concepts.hpp"
+#include "../../std/optional.hpp"
+#include "../../std/type_traits.hpp"
 #include "../../utils/functional.hpp"
 #include "./context.hpp"
 #include "./route_concepts.hpp"
-#include "../../std/optional.hpp"
-#include "../../std/type_traits.hpp"
 
 #include <utility>
 
@@ -21,9 +21,10 @@ namespace webpp {
      */
     template <typename T, typename U>
     struct can_convert
-      : stl::integral_constant<bool, (!stl::is_void_v<T> && !stl::is_void_v<U>) &&(
-                                       stl::is_convertible_v<T, U> || stl::is_constructible_v<T, U> ||
-                                       stl::is_assignable_v<T, U>)> {};
+      : stl::integral_constant<bool,
+                               (!stl::is_void_v<T> && !stl::is_void_v<U>) &&(stl::is_convertible_v<T, U> ||
+                                                                             stl::is_constructible_v<T, U> ||
+                                                                             stl::is_assignable_v<T, U>)> {};
 
     template <typename T, typename U>
     constexpr bool can_convert_v = can_convert<T, U>::value;
@@ -35,8 +36,9 @@ namespace webpp {
      */
     template <typename Traits, typename U>
     struct can_convert_to_string
-      : stl::integral_constant<bool, (can_convert_v<U, typename Traits::string_type> ||
-                                      can_convert_v<U, typename Traits::string_view_type>)> {};
+      : stl::integral_constant<bool,
+                               (can_convert_v<U, typename Traits::string_type> ||
+                                can_convert_v<U, typename Traits::string_view_type>)> {};
 
     template <typename Traits, typename U>
     constexpr bool can_convert_to_string_v = can_convert_to_string<Traits, U>::value;
@@ -45,29 +47,29 @@ namespace webpp {
     /**
      * Handle special return types here
      */
-//    constexpr auto handle_results(auto&& ctx, auto&& res) noexcept {
-//        using res_t    = decltype(res);
-//        using ctx_type = stl::remove_cvref_t<decltype(ctx)>;
-//        if constexpr (istl::Optional<res_t>) {
-//            // pass it out to the router, we're not able to handle this here
-//            return stl::forward<res_t>(res);
-//        } else if constexpr (Context<res_t>) {
-//            // we're not able to do a context switching here,
-//            // route: is responsible for sub-route context switching
-//            // router: is responsible for entry-route context switching
-//            return stl::forward<res_t>(res);
-//        } else if constexpr (stl::is_same_v<res_t, bool>) {
-//            return stl::forward<res_t>(res);
-//        } else if constexpr (Response<res_t>) {
-//            return stl::forward<res_t>(res);
-//        } else if constexpr (ConstructibleWithResponse<typename ctx_type::response_type, res_t>) {
-//            return ctx.template response<>(stl::forward<res_t>(res));
-//            // todo: consider "response extension" injection in order to get the right response type
-//        } else {
-//            // let's just ignore the result
-//            return true;
-//        }
-//    }
+    //    constexpr auto handle_results(auto&& ctx, auto&& res) noexcept {
+    //        using res_t    = decltype(res);
+    //        using ctx_type = stl::remove_cvref_t<decltype(ctx)>;
+    //        if constexpr (istl::Optional<res_t>) {
+    //            // pass it out to the router, we're not able to handle this here
+    //            return stl::forward<res_t>(res);
+    //        } else if constexpr (Context<res_t>) {
+    //            // we're not able to do a context switching here,
+    //            // route: is responsible for sub-route context switching
+    //            // router: is responsible for entry-route context switching
+    //            return stl::forward<res_t>(res);
+    //        } else if constexpr (stl::is_same_v<res_t, bool>) {
+    //            return stl::forward<res_t>(res);
+    //        } else if constexpr (Response<res_t>) {
+    //            return stl::forward<res_t>(res);
+    //        } else if constexpr (ConstructibleWithResponse<typename ctx_type::response_type, res_t>) {
+    //            return ctx.template response<>(stl::forward<res_t>(res));
+    //            // todo: consider "response extension" injection in order to get the right response type
+    //        } else {
+    //            // let's just ignore the result
+    //            return true;
+    //        }
+    //    }
 
     template <typename Route, typename... Args>
     concept is_callable_route =
@@ -115,17 +117,17 @@ namespace webpp {
                         return typename return_type::value_type{500u};
                     }
                 } else {
-                    using optional_type = decltype(stl::make_optional(callable(stl::forward<decltype(args)>(args)...)));
+                    using optional_type =
+                      decltype(stl::make_optional(callable(stl::forward<decltype(args)>(args)...)));
                     try {
                         return stl::make_optional(callable(stl::forward<decltype(args)>(args)...));
-                    } catch (...) {
-                        return optional_type{stl::nullopt};
-                    }
+                    } catch (...) { return optional_type{stl::nullopt}; }
                 }
 
             } else {
-                return ctx.error(500u, stl::invalid_argument(
-                                         "The specified route is not valid. We're not able to call it."));
+                return ctx.error(
+                  500u,
+                  stl::invalid_argument("The specified route is not valid. We're not able to call it."));
             }
         };
 
@@ -149,8 +151,9 @@ namespace webpp {
             } else if constexpr (ConstructibleWithResponse<typename ctx_type::response_type, res_t>) {
                 return ctx.response(stl::forward<decltype(res)>(res));
                 // todo: consider "response extension" injection in order to get the right response type
-//            } else if constexpr (istl::StringViewifiable<res_t>) {
-//                return ctx.template response<string_response>(istl::string_viewify(stl::forward<decltype(res)>(res)));
+                //            } else if constexpr (istl::StringViewifiable<res_t>) {
+                //                return ctx.template
+                //                response<string_response>(istl::string_viewify(stl::forward<decltype(res)>(res)));
             } else {
                 // let's just ignore the result
                 return true;
@@ -357,9 +360,11 @@ namespace webpp {
         void operator()(Context auto const&) const noexcept {}
     };
 
-    template <typename RouteType = void, logical_operators Op = logical_operators::none,
+    template <typename RouteType     = void,
+              logical_operators Op   = logical_operators::none,
               typename NextRouteType = void>
-    struct route : public basic_route<stl::remove_cvref_t<RouteType>, Op, stl::remove_cvref_t<NextRouteType>> {
+    struct route
+      : public basic_route<stl::remove_cvref_t<RouteType>, Op, stl::remove_cvref_t<NextRouteType>> {
 
         using route_type                      = stl::remove_cvref_t<RouteType>;
         using next_route_type                 = stl::remove_cvref_t<NextRouteType>;
@@ -414,8 +419,7 @@ namespace webpp {
         };
 
         template <typename R, typename C>
-        requires (Route<R, C>)
-        struct lazy_switched_context_type<R, C> {
+        requires(Route<R, C>) struct lazy_switched_context_type<R, C> {
             using type = typename R::template switched_context_type<C>;
         };
 
@@ -541,7 +545,8 @@ namespace webpp {
                 using mem_func_ptr_t = member_function_pointer<rt>;
                 using app_type       = typename mem_func_ptr_t::type;
                 return set_next<logical_operators::none>(
-                  route_with_router_pointer<app_type, stl::remove_cvref<decltype(new_route)>,
+                  route_with_router_pointer<app_type,
+                                            stl::remove_cvref<decltype(new_route)>,
                                             mem_func_ptr_t::is_noexcept>{});
             } else /*if constexpr (PotentialRoute<rt, switched_context_type<fake_context_type>>)*/ {
                 return set_next<logical_operators::none>(stl::forward<decltype(new_route)>(new_route));

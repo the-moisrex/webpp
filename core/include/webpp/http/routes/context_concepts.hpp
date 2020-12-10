@@ -57,20 +57,20 @@ namespace webpp {
 
     ///////////////////////////////////////////////////////////////////////////
 
-        template <typename T>
-        concept ContextExtension = Extension<T>;
+    template <typename T>
+    concept ContextExtension = Extension<T>;
 
-        template <typename T>
-        concept Context = requires(stl::remove_cvref_t<T> c) {
-            requires EnabledTraits<typename stl::remove_cvref_t<T>>;
-            requires Request<typename stl::remove_cvref_t<T>::request_type>;
-            //        {c.request};
-        };
+    template <typename T>
+    concept Context = requires(stl::remove_cvref_t<T> c) {
+        requires EnabledTraits<typename stl::remove_cvref_t<T>>;
+        requires Request<typename stl::remove_cvref_t<T>::request_type>;
+        //        {c.request};
+    };
 
-        template <typename T>
-        struct ContextTempl {
-            static constexpr bool value = Context<T>;
-        };
+    template <typename T>
+    struct ContextTempl {
+        static constexpr bool value = Context<T>;
+    };
 
     //    template <typename ...E>
     //    struct fake_context_type_impl: public E... {

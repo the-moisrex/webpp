@@ -3,10 +3,10 @@
 #ifndef WEBPP_JOIN_HPP
 #define WEBPP_JOIN_HPP
 
+#include "../convert/lexical_cast.hpp"
 #include "../std/format.hpp"
 #include "../std/string.hpp"
 #include "./size.hpp"
-#include "../convert/lexical_cast.hpp"
 
 namespace webpp::string {
 
@@ -37,8 +37,9 @@ namespace webpp::string {
         stl::size_t const merged_size = ((istl::Stringifiable<T> ? ascii::max_size(strs) : 0) + ...);
         using best_str_t              = typename istl::ranked_types<details::string_type_ranker, T...>::best;
         using str_type                = stl::conditional_t<stl::is_void_v<StringType>,
-          stl::remove_cvref_t<typename best_str_t::type>, StringType>;
-        auto const alloc = [&]() noexcept {
+                                            stl::remove_cvref_t<typename best_str_t::type>,
+                                            StringType>;
+        auto const alloc              = [&]() noexcept {
             if constexpr (!stl::is_void_v<StringType>) {
                 return extract_allocator_of_or_default<istl::allocator_type_of<str_type>>(strs...);
             } else if constexpr (requires { str_type::allocator_type; }) { // has allocator
@@ -53,8 +54,8 @@ namespace webpp::string {
         str_type str{alloc};
         if constexpr (requires { str.reserve(merged_size); }) {
             str.reserve(merged_size);
-//        } else if constexpr (requires { str.resize(merged_size); }) {
-//            str.resize(merged_size);
+            //        } else if constexpr (requires { str.resize(merged_size); }) {
+            //            str.resize(merged_size);
         }
         (([&]() noexcept {
              /* if constexpr (requires { str.append(stl::forward<T>(strs)); }) {
@@ -63,14 +64,20 @@ namespace webpp::string {
                  str += stl::forward<T>(strs);
              } else if constexpr (requires { str.push_back(stl::forward<T>(strs)); }) {
                  str.push_back(stl::forward<T>(strs));
-             } else */ if constexpr (requires { str.append(lexical::cast<str_type>(stl::forward<T>(strs), alloc)); }) {
+             } else */
+             if constexpr (requires { str.append(lexical::cast<str_type>(stl::forward<T>(strs), alloc)); }) {
                  str.append(lexical::cast<str_type>(stl::forward<T>(strs), alloc));
-             } else if constexpr (requires { str += lexical::cast<str_type>(stl::forward<T>(strs), alloc); }) {
+             } else if constexpr (requires {
+                                      str += lexical::cast<str_type>(stl::forward<T>(strs), alloc);
+                                  }) {
                  str += lexical::cast<str_type>(stl::forward<T>(strs), alloc);
-             } else if constexpr (requires { str.push_back(lexical::cast<str_type>(stl::forward<T>(strs), alloc)); }) {
+             } else if constexpr (requires {
+                                      str.push_back(lexical::cast<str_type>(stl::forward<T>(strs), alloc));
+                                  }) {
                  str.push_back(lexical::cast<str_type>(stl::forward<T>(strs), alloc));
              } else if constexpr (requires {
-                                      stl::format_to(stl::back_inserter(str), FMT_COMPILE("{}"),
+                                      stl::format_to(stl::back_inserter(str),
+                                                     FMT_COMPILE("{}"),
                                                      stl::forward<T>(strs));
                                   }) {
                  stl::format_to(stl::back_inserter(str), FMT_COMPILE("{}"), stl::forward<T>(strs));

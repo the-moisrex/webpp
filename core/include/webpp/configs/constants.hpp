@@ -12,6 +12,6 @@ namespace webpp {
 #endif
 
 
-}
+} // namespace webpp
 
 #endif // WEBPP_CONSTANTS_HPP

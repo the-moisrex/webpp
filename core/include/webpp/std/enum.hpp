@@ -3,16 +3,16 @@
 #ifndef WEBPP_ENUM_HPP
 #define WEBPP_ENUM_HPP
 
-#include "./type_traits.hpp"
 #include "./concepts.hpp"
+#include "./type_traits.hpp"
 
 namespace webpp::istl {
 
     template <typename EnumType, typename T>
-    concept EnumOf = stl::is_enum_v<EnumType> && (stl::same_as<T, EnumType> ||
-      (stl::same_as<T, stl::underlying_type_t<T>> && requires (T mod) {
-        static_cast<stl::underlying_type_t<T>>(mod) == mod;
-    }));
+    concept EnumOf = stl::is_enum_v<EnumType> &&
+                     (stl::same_as<T, EnumType> ||
+                      (stl::same_as<T, stl::underlying_type_t<T>> &&
+                       requires(T mod) { static_cast<stl::underlying_type_t<T>>(mod) == mod; }));
 
     /**
      * Convert an integral type, or enum type itself to an enum type of the specified type (of type EnumType).
@@ -28,6 +28,6 @@ namespace webpp::istl {
         }
     }
 
-}
+} // namespace webpp::istl
 
 #endif // WEBPP_ENUM_HPP

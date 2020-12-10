@@ -152,8 +152,10 @@ namespace webpp::fastcgi {
         /* reserved for later use */
         uint8_t reserved = 0;
 
-        constexpr header(record_type _type, uint16_t _req_id, uint16_t _content_length,
-                         uint8_t _padd_len) noexcept
+        constexpr header(record_type _type,
+                         uint16_t    _req_id,
+                         uint16_t    _content_length,
+                         uint8_t     _padd_len) noexcept
           : type{_type},
             request_id_b1{static_cast<uint8_t>(_req_id >> 8u)},
             request_id_b0{static_cast<uint8_t>(_req_id)},
@@ -226,7 +228,10 @@ namespace webpp::fastcgi {
         uint8_t reserved[3] = {};
 
         void app_status(uint32_t status_code) noexcept {
-            split_pieces<uint32_t, uint8_t>(status_code, app_status_b3, app_status_b2, app_status_b1,
+            split_pieces<uint32_t, uint8_t>(status_code,
+                                            app_status_b3,
+                                            app_status_b2,
+                                            app_status_b1,
                                             app_status_b0);
         }
 
@@ -258,7 +263,9 @@ namespace webpp::fastcgi {
       public:
         constexpr management_reply(char const (&_name)[NAME_LENGTH],
                                    char const (&_value)[VALUE_LENGTH]) noexcept
-          : _header{record_type::get_values_result, 0u, real_name_length + real_value_length,
+          : _header{record_type::get_values_result,
+                    0u,
+                    real_name_length + real_value_length,
                     padding_length} {
             stl::copy_n(_name, real_name_length, name);
             stl::copy_n(_value, real_value_length, value);
@@ -284,6 +291,6 @@ namespace webpp::fastcgi {
     static constexpr management_reply max_reqs_reply{"FCGI_MAX_REQS", "50"};
     static constexpr management_reply mpxs_conns_reply{"FCGI_MPXS_CONNS", "1"};
 
-} // namespace webpp::fcgi
+} // namespace webpp::fastcgi
 
 #endif

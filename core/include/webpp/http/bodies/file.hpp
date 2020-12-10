@@ -25,7 +25,7 @@ namespace webpp {
             using allocator_type   = traits::general_allocator<traits_type, char_type>;
             using string_type      = traits::string<traits_type, allocator_type>;
             using alloc_type       = allocator_type const&;
-            using ifstream_type = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
+            using ifstream_type    = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
 
           private:
             string_type     content;

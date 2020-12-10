@@ -11,13 +11,15 @@ namespace webpp::uri {
 
     template <istl::String StringType = stl::string>
     struct basic_host : stl::vector<stl::remove_cvref_t<StringType>,
-      rebind_allocator<typename stl::remove_cvref_t<StringType>::allocator_type, stl::remove_cvref_t<StringType>>> {
-        using super = stl::vector<stl::remove_cvref_t<StringType>,
-          rebind_allocator<typename stl::remove_cvref_t<StringType>::allocator_type, stl::remove_cvref_t<StringType>>>;
+                                    rebind_allocator<typename stl::remove_cvref_t<StringType>::allocator_type,
+                                                     stl::remove_cvref_t<StringType>>> {
+        using super       = stl::vector<stl::remove_cvref_t<StringType>,
+                                  rebind_allocator<typename stl::remove_cvref_t<StringType>::allocator_type,
+                                                   stl::remove_cvref_t<StringType>>>;
         using string_type = stl::remove_cvref_t<StringType>;
 
-        template <typename ...T>
-        constexpr basic_host(T&&...args) : super{stl::forward<T>(args)...} {}
+        template <typename... T>
+        constexpr basic_host(T&&... args) : super{stl::forward<T>(args)...} {}
 
 
         /**
@@ -27,14 +29,13 @@ namespace webpp::uri {
             return this->back();
         }
 
-        void append_to(istl::String auto&str) const {
+        void append_to(istl::String auto& str) const {
             for (auto const& subdomain : *this) {
                 str.append(subdomain);
             }
         }
-
     };
 
-}
+} // namespace webpp::uri
 
 #endif // WEBPP_HOST_HPP

@@ -31,8 +31,11 @@ TEST(IPv6Tests, Creation) {
 }
 
 TEST(IPv6Tests, Validation) {
-    auto valid_ipv6s = {"0000:0000:0000:0000:0000:0000:0000:0000", "fe00::1", "fe80::217:f2ff:fe07:ed62",
-                        "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "2001:0db8:0000:85a3:0000:0000:ac1f:8001"};
+    auto valid_ipv6s = {"0000:0000:0000:0000:0000:0000:0000:0000",
+                        "fe00::1",
+                        "fe80::217:f2ff:fe07:ed62",
+                        "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+                        "2001:0db8:0000:85a3:0000:0000:ac1f:8001"};
 
     auto invalid_ipv6s = {"02001:0000:1234:0000:0000:C1C0:ABCD:0876",
                           "2001:0000:1234:0000:00001:C1C0:ABCD:0876",
@@ -85,7 +88,8 @@ TEST(IPv6Tests, CIDR) {
 
     auto invalid_ipv6s = {"0000:0000:0000:0000:0000:0000:0000:0000/",
                           "0000:0000:0000:0000:0000:0000:0000:0000/129",
-                          "0000:0000:0000:0000:0000:0000:0000:0000/130", ""};
+                          "0000:0000:0000:0000:0000:0000:0000:0000/130",
+                          ""};
 
     for (auto const& _ip : valid_ipv6s) {
         EXPECT_FALSE(is::ipv6(_ip)) << _ip;

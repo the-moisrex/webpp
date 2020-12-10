@@ -60,8 +60,10 @@ namespace webpp::fastcgi {
          *
          *
          */
-        static bool process_header_params(const char* data, const char* const data_end,
-                                          stl::string_view& name, stl::string_view& value) noexcept {
+        static bool process_header_params(const char*       data,
+                                          const char* const data_end,
+                                          stl::string_view& name,
+                                          stl::string_view& value) noexcept {
             if (data >= data_end)
                 return false; // no more params for you
 
@@ -122,7 +124,8 @@ namespace webpp::fastcgi {
                         switch (name.size()) {
 
                             case decltype(max_conns_reply)::real_name_length:
-                                if (stl::equal(name.data(), name.data() + name.size(),
+                                if (stl::equal(name.data(),
+                                               name.data() + name.size(),
                                                max_conns_reply.name)) {
                                     send(max_conns_reply);
                                 }
@@ -135,7 +138,8 @@ namespace webpp::fastcgi {
                                 break;
 
                             case decltype(mpxs_conns_reply)::real_name_length:
-                                if (stl::equal(name.data(), name.data() + name.size(),
+                                if (stl::equal(name.data(),
+                                               name.data() + name.size(),
                                                mpxs_conns_reply.name)) {
                                     send(max_reqs_reply);
                                 }

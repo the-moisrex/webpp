@@ -4,9 +4,9 @@
 #define WEBPP_STD_CONCEPTS_H
 
 #include "./std.hpp"
+#include "./type_traits.hpp"
 
 #include <memory> // for Allocator
-#include "./type_traits.hpp"
 
 #if __has_include(<concepts>)
 #    include <concepts>

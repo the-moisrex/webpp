@@ -85,15 +85,17 @@ namespace webpp {
             throw stl::invalid_argument("The specified index is not valid");
         }
 
-        auto error(Context auto const& ctx, http::status_code_type error_code,
-                   stl::string_view phrase = "") const noexcept {
+        auto error(Context auto const&    ctx,
+                   http::status_code_type error_code,
+                   stl::string_view       phrase = "") const noexcept {
             // todo: add methods to change the default error template and individual ones
             stl::string_view _phrase = phrase.empty() ? http::status_code_reason_phrase(error_code) : phrase;
             return ctx.template response<string_response>(
               error_code,
               stl::format(
                 R"html(<!doctype html><html><head><title>{0} {1}!</title></head><body><h1>{0} {1}</h1></body></html>)html",
-                error_code, _phrase));
+                error_code,
+                _phrase));
         }
 
       private:
@@ -112,17 +114,17 @@ namespace webpp {
                 // the same goes for any other valid type
 
                 if (res) {
-                    return handle_route_results<Index>(res.value(),
-                                                       stl::forward<decltype(ctx)>(ctx), req);
+                    return handle_route_results<Index>(res.value(), stl::forward<decltype(ctx)>(ctx), req);
                 } else {
                     // return a 500 error
                     static constexpr auto err_code = 500u;
-                    using ret_type = decltype(handle_route_results<Index>(res.value(),
-                                                                          stl::forward<decltype(ctx)>(ctx), req));
+                    using ret_type                 = decltype(
+                      handle_route_results<Index>(res.value(), stl::forward<decltype(ctx)>(ctx), req));
                     if constexpr (stl::is_convertible_v<typename result_type::value_type, unsigned long>) {
                         return handle_route_results<Index>(typename result_type::value_type{err_code},
-                                                           stl::forward<decltype(ctx)>(ctx), req);
-                    }  else if constexpr (stl::is_constructible_v<ret_type, decltype(err_code)>) {
+                                                           stl::forward<decltype(ctx)>(ctx),
+                                                           req);
+                    } else if constexpr (stl::is_constructible_v<ret_type, decltype(err_code)>) {
                         return ret_type{err_code};
                     } else {
                         return handle_route_results<Index>(err_code, stl::forward<decltype(ctx)>(ctx), req);
@@ -161,7 +163,8 @@ namespace webpp {
                 if constexpr (stl::is_void_v<res2_type>) {
                     return operator()<next_route_index>(stl::forward<decltype(ctx)>(ctx), req);
                 } else {
-                    return handle_route_results<Index>(stl::move(res2), stl::forward<decltype(ctx)>(ctx),
+                    return handle_route_results<Index>(stl::move(res2),
+                                                       stl::forward<decltype(ctx)>(ctx),
                                                        req);
                 }
             } else {

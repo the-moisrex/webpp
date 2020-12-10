@@ -6,10 +6,8 @@
 namespace webpp::posix {
 
 
-    struct posix_thread_pool {
+    struct posix_thread_pool {};
 
-    };
-
-}
+} // namespace webpp::posix
 
 #endif // WEBPP_POSIX_THREAD_POOL_HPP

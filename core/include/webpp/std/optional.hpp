@@ -43,10 +43,12 @@ namespace webpp::istl {
     };
 
     template <typename T>
-    concept Optional = is_std_optional<T>::value || requires (stl::remove_cvref_t<T> obj) {
+    concept Optional = is_std_optional<T>::value || requires(stl::remove_cvref_t<T> obj) {
         typename stl::remove_cvref_t<T>::value_type;
-        {obj.value()} -> stl::same_as<typename stl::remove_cvref_t<T>::value_type>;
-        {obj.value_or(obj)} -> stl::same_as<typename stl::remove_cvref_t<T>::value_type>;
+        { obj.value() }
+        ->stl::same_as<typename stl::remove_cvref_t<T>::value_type>;
+        { obj.value_or(obj) }
+        ->stl::same_as<typename stl::remove_cvref_t<T>::value_type>;
     }
     &&stl::is_convertible_v<T, bool>;
 

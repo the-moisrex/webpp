@@ -51,7 +51,8 @@ namespace webpp {
                           socket.close(ec);
                           if (!ec) {
                               session.logger.error(session.logger_category,
-                                                   "Problem with closing connection.", ec);
+                                                   "Problem with closing connection.",
+                                                   ec);
                           }
                       }
                   }
@@ -83,7 +84,8 @@ namespace webpp {
                           socket.close(ec);
                           if (!ec) {
                               session.logger.error(session.logger_category,
-                                                   "Problem with closing connection.", ec);
+                                                   "Problem with closing connection.",
+                                                   ec);
                           }
                       }
                   }
@@ -103,8 +105,9 @@ namespace webpp {
         }
 
       public:
-        explicit asio_connection(socket_type&& socket, logger_ref logger_obj = logger_type{},
-                                 auto const& alloc = allocator_type{}) noexcept
+        explicit asio_connection(socket_type&& socket,
+                                 logger_ref    logger_obj = logger_type{},
+                                 auto const&   alloc      = allocator_type{}) noexcept
           : socket(stl::move(socket)),
             session{logger_obj, alloc} {
             start_reading();

@@ -81,18 +81,18 @@
 namespace webpp {
 
     template <typename T>
-    concept Config = requires (T config) {
-        {config["key"]}; // string_view
+    concept Config = requires(T config) {
+        {config["key"]};     // string_view
         {config.get("key")}; // optional<string_view>
 
         {config.set("key", "value")};
 
         config.has("key"); // bool
-        config.clear(); // clear the configs
-        config.flush(); // bool
+        config.clear();    // clear the configs
+        config.flush();    // bool
     };
 
 
-}
+} // namespace webpp
 
 #endif // WEBPP_CONFIG_CONCEPTS_HPP

@@ -31,11 +31,13 @@ namespace webpp::flags {
     struct manager {
         using type                             = Values;
         static constexpr stl::size_t base_size = magic_enum::enum_count<type>();
-        using base_type =
-          stl::conditional_t<(base_size <= sizeof(stl::uint8_t) * 8), stl::uint8_t,
-                             stl::conditional_t<(base_size <= sizeof(stl::uint16_t) * 8), stl::uint16_t,
-                                                stl::conditional_t<(base_size <= sizeof(stl::uint32_t) * 8),
-                                                                   stl::uint32_t, stl::uint64_t>>>;
+        using base_type                        = stl::conditional_t<
+          (base_size <= sizeof(stl::uint8_t) * 8),
+          stl::uint8_t,
+          stl::conditional_t<
+            (base_size <= sizeof(stl::uint16_t) * 8),
+            stl::uint16_t,
+            stl::conditional_t<(base_size <= sizeof(stl::uint32_t) * 8), stl::uint32_t, stl::uint64_t>>>;
         // There is a clang bug (or magic_enum bug)
         // GitHub issue: https://github.com/Neargye/magic_enum/issues/65
         static constexpr bool are_values_sequential = []() constexpr noexcept->bool {
@@ -60,16 +62,15 @@ namespace webpp::flags {
             }
         }
 
-        constexpr manager() = default;
-        constexpr manager(manager const&) = default;
+        constexpr manager()                   = default;
+        constexpr manager(manager const&)     = default;
         constexpr manager(manager&&) noexcept = default;
 
         constexpr manager& operator=(manager const&) = default;
         constexpr manager& operator=(manager&&) noexcept = default;
 
         template <typename... T>
-        requires(stl::same_as<stl::remove_cvref_t<T>, base_type> && ...) constexpr manager(
-          T... val) noexcept
+        requires(stl::same_as<stl::remove_cvref_t<T>, base_type>&&...) constexpr manager(T... val) noexcept
           : value{static_cast<base_type>((base_type(0) | ... | static_cast<base_type>(val)))} {}
 
         template <typename... T>

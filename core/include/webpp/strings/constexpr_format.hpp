@@ -11,8 +11,7 @@
 namespace webpp {
 
 
-    constexpr auto constexpr_format(istl::StringViewifiable auto&& format_str,
-                                    auto&&... args) noexcept {
+    constexpr auto constexpr_format(istl::StringViewifiable auto&& format_str, auto&&... args) noexcept {
         auto format_string = istl::string_viewify(format_str);
         using strv_t       = stl::remove_cvref_t<decltype(format_string)>;
 
@@ -147,14 +146,20 @@ namespace webpp {
         template <size_t max = 0, size_t lastEnd = 0, class... Args>
         struct sublist {
             template <size_t str_begin, size_t format_begin, size_t end, size_t index>
-            using push_format = sublist<(max < index ? index : max), end, Args...,
+            using push_format = sublist<(max < index ? index : max),
+                                        end,
+                                        Args...,
                                         substring<str_begin, format_begin, end, index>>;
 
             static constexpr size_t size = sizeof...(Args);
             static constexpr size_t Max  = max;
         };
 
-        template <bool is_in = false, size_t B = 0, size_t NB = 0, size_t I = 0, size_t Index = 0,
+        template <bool   is_in  = false,
+                  size_t B      = 0,
+                  size_t NB     = 0,
+                  size_t I      = 0,
+                  size_t Index  = 0,
                   class Results = sublist<>>
         static constexpr auto parser() {
             if constexpr (I >= String::size)
@@ -171,7 +176,11 @@ namespace webpp {
                 } else {
                     if constexpr (c == '}')
                         return parser<
-                          false, I + 1, I + 1, I + 1, Index + (is_number<NB, I>() ? 0 : 1),
+                          false,
+                          I + 1,
+                          I + 1,
+                          I + 1,
+                          Index + (is_number<NB, I>() ? 0 : 1),
                           typename Results::template push_format<B, NB, I, get_index<NB, I, Index>()>>();
                     else if constexpr (!" 0123456789"_s.contains(c))
                         return parser<false, B, B, I + 1, Index, Results>();

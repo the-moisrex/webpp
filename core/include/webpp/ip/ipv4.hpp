@@ -100,8 +100,10 @@ namespace webpp {
      */
     constexpr stl::array<uint8_t, 4> to_subnet_array(uint8_t prefix) noexcept {
         auto subnet = to_subnet(prefix);
-        return {static_cast<uint8_t>(subnet >> 24u & 0xFFu), static_cast<uint8_t>(subnet >> 16u & 0xFFu),
-                static_cast<uint8_t>(subnet >> 8u & 0xFFu), static_cast<uint8_t>(subnet & 0xFFu)};
+        return {static_cast<uint8_t>(subnet >> 24u & 0xFFu),
+                static_cast<uint8_t>(subnet >> 16u & 0xFFu),
+                static_cast<uint8_t>(subnet >> 8u & 0xFFu),
+                static_cast<uint8_t>(subnet & 0xFFu)};
     }
 
     struct ipv4 {
@@ -190,7 +192,9 @@ namespace webpp {
                 return;
             }
 
-            data = parse({static_cast<uint8_t>(oc1), static_cast<uint8_t>(oc2), static_cast<uint8_t>(oc3),
+            data = parse({static_cast<uint8_t>(oc1),
+                          static_cast<uint8_t>(oc2),
+                          static_cast<uint8_t>(oc3),
                           static_cast<uint8_t>(oc4)});
 
             if (_prefix == 254u)
@@ -208,8 +212,9 @@ namespace webpp {
         constexpr ipv4(ipv4&& ip) = default;
 
         template <typename T>
-        requires (!stl::same_as<stl::remove_cvref_t<T>, ipv4> && istl::StringViewifiable<T>)
-        constexpr explicit ipv4(T&& ip) noexcept : _prefix(255) {
+        requires(!stl::same_as<stl::remove_cvref_t<T>, ipv4> &&
+                 istl::StringViewifiable<T>) constexpr explicit ipv4(T&& ip) noexcept
+          : _prefix(255) {
             parse(stl::forward<decltype(ip)>(ip));
         }
 
@@ -228,12 +233,18 @@ namespace webpp {
             parse(stl::forward<decltype(ip)>(ip));
         }
 
-        constexpr ipv4(uint8_t octet1, uint8_t octet2, uint8_t octet3, uint8_t octet4,
+        constexpr ipv4(uint8_t octet1,
+                       uint8_t octet2,
+                       uint8_t octet3,
+                       uint8_t octet4,
                        uint8_t __prefix = 255) noexcept
           : data(parse({octet1, octet2, octet3, octet4})),
             _prefix(__prefix > 32 && __prefix != 255u ? 253u : __prefix) {}
 
-        constexpr ipv4(uint8_t octet1, uint8_t octet2, uint8_t octet3, uint8_t octet4,
+        constexpr ipv4(uint8_t                 octet1,
+                       uint8_t                 octet2,
+                       uint8_t                 octet3,
+                       uint8_t                 octet4,
                        stl::string_view const& subnet) noexcept
           : data(parse({octet1, octet2, octet3, octet4})),
             _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {}
@@ -383,8 +394,12 @@ namespace webpp {
 
         void str_to(istl::String auto& str) const noexcept {
             const auto _octets = octets();
-            stl::format_to(stl::back_inserter(str), FMT_COMPILE("{}.{}.{}.{}"), _octets[0], _octets[1],
-                           _octets[2], _octets[3]);
+            stl::format_to(stl::back_inserter(str),
+                           FMT_COMPILE("{}.{}.{}.{}"),
+                           _octets[0],
+                           _octets[1],
+                           _octets[2],
+                           _octets[3]);
         }
 
         /**
@@ -401,9 +416,10 @@ namespace webpp {
          */
         [[nodiscard]] constexpr stl::array<uint8_t, 4u> octets() const noexcept {
             uint32_t _data = integer();
-            return stl::array<uint8_t, 4u>(
-              {static_cast<uint8_t>(_data >> 24u), static_cast<uint8_t>(_data >> 16u & 0x0FFu),
-               static_cast<uint8_t>(_data >> 8u & 0x0FFu), static_cast<uint8_t>(_data & 0x0FFu)});
+            return stl::array<uint8_t, 4u>({static_cast<uint8_t>(_data >> 24u),
+                                            static_cast<uint8_t>(_data >> 16u & 0x0FFu),
+                                            static_cast<uint8_t>(_data >> 8u & 0x0FFu),
+                                            static_cast<uint8_t>(_data & 0x0FFu)});
         }
 
         /**
@@ -530,9 +546,10 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] constexpr ipv4 reversed() const noexcept {
-            return stl::array<uint8_t, 4>{
-              static_cast<uint8_t>(data & 0xFFu), static_cast<uint8_t>(data >> 8u & 0xFFu),
-              static_cast<uint8_t>(data >> 16u & 0xFFu), static_cast<uint8_t>(data >> 24u & 0xFFu)};
+            return stl::array<uint8_t, 4>{static_cast<uint8_t>(data & 0xFFu),
+                                          static_cast<uint8_t>(data >> 8u & 0xFFu),
+                                          static_cast<uint8_t>(data >> 16u & 0xFFu),
+                                          static_cast<uint8_t>(data >> 24u & 0xFFu)};
         }
 
         /**

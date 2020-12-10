@@ -4,35 +4,31 @@
 #include <tuple>
 
 void check_args(
-  const int argc, char const* const* const argv,
-  std::vector<std::pair<
-    std::string,
-    std::function<void(boost::program_options::options_description const&,
-                       boost::program_options::variables_map const&)>>> const&
-    actions,
+  const int                                                                                        argc,
+  char const* const* const                                                                         argv,
+  std::vector<std::pair<std::string,
+                        std::function<void(boost::program_options::options_description const&,
+                                           boost::program_options::variables_map const&)>>> const& actions,
   std::function<void(boost::program_options::options_description const&,
-                     boost::program_options::variables_map const&)> const&
-    default_action) {
+                     boost::program_options::variables_map const&)> const& default_action) {
     using namespace boost::program_options;
 
     options_description desc("Program options");
-    desc.add_options()(
-      "update,u", bool_switch()->default_value(false)->implicit_value(true),
-      "update the databases")(
-      "help,h", bool_switch()->default_value(false)->implicit_value(true),
-      "print this help")(
-      "cmd", value<std::string>()->default_value("help")->required(),
-      "The command")("cmd_opts",
-                     value<std::vector<std::string>>()->multitoken(),
-                     "The command options.");
+    desc.add_options()("update,u",
+                       bool_switch()->default_value(false)->implicit_value(true),
+                       "update the databases")("help,h",
+                                               bool_switch()->default_value(false)->implicit_value(true),
+                                               "print this help")(
+      "cmd",
+      value<std::string>()->default_value("help")->required(),
+      "The command")("cmd_opts", value<std::vector<std::string>>()->multitoken(), "The command options.");
 
     positional_options_description pos;
     pos.add("cmd", 1);
     pos.add("cmd_opts", -1);
 
     variables_map vm;
-    store(command_line_parser(argc, argv).options(desc).positional(pos).run(),
-          vm);
+    store(command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
     notify(vm);
 
     for (auto const& action : actions) {
@@ -90,7 +86,8 @@ void session_manager(boost::program_options::options_description const& desc,
 auto main(int argc, char const** argv) -> int {
     using namespace std;
 
-    check_args(argc, argv,
+    check_args(argc,
+               argv,
                {{"help", print_help},
                 {"create", create_template},
                 {"session", session_manager},

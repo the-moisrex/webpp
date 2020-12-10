@@ -24,16 +24,12 @@ namespace webpp::inline extensions {
         using request_type   = ReqType;
         using response_type  = ResType;
 
-        static_assert(std::is_same_v<typename request_type::traits_type,
-                                     typename response_type::traits_type>,
+        static_assert(std::is_same_v<typename request_type::traits_type, typename response_type::traits_type>,
                       "The traits type in the request and the response are "
                       "not the same; the framework currently doesn't "
                       "support traits conversion algorithms.");
 
-        ce_reqres(request_type const& req, response_type& res) noexcept
-          : request{req},
-            response{res} {
-        }
+        ce_reqres(request_type const& req, response_type& res) noexcept : request{req}, response{res} {}
 
 
         // public fields:
@@ -52,22 +48,19 @@ namespace webpp::inline extensions {
         using request_type   = ReqType;
         using response_type  = ResType;
 
-        static_assert(std::is_same_v<typename request_type::traits_type,
-                                     typename response_type::traits_type>,
+        static_assert(std::is_same_v<typename request_type::traits_type, typename response_type::traits_type>,
                       "The traits type in the request and the response are "
                       "not the same; the framework currently doesn't "
                       "support traits conversion algorithms.");
 
-        using required_context_extensions =
-          ce_reqres<request_type, response_type>;
+        using required_context_extensions = ce_reqres<request_type, response_type>;
     };
 
     /**
      * I'm sure it's gonna give me an error
      */
     template <Traits TraitsType, Interface InterfaceType>
-    struct re_reqres : public re_reqres<request_t<TraitsType, InterfaceType>,
-                                        response_t<TraitsType>> {};
+    struct re_reqres : public re_reqres<request_t<TraitsType, InterfaceType>, response_t<TraitsType>> {};
 
 } // namespace webpp::inline extensions
 

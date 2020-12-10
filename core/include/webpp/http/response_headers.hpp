@@ -54,7 +54,9 @@ namespace webpp {
             res.reserve(size);
             for (auto const& field : *this) {
                 // todo: make sure value is secure and doesn't have any newlines
-                stl::format_to(stl::back_insert_iterator<string_type>(res), "{}: {}\r\n", field.name,
+                stl::format_to(stl::back_insert_iterator<string_type>(res),
+                               "{}: {}\r\n",
+                               field.name,
                                field.value);
             }
             return res;
@@ -97,7 +99,8 @@ namespace webpp {
 
         template <typename ExtensionListType, typename TraitsType, typename EList>
         using mid_level_extensie_type = response_headers<
-          TraitsType, EList,
+          TraitsType,
+          EList,
           typename ExtensionListType::template extensie_type<TraitsType, response_header_field_descriptor>>;
 
         // empty final extensie

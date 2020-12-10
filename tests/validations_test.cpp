@@ -113,7 +113,13 @@ TEST(ValidationTest, IPv6Functions) {
 
 TEST(ValidationsTest, HostFunction) {
     auto valids = {
-      "localhost", "one.com", "example.notcom", "192.168.0.1", "255.255.255.255", "[::1]", "127.0.0.1",
+      "localhost",
+      "one.com",
+      "example.notcom",
+      "192.168.0.1",
+      "255.255.255.255",
+      "[::1]",
+      "127.0.0.1",
     };
     auto invalids = {"&^%&^%$&^%&^%$&^%$#@%$#@@!~#!@"};
 

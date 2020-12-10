@@ -4,6 +4,7 @@
 #define WEBPP_ATOMIC_COUNTER_HPP
 
 #include "../std/std.hpp"
+
 #include <atomic>
 
 namespace webpp {
@@ -35,6 +36,6 @@ namespace webpp {
         }
     };
 
-}
+} // namespace webpp
 
 #endif // WEBPP_ATOMIC_COUNTER_HPP

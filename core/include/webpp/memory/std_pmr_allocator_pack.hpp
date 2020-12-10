@@ -18,7 +18,8 @@ namespace webpp {
      */
     struct std_pmr_allocator_pack {
         struct monotonic_buffer_resource_descriptor {
-            static constexpr alloc::feature_pack features{alloc::noop_dealloc, alloc::stateful,
+            static constexpr alloc::feature_pack features{alloc::noop_dealloc,
+                                                          alloc::stateful,
                                                           alloc::unsync};
 
             template <typename T>
@@ -47,9 +48,10 @@ namespace webpp {
         };
 
         // todo: add new_delete_resource
-        using descriptor_list =
-          alloc::allocator_list<monotonic_buffer_resource_descriptor, synchronized_pool_resource_descriptor,
-                                unsynchronized_pool_resource_descriptor, std_allocator_descriptor>;
+        using descriptor_list = alloc::allocator_list<monotonic_buffer_resource_descriptor,
+                                                      synchronized_pool_resource_descriptor,
+                                                      unsynchronized_pool_resource_descriptor,
+                                                      std_allocator_descriptor>;
     };
 
     static_assert(AllocatorPack<std_pmr_allocator_pack>, "The specified allocator pack is not really one");
