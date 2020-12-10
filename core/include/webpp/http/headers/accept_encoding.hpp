@@ -36,7 +36,8 @@ namespace webpp::http {
      *
      * todo: add support for pack200-gzip, exi, zstd
      */
-    template <Allocator AllocT, istl::StringView StrViewT = stl::string_view,
+    template <Allocator                      AllocT,
+              istl::StringView               StrViewT = stl::string_view,
               accept_encoding_option_manager Options =
                 accept_encoding_option_manager{accept_encoding_options::none}>
     struct basic_accept_encoding {
@@ -128,7 +129,8 @@ namespace webpp::http {
                 auto param_name = params.substr(0, equals_pos);
                 http::trim_lws(param_name);
                 if (!ascii::iequals<ascii::char_case_side::second_lowered>(
-                      param_name, 'q')) { // the size is checked inside of iequals
+                      param_name,
+                      'q')) { // the size is checked inside of iequals
                     _is_valid = false;
                     return;
                 }
@@ -287,10 +289,13 @@ namespace webpp::http {
                 return _allowed_encodings.cend();
             }
             return stl::find_if(
-              _allowed_encodings.cbegin(), _allowed_encodings.cend(), [&](auto&& item) noexcept {
-                  return (ascii::iequals<ascii::char_case_to_side(ascii::char_case::unknown, Case)>(
-                            item.encoding, str) ||
-                          ...);
+              _allowed_encodings.cbegin(),
+              _allowed_encodings.cend(),
+              [&](auto&& item) noexcept {
+                  return (
+                    ascii::iequals<ascii::char_case_to_side(ascii::char_case::unknown, Case)>(item.encoding,
+                                                                                              str) ||
+                    ...);
               });
         }
 
@@ -316,7 +321,8 @@ namespace webpp::http {
                     return _allowed_encodings.cend();
                 }
             } else {
-                return stl::find_if(_allowed_encodings.cbegin(), _allowed_encodings.cend(),
+                return stl::find_if(_allowed_encodings.cbegin(),
+                                    _allowed_encodings.cend(),
                                     [](auto&& item) noexcept {
                                         return item.encoding == Type;
                                     });

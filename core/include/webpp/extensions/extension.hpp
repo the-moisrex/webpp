@@ -75,8 +75,11 @@ namespace webpp {
             using type = PackType<F, L...>;
         };
 
-        template <template <typename...> typename PackType, template <typename> typename IF,
-                  typename First = void, typename... EI>
+        template <template <typename...> typename PackType,
+                  template <typename>
+                  typename IF,
+                  typename First = void,
+                  typename... EI>
         struct filter {
             using type = stl::conditional_t<
               IF<First>::value,
@@ -165,11 +168,15 @@ namespace webpp {
         //        };
 
 
-        template <template <typename...> typename PackType, template <typename> typename Extractor,
+        template <template <typename...> typename PackType,
+                  template <typename>
+                  typename Extractor,
                   typename... EPack>
         struct epack_miner {};
 
-        template <template <typename...> typename PackType, template <typename> typename Extractor,
+        template <template <typename...> typename PackType,
+                  template <typename>
+                  typename Extractor,
                   typename... EPack>
         struct epack_miner<PackType, Extractor, extension_pack<EPack...>> {
             using type = PackType<Extractor<EPack>...>;
@@ -227,10 +234,12 @@ namespace webpp {
         template <typename ExtensieDescriptor, template <typename> typename IF>
         using merge_extensions = typename unique_types<
           typename flatten_epacks<typename epack_miner<
-            extension_pack, ExtensieDescriptor::template related_extension_pack_type,
+            extension_pack,
+            ExtensieDescriptor::template related_extension_pack_type,
 
             // filter the packs that contain the interested packs
-            typename filter_epack<extension_pack, ExtensieDescriptor::template has_related_extension_pack,
+            typename filter_epack<extension_pack,
+                                  ExtensieDescriptor::template has_related_extension_pack,
                                   this_epack>::type
 
             >::type>::type
@@ -312,7 +321,8 @@ namespace webpp {
         // Mid-Level extensie type
         template <Traits TraitsType, typename ExtensieDescriptor, typename... ExtraArgs>
         using mid_level_extensie_type = typename ExtensieDescriptor::template mid_level_extensie_type<
-          this_epack, TraitsType,
+          this_epack,
+          TraitsType,
           typename merge_extensions<ExtensieDescriptor, mother_type<TraitsType>::template type>::
             template mother_extensions<TraitsType>::unique::template mother_inherited<TraitsType>,
           ExtraArgs...>;
@@ -322,8 +332,9 @@ namespace webpp {
         // extensie)
         template <Traits TraitsType, typename ExtensieDescriptor, typename... ExtraArgs>
         using mid_level_extensie_children = typename merge_extensions<
-          ExtensieDescriptor, child_type<TraitsType, mid_level_extensie_type<TraitsType, ExtensieDescriptor,
-                                                                             ExtraArgs...>>::template type>::
+          ExtensieDescriptor,
+          child_type<TraitsType,
+                     mid_level_extensie_type<TraitsType, ExtensieDescriptor, ExtraArgs...>>::template type>::
           template child_extensions<TraitsType,
                                     mid_level_extensie_type<TraitsType, ExtensieDescriptor, ExtraArgs...>>;
 
@@ -334,11 +345,13 @@ namespace webpp {
          */
         template <Traits TraitsType, typename ExtensieDescriptor, typename... ExtraArgs>
         using extensie_type = typename ExtensieDescriptor::template final_extensie_type<
-          this_epack, TraitsType,
+          this_epack,
+          TraitsType,
 
           // child extensions + the mid-level extensie + mother extensions
           typename children_inherited<
-            TraitsType, mid_level_extensie_type<TraitsType, ExtensieDescriptor, ExtraArgs...>,
+            TraitsType,
+            mid_level_extensie_type<TraitsType, ExtensieDescriptor, ExtraArgs...>,
             mid_level_extensie_children<TraitsType, ExtensieDescriptor, ExtraArgs...>>::type,
 
           ExtraArgs...>;
@@ -372,7 +385,7 @@ namespace webpp {
 
     template <typename E>
     concept ExtensionList = requires {
-        typename E::template extensie_type<std_traits , fake_extensie_descriptor>;
+        typename E::template extensie_type<std_traits, fake_extensie_descriptor>;
         typename E::template is_all<fake_extensie_descriptor::template has_related_extension_pack>;
     };
 

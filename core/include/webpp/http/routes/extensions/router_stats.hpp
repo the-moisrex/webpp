@@ -20,16 +20,15 @@ namespace webpp::inline extensions {
         };
 
         // we specify the bit fields to reduce the padding
-        routes_size entryroute_index           = 0;
-        routes_size subroute_index             = 0;
-        routes_size internal_subroute_index    = 0;
+        routes_size entryroute_index              = 0;
+        routes_size subroute_index                = 0;
+        routes_size internal_subroute_index       = 0;
         bool        is_last_entryroute : 1        = false;
         bool        is_last_subroute : 1          = false;
         bool        is_last_internal_subroute : 1 = false;
-        skip_next   skip : 2                   = skip_next::none;
-        route_level level : 2                  = route_level::none;
-
+        skip_next   skip : 2                      = skip_next::none;
+        route_level level : 2                     = route_level::none;
     };
-}
+} // namespace webpp::inline extensions
 
 #endif // WEBPP_ROUTER_STATS_HPP

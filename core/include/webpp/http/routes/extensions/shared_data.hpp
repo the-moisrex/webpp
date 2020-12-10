@@ -4,9 +4,7 @@
 #define WEBPP_SHARED_DATA_HPP
 
 namespace webpp::inline extensions {
-    struct shared_data {
-
-    };
-}
+    struct shared_data {};
+} // namespace webpp::inline extensions
 
 #endif // WEBPP_SHARED_DATA_HPP

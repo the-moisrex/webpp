@@ -35,13 +35,13 @@ namespace webpp::uri {
               typename AllocType = typename stl::remove_cvref_t<SlugType>::allocator_type>
     struct basic_path : public stl::vector<stl::remove_cvref_t<SlugType>,
                                            rebind_allocator<AllocType, stl::remove_cvref_t<SlugType>>> {
-        using container_type   = stl::vector<stl::remove_cvref_t<SlugType>,
+        using container_type = stl::vector<stl::remove_cvref_t<SlugType>,
                                            rebind_allocator<AllocType, stl::remove_cvref_t<SlugType>>>;
-        using value_type       = stl::remove_cvref_t<SlugType>;
-        using allocator_type   = rebind_allocator<AllocType, value_type>;
-        using char_type        = typename SlugType::value_type;
-        using string_type      = stl::conditional_t<istl::String<value_type>, value_type,
-                                               stl::basic_string<char_type, allocator_type>>;
+        using value_type     = stl::remove_cvref_t<SlugType>;
+        using allocator_type = rebind_allocator<AllocType, value_type>;
+        using char_type      = typename SlugType::value_type;
+        using string_type    = stl::
+          conditional_t<istl::String<value_type>, value_type, stl::basic_string<char_type, allocator_type>>;
         using string_view_type = istl::string_view_type_of<value_type>;
 
         static constexpr string_view_type parent_dir  = "..";
@@ -55,9 +55,10 @@ namespace webpp::uri {
         constexpr basic_path(T&&... args) : container_type{stl::forward<T>(args)...} {}
 
         template <typename T>
-        requires(!stl::is_same_v<stl::remove_cvref_t<T>, basic_path> &&
-                 istl::StringViewifiable<T>) constexpr basic_path(T&& str, allocator_type const& alloc =
-                                                                             allocator_type{})
+        requires(
+          !stl::is_same_v<stl::remove_cvref_t<T>, basic_path> &&
+          istl::StringViewifiable<T>) constexpr basic_path(T&&                   str,
+                                                           allocator_type const& alloc = allocator_type{})
           : container_type{alloc} {
             parse(istl::string_viewify_of<string_view_type>(str));
         }

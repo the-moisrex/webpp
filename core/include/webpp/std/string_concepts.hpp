@@ -8,103 +8,100 @@
 namespace webpp::istl {
 
 
+    // clang-format off
     template <typename X>
-    concept CharTraits = Destructible<typename X::state_type>&& CopyAssignable<typename X::state_type>&&
-      CopyConstructible<typename X::state_type>&& DefaultConstructible<typename X::state_type>&& requires(
-        typename X::char_type c, typename X::char_type const* p, typename X::char_type* s, stl::size_t n,
-        typename X::int_type e, typename X::char_type const& ch) {
+    concept CharTraits = requires {
         typename X::char_type;
         typename X::int_type;
         typename X::off_type;
         typename X::pos_type;
         typename X::state_type;
+    } && requires(
+            typename X::char_type c,
+            typename X::char_type const* p,
+            typename X::char_type* s,
+            stl::size_t n,
+            typename X::int_type e,
+            typename X::char_type const& ch
+    ) {
+        requires CopyAssignable<typename X::state_type>;
+        requires Destructible<typename X::state_type>;
+        requires CopyConstructible<typename X::state_type>;
+        requires DefaultConstructible<typename X::state_type>;
 
-
-        { X::eq(c, c) }
-        ->stl::same_as<bool>;
-        { X::lt(c, c) }
-        ->stl::same_as<bool>;
-        { X::compare(p, p, n) }
-        ->stl::same_as<int>;
-        { X::length(p) }
-        ->stl::same_as<stl::size_t>;
-        { X::find(p, n, ch) }
-        ->stl::same_as<typename X::char_type const*>;
-        { X::move(s, p, ch) }
-        ->stl::same_as<typename X::char_type*>;
-        { X::copy(s, p, n) }
-        ->stl::same_as<typename X::char_type*>;
-        { X::assign(s, n, c) }
-        ->stl::same_as<typename X::char_type*>;
-        { X::not_eof(e) }
-        ->stl::same_as<typename X::int_type>;
-        { X::to_char_type(e) }
-        ->stl::same_as<typename X::char_type>;
-        { X::to_int_type(c) }
-        ->stl::same_as<typename X::int_type>;
-        { X::eq_int_type(e, e) }
-        ->stl::same_as<bool>;
-        { X::eof() }
-        ->stl::same_as<typename X::int_type>;
+        { X::eq(c, c) }             -> stl::same_as<bool>;
+        { X::lt(c, c) }             -> stl::same_as<bool>;
+        { X::compare(p, p, n) }     -> stl::same_as<int>;
+        { X::length(p) }            -> stl::same_as<stl::size_t>;
+        { X::find(p, n, ch) }       -> stl::same_as<typename X::char_type const*>;
+        { X::move(s, p, ch) }       -> stl::same_as<typename X::char_type*>;
+        { X::copy(s, p, n) }        -> stl::same_as<typename X::char_type*>;
+        { X::assign(s, n, c) }      -> stl::same_as<typename X::char_type*>;
+        { X::not_eof(e) }           -> stl::same_as<typename X::int_type>;
+        { X::to_char_type(e) }      -> stl::same_as<typename X::char_type>;
+        { X::to_int_type(c) }       -> stl::same_as<typename X::int_type>;
+        { X::eq_int_type(e, e) }    -> stl::same_as<bool>;
+        { X::eof() }                -> stl::same_as<typename X::int_type>;
     };
+    // clang-format on
 
-    struct fake_char_traits_type {
-
-        ~fake_char_traits_type() {}
-
-        using char_type = char;
-        using int_type  = int;
-        using off_type  = void;
-        using pos_type  = void;
-        struct state_type {};
-
-        typedef char_type        c;
-        typedef char_type const* p;
-        typedef char_type*       s;
-        typedef stl::size_t      n;
-        typedef int_type         e;
-        typedef char_type const& ch;
-
-        static constexpr bool eq(c, c) noexcept {
-            return true;
-        }
-        static constexpr bool lt(c, c) noexcept {
-            return true;
-        }
-        static constexpr int compare(p, p, n) noexcept {
-            return 0;
-        }
-        static constexpr n length(p) noexcept {
-            return 0;
-        }
-        static constexpr p find(p _p, n, ch) noexcept {
-            return _p;
-        }
-        static constexpr s copy(s _s, p, ch) noexcept {
-            return _s;
-        }
-        static constexpr s move(s _s, p, n) noexcept {
-            return _s;
-        }
-        static constexpr s assign(s _s, n, c) noexcept {
-            return _s;
-        }
-        static constexpr e not_eof(e) noexcept {
-            return 0;
-        }
-        static constexpr c to_char_type(e _e) noexcept {
-            return _e;
-        }
-        static constexpr e to_int_type(c _c) noexcept {
-            return _c;
-        }
-        static constexpr bool eq_int_type(e, e) noexcept {
-            return true;
-        }
-        static constexpr e eof() noexcept {
-            return 0;
-        }
-    };
+    //    struct fake_char_traits_type {
+    //
+    //        ~fake_char_traits_type() {}
+    //
+    //        using char_type = char;
+    //        using int_type  = int;
+    //        using off_type  = void;
+    //        using pos_type  = void;
+    //        struct state_type {};
+    //
+    //        typedef char_type        c;
+    //        typedef char_type const* p;
+    //        typedef char_type*       s;
+    //        typedef stl::size_t      n;
+    //        typedef int_type         e;
+    //        typedef char_type const& ch;
+    //
+    //        static constexpr bool eq(c, c) noexcept {
+    //            return true;
+    //        }
+    //        static constexpr bool lt(c, c) noexcept {
+    //            return true;
+    //        }
+    //        static constexpr int compare(p, p, n) noexcept {
+    //            return 0;
+    //        }
+    //        static constexpr n length(p) noexcept {
+    //            return 0;
+    //        }
+    //        static constexpr p find(p _p, n, ch) noexcept {
+    //            return _p;
+    //        }
+    //        static constexpr s copy(s _s, p, ch) noexcept {
+    //            return _s;
+    //        }
+    //        static constexpr s move(s _s, p, n) noexcept {
+    //            return _s;
+    //        }
+    //        static constexpr s assign(s _s, n, c) noexcept {
+    //            return _s;
+    //        }
+    //        static constexpr e not_eof(e) noexcept {
+    //            return 0;
+    //        }
+    //        static constexpr c to_char_type(e _e) noexcept {
+    //            return _e;
+    //        }
+    //        static constexpr e to_int_type(c _c) noexcept {
+    //            return _c;
+    //        }
+    //        static constexpr bool eq_int_type(e, e) noexcept {
+    //            return true;
+    //        }
+    //        static constexpr e eof() noexcept {
+    //            return 0;
+    //        }
+    //    };
 
     template <typename T>
     concept CharType = stl::is_integral_v<stl::remove_cvref_t<T>>;
@@ -143,12 +140,13 @@ namespace webpp::istl {
     /**
      * Get the underlying character type in a string/string view/c style string
      */
-    template <typename T, typename BestGuess = stl::remove_cvref_t<stl::remove_all_extents_t<stl::remove_pointer_t<stl::decay_t<T>>>>>
+    template <typename T,
+              typename BestGuess =
+                stl::remove_cvref_t<stl::remove_all_extents_t<stl::remove_pointer_t<stl::decay_t<T>>>>>
     using char_type_of =
       lazy_conditional_t<details::has_value_type<T>,
                          templated_lazy_type<details::char_extractor, BestGuess>,
-                         lazy_type<stl::conditional_t<CharType<BestGuess>, BestGuess, void>>
-                         >;
+                         lazy_type<stl::conditional_t<CharType<BestGuess>, BestGuess, void>>>;
 
 #ifndef NDEBUG
     static_assert(stl::is_same_v<int, char_type_of<int*>>);
@@ -171,12 +169,16 @@ namespace webpp::istl {
       lazy_type<DefaultAllocator>>;
 
 
+    // clang-format off
     template <typename T, typename Default = stl::char_traits<char_type_of<T>>>
-    using char_traits_type_of = lazy_conditional_t < requires {
-        typename stl::remove_cvref_t<T>::traits_type;
-    }
-    , templated_lazy_type<details::traits_extractor, stl::remove_cvref_t<T>>,
-      lazy_type<Default> >;
+    using char_traits_type_of = lazy_conditional_t<
+        requires{
+            typename stl::remove_cvref_t<T>::traits_type;
+        },
+        templated_lazy_type<details::traits_extractor,
+        stl::remove_cvref_t<T>>, lazy_type<Default>
+    >;
+    // clang-format on
 
 } // namespace webpp::istl
 

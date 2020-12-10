@@ -15,7 +15,7 @@
 #    include <boost/asio/ts/buffer.hpp>
 namespace webpp::stl {
     namespace net = boost::asio;
-} // namespace webpp::std
+} // namespace webpp::stl
 #elif __has_include(<experimental/buffer>)
 #    define STD_BUFFER STLLIB_EXPERIMENTAL
 #    include <experimental/buffer>

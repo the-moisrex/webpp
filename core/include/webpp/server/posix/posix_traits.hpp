@@ -20,6 +20,6 @@ namespace webpp::posix {
     };
 
 
-}
+} // namespace webpp::posix
 
 #endif // WEBPP_POSIX_TRAITS_HPP

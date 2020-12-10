@@ -4,15 +4,15 @@
 #define WEBPP_USER_INFO_HPP
 
 #include "../std/string.hpp"
-#include "./encoding.hpp"
 #include "./details/constants.hpp"
+#include "./encoding.hpp"
 
 namespace webpp::uri {
 
     template <istl::String StringType = stl::string>
     struct basic_user_info {
         using string_type = stl::remove_cvref_t<StringType>;
-        using char_type = typename string_type::value_type;
+        using char_type   = typename string_type::value_type;
 
 
         string_type username{};
@@ -38,7 +38,7 @@ namespace webpp::uri {
             return res;
         }
 
-        void append_raw_to(istl::String auto &out) const {
+        void append_raw_to(istl::String auto& out) const {
             const bool user_empty = !username.empty();
             const bool pass_empty = !password.empty();
             if (user_empty && pass_empty) {
@@ -63,10 +63,9 @@ namespace webpp::uri {
             append_raw_to(res);
             return res;
         }
-
     };
 
 
-}
+} // namespace webpp::uri
 
 #endif // WEBPP_USER_INFO_HPP

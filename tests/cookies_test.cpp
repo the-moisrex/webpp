@@ -150,7 +150,8 @@ TEST(ResponseCookies, CookieJarUniqeness) {
           return cookie.domain() == "google.com";
       },
       "something-else.com");
-    EXPECT_NE(std::find_if(cs.begin(), cs.end(),
+    EXPECT_NE(std::find_if(cs.begin(),
+                           cs.end(),
                            [](auto const& cookie) {
                                return cookie.domain() == "something-else.com";
                            }),

@@ -21,13 +21,13 @@ namespace webpp {
      */
     template <istl::CharType CharT, stl::size_t N>
     struct charset : public stl::array<stl::remove_cvref_t<CharT>, N> {
-        using value_type = stl::remove_cvref_t<CharT>;
+        using value_type                        = stl::remove_cvref_t<CharT>;
         static constexpr stl::size_t array_size = N;
 
       private:
         template <typename Tpl, typename Callable, stl::size_t... I>
-        constexpr void do_this_for_that(stl::index_sequence<I...>, Tpl const& tpl,
-                                        Callable callback) noexcept {
+        constexpr void
+        do_this_for_that(stl::index_sequence<I...>, Tpl const& tpl, Callable callback) noexcept {
             (callback(stl::get<I>(tpl)), ...);
         }
 
@@ -45,12 +45,13 @@ namespace webpp {
         }
 
         template <stl::size_t N1, stl::size_t N2, stl::size_t... NN>
-        constexpr auto merge(charset<value_type, N1> const& set1, charset<value_type, N2> const& set2,
-                          charset<value_type, NN> const&... c_sets) noexcept {
+        constexpr auto merge(charset<value_type, N1> const& set1,
+                             charset<value_type, N2> const& set2,
+                             charset<value_type, NN> const&... c_sets) noexcept {
             super data;
-            auto write = [&, i = 0u](auto const& set) mutable noexcept {
-              stl::copy(set.begin(), set.end(), data.begin() + i);
-              i += set.size();
+            auto  write = [&, i = 0u](auto const& set) mutable noexcept {
+                stl::copy(set.begin(), set.end(), data.begin() + i);
+                i += set.size();
             };
             write(set1);
             write(set2);
@@ -65,8 +66,8 @@ namespace webpp {
           : super{to_array(stl::make_index_sequence<N>(), str)} {}
 
         template <typename... T>
-        requires((stl::same_as<T, value_type> && ...) && sizeof...(T) <= N)
-          constexpr charset(T &&... data) noexcept
+        requires((stl::same_as<T, value_type> && ...) &&
+                 sizeof...(T) <= N) constexpr charset(T&&... data) noexcept
           : super{stl::forward<T>(data)...} {}
 
         /**
@@ -77,10 +78,10 @@ namespace webpp {
          *     These are the character sets to include.
          */
         template <stl::size_t N1, stl::size_t N2, stl::size_t... NN>
-        constexpr charset(charset<value_type, N1> const& set1, charset<value_type, N2> const& set2,
-                                   charset<value_type, NN> const&... c_sets) noexcept :
-            super{merge<N1, N2, NN...>(set1, set2, c_sets...)}
-        {
+        constexpr charset(charset<value_type, N1> const& set1,
+                          charset<value_type, N2> const& set2,
+                          charset<value_type, NN> const&... c_sets) noexcept
+          : super{merge<N1, N2, NN...>(set1, set2, c_sets...)} {
             static_assert(N == (N1 + N2 + (0 + ... + NN)), "The charsets don't fit in this charset.");
         }
 
@@ -125,11 +126,12 @@ namespace webpp {
     };
 
     template <typename T>
-    concept CharSet = requires (T cs) {
-      typename stl::remove_cvref_t<T>::value_type;
-      stl::remove_cvref_t<T>::array_size;
-      stl::same_as<stl::remove_cvref_t<T>,
-                   charset<typename stl::remove_cvref_t<T>::value_type, stl::remove_cvref_t<T>::array_size>>;
+    concept CharSet = requires(T cs) {
+        typename stl::remove_cvref_t<T>::value_type;
+        stl::remove_cvref_t<T>::array_size;
+        stl::same_as<
+          stl::remove_cvref_t<T>,
+          charset<typename stl::remove_cvref_t<T>::value_type, stl::remove_cvref_t<T>::array_size>>;
     };
 
     /**
@@ -193,8 +195,8 @@ namespace webpp {
      * in a hexadecimal digit.
      */
     template <istl::CharType CharT = char>
-    static constexpr auto HEXDIG = charset(DIGIT<CharT>, charset_range<CharT, 'A', 'F'>(),
-                                    charset_range<CharT, 'a', 'f'>());
+    static constexpr auto
+      HEXDIG = charset(DIGIT<CharT>, charset_range<CharT, 'A', 'F'>(), charset_range<CharT, 'a', 'f'>());
 
 
     template <istl::CharType CharT = char>

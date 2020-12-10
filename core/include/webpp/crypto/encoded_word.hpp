@@ -3,8 +3,8 @@
 #ifndef WEBPP_ENCODED_WORD_H
 #define WEBPP_ENCODED_WORD_H
 
-#include "../std/string_view.hpp"
 #include "../std/string.hpp"
+#include "../std/string_view.hpp"
 
 namespace webpp::http {
 
@@ -21,8 +21,10 @@ namespace webpp::http {
      *   - https://github.com/sassmann/rfc2047/blob/master/rfc2047.c
      *   - https://github.com/Jim-CodeHub/libmime
      *   - Chinese one:
-     *      - https://github.com/wamdmlab/AstroServ/blob/8b5a2214a10a157bd2c073f8f9113f1c3040dce9/astroDB_cache/lib/acl/lib_acl_cpp/include/acl_cpp/mime/rfc2047.hpp
-     *      - https://github.com/wamdmlab/AstroServ/blob/8b5a2214a10a157bd2c073f8f9113f1c3040dce9/astroDB_cache/lib/acl/lib_acl_cpp/src/mime/rfc2047.cpp
+     *      -
+     * https://github.com/wamdmlab/AstroServ/blob/8b5a2214a10a157bd2c073f8f9113f1c3040dce9/astroDB_cache/lib/acl/lib_acl_cpp/include/acl_cpp/mime/rfc2047.hpp
+     *      -
+     * https://github.com/wamdmlab/AstroServ/blob/8b5a2214a10a157bd2c073f8f9113f1c3040dce9/astroDB_cache/lib/acl/lib_acl_cpp/src/mime/rfc2047.cpp
      *
      * The format is:
      *   "=?charset?encoding?encoded text?="
@@ -50,79 +52,64 @@ namespace webpp::http {
      */
     template <Traits TraitsType>
     struct encoded_word {
-        using traits_type = TraitsType;
+        using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
-        using string_type = traits::string<traits_type>;
-        using char_type = typename string_type::value_type;
-        using allocator_type = typename traits_type::template allocator<typename string_type::value_type>;
+        using string_type      = traits::string<traits_type>;
+        using char_type        = typename string_type::value_type;
+        using allocator_type   = typename traits_type::template allocator<typename string_type::value_type>;
 
       private:
         string_view_type input;
-        string_type output;
+        string_type      output;
 
       public:
-
-        encoded_word(istl::StringViewifiable auto&& _input, allocator_type const &alloc = allocator_type{})
+        encoded_word(istl::StringViewifiable auto&& _input, allocator_type const& alloc = allocator_type{})
           : input(istl::string_viewify(stl::forward<decltype(_input)>(input))),
-            output(alloc)
-        {}
+            output(alloc) {}
 
-        encoded_word() = delete;
-        encoded_word(encoded_word const&) = default;
-        encoded_word(encoded_word &&) noexcept = default;
+        encoded_word()                        = delete;
+        encoded_word(encoded_word const&)     = default;
+        encoded_word(encoded_word&&) noexcept = default;
 
-        [[nodiscard]] string_view_type charset() const noexcept {
+        [[nodiscard]] string_view_type charset() const noexcept {}
 
-        }
+        [[nodiscard]] string_view_type encoding() const noexcept {}
 
-        [[nodiscard]] string_view_type encoding() const noexcept {
+        [[nodiscard]] string_view_type encoded() const noexcept {}
 
-        }
+        [[nodiscard]] string_type const& decoded() const noexcept {}
 
-        [[nodiscard]] string_view_type encoded() const noexcept {
+        bool decode() noexcept {}
 
-        }
-
-        [[nodiscard]] string_type const& decoded() const noexcept {
-
-        }
-
-        bool decode() noexcept {
-
-        }
-
-        bool encode() noexcept {
-
-        }
-
-
+        bool encode() noexcept {}
     };
 
     /*
-    * If the given string contains non-ASCII characters,
-    * encodes the given string using RFC 2047 'Q' or 'B' word encoding.
-    *
-    * The given text must already be encoded in the character set
-    * given in charset (default is UTF-8).
-    *
-    * Returns the encoded string, or the original string if it
-    * consists only of ASCII characters.
-    */
-    static std::string encodeWord(const std::string& text, const std::string& charset = "UTF-8", char encoding = 'q');
+     * If the given string contains non-ASCII characters,
+     * encodes the given string using RFC 2047 'Q' or 'B' word encoding.
+     *
+     * The given text must already be encoded in the character set
+     * given in charset (default is UTF-8).
+     *
+     * Returns the encoded string, or the original string if it
+     * consists only of ASCII characters.
+     */
+    static std::string
+    encodeWord(const std::string& text, const std::string& charset = "UTF-8", char encoding = 'q');
 
     /*
-    * Decodes a string containing encoded-word's according to the rules specified in
-    * RFC 2047 and returns the decoded string. Both Q and B encodings are supported.
-    *
-    * If toCharset is not provided, no decoded string conversion is performed (ie.
-    * string is simply decoded to the charset specified in encodedWord string)
-    * If toCharset is provided, returned string is converted to the specified
-    * charset. For a list of supported encodings, see Poco:TextEncodingRegistry.
+     * Decodes a string containing encoded-word's according to the rules specified in
+     * RFC 2047 and returns the decoded string. Both Q and B encodings are supported.
+     *
+     * If toCharset is not provided, no decoded string conversion is performed (ie.
+     * string is simply decoded to the charset specified in encodedWord string)
+     * If toCharset is provided, returned string is converted to the specified
+     * charset. For a list of supported encodings, see Poco:TextEncodingRegistry.
      */
     static std::string decodeWord(const std::string& encodedWord, std::string toCharset = "");
 
 
 
-}
+} // namespace webpp::http
 
 #endif // WEBPP_ENCODED_WORD_H

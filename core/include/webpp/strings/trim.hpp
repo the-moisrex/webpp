@@ -14,22 +14,19 @@ namespace webpp::ascii {
 
     // trim from start (leading whitespaces)
     template <typename Iter, CharSet CS = decltype(ascii::standard_whitespaces)>
-    static inline void ltrim(Iter* begin, Iter const* end,
-                             CS whitespaces = standard_whitespaces) noexcept {
+    static inline void ltrim(Iter* begin, Iter const* end, CS whitespaces = standard_whitespaces) noexcept {
         while (*begin < *end && whitespaces.contains((*begin)[0]))
             ++(*begin);
     }
 
     template <typename Iter, CharSet CS = decltype(ascii::standard_whitespaces)>
-    static inline void rtrim(Iter const* begin, Iter* end,
-                             CS whitespaces = standard_whitespaces) noexcept {
+    static inline void rtrim(Iter const* begin, Iter* end, CS whitespaces = standard_whitespaces) noexcept {
         while (*begin < *end && whitespaces.contains((*end)[-1]))
             --(*end);
     }
 
     template <typename Iter, CharSet CS = decltype(standard_whitespaces)>
-    static inline void trim(Iter* begin, Iter* end,
-                             CS whitespaces = standard_whitespaces) noexcept {
+    static inline void trim(Iter* begin, Iter* end, CS whitespaces = standard_whitespaces) noexcept {
         ltrim<Iter, CS>(begin, end, whitespaces);
         rtrim<Iter, CS>(begin, end, whitespaces);
     }
@@ -37,7 +34,8 @@ namespace webpp::ascii {
     // trim from start (in place)
     template <istl::StringView StrViewType, CharSet CS = decltype(standard_whitespaces)>
     static inline void ltrim(StrViewType& str, CS whitespaces = standard_whitespaces) noexcept {
-        str.remove_prefix(stl::min(str.find_first_not_of(whitespaces.data(), 0, whitespaces.size()), str.size()));
+        str.remove_prefix(
+          stl::min(str.find_first_not_of(whitespaces.data(), 0, whitespaces.size()), str.size()));
     }
 
     template <istl::StringView StrViewType, CharSet CS = decltype(standard_whitespaces)>
@@ -59,7 +57,7 @@ namespace webpp::ascii {
     // trim from start (copying)
     template <istl::StringViewifiable StrViewType, CharSet CS = decltype(standard_whitespaces)>
     [[nodiscard]] static inline auto ltrim_copy(StrViewType&& s,
-                                                CS whitespaces = standard_whitespaces) noexcept {
+                                                CS            whitespaces = standard_whitespaces) noexcept {
         auto str = istl::string_viewify(stl::forward<StrViewType>(s));
         ltrim(str, whitespaces);
         return str;
@@ -68,7 +66,7 @@ namespace webpp::ascii {
     // trim from end (copying)
     template <istl::StringViewifiable StrViewType, CharSet CS = decltype(standard_whitespaces)>
     [[nodiscard]] static inline auto rtrim_copy(StrViewType&& s,
-                                                CS whitespaces = standard_whitespaces) noexcept {
+                                                CS            whitespaces = standard_whitespaces) noexcept {
         auto str = istl::string_viewify(stl::forward<StrViewType>(s));
         rtrim(str, whitespaces);
         return str;
@@ -77,7 +75,7 @@ namespace webpp::ascii {
     // trim from both ends (copying)
     template <istl::StringViewifiable StrViewType, CharSet CS = decltype(standard_whitespaces)>
     [[nodiscard]] static inline auto trim_copy(StrViewType&& s,
-                                               CS whitespaces = standard_whitespaces) noexcept {
+                                               CS            whitespaces = standard_whitespaces) noexcept {
         auto str = istl::string_viewify(stl::forward<StrViewType>(s));
         trim(str, whitespaces);
         return str;
@@ -111,7 +109,8 @@ namespace webpp::ascii {
 
     // trim from start (copying)
     template <CharSet CS = decltype(standard_whitespaces)>
-    [[nodiscard]] static inline auto ltrim_copy(istl::Stringifiable auto&& s, auto const& allocator,
+    [[nodiscard]] static inline auto ltrim_copy(istl::Stringifiable auto&& s,
+                                                auto const&                allocator,
                                                 CS whitespaces = standard_whitespaces) noexcept {
         auto str = istl::stringify(stl::forward<decltype(s)>(s), allocator);
         ltrim(str, whitespaces);
@@ -120,7 +119,8 @@ namespace webpp::ascii {
 
     // trim from end (copying)
     template <CharSet CS = decltype(standard_whitespaces)>
-    [[nodiscard]] static inline auto rtrim_copy(istl::Stringifiable auto&& s, auto const& allocator,
+    [[nodiscard]] static inline auto rtrim_copy(istl::Stringifiable auto&& s,
+                                                auto const&                allocator,
                                                 CS whitespaces = standard_whitespaces) noexcept {
         auto str = istl::stringify(stl::forward<decltype(s)>(s), allocator);
         rtrim(str, whitespaces);
@@ -129,7 +129,8 @@ namespace webpp::ascii {
 
     // trim from both ends (copying)
     template <CharSet CS = decltype(standard_whitespaces)>
-    [[nodiscard]] inline auto trim_copy(istl::Stringifiable auto&& s, auto const& allocator,
+    [[nodiscard]] inline auto trim_copy(istl::Stringifiable auto&& s,
+                                        auto const&                allocator,
                                         CS whitespaces = standard_whitespaces) noexcept {
         auto str = istl::stringify(stl::forward<decltype(s)>(s), allocator);
         trim(str, whitespaces);

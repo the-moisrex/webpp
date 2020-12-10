@@ -63,13 +63,15 @@ namespace webpp {
             return !operator==(stl::forward<decltype(str)>(str));
         }
 
-        friend constexpr bool operator==(istl::StringViewifiable auto&&   str,
-                                         basic_header_field<TraitsType, EList, IsView> const& field) noexcept {
+        friend constexpr bool
+        operator==(istl::StringViewifiable auto&&                       str,
+                   basic_header_field<TraitsType, EList, IsView> const& field) noexcept {
             return field.operator==(istl::string_viewify(str));
         }
 
-        friend constexpr bool operator!=(istl::StringViewifiable auto&&   str,
-                                         basic_header_field<TraitsType, EList, IsView> const& field) noexcept {
+        friend constexpr bool
+        operator!=(istl::StringViewifiable auto&&                       str,
+                   basic_header_field<TraitsType, EList, IsView> const& field) noexcept {
             return field.operator!=(istl::string_viewify(str));
         }
     };

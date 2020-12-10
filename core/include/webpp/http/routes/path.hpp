@@ -143,8 +143,9 @@ namespace webpp {
         // if the NextSegmentType is itself a path (which normally should not happen)
         static constexpr bool is_next_segment_nested =
           has_next_segment &&
-          stl::same_as<next_segment_type, path<typename next_segment_type::segment_type,
-                                               typename next_segment_type::next_segment_type>>;
+          stl::same_as<
+            next_segment_type,
+            path<typename next_segment_type::segment_type, typename next_segment_type::next_segment_type>>;
 
         segment_type      segment{};
         next_segment_type next_segment{};
@@ -274,7 +275,8 @@ namespace webpp {
                     if (auto res = segment.template get<T>(variable_name))
                         return res;
                 } else if constexpr ((stl::is_convertible_v<T, segment_type> ||
-                                      can_parse_to<ContextType, segment_type,
+                                      can_parse_to<ContextType,
+                                                   segment_type,
                                                    T>) &&has_variable_name<segment_type>) {
                     if (variable_name == segment.variable_name) {
                         if constexpr (stl::is_convertible_v<T, segment_type>) {
@@ -295,7 +297,8 @@ namespace webpp {
                     if (auto res = next_segment.template get<T>(variable_name))
                         return res;
                 } else if constexpr ((stl::is_convertible_v<T, next_segment_type> ||
-                                      can_parse_to<ContextType, next_segment_type,
+                                      can_parse_to<ContextType,
+                                                   next_segment_type,
                                                    T>) &&has_variable_name<next_segment_type>) {
                     if (variable_name == next_segment.variable_name) {
                         if constexpr (stl::is_convertible_v<T, next_segment_type>) {

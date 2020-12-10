@@ -4,6 +4,7 @@
 #define WEBPP_TYPE_TRAITS_HPP
 
 #include "./std.hpp"
+
 #include <type_traits>
 #include <utility> // for move and forward
 
@@ -19,18 +20,18 @@ namespace webpp::istl {
 
     namespace details {
 
-        template <bool Condition, template<typename...> typename Extractor, typename...Args>
+        template <bool Condition, template <typename...> typename Extractor, typename... Args>
         struct templated_lazy_evaluate {
             using type = void;
         };
 
-        template <template<typename...>typename Extractor, typename ...Args>
+        template <template <typename...> typename Extractor, typename... Args>
         struct templated_lazy_evaluate<true, Extractor, Args...> {
             using type = typename Extractor<Args...>::type;
         };
-    }
+    } // namespace details
 
-    template <template <typename...> typename Extractor, typename ...Args>
+    template <template <typename...> typename Extractor, typename... Args>
     struct templated_lazy_type {
         // I know how it looks, but it's c++, what did you expect? :)
         template <bool Condition>
@@ -70,8 +71,7 @@ namespace webpp::istl {
             type                         value;
 
             // this is for adding one to the index
-            constexpr auto add_one() noexcept {
-            }
+            constexpr auto add_one() noexcept {}
 
             template <typename NextType>
             constexpr auto operator|(NextType&& next) const noexcept {
@@ -82,12 +82,14 @@ namespace webpp::istl {
                 }
             }
         };
-    }
+    } // namespace details
 
-    template <stl::size_t Index, typename First, typename ...T>
-    [[nodiscard]] constexpr auto nth_of(First&& first, T&& ...objs) noexcept {
+    template <stl::size_t Index, typename First, typename... T>
+    [[nodiscard]] constexpr auto nth_of(First&& first, T&&... objs) noexcept {
         static_assert(Index < (sizeof...(T) + 1), "The specified Index is out of range");
-        return ((details::nth_of<Index, First>{.value = stl::forward<First>(first)}) | ... | stl::forward<T>(objs)).value;
+        return ((details::nth_of<Index, First>{.value = stl::forward<First>(first)}) | ... |
+                stl::forward<T>(objs))
+          .value;
     }
 
     ////////////////////////// Rank Types ////////////////////////////
@@ -121,22 +123,20 @@ namespace webpp::istl {
      *   );
      * @endcode
      */
-    template <template<typename> typename ConditionOp, typename ...Types>
+    template <template <typename> typename ConditionOp, typename... Types>
     struct ranked_types {
 
-        static_assert(
-        (stl::is_integral_v<stl::remove_cvref_t<decltype(ConditionOp<Types>::value)>> && ...),
-          "The specified Condition is not valid"
-        );
+        static_assert((stl::is_integral_v<stl::remove_cvref_t<decltype(ConditionOp<Types>::value)>> && ...),
+                      "The specified Condition is not valid");
 
         template <typename T, stl::size_t Index = 0>
         struct a_type {
-            static constexpr long long int rank = ConditionOp<T>::value;
-            static constexpr stl::size_t index = Index;
-            using type = T;
+            static constexpr long long int rank  = ConditionOp<T>::value;
+            static constexpr stl::size_t   index = Index;
+            using type                           = T;
 
-            template <typename ...ItemType>
-            [[nodiscard]] static constexpr auto get(ItemType&& ...item) noexcept {
+            template <typename... ItemType>
+            [[nodiscard]] static constexpr auto get(ItemType&&... item) noexcept {
                 return nth_of<index>(stl::forward<ItemType>(item)...);
             }
 
@@ -165,17 +165,15 @@ namespace webpp::istl {
                     return next.add_one();
                 }
             }
-
         };
 
 
-        using best = decltype((a_type<Types>() & ...));
+        using best  = decltype((a_type<Types>() & ...));
         using worst = decltype((a_type<Types>() | ...));
-
     };
 
 
 
-}
+} // namespace webpp::istl
 
 #endif // WEBPP_TYPE_TRAITS_HPP

@@ -4,6 +4,7 @@
 
 #include "../logs/log_concepts.hpp"
 #include "../memory/allocator_concepts.hpp"
+#include "../memory/allocator_pack.hpp"
 #include "../std/concepts.hpp"
 #include "../std/string_concepts.hpp"
 
@@ -156,8 +157,8 @@ namespace webpp {
         // requires ThreadPool<typename T::thread_pool>;   // thread pool
 
         typename T::string_view;
-        typename T::template string<
-          typename T::alloc_pack::template general<istl::char_type_of<typename T::string_view>>>;
+        typename T::template string<alloc::ranker<typename T::alloc_pack, alloc::general_features>::
+                                      template type<istl::char_type_of<typename T::string_view>>>;
 
         // todo: add String<typename T::string_type>; without adding a circular dependency
         // todo: add StringView<typename T::string_view_type>; without adding a circular dependency

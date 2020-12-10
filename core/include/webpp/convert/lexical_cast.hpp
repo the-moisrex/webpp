@@ -34,12 +34,14 @@ namespace webpp::lexical {
             return istl::string_viewify_of<Target>(stl::forward<Source>(source));
         } else if constexpr (istl::String<target_t>) {
             // Target == string
-            const auto the_alloc = extract_allocator_of_or_default<istl::allocator_type_of<target_t>>(allocs..., source);
+            const auto the_alloc =
+              extract_allocator_of_or_default<istl::allocator_type_of<target_t>>(allocs..., source);
             if constexpr (istl::StringifiableOf<target_t, src_t>) {
                 // Source is convertible to string
                 return istl::stringify_of<Target>(stl::forward<Source>(source), the_alloc);
             } else if constexpr (istl::String<target_t> && stl::is_integral_v<src_t>) {
-                if constexpr (stl::same_as<src_t, char> || stl::same_as<src_t, char8_t> || stl::same_as<src_t, char16_t> || stl::same_as<src_t, char32_t>) {
+                if constexpr (stl::same_as<src_t, char> || stl::same_as<src_t, char8_t> ||
+                              stl::same_as<src_t, char16_t> || stl::same_as<src_t, char32_t>) {
                     // don't need to convert, it's a char type
                     using char_type = istl::char_type_of<target_t>;
                     return Target{1, static_cast<char_type>(source), the_alloc};
@@ -78,41 +80,43 @@ namespace webpp::lexical {
                              }) {
             return Target{stl::forward<Source>(source), stl::forward<AllocList>(allocs)...};
         } else if constexpr (requires {
-                                 Target{stl::forward<Source>(source),
-                                        extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
+                                 Target{
+                                   stl::forward<Source>(source),
+                                   extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
                              }) {
             return Target{stl::forward<Source>(source),
-                   extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
+                          extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
         } else if constexpr (requires { Target{stl::forward<Source>(source)}; }) {
             return Target{stl::forward<Source>(source)};
         }
     }
 
-    template <template<typename...> typename Target, typename Source, typename... AllocList>
+    template <template <typename...> typename Target, typename Source, typename... AllocList>
     [[nodiscard]] static constexpr auto cast(Source&& source, AllocList const&... allocs) noexcept {
-        using src_t    = stl::remove_cvref_t<Source>;
-//        constexpr bool is_target_string_view = istl::StringView<decltype(Target{""})>;
-//        constexpr bool is_target_string = istl::String<decltype(Target{""})>;
-//        static_assert(!is_target_string_view);
-//        static_assert(is_target_string);
+        using src_t = stl::remove_cvref_t<Source>;
+        //        constexpr bool is_target_string_view = istl::StringView<decltype(Target{""})>;
+        //        constexpr bool is_target_string = istl::String<decltype(Target{""})>;
+        //        static_assert(!is_target_string_view);
+        //        static_assert(is_target_string);
 
-        if constexpr (istl::StringViewifiableOfTemplate<Target, src_t> && requires {
-            istl::string_viewify_of<Target>(stl::forward<Source>(source));
-                                                                          }) {
+        if constexpr (istl::StringViewifiableOfTemplate<Target, src_t> &&
+                      requires { istl::string_viewify_of<Target>(stl::forward<Source>(source)); }) {
             return istl::string_viewify_of<Target>(stl::forward<Source>(source));
         } else if constexpr (istl::StringifiableOfTemplate<Target, src_t> && requires {
-            istl::stringify_of<Target>(stl::forward<Source>(source), extract_allocator_or_default(allocs..., source));
-                                                                             }) {
+                                 istl::stringify_of<Target>(stl::forward<Source>(source),
+                                                            extract_allocator_or_default(allocs..., source));
+                             }) {
             const auto the_alloc = extract_allocator_or_default(allocs..., source);
             return istl::stringify_of<Target>(stl::forward<Source>(source), the_alloc);
         } else if constexpr (requires {
-            Target{stl::forward<Source>(source), stl::forward<AllocList>(allocs)...};
-        }) {
+                                 Target{stl::forward<Source>(source), stl::forward<AllocList>(allocs)...};
+                             }) {
             return Target{stl::forward<Source>(source), stl::forward<AllocList>(allocs)...};
         } else if constexpr (requires {
-            Target{stl::forward<Source>(source),
-                   extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
-        }) {
+                                 Target{
+                                   stl::forward<Source>(source),
+                                   extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
+                             }) {
             return Target{stl::forward<Source>(source),
                           extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
         } else if constexpr (requires { Target{stl::forward<Source>(source)}; }) {

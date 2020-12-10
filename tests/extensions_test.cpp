@@ -186,12 +186,14 @@ TEST(ExtensionsTests, ExtensionPackStuff) {
 
 
 
-    using mid_type = typename extension_pack<exes>::mid_level_extensie_type<std_traits, fake_descriptor>;
+    using mid_type =
+      typename extension_pack<exes>::template mid_level_extensie_type<std_traits, fake_descriptor>;
     mid_type mid;
     EXPECT_TRUE(mid.mid_level);
 
     using mid_kids_type =
-      typename extension_pack<exes_with_kids>::mid_level_extensie_children<std_traits, fake_descriptor>;
+      typename extension_pack<exes_with_kids>::template mid_level_extensie_children<std_traits,
+                                                                                    fake_descriptor>;
     static_assert(stl::same_as<mid_kids_type, extension_pack<child_one, child_two>>,
                   "mid_level_extensie_children doesn't work properly");
 }

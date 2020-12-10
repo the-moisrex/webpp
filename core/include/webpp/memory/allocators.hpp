@@ -51,7 +51,8 @@ namespace webpp {
                 }
             }
 
-            constexpr auto operator|(auto&& finder_res) const noexcept { // NOLINT(misc-unconventional-assign-operator)
+            constexpr auto
+            operator|(auto&& finder_res) const noexcept { // NOLINT(misc-unconventional-assign-operator)
                 using U = stl::remove_cvref_t<decltype(finder_res)>;
                 if constexpr (stl::is_integral_v<U>) {
                     return *this;
@@ -74,7 +75,8 @@ namespace webpp {
         details::alloc_finder_type<> finder;
         const auto                   res = (finder | ... | finder(stl::forward<T>(args)));
         static_assert(
-          requires { res.alloc; }, "We didn't find any allocator in the inputs.");
+          requires { res.alloc; },
+          "We didn't find any allocator in the inputs.");
         return res.alloc;
     }
 
@@ -107,8 +109,8 @@ namespace webpp {
     [[nodiscard]] inline auto extract_allocator_of_or_default(T&&... args) noexcept {
         details::alloc_finder_type<AllocType> finder;
         const auto                            res = (finder | ... | finder(stl::forward<T>(args)));
-        if constexpr (
-          stl::is_same_v<stl::remove_cvref_t<decltype(res)>, details::temp_alloc_holder<AllocType>>) {
+        if constexpr (stl::is_same_v<stl::remove_cvref_t<decltype(res)>,
+                                     details::temp_alloc_holder<AllocType>>) {
             return res.alloc;
         } else {
             // todo: we might be able to find and convert an allocator and not just re-create it
@@ -137,7 +139,8 @@ namespace webpp {
             if constexpr (stl::is_same_v<T, allocator_value_type>) {
                 return alloc;
             } else {
-                return rebind_allocator<allocator_type, T>(alloc); // using copy ctor, so this should work for most allocator types
+                return rebind_allocator<allocator_type, T>(
+                  alloc); // using copy ctor, so this should work for most allocator types
             }
         }
 
@@ -152,7 +155,8 @@ namespace webpp {
     struct nothing_type {};
 
     template <typename AllocType, bool Mutable>
-    using conditional_allocator_holder = stl::conditional_t<Mutable, allocator_holder<AllocType>, nothing_type>;
+    using conditional_allocator_holder =
+      stl::conditional_t<Mutable, allocator_holder<AllocType>, nothing_type>;
 
 } // namespace webpp
 

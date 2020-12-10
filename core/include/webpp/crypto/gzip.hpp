@@ -3,8 +3,6 @@
 #ifndef WEBPP_GZIP_HPP
 #define WEBPP_GZIP_HPP
 
-namespace webpp::gzip {
-
-}
+namespace webpp::gzip {}
 
 #endif // WEBPP_GZIP_HPP

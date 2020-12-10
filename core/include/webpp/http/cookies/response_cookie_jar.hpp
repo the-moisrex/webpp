@@ -12,11 +12,12 @@ namespace webpp {
 
     template <typename Allocator = stl::allocator<char>,
               istl::String StringType =
-                stl::basic_string<char, stl::char_traits<char>, to_alloc<Allocator, char>>>
-    struct response_cookie_jar : public basic_cookie_jar<response_cookie<StringType>,
-                                                         to_alloc<Allocator, response_cookie<StringType>>> {
+                stl::basic_string<char, stl::char_traits<char>, rebind_allocator<Allocator, char>>>
+    struct response_cookie_jar
+      : public basic_cookie_jar<response_cookie<StringType>,
+                                rebind_allocator<Allocator, response_cookie<StringType>>> {
 
-        using allocator_type  = to_alloc<Allocator, response_cookie<StringType>>;
+        using allocator_type  = rebind_allocator<Allocator, response_cookie<StringType>>;
         using string_type     = StringType;
         using cookie_type     = response_cookie<string_type>;
         using cookie_jar_type = response_cookie_jar<Allocator, StringType>;

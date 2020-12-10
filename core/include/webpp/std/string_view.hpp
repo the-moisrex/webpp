@@ -91,7 +91,8 @@ namespace webpp::istl {
 
     template <typename T>
     using defaulted_string_view =
-      stl::conditional_t<StringView<T>, stl::remove_cvref_t<T>,
+      stl::conditional_t<StringView<T>,
+                         stl::remove_cvref_t<T>,
                          stl::basic_string_view<char_type_of<T>, char_traits_type_of<T>>>;
 
     template <typename T>

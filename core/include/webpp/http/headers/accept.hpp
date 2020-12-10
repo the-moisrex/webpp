@@ -97,10 +97,8 @@ namespace webpp::http {
      *       a closed system which cannot interact with other rendering agents,
      *     this default set ought to be configurable by the user.
      */
-    struct accept {
+    struct accept {};
 
-    };
-
-}
+} // namespace webpp::http
 
 #endif // WEBPP_ACCEPT_HPP

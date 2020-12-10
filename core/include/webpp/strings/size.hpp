@@ -6,6 +6,7 @@
 #define WEBPP_SIZE_HPP
 
 #include "../std/type_traits.hpp"
+
 #include <cstring>
 #include <limits>
 
@@ -30,9 +31,11 @@ namespace webpp::ascii {
 
     template <typename T, stl::size_t N>
     struct constexpr_array_type<const T (&)[N]> {
-        using array_type                          = T;
-        static constexpr bool        is_array     = true;
-        static constexpr stl::size_t array_length = N - (stl::is_same_v<T, char> || stl::is_same_v<T, wchar_t>); // for strings, we don't want to count the last null character
+        using array_type                      = T;
+        static constexpr bool        is_array = true;
+        static constexpr stl::size_t array_length =
+          N - (stl::is_same_v<T, char> ||
+               stl::is_same_v<T, wchar_t>); // for strings, we don't want to count the last null character
     };
 
     // it's best to use this for counting strings and not other types of arrays or containers,
@@ -41,13 +44,13 @@ namespace webpp::ascii {
     // This method is also supports integer sizes
     template <typename T>
     [[nodiscard]] constexpr stl::size_t size(T&& str) noexcept {
-        if constexpr (requires{ str.size(); }) {
+        if constexpr (requires { str.size(); }) {
             return str.size();
         } else if constexpr (requires { str.length(); }) {
             return str.length();
         } else if constexpr (constexpr_array_type<T>::is_array) {
             return constexpr_array_type<T>::array_length; // todo: I'm not sure if this works or not
-        } else if constexpr (requires {stl::strlen(str);}) {
+        } else if constexpr (requires { stl::strlen(str); }) {
             return stl::strlen(str);
         } else {
             // todo: is it possible to optimize this with SIMD?
@@ -74,6 +77,6 @@ namespace webpp::ascii {
 
 
 
-}
+} // namespace webpp::ascii
 
 #endif // WEBPP_SIZE_HPP

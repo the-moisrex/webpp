@@ -11,8 +11,9 @@
 
 namespace webpp {
 
-    template <typename CharT, typename CharTraits = stl::char_traits<CharT>,
-              typename Allocator = std_allocator_pack>
+    template <typename CharT,
+              typename CharTraits = stl::char_traits<CharT>,
+              typename Allocator  = std_allocator_pack>
     struct basic_std_traits {
         using traits_type = basic_std_traits<CharT, CharTraits, Allocator>;
         using char_type   = CharT;

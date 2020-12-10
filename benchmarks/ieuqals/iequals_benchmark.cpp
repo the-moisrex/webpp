@@ -1,19 +1,18 @@
+#include "../../core/include/webpp/std/string_view.hpp"
+#include "../../core/include/webpp/strings/iequals.hpp"
+#include "../../core/include/webpp/strings/to_case.hpp"
 #include "../benchmark.hpp"
+
 #include <strings.h>
 
 
-#include "../../core/include/webpp/strings/to_case.hpp"
-#include "../../core/include/webpp/strings/iequals.hpp"
-#include "../../core/include/webpp/std/string_view.hpp"
-
-
 #if __has_include(<boost/algorithm/string/predicate.hpp>)
-#  include <boost/algorithm/string/predicate.hpp>
+#    include <boost/algorithm/string/predicate.hpp>
 #endif
 
 #if __has_include(<boost/beast/core/string.hpp>)
-#  include <boost/beast/core/string.hpp>
-#  define BEAST_IEQUALS
+#    include <boost/beast/core/string.hpp>
+#    define BEAST_IEQUALS
 #endif
 
 using namespace webpp;
@@ -166,10 +165,12 @@ using namespace webpp;
             if (webpp::eve::any(equality)) {
                 const auto val1_lowered = webpp::eve::logical_not(
                   webpp::eve::if_else(webpp::eve::is_less(webpp::eve::sub(values1, big_a), 25),
-                                      webpp::eve::add(values1, diff), values1));
+                                      webpp::eve::add(values1, diff),
+                                      values1));
                 const auto val2_lowered = webpp::eve::logical_not(
                   webpp::eve::if_else(webpp::eve::is_less(webpp::eve::sub(values1, big_a), 25),
-                                      webpp::eve::add(values1, diff), values1));
+                                      webpp::eve::add(values1, diff),
+                                      values1));
                 const auto equality2 = webpp::eve::is_not_equal(val1_lowered, val2_lowered);
                 if (webpp::eve::any(equality2)) {
                     return false;
@@ -199,7 +200,7 @@ static void IEQ_Strcasecmp(benchmark::State& state) {
         std::string str   = str_generator();
         auto        istr  = str;
         auto        istr2 = webpp::ascii::to_lower_copy(istr);
-        auto res = ::strcasecmp(istr.data(), istr2.data());
+        auto        res   = ::strcasecmp(istr.data(), istr2.data());
         benchmark::DoNotOptimize(res == 0);
         benchmark::DoNotOptimize(istr);
         benchmark::DoNotOptimize(istr2);
@@ -212,7 +213,7 @@ static void IEQ_Strncasecmp(benchmark::State& state) {
         std::string str   = str_generator();
         auto        istr  = str;
         auto        istr2 = webpp::ascii::to_lower_copy(istr);
-        auto res = ::strncasecmp(istr.data(), istr2.data(), istr.size());
+        auto        res   = ::strncasecmp(istr.data(), istr2.data(), istr.size());
         benchmark::DoNotOptimize(res == 0);
         benchmark::DoNotOptimize(istr);
         benchmark::DoNotOptimize(istr2);
@@ -225,7 +226,7 @@ static void IEQ_Default(benchmark::State& state) {
         std::string str   = str_generator();
         auto        istr  = str;
         auto        istr2 = webpp::ascii::to_lower_copy(istr);
-        auto res = webpp::ascii::iequals(istr, istr2);
+        auto        res   = webpp::ascii::iequals(istr, istr2);
         benchmark::DoNotOptimize(res);
         benchmark::DoNotOptimize(istr);
         benchmark::DoNotOptimize(istr2);
@@ -238,7 +239,7 @@ static void IEQ_DefaultLowered(benchmark::State& state) {
         std::string str   = str_generator();
         auto        istr  = str;
         auto        istr2 = webpp::ascii::to_lower_copy(istr);
-        auto res = webpp::ascii::iequals<webpp::ascii::char_case_side::second_lowered>(istr, istr2);
+        auto        res   = webpp::ascii::iequals<webpp::ascii::char_case_side::second_lowered>(istr, istr2);
         benchmark::DoNotOptimize(res);
         benchmark::DoNotOptimize(istr);
         benchmark::DoNotOptimize(istr2);
@@ -251,7 +252,7 @@ static void IEQ_SIMD(benchmark::State& state) {
         std::string str   = str_generator();
         auto        istr  = str;
         auto        istr2 = webpp::ascii::to_lower_copy(istr);
-        auto res = iequals_simd(istr, istr2);
+        auto        res   = iequals_simd(istr, istr2);
         benchmark::DoNotOptimize(res);
         benchmark::DoNotOptimize(istr);
         benchmark::DoNotOptimize(istr2);

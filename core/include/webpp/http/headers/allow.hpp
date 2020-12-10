@@ -34,9 +34,7 @@ namespace webpp::http {
      * understand all the methods specified, since the user agent might
      * have other means of communicating with the origin server.
      */
-    struct allow {
-
-    };
-}
+    struct allow {};
+} // namespace webpp::http
 
 #endif // WEBPP_ALLOW_HPP

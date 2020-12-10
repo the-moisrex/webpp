@@ -157,8 +157,8 @@ namespace webpp::modp_b64 {
      *
      */
     [[nodiscard]] static std::size_t encode(char* dest, const char* str, std::size_t len) noexcept {
-        std::size_t   i = 0;
-        auto* p = reinterpret_cast<std::uint8_t*>(dest);
+        std::size_t i = 0;
+        auto*       p = reinterpret_cast<std::uint8_t*>(dest);
 
         /* unsigned here is important! */
         std::uint8_t t1, t2, t3;
@@ -243,14 +243,14 @@ namespace webpp::modp_b64 {
         if constexpr (std::endian::native == std::endian::big) { /* BIG ENDIAN -- SUN / IBM / MOTOROLA */
 
             std::size_t i;
-            std::size_t         leftover = len % 4;
+            std::size_t leftover = len % 4;
             std::size_t chunks   = (leftover == 0) ? len / 4 - 1 : len / 4;
 
-            auto*  p       = reinterpret_cast<std::uint8_t*>(dest);
-            std::uint32_t  x       = 0;
-            auto* destInt = reinterpret_cast<std::uint32_t*>(p);
-            const auto* srcInt  = reinterpret_cast<std::uint32_t const*>(src);
-            std::uint32_t  y       = *srcInt++;
+            auto*         p       = reinterpret_cast<std::uint8_t*>(dest);
+            std::uint32_t x       = 0;
+            auto*         destInt = reinterpret_cast<std::uint32_t*>(p);
+            const auto*   srcInt  = reinterpret_cast<std::uint32_t const*>(src);
+            std::uint32_t y       = *srcInt++;
             for (i = 0; i < chunks; ++i) {
                 x = d0[y >> 24 & 0xff] | d1[y >> 16 & 0xff] | d2[y >> 8 & 0xff] | d3[y & 0xff];
 
@@ -294,12 +294,12 @@ namespace webpp::modp_b64 {
         } else { // Little Endian - Intel and Friends
 
             std::size_t i;
-            std::size_t         leftover = len % 4;
+            std::size_t leftover = len % 4;
             std::size_t chunks   = (leftover == 0) ? len / 4 - 1 : len / 4;
 
-            auto*       p = reinterpret_cast<std::uint8_t*>(dest);
-            std::uint32_t       x = 0;
-            const auto* y = reinterpret_cast<std::uint8_t const*>(src);
+            auto*         p = reinterpret_cast<std::uint8_t*>(dest);
+            std::uint32_t x = 0;
+            const auto*   y = reinterpret_cast<std::uint8_t const*>(src);
             for (i = 0; i < chunks; ++i, y += 4) {
                 x = d0[y[0]] | d1[y[1]] | d2[y[2]] | d3[y[3]];
                 if (x >= BADCHAR)

@@ -5,8 +5,8 @@
 #ifndef WEBPP_VALIDATORS_HPP
 #define WEBPP_VALIDATORS_HPP
 
-#include "../std/string_view.hpp"
 #include "../std/string.hpp"
+#include "../std/string_view.hpp"
 
 namespace webpp::ascii::is {
 
@@ -91,8 +91,8 @@ namespace webpp::ascii::is {
      */
     [[nodiscard]] constexpr bool number(istl::StringViewifiable auto&& _str) noexcept {
         // todo: add SIMD
-        auto str = istl::string_viewify(_str);
-        bool                   is_first = true;
+        auto str      = istl::string_viewify(_str);
+        bool is_first = true;
         for (auto const& c : str) {
             if (!digit(c)) {
                 if (is_first && c == '.') {
@@ -197,13 +197,13 @@ namespace webpp::ascii::is {
             ++first;
         }
         if (!stl::all_of(first, std::cend(str), [](char_type ch) {
-          return hex(ch);
-        })) {
+                return hex(ch);
+            })) {
             return false;
         }
         return !str.empty();
     }
 
-}
+} // namespace webpp::ascii::is
 
 #endif // WEBPP_VALIDATORS_HPP

@@ -1,12 +1,10 @@
+#include "../../core/include/webpp/strings/to_case.hpp"
 #include "../benchmark.hpp"
 #include "../simd_pch.hpp" // std::experimental as of writing this
 
 #include <algorithm>
 #include <string>
 #include <string_view>
-
-
-#include "../../core/include/webpp/strings/to_case.hpp"
 
 
 
@@ -248,15 +246,15 @@ BENCHMARK(TLR_WebppToLowerString);
 
 
 
-#define TEST_SUITE(name, algorithm, str_count)             \
+#define TEST_SUITE(name, algorithm, str_count)                   \
     static void TLR_##name##str_count(benchmark::State& state) { \
-        auto str2 = str_generator(str_count);              \
-        for (auto _ : state) {                             \
-            std::string istr = str2;                       \
-            algorithm(istr);                               \
-            benchmark::DoNotOptimize(istr);                \
-        }                                                  \
-    }                                                      \
+        auto str2 = str_generator(str_count);                    \
+        for (auto _ : state) {                                   \
+            std::string istr = str2;                             \
+            algorithm(istr);                                     \
+            benchmark::DoNotOptimize(istr);                      \
+        }                                                        \
+    }                                                            \
     BENCHMARK(TLR_##name##str_count);
 
 TEST_SUITE(NWebppEveString, webpp::ascii::algo::eve_to_lower, 1)
@@ -460,8 +458,8 @@ BENCHMARK(TLR_SIMDToLowerString2);
 
 
 #include <eve/eve.hpp>
-#include <eve/function/store.hpp>
 #include <eve/function/add.hpp>
+#include <eve/function/store.hpp>
 // #include <eve/function/load.hpp>
 
 //

@@ -53,13 +53,13 @@ namespace webpp::uri {
         template <typename DefaultAlloc = allocator_type>
         auto get_allocator() const noexcept {
             return extract_allocator_of_or_default<DefaultAlloc>(scheme,
-                                                        user_info.username,
-                                                        user_info.password,
-                                                        host,
-                                                        port,
-                                                        path,
-                                                        queries,
-                                                        fragment);
+                                                                 user_info.username,
+                                                                 user_info.password,
+                                                                 host,
+                                                                 port,
+                                                                 path,
+                                                                 queries,
+                                                                 fragment);
         }
 
 
@@ -164,7 +164,8 @@ namespace webpp::uri {
                             if (target.path.size() > 1) {
                                 target.path.pop_back();
                             }
-                            stl::copy(relative_uri.path.cbegin(), relative_uri.path.cend(),
+                            stl::copy(relative_uri.path.cbegin(),
+                                      relative_uri.path.cend(),
                                       stl::back_inserter(target.path));
                             target.path.normalize();
                         }

@@ -21,24 +21,22 @@ namespace webpp {
         session_manager_type& session;
 
       public:
+        template <typename... Args>
+        self_hosted_request(session_manager_type& _session, Args&&... args)
+          : super(stl::forward<Args>(args)...),
+            session{_session} {}
 
 
-        template <typename ...Args>
-        self_hosted_request(session_manager_type& _session, Args&&...args)
-          : super(stl::forward<Args>(args)...), session{_session} {}
-
-
-//#define WEBPP_SHOSTED_HEADER(name, value)
-//    [[nodiscard]] string_view_type name() const noexcept {
-//        return protocol_type::header(value);
-//    }
-//
-//
-//#undef WEBPP_SHOSTED_HEADER
-
+        //#define WEBPP_SHOSTED_HEADER(name, value)
+        //    [[nodiscard]] string_view_type name() const noexcept {
+        //        return protocol_type::header(value);
+        //    }
+        //
+        //
+        //#undef WEBPP_SHOSTED_HEADER
     };
 
 
-}
+} // namespace webpp
 
 #endif // WEBPP_SELF_HOSTED_REQUEST_HPP

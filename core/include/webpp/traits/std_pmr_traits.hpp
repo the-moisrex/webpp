@@ -10,8 +10,9 @@ namespace webpp {
 
     // todo: specialize for monotonic buffer resource and stuff
 
-    template <typename CharT, typename CharTraits = stl::char_traits<CharT>,
-              typename Allocator = std_pmr_allocator_pack>
+    template <typename CharT,
+              typename CharTraits = stl::char_traits<CharT>,
+              typename Allocator  = std_pmr_allocator_pack>
     using basic_std_pmr_traits = basic_std_traits<CharT, CharTraits, Allocator>;
 
 

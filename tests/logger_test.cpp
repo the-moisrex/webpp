@@ -9,6 +9,4 @@
 using namespace webpp;
 
 
-TEST(Logger, STDERRLogger) {
-
-}
+TEST(Logger, STDERRLogger) {}

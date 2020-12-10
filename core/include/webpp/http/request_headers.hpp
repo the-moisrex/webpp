@@ -4,10 +4,10 @@
 #define WEBPP_REQUEST_HEADERS_HPP
 
 #include "../std/format.hpp"
+#include "../std/string_view.hpp"
 #include "../std/vector.hpp"
 #include "../traits/traits.hpp"
 #include "./headers.hpp"
-#include "../std/string_view.hpp"
 
 namespace webpp {
 
@@ -30,10 +30,10 @@ namespace webpp {
         using super = istl::vector<TraitsType, HeaderFieldType>;
 
       public:
-        using traits_type = TraitsType;
-        using string_type = traits::string<traits_type>;
+        using traits_type      = TraitsType;
+        using string_type      = traits::string<traits_type>;
         using string_view_type = traits::string_view<traits_type>;
-        using field_type  = HeaderFieldType;
+        using field_type       = HeaderFieldType;
 
         template <typename... Args>
         constexpr request_headers(Args&&... args) noexcept
@@ -42,12 +42,10 @@ namespace webpp {
 
 
         // todo: fix this
-        constexpr request_headers(istl::StringViewifiable auto &&header_string, auto&&...args)
-        :   super{stl::forward< decltype(args)>(args)...}
-        {
+        constexpr request_headers(istl::StringViewifiable auto&& header_string, auto&&... args)
+          : super{stl::forward<decltype(args)>(args)...} {
             parse_header_string(istl::string_viewify(header_string));
         }
-
     };
 
 
@@ -86,7 +84,8 @@ namespace webpp {
 
         template <typename ExtensionListType, typename TraitsType, typename EList>
         using mid_level_extensie_type = request_headers<
-          TraitsType, EList,
+          TraitsType,
+          EList,
           typename ExtensionListType::template extensie_type<TraitsType, request_header_field_descriptor>>;
 
         // empty final extensie
@@ -95,6 +94,6 @@ namespace webpp {
     };
 
 
-}
+} // namespace webpp
 
 #endif // WEBPP_REQUEST_HEADERS_HPP

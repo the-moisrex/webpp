@@ -36,8 +36,8 @@ namespace webpp {
         beast_request(Args&&... args) noexcept : super(stl::forward<Args>(args)...),
                                                  beast_request_type{} {}
 
-        beast_request(beast_request const&) = delete; // no copying for now
-        beast_request(beast_request &&) noexcept = default;
+        beast_request(beast_request const&)     = delete; // no copying for now
+        beast_request(beast_request&&) noexcept = default;
     };
 
 } // namespace webpp

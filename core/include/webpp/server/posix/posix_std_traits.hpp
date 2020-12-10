@@ -13,6 +13,6 @@ namespace webpp::posix {
      *   - Standard Memory Resources: Default new and delete (std::allocator) memory resources
      */
     using posix_std_traits = posix_traits<std_traits>;
-}
+} // namespace webpp::posix
 
 #endif // WEBPP_POSIX_STD_TRAITS_HPP

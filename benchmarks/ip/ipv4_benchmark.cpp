@@ -1,10 +1,8 @@
-#include "../benchmark.hpp"
-#include "../boost_pch.hpp"
-
-
 #include "../../core/include/webpp/ip/ipv4.hpp"
 #include "../../core/include/webpp/ip/ipv6.hpp"
 #include "../../core/include/webpp/traits/std_traits.hpp"
+#include "../benchmark.hpp"
+#include "../boost_pch.hpp"
 
 
 
@@ -64,5 +62,3 @@ static void IP_webpp_v4_random(benchmark::State& state) {
     }
 }
 BENCHMARK(IP_webpp_v4_random);
-
-

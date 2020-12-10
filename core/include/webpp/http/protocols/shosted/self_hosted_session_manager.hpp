@@ -39,7 +39,8 @@ namespace webpp::shosted {
         // todo: add "trivial" here; it's a defect to use copy-ctor or move-ctor
         using app_wrapper_ref =
           stl::conditional_t<sizeof(app_wrapper_type) == 0 && stl::is_move_constructible_v<app_wrapper_type>,
-                             app_wrapper_type, app_wrapper_type&>;
+                             app_wrapper_type,
+                             app_wrapper_type&>;
 
 
       private:

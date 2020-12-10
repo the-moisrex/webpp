@@ -34,7 +34,8 @@ namespace webpp {
         // todo: SSL options and other options go here
 
         template <typename... Args>
-        self_hosted(Args&&... args) : super{stl::forward<Args>(args)...}, server{this->app} {}
+        self_hosted(Args&&... args) : super{stl::forward<Args>(args)...},
+                                      server{this->app} {}
 
         [[nodiscard]] static constexpr bool is_ssl_available() const noexcept {
             return false; // todo: change this

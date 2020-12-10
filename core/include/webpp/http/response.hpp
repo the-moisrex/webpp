@@ -134,7 +134,8 @@ namespace webpp {
 
         template <typename ExtensionListType, typename TraitsType, typename EList>
         using mid_level_extensie_type = basic_response<
-          TraitsType, EList,
+          TraitsType,
+          EList,
           typename ExtensionListType::template extensie_type<TraitsType, response_headers_descriptor>,
 
           typename ExtensionListType::template extensie_type<TraitsType, response_body_descriptor>>;

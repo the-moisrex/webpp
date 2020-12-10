@@ -677,8 +677,12 @@ TEST(UriTests, ParseFromStringTwiceFirstUserInfoThenWithout) {
 
 TEST(UriTests, ParseFromStringSchemeIllegalCharacters) {
     const std::vector<std::string> testVectors{
-      {"://www.example.com/"},  {"0://www.example.com/"}, {"+://www.example.com/"},
-      {"@://www.example.com/"}, {".://www.example.com/"}, {"h@://www.example.com/"},
+      {"://www.example.com/"},
+      {"0://www.example.com/"},
+      {"+://www.example.com/"},
+      {"@://www.example.com/"},
+      {".://www.example.com/"},
+      {"h@://www.example.com/"},
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
@@ -694,8 +698,12 @@ TEST(UriTests, ParseFromStringSchemeBarelyLegal) {
         std::string scheme;
     };
     const std::vector<TestVector> testVectors{
-      {"h://www.example.com/", "h"},   {"x+://www.example.com/", "x+"}, {"y-://www.example.com/", "y-"},
-      {"z.://www.example.com/", "z."}, {"aa://www.example.com/", "aa"}, {"a0://www.example.com/", "a0"},
+      {"h://www.example.com/", "h"},
+      {"x+://www.example.com/", "x+"},
+      {"y-://www.example.com/", "y-"},
+      {"z.://www.example.com/", "z."},
+      {"aa://www.example.com/", "aa"},
+      {"a0://www.example.com/", "a0"},
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
@@ -708,8 +716,11 @@ TEST(UriTests, ParseFromStringSchemeBarelyLegal) {
 
 TEST(UriTests, ParseFromStringSchemeMixedCase) {
     const std::vector<std::string> testVectors{
-      {"http://www.example.com/"}, {"hTtp://www.example.com/"}, {"HTTP://www.example.com/"},
-      {"Http://www.example.com/"}, {"HttP://www.example.com/"},
+      {"http://www.example.com/"},
+      {"hTtp://www.example.com/"},
+      {"HTTP://www.example.com/"},
+      {"Http://www.example.com/"},
+      {"HttP://www.example.com/"},
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
@@ -745,8 +756,12 @@ TEST(UriTests, ParseFromStringUserInfoBarelyLegal) {
         std::string userInfo;
     };
     const std::vector<TestVector> testVectors{
-      {"//%41@www.example.com/", "A"},    {"//@www.example.com/", ""},   {"//!@www.example.com/", "!"},
-      {"//'@www.example.com/", "'"},      {"//(@www.example.com/", "("}, {"//;@www.example.com/", ";"},
+      {"//%41@www.example.com/", "A"},
+      {"//@www.example.com/", ""},
+      {"//!@www.example.com/", "!"},
+      {"//'@www.example.com/", "'"},
+      {"//(@www.example.com/", "("},
+      {"//;@www.example.com/", ";"},
       {"http://:@www.example.com/", ":"},
     };
     size_t index = 0;
@@ -799,8 +814,11 @@ TEST(UriTests, ParseFromStringHostBarelyLegal) {
 
 TEST(UriTests, ParseFromStringHostMixedCase) {
     const std::vector<std::string> testVectors{
-      {"http://www.example.com/"}, {"http://www.EXAMPLE.com/"}, {"http://www.exAMple.com/"},
-      {"http://www.example.cOM/"}, {"http://wWw.exampLe.Com/"},
+      {"http://www.example.com/"},
+      {"http://www.EXAMPLE.com/"},
+      {"http://www.exAMple.com/"},
+      {"http://www.example.cOM/"},
+      {"http://wWw.exampLe.Com/"},
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
@@ -993,8 +1011,15 @@ TEST(UriTests, ParseFromStringPathsWithPercentEncodedCharacters) {
         std::string pathFirstSegment;
     };
     const std::vector<TestVector> testVectors{
-      {"%41", "A"},    {"%4A", "J"},    {"%4a", "J"},         {"%bc", "\xbc"},          {"%Bc", "\xbc"},
-      {"%bC", "\xbc"}, {"%BC", "\xbc"}, {"%41%42%43", "ABC"}, {"%41%4A%43%4b", "AJCK"},
+      {"%41", "A"},
+      {"%4A", "J"},
+      {"%4a", "J"},
+      {"%bc", "\xbc"},
+      {"%Bc", "\xbc"},
+      {"%bC", "\xbc"},
+      {"%BC", "\xbc"},
+      {"%41%42%43", "ABC"},
+      {"%41%4A%43%4b", "AJCK"},
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {

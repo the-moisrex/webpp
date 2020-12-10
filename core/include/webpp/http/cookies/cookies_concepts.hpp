@@ -11,8 +11,8 @@ namespace webpp {
     concept Cookie = requires(T cookie) {
         {cookie.name()};
         {cookie.value()};
-//        {T::header_direction};
-//        typename T::traits_type;
+        //        {T::header_direction};
+        //        typename T::traits_type;
     };
 
     // todo: complete this

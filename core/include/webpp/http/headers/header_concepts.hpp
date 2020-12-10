@@ -6,13 +6,13 @@
 namespace webpp::http::headers {
 
     template <typename T>
-    concept Header = requires (T h) {
+    concept Header = requires(T h) {
         T{"Content-Type: string"};
         T::versions;
         h.parse();
         h.is_valid();
     };
 
-}
+} // namespace webpp::http::headers
 
 #endif // WEBPP_HEADER_CONCEPTS_HPP

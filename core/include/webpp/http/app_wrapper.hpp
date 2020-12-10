@@ -111,7 +111,8 @@ namespace webpp {
                                                "    <h1>{0} - {1}</h1>\n"
                                                "  </body>\n"
                                                "</html>\n"),
-                                   err, http::status_code_reason_phrase(err));
+                                   err,
+                                   http::status_code_reason_phrase(err));
             }
         }
     };
