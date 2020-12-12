@@ -12,13 +12,15 @@ namespace webpp {
     struct std_allocator_pack {
         struct std_allocator_descriptor {
 
+            using inputs = alloc::allocator_list<>;
+
             template <typename T>
             using type = stl::allocator<T>;
 
             static constexpr alloc::feature_pack features{alloc::stateless, alloc::sync, alloc::low_locality};
         };
 
-        using descriptor_list = alloc::allocator_list<std_allocator_descriptor>;
+        using descriptors = alloc::allocator_list<std_allocator_descriptor>;
     };
 
 

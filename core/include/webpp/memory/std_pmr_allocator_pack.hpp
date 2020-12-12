@@ -17,41 +17,47 @@ namespace webpp {
      * fixme: see if you can add those two allocators in this as well by adding wrappers for them
      */
     struct std_pmr_allocator_pack {
-        struct monotonic_buffer_resource_descriptor {
-            static constexpr alloc::feature_pack features{alloc::noop_dealloc,
-                                                          alloc::stateful,
-                                                          alloc::unsync};
+
+        // std::pmr has one allocator type
+        struct polymorphic_allocator_descriptor {
+            // but std::pmr has multiple input types for that one allocator
+
+            struct monotonic_buffer_resource_input_descriptor {
+                using type = stl::add_pointer_t<stl::pmr::monotonic_buffer_resource>;
+                static constexpr alloc::feature_pack features{alloc::noop_dealloc,
+                                                              alloc::stateful,
+                                                              alloc::unsync};
+            };
+
+            struct synchronized_pool_resource_input_descriptor {
+                using type = stl::add_pointer_t<stl::pmr::synchronized_pool_resource>;
+                static constexpr alloc::feature_pack features{alloc::sync, alloc::stateful};
+            };
+
+            struct unsynchronized_pool_resource_input_descriptor {
+                using type = stl::add_pointer_t<stl::pmr::unsynchronized_pool_resource>;
+                static constexpr alloc::feature_pack features{};
+            };
+
+            //        struct std_allocator_descriptor {
+            //            static constexpr alloc::feature_pack features{alloc::stateless, alloc::sync,
+            //            alloc::low_locality};
+            //            using type = stl::allocator<T>;
+            //        };
 
             template <typename T>
-            using type = stl::pmr::monotonic_buffer_resource;
+            using type = stl::pmr::polymorphic_allocator<T>;
+
+            // the inputs will inherit these features
+            static constexpr alloc::feature_pack features{alloc::stateful};
+
+            // todo: add new_delete_resource
+            using inputs = alloc::allocator_list<monotonic_buffer_resource_input_descriptor,
+                                                 synchronized_pool_resource_input_descriptor,
+                                                 unsynchronized_pool_resource_input_descriptor>;
         };
 
-        struct synchronized_pool_resource_descriptor {
-            static constexpr alloc::feature_pack features{alloc::sync, alloc::stateful};
-
-            template <typename T>
-            using type = stl::pmr::synchronized_pool_resource;
-        };
-
-        struct unsynchronized_pool_resource_descriptor {
-            static constexpr alloc::feature_pack features{};
-
-            template <typename T>
-            using type = stl::pmr::unsynchronized_pool_resource;
-        };
-
-        struct std_allocator_descriptor {
-            static constexpr alloc::feature_pack features{alloc::stateless, alloc::sync, alloc::low_locality};
-
-            template <typename T>
-            using type = stl::allocator<T>;
-        };
-
-        // todo: add new_delete_resource
-        using descriptor_list = alloc::allocator_list<monotonic_buffer_resource_descriptor,
-                                                      synchronized_pool_resource_descriptor,
-                                                      unsynchronized_pool_resource_descriptor,
-                                                      std_allocator_descriptor>;
+        using descriptors = alloc::allocator_list<polymorphic_allocator_descriptor>;
     };
 
     static_assert(AllocatorPack<std_pmr_allocator_pack>, "The specified allocator pack is not really one");

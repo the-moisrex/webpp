@@ -51,9 +51,24 @@ namespace webpp {
 
     // static_assert(Allocator<stl::allocator<int>>, "There's a problem with Allocator concept");
 
+    template <typename I>
+    concept AllocatorInput = requires {
+        typename I::type; // the input type
+        {I::features};    // the input features of type alloc::feature_pack
+    };
+
+    template <typename D>
+    concept AllocatorDescriptor = requires {
+        typename D::template type<char>; // get the allocator itself
+        typename D::inputs;              // input types (a list of AllocatorInput)
+        {D::features};                   // parent features of type alloc::feature_pack
+    };
+
+
+    // todo: should we simplify AllocatorPack by making the AllocatorDescriptor the AllocatorPack itself?
     template <typename D>
     concept AllocatorPack = requires {
-        typename D::descriptor_list;
+        typename D::descriptors; // a list of AllocatorDescriptor
     };
 
 } // namespace webpp

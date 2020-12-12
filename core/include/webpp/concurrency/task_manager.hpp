@@ -19,13 +19,14 @@ namespace webpp {
         using allocator_type = stl::remove_cvref_t<AllocType>;
 
       private:
+        // todo: allocator
         stl::deque<stl::function<void()>, allocator_type> _q;
         bool                                              _done{false};
         stl::mutex                                        _mutex;
         stl::condition_variable                           _ready;
 
       public:
-        notification_queue(allocator_type const& alloc = allocator_type{}) : _q{alloc} {};
+        notification_queue(allocator_type const& alloc = allocator_type{}) : _q{alloc} {}
 
         bool try_pop(stl::function<void()>& x) noexcept {
             stl::unique_lock<stl::mutex> lock{_mutex, stl::try_to_lock};

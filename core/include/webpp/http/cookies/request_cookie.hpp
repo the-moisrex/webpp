@@ -46,7 +46,7 @@ namespace webpp {
             return is_valid();
         }
 
-        bool is_valid() const noexcept {
+        [[nodiscard]] bool is_valid() const noexcept {
             // todo
             // The _valid may not catch all the validness conditions, so we have
             // to do other validation checks ourselves.
