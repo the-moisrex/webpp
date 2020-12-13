@@ -51,6 +51,14 @@ namespace webpp {
 
     // static_assert(Allocator<stl::allocator<int>>, "There's a problem with Allocator concept");
 
+    /**
+     * Types of allocator that the core library may need based on the inputs:
+     *   1. limited space on stack (with the max limit known)
+     *   2. unlimited long-standing on heap
+     *   3. default-constructible, general allocators
+     *   4. singleton allocators that are passed to us
+     *   5. copyable allocators that are passed to us
+     */
     template <typename I>
     concept AllocatorInput = requires {
         typename I::type; // the input type
