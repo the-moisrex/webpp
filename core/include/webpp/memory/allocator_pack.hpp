@@ -11,6 +11,14 @@
 namespace webpp::alloc {
 
     // todo: see if you need to add low&high "variation" and "density" or not
+    // todo: add "singleton" and "limited_space" as a feature
+    // todo: add "low_/high_fragmentation"
+    // todo: add "prefer_same_size" (pool)
+    // todo: add multi-pool
+    // todo: add "local/arena" (add a "buffer" type or a "stack" type)
+
+    // https://cdn2-ecros.pl/event/codedive/files/presentations/2018/code%20dive%202018%20-%20Andreas%20Weis%20-%20Taming%20dynamic%20memory%20-%20An%20introduction%20to%20custom%20allocators%20in%20C%2B%2B.pdf
+    // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0089r0.pdf
 
     // every feature has to have an opposite feature so the child can overwrite the parent's decision.
     enum features : unsigned short {
@@ -67,7 +75,7 @@ namespace webpp::alloc {
             if (conflicting_fch.second == fch)
                 return conflicting_fch.first;
         }
-        assert(false); // there's something wrong.
+        return fch; // there's something wrong, we should not reach this part
     }
 
     /**
@@ -206,11 +214,17 @@ namespace webpp::alloc {
     template <typename... AllocatorDescriptor, feature_pack AskedFeatures>
     struct ranker<allocator_list<AllocatorDescriptor...>, AskedFeatures> {
 
+        // the ranking should be used on each combination of "allocator" and its "inputs"; sorting allocators
+        // only will not result in the best solution.
+
         using best_descriptor = typename istl::ranked_types<ranking_condition<AskedFeatures>::template ranker,
                                                             AllocatorDescriptor...>::best::type;
 
+        // get the allocator type that gets passed to the STL containers and such
         template <typename T>
         using type = typename best_descriptor::template type<T>;
+
+        // todo: get the best input
     };
 
     // requires an allocator pack (which includes "allocator descriptor list")
