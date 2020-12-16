@@ -124,7 +124,7 @@ namespace webpp::istl {
         } else if constexpr (requires { str.str(); }) {
             return string_viewify_of<StrViewT>(str.str());
         } else {
-            throw stl::invalid_argument("The specified input is not convertible to string view");
+            static_assert(false && sizeof(StrT), "The specified input is not convertible to string view");
         }
     }
 

@@ -16,6 +16,8 @@ namespace webpp::alloc {
     // todo: add "prefer_same_size" (pool)
     // todo: add multi-pool
     // todo: add "local/arena" (add a "buffer" type or a "stack" type)
+    // todo: change the "input" to "resource"
+    // todo: add constructor unifier for allocators
 
     // https://cdn2-ecros.pl/event/codedive/files/presentations/2018/code%20dive%202018%20-%20Andreas%20Weis%20-%20Taming%20dynamic%20memory%20-%20An%20introduction%20to%20custom%20allocators%20in%20C%2B%2B.pdf
     // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0089r0.pdf
@@ -169,7 +171,6 @@ namespace webpp::alloc {
                         }
                     }
                 }
-
 
                 for (auto const ft : feature_rates) {
                     const auto fch          = ft.first;
