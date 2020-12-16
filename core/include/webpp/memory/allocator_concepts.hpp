@@ -60,7 +60,7 @@ namespace webpp {
      *   5. copyable allocators that are passed to us
      */
     template <typename I>
-    concept AllocatorInput = requires {
+    concept MemoryResource = requires {
         typename I::type; // the input type
         {I::features};    // the input features of type alloc::feature_pack
     };
@@ -68,7 +68,7 @@ namespace webpp {
     template <typename D>
     concept AllocatorDescriptor = requires {
         typename D::template type<char>; // get the allocator itself
-        typename D::inputs;              // input types (a list of AllocatorInput)
+        typename D::resources;           // input types (a list of MemoryResource)
         {D::features};                   // parent features of type alloc::feature_pack
     };
 
@@ -78,6 +78,33 @@ namespace webpp {
     concept AllocatorPack = requires {
         typename D::descriptors; // a list of AllocatorDescriptor
     };
+
+
+    // todo: types to add:
+    //       1. make: make<string>(alloc)
+    //       2. buffer: stack, arena, ram
+    //       3. allocator_pack: a pack of allocator's objects
+    //       4. resource_pack: a pack of resources for one type of allocator
+
+    /**
+     * Examples of usage:
+     * @code
+     *
+     *   // global (not really)
+     *   allocator_pack<std_pmr_allocator_pack> alloc_pack();
+     *   alloc_pack.set_upstream(...);
+     *
+     *   void local_function() {
+     *       stack_allocator<1024> arena(alloc_pack); // a resource
+     *       for (auto long_str: long_strings) {
+     *          resource<basic_string<...>> str(arena, long_str);
+     *          str += "; not that long";
+     *       }
+     *   }
+     * @endcode
+     */
+
+
 
 } // namespace webpp
 

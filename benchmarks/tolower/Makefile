@@ -1,7 +1,7 @@
 flags = -std=c++20 -isystem /usr/local/include -L/usr/local/lib -lpthread -lbenchmark_main -lbenchmark
 optflags = -flto -Ofast -DNDEBUG -march=native
 #optflags = -O2
-files = main.cpp
+files = tolower_benchmark.cpp
 
 all: gcc
 .PHONY: all

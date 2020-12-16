@@ -114,7 +114,8 @@ namespace webpp::istl {
         } else if constexpr (requires { str.str(); }) {
             return stringify_of<StrT>(str.str(), allocator);
         } else {
-            throw stl::invalid_argument("The specified input is not convertible to string");
+            // means static_assert(false, ...)
+            static_assert(false && sizeof(StrT), "The specified input is not convertible to string");
         }
     }
 
