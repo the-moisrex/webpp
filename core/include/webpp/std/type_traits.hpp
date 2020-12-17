@@ -174,6 +174,62 @@ namespace webpp::istl {
 
 
 
+
+    ////////////////////////////////////////////////////////////////
+    /////// changing template parameter type from Old to New ///////
+    ////////////////////////////////////////////////////////////////
+
+
+    namespace details {
+
+        template <typename ...T>
+        struct fake_tuple{};
+
+        template <template <typename...> typename T,
+                  typename OldType,
+                  typename NewType,
+                  typename T1,
+                  typename T2>
+        struct template_element;
+
+        // recursive case (move from T1 tuple to T2 tuple if it's not a match)
+        template <template <typename...> typename T,
+                  typename OldType,
+                  typename NewType,
+                  typename... Heads,
+                  typename This,
+                  typename... Tails>
+        struct template_element<T, OldType, NewType, fake_tuple<Heads...>, fake_tuple<This, Tails...>>
+          : template_element<T, OldType, NewType, fake_tuple<Heads..., This>, fake_tuple<Tails...>> {};
+
+        // base case (found the old type)
+        template <template <typename...> typename T,
+                  typename OldType,
+                  typename NewType,
+                  typename... Heads,
+                  typename... Tails>
+        struct template_element<T, OldType, NewType, fake_tuple<Heads...>, fake_tuple<OldType, Tails...>> {
+            using type = T<Heads..., NewType, Tails...>;
+        };
+
+
+        template <typename T, typename OldType, typename NewType>
+        struct change_template_parameter;
+
+        template <template <typename...> typename T, typename OldType, typename NewType, typename... Types>
+        struct change_template_parameter<T<Types...>, OldType, NewType> {
+            using the_type = T<Types...>;
+            using type     = typename details::
+              template_element<T, OldType, NewType, fake_tuple<>, fake_tuple<Types...>>::type;
+        };
+
+    } // namespace details
+
+    template <typename T, typename OldType, typename NewType>
+    using replace_parameter = typename details::change_template_parameter<T, OldType, NewType>::type;
+
+
+
 } // namespace webpp::istl
 
 #endif // WEBPP_TYPE_TRAITS_HPP
