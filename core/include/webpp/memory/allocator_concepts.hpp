@@ -87,7 +87,7 @@ namespace webpp {
     //       4. resource_pack: a pack of resources for one type of allocator
 
     /**
-     * Examples of usage:
+     * Example codes of possible implementations:
      * @code
      *
      *   // global (not really)
@@ -102,6 +102,62 @@ namespace webpp {
      *       }
      *   }
      * @endcode
+     *
+     * @code
+     *   // global or in main
+     *   int main() {
+     *      allocator_pack<std_pmr_allocator_pack> alloc_pack();
+     *      memory_buffer buff;
+     *      pmr::monotonic_buffer_resource mbr(buff.data(), buff.size());
+     *      alloc_pack.template set_upstream<pmr::monotonic_buffer_resource>(mbr);
+     *      auto str = do(alloc_pack);
+     *      cout << str << endl;
+     *   }
+     *
+     *   template <typename T>
+     *   auto do(allocator_pack<T> &alloc_pack) {
+     *      stack_allocator<1024> arena(alloc_pack);
+     *      object<string> res(arena);
+     *      for (auto str : strs) {
+     *          res += str;
+     *      }
+     *      return heap(res, alloc_pack); // copy from stack to heap
+     *   }
+     *
+     *   template <typename T>
+     *   auto do2(allocator_pack<T> &alloc_pack) {
+     *      auto res = make_object<string>(alloc_pack, alloc::unsync, alloc::high_utilization);
+     *      // fill res
+     *      return res;
+     *   }
+     *
+     *   template <typename T>
+     *   auto do3(allocator_pack<T> &alloc_pack) {
+     *      auto res = alloc_pack.template make_object<string>();
+     *      // ...
+     *      return res;
+     *   }
+     *
+     * @endcode
+     *
+     *
+     * @code
+     *   auto do(allocator_pack<T> &alloc_pack) {
+     *      auto res = make<std::basic_string,
+     *                      char,
+     *                      std::char_traits<char>,
+     *                      alloc_placeholder>(alloc_pack, alloc_placeholder{});
+     *      // ...
+     *      return res;
+     *   }
+     *
+     *   auto do2(allocator_pack<T>&alloc_pack) {
+     *      auto res = make<std::string>(alloc_pack, alloc::placeholder());
+     *      // ...
+     *      return res;
+     *   }
+     * @endcode
+     *
      */
 
 
