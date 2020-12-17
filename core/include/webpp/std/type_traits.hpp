@@ -202,6 +202,15 @@ namespace webpp::istl {
         struct template_element<T, OldType, NewType, fake_tuple<Heads...>, fake_tuple<This, Tails...>>
           : template_element<T, OldType, NewType, fake_tuple<Heads..., This>, fake_tuple<Tails...>> {};
 
+        // to check if it exists.
+        template <template <typename...> typename T,
+          typename OldType,
+          typename NewType,
+          typename... Heads>
+        struct template_element<T, OldType, NewType, fake_tuple<Heads...>, fake_tuple<>> : stl::false_type {
+            using type = void;
+        };
+
         // base case (found the old type)
         template <template <typename...> typename T,
                   typename OldType,
@@ -228,6 +237,8 @@ namespace webpp::istl {
     template <typename T, typename OldType, typename NewType>
     using replace_parameter = typename details::change_template_parameter<T, OldType, NewType>::type;
 
+
+    // todo: add replace_parameter_all as well
 
 
 } // namespace webpp::istl
