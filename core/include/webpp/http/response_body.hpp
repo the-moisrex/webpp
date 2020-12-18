@@ -3,7 +3,6 @@
 
 #include "../extensions/extension.hpp"
 
-
 namespace webpp {
 
     /**
@@ -69,29 +68,9 @@ namespace webpp {
      */
     template <Traits TraitsType, typename EList = empty_extension_pack>
     struct response_body : public EList {
-        using traits_type      = TraitsType;
-        using string_type      = traits::string<traits_type>;
-        using string_view_type = traits::string_view<traits_type>;
-        using elist_type       = EList;
-        /*
-              private:
-                template <typename ExtensionType>
-                using variant_extractor = typename ExtensionType::response_body_extensions;
+        using traits_type = TraitsType;
+        using elist_type  = EList;
 
-                template <typename ExtensionType>
-                struct has_variant {
-                    static constexpr bool value = requires {
-                        typename ExtensionType::response_body_extensions;
-                    };
-                };
-
-                using extensions_that_has_variants =
-                  typename EList::template filter<stl::variant, has_variant, EList>;
-
-              public:
-                using variant_type   = typename EList::template epack_miner<stl::variant, variant_extractor,
-                                                                          extensions_that_has_variants>::type;
-        */
         template <typename... Args>
         constexpr response_body(Args&&... args) noexcept : elist_type{stl::forward<Args>(args)...} {}
     };
