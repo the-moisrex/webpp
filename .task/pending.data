@@ -74,3 +74,4 @@
 [description:"add errors.hpp success and failure functions are useless" entry:"1606929125" modified:"1606929125" project:"bugs" status:"pending" uuid:"9926f34f-ae50-4967-9c12-9f0b54986dd3"]
 [description:"remove magic_enums as dependency" entry:"1607022801" modified:"1607022801" status:"pending" uuid:"349645bd-0ee8-4bf0-b6ad-ed05f9840065"]
 [description:"add 128bit support to ipv6 class for systems that supports them" entry:"1607086956" modified:"1607086956" project:"net" status:"pending" uuid:"c3b6f39a-9ef9-4dc8-8f33-20ad0aa78800"]
+[description:"use source_group to group files logically" entry:"1608232221" modified:"1608232221" project:"cmake" status:"pending" uuid:"aeaf9a06-8efd-46e3-9b61-f516fa26de90"]

@@ -13,7 +13,7 @@ namespace webpp {
 
     template <typename CharT,
               typename CharTraits = stl::char_traits<CharT>,
-              typename Allocator  = std_allocator_pack>
+              typename Allocator  = stl::allocator_descriptors>
     struct basic_std_traits {
         using traits_type = basic_std_traits<CharT, CharTraits, Allocator>;
         using char_type   = CharT;
@@ -31,7 +31,7 @@ namespace webpp {
     //    template <typename T>
     //    struct std_traits_from_string_view {
     //        using type = basic_std_traits<typename T::value_type, typename T::traits_type,
-    //        std_allocator_pack>;
+    //        stl::allocator_pack>;
     //    };
     //
     //    template <typename T>

@@ -12,7 +12,7 @@ namespace webpp {
 
     template <typename CharT,
               typename CharTraits = stl::char_traits<CharT>,
-              typename Allocator  = std_pmr_allocator_pack>
+              typename Allocator  = stl::pmr::allocator_descriptors>
     using basic_std_pmr_traits = basic_std_traits<CharT, CharTraits, Allocator>;
 
 

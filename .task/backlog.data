@@ -216,3 +216,4 @@
 {"description":"projects","end":"20201203T191220Z","entry":"20201203T191205Z","modified":"20201203T191222Z","status":"deleted","uuid":"27286d5e-96ff-4c8a-b3d1-dbed6a527d12"}
 {"description":"remove magic_enums as dependency","entry":"20201203T191321Z","modified":"20201203T191321Z","status":"pending","uuid":"349645bd-0ee8-4bf0-b6ad-ed05f9840065"}
 {"description":"add 128bit support to ipv6 class for systems that supports them","entry":"20201204T130236Z","modified":"20201204T130236Z","project":"net","status":"pending","uuid":"c3b6f39a-9ef9-4dc8-8f33-20ad0aa78800"}
+{"description":"use source_group to group files logically","entry":"20201217T191021Z","modified":"20201217T191021Z","project":"cmake","status":"pending","uuid":"aeaf9a06-8efd-46e3-9b61-f516fa26de90"}

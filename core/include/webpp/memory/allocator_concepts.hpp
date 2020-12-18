@@ -3,7 +3,7 @@
 #ifndef WEBPP_ALLOCATOR_CONCEPTS_HPP
 #define WEBPP_ALLOCATOR_CONCEPTS_HPP
 
-#include "../std/std.hpp"
+#include "../std/tuple.hpp"
 
 #include <memory>
 
@@ -65,6 +65,7 @@ namespace webpp {
         {I::features};    // the input features of type alloc::feature_pack
     };
 
+    // one single allocator descriptor which describes an allocator and its features and its resources
     template <typename D>
     concept AllocatorDescriptor = requires {
         typename D::template type<char>; // get the allocator itself
@@ -72,13 +73,24 @@ namespace webpp {
         {D::features};                   // parent features of type alloc::feature_pack
     };
 
+    namespace details {
+        template <typename T>
+        struct allocator_descriptor_validator {
+            static constexpr bool value = AllocatorDescriptor<T>;
+        };
 
-    // todo: should we simplify AllocatorPack by making the AllocatorDescriptor the AllocatorPack itself?
+        template <typename T>
+        struct allocator_validator {
+            static constexpr bool value = Allocator<T>;
+        };
+    } // namespace details
+
+    // a list of allocator descriptors
     template <typename D>
-    concept AllocatorPack = requires {
-        typename D::descriptors; // a list of AllocatorDescriptor
-    };
+    concept AllocatorDescriptors = istl::TupleOf<details::allocator_descriptor_validator, D>;
 
+    template <typename T>
+    concept AllocatorPack = istl::TupleOf<details::allocator_validator, T>;
 
     // todo: types to add:
     //       1. make: make<string>(alloc)
@@ -91,7 +103,7 @@ namespace webpp {
      * @code
      *
      *   // global (not really)
-     *   allocator_pack<std_pmr_allocator_pack> alloc_pack();
+     *   allocator_pack<stl::pmr::allocator_pack> alloc_pack();
      *   alloc_pack.set_upstream(...);
      *
      *   void local_function() {
@@ -106,7 +118,7 @@ namespace webpp {
      * @code
      *   // global or in main
      *   int main() {
-     *      allocator_pack<std_pmr_allocator_pack> alloc_pack();
+     *      allocator_pack<stl::pmr::allocator_pack> alloc_pack();
      *      memory_buffer buff;
      *      pmr::monotonic_buffer_resource mbr(buff.data(), buff.size());
      *      alloc_pack.template set_upstream<pmr::monotonic_buffer_resource>(mbr);
