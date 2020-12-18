@@ -152,8 +152,8 @@ namespace webpp {
      */
     template <typename T>
     concept Traits = requires {
-        requires AllocatorPack<typename T::alloc_pack>; // allocator pack
-        requires Logger<typename T::logger_type>;       // logger type
+        requires AllocatorDescriptors<typename T::allocator_descriptors>; // allocator pack
+        requires Logger<typename T::logger_type>;                         // logger type
         // requires ThreadPool<typename T::thread_pool>;   // thread pool
 
         typename T::string_view;
