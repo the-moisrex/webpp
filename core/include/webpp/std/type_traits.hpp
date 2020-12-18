@@ -238,6 +238,29 @@ namespace webpp::istl {
     using replace_parameter = typename details::change_template_parameter<T, OldType, NewType>::type;
 
 
+    /**
+     * With the help of this, you can replace a "placeholder" type with the new object you give it.
+     * It's good for using in codes like this:
+     *
+     * @code
+     *   struct placeholder{};
+     *
+     *   template <typename ...Args>
+     *   void replace(Args&&...args) {
+     *      return something{replace_object<placeholder, new_type>(stl::forward<Args>(args), new_obj)...};
+     *   }
+     * @endcode
+     */
+    template <typename OldType, typename NewType, typename T>
+    constexpr auto replace_object(T&& obj, NewType const& new_obj) noexcept {
+        if constexpr (stl::same_as<OldType, T>) {
+            return new_obj;
+        } else {
+            return stl::forward<T>(obj);
+        }
+    }
+
+
     // todo: add replace_parameter_all as well
 
 

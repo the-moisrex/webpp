@@ -193,6 +193,10 @@ namespace webpp::flags {
         constexpr void reset(type v) noexcept {
             value = value_of(v);
         }
+
+        [[nodiscard]] constexpr bool empty() const noexcept {
+            return value == none;
+        }
     };
 
 } // namespace webpp::flags

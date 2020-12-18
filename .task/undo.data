@@ -729,3 +729,6 @@ new [description:"remove magic_enums as dependency" entry:"1607022801" modified:
 time 1607086956
 new [description:"add 128bit support to ipv6 class for systems that supports them" entry:"1607086956" modified:"1607086956" project:"net" status:"pending" uuid:"c3b6f39a-9ef9-4dc8-8f33-20ad0aa78800"]
 ---
+time 1608232221
+new [description:"use source_group to group files logically" entry:"1608232221" modified:"1608232221" project:"cmake" status:"pending" uuid:"aeaf9a06-8efd-46e3-9b61-f516fa26de90"]
+---

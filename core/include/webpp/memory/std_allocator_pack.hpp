@@ -8,23 +8,20 @@
 #include <memory>
 
 namespace webpp {
+    namespace stl {
+        namespace details {
+            struct std_allocator_descriptor_type {
+                using resources = alloc::allocator_list<>;
+                static constexpr alloc::feature_pack features{alloc::stateless,
+                                                              alloc::sync,
+                                                              alloc::low_locality};
+                template <typename T>
+                using type = stl::allocator<T>;
+            };
+        } // namespace details
 
-    struct std_allocator_pack {
-        struct std_allocator_descriptor {
-
-            using inputs = alloc::allocator_list<>;
-
-            template <typename T>
-            using type = stl::allocator<T>;
-
-            static constexpr alloc::feature_pack features{alloc::stateless, alloc::sync, alloc::low_locality};
-        };
-
-        using descriptors = alloc::allocator_list<std_allocator_descriptor>;
-    };
-
-
-    static_assert(AllocatorPack<std_allocator_pack>, "The specified allocator pack is not really one");
+        using allocator_descriptors = alloc::allocator_list<details::std_allocator_descriptor_type>;
+    } // namespace stl
 
 } // namespace webpp
 
