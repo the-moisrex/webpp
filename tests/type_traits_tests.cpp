@@ -1,6 +1,7 @@
 // Created by moisrex on 12/17/20.
 
 #include "../core/include/webpp/std/type_traits.hpp"
+#include "../core/include/webpp/std/tuple.hpp"
 #include <string>
 #include <memory_resource>
 
@@ -31,5 +32,17 @@ using should_be_void = replace_parameter<
 static_assert(is_void_v<should_be_void>);
 
 
+
+///////////////////// Tuple ///////////////////
+
+
+template <typename ...T>
+struct fake_tuple {};
+
+// tuple_filter
+static_assert(is_same_v<
+  tuple_filter_t<is_void, fake_tuple<int, void, int, void, double, void>>,
+  fake_tuple<void, void, void>
+>);
 
 

@@ -225,7 +225,7 @@ namespace webpp::alloc {
         template <typename T>
         using type = typename best_descriptor::template type<T>;
 
-        // todo: get the best input
+        // todo: get the best resource
     };
 
 
@@ -238,7 +238,7 @@ namespace webpp::alloc {
     template <AllocatorDescriptors AllocDescTypes>
     struct allocator_extractor;
 
-    template <AllocatorDescriptor ...AllocDescType>
+    template <AllocatorDescriptor... AllocDescType>
     struct allocator_extractor<allocator_list<AllocDescType...>> {
 
         template <typename T>
@@ -246,18 +246,21 @@ namespace webpp::alloc {
     };
 
     /**
-     * Extract memory resources from an allocator descriptor
+     * Extract "memory resource descriptors" from an allocator descriptor
+     * in form of std::pair<AllocatorDescriptor, ResourceDescriptor>
      */
-    template <AllocatorDescriptor AllocDescType>
-    struct resource_extractor;
+    template <AllocatorDescriptor AllocDescType, typename TheSame = AllocDescType>
+    struct resource_descriptor_extractor
+      : public resource_descriptor_extractor<typename AllocDescType::resources, TheSame> {};
 
-    template <MemoryResource ...MemRes>
-    struct resource_extractor<allocator_list<MemRes...>> {
-
-        template <typename T>
-        using type = allocator_list<typename MemRes::template type<T>...>;
+    template <MemoryResource... MemRes, typename AllocDescType>
+    struct resource_descriptor_extractor<allocator_list<MemRes...>, AllocDescType> {
+        using type = allocator_list<std::pair<AllocDescType, MemRes>...>;
     };
 
+
+    template <typename List, feature_pack FPack>
+    using filter = ;
 
 
     /**
@@ -275,6 +278,15 @@ namespace webpp::alloc {
 
         template <Allocator AllocType>
         static constexpr bool has_allocator = istl::tuple_contains<descriptors, AllocType>::value;
+
+        // set upstream
+        // get allocator
+        // construct
+        // allocate
+        // deallocate
+        // new_object
+        // delete_object
+        // ...
     };
 
 

@@ -38,14 +38,88 @@ namespace webpp::istl {
         static constexpr bool value = false;
     };
 
-    template <template <typename> typename Concept, typename... Types>
-    struct is_tuple_of<Concept, stl::tuple<Types...>> {
+    template <template <typename> typename Concept,
+              typename... Types,
+              template <typename...>
+              typename TupleType>
+    struct is_tuple_of<Concept, TupleType<Types...>> {
         static constexpr bool value = (Concept<Types>::value && ...);
     };
 
 
     template <template <typename> typename Concept, typename Tup>
-    concept TupleOf = is_tuple_of<Concept, Tup>::value;
+    concept TupleOf = Tuple<Tup>&& is_tuple_of<Concept, Tup>::value;
+
+
+    // details for tuple_filter
+    namespace details {
+        template <template <typename> typename Concept,
+                  typename Head,
+                  typename Tail,
+                  template <typename...>
+                  typename TupleType>
+        struct tuple_filter_impl;
+
+        // moving This from Heads to the Tails list
+        template <template <typename> typename Concept,
+                  typename... Heads,
+                  typename This,
+                  typename... Tails,
+                  template <typename...>
+                  typename TupleType>
+        requires(Concept<This>::value) struct tuple_filter_impl<Concept,
+                                                                TupleType<This, Heads...>,
+                                                                TupleType<Tails...>,
+                                                                TupleType>
+          : tuple_filter_impl<Concept, TupleType<Heads...>, TupleType<This, Tails...>, TupleType> {};
+
+        // remove the first one
+        template <template <typename> typename Concept,
+                  typename... Heads,
+                  typename This,
+                  typename... Tails,
+                  template <typename...>
+                  typename TupleType>
+        requires(!Concept<This>::value) struct tuple_filter_impl<Concept,
+                                                                 TupleType<This, Heads...>,
+                                                                 TupleType<Tails...>,
+                                                                 TupleType>
+          : tuple_filter_impl<Concept, TupleType<Heads...>, TupleType<Tails...>, TupleType> {};
+
+        // We're at the end of the line, no Heads left to check
+        template <template <typename> typename Concept,
+                  typename... Tails,
+                  template <typename...>
+                  typename TupleType>
+        struct tuple_filter_impl<Concept, TupleType<>, TupleType<Tails...>, TupleType> {
+            using type = TupleType<Tails...>;
+        };
+    } // namespace details
+
+    /**
+     * Filter tuple types based on the Concept templated type (which contains a bool "value")
+     * Example of the Concept type:
+     *
+     * @code
+     *   template <typename T>
+     *   struct is_not_void {
+     *      static constexpr bool value = !std::is_void_v<T>; // or use a C++20 requires clause here
+     *   };
+     * @endcode
+     */
+    template <template <typename> typename Concept, typename Tup>
+    struct tuple_filter;
+
+    template <template <typename> typename Concept,
+              typename... Types,
+              template <typename...>
+              typename TupleType>
+    struct tuple_filter<Concept, TupleType<Types...>>
+      : public details::tuple_filter_impl<Concept, TupleType<Types...>, TupleType<>, TupleType> {};
+
+
+    template <template <typename> typename Concept, typename Tup>
+    using tuple_filter_t = typename tuple_filter<Concept, Tup>::type;
 
 
     /**

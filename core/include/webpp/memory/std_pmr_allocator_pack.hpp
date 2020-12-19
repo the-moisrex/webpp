@@ -22,21 +22,21 @@ namespace webpp {
 
             // std::pmr has one allocator type
             struct polymorphic_allocator_descriptor {
-                // but std::pmr has multiple input types for that one allocator
+                // but std::pmr has multiple resource types for that one allocator
 
-                struct monotonic_buffer_resource_input_descriptor {
+                struct monotonic_buffer_resource_descriptor {
                     using type = stl::add_pointer_t<stl::pmr::monotonic_buffer_resource>;
                     static constexpr alloc::feature_pack features{alloc::noop_dealloc,
                                                                   alloc::stateful,
                                                                   alloc::unsync};
                 };
 
-                struct synchronized_pool_resource_input_descriptor {
+                struct synchronized_pool_resource_descriptor {
                     using type = stl::add_pointer_t<stl::pmr::synchronized_pool_resource>;
                     static constexpr alloc::feature_pack features{alloc::sync, alloc::stateful};
                 };
 
-                struct unsynchronized_pool_resource_input_descriptor {
+                struct unsynchronized_pool_resource_descriptor {
                     using type = stl::add_pointer_t<stl::pmr::unsynchronized_pool_resource>;
                     static constexpr alloc::feature_pack features{};
                 };
@@ -50,13 +50,13 @@ namespace webpp {
                 template <typename T>
                 using type = stl::pmr::polymorphic_allocator<T>;
 
-                // the inputs will inherit these features
+                // the resources will inherit these features
                 static constexpr alloc::feature_pack features{alloc::stateful};
 
                 // todo: add new_delete_resource
-                using resources = alloc::allocator_list<monotonic_buffer_resource_input_descriptor,
-                                                        synchronized_pool_resource_input_descriptor,
-                                                        unsynchronized_pool_resource_input_descriptor>;
+                using resources = alloc::allocator_list<monotonic_buffer_resource_descriptor,
+                                                        synchronized_pool_resource_descriptor,
+                                                        unsynchronized_pool_resource_descriptor>;
             };
 
         } // namespace details
