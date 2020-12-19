@@ -258,9 +258,22 @@ namespace webpp::alloc {
         using type = allocator_list<std::pair<AllocDescType, MemRes>...>;
     };
 
+    namespace details {
+
+        template <feature_pack FPack>
+        struct features_filterer {
+
+            template <typename T>
+            struct type {
+                // check if T has the features in the FPack
+                // if the rank > 0
+                static constexpr bool value = ranking_condition<FPack>::template ranker<T>::value > 0;
+            };
+        };
+    }
 
     template <typename List, feature_pack FPack>
-    using filter = ;
+    using filter = istl::tuple_filter<details::features_filterer<FPack>::template type, List>;
 
 
     /**
