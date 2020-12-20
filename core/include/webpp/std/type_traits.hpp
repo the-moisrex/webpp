@@ -331,6 +331,20 @@ namespace webpp::istl {
     using filter_parameters_t = typename filter_parameters<Concept, Tup>::type;
 
 
+    /**
+     * Merge two tuple-like types.
+     */
+    template <typename First, typename Second>
+    struct merge_parameters;
+
+    template <template <typename> typename TupleType, typename ...FirstItems, typename ...SecondItems>
+    struct merge_parameters<TupleType<FirstItems...>, TupleType<SecondItems...>> {
+        using type = TupleType<FirstItems..., SecondItems...>;
+    };
+
+    template <typename First, typename Second>
+    using merge_t = typename merge_parameters<First, Second>::type;
+
 } // namespace webpp::istl
 
 #endif // WEBPP_TYPE_TRAITS_HPP

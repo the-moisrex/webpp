@@ -279,8 +279,8 @@ namespace webpp::alloc {
     /**
      * The allocator pack type; this will hold a pack of allocators
      */
-    template <AllocatorDescriptors AllocDescriptorsType, typename ValueType = char>
-    struct allocator_pack : public allocator_extractor<AllocDescriptorsType>::template type<ValueType> {
+    template <AllocatorDescriptors AllocDescriptorsType>
+    struct allocator_pack : public allocator_extractor<AllocDescriptorsType>::template type<char> {
         using descriptors = AllocDescriptorsType;
 
         template <feature_pack FPack>
