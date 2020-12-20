@@ -273,7 +273,7 @@ namespace webpp::alloc {
     }
 
     template <typename List, feature_pack FPack>
-    using filter = istl::tuple_filter<details::features_filterer<FPack>::template type, List>;
+    using filter = istl::filter_parameters<details::features_filterer<FPack>::template type, List>;
 
 
     /**
