@@ -182,8 +182,8 @@ namespace webpp::istl {
 
     namespace details {
 
-        template <typename ...T>
-        struct fake_tuple{};
+        template <typename... T>
+        struct fake_tuple {};
 
         template <template <typename...> typename T,
                   typename OldType,
@@ -203,10 +203,7 @@ namespace webpp::istl {
           : template_element<T, OldType, NewType, fake_tuple<Heads..., This>, fake_tuple<Tails...>> {};
 
         // to check if it exists.
-        template <template <typename...> typename T,
-          typename OldType,
-          typename NewType,
-          typename... Heads>
+        template <template <typename...> typename T, typename OldType, typename NewType, typename... Heads>
         struct template_element<T, OldType, NewType, fake_tuple<Heads...>, fake_tuple<>> : stl::false_type {
             using type = void;
         };
@@ -262,6 +259,76 @@ namespace webpp::istl {
 
 
     // todo: add replace_parameter_all as well
+
+    // details for filter_parameters
+    namespace details {
+        template <template <typename> typename Concept,
+                  typename Head,
+                  typename Tail,
+                  template <typename...>
+                  typename TupleType>
+        struct filter_parameters_impl;
+
+        // moving This from Heads to the Tails list
+        template <template <typename> typename Concept,
+                  typename... Heads,
+                  typename This,
+                  typename... Tails,
+                  template <typename...>
+                  typename TupleType>
+        requires(Concept<This>::value) struct filter_parameters_impl<Concept,
+                                                                     TupleType<This, Heads...>,
+                                                                     TupleType<Tails...>,
+                                                                     TupleType>
+          : filter_parameters_impl<Concept, TupleType<Heads...>, TupleType<This, Tails...>, TupleType> {};
+
+        // remove the first one
+        template <template <typename> typename Concept,
+                  typename... Heads,
+                  typename This,
+                  typename... Tails,
+                  template <typename...>
+                  typename TupleType>
+        requires(!Concept<This>::value) struct filter_parameters_impl<Concept,
+                                                                      TupleType<This, Heads...>,
+                                                                      TupleType<Tails...>,
+                                                                      TupleType>
+          : filter_parameters_impl<Concept, TupleType<Heads...>, TupleType<Tails...>, TupleType> {};
+
+        // We're at the end of the line, no Heads left to check
+        template <template <typename> typename Concept,
+                  typename... Tails,
+                  template <typename...>
+                  typename TupleType>
+        struct filter_parameters_impl<Concept, TupleType<>, TupleType<Tails...>, TupleType> {
+            using type = TupleType<Tails...>;
+        };
+    } // namespace details
+
+    /**
+     * Filter tuple types based on the Concept templated type (which contains a bool "value")
+     * Example of the Concept type:
+     *
+     * @code
+     *   template <typename T>
+     *   struct is_not_void {
+     *      static constexpr bool value = !std::is_void_v<T>; // or use a C++20 requires clause here
+     *   };
+     * @endcode
+     */
+    template <template <typename> typename Concept, typename Tup>
+    struct filter_parameters;
+
+    template <template <typename> typename Concept,
+              typename... Types,
+              template <typename...>
+              typename TupleType>
+    struct filter_parameters<Concept, TupleType<Types...>>
+      : public details::filter_parameters_impl<Concept, TupleType<Types...>, TupleType<>, TupleType> {};
+
+
+    template <template <typename> typename Concept, typename Tup>
+    using filter_parameters_t = typename filter_parameters<Concept, Tup>::type;
 
 
 } // namespace webpp::istl
