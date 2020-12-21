@@ -10,7 +10,7 @@
 
 #include <algorithm>
 
-namespace webpp::string {
+namespace webpp {
 
     /**
      *  @brief  Mapping from character type to associated types.
@@ -147,6 +147,6 @@ namespace webpp::string {
     };
 
 
-} // namespace webpp::string
+} // namespace webpp
 
 #endif // WEBPP_UNICODE_CHAR_TRAITS_HPP
