@@ -4,63 +4,126 @@
 #define WEBPP_USTRING_ITERATOR_HPP
 
 #include "../std/type_traits.hpp"
-namespace webpp::string {
 
-    template <typename value_type>
-    requires(stl::is_integral_v<value_type>) static constexpr stl::size_t
-    count_bytes(value_type value) noexcept {
-        if constexpr (sizeof(value_type) == sizeof(char16_t)) {
-            if ((value & 0xFC00u) == 0xD800u)
-                return 2;
-            return 1;
-        } else if constexpr (sizeof(value_type) == sizeof(char8_t)) {
-            if ((value & 0x80u) == 0) {
+#include <iterator>
+
+namespace webpp {
+
+    namespace details {
+        template <typename value_type>
+        requires(stl::is_integral_v<value_type>) static constexpr stl::size_t
+          count_bytes(value_type value) noexcept {
+            if constexpr (sizeof(value_type) == sizeof(char16_t)) {
+                if ((value & 0xFC00u) == 0xD800u)
+                    return 2;
                 return 1;
-            } else if ((value & 0xE0u) == 0xC0u) {
-                return 2;
-            } else if ((value & 0xF0u) == 0xE0u) {
-                return 3;
-            } else if ((value & 0xF8u) == 0xF0u) {
-                return 4;
+            } else if constexpr (sizeof(value_type) == sizeof(char8_t)) {
+                if ((value & 0x80u) == 0) {
+                    return 1;
+                } else if ((value & 0xE0u) == 0xC0u) {
+                    return 2;
+                } else if ((value & 0xF0u) == 0xE0u) {
+                    return 3;
+                } else if ((value & 0xF8u) == 0xF0u) {
+                    return 4;
+                }
+                return 1;
+            } else {
+                return 1;
             }
-            return 1;
-        } else {
-            return 1;
         }
-    }
+    } // namespace details
 
-    template <typename IterType, typename CharT = char32_t>
-    using default_iterator_char_type =
-    stl::conditional_t<sizeof(typename IterType::value_type) == sizeof(CharT),
-      typename IterType::value_type,
-      CharT>;
+    /**
+     * Satisfies:
+     *   - [Random Access Iterator](https://en.cppreference.com/w/cpp/iterator/random_access_iterator)
+     *   - [LegacyRandomAccessIterator](https://en.cppreference.com/w/cpp/named_req/RandomAccessIterator)
+     *
+     */
+    template <typename CharT = char8_t, typename WCharT = char32_t>
+    struct unicode_iterator : stl::random_access_iterator_tag {
+        using iterator_type     = unicode_iterator<CharT, WCharT>;
+        using traits_type       = stl::iterator_traits<iterator_type>;
+        using iterator_category = typename traits_type::iterator_category;
+        using value_type        = typename traits_type::value_type;
+        using difference_type   = typename traits_type::difference_type;
+        using reference         = typename traits_type::reference;
+        using pointer           = typename traits_type::pointer;
+        using iterator_concept  = stl::random_access_iterator_tag;
+        using wide_char_type    = WCharT;
 
-    template <typename IterType, typename CharT = default_iterator_char_type<IterType>>
-    struct unicode_iterator_adapter : public IterType {
-        using IterType::IterType;
-        using iter_type = IterType;
-        using wide_char = CharT;
-        //        using size_type         = typename iter_type::size_type;
-        using iterator_type     = typename iter_type::iterator_type;
-        using iterator_category = typename iter_type::iterator_category;
-        using value_type        = wide_char;
-        using difference_type   = typename iter_type::difference_type;
-        using reference         = typename iter_type::reference;
-        using pointer           = typename iter_type::pointer;
-
-        static_assert(sizeof(CharT) > sizeof(char16_t),
-                      "The specified character type is not valid for iterator");
-        static_assert(sizeof(CharT) >= sizeof(value_type),
-                      "The specified character type is smaller than the original iterator type size.");
+        static_assert(sizeof(WCharT) >= sizeof(CharT),
+                      "The specified wide char type is smaller than the unicode char type");
 
         static constexpr bool is_utf16 = sizeof(value_type) == sizeof(char16_t);
         static constexpr bool is_utf8  = sizeof(value_type) == sizeof(char8_t);
-        static constexpr bool is_wchar = sizeof(value_type) >= sizeof(char32_t);
+        static constexpr bool is_wchar = sizeof(value_type) >= sizeof(wide_char_type);
 
-        // get the current character value (the one that the parent iterator is pointing to)
-        constexpr auto value() const noexcept {
-            return iter_type::operator*();
+      private:
+        pointer current{};
+
+      public:
+        constexpr unicode_iterator() noexcept = default;
+        explicit constexpr unicode_iterator(const pointer& i) noexcept : current(i) {}
+
+        // Allow iterator to const_iterator conversion
+        constexpr unicode_iterator(const unicode_iterator<CharT>& i) noexcept : current(i.base()) {}
+
+        // Forward iterator requirements
+        constexpr reference operator*() const noexcept {
+            return *current;
         }
+
+        constexpr pointer operator->() const noexcept {
+            return current;
+        }
+
+        constexpr unicode_iterator& operator++() noexcept {
+            ++current;
+            return *this;
+        }
+
+        constexpr unicode_iterator operator++(int) noexcept {
+            return unicode_iterator(current++);
+        }
+
+        // Bidirectional iterator requirements
+        constexpr unicode_iterator& operator--() noexcept {
+            --current;
+            return *this;
+        }
+
+        constexpr unicode_iterator operator--(int) noexcept {
+            return unicode_iterator(current--);
+        }
+
+        // Random access iterator requirements
+        constexpr reference operator[](difference_type n) const noexcept {
+            return current[n];
+        }
+
+        constexpr unicode_iterator& operator+=(difference_type n) noexcept {
+            current += n;
+            return *this;
+        }
+
+        constexpr unicode_iterator operator+(difference_type n) const noexcept {
+            return unicode_iterator(current + n);
+        }
+
+        constexpr unicode_iterator& operator-=(difference_type n) noexcept {
+            current -= n;
+            return *this;
+        }
+
+        constexpr unicode_iterator operator-(difference_type n) const noexcept {
+            return unicode_iterator(current - n);
+        }
+
+        constexpr const pointer& base() const noexcept {
+            return current;
+        }
+
 
         constexpr auto operator*() const noexcept {
             auto val = value();
@@ -72,12 +135,12 @@ namespace webpp::string {
                     val |= *next_val;
                     return val;
                 }
-                return static_cast<wide_char>(val); // this is the only char
+                return static_cast<wide_char_type>(val); // this is the only char
             } else if constexpr (is_utf8) {
                 constexpr auto shift_bit_count = sizeof(char8_t) * 8u;
                 if ((val & 0x80u) == 0) {
                     // we have one char
-                    return static_cast<wide_char>(val);
+                    return static_cast<wide_char_type>(val);
                 } else if ((val & 0xE0u) == 0xC0u) {
                     // we have 2 chars
                     val <<= shift_bit_count;
@@ -112,17 +175,17 @@ namespace webpp::string {
             }
         }
 
-        constexpr unicode_iterator_adapter& operator++() noexcept {
-            return iter_type::operator+=(count_bytes<value_type>(this->value()));
+        constexpr unicode_iterator& operator++() noexcept {
+            return iter_type::operator+=(details::count_bytes<value_type>(this->value()));
         }
 
-        constexpr unicode_iterator_adapter operator++(int) noexcept {
-            unicode_iterator_adapter ret{*this};
-            ret.                     operator++();
+        constexpr unicode_iterator operator++(int) noexcept {
+            unicode_iterator ret{*this};
+            ret.             operator++();
             return ret;
         }
 
-        constexpr unicode_iterator_adapter& operator--() noexcept {
+        constexpr unicode_iterator& operator--() noexcept {
             while (true) {
                 iter_type::operator--();
                 auto const val = this->value();
@@ -141,40 +204,40 @@ namespace webpp::string {
             return *this;
         }
 
-        constexpr unicode_iterator_adapter operator--(int) noexcept {
-            unicode_iterator_adapter ret{*this};
-            ret.                     operator--();
+        constexpr unicode_iterator operator--(int) noexcept {
+            unicode_iterator ret{*this};
+            ret.             operator--();
             return ret;
         }
 
-        constexpr unicode_iterator_adapter& operator+=(difference_type n) noexcept {
+        constexpr unicode_iterator& operator+=(difference_type n) noexcept {
             for (; n != 0; --n)
                 this->operator++();
             return *this;
         }
 
-        constexpr unicode_iterator_adapter& operator-=(difference_type n) noexcept {
+        constexpr unicode_iterator& operator-=(difference_type n) noexcept {
             for (; n != 0; --n)
                 this->operator--();
             return *this;
         }
 
-        constexpr unicode_iterator_adapter operator+(difference_type n) const noexcept {
-            unicode_iterator_adapter ret{*this};
+        constexpr unicode_iterator operator+(difference_type n) const noexcept {
+            unicode_iterator ret{*this};
             for (; n != 0; --n)
                 ret.operator++();
             return ret;
         }
 
-        constexpr unicode_iterator_adapter operator-(difference_type n) const noexcept {
-            unicode_iterator_adapter ret{*this};
+        constexpr unicode_iterator operator-(difference_type n) const noexcept {
+            unicode_iterator ret{*this};
             for (; n != 0; --n)
                 ret.operator--();
             return ret;
         }
 
         constexpr reference operator[](difference_type n) noexcept {
-            unicode_iterator_adapter ret{*this};
+            unicode_iterator ret{*this};
             ret += n;
             return *ret;
         }
@@ -208,6 +271,6 @@ namespace webpp::string {
 
 
 
-} // namespace webpp::string
+} // namespace webpp
 
 #endif // WEBPP_USTRING_ITERATOR_HPP

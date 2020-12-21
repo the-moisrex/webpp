@@ -10,8 +10,9 @@
 
 #include <memory_resource>
 
+// testing area: http://localhost:10240/z/z39ErG
 
-namespace webpp::string {
+namespace webpp {
 
 
     template <typename To, stl::size_t N, typename From>
@@ -34,62 +35,45 @@ namespace webpp::string {
                                             stl::conditional_t<Size == sizeof(char32_t), char32_t, wchar_t>>>;
 
 
-    template <typename T>
-    struct ustring : public T {
-        using string_type    = T;
-        using value_type     = typename T::value_type;
-        using allocator_type = typename T::allocator_type;
-        using size_type      = typename T::size_type;
-        //        using underlying_integer_type = typename value_type::value_type;
-        using string_iterator        = typename string_type::iterator;
-        using string_const_iterator  = typename string_type::const_iterator;
-        using iterator               = unicode_iterator_adapter<typename string_type::iterator>;
+    template <istl::CharType     CharT          = char8_t,
+              istl::CharTraits   CharTraitsType = unicode_char_traits<CharT>,
+              AllocatorOf<CharT> AllocType      = stl::allocator<CharT>>
+    struct ustring {
+      private:
+        using alloc_traits = stl::allocator_traits<AllocType>;
+
+      public:
+        using value_type             = CharT;
+        using allocator_type         = typename alloc_traits::template rebind_alloc<value_type>;
+        using traits_type            = CharTraitsType;
+        using reference              = value_type&;
+        using const_reference        = value_type const&;
+        using size_type              = typename stl::allocator_traits<allocator_type>::size_type;
+        using difference_type        = typename std::allocator_traits<allocator_type>::difference_type;
+        using pointer                = typename stl::allocator_traits<allocator_type>::pointer;
+        using const_pointer          = typename stl::allocator_traits<allocator_type>::const_pointer;
+        using iterator               = unicode_iterator<value_type>;
         using const_iterator         = const iterator;
         using reverse_iterator       = stl::reverse_iterator<iterator>;
         using const_reverse_iterator = stl::reverse_iterator<const_iterator>;
 
-        //        template<typename ...Args>
-        //        constexpr ustring(Args &&...args) noexcept : T{stl::forward<Args>(args)...} {}
+      private:
+        // the reason I'm choosing data_end over size is that we're implementing a unicode string and not
+        // ascii string; the difference is that "data_start + size != data_end";
+        // todo: I need to think if we need a "size" field as well or not!
+        pointer                              data_starts;
+        pointer                              data_ends;
+        [[no_unique_address]] allocator_type alloc;
 
+        static constexpr auto local_capacity = 15 / sizeof(value_type);
+        union {
+            value_type local_buf[local_capacity + 1];
+            size_type  allocated_capacity;
+        };
 
-        //        template<stl::size_t N>
-        //        constexpr ustring(value_type const (&chars)[N]) noexcept : T{value_type} {}
+        void set_length(size_type) noexcept {}
 
-        //        template<stl::size_t N>
-        //        constexpr ustring(underlying_integer_type const (&chars)[N]) noexcept :
-        //            T{convert_to<value_type, N>(chars)} {}
-
-
-        template <typename C>
-        requires(stl::is_integral_v<stl::remove_cvref_t<C>>) constexpr ustring(
-          size_type             count,
-          C                     ch,
-          const allocator_type& alloc = allocator_type())
-          : string_type{count, static_cast<value_type>(ch), alloc} {}
-
-        template <typename C>
-        requires(stl::is_integral_v<stl::remove_cvref_t<C>>)
-          ustring(const C* s, size_type count, const allocator_type& alloc = allocator_type())
-          : string_type{reinterpret_cast<const value_type*>(s), count, alloc} {}
-
-        template <stl::size_t N>
-        constexpr ustring(const value_type (&s)[N], const allocator_type& alloc = allocator_type())
-          : string_type{s, alloc} {}
-
-        constexpr ustring(const value_type* s, const allocator_type& alloc = allocator_type())
-          : string_type{s, alloc} {}
-
-        template <typename C>
-        requires(stl::is_integral_v<C> && !stl::is_same_v<C, value_type>)
-          ustring(const C* s, const allocator_type& alloc = allocator_type())
-          : string_type{reinterpret_cast<const value_type*>(s), alloc} {}
-
-        template <typename C>
-        requires(stl::is_integral_v<stl::remove_cvref_t<C>>)
-          ustring(stl::initializer_list<C> ilist, const allocator_type& alloc = allocator_type())
-          : string_type{reinterpret_cast<stl::initializer_list<value_type>>(ilist), alloc} {}
-
-
+      public:
         template <typename NewStrT, typename... Args>
         constexpr NewStrT to(Args&&... args) const noexcept {
             using new_allocator_type                 = typename NewStrT::allocator_type;
@@ -113,6 +97,7 @@ namespace webpp::string {
                 } else if constexpr (requires { NewStrT{this->data(), this->size()}; }) {
                     return NewStrT{this->data(), this->size()};
                 } else if constexpr (has_compatible_char_types && has_same_allocator) {
+                    // todo: fix this
                     NewStrT    output(this->get_allocator());
                     const auto len = this->size();
                     output.reserve(len);
@@ -173,15 +158,17 @@ namespace webpp::string {
     };
 
 
-    //    using cs_utf8 = ustring<
-    //      CsString::CsBasicString<CsString::utf8,
-    //                              stl::pmr::polymorphic_allocator<typename CsString::utf8::storage_unit>>>;
-    using ascii      = ustring<stl::pmr::string>;
-    using ascii_view = ustring<stl::string_view>;
-    using utf8       = ustring<stl::pmr::basic_string<char8_t, unicode_char_traits<char8_t>>>;
-    using utf8_view  = ustring<stl::basic_string_view<char8_t, unicode_char_traits<char8_t>>>;
+    using utf8  = ustring<char8_t>;
+    using utf16 = ustring<char16_t>;
 
-} // namespace webpp::string
+    namespace pmr {
+        using namespace std::pmr;
+
+        using utf8  = ustring<char8_t, unicode_char_traits<char8_t>, polymorphic_allocator<char8_t>>;
+        using utf16 = ustring<char16_t, unicode_char_traits<char16_t>, polymorphic_allocator<char16_t>>;
+    } // namespace pmr
+
+} // namespace webpp
 
 
 #endif // WEBPP_USTRING_HPP
