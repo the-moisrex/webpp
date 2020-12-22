@@ -19,6 +19,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/strings/istring.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/ustring.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/ustring_iterator.hpp
+        ${LIB_INCLUDE_DIR}/webpp/strings/glyph.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/unicode_char_traits.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/fixed_string.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/to_case.hpp
