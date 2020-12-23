@@ -88,6 +88,74 @@ namespace webpp {
             return traits::select_on_container_copy_construction(a);
         }
 
+
+
+        template <typename T>
+        inline bool is_null_pointer(T* __ptr) noexcept {
+            return __ptr == 0;
+        }
+
+        template <typename T>
+        inline bool is_null_pointer(T) noexcept {
+            return false;
+        }
+
+        inline bool is_null_pointer(stl::nullptr_t) noexcept {
+            return true;
+        }
+
+
+
+
+
+        template <typename Iter>
+        using iterator_category_t = typename stl::iterator_traits<Iter>::iterator_category;
+
+        template <typename InIter>
+        concept RequireInputIter =
+          stl::is_convertible_v<iterator_category_t<InIter>, stl::input_iterator_tag>;
+
+        template <typename InIter>
+        using RequireInputIterEnableIf =
+          stl::enable_if_t<stl::is_convertible_v<iterator_category_t<InIter>, stl::input_iterator_tag>>;
+
+
+        // Trait to detect Allocator-like types.
+        template <typename AllocT, typename = void>
+        struct is_allocator : stl::false_type {};
+
+        template <typename AllocT>
+        struct is_allocator<
+          AllocT,
+          stl::void_t<typename AllocT::value_type, decltype(std::declval<AllocT&>().allocate(size_t{}))>>
+          : stl::true_type {};
+
+        template <typename AllocT>
+        using RequireAllocator = typename stl::enable_if<is_allocator<AllocT>::value, AllocT>::type;
+
+        template <typename AllocT>
+        using RequireNotAllocator = typename stl::enable_if<!is_allocator<AllocT>::value, AllocT>::type;
+
+
+
+
+
+        template <typename T>
+        struct is_char {
+            static constexpr bool value = false;
+        };
+
+        template <>
+        struct is_char<char> {
+            static constexpr bool value = true;
+        };
+
+        template <>
+        struct is_char<wchar_t> {
+            static constexpr bool value = true;
+        };
+
+
     } // namespace details
 
 
@@ -555,7 +623,7 @@ namespace webpp {
 #    if cpp_deduction_guides && !defined _GLIBCXX_DEFINING_STRING_INSTANTIATIONS
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 3076. ustring CTAD ambiguity
-        template <typename = _RequireAllocator<allocator_type>>
+        template <typename = details::RequireAllocator<allocator_type>>
 #    endif
         ustring(const value_type* s, const allocator_type& a = allocator_type())
           : data_start(local_data()),
@@ -572,7 +640,7 @@ namespace webpp {
 #    if cpp_deduction_guides && !defined _GLIBCXX_DEFINING_STRING_INSTANTIATIONS
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 3076. ustring CTAD ambiguity
-        template <typename = _RequireAllocator<allocator_type>>
+        template <typename = details::RequireAllocator<allocator_type>>
 #    endif
         ustring(size_type n, value_type c, const allocator_type& a = allocator_type())
           : data_start(local_data()),
@@ -644,8 +712,9 @@ namespace webpp {
          *  @param  end  End of range.
          *  @param  a  Allocator to use (default is default allocator).
          */
-        template <typename _InputIterator, typename = stl::_RequireInputIter<_InputIterator>>
-        ustring(_InputIterator beg, _InputIterator end, const allocator_type& a = allocator_type())
+        template <typename InputIterator>
+        requires(details::RequireInputIter<InputIterator>)
+          ustring(InputIterator beg, InputIterator end, const allocator_type& a = allocator_type())
           : data_start(local_data()),
             alloc(a) {
             construct(beg, end);
@@ -1226,8 +1295,9 @@ namespace webpp {
          *
          *  Appends characters in the range [first,last) to this string.
          */
-        template <class _InputIterator, typename = stl::_RequireInputIter<_InputIterator>>
-        ustring& append(_InputIterator first, _InputIterator last) {
+        template <class InputIterator>
+        requires(details::RequireInputIter<InputIterator>) ustring& append(InputIterator first,
+                                                                           InputIterator last) {
             return this->replace(end(), end(), first, last);
         }
 
@@ -1386,8 +1456,9 @@ namespace webpp {
          *
          *  Sets value of string to characters in the range [first,last).
          */
-        template <class _InputIterator, typename = stl::_RequireInputIter<_InputIterator>>
-        ustring& assign(_InputIterator first, _InputIterator last) {
+        template <class InputIterator>
+        requires(details::RequireInputIter<InputIterator>) ustring& assign(InputIterator first,
+                                                                           InputIterator last) {
             return this->replace(begin(), end(), first, last);
         }
 
@@ -1465,8 +1536,8 @@ namespace webpp {
          *  thrown.  The value of the string doesn't change if an error
          *  is thrown.
          */
-        template <class _InputIterator, typename = stl::_RequireInputIter<_InputIterator>>
-        iterator insert(const_iterator p, _InputIterator beg, _InputIterator end) {
+        template <class InputIterator, typename = details::RequireInputIter<InputIterator>>
+        iterator insert(const_iterator p, InputIterator beg, InputIterator end) {
             _GLIBCXX_DEBUG_PEDASSERT(p >= begin() && p <= end());
             const size_type pos = p - begin();
             this->replace(p, p, beg, end);
@@ -1910,21 +1981,21 @@ namespace webpp {
          *  The value of the string doesn't change if an error is
          *  thrown.
          */
-        template <class _InputIterator, typename = stl::_RequireInputIter<_InputIterator>>
-        ustring& replace(const_iterator i1, const_iterator i2, _InputIterator k1, _InputIterator k2) {
+        template <class InputIterator, typename = details::RequireInputIter<InputIterator>>
+        ustring& replace(const_iterator i1, const_iterator i2, InputIterator k1, InputIterator k2) {
             _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
             glibcxx_requires_valid_range(k1, k2);
             return this->replace_dispatch(i1, i2, k1, k2, stl::false_type());
         }
 #    ifdef _GLIBCXX_DISAMBIGUATE_REPLACE_INST
-        typename enable_if_not_native_iterator<_InputIterator>::type
+        typename enable_if_not_native_iterator<InputIterator>::type
 #    else
         ustring&
 #    endif
-        replace(iterator i1, iterator i2, _InputIterator k1, _InputIterator k2) {
+        replace(iterator i1, iterator i2, InputIterator k1, InputIterator k2) {
             _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
             glibcxx_requires_valid_range(k1, k2);
-            using integral_type = stl::is_integer_t<_InputIterator>;
+            using integral_type = stl::is_integer_t<InputIterator>;
             return replace_dispatch(i1, i2, k1, k2, _Integral());
         }
 
@@ -2028,11 +2099,11 @@ namespace webpp {
             return replace_aux(i1 - begin(), i2 - i1, n, val);
         }
 
-        template <class _InputIterator>
+        template <class InputIterator>
         ustring& replace_dispatch(const_iterator i1,
                                   const_iterator i2,
-                                  _InputIterator k1,
-                                  _InputIterator k2,
+                                  InputIterator  k1,
+                                  InputIterator  k2,
                                   stl::false_type);
 
         ustring& replace_aux(size_type pos1, size_type n1, size_type n2, value_type c);
@@ -2770,31 +2841,30 @@ namespace webpp {
         friend class ustringbuf;
     };
 
-    template <typename _InputIterator,
-              typename CharT      = typename stl::iterator_traits<_InputIterator>::value_type,
-              typename _Allocator = stl::allocator<CharT>,
-              typename            = _RequireInputIter<_InputIterator>,
-              typename            = _RequireAllocator<_Allocator>>
-    ustring(_InputIterator, _InputIterator, _Allocator = _Allocator())
-      -> ustring<CharT, stl::char_traits<CharT>, _Allocator>;
+    template <typename InputIterator,
+              typename CharT  = typename stl::iterator_traits<InputIterator>::value_type,
+              typename AllocT = stl::allocator<CharT>,
+              typename        = details::RequireInputIterEnableIf<InputIterator>,
+              typename        = details::RequireAllocatorEnableIf<AllocT>>
+    ustring(InputIterator, InputIterator, AllocT = AllocT())
+      -> ustring<CharT, stl::char_traits<CharT>, AllocT>;
 
     // _GLIBCXX_RESOLVE_LIB_DEFECTS
     // 3075. ustring needs deduction guides from ustring_view
     template <typename CharT,
               typename TraitsT,
-              typename _Allocator = stl::allocator<CharT>,
-              typename            = _RequireAllocator<_Allocator>>
-    ustring(ustring_view<CharT, TraitsT>, const _Allocator& = _Allocator())
-      -> ustring<CharT, TraitsT, _Allocator>;
+              typename AllocT = stl::allocator<CharT>,
+              typename        = details::RequireAllocatorEnableIf<AllocT>>
+    ustring(ustring_view<CharT, TraitsT>, const AllocT& = AllocT()) -> ustring<CharT, TraitsT, AllocT>;
 
     template <typename CharT,
               typename TraitsT,
-              typename _Allocator = stl::allocator<CharT>,
-              typename            = _RequireAllocator<_Allocator>>
+              typename AllocT = stl::allocator<CharT>,
+              typename        = details::RequireAllocator<AllocT>>
     ustring(ustring_view<CharT, TraitsT>,
-            typename ustring<CharT, TraitsT, _Allocator>::size_type,
-            typename ustring<CharT, TraitsT, _Allocator>::size_type,
-            const _Allocator& = _Allocator()) -> ustring<CharT, TraitsT, _Allocator>;
+            typename ustring<CharT, TraitsT, AllocT>::size_type,
+            typename ustring<CharT, TraitsT, AllocT>::size_type,
+            const AllocT& = AllocT()) -> ustring<CharT, TraitsT, AllocT>;
 
 
 
@@ -2877,8 +2947,8 @@ namespace webpp {
     inline ustring<CharT, TraitsT, AllocT> operator+(ustring<CharT, TraitsT, AllocT>&& lhs,
                                                      ustring<CharT, TraitsT, AllocT>&& rhs) {
 #    if _GLIBCXX_USE_CXX11_ABI
-        using _Alloc_traits = allocator_traits<AllocT>;
-        bool use_rhs        = false;
+        using alloc_traits = stl::allocator_traits<AllocT>;
+        bool use_rhs       = false;
         if _GLIBCXX17_CONSTEXPR (typename alloc_traits::is_always_equal{})
             use_rhs = true;
         else if (lhs.private_get_allocator() == rhs.private_get_allocator())
@@ -2929,8 +2999,8 @@ namespace webpp {
     }
 
     template <typename CharT>
-    inline typename gnu_cxx::enable_if<is_char<CharT>::value, bool>::type
-    operator==(const ustring<CharT>& lhs, const ustring<CharT>& rhs) noexcept {
+    requires(details::is_char<CharT>::value) inline bool operator==(const ustring<CharT>& lhs,
+                                                                    const ustring<CharT>& rhs) noexcept {
         return (lhs.size() == rhs.size() &&
                 !std::char_traits<CharT>::compare(lhs.data(), rhs.data(), lhs.size()));
     }
@@ -3394,7 +3464,7 @@ namespace webpp {
     void
     ustring<CharT, TraitsT, AllocT>::construct(_InIterator beg, _InIterator end, std::forward_iterator_tag) {
         // NB: Not required, but considered best practice.
-        if (gnu_cxx::is_null_pointer(beg) && beg != end)
+        if (details::is_null_pointer(beg) && beg != end)
             std::throw_logic_error(N("ustring::"
                                      "construct null not valid"));
 
@@ -3526,11 +3596,11 @@ namespace webpp {
     }
 
     template <typename CharT, typename TraitsT, typename AllocT>
-    template <typename _InputIterator>
+    template <typename InputIterator>
     ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::replace_dispatch(const_iterator i1,
                                                                                        const_iterator i2,
-                                                                                       _InputIterator k1,
-                                                                                       _InputIterator k2,
+                                                                                       InputIterator  k1,
+                                                                                       InputIterator  k2,
                                                                                        std::false_type) {
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 2788. unintentionally require a default constructible allocator
@@ -3691,7 +3761,7 @@ CharT* ustring<CharT, TraitsT, AllocT>::construct(_InIterator   beg,
         return empty_rep().refdata();
 #    endif
     // NB: Not required, but considered best practice.
-    if (gnu_cxx::is_null_pointer(beg) && beg != end)
+    if (details::is_null_pointer(beg) && beg != end)
         throw_logic_error(N("ustring::construct null not valid"));
 
     const size_type dnew = static_cast<size_type>(std::distance(beg, end));
@@ -3764,8 +3834,8 @@ ustring<CharT, TraitsT, AllocT>::ustring(size_type n, CharT c, const AllocT& a)
 
 // TBD: DPG annotate
 template <typename CharT, typename TraitsT, typename AllocT>
-template <typename _InputIterator>
-ustring<CharT, TraitsT, AllocT>::ustring(_InputIterator beg, _InputIterator end, const AllocT& a)
+template <typename InputIterator>
+ustring<CharT, TraitsT, AllocT>::ustring(InputIterator beg, InputIterator end, const AllocT& a)
   : dataplus(construct(beg, end, a), a) {}
 
 #    if cplusplus >= 201103L
@@ -4111,11 +4181,11 @@ void ustring<CharT, TraitsT, AllocT>::resize(size_type n, CharT c) {
 }
 
 template <typename CharT, typename TraitsT, typename AllocT>
-template <typename _InputIterator>
-ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::replace_dispatch(iterator       i1,
-                                                                                   iterator       i2,
-                                                                                   _InputIterator k1,
-                                                                                   _InputIterator k2,
+template <typename InputIterator>
+ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::replace_dispatch(iterator      i1,
+                                                                                   iterator      i2,
+                                                                                   InputIterator k1,
+                                                                                   InputIterator k2,
                                                                                    false_type) {
     const ustring   s(k1, k2);
     const size_type n1 = i2 - i1;
@@ -4158,11 +4228,11 @@ ustring<CharT, TraitsT, AllocT>::copy(CharT* s, size_type n, size_type pos) cons
     template <typename CharT, typename TraitsT, typename AllocT>
     ustring<CharT, TraitsT, AllocT> operator+(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
         glibcxx_requires_string(lhs);
-        typedef ustring<CharT, TraitsT, AllocT>                                       string_type;
-        typedef typename string_type::size_type                                       size_type;
-        typedef typename gnu_cxx::alloc_traits<AllocT>::template rebind<CharT>::other _Char_alloc_type;
-        typedef gnu_cxx::alloc_traits<_Char_alloc_type>                               _Alloc_traits;
-        const size_type len = TraitsT::length(lhs);
+        using string_type     = ustring<CharT, TraitsT, AllocT>;
+        using size_type       = typename string_type::size_type;
+        using char_alloc_type = typename stl::allocator_traits<AllocT>::template rebind<CharT>::other;
+        using alloc_traits    = stl::allocator_traits<char_alloc_type>;
+        const size_type len   = TraitsT::length(lhs);
         string_type     str(alloc_traits::select_on_copy(rhs.private_get_allocator()));
         str.reserve(len + rhs.size());
         str.append(lhs, len);
@@ -4172,10 +4242,10 @@ ustring<CharT, TraitsT, AllocT>::copy(CharT* s, size_type n, size_type pos) cons
 
     template <typename CharT, typename TraitsT, typename AllocT>
     ustring<CharT, TraitsT, AllocT> operator+(CharT lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
-        typedef ustring<CharT, TraitsT, AllocT>                                       string_type;
-        typedef typename string_type::size_type                                       size_type;
-        typedef typename gnu_cxx::alloc_traits<AllocT>::template rebind<CharT>::other _Char_alloc_type;
-        typedef gnu_cxx::alloc_traits<_Char_alloc_type>                               _Alloc_traits;
+        using string_type     = ustring<CharT, TraitsT, AllocT>;
+        using size_type       = typename string_type::size_type;
+        using char_alloc_type = typename stl::allocator_traits<AllocT>::template rebind<CharT>::other;
+        using alloc_traits    = stl::allocator_traits<char_alloc_type>;
         string_type     str(alloc_traits::select_on_copy(rhs.private_get_allocator()));
         const size_type len = rhs.size();
         str.reserve(len + 1);
