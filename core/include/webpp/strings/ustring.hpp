@@ -9,11 +9,70 @@
 #include "ustring_iterator.hpp"
 
 #include <memory_resource>
-#include <limits>
 
 // testing area: http://localhost:10240/z/z39ErG
 
 namespace webpp {
+
+#ifdef CHAR_BIT
+    static constexpr unsigned char_bits = CHAR_BIT;
+#else
+    static constexpr unsigned char_bits = 8;
+#endif
+
+    namespace details {
+
+        // Helper for basic_string and basic_string_view members.
+        constexpr size_t sv_check(size_t size, size_t pos, const char* s) {
+            if (pos > size)
+                throw_out_of_range_fmt(N("%s: pos (which is %zu) > size "
+                                         "(which is %zu)"),
+                                       s,
+                                       pos,
+                                       size);
+            return pos;
+        }
+
+        // Helper for basic_string members.
+        // NB: sv_limit doesn't check for a bad pos value.
+        constexpr size_t sv_limit(size_t size, size_t pos, size_t off) noexcept {
+            const bool testoff = off < size - pos;
+            return testoff ? off : size - pos;
+        }
+
+
+
+        // Lightweight alternative to numeric_limits<signed integer type>.
+        template <typename T, bool = stl::is_signed<T>::value>
+        struct int_limits {
+            static_assert(stl::is_integral<T>::value, "unsupported specialization");
+            using U                     = typename stl::make_unsigned<T>::type;
+            static constexpr int digits = sizeof(T) * char_bits - 1;
+            static constexpr T   min() noexcept {
+                return T(U(1) << digits);
+            }
+            static constexpr T max() noexcept {
+                return T(U(~U(0)) >> 1);
+            }
+        };
+
+        // Lightweight alternative to numeric_limits<unsigned integer type>.
+        template <typename T>
+        struct int_limits<T, false> {
+            static_assert(stl::is_integral<T>::value, "unsupported specialization");
+            static constexpr int digits = sizeof(T) * char_bits;
+            static constexpr T   min() noexcept {
+                return 0;
+            }
+            static constexpr T max() noexcept {
+                return T(-1);
+            }
+        };
+
+        template <>
+        struct int_limits<bool>; // not defined
+
+    } // namespace details
 
 
     template <typename To, stl::size_t N, typename From>
@@ -67,13 +126,11 @@ namespace webpp {
 
 
       private:
-
         template <typename T>
         static constexpr bool convertible_to_ustring_view =
           stl::is_convertible_v<const T&, string_view_type> &&
           !stl::is_convertible_v<const T*, const ustring> &&
-          !stl::is_convertible_v<const T&, const value_type*>
-        ;
+          !stl::is_convertible_v<const T&, const value_type*>;
 
 
 
@@ -180,197 +237,155 @@ namespace webpp {
 
 
 
+        void _M_data(pointer p) noexcept {
+            data_start = p;
+        }
 
+        void _M_length(size_type length) noexcept {
+            _M_string_length = length;
+        }
 
-        void
-        _M_data(pointer p)
-        { data_start = p; }
+        pointer _M_data() const noexcept {
+            return data_start;
+        }
 
-        void
-        _M_length(size_type length)
-        { _M_string_length = length; }
-
-        pointer
-        _M_data() const
-        { return data_start; }
-
-        pointer
-        _M_local_data()
-        {
-#if cplusplus >= 201103L
+        pointer _M_local_data() {
             return stl::pointer_traits<pointer>::pointer_to(*local_buf);
-#else
-            return pointer(local_buf);
-#endif
         }
 
-        const_pointer
-        _M_local_data() const
-        {
-#if cplusplus >= 201103L
+        const_pointer _M_local_data() const {
             return stl::pointer_traits<const_pointer>::pointer_to(*local_buf);
-#else
-            return const_pointer(local_buf);
-#endif
         }
 
-        void
-        _M_capacity(size_type capacity)
-        { allocated_capacity = capacity; }
+        void _M_capacity(size_type capacity) {
+            allocated_capacity = capacity;
+        }
 
-        void
-        _M_set_length(size_type n)
-        {
+        void _M_set_length(size_type n) {
             _M_length(n);
             traits_type::assign(_M_data()[n], value_type());
         }
 
-        bool
-        _M_is_local() const
-        { return _M_data() == _M_local_data(); }
+        bool _M_is_local() const {
+            return _M_data() == _M_local_data();
+        }
 
         // Create & Destroy
-        pointer
-        _M_create(size_type&, size_type);
+        pointer _M_create(size_type&, size_type);
 
-        void
-        _M_dispose()
-        {
+        void _M_dispose() {
             if (!_M_is_local())
                 _M_destroy(allocated_capacity);
         }
 
-        void
-        _M_destroy(size_type size) throw()
-        { _Alloc_traits::deallocate(_M_get_allocator(), _M_data(), size + 1); }
+        void _M_destroy(size_type size) noexcept(false) {
+            _Alloc_traits::deallocate(_M_get_allocator(), _M_data(), size + 1);
+        }
 
         // _M_construct_aux is used to implement the 21.3.1 para 15 which
         // requires special behaviour if _InIterator is an integral type
-        template<typename _InIterator>
-        void
-        _M_construct_aux(_InIterator beg, _InIterator end,
-                         stl::false_type)
-        {
+        template <typename _InIterator>
+        void _M_construct_aux(_InIterator beg, _InIterator end, stl::false_type) {
             typedef typename stl::iterator_traits<_InIterator>::iterator_category _Tag;
             _M_construct(beg, end, _Tag());
         }
 
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 438. Ambiguity in the "do the right thing" clause
-        template<typename _Integer>
-        void
-        _M_construct_aux(_Integer beg, _Integer end, stl::true_type)
-        { _M_construct_aux_2(static_cast<size_type>(beg), end); }
+        template <typename _Integer>
+        void _M_construct_aux(_Integer beg, _Integer end, stl::true_type) {
+            _M_construct_aux_2(static_cast<size_type>(beg), end);
+        }
 
-        void
-        _M_construct_aux_2(size_type req, value_type c)
-        { _M_construct(req, c); }
+        void _M_construct_aux_2(size_type req, value_type c) {
+            _M_construct(req, c);
+        }
 
-        template<typename _InIterator>
-        void
-        _M_construct(_InIterator beg, _InIterator end)
-        {
+        template <typename _InIterator>
+        void _M_construct(_InIterator beg, _InIterator end) {
             typedef typename stl::is_integer<_InIterator>::type _Integral;
             _M_construct_aux(beg, end, _Integral());
         }
 
         // For Input Iterators, used in istreambuf_iterators, etc.
-        template<typename _InIterator>
-        void
-        _M_construct(_InIterator beg, _InIterator end,
-                     stl::input_iterator_tag);
+        template <typename _InIterator>
+        void _M_construct(_InIterator beg, _InIterator end, stl::input_iterator_tag);
 
         // For forward_iterators up to random_access_iterators, used for
         // string::iterator, value_type*, etc.
-        template<typename _FwdIterator>
-        void
-        _M_construct(_FwdIterator beg, _FwdIterator end,
-                     stl::forward_iterator_tag);
+        template <typename _FwdIterator>
+        void _M_construct(_FwdIterator beg, _FwdIterator end, stl::forward_iterator_tag);
 
-        void
-        _M_construct(size_type req, value_type c);
+        void _M_construct(size_type req, value_type c);
 
-        allocator_type&
-        _M_get_allocator()
-        { return _M_dataplus; }
+        allocator_type& _M_get_allocator() {
+            return _M_dataplus;
+        }
 
-        const allocator_type&
-        _M_get_allocator() const
-        { return _M_dataplus; }
+        const allocator_type& _M_get_allocator() const {
+            return _M_dataplus;
+        }
 
       private:
-
 #ifdef _GLIBCXX_DISAMBIGUATE_REPLACE_INST
         // The explicit instantiations in misc-inst.cc require this due to
-      // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=64063
-      template<typename _Tp, bool _Requires =
-	       !are_same<_Tp, value_type*>::value
-	       && !are_same<_Tp, const value_type*>::value
-	       && !are_same<_Tp, iterator>::value
-	       && !are_same<_Tp, const_iterator>::value>
-	struct enable_if_not_native_iterator
-	{ typedef ustring& type; };
-      template<typename _Tp>
-	struct enable_if_not_native_iterator<_Tp, false> { };
+        // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=64063
+        template <typename T,
+                  bool _Requires = !are_same<T, value_type*>::value &&
+                                   !are_same<T, const value_type*>::value && !are_same<T, iterator>::value &&
+                                   !are_same<T, const_iterator>::value>
+        struct enable_if_not_native_iterator {
+            typedef ustring& type;
+        };
+        template <typename T>
+        struct enable_if_not_native_iterator<T, false> {};
 #endif
 
-        size_type
-        _M_check(size_type pos, const char* s) const
-        {
+        size_type _M_check(size_type pos, const char* s) const {
             if (pos > this->size())
                 throw_out_of_range_fmt(N("%s: pos (which is %zu) > "
-                                             "this->size() (which is %zu)"),
-                                         s, pos, this->size());
+                                         "this->size() (which is %zu)"),
+                                       s,
+                                       pos,
+                                       this->size());
             return pos;
         }
 
-        void
-        _M_check_length(size_type n1, size_type n2, const char* s) const
-        {
+        void _M_check_length(size_type n1, size_type n2, const char* s) const {
             if (this->max_size() - (this->size() - n1) < n2)
                 throw_length_error(N(s));
         }
 
 
         // NB: _M_limit doesn't check for a bad pos value.
-        size_type
-        _M_limit(size_type pos, size_type off) const _GLIBCXX_NOEXCEPT
-        {
-            const bool testoff =  off < this->size() - pos;
+        size_type _M_limit(size_type pos, size_type off) const noexcept {
+            const bool testoff = off < this->size() - pos;
             return testoff ? off : this->size() - pos;
         }
 
         // True if _Rep and source do not overlap.
-        bool
-        _M_disjunct(const value_type* s) const _GLIBCXX_NOEXCEPT
-        {
-            return (less<const value_type*>()(s, _M_data())
-                    || less<const value_type*>()(_M_data() + this->size(), s));
+        bool _M_disjunct(const value_type* s) const noexcept {
+            return (less<const value_type*>()(s, _M_data()) ||
+                    less<const value_type*>()(_M_data() + this->size(), s));
         }
 
         // When n = 1 way faster than the general multichar
         // traits_type::copy/move/assign.
-        static void
-        _S_copy(value_type* d, const value_type* s, size_type n)
-        {
+        static void _S_copy(value_type* d, const value_type* s, size_type n) {
             if (n == 1)
                 traits_type::assign(*d, *s);
             else
                 traits_type::copy(d, s, n);
         }
 
-        static void
-        _S_move(value_type* d, const value_type* s, size_type n)
-        {
+        static void _S_move(value_type* d, const value_type* s, size_type n) {
             if (n == 1)
                 traits_type::assign(*d, *s);
             else
                 traits_type::move(d, s, n);
         }
 
-        static void
-        _S_assign(value_type* d, size_type n, value_type c)
-        {
+        static void _S_assign(value_type* d, size_type n, value_type c) {
             if (n == 1)
                 traits_type::assign(*d, c);
             else
@@ -379,59 +394,44 @@ namespace webpp {
 
         // _S_copy_chars is a separate template to permit specialization
         // to optimize for the common case of pointers as iterators.
-        template<class _Iterator>
-        static void
-        _S_copy_chars(value_type* p, _Iterator k1, _Iterator k2)
-        {
-            for (; k1 != k2; ++k1, (void)++p)
+        template <class _Iterator>
+        static void _S_copy_chars(value_type* p, _Iterator k1, _Iterator k2) {
+            for (; k1 != k2; ++k1, (void) ++p)
                 traits_type::assign(*p, *k1); // These types are off.
         }
 
-        static void
-        _S_copy_chars(value_type* p, iterator k1, iterator k2) _GLIBCXX_NOEXCEPT
-        { _S_copy_chars(p, k1.base(), k2.base()); }
+        static void _S_copy_chars(value_type* p, iterator k1, iterator k2) noexcept {
+            _S_copy_chars(p, k1.base(), k2.base());
+        }
 
-        static void
-        _S_copy_chars(value_type* p, const_iterator k1, const_iterator k2)
-        _GLIBCXX_NOEXCEPT
-        { _S_copy_chars(p, k1.base(), k2.base()); }
+        static void _S_copy_chars(value_type* p, const_iterator k1, const_iterator k2) noexcept {
+            _S_copy_chars(p, k1.base(), k2.base());
+        }
 
-        static void
-        _S_copy_chars(value_type* p, value_type* k1, value_type* k2) _GLIBCXX_NOEXCEPT
-        { _S_copy(p, k1, k2 - k1); }
+        static void _S_copy_chars(value_type* p, value_type* k1, value_type* k2) noexcept {
+            _S_copy(p, k1, k2 - k1);
+        }
 
-        static void
-        _S_copy_chars(value_type* p, const value_type* k1, const value_type* k2)
-        _GLIBCXX_NOEXCEPT
-        { _S_copy(p, k1, k2 - k1); }
+        static void _S_copy_chars(value_type* p, const value_type* k1, const value_type* k2) noexcept {
+            _S_copy(p, k1, k2 - k1);
+        }
 
-        static int
-        _S_compare(size_type n1, size_type n2) _GLIBCXX_NOEXCEPT
-        {
+        static int _S_compare(size_type n1, size_type n2) noexcept {
             const difference_type d = difference_type(n1 - n2);
 
-            if (d > stl::numeric_traits<int>::max)
-                return stl::numeric_traits<int>::max;
-            else if (d < stl::numeric_traits<int>::min)
-                return stl::numeric_traits<int>::min;
+            if (d > details::int_limits<int>::max())
+                return details::int_limits<int>::max();
+            else if (d < details::int_limits<int>::min())
+                return details::int_limits<int>::min();
             else
                 return int(d);
         }
 
-        void
-        _M_assign(const ustring&);
+        void _M_assign(const ustring&);
 
-        void
-        _M_mutate(size_type pos, size_type len1, const value_type* s,
-                  size_type len2);
+        void _M_mutate(size_type pos, size_type len1, const value_type* s, size_type len2);
 
-        void
-        _M_erase(size_type pos, size_type n);
-
-
-
-
-
+        void _M_erase(size_type pos, size_type n);
 
 
 
@@ -444,27 +444,26 @@ namespace webpp {
         /**
          *  @brief  Default constructor creates an empty string.
          */
-        ustring()
-        _GLIBCXX_NOEXCEPT_IF(is_nothrow_default_constructible<allocator_type>::value)
-          : _M_dataplus(_M_local_data())
-        { _M_set_length(0); }
+        ustring() _GLIBCXX_NOEXCEPT_IF(stl::is_nothrow_default_constructible<allocator_type>::value)
+          : _M_dataplus(_M_local_data()) {
+            _M_set_length(0);
+        }
 
         /**
          *  @brief  Construct an empty string using allocator @a a.
          */
-        explicit
-        ustring(const allocator_type& a) noexcept
-          : _M_dataplus(_M_local_data(), a)
-        { _M_set_length(0); }
+        explicit ustring(const allocator_type& a) noexcept : _M_dataplus(_M_local_data(), a) {
+            _M_set_length(0);
+        }
 
         /**
          *  @brief  Construct string with copy of value of @a str.
          *  @param  str  Source string.
          */
         ustring(const ustring& str)
-          : _M_dataplus(_M_local_data(),
-                        _Alloc_traits::_S_select_on_copy(str._M_get_allocator()))
-        { _M_construct(str._M_data(), str._M_data() + str.length()); }
+          : _M_dataplus(_M_local_data(), _Alloc_traits::_S_select_on_copy(str._M_get_allocator())) {
+            _M_construct(str._M_data(), str._M_data() + str.length());
+        }
 
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 2583. no way to supply an allocator for ustring(str, pos)
@@ -474,12 +473,9 @@ namespace webpp {
          *  @param  pos  Index of first character to copy from.
          *  @param  a  Allocator to use.
          */
-        ustring(const ustring& str, size_type pos,
-                     const allocator_type& a = allocator_type())
-          : _M_dataplus(_M_local_data(), a)
-        {
-            const value_type* start = str._M_data()
-                                    + str._M_check(pos, "ustring::ustring");
+        ustring(const ustring& str, size_type pos, const allocator_type& a = allocator_type())
+          : _M_dataplus(_M_local_data(), a) {
+            const value_type* start = str._M_data() + str._M_check(pos, "ustring::ustring");
             _M_construct(start, start + str._M_limit(pos, npos));
         }
 
@@ -489,12 +485,8 @@ namespace webpp {
          *  @param  pos  Index of first character to copy from.
          *  @param  n  Number of characters to copy.
          */
-        ustring(const ustring& str, size_type pos,
-                     size_type n)
-          : _M_dataplus(_M_local_data())
-        {
-            const value_type* start = str._M_data()
-                                    + str._M_check(pos, "ustring::ustring");
+        ustring(const ustring& str, size_type pos, size_type n) : _M_dataplus(_M_local_data()) {
+            const value_type* start = str._M_data() + str._M_check(pos, "ustring::ustring");
             _M_construct(start, start + str._M_limit(pos, n));
         }
 
@@ -505,12 +497,9 @@ namespace webpp {
          *  @param  n  Number of characters to copy.
          *  @param  a  Allocator to use.
          */
-        ustring(const ustring& str, size_type pos,
-                     size_type n, const allocator_type& a)
-          : _M_dataplus(_M_local_data(), a)
-        {
-            const value_type* start
-              = str._M_data() + str._M_check(pos, "string::string");
+        ustring(const ustring& str, size_type pos, size_type n, const allocator_type& a)
+          : _M_dataplus(_M_local_data(), a) {
+            const value_type* start = str._M_data() + str._M_check(pos, "string::string");
             _M_construct(start, start + str._M_limit(pos, n));
         }
 
@@ -523,24 +512,25 @@ namespace webpp {
          *  NB: @a s must have at least @a n characters, &apos;\\0&apos;
          *  has no special meaning.
          */
-        ustring(const value_type* s, size_type n,
-                     const allocator_type& a = allocator_type())
-          : _M_dataplus(_M_local_data(), a)
-        { _M_construct(s, s + n); }
+        ustring(const value_type* s, size_type n, const allocator_type& a = allocator_type())
+          : _M_dataplus(_M_local_data(), a) {
+            _M_construct(s, s + n);
+        }
 
         /**
          *  @brief  Construct string as copy of a C string.
          *  @param  s  Source C string.
          *  @param  a  Allocator to use (default is default allocator).
          */
-#if cpp_deduction_guides && ! defined _GLIBCXX_DEFINING_STRING_INSTANTIATIONS
+#if cpp_deduction_guides && !defined _GLIBCXX_DEFINING_STRING_INSTANTIATIONS
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 3076. ustring CTAD ambiguity
-        template<typename = _RequireAllocator<allocator_type>>
+        template <typename = _RequireAllocator<allocator_type>>
 #endif
         ustring(const value_type* s, const allocator_type& a = allocator_type())
-          : _M_dataplus(_M_local_data(), a)
-        { _M_construct(s, s ? s + traits_type::length(s) : s+npos); }
+          : _M_dataplus(_M_local_data(), a) {
+            _M_construct(s, s ? s + traits_type::length(s) : s + npos);
+        }
 
         /**
          *  @brief  Construct string as multiple characters.
@@ -548,14 +538,15 @@ namespace webpp {
          *  @param  c  Character to use.
          *  @param  a  Allocator to use (default is default allocator).
          */
-#if cpp_deduction_guides && ! defined _GLIBCXX_DEFINING_STRING_INSTANTIATIONS
+#if cpp_deduction_guides && !defined _GLIBCXX_DEFINING_STRING_INSTANTIATIONS
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 3076. ustring CTAD ambiguity
-        template<typename = _RequireAllocator<allocator_type>>
+        template <typename = _RequireAllocator<allocator_type>>
 #endif
         ustring(size_type n, value_type c, const allocator_type& a = allocator_type())
-        : _M_dataplus(_M_local_data(), a)
-        { _M_construct(n, c); }
+          : _M_dataplus(_M_local_data(), a) {
+            _M_construct(n, c);
+        }
 
         /**
          *  @brief  Move construct string.
@@ -564,16 +555,10 @@ namespace webpp {
          *  The newly-created string contains the exact contents of @a str.
          *  @a str is a valid, but unspecified string.
          **/
-        ustring(ustring&& str) noexcept
-        : _M_dataplus(_M_local_data(), stl::move(str._M_get_allocator()))
-        {
-            if (str._M_is_local())
-            {
-                traits_type::copy(local_buf, str.local_buf,
-                                  local_capacity + 1);
-            }
-            else
-            {
+        ustring(ustring&& str) noexcept : _M_dataplus(_M_local_data(), stl::move(str._M_get_allocator())) {
+            if (str._M_is_local()) {
+                traits_type::copy(local_buf, str.local_buf, local_capacity + 1);
+            } else {
                 _M_data(str._M_data());
                 _M_capacity(str.allocated_capacity);
             }
@@ -592,34 +577,27 @@ namespace webpp {
          *  @param  a  Allocator to use (default is default allocator).
          */
         ustring(stl::initializer_list<value_type> l, const allocator_type& a = allocator_type())
-        : _M_dataplus(_M_local_data(), a)
-        { _M_construct(l.begin(), l.end()); }
+          : _M_dataplus(_M_local_data(), a) {
+            _M_construct(l.begin(), l.end());
+        }
 
-        ustring(const ustring& str, const allocator_type& a)
-          : _M_dataplus(_M_local_data(), a)
-        { _M_construct(str.begin(), str.end()); }
+        ustring(const ustring& str, const allocator_type& a) : _M_dataplus(_M_local_data(), a) {
+            _M_construct(str.begin(), str.end());
+        }
 
-        ustring(ustring&& str, const allocator_type& a)
-        noexcept(_Alloc_traits::_S_always_equal())
-        : _M_dataplus(_M_local_data(), a)
-        {
-            if (str._M_is_local())
-            {
-                traits_type::copy(local_buf, str.local_buf,
-                                  local_capacity + 1);
+        ustring(ustring&& str, const allocator_type& a) noexcept(_Alloc_traits::_S_always_equal())
+          : _M_dataplus(_M_local_data(), a) {
+            if (str._M_is_local()) {
+                traits_type::copy(local_buf, str.local_buf, local_capacity + 1);
                 _M_length(str.length());
                 str._M_set_length(0);
-            }
-            else if (_Alloc_traits::_S_always_equal()
-                     || str.get_allocator() == a)
-            {
+            } else if (_Alloc_traits::_S_always_equal() || str.get_allocator() == a) {
                 _M_data(str._M_data());
                 _M_length(str.length());
                 _M_capacity(str.allocated_capacity);
                 str._M_data(str.local_buf);
                 str._M_set_length(0);
-            }
-            else
+            } else
                 _M_construct(str.begin(), str.end());
         }
 
@@ -630,12 +608,11 @@ namespace webpp {
          *  @param  end  End of range.
          *  @param  a  Allocator to use (default is default allocator).
          */
-        template<typename _InputIterator,
-          typename = stl::_RequireInputIter<_InputIterator>>
-        ustring(_InputIterator beg, _InputIterator end,
-        const allocator_type& a = allocator_type())
-        : _M_dataplus(_M_local_data(), a)
-        { _M_construct(beg, end); }
+        template <typename _InputIterator, typename = stl::_RequireInputIter<_InputIterator>>
+        ustring(_InputIterator beg, _InputIterator end, const allocator_type& a = allocator_type())
+          : _M_dataplus(_M_local_data(), a) {
+            _M_construct(beg, end);
+        }
 
         /**
          *  @brief  Construct string from a substring of a string_view.
@@ -644,34 +621,33 @@ namespace webpp {
          *  @param  n   The number of characters to copy from t.
          *  @param  a   Allocator to use.
          */
-        template<typename _Tp, typename = requires (convertible_to_ustring_view<_Tp>) void>
-        ustring(const _Tp& t, size_type pos, size_type n,
-                     const allocator_type& a = allocator_type())
-          : ustring(_S_to_string_view(t).substr(pos, n), a) { }
+        template <typename T>
+        requires(convertible_to_ustring_view<T>)
+          ustring(const T& t, size_type pos, size_type n, const allocator_type& a = allocator_type())
+          : ustring(_S_to_string_view(t).substr(pos, n), a) {}
 
         /**
          *  @brief  Construct string from a string_view.
          *  @param  t  Source object convertible to string view.
          *  @param  a  Allocator to use (default is default allocator).
          */
-        template<typename _Tp, typename = requires (convertible_to_ustring_view<_Tp>) void>
-        explicit
-        ustring(const _Tp& t, const allocator_type& a = allocator_type())
-          : ustring(sv_wrapper(_S_to_string_view(t)), a) { }
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) explicit ustring(const T&              t,
+                                                                  const allocator_type& a = allocator_type())
+          : ustring(sv_wrapper(_S_to_string_view(t)), a) {}
 
         /**
          *  @brief  Destroy the string instance.
          */
-        ~ustring()
-        { _M_dispose(); }
+        ~ustring() {
+            _M_dispose();
+        }
 
         /**
          *  @brief  Assign the value of @a str to this string.
          *  @param  str  Source string.
          */
-        ustring&
-        operator=(const ustring& str)
-        {
+        ustring& operator=(const ustring& str) {
             return this->assign(str);
         }
 
@@ -679,9 +655,9 @@ namespace webpp {
          *  @brief  Copy contents of @a s into this string.
          *  @param  s  Source null-terminated string.
          */
-        ustring&
-        operator=(const value_type* s)
-        { return this->assign(s); }
+        ustring& operator=(const value_type* s) {
+            return this->assign(s);
+        }
 
         /**
          *  @brief  Set value to string of length 1.
@@ -690,9 +666,7 @@ namespace webpp {
          *  Assigning to a character makes this string length 1 and
          *  (*this)[0] == @a c.
          */
-        ustring&
-        operator=(value_type c)
-        {
+        ustring& operator=(value_type c) {
             this->assign(1, c);
             return *this;
         }
@@ -706,14 +680,9 @@ namespace webpp {
          **/
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 2063. Contradictory requirements for string move assignment
-        ustring&
-        operator=(ustring&& str)
-        noexcept(_Alloc_traits::_S_nothrow_move())
-        {
-            if (!_M_is_local() && _Alloc_traits::_S_propagate_on_move_assign()
-                && !_Alloc_traits::_S_always_equal()
-                && _M_get_allocator() != str._M_get_allocator())
-            {
+        ustring& operator=(ustring&& str) noexcept(_Alloc_traits::_S_nothrow_move()) {
+            if (!_M_is_local() && _Alloc_traits::_S_propagate_on_move_assign() &&
+                !_Alloc_traits::_S_always_equal() && _M_get_allocator() != str._M_get_allocator()) {
                 // Destroy existing storage before replacing allocator.
                 _M_destroy(allocated_capacity);
                 _M_data(_M_local_data());
@@ -722,44 +691,34 @@ namespace webpp {
             // Replace allocator if POCMA is true.
             stl::alloc_on_move(_M_get_allocator(), str._M_get_allocator());
 
-            if (str._M_is_local())
-            {
+            if (str._M_is_local()) {
                 // We've always got room for a short string, just copy it.
                 if (str.size())
                     this->_S_copy(_M_data(), str._M_data(), str.size());
                 _M_set_length(str.size());
-            }
-            else if (_Alloc_traits::_S_propagate_on_move_assign()
-                     || _Alloc_traits::_S_always_equal()
-                     || _M_get_allocator() == str._M_get_allocator())
-            {
+            } else if (_Alloc_traits::_S_propagate_on_move_assign() || _Alloc_traits::_S_always_equal() ||
+                       _M_get_allocator() == str._M_get_allocator()) {
                 // Just move the allocated pointer, our allocator can free it.
-                pointer data = nullptr;
+                pointer   data = nullptr;
                 size_type capacity;
-                if (!_M_is_local())
-                {
-                    if (_Alloc_traits::_S_always_equal())
-                    {
+                if (!_M_is_local()) {
+                    if (_Alloc_traits::_S_always_equal()) {
                         // str can reuse our existing storage.
-                        data = _M_data();
+                        data     = _M_data();
                         capacity = allocated_capacity;
-                    }
-                    else // str can't use it, so free it.
+                    } else // str can't use it, so free it.
                         _M_destroy(allocated_capacity);
                 }
 
                 _M_data(str._M_data());
                 _M_length(str.length());
                 _M_capacity(str.allocated_capacity);
-                if (data)
-                {
+                if (data) {
                     str._M_data(data);
                     str._M_capacity(capacity);
-                }
-                else
+                } else
                     str._M_data(str.local_buf);
-            }
-            else // Need to do a deep copy
+            } else // Need to do a deep copy
                 assign(str);
             str.clear();
             return *this;
@@ -769,9 +728,7 @@ namespace webpp {
          *  @brief  Set value to string constructed from initializer %list.
          *  @param  l  stl::initializer_list.
          */
-        ustring&
-        operator=(stl::initializer_list<value_type> l)
-        {
+        ustring& operator=(stl::initializer_list<value_type> l) {
             this->assign(l.begin(), l.size());
             return *this;
         }
@@ -780,139 +737,140 @@ namespace webpp {
          *  @brief  Set value to string constructed from a string_view.
          *  @param  svt  An object convertible to string_view.
          */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) ustring&
-        operator=(const _Tp& svt)
-        { return this->assign(svt); }
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) ustring& operator=(const T& svt) {
+            return this->assign(svt);
+        }
 
         /**
          *  @brief  Convert to a string_view.
          *  @return A string_view.
          */
-        operator string_view_type() const noexcept
-        { return string_view_type(data(), size()); }
+        operator string_view_type() const noexcept {
+            return string_view_type(data(), size());
+        }
 
         // Iterators:
         /**
          *  Returns a read/write iterator that points to the first character in
          *  the %string.
          */
-        iterator
-        begin() noexcept
-        { return iterator(_M_data()); }
+        iterator begin() noexcept {
+            return iterator(_M_data());
+        }
 
         /**
          *  Returns a read-only (constant) iterator that points to the first
          *  character in the %string.
          */
-        const_iterator
-        begin() const noexcept
-        { return const_iterator(_M_data()); }
+        const_iterator begin() const noexcept {
+            return const_iterator(_M_data());
+        }
 
         /**
          *  Returns a read/write iterator that points one past the last
          *  character in the %string.
          */
-        iterator
-        end() noexcept
-        { return iterator(_M_data() + this->size()); }
+        iterator end() noexcept {
+            return iterator(_M_data() + this->size());
+        }
 
         /**
          *  Returns a read-only (constant) iterator that points one past the
          *  last character in the %string.
          */
-        const_iterator
-        end() const noexcept
-        { return const_iterator(_M_data() + this->size()); }
+        const_iterator end() const noexcept {
+            return const_iterator(_M_data() + this->size());
+        }
 
         /**
          *  Returns a read/write reverse iterator that points to the last
          *  character in the %string.  Iteration is done in reverse element
          *  order.
          */
-        reverse_iterator
-        rbegin() noexcept
-        { return reverse_iterator(this->end()); }
+        reverse_iterator rbegin() noexcept {
+            return reverse_iterator(this->end());
+        }
 
         /**
          *  Returns a read-only (constant) reverse iterator that points
          *  to the last character in the %string.  Iteration is done in
          *  reverse element order.
          */
-        const_reverse_iterator
-        rbegin() const noexcept
-        { return const_reverse_iterator(this->end()); }
+        const_reverse_iterator rbegin() const noexcept {
+            return const_reverse_iterator(this->end());
+        }
 
         /**
          *  Returns a read/write reverse iterator that points to one before the
          *  first character in the %string.  Iteration is done in reverse
          *  element order.
          */
-        reverse_iterator
-        rend() noexcept
-        { return reverse_iterator(this->begin()); }
+        reverse_iterator rend() noexcept {
+            return reverse_iterator(this->begin());
+        }
 
         /**
          *  Returns a read-only (constant) reverse iterator that points
          *  to one before the first character in the %string.  Iteration
          *  is done in reverse element order.
          */
-        const_reverse_iterator
-        rend() const noexcept
-        { return const_reverse_iterator(this->begin()); }
+        const_reverse_iterator rend() const noexcept {
+            return const_reverse_iterator(this->begin());
+        }
 
         /**
          *  Returns a read-only (constant) iterator that points to the first
          *  character in the %string.
          */
-        const_iterator
-        cbegin() const noexcept
-        { return const_iterator(this->_M_data()); }
+        const_iterator cbegin() const noexcept {
+            return const_iterator(this->_M_data());
+        }
 
         /**
          *  Returns a read-only (constant) iterator that points one past the
          *  last character in the %string.
          */
-        const_iterator
-        cend() const noexcept
-        { return const_iterator(this->_M_data() + this->size()); }
+        const_iterator cend() const noexcept {
+            return const_iterator(this->_M_data() + this->size());
+        }
 
         /**
          *  Returns a read-only (constant) reverse iterator that points
          *  to the last character in the %string.  Iteration is done in
          *  reverse element order.
          */
-        const_reverse_iterator
-        crbegin() const noexcept
-        { return const_reverse_iterator(this->end()); }
+        const_reverse_iterator crbegin() const noexcept {
+            return const_reverse_iterator(this->end());
+        }
 
         /**
          *  Returns a read-only (constant) reverse iterator that points
          *  to one before the first character in the %string.  Iteration
          *  is done in reverse element order.
          */
-        const_reverse_iterator
-        crend() const noexcept
-        { return const_reverse_iterator(this->begin()); }
+        const_reverse_iterator crend() const noexcept {
+            return const_reverse_iterator(this->begin());
+        }
 
       public:
         // Capacity:
         ///  Returns the number of characters in the string, not including any
         ///  null-termination.
-        size_type
-        size() const noexcept
-        { return _M_string_length; }
+        size_type size() const noexcept {
+            return _M_string_length;
+        }
 
         ///  Returns the number of characters in the string, not including any
         ///  null-termination.
-        size_type
-        length() const noexcept
-        { return _M_string_length; }
+        size_type length() const noexcept {
+            return _M_string_length;
+        }
 
         ///  Returns the size() of the largest possible %string.
-        size_type
-        max_size() const noexcept
-        { return (_Alloc_traits::max_size(_M_get_allocator()) - 1) / 2; }
+        size_type max_size() const noexcept {
+            return (_Alloc_traits::max_size(_M_get_allocator()) - 1) / 2;
+        }
 
         /**
          *  @brief  Resizes the %string to the specified number of characters.
@@ -924,8 +882,7 @@ namespace webpp {
          *  %string's current size the %string is truncated, otherwise
          *  the %string is extended and new elements are %set to @a c.
          */
-        void
-        resize(size_type n, value_type c);
+        void resize(size_type n, value_type c);
 
         /**
          *  @brief  Resizes the %string to the specified number of characters.
@@ -937,21 +894,17 @@ namespace webpp {
          *  are default-constructed.  For basic types such as char, this means
          *  setting them to 0.
          */
-        void
-        resize(size_type n)
-        { this->resize(n, value_type()); }
+        void resize(size_type n) {
+            this->resize(n, value_type());
+        }
 
         ///  A non-binding request to reduce capacity() to size().
-        void
-        shrink_to_fit() noexcept
-        {
+        void shrink_to_fit() noexcept {
 #if cpp_exceptions
-            if (capacity() > size())
-            {
-                try
-                { reserve(0); }
-                catch(...)
-                { }
+            if (capacity() > size()) {
+                try {
+                    reserve(0);
+                } catch (...) {}
             }
 #endif
         }
@@ -960,11 +913,8 @@ namespace webpp {
          *  Returns the total number of characters that the %string can hold
          *  before needing to allocate more memory.
          */
-        size_type
-        capacity() const noexcept
-        {
-            return _M_is_local() ? size_type(local_capacity)
-                                 : allocated_capacity;
+        size_type capacity() const noexcept {
+            return _M_is_local() ? size_type(local_capacity) : allocated_capacity;
         }
 
         /**
@@ -984,23 +934,22 @@ namespace webpp {
          *  prevent a possible reallocation of memory and copying of %string
          *  data.
          */
-        void
-        reserve(size_type res_arg = 0);
+        void reserve(size_type res_arg = 0);
 
         /**
          *  Erases the string, making it empty.
          */
-        void
-        clear() noexcept
-        { _M_set_length(0); }
+        void clear() noexcept {
+            _M_set_length(0);
+        }
 
         /**
-         *  Returns true if the %string is empty.  Equivalent to 
+         *  Returns true if the %string is empty.  Equivalent to
          *  <code>*this == ""</code>.
          */
-        _GLIBCXX_NODISCARD bool
-        empty() const noexcept
-        { return this->size() == 0; }
+        _GLIBCXX_NODISCARD bool empty() const noexcept {
+            return this->size() == 0;
+        }
 
         // Element access:
         /**
@@ -1013,9 +962,7 @@ namespace webpp {
          *  out_of_range lookups are not defined. (For checked lookups
          *  see at().)
          */
-        const_reference
-        operator[] (size_type pos) const noexcept
-        {
+        const_reference operator[](size_type pos) const noexcept {
             glibcxx_assert(pos <= size());
             return _M_data()[pos];
         }
@@ -1030,9 +977,7 @@ namespace webpp {
          *  out_of_range lookups are not defined. (For checked lookups
          *  see at().)
          */
-        reference
-        operator[](size_type pos)
-        {
+        reference operator[](size_type pos) {
             // Allow pos == size() both in C++98 mode, as v3 extension,
             // and in C++11 mode.
             glibcxx_assert(pos <= size());
@@ -1051,14 +996,13 @@ namespace webpp {
          *  first checked that it is in the range of the string.  The function
          *  throws out_of_range if the check fails.
          */
-        const_reference
-        at(size_type n) const
-        {
+        const_reference at(size_type n) const {
             if (n >= this->size())
                 throw_out_of_range_fmt(N("ustring::at: n "
-                                             "(which is %zu) >= this->size() "
-                                             "(which is %zu)"),
-                                         n, this->size());
+                                         "(which is %zu) >= this->size() "
+                                         "(which is %zu)"),
+                                       n,
+                                       this->size());
             return _M_data()[n];
         }
 
@@ -1072,14 +1016,13 @@ namespace webpp {
          *  first checked that it is in the range of the string.  The function
          *  throws out_of_range if the check fails.
          */
-        reference
-        at(size_type n)
-        {
+        reference at(size_type n) {
             if (n >= size())
                 throw_out_of_range_fmt(N("ustring::at: n "
-                                             "(which is %zu) >= this->size() "
-                                             "(which is %zu)"),
-                                         n, this->size());
+                                         "(which is %zu) >= this->size() "
+                                         "(which is %zu)"),
+                                       n,
+                                       this->size());
             return _M_data()[n];
         }
 
@@ -1087,9 +1030,7 @@ namespace webpp {
          *  Returns a read/write reference to the data at the first
          *  element of the %string.
          */
-        reference
-        front() noexcept
-        {
+        reference front() noexcept {
             glibcxx_assert(!empty());
             return operator[](0);
         }
@@ -1098,9 +1039,7 @@ namespace webpp {
          *  Returns a read-only (constant) reference to the data at the first
          *  element of the %string.
          */
-        const_reference
-        front() const noexcept
-        {
+        const_reference front() const noexcept {
             glibcxx_assert(!empty());
             return operator[](0);
         }
@@ -1109,9 +1048,7 @@ namespace webpp {
          *  Returns a read/write reference to the data at the last
          *  element of the %string.
          */
-        reference
-        back() noexcept
-        {
+        reference back() noexcept {
             glibcxx_assert(!empty());
             return operator[](this->size() - 1);
         }
@@ -1120,9 +1057,7 @@ namespace webpp {
          *  Returns a read-only (constant) reference to the data at the
          *  last element of the %string.
          */
-        const_reference
-        back() const noexcept
-        {
+        const_reference back() const noexcept {
             glibcxx_assert(!empty());
             return operator[](this->size() - 1);
         }
@@ -1133,27 +1068,25 @@ namespace webpp {
          *  @param str  The string to append.
          *  @return  Reference to this string.
          */
-        ustring&
-        operator+=(const ustring& str)
-        { return this->append(str); }
+        ustring& operator+=(const ustring& str) {
+            return this->append(str);
+        }
 
         /**
          *  @brief  Append a C string.
          *  @param s  The C string to append.
          *  @return  Reference to this string.
          */
-        ustring&
-        operator+=(const value_type* s)
-        { return this->append(s); }
+        ustring& operator+=(const value_type* s) {
+            return this->append(s);
+        }
 
         /**
          *  @brief  Append a character.
          *  @param c  The character to append.
          *  @return  Reference to this string.
          */
-        ustring&
-        operator+=(value_type c)
-        {
+        ustring& operator+=(value_type c) {
             this->push_back(c);
             return *this;
         }
@@ -1163,28 +1096,28 @@ namespace webpp {
          *  @param l  The stl::initializer_list of characters to be appended.
          *  @return  Reference to this string.
          */
-        ustring&
-        operator+=(stl::initializer_list<value_type> l)
-        { return this->append(l.begin(), l.size()); }
+        ustring& operator+=(stl::initializer_list<value_type> l) {
+            return this->append(l.begin(), l.size());
+        }
 
         /**
          *  @brief  Append a string_view.
          *  @param svt  An object convertible to string_view to be appended.
          *  @return  Reference to this string.
          */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) ustring&
-        operator+=(const _Tp& svt)
-        { return this->append(svt); }
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) ustring& operator+=(const T& svt) {
+            return this->append(svt);
+        }
 
         /**
          *  @brief  Append a string to this string.
          *  @param str  The string to append.
          *  @return  Reference to this string.
          */
-        ustring&
-        append(const ustring& str)
-        { return _M_append(str._M_data(), str.size()); }
+        ustring& append(const ustring& str) {
+            return _M_append(str._M_data(), str.size());
+        }
 
         /**
          *  @brief  Append a substring.
@@ -1199,11 +1132,9 @@ namespace webpp {
          *  than the number of available characters in @a str, the
          *  remainder of @a str is appended.
          */
-        ustring&
-        append(const ustring& str, size_type pos, size_type n = npos)
-        { return _M_append(str._M_data()
-                           + str._M_check(pos, "ustring::append"),
-                           str._M_limit(pos, n)); }
+        ustring& append(const ustring& str, size_type pos, size_type n = npos) {
+            return _M_append(str._M_data() + str._M_check(pos, "ustring::append"), str._M_limit(pos, n));
+        }
 
         /**
          *  @brief  Append a C substring.
@@ -1211,9 +1142,7 @@ namespace webpp {
          *  @param n  The number of characters to append.
          *  @return  Reference to this string.
          */
-        ustring&
-        append(const value_type* s, size_type n)
-        {
+        ustring& append(const value_type* s, size_type n) {
             glibcxx_requires_string_len(s, n);
             _M_check_length(size_type(0), n, "ustring::append");
             return _M_append(s, n);
@@ -1224,9 +1153,7 @@ namespace webpp {
          *  @param s  The C string to append.
          *  @return  Reference to this string.
          */
-        ustring&
-        append(const value_type* s)
-        {
+        ustring& append(const value_type* s) {
             glibcxx_requires_string(s);
             const size_type n = traits_type::length(s);
             _M_check_length(size_type(0), n, "ustring::append");
@@ -1241,18 +1168,18 @@ namespace webpp {
          *
          *  Appends n copies of c to this string.
          */
-        ustring&
-        append(size_type n, value_type c)
-        { return _M_replace_aux(this->size(), size_type(0), n, c); }
+        ustring& append(size_type n, value_type c) {
+            return _M_replace_aux(this->size(), size_type(0), n, c);
+        }
 
         /**
          *  @brief  Append an stl::initializer_list of characters.
          *  @param l  The stl::initializer_list of characters to append.
          *  @return  Reference to this string.
          */
-        ustring&
-        append(stl::initializer_list<value_type> l)
-        { return this->append(l.begin(), l.size()); }
+        ustring& append(stl::initializer_list<value_type> l) {
+            return this->append(l.begin(), l.size());
+        }
 
         /**
          *  @brief  Append a range of characters.
@@ -1262,21 +1189,18 @@ namespace webpp {
          *
          *  Appends characters in the range [first,last) to this string.
          */
-        template<class _InputIterator,
-          typename = stl::_RequireInputIter<_InputIterator>>
-        ustring&
-        append(_InputIterator first, _InputIterator last)
-        { return this->replace(end(), end(), first, last); }
+        template <class _InputIterator, typename = stl::_RequireInputIter<_InputIterator>>
+        ustring& append(_InputIterator first, _InputIterator last) {
+            return this->replace(end(), end(), first, last);
+        }
 
         /**
          *  @brief  Append a string_view.
          *  @param svt  An object convertible to string_view to be appended.
          *  @return  Reference to this string.
          */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) ustring&
-        append(const _Tp& svt)
-        {
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) ustring& append(const T& svt) {
             string_view_type sv = svt;
             return this->append(sv.data(), sv.size());
         }
@@ -1288,23 +1212,20 @@ namespace webpp {
          *  @param n   The number of characters to append from the string_view.
          *  @return  Reference to this string.
          */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) ustring&
-        append(const _Tp& svt, size_type pos, size_type n = npos)
-        {
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) ustring& append(const T&  svt,
+                                                                 size_type pos,
+                                                                 size_type n = npos) {
             string_view_type sv = svt;
-            return _M_append(sv.data()
-                             + stl::sv_check(sv.size(), pos, "ustring::append"),
-                             stl::sv_limit(sv.size(), pos, n));
+            return _M_append(sv.data() + details::sv_check(sv.size(), pos, "ustring::append"),
+                             details::sv_limit(sv.size(), pos, n));
         }
 
         /**
          *  @brief  Append a single character.
          *  @param c  Character to append.
          */
-        void
-        push_back(value_type c)
-        {
+        void push_back(value_type c) {
             const size_type size = this->size();
             if (size + 1 > this->capacity())
                 this->_M_mutate(size, size_type(0), 0, size_type(1));
@@ -1317,26 +1238,19 @@ namespace webpp {
          *  @param  str  Source string to use.
          *  @return  Reference to this string.
          */
-        ustring&
-        assign(const ustring& str)
-        {
-            if (_Alloc_traits::_S_propagate_on_copy_assign())
-            {
-                if (!_Alloc_traits::_S_always_equal() && !_M_is_local()
-                    && _M_get_allocator() != str._M_get_allocator())
-                {
+        ustring& assign(const ustring& str) {
+            if (_Alloc_traits::_S_propagate_on_copy_assign()) {
+                if (!_Alloc_traits::_S_always_equal() && !_M_is_local() &&
+                    _M_get_allocator() != str._M_get_allocator()) {
                     // Propagating allocator cannot free existing storage so must
                     // deallocate it before replacing current allocator.
-                    if (str.size() <= local_capacity)
-                    {
+                    if (str.size() <= local_capacity) {
                         _M_destroy(allocated_capacity);
                         _M_data(_M_local_data());
                         _M_set_length(0);
-                    }
-                    else
-                    {
-                        const auto len = str.size();
-                        auto alloc = str._M_get_allocator();
+                    } else {
+                        const auto len   = str.size();
+                        auto       alloc = str._M_get_allocator();
                         // If this allocation throws there are no effects:
                         auto ptr = _Alloc_traits::allocate(alloc, len + 1);
                         _M_destroy(allocated_capacity);
@@ -1359,10 +1273,7 @@ namespace webpp {
          *  This function sets this string to the exact contents of @a str.
          *  @a str is a valid, but unspecified string.
          */
-        ustring&
-        assign(ustring&& str)
-        noexcept(_Alloc_traits::_S_nothrow_move())
-        {
+        ustring& assign(ustring&& str) noexcept(_Alloc_traits::_S_nothrow_move()) {
             // _GLIBCXX_RESOLVE_LIB_DEFECTS
             // 2063. Contradictory requirements for string move assignment
             return *this = stl::move(str);
@@ -1381,11 +1292,12 @@ namespace webpp {
          *  is larger than the number of available characters in @a
          *  str, the remainder of @a str is used.
          */
-        ustring&
-        assign(const ustring& str, size_type pos, size_type n = npos)
-        { return _M_replace(size_type(0), this->size(), str._M_data()
-                                                        + str._M_check(pos, "ustring::assign"),
-                            str._M_limit(pos, n)); }
+        ustring& assign(const ustring& str, size_type pos, size_type n = npos) {
+            return _M_replace(size_type(0),
+                              this->size(),
+                              str._M_data() + str._M_check(pos, "ustring::assign"),
+                              str._M_limit(pos, n));
+        }
 
         /**
          *  @brief  Set value to a C substring.
@@ -1397,9 +1309,7 @@ namespace webpp {
          *  characters of @a s.  If @a n is is larger than the number of
          *  available characters in @a s, the remainder of @a s is used.
          */
-        ustring&
-        assign(const value_type* s, size_type n)
-        {
+        ustring& assign(const value_type* s, size_type n) {
             glibcxx_requires_string_len(s, n);
             return _M_replace(size_type(0), this->size(), s, n);
         }
@@ -1413,12 +1323,9 @@ namespace webpp {
          *  The data is copied, so there is no dependence on @a s once the
          *  function returns.
          */
-        ustring&
-        assign(const value_type* s)
-        {
+        ustring& assign(const value_type* s) {
             glibcxx_requires_string(s);
-            return _M_replace(size_type(0), this->size(), s,
-                              traits_type::length(s));
+            return _M_replace(size_type(0), this->size(), s, traits_type::length(s));
         }
 
         /**
@@ -1430,9 +1337,9 @@ namespace webpp {
          *  This function sets the value of this string to @a n copies of
          *  character @a c.
          */
-        ustring&
-        assign(size_type n, value_type c)
-        { return _M_replace_aux(size_type(0), this->size(), n, c); }
+        ustring& assign(size_type n, value_type c) {
+            return _M_replace_aux(size_type(0), this->size(), n, c);
+        }
 
         /**
          *  @brief  Set value to a range of characters.
@@ -1441,31 +1348,28 @@ namespace webpp {
          *  @return  Reference to this string.
          *
          *  Sets value of string to characters in the range [first,last).
-        */
-        template<class _InputIterator,
-          typename = stl::_RequireInputIter<_InputIterator>>
-        ustring&
-        assign(_InputIterator first, _InputIterator last)
-        { return this->replace(begin(), end(), first, last); }
+         */
+        template <class _InputIterator, typename = stl::_RequireInputIter<_InputIterator>>
+        ustring& assign(_InputIterator first, _InputIterator last) {
+            return this->replace(begin(), end(), first, last);
+        }
 
         /**
          *  @brief  Set value to an stl::initializer_list of characters.
          *  @param l  The stl::initializer_list of characters to assign.
          *  @return  Reference to this string.
          */
-        ustring&
-        assign(stl::initializer_list<value_type> l)
-        { return this->assign(l.begin(), l.size()); }
+        ustring& assign(stl::initializer_list<value_type> l) {
+            return this->assign(l.begin(), l.size());
+        }
 
         /**
          *  @brief  Set value from a string_view.
          *  @param svt  The source object convertible to string_view.
          *  @return  Reference to this string.
          */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) ustring&
-        assign(const _Tp& svt)
-        {
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) ustring& assign(const T& svt) {
             string_view_type sv = svt;
             return this->assign(sv.data(), sv.size());
         }
@@ -1477,15 +1381,15 @@ namespace webpp {
          *  @param n  The number of characters to assign.
          *  @return  Reference to this string.
          */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) ustring&
-        assign(const _Tp& svt, size_type pos, size_type n = npos)
-        {
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) ustring& assign(const T&  svt,
+                                                                 size_type pos,
+                                                                 size_type n = npos) {
             string_view_type sv = svt;
-            return _M_replace(size_type(0), this->size(),
-                              sv.data()
-                              + stl::sv_check(sv.size(), pos, "ustring::assign"),
-                              stl::sv_limit(sv.size(), pos, n));
+            return _M_replace(size_type(0),
+                              this->size(),
+                              sv.data() + details::sv_check(sv.size(), pos, "ustring::assign"),
+                              details::sv_limit(sv.size(), pos, n));
         }
 
         /**
@@ -1502,10 +1406,8 @@ namespace webpp {
          *  characters causes the length to exceed max_size(),
          *  length_error is thrown.  The value of the string doesn't
          *  change if an error is thrown.
-        */
-        iterator
-        insert(const_iterator p, size_type n, value_type c)
-        {
+         */
+        iterator insert(const_iterator p, size_type n, value_type c) {
             _GLIBCXX_DEBUG_PEDASSERT(p >= begin() && p <= end());
             const size_type pos = p - begin();
             this->replace(p, p, n, c);
@@ -1525,12 +1427,9 @@ namespace webpp {
          *  causes the length to exceed max_size(), length_error is
          *  thrown.  The value of the string doesn't change if an error
          *  is thrown.
-        */
-        template<class _InputIterator,
-          typename = stl::_RequireInputIter<_InputIterator>>
-        iterator
-        insert(const_iterator p, _InputIterator beg, _InputIterator end)
-        {
+         */
+        template <class _InputIterator, typename = stl::_RequireInputIter<_InputIterator>>
+        iterator insert(const_iterator p, _InputIterator beg, _InputIterator end) {
             _GLIBCXX_DEBUG_PEDASSERT(p >= begin() && p <= end());
             const size_type pos = p - begin();
             this->replace(p, p, beg, end);
@@ -1542,17 +1441,15 @@ namespace webpp {
          *  @param l  The stl::initializer_list of characters to insert.
          *  @throw  stl::length_error  If new length exceeds @c max_size().
          */
-        iterator
-        insert(const_iterator p, stl::initializer_list<value_type> l)
-        { return this->insert(p, l.begin(), l.end()); }
+        iterator insert(const_iterator p, stl::initializer_list<value_type> l) {
+            return this->insert(p, l.begin(), l.end());
+        }
 
         // See PR libstdc++/83328
-      void
-      insert(iterator p, stl::initializer_list<value_type> l)
-      {
-	_GLIBCXX_DEBUG_PEDASSERT(p >= begin() && p <= end());
-	this->insert(p - begin(), l.begin(), l.size());
-      }
+        void insert(iterator p, stl::initializer_list<value_type> l) {
+            _GLIBCXX_DEBUG_PEDASSERT(p >= begin() && p <= end());
+            this->insert(p - begin(), l.begin(), l.size());
+        }
 
         /**
          *  @brief  Insert value of a string.
@@ -1565,11 +1462,10 @@ namespace webpp {
          *  characters causes the length to exceed max_size(),
          *  length_error is thrown.  The value of the string doesn't
          *  change if an error is thrown.
-        */
-        ustring&
-        insert(size_type pos1, const ustring& str)
-        { return this->replace(pos1, size_type(0),
-                               str._M_data(), str.size()); }
+         */
+        ustring& insert(size_type pos1, const ustring& str) {
+            return this->replace(pos1, size_type(0), str._M_data(), str.size());
+        }
 
         /**
          *  @brief  Insert a substring.
@@ -1588,13 +1484,13 @@ namespace webpp {
          *  pos1 is beyond the end of this string or @a pos2 is
          *  beyond the end of @a str, out_of_range is thrown.  The
          *  value of the string doesn't change if an error is thrown.
-        */
-        ustring&
-        insert(size_type pos1, const ustring& str,
-               size_type pos2, size_type n = npos)
-        { return this->replace(pos1, size_type(0), str._M_data()
-                                                     + str._M_check(pos2, "ustring::insert"),
-                               str._M_limit(pos2, n)); }
+         */
+        ustring& insert(size_type pos1, const ustring& str, size_type pos2, size_type n = npos) {
+            return this->replace(pos1,
+                                 size_type(0),
+                                 str._M_data() + str._M_check(pos2, "ustring::insert"),
+                                 str._M_limit(pos2, n));
+        }
 
         /**
          *  @brief  Insert a C substring.
@@ -1611,10 +1507,10 @@ namespace webpp {
          *  max_size(), length_error is thrown.  If @a pos is beyond
          *  end(), out_of_range is thrown.  The value of the string
          *  doesn't change if an error is thrown.
-        */
-        ustring&
-        insert(size_type pos, const value_type* s, size_type n)
-        { return this->replace(pos, size_type(0), s, n); }
+         */
+        ustring& insert(size_type pos, const value_type* s, size_type n) {
+            return this->replace(pos, size_type(0), s, n);
+        }
 
         /**
          *  @brief  Insert a C string.
@@ -1630,13 +1526,10 @@ namespace webpp {
          *  length_error is thrown.  If @a pos is beyond end(), out_of_range is
          *  thrown.  The value of the string doesn't change if an error is
          *  thrown.
-        */
-        ustring&
-        insert(size_type pos, const value_type* s)
-        {
+         */
+        ustring& insert(size_type pos, const value_type* s) {
             glibcxx_requires_string(s);
-            return this->replace(pos, size_type(0), s,
-                                 traits_type::length(s));
+            return this->replace(pos, size_type(0), s, traits_type::length(s));
         }
 
         /**
@@ -1654,11 +1547,10 @@ namespace webpp {
          *  max_size(), length_error is thrown.  If @a pos > length(),
          *  out_of_range is thrown.  The value of the string doesn't
          *  change if an error is thrown.
-        */
-        ustring&
-        insert(size_type pos, size_type n, value_type c)
-        { return _M_replace_aux(_M_check(pos, "ustring::insert"),
-                                size_type(0), n, c); }
+         */
+        ustring& insert(size_type pos, size_type n, value_type c) {
+            return _M_replace_aux(_M_check(pos, "ustring::insert"), size_type(0), n, c);
+        }
 
         /**
          *  @brief  Insert one character.
@@ -1672,10 +1564,8 @@ namespace webpp {
          *  length_error is thrown.  If @a p is beyond end of string,
          *  out_of_range is thrown.  The value of the string doesn't
          *  change if an error is thrown.
-        */
-        iterator
-        insert(const_iterator p, value_type c)
-        {
+         */
+        iterator insert(const_iterator p, value_type c) {
             _GLIBCXX_DEBUG_PEDASSERT(p >= begin() && p <= end());
             const size_type pos = p - begin();
             _M_replace_aux(pos, size_type(0), size_type(1), c);
@@ -1687,11 +1577,9 @@ namespace webpp {
          *  @param pos  Position in string to insert at.
          *  @param svt  The object convertible to string_view to insert.
          *  @return  Reference to this string.
-        */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) ustring&
-        insert(size_type pos, const _Tp& svt)
-        {
+         */
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) ustring& insert(size_type pos, const T& svt) {
             string_view_type sv = svt;
             return this->insert(pos, sv.data(), sv.size());
         }
@@ -1703,17 +1591,17 @@ namespace webpp {
          *  @param pos2  Start of characters in str to insert.
          *  @param n    The number of characters to insert.
          *  @return  Reference to this string.
-        */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) ustring&
-        insert(size_type pos1, const _Tp& svt,
-               size_type pos2, size_type n = npos)
-        {
+         */
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) ustring& insert(size_type pos1,
+                                                                 const T&  svt,
+                                                                 size_type pos2,
+                                                                 size_type n = npos) {
             string_view_type sv = svt;
-            return this->replace(pos1, size_type(0),
-                                 sv.data()
-                                 + stl::sv_check(sv.size(), pos2, "ustring::insert"),
-                                 stl::sv_limit(sv.size(), pos2, n));
+            return this->replace(pos1,
+                                 size_type(0),
+                                 sv.data() + details::sv_check(sv.size(), pos2, "ustring::insert"),
+                                 details::sv_limit(sv.size(), pos2, n));
         }
 
         /**
@@ -1730,10 +1618,8 @@ namespace webpp {
          *  the string is truncated.  If @a p is beyond end of string,
          *  out_of_range is thrown.  The value of the string doesn't
          *  change if an error is thrown.
-        */
-        ustring&
-        erase(size_type pos = 0, size_type n = npos)
-        {
+         */
+        ustring& erase(size_type pos = 0, size_type n = npos) {
             _M_check(pos, "ustring::erase");
             if (n == npos)
                 this->_M_set_length(pos);
@@ -1749,12 +1635,9 @@ namespace webpp {
          *
          *  Removes the character at @a position from this string. The value
          *  of the string doesn't change if an error is thrown.
-        */
-        iterator
-        erase(const_iterator position)
-        {
-            _GLIBCXX_DEBUG_PEDASSERT(position >= begin()
-                                     && position < end());
+         */
+        iterator erase(const_iterator position) {
+            _GLIBCXX_DEBUG_PEDASSERT(position >= begin() && position < end());
             const size_type pos = position - begin();
             this->_M_erase(pos, size_type(1));
             return iterator(_M_data() + pos);
@@ -1768,12 +1651,9 @@ namespace webpp {
          *
          *  Removes the characters in the range [first,last) from this string.
          *  The value of the string doesn't change if an error is thrown.
-        */
-        iterator
-        erase(const_iterator first, const_iterator last)
-        {
-            _GLIBCXX_DEBUG_PEDASSERT(first >= begin() && first <= last
-                                     && last <= end());
+         */
+        iterator erase(const_iterator first, const_iterator last) {
+            _GLIBCXX_DEBUG_PEDASSERT(first >= begin() && first <= last && last <= end());
             const size_type pos = first - begin();
             if (last == end())
                 this->_M_set_length(pos);
@@ -1787,9 +1667,7 @@ namespace webpp {
          *
          *  The string must be non-empty.
          */
-        void
-        pop_back() noexcept
-        {
+        void pop_back() noexcept {
             glibcxx_assert(!empty());
             _M_erase(size() - 1, 1);
         }
@@ -1810,10 +1688,10 @@ namespace webpp {
          *  If the length of the result exceeds max_size(), length_error
          *  is thrown.  The value of the string doesn't change if an
          *  error is thrown.
-        */
-        ustring&
-        replace(size_type pos, size_type n, const ustring& str)
-        { return this->replace(pos, n, str._M_data(), str.size()); }
+         */
+        ustring& replace(size_type pos, size_type n, const ustring& str) {
+            return this->replace(pos, n, str._M_data(), str.size());
+        }
 
         /**
          *  @brief  Replace characters with value from another string.
@@ -1832,13 +1710,14 @@ namespace webpp {
          *  beyond end of string, out_of_range is thrown.  If the length of the
          *  result exceeds max_size(), length_error is thrown.  The value of the
          *  string doesn't change if an error is thrown.
-        */
+         */
         ustring&
-        replace(size_type pos1, size_type n1, const ustring& str,
-                size_type pos2, size_type n2 = npos)
-        { return this->replace(pos1, n1, str._M_data()
-                                             + str._M_check(pos2, "ustring::replace"),
-                               str._M_limit(pos2, n2)); }
+        replace(size_type pos1, size_type n1, const ustring& str, size_type pos2, size_type n2 = npos) {
+            return this->replace(pos1,
+                                 n1,
+                                 str._M_data() + str._M_check(pos2, "ustring::replace"),
+                                 str._M_limit(pos2, n2));
+        }
 
         /**
          *  @brief  Replace characters with value of a C substring.
@@ -1857,14 +1736,10 @@ namespace webpp {
          *  the length of result exceeds max_size(), length_error is
          *  thrown.  The value of the string doesn't change if an error
          *  is thrown.
-        */
-        ustring&
-        replace(size_type pos, size_type n1, const value_type* s,
-                size_type n2)
-        {
+         */
+        ustring& replace(size_type pos, size_type n1, const value_type* s, size_type n2) {
             glibcxx_requires_string_len(s, n2);
-            return _M_replace(_M_check(pos, "ustring::replace"),
-                              _M_limit(pos, n1), s, n2);
+            return _M_replace(_M_check(pos, "ustring::replace"), _M_limit(pos, n1), s, n2);
         }
 
         /**
@@ -1882,10 +1757,8 @@ namespace webpp {
          *  is thrown.  If the length of result exceeds max_size(),
          *  length_error is thrown.  The value of the string doesn't
          *  change if an error is thrown.
-        */
-        ustring&
-        replace(size_type pos, size_type n1, const value_type* s)
-        {
+         */
+        ustring& replace(size_type pos, size_type n1, const value_type* s) {
             glibcxx_requires_string(s);
             return this->replace(pos, n1, s, traits_type::length(s));
         }
@@ -1906,11 +1779,10 @@ namespace webpp {
          *  If the length of result exceeds max_size(), length_error is
          *  thrown.  The value of the string doesn't change if an error
          *  is thrown.
-        */
-        ustring&
-        replace(size_type pos, size_type n1, size_type n2, value_type c)
-        { return _M_replace_aux(_M_check(pos, "ustring::replace"),
-                                _M_limit(pos, n1), n2, c); }
+         */
+        ustring& replace(size_type pos, size_type n1, size_type n2, value_type c) {
+            return _M_replace_aux(_M_check(pos, "ustring::replace"), _M_limit(pos, n1), n2, c);
+        }
 
         /**
          *  @brief  Replace range of characters with string.
@@ -1924,11 +1796,10 @@ namespace webpp {
          *  the value of @a str is inserted.  If the length of result
          *  exceeds max_size(), length_error is thrown.  The value of
          *  the string doesn't change if an error is thrown.
-        */
-        ustring&
-        replace(const_iterator i1, const_iterator i2,
-                const ustring& str)
-        { return this->replace(i1, i2, str._M_data(), str.size()); }
+         */
+        ustring& replace(const_iterator i1, const_iterator i2, const ustring& str) {
+            return this->replace(i1, i2, str._M_data(), str.size());
+        }
 
         /**
          *  @brief  Replace range of characters with C substring.
@@ -1944,13 +1815,9 @@ namespace webpp {
          *  length of result exceeds max_size(), length_error is thrown.
          *  The value of the string doesn't change if an error is
          *  thrown.
-        */
-        ustring&
-        replace(const_iterator i1, const_iterator i2,
-                const value_type* s, size_type n)
-        {
-            _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2
-                                     && i2 <= end());
+         */
+        ustring& replace(const_iterator i1, const_iterator i2, const value_type* s, size_type n) {
+            _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
             return this->replace(i1 - begin(), i2 - i1, s, n);
         }
 
@@ -1966,10 +1833,8 @@ namespace webpp {
          *  the characters of @a s are inserted.  If the length of
          *  result exceeds max_size(), length_error is thrown.  The
          *  value of the string doesn't change if an error is thrown.
-        */
-        ustring&
-        replace(const_iterator i1, const_iterator i2, const value_type* s)
-        {
+         */
+        ustring& replace(const_iterator i1, const_iterator i2, const value_type* s) {
             glibcxx_requires_string(s);
             return this->replace(i1, i2, s, traits_type::length(s));
         }
@@ -1987,13 +1852,9 @@ namespace webpp {
          *  @a n copies of @a c are inserted.  If the length of
          *  result exceeds max_size(), length_error is thrown.  The
          *  value of the string doesn't change if an error is thrown.
-        */
-        ustring&
-        replace(const_iterator i1, const_iterator i2, size_type n,
-                value_type c)
-        {
-            _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2
-                                     && i2 <= end());
+         */
+        ustring& replace(const_iterator i1, const_iterator i2, size_type n, value_type c) {
+            _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
             return _M_replace_aux(i1 - begin(), i2 - i1, n, c);
         }
 
@@ -2011,78 +1872,49 @@ namespace webpp {
          *  length of result exceeds max_size(), length_error is thrown.
          *  The value of the string doesn't change if an error is
          *  thrown.
-        */
-        template<class _InputIterator,
-          typename = stl::_RequireInputIter<_InputIterator>>
-        ustring&
-        replace(const_iterator i1, const_iterator i2,
-                _InputIterator k1, _InputIterator k2)
-        {
-            _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2
-                                     && i2 <= end());
+         */
+        template <class _InputIterator, typename = stl::_RequireInputIter<_InputIterator>>
+        ustring& replace(const_iterator i1, const_iterator i2, _InputIterator k1, _InputIterator k2) {
+            _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
             glibcxx_requires_valid_range(k1, k2);
-            return this->_M_replace_dispatch(i1, i2, k1, k2,
-                                             stl::false_type());
+            return this->_M_replace_dispatch(i1, i2, k1, k2, stl::false_type());
         }
 #ifdef _GLIBCXX_DISAMBIGUATE_REPLACE_INST
         typename enable_if_not_native_iterator<_InputIterator>::type
 #else
         ustring&
 #endif
-        replace(iterator i1, iterator i2,
-		_InputIterator k1, _InputIterator k2)
-        {
-	  _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2
-				   && i2 <= end());
-	  glibcxx_requires_valid_range(k1, k2);
-	  typedef typename stl::is_integer<_InputIterator>::type _Integral;
-	  return _M_replace_dispatch(i1, i2, k1, k2, _Integral());
-	}
+        replace(iterator i1, iterator i2, _InputIterator k1, _InputIterator k2) {
+            _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
+            glibcxx_requires_valid_range(k1, k2);
+            using integral_type = stl::is_integer_t<_InputIterator>;
+            return _M_replace_dispatch(i1, i2, k1, k2, _Integral());
+        }
 
         // Specializations for the common case of pointer and iterator:
         // useful to avoid the overhead of temporary buffering in _M_replace.
-        ustring&
-        replace(const_iterator i1, const_iterator i2,
-                value_type* k1, value_type* k2)
-        {
-            _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2
-                                     && i2 <= end());
+        ustring& replace(const_iterator i1, const_iterator i2, value_type* k1, value_type* k2) {
+            _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
             glibcxx_requires_valid_range(k1, k2);
-            return this->replace(i1 - begin(), i2 - i1,
-                                 k1, k2 - k1);
+            return this->replace(i1 - begin(), i2 - i1, k1, k2 - k1);
         }
 
-        ustring&
-        replace(const_iterator i1, const_iterator i2,
-                const value_type* k1, const value_type* k2)
-        {
-            _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2
-                                     && i2 <= end());
+        ustring& replace(const_iterator i1, const_iterator i2, const value_type* k1, const value_type* k2) {
+            _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
             glibcxx_requires_valid_range(k1, k2);
-            return this->replace(i1 - begin(), i2 - i1,
-                                 k1, k2 - k1);
+            return this->replace(i1 - begin(), i2 - i1, k1, k2 - k1);
         }
 
-        ustring&
-        replace(const_iterator i1, const_iterator i2,
-                iterator k1, iterator k2)
-        {
-            _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2
-                                     && i2 <= end());
+        ustring& replace(const_iterator i1, const_iterator i2, iterator k1, iterator k2) {
+            _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
             glibcxx_requires_valid_range(k1, k2);
-            return this->replace(i1 - begin(), i2 - i1,
-                                 k1.base(), k2 - k1);
+            return this->replace(i1 - begin(), i2 - i1, k1.base(), k2 - k1);
         }
 
-        ustring&
-        replace(const_iterator i1, const_iterator i2,
-                const_iterator k1, const_iterator k2)
-        {
-            _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2
-                                     && i2 <= end());
+        ustring& replace(const_iterator i1, const_iterator i2, const_iterator k1, const_iterator k2) {
+            _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
             glibcxx_requires_valid_range(k1, k2);
-            return this->replace(i1 - begin(), i2 - i1,
-                                 k1.base(), k2 - k1);
+            return this->replace(i1 - begin(), i2 - i1, k1.base(), k2 - k1);
         }
 
         /**
@@ -2098,10 +1930,10 @@ namespace webpp {
          *  length of result exceeds max_size(), length_error is thrown.
          *  The value of the string doesn't change if an error is
          *  thrown.
-        */
-        ustring& replace(const_iterator i1, const_iterator i2,
-                              stl::initializer_list<value_type> l)
-        { return this->replace(i1, i2, l.begin(), l.size()); }
+         */
+        ustring& replace(const_iterator i1, const_iterator i2, stl::initializer_list<value_type> l) {
+            return this->replace(i1, i2, l.begin(), l.size());
+        }
 
         /**
          *  @brief  Replace range of characters with string_view.
@@ -2109,11 +1941,9 @@ namespace webpp {
          *  @param n    The number of characters to replace.
          *  @param svt  The object convertible to string_view to insert.
          *  @return  Reference to this string.
-        */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) ustring&
-        replace(size_type pos, size_type n, const _Tp& svt)
-        {
+         */
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) ustring& replace(size_type pos, size_type n, const T& svt) {
             string_view_type sv = svt;
             return this->replace(pos, n, sv.data(), sv.size());
         }
@@ -2126,17 +1956,15 @@ namespace webpp {
          *  @param pos2  The position in the string_view to insert from.
          *  @param n2    The number of characters to insert.
          *  @return  Reference to this string.
-        */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) ustring&
-        replace(size_type pos1, size_type n1, const _Tp& svt,
-                size_type pos2, size_type n2 = npos)
-        {
+         */
+        template <typename T>
+        requires(convertible_to_ustring_view<T>)
+          ustring& replace(size_type pos1, size_type n1, const T& svt, size_type pos2, size_type n2 = npos) {
             string_view_type sv = svt;
-            return this->replace(pos1, n1,
-                                 sv.data()
-                                 + stl::sv_check(sv.size(), pos2, "ustring::replace"),
-                                 stl::sv_limit(sv.size(), pos2, n2));
+            return this->replace(pos1,
+                                 n1,
+                                 sv.data() + details::sv_check(sv.size(), pos2, "ustring::replace"),
+                                 details::sv_limit(sv.size(), pos2, n2));
         }
 
         /**
@@ -2148,40 +1976,35 @@ namespace webpp {
          *  @param svt   The object convertible to string_view to insert from.
          *  @return  Reference to this string.
         */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) ustring&
-        replace(const_iterator i1, const_iterator i2, const _Tp& svt)
-        {
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) ustring& replace(const_iterator i1,
+                                                                  const_iterator i2,
+                                                                  const T&       svt) {
             string_view_type sv = svt;
             return this->replace(i1 - begin(), i2 - i1, sv);
         }
 
       private:
-        template<class _Integer>
+        template <class _Integer>
         ustring&
-        _M_replace_dispatch(const_iterator i1, const_iterator i2,
-                            _Integer n, _Integer val, stl::true_type)
-        { return _M_replace_aux(i1 - begin(), i2 - i1, n, val); }
+        _M_replace_dispatch(const_iterator i1, const_iterator i2, _Integer n, _Integer val, stl::true_type) {
+            return _M_replace_aux(i1 - begin(), i2 - i1, n, val);
+        }
 
-        template<class _InputIterator>
-        ustring&
-        _M_replace_dispatch(const_iterator i1, const_iterator i2,
-                            _InputIterator k1, _InputIterator k2,
-                            stl::false_type);
+        template <class _InputIterator>
+        ustring& _M_replace_dispatch(const_iterator i1,
+                                     const_iterator i2,
+                                     _InputIterator k1,
+                                     _InputIterator k2,
+                                     stl::false_type);
 
-        ustring&
-        _M_replace_aux(size_type pos1, size_type n1, size_type n2,
-                       value_type c);
+        ustring& _M_replace_aux(size_type pos1, size_type n1, size_type n2, value_type c);
 
-        ustring&
-        _M_replace(size_type pos, size_type len1, const value_type* s,
-                   const size_type len2);
+        ustring& _M_replace(size_type pos, size_type len1, const value_type* s, const size_type len2);
 
-        ustring&
-        _M_append(const value_type* s, size_type n);
+        ustring& _M_append(const value_type* s, size_type n);
 
       public:
-
         /**
          *  @brief  Copy substring into C string.
          *  @param s  C string to copy value into.
@@ -2193,9 +2016,8 @@ namespace webpp {
          *  Copies up to @a n characters starting at @a pos into the
          *  C string @a s.  If @a pos is %greater than size(),
          *  out_of_range is thrown.
-        */
-        size_type
-        copy(value_type* s, size_type n, size_type pos = 0) const;
+         */
+        size_type copy(value_type* s, size_type n, size_type pos = 0) const;
 
         /**
          *  @brief  Swap contents with another string.
@@ -2203,9 +2025,8 @@ namespace webpp {
          *
          *  Exchanges the contents of this string with that of @a s in constant
          *  time.
-        */
-        void
-        swap(ustring& s) noexcept;
+         */
+        void swap(ustring& s) noexcept;
 
         // String operations:
         /**
@@ -2213,10 +2034,10 @@ namespace webpp {
          *
          *  This is a handle to internal data.  Do not modify or dire things may
          *  happen.
-        */
-        const value_type*
-        c_str() const noexcept
-        { return _M_data(); }
+         */
+        const value_type* c_str() const noexcept {
+            return _M_data();
+        }
 
         /**
          *  @brief  Return const pointer to contents.
@@ -2225,27 +2046,27 @@ namespace webpp {
          *  the contents through the returned pointer. To get a pointer that
          *  allows modifying the contents use @c &str[0] instead,
          *  (or in C++17 the non-const @c str.data() overload).
-        */
-        const value_type*
-        data() const noexcept
-        { return _M_data(); }
+         */
+        const value_type* data() const noexcept {
+            return _M_data();
+        }
 
         /**
          *  @brief  Return non-const pointer to contents.
          *
          *  This is a pointer to the character sequence held by the string.
          *  Modifying the characters in the sequence is allowed.
-        */
-        value_type*
-        data() noexcept
-        { return _M_data(); }
+         */
+        value_type* data() noexcept {
+            return _M_data();
+        }
 
         /**
          *  @brief  Return copy of allocator used to construct this string.
-        */
-        allocator_type
-        get_allocator() const noexcept
-        { return _M_get_allocator(); }
+         */
+        allocator_type get_allocator() const noexcept {
+            return _M_get_allocator();
+        }
 
         /**
          *  @brief  Find position of a C substring.
@@ -2258,10 +2079,8 @@ namespace webpp {
          *  n characters in @a s within this string.  If found,
          *  returns the index where it begins.  If not found, returns
          *  npos.
-        */
-        size_type
-        find(const value_type* s, size_type pos, size_type n) const
-        noexcept;
+         */
+        size_type find(const value_type* s, size_type pos, size_type n) const noexcept;
 
         /**
          *  @brief  Find position of a string.
@@ -2272,23 +2091,20 @@ namespace webpp {
          *  Starting from @a pos, searches forward for value of @a str within
          *  this string.  If found, returns the index where it begins.  If not
          *  found, returns npos.
-        */
-        size_type
-        find(const ustring& str, size_type pos = 0) const
-        noexcept
-        { return this->find(str.data(), pos, str.size()); }
+         */
+        size_type find(const ustring& str, size_type pos = 0) const noexcept {
+            return this->find(str.data(), pos, str.size());
+        }
 
         /**
          *  @brief  Find position of a string_view.
          *  @param svt  The object convertible to string_view to locate.
          *  @param pos  Index of character to search from (default 0).
          *  @return  Index of start of first occurrence.
-        */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) size_type
-        find(const _Tp& svt, size_type pos = 0) const
-        noexcept(is_same<_Tp, string_view_type>::value)
-        {
+         */
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) size_type find(const T& svt, size_type pos = 0) const
+          noexcept(stl::is_same<T, string_view_type>::value) {
             string_view_type sv = svt;
             return this->find(sv.data(), pos, sv.size());
         }
@@ -2302,10 +2118,8 @@ namespace webpp {
          *  Starting from @a pos, searches forward for the value of @a
          *  s within this string.  If found, returns the index where
          *  it begins.  If not found, returns npos.
-        */
-        size_type
-        find(const value_type* s, size_type pos = 0) const noexcept
-        {
+         */
+        size_type find(const value_type* s, size_type pos = 0) const noexcept {
             glibcxx_requires_string(s);
             return this->find(s, pos, traits_type::length(s));
         }
@@ -2319,9 +2133,8 @@ namespace webpp {
          *  Starting from @a pos, searches forward for @a c within
          *  this string.  If found, returns the index where it was
          *  found.  If not found, returns npos.
-        */
-        size_type
-        find(value_type c, size_type pos = 0) const noexcept;
+         */
+        size_type find(value_type c, size_type pos = 0) const noexcept;
 
         /**
          *  @brief  Find last position of a string.
@@ -2332,23 +2145,20 @@ namespace webpp {
          *  Starting from @a pos, searches backward for value of @a
          *  str within this string.  If found, returns the index where
          *  it begins.  If not found, returns npos.
-        */
-        size_type
-        rfind(const ustring& str, size_type pos = npos) const
-        noexcept
-        { return this->rfind(str.data(), pos, str.size()); }
+         */
+        size_type rfind(const ustring& str, size_type pos = npos) const noexcept {
+            return this->rfind(str.data(), pos, str.size());
+        }
 
         /**
          *  @brief  Find last position of a string_view.
          *  @param svt  The object convertible to string_view to locate.
          *  @param pos  Index of character to search back from (default end).
          *  @return  Index of start of last occurrence.
-        */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) size_type
-        rfind(const _Tp& svt, size_type pos = npos) const
-        noexcept(is_same<_Tp, string_view_type>::value)
-        {
+         */
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) size_type rfind(const T& svt, size_type pos = npos) const
+          noexcept(stl::is_same<T, string_view_type>::value) {
             string_view_type sv = svt;
             return this->rfind(sv.data(), pos, sv.size());
         }
@@ -2364,10 +2174,8 @@ namespace webpp {
          *  n characters in @a s within this string.  If found,
          *  returns the index where it begins.  If not found, returns
          *  npos.
-        */
-        size_type
-        rfind(const value_type* s, size_type pos, size_type n) const
-        noexcept;
+         */
+        size_type rfind(const value_type* s, size_type pos, size_type n) const noexcept;
 
         /**
          *  @brief  Find last position of a C string.
@@ -2378,10 +2186,8 @@ namespace webpp {
          *  Starting from @a pos, searches backward for the value of
          *  @a s within this string.  If found, returns the index
          *  where it begins.  If not found, returns npos.
-        */
-        size_type
-        rfind(const value_type* s, size_type pos = npos) const
-        {
+         */
+        size_type rfind(const value_type* s, size_type pos = npos) const {
             glibcxx_requires_string(s);
             return this->rfind(s, pos, traits_type::length(s));
         }
@@ -2395,9 +2201,8 @@ namespace webpp {
          *  Starting from @a pos, searches backward for @a c within
          *  this string.  If found, returns the index where it was
          *  found.  If not found, returns npos.
-        */
-        size_type
-        rfind(value_type c, size_type pos = npos) const noexcept;
+         */
+        size_type rfind(value_type c, size_type pos = npos) const noexcept;
 
         /**
          *  @brief  Find position of a character of string.
@@ -2409,11 +2214,10 @@ namespace webpp {
          *  characters of @a str within this string.  If found,
          *  returns the index where it was found.  If not found, returns
          *  npos.
-        */
-        size_type
-        find_first_of(const ustring& str, size_type pos = 0) const
-        noexcept
-        { return this->find_first_of(str.data(), pos, str.size()); }
+         */
+        size_type find_first_of(const ustring& str, size_type pos = 0) const noexcept {
+            return this->find_first_of(str.data(), pos, str.size());
+        }
 
         /**
          *  @brief  Find position of a character of a string_view.
@@ -2421,12 +2225,11 @@ namespace webpp {
          *                characters to locate.
          *  @param pos  Index of character to search from (default 0).
          *  @return  Index of first occurrence.
-        */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) size_type
-        find_first_of(const _Tp& svt, size_type pos = 0) const
-        noexcept(is_same<_Tp, string_view_type>::value)
-        {
+         */
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) size_type
+          find_first_of(const T& svt, size_type pos = 0) const
+          noexcept(stl::is_same<T, string_view_type>::value) {
             string_view_type sv = svt;
             return this->find_first_of(sv.data(), pos, sv.size());
         }
@@ -2442,10 +2245,8 @@ namespace webpp {
          *  first @a n characters of @a s within this string.  If
          *  found, returns the index where it was found.  If not found,
          *  returns npos.
-        */
-        size_type
-        find_first_of(const value_type* s, size_type pos, size_type n) const
-        noexcept;
+         */
+        size_type find_first_of(const value_type* s, size_type pos, size_type n) const noexcept;
 
         /**
          *  @brief  Find position of a character of C string.
@@ -2456,11 +2257,8 @@ namespace webpp {
          *  Starting from @a pos, searches forward for one of the
          *  characters of @a s within this string.  If found, returns
          *  the index where it was found.  If not found, returns npos.
-        */
-        size_type
-        find_first_of(const value_type* s, size_type pos = 0) const
-        noexcept
-        {
+         */
+        size_type find_first_of(const value_type* s, size_type pos = 0) const noexcept {
             glibcxx_requires_string(s);
             return this->find_first_of(s, pos, traits_type::length(s));
         }
@@ -2476,10 +2274,10 @@ namespace webpp {
          *  where it was found.  If not found, returns npos.
          *
          *  Note: equivalent to find(c, pos).
-        */
-        size_type
-        find_first_of(value_type c, size_type pos = 0) const noexcept
-        { return this->find(c, pos); }
+         */
+        size_type find_first_of(value_type c, size_type pos = 0) const noexcept {
+            return this->find(c, pos);
+        }
 
         /**
          *  @brief  Find last position of a character of string.
@@ -2491,11 +2289,10 @@ namespace webpp {
          *  characters of @a str within this string.  If found,
          *  returns the index where it was found.  If not found, returns
          *  npos.
-        */
-        size_type
-        find_last_of(const ustring& str, size_type pos = npos) const
-        noexcept
-        { return this->find_last_of(str.data(), pos, str.size()); }
+         */
+        size_type find_last_of(const ustring& str, size_type pos = npos) const noexcept {
+            return this->find_last_of(str.data(), pos, str.size());
+        }
 
         /**
          *  @brief  Find last position of a character of string.
@@ -2503,12 +2300,11 @@ namespace webpp {
          *                characters to locate.
          *  @param pos  Index of character to search back from (default end).
          *  @return  Index of last occurrence.
-        */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) size_type
-        find_last_of(const _Tp& svt, size_type pos = npos) const
-        noexcept(is_same<_Tp, string_view_type>::value)
-        {
+         */
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) size_type
+          find_last_of(const T& svt, size_type pos = npos) const
+          noexcept(stl::is_same<T, string_view_type>::value) {
             string_view_type sv = svt;
             return this->find_last_of(sv.data(), pos, sv.size());
         }
@@ -2524,10 +2320,8 @@ namespace webpp {
          *  first @a n characters of @a s within this string.  If
          *  found, returns the index where it was found.  If not found,
          *  returns npos.
-        */
-        size_type
-        find_last_of(const value_type* s, size_type pos, size_type n) const
-        noexcept;
+         */
+        size_type find_last_of(const value_type* s, size_type pos, size_type n) const noexcept;
 
         /**
          *  @brief  Find last position of a character of C string.
@@ -2538,11 +2332,8 @@ namespace webpp {
          *  Starting from @a pos, searches backward for one of the
          *  characters of @a s within this string.  If found, returns
          *  the index where it was found.  If not found, returns npos.
-        */
-        size_type
-        find_last_of(const value_type* s, size_type pos = npos) const
-        noexcept
-        {
+         */
+        size_type find_last_of(const value_type* s, size_type pos = npos) const noexcept {
             glibcxx_requires_string(s);
             return this->find_last_of(s, pos, traits_type::length(s));
         }
@@ -2558,10 +2349,10 @@ namespace webpp {
          *  found.  If not found, returns npos.
          *
          *  Note: equivalent to rfind(c, pos).
-        */
-        size_type
-        find_last_of(value_type c, size_type pos = npos) const noexcept
-        { return this->rfind(c, pos); }
+         */
+        size_type find_last_of(value_type c, size_type pos = npos) const noexcept {
+            return this->rfind(c, pos);
+        }
 
         /**
          *  @brief  Find position of a character not in string.
@@ -2572,11 +2363,10 @@ namespace webpp {
          *  Starting from @a pos, searches forward for a character not contained
          *  in @a str within this string.  If found, returns the index where it
          *  was found.  If not found, returns npos.
-        */
-        size_type
-        find_first_not_of(const ustring& str, size_type pos = 0) const
-        noexcept
-        { return this->find_first_not_of(str.data(), pos, str.size()); }
+         */
+        size_type find_first_not_of(const ustring& str, size_type pos = 0) const noexcept {
+            return this->find_first_not_of(str.data(), pos, str.size());
+        }
 
         /**
          *  @brief  Find position of a character not in a string_view.
@@ -2585,11 +2375,10 @@ namespace webpp {
          *  @param pos  Index of character to search from (default 0).
          *  @return  Index of first occurrence.
          */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) size_type
-        find_first_not_of(const _Tp& svt, size_type pos = 0) const
-        noexcept(is_same<_Tp, string_view_type>::value)
-        {
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) size_type
+          find_first_not_of(const T& svt, size_type pos = 0) const
+          noexcept(stl::is_same<T, string_view_type>::value) {
             string_view_type sv = svt;
             return this->find_first_not_of(sv.data(), pos, sv.size());
         }
@@ -2605,10 +2394,8 @@ namespace webpp {
          *  contained in the first @a n characters of @a s within
          *  this string.  If found, returns the index where it was
          *  found.  If not found, returns npos.
-        */
-        size_type
-        find_first_not_of(const value_type* s, size_type pos,
-                          size_type n) const noexcept;
+         */
+        size_type find_first_not_of(const value_type* s, size_type pos, size_type n) const noexcept;
 
         /**
          *  @brief  Find position of a character not in C string.
@@ -2619,11 +2406,8 @@ namespace webpp {
          *  Starting from @a pos, searches forward for a character not
          *  contained in @a s within this string.  If found, returns
          *  the index where it was found.  If not found, returns npos.
-        */
-        size_type
-        find_first_not_of(const value_type* s, size_type pos = 0) const
-        noexcept
-        {
+         */
+        size_type find_first_not_of(const value_type* s, size_type pos = 0) const noexcept {
             glibcxx_requires_string(s);
             return this->find_first_not_of(s, pos, traits_type::length(s));
         }
@@ -2637,10 +2421,8 @@ namespace webpp {
          *  Starting from @a pos, searches forward for a character
          *  other than @a c within this string.  If found, returns the
          *  index where it was found.  If not found, returns npos.
-        */
-        size_type
-        find_first_not_of(value_type c, size_type pos = 0) const
-        noexcept;
+         */
+        size_type find_first_not_of(value_type c, size_type pos = 0) const noexcept;
 
         /**
          *  @brief  Find last position of a character not in string.
@@ -2652,11 +2434,10 @@ namespace webpp {
          *  not contained in @a str within this string.  If found,
          *  returns the index where it was found.  If not found, returns
          *  npos.
-        */
-        size_type
-        find_last_not_of(const ustring& str, size_type pos = npos) const
-        noexcept
-        { return this->find_last_not_of(str.data(), pos, str.size()); }
+         */
+        size_type find_last_not_of(const ustring& str, size_type pos = npos) const noexcept {
+            return this->find_last_not_of(str.data(), pos, str.size());
+        }
 
         /**
          *  @brief  Find last position of a character not in a string_view.
@@ -2665,11 +2446,10 @@ namespace webpp {
          *  @param pos  Index of character to search back from (default end).
          *  @return  Index of last occurrence.
          */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) size_type
-        find_last_not_of(const _Tp& svt, size_type pos = npos) const
-        noexcept(is_same<_Tp, string_view_type>::value)
-        {
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) size_type
+          find_last_not_of(const T& svt, size_type pos = npos) const
+          noexcept(stl::is_same<T, string_view_type>::value) {
             string_view_type sv = svt;
             return this->find_last_not_of(sv.data(), pos, sv.size());
         }
@@ -2685,10 +2465,8 @@ namespace webpp {
          *  contained in the first @a n characters of @a s within this string.
          *  If found, returns the index where it was found.  If not found,
          *  returns npos.
-        */
-        size_type
-        find_last_not_of(const value_type* s, size_type pos,
-                         size_type n) const noexcept;
+         */
+        size_type find_last_not_of(const value_type* s, size_type pos, size_type n) const noexcept;
         /**
          *  @brief  Find last position of a character not in C string.
          *  @param s  C string containing characters to avoid.
@@ -2699,11 +2477,8 @@ namespace webpp {
          *  not contained in @a s within this string.  If found,
          *  returns the index where it was found.  If not found, returns
          *  npos.
-        */
-        size_type
-        find_last_not_of(const value_type* s, size_type pos = npos) const
-        noexcept
-        {
+         */
+        size_type find_last_not_of(const value_type* s, size_type pos = npos) const noexcept {
             glibcxx_requires_string(s);
             return this->find_last_not_of(s, pos, traits_type::length(s));
         }
@@ -2717,10 +2492,8 @@ namespace webpp {
          *  Starting from @a pos, searches backward for a character other than
          *  @a c within this string.  If found, returns the index where it was
          *  found.  If not found, returns npos.
-        */
-        size_type
-        find_last_not_of(value_type c, size_type pos = npos) const
-        noexcept;
+         */
+        size_type find_last_not_of(value_type c, size_type pos = npos) const noexcept;
 
         /**
          *  @brief  Get a substring.
@@ -2733,11 +2506,10 @@ namespace webpp {
          *  characters starting at @a pos.  If the string is too
          *  short, use the remainder of the characters.  If @a pos is
          *  beyond the end of the string, out_of_range is thrown.
-        */
-        ustring
-        substr(size_type pos = 0, size_type n = npos) const
-        { return ustring(*this,
-                              _M_check(pos, "ustring::substr"), n); }
+         */
+        ustring substr(size_type pos = 0, size_type n = npos) const {
+            return ustring(*this, _M_check(pos, "ustring::substr"), n);
+        }
 
         /**
          *  @brief  Compare to a string.
@@ -2752,13 +2524,11 @@ namespace webpp {
          *  strings by calling traits::compare(data(), str.data(),rlen).
          *  If the result of the comparison is nonzero returns it,
          *  otherwise the shorter one is ordered first.
-        */
-        int
-        compare(const ustring& str) const
-        {
-            const size_type size = this->size();
+         */
+        int compare(const ustring& str) const {
+            const size_type size  = this->size();
             const size_type osize = str.size();
-            const size_type len = stl::min(size, osize);
+            const size_type len   = stl::min(size, osize);
 
             int r = traits_type::compare(_M_data(), str.data(), len);
             if (!r)
@@ -2771,15 +2541,13 @@ namespace webpp {
          *  @param svt An object convertible to string_view to compare against.
          *  @return  Integer < 0, 0, or > 0.
          */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) int
-        compare(const _Tp& svt) const
-        noexcept(is_same<_Tp, string_view_type>::value)
-        {
-            string_view_type sv = svt;
-            const size_type size = this->size();
-            const size_type osize = sv.size();
-            const size_type len = stl::min(size, osize);
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) int compare(const T& svt) const
+          noexcept(stl::is_same<T, string_view_type>::value) {
+            string_view_type sv    = svt;
+            const size_type  size  = this->size();
+            const size_type  osize = sv.size();
+            const size_type  len   = stl::min(size, osize);
 
             int r = traits_type::compare(_M_data(), sv.data(), len);
             if (!r)
@@ -2795,11 +2563,9 @@ namespace webpp {
          *                against.
          *  @return  Integer < 0, 0, or > 0.
          */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) int
-        compare(size_type pos, size_type n, const _Tp& svt) const
-        noexcept(is_same<_Tp, string_view_type>::value)
-        {
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) int compare(size_type pos, size_type n, const T& svt) const
+          noexcept(stl::is_same<T, string_view_type>::value) {
             string_view_type sv = svt;
             return string_view_type(*this).substr(pos, n).compare(sv);
         }
@@ -2814,15 +2580,15 @@ namespace webpp {
          *  @param n2  The number of characters to compare.
          *  @return  Integer < 0, 0, or > 0.
          */
-        template<typename _Tp>
-        requires (convertible_to_ustring_view<_Tp>) int
-        compare(size_type pos1, size_type n1, const _Tp& svt,
-                size_type pos2, size_type n2 = npos) const
-        noexcept(is_same<_Tp, string_view_type>::value)
-        {
+        template <typename T>
+        requires(convertible_to_ustring_view<T>) int compare(size_type pos1,
+                                                             size_type n1,
+                                                             const T&  svt,
+                                                             size_type pos2,
+                                                             size_type n2 = npos) const
+          noexcept(stl::is_same<T, string_view_type>::value) {
             string_view_type sv = svt;
-            return string_view_type(*this)
-              .substr(pos1, n1).compare(sv.substr(pos2, n2));
+            return string_view_type(*this).substr(pos1, n1).compare(sv.substr(pos2, n2));
         }
 
         /**
@@ -2843,9 +2609,8 @@ namespace webpp {
          *  traits::compare(substring.data(),str.data(),rlen).  If the
          *  result of the comparison is nonzero returns it, otherwise
          *  the shorter one is ordered first.
-        */
-        int
-        compare(size_type pos, size_type n, const ustring& str) const;
+         */
+        int compare(size_type pos, size_type n, const ustring& str) const;
 
         /**
          *  @brief  Compare substring to a substring.
@@ -2869,10 +2634,9 @@ namespace webpp {
          *  traits::compare(substring.data(),str.substr(pos2,n2).data(),rlen).
          *  If the result of the comparison is nonzero returns it,
          *  otherwise the shorter one is ordered first.
-        */
+         */
         int
-        compare(size_type pos1, size_type n1, const ustring& str,
-                size_type pos2, size_type n2 = npos) const;
+        compare(size_type pos1, size_type n1, const ustring& str, size_type pos2, size_type n2 = npos) const;
 
         /**
          *  @brief  Compare to a C string.
@@ -2887,9 +2651,8 @@ namespace webpp {
          *  by calling traits::compare(data(),s,rlen).  If the result of the
          *  comparison is nonzero returns it, otherwise the shorter one is
          *  ordered first.
-        */
-        int
-        compare(const value_type* s) const noexcept;
+         */
+        int compare(const value_type* s) const noexcept;
 
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 5 String::compare specification questionable
@@ -2911,9 +2674,8 @@ namespace webpp {
          *  traits::compare(substring.data(),s,rlen).  If the result of
          *  the comparison is nonzero returns it, otherwise the shorter
          *  one is ordered first.
-        */
-        int
-        compare(size_type pos, size_type n1, const value_type* s) const;
+         */
+        int compare(size_type pos, size_type n1, const value_type* s) const;
 
         /**
          *  @brief  Compare substring against a character %array.
@@ -2938,54 +2700,36 @@ namespace webpp {
          *
          *  NB: s must have at least n2 characters, &apos;\\0&apos; has
          *  no special meaning.
-        */
-        int
-        compare(size_type pos, size_type n1, const value_type* s,
-                size_type n2) const;
+         */
+        int compare(size_type pos, size_type n1, const value_type* s, size_type n2) const;
 
-        bool
-        starts_with(ustring_view<value_type, traits_type> x) const noexcept
-        { return string_view_type(this->data(), this->size()).starts_with(x); }
+        bool starts_with(ustring_view<value_type, traits_type> x) const noexcept {
+            return string_view_type(this->data(), this->size()).starts_with(x);
+        }
 
-        bool
-        starts_with(value_type x) const noexcept
-        { return string_view_type(this->data(), this->size()).starts_with(x); }
+        bool starts_with(value_type x) const noexcept {
+            return string_view_type(this->data(), this->size()).starts_with(x);
+        }
 
-        bool
-        starts_with(const value_type* x) const noexcept
-        { return string_view_type(this->data(), this->size()).starts_with(x); }
+        bool starts_with(const value_type* x) const noexcept {
+            return string_view_type(this->data(), this->size()).starts_with(x);
+        }
 
-        bool
-        ends_with(ustring_view<value_type, traits_type> x) const noexcept
-        { return string_view_type(this->data(), this->size()).ends_with(x); }
+        bool ends_with(ustring_view<value_type, traits_type> x) const noexcept {
+            return string_view_type(this->data(), this->size()).ends_with(x);
+        }
 
-        bool
-        ends_with(value_type x) const noexcept
-        { return string_view_type(this->data(), this->size()).ends_with(x); }
+        bool ends_with(value_type x) const noexcept {
+            return string_view_type(this->data(), this->size()).ends_with(x);
+        }
 
-        bool
-        ends_with(const value_type* x) const noexcept
-        { return string_view_type(this->data(), this->size()).ends_with(x); }
+        bool ends_with(const value_type* x) const noexcept {
+            return string_view_type(this->data(), this->size()).ends_with(x);
+        }
 
         // Allow ustringbuf::xfer_bufptrs to call _M_length:
-        template<typename, typename, typename> friend class ustringbuf;
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+        template <typename, typename, typename>
+        friend class ustringbuf;
     };
 
 
