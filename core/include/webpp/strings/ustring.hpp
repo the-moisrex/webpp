@@ -1,28 +1,28 @@
 // Created by moisrex on 12/21/20.
 
 #ifndef WEBPP_USTRING_HPP
-#define WEBPP_USTRING_HPP
+#    define WEBPP_USTRING_HPP
 
-#include "../std/string.hpp"
-#include "../std/string_view.hpp"
-#include "unicode_char_traits.hpp"
-#include "ustring_iterator.hpp"
+#    include "../std/string.hpp"
+#    include "../std/string_view.hpp"
+#    include "unicode_char_traits.hpp"
+#    include "ustring_iterator.hpp"
 
-#include <memory_resource>
+#    include <memory_resource>
 
 // testing area: http://localhost:10240/z/z39ErG
 
 namespace webpp {
 
-#ifdef __CHAR_BIT__
-    static constexpr unsigned char_bits = __CHAR_BIT__;
-#else
+#    ifdef CHAR_BIT
+    static constexpr unsigned char_bits = CHAR_BIT;
+#    else
     static constexpr unsigned char_bits = 8;
-#endif
+#    endif
 
     namespace details {
 
-        // Helper for basic_string and basic_string_view members.
+        // Helper for ustring and ustring_view members.
         constexpr size_t sv_check(size_t size, size_t pos, const char* s) {
             if (pos > size)
                 throw_out_of_range_fmt(N("%s: pos (which is %zu) > size "
@@ -33,7 +33,7 @@ namespace webpp {
             return pos;
         }
 
-        // Helper for basic_string members.
+        // Helper for ustring members.
         // NB: sv_limit doesn't check for a bad pos value.
         constexpr size_t sv_limit(size_t size, size_t pos, size_t off) noexcept {
             const bool testoff = off < size - pos;
@@ -113,10 +113,11 @@ namespace webpp {
     template <typename T, typename CharTraits>
     struct ustring_view;
 
-    template <typename CharT                    = glyph<>,
-              istl::CharTraits   CharTraitsType = unicode_char_traits<CharT>,
-              AllocatorOf<CharT> AllocType      = stl::allocator<CharT>>
-    struct ustring {
+    template <typename CharT          = glyph<>,
+              typename CharTraitsType = unicode_char_traits<CharT>,
+              typename AllocType      = stl::allocator<CharT>>
+    // requires(istl::CharTraits<CharTraitsType>&& AllocatorOf<CharT, AllocType>)
+      struct ustring {
       private:
         using alloc_traits = stl::allocator_traits<AllocType>;
 
@@ -148,7 +149,14 @@ namespace webpp {
           !stl::is_convertible_v<const T*, const ustring> &&
           !stl::is_convertible_v<const T&, const value_type*>;
 
+        struct length_container_the_len {
+            size_type length;
+        };
+        struct length_container_empty {};
 
+        static constexpr bool has_length = sizeof(value_type) > sizeof(char16_t);
+        using length_container =
+          stl::conditional_t<has_length, length_container_empty, length_container_the_len>;
 
 
         // the reason I'm choosing data_end over size is that we're implementing a unicode string and not
@@ -156,6 +164,7 @@ namespace webpp {
         // todo: I need to think if we need a "size" field as well or not!
         pointer                              data_start;
         pointer                              data_end;
+        length_container                     len;
         [[no_unique_address]] allocator_type alloc;
 
         static constexpr auto local_capacity = 15 / sizeof(value_type);
@@ -343,7 +352,7 @@ namespace webpp {
         }
 
       private:
-#ifdef _GLIBCXX_DISAMBIGUATE_REPLACE_INST
+#    ifdef _GLIBCXX_DISAMBIGUATE_REPLACE_INST
         // The explicit instantiations in misc-inst.cc require this due to
         // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=64063
         template <typename T,
@@ -355,7 +364,7 @@ namespace webpp {
         };
         template <typename T>
         struct enable_if_not_native_iterator<T, false> {};
-#endif
+#    endif
 
         size_type check(size_type pos, const char* s) const {
             if (pos > this->size())
@@ -543,11 +552,11 @@ namespace webpp {
          *  @param  s  Source C string.
          *  @param  a  Allocator to use (default is default allocator).
          */
-#if cpp_deduction_guides && !defined _GLIBCXX_DEFINING_STRING_INSTANTIATIONS
+#    if cpp_deduction_guides && !defined _GLIBCXX_DEFINING_STRING_INSTANTIATIONS
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 3076. ustring CTAD ambiguity
         template <typename = _RequireAllocator<allocator_type>>
-#endif
+#    endif
         ustring(const value_type* s, const allocator_type& a = allocator_type())
           : data_start(local_data()),
             alloc(a) {
@@ -560,11 +569,11 @@ namespace webpp {
          *  @param  c  Character to use.
          *  @param  a  Allocator to use (default is default allocator).
          */
-#if cpp_deduction_guides && !defined _GLIBCXX_DEFINING_STRING_INSTANTIATIONS
+#    if cpp_deduction_guides && !defined _GLIBCXX_DEFINING_STRING_INSTANTIATIONS
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 3076. ustring CTAD ambiguity
         template <typename = _RequireAllocator<allocator_type>>
-#endif
+#    endif
         ustring(size_type n, value_type c, const allocator_type& a = allocator_type())
           : data_start(local_data()),
             alloc(a) {
@@ -926,13 +935,13 @@ namespace webpp {
 
         ///  A non-binding request to reduce capacity() to size().
         void shrink_to_fit() noexcept {
-#if cpp_exceptions
+#    if cpp_exceptions
             if (capacity() > size()) {
                 try {
                     reserve(0);
                 } catch (...) {}
             }
-#endif
+#    endif
         }
 
         /**
@@ -973,7 +982,7 @@ namespace webpp {
          *  Returns true if the %string is empty.  Equivalent to
          *  <code>*this == ""</code>.
          */
-        _GLIBCXX_NODISCARD bool empty() const noexcept {
+        [[nodiscard]] bool empty() const noexcept {
             return this->size() == 0;
         }
 
@@ -989,7 +998,7 @@ namespace webpp {
          *  see at().)
          */
         const_reference operator[](size_type pos) const noexcept {
-            glibcxx_assert(pos <= size());
+            assert(pos <= size());
             return data()[pos];
         }
 
@@ -1006,7 +1015,7 @@ namespace webpp {
         reference operator[](size_type pos) {
             // Allow pos == size() both in C++98 mode, as v3 extension,
             // and in C++11 mode.
-            glibcxx_assert(pos <= size());
+            assert(pos <= size());
             // In pedantic mode be strict in C++98 mode.
             _GLIBCXX_DEBUG_PEDASSERT(cplusplus >= 201103L || pos < size());
             return data()[pos];
@@ -1057,7 +1066,7 @@ namespace webpp {
          *  element of the %string.
          */
         reference front() noexcept {
-            glibcxx_assert(!empty());
+            assert(!empty());
             return operator[](0);
         }
 
@@ -1066,7 +1075,7 @@ namespace webpp {
          *  element of the %string.
          */
         const_reference front() const noexcept {
-            glibcxx_assert(!empty());
+            assert(!empty());
             return operator[](0);
         }
 
@@ -1075,7 +1084,7 @@ namespace webpp {
          *  element of the %string.
          */
         reference back() noexcept {
-            glibcxx_assert(!empty());
+            assert(!empty());
             return operator[](this->size() - 1);
         }
 
@@ -1084,7 +1093,7 @@ namespace webpp {
          *  last element of the %string.
          */
         const_reference back() const noexcept {
-            glibcxx_assert(!empty());
+            assert(!empty());
             return operator[](this->size() - 1);
         }
 
@@ -1693,7 +1702,7 @@ namespace webpp {
          *  The string must be non-empty.
          */
         void pop_back() noexcept {
-            glibcxx_assert(!empty());
+            assert(!empty());
             erase(size() - 1, 1);
         }
 
@@ -1904,11 +1913,11 @@ namespace webpp {
             glibcxx_requires_valid_range(k1, k2);
             return this->replace_dispatch(i1, i2, k1, k2, stl::false_type());
         }
-#ifdef _GLIBCXX_DISAMBIGUATE_REPLACE_INST
+#    ifdef _GLIBCXX_DISAMBIGUATE_REPLACE_INST
         typename enable_if_not_native_iterator<_InputIterator>::type
-#else
+#    else
         ustring&
-#endif
+#    endif
         replace(iterator i1, iterator i2, _InputIterator k1, _InputIterator k2) {
             _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
             glibcxx_requires_valid_range(k1, k2);
@@ -2752,10 +2761,1800 @@ namespace webpp {
             return string_view_type(this->data(), this->size()).ends_with(x);
         }
 
+        // todo
         // Allow ustringbuf::xfer_bufptrs to call length:
         template <typename, typename, typename>
         friend class ustringbuf;
     };
+
+    template <typename _InputIterator,
+              typename CharT      = typename stl::iterator_traits<_InputIterator>::value_type,
+              typename _Allocator = stl::allocator<CharT>,
+              typename            = _RequireInputIter<_InputIterator>,
+              typename            = _RequireAllocator<_Allocator>>
+    ustring(_InputIterator, _InputIterator, _Allocator = _Allocator())
+      -> ustring<CharT, stl::char_traits<CharT>, _Allocator>;
+
+    // _GLIBCXX_RESOLVE_LIB_DEFECTS
+    // 3075. ustring needs deduction guides from ustring_view
+    template <typename CharT,
+              typename TraitsT,
+              typename _Allocator = stl::allocator<CharT>,
+              typename            = _RequireAllocator<_Allocator>>
+    ustring(ustring_view<CharT, TraitsT>, const _Allocator& = _Allocator())
+      -> ustring<CharT, TraitsT, _Allocator>;
+
+    template <typename CharT,
+              typename TraitsT,
+              typename _Allocator = stl::allocator<CharT>,
+              typename            = _RequireAllocator<_Allocator>>
+    ustring(ustring_view<CharT, TraitsT>,
+            typename ustring<CharT, TraitsT, _Allocator>::size_type,
+            typename ustring<CharT, TraitsT, _Allocator>::size_type,
+            const _Allocator& = _Allocator()) -> ustring<CharT, TraitsT, _Allocator>;
+
+
+
+
+    // operator+
+    /**
+     *  @brief  Concatenate two strings.
+     *  @param lhs  First string.
+     *  @param rhs  Last string.
+     *  @return  New string with value of @a lhs followed by @a rhs.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    ustring<CharT, TraitsT, AllocT> operator+(const ustring<CharT, TraitsT, AllocT>& lhs,
+                                              const ustring<CharT, TraitsT, AllocT>& rhs) {
+        ustring<CharT, TraitsT, AllocT> str(lhs);
+        str.append(rhs);
+        return str;
+    }
+
+    /**
+     *  @brief  Concatenate C string and string.
+     *  @param lhs  First string.
+     *  @param rhs  Last string.
+     *  @return  New string with value of @a lhs followed by @a rhs.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    ustring<CharT, TraitsT, AllocT> operator+(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs);
+
+    /**
+     *  @brief  Concatenate character and string.
+     *  @param lhs  First string.
+     *  @param rhs  Last string.
+     *  @return  New string with @a lhs followed by @a rhs.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    ustring<CharT, TraitsT, AllocT> operator+(CharT lhs, const ustring<CharT, TraitsT, AllocT>& rhs);
+
+    /**
+     *  @brief  Concatenate string and C string.
+     *  @param lhs  First string.
+     *  @param rhs  Last string.
+     *  @return  New string with @a lhs followed by @a rhs.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline ustring<CharT, TraitsT, AllocT> operator+(const ustring<CharT, TraitsT, AllocT>& lhs,
+                                                     const CharT*                           rhs) {
+        ustring<CharT, TraitsT, AllocT> str(lhs);
+        str.append(rhs);
+        return str;
+    }
+
+    /**
+     *  @brief  Concatenate string and character.
+     *  @param lhs  First string.
+     *  @param rhs  Last string.
+     *  @return  New string with @a lhs followed by @a rhs.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline ustring<CharT, TraitsT, AllocT> operator+(const ustring<CharT, TraitsT, AllocT>& lhs, CharT rhs) {
+        typedef ustring<CharT, TraitsT, AllocT> string_type;
+        typedef typename string_type::size_type size_type;
+        string_type                             str(lhs);
+        str.append(size_type(1), rhs);
+        return str;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline ustring<CharT, TraitsT, AllocT> operator+(ustring<CharT, TraitsT, AllocT>&&      lhs,
+                                                     const ustring<CharT, TraitsT, AllocT>& rhs) {
+        return std::move(lhs.append(rhs));
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline ustring<CharT, TraitsT, AllocT> operator+(const ustring<CharT, TraitsT, AllocT>& lhs,
+                                                     ustring<CharT, TraitsT, AllocT>&&      rhs) {
+        return std::move(rhs.insert(0, lhs));
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline ustring<CharT, TraitsT, AllocT> operator+(ustring<CharT, TraitsT, AllocT>&& lhs,
+                                                     ustring<CharT, TraitsT, AllocT>&& rhs) {
+#    if _GLIBCXX_USE_CXX11_ABI
+        using _Alloc_traits = allocator_traits<AllocT>;
+        bool use_rhs        = false;
+        if _GLIBCXX17_CONSTEXPR (typename alloc_traits::is_always_equal{})
+            use_rhs = true;
+        else if (lhs.get_allocator() == rhs.get_allocator())
+            use_rhs = true;
+        if (use_rhs)
+#    endif
+        {
+            const auto size = lhs.size() + rhs.size();
+            if (size > lhs.capacity() && size <= rhs.capacity())
+                return std::move(rhs.insert(0, lhs));
+        }
+        return std::move(lhs.append(rhs));
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline ustring<CharT, TraitsT, AllocT> operator+(const CharT*                      lhs,
+                                                     ustring<CharT, TraitsT, AllocT>&& rhs) {
+        return std::move(rhs.insert(0, lhs));
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline ustring<CharT, TraitsT, AllocT> operator+(CharT lhs, ustring<CharT, TraitsT, AllocT>&& rhs) {
+        return std::move(rhs.insert(0, 1, lhs));
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline ustring<CharT, TraitsT, AllocT> operator+(ustring<CharT, TraitsT, AllocT>&& lhs,
+                                                     const CharT*                      rhs) {
+        return std::move(lhs.append(rhs));
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline ustring<CharT, TraitsT, AllocT> operator+(ustring<CharT, TraitsT, AllocT>&& lhs, CharT rhs) {
+        return std::move(lhs.append(1, rhs));
+    }
+
+    // operator ==
+    /**
+     *  @brief  Test equivalence of two strings.
+     *  @param lhs  First string.
+     *  @param rhs  Second string.
+     *  @return  True if @a lhs.compare(@a rhs) == 0.  False otherwise.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline bool operator==(const ustring<CharT, TraitsT, AllocT>& lhs,
+                           const ustring<CharT, TraitsT, AllocT>& rhs) noexcept {
+        return lhs.compare(rhs) == 0;
+    }
+
+    template <typename CharT>
+    inline typename gnu_cxx::enable_if<is_char<CharT>::value, bool>::type
+    operator==(const ustring<CharT>& lhs, const ustring<CharT>& rhs) noexcept {
+        return (lhs.size() == rhs.size() &&
+                !std::char_traits<CharT>::compare(lhs.data(), rhs.data(), lhs.size()));
+    }
+
+    /**
+     *  @brief  Test equivalence of string and C string.
+     *  @param lhs  String.
+     *  @param rhs  C string.
+     *  @return  True if @a lhs.compare(@a rhs) == 0.  False otherwise.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline bool operator==(const ustring<CharT, TraitsT, AllocT>& lhs, const CharT* rhs) {
+        return lhs.compare(rhs) == 0;
+    }
+
+#    if cpp_lib_three_way_comparison
+    /**
+     *  @brief  Three-way comparison of a string and a C string.
+     *  @param lhs  A string.
+     *  @param rhs  A null-terminated string.
+     *  @return  A value indicating whether `lhs` is less than, equal to,
+     *	       greater than, or incomparable with `rhs`.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline auto operator<=>(const ustring<CharT, TraitsT, AllocT>& lhs,
+                            const ustring<CharT, TraitsT, AllocT>& rhs) noexcept
+      -> decltype(detail::char_traits_cmp_cat<TraitsT>(0)) {
+        return detail::char_traits_cmp_cat<TraitsT>(lhs.compare(rhs));
+    }
+
+    /**
+     *  @brief  Three-way comparison of a string and a C string.
+     *  @param lhs  A string.
+     *  @param rhs  A null-terminated string.
+     *  @return  A value indicating whether `lhs` is less than, equal to,
+     *	       greater than, or incomparable with `rhs`.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline auto operator<=>(const ustring<CharT, TraitsT, AllocT>& lhs, const CharT* rhs) noexcept
+      -> decltype(detail::char_traits_cmp_cat<TraitsT>(0)) {
+        return detail::char_traits_cmp_cat<TraitsT>(lhs.compare(rhs));
+    }
+#    else
+    /**
+     *  @brief  Test equivalence of C string and string.
+     *  @param lhs  C string.
+     *  @param rhs  String.
+     *  @return  True if @a rhs.compare(@a lhs) == 0.  False otherwise.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline bool operator==(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
+        return rhs.compare(lhs) == 0;
+    }
+
+    // operator !=
+    /**
+     *  @brief  Test difference of two strings.
+     *  @param lhs  First string.
+     *  @param rhs  Second string.
+     *  @return  True if @a lhs.compare(@a rhs) != 0.  False otherwise.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline bool operator!=(const ustring<CharT, TraitsT, AllocT>& lhs,
+                           const ustring<CharT, TraitsT, AllocT>& rhs) noexcept {
+        return !(lhs == rhs);
+    }
+
+    /**
+     *  @brief  Test difference of C string and string.
+     *  @param lhs  C string.
+     *  @param rhs  String.
+     *  @return  True if @a rhs.compare(@a lhs) != 0.  False otherwise.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline bool operator!=(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
+        return !(lhs == rhs);
+    }
+
+    /**
+     *  @brief  Test difference of string and C string.
+     *  @param lhs  String.
+     *  @param rhs  C string.
+     *  @return  True if @a lhs.compare(@a rhs) != 0.  False otherwise.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline bool operator!=(const ustring<CharT, TraitsT, AllocT>& lhs, const CharT* rhs) {
+        return !(lhs == rhs);
+    }
+
+    // operator <
+    /**
+     *  @brief  Test if string precedes string.
+     *  @param lhs  First string.
+     *  @param rhs  Second string.
+     *  @return  True if @a lhs precedes @a rhs.  False otherwise.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline bool operator<(const ustring<CharT, TraitsT, AllocT>& lhs,
+                          const ustring<CharT, TraitsT, AllocT>& rhs) noexcept {
+        return lhs.compare(rhs) < 0;
+    }
+
+    /**
+     *  @brief  Test if string precedes C string.
+     *  @param lhs  String.
+     *  @param rhs  C string.
+     *  @return  True if @a lhs precedes @a rhs.  False otherwise.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline bool operator<(const ustring<CharT, TraitsT, AllocT>& lhs, const CharT* rhs) {
+        return lhs.compare(rhs) < 0;
+    }
+
+    /**
+     *  @brief  Test if C string precedes string.
+     *  @param lhs  C string.
+     *  @param rhs  String.
+     *  @return  True if @a lhs precedes @a rhs.  False otherwise.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline bool operator<(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
+        return rhs.compare(lhs) > 0;
+    }
+
+    // operator >
+    /**
+     *  @brief  Test if string follows string.
+     *  @param lhs  First string.
+     *  @param rhs  Second string.
+     *  @return  True if @a lhs follows @a rhs.  False otherwise.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline bool operator>(const ustring<CharT, TraitsT, AllocT>& lhs,
+                          const ustring<CharT, TraitsT, AllocT>& rhs) noexcept {
+        return lhs.compare(rhs) > 0;
+    }
+
+    /**
+     *  @brief  Test if string follows C string.
+     *  @param lhs  String.
+     *  @param rhs  C string.
+     *  @return  True if @a lhs follows @a rhs.  False otherwise.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline bool operator>(const ustring<CharT, TraitsT, AllocT>& lhs, const CharT* rhs) {
+        return lhs.compare(rhs) > 0;
+    }
+
+    /**
+     *  @brief  Test if C string follows string.
+     *  @param lhs  C string.
+     *  @param rhs  String.
+     *  @return  True if @a lhs follows @a rhs.  False otherwise.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline bool operator>(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
+        return rhs.compare(lhs) < 0;
+    }
+
+    // operator <=
+    /**
+     *  @brief  Test if string doesn't follow string.
+     *  @param lhs  First string.
+     *  @param rhs  Second string.
+     *  @return  True if @a lhs doesn't follow @a rhs.  False otherwise.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline bool operator<=(const ustring<CharT, TraitsT, AllocT>& lhs,
+                           const ustring<CharT, TraitsT, AllocT>& rhs) noexcept {
+        return lhs.compare(rhs) <= 0;
+    }
+
+    /**
+     *  @brief  Test if string doesn't follow C string.
+     *  @param lhs  String.
+     *  @param rhs  C string.
+     *  @return  True if @a lhs doesn't follow @a rhs.  False otherwise.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline bool operator<=(const ustring<CharT, TraitsT, AllocT>& lhs, const CharT* rhs) {
+        return lhs.compare(rhs) <= 0;
+    }
+
+    /**
+     *  @brief  Test if C string doesn't follow string.
+     *  @param lhs  C string.
+     *  @param rhs  String.
+     *  @return  True if @a lhs doesn't follow @a rhs.  False otherwise.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline bool operator<=(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
+        return rhs.compare(lhs) >= 0;
+    }
+
+    // operator >=
+    /**
+     *  @brief  Test if string doesn't precede string.
+     *  @param lhs  First string.
+     *  @param rhs  Second string.
+     *  @return  True if @a lhs doesn't precede @a rhs.  False otherwise.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline bool operator>=(const ustring<CharT, TraitsT, AllocT>& lhs,
+                           const ustring<CharT, TraitsT, AllocT>& rhs) noexcept {
+        return lhs.compare(rhs) >= 0;
+    }
+
+    /**
+     *  @brief  Test if string doesn't precede C string.
+     *  @param lhs  String.
+     *  @param rhs  C string.
+     *  @return  True if @a lhs doesn't precede @a rhs.  False otherwise.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline bool operator>=(const ustring<CharT, TraitsT, AllocT>& lhs, const CharT* rhs) {
+        return lhs.compare(rhs) >= 0;
+    }
+
+    /**
+     *  @brief  Test if C string doesn't precede string.
+     *  @param lhs  C string.
+     *  @param rhs  String.
+     *  @return  True if @a lhs doesn't precede @a rhs.  False otherwise.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline bool operator>=(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
+        return rhs.compare(lhs) <= 0;
+    }
+#    endif // three-way comparison
+
+    /**
+     *  @brief  Swap contents of two strings.
+     *  @param lhs  First string.
+     *  @param rhs  Second string.
+     *
+     *  Exchanges the contents of @a lhs and @a rhs in constant time.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline void swap(ustring<CharT, TraitsT, AllocT>& lhs, ustring<CharT, TraitsT, AllocT>& rhs)
+      _GLIBCXX_NOEXCEPT_IF(noexcept(lhs.swap(rhs))) {
+        lhs.swap(rhs);
+    }
+
+
+    /**
+     *  @brief  Read stream into a string.
+     *  @param is  Input stream.
+     *  @param str  Buffer to store into.
+     *  @return  Reference to the input stream.
+     *
+     *  Stores characters from @a is into @a str until whitespace is
+     *  found, the end of the stream is encountered, or str.max_size()
+     *  is reached.  If is.width() is non-zero, that is the limit on the
+     *  number of characters stored into @a str.  Any previous
+     *  contents of @a str are erased.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    stl::basic_istream<CharT, TraitsT>& operator>>(stl::basic_istream<CharT, TraitsT>& is,
+                                                   ustring<CharT, TraitsT, AllocT>&    str);
+
+    template <>
+    stl::basic_istream<char>& operator>>(stl::basic_istream<char>& is, ustring<char>& str);
+
+    /**
+     *  @brief  Write string to a stream.
+     *  @param os  Output stream.
+     *  @param str  String to write out.
+     *  @return  Reference to the output stream.
+     *
+     *  Output characters of @a str into os following the same rules as for
+     *  writing a C string.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline stl::basic_ostream<CharT, TraitsT>& operator<<(stl::basic_ostream<CharT, TraitsT>&    os,
+                                                          const ustring<CharT, TraitsT, AllocT>& str) {
+        // _GLIBCXX_RESOLVE_LIB_DEFECTS
+        // 586. string inserter not a formatted function
+        return ostream_insert(os, str.data(), str.size());
+    }
+
+    /**
+     *  @brief  Read a line from stream into a string.
+     *  @param is  Input stream.
+     *  @param str  Buffer to store into.
+     *  @param delim  Character marking end of line.
+     *  @return  Reference to the input stream.
+     *
+     *  Stores characters from @a is into @a str until @a delim is
+     *  found, the end of the stream is encountered, or str.max_size()
+     *  is reached.  Any previous contents of @a str are erased.  If
+     *  @a delim is encountered, it is extracted but not stored into
+     *  @a str.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    stl::basic_istream<CharT, TraitsT>&
+    getline(stl::basic_istream<CharT, TraitsT>& is, ustring<CharT, TraitsT, AllocT>& str, CharT delim);
+
+    /**
+     *  @brief  Read a line from stream into a string.
+     *  @param is  Input stream.
+     *  @param str  Buffer to store into.
+     *  @return  Reference to the input stream.
+     *
+     *  Stores characters from is into @a str until &apos;\n&apos; is
+     *  found, the end of the stream is encountered, or str.max_size()
+     *  is reached.  Any previous contents of @a str are erased.  If
+     *  end of line is encountered, it is extracted but not stored into
+     *  @a str.
+     */
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline stl::basic_istream<CharT, TraitsT>& getline(stl::basic_istream<CharT, TraitsT>& is,
+                                                       ustring<CharT, TraitsT, AllocT>&    str) {
+        return std::getline(is, str, is.widen('\n'));
+    }
+
+#    if cplusplus >= 201103L
+    /// Read a line from an rvalue stream into a string.
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline stl::basic_istream<CharT, TraitsT>&
+    getline(stl::basic_istream<CharT, TraitsT>&& is, ustring<CharT, TraitsT, AllocT>& str, CharT delim) {
+        return std::getline(is, str, delim);
+    }
+
+    /// Read a line from an rvalue stream into a string.
+    template <typename CharT, typename TraitsT, typename AllocT>
+    inline stl::basic_istream<CharT, TraitsT>& getline(stl::basic_istream<CharT, TraitsT>&& is,
+                                                       ustring<CharT, TraitsT, AllocT>&     str) {
+        return std::getline(is, str);
+    }
+#    endif
+
+    template <>
+    stl::basic_istream<char>& getline(stl::basic_istream<char>& in, ustring<char>& str, char delim);
+
+#    ifdef _GLIBCXX_USE_WCHAR_T
+    template <>
+    stl::basic_istream<wchar_t>&
+    getline(stl::basic_istream<wchar_t>& in, ustring<wchar_t>& str, wchar_t delim);
+#    endif
+
+
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    const typename ustring<CharT, TraitsT, AllocT>::size_type ustring<CharT, TraitsT, AllocT>::npos;
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    void ustring<CharT, TraitsT, AllocT>::swap(ustring& s) noexcept {
+        if (this == &s)
+            return;
+
+        alloc_traits::on_swap(get_allocator(), s.get_allocator());
+
+        if (is_local())
+            if (s.is_local()) {
+                if (length() && s.length()) {
+                    CharT tmp_data[local_capacity + 1];
+                    traits_type::copy(tmp_data, s.local_buf, local_capacity + 1);
+                    traits_type::copy(s.local_buf, local_buf, local_capacity + 1);
+                    traits_type::copy(local_buf, tmp_data, local_capacity + 1);
+                } else if (s.length()) {
+                    traits_type::copy(local_buf, s.local_buf, local_capacity + 1);
+                    length(s.length());
+                    s.set_length(0);
+                    return;
+                } else if (length()) {
+                    traits_type::copy(s.local_buf, local_buf, local_capacity + 1);
+                    s.length(length());
+                    set_length(0);
+                    return;
+                }
+            } else {
+                const size_type tmp_capacity = s.allocated_capacity;
+                traits_type::copy(s.local_buf, local_buf, local_capacity + 1);
+                data(s.data());
+                s.data(s.local_buf);
+                capacity(tmp_capacity);
+            }
+        else {
+            const size_type tmp_capacity = allocated_capacity;
+            if (s.is_local()) {
+                traits_type::copy(local_buf, s.local_buf, local_capacity + 1);
+                s.data(data());
+                data(local_buf);
+            } else {
+                pointer tmp_ptr = data();
+                data(s.data());
+                s.data(tmp_ptr);
+                capacity(s.allocated_capacity);
+            }
+            s.capacity(tmp_capacity);
+        }
+
+        const size_type tmp_length = length();
+        length(s.length());
+        s.length(tmp_length);
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    typename ustring<CharT, TraitsT, AllocT>::pointer
+    ustring<CharT, TraitsT, AllocT>::create(size_type& capacity, size_type old_capacity) {
+        // _GLIBCXX_RESOLVE_LIB_DEFECTS
+        // 83.  String::npos vs. string::max_size()
+        if (capacity > max_size())
+            std::throw_length_error(N("ustring::create"));
+
+        // The below implements an exponential growth policy, necessary to
+        // meet amortized linear time requirements of the library: see
+        // http://gcc.gnu.org/ml/libstdc++/2001-07/msg00085.html.
+        if (capacity > old_capacity && capacity < 2 * old_capacity) {
+            capacity = 2 * old_capacity;
+            // Never allocate a string bigger than max_size.
+            if (capacity > max_size())
+                capacity = max_size();
+        }
+
+        // NB: Need an array of char_type[capacity], plus a terminating
+        // null char_type() element.
+        return alloc_traits::allocate(get_allocator(), capacity + 1);
+    }
+
+    // NB: This is the special case for Input Iterators, used in
+    // istreambuf_iterators, etc.
+    // Input Iterators have a cost structure very different from
+    // pointers, calling for a different coding style.
+    template <typename CharT, typename TraitsT, typename AllocT>
+    template <typename _InIterator>
+    void
+    ustring<CharT, TraitsT, AllocT>::construct(_InIterator beg, _InIterator end, std::input_iterator_tag) {
+        size_type len      = 0;
+        size_type capacity = size_type(local_capacity);
+
+        while (beg != end && len < capacity) {
+            data()[len++] = *beg;
+            ++beg;
+        }
+
+        try {
+            while (beg != end) {
+                if (len == capacity) {
+                    // Allocate more space.
+                    capacity        = len + 1;
+                    pointer another = create(capacity, len);
+                    this->copy(another, data(), len);
+                    dispose();
+                    data(another);
+                    capacity(capacity);
+                }
+                data()[len++] = *beg;
+                ++beg;
+            }
+        } catch (...) {
+            dispose();
+            throw_exception_again;
+        }
+
+        set_length(len);
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    template <typename _InIterator>
+    void
+    ustring<CharT, TraitsT, AllocT>::construct(_InIterator beg, _InIterator end, std::forward_iterator_tag) {
+        // NB: Not required, but considered best practice.
+        if (gnu_cxx::is_null_pointer(beg) && beg != end)
+            std::throw_logic_error(N("ustring::"
+                                     "construct null not valid"));
+
+        size_type dnew = static_cast<size_type>(std::distance(beg, end));
+
+        if (dnew > size_type(local_capacity)) {
+            data(create(dnew, size_type(0)));
+            capacity(dnew);
+        }
+
+        // Check for out_of_range and length_error exceptions.
+        try {
+            this->copy_chars(data(), beg, end);
+        } catch (...) {
+            dispose();
+            throw_exception_again;
+        }
+
+        set_length(dnew);
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    void ustring<CharT, TraitsT, AllocT>::construct(size_type n, CharT c) {
+        if (n > size_type(local_capacity)) {
+            data(create(n, size_type(0)));
+            capacity(n);
+        }
+
+        if (n)
+            this->assign(data(), n, c);
+
+        set_length(n);
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    void ustring<CharT, TraitsT, AllocT>::assign(const ustring& str) {
+        if (this != &str) {
+            const size_type rsize    = str.length();
+            const size_type capacity = capacity();
+
+            if (rsize > capacity) {
+                size_type new_capacity = rsize;
+                pointer   tmp          = create(new_capacity, capacity);
+                dispose();
+                data(tmp);
+                capacity(new_capacity);
+            }
+
+            if (rsize)
+                this->copy(data(), str.data(), rsize);
+
+            set_length(rsize);
+        }
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    void ustring<CharT, TraitsT, AllocT>::reserve(size_type res) {
+        // Make sure we don't shrink below the current size.
+        if (res < length())
+            res = length();
+
+        const size_type capacity = capacity();
+        if (res != capacity) {
+            if (res > capacity || res > size_type(local_capacity)) {
+                pointer tmp = create(res, capacity);
+                this->copy(tmp, data(), length() + 1);
+                dispose();
+                data(tmp);
+                capacity(res);
+            } else if (!is_local()) {
+                this->copy(local_data(), data(), length() + 1);
+                destroy(capacity);
+                data(local_data());
+            }
+        }
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    void
+    ustring<CharT, TraitsT, AllocT>::mutate(size_type pos, size_type len1, const CharT* s, size_type len2) {
+        const size_type how_much = length() - pos - len1;
+
+        size_type new_capacity = length() + len2 - len1;
+        pointer   r            = create(new_capacity, capacity());
+
+        if (pos)
+            this->copy(r, data(), pos);
+        if (s && len2)
+            this->copy(r + pos, s, len2);
+        if (how_much)
+            this->copy(r + pos + len2, data() + pos + len1, how_much);
+
+        dispose();
+        data(r);
+        capacity(new_capacity);
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    void ustring<CharT, TraitsT, AllocT>::erase(size_type pos, size_type n) {
+        const size_type how_much = length() - pos - n;
+
+        if (how_much && n)
+            this->move(data() + pos, data() + pos + n, how_much);
+
+        set_length(length() - n);
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    void ustring<CharT, TraitsT, AllocT>::resize(size_type n, CharT c) {
+        const size_type size = this->size();
+        if (size < n)
+            this->append(n - size, c);
+        else if (n < size)
+            this->set_length(n);
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::append(const CharT* s, size_type n) {
+        const size_type len = n + this->size();
+
+        if (len <= this->capacity()) {
+            if (n)
+                this->copy(this->data() + this->size(), s, n);
+        } else
+            this->mutate(this->size(), size_type(0), s, n);
+
+        this->set_length(len);
+        return *this;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    template <typename _InputIterator>
+    ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::replace_dispatch(const_iterator i1,
+                                                                                       const_iterator i2,
+                                                                                       _InputIterator k1,
+                                                                                       _InputIterator k2,
+                                                                                       std::false_type) {
+        // _GLIBCXX_RESOLVE_LIB_DEFECTS
+        // 2788. unintentionally require a default constructible allocator
+        const ustring   s(k1, k2, this->get_allocator());
+        const size_type n1 = i2 - i1;
+        return replace(i1 - begin(), n1, s.data(), s.size());
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    ustring<CharT, TraitsT, AllocT>&
+    ustring<CharT, TraitsT, AllocT>::replace_aux(size_type pos1, size_type n1, size_type n2, CharT c) {
+        check_length(n1, n2, "ustring::replace_aux");
+
+        const size_type old_size = this->size();
+        const size_type new_size = old_size + n2 - n1;
+
+        if (new_size <= this->capacity()) {
+            pointer p = this->data() + pos1;
+
+            const size_type how_much = old_size - pos1 - n1;
+            if (how_much && n1 != n2)
+                this->move(p + n2, p + n1, how_much);
+        } else
+            this->mutate(pos1, n1, 0, n2);
+
+        if (n2)
+            this->assign(this->data() + pos1, n2, c);
+
+        this->set_length(new_size);
+        return *this;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::replace(size_type       pos,
+                                                                              size_type       len1,
+                                                                              const CharT*    s,
+                                                                              const size_type len2) {
+        check_length(len1, len2, "ustring::replace");
+
+        const size_type old_size = this->size();
+        const size_type new_size = old_size + len2 - len1;
+
+        if (new_size <= this->capacity()) {
+            pointer p = this->data() + pos;
+
+            const size_type how_much = old_size - pos - len1;
+            if (disjunct(s)) {
+                if (how_much && len1 != len2)
+                    this->move(p + len2, p + len1, how_much);
+                if (len2)
+                    this->copy(p, s, len2);
+            } else {
+                // Work in-place.
+                if (len2 && len2 <= len1)
+                    this->move(p, s, len2);
+                if (how_much && len1 != len2)
+                    this->move(p + len2, p + len1, how_much);
+                if (len2 > len1) {
+                    if (s + len2 <= p + len1)
+                        this->move(p, s, len2);
+                    else if (s >= p + len1)
+                        this->copy(p, s + len2 - len1, len2);
+                    else {
+                        const size_type nleft = (p + len1) - s;
+                        this->move(p, s, nleft);
+                        this->copy(p + nleft, p + len2, len2 - nleft);
+                    }
+                }
+            }
+        } else
+            this->mutate(pos, len1, s, len2);
+
+        this->set_length(new_size);
+        return *this;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    typename ustring<CharT, TraitsT, AllocT>::size_type
+    ustring<CharT, TraitsT, AllocT>::copy(CharT* s, size_type n, size_type pos) const {
+        check(pos, "ustring::copy");
+        n = limit(pos, n);
+        glibcxx_requires_string_len(s, n);
+        if (n)
+            copy(s, data() + pos, n);
+        // 21.3.5.7 par 3: do not append null.  (good.)
+        return n;
+    }
+
+#else // !_GLIBCXX_USE_CXX11_ABI
+
+template <typename CharT, typename TraitsT, typename AllocT>
+const typename ustring<CharT, TraitsT, AllocT>::size_type
+  ustring<CharT, TraitsT, AllocT>::_Rep::max_size = (((npos - sizeof(_Rep_base)) / sizeof(CharT)) - 1) / 4;
+
+template <typename CharT, typename TraitsT, typename AllocT>
+const CharT ustring<CharT, TraitsT, AllocT>::_Rep::terminal = CharT();
+
+template <typename CharT, typename TraitsT, typename AllocT>
+const typename ustring<CharT, TraitsT, AllocT>::size_type ustring<CharT, TraitsT, AllocT>::npos;
+
+// Linker sets empty_rep_storage to all 0s (one reference, empty string)
+// at static init time (before static ctors are run).
+template <typename CharT, typename TraitsT, typename AllocT>
+typename ustring<CharT, TraitsT, AllocT>::size_type ustring<CharT, TraitsT, AllocT>::_Rep::empty_rep_storage
+  [(sizeof(_Rep_base) + sizeof(CharT) + sizeof(size_type) - 1) / sizeof(size_type)];
+
+// NB: This is the special case for Input Iterators, used in
+// istreambuf_iterators, etc.
+// Input Iterators have a cost structure very different from
+// pointers, calling for a different coding style.
+template <typename CharT, typename TraitsT, typename AllocT>
+template <typename _InIterator>
+CharT* ustring<CharT, TraitsT, AllocT>::construct(_InIterator   beg,
+                                                  _InIterator   end,
+                                                  const AllocT& a,
+                                                  input_iterator_tag) {
+#    if _GLIBCXX_FULLY_DYNAMIC_STRING == 0
+    if (beg == end && a == AllocT())
+        return empty_rep().refdata();
+#    endif
+    // Avoid reallocation for common case.
+    CharT     buf[128];
+    size_type len = 0;
+    while (beg != end && len < sizeof(buf) / sizeof(CharT)) {
+        buf[len++] = *beg;
+        ++beg;
+    }
+    _Rep* r = _Rep::create(len, size_type(0), a);
+    copy(r->refdata(), buf, len);
+    try {
+        while (beg != end) {
+            if (len == r->capacity) {
+                // Allocate more space.
+                _Rep* another = _Rep::create(len + 1, len, a);
+                copy(another->refdata(), r->refdata(), len);
+                r->destroy(a);
+                r = another;
+            }
+            r->refdata()[len++] = *beg;
+            ++beg;
+        }
+    } catch (...) {
+        r->destroy(a);
+        throw_exception_again;
+    }
+    r->set_length_and_sharable(len);
+    return r->refdata();
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+template <typename _InIterator>
+CharT* ustring<CharT, TraitsT, AllocT>::construct(_InIterator   beg,
+                                                  _InIterator   end,
+                                                  const AllocT& a,
+                                                  forward_iterator_tag) {
+#    if _GLIBCXX_FULLY_DYNAMIC_STRING == 0
+    if (beg == end && a == AllocT())
+        return empty_rep().refdata();
+#    endif
+    // NB: Not required, but considered best practice.
+    if (gnu_cxx::is_null_pointer(beg) && beg != end)
+        throw_logic_error(N("ustring::construct null not valid"));
+
+    const size_type dnew = static_cast<size_type>(std::distance(beg, end));
+    // Check for out_of_range and length_error exceptions.
+    _Rep* r = _Rep::create(dnew, size_type(0), a);
+    try {
+        copy_chars(r->refdata(), beg, end);
+    } catch (...) {
+        r->destroy(a);
+        throw_exception_again;
+    }
+    r->set_length_and_sharable(dnew);
+    return r->refdata();
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+CharT* ustring<CharT, TraitsT, AllocT>::construct(size_type n, CharT c, const AllocT& a) {
+#    if _GLIBCXX_FULLY_DYNAMIC_STRING == 0
+    if (n == 0 && a == AllocT())
+        return empty_rep().refdata();
+#    endif
+    // Check for out_of_range and length_error exceptions.
+    _Rep* r = _Rep::create(n, size_type(0), a);
+    if (n)
+        assign(r->refdata(), n, c);
+
+    r->set_length_and_sharable(n);
+    return r->refdata();
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>::ustring(const ustring& str)
+  : dataplus(str.rep()->grab(AllocT(str.get_allocator()), str.get_allocator()), str.get_allocator()) {}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>::ustring(const AllocT& a) : dataplus(construct(size_type(), CharT(), a), a) {}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>::ustring(const ustring& str, size_type pos, const AllocT& a)
+  : dataplus(
+      construct(str.data() + str.check(pos, "ustring::ustring"), str.data() + str.limit(pos, npos) + pos, a),
+      a) {}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>::ustring(const ustring& str, size_type pos, size_type n)
+  : dataplus(construct(str.data() + str.check(pos, "ustring::ustring"),
+                       str.data() + str.limit(pos, n) + pos,
+                       AllocT()),
+             AllocT()) {}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>::ustring(const ustring& str, size_type pos, size_type n, const AllocT& a)
+  : dataplus(
+      construct(str.data() + str.check(pos, "ustring::ustring"), str.data() + str.limit(pos, n) + pos, a),
+      a) {}
+
+// TBD: DPG annotate
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>::ustring(const CharT* s, size_type n, const AllocT& a)
+  : dataplus(construct(s, s + n, a), a) {}
+
+// TBD: DPG annotate
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>::ustring(const CharT* s, const AllocT& a)
+  : dataplus(construct(s, s ? s + traits_type::length(s) : s + npos, a), a) {}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>::ustring(size_type n, CharT c, const AllocT& a)
+  : dataplus(construct(n, c, a), a) {}
+
+// TBD: DPG annotate
+template <typename CharT, typename TraitsT, typename AllocT>
+template <typename _InputIterator>
+ustring<CharT, TraitsT, AllocT>::ustring(_InputIterator beg, _InputIterator end, const AllocT& a)
+  : dataplus(construct(beg, end, a), a) {}
+
+#    if cplusplus >= 201103L
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>::ustring(initializer_list<CharT> l, const AllocT& a)
+  : dataplus(construct(l.begin(), l.end(), a), a) {}
+#    endif
+
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::assign(const ustring& str) {
+    if (rep() != str.rep()) {
+        // XXX MT
+        const allocator_type a   = this->get_allocator();
+        CharT*               tmp = str.rep()->grab(a, str.get_allocator());
+        rep()->dispose(a);
+        data(tmp);
+    }
+    return *this;
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::assign(const CharT* s, size_type n) {
+    glibcxx_requires_string_len(s, n);
+    check_length(this->size(), n, "ustring::assign");
+    if (disjunct(s) || rep()->is_shared())
+        return replace_safe(size_type(0), this->size(), s, n);
+    else {
+        // Work in-place.
+        const size_type pos = s - data();
+        if (pos >= n)
+            copy(data(), s, n);
+        else if (pos)
+            move(data(), s, n);
+        rep()->set_length_and_sharable(n);
+        return *this;
+    }
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::append(size_type n, CharT c) {
+    if (n) {
+        check_length(size_type(0), n, "ustring::append");
+        const size_type len = n + this->size();
+        if (len > this->capacity() || rep()->is_shared())
+            this->reserve(len);
+        assign(data() + this->size(), n, c);
+        rep()->set_length_and_sharable(len);
+    }
+    return *this;
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::append(const CharT* s, size_type n) {
+    glibcxx_requires_string_len(s, n);
+    if (n) {
+        check_length(size_type(0), n, "ustring::append");
+        const size_type len = n + this->size();
+        if (len > this->capacity() || rep()->is_shared()) {
+            if (disjunct(s))
+                this->reserve(len);
+            else {
+                const size_type off = s - data();
+                this->reserve(len);
+                s = data() + off;
+            }
+        }
+        copy(data() + this->size(), s, n);
+        rep()->set_length_and_sharable(len);
+    }
+    return *this;
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::append(const ustring& str) {
+    const size_type size = str.size();
+    if (size) {
+        const size_type len = size + this->size();
+        if (len > this->capacity() || rep()->is_shared())
+            this->reserve(len);
+        copy(data() + this->size(), str.data(), size);
+        rep()->set_length_and_sharable(len);
+    }
+    return *this;
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>&
+ustring<CharT, TraitsT, AllocT>::append(const ustring& str, size_type pos, size_type n) {
+    str.check(pos, "ustring::append");
+    n = str.limit(pos, n);
+    if (n) {
+        const size_type len = n + this->size();
+        if (len > this->capacity() || rep()->is_shared())
+            this->reserve(len);
+        copy(data() + this->size(), str.data() + pos, n);
+        rep()->set_length_and_sharable(len);
+    }
+    return *this;
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>&
+ustring<CharT, TraitsT, AllocT>::insert(size_type pos, const CharT* s, size_type n) {
+    glibcxx_requires_string_len(s, n);
+    check(pos, "ustring::insert");
+    check_length(size_type(0), n, "ustring::insert");
+    if (disjunct(s) || rep()->is_shared())
+        return replace_safe(pos, size_type(0), s, n);
+    else {
+        // Work in-place.
+        const size_type off = s - data();
+        mutate(pos, 0, n);
+        s        = data() + off;
+        CharT* p = data() + pos;
+        if (s + n <= p)
+            copy(p, s, n);
+        else if (s >= p)
+            copy(p, s + n, n);
+        else {
+            const size_type nleft = p - s;
+            copy(p, s, nleft);
+            copy(p + nleft, p + n, n - nleft);
+        }
+        return *this;
+    }
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+typename ustring<CharT, TraitsT, AllocT>::iterator ustring<CharT, TraitsT, AllocT>::erase(iterator first,
+                                                                                          iterator last) {
+    _GLIBCXX_DEBUG_PEDASSERT(first >= ibegin() && first <= last && last <= iend());
+
+    // NB: This isn't just an optimization (bail out early when
+    // there is nothing to do, really), it's also a correctness
+    // issue vs MT, see libstdc++/40518.
+    const size_type size = last - first;
+    if (size) {
+        const size_type pos = first - ibegin();
+        mutate(pos, size, size_type(0));
+        rep()->set_leaked();
+        return iterator(data() + pos);
+    } else
+        return first;
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>&
+ustring<CharT, TraitsT, AllocT>::replace(size_type pos, size_type n1, const CharT* s, size_type n2) {
+    glibcxx_requires_string_len(s, n2);
+    check(pos, "ustring::replace");
+    n1 = limit(pos, n1);
+    check_length(n1, n2, "ustring::replace");
+    bool left;
+    if (disjunct(s) || rep()->is_shared())
+        return replace_safe(pos, n1, s, n2);
+    else if ((left = s + n2 <= data() + pos) || data() + pos + n1 <= s) {
+        // Work in-place: non-overlapping case.
+        size_type off = s - data();
+        left ? off : (off += n2 - n1);
+        mutate(pos, n1, n2);
+        copy(data() + pos, data() + off, n2);
+        return *this;
+    } else {
+        // Todo: overlapping case.
+        const ustring tmp(s, n2);
+        return replace_safe(pos, n1, tmp.data(), n2);
+    }
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+void ustring<CharT, TraitsT, AllocT>::_Rep::destroy(const AllocT& a) throw() {
+    const size_type size = sizeof(_Rep_base) + (this->capacity + 1) * sizeof(CharT);
+    _Raw_bytes_alloc(a).deallocate(reinterpret_cast<char*>(this), size);
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+void ustring<CharT, TraitsT, AllocT>::leak_hard() {
+#    if _GLIBCXX_FULLY_DYNAMIC_STRING == 0
+    if (rep() == &empty_rep())
+        return;
+#    endif
+    if (rep()->is_shared())
+        mutate(0, 0, 0);
+    rep()->set_leaked();
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+void ustring<CharT, TraitsT, AllocT>::mutate(size_type pos, size_type len1, size_type len2) {
+    const size_type old_size = this->size();
+    const size_type new_size = old_size + len2 - len1;
+    const size_type how_much = old_size - pos - len1;
+
+    if (new_size > this->capacity() || rep()->is_shared()) {
+        // Must reallocate.
+        const allocator_type a = get_allocator();
+        _Rep*                r = _Rep::create(new_size, this->capacity(), a);
+
+        if (pos)
+            copy(r->refdata(), data(), pos);
+        if (how_much)
+            copy(r->refdata() + pos + len2, data() + pos + len1, how_much);
+
+        rep()->dispose(a);
+        data(r->refdata());
+    } else if (how_much && len1 != len2) {
+        // Work in-place.
+        move(data() + pos + len2, data() + pos + len1, how_much);
+    }
+    rep()->set_length_and_sharable(new_size);
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+void ustring<CharT, TraitsT, AllocT>::reserve(size_type res) {
+    if (res != this->capacity() || rep()->is_shared()) {
+        // Make sure we don't shrink below the current size
+        if (res < this->size())
+            res = this->size();
+        const allocator_type a   = get_allocator();
+        CharT*               tmp = rep()->clone(a, res - this->size());
+        rep()->dispose(a);
+        data(tmp);
+    }
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+void ustring<CharT, TraitsT, AllocT>::swap(ustring& s)
+  _GLIBCXX_NOEXCEPT_IF(allocator_traits<AllocT>::is_always_equal::value) {
+    if (rep()->is_leaked())
+        rep()->set_sharable();
+    if (s.rep()->is_leaked())
+        s.rep()->set_sharable();
+    if (this->get_allocator() == s.get_allocator()) {
+        CharT* tmp = data();
+        data(s.data());
+        s.data(tmp);
+    }
+    // The code below can usually be optimized away.
+    else {
+        const ustring tmp1(ibegin(), iend(), s.get_allocator());
+        const ustring tmp2(s.ibegin(), s.iend(), this->get_allocator());
+        *this = tmp2;
+        s     = tmp1;
+    }
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+typename ustring<CharT, TraitsT, AllocT>::_Rep*
+ustring<CharT, TraitsT, AllocT>::_Rep::create(size_type     capacity,
+                                              size_type     old_capacity,
+                                              const AllocT& alloc) {
+    // _GLIBCXX_RESOLVE_LIB_DEFECTS
+    // 83.  String::npos vs. string::max_size()
+    if (capacity > max_size)
+        throw_length_error(N("ustring::create"));
+
+    // The standard places no restriction on allocating more memory
+    // than is strictly needed within this layer at the moment or as
+    // requested by an explicit application call to reserve().
+
+    // Many malloc implementations perform quite poorly when an
+    // application attempts to allocate memory in a stepwise fashion
+    // growing each allocation size by only 1 char.  Additionally,
+    // it makes little sense to allocate less linear memory than the
+    // natural blocking size of the malloc implementation.
+    // Unfortunately, we would need a somewhat low-level calculation
+    // with tuned parameters to get this perfect for any particular
+    // malloc implementation.  Fortunately, generalizations about
+    // common features seen among implementations seems to suffice.
+
+    // pagesize need not match the actual VM page size for good
+    // results in practice, thus we pick a common value on the low
+    // side.  malloc_header_size is an estimate of the amount of
+    // overhead per memory allocation (in practice seen N * sizeof
+    // (void*) where N is 0, 2 or 4).  According to folklore,
+    // picking this value on the high side is better than
+    // low-balling it (especially when this algorithm is used with
+    // malloc implementations that allocate memory blocks rounded up
+    // to a size which is a power of 2).
+    const size_type pagesize           = 4096;
+    const size_type malloc_header_size = 4 * sizeof(void*);
+
+    // The below implements an exponential growth policy, necessary to
+    // meet amortized linear time requirements of the library: see
+    // http://gcc.gnu.org/ml/libstdc++/2001-07/msg00085.html.
+    // It's active for allocations requiring an amount of memory above
+    // system pagesize. This is consistent with the requirements of the
+    // standard: http://gcc.gnu.org/ml/libstdc++/2001-07/msg00130.html
+    if (capacity > old_capacity && capacity < 2 * old_capacity)
+        capacity = 2 * old_capacity;
+
+    // NB: Need an array of char_type[capacity], plus a terminating
+    // null char_type() element, plus enough for the _Rep data structure.
+    // Whew. Seemingly so needy, yet so elemental.
+    size_type size = (capacity + 1) * sizeof(CharT) + sizeof(_Rep);
+
+    const size_type adj_size = size + malloc_header_size;
+    if (adj_size > pagesize && capacity > old_capacity) {
+        const size_type extra = pagesize - adj_size % pagesize;
+        capacity += extra / sizeof(CharT);
+        // Never allocate a string bigger than max_size.
+        if (capacity > max_size)
+            capacity = max_size;
+        size = (capacity + 1) * sizeof(CharT) + sizeof(_Rep);
+    }
+
+    // NB: Might throw, but no worries about a leak, mate: _Rep()
+    // does not throw.
+    void* place = _Raw_bytes_alloc(alloc).allocate(size);
+    _Rep* p     = new (place) _Rep;
+    p->capacity = capacity;
+    // ABI compatibility - 3.4.x set in create both
+    // refcount and length.  All callers of create
+    // in ustring.tcc then set just length.
+    // In 4.0.x and later both refcount and length
+    // are initialized in the callers, unfortunately we can
+    // have 3.4.x compiled code with create callers inlined
+    // calling 4.0.x+ create.
+    p->set_sharable();
+    return p;
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+CharT* ustring<CharT, TraitsT, AllocT>::_Rep::clone(const AllocT& alloc, size_type res) {
+    // Requested capacity of the clone.
+    const size_type requested_cap = this->length + res;
+    _Rep*           r             = _Rep::create(requested_cap, this->capacity, alloc);
+    if (this->length)
+        copy(r->refdata(), refdata(), this->length);
+
+    r->set_length_and_sharable(this->length);
+    return r->refdata();
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+void ustring<CharT, TraitsT, AllocT>::resize(size_type n, CharT c) {
+    const size_type size = this->size();
+    check_length(size, n, "ustring::resize");
+    if (size < n)
+        this->append(n - size, c);
+    else if (n < size)
+        this->erase(n);
+    // else nothing (in particular, avoid calling mutate() unnecessarily.)
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+template <typename _InputIterator>
+ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::replace_dispatch(iterator       i1,
+                                                                                   iterator       i2,
+                                                                                   _InputIterator k1,
+                                                                                   _InputIterator k2,
+                                                                                   false_type) {
+    const ustring   s(k1, k2);
+    const size_type n1 = i2 - i1;
+    check_length(n1, s.size(), "ustring::replace_dispatch");
+    return replace_safe(i1 - ibegin(), n1, s.data(), s.size());
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>&
+ustring<CharT, TraitsT, AllocT>::replace_aux(size_type pos1, size_type n1, size_type n2, CharT c) {
+    check_length(n1, n2, "ustring::replace_aux");
+    mutate(pos1, n1, n2);
+    if (n2)
+        assign(data() + pos1, n2, c);
+    return *this;
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+ustring<CharT, TraitsT, AllocT>&
+ustring<CharT, TraitsT, AllocT>::replace_safe(size_type pos1, size_type n1, const CharT* s, size_type n2) {
+    mutate(pos1, n1, n2);
+    if (n2)
+        copy(data() + pos1, s, n2);
+    return *this;
+}
+
+template <typename CharT, typename TraitsT, typename AllocT>
+typename ustring<CharT, TraitsT, AllocT>::size_type
+ustring<CharT, TraitsT, AllocT>::copy(CharT* s, size_type n, size_type pos) const {
+    check(pos, "ustring::copy");
+    n = limit(pos, n);
+    glibcxx_requires_string_len(s, n);
+    if (n)
+        copy(s, data() + pos, n);
+    // 21.3.5.7 par 3: do not append null.  (good.)
+    return n;
+}
+#endif // !_GLIBCXX_USE_CXX11_ABI
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    ustring<CharT, TraitsT, AllocT> operator+(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
+        glibcxx_requires_string(lhs);
+        typedef ustring<CharT, TraitsT, AllocT>                                       string_type;
+        typedef typename string_type::size_type                                       size_type;
+        typedef typename gnu_cxx::alloc_traits<AllocT>::template rebind<CharT>::other _Char_alloc_type;
+        typedef gnu_cxx::alloc_traits<_Char_alloc_type>                               _Alloc_traits;
+        const size_type len = TraitsT::length(lhs);
+        string_type     str(alloc_traits::select_on_copy(rhs.get_allocator()));
+        str.reserve(len + rhs.size());
+        str.append(lhs, len);
+        str.append(rhs);
+        return str;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    ustring<CharT, TraitsT, AllocT> operator+(CharT lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
+        typedef ustring<CharT, TraitsT, AllocT>                                       string_type;
+        typedef typename string_type::size_type                                       size_type;
+        typedef typename gnu_cxx::alloc_traits<AllocT>::template rebind<CharT>::other _Char_alloc_type;
+        typedef gnu_cxx::alloc_traits<_Char_alloc_type>                               _Alloc_traits;
+        string_type     str(alloc_traits::select_on_copy(rhs.get_allocator()));
+        const size_type len = rhs.size();
+        str.reserve(len + 1);
+        str.append(size_type(1), lhs);
+        str.append(rhs);
+        return str;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    typename ustring<CharT, TraitsT, AllocT>::size_type
+    ustring<CharT, TraitsT, AllocT>::find(const CharT* s, size_type pos, size_type n) const noexcept {
+        glibcxx_requires_string_len(s, n);
+        const size_type size = this->size();
+
+        if (n == 0)
+            return pos <= size ? pos : npos;
+        if (pos >= size)
+            return npos;
+
+        const CharT        elem0 = s[0];
+        const CharT* const data  = data();
+        const CharT*       first = data + pos;
+        const CharT* const last  = data + size;
+        size_type          len   = size - pos;
+
+        while (len >= n) {
+            // Find the first occurrence of elem0:
+            first = traits_type::find(first, len - n + 1, elem0);
+            if (!first)
+                return npos;
+            // Compare the full strings from the first occurrence of elem0.
+            // We already know that first[0] == s[0] but compare them again
+            // anyway because s is probably aligned, which helps memcmp.
+            if (traits_type::compare(first, s, n) == 0)
+                return first - data;
+            len = last - ++first;
+        }
+        return npos;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    typename ustring<CharT, TraitsT, AllocT>::size_type
+    ustring<CharT, TraitsT, AllocT>::find(CharT c, size_type pos) const noexcept {
+        size_type       ret  = npos;
+        const size_type size = this->size();
+        if (pos < size) {
+            const CharT*    data = data();
+            const size_type n    = size - pos;
+            const CharT*    p    = traits_type::find(data + pos, n, c);
+            if (p)
+                ret = p - data;
+        }
+        return ret;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    typename ustring<CharT, TraitsT, AllocT>::size_type
+    ustring<CharT, TraitsT, AllocT>::rfind(const CharT* s, size_type pos, size_type n) const noexcept {
+        glibcxx_requires_string_len(s, n);
+        const size_type size = this->size();
+        if (n <= size) {
+            pos               = std::min(size_type(size - n), pos);
+            const CharT* data = data();
+            do {
+                if (traits_type::compare(data + pos, s, n) == 0)
+                    return pos;
+            } while (pos-- > 0);
+        }
+        return npos;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    typename ustring<CharT, TraitsT, AllocT>::size_type
+    ustring<CharT, TraitsT, AllocT>::rfind(CharT c, size_type pos) const noexcept {
+        size_type size = this->size();
+        if (size) {
+            if (--size > pos)
+                size = pos;
+            for (++size; size-- > 0;)
+                if (traits_type::eq(data()[size], c))
+                    return size;
+        }
+        return npos;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    typename ustring<CharT, TraitsT, AllocT>::size_type
+    ustring<CharT, TraitsT, AllocT>::find_first_of(const CharT* s,
+                                                   size_type    pos,
+                                                   size_type    n) const noexcept {
+        glibcxx_requires_string_len(s, n);
+        for (; n && pos < this->size(); ++pos) {
+            const CharT* p = traits_type::find(s, n, data()[pos]);
+            if (p)
+                return pos;
+        }
+        return npos;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    typename ustring<CharT, TraitsT, AllocT>::size_type
+    ustring<CharT, TraitsT, AllocT>::find_last_of(const CharT* s, size_type pos, size_type n) const noexcept {
+        glibcxx_requires_string_len(s, n);
+        size_type size = this->size();
+        if (size && n) {
+            if (--size > pos)
+                size = pos;
+            do {
+                if (traits_type::find(s, n, data()[size]))
+                    return size;
+            } while (size-- != 0);
+        }
+        return npos;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    typename ustring<CharT, TraitsT, AllocT>::size_type
+    ustring<CharT, TraitsT, AllocT>::find_first_not_of(const CharT* s,
+                                                       size_type    pos,
+                                                       size_type    n) const noexcept {
+        glibcxx_requires_string_len(s, n);
+        for (; pos < this->size(); ++pos)
+            if (!traits_type::find(s, n, data()[pos]))
+                return pos;
+        return npos;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    typename ustring<CharT, TraitsT, AllocT>::size_type
+    ustring<CharT, TraitsT, AllocT>::find_first_not_of(CharT c, size_type pos) const noexcept {
+        for (; pos < this->size(); ++pos)
+            if (!traits_type::eq(data()[pos], c))
+                return pos;
+        return npos;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    typename ustring<CharT, TraitsT, AllocT>::size_type
+    ustring<CharT, TraitsT, AllocT>::find_last_not_of(const CharT* s,
+                                                      size_type    pos,
+                                                      size_type    n) const noexcept {
+        glibcxx_requires_string_len(s, n);
+        size_type size = this->size();
+        if (size) {
+            if (--size > pos)
+                size = pos;
+            do {
+                if (!traits_type::find(s, n, data()[size]))
+                    return size;
+            } while (size--);
+        }
+        return npos;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    typename ustring<CharT, TraitsT, AllocT>::size_type
+    ustring<CharT, TraitsT, AllocT>::find_last_not_of(CharT c, size_type pos) const noexcept {
+        size_type size = this->size();
+        if (size) {
+            if (--size > pos)
+                size = pos;
+            do {
+                if (!traits_type::eq(data()[size], c))
+                    return size;
+            } while (size--);
+        }
+        return npos;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    int ustring<CharT, TraitsT, AllocT>::compare(size_type pos, size_type n, const ustring& str) const {
+        check(pos, "ustring::compare");
+        n                     = limit(pos, n);
+        const size_type osize = str.size();
+        const size_type len   = std::min(n, osize);
+        int             r     = traits_type::compare(data() + pos, str.data(), len);
+        if (!r)
+            r = compare(n, osize);
+        return r;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    int ustring<CharT, TraitsT, AllocT>::compare(size_type      pos1,
+                                                 size_type      n1,
+                                                 const ustring& str,
+                                                 size_type      pos2,
+                                                 size_type      n2) const {
+        check(pos1, "ustring::compare");
+        str.check(pos2, "ustring::compare");
+        n1                  = limit(pos1, n1);
+        n2                  = str.limit(pos2, n2);
+        const size_type len = std::min(n1, n2);
+        int             r   = traits_type::compare(data() + pos1, str.data() + pos2, len);
+        if (!r)
+            r = compare(n1, n2);
+        return r;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    int ustring<CharT, TraitsT, AllocT>::compare(const CharT* s) const noexcept {
+        glibcxx_requires_string(s);
+        const size_type size  = this->size();
+        const size_type osize = traits_type::length(s);
+        const size_type len   = std::min(size, osize);
+        int             r     = traits_type::compare(data(), s, len);
+        if (!r)
+            r = compare(size, osize);
+        return r;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    int ustring<CharT, TraitsT, AllocT>::compare(size_type pos, size_type n1, const CharT* s) const {
+        glibcxx_requires_string(s);
+        check(pos, "ustring::compare");
+        n1                    = limit(pos, n1);
+        const size_type osize = traits_type::length(s);
+        const size_type len   = std::min(n1, osize);
+        int             r     = traits_type::compare(data() + pos, s, len);
+        if (!r)
+            r = compare(n1, osize);
+        return r;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    int ustring<CharT, TraitsT, AllocT>::compare(size_type    pos,
+                                                 size_type    n1,
+                                                 const CharT* s,
+                                                 size_type    n2) const {
+        glibcxx_requires_string_len(s, n2);
+        check(pos, "ustring::compare");
+        n1                  = limit(pos, n1);
+        const size_type len = std::min(n1, n2);
+        int             r   = traits_type::compare(data() + pos, s, len);
+        if (!r)
+            r = compare(n1, n2);
+        return r;
+    }
+
+    // 21.3.7.9 ustring::getline and operators
+    template <typename CharT, typename TraitsT, typename AllocT>
+    basic_istream<CharT, TraitsT>& operator>>(basic_istream<CharT, TraitsT>&   in,
+                                              ustring<CharT, TraitsT, AllocT>& str) {
+        typedef basic_istream<CharT, TraitsT>   istream_type;
+        typedef ustring<CharT, TraitsT, AllocT> string_type;
+        typedef typename istream_type::ios_base ios_base;
+        typedef typename istream_type::int_type int_type;
+        typedef typename string_type::size_type size_type;
+        typedef ctype<CharT>                    ctype_type;
+        typedef typename ctype_type::ctype_base ctype_base;
+
+        size_type                     extracted = 0;
+        typename ios_base::iostate    err       = ios_base::goodbit;
+        typename istream_type::sentry cerb(in, false);
+        if (cerb) {
+            try {
+                // Avoid reallocation for common case.
+                str.erase();
+                CharT             buf[128];
+                size_type         len = 0;
+                const streamsize  w   = in.width();
+                const size_type   n   = w > 0 ? static_cast<size_type>(w) : str.max_size();
+                const ctype_type& ct  = use_facet<ctype_type>(in.getloc());
+                const int_type    eof = TraitsT::eof();
+                int_type          c   = in.rdbuf()->sgetc();
+
+                while (extracted < n && !TraitsT::eq_int_type(c, eof) &&
+                       !ct.is(ctype_base::space, TraitsT::to_char_type(c))) {
+                    if (len == sizeof(buf) / sizeof(CharT)) {
+                        str.append(buf, sizeof(buf) / sizeof(CharT));
+                        len = 0;
+                    }
+                    buf[len++] = TraitsT::to_char_type(c);
+                    ++extracted;
+                    c = in.rdbuf()->snextc();
+                }
+                str.append(buf, len);
+
+                if (TraitsT::eq_int_type(c, eof))
+                    err |= ios_base::eofbit;
+                in.width(0);
+            } catch (cxxabiv1::forced_unwind&) {
+                in.setstate(ios_base::badbit);
+                throw_exception_again;
+            } catch (...) {
+                // _GLIBCXX_RESOLVE_LIB_DEFECTS
+                // 91. Description of operator>> and getline() for string<>
+                // might cause endless loop
+                in.setstate(ios_base::badbit);
+            }
+        }
+        // 211.  operator>>(istream&, string&) doesn't set failbit
+        if (!extracted)
+            err |= ios_base::failbit;
+        if (err)
+            in.setstate(err);
+        return in;
+    }
+
+    template <typename CharT, typename TraitsT, typename AllocT>
+    basic_istream<CharT, TraitsT>&
+    getline(basic_istream<CharT, TraitsT>& in, ustring<CharT, TraitsT, AllocT>& str, CharT delim) {
+        typedef basic_istream<CharT, TraitsT>   istream_type;
+        typedef ustring<CharT, TraitsT, AllocT> string_type;
+        typedef typename istream_type::ios_base ios_base;
+        typedef typename istream_type::int_type int_type;
+        typedef typename string_type::size_type size_type;
+
+        size_type                     extracted = 0;
+        const size_type               n         = str.max_size();
+        typename ios_base::iostate    err       = ios_base::goodbit;
+        typename istream_type::sentry cerb(in, true);
+        if (cerb) {
+            try {
+                str.erase();
+                const int_type idelim = TraitsT::to_int_type(delim);
+                const int_type eof    = TraitsT::eof();
+                int_type       c      = in.rdbuf()->sgetc();
+
+                while (extracted < n && !TraitsT::eq_int_type(c, eof) && !TraitsT::eq_int_type(c, idelim)) {
+                    str += TraitsT::to_char_type(c);
+                    ++extracted;
+                    c = in.rdbuf()->snextc();
+                }
+
+                if (TraitsT::eq_int_type(c, eof))
+                    err |= ios_base::eofbit;
+                else if (TraitsT::eq_int_type(c, idelim)) {
+                    ++extracted;
+                    in.rdbuf()->sbumpc();
+                } else
+                    err |= ios_base::failbit;
+            } catch (cxxabiv1::forced_unwind&) {
+                in.setstate(ios_base::badbit);
+                throw_exception_again;
+            } catch (...) {
+                // _GLIBCXX_RESOLVE_LIB_DEFECTS
+                // 91. Description of operator>> and getline() for string<>
+                // might cause endless loop
+                in.setstate(ios_base::badbit);
+            }
+        }
+        if (!extracted)
+            err |= ios_base::failbit;
+        if (err)
+            in.setstate(err);
+        return in;
+    }
+
+    // Inhibit implicit instantiations for required instantiations,
+    // which are defined via explicit instantiations elsewhere.
+#if _GLIBCXX_EXTERN_TEMPLATE
+    // The explicit instantiation definitions in src/c++11/string-inst.cc and
+    // src/c++17/string-inst.cc only instantiate the members required for C++17
+    // and earlier standards (so not C++20's starts_with and ends_with).
+    // Suppress the explicit instantiation declarations for C++20, so C++20
+    // code will implicitly instantiate std::string and std::wstring as needed.
+#    if cplusplus <= 201703L && _GLIBCXX_EXTERN_TEMPLATE > 0
+    extern template class ustring<char>;
+#    elif !_GLIBCXX_USE_CXX11_ABI
+    // Still need to prevent implicit instantiation of the COW empty rep,
+    // to ensure the definition in libstdc++.so is unique (PR 86138).
+    extern template ustring<char>::size_type ustring<char>::_Rep::empty_rep_storage[];
+#    endif
+
+    extern template basic_istream<char>& operator>>(basic_istream<char>&, string&);
+    extern template basic_ostream<char>& operator<<(basic_ostream<char>&, const string&);
+    extern template basic_istream<char>& getline(basic_istream<char>&, string&, char);
+    extern template basic_istream<char>& getline(basic_istream<char>&, string&);
+
+#    ifdef _GLIBCXX_USE_WCHAR_T
+#        if cplusplus <= 201703L && _GLIBCXX_EXTERN_TEMPLATE > 0
+    extern template class ustring<wchar_t>;
+#        elif !_GLIBCXX_USE_CXX11_ABI
+    extern template ustring<wchar_t>::size_type ustring<wchar_t>::_Rep::empty_rep_storage[];
+#        endif
+
+    extern template basic_istream<wchar_t>& operator>>(basic_istream<wchar_t>&, wstring&);
+    extern template basic_ostream<wchar_t>& operator<<(basic_ostream<wchar_t>&, const wstring&);
+    extern template basic_istream<wchar_t>& getline(basic_istream<wchar_t>&, wstring&, wchar_t);
+    extern template basic_istream<wchar_t>& getline(basic_istream<wchar_t>&, wstring&);
+#    endif // _GLIBCXX_USE_WCHAR_T
+#endif // _GLIBCXX_EXTERN_TEMPLATE
 
 
     using utf8  = ustring<utf8_glyph>;
