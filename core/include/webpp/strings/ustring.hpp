@@ -14,8 +14,8 @@
 
 namespace webpp {
 
-#ifdef CHAR_BIT
-    static constexpr unsigned char_bits = CHAR_BIT;
+#ifdef __CHAR_BIT__
+    static constexpr unsigned char_bits = __CHAR_BIT__;
 #else
     static constexpr unsigned char_bits = 8;
 #endif
@@ -71,6 +71,17 @@ namespace webpp {
 
         template <>
         struct int_limits<bool>; // not defined
+
+
+
+        template <typename AllocT>
+        constexpr inline void alloc_on_move(AllocT& one, AllocT& two) {
+            using traits = stl::allocator_traits<AllocT>;
+            using pocma  = typename traits::propagate_on_container_move_assignment;
+            if constexpr (pocma::value)
+                one = std::move(two);
+        }
+
 
     } // namespace details
 
@@ -279,7 +290,7 @@ namespace webpp {
         }
 
         void _M_destroy(size_type size) noexcept(false) {
-            _Alloc_traits::deallocate(_M_get_allocator(), _M_data(), size + 1);
+            alloc_traits::deallocate(_M_get_allocator(), _M_data(), size + 1);
         }
 
         // _M_construct_aux is used to implement the 21.3.1 para 15 which
@@ -461,7 +472,7 @@ namespace webpp {
          *  @param  str  Source string.
          */
         ustring(const ustring& str)
-          : _M_dataplus(_M_local_data(), _Alloc_traits::_S_select_on_copy(str._M_get_allocator())) {
+          : _M_dataplus(_M_local_data(), alloc_traits::_S_select_on_copy(str._M_get_allocator())) {
             _M_construct(str._M_data(), str._M_data() + str.length());
         }
 
@@ -585,13 +596,13 @@ namespace webpp {
             _M_construct(str.begin(), str.end());
         }
 
-        ustring(ustring&& str, const allocator_type& a) noexcept(_Alloc_traits::_S_always_equal())
+        ustring(ustring&& str, const allocator_type& a) noexcept(alloc_traits::_S_always_equal())
           : _M_dataplus(_M_local_data(), a) {
             if (str._M_is_local()) {
                 traits_type::copy(local_buf, str.local_buf, local_capacity + 1);
                 _M_length(str.length());
                 str._M_set_length(0);
-            } else if (_Alloc_traits::_S_always_equal() || str.get_allocator() == a) {
+            } else if (alloc_traits::_S_always_equal() || str.get_allocator() == a) {
                 _M_data(str._M_data());
                 _M_length(str.length());
                 _M_capacity(str.allocated_capacity);
@@ -680,29 +691,29 @@ namespace webpp {
          **/
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 2063. Contradictory requirements for string move assignment
-        ustring& operator=(ustring&& str) noexcept(_Alloc_traits::_S_nothrow_move()) {
-            if (!_M_is_local() && _Alloc_traits::_S_propagate_on_move_assign() &&
-                !_Alloc_traits::_S_always_equal() && _M_get_allocator() != str._M_get_allocator()) {
+        ustring& operator=(ustring&& str) noexcept(alloc_traits::_S_nothrow_move()) {
+            if (!_M_is_local() && alloc_traits::_S_propagate_on_move_assign() &&
+                !alloc_traits::_S_always_equal() && _M_get_allocator() != str._M_get_allocator()) {
                 // Destroy existing storage before replacing allocator.
                 _M_destroy(allocated_capacity);
                 _M_data(_M_local_data());
                 _M_set_length(0);
             }
             // Replace allocator if POCMA is true.
-            stl::alloc_on_move(_M_get_allocator(), str._M_get_allocator());
+            details::alloc_on_move(_M_get_allocator(), str._M_get_allocator());
 
             if (str._M_is_local()) {
                 // We've always got room for a short string, just copy it.
                 if (str.size())
                     this->_S_copy(_M_data(), str._M_data(), str.size());
                 _M_set_length(str.size());
-            } else if (_Alloc_traits::_S_propagate_on_move_assign() || _Alloc_traits::_S_always_equal() ||
+            } else if (alloc_traits::_S_propagate_on_move_assign() || alloc_traits::_S_always_equal() ||
                        _M_get_allocator() == str._M_get_allocator()) {
                 // Just move the allocated pointer, our allocator can free it.
                 pointer   data = nullptr;
                 size_type capacity;
                 if (!_M_is_local()) {
-                    if (_Alloc_traits::_S_always_equal()) {
+                    if (alloc_traits::_S_always_equal()) {
                         // str can reuse our existing storage.
                         data     = _M_data();
                         capacity = allocated_capacity;
@@ -869,7 +880,7 @@ namespace webpp {
 
         ///  Returns the size() of the largest possible %string.
         size_type max_size() const noexcept {
-            return (_Alloc_traits::max_size(_M_get_allocator()) - 1) / 2;
+            return (alloc_traits::max_size(_M_get_allocator()) - 1) / 2;
         }
 
         /**
@@ -1239,8 +1250,8 @@ namespace webpp {
          *  @return  Reference to this string.
          */
         ustring& assign(const ustring& str) {
-            if (_Alloc_traits::_S_propagate_on_copy_assign()) {
-                if (!_Alloc_traits::_S_always_equal() && !_M_is_local() &&
+            if (alloc_traits::_S_propagate_on_copy_assign()) {
+                if (!alloc_traits::_S_always_equal() && !_M_is_local() &&
                     _M_get_allocator() != str._M_get_allocator()) {
                     // Propagating allocator cannot free existing storage so must
                     // deallocate it before replacing current allocator.
@@ -1252,7 +1263,7 @@ namespace webpp {
                         const auto len   = str.size();
                         auto       alloc = str._M_get_allocator();
                         // If this allocation throws there are no effects:
-                        auto ptr = _Alloc_traits::allocate(alloc, len + 1);
+                        auto ptr = alloc_traits::allocate(alloc, len + 1);
                         _M_destroy(allocated_capacity);
                         _M_data(ptr);
                         _M_capacity(len);
@@ -1273,7 +1284,7 @@ namespace webpp {
          *  This function sets this string to the exact contents of @a str.
          *  @a str is a valid, but unspecified string.
          */
-        ustring& assign(ustring&& str) noexcept(_Alloc_traits::_S_nothrow_move()) {
+        ustring& assign(ustring&& str) noexcept(alloc_traits::_S_nothrow_move()) {
             // _GLIBCXX_RESOLVE_LIB_DEFECTS
             // 2063. Contradictory requirements for string move assignment
             return *this = stl::move(str);
