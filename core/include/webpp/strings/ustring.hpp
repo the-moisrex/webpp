@@ -117,7 +117,7 @@ namespace webpp {
               typename CharTraitsType = unicode_char_traits<CharT>,
               typename AllocType      = stl::allocator<CharT>>
     // requires(istl::CharTraits<CharTraitsType>&& AllocatorOf<CharT, AllocType>)
-      struct ustring {
+    struct ustring {
       private:
         using alloc_traits = stl::allocator_traits<AllocType>;
 
@@ -193,14 +193,14 @@ namespace webpp {
                 if constexpr (requires { NewStrT{*this}; }) {
                     return NewStrT{*this}; // has a constructor we can use
                 } else if constexpr (requires {
-                                         NewStrT{this->data(), this->size(), this->get_allocator()};
+                                         NewStrT{this->data(), this->size(), this->private_get_allocator()};
                                      }) {
-                    return NewStrT{this->data(), this->size(), this->get_allocator()};
+                    return NewStrT{this->data(), this->size(), this->private_get_allocator()};
                 } else if constexpr (requires { NewStrT{this->data(), this->size()}; }) {
                     return NewStrT{this->data(), this->size()};
                 } else if constexpr (has_compatible_char_types && has_same_allocator) {
                     // todo: fix this
-                    NewStrT    output(this->get_allocator());
+                    NewStrT    output(this->private_get_allocator());
                     const auto len = this->size();
                     output.reserve(len);
                     const auto the_end = this->end();
@@ -304,7 +304,7 @@ namespace webpp {
         }
 
         void destroy(size_type size) noexcept(false) {
-            alloc_traits::deallocate(get_allocator(), data(), size + 1);
+            alloc_traits::deallocate(private_get_allocator(), data(), size + 1);
         }
 
         // construct_aux is used to implement the 21.3.1 para 15 which
@@ -343,11 +343,11 @@ namespace webpp {
 
         void construct(size_type req, value_type c);
 
-        allocator_type& get_allocator() {
+        allocator_type& private_get_allocator() {
             return alloc;
         }
 
-        const allocator_type& get_allocator() const {
+        const allocator_type& private_get_allocator() const {
             return alloc;
         }
 
@@ -488,7 +488,7 @@ namespace webpp {
          */
         ustring(const ustring& str)
           : data_start(local_data()),
-            alloc(alloc_traits::select_on_copy(str.get_allocator())) {
+            alloc(alloc_traits::select_on_copy(str.private_get_allocator())) {
             construct(str.data(), str.data() + str.length());
         }
 
@@ -587,7 +587,9 @@ namespace webpp {
          *  The newly-created string contains the exact contents of @a str.
          *  @a str is a valid, but unspecified string.
          **/
-        ustring(ustring&& str) noexcept : data_start(local_data()), alloc(stl::move(str.get_allocator())) {
+        ustring(ustring&& str) noexcept
+          : data_start(local_data()),
+            alloc(stl::move(str.private_get_allocator())) {
             if (str.is_local()) {
                 traits_type::copy(local_buf, str.local_buf, local_capacity + 1);
             } else {
@@ -625,7 +627,7 @@ namespace webpp {
                 traits_type::copy(local_buf, str.local_buf, local_capacity + 1);
                 length(str.length());
                 str.set_length(0);
-            } else if (alloc_traits::always_equal() || str.get_allocator() == a) {
+            } else if (alloc_traits::always_equal() || str.private_get_allocator() == a) {
                 data(str.data());
                 length(str.length());
                 capacity(str.allocated_capacity);
@@ -717,14 +719,14 @@ namespace webpp {
         // 2063. Contradictory requirements for string move assignment
         ustring& operator=(ustring&& str) noexcept(alloc_traits::nothrow_move()) {
             if (!is_local() && alloc_traits::propagate_on_move_assign() && !alloc_traits::always_equal() &&
-                get_allocator() != str.get_allocator()) {
+                private_get_allocator() != str.private_get_allocator()) {
                 // Destroy existing storage before replacing allocator.
                 destroy(allocated_capacity);
                 data(local_data());
                 set_length(0);
             }
             // Replace allocator if POCMA is true.
-            details::alloc_on_move(get_allocator(), str.get_allocator());
+            details::alloc_on_move(private_get_allocator(), str.private_get_allocator());
 
             if (str.is_local()) {
                 // We've always got room for a short string, just copy it.
@@ -732,7 +734,7 @@ namespace webpp {
                     this->copy(data(), str.data(), str.size());
                 set_length(str.size());
             } else if (alloc_traits::propagate_on_move_assign() || alloc_traits::always_equal() ||
-                       get_allocator() == str.get_allocator()) {
+                       private_get_allocator() == str.private_get_allocator()) {
                 // Just move the allocated pointer, our allocator can free it.
                 pointer   data = nullptr;
                 size_type capacity;
@@ -904,7 +906,7 @@ namespace webpp {
 
         ///  Returns the size() of the largest possible %string.
         size_type max_size() const noexcept {
-            return (alloc_traits::max_size(get_allocator()) - 1) / 2;
+            return (alloc_traits::max_size(private_get_allocator()) - 1) / 2;
         }
 
         /**
@@ -1275,7 +1277,8 @@ namespace webpp {
          */
         ustring& assign(const ustring& str) {
             if (alloc_traits::propagate_on_copy_assign()) {
-                if (!alloc_traits::always_equal() && !is_local() && get_allocator() != str.get_allocator()) {
+                if (!alloc_traits::always_equal() && !is_local() &&
+                    private_get_allocator() != str.private_get_allocator()) {
                     // Propagating allocator cannot free existing storage so must
                     // deallocate it before replacing current allocator.
                     if (str.size() <= local_capacity) {
@@ -1284,7 +1287,7 @@ namespace webpp {
                         set_length(0);
                     } else {
                         const auto len   = str.size();
-                        auto       alloc = str.get_allocator();
+                        auto       alloc = str.private_get_allocator();
                         // If this allocation throws there are no effects:
                         auto ptr = alloc_traits::allocate(alloc, len + 1);
                         destroy(allocated_capacity);
@@ -1293,7 +1296,7 @@ namespace webpp {
                         set_length(len);
                     }
                 }
-                details::alloc_on_copy(get_allocator(), str.get_allocator());
+                details::alloc_on_copy(private_get_allocator(), str.private_get_allocator());
             }
             this->assign(str);
             return *this;
@@ -2099,7 +2102,7 @@ namespace webpp {
          *  @brief  Return copy of allocator used to construct this string.
          */
         allocator_type get_allocator() const noexcept {
-            return get_allocator();
+            return private_get_allocator();
         }
 
         /**
@@ -2878,7 +2881,7 @@ namespace webpp {
         bool use_rhs        = false;
         if _GLIBCXX17_CONSTEXPR (typename alloc_traits::is_always_equal{})
             use_rhs = true;
-        else if (lhs.get_allocator() == rhs.get_allocator())
+        else if (lhs.private_get_allocator() == rhs.private_get_allocator())
             use_rhs = true;
         if (use_rhs)
 #    endif
@@ -3278,7 +3281,7 @@ namespace webpp {
         if (this == &s)
             return;
 
-        alloc_traits::on_swap(get_allocator(), s.get_allocator());
+        alloc_traits::on_swap(private_get_allocator(), s.private_get_allocator());
 
         if (is_local())
             if (s.is_local()) {
@@ -3345,7 +3348,7 @@ namespace webpp {
 
         // NB: Need an array of char_type[capacity], plus a terminating
         // null char_type() element.
-        return alloc_traits::allocate(get_allocator(), capacity + 1);
+        return alloc_traits::allocate(private_get_allocator(), capacity + 1);
     }
 
     // NB: This is the special case for Input Iterators, used in
@@ -3531,7 +3534,7 @@ namespace webpp {
                                                                                        std::false_type) {
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 2788. unintentionally require a default constructible allocator
-        const ustring   s(k1, k2, this->get_allocator());
+        const ustring   s(k1, k2, this->private_get_allocator());
         const size_type n1 = i2 - i1;
         return replace(i1 - begin(), n1, s.data(), s.size());
     }
@@ -4160,7 +4163,7 @@ ustring<CharT, TraitsT, AllocT>::copy(CharT* s, size_type n, size_type pos) cons
         typedef typename gnu_cxx::alloc_traits<AllocT>::template rebind<CharT>::other _Char_alloc_type;
         typedef gnu_cxx::alloc_traits<_Char_alloc_type>                               _Alloc_traits;
         const size_type len = TraitsT::length(lhs);
-        string_type     str(alloc_traits::select_on_copy(rhs.get_allocator()));
+        string_type     str(alloc_traits::select_on_copy(rhs.private_get_allocator()));
         str.reserve(len + rhs.size());
         str.append(lhs, len);
         str.append(rhs);
@@ -4173,7 +4176,7 @@ ustring<CharT, TraitsT, AllocT>::copy(CharT* s, size_type n, size_type pos) cons
         typedef typename string_type::size_type                                       size_type;
         typedef typename gnu_cxx::alloc_traits<AllocT>::template rebind<CharT>::other _Char_alloc_type;
         typedef gnu_cxx::alloc_traits<_Char_alloc_type>                               _Alloc_traits;
-        string_type     str(alloc_traits::select_on_copy(rhs.get_allocator()));
+        string_type     str(alloc_traits::select_on_copy(rhs.private_get_allocator()));
         const size_type len = rhs.size();
         str.reserve(len + 1);
         str.append(size_type(1), lhs);
