@@ -19,11 +19,11 @@ namespace webpp {
      *   - [LegacyRandomAccessIterator](https://en.cppreference.com/w/cpp/named_req/RandomAccessIterator)
      *
      */
-    template <typename GlyphType = glyph<>>
+    template <typename GlyphType = glyph<>> // todo: use a pointer instead of a type
     struct unicode_iterator : stl::random_access_iterator_tag {
         using glyph_type = GlyphType;
         using wide_char_type    = typename glyph_type::wide_char_type;
-        using iterator_type     = wide_char_type;
+        using iterator_type     = wide_char_type; // todo: this should be a pointer or a const pointer
         using traits_type       = stl::iterator_traits<iterator_type>;
         using iterator_category = typename traits_type::iterator_category;
         using value_type        = typename traits_type::value_type;

@@ -200,7 +200,7 @@ namespace webpp {
         using pointer                = typename stl::allocator_traits<allocator_type>::pointer;
         using const_pointer          = typename stl::allocator_traits<allocator_type>::const_pointer;
         using iterator               = unicode_iterator<value_type>;
-        using const_iterator         = const iterator;
+        using const_iterator         = unicode_iterator<const value_type>; // todo: check this
         using reverse_iterator       = stl::reverse_iterator<iterator>;
         using const_reverse_iterator = stl::reverse_iterator<const_iterator>;
 
@@ -376,17 +376,17 @@ namespace webpp {
         }
 
         // construct_aux is used to implement the 21.3.1 para 15 which
-        // requires special behaviour if _InIterator is an integral type
-        template <typename _InIterator>
-        void construct_aux(_InIterator beg, _InIterator end, stl::false_type) {
-            typedef typename stl::iterator_traits<_InIterator>::iterator_category _Tag;
+        // requires special behaviour if InIterator is an integral type
+        template <typename InIterator>
+        void construct_aux(InIterator beg, InIterator end, stl::false_type) {
+            typedef typename stl::iterator_traits<InIterator>::iterator_category _Tag;
             construct(beg, end, _Tag());
         }
 
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 438. Ambiguity in the "do the right thing" clause
-        template <typename _Integer>
-        void construct_aux(_Integer beg, _Integer end, stl::true_type) {
+        template <typename Integer>
+        void construct_aux(Integer beg, Integer end, stl::true_type) {
             construct_aux_2(static_cast<size_type>(beg), end);
         }
 
@@ -394,20 +394,21 @@ namespace webpp {
             construct(req, c);
         }
 
-        template <typename _InIterator>
-        void construct(_InIterator beg, _InIterator end) {
-            typedef typename stl::is_integer<_InIterator>::type _Integral;
-            construct_aux(beg, end, _Integral());
+        template <typename InIterator>
+        void construct(InIterator beg, InIterator end) {
+            using integral =
+              stl::conditional_t<stl::is_integral_v<InIterator>, stl::true_type, stl::false_type>;
+            construct_aux(beg, end, integral());
         }
 
         // For Input Iterators, used in istreambuf_iterators, etc.
-        template <typename _InIterator>
-        void construct(_InIterator beg, _InIterator end, stl::input_iterator_tag);
+        template <typename InIterator>
+        void construct(InIterator beg, InIterator end, stl::input_iterator_tag);
 
         // For forward_iterators up to random_access_iterators, used for
         // string::iterator, value_type*, etc.
-        template <typename _FwdIterator>
-        void construct(_FwdIterator beg, _FwdIterator end, stl::forward_iterator_tag);
+        template <typename FwdIterator>
+        void construct(FwdIterator beg, FwdIterator end, stl::forward_iterator_tag);
 
         void construct(size_type req, value_type c);
 
@@ -1536,8 +1537,9 @@ namespace webpp {
          *  thrown.  The value of the string doesn't change if an error
          *  is thrown.
          */
-        template <class InputIterator, typename = details::RequireInputIter<InputIterator>>
-        iterator insert(const_iterator p, InputIterator beg, InputIterator end) {
+        template <class InputIterator>
+        requires(details::RequireInputIter<InputIterator>) iterator
+          insert(const_iterator p, InputIterator beg, InputIterator end) {
             _GLIBCXX_DEBUG_PEDASSERT(p >= begin() && p <= end());
             const size_type pos = p - begin();
             this->replace(p, p, beg, end);
@@ -1981,8 +1983,11 @@ namespace webpp {
          *  The value of the string doesn't change if an error is
          *  thrown.
          */
-        template <class InputIterator, typename = details::RequireInputIter<InputIterator>>
-        ustring& replace(const_iterator i1, const_iterator i2, InputIterator k1, InputIterator k2) {
+        template <class InputIterator>
+        requires(details::RequireInputIter<InputIterator>) ustring& replace(const_iterator i1,
+                                                                            const_iterator i2,
+                                                                            InputIterator  k1,
+                                                                            InputIterator  k2) {
             _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
             glibcxx_requires_valid_range(k1, k2);
             return this->replace_dispatch(i1, i2, k1, k2, stl::false_type());
@@ -1996,7 +2001,7 @@ namespace webpp {
             _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
             glibcxx_requires_valid_range(k1, k2);
             using integral_type = stl::is_integer_t<InputIterator>;
-            return replace_dispatch(i1, i2, k1, k2, _Integral());
+            return replace_dispatch(i1, i2, k1, k2, Integral());
         }
 
         // Specializations for the common case of pointer and iterator:
@@ -2093,9 +2098,9 @@ namespace webpp {
         }
 
       private:
-        template <class _Integer>
+        template <class Integer>
         ustring&
-        replace_dispatch(const_iterator i1, const_iterator i2, _Integer n, _Integer val, stl::true_type) {
+        replace_dispatch(const_iterator i1, const_iterator i2, Integer n, Integer val, stl::true_type) {
             return replace_aux(i1 - begin(), i2 - i1, n, val);
         }
 
@@ -2845,7 +2850,7 @@ namespace webpp {
               typename CharT  = typename stl::iterator_traits<InputIterator>::value_type,
               typename AllocT = stl::allocator<CharT>,
               typename        = details::RequireInputIterEnableIf<InputIterator>,
-              typename        = details::RequireAllocatorEnableIf<AllocT>>
+              typename        = details::RequireAllocator<AllocT>>
     ustring(InputIterator, InputIterator, AllocT = AllocT())
       -> ustring<CharT, stl::char_traits<CharT>, AllocT>;
 
@@ -2854,7 +2859,7 @@ namespace webpp {
     template <typename CharT,
               typename TraitsT,
               typename AllocT = stl::allocator<CharT>,
-              typename        = details::RequireAllocatorEnableIf<AllocT>>
+              typename        = details::RequireAllocator<AllocT>>
     ustring(ustring_view<CharT, TraitsT>, const AllocT& = AllocT()) -> ustring<CharT, TraitsT, AllocT>;
 
     template <typename CharT,
@@ -3316,7 +3321,6 @@ namespace webpp {
         return std::getline(is, str, is.widen('\n'));
     }
 
-#    if cplusplus >= 201103L
     /// Read a line from an rvalue stream into a string.
     template <typename CharT, typename TraitsT, typename AllocT>
     inline stl::basic_istream<CharT, TraitsT>&
@@ -3330,16 +3334,13 @@ namespace webpp {
                                                        ustring<CharT, TraitsT, AllocT>&     str) {
         return std::getline(is, str);
     }
-#    endif
 
     template <>
     stl::basic_istream<char>& getline(stl::basic_istream<char>& in, ustring<char>& str, char delim);
 
-#    ifdef _GLIBCXX_USE_WCHAR_T
     template <>
     stl::basic_istream<wchar_t>&
     getline(stl::basic_istream<wchar_t>& in, ustring<wchar_t>& str, wchar_t delim);
-#    endif
 
 
 
@@ -3426,9 +3427,8 @@ namespace webpp {
     // Input Iterators have a cost structure very different from
     // pointers, calling for a different coding style.
     template <typename CharT, typename TraitsT, typename AllocT>
-    template <typename _InIterator>
-    void
-    ustring<CharT, TraitsT, AllocT>::construct(_InIterator beg, _InIterator end, std::input_iterator_tag) {
+    template <typename InIterator>
+    void ustring<CharT, TraitsT, AllocT>::construct(InIterator beg, InIterator end, std::input_iterator_tag) {
         size_type len      = 0;
         size_type capacity = size_type(local_capacity);
 
@@ -3453,16 +3453,16 @@ namespace webpp {
             }
         } catch (...) {
             dispose();
-            throw_exception_again;
+            throw;
         }
 
         set_length(len);
     }
 
     template <typename CharT, typename TraitsT, typename AllocT>
-    template <typename _InIterator>
+    template <typename InIterator>
     void
-    ustring<CharT, TraitsT, AllocT>::construct(_InIterator beg, _InIterator end, std::forward_iterator_tag) {
+    ustring<CharT, TraitsT, AllocT>::construct(InIterator beg, InIterator end, std::forward_iterator_tag) {
         // NB: Not required, but considered best practice.
         if (details::is_null_pointer(beg) && beg != end)
             std::throw_logic_error(N("ustring::"
@@ -3480,7 +3480,7 @@ namespace webpp {
             this->copy_chars(data(), beg, end);
         } catch (...) {
             dispose();
-            throw_exception_again;
+            throw;
         }
 
         set_length(dnew);
@@ -3712,9 +3712,9 @@ typename ustring<CharT, TraitsT, AllocT>::size_type ustring<CharT, TraitsT, Allo
 // Input Iterators have a cost structure very different from
 // pointers, calling for a different coding style.
 template <typename CharT, typename TraitsT, typename AllocT>
-template <typename _InIterator>
-CharT* ustring<CharT, TraitsT, AllocT>::construct(_InIterator   beg,
-                                                  _InIterator   end,
+template <typename InIterator>
+CharT* ustring<CharT, TraitsT, AllocT>::construct(InIterator    beg,
+                                                  InIterator    end,
                                                   const AllocT& a,
                                                   input_iterator_tag) {
 #    if _GLIBCXX_FULLY_DYNAMIC_STRING == 0
@@ -3744,16 +3744,16 @@ CharT* ustring<CharT, TraitsT, AllocT>::construct(_InIterator   beg,
         }
     } catch (...) {
         r->destroy(a);
-        throw_exception_again;
+        throw;
     }
     r->set_length_and_sharable(len);
     return r->refdata();
 }
 
 template <typename CharT, typename TraitsT, typename AllocT>
-template <typename _InIterator>
-CharT* ustring<CharT, TraitsT, AllocT>::construct(_InIterator   beg,
-                                                  _InIterator   end,
+template <typename InIterator>
+CharT* ustring<CharT, TraitsT, AllocT>::construct(InIterator    beg,
+                                                  InIterator    end,
                                                   const AllocT& a,
                                                   forward_iterator_tag) {
 #    if _GLIBCXX_FULLY_DYNAMIC_STRING == 0
@@ -3771,7 +3771,7 @@ CharT* ustring<CharT, TraitsT, AllocT>::construct(_InIterator   beg,
         copy_chars(r->refdata(), beg, end);
     } catch (...) {
         r->destroy(a);
-        throw_exception_again;
+        throw;
     }
     r->set_length_and_sharable(dnew);
     return r->refdata();
@@ -4486,15 +4486,15 @@ ustring<CharT, TraitsT, AllocT>::copy(CharT* s, size_type n, size_type pos) cons
 
     // 21.3.7.9 ustring::getline and operators
     template <typename CharT, typename TraitsT, typename AllocT>
-    basic_istream<CharT, TraitsT>& operator>>(basic_istream<CharT, TraitsT>&   in,
-                                              ustring<CharT, TraitsT, AllocT>& str) {
-        typedef basic_istream<CharT, TraitsT>   istream_type;
-        typedef ustring<CharT, TraitsT, AllocT> string_type;
-        typedef typename istream_type::ios_base ios_base;
-        typedef typename istream_type::int_type int_type;
-        typedef typename string_type::size_type size_type;
-        typedef ctype<CharT>                    ctype_type;
-        typedef typename ctype_type::ctype_base ctype_base;
+    stl::basic_istream<CharT, TraitsT>& operator>>(stl::basic_istream<CharT, TraitsT>& in,
+                                                   ustring<CharT, TraitsT, AllocT>&    str) {
+        typedef stl::basic_istream<CharT, TraitsT> istream_type;
+        typedef ustring<CharT, TraitsT, AllocT>    string_type;
+        typedef typename istream_type::ios_base    ios_base;
+        typedef typename istream_type::int_type    int_type;
+        typedef typename string_type::size_type    size_type;
+        typedef stl::ctype<CharT>                  ctype_type;
+        typedef typename ctype_type::ctype_base    ctype_base;
 
         size_type                     extracted = 0;
         typename ios_base::iostate    err       = ios_base::goodbit;
@@ -4528,7 +4528,7 @@ ustring<CharT, TraitsT, AllocT>::copy(CharT* s, size_type n, size_type pos) cons
                 in.width(0);
             } catch (cxxabiv1::forced_unwind&) {
                 in.setstate(ios_base::badbit);
-                throw_exception_again;
+                throw;
             } catch (...) {
                 // _GLIBCXX_RESOLVE_LIB_DEFECTS
                 // 91. Description of operator>> and getline() for string<>
@@ -4545,13 +4545,13 @@ ustring<CharT, TraitsT, AllocT>::copy(CharT* s, size_type n, size_type pos) cons
     }
 
     template <typename CharT, typename TraitsT, typename AllocT>
-    basic_istream<CharT, TraitsT>&
-    getline(basic_istream<CharT, TraitsT>& in, ustring<CharT, TraitsT, AllocT>& str, CharT delim) {
-        typedef basic_istream<CharT, TraitsT>   istream_type;
-        typedef ustring<CharT, TraitsT, AllocT> string_type;
-        typedef typename istream_type::ios_base ios_base;
-        typedef typename istream_type::int_type int_type;
-        typedef typename string_type::size_type size_type;
+    stl::basic_istream<CharT, TraitsT>&
+    getline(stl::basic_istream<CharT, TraitsT>& in, ustring<CharT, TraitsT, AllocT>& str, CharT delim) {
+        typedef stl::basic_istream<CharT, TraitsT> istream_type;
+        typedef ustring<CharT, TraitsT, AllocT>    string_type;
+        typedef typename istream_type::ios_base    ios_base;
+        typedef typename istream_type::int_type    int_type;
+        typedef typename string_type::size_type    size_type;
 
         size_type                     extracted = 0;
         const size_type               n         = str.max_size();
@@ -4579,7 +4579,7 @@ ustring<CharT, TraitsT, AllocT>::copy(CharT* s, size_type n, size_type pos) cons
                     err |= ios_base::failbit;
             } catch (cxxabiv1::forced_unwind&) {
                 in.setstate(ios_base::badbit);
-                throw_exception_again;
+                throw;
             } catch (...) {
                 // _GLIBCXX_RESOLVE_LIB_DEFECTS
                 // 91. Description of operator>> and getline() for string<>
@@ -4610,23 +4610,21 @@ ustring<CharT, TraitsT, AllocT>::copy(CharT* s, size_type n, size_type pos) cons
     extern template ustring<char>::size_type ustring<char>::_Rep::empty_rep_storage[];
 #    endif
 
-    extern template basic_istream<char>& operator>>(basic_istream<char>&, string&);
-    extern template basic_ostream<char>& operator<<(basic_ostream<char>&, const string&);
-    extern template basic_istream<char>& getline(basic_istream<char>&, string&, char);
-    extern template basic_istream<char>& getline(basic_istream<char>&, string&);
+    extern template stl::basic_istream<char>& operator>>(stl::basic_istream<char>&, string&);
+    extern template stl::basic_ostream<char>& operator<<(stl::basic_ostream<char>&, const string&);
+    extern template stl::basic_istream<char>& getline(stl::basic_istream<char>&, string&, char);
+    extern template stl::basic_istream<char>& getline(stl::basic_istream<char>&, string&);
 
-#    ifdef _GLIBCXX_USE_WCHAR_T
-#        if cplusplus <= 201703L && _GLIBCXX_EXTERN_TEMPLATE > 0
+#    if cplusplus <= 201703L && _GLIBCXX_EXTERN_TEMPLATE > 0
     extern template class ustring<wchar_t>;
-#        elif !_GLIBCXX_USE_CXX11_ABI
+#    elif !_GLIBCXX_USE_CXX11_ABI
     extern template ustring<wchar_t>::size_type ustring<wchar_t>::_Rep::empty_rep_storage[];
-#        endif
+#    endif
 
-    extern template basic_istream<wchar_t>& operator>>(basic_istream<wchar_t>&, wstring&);
-    extern template basic_ostream<wchar_t>& operator<<(basic_ostream<wchar_t>&, const wstring&);
-    extern template basic_istream<wchar_t>& getline(basic_istream<wchar_t>&, wstring&, wchar_t);
-    extern template basic_istream<wchar_t>& getline(basic_istream<wchar_t>&, wstring&);
-#    endif // _GLIBCXX_USE_WCHAR_T
+    extern template stl::basic_istream<wchar_t>& operator>>(stl::basic_istream<wchar_t>&, wstring&);
+    extern template stl::basic_ostream<wchar_t>& operator<<(stl::basic_ostream<wchar_t>&, const wstring&);
+    extern template stl::basic_istream<wchar_t>& getline(stl::basic_istream<wchar_t>&, wstring&, wchar_t);
+    extern template stl::basic_istream<wchar_t>& getline(stl::basic_istream<wchar_t>&, wstring&);
 #endif // _GLIBCXX_EXTERN_TEMPLATE
 
 
