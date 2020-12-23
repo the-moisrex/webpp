@@ -82,6 +82,11 @@ namespace webpp {
                 one = std::move(two);
         }
 
+        template <typename AllocT>
+        constexpr AllocT alloc_on_copy(const AllocT& a) {
+            using traits = stl::allocator_traits<AllocT>;
+            return traits::select_on_container_copy_construction(a);
+        }
 
     } // namespace details
 
@@ -248,93 +253,93 @@ namespace webpp {
 
 
 
-        void _M_data(pointer p) noexcept {
+        void data(pointer p) noexcept {
             data_start = p;
         }
 
-        void _M_length(size_type length) noexcept {
-            _M_string_length = length;
+        void length(size_type length) noexcept {
+            string_length = length;
         }
 
-        pointer _M_data() const noexcept {
+        pointer data() const noexcept {
             return data_start;
         }
 
-        pointer _M_local_data() {
+        pointer local_data() {
             return stl::pointer_traits<pointer>::pointer_to(*local_buf);
         }
 
-        const_pointer _M_local_data() const {
+        const_pointer local_data() const {
             return stl::pointer_traits<const_pointer>::pointer_to(*local_buf);
         }
 
-        void _M_capacity(size_type capacity) {
+        void capacity(size_type capacity) {
             allocated_capacity = capacity;
         }
 
-        void _M_set_length(size_type n) {
-            _M_length(n);
-            traits_type::assign(_M_data()[n], value_type());
+        void set_length(size_type n) {
+            length(n);
+            traits_type::assign(data()[n], value_type());
         }
 
-        bool _M_is_local() const {
-            return _M_data() == _M_local_data();
+        bool is_local() const {
+            return data() == local_data();
         }
 
         // Create & Destroy
-        pointer _M_create(size_type&, size_type);
+        pointer create(size_type&, size_type);
 
-        void _M_dispose() {
-            if (!_M_is_local())
-                _M_destroy(allocated_capacity);
+        void dispose() {
+            if (!is_local())
+                destroy(allocated_capacity);
         }
 
-        void _M_destroy(size_type size) noexcept(false) {
-            alloc_traits::deallocate(_M_get_allocator(), _M_data(), size + 1);
+        void destroy(size_type size) noexcept(false) {
+            alloc_traits::deallocate(get_allocator(), data(), size + 1);
         }
 
-        // _M_construct_aux is used to implement the 21.3.1 para 15 which
+        // construct_aux is used to implement the 21.3.1 para 15 which
         // requires special behaviour if _InIterator is an integral type
         template <typename _InIterator>
-        void _M_construct_aux(_InIterator beg, _InIterator end, stl::false_type) {
+        void construct_aux(_InIterator beg, _InIterator end, stl::false_type) {
             typedef typename stl::iterator_traits<_InIterator>::iterator_category _Tag;
-            _M_construct(beg, end, _Tag());
+            construct(beg, end, _Tag());
         }
 
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 438. Ambiguity in the "do the right thing" clause
         template <typename _Integer>
-        void _M_construct_aux(_Integer beg, _Integer end, stl::true_type) {
-            _M_construct_aux_2(static_cast<size_type>(beg), end);
+        void construct_aux(_Integer beg, _Integer end, stl::true_type) {
+            construct_aux_2(static_cast<size_type>(beg), end);
         }
 
-        void _M_construct_aux_2(size_type req, value_type c) {
-            _M_construct(req, c);
+        void construct_aux_2(size_type req, value_type c) {
+            construct(req, c);
         }
 
         template <typename _InIterator>
-        void _M_construct(_InIterator beg, _InIterator end) {
+        void construct(_InIterator beg, _InIterator end) {
             typedef typename stl::is_integer<_InIterator>::type _Integral;
-            _M_construct_aux(beg, end, _Integral());
+            construct_aux(beg, end, _Integral());
         }
 
         // For Input Iterators, used in istreambuf_iterators, etc.
         template <typename _InIterator>
-        void _M_construct(_InIterator beg, _InIterator end, stl::input_iterator_tag);
+        void construct(_InIterator beg, _InIterator end, stl::input_iterator_tag);
 
         // For forward_iterators up to random_access_iterators, used for
         // string::iterator, value_type*, etc.
         template <typename _FwdIterator>
-        void _M_construct(_FwdIterator beg, _FwdIterator end, stl::forward_iterator_tag);
+        void construct(_FwdIterator beg, _FwdIterator end, stl::forward_iterator_tag);
 
-        void _M_construct(size_type req, value_type c);
+        void construct(size_type req, value_type c);
 
-        allocator_type& _M_get_allocator() {
-            return _M_dataplus;
+        allocator_type& get_allocator() {
+            return alloc;
         }
 
-        const allocator_type& _M_get_allocator() const {
-            return _M_dataplus;
+        const allocator_type& get_allocator() const {
+            return alloc;
         }
 
       private:
@@ -352,7 +357,7 @@ namespace webpp {
         struct enable_if_not_native_iterator<T, false> {};
 #endif
 
-        size_type _M_check(size_type pos, const char* s) const {
+        size_type check(size_type pos, const char* s) const {
             if (pos > this->size())
                 throw_out_of_range_fmt(N("%s: pos (which is %zu) > "
                                          "this->size() (which is %zu)"),
@@ -362,72 +367,72 @@ namespace webpp {
             return pos;
         }
 
-        void _M_check_length(size_type n1, size_type n2, const char* s) const {
+        void check_length(size_type n1, size_type n2, const char* s) const {
             if (this->max_size() - (this->size() - n1) < n2)
                 throw_length_error(N(s));
         }
 
 
-        // NB: _M_limit doesn't check for a bad pos value.
-        size_type _M_limit(size_type pos, size_type off) const noexcept {
+        // NB: limit doesn't check for a bad pos value.
+        size_type limit(size_type pos, size_type off) const noexcept {
             const bool testoff = off < this->size() - pos;
             return testoff ? off : this->size() - pos;
         }
 
         // True if _Rep and source do not overlap.
-        bool _M_disjunct(const value_type* s) const noexcept {
-            return (less<const value_type*>()(s, _M_data()) ||
-                    less<const value_type*>()(_M_data() + this->size(), s));
+        bool disjunct(const value_type* s) const noexcept {
+            return (less<const value_type*>()(s, data()) ||
+                    less<const value_type*>()(data() + this->size(), s));
         }
 
         // When n = 1 way faster than the general multichar
         // traits_type::copy/move/assign.
-        static void _S_copy(value_type* d, const value_type* s, size_type n) {
+        static void copy(value_type* d, const value_type* s, size_type n) {
             if (n == 1)
                 traits_type::assign(*d, *s);
             else
                 traits_type::copy(d, s, n);
         }
 
-        static void _S_move(value_type* d, const value_type* s, size_type n) {
+        static void move(value_type* d, const value_type* s, size_type n) {
             if (n == 1)
                 traits_type::assign(*d, *s);
             else
                 traits_type::move(d, s, n);
         }
 
-        static void _S_assign(value_type* d, size_type n, value_type c) {
+        static void assign(value_type* d, size_type n, value_type c) {
             if (n == 1)
                 traits_type::assign(*d, c);
             else
                 traits_type::assign(d, n, c);
         }
 
-        // _S_copy_chars is a separate template to permit specialization
+        // copy_chars is a separate template to permit specialization
         // to optimize for the common case of pointers as iterators.
         template <class _Iterator>
-        static void _S_copy_chars(value_type* p, _Iterator k1, _Iterator k2) {
+        static void copy_chars(value_type* p, _Iterator k1, _Iterator k2) {
             for (; k1 != k2; ++k1, (void) ++p)
                 traits_type::assign(*p, *k1); // These types are off.
         }
 
-        static void _S_copy_chars(value_type* p, iterator k1, iterator k2) noexcept {
-            _S_copy_chars(p, k1.base(), k2.base());
+        static void copy_chars(value_type* p, iterator k1, iterator k2) noexcept {
+            copy_chars(p, k1.base(), k2.base());
         }
 
-        static void _S_copy_chars(value_type* p, const_iterator k1, const_iterator k2) noexcept {
-            _S_copy_chars(p, k1.base(), k2.base());
+        static void copy_chars(value_type* p, const_iterator k1, const_iterator k2) noexcept {
+            copy_chars(p, k1.base(), k2.base());
         }
 
-        static void _S_copy_chars(value_type* p, value_type* k1, value_type* k2) noexcept {
-            _S_copy(p, k1, k2 - k1);
+        static void copy_chars(value_type* p, value_type* k1, value_type* k2) noexcept {
+            copy(p, k1, k2 - k1);
         }
 
-        static void _S_copy_chars(value_type* p, const value_type* k1, const value_type* k2) noexcept {
-            _S_copy(p, k1, k2 - k1);
+        static void copy_chars(value_type* p, const value_type* k1, const value_type* k2) noexcept {
+            copy(p, k1, k2 - k1);
         }
 
-        static int _S_compare(size_type n1, size_type n2) noexcept {
+        static int compare(size_type n1, size_type n2) noexcept {
             const difference_type d = difference_type(n1 - n2);
 
             if (d > details::int_limits<int>::max())
@@ -438,11 +443,11 @@ namespace webpp {
                 return int(d);
         }
 
-        void _M_assign(const ustring&);
+        void assign(const ustring&);
 
-        void _M_mutate(size_type pos, size_type len1, const value_type* s, size_type len2);
+        void mutate(size_type pos, size_type len1, const value_type* s, size_type len2);
 
-        void _M_erase(size_type pos, size_type n);
+        void erase(size_type pos, size_type n);
 
 
 
@@ -455,16 +460,17 @@ namespace webpp {
         /**
          *  @brief  Default constructor creates an empty string.
          */
-        ustring() _GLIBCXX_NOEXCEPT_IF(stl::is_nothrow_default_constructible<allocator_type>::value)
-          : _M_dataplus(_M_local_data()) {
-            _M_set_length(0);
+        ustring() noexcept(stl::is_nothrow_default_constructible<allocator_type>::value)
+          : data_start(local_data()),
+            alloc() {
+            set_length(0);
         }
 
         /**
          *  @brief  Construct an empty string using allocator @a a.
          */
-        explicit ustring(const allocator_type& a) noexcept : _M_dataplus(_M_local_data(), a) {
-            _M_set_length(0);
+        explicit ustring(const allocator_type& a) noexcept : data_start(local_data()), alloc(a) {
+            set_length(0);
         }
 
         /**
@@ -472,8 +478,9 @@ namespace webpp {
          *  @param  str  Source string.
          */
         ustring(const ustring& str)
-          : _M_dataplus(_M_local_data(), alloc_traits::_S_select_on_copy(str._M_get_allocator())) {
-            _M_construct(str._M_data(), str._M_data() + str.length());
+          : data_start(local_data()),
+            alloc(alloc_traits::select_on_copy(str.get_allocator())) {
+            construct(str.data(), str.data() + str.length());
         }
 
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
@@ -485,9 +492,10 @@ namespace webpp {
          *  @param  a  Allocator to use.
          */
         ustring(const ustring& str, size_type pos, const allocator_type& a = allocator_type())
-          : _M_dataplus(_M_local_data(), a) {
-            const value_type* start = str._M_data() + str._M_check(pos, "ustring::ustring");
-            _M_construct(start, start + str._M_limit(pos, npos));
+          : data_start(local_data()),
+            alloc(a) {
+            const value_type* start = str.data() + str.check(pos, "ustring::ustring");
+            construct(start, start + str.limit(pos, npos));
         }
 
         /**
@@ -496,9 +504,9 @@ namespace webpp {
          *  @param  pos  Index of first character to copy from.
          *  @param  n  Number of characters to copy.
          */
-        ustring(const ustring& str, size_type pos, size_type n) : _M_dataplus(_M_local_data()) {
-            const value_type* start = str._M_data() + str._M_check(pos, "ustring::ustring");
-            _M_construct(start, start + str._M_limit(pos, n));
+        ustring(const ustring& str, size_type pos, size_type n) : data_start(local_data()), alloc() {
+            const value_type* start = str.data() + str.check(pos, "ustring::ustring");
+            construct(start, start + str.limit(pos, n));
         }
 
         /**
@@ -509,9 +517,10 @@ namespace webpp {
          *  @param  a  Allocator to use.
          */
         ustring(const ustring& str, size_type pos, size_type n, const allocator_type& a)
-          : _M_dataplus(_M_local_data(), a) {
-            const value_type* start = str._M_data() + str._M_check(pos, "string::string");
-            _M_construct(start, start + str._M_limit(pos, n));
+          : data_start(local_data()),
+            alloc(a) {
+            const value_type* start = str.data() + str.check(pos, "string::string");
+            construct(start, start + str.limit(pos, n));
         }
 
         /**
@@ -524,8 +533,9 @@ namespace webpp {
          *  has no special meaning.
          */
         ustring(const value_type* s, size_type n, const allocator_type& a = allocator_type())
-          : _M_dataplus(_M_local_data(), a) {
-            _M_construct(s, s + n);
+          : data_start(local_data()),
+            alloc(a) {
+            construct(s, s + n);
         }
 
         /**
@@ -539,8 +549,9 @@ namespace webpp {
         template <typename = _RequireAllocator<allocator_type>>
 #endif
         ustring(const value_type* s, const allocator_type& a = allocator_type())
-          : _M_dataplus(_M_local_data(), a) {
-            _M_construct(s, s ? s + traits_type::length(s) : s + npos);
+          : data_start(local_data()),
+            alloc(a) {
+            construct(s, s ? s + traits_type::length(s) : s + npos);
         }
 
         /**
@@ -555,8 +566,9 @@ namespace webpp {
         template <typename = _RequireAllocator<allocator_type>>
 #endif
         ustring(size_type n, value_type c, const allocator_type& a = allocator_type())
-          : _M_dataplus(_M_local_data(), a) {
-            _M_construct(n, c);
+          : data_start(local_data()),
+            alloc(a) {
+            construct(n, c);
         }
 
         /**
@@ -566,20 +578,20 @@ namespace webpp {
          *  The newly-created string contains the exact contents of @a str.
          *  @a str is a valid, but unspecified string.
          **/
-        ustring(ustring&& str) noexcept : _M_dataplus(_M_local_data(), stl::move(str._M_get_allocator())) {
-            if (str._M_is_local()) {
+        ustring(ustring&& str) noexcept : data_start(local_data()), alloc(stl::move(str.get_allocator())) {
+            if (str.is_local()) {
                 traits_type::copy(local_buf, str.local_buf, local_capacity + 1);
             } else {
-                _M_data(str._M_data());
-                _M_capacity(str.allocated_capacity);
+                data(str.data());
+                capacity(str.allocated_capacity);
             }
 
-            // Must use _M_length() here not _M_set_length() because
+            // Must use length() here not set_length() because
             // ustringbuf relies on writing into unallocated capacity so
             // we mess up the contents if we put a '\0' in the string.
-            _M_length(str.length());
-            str._M_data(str._M_local_data());
-            str._M_set_length(0);
+            length(str.length());
+            str.data(str.local_data());
+            str.set_length(0);
         }
 
         /**
@@ -588,28 +600,30 @@ namespace webpp {
          *  @param  a  Allocator to use (default is default allocator).
          */
         ustring(stl::initializer_list<value_type> l, const allocator_type& a = allocator_type())
-          : _M_dataplus(_M_local_data(), a) {
-            _M_construct(l.begin(), l.end());
+          : data_start(local_data()),
+            alloc(a) {
+            construct(l.begin(), l.end());
         }
 
-        ustring(const ustring& str, const allocator_type& a) : _M_dataplus(_M_local_data(), a) {
-            _M_construct(str.begin(), str.end());
+        ustring(const ustring& str, const allocator_type& a) : data_start(local_data()), alloc(a) {
+            construct(str.begin(), str.end());
         }
 
-        ustring(ustring&& str, const allocator_type& a) noexcept(alloc_traits::_S_always_equal())
-          : _M_dataplus(_M_local_data(), a) {
-            if (str._M_is_local()) {
+        ustring(ustring&& str, const allocator_type& a) noexcept(alloc_traits::always_equal())
+          : data_start(local_data()),
+            alloc(a) {
+            if (str.is_local()) {
                 traits_type::copy(local_buf, str.local_buf, local_capacity + 1);
-                _M_length(str.length());
-                str._M_set_length(0);
-            } else if (alloc_traits::_S_always_equal() || str.get_allocator() == a) {
-                _M_data(str._M_data());
-                _M_length(str.length());
-                _M_capacity(str.allocated_capacity);
-                str._M_data(str.local_buf);
-                str._M_set_length(0);
+                length(str.length());
+                str.set_length(0);
+            } else if (alloc_traits::always_equal() || str.get_allocator() == a) {
+                data(str.data());
+                length(str.length());
+                capacity(str.allocated_capacity);
+                str.data(str.local_buf);
+                str.set_length(0);
             } else
-                _M_construct(str.begin(), str.end());
+                construct(str.begin(), str.end());
         }
 
 
@@ -621,8 +635,9 @@ namespace webpp {
          */
         template <typename _InputIterator, typename = stl::_RequireInputIter<_InputIterator>>
         ustring(_InputIterator beg, _InputIterator end, const allocator_type& a = allocator_type())
-          : _M_dataplus(_M_local_data(), a) {
-            _M_construct(beg, end);
+          : data_start(local_data()),
+            alloc(a) {
+            construct(beg, end);
         }
 
         /**
@@ -635,7 +650,7 @@ namespace webpp {
         template <typename T>
         requires(convertible_to_ustring_view<T>)
           ustring(const T& t, size_type pos, size_type n, const allocator_type& a = allocator_type())
-          : ustring(_S_to_string_view(t).substr(pos, n), a) {}
+          : ustring(to_string_view(t).substr(pos, n), a) {}
 
         /**
          *  @brief  Construct string from a string_view.
@@ -645,13 +660,13 @@ namespace webpp {
         template <typename T>
         requires(convertible_to_ustring_view<T>) explicit ustring(const T&              t,
                                                                   const allocator_type& a = allocator_type())
-          : ustring(sv_wrapper(_S_to_string_view(t)), a) {}
+          : ustring(sv_wrapper(to_string_view(t)), a) {}
 
         /**
          *  @brief  Destroy the string instance.
          */
         ~ustring() {
-            _M_dispose();
+            dispose();
         }
 
         /**
@@ -691,44 +706,44 @@ namespace webpp {
          **/
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 2063. Contradictory requirements for string move assignment
-        ustring& operator=(ustring&& str) noexcept(alloc_traits::_S_nothrow_move()) {
-            if (!_M_is_local() && alloc_traits::_S_propagate_on_move_assign() &&
-                !alloc_traits::_S_always_equal() && _M_get_allocator() != str._M_get_allocator()) {
+        ustring& operator=(ustring&& str) noexcept(alloc_traits::nothrow_move()) {
+            if (!is_local() && alloc_traits::propagate_on_move_assign() && !alloc_traits::always_equal() &&
+                get_allocator() != str.get_allocator()) {
                 // Destroy existing storage before replacing allocator.
-                _M_destroy(allocated_capacity);
-                _M_data(_M_local_data());
-                _M_set_length(0);
+                destroy(allocated_capacity);
+                data(local_data());
+                set_length(0);
             }
             // Replace allocator if POCMA is true.
-            details::alloc_on_move(_M_get_allocator(), str._M_get_allocator());
+            details::alloc_on_move(get_allocator(), str.get_allocator());
 
-            if (str._M_is_local()) {
+            if (str.is_local()) {
                 // We've always got room for a short string, just copy it.
                 if (str.size())
-                    this->_S_copy(_M_data(), str._M_data(), str.size());
-                _M_set_length(str.size());
-            } else if (alloc_traits::_S_propagate_on_move_assign() || alloc_traits::_S_always_equal() ||
-                       _M_get_allocator() == str._M_get_allocator()) {
+                    this->copy(data(), str.data(), str.size());
+                set_length(str.size());
+            } else if (alloc_traits::propagate_on_move_assign() || alloc_traits::always_equal() ||
+                       get_allocator() == str.get_allocator()) {
                 // Just move the allocated pointer, our allocator can free it.
                 pointer   data = nullptr;
                 size_type capacity;
-                if (!_M_is_local()) {
-                    if (alloc_traits::_S_always_equal()) {
+                if (!is_local()) {
+                    if (alloc_traits::always_equal()) {
                         // str can reuse our existing storage.
-                        data     = _M_data();
+                        data     = data();
                         capacity = allocated_capacity;
                     } else // str can't use it, so free it.
-                        _M_destroy(allocated_capacity);
+                        destroy(allocated_capacity);
                 }
 
-                _M_data(str._M_data());
-                _M_length(str.length());
-                _M_capacity(str.allocated_capacity);
+                data(str.data());
+                length(str.length());
+                capacity(str.allocated_capacity);
                 if (data) {
-                    str._M_data(data);
-                    str._M_capacity(capacity);
+                    str.data(data);
+                    str.capacity(capacity);
                 } else
-                    str._M_data(str.local_buf);
+                    str.data(str.local_buf);
             } else // Need to do a deep copy
                 assign(str);
             str.clear();
@@ -767,7 +782,7 @@ namespace webpp {
          *  the %string.
          */
         iterator begin() noexcept {
-            return iterator(_M_data());
+            return iterator(data());
         }
 
         /**
@@ -775,7 +790,7 @@ namespace webpp {
          *  character in the %string.
          */
         const_iterator begin() const noexcept {
-            return const_iterator(_M_data());
+            return const_iterator(data());
         }
 
         /**
@@ -783,7 +798,7 @@ namespace webpp {
          *  character in the %string.
          */
         iterator end() noexcept {
-            return iterator(_M_data() + this->size());
+            return iterator(data() + this->size());
         }
 
         /**
@@ -791,7 +806,7 @@ namespace webpp {
          *  last character in the %string.
          */
         const_iterator end() const noexcept {
-            return const_iterator(_M_data() + this->size());
+            return const_iterator(data() + this->size());
         }
 
         /**
@@ -835,7 +850,7 @@ namespace webpp {
          *  character in the %string.
          */
         const_iterator cbegin() const noexcept {
-            return const_iterator(this->_M_data());
+            return const_iterator(this->data());
         }
 
         /**
@@ -843,7 +858,7 @@ namespace webpp {
          *  last character in the %string.
          */
         const_iterator cend() const noexcept {
-            return const_iterator(this->_M_data() + this->size());
+            return const_iterator(this->data() + this->size());
         }
 
         /**
@@ -869,18 +884,18 @@ namespace webpp {
         ///  Returns the number of characters in the string, not including any
         ///  null-termination.
         size_type size() const noexcept {
-            return _M_string_length;
+            return string_length;
         }
 
         ///  Returns the number of characters in the string, not including any
         ///  null-termination.
         size_type length() const noexcept {
-            return _M_string_length;
+            return string_length;
         }
 
         ///  Returns the size() of the largest possible %string.
         size_type max_size() const noexcept {
-            return (alloc_traits::max_size(_M_get_allocator()) - 1) / 2;
+            return (alloc_traits::max_size(get_allocator()) - 1) / 2;
         }
 
         /**
@@ -925,7 +940,7 @@ namespace webpp {
          *  before needing to allocate more memory.
          */
         size_type capacity() const noexcept {
-            return _M_is_local() ? size_type(local_capacity) : allocated_capacity;
+            return is_local() ? size_type(local_capacity) : allocated_capacity;
         }
 
         /**
@@ -951,7 +966,7 @@ namespace webpp {
          *  Erases the string, making it empty.
          */
         void clear() noexcept {
-            _M_set_length(0);
+            set_length(0);
         }
 
         /**
@@ -975,7 +990,7 @@ namespace webpp {
          */
         const_reference operator[](size_type pos) const noexcept {
             glibcxx_assert(pos <= size());
-            return _M_data()[pos];
+            return data()[pos];
         }
 
         /**
@@ -994,7 +1009,7 @@ namespace webpp {
             glibcxx_assert(pos <= size());
             // In pedantic mode be strict in C++98 mode.
             _GLIBCXX_DEBUG_PEDASSERT(cplusplus >= 201103L || pos < size());
-            return _M_data()[pos];
+            return data()[pos];
         }
 
         /**
@@ -1014,7 +1029,7 @@ namespace webpp {
                                          "(which is %zu)"),
                                        n,
                                        this->size());
-            return _M_data()[n];
+            return data()[n];
         }
 
         /**
@@ -1034,7 +1049,7 @@ namespace webpp {
                                          "(which is %zu)"),
                                        n,
                                        this->size());
-            return _M_data()[n];
+            return data()[n];
         }
 
         /**
@@ -1127,7 +1142,7 @@ namespace webpp {
          *  @return  Reference to this string.
          */
         ustring& append(const ustring& str) {
-            return _M_append(str._M_data(), str.size());
+            return append(str.data(), str.size());
         }
 
         /**
@@ -1144,7 +1159,7 @@ namespace webpp {
          *  remainder of @a str is appended.
          */
         ustring& append(const ustring& str, size_type pos, size_type n = npos) {
-            return _M_append(str._M_data() + str._M_check(pos, "ustring::append"), str._M_limit(pos, n));
+            return append(str.data() + str.check(pos, "ustring::append"), str.limit(pos, n));
         }
 
         /**
@@ -1155,8 +1170,8 @@ namespace webpp {
          */
         ustring& append(const value_type* s, size_type n) {
             glibcxx_requires_string_len(s, n);
-            _M_check_length(size_type(0), n, "ustring::append");
-            return _M_append(s, n);
+            check_length(size_type(0), n, "ustring::append");
+            return append(s, n);
         }
 
         /**
@@ -1167,8 +1182,8 @@ namespace webpp {
         ustring& append(const value_type* s) {
             glibcxx_requires_string(s);
             const size_type n = traits_type::length(s);
-            _M_check_length(size_type(0), n, "ustring::append");
-            return _M_append(s, n);
+            check_length(size_type(0), n, "ustring::append");
+            return append(s, n);
         }
 
         /**
@@ -1180,7 +1195,7 @@ namespace webpp {
          *  Appends n copies of c to this string.
          */
         ustring& append(size_type n, value_type c) {
-            return _M_replace_aux(this->size(), size_type(0), n, c);
+            return replace_aux(this->size(), size_type(0), n, c);
         }
 
         /**
@@ -1228,8 +1243,8 @@ namespace webpp {
                                                                  size_type pos,
                                                                  size_type n = npos) {
             string_view_type sv = svt;
-            return _M_append(sv.data() + details::sv_check(sv.size(), pos, "ustring::append"),
-                             details::sv_limit(sv.size(), pos, n));
+            return append(sv.data() + details::sv_check(sv.size(), pos, "ustring::append"),
+                          details::sv_limit(sv.size(), pos, n));
         }
 
         /**
@@ -1239,9 +1254,9 @@ namespace webpp {
         void push_back(value_type c) {
             const size_type size = this->size();
             if (size + 1 > this->capacity())
-                this->_M_mutate(size, size_type(0), 0, size_type(1));
-            traits_type::assign(this->_M_data()[size], c);
-            this->_M_set_length(size + 1);
+                this->mutate(size, size_type(0), 0, size_type(1));
+            traits_type::assign(this->data()[size], c);
+            this->set_length(size + 1);
         }
 
         /**
@@ -1250,29 +1265,28 @@ namespace webpp {
          *  @return  Reference to this string.
          */
         ustring& assign(const ustring& str) {
-            if (alloc_traits::_S_propagate_on_copy_assign()) {
-                if (!alloc_traits::_S_always_equal() && !_M_is_local() &&
-                    _M_get_allocator() != str._M_get_allocator()) {
+            if (alloc_traits::propagate_on_copy_assign()) {
+                if (!alloc_traits::always_equal() && !is_local() && get_allocator() != str.get_allocator()) {
                     // Propagating allocator cannot free existing storage so must
                     // deallocate it before replacing current allocator.
                     if (str.size() <= local_capacity) {
-                        _M_destroy(allocated_capacity);
-                        _M_data(_M_local_data());
-                        _M_set_length(0);
+                        destroy(allocated_capacity);
+                        data(local_data());
+                        set_length(0);
                     } else {
                         const auto len   = str.size();
-                        auto       alloc = str._M_get_allocator();
+                        auto       alloc = str.get_allocator();
                         // If this allocation throws there are no effects:
                         auto ptr = alloc_traits::allocate(alloc, len + 1);
-                        _M_destroy(allocated_capacity);
-                        _M_data(ptr);
-                        _M_capacity(len);
-                        _M_set_length(len);
+                        destroy(allocated_capacity);
+                        data(ptr);
+                        capacity(len);
+                        set_length(len);
                     }
                 }
-                stl::alloc_on_copy(_M_get_allocator(), str._M_get_allocator());
+                details::alloc_on_copy(get_allocator(), str.get_allocator());
             }
-            this->_M_assign(str);
+            this->assign(str);
             return *this;
         }
 
@@ -1284,7 +1298,7 @@ namespace webpp {
          *  This function sets this string to the exact contents of @a str.
          *  @a str is a valid, but unspecified string.
          */
-        ustring& assign(ustring&& str) noexcept(alloc_traits::_S_nothrow_move()) {
+        ustring& assign(ustring&& str) noexcept(alloc_traits::nothrow_move()) {
             // _GLIBCXX_RESOLVE_LIB_DEFECTS
             // 2063. Contradictory requirements for string move assignment
             return *this = stl::move(str);
@@ -1304,10 +1318,10 @@ namespace webpp {
          *  str, the remainder of @a str is used.
          */
         ustring& assign(const ustring& str, size_type pos, size_type n = npos) {
-            return _M_replace(size_type(0),
-                              this->size(),
-                              str._M_data() + str._M_check(pos, "ustring::assign"),
-                              str._M_limit(pos, n));
+            return replace(size_type(0),
+                           this->size(),
+                           str.data() + str.check(pos, "ustring::assign"),
+                           str.limit(pos, n));
         }
 
         /**
@@ -1322,7 +1336,7 @@ namespace webpp {
          */
         ustring& assign(const value_type* s, size_type n) {
             glibcxx_requires_string_len(s, n);
-            return _M_replace(size_type(0), this->size(), s, n);
+            return replace(size_type(0), this->size(), s, n);
         }
 
         /**
@@ -1336,7 +1350,7 @@ namespace webpp {
          */
         ustring& assign(const value_type* s) {
             glibcxx_requires_string(s);
-            return _M_replace(size_type(0), this->size(), s, traits_type::length(s));
+            return replace(size_type(0), this->size(), s, traits_type::length(s));
         }
 
         /**
@@ -1349,7 +1363,7 @@ namespace webpp {
          *  character @a c.
          */
         ustring& assign(size_type n, value_type c) {
-            return _M_replace_aux(size_type(0), this->size(), n, c);
+            return replace_aux(size_type(0), this->size(), n, c);
         }
 
         /**
@@ -1397,10 +1411,10 @@ namespace webpp {
                                                                  size_type pos,
                                                                  size_type n = npos) {
             string_view_type sv = svt;
-            return _M_replace(size_type(0),
-                              this->size(),
-                              sv.data() + details::sv_check(sv.size(), pos, "ustring::assign"),
-                              details::sv_limit(sv.size(), pos, n));
+            return replace(size_type(0),
+                           this->size(),
+                           sv.data() + details::sv_check(sv.size(), pos, "ustring::assign"),
+                           details::sv_limit(sv.size(), pos, n));
         }
 
         /**
@@ -1422,7 +1436,7 @@ namespace webpp {
             _GLIBCXX_DEBUG_PEDASSERT(p >= begin() && p <= end());
             const size_type pos = p - begin();
             this->replace(p, p, n, c);
-            return iterator(this->_M_data() + pos);
+            return iterator(this->data() + pos);
         }
 
         /**
@@ -1444,7 +1458,7 @@ namespace webpp {
             _GLIBCXX_DEBUG_PEDASSERT(p >= begin() && p <= end());
             const size_type pos = p - begin();
             this->replace(p, p, beg, end);
-            return iterator(this->_M_data() + pos);
+            return iterator(this->data() + pos);
         }
         /**
          *  @brief  Insert an stl::initializer_list of characters.
@@ -1475,7 +1489,7 @@ namespace webpp {
          *  change if an error is thrown.
          */
         ustring& insert(size_type pos1, const ustring& str) {
-            return this->replace(pos1, size_type(0), str._M_data(), str.size());
+            return this->replace(pos1, size_type(0), str.data(), str.size());
         }
 
         /**
@@ -1499,8 +1513,8 @@ namespace webpp {
         ustring& insert(size_type pos1, const ustring& str, size_type pos2, size_type n = npos) {
             return this->replace(pos1,
                                  size_type(0),
-                                 str._M_data() + str._M_check(pos2, "ustring::insert"),
-                                 str._M_limit(pos2, n));
+                                 str.data() + str.check(pos2, "ustring::insert"),
+                                 str.limit(pos2, n));
         }
 
         /**
@@ -1560,7 +1574,7 @@ namespace webpp {
          *  change if an error is thrown.
          */
         ustring& insert(size_type pos, size_type n, value_type c) {
-            return _M_replace_aux(_M_check(pos, "ustring::insert"), size_type(0), n, c);
+            return replace_aux(check(pos, "ustring::insert"), size_type(0), n, c);
         }
 
         /**
@@ -1579,8 +1593,8 @@ namespace webpp {
         iterator insert(const_iterator p, value_type c) {
             _GLIBCXX_DEBUG_PEDASSERT(p >= begin() && p <= end());
             const size_type pos = p - begin();
-            _M_replace_aux(pos, size_type(0), size_type(1), c);
-            return iterator(_M_data() + pos);
+            replace_aux(pos, size_type(0), size_type(1), c);
+            return iterator(data() + pos);
         }
 
         /**
@@ -1631,11 +1645,11 @@ namespace webpp {
          *  change if an error is thrown.
          */
         ustring& erase(size_type pos = 0, size_type n = npos) {
-            _M_check(pos, "ustring::erase");
+            check(pos, "ustring::erase");
             if (n == npos)
-                this->_M_set_length(pos);
+                this->set_length(pos);
             else if (n != 0)
-                this->_M_erase(pos, _M_limit(pos, n));
+                this->erase(pos, limit(pos, n));
             return *this;
         }
 
@@ -1650,8 +1664,8 @@ namespace webpp {
         iterator erase(const_iterator position) {
             _GLIBCXX_DEBUG_PEDASSERT(position >= begin() && position < end());
             const size_type pos = position - begin();
-            this->_M_erase(pos, size_type(1));
-            return iterator(_M_data() + pos);
+            this->erase(pos, size_type(1));
+            return iterator(data() + pos);
         }
 
         /**
@@ -1667,10 +1681,10 @@ namespace webpp {
             _GLIBCXX_DEBUG_PEDASSERT(first >= begin() && first <= last && last <= end());
             const size_type pos = first - begin();
             if (last == end())
-                this->_M_set_length(pos);
+                this->set_length(pos);
             else
-                this->_M_erase(pos, last - first);
-            return iterator(this->_M_data() + pos);
+                this->erase(pos, last - first);
+            return iterator(this->data() + pos);
         }
 
         /**
@@ -1680,7 +1694,7 @@ namespace webpp {
          */
         void pop_back() noexcept {
             glibcxx_assert(!empty());
-            _M_erase(size() - 1, 1);
+            erase(size() - 1, 1);
         }
 
         /**
@@ -1701,7 +1715,7 @@ namespace webpp {
          *  error is thrown.
          */
         ustring& replace(size_type pos, size_type n, const ustring& str) {
-            return this->replace(pos, n, str._M_data(), str.size());
+            return this->replace(pos, n, str.data(), str.size());
         }
 
         /**
@@ -1726,8 +1740,8 @@ namespace webpp {
         replace(size_type pos1, size_type n1, const ustring& str, size_type pos2, size_type n2 = npos) {
             return this->replace(pos1,
                                  n1,
-                                 str._M_data() + str._M_check(pos2, "ustring::replace"),
-                                 str._M_limit(pos2, n2));
+                                 str.data() + str.check(pos2, "ustring::replace"),
+                                 str.limit(pos2, n2));
         }
 
         /**
@@ -1750,7 +1764,7 @@ namespace webpp {
          */
         ustring& replace(size_type pos, size_type n1, const value_type* s, size_type n2) {
             glibcxx_requires_string_len(s, n2);
-            return _M_replace(_M_check(pos, "ustring::replace"), _M_limit(pos, n1), s, n2);
+            return replace(check(pos, "ustring::replace"), limit(pos, n1), s, n2);
         }
 
         /**
@@ -1792,7 +1806,7 @@ namespace webpp {
          *  is thrown.
          */
         ustring& replace(size_type pos, size_type n1, size_type n2, value_type c) {
-            return _M_replace_aux(_M_check(pos, "ustring::replace"), _M_limit(pos, n1), n2, c);
+            return replace_aux(check(pos, "ustring::replace"), limit(pos, n1), n2, c);
         }
 
         /**
@@ -1809,7 +1823,7 @@ namespace webpp {
          *  the string doesn't change if an error is thrown.
          */
         ustring& replace(const_iterator i1, const_iterator i2, const ustring& str) {
-            return this->replace(i1, i2, str._M_data(), str.size());
+            return this->replace(i1, i2, str.data(), str.size());
         }
 
         /**
@@ -1866,7 +1880,7 @@ namespace webpp {
          */
         ustring& replace(const_iterator i1, const_iterator i2, size_type n, value_type c) {
             _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
-            return _M_replace_aux(i1 - begin(), i2 - i1, n, c);
+            return replace_aux(i1 - begin(), i2 - i1, n, c);
         }
 
         /**
@@ -1888,7 +1902,7 @@ namespace webpp {
         ustring& replace(const_iterator i1, const_iterator i2, _InputIterator k1, _InputIterator k2) {
             _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
             glibcxx_requires_valid_range(k1, k2);
-            return this->_M_replace_dispatch(i1, i2, k1, k2, stl::false_type());
+            return this->replace_dispatch(i1, i2, k1, k2, stl::false_type());
         }
 #ifdef _GLIBCXX_DISAMBIGUATE_REPLACE_INST
         typename enable_if_not_native_iterator<_InputIterator>::type
@@ -1899,11 +1913,11 @@ namespace webpp {
             _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
             glibcxx_requires_valid_range(k1, k2);
             using integral_type = stl::is_integer_t<_InputIterator>;
-            return _M_replace_dispatch(i1, i2, k1, k2, _Integral());
+            return replace_dispatch(i1, i2, k1, k2, _Integral());
         }
 
         // Specializations for the common case of pointer and iterator:
-        // useful to avoid the overhead of temporary buffering in _M_replace.
+        // useful to avoid the overhead of temporary buffering in replace.
         ustring& replace(const_iterator i1, const_iterator i2, value_type* k1, value_type* k2) {
             _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
             glibcxx_requires_valid_range(k1, k2);
@@ -1998,22 +2012,22 @@ namespace webpp {
       private:
         template <class _Integer>
         ustring&
-        _M_replace_dispatch(const_iterator i1, const_iterator i2, _Integer n, _Integer val, stl::true_type) {
-            return _M_replace_aux(i1 - begin(), i2 - i1, n, val);
+        replace_dispatch(const_iterator i1, const_iterator i2, _Integer n, _Integer val, stl::true_type) {
+            return replace_aux(i1 - begin(), i2 - i1, n, val);
         }
 
         template <class _InputIterator>
-        ustring& _M_replace_dispatch(const_iterator i1,
-                                     const_iterator i2,
-                                     _InputIterator k1,
-                                     _InputIterator k2,
-                                     stl::false_type);
+        ustring& replace_dispatch(const_iterator i1,
+                                  const_iterator i2,
+                                  _InputIterator k1,
+                                  _InputIterator k2,
+                                  stl::false_type);
 
-        ustring& _M_replace_aux(size_type pos1, size_type n1, size_type n2, value_type c);
+        ustring& replace_aux(size_type pos1, size_type n1, size_type n2, value_type c);
 
-        ustring& _M_replace(size_type pos, size_type len1, const value_type* s, const size_type len2);
+        ustring& replace(size_type pos, size_type len1, const value_type* s, const size_type len2);
 
-        ustring& _M_append(const value_type* s, size_type n);
+        ustring& append(const value_type* s, size_type n);
 
       public:
         /**
@@ -2047,7 +2061,7 @@ namespace webpp {
          *  happen.
          */
         const value_type* c_str() const noexcept {
-            return _M_data();
+            return data();
         }
 
         /**
@@ -2059,7 +2073,7 @@ namespace webpp {
          *  (or in C++17 the non-const @c str.data() overload).
          */
         const value_type* data() const noexcept {
-            return _M_data();
+            return data();
         }
 
         /**
@@ -2069,14 +2083,14 @@ namespace webpp {
          *  Modifying the characters in the sequence is allowed.
          */
         value_type* data() noexcept {
-            return _M_data();
+            return data();
         }
 
         /**
          *  @brief  Return copy of allocator used to construct this string.
          */
         allocator_type get_allocator() const noexcept {
-            return _M_get_allocator();
+            return get_allocator();
         }
 
         /**
@@ -2519,7 +2533,7 @@ namespace webpp {
          *  beyond the end of the string, out_of_range is thrown.
          */
         ustring substr(size_type pos = 0, size_type n = npos) const {
-            return ustring(*this, _M_check(pos, "ustring::substr"), n);
+            return ustring(*this, check(pos, "ustring::substr"), n);
         }
 
         /**
@@ -2541,9 +2555,9 @@ namespace webpp {
             const size_type osize = str.size();
             const size_type len   = stl::min(size, osize);
 
-            int r = traits_type::compare(_M_data(), str.data(), len);
+            int r = traits_type::compare(data(), str.data(), len);
             if (!r)
-                r = _S_compare(size, osize);
+                r = compare(size, osize);
             return r;
         }
 
@@ -2560,9 +2574,9 @@ namespace webpp {
             const size_type  osize = sv.size();
             const size_type  len   = stl::min(size, osize);
 
-            int r = traits_type::compare(_M_data(), sv.data(), len);
+            int r = traits_type::compare(data(), sv.data(), len);
             if (!r)
-                r = _S_compare(size, osize);
+                r = compare(size, osize);
             return r;
         }
 
@@ -2738,7 +2752,7 @@ namespace webpp {
             return string_view_type(this->data(), this->size()).ends_with(x);
         }
 
-        // Allow ustringbuf::xfer_bufptrs to call _M_length:
+        // Allow ustringbuf::xfer_bufptrs to call length:
         template <typename, typename, typename>
         friend class ustringbuf;
     };
