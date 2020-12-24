@@ -3,6 +3,7 @@
 #ifndef WEBPP_USTRING_HPP
 #define WEBPP_USTRING_HPP
 
+#include "../std/format.hpp"
 #include "unicode_char_traits.hpp"
 #include "ustring_iterator.hpp"
 
@@ -17,19 +18,19 @@ namespace webpp {
     namespace details {
 
         // Helper for ustring and ustring_view members.
-        constexpr size_t sv_check(size_t size, size_t pos, const char* s) {
+        constexpr stl::size_t sv_check(stl::size_t size, stl::size_t pos, const char* s) {
             if (pos > size)
-                throw_out_of_range_fmt(N("%s: pos (which is %zu) > size "
-                                         "(which is %zu)"),
-                                       s,
-                                       pos,
-                                       size);
+                throw stl::out_of_range(stl::format("%s: pos (which is %zu) > size "
+                                                    "(which is %zu)",
+                                                    s,
+                                                    pos,
+                                                    size));
             return pos;
         }
 
         // Helper for ustring members.
         // NB: sv_limit doesn't check for a bad pos value.
-        constexpr size_t sv_limit(size_t size, size_t pos, size_t off) noexcept {
+        constexpr stl::size_t sv_limit(stl::size_t size, stl::size_t pos, stl::size_t off) noexcept {
             const bool testoff = off < size - pos;
             return testoff ? off : size - pos;
         }
@@ -85,8 +86,8 @@ namespace webpp {
 
 
         template <typename T>
-        inline bool is_null_pointer(T* __ptr) noexcept {
-            return __ptr == 0;
+        inline bool is_null_pointer(T* ptr) noexcept {
+            return ptr == 0;
         }
 
         template <typename T>
@@ -121,7 +122,7 @@ namespace webpp {
         template <typename AllocT>
         struct is_allocator<
           AllocT,
-          stl::void_t<typename AllocT::value_type, decltype(std::declval<AllocT&>().allocate(size_t{}))>>
+          stl::void_t<typename AllocT::value_type, decltype(std::declval<AllocT&>().allocate(stl::size_t{}))>>
           : stl::true_type {};
 
         template <typename AllocT>
@@ -226,7 +227,7 @@ namespace webpp {
         // todo: I need to think if we need a "size" field as well or not!
         pointer                              data_start;
         pointer                              data_end;
-        length_container                     string_lenngth;
+        length_container                     string_length;
         [[no_unique_address]] allocator_type alloc;
 
         static constexpr auto local_capacity = 15 / sizeof(value_type);
@@ -327,7 +328,10 @@ namespace webpp {
         }
 
         void length(size_type length) noexcept {
-            string_length = length;
+            if constexpr (has_length) {
+                string_length.length = length;
+            }
+            data_end = data_start + length;
         }
 
         pointer local_data() {
@@ -432,10 +436,9 @@ namespace webpp {
         void construct(FwdIterator beg, FwdIterator end, stl::forward_iterator_tag) {
             // NB: Not required, but considered best practice.
             if (details::is_null_pointer(beg) && beg != end)
-                std::throw_logic_error(N("ustring::"
-                                         "construct null not valid"));
+                throw std::logic_error("ustring::construct null not valid");
 
-            size_type dnew = static_cast<size_type>(std::distance(beg, end));
+            auto dnew = static_cast<size_type>(std::distance(beg, end));
 
             if (dnew > size_type(local_capacity)) {
                 data(create(dnew, size_type(0)));
@@ -453,7 +456,7 @@ namespace webpp {
             set_length(dnew);
         }
 
-        void construct(size_type req, value_type n) {
+        void construct(size_type n, value_type c) {
             if (n > size_type(local_capacity)) {
                 data(create(n, size_type(0)));
                 capacity(n);
@@ -491,17 +494,17 @@ namespace webpp {
 
         size_type check(size_type pos, const char* s) const {
             if (pos > this->size())
-                throw_out_of_range_fmt(N("%s: pos (which is %zu) > "
-                                         "this->size() (which is %zu)"),
-                                       s,
-                                       pos,
-                                       this->size());
+                throw stl::out_of_range(stl::format("%s: pos (which is %zu) > "
+                                                    "this->size() (which is %zu)",
+                                                    s,
+                                                    pos,
+                                                    this->size()));
             return pos;
         }
 
         void check_length(size_type n1, size_type n2, const char* s) const {
             if (this->max_size() - (this->size() - n1) < n2)
-                throw_length_error(N(s));
+                throw stl::length_error(s);
         }
 
 
@@ -1059,7 +1062,7 @@ namespace webpp {
         ///  null-termination.
         [[nodiscard]] size_type size() const noexcept {
             if constexpr (has_length) {
-                return string_lenngth.length;
+                return string_length.length;
             } else {
                 return data_end - data_start;
             }
@@ -1229,11 +1232,11 @@ namespace webpp {
          */
         [[nodiscard]] const_reference at(size_type n) const {
             if (n >= this->size())
-                throw_out_of_range_fmt(N("ustring::at: n "
-                                         "(which is %zu) >= this->size() "
-                                         "(which is %zu)"),
-                                       n,
-                                       this->size());
+                throw stl::out_of_range(stl::format("ustring::at: n "
+                                                    "(which is %zu) >= this->size() "
+                                                    "(which is %zu)",
+                                                    n,
+                                                    this->size()));
             return data()[n];
         }
 
@@ -1249,11 +1252,11 @@ namespace webpp {
          */
         reference at(size_type n) {
             if (n >= size())
-                throw_out_of_range_fmt(N("ustring::at: n "
-                                         "(which is %zu) >= this->size() "
-                                         "(which is %zu)"),
-                                       n,
-                                       this->size());
+                throw stl::out_of_range(stl::format("ustring::at: n "
+                                                    "(which is %zu) >= this->size() "
+                                                    "(which is %zu)",
+                                                    n,
+                                                    this->size()));
             return data()[n];
         }
 
@@ -3784,7 +3787,7 @@ namespace webpp {
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 83.  String::npos vs. string::max_size()
         if (capacity > max_size())
-            std::throw_length_error(N("ustring::create"));
+            throw stl::length_error("ustring::create");
 
         // The below implements an exponential growth policy, necessary to
         // meet amortized linear time requirements of the library: see
@@ -3868,13 +3871,13 @@ namespace webpp {
             try {
                 // Avoid reallocation for common case.
                 str.erase();
-                CharT             buf[128];
-                size_type         len = 0;
-                const streamsize  w   = in.width();
-                const size_type   n   = w > 0 ? static_cast<size_type>(w) : str.max_size();
-                const ctype_type& ct  = use_facet<ctype_type>(in.getloc());
-                const int_type    eof = TraitsT::eof();
-                int_type          c   = in.rdbuf()->sgetc();
+                CharT                 buf[128];
+                size_type             len = 0;
+                const stl::streamsize w   = in.width();
+                const size_type       n   = w > 0 ? static_cast<size_type>(w) : str.max_size();
+                const ctype_type&     ct  = use_facet<ctype_type>(in.getloc());
+                const int_type        eof = TraitsT::eof();
+                int_type              c   = in.rdbuf()->sgetc();
 
                 while (extracted < n && !TraitsT::eq_int_type(c, eof) &&
                        !ct.is(ctype_base::space, TraitsT::to_char_type(c))) {
