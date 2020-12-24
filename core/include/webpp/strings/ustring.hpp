@@ -478,19 +478,6 @@ namespace webpp {
         }
 
       private:
-#ifdef _GLIBCXX_DISAMBIGUATE_REPLACE_INST
-        // The explicit instantiations in misc-inst.cc require this due to
-        // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=64063
-        template <typename T,
-                  bool _Requires = !are_same<T, value_type*>::value &&
-                                   !are_same<T, const value_type*>::value && !are_same<T, iterator>::value &&
-                                   !are_same<T, const_iterator>::value>
-        struct enable_if_not_native_iterator {
-            typedef ustring& type;
-        };
-        template <typename T>
-        struct enable_if_not_native_iterator<T, false> {};
-#endif
 
         size_type check(size_type pos, const char* s) const {
             if (pos > this->size())
@@ -2118,17 +2105,6 @@ namespace webpp {
             _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
             glibcxx_requires_valid_range(k1, k2);
             return this->replace_dispatch(i1, i2, k1, k2, stl::false_type());
-        }
-#ifdef _GLIBCXX_DISAMBIGUATE_REPLACE_INST
-        typename enable_if_not_native_iterator<InputIterator>::type
-#else
-        ustring&
-#endif
-        replace(iterator i1, iterator i2, InputIterator k1, InputIterator k2) {
-            _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
-            glibcxx_requires_valid_range(k1, k2);
-            using integral_type = stl::is_integer_t<InputIterator>;
-            return replace_dispatch(i1, i2, k1, k2, Integral());
         }
 
         // Specializations for the common case of pointer and iterator:
