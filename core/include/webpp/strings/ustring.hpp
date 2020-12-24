@@ -1,24 +1,24 @@
 // Created by moisrex on 12/21/20.
 
 #ifndef WEBPP_USTRING_HPP
-#    define WEBPP_USTRING_HPP
+#define WEBPP_USTRING_HPP
 
-#    include "../std/string.hpp"
-#    include "../std/string_view.hpp"
-#    include "unicode_char_traits.hpp"
-#    include "ustring_iterator.hpp"
+#include "../std/string.hpp"
+#include "../std/string_view.hpp"
+#include "unicode_char_traits.hpp"
+#include "ustring_iterator.hpp"
 
-#    include <memory_resource>
+#include <memory_resource>
 
 // testing area: http://localhost:10240/z/z39ErG
 
 namespace webpp {
 
-#    ifdef CHAR_BIT
+#ifdef CHAR_BIT
     static constexpr unsigned char_bits = CHAR_BIT;
-#    else
+#else
     static constexpr unsigned char_bits = 8;
-#    endif
+#endif
 
     namespace details {
 
@@ -232,7 +232,7 @@ namespace webpp {
         // todo: I need to think if we need a "size" field as well or not!
         pointer                              data_start;
         pointer                              data_end;
-        length_container                     len;
+        length_container                     string_lenngth;
         [[no_unique_address]] allocator_type alloc;
 
         static constexpr auto local_capacity = 15 / sizeof(value_type);
@@ -402,13 +402,68 @@ namespace webpp {
         }
 
         // For Input Iterators, used in istreambuf_iterators, etc.
+        // NB: This is the special case for Input Iterators, used in
+        // istreambuf_iterators, etc.
+        // Input Iterators have a cost structure very different from
+        // pointers, calling for a different coding style.
         template <typename InIterator>
-        void construct(InIterator beg, InIterator end, stl::input_iterator_tag);
+        void construct(InIterator beg, InIterator end, stl::input_iterator_tag) {
+            size_type len      = 0;
+            size_type capacity = size_type(local_capacity);
+
+            while (beg != end && len < capacity) {
+                data()[len++] = *beg;
+                ++beg;
+            }
+
+            try {
+                while (beg != end) {
+                    if (len == capacity) {
+                        // Allocate more space.
+                        capacity        = len + 1;
+                        pointer another = create(capacity, len);
+                        this->copy(another, data(), len);
+                        dispose();
+                        data(another);
+                        capacity(capacity);
+                    }
+                    data()[len++] = *beg;
+                    ++beg;
+                }
+            } catch (...) {
+                dispose();
+                throw;
+            }
+
+            set_length(len);
+        }
 
         // For forward_iterators up to random_access_iterators, used for
         // string::iterator, value_type*, etc.
         template <typename FwdIterator>
-        void construct(FwdIterator beg, FwdIterator end, stl::forward_iterator_tag);
+        void construct(FwdIterator beg, FwdIterator end, stl::forward_iterator_tag) {
+            // NB: Not required, but considered best practice.
+            if (details::is_null_pointer(beg) && beg != end)
+                std::throw_logic_error(N("ustring::"
+                                         "construct null not valid"));
+
+            size_type dnew = static_cast<size_type>(std::distance(beg, end));
+
+            if (dnew > size_type(local_capacity)) {
+                data(create(dnew, size_type(0)));
+                capacity(dnew);
+            }
+
+            // Check for out_of_range and length_error exceptions.
+            try {
+                this->copy_chars(data(), beg, end);
+            } catch (...) {
+                dispose();
+                throw;
+            }
+
+            set_length(dnew);
+        }
 
         void construct(size_type req, value_type c);
 
@@ -416,12 +471,12 @@ namespace webpp {
             return alloc;
         }
 
-        const allocator_type& private_get_allocator() const {
+        [[nodiscard]] const allocator_type& private_get_allocator() const {
             return alloc;
         }
 
       private:
-#    ifdef _GLIBCXX_DISAMBIGUATE_REPLACE_INST
+#ifdef _GLIBCXX_DISAMBIGUATE_REPLACE_INST
         // The explicit instantiations in misc-inst.cc require this due to
         // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=64063
         template <typename T,
@@ -433,7 +488,7 @@ namespace webpp {
         };
         template <typename T>
         struct enable_if_not_native_iterator<T, false> {};
-#    endif
+#endif
 
         size_type check(size_type pos, const char* s) const {
             if (pos > this->size())
@@ -452,7 +507,7 @@ namespace webpp {
 
 
         // NB: limit doesn't check for a bad pos value.
-        size_type limit(size_type pos, size_type off) const noexcept {
+        [[nodiscard]] size_type limit(size_type pos, size_type off) const noexcept {
             const bool testoff = off < this->size() - pos;
             return testoff ? off : this->size() - pos;
         }
@@ -488,8 +543,8 @@ namespace webpp {
 
         // copy_chars is a separate template to permit specialization
         // to optimize for the common case of pointers as iterators.
-        template <class _Iterator>
-        static void copy_chars(value_type* p, _Iterator k1, _Iterator k2) {
+        template <class IteratorT>
+        static void copy_chars(value_type* p, IteratorT k1, IteratorT k2) {
             for (; k1 != k2; ++k1, (void) ++p)
                 traits_type::assign(*p, *k1); // These types are off.
         }
@@ -521,11 +576,54 @@ namespace webpp {
                 return int(d);
         }
 
-        void assign(const ustring&);
+        void private_assign(const ustring& str) {
+            if (this != &str) {
+                const size_type rsize    = str.length();
+                const size_type capacity = capacity();
 
-        void mutate(size_type pos, size_type len1, const value_type* s, size_type len2);
+                if (rsize > capacity) {
+                    size_type new_capacity = rsize;
+                    pointer   tmp          = create(new_capacity, capacity);
+                    dispose();
+                    data(tmp);
+                    capacity(new_capacity);
+                }
 
-        void erase(size_type pos, size_type n);
+                if (rsize)
+                    this->copy(data(), str.data(), rsize);
+
+                set_length(rsize);
+            }
+        }
+
+
+        void mutate(size_type pos, size_type len1, const value_type* s, size_type len2) {
+            const size_type how_much = length() - pos - len1;
+
+            size_type new_capacity = length() + len2 - len1;
+            pointer   r            = create(new_capacity, capacity());
+
+            if (pos)
+                this->copy(r, data(), pos);
+            if (s && len2)
+                this->copy(r + pos, s, len2);
+            if (how_much)
+                this->copy(r + pos + len2, data() + pos + len1, how_much);
+
+            dispose();
+            data(r);
+            capacity(new_capacity);
+        }
+
+
+        void private_erase(size_type pos, size_type n) {
+            const size_type how_much = length() - pos - n;
+
+            if (how_much && n)
+                this->move(data() + pos, data() + pos + n, how_much);
+
+            set_length(length() - n);
+        }
 
 
 
@@ -621,11 +719,9 @@ namespace webpp {
          *  @param  s  Source C string.
          *  @param  a  Allocator to use (default is default allocator).
          */
-#    if cpp_deduction_guides && !defined _GLIBCXX_DEFINING_STRING_INSTANTIATIONS
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 3076. ustring CTAD ambiguity
         template <typename = details::RequireAllocator<allocator_type>>
-#    endif
         ustring(const value_type* s, const allocator_type& a = allocator_type())
           : data_start(local_data()),
             alloc(a) {
@@ -638,11 +734,9 @@ namespace webpp {
          *  @param  c  Character to use.
          *  @param  a  Allocator to use (default is default allocator).
          */
-#    if cpp_deduction_guides && !defined _GLIBCXX_DEFINING_STRING_INSTANTIATIONS
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 3076. ustring CTAD ambiguity
         template <typename = details::RequireAllocator<allocator_type>>
-#    endif
         ustring(size_type n, value_type c, const allocator_type& a = allocator_type())
           : data_start(local_data()),
             alloc(a) {
@@ -870,7 +964,7 @@ namespace webpp {
          *  Returns a read-only (constant) iterator that points to the first
          *  character in the %string.
          */
-        const_iterator begin() const noexcept {
+        [[nodiscard]] const_iterator begin() const noexcept {
             return const_iterator(data());
         }
 
@@ -886,7 +980,7 @@ namespace webpp {
          *  Returns a read-only (constant) iterator that points one past the
          *  last character in the %string.
          */
-        const_iterator end() const noexcept {
+        [[nodiscard]] const_iterator end() const noexcept {
             return const_iterator(data() + this->size());
         }
 
@@ -904,7 +998,7 @@ namespace webpp {
          *  to the last character in the %string.  Iteration is done in
          *  reverse element order.
          */
-        const_reverse_iterator rbegin() const noexcept {
+        [[nodiscard]] const_reverse_iterator rbegin() const noexcept {
             return const_reverse_iterator(this->end());
         }
 
@@ -922,7 +1016,7 @@ namespace webpp {
          *  to one before the first character in the %string.  Iteration
          *  is done in reverse element order.
          */
-        const_reverse_iterator rend() const noexcept {
+        [[nodiscard]] const_reverse_iterator rend() const noexcept {
             return const_reverse_iterator(this->begin());
         }
 
@@ -930,7 +1024,7 @@ namespace webpp {
          *  Returns a read-only (constant) iterator that points to the first
          *  character in the %string.
          */
-        const_iterator cbegin() const noexcept {
+        [[nodiscard]] const_iterator cbegin() const noexcept {
             return const_iterator(this->data());
         }
 
@@ -938,7 +1032,7 @@ namespace webpp {
          *  Returns a read-only (constant) iterator that points one past the
          *  last character in the %string.
          */
-        const_iterator cend() const noexcept {
+        [[nodiscard]] const_iterator cend() const noexcept {
             return const_iterator(this->data() + this->size());
         }
 
@@ -947,7 +1041,7 @@ namespace webpp {
          *  to the last character in the %string.  Iteration is done in
          *  reverse element order.
          */
-        const_reverse_iterator crbegin() const noexcept {
+        [[nodiscard]] const_reverse_iterator crbegin() const noexcept {
             return const_reverse_iterator(this->end());
         }
 
@@ -956,7 +1050,7 @@ namespace webpp {
          *  to one before the first character in the %string.  Iteration
          *  is done in reverse element order.
          */
-        const_reverse_iterator crend() const noexcept {
+        [[nodiscard]] const_reverse_iterator crend() const noexcept {
             return const_reverse_iterator(this->begin());
         }
 
@@ -964,18 +1058,22 @@ namespace webpp {
         // Capacity:
         ///  Returns the number of characters in the string, not including any
         ///  null-termination.
-        size_type size() const noexcept {
-            return string_length;
+        [[nodiscard]] size_type size() const noexcept {
+            if constexpr (has_length) {
+                return string_lenngth.length;
+            } else {
+                return data_end - data_start;
+            }
         }
 
         ///  Returns the number of characters in the string, not including any
         ///  null-termination.
-        size_type length() const noexcept {
-            return string_length;
+        [[nodiscard]] size_type length() const noexcept {
+            return size();
         }
 
         ///  Returns the size() of the largest possible %string.
-        size_type max_size() const noexcept {
+        [[nodiscard]] size_type max_size() const noexcept {
             return (alloc_traits::max_size(private_get_allocator()) - 1) / 2;
         }
 
@@ -989,7 +1087,14 @@ namespace webpp {
          *  %string's current size the %string is truncated, otherwise
          *  the %string is extended and new elements are %set to @a c.
          */
-        void resize(size_type n, value_type c);
+        void resize(size_type n, value_type c) {
+            const size_type size = this->size();
+            if (size < n)
+                this->append(n - size, c);
+            else if (n < size)
+                this->set_length(n);
+        }
+
 
         /**
          *  @brief  Resizes the %string to the specified number of characters.
@@ -1007,20 +1112,20 @@ namespace webpp {
 
         ///  A non-binding request to reduce capacity() to size().
         void shrink_to_fit() noexcept {
-#    if cpp_exceptions
+#if cpp_exceptions
             if (capacity() > size()) {
                 try {
                     reserve(0);
                 } catch (...) {}
             }
-#    endif
+#endif
         }
 
         /**
          *  Returns the total number of characters that the %string can hold
          *  before needing to allocate more memory.
          */
-        size_type capacity() const noexcept {
+        [[nodiscard]] size_type capacity() const noexcept {
             return is_local() ? size_type(local_capacity) : allocated_capacity;
         }
 
@@ -1041,7 +1146,27 @@ namespace webpp {
          *  prevent a possible reallocation of memory and copying of %string
          *  data.
          */
-        void reserve(size_type res_arg = 0);
+        void reserve(size_type res = 0) {
+            // Make sure we don't shrink below the current size.
+            if (res < length())
+                res = length();
+
+            const size_type capacity = capacity();
+            if (res != capacity) {
+                if (res > capacity || res > size_type(local_capacity)) {
+                    pointer tmp = create(res, capacity);
+                    this->copy(tmp, data(), length() + 1);
+                    dispose();
+                    data(tmp);
+                    capacity(res);
+                } else if (!is_local()) {
+                    this->copy(local_data(), data(), length() + 1);
+                    destroy(capacity);
+                    data(local_data());
+                }
+            }
+        }
+
 
         /**
          *  Erases the string, making it empty.
@@ -1103,7 +1228,7 @@ namespace webpp {
          *  first checked that it is in the range of the string.  The function
          *  throws out_of_range if the check fails.
          */
-        const_reference at(size_type n) const {
+        [[nodiscard]] const_reference at(size_type n) const {
             if (n >= this->size())
                 throw_out_of_range_fmt(N("ustring::at: n "
                                          "(which is %zu) >= this->size() "
@@ -1146,7 +1271,7 @@ namespace webpp {
          *  Returns a read-only (constant) reference to the data at the first
          *  element of the %string.
          */
-        const_reference front() const noexcept {
+        [[nodiscard]] const_reference front() const noexcept {
             assert(!empty());
             return operator[](0);
         }
@@ -1164,7 +1289,7 @@ namespace webpp {
          *  Returns a read-only (constant) reference to the data at the
          *  last element of the %string.
          */
-        const_reference back() const noexcept {
+        [[nodiscard]] const_reference back() const noexcept {
             assert(!empty());
             return operator[](this->size() - 1);
         }
@@ -1369,7 +1494,7 @@ namespace webpp {
                 }
                 details::alloc_on_copy(private_get_allocator(), str.private_get_allocator());
             }
-            this->assign(str);
+            this->private_assign(str);
             return *this;
         }
 
@@ -1734,7 +1859,7 @@ namespace webpp {
             if (n == npos)
                 this->set_length(pos);
             else if (n != 0)
-                this->erase(pos, limit(pos, n));
+                this->private_erase(pos, limit(pos, n));
             return *this;
         }
 
@@ -1749,7 +1874,7 @@ namespace webpp {
         iterator erase(const_iterator position) {
             _GLIBCXX_DEBUG_PEDASSERT(position >= begin() && position < end());
             const size_type pos = position - begin();
-            this->erase(pos, size_type(1));
+            this->private_erase(pos, size_type(1));
             return iterator(data() + pos);
         }
 
@@ -1768,7 +1893,7 @@ namespace webpp {
             if (last == end())
                 this->set_length(pos);
             else
-                this->erase(pos, last - first);
+                this->private_erase(pos, last - first);
             return iterator(this->data() + pos);
         }
 
@@ -1779,7 +1904,7 @@ namespace webpp {
          */
         void pop_back() noexcept {
             assert(!empty());
-            erase(size() - 1, 1);
+            private_erase(size() - 1, 1);
         }
 
         /**
@@ -1992,11 +2117,11 @@ namespace webpp {
             glibcxx_requires_valid_range(k1, k2);
             return this->replace_dispatch(i1, i2, k1, k2, stl::false_type());
         }
-#    ifdef _GLIBCXX_DISAMBIGUATE_REPLACE_INST
+#ifdef _GLIBCXX_DISAMBIGUATE_REPLACE_INST
         typename enable_if_not_native_iterator<InputIterator>::type
-#    else
+#else
         ustring&
-#    endif
+#endif
         replace(iterator i1, iterator i2, InputIterator k1, InputIterator k2) {
             _GLIBCXX_DEBUG_PEDASSERT(begin() <= i1 && i1 <= i2 && i2 <= end());
             glibcxx_requires_valid_range(k1, k2);
@@ -2109,9 +2234,36 @@ namespace webpp {
                                   const_iterator i2,
                                   InputIterator  k1,
                                   InputIterator  k2,
-                                  stl::false_type);
+                                  stl::false_type) {
+            // _GLIBCXX_RESOLVE_LIB_DEFECTS
+            // 2788. unintentionally require a default constructible allocator
+            const ustring   s(k1, k2, this->private_get_allocator());
+            const size_type n1 = i2 - i1;
+            return replace(i1 - begin(), n1, s.data(), s.size());
+        }
 
-        ustring& replace_aux(size_type pos1, size_type n1, size_type n2, value_type c);
+        ustring& replace_aux(size_type pos1, size_type n1, size_type n2, value_type c) {
+            check_length(n1, n2, "ustring::replace_aux");
+
+            const size_type old_size = this->size();
+            const size_type new_size = old_size + n2 - n1;
+
+            if (new_size <= this->capacity()) {
+                pointer p = this->data() + pos1;
+
+                const size_type how_much = old_size - pos1 - n1;
+                if (how_much && n1 != n2)
+                    this->move(p + n2, p + n1, how_much);
+            } else
+                this->mutate(pos1, n1, 0, n2);
+
+            if (n2)
+                this->assign(this->data() + pos1, n2, c);
+
+            this->set_length(new_size);
+            return *this;
+        }
+
 
         ustring& replace(size_type pos, size_type len1, const value_type* s, const size_type len2);
 
@@ -2193,7 +2345,35 @@ namespace webpp {
          *  returns the index where it begins.  If not found, returns
          *  npos.
          */
-        size_type find(const value_type* s, size_type pos, size_type n) const noexcept;
+        [[nodiscard]] size_type find(const value_type* s, size_type pos, size_type n) const noexcept {
+            glibcxx_requires_string_len(s, n);
+            const size_type size = this->size();
+
+            if (n == 0)
+                return pos <= size ? pos : npos;
+            if (pos >= size)
+                return npos;
+
+            const value_type        elem0 = s[0];
+            const value_type* const data  = data();
+            const value_type*       first = data + pos;
+            const value_type* const last  = data + size;
+            size_type               len   = size - pos;
+
+            while (len >= n) {
+                // Find the first occurrence of elem0:
+                first = traits_type::find(first, len - n + 1, elem0);
+                if (!first)
+                    return npos;
+                // Compare the full strings from the first occurrence of elem0.
+                // We already know that first[0] == s[0] but compare them again
+                // anyway because s is probably aligned, which helps memcmp.
+                if (traits_type::compare(first, s, n) == 0)
+                    return first - data;
+                len = last - ++first;
+            }
+            return npos;
+        }
 
         /**
          *  @brief  Find position of a string.
@@ -2205,7 +2385,7 @@ namespace webpp {
          *  this string.  If found, returns the index where it begins.  If not
          *  found, returns npos.
          */
-        size_type find(const ustring& str, size_type pos = 0) const noexcept {
+        [[nodiscard]] size_type find(const ustring& str, size_type pos = 0) const noexcept {
             return this->find(str.data(), pos, str.size());
         }
 
@@ -2247,7 +2427,19 @@ namespace webpp {
          *  this string.  If found, returns the index where it was
          *  found.  If not found, returns npos.
          */
-        size_type find(value_type c, size_type pos = 0) const noexcept;
+        [[nodiscard]] size_type find(value_type c, size_type pos = 0) const noexcept {
+            size_type       ret  = npos;
+            const size_type size = this->size();
+            if (pos < size) {
+                const value_type* data = data();
+                const size_type   n    = size - pos;
+                const value_type* p    = traits_type::find(data + pos, n, c);
+                if (p)
+                    ret = p - data;
+            }
+            return ret;
+        }
+
 
         /**
          *  @brief  Find last position of a string.
@@ -2259,7 +2451,7 @@ namespace webpp {
          *  str within this string.  If found, returns the index where
          *  it begins.  If not found, returns npos.
          */
-        size_type rfind(const ustring& str, size_type pos = npos) const noexcept {
+        [[nodiscard]] size_type rfind(const ustring& str, size_type pos = npos) const noexcept {
             return this->rfind(str.data(), pos, str.size());
         }
 
@@ -2288,7 +2480,20 @@ namespace webpp {
          *  returns the index where it begins.  If not found, returns
          *  npos.
          */
-        size_type rfind(const value_type* s, size_type pos, size_type n) const noexcept;
+        [[nodiscard]] size_type rfind(const value_type* s, size_type pos, size_type n) const noexcept {
+            glibcxx_requires_string_len(s, n);
+            const size_type size = this->size();
+            if (n <= size) {
+                pos               = std::min(size_type(size - n), pos);
+                const CharT* data = data();
+                do {
+                    if (traits_type::compare(data + pos, s, n) == 0)
+                        return pos;
+                } while (pos-- > 0);
+            }
+            return npos;
+        }
+
 
         /**
          *  @brief  Find last position of a C string.
@@ -2315,7 +2520,18 @@ namespace webpp {
          *  this string.  If found, returns the index where it was
          *  found.  If not found, returns npos.
          */
-        size_type rfind(value_type c, size_type pos = npos) const noexcept;
+        [[nodiscard]] size_type rfind(value_type c, size_type pos = npos) const noexcept {
+            size_type size = this->size();
+            if (size) {
+                if (--size > pos)
+                    size = pos;
+                for (++size; size-- > 0;)
+                    if (traits_type::eq(data()[size], c))
+                        return size;
+            }
+            return npos;
+        }
+
 
         /**
          *  @brief  Find position of a character of string.
@@ -2328,7 +2544,7 @@ namespace webpp {
          *  returns the index where it was found.  If not found, returns
          *  npos.
          */
-        size_type find_first_of(const ustring& str, size_type pos = 0) const noexcept {
+        [[nodiscard]] size_type find_first_of(const ustring& str, size_type pos = 0) const noexcept {
             return this->find_first_of(str.data(), pos, str.size());
         }
 
@@ -2359,7 +2575,17 @@ namespace webpp {
          *  found, returns the index where it was found.  If not found,
          *  returns npos.
          */
-        size_type find_first_of(const value_type* s, size_type pos, size_type n) const noexcept;
+        [[nodiscard]] size_type
+        find_first_of(const value_type* s, size_type pos, size_type n) const noexcept {
+            glibcxx_requires_string_len(s, n);
+            for (; n && pos < this->size(); ++pos) {
+                const value_type* p = traits_type::find(s, n, data()[pos]);
+                if (p)
+                    return pos;
+            }
+            return npos;
+        }
+
 
         /**
          *  @brief  Find position of a character of C string.
@@ -2388,7 +2614,7 @@ namespace webpp {
          *
          *  Note: equivalent to find(c, pos).
          */
-        size_type find_first_of(value_type c, size_type pos = 0) const noexcept {
+        [[nodiscard]] size_type find_first_of(value_type c, size_type pos = 0) const noexcept {
             return this->find(c, pos);
         }
 
@@ -2403,7 +2629,7 @@ namespace webpp {
          *  returns the index where it was found.  If not found, returns
          *  npos.
          */
-        size_type find_last_of(const ustring& str, size_type pos = npos) const noexcept {
+        [[nodiscard]] size_type find_last_of(const ustring& str, size_type pos = npos) const noexcept {
             return this->find_last_of(str.data(), pos, str.size());
         }
 
@@ -2434,7 +2660,20 @@ namespace webpp {
          *  found, returns the index where it was found.  If not found,
          *  returns npos.
          */
-        size_type find_last_of(const value_type* s, size_type pos, size_type n) const noexcept;
+        size_type find_last_of(const value_type* s, size_type pos, size_type n) const noexcept {
+            glibcxx_requires_string_len(s, n);
+            size_type size = this->size();
+            if (size && n) {
+                if (--size > pos)
+                    size = pos;
+                do {
+                    if (traits_type::find(s, n, data()[size]))
+                        return size;
+                } while (size-- != 0);
+            }
+            return npos;
+        }
+
 
         /**
          *  @brief  Find last position of a character of C string.
@@ -2463,7 +2702,7 @@ namespace webpp {
          *
          *  Note: equivalent to rfind(c, pos).
          */
-        size_type find_last_of(value_type c, size_type pos = npos) const noexcept {
+        [[nodiscard]] size_type find_last_of(value_type c, size_type pos = npos) const noexcept {
             return this->rfind(c, pos);
         }
 
@@ -2477,7 +2716,7 @@ namespace webpp {
          *  in @a str within this string.  If found, returns the index where it
          *  was found.  If not found, returns npos.
          */
-        size_type find_first_not_of(const ustring& str, size_type pos = 0) const noexcept {
+        [[nodiscard]] size_type find_first_not_of(const ustring& str, size_type pos = 0) const noexcept {
             return this->find_first_not_of(str.data(), pos, str.size());
         }
 
@@ -2508,7 +2747,15 @@ namespace webpp {
          *  this string.  If found, returns the index where it was
          *  found.  If not found, returns npos.
          */
-        size_type find_first_not_of(const value_type* s, size_type pos, size_type n) const noexcept;
+        [[nodiscard]] size_type
+        find_first_not_of(const value_type* s, size_type pos, size_type n) const noexcept {
+            glibcxx_requires_string_len(s, n);
+            for (; pos < this->size(); ++pos)
+                if (!traits_type::find(s, n, data()[pos]))
+                    return pos;
+            return npos;
+        }
+
 
         /**
          *  @brief  Find position of a character not in C string.
@@ -2520,7 +2767,7 @@ namespace webpp {
          *  contained in @a s within this string.  If found, returns
          *  the index where it was found.  If not found, returns npos.
          */
-        size_type find_first_not_of(const value_type* s, size_type pos = 0) const noexcept {
+        [[nodiscard]] size_type find_first_not_of(const value_type* s, size_type pos = 0) const noexcept {
             glibcxx_requires_string(s);
             return this->find_first_not_of(s, pos, traits_type::length(s));
         }
@@ -2535,7 +2782,13 @@ namespace webpp {
          *  other than @a c within this string.  If found, returns the
          *  index where it was found.  If not found, returns npos.
          */
-        size_type find_first_not_of(value_type c, size_type pos = 0) const noexcept;
+        [[nodiscard]] size_type find_first_not_of(value_type c, size_type pos = 0) const noexcept {
+            for (; pos < this->size(); ++pos)
+                if (!traits_type::eq(data()[pos], c))
+                    return pos;
+            return npos;
+        }
+
 
         /**
          *  @brief  Find last position of a character not in string.
@@ -2548,7 +2801,7 @@ namespace webpp {
          *  returns the index where it was found.  If not found, returns
          *  npos.
          */
-        size_type find_last_not_of(const ustring& str, size_type pos = npos) const noexcept {
+        [[nodiscard]] size_type find_last_not_of(const ustring& str, size_type pos = npos) const noexcept {
             return this->find_last_not_of(str.data(), pos, str.size());
         }
 
@@ -2579,7 +2832,21 @@ namespace webpp {
          *  If found, returns the index where it was found.  If not found,
          *  returns npos.
          */
-        size_type find_last_not_of(const value_type* s, size_type pos, size_type n) const noexcept;
+        [[nodiscard]] size_type
+        find_last_not_of(const value_type* s, size_type pos, size_type n) const noexcept {
+            glibcxx_requires_string_len(s, n);
+            size_type size = this->size();
+            if (size) {
+                if (--size > pos)
+                    size = pos;
+                do {
+                    if (!traits_type::find(s, n, data()[size]))
+                        return size;
+                } while (size--);
+            }
+            return npos;
+        }
+
         /**
          *  @brief  Find last position of a character not in C string.
          *  @param s  C string containing characters to avoid.
@@ -2591,7 +2858,7 @@ namespace webpp {
          *  returns the index where it was found.  If not found, returns
          *  npos.
          */
-        size_type find_last_not_of(const value_type* s, size_type pos = npos) const noexcept {
+        [[nodiscard]] size_type find_last_not_of(const value_type* s, size_type pos = npos) const noexcept {
             glibcxx_requires_string(s);
             return this->find_last_not_of(s, pos, traits_type::length(s));
         }
@@ -2606,7 +2873,19 @@ namespace webpp {
          *  @a c within this string.  If found, returns the index where it was
          *  found.  If not found, returns npos.
          */
-        size_type find_last_not_of(value_type c, size_type pos = npos) const noexcept;
+        [[nodiscard]] size_type find_last_not_of(value_type c, size_type pos = npos) const noexcept {
+            size_type size = this->size();
+            if (size) {
+                if (--size > pos)
+                    size = pos;
+                do {
+                    if (!traits_type::eq(data()[size], c))
+                        return size;
+                } while (size--);
+            }
+            return npos;
+        }
+
 
         /**
          *  @brief  Get a substring.
@@ -2620,7 +2899,7 @@ namespace webpp {
          *  short, use the remainder of the characters.  If @a pos is
          *  beyond the end of the string, out_of_range is thrown.
          */
-        ustring substr(size_type pos = 0, size_type n = npos) const {
+        [[nodiscard]] ustring substr(size_type pos = 0, size_type n = npos) const {
             return ustring(*this, check(pos, "ustring::substr"), n);
         }
 
@@ -2638,7 +2917,7 @@ namespace webpp {
          *  If the result of the comparison is nonzero returns it,
          *  otherwise the shorter one is ordered first.
          */
-        int compare(const ustring& str) const {
+        [[nodiscard]] int compare(const ustring& str) const {
             const size_type size  = this->size();
             const size_type osize = str.size();
             const size_type len   = stl::min(size, osize);
@@ -2723,7 +3002,17 @@ namespace webpp {
          *  result of the comparison is nonzero returns it, otherwise
          *  the shorter one is ordered first.
          */
-        int compare(size_type pos, size_type n, const ustring& str) const;
+        [[nodiscard]] int compare(size_type pos, size_type n, const ustring& str) const {
+            check(pos, "ustring::compare");
+            n                     = limit(pos, n);
+            const size_type osize = str.size();
+            const size_type len   = std::min(n, osize);
+            int             r     = traits_type::compare(data() + pos, str.data(), len);
+            if (!r)
+                r = compare(n, osize);
+            return r;
+        }
+
 
         /**
          *  @brief  Compare substring to a substring.
@@ -2748,8 +3037,19 @@ namespace webpp {
          *  If the result of the comparison is nonzero returns it,
          *  otherwise the shorter one is ordered first.
          */
-        int
-        compare(size_type pos1, size_type n1, const ustring& str, size_type pos2, size_type n2 = npos) const;
+        [[nodiscard]] int
+        compare(size_type pos1, size_type n1, const ustring& str, size_type pos2, size_type n2 = npos) const {
+            check(pos1, "ustring::compare");
+            str.check(pos2, "ustring::compare");
+            n1                  = limit(pos1, n1);
+            n2                  = str.limit(pos2, n2);
+            const size_type len = std::min(n1, n2);
+            int             r   = traits_type::compare(data() + pos1, str.data() + pos2, len);
+            if (!r)
+                r = compare(n1, n2);
+            return r;
+        }
+
 
         /**
          *  @brief  Compare to a C string.
@@ -2765,7 +3065,17 @@ namespace webpp {
          *  comparison is nonzero returns it, otherwise the shorter one is
          *  ordered first.
          */
-        int compare(const value_type* s) const noexcept;
+        [[nodiscard]] int compare(const value_type* s) const noexcept {
+            glibcxx_requires_string(s);
+            const size_type size  = this->size();
+            const size_type osize = traits_type::length(s);
+            const size_type len   = std::min(size, osize);
+            int             r     = traits_type::compare(data(), s, len);
+            if (!r)
+                r = compare(size, osize);
+            return r;
+        }
+
 
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 5 String::compare specification questionable
@@ -2788,7 +3098,18 @@ namespace webpp {
          *  the comparison is nonzero returns it, otherwise the shorter
          *  one is ordered first.
          */
-        int compare(size_type pos, size_type n1, const value_type* s) const;
+        [[nodiscard]] int compare(size_type pos, size_type n1, const value_type* s) const {
+            glibcxx_requires_string(s);
+            check(pos, "ustring::compare");
+            n1                    = limit(pos, n1);
+            const size_type osize = traits_type::length(s);
+            const size_type len   = std::min(n1, osize);
+            int             r     = traits_type::compare(data() + pos, s, len);
+            if (!r)
+                r = compare(n1, osize);
+            return r;
+        }
+
 
         /**
          *  @brief  Compare substring against a character %array.
@@ -2814,13 +3135,23 @@ namespace webpp {
          *  NB: s must have at least n2 characters, &apos;\\0&apos; has
          *  no special meaning.
          */
-        int compare(size_type pos, size_type n1, const value_type* s, size_type n2) const;
+        int compare(size_type pos, size_type n1, const value_type* s, size_type n2) const {
+            glibcxx_requires_string_len(s, n2);
+            check(pos, "ustring::compare");
+            n1                  = limit(pos, n1);
+            const size_type len = std::min(n1, n2);
+            int             r   = traits_type::compare(data() + pos, s, len);
+            if (!r)
+                r = compare(n1, n2);
+            return r;
+        }
 
-        bool starts_with(ustring_view<value_type, traits_type> x) const noexcept {
+
+        [[nodiscard]] bool starts_with(ustring_view<value_type, traits_type> x) const noexcept {
             return string_view_type(this->data(), this->size()).starts_with(x);
         }
 
-        bool starts_with(value_type x) const noexcept {
+        [[nodiscard]] bool starts_with(value_type x) const noexcept {
             return string_view_type(this->data(), this->size()).starts_with(x);
         }
 
@@ -2828,11 +3159,11 @@ namespace webpp {
             return string_view_type(this->data(), this->size()).starts_with(x);
         }
 
-        bool ends_with(ustring_view<value_type, traits_type> x) const noexcept {
+        [[nodiscard]] bool ends_with(ustring_view<value_type, traits_type> x) const noexcept {
             return string_view_type(this->data(), this->size()).ends_with(x);
         }
 
-        bool ends_with(value_type x) const noexcept {
+        [[nodiscard]] bool ends_with(value_type x) const noexcept {
             return string_view_type(this->data(), this->size()).ends_with(x);
         }
 
@@ -2951,16 +3282,15 @@ namespace webpp {
     template <typename CharT, typename TraitsT, typename AllocT>
     inline ustring<CharT, TraitsT, AllocT> operator+(ustring<CharT, TraitsT, AllocT>&& lhs,
                                                      ustring<CharT, TraitsT, AllocT>&& rhs) {
-#    if _GLIBCXX_USE_CXX11_ABI
         using alloc_traits = stl::allocator_traits<AllocT>;
         bool use_rhs       = false;
-        if _GLIBCXX17_CONSTEXPR (typename alloc_traits::is_always_equal{})
+        if constexpr (typename alloc_traits::is_always_equal{}) {
             use_rhs = true;
-        else if (lhs.private_get_allocator() == rhs.private_get_allocator())
-            use_rhs = true;
-        if (use_rhs)
-#    endif
-        {
+        } else {
+            if (lhs.private_get_allocator() == rhs.private_get_allocator())
+                use_rhs = true;
+        }
+        if (use_rhs) {
             const auto size = lhs.size() + rhs.size();
             if (size > lhs.capacity() && size <= rhs.capacity())
                 return std::move(rhs.insert(0, lhs));
@@ -3021,7 +3351,7 @@ namespace webpp {
         return lhs.compare(rhs) == 0;
     }
 
-#    if cpp_lib_three_way_comparison
+#if __cpp_lib_three_way_comparison
     /**
      *  @brief  Three-way comparison of a string and a C string.
      *  @param lhs  A string.
@@ -3048,7 +3378,7 @@ namespace webpp {
       -> decltype(detail::char_traits_cmp_cat<TraitsT>(0)) {
         return detail::char_traits_cmp_cat<TraitsT>(lhs.compare(rhs));
     }
-#    else
+#else
     /**
      *  @brief  Test equivalence of C string and string.
      *  @param lhs  C string.
@@ -3234,7 +3564,7 @@ namespace webpp {
     inline bool operator>=(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
         return rhs.compare(lhs) <= 0;
     }
-#    endif // three-way comparison
+#endif // three-way comparison
 
     /**
      *  @brief  Swap contents of two strings.
@@ -3422,69 +3752,7 @@ namespace webpp {
         return alloc_traits::allocate(private_get_allocator(), capacity + 1);
     }
 
-    // NB: This is the special case for Input Iterators, used in
-    // istreambuf_iterators, etc.
-    // Input Iterators have a cost structure very different from
-    // pointers, calling for a different coding style.
-    template <typename CharT, typename TraitsT, typename AllocT>
-    template <typename InIterator>
-    void ustring<CharT, TraitsT, AllocT>::construct(InIterator beg, InIterator end, std::input_iterator_tag) {
-        size_type len      = 0;
-        size_type capacity = size_type(local_capacity);
 
-        while (beg != end && len < capacity) {
-            data()[len++] = *beg;
-            ++beg;
-        }
-
-        try {
-            while (beg != end) {
-                if (len == capacity) {
-                    // Allocate more space.
-                    capacity        = len + 1;
-                    pointer another = create(capacity, len);
-                    this->copy(another, data(), len);
-                    dispose();
-                    data(another);
-                    capacity(capacity);
-                }
-                data()[len++] = *beg;
-                ++beg;
-            }
-        } catch (...) {
-            dispose();
-            throw;
-        }
-
-        set_length(len);
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    template <typename InIterator>
-    void
-    ustring<CharT, TraitsT, AllocT>::construct(InIterator beg, InIterator end, std::forward_iterator_tag) {
-        // NB: Not required, but considered best practice.
-        if (details::is_null_pointer(beg) && beg != end)
-            std::throw_logic_error(N("ustring::"
-                                     "construct null not valid"));
-
-        size_type dnew = static_cast<size_type>(std::distance(beg, end));
-
-        if (dnew > size_type(local_capacity)) {
-            data(create(dnew, size_type(0)));
-            capacity(dnew);
-        }
-
-        // Check for out_of_range and length_error exceptions.
-        try {
-            this->copy_chars(data(), beg, end);
-        } catch (...) {
-            dispose();
-            throw;
-        }
-
-        set_length(dnew);
-    }
 
     template <typename CharT, typename TraitsT, typename AllocT>
     void ustring<CharT, TraitsT, AllocT>::construct(size_type n, CharT c) {
@@ -3499,87 +3767,6 @@ namespace webpp {
         set_length(n);
     }
 
-    template <typename CharT, typename TraitsT, typename AllocT>
-    void ustring<CharT, TraitsT, AllocT>::assign(const ustring& str) {
-        if (this != &str) {
-            const size_type rsize    = str.length();
-            const size_type capacity = capacity();
-
-            if (rsize > capacity) {
-                size_type new_capacity = rsize;
-                pointer   tmp          = create(new_capacity, capacity);
-                dispose();
-                data(tmp);
-                capacity(new_capacity);
-            }
-
-            if (rsize)
-                this->copy(data(), str.data(), rsize);
-
-            set_length(rsize);
-        }
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    void ustring<CharT, TraitsT, AllocT>::reserve(size_type res) {
-        // Make sure we don't shrink below the current size.
-        if (res < length())
-            res = length();
-
-        const size_type capacity = capacity();
-        if (res != capacity) {
-            if (res > capacity || res > size_type(local_capacity)) {
-                pointer tmp = create(res, capacity);
-                this->copy(tmp, data(), length() + 1);
-                dispose();
-                data(tmp);
-                capacity(res);
-            } else if (!is_local()) {
-                this->copy(local_data(), data(), length() + 1);
-                destroy(capacity);
-                data(local_data());
-            }
-        }
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    void
-    ustring<CharT, TraitsT, AllocT>::mutate(size_type pos, size_type len1, const CharT* s, size_type len2) {
-        const size_type how_much = length() - pos - len1;
-
-        size_type new_capacity = length() + len2 - len1;
-        pointer   r            = create(new_capacity, capacity());
-
-        if (pos)
-            this->copy(r, data(), pos);
-        if (s && len2)
-            this->copy(r + pos, s, len2);
-        if (how_much)
-            this->copy(r + pos + len2, data() + pos + len1, how_much);
-
-        dispose();
-        data(r);
-        capacity(new_capacity);
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    void ustring<CharT, TraitsT, AllocT>::erase(size_type pos, size_type n) {
-        const size_type how_much = length() - pos - n;
-
-        if (how_much && n)
-            this->move(data() + pos, data() + pos + n, how_much);
-
-        set_length(length() - n);
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    void ustring<CharT, TraitsT, AllocT>::resize(size_type n, CharT c) {
-        const size_type size = this->size();
-        if (size < n)
-            this->append(n - size, c);
-        else if (n < size)
-            this->set_length(n);
-    }
 
     template <typename CharT, typename TraitsT, typename AllocT>
     ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::append(const CharT* s, size_type n) {
@@ -3595,43 +3782,6 @@ namespace webpp {
         return *this;
     }
 
-    template <typename CharT, typename TraitsT, typename AllocT>
-    template <typename InputIterator>
-    ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::replace_dispatch(const_iterator i1,
-                                                                                       const_iterator i2,
-                                                                                       InputIterator  k1,
-                                                                                       InputIterator  k2,
-                                                                                       std::false_type) {
-        // _GLIBCXX_RESOLVE_LIB_DEFECTS
-        // 2788. unintentionally require a default constructible allocator
-        const ustring   s(k1, k2, this->private_get_allocator());
-        const size_type n1 = i2 - i1;
-        return replace(i1 - begin(), n1, s.data(), s.size());
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    ustring<CharT, TraitsT, AllocT>&
-    ustring<CharT, TraitsT, AllocT>::replace_aux(size_type pos1, size_type n1, size_type n2, CharT c) {
-        check_length(n1, n2, "ustring::replace_aux");
-
-        const size_type old_size = this->size();
-        const size_type new_size = old_size + n2 - n1;
-
-        if (new_size <= this->capacity()) {
-            pointer p = this->data() + pos1;
-
-            const size_type how_much = old_size - pos1 - n1;
-            if (how_much && n1 != n2)
-                this->move(p + n2, p + n1, how_much);
-        } else
-            this->mutate(pos1, n1, 0, n2);
-
-        if (n2)
-            this->assign(this->data() + pos1, n2, c);
-
-        this->set_length(new_size);
-        return *this;
-    }
 
     template <typename CharT, typename TraitsT, typename AllocT>
     ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::replace(size_type       pos,
@@ -3689,541 +3839,6 @@ namespace webpp {
         return n;
     }
 
-#else // !_GLIBCXX_USE_CXX11_ABI
-
-template <typename CharT, typename TraitsT, typename AllocT>
-const typename ustring<CharT, TraitsT, AllocT>::size_type
-  ustring<CharT, TraitsT, AllocT>::_Rep::max_size = (((npos - sizeof(_Rep_base)) / sizeof(CharT)) - 1) / 4;
-
-template <typename CharT, typename TraitsT, typename AllocT>
-const CharT ustring<CharT, TraitsT, AllocT>::_Rep::terminal = CharT();
-
-template <typename CharT, typename TraitsT, typename AllocT>
-const typename ustring<CharT, TraitsT, AllocT>::size_type ustring<CharT, TraitsT, AllocT>::npos;
-
-// Linker sets empty_rep_storage to all 0s (one reference, empty string)
-// at static init time (before static ctors are run).
-template <typename CharT, typename TraitsT, typename AllocT>
-typename ustring<CharT, TraitsT, AllocT>::size_type ustring<CharT, TraitsT, AllocT>::_Rep::empty_rep_storage
-  [(sizeof(_Rep_base) + sizeof(CharT) + sizeof(size_type) - 1) / sizeof(size_type)];
-
-// NB: This is the special case for Input Iterators, used in
-// istreambuf_iterators, etc.
-// Input Iterators have a cost structure very different from
-// pointers, calling for a different coding style.
-template <typename CharT, typename TraitsT, typename AllocT>
-template <typename InIterator>
-CharT* ustring<CharT, TraitsT, AllocT>::construct(InIterator    beg,
-                                                  InIterator    end,
-                                                  const AllocT& a,
-                                                  input_iterator_tag) {
-#    if _GLIBCXX_FULLY_DYNAMIC_STRING == 0
-    if (beg == end && a == AllocT())
-        return empty_rep().refdata();
-#    endif
-    // Avoid reallocation for common case.
-    CharT     buf[128];
-    size_type len = 0;
-    while (beg != end && len < sizeof(buf) / sizeof(CharT)) {
-        buf[len++] = *beg;
-        ++beg;
-    }
-    _Rep* r = _Rep::create(len, size_type(0), a);
-    copy(r->refdata(), buf, len);
-    try {
-        while (beg != end) {
-            if (len == r->capacity) {
-                // Allocate more space.
-                _Rep* another = _Rep::create(len + 1, len, a);
-                copy(another->refdata(), r->refdata(), len);
-                r->destroy(a);
-                r = another;
-            }
-            r->refdata()[len++] = *beg;
-            ++beg;
-        }
-    } catch (...) {
-        r->destroy(a);
-        throw;
-    }
-    r->set_length_and_sharable(len);
-    return r->refdata();
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-template <typename InIterator>
-CharT* ustring<CharT, TraitsT, AllocT>::construct(InIterator    beg,
-                                                  InIterator    end,
-                                                  const AllocT& a,
-                                                  forward_iterator_tag) {
-#    if _GLIBCXX_FULLY_DYNAMIC_STRING == 0
-    if (beg == end && a == AllocT())
-        return empty_rep().refdata();
-#    endif
-    // NB: Not required, but considered best practice.
-    if (details::is_null_pointer(beg) && beg != end)
-        throw_logic_error(N("ustring::construct null not valid"));
-
-    const size_type dnew = static_cast<size_type>(std::distance(beg, end));
-    // Check for out_of_range and length_error exceptions.
-    _Rep* r = _Rep::create(dnew, size_type(0), a);
-    try {
-        copy_chars(r->refdata(), beg, end);
-    } catch (...) {
-        r->destroy(a);
-        throw;
-    }
-    r->set_length_and_sharable(dnew);
-    return r->refdata();
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-CharT* ustring<CharT, TraitsT, AllocT>::construct(size_type n, CharT c, const AllocT& a) {
-#    if _GLIBCXX_FULLY_DYNAMIC_STRING == 0
-    if (n == 0 && a == AllocT())
-        return empty_rep().refdata();
-#    endif
-    // Check for out_of_range and length_error exceptions.
-    _Rep* r = _Rep::create(n, size_type(0), a);
-    if (n)
-        assign(r->refdata(), n, c);
-
-    r->set_length_and_sharable(n);
-    return r->refdata();
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>::ustring(const ustring& str)
-  : dataplus(str.rep()->grab(AllocT(str.get_allocator()), str.get_allocator()), str.get_allocator()) {}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>::ustring(const AllocT& a) : dataplus(construct(size_type(), CharT(), a), a) {}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>::ustring(const ustring& str, size_type pos, const AllocT& a)
-  : dataplus(
-      construct(str.data() + str.check(pos, "ustring::ustring"), str.data() + str.limit(pos, npos) + pos, a),
-      a) {}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>::ustring(const ustring& str, size_type pos, size_type n)
-  : dataplus(construct(str.data() + str.check(pos, "ustring::ustring"),
-                       str.data() + str.limit(pos, n) + pos,
-                       AllocT()),
-             AllocT()) {}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>::ustring(const ustring& str, size_type pos, size_type n, const AllocT& a)
-  : dataplus(
-      construct(str.data() + str.check(pos, "ustring::ustring"), str.data() + str.limit(pos, n) + pos, a),
-      a) {}
-
-// TBD: DPG annotate
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>::ustring(const CharT* s, size_type n, const AllocT& a)
-  : dataplus(construct(s, s + n, a), a) {}
-
-// TBD: DPG annotate
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>::ustring(const CharT* s, const AllocT& a)
-  : dataplus(construct(s, s ? s + traits_type::length(s) : s + npos, a), a) {}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>::ustring(size_type n, CharT c, const AllocT& a)
-  : dataplus(construct(n, c, a), a) {}
-
-// TBD: DPG annotate
-template <typename CharT, typename TraitsT, typename AllocT>
-template <typename InputIterator>
-ustring<CharT, TraitsT, AllocT>::ustring(InputIterator beg, InputIterator end, const AllocT& a)
-  : dataplus(construct(beg, end, a), a) {}
-
-#    if cplusplus >= 201103L
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>::ustring(initializer_list<CharT> l, const AllocT& a)
-  : dataplus(construct(l.begin(), l.end(), a), a) {}
-#    endif
-
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::assign(const ustring& str) {
-    if (rep() != str.rep()) {
-        // XXX MT
-        const allocator_type a   = this->get_allocator();
-        CharT*               tmp = str.rep()->grab(a, str.get_allocator());
-        rep()->dispose(a);
-        data(tmp);
-    }
-    return *this;
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::assign(const CharT* s, size_type n) {
-    glibcxx_requires_string_len(s, n);
-    check_length(this->size(), n, "ustring::assign");
-    if (disjunct(s) || rep()->is_shared())
-        return replace_safe(size_type(0), this->size(), s, n);
-    else {
-        // Work in-place.
-        const size_type pos = s - data();
-        if (pos >= n)
-            copy(data(), s, n);
-        else if (pos)
-            move(data(), s, n);
-        rep()->set_length_and_sharable(n);
-        return *this;
-    }
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::append(size_type n, CharT c) {
-    if (n) {
-        check_length(size_type(0), n, "ustring::append");
-        const size_type len = n + this->size();
-        if (len > this->capacity() || rep()->is_shared())
-            this->reserve(len);
-        assign(data() + this->size(), n, c);
-        rep()->set_length_and_sharable(len);
-    }
-    return *this;
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::append(const CharT* s, size_type n) {
-    glibcxx_requires_string_len(s, n);
-    if (n) {
-        check_length(size_type(0), n, "ustring::append");
-        const size_type len = n + this->size();
-        if (len > this->capacity() || rep()->is_shared()) {
-            if (disjunct(s))
-                this->reserve(len);
-            else {
-                const size_type off = s - data();
-                this->reserve(len);
-                s = data() + off;
-            }
-        }
-        copy(data() + this->size(), s, n);
-        rep()->set_length_and_sharable(len);
-    }
-    return *this;
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::append(const ustring& str) {
-    const size_type size = str.size();
-    if (size) {
-        const size_type len = size + this->size();
-        if (len > this->capacity() || rep()->is_shared())
-            this->reserve(len);
-        copy(data() + this->size(), str.data(), size);
-        rep()->set_length_and_sharable(len);
-    }
-    return *this;
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>&
-ustring<CharT, TraitsT, AllocT>::append(const ustring& str, size_type pos, size_type n) {
-    str.check(pos, "ustring::append");
-    n = str.limit(pos, n);
-    if (n) {
-        const size_type len = n + this->size();
-        if (len > this->capacity() || rep()->is_shared())
-            this->reserve(len);
-        copy(data() + this->size(), str.data() + pos, n);
-        rep()->set_length_and_sharable(len);
-    }
-    return *this;
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>&
-ustring<CharT, TraitsT, AllocT>::insert(size_type pos, const CharT* s, size_type n) {
-    glibcxx_requires_string_len(s, n);
-    check(pos, "ustring::insert");
-    check_length(size_type(0), n, "ustring::insert");
-    if (disjunct(s) || rep()->is_shared())
-        return replace_safe(pos, size_type(0), s, n);
-    else {
-        // Work in-place.
-        const size_type off = s - data();
-        mutate(pos, 0, n);
-        s        = data() + off;
-        CharT* p = data() + pos;
-        if (s + n <= p)
-            copy(p, s, n);
-        else if (s >= p)
-            copy(p, s + n, n);
-        else {
-            const size_type nleft = p - s;
-            copy(p, s, nleft);
-            copy(p + nleft, p + n, n - nleft);
-        }
-        return *this;
-    }
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-typename ustring<CharT, TraitsT, AllocT>::iterator ustring<CharT, TraitsT, AllocT>::erase(iterator first,
-                                                                                          iterator last) {
-    _GLIBCXX_DEBUG_PEDASSERT(first >= ibegin() && first <= last && last <= iend());
-
-    // NB: This isn't just an optimization (bail out early when
-    // there is nothing to do, really), it's also a correctness
-    // issue vs MT, see libstdc++/40518.
-    const size_type size = last - first;
-    if (size) {
-        const size_type pos = first - ibegin();
-        mutate(pos, size, size_type(0));
-        rep()->set_leaked();
-        return iterator(data() + pos);
-    } else
-        return first;
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>&
-ustring<CharT, TraitsT, AllocT>::replace(size_type pos, size_type n1, const CharT* s, size_type n2) {
-    glibcxx_requires_string_len(s, n2);
-    check(pos, "ustring::replace");
-    n1 = limit(pos, n1);
-    check_length(n1, n2, "ustring::replace");
-    bool left;
-    if (disjunct(s) || rep()->is_shared())
-        return replace_safe(pos, n1, s, n2);
-    else if ((left = s + n2 <= data() + pos) || data() + pos + n1 <= s) {
-        // Work in-place: non-overlapping case.
-        size_type off = s - data();
-        left ? off : (off += n2 - n1);
-        mutate(pos, n1, n2);
-        copy(data() + pos, data() + off, n2);
-        return *this;
-    } else {
-        // Todo: overlapping case.
-        const ustring tmp(s, n2);
-        return replace_safe(pos, n1, tmp.data(), n2);
-    }
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-void ustring<CharT, TraitsT, AllocT>::_Rep::destroy(const AllocT& a) throw() {
-    const size_type size = sizeof(_Rep_base) + (this->capacity + 1) * sizeof(CharT);
-    _Raw_bytes_alloc(a).deallocate(reinterpret_cast<char*>(this), size);
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-void ustring<CharT, TraitsT, AllocT>::leak_hard() {
-#    if _GLIBCXX_FULLY_DYNAMIC_STRING == 0
-    if (rep() == &empty_rep())
-        return;
-#    endif
-    if (rep()->is_shared())
-        mutate(0, 0, 0);
-    rep()->set_leaked();
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-void ustring<CharT, TraitsT, AllocT>::mutate(size_type pos, size_type len1, size_type len2) {
-    const size_type old_size = this->size();
-    const size_type new_size = old_size + len2 - len1;
-    const size_type how_much = old_size - pos - len1;
-
-    if (new_size > this->capacity() || rep()->is_shared()) {
-        // Must reallocate.
-        const allocator_type a = get_allocator();
-        _Rep*                r = _Rep::create(new_size, this->capacity(), a);
-
-        if (pos)
-            copy(r->refdata(), data(), pos);
-        if (how_much)
-            copy(r->refdata() + pos + len2, data() + pos + len1, how_much);
-
-        rep()->dispose(a);
-        data(r->refdata());
-    } else if (how_much && len1 != len2) {
-        // Work in-place.
-        move(data() + pos + len2, data() + pos + len1, how_much);
-    }
-    rep()->set_length_and_sharable(new_size);
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-void ustring<CharT, TraitsT, AllocT>::reserve(size_type res) {
-    if (res != this->capacity() || rep()->is_shared()) {
-        // Make sure we don't shrink below the current size
-        if (res < this->size())
-            res = this->size();
-        const allocator_type a   = get_allocator();
-        CharT*               tmp = rep()->clone(a, res - this->size());
-        rep()->dispose(a);
-        data(tmp);
-    }
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-void ustring<CharT, TraitsT, AllocT>::swap(ustring& s)
-  _GLIBCXX_NOEXCEPT_IF(allocator_traits<AllocT>::is_always_equal::value) {
-    if (rep()->is_leaked())
-        rep()->set_sharable();
-    if (s.rep()->is_leaked())
-        s.rep()->set_sharable();
-    if (this->get_allocator() == s.get_allocator()) {
-        CharT* tmp = data();
-        data(s.data());
-        s.data(tmp);
-    }
-    // The code below can usually be optimized away.
-    else {
-        const ustring tmp1(ibegin(), iend(), s.get_allocator());
-        const ustring tmp2(s.ibegin(), s.iend(), this->get_allocator());
-        *this = tmp2;
-        s     = tmp1;
-    }
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-typename ustring<CharT, TraitsT, AllocT>::_Rep*
-ustring<CharT, TraitsT, AllocT>::_Rep::create(size_type     capacity,
-                                              size_type     old_capacity,
-                                              const AllocT& alloc) {
-    // _GLIBCXX_RESOLVE_LIB_DEFECTS
-    // 83.  String::npos vs. string::max_size()
-    if (capacity > max_size)
-        throw_length_error(N("ustring::create"));
-
-    // The standard places no restriction on allocating more memory
-    // than is strictly needed within this layer at the moment or as
-    // requested by an explicit application call to reserve().
-
-    // Many malloc implementations perform quite poorly when an
-    // application attempts to allocate memory in a stepwise fashion
-    // growing each allocation size by only 1 char.  Additionally,
-    // it makes little sense to allocate less linear memory than the
-    // natural blocking size of the malloc implementation.
-    // Unfortunately, we would need a somewhat low-level calculation
-    // with tuned parameters to get this perfect for any particular
-    // malloc implementation.  Fortunately, generalizations about
-    // common features seen among implementations seems to suffice.
-
-    // pagesize need not match the actual VM page size for good
-    // results in practice, thus we pick a common value on the low
-    // side.  malloc_header_size is an estimate of the amount of
-    // overhead per memory allocation (in practice seen N * sizeof
-    // (void*) where N is 0, 2 or 4).  According to folklore,
-    // picking this value on the high side is better than
-    // low-balling it (especially when this algorithm is used with
-    // malloc implementations that allocate memory blocks rounded up
-    // to a size which is a power of 2).
-    const size_type pagesize           = 4096;
-    const size_type malloc_header_size = 4 * sizeof(void*);
-
-    // The below implements an exponential growth policy, necessary to
-    // meet amortized linear time requirements of the library: see
-    // http://gcc.gnu.org/ml/libstdc++/2001-07/msg00085.html.
-    // It's active for allocations requiring an amount of memory above
-    // system pagesize. This is consistent with the requirements of the
-    // standard: http://gcc.gnu.org/ml/libstdc++/2001-07/msg00130.html
-    if (capacity > old_capacity && capacity < 2 * old_capacity)
-        capacity = 2 * old_capacity;
-
-    // NB: Need an array of char_type[capacity], plus a terminating
-    // null char_type() element, plus enough for the _Rep data structure.
-    // Whew. Seemingly so needy, yet so elemental.
-    size_type size = (capacity + 1) * sizeof(CharT) + sizeof(_Rep);
-
-    const size_type adj_size = size + malloc_header_size;
-    if (adj_size > pagesize && capacity > old_capacity) {
-        const size_type extra = pagesize - adj_size % pagesize;
-        capacity += extra / sizeof(CharT);
-        // Never allocate a string bigger than max_size.
-        if (capacity > max_size)
-            capacity = max_size;
-        size = (capacity + 1) * sizeof(CharT) + sizeof(_Rep);
-    }
-
-    // NB: Might throw, but no worries about a leak, mate: _Rep()
-    // does not throw.
-    void* place = _Raw_bytes_alloc(alloc).allocate(size);
-    _Rep* p     = new (place) _Rep;
-    p->capacity = capacity;
-    // ABI compatibility - 3.4.x set in create both
-    // refcount and length.  All callers of create
-    // in ustring.tcc then set just length.
-    // In 4.0.x and later both refcount and length
-    // are initialized in the callers, unfortunately we can
-    // have 3.4.x compiled code with create callers inlined
-    // calling 4.0.x+ create.
-    p->set_sharable();
-    return p;
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-CharT* ustring<CharT, TraitsT, AllocT>::_Rep::clone(const AllocT& alloc, size_type res) {
-    // Requested capacity of the clone.
-    const size_type requested_cap = this->length + res;
-    _Rep*           r             = _Rep::create(requested_cap, this->capacity, alloc);
-    if (this->length)
-        copy(r->refdata(), refdata(), this->length);
-
-    r->set_length_and_sharable(this->length);
-    return r->refdata();
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-void ustring<CharT, TraitsT, AllocT>::resize(size_type n, CharT c) {
-    const size_type size = this->size();
-    check_length(size, n, "ustring::resize");
-    if (size < n)
-        this->append(n - size, c);
-    else if (n < size)
-        this->erase(n);
-    // else nothing (in particular, avoid calling mutate() unnecessarily.)
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-template <typename InputIterator>
-ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::replace_dispatch(iterator      i1,
-                                                                                   iterator      i2,
-                                                                                   InputIterator k1,
-                                                                                   InputIterator k2,
-                                                                                   false_type) {
-    const ustring   s(k1, k2);
-    const size_type n1 = i2 - i1;
-    check_length(n1, s.size(), "ustring::replace_dispatch");
-    return replace_safe(i1 - ibegin(), n1, s.data(), s.size());
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>&
-ustring<CharT, TraitsT, AllocT>::replace_aux(size_type pos1, size_type n1, size_type n2, CharT c) {
-    check_length(n1, n2, "ustring::replace_aux");
-    mutate(pos1, n1, n2);
-    if (n2)
-        assign(data() + pos1, n2, c);
-    return *this;
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-ustring<CharT, TraitsT, AllocT>&
-ustring<CharT, TraitsT, AllocT>::replace_safe(size_type pos1, size_type n1, const CharT* s, size_type n2) {
-    mutate(pos1, n1, n2);
-    if (n2)
-        copy(data() + pos1, s, n2);
-    return *this;
-}
-
-template <typename CharT, typename TraitsT, typename AllocT>
-typename ustring<CharT, TraitsT, AllocT>::size_type
-ustring<CharT, TraitsT, AllocT>::copy(CharT* s, size_type n, size_type pos) const {
-    check(pos, "ustring::copy");
-    n = limit(pos, n);
-    glibcxx_requires_string_len(s, n);
-    if (n)
-        copy(s, data() + pos, n);
-    // 21.3.5.7 par 3: do not append null.  (good.)
-    return n;
-}
-#endif // !_GLIBCXX_USE_CXX11_ABI
 
     template <typename CharT, typename TraitsT, typename AllocT>
     ustring<CharT, TraitsT, AllocT> operator+(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
@@ -4254,235 +3869,7 @@ ustring<CharT, TraitsT, AllocT>::copy(CharT* s, size_type n, size_type pos) cons
         return str;
     }
 
-    template <typename CharT, typename TraitsT, typename AllocT>
-    typename ustring<CharT, TraitsT, AllocT>::size_type
-    ustring<CharT, TraitsT, AllocT>::find(const CharT* s, size_type pos, size_type n) const noexcept {
-        glibcxx_requires_string_len(s, n);
-        const size_type size = this->size();
 
-        if (n == 0)
-            return pos <= size ? pos : npos;
-        if (pos >= size)
-            return npos;
-
-        const CharT        elem0 = s[0];
-        const CharT* const data  = data();
-        const CharT*       first = data + pos;
-        const CharT* const last  = data + size;
-        size_type          len   = size - pos;
-
-        while (len >= n) {
-            // Find the first occurrence of elem0:
-            first = traits_type::find(first, len - n + 1, elem0);
-            if (!first)
-                return npos;
-            // Compare the full strings from the first occurrence of elem0.
-            // We already know that first[0] == s[0] but compare them again
-            // anyway because s is probably aligned, which helps memcmp.
-            if (traits_type::compare(first, s, n) == 0)
-                return first - data;
-            len = last - ++first;
-        }
-        return npos;
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    typename ustring<CharT, TraitsT, AllocT>::size_type
-    ustring<CharT, TraitsT, AllocT>::find(CharT c, size_type pos) const noexcept {
-        size_type       ret  = npos;
-        const size_type size = this->size();
-        if (pos < size) {
-            const CharT*    data = data();
-            const size_type n    = size - pos;
-            const CharT*    p    = traits_type::find(data + pos, n, c);
-            if (p)
-                ret = p - data;
-        }
-        return ret;
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    typename ustring<CharT, TraitsT, AllocT>::size_type
-    ustring<CharT, TraitsT, AllocT>::rfind(const CharT* s, size_type pos, size_type n) const noexcept {
-        glibcxx_requires_string_len(s, n);
-        const size_type size = this->size();
-        if (n <= size) {
-            pos               = std::min(size_type(size - n), pos);
-            const CharT* data = data();
-            do {
-                if (traits_type::compare(data + pos, s, n) == 0)
-                    return pos;
-            } while (pos-- > 0);
-        }
-        return npos;
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    typename ustring<CharT, TraitsT, AllocT>::size_type
-    ustring<CharT, TraitsT, AllocT>::rfind(CharT c, size_type pos) const noexcept {
-        size_type size = this->size();
-        if (size) {
-            if (--size > pos)
-                size = pos;
-            for (++size; size-- > 0;)
-                if (traits_type::eq(data()[size], c))
-                    return size;
-        }
-        return npos;
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    typename ustring<CharT, TraitsT, AllocT>::size_type
-    ustring<CharT, TraitsT, AllocT>::find_first_of(const CharT* s,
-                                                   size_type    pos,
-                                                   size_type    n) const noexcept {
-        glibcxx_requires_string_len(s, n);
-        for (; n && pos < this->size(); ++pos) {
-            const CharT* p = traits_type::find(s, n, data()[pos]);
-            if (p)
-                return pos;
-        }
-        return npos;
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    typename ustring<CharT, TraitsT, AllocT>::size_type
-    ustring<CharT, TraitsT, AllocT>::find_last_of(const CharT* s, size_type pos, size_type n) const noexcept {
-        glibcxx_requires_string_len(s, n);
-        size_type size = this->size();
-        if (size && n) {
-            if (--size > pos)
-                size = pos;
-            do {
-                if (traits_type::find(s, n, data()[size]))
-                    return size;
-            } while (size-- != 0);
-        }
-        return npos;
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    typename ustring<CharT, TraitsT, AllocT>::size_type
-    ustring<CharT, TraitsT, AllocT>::find_first_not_of(const CharT* s,
-                                                       size_type    pos,
-                                                       size_type    n) const noexcept {
-        glibcxx_requires_string_len(s, n);
-        for (; pos < this->size(); ++pos)
-            if (!traits_type::find(s, n, data()[pos]))
-                return pos;
-        return npos;
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    typename ustring<CharT, TraitsT, AllocT>::size_type
-    ustring<CharT, TraitsT, AllocT>::find_first_not_of(CharT c, size_type pos) const noexcept {
-        for (; pos < this->size(); ++pos)
-            if (!traits_type::eq(data()[pos], c))
-                return pos;
-        return npos;
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    typename ustring<CharT, TraitsT, AllocT>::size_type
-    ustring<CharT, TraitsT, AllocT>::find_last_not_of(const CharT* s,
-                                                      size_type    pos,
-                                                      size_type    n) const noexcept {
-        glibcxx_requires_string_len(s, n);
-        size_type size = this->size();
-        if (size) {
-            if (--size > pos)
-                size = pos;
-            do {
-                if (!traits_type::find(s, n, data()[size]))
-                    return size;
-            } while (size--);
-        }
-        return npos;
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    typename ustring<CharT, TraitsT, AllocT>::size_type
-    ustring<CharT, TraitsT, AllocT>::find_last_not_of(CharT c, size_type pos) const noexcept {
-        size_type size = this->size();
-        if (size) {
-            if (--size > pos)
-                size = pos;
-            do {
-                if (!traits_type::eq(data()[size], c))
-                    return size;
-            } while (size--);
-        }
-        return npos;
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    int ustring<CharT, TraitsT, AllocT>::compare(size_type pos, size_type n, const ustring& str) const {
-        check(pos, "ustring::compare");
-        n                     = limit(pos, n);
-        const size_type osize = str.size();
-        const size_type len   = std::min(n, osize);
-        int             r     = traits_type::compare(data() + pos, str.data(), len);
-        if (!r)
-            r = compare(n, osize);
-        return r;
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    int ustring<CharT, TraitsT, AllocT>::compare(size_type      pos1,
-                                                 size_type      n1,
-                                                 const ustring& str,
-                                                 size_type      pos2,
-                                                 size_type      n2) const {
-        check(pos1, "ustring::compare");
-        str.check(pos2, "ustring::compare");
-        n1                  = limit(pos1, n1);
-        n2                  = str.limit(pos2, n2);
-        const size_type len = std::min(n1, n2);
-        int             r   = traits_type::compare(data() + pos1, str.data() + pos2, len);
-        if (!r)
-            r = compare(n1, n2);
-        return r;
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    int ustring<CharT, TraitsT, AllocT>::compare(const CharT* s) const noexcept {
-        glibcxx_requires_string(s);
-        const size_type size  = this->size();
-        const size_type osize = traits_type::length(s);
-        const size_type len   = std::min(size, osize);
-        int             r     = traits_type::compare(data(), s, len);
-        if (!r)
-            r = compare(size, osize);
-        return r;
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    int ustring<CharT, TraitsT, AllocT>::compare(size_type pos, size_type n1, const CharT* s) const {
-        glibcxx_requires_string(s);
-        check(pos, "ustring::compare");
-        n1                    = limit(pos, n1);
-        const size_type osize = traits_type::length(s);
-        const size_type len   = std::min(n1, osize);
-        int             r     = traits_type::compare(data() + pos, s, len);
-        if (!r)
-            r = compare(n1, osize);
-        return r;
-    }
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    int ustring<CharT, TraitsT, AllocT>::compare(size_type    pos,
-                                                 size_type    n1,
-                                                 const CharT* s,
-                                                 size_type    n2) const {
-        glibcxx_requires_string_len(s, n2);
-        check(pos, "ustring::compare");
-        n1                  = limit(pos, n1);
-        const size_type len = std::min(n1, n2);
-        int             r   = traits_type::compare(data() + pos, s, len);
-        if (!r)
-            r = compare(n1, n2);
-        return r;
-    }
 
     // 21.3.7.9 ustring::getline and operators
     template <typename CharT, typename TraitsT, typename AllocT>
