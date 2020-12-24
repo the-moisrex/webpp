@@ -3,14 +3,8 @@
 #ifndef WEBPP_USTRING_HPP
 #define WEBPP_USTRING_HPP
 
-#include "../std/string.hpp"
-#include "../std/string_view.hpp"
 #include "unicode_char_traits.hpp"
 #include "ustring_iterator.hpp"
-
-#include <memory_resource>
-
-// testing area: http://localhost:10240/z/z39ErG
 
 namespace webpp {
 
@@ -241,8 +235,6 @@ namespace webpp {
             size_type  allocated_capacity;
         };
 
-        void set_length(size_type) noexcept {}
-
       public:
         template <typename NewStrT, typename... Args>
         constexpr NewStrT to(Args&&... args) const noexcept {
@@ -338,15 +330,11 @@ namespace webpp {
             string_length = length;
         }
 
-        pointer data() const noexcept {
-            return data_start;
-        }
-
         pointer local_data() {
             return stl::pointer_traits<pointer>::pointer_to(*local_buf);
         }
 
-        const_pointer local_data() const {
+        [[nodiscard]] const_pointer local_data() const {
             return stl::pointer_traits<const_pointer>::pointer_to(*local_buf);
         }
 
@@ -359,7 +347,7 @@ namespace webpp {
             traits_type::assign(data()[n], value_type());
         }
 
-        bool is_local() const {
+        [[nodiscard]] bool is_local() const {
             return data() == local_data();
         }
 
@@ -465,7 +453,18 @@ namespace webpp {
             set_length(dnew);
         }
 
-        void construct(size_type req, value_type c);
+        void construct(size_type req, value_type n) {
+            if (n > size_type(local_capacity)) {
+                data(create(n, size_type(0)));
+                capacity(n);
+            }
+
+            if (n)
+                this->assign(data(), n, c);
+
+            set_length(n);
+        }
+
 
         allocator_type& private_get_allocator() {
             return alloc;
@@ -1348,7 +1347,7 @@ namespace webpp {
          *  @return  Reference to this string.
          */
         ustring& append(const ustring& str) {
-            return append(str.data(), str.size());
+            return private_append(str.data(), str.size());
         }
 
         /**
@@ -1365,7 +1364,7 @@ namespace webpp {
          *  remainder of @a str is appended.
          */
         ustring& append(const ustring& str, size_type pos, size_type n = npos) {
-            return append(str.data() + str.check(pos, "ustring::append"), str.limit(pos, n));
+            return private_append(str.data() + str.check(pos, "ustring::append"), str.limit(pos, n));
         }
 
         /**
@@ -1377,7 +1376,7 @@ namespace webpp {
         ustring& append(const value_type* s, size_type n) {
             glibcxx_requires_string_len(s, n);
             check_length(size_type(0), n, "ustring::append");
-            return append(s, n);
+            return private_append(s, n);
         }
 
         /**
@@ -1389,7 +1388,7 @@ namespace webpp {
             glibcxx_requires_string(s);
             const size_type n = traits_type::length(s);
             check_length(size_type(0), n, "ustring::append");
-            return append(s, n);
+            return private_append(s, n);
         }
 
         /**
@@ -1482,10 +1481,10 @@ namespace webpp {
                         data(local_data());
                         set_length(0);
                     } else {
-                        const auto len   = str.size();
-                        auto       alloc = str.private_get_allocator();
+                        const auto len       = str.size();
+                        auto       the_alloc = str.private_get_allocator();
                         // If this allocation throws there are no effects:
-                        auto ptr = alloc_traits::allocate(alloc, len + 1);
+                        auto ptr = alloc_traits::allocate(the_alloc, len + 1);
                         destroy(allocated_capacity);
                         data(ptr);
                         capacity(len);
@@ -1526,10 +1525,10 @@ namespace webpp {
          *  str, the remainder of @a str is used.
          */
         ustring& assign(const ustring& str, size_type pos, size_type n = npos) {
-            return replace(size_type(0),
-                           this->size(),
-                           str.data() + str.check(pos, "ustring::assign"),
-                           str.limit(pos, n));
+            return private_replace(size_type(0),
+                                   this->size(),
+                                   str.data() + str.check(pos, "ustring::assign"),
+                                   str.limit(pos, n));
         }
 
         /**
@@ -1544,7 +1543,7 @@ namespace webpp {
          */
         ustring& assign(const value_type* s, size_type n) {
             glibcxx_requires_string_len(s, n);
-            return replace(size_type(0), this->size(), s, n);
+            return private_replace(size_type(0), this->size(), s, n);
         }
 
         /**
@@ -1558,7 +1557,7 @@ namespace webpp {
          */
         ustring& assign(const value_type* s) {
             glibcxx_requires_string(s);
-            return replace(size_type(0), this->size(), s, traits_type::length(s));
+            return private_replace(size_type(0), this->size(), s, traits_type::length(s));
         }
 
         /**
@@ -1620,10 +1619,10 @@ namespace webpp {
                                                                  size_type pos,
                                                                  size_type n = npos) {
             string_view_type sv = svt;
-            return replace(size_type(0),
-                           this->size(),
-                           sv.data() + details::sv_check(sv.size(), pos, "ustring::assign"),
-                           details::sv_limit(sv.size(), pos, n));
+            return private_replace(size_type(0),
+                                   this->size(),
+                                   sv.data() + details::sv_check(sv.size(), pos, "ustring::assign"),
+                                   details::sv_limit(sv.size(), pos, n));
         }
 
         /**
@@ -1974,7 +1973,7 @@ namespace webpp {
          */
         ustring& replace(size_type pos, size_type n1, const value_type* s, size_type n2) {
             glibcxx_requires_string_len(s, n2);
-            return replace(check(pos, "ustring::replace"), limit(pos, n1), s, n2);
+            return private_replace(check(pos, "ustring::replace"), limit(pos, n1), s, n2);
         }
 
         /**
@@ -2239,7 +2238,7 @@ namespace webpp {
             // 2788. unintentionally require a default constructible allocator
             const ustring   s(k1, k2, this->private_get_allocator());
             const size_type n1 = i2 - i1;
-            return replace(i1 - begin(), n1, s.data(), s.size());
+            return private_replace(i1 - begin(), n1, s.data(), s.size());
         }
 
         ustring& replace_aux(size_type pos1, size_type n1, size_type n2, value_type c) {
@@ -2265,9 +2264,59 @@ namespace webpp {
         }
 
 
-        ustring& replace(size_type pos, size_type len1, const value_type* s, const size_type len2);
+        ustring& private_replace(size_type pos, size_type len1, const value_type* s, const size_type len2) {
+            check_length(len1, len2, "ustring::replace");
 
-        ustring& append(const value_type* s, size_type n);
+            const size_type old_size = this->size();
+            const size_type new_size = old_size + len2 - len1;
+
+            if (new_size <= this->capacity()) {
+                pointer p = this->data() + pos;
+
+                const size_type how_much = old_size - pos - len1;
+                if (disjunct(s)) {
+                    if (how_much && len1 != len2)
+                        this->move(p + len2, p + len1, how_much);
+                    if (len2)
+                        this->copy(p, s, len2);
+                } else {
+                    // Work in-place.
+                    if (len2 && len2 <= len1)
+                        this->move(p, s, len2);
+                    if (how_much && len1 != len2)
+                        this->move(p + len2, p + len1, how_much);
+                    if (len2 > len1) {
+                        if (s + len2 <= p + len1)
+                            this->move(p, s, len2);
+                        else if (s >= p + len1)
+                            this->copy(p, s + len2 - len1, len2);
+                        else {
+                            const size_type nleft = (p + len1) - s;
+                            this->move(p, s, nleft);
+                            this->copy(p + nleft, p + len2, len2 - nleft);
+                        }
+                    }
+                }
+            } else
+                this->mutate(pos, len1, s, len2);
+
+            this->set_length(new_size);
+            return *this;
+        }
+
+        ustring& private_append(const value_type* s, size_type n) {
+            const size_type len = n + this->size();
+
+            if (len <= this->capacity()) {
+                if (n)
+                    this->copy(this->data() + this->size(), s, n);
+            } else
+                this->mutate(this->size(), size_type(0), s, n);
+
+            this->set_length(len);
+            return *this;
+        }
+
 
       public:
         /**
@@ -2300,7 +2349,7 @@ namespace webpp {
          *  This is a handle to internal data.  Do not modify or dire things may
          *  happen.
          */
-        const value_type* c_str() const noexcept {
+        [[nodiscard]] const value_type* c_str() const noexcept {
             return data();
         }
 
@@ -2312,8 +2361,8 @@ namespace webpp {
          *  allows modifying the contents use @c &str[0] instead,
          *  (or in C++17 the non-const @c str.data() overload).
          */
-        const value_type* data() const noexcept {
-            return data();
+        [[nodiscard]] const value_type* data() const noexcept {
+            return data_start;
         }
 
         /**
@@ -2323,13 +2372,13 @@ namespace webpp {
          *  Modifying the characters in the sequence is allowed.
          */
         value_type* data() noexcept {
-            return data();
+            return data_start;
         }
 
         /**
          *  @brief  Return copy of allocator used to construct this string.
          */
-        allocator_type get_allocator() const noexcept {
+        [[nodiscard]] allocator_type get_allocator() const noexcept {
             return private_get_allocator();
         }
 
@@ -3754,78 +3803,7 @@ namespace webpp {
 
 
 
-    template <typename CharT, typename TraitsT, typename AllocT>
-    void ustring<CharT, TraitsT, AllocT>::construct(size_type n, CharT c) {
-        if (n > size_type(local_capacity)) {
-            data(create(n, size_type(0)));
-            capacity(n);
-        }
 
-        if (n)
-            this->assign(data(), n, c);
-
-        set_length(n);
-    }
-
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::append(const CharT* s, size_type n) {
-        const size_type len = n + this->size();
-
-        if (len <= this->capacity()) {
-            if (n)
-                this->copy(this->data() + this->size(), s, n);
-        } else
-            this->mutate(this->size(), size_type(0), s, n);
-
-        this->set_length(len);
-        return *this;
-    }
-
-
-    template <typename CharT, typename TraitsT, typename AllocT>
-    ustring<CharT, TraitsT, AllocT>& ustring<CharT, TraitsT, AllocT>::replace(size_type       pos,
-                                                                              size_type       len1,
-                                                                              const CharT*    s,
-                                                                              const size_type len2) {
-        check_length(len1, len2, "ustring::replace");
-
-        const size_type old_size = this->size();
-        const size_type new_size = old_size + len2 - len1;
-
-        if (new_size <= this->capacity()) {
-            pointer p = this->data() + pos;
-
-            const size_type how_much = old_size - pos - len1;
-            if (disjunct(s)) {
-                if (how_much && len1 != len2)
-                    this->move(p + len2, p + len1, how_much);
-                if (len2)
-                    this->copy(p, s, len2);
-            } else {
-                // Work in-place.
-                if (len2 && len2 <= len1)
-                    this->move(p, s, len2);
-                if (how_much && len1 != len2)
-                    this->move(p + len2, p + len1, how_much);
-                if (len2 > len1) {
-                    if (s + len2 <= p + len1)
-                        this->move(p, s, len2);
-                    else if (s >= p + len1)
-                        this->copy(p, s + len2 - len1, len2);
-                    else {
-                        const size_type nleft = (p + len1) - s;
-                        this->move(p, s, nleft);
-                        this->copy(p + nleft, p + len2, len2 - nleft);
-                    }
-                }
-            }
-        } else
-            this->mutate(pos, len1, s, len2);
-
-        this->set_length(new_size);
-        return *this;
-    }
 
     template <typename CharT, typename TraitsT, typename AllocT>
     typename ustring<CharT, TraitsT, AllocT>::size_type
@@ -4021,6 +3999,9 @@ namespace webpp {
 
     namespace pmr {
         using namespace stl::pmr;
+
+        template <typename T>
+        struct polymorphic_allocator;
 
         using utf8 = ustring<utf8_glyph, unicode_char_traits<utf8_glyph>, polymorphic_allocator<utf8_glyph>>;
         using utf16 =
