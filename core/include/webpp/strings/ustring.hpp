@@ -74,7 +74,7 @@ namespace webpp {
             using traits = stl::allocator_traits<AllocT>;
             using pocma  = typename traits::propagate_on_container_move_assignment;
             if constexpr (pocma::value)
-                one = std::move(two);
+                one = stl::move(two);
         }
 
         template <typename AllocT>
@@ -122,7 +122,7 @@ namespace webpp {
         template <typename AllocT>
         struct is_allocator<
           AllocT,
-          stl::void_t<typename AllocT::value_type, decltype(std::declval<AllocT&>().allocate(stl::size_t{}))>>
+          stl::void_t<typename AllocT::value_type, decltype(stl::declval<AllocT&>().allocate(stl::size_t{}))>>
           : stl::true_type {};
 
         template <typename AllocT>
@@ -448,9 +448,9 @@ namespace webpp {
         void construct(FwdIterator beg, FwdIterator end, stl::forward_iterator_tag) {
             // NB: Not required, but considered best practice.
             if (details::is_null_pointer(beg) && beg != end)
-                throw std::logic_error("ustring::construct null not valid");
+                throw stl::logic_error("ustring::construct null not valid");
 
-            auto dnew = static_cast<size_type>(std::distance(beg, end));
+            auto dnew = static_cast<size_type>(stl::distance(beg, end));
 
             if (dnew > size_type(local_capacity)) {
                 data(create(dnew, size_type(0)));
@@ -514,8 +514,8 @@ namespace webpp {
 
         // True if _Rep and source do not overlap.
         bool disjunct(const value_type* s) const noexcept {
-            return (less<const value_type*>()(s, data()) ||
-                    less<const value_type*>()(data() + this->size(), s));
+            return (stl::less<const value_type*>()(s, data()) ||
+                    stl::less<const value_type*>()(data() + this->size(), s));
         }
 
         // When n = 1 way faster than the general multichar
@@ -2523,7 +2523,7 @@ namespace webpp {
             glibcxx_requires_string_len(s, n);
             const size_type size = this->size();
             if (n <= size) {
-                pos               = std::min(size_type(size - n), pos);
+                pos               = stl::min(size_type(size - n), pos);
                 const CharT* data = data();
                 do {
                     if (traits_type::compare(data + pos, s, n) == 0)
@@ -3045,7 +3045,7 @@ namespace webpp {
             check(pos, "ustring::compare");
             n                     = limit(pos, n);
             const size_type osize = str.size();
-            const size_type len   = std::min(n, osize);
+            const size_type len   = stl::min(n, osize);
             int             r     = traits_type::compare(data() + pos, str.data(), len);
             if (!r)
                 r = compare(n, osize);
@@ -3082,7 +3082,7 @@ namespace webpp {
             str.check(pos2, "ustring::compare");
             n1                  = limit(pos1, n1);
             n2                  = str.limit(pos2, n2);
-            const size_type len = std::min(n1, n2);
+            const size_type len = stl::min(n1, n2);
             int             r   = traits_type::compare(data() + pos1, str.data() + pos2, len);
             if (!r)
                 r = compare(n1, n2);
@@ -3108,7 +3108,7 @@ namespace webpp {
             glibcxx_requires_string(s);
             const size_type size  = this->size();
             const size_type osize = traits_type::length(s);
-            const size_type len   = std::min(size, osize);
+            const size_type len   = stl::min(size, osize);
             int             r     = traits_type::compare(data(), s, len);
             if (!r)
                 r = compare(size, osize);
@@ -3142,7 +3142,7 @@ namespace webpp {
             check(pos, "ustring::compare");
             n1                    = limit(pos, n1);
             const size_type osize = traits_type::length(s);
-            const size_type len   = std::min(n1, osize);
+            const size_type len   = stl::min(n1, osize);
             int             r     = traits_type::compare(data() + pos, s, len);
             if (!r)
                 r = compare(n1, osize);
@@ -3178,7 +3178,7 @@ namespace webpp {
             glibcxx_requires_string_len(s, n2);
             check(pos, "ustring::compare");
             n1                  = limit(pos, n1);
-            const size_type len = std::min(n1, n2);
+            const size_type len = stl::min(n1, n2);
             int             r   = traits_type::compare(data() + pos, s, len);
             if (!r)
                 r = compare(n1, n2);
@@ -3311,13 +3311,13 @@ namespace webpp {
     template <typename CharT, typename ChTraitsT, typename AllocT>
     inline ustring<CharT, ChTraitsT, AllocT> operator+(ustring<CharT, ChTraitsT, AllocT>&&      lhs,
                                                        const ustring<CharT, ChTraitsT, AllocT>& rhs) {
-        return std::move(lhs.append(rhs));
+        return stl::move(lhs.append(rhs));
     }
 
     template <typename CharT, typename ChTraitsT, typename AllocT>
     inline ustring<CharT, ChTraitsT, AllocT> operator+(const ustring<CharT, ChTraitsT, AllocT>& lhs,
                                                        ustring<CharT, ChTraitsT, AllocT>&&      rhs) {
-        return std::move(rhs.insert(0, lhs));
+        return stl::move(rhs.insert(0, lhs));
     }
 
     template <typename CharT, typename ChTraitsT, typename AllocT>
@@ -3334,31 +3334,31 @@ namespace webpp {
         if (use_rhs) {
             const auto size = lhs.size() + rhs.size();
             if (size > lhs.capacity() && size <= rhs.capacity())
-                return std::move(rhs.insert(0, lhs));
+                return stl::move(rhs.insert(0, lhs));
         }
-        return std::move(lhs.append(rhs));
+        return stl::move(lhs.append(rhs));
     }
 
     template <typename CharT, typename ChTraitsT, typename AllocT>
     inline ustring<CharT, ChTraitsT, AllocT> operator+(const CharT*                        lhs,
                                                        ustring<CharT, ChTraitsT, AllocT>&& rhs) {
-        return std::move(rhs.insert(0, lhs));
+        return stl::move(rhs.insert(0, lhs));
     }
 
     template <typename CharT, typename ChTraitsT, typename AllocT>
     inline ustring<CharT, ChTraitsT, AllocT> operator+(CharT lhs, ustring<CharT, ChTraitsT, AllocT>&& rhs) {
-        return std::move(rhs.insert(0, 1, lhs));
+        return stl::move(rhs.insert(0, 1, lhs));
     }
 
     template <typename CharT, typename ChTraitsT, typename AllocT>
     inline ustring<CharT, ChTraitsT, AllocT> operator+(ustring<CharT, ChTraitsT, AllocT>&& lhs,
                                                        const CharT*                        rhs) {
-        return std::move(lhs.append(rhs));
+        return stl::move(lhs.append(rhs));
     }
 
     template <typename CharT, typename ChTraitsT, typename AllocT>
     inline ustring<CharT, ChTraitsT, AllocT> operator+(ustring<CharT, ChTraitsT, AllocT>&& lhs, CharT rhs) {
-        return std::move(lhs.append(1, rhs));
+        return stl::move(lhs.append(1, rhs));
     }
 
     // operator ==
@@ -3378,7 +3378,7 @@ namespace webpp {
     requires(details::is_char<CharT>::value) inline bool operator==(const ustring<CharT>& lhs,
                                                                     const ustring<CharT>& rhs) noexcept {
         return (lhs.size() == rhs.size() &&
-                !std::char_traits<CharT>::compare(lhs.data(), rhs.data(), lhs.size()));
+                !stl::char_traits<CharT>::compare(lhs.data(), rhs.data(), lhs.size()));
     }
 
     /**
@@ -3621,98 +3621,6 @@ namespace webpp {
     }
 
 
-    /**
-     *  @brief  Read stream into a string.
-     *  @param is  Input stream.
-     *  @param str  Buffer to store into.
-     *  @return  Reference to the input stream.
-     *
-     *  Stores characters from @a is into @a str until whitespace is
-     *  found, the end of the stream is encountered, or str.max_size()
-     *  is reached.  If is.width() is non-zero, that is the limit on the
-     *  number of characters stored into @a str.  Any previous
-     *  contents of @a str are erased.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    stl::basic_istream<CharT, ChTraitsT>& operator>>(stl::basic_istream<CharT, ChTraitsT>& is,
-                                                     ustring<CharT, ChTraitsT, AllocT>&    str);
-
-    template <>
-    stl::basic_istream<char>& operator>>(stl::basic_istream<char>& is, ustring<char>& str);
-
-    /**
-     *  @brief  Write string to a stream.
-     *  @param os  Output stream.
-     *  @param str  String to write out.
-     *  @return  Reference to the output stream.
-     *
-     *  Output characters of @a str into os following the same rules as for
-     *  writing a C string.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline stl::basic_ostream<CharT, ChTraitsT>& operator<<(stl::basic_ostream<CharT, ChTraitsT>&    os,
-                                                            const ustring<CharT, ChTraitsT, AllocT>& str) {
-        // _GLIBCXX_RESOLVE_LIB_DEFECTS
-        // 586. string inserter not a formatted function
-        return ostream_insert(os, str.data(), str.size());
-    }
-
-    /**
-     *  @brief  Read a line from stream into a string.
-     *  @param is  Input stream.
-     *  @param str  Buffer to store into.
-     *  @param delim  Character marking end of line.
-     *  @return  Reference to the input stream.
-     *
-     *  Stores characters from @a is into @a str until @a delim is
-     *  found, the end of the stream is encountered, or str.max_size()
-     *  is reached.  Any previous contents of @a str are erased.  If
-     *  @a delim is encountered, it is extracted but not stored into
-     *  @a str.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    stl::basic_istream<CharT, ChTraitsT>&
-    getline(stl::basic_istream<CharT, ChTraitsT>& is, ustring<CharT, ChTraitsT, AllocT>& str, CharT delim);
-
-    /**
-     *  @brief  Read a line from stream into a string.
-     *  @param is  Input stream.
-     *  @param str  Buffer to store into.
-     *  @return  Reference to the input stream.
-     *
-     *  Stores characters from is into @a str until &apos;\n&apos; is
-     *  found, the end of the stream is encountered, or str.max_size()
-     *  is reached.  Any previous contents of @a str are erased.  If
-     *  end of line is encountered, it is extracted but not stored into
-     *  @a str.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline stl::basic_istream<CharT, ChTraitsT>& getline(stl::basic_istream<CharT, ChTraitsT>& is,
-                                                         ustring<CharT, ChTraitsT, AllocT>&    str) {
-        return std::getline(is, str, is.widen('\n'));
-    }
-
-    /// Read a line from an rvalue stream into a string.
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline stl::basic_istream<CharT, ChTraitsT>&
-    getline(stl::basic_istream<CharT, ChTraitsT>&& is, ustring<CharT, ChTraitsT, AllocT>& str, CharT delim) {
-        return std::getline(is, str, delim);
-    }
-
-    /// Read a line from an rvalue stream into a string.
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline stl::basic_istream<CharT, ChTraitsT>& getline(stl::basic_istream<CharT, ChTraitsT>&& is,
-                                                         ustring<CharT, ChTraitsT, AllocT>&     str) {
-        return std::getline(is, str);
-    }
-
-    template <>
-    stl::basic_istream<char>& getline(stl::basic_istream<char>& in, ustring<char>& str, char delim);
-
-    template <>
-    stl::basic_istream<wchar_t>&
-    getline(stl::basic_istream<wchar_t>& in, ustring<wchar_t>& str, wchar_t delim);
-
 
 
     template <typename CharT, typename ChTraitsT, typename AllocT>
@@ -3841,151 +3749,242 @@ namespace webpp {
     }
 
 
-
-    // 21.3.7.9 ustring::getline and operators
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    stl::basic_istream<CharT, ChTraitsT>& operator>>(stl::basic_istream<CharT, ChTraitsT>& in,
-                                                     ustring<CharT, ChTraitsT, AllocT>&    str) {
-        typedef stl::basic_istream<CharT, ChTraitsT> istream_type;
-        typedef ustring<CharT, ChTraitsT, AllocT>    string_type;
-        typedef typename istream_type::ios_base      ios_base;
-        typedef typename istream_type::int_type      int_type;
-        typedef typename string_type::size_type      size_type;
-        typedef stl::ctype<CharT>                    ctype_type;
-        typedef typename ctype_type::ctype_base      ctype_base;
-
-        size_type                     extracted = 0;
-        typename ios_base::iostate    err       = ios_base::goodbit;
-        typename istream_type::sentry cerb(in, false);
-        if (cerb) {
-            try {
-                // Avoid reallocation for common case.
-                str.erase();
-                CharT                 buf[128];
-                size_type             len = 0;
-                const stl::streamsize w   = in.width();
-                const size_type       n   = w > 0 ? static_cast<size_type>(w) : str.max_size();
-                const ctype_type&     ct  = use_facet<ctype_type>(in.getloc());
-                const int_type        eof = ChTraitsT::eof();
-                int_type              c   = in.rdbuf()->sgetc();
-
-                while (extracted < n && !ChTraitsT::eq_int_type(c, eof) &&
-                       !ct.is(ctype_base::space, ChTraitsT::to_char_type(c))) {
-                    if (len == sizeof(buf) / sizeof(CharT)) {
-                        str.append(buf, sizeof(buf) / sizeof(CharT));
-                        len = 0;
-                    }
-                    buf[len++] = ChTraitsT::to_char_type(c);
-                    ++extracted;
-                    c = in.rdbuf()->snextc();
-                }
-                str.append(buf, len);
-
-                if (ChTraitsT::eq_int_type(c, eof))
-                    err |= ios_base::eofbit;
-                in.width(0);
-            } catch (cxxabiv1::forced_unwind&) {
-                in.setstate(ios_base::badbit);
-                throw;
-            } catch (...) {
-                // _GLIBCXX_RESOLVE_LIB_DEFECTS
-                // 91. Description of operator>> and getline() for string<>
-                // might cause endless loop
-                in.setstate(ios_base::badbit);
-            }
-        }
-        // 211.  operator>>(istream&, string&) doesn't set failbit
-        if (!extracted)
-            err |= ios_base::failbit;
-        if (err)
-            in.setstate(err);
-        return in;
-    }
-
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    stl::basic_istream<CharT, ChTraitsT>&
-    getline(stl::basic_istream<CharT, ChTraitsT>& in, ustring<CharT, ChTraitsT, AllocT>& str, CharT delim) {
-        typedef stl::basic_istream<CharT, ChTraitsT> istream_type;
-        typedef ustring<CharT, ChTraitsT, AllocT>    string_type;
-        typedef typename istream_type::ios_base      ios_base;
-        typedef typename istream_type::int_type      int_type;
-        typedef typename string_type::size_type      size_type;
-
-        size_type                     extracted = 0;
-        const size_type               n         = str.max_size();
-        typename ios_base::iostate    err       = ios_base::goodbit;
-        typename istream_type::sentry cerb(in, true);
-        if (cerb) {
-            try {
-                str.erase();
-                const int_type idelim = ChTraitsT::to_int_type(delim);
-                const int_type eof    = ChTraitsT::eof();
-                int_type       c      = in.rdbuf()->sgetc();
-
-                while (extracted < n && !ChTraitsT::eq_int_type(c, eof) &&
-                       !ChTraitsT::eq_int_type(c, idelim)) {
-                    str += ChTraitsT::to_char_type(c);
-                    ++extracted;
-                    c = in.rdbuf()->snextc();
-                }
-
-                if (ChTraitsT::eq_int_type(c, eof))
-                    err |= ios_base::eofbit;
-                else if (ChTraitsT::eq_int_type(c, idelim)) {
-                    ++extracted;
-                    in.rdbuf()->sbumpc();
-                } else
-                    err |= ios_base::failbit;
-            } catch (cxxabiv1::forced_unwind&) {
-                in.setstate(ios_base::badbit);
-                throw;
-            } catch (...) {
-                // _GLIBCXX_RESOLVE_LIB_DEFECTS
-                // 91. Description of operator>> and getline() for string<>
-                // might cause endless loop
-                in.setstate(ios_base::badbit);
-            }
-        }
-        if (!extracted)
-            err |= ios_base::failbit;
-        if (err)
-            in.setstate(err);
-        return in;
-    }
-
-    // Inhibit implicit instantiations for required instantiations,
-    // which are defined via explicit instantiations elsewhere.
-#if _GLIBCXX_EXTERN_TEMPLATE
-    // The explicit instantiation definitions in src/c++11/string-inst.cc and
-    // src/c++17/string-inst.cc only instantiate the members required for C++17
-    // and earlier standards (so not C++20's starts_with and ends_with).
-    // Suppress the explicit instantiation declarations for C++20, so C++20
-    // code will implicitly instantiate std::string and std::wstring as needed.
-#    if cplusplus <= 201703L && _GLIBCXX_EXTERN_TEMPLATE > 0
-    extern template class ustring<char>;
-#    elif !_GLIBCXX_USE_CXX11_ABI
-    // Still need to prevent implicit instantiation of the COW empty rep,
-    // to ensure the definition in libstdc++.so is unique (PR 86138).
-    extern template ustring<char>::size_type ustring<char>::_Rep::empty_rep_storage[];
-#    endif
-
-    extern template stl::basic_istream<char>& operator>>(stl::basic_istream<char>&, string&);
-    extern template stl::basic_ostream<char>& operator<<(stl::basic_ostream<char>&, const string&);
-    extern template stl::basic_istream<char>& getline(stl::basic_istream<char>&, string&, char);
-    extern template stl::basic_istream<char>& getline(stl::basic_istream<char>&, string&);
-
-#    if cplusplus <= 201703L && _GLIBCXX_EXTERN_TEMPLATE > 0
-    extern template class ustring<wchar_t>;
-#    elif !_GLIBCXX_USE_CXX11_ABI
-    extern template ustring<wchar_t>::size_type ustring<wchar_t>::_Rep::empty_rep_storage[];
-#    endif
-
-    extern template stl::basic_istream<wchar_t>& operator>>(stl::basic_istream<wchar_t>&, wstring&);
-    extern template stl::basic_ostream<wchar_t>& operator<<(stl::basic_ostream<wchar_t>&, const wstring&);
-    extern template stl::basic_istream<wchar_t>& getline(stl::basic_istream<wchar_t>&, wstring&, wchar_t);
-    extern template stl::basic_istream<wchar_t>& getline(stl::basic_istream<wchar_t>&, wstring&);
-#endif // _GLIBCXX_EXTERN_TEMPLATE
-
+//
+//    /**
+//     *  @brief  Read stream into a string.
+//     *  @param is  Input stream.
+//     *  @param str  Buffer to store into.
+//     *  @return  Reference to the input stream.
+//     *
+//     *  Stores characters from @a is into @a str until whitespace is
+//     *  found, the end of the stream is encountered, or str.max_size()
+//     *  is reached.  If is.width() is non-zero, that is the limit on the
+//     *  number of characters stored into @a str.  Any previous
+//     *  contents of @a str are erased.
+//     */
+//    template <typename CharT, typename ChTraitsT, typename AllocT>
+//    stl::basic_istream<CharT, ChTraitsT>& operator>>(stl::basic_istream<CharT, ChTraitsT>& is,
+//                                                     ustring<CharT, ChTraitsT, AllocT>&    str);
+//
+//    template <>
+//    stl::basic_istream<char>& operator>>(stl::basic_istream<char>& is, ustring<char>& str);
+//
+//    /**
+//     *  @brief  Write string to a stream.
+//     *  @param os  Output stream.
+//     *  @param str  String to write out.
+//     *  @return  Reference to the output stream.
+//     *
+//     *  Output characters of @a str into os following the same rules as for
+//     *  writing a C string.
+//     */
+//    template <typename CharT, typename ChTraitsT, typename AllocT>
+//    inline stl::basic_ostream<CharT, ChTraitsT>& operator<<(stl::basic_ostream<CharT, ChTraitsT>&    os,
+//                                                            const ustring<CharT, ChTraitsT, AllocT>& str) {
+//        // _GLIBCXX_RESOLVE_LIB_DEFECTS
+//        // 586. string inserter not a formatted function
+//        return ostream_insert(os, str.data(), str.size());
+//    }
+//
+//    /**
+//     *  @brief  Read a line from stream into a string.
+//     *  @param is  Input stream.
+//     *  @param str  Buffer to store into.
+//     *  @param delim  Character marking end of line.
+//     *  @return  Reference to the input stream.
+//     *
+//     *  Stores characters from @a is into @a str until @a delim is
+//     *  found, the end of the stream is encountered, or str.max_size()
+//     *  is reached.  Any previous contents of @a str are erased.  If
+//     *  @a delim is encountered, it is extracted but not stored into
+//     *  @a str.
+//     */
+//    template <typename CharT, typename ChTraitsT, typename AllocT>
+//    stl::basic_istream<CharT, ChTraitsT>&
+//    getline(stl::basic_istream<CharT, ChTraitsT>& is, ustring<CharT, ChTraitsT, AllocT>& str, CharT delim);
+//
+//    /**
+//     *  @brief  Read a line from stream into a string.
+//     *  @param is  Input stream.
+//     *  @param str  Buffer to store into.
+//     *  @return  Reference to the input stream.
+//     *
+//     *  Stores characters from is into @a str until &apos;\n&apos; is
+//     *  found, the end of the stream is encountered, or str.max_size()
+//     *  is reached.  Any previous contents of @a str are erased.  If
+//     *  end of line is encountered, it is extracted but not stored into
+//     *  @a str.
+//     */
+//    template <typename CharT, typename ChTraitsT, typename AllocT>
+//    inline stl::basic_istream<CharT, ChTraitsT>& getline(stl::basic_istream<CharT, ChTraitsT>& is,
+//                                                         ustring<CharT, ChTraitsT, AllocT>&    str) {
+//        return stl::getline(is, str, is.widen('\n'));
+//    }
+//
+//    /// Read a line from an rvalue stream into a string.
+//    template <typename CharT, typename ChTraitsT, typename AllocT>
+//    inline stl::basic_istream<CharT, ChTraitsT>&
+//    getline(stl::basic_istream<CharT, ChTraitsT>&& is, ustring<CharT, ChTraitsT, AllocT>& str, CharT delim) {
+//        return stl::getline(is, str, delim);
+//    }
+//
+//    /// Read a line from an rvalue stream into a string.
+//    template <typename CharT, typename ChTraitsT, typename AllocT>
+//    inline stl::basic_istream<CharT, ChTraitsT>& getline(stl::basic_istream<CharT, ChTraitsT>&& is,
+//                                                         ustring<CharT, ChTraitsT, AllocT>&     str) {
+//        return stl::getline(is, str);
+//    }
+//
+//    template <>
+//    stl::basic_istream<char>& getline(stl::basic_istream<char>& in, ustring<char>& str, char delim);
+//
+//    template <>
+//    stl::basic_istream<wchar_t>&
+//    getline(stl::basic_istream<wchar_t>& in, ustring<wchar_t>& str, wchar_t delim);
+//    // 21.3.7.9 ustring::getline and operators
+//    template <typename CharT, typename ChTraitsT, typename AllocT>
+//    stl::basic_istream<CharT, ChTraitsT>& operator>>(stl::basic_istream<CharT, ChTraitsT>& in,
+//                                                     ustring<CharT, ChTraitsT, AllocT>&    str) {
+//        typedef stl::basic_istream<CharT, ChTraitsT> istream_type;
+//        typedef ustring<CharT, ChTraitsT, AllocT>    string_type;
+//        typedef typename istream_type::ios_base      ios_base;
+//        typedef typename istream_type::int_type      int_type;
+//        typedef typename string_type::size_type      size_type;
+//        typedef stl::ctype<CharT>                    ctype_type;
+//        typedef typename ctype_type::ctype_base      ctype_base;
+//
+//        size_type                     extracted = 0;
+//        typename ios_base::iostate    err       = ios_base::goodbit;
+//        typename istream_type::sentry cerb(in, false);
+//        if (cerb) {
+//            try {
+//                // Avoid reallocation for common case.
+//                str.erase();
+//                CharT                 buf[128];
+//                size_type             len = 0;
+//                const stl::streamsize w   = in.width();
+//                const size_type       n   = w > 0 ? static_cast<size_type>(w) : str.max_size();
+//                const ctype_type&     ct  = use_facet<ctype_type>(in.getloc());
+//                const int_type        eof = ChTraitsT::eof();
+//                int_type              c   = in.rdbuf()->sgetc();
+//
+//                while (extracted < n && !ChTraitsT::eq_int_type(c, eof) &&
+//                       !ct.is(ctype_base::space, ChTraitsT::to_char_type(c))) {
+//                    if (len == sizeof(buf) / sizeof(CharT)) {
+//                        str.append(buf, sizeof(buf) / sizeof(CharT));
+//                        len = 0;
+//                    }
+//                    buf[len++] = ChTraitsT::to_char_type(c);
+//                    ++extracted;
+//                    c = in.rdbuf()->snextc();
+//                }
+//                str.append(buf, len);
+//
+//                if (ChTraitsT::eq_int_type(c, eof))
+//                    err |= ios_base::eofbit;
+//                in.width(0);
+//            } catch (cxxabiv1::forced_unwind&) {
+//                in.setstate(ios_base::badbit);
+//                throw;
+//            } catch (...) {
+//                // _GLIBCXX_RESOLVE_LIB_DEFECTS
+//                // 91. Description of operator>> and getline() for string<>
+//                // might cause endless loop
+//                in.setstate(ios_base::badbit);
+//            }
+//        }
+//        // 211.  operator>>(istream&, string&) doesn't set failbit
+//        if (!extracted)
+//            err |= ios_base::failbit;
+//        if (err)
+//            in.setstate(err);
+//        return in;
+//    }
+//
+//    template <typename CharT, typename ChTraitsT, typename AllocT>
+//    stl::basic_istream<CharT, ChTraitsT>&
+//    getline(stl::basic_istream<CharT, ChTraitsT>& in, ustring<CharT, ChTraitsT, AllocT>& str, CharT delim) {
+//        typedef stl::basic_istream<CharT, ChTraitsT> istream_type;
+//        typedef ustring<CharT, ChTraitsT, AllocT>    string_type;
+//        typedef typename istream_type::ios_base      ios_base;
+//        typedef typename istream_type::int_type      int_type;
+//        typedef typename string_type::size_type      size_type;
+//
+//        size_type                     extracted = 0;
+//        const size_type               n         = str.max_size();
+//        typename ios_base::iostate    err       = ios_base::goodbit;
+//        typename istream_type::sentry cerb(in, true);
+//        if (cerb) {
+//            try {
+//                str.erase();
+//                const int_type idelim = ChTraitsT::to_int_type(delim);
+//                const int_type eof    = ChTraitsT::eof();
+//                int_type       c      = in.rdbuf()->sgetc();
+//
+//                while (extracted < n && !ChTraitsT::eq_int_type(c, eof) &&
+//                       !ChTraitsT::eq_int_type(c, idelim)) {
+//                    str += ChTraitsT::to_char_type(c);
+//                    ++extracted;
+//                    c = in.rdbuf()->snextc();
+//                }
+//
+//                if (ChTraitsT::eq_int_type(c, eof))
+//                    err |= ios_base::eofbit;
+//                else if (ChTraitsT::eq_int_type(c, idelim)) {
+//                    ++extracted;
+//                    in.rdbuf()->sbumpc();
+//                } else
+//                    err |= ios_base::failbit;
+//            } catch (cxxabiv1::forced_unwind&) {
+//                in.setstate(ios_base::badbit);
+//                throw;
+//            } catch (...) {
+//                // _GLIBCXX_RESOLVE_LIB_DEFECTS
+//                // 91. Description of operator>> and getline() for string<>
+//                // might cause endless loop
+//                in.setstate(ios_base::badbit);
+//            }
+//        }
+//        if (!extracted)
+//            err |= ios_base::failbit;
+//        if (err)
+//            in.setstate(err);
+//        return in;
+//    }
+//
+//    // Inhibit implicit instantiations for required instantiations,
+//    // which are defined via explicit instantiations elsewhere.
+//#if _GLIBCXX_EXTERN_TEMPLATE
+//    // The explicit instantiation definitions in src/c++11/string-inst.cc and
+//    // src/c++17/string-inst.cc only instantiate the members required for C++17
+//    // and earlier standards (so not C++20's starts_with and ends_with).
+//    // Suppress the explicit instantiation declarations for C++20, so C++20
+//    // code will implicitly instantiate stl::string and stl::wstring as needed.
+//#    if cplusplus <= 201703L && _GLIBCXX_EXTERN_TEMPLATE > 0
+//    extern template class ustring<char>;
+//#    elif !_GLIBCXX_USE_CXX11_ABI
+//    // Still need to prevent implicit instantiation of the COW empty rep,
+//    // to ensure the definition in libstdc++.so is unique (PR 86138).
+//    extern template ustring<char>::size_type ustring<char>::_Rep::empty_rep_storage[];
+//#    endif
+//
+//    extern template stl::basic_istream<char>& operator>>(stl::basic_istream<char>&, string&);
+//    extern template stl::basic_ostream<char>& operator<<(stl::basic_ostream<char>&, const string&);
+//    extern template stl::basic_istream<char>& getline(stl::basic_istream<char>&, string&, char);
+//    extern template stl::basic_istream<char>& getline(stl::basic_istream<char>&, string&);
+//
+//#    if cplusplus <= 201703L && _GLIBCXX_EXTERN_TEMPLATE > 0
+//    extern template class ustring<wchar_t>;
+//#    elif !_GLIBCXX_USE_CXX11_ABI
+//    extern template ustring<wchar_t>::size_type ustring<wchar_t>::_Rep::empty_rep_storage[];
+//#    endif
+//
+//    extern template stl::basic_istream<wchar_t>& operator>>(stl::basic_istream<wchar_t>&, wstring&);
+//    extern template stl::basic_ostream<wchar_t>& operator<<(stl::basic_ostream<wchar_t>&, const wstring&);
+//    extern template stl::basic_istream<wchar_t>& getline(stl::basic_istream<wchar_t>&, wstring&, wchar_t);
+//    extern template stl::basic_istream<wchar_t>& getline(stl::basic_istream<wchar_t>&, wstring&);
+//#endif // _GLIBCXX_EXTERN_TEMPLATE
+//
 
     using utf8  = ustring<utf8_glyph>;
     using utf16 = ustring<utf16_glyph>;
