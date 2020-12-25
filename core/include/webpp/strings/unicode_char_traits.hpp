@@ -38,7 +38,9 @@ namespace webpp {
         using pos_type   = typename char_types<CharT>::pos_type;
         using off_type   = typename char_types<CharT>::off_type;
         using state_type = typename char_types<CharT>::state_type;
+
 #ifdef has_compare
+        // for 3-way comparison
         using comparison_category = stl::strong_ordering;
 #endif
 

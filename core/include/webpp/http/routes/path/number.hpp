@@ -34,9 +34,9 @@ namespace webpp::routes {
                 return to<T>(str);
             } else if constexpr (stl::is_constructible_v<T, long double>) {
                 return T(to<long double>(str));
+            } else {
+                return stl::nullopt;
             }
-
-            return stl::nullopt;
         }
     };
 
