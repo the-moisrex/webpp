@@ -5,6 +5,8 @@
 
 #include "../std/type_traits.hpp"
 
+#include <compare>
+
 namespace webpp {
 
     template <typename T>
@@ -56,36 +58,30 @@ namespace webpp {
      */
     template <typename GlyphType, typename ContainerType>
     struct glyph_reference_wrapper {
-        using glyph_type     = GlyphType;
-        using container_type = ContainerType;
-        using container_ref  = stl::add_lvalue_reference_t<container_type>;
-        using value_type     = typename glyph_type::value_type;
-        using wide_char_type = typename glyph_type::wide_char_type;
-        using pointer        = stl::add_pointer_t<value_type>;
+        using glyph_type      = GlyphType;
+        using container_type  = ContainerType;
+        using container_ref   = stl::add_lvalue_reference_t<container_type>;
+        using value_type      = typename glyph_type::value_type;
+        using code_point_type = typename glyph_type::code_point_type;
+        using pointer         = stl::add_pointer_t<value_type>;
 
         container_ref container;
         pointer       start;
 
-
-#define OP(op)                                                           \
-    constexpr glyph_reference_wrapper& op(wide_char_type val) noexcept { \
-        return *this;                                                    \
-    }
-
-        OP(operator=)
-
-#undef OP
+        constexpr stl::strong_ordering operator<=>(auto val) const noexcept {
+            return *start <=> val;
+        }
     };
 
 
-    template <typename GlyphType>
-    struct glyph_ptr {
-        using glyph_type      = GlyphType;
-        using value_type      = typename glyph_type::value_type;
-        using wide_char_type  = typename glyph_type::wide_char_type;
-        using pointer         = stl::add_pointer_t<value_type>;
-        using reference       = wide_char_type;
-        using difference_type = stl::ptrdiff_t;
+    template <typename StorageUnitType>
+    struct glyph {
+        using storage_unit_type = StorageUnitType;
+        using value_type        = typename storage_unit_type::value_type;
+        using code_point_type   = typename storage_unit_type::code_point_type;
+        using pointer           = stl::add_pointer_t<value_type>;
+        using reference         = code_point_type;
+        using difference_type   = stl::ptrdiff_t;
 
         static constexpr bool is_utf8  = UTF8<value_type>;
         static constexpr bool is_utf16 = UTF16<value_type>;
@@ -97,22 +93,22 @@ namespace webpp {
             return *start;
         }
 
-        constexpr glyph_ptr& next() noexcept {
+        constexpr glyph& next() noexcept {
             ++start;
             return *this;
         }
 
-        constexpr glyph_ptr& next(difference_type n) noexcept {
+        constexpr glyph& next(difference_type n) noexcept {
             start += n;
             return *this;
         }
 
-        constexpr glyph_ptr& prev() noexcept {
+        constexpr glyph& prev() noexcept {
             --start;
             return *this;
         }
 
-        constexpr glyph_ptr& prev(difference_type n) noexcept {
+        constexpr glyph& prev(difference_type n) noexcept {
             start -= n;
             return *this;
         }
@@ -140,12 +136,12 @@ namespace webpp {
                     val |= *next_val;
                     return val;
                 }
-                return static_cast<wide_char_type>(val); // this is the only char
+                return static_cast<code_point_type>(val); // this is the only char
             } else if constexpr (is_utf8) {
                 constexpr auto shift_bit_count = sizeof(char8_t) * 8u;
                 if ((val & 0x80u) == 0) {
                     // we have one char
-                    return static_cast<wide_char_type>(val);
+                    return static_cast<code_point_type>(val);
                 } else if ((val & 0xE0u) == 0xC0u) {
                     // we have 2 chars
                     val <<= shift_bit_count;
@@ -180,17 +176,17 @@ namespace webpp {
             }
         }
 
-        constexpr glyph_ptr& operator++() noexcept {
+        constexpr glyph& operator++() noexcept {
             return next(details::count_bytes<value_type>(this->value()));
         }
 
-        constexpr glyph_ptr operator++(int) noexcept {
-            glyph_ptr ret{*this};
-            ret.      operator++();
+        constexpr glyph operator++(int) noexcept {
+            glyph ret{*this};
+            ret.  operator++();
             return ret;
         }
 
-        constexpr glyph_ptr& operator--() noexcept {
+        constexpr glyph& operator--() noexcept {
             while (true) {
                 prev();
                 auto const val = this->value();
@@ -209,40 +205,40 @@ namespace webpp {
             return *this;
         }
 
-        constexpr glyph_ptr operator--(int) noexcept {
-            glyph_ptr ret{*this};
-            ret.      operator--();
+        constexpr glyph operator--(int) noexcept {
+            glyph ret{*this};
+            ret.  operator--();
             return ret;
         }
 
-        constexpr glyph_ptr& operator+=(difference_type n) noexcept {
+        constexpr glyph& operator+=(difference_type n) noexcept {
             for (; n != 0; --n)
                 this->operator++();
             return *this;
         }
 
-        constexpr glyph_ptr& operator-=(difference_type n) noexcept {
+        constexpr glyph& operator-=(difference_type n) noexcept {
             for (; n != 0; --n)
                 this->operator--();
             return *this;
         }
 
-        constexpr glyph_ptr operator+(difference_type n) const noexcept {
-            glyph_ptr ret{*this};
+        constexpr glyph operator+(difference_type n) const noexcept {
+            glyph ret{*this};
             for (; n != 0; --n)
                 ret.operator++();
             return ret;
         }
 
-        constexpr glyph_ptr operator-(difference_type n) const noexcept {
-            glyph_ptr ret{*this};
+        constexpr glyph operator-(difference_type n) const noexcept {
+            glyph ret{*this};
             for (; n != 0; --n)
                 ret.operator--();
             return ret;
         }
 
         constexpr reference operator[](difference_type n) noexcept {
-            glyph_ptr ret{*this};
+            glyph ret{*this};
             ret += n;
             return *ret;
         }
@@ -251,16 +247,16 @@ namespace webpp {
     /**
      * This type can handle both a pointer and a value
      */
-    template <details::is_value CharT = char8_t, details::is_value WCharT = char32_t>
-    struct glyph {
-        using value_type     = CharT;
-        using wide_char_type = WCharT;
-        using glyph_type     = glyph<CharT, WCharT>;
+    template <details::is_value CharT = char8_t, details::is_value CodePointType = char32_t>
+    struct storage_unit {
+        using value_type      = CharT;
+        using code_point_type = CodePointType;
+        using type            = storage_unit<CharT, CodePointType>;
 
         // the std::iterator_traits uses this to get the pointer type
-        using pointer = glyph_ptr<glyph_type>;
+        using pointer = glyph<type>;
 
-        static_assert(sizeof(WCharT) >= sizeof(CharT),
+        static_assert(sizeof(CodePointType) >= sizeof(CharT),
                       "The specified wide char type is smaller than the unicode char type");
 
         static constexpr bool is_utf16 = UTF16<value_type>;
@@ -272,109 +268,49 @@ namespace webpp {
         template <typename C>
         requires(details::is_value<stl::remove_cvref_t<C>> &&
                  !stl::is_same_v<stl::remove_cvref_t<C>, value_type>) constexpr explicit(false)
-          glyph(C c) noexcept
+          storage_unit(C c) noexcept
           : value(static_cast<value_type>(c)) {}
 
-        constexpr explicit(false) glyph(value_type val) noexcept : value(val) {}
-        constexpr glyph() noexcept        = default;
-        constexpr glyph(glyph const&)     = default;
-        constexpr glyph(glyph&&) noexcept = default;
-        glyph& operator=(glyph const& val) = default;
-        glyph& operator=(glyph&& val) noexcept = default;
+        constexpr explicit(false) storage_unit(value_type val) noexcept : value(val) {}
+        constexpr storage_unit() noexcept               = default;
+        constexpr storage_unit(storage_unit const&)     = default;
+        constexpr storage_unit(storage_unit&&) noexcept = default;
+        storage_unit& operator=(storage_unit const& val) = default;
+        storage_unit& operator=(storage_unit&& val) noexcept = default;
 
         template <typename C>
-        requires(stl::is_integral_v<stl::remove_cvref_t<C>>) glyph& operator=(C c) {
+        requires(stl::is_integral_v<stl::remove_cvref_t<C>>) storage_unit& operator=(C c) {
             value = static_cast<value_type>(c);
             return *this;
-        }
-
-        constexpr explicit operator value_type() const noexcept {
-            return value;
         }
 
         /**
          * Let it to be converted to another integer type with static_cast
          */
         template <typename IntType>
-        requires(stl::is_integral_v<stl::remove_cvref_t<IntType>> &&
-                 !stl::is_same_v<stl::remove_cvref_t<IntType>, value_type>) constexpr explicit
+        requires(stl::is_integral_v<stl::remove_cvref_t<IntType>>) constexpr explicit
         operator IntType() const noexcept {
             return static_cast<IntType>(value);
         }
 
         template <typename IntT>
-        constexpr bool operator==(glyph<IntT> val) const noexcept {
-            return value == val.value;
+        constexpr stl::strong_ordering operator<=>(storage_unit<IntT> val) const noexcept {
+            return value <=> static_cast<value_type>(val.value);
         }
 
         template <typename IntT>
-        constexpr bool operator!=(glyph<IntT> val) const noexcept {
-            return value != val.value;
-        }
-
-        template <typename IntT>
-        constexpr bool operator<(glyph<IntT> val) const noexcept {
-            return value < val.value;
-        }
-
-        template <typename IntT>
-        constexpr bool operator>(glyph<IntT> val) const noexcept {
-            return value > val.value;
-        }
-
-        template <typename IntT>
-        constexpr bool operator>=(glyph<IntT> val) const noexcept {
-            return value >= val.value;
-        }
-
-        template <typename IntT>
-        constexpr bool operator<=(glyph<IntT> val) const noexcept {
-            return value <= val.value;
-        }
-
-        template <typename IntT>
-        requires(stl::is_integral_v<stl::remove_cvref_t<IntT>>) constexpr bool
-        operator==(IntT&& val) const noexcept {
-            return value == val;
-        }
-
-        template <typename IntT>
-        requires(stl::is_integral_v<stl::remove_cvref_t<IntT>>) constexpr bool
-        operator!=(IntT&& val) const noexcept {
-            return value != val;
-        }
-
-        template <typename IntT>
-        requires(stl::is_integral_v<stl::remove_cvref_t<IntT>>) constexpr bool
-        operator<(IntT&& val) const noexcept {
-            return value < val;
-        }
-
-        template <typename IntT>
-        requires(stl::is_integral_v<stl::remove_cvref_t<IntT>>) constexpr bool
-        operator>(IntT&& val) const noexcept {
-            return value > val;
-        }
-
-        template <typename IntT>
-        requires(stl::is_integral_v<stl::remove_cvref_t<IntT>>) constexpr bool
-        operator>=(IntT&& val) const noexcept {
-            return value >= val;
-        }
-
-        template <typename IntT>
-        requires(stl::is_integral_v<stl::remove_cvref_t<IntT>>) constexpr bool
-        operator<=(IntT&& val) const noexcept {
-            return value <= val;
+        requires(stl::is_integral_v<stl::remove_cvref_t<IntT>>) constexpr stl::strong_ordering
+        operator<=>(IntT&& val) const noexcept {
+            return value <=> val;
         }
     };
 
-    using utf8_glyph  = glyph<char8_t, char32_t>;
-    using utf16_glyph = glyph<char16_t, char32_t>;
-    using utf32_glyph = glyph<char32_t, char32_t>;
+    using utf8_storage_unit  = storage_unit<char8_t, char32_t>;
+    using utf16_storage_unit = storage_unit<char16_t, char32_t>;
+    using utf32_storage_unit = storage_unit<char32_t, char32_t>;
 
-    static_assert(stl::is_standard_layout_v<glyph<>>, "The glyph won't work in std::basic_string");
-    static_assert(stl::is_trivial_v<glyph<>>, "The glyph needs to be a trivial type");
+    static_assert(stl::is_standard_layout_v<storage_unit<>>, "The glyph won't work in std::basic_string");
+    static_assert(stl::is_trivial_v<storage_unit<>>, "The glyph needs to be a trivial type");
 } // namespace webpp
 
 #endif // WEBPP_GLYPH_HPP

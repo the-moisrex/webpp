@@ -188,7 +188,7 @@ namespace webpp {
     template <typename T, typename CharTraits>
     struct ustring_view;
 
-    template <typename CharT          = glyph<>,
+    template <typename CharT          = storage_unit<>,
               typename CharTraitsType = unicode_char_traits<CharT>,
               typename AllocType      = stl::allocator<CharT>>
     // requires(istl::CharTraits<CharTraitsType>&& AllocatorOf<CharT, AllocType>)
@@ -3986,9 +3986,9 @@ namespace webpp {
 //#endif // _GLIBCXX_EXTERN_TEMPLATE
 //
 
-    using utf8  = ustring<utf8_glyph>;
-    using utf16 = ustring<utf16_glyph>;
-    using utf32 = ustring<utf32_glyph>;
+    using utf8  = ustring<utf8_storage_unit>;
+    using utf16 = ustring<utf16_storage_unit>;
+    using utf32 = ustring<utf32_storage_unit>;
 
     namespace pmr {
         using namespace stl::pmr;
@@ -3996,11 +3996,11 @@ namespace webpp {
         template <typename T>
         struct polymorphic_allocator;
 
-        using utf8 = ustring<utf8_glyph, unicode_char_traits<utf8_glyph>, polymorphic_allocator<utf8_glyph>>;
+        using utf8 = ustring<utf8_storage_unit, unicode_char_traits<utf8_storage_unit>, polymorphic_allocator<utf8_storage_unit>>;
         using utf16 =
-          ustring<utf16_glyph, unicode_char_traits<utf16_glyph>, polymorphic_allocator<utf16_glyph>>;
+          ustring<utf16_storage_unit, unicode_char_traits<utf16_storage_unit>, polymorphic_allocator<utf16_storage_unit>>;
         using utf32 =
-          ustring<utf32_glyph, unicode_char_traits<utf32_glyph>, polymorphic_allocator<utf32_glyph>>;
+          ustring<utf32_storage_unit, unicode_char_traits<utf32_storage_unit>, polymorphic_allocator<utf32_storage_unit>>;
     } // namespace pmr
 
 } // namespace webpp
