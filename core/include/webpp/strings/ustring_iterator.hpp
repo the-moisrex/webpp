@@ -10,8 +10,7 @@
 
 namespace webpp {
 
-    namespace details {
-    } // namespace details
+    namespace details {} // namespace details
 
     /**
      * Satisfies:
@@ -19,17 +18,17 @@ namespace webpp {
      *   - [LegacyRandomAccessIterator](https://en.cppreference.com/w/cpp/named_req/RandomAccessIterator)
      *
      */
-    template <typename GlyphType = glyph<>> // todo: use a pointer instead of a type
+    template <typename StorageUnitType = storage_unit<>> // todo: use a pointer instead of a type
     struct unicode_iterator : stl::random_access_iterator_tag {
-        using glyph_type = GlyphType;
-        using wide_char_type    = typename glyph_type::wide_char_type;
-        using iterator_type     = wide_char_type; // todo: this should be a pointer or a const pointer
+        using storage_unit_type = StorageUnitType;
+        using code_point_type   = typename storage_unit_type::code_point_type;
+        using iterator_type     = code_point_type; // todo: this should be a pointer or a const pointer
         using traits_type       = stl::iterator_traits<iterator_type>;
         using iterator_category = typename traits_type::iterator_category;
         using value_type        = typename traits_type::value_type;
         using difference_type   = typename traits_type::difference_type;
         using reference         = typename traits_type::reference; // todo
-        using pointer           = typename traits_type::pointer; // todo
+        using pointer           = typename traits_type::pointer;   // todo
         using iterator_concept  = stl::random_access_iterator_tag;
 
       private:
@@ -40,7 +39,8 @@ namespace webpp {
         explicit constexpr unicode_iterator(const pointer& i) noexcept : current(i) {}
 
         // Allow iterator to const_iterator conversion
-        constexpr unicode_iterator(const unicode_iterator<glyph_type>& i) noexcept : current(i.base()) {}
+        constexpr unicode_iterator(const unicode_iterator<storage_unit_type>& i) noexcept
+          : current(i.base()) {}
 
         // Forward iterator requirements
         constexpr reference operator*() const noexcept {
