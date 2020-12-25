@@ -151,6 +151,18 @@ namespace webpp {
         };
 
 
+#if __cpp_lib_three_way_comparison
+        template <typename ChTraits>
+        constexpr auto char_traits_cmp_cat(int cmp) noexcept {
+            if constexpr (requires { typename ChTraits::comparison_category; }) {
+                using _Cat = typename ChTraits::comparison_category;
+                static_assert(!stl::is_void_v<stl::common_comparison_category_t<_Cat>>);
+                return static_cast<_Cat>(cmp <=> 0);
+            } else
+                return static_cast<stl::weak_ordering>(cmp <=> 0);
+        }
+#endif // C++20
+
     } // namespace details
 
 
@@ -478,7 +490,6 @@ namespace webpp {
         }
 
       private:
-
         size_type check(size_type pos, const char* s) const {
             if (pos > this->size())
                 throw stl::out_of_range(stl::format("%s: pos (which is %zu) > "
@@ -3216,19 +3227,19 @@ namespace webpp {
     // _GLIBCXX_RESOLVE_LIB_DEFECTS
     // 3075. ustring needs deduction guides from ustring_view
     template <typename CharT,
-              typename TraitsT,
+              typename ChTraitsT,
               typename AllocT = stl::allocator<CharT>,
               typename        = details::RequireAllocator<AllocT>>
-    ustring(ustring_view<CharT, TraitsT>, const AllocT& = AllocT()) -> ustring<CharT, TraitsT, AllocT>;
+    ustring(ustring_view<CharT, ChTraitsT>, const AllocT& = AllocT()) -> ustring<CharT, ChTraitsT, AllocT>;
 
     template <typename CharT,
-              typename TraitsT,
+              typename ChTraitsT,
               typename AllocT = stl::allocator<CharT>,
               typename        = details::RequireAllocator<AllocT>>
-    ustring(ustring_view<CharT, TraitsT>,
-            typename ustring<CharT, TraitsT, AllocT>::size_type,
-            typename ustring<CharT, TraitsT, AllocT>::size_type,
-            const AllocT& = AllocT()) -> ustring<CharT, TraitsT, AllocT>;
+    ustring(ustring_view<CharT, ChTraitsT>,
+            typename ustring<CharT, ChTraitsT, AllocT>::size_type,
+            typename ustring<CharT, ChTraitsT, AllocT>::size_type,
+            const AllocT& = AllocT()) -> ustring<CharT, ChTraitsT, AllocT>;
 
 
 
@@ -3240,10 +3251,10 @@ namespace webpp {
      *  @param rhs  Last string.
      *  @return  New string with value of @a lhs followed by @a rhs.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    ustring<CharT, TraitsT, AllocT> operator+(const ustring<CharT, TraitsT, AllocT>& lhs,
-                                              const ustring<CharT, TraitsT, AllocT>& rhs) {
-        ustring<CharT, TraitsT, AllocT> str(lhs);
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    ustring<CharT, ChTraitsT, AllocT> operator+(const ustring<CharT, ChTraitsT, AllocT>& lhs,
+                                                const ustring<CharT, ChTraitsT, AllocT>& rhs) {
+        ustring<CharT, ChTraitsT, AllocT> str(lhs);
         str.append(rhs);
         return str;
     }
@@ -3254,8 +3265,9 @@ namespace webpp {
      *  @param rhs  Last string.
      *  @return  New string with value of @a lhs followed by @a rhs.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    ustring<CharT, TraitsT, AllocT> operator+(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs);
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    ustring<CharT, ChTraitsT, AllocT> operator+(const CharT*                             lhs,
+                                                const ustring<CharT, ChTraitsT, AllocT>& rhs);
 
     /**
      *  @brief  Concatenate character and string.
@@ -3263,8 +3275,8 @@ namespace webpp {
      *  @param rhs  Last string.
      *  @return  New string with @a lhs followed by @a rhs.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    ustring<CharT, TraitsT, AllocT> operator+(CharT lhs, const ustring<CharT, TraitsT, AllocT>& rhs);
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    ustring<CharT, ChTraitsT, AllocT> operator+(CharT lhs, const ustring<CharT, ChTraitsT, AllocT>& rhs);
 
     /**
      *  @brief  Concatenate string and C string.
@@ -3272,10 +3284,10 @@ namespace webpp {
      *  @param rhs  Last string.
      *  @return  New string with @a lhs followed by @a rhs.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline ustring<CharT, TraitsT, AllocT> operator+(const ustring<CharT, TraitsT, AllocT>& lhs,
-                                                     const CharT*                           rhs) {
-        ustring<CharT, TraitsT, AllocT> str(lhs);
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline ustring<CharT, ChTraitsT, AllocT> operator+(const ustring<CharT, ChTraitsT, AllocT>& lhs,
+                                                       const CharT*                             rhs) {
+        ustring<CharT, ChTraitsT, AllocT> str(lhs);
         str.append(rhs);
         return str;
     }
@@ -3286,30 +3298,31 @@ namespace webpp {
      *  @param rhs  Last string.
      *  @return  New string with @a lhs followed by @a rhs.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline ustring<CharT, TraitsT, AllocT> operator+(const ustring<CharT, TraitsT, AllocT>& lhs, CharT rhs) {
-        typedef ustring<CharT, TraitsT, AllocT> string_type;
-        typedef typename string_type::size_type size_type;
-        string_type                             str(lhs);
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline ustring<CharT, ChTraitsT, AllocT> operator+(const ustring<CharT, ChTraitsT, AllocT>& lhs,
+                                                       CharT                                    rhs) {
+        typedef ustring<CharT, ChTraitsT, AllocT> string_type;
+        typedef typename string_type::size_type   size_type;
+        string_type                               str(lhs);
         str.append(size_type(1), rhs);
         return str;
     }
 
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline ustring<CharT, TraitsT, AllocT> operator+(ustring<CharT, TraitsT, AllocT>&&      lhs,
-                                                     const ustring<CharT, TraitsT, AllocT>& rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline ustring<CharT, ChTraitsT, AllocT> operator+(ustring<CharT, ChTraitsT, AllocT>&&      lhs,
+                                                       const ustring<CharT, ChTraitsT, AllocT>& rhs) {
         return std::move(lhs.append(rhs));
     }
 
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline ustring<CharT, TraitsT, AllocT> operator+(const ustring<CharT, TraitsT, AllocT>& lhs,
-                                                     ustring<CharT, TraitsT, AllocT>&&      rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline ustring<CharT, ChTraitsT, AllocT> operator+(const ustring<CharT, ChTraitsT, AllocT>& lhs,
+                                                       ustring<CharT, ChTraitsT, AllocT>&&      rhs) {
         return std::move(rhs.insert(0, lhs));
     }
 
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline ustring<CharT, TraitsT, AllocT> operator+(ustring<CharT, TraitsT, AllocT>&& lhs,
-                                                     ustring<CharT, TraitsT, AllocT>&& rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline ustring<CharT, ChTraitsT, AllocT> operator+(ustring<CharT, ChTraitsT, AllocT>&& lhs,
+                                                       ustring<CharT, ChTraitsT, AllocT>&& rhs) {
         using alloc_traits = stl::allocator_traits<AllocT>;
         bool use_rhs       = false;
         if constexpr (typename alloc_traits::is_always_equal{}) {
@@ -3326,25 +3339,25 @@ namespace webpp {
         return std::move(lhs.append(rhs));
     }
 
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline ustring<CharT, TraitsT, AllocT> operator+(const CharT*                      lhs,
-                                                     ustring<CharT, TraitsT, AllocT>&& rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline ustring<CharT, ChTraitsT, AllocT> operator+(const CharT*                        lhs,
+                                                       ustring<CharT, ChTraitsT, AllocT>&& rhs) {
         return std::move(rhs.insert(0, lhs));
     }
 
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline ustring<CharT, TraitsT, AllocT> operator+(CharT lhs, ustring<CharT, TraitsT, AllocT>&& rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline ustring<CharT, ChTraitsT, AllocT> operator+(CharT lhs, ustring<CharT, ChTraitsT, AllocT>&& rhs) {
         return std::move(rhs.insert(0, 1, lhs));
     }
 
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline ustring<CharT, TraitsT, AllocT> operator+(ustring<CharT, TraitsT, AllocT>&& lhs,
-                                                     const CharT*                      rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline ustring<CharT, ChTraitsT, AllocT> operator+(ustring<CharT, ChTraitsT, AllocT>&& lhs,
+                                                       const CharT*                        rhs) {
         return std::move(lhs.append(rhs));
     }
 
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline ustring<CharT, TraitsT, AllocT> operator+(ustring<CharT, TraitsT, AllocT>&& lhs, CharT rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline ustring<CharT, ChTraitsT, AllocT> operator+(ustring<CharT, ChTraitsT, AllocT>&& lhs, CharT rhs) {
         return std::move(lhs.append(1, rhs));
     }
 
@@ -3355,9 +3368,9 @@ namespace webpp {
      *  @param rhs  Second string.
      *  @return  True if @a lhs.compare(@a rhs) == 0.  False otherwise.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline bool operator==(const ustring<CharT, TraitsT, AllocT>& lhs,
-                           const ustring<CharT, TraitsT, AllocT>& rhs) noexcept {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline bool operator==(const ustring<CharT, ChTraitsT, AllocT>& lhs,
+                           const ustring<CharT, ChTraitsT, AllocT>& rhs) noexcept {
         return lhs.compare(rhs) == 0;
     }
 
@@ -3374,8 +3387,8 @@ namespace webpp {
      *  @param rhs  C string.
      *  @return  True if @a lhs.compare(@a rhs) == 0.  False otherwise.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline bool operator==(const ustring<CharT, TraitsT, AllocT>& lhs, const CharT* rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline bool operator==(const ustring<CharT, ChTraitsT, AllocT>& lhs, const CharT* rhs) {
         return lhs.compare(rhs) == 0;
     }
 
@@ -3387,11 +3400,11 @@ namespace webpp {
      *  @return  A value indicating whether `lhs` is less than, equal to,
      *	       greater than, or incomparable with `rhs`.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline auto operator<=>(const ustring<CharT, TraitsT, AllocT>& lhs,
-                            const ustring<CharT, TraitsT, AllocT>& rhs) noexcept
-      -> decltype(detail::char_traits_cmp_cat<TraitsT>(0)) {
-        return detail::char_traits_cmp_cat<TraitsT>(lhs.compare(rhs));
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline auto operator<=>(const ustring<CharT, ChTraitsT, AllocT>& lhs,
+                            const ustring<CharT, ChTraitsT, AllocT>& rhs) noexcept
+      -> decltype(details::char_traits_cmp_cat<ChTraitsT>(0)) {
+        return details::char_traits_cmp_cat<ChTraitsT>(lhs.compare(rhs));
     }
 
     /**
@@ -3401,10 +3414,10 @@ namespace webpp {
      *  @return  A value indicating whether `lhs` is less than, equal to,
      *	       greater than, or incomparable with `rhs`.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline auto operator<=>(const ustring<CharT, TraitsT, AllocT>& lhs, const CharT* rhs) noexcept
-      -> decltype(detail::char_traits_cmp_cat<TraitsT>(0)) {
-        return detail::char_traits_cmp_cat<TraitsT>(lhs.compare(rhs));
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline auto operator<=>(const ustring<CharT, ChTraitsT, AllocT>& lhs, const CharT* rhs) noexcept
+      -> decltype(details::char_traits_cmp_cat<ChTraitsT>(0)) {
+        return details::char_traits_cmp_cat<ChTraitsT>(lhs.compare(rhs));
     }
 #else
     /**
@@ -3413,8 +3426,8 @@ namespace webpp {
      *  @param rhs  String.
      *  @return  True if @a rhs.compare(@a lhs) == 0.  False otherwise.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline bool operator==(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline bool operator==(const CharT* lhs, const ustring<CharT, ChTraitsT, AllocT>& rhs) {
         return rhs.compare(lhs) == 0;
     }
 
@@ -3425,9 +3438,9 @@ namespace webpp {
      *  @param rhs  Second string.
      *  @return  True if @a lhs.compare(@a rhs) != 0.  False otherwise.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline bool operator!=(const ustring<CharT, TraitsT, AllocT>& lhs,
-                           const ustring<CharT, TraitsT, AllocT>& rhs) noexcept {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline bool operator!=(const ustring<CharT, ChTraitsT, AllocT>& lhs,
+                           const ustring<CharT, ChTraitsT, AllocT>& rhs) noexcept {
         return !(lhs == rhs);
     }
 
@@ -3437,8 +3450,8 @@ namespace webpp {
      *  @param rhs  String.
      *  @return  True if @a rhs.compare(@a lhs) != 0.  False otherwise.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline bool operator!=(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline bool operator!=(const CharT* lhs, const ustring<CharT, ChTraitsT, AllocT>& rhs) {
         return !(lhs == rhs);
     }
 
@@ -3448,8 +3461,8 @@ namespace webpp {
      *  @param rhs  C string.
      *  @return  True if @a lhs.compare(@a rhs) != 0.  False otherwise.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline bool operator!=(const ustring<CharT, TraitsT, AllocT>& lhs, const CharT* rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline bool operator!=(const ustring<CharT, ChTraitsT, AllocT>& lhs, const CharT* rhs) {
         return !(lhs == rhs);
     }
 
@@ -3460,9 +3473,9 @@ namespace webpp {
      *  @param rhs  Second string.
      *  @return  True if @a lhs precedes @a rhs.  False otherwise.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline bool operator<(const ustring<CharT, TraitsT, AllocT>& lhs,
-                          const ustring<CharT, TraitsT, AllocT>& rhs) noexcept {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline bool operator<(const ustring<CharT, ChTraitsT, AllocT>& lhs,
+                          const ustring<CharT, ChTraitsT, AllocT>& rhs) noexcept {
         return lhs.compare(rhs) < 0;
     }
 
@@ -3472,8 +3485,8 @@ namespace webpp {
      *  @param rhs  C string.
      *  @return  True if @a lhs precedes @a rhs.  False otherwise.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline bool operator<(const ustring<CharT, TraitsT, AllocT>& lhs, const CharT* rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline bool operator<(const ustring<CharT, ChTraitsT, AllocT>& lhs, const CharT* rhs) {
         return lhs.compare(rhs) < 0;
     }
 
@@ -3483,8 +3496,8 @@ namespace webpp {
      *  @param rhs  String.
      *  @return  True if @a lhs precedes @a rhs.  False otherwise.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline bool operator<(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline bool operator<(const CharT* lhs, const ustring<CharT, ChTraitsT, AllocT>& rhs) {
         return rhs.compare(lhs) > 0;
     }
 
@@ -3495,9 +3508,9 @@ namespace webpp {
      *  @param rhs  Second string.
      *  @return  True if @a lhs follows @a rhs.  False otherwise.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline bool operator>(const ustring<CharT, TraitsT, AllocT>& lhs,
-                          const ustring<CharT, TraitsT, AllocT>& rhs) noexcept {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline bool operator>(const ustring<CharT, ChTraitsT, AllocT>& lhs,
+                          const ustring<CharT, ChTraitsT, AllocT>& rhs) noexcept {
         return lhs.compare(rhs) > 0;
     }
 
@@ -3507,8 +3520,8 @@ namespace webpp {
      *  @param rhs  C string.
      *  @return  True if @a lhs follows @a rhs.  False otherwise.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline bool operator>(const ustring<CharT, TraitsT, AllocT>& lhs, const CharT* rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline bool operator>(const ustring<CharT, ChTraitsT, AllocT>& lhs, const CharT* rhs) {
         return lhs.compare(rhs) > 0;
     }
 
@@ -3518,8 +3531,8 @@ namespace webpp {
      *  @param rhs  String.
      *  @return  True if @a lhs follows @a rhs.  False otherwise.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline bool operator>(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline bool operator>(const CharT* lhs, const ustring<CharT, ChTraitsT, AllocT>& rhs) {
         return rhs.compare(lhs) < 0;
     }
 
@@ -3530,9 +3543,9 @@ namespace webpp {
      *  @param rhs  Second string.
      *  @return  True if @a lhs doesn't follow @a rhs.  False otherwise.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline bool operator<=(const ustring<CharT, TraitsT, AllocT>& lhs,
-                           const ustring<CharT, TraitsT, AllocT>& rhs) noexcept {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline bool operator<=(const ustring<CharT, ChTraitsT, AllocT>& lhs,
+                           const ustring<CharT, ChTraitsT, AllocT>& rhs) noexcept {
         return lhs.compare(rhs) <= 0;
     }
 
@@ -3542,8 +3555,8 @@ namespace webpp {
      *  @param rhs  C string.
      *  @return  True if @a lhs doesn't follow @a rhs.  False otherwise.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline bool operator<=(const ustring<CharT, TraitsT, AllocT>& lhs, const CharT* rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline bool operator<=(const ustring<CharT, ChTraitsT, AllocT>& lhs, const CharT* rhs) {
         return lhs.compare(rhs) <= 0;
     }
 
@@ -3553,8 +3566,8 @@ namespace webpp {
      *  @param rhs  String.
      *  @return  True if @a lhs doesn't follow @a rhs.  False otherwise.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline bool operator<=(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline bool operator<=(const CharT* lhs, const ustring<CharT, ChTraitsT, AllocT>& rhs) {
         return rhs.compare(lhs) >= 0;
     }
 
@@ -3565,9 +3578,9 @@ namespace webpp {
      *  @param rhs  Second string.
      *  @return  True if @a lhs doesn't precede @a rhs.  False otherwise.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline bool operator>=(const ustring<CharT, TraitsT, AllocT>& lhs,
-                           const ustring<CharT, TraitsT, AllocT>& rhs) noexcept {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline bool operator>=(const ustring<CharT, ChTraitsT, AllocT>& lhs,
+                           const ustring<CharT, ChTraitsT, AllocT>& rhs) noexcept {
         return lhs.compare(rhs) >= 0;
     }
 
@@ -3577,8 +3590,8 @@ namespace webpp {
      *  @param rhs  C string.
      *  @return  True if @a lhs doesn't precede @a rhs.  False otherwise.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline bool operator>=(const ustring<CharT, TraitsT, AllocT>& lhs, const CharT* rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline bool operator>=(const ustring<CharT, ChTraitsT, AllocT>& lhs, const CharT* rhs) {
         return lhs.compare(rhs) >= 0;
     }
 
@@ -3588,8 +3601,8 @@ namespace webpp {
      *  @param rhs  String.
      *  @return  True if @a lhs doesn't precede @a rhs.  False otherwise.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline bool operator>=(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline bool operator>=(const CharT* lhs, const ustring<CharT, ChTraitsT, AllocT>& rhs) {
         return rhs.compare(lhs) <= 0;
     }
 #endif // three-way comparison
@@ -3601,9 +3614,9 @@ namespace webpp {
      *
      *  Exchanges the contents of @a lhs and @a rhs in constant time.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline void swap(ustring<CharT, TraitsT, AllocT>& lhs, ustring<CharT, TraitsT, AllocT>& rhs)
-      _GLIBCXX_NOEXCEPT_IF(noexcept(lhs.swap(rhs))) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline void swap(ustring<CharT, ChTraitsT, AllocT>& lhs, ustring<CharT, ChTraitsT, AllocT>& rhs)
+      noexcept(noexcept(lhs.swap(rhs))) {
         lhs.swap(rhs);
     }
 
@@ -3620,9 +3633,9 @@ namespace webpp {
      *  number of characters stored into @a str.  Any previous
      *  contents of @a str are erased.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    stl::basic_istream<CharT, TraitsT>& operator>>(stl::basic_istream<CharT, TraitsT>& is,
-                                                   ustring<CharT, TraitsT, AllocT>&    str);
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    stl::basic_istream<CharT, ChTraitsT>& operator>>(stl::basic_istream<CharT, ChTraitsT>& is,
+                                                     ustring<CharT, ChTraitsT, AllocT>&    str);
 
     template <>
     stl::basic_istream<char>& operator>>(stl::basic_istream<char>& is, ustring<char>& str);
@@ -3636,9 +3649,9 @@ namespace webpp {
      *  Output characters of @a str into os following the same rules as for
      *  writing a C string.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline stl::basic_ostream<CharT, TraitsT>& operator<<(stl::basic_ostream<CharT, TraitsT>&    os,
-                                                          const ustring<CharT, TraitsT, AllocT>& str) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline stl::basic_ostream<CharT, ChTraitsT>& operator<<(stl::basic_ostream<CharT, ChTraitsT>&    os,
+                                                            const ustring<CharT, ChTraitsT, AllocT>& str) {
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 586. string inserter not a formatted function
         return ostream_insert(os, str.data(), str.size());
@@ -3657,9 +3670,9 @@ namespace webpp {
      *  @a delim is encountered, it is extracted but not stored into
      *  @a str.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    stl::basic_istream<CharT, TraitsT>&
-    getline(stl::basic_istream<CharT, TraitsT>& is, ustring<CharT, TraitsT, AllocT>& str, CharT delim);
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    stl::basic_istream<CharT, ChTraitsT>&
+    getline(stl::basic_istream<CharT, ChTraitsT>& is, ustring<CharT, ChTraitsT, AllocT>& str, CharT delim);
 
     /**
      *  @brief  Read a line from stream into a string.
@@ -3673,23 +3686,23 @@ namespace webpp {
      *  end of line is encountered, it is extracted but not stored into
      *  @a str.
      */
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline stl::basic_istream<CharT, TraitsT>& getline(stl::basic_istream<CharT, TraitsT>& is,
-                                                       ustring<CharT, TraitsT, AllocT>&    str) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline stl::basic_istream<CharT, ChTraitsT>& getline(stl::basic_istream<CharT, ChTraitsT>& is,
+                                                         ustring<CharT, ChTraitsT, AllocT>&    str) {
         return std::getline(is, str, is.widen('\n'));
     }
 
     /// Read a line from an rvalue stream into a string.
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline stl::basic_istream<CharT, TraitsT>&
-    getline(stl::basic_istream<CharT, TraitsT>&& is, ustring<CharT, TraitsT, AllocT>& str, CharT delim) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline stl::basic_istream<CharT, ChTraitsT>&
+    getline(stl::basic_istream<CharT, ChTraitsT>&& is, ustring<CharT, ChTraitsT, AllocT>& str, CharT delim) {
         return std::getline(is, str, delim);
     }
 
     /// Read a line from an rvalue stream into a string.
-    template <typename CharT, typename TraitsT, typename AllocT>
-    inline stl::basic_istream<CharT, TraitsT>& getline(stl::basic_istream<CharT, TraitsT>&& is,
-                                                       ustring<CharT, TraitsT, AllocT>&     str) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    inline stl::basic_istream<CharT, ChTraitsT>& getline(stl::basic_istream<CharT, ChTraitsT>&& is,
+                                                         ustring<CharT, ChTraitsT, AllocT>&     str) {
         return std::getline(is, str);
     }
 
@@ -3702,11 +3715,11 @@ namespace webpp {
 
 
 
-    template <typename CharT, typename TraitsT, typename AllocT>
-    const typename ustring<CharT, TraitsT, AllocT>::size_type ustring<CharT, TraitsT, AllocT>::npos;
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    const typename ustring<CharT, ChTraitsT, AllocT>::size_type ustring<CharT, ChTraitsT, AllocT>::npos;
 
-    template <typename CharT, typename TraitsT, typename AllocT>
-    void ustring<CharT, TraitsT, AllocT>::swap(ustring& s) noexcept {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    void ustring<CharT, ChTraitsT, AllocT>::swap(ustring& s) noexcept {
         if (this == &s)
             return;
 
@@ -3757,9 +3770,9 @@ namespace webpp {
         s.length(tmp_length);
     }
 
-    template <typename CharT, typename TraitsT, typename AllocT>
-    typename ustring<CharT, TraitsT, AllocT>::pointer
-    ustring<CharT, TraitsT, AllocT>::create(size_type& capacity, size_type old_capacity) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    typename ustring<CharT, ChTraitsT, AllocT>::pointer
+    ustring<CharT, ChTraitsT, AllocT>::create(size_type& capacity, size_type old_capacity) {
         // _GLIBCXX_RESOLVE_LIB_DEFECTS
         // 83.  String::npos vs. string::max_size()
         if (capacity > max_size())
@@ -3784,9 +3797,9 @@ namespace webpp {
 
 
 
-    template <typename CharT, typename TraitsT, typename AllocT>
-    typename ustring<CharT, TraitsT, AllocT>::size_type
-    ustring<CharT, TraitsT, AllocT>::copy(CharT* s, size_type n, size_type pos) const {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    typename ustring<CharT, ChTraitsT, AllocT>::size_type
+    ustring<CharT, ChTraitsT, AllocT>::copy(CharT* s, size_type n, size_type pos) const {
         check(pos, "ustring::copy");
         n = limit(pos, n);
         glibcxx_requires_string_len(s, n);
@@ -3797,14 +3810,15 @@ namespace webpp {
     }
 
 
-    template <typename CharT, typename TraitsT, typename AllocT>
-    ustring<CharT, TraitsT, AllocT> operator+(const CharT* lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    ustring<CharT, ChTraitsT, AllocT> operator+(const CharT*                             lhs,
+                                                const ustring<CharT, ChTraitsT, AllocT>& rhs) {
         glibcxx_requires_string(lhs);
-        using string_type     = ustring<CharT, TraitsT, AllocT>;
+        using string_type     = ustring<CharT, ChTraitsT, AllocT>;
         using size_type       = typename string_type::size_type;
         using char_alloc_type = typename stl::allocator_traits<AllocT>::template rebind<CharT>::other;
         using alloc_traits    = stl::allocator_traits<char_alloc_type>;
-        const size_type len   = TraitsT::length(lhs);
+        const size_type len   = ChTraitsT::length(lhs);
         string_type     str(alloc_traits::select_on_copy(rhs.private_get_allocator()));
         str.reserve(len + rhs.size());
         str.append(lhs, len);
@@ -3812,9 +3826,9 @@ namespace webpp {
         return str;
     }
 
-    template <typename CharT, typename TraitsT, typename AllocT>
-    ustring<CharT, TraitsT, AllocT> operator+(CharT lhs, const ustring<CharT, TraitsT, AllocT>& rhs) {
-        using string_type     = ustring<CharT, TraitsT, AllocT>;
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    ustring<CharT, ChTraitsT, AllocT> operator+(CharT lhs, const ustring<CharT, ChTraitsT, AllocT>& rhs) {
+        using string_type     = ustring<CharT, ChTraitsT, AllocT>;
         using size_type       = typename string_type::size_type;
         using char_alloc_type = typename stl::allocator_traits<AllocT>::template rebind<CharT>::other;
         using alloc_traits    = stl::allocator_traits<char_alloc_type>;
@@ -3829,16 +3843,16 @@ namespace webpp {
 
 
     // 21.3.7.9 ustring::getline and operators
-    template <typename CharT, typename TraitsT, typename AllocT>
-    stl::basic_istream<CharT, TraitsT>& operator>>(stl::basic_istream<CharT, TraitsT>& in,
-                                                   ustring<CharT, TraitsT, AllocT>&    str) {
-        typedef stl::basic_istream<CharT, TraitsT> istream_type;
-        typedef ustring<CharT, TraitsT, AllocT>    string_type;
-        typedef typename istream_type::ios_base    ios_base;
-        typedef typename istream_type::int_type    int_type;
-        typedef typename string_type::size_type    size_type;
-        typedef stl::ctype<CharT>                  ctype_type;
-        typedef typename ctype_type::ctype_base    ctype_base;
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    stl::basic_istream<CharT, ChTraitsT>& operator>>(stl::basic_istream<CharT, ChTraitsT>& in,
+                                                     ustring<CharT, ChTraitsT, AllocT>&    str) {
+        typedef stl::basic_istream<CharT, ChTraitsT> istream_type;
+        typedef ustring<CharT, ChTraitsT, AllocT>    string_type;
+        typedef typename istream_type::ios_base      ios_base;
+        typedef typename istream_type::int_type      int_type;
+        typedef typename string_type::size_type      size_type;
+        typedef stl::ctype<CharT>                    ctype_type;
+        typedef typename ctype_type::ctype_base      ctype_base;
 
         size_type                     extracted = 0;
         typename ios_base::iostate    err       = ios_base::goodbit;
@@ -3852,22 +3866,22 @@ namespace webpp {
                 const stl::streamsize w   = in.width();
                 const size_type       n   = w > 0 ? static_cast<size_type>(w) : str.max_size();
                 const ctype_type&     ct  = use_facet<ctype_type>(in.getloc());
-                const int_type        eof = TraitsT::eof();
+                const int_type        eof = ChTraitsT::eof();
                 int_type              c   = in.rdbuf()->sgetc();
 
-                while (extracted < n && !TraitsT::eq_int_type(c, eof) &&
-                       !ct.is(ctype_base::space, TraitsT::to_char_type(c))) {
+                while (extracted < n && !ChTraitsT::eq_int_type(c, eof) &&
+                       !ct.is(ctype_base::space, ChTraitsT::to_char_type(c))) {
                     if (len == sizeof(buf) / sizeof(CharT)) {
                         str.append(buf, sizeof(buf) / sizeof(CharT));
                         len = 0;
                     }
-                    buf[len++] = TraitsT::to_char_type(c);
+                    buf[len++] = ChTraitsT::to_char_type(c);
                     ++extracted;
                     c = in.rdbuf()->snextc();
                 }
                 str.append(buf, len);
 
-                if (TraitsT::eq_int_type(c, eof))
+                if (ChTraitsT::eq_int_type(c, eof))
                     err |= ios_base::eofbit;
                 in.width(0);
             } catch (cxxabiv1::forced_unwind&) {
@@ -3888,14 +3902,14 @@ namespace webpp {
         return in;
     }
 
-    template <typename CharT, typename TraitsT, typename AllocT>
-    stl::basic_istream<CharT, TraitsT>&
-    getline(stl::basic_istream<CharT, TraitsT>& in, ustring<CharT, TraitsT, AllocT>& str, CharT delim) {
-        typedef stl::basic_istream<CharT, TraitsT> istream_type;
-        typedef ustring<CharT, TraitsT, AllocT>    string_type;
-        typedef typename istream_type::ios_base    ios_base;
-        typedef typename istream_type::int_type    int_type;
-        typedef typename string_type::size_type    size_type;
+    template <typename CharT, typename ChTraitsT, typename AllocT>
+    stl::basic_istream<CharT, ChTraitsT>&
+    getline(stl::basic_istream<CharT, ChTraitsT>& in, ustring<CharT, ChTraitsT, AllocT>& str, CharT delim) {
+        typedef stl::basic_istream<CharT, ChTraitsT> istream_type;
+        typedef ustring<CharT, ChTraitsT, AllocT>    string_type;
+        typedef typename istream_type::ios_base      ios_base;
+        typedef typename istream_type::int_type      int_type;
+        typedef typename string_type::size_type      size_type;
 
         size_type                     extracted = 0;
         const size_type               n         = str.max_size();
@@ -3904,19 +3918,20 @@ namespace webpp {
         if (cerb) {
             try {
                 str.erase();
-                const int_type idelim = TraitsT::to_int_type(delim);
-                const int_type eof    = TraitsT::eof();
+                const int_type idelim = ChTraitsT::to_int_type(delim);
+                const int_type eof    = ChTraitsT::eof();
                 int_type       c      = in.rdbuf()->sgetc();
 
-                while (extracted < n && !TraitsT::eq_int_type(c, eof) && !TraitsT::eq_int_type(c, idelim)) {
-                    str += TraitsT::to_char_type(c);
+                while (extracted < n && !ChTraitsT::eq_int_type(c, eof) &&
+                       !ChTraitsT::eq_int_type(c, idelim)) {
+                    str += ChTraitsT::to_char_type(c);
                     ++extracted;
                     c = in.rdbuf()->snextc();
                 }
 
-                if (TraitsT::eq_int_type(c, eof))
+                if (ChTraitsT::eq_int_type(c, eof))
                     err |= ios_base::eofbit;
-                else if (TraitsT::eq_int_type(c, idelim)) {
+                else if (ChTraitsT::eq_int_type(c, idelim)) {
                     ++extracted;
                     in.rdbuf()->sbumpc();
                 } else
