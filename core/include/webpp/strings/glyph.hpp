@@ -110,7 +110,8 @@ namespace webpp {
         }
 
         constexpr glyph& operator++() noexcept {
-            return next(unicode::count_bytes<value_type>(this->value()));
+            unicode::advance(start);
+            return *this;
         }
 
         constexpr glyph operator++(int) noexcept {

@@ -18,6 +18,7 @@ namespace webpp::unicode {
     concept WChar = (sizeof(T) >= sizeof(char32_t));
 
 
+    // todo: check out the glib/gutf8.c implementation
     template <typename CharT = char8_t, typename CodePointType = char32_t>
     static constexpr CodePointType code_point(CharT const* const p) noexcept {
         using code_point_type   = CodePointType;
@@ -118,7 +119,7 @@ namespace webpp::unicode {
     } // namespace details
 
     template <typename T = char8_t>
-    static inline void advance(T* p) noexcept {
+    requires(!stl::is_const_v<T>) static inline void advance(T*& p) noexcept {
         if constexpr (UTF8<T>) {
             p += details::utf8_skip<T>[*p];
         } else if constexpr (UTF16<T>) {
