@@ -9,8 +9,8 @@
 
 namespace webpp {
 
-#ifdef CHAR_BIT
-    static constexpr unsigned char_bits = CHAR_BIT;
+#ifdef __CHAR_BIT__
+    static constexpr unsigned char_bits = __CHAR_BIT__;
 #else
     static constexpr unsigned char_bits = 8;
 #endif
@@ -155,11 +155,12 @@ namespace webpp {
         template <typename ChTraits>
         constexpr auto char_traits_cmp_cat(int cmp) noexcept {
             if constexpr (requires { typename ChTraits::comparison_category; }) {
-                using _Cat = typename ChTraits::comparison_category;
-                static_assert(!stl::is_void_v<stl::common_comparison_category_t<_Cat>>);
-                return static_cast<_Cat>(cmp <=> 0);
-            } else
+                using Cat = typename ChTraits::comparison_category;
+                static_assert(!stl::is_void_v<stl::common_comparison_category_t<Cat>>);
+                return static_cast<Cat>(cmp <=> 0);
+            } else {
                 return static_cast<stl::weak_ordering>(cmp <=> 0);
+            }
         }
 #endif // C++20
 

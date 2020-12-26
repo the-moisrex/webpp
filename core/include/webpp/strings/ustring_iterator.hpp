@@ -10,8 +10,6 @@
 
 namespace webpp {
 
-    namespace details {} // namespace details
-
     /**
      * Satisfies:
      *   - [Random Access Iterator](https://en.cppreference.com/w/cpp/iterator/random_access_iterator)
