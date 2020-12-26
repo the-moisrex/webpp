@@ -17,6 +17,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/extensions/extension.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/strings/istring.hpp
+        ${LIB_INCLUDE_DIR}/webpp/strings/unicode.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/ustring.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/ustring_iterator.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/glyph.hpp
