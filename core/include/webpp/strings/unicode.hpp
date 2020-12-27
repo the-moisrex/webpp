@@ -206,9 +206,53 @@ namespace webpp::unicode {
     }
 
     template <typename CharT = char8_t>
+    static constexpr void next_char(CharT*& p, CharT const* end) noexcept {
+        if constexpr (UTF8<CharT>) {
+            if (end) {
+                for (++p; p < end && (*p & 0xc0) == 0x80; ++p)
+                    ;
+                if (p >= end)
+                    p = nullptr;
+            } else {
+                for (++p; (*p & 0xc0) == 0x80; ++p)
+                    ;
+            }
+        } else if constexpr (UTF16<CharT>) {
+            // todo
+        } else {
+            ++p;
+            if (p == end)
+                --p;
+        }
+    }
+
+    /**
+     * Go to the beginning of the previous character.
+     * This function does not check if previous character exists or not or even if its a valid character.
+     */
+    template <typename CharT = char8_t>
     static constexpr void prev_char(CharT*& p) noexcept {
         if constexpr (UTF8<CharT>) {
             for (;;) {
+                --p;
+                if ((*p & 0xc0) != 0x80)
+                    break;
+            }
+        } else if constexpr (UTF16<CharT>) {
+            // todo
+        } else {
+            --p;
+        }
+    }
+
+    /**
+     * This function also checks if we're at the beginning of the string or not; but doesn't validate the
+     * character itself at all other.
+     */
+    template <typename CharT = char8_t>
+    static constexpr void prev_char(CharT*& p, CharT const* start) noexcept {
+        if constexpr (UTF8<CharT>) {
+            while (p > start) {
                 --p;
                 if ((*p & 0xc0) != 0x80)
                     break;
