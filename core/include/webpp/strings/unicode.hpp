@@ -261,9 +261,54 @@ namespace webpp::unicode {
             // todo
         } else {
             --p;
+            if (p == start)
+                ++p;
         }
     }
 
+
+    template <typename CharT = char8_t>
+    static constexpr stl::size_t count(CharT const* p, stl::size_t max) noexcept {
+        if constexpr (UTF8<CharT> || UTF16<CharT>) {
+            stl::size_t  len   = 0;
+            const CharT* start = p;
+            if (max == 0 || !*p)
+                return 0;
+
+            next_char(p);
+
+            while (p - start < max && *p) {
+                ++len;
+                next_char(p);
+            }
+
+            /* only do the last len increment if we got a complete
+             * char (don't count partial chars)
+             */
+            if (p - start <= max)
+                ++len;
+        } else {
+            // todo
+        }
+    }
+
+    template <typename CharT = char8_t>
+    static constexpr stl::size_t count(CharT const* start, CharT const* end) noexcept {
+        if constexpr (UTF8<CharT> || UTF16<CharT>) {
+            // todo
+        } else {
+            return end - start;
+        }
+    }
+
+    // There's a better way to count 32bit unicode if you know the start and the end.
+    template <typename CharT = char8_t>
+    static constexpr stl::size_t count(CharT const* p) noexcept {
+        stl::size_t len = 0;
+        for (; *p; next_char(p))
+            ++len;
+        return len;
+    }
 
 
     namespace unchecked {
