@@ -5,7 +5,6 @@
 
 #include "../std/type_traits.hpp"
 
-
 namespace webpp::unicode {
 
     template <typename T>
@@ -16,6 +15,67 @@ namespace webpp::unicode {
 
     template <typename T>
     concept WChar = (sizeof(T) >= sizeof(char32_t));
+
+
+    // Leading (high) surrogates: 0xd800 - 0xdbff
+    // Trailing (low) surrogates: 0xdc00 - 0xdfff
+    template <typename u16 = uint16_t>
+    static constexpr u16 lead_surrogate_min = 0xd800u;
+
+    template <typename u16 = uint16_t>
+    static constexpr u16 lead_surrogate_max = 0xdbffu;
+
+    template <typename u16 = uint16_t>
+    static constexpr u16 trail_surrogate_min = 0xdc00u;
+
+    template <typename u16 = uint16_t>
+    static constexpr u16 trail_surrogate_max = 0xdfffu;
+
+    template <typename u16 = uint16_t>
+    static constexpr u16 lead_offset = lead_surrogate_min<u16> - (0x10000 >> 10);
+
+    template <typename u32 = uint32_t>
+    static constexpr u32 surrogate_offset = 0x10000u -
+                                            (lead_surrogate_min<u32> << 10) - trail_surrogate_min<u32>;
+
+    // Max valid value for a unicode code point
+    template <typename u32 = uint32_t>
+    static constexpr u32 code_point_max = 0x0010ffffu;
+
+    template <typename u8 = uint8_t, typename octet_type>
+    static constexpr u8 mask8(octet_type oc) noexcept {
+        return static_cast<u8>(0xff & oc);
+    }
+
+    template <typename u16 = uint16_t, typename u16_type>
+    static constexpr u16 mask16(u16_type oc) noexcept {
+        return static_cast<u16>(0xffff & oc);
+    }
+
+    template <typename octet_type>
+    static constexpr bool is_trail(octet_type oc) noexcept {
+        return ((mask8(oc) >> 6) == 0x2);
+    }
+
+    template <typename u16>
+    static constexpr bool is_lead_surrogate(u16 cp) noexcept {
+        return (cp >= lead_surrogate_min<u16> && cp <= lead_surrogate_max<u16>);
+    }
+
+    template <typename u16>
+    static constexpr bool is_trail_surrogate(u16 cp) noexcept {
+        return (cp >= trail_surrogate_min<u16> && cp <= trail_surrogate_max<u16>);
+    }
+
+    template <typename u16>
+    static constexpr bool is_surrogate(u16 cp) noexcept {
+        return (cp >= lead_surrogate_min<u16> && cp <= trail_surrogate_max<u16>);
+    }
+
+    template <typename u32>
+    static constexpr bool is_code_point_valid(u32 cp) noexcept {
+        return (cp <= code_point_max<u32> && !is_surrogate(cp));
+    }
 
 
     // todo: check out the glib/gutf8.c implementation
@@ -128,6 +188,50 @@ namespace webpp::unicode {
             ++p;
         }
     }
+
+
+
+    namespace unchecked {
+
+        template <typename Ptr, typename CharT = char32_t>
+        requires(!stl::is_const_v<Ptr>) static constexpr void append(Ptr& result, CharT cp) noexcept {
+            using char_type = stl::remove_cvref_t<decltype(*result)>;
+            if constexpr (UTF8<char_type>) {
+                if (cp < 0x80) // one octet
+                    *(result++) = static_cast<char_type>(cp);
+                else if (cp < 0x800) { // two octets
+                    *(result++) = static_cast<char_type>((cp >> 6) | 0xc0);
+                    *(result++) = static_cast<char_type>((cp & 0x3f) | 0x80);
+                } else if (cp < 0x10000) { // three octets
+                    *(result++) = static_cast<char_type>((cp >> 12) | 0xe0);
+                    *(result++) = static_cast<char_type>(((cp >> 6) & 0x3f) | 0x80);
+                    *(result++) = static_cast<char_type>((cp & 0x3f) | 0x80);
+                } else { // four octets
+                    *(result++) = static_cast<char_type>((cp >> 18) | 0xf0);
+                    *(result++) = static_cast<char_type>(((cp >> 12) & 0x3f) | 0x80);
+                    *(result++) = static_cast<char_type>(((cp >> 6) & 0x3f) | 0x80);
+                    *(result++) = static_cast<char_type>((cp & 0x3f) | 0x80);
+                }
+            } else if constexpr (UTF16<char_type>) {
+                // todo
+            } else { // for char32_t or others
+                *(result++) = static_cast<char_type>(cp);
+            }
+        }
+
+    } // namespace unchecked
+
+    namespace checked {
+
+        template <typename Ptr, typename CharT = char32_t>
+        requires(!stl::is_const_v<Ptr>) static constexpr bool append(Ptr& result, CharT cp) noexcept {
+            if (!is_code_point_valid(cp))
+                return false;
+            unchecked::append<Ptr, CharT>(result, cp);
+            return true;
+        }
+
+    } // namespace checked
 
 } // namespace webpp::unicode
 
