@@ -72,9 +72,19 @@ namespace webpp::unicode {
         return (cp >= lead_surrogate_min<u16> && cp <= trail_surrogate_max<u16>);
     }
 
+    /*
+     * Check whether a Unicode (5.2) char is in a valid range.
+     *
+     * The first check comes from the Unicode guarantee to never encode
+     * a point above 0x0010ffff, since UTF-16 couldn't represent it.
+     *
+     * The second check covers surrogate pairs (category Cs).
+     */
     template <typename u32>
     static constexpr bool is_code_point_valid(u32 cp) noexcept {
-        return (cp <= code_point_max<u32> && !is_surrogate(cp));
+        return (cp) < 0x110000 && ((cp & 0xFFFFF800) != 0xD800);
+        // alternative implementation:
+        // return (cp <= code_point_max<u32> && !is_surrogate(cp));
     }
 
 
@@ -137,23 +147,29 @@ namespace webpp::unicode {
 
 
     template <typename value_type>
-    requires(stl::is_integral_v<value_type>) static constexpr stl::size_t
-      count_bytes(value_type value) noexcept {
-        if constexpr (sizeof(value_type) == sizeof(char16_t)) {
+    requires(stl::is_integral_v<value_type>) static constexpr auto count_bytes(value_type value) noexcept {
+        if constexpr (UTF16<value_type>) {
             if ((value & 0xFC00u) == 0xD800u)
                 return 2;
             return 1;
-        } else if constexpr (sizeof(value_type) == sizeof(char8_t)) {
-            if ((value & 0x80u) == 0) {
-                return 1;
-            } else if ((value & 0xE0u) == 0xC0u) {
-                return 2;
-            } else if ((value & 0xF0u) == 0xE0u) {
-                return 3;
-            } else if ((value & 0xF8u) == 0xF0u) {
-                return 4;
-            }
-            return 1;
+        } else if constexpr (UTF8<value_type>) {
+            return (
+              (value) < 0x80
+                ? 1
+                : ((value) < 0x800
+                     ? 2
+                     : ((value) < 0x10000 ? 3 : ((value) < 0x200000 ? 4 : ((value) < 0x4000000 ? 5 : 6)))));
+            // alternative implementation:
+            // if ((value & 0x80u) == 0) {
+            //     return 1;
+            // } else if ((value & 0xE0u) == 0xC0u) {
+            //     return 2;
+            // } else if ((value & 0xF0u) == 0xE0u) {
+            //     return 3;
+            // } else if ((value & 0xF8u) == 0xF0u) {
+            //     return 4;
+            // }
+            // return 1;
         } else {
             return 1;
         }
@@ -178,14 +194,29 @@ namespace webpp::unicode {
 
     } // namespace details
 
-    template <typename T = char8_t>
-    requires(!stl::is_const_v<T>) static inline void advance(T*& p) noexcept {
-        if constexpr (UTF8<T>) {
-            p += details::utf8_skip<T>[*p];
-        } else if constexpr (UTF16<T>) {
+    template <typename CharT = char8_t>
+    static constexpr void next_char(CharT*& p) noexcept {
+        if constexpr (UTF8<CharT>) {
+            p += details::utf8_skip<CharT>[*p];
+        } else if constexpr (UTF16<CharT>) {
             // todo
         } else {
             ++p;
+        }
+    }
+
+    template <typename CharT = char8_t>
+    static constexpr void prev_char(CharT*& p) noexcept {
+        if constexpr (UTF8<CharT>) {
+            for (;;) {
+                --p;
+                if ((*p & 0xc0) != 0x80)
+                    break;
+            }
+        } else if constexpr (UTF16<CharT>) {
+            // todo
+        } else {
+            --p;
         }
     }
 
