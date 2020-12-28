@@ -1,0 +1,20 @@
+// Created by moisrex on 12/28/20.
+#include "../core/include/webpp/strings/unicode.hpp"
+
+#include "./common_pch.hpp"
+
+using namespace webpp;
+using namespace std;
+
+
+TEST(Unicode, UnChecked) {
+    using namespace unicode::unchecked;
+
+    const char8_t* str = u8"این یک تست است.";
+    // have to use static_cast<int> because the google-test doesn't seem to understand char8_t
+    EXPECT_EQ(static_cast<int>(u8"ی"[0]), static_cast<int>(*next_char_copy(str + 1)));
+    EXPECT_EQ(static_cast<int>(u8"ن"[0]), static_cast<int>(*next_char_copy(str + 3)));
+    EXPECT_EQ(static_cast<int>(u8"ی"[0]), static_cast<int>(*prev_char_copy(str + 3)));
+    EXPECT_EQ(static_cast<int>(u8"ن"[0]), static_cast<int>(*prev_char_copy(str + 5)));
+
+}

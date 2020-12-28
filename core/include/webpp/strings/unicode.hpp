@@ -19,35 +19,35 @@ namespace webpp::unicode {
 
     // Leading (high) surrogates: 0xd800 - 0xdbff
     // Trailing (low) surrogates: 0xdc00 - 0xdfff
-    template <typename u16 = uint16_t>
-    static constexpr u16 lead_surrogate_min = 0xd800u;
+    template <typename u16 = char16_t>
+    static constexpr u16 lead_surrogate_min = 0xd800;
 
-    template <typename u16 = uint16_t>
-    static constexpr u16 lead_surrogate_max = 0xdbffu;
+    template <typename u16 = char16_t>
+    static constexpr u16 lead_surrogate_max = 0xdbff;
 
-    template <typename u16 = uint16_t>
-    static constexpr u16 trail_surrogate_min = 0xdc00u;
+    template <typename u16 = char16_t>
+    static constexpr u16 trail_surrogate_min = 0xdc00;
 
-    template <typename u16 = uint16_t>
-    static constexpr u16 trail_surrogate_max = 0xdfffu;
+    template <typename u16 = char16_t>
+    static constexpr u16 trail_surrogate_max = 0xdfff;
 
-    template <typename u16 = uint16_t>
+    template <typename u16 = char16_t>
     static constexpr u16 lead_offset = lead_surrogate_min<u16> - (0x10000 >> 10);
 
-    template <typename u32 = uint32_t>
-    static constexpr u32 surrogate_offset = 0x10000u -
+    template <typename u32 = char32_t>
+    static constexpr u32 surrogate_offset = 0x10000 -
                                             (lead_surrogate_min<u32> << 10) - trail_surrogate_min<u32>;
 
     // Max valid value for a unicode code point
-    template <typename u32 = uint32_t>
+    template <typename u32 = char32_t>
     static constexpr u32 code_point_max = 0x0010ffffu;
 
-    template <typename u8 = uint8_t, typename octet_type>
+    template <typename u8 = char8_t, typename octet_type>
     static constexpr u8 mask8(octet_type oc) noexcept {
         return static_cast<u8>(0xff & oc);
     }
 
-    template <typename u16 = uint16_t, typename u16_type>
+    template <typename u16 = char16_t, typename u16_type>
     static constexpr u16 mask16(u16_type oc) noexcept {
         return static_cast<u16>(0xffff & oc);
     }
@@ -153,12 +153,11 @@ namespace webpp::unicode {
                 return 2;
             return 1;
         } else if constexpr (UTF8<value_type>) {
-            return (
-              (value) < 0x80
-                ? 1
-                : ((value) < 0x800
-                     ? 2
-                     : ((value) < 0x10000 ? 3 : ((value) < 0x200000 ? 4 : ((value) < 0x4000000 ? 5 : 6)))));
+            return value < 0x80
+                     ? 1
+                     : (value < 0x800
+                          ? 2
+                          : (value < 0x10000 ? 3 : (value < 0x200000 ? 4 : (value < 0x4000000 ? 5 : 6))));
             // alternative implementation:
             // if ((value & 0x80u) == 0) {
             //     return 1;
@@ -177,141 +176,133 @@ namespace webpp::unicode {
 
 
 
-    namespace details {
-
-        // from glib/gutf8.c
-        template <typename CharT = char8_t>
-        static constexpr CharT utf8_skip[256] = {
-          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-          3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 1, 1};
-
-
-    } // namespace details
-
-    template <typename CharT = char8_t>
-    static constexpr void next_char(CharT*& p) noexcept {
-        if constexpr (UTF8<CharT>) {
-            p += details::utf8_skip<CharT>[*p];
-        } else if constexpr (UTF16<CharT>) {
-            // todo
-        } else {
-            ++p;
-        }
-    }
-
-    template <typename CharT = char8_t>
-    static constexpr void next_char(CharT*& p, CharT const* end) noexcept {
-        if constexpr (UTF8<CharT>) {
-            if (end) {
-                for (++p; p < end && (*p & 0xc0) == 0x80; ++p)
-                    ;
-                if (p >= end)
-                    p = nullptr;
-            } else {
-                for (++p; (*p & 0xc0) == 0x80; ++p)
-                    ;
-            }
-        } else if constexpr (UTF16<CharT>) {
-            // todo
-        } else {
-            ++p;
-            if (p == end)
-                --p;
-        }
-    }
-
-    /**
-     * Go to the beginning of the previous character.
-     * This function does not check if previous character exists or not or even if its a valid character.
-     */
-    template <typename CharT = char8_t>
-    static constexpr void prev_char(CharT*& p) noexcept {
-        if constexpr (UTF8<CharT>) {
-            for (;;) {
-                --p;
-                if ((*p & 0xc0) != 0x80)
-                    break;
-            }
-        } else if constexpr (UTF16<CharT>) {
-            // todo
-        } else {
-            --p;
-        }
-    }
-
-    /**
-     * This function also checks if we're at the beginning of the string or not; but doesn't validate the
-     * character itself at all other.
-     */
-    template <typename CharT = char8_t>
-    static constexpr void prev_char(CharT*& p, CharT const* start) noexcept {
-        if constexpr (UTF8<CharT>) {
-            while (p > start) {
-                --p;
-                if ((*p & 0xc0) != 0x80)
-                    break;
-            }
-        } else if constexpr (UTF16<CharT>) {
-            // todo
-        } else {
-            --p;
-            if (p == start)
-                ++p;
-        }
-    }
-
-
-    template <typename CharT = char8_t>
-    static constexpr stl::size_t count(CharT const* p, stl::size_t max) noexcept {
-        if constexpr (UTF8<CharT> || UTF16<CharT>) {
-            stl::size_t  len   = 0;
-            const CharT* start = p;
-            if (max == 0 || !*p)
-                return 0;
-
-            next_char(p);
-
-            while (p - start < max && *p) {
-                ++len;
-                next_char(p);
-            }
-
-            /* only do the last len increment if we got a complete
-             * char (don't count partial chars)
-             */
-            if (p - start <= max)
-                ++len;
-        } else {
-            // todo
-        }
-    }
-
-    template <typename CharT = char8_t>
-    static constexpr stl::size_t count(CharT const* start, CharT const* end) noexcept {
-        if constexpr (UTF8<CharT> || UTF16<CharT>) {
-            // todo
-        } else {
-            return end - start;
-        }
-    }
-
-    // There's a better way to count 32bit unicode if you know the start and the end.
-    template <typename CharT = char8_t>
-    static constexpr stl::size_t count(CharT const* p) noexcept {
-        stl::size_t len = 0;
-        for (; *p; next_char(p))
-            ++len;
-        return len;
-    }
-
-
     namespace unchecked {
+
+        namespace details {
+
+            // from glib/gutf8.c
+            template <typename CharT = char8_t>
+            static constexpr CharT utf8_skip[256] = {
+              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+              2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+              3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 1, 1};
+        } // namespace details
+
+
+
+        template <typename CharT = char8_t>
+        static constexpr void next_char(CharT*& p) noexcept {
+            if constexpr (UTF8<CharT>) {
+                // alternative implementation:
+                // for (++p; (*p & 0xc0) == 0x80; ++p) ;
+                p += details::utf8_skip<CharT>[*p];
+            } else if constexpr (UTF16<CharT>) {
+                // todo: test this
+                ++p;
+                if (!(*p < 0xDC00 || *p > 0xDFFF))
+                    ++p;
+            } else {
+                ++p;
+            }
+        }
+
+        template <typename CharT = char8_t>
+        static constexpr CharT* next_char_copy(CharT* p) noexcept {
+            next_char<CharT>(p);
+            return p;
+        }
+
+        /**
+         * Go to the beginning of the previous character.
+         * This function does not check if previous character exists or not or even if its a valid character.
+         */
+        template <typename CharT = char8_t>
+        static constexpr void prev_char(CharT*& p) noexcept {
+            if constexpr (UTF8<CharT>) {
+                --p;
+                if ((*p & 0xc0) != 0x80)
+                    return;
+                --p;
+                if ((*p & 0xc0) != 0x80)
+                    return;
+                --p;
+                if ((*p & 0xc0) != 0x80)
+                    return;
+                --p;
+                if ((*p & 0xc0) != 0x80)
+                    return;
+                --p;
+                if ((*p & 0xc0) != 0x80)
+                    return;
+                --p;
+                if ((*p & 0xc0) != 0x80)
+                    return;
+            } else if constexpr (UTF16<CharT>) {
+                // todo: test this
+                --p;
+                if (!(*p < 0xDC00 || *p > 0xDFFF))
+                    --p;
+            } else {
+                --p;
+            }
+        }
+
+        template <typename CharT = char8_t>
+        static constexpr CharT* prev_char_copy(CharT* p) noexcept {
+            prev_char<CharT>(p);
+            return p;
+        }
+
+
+
+
+        template <typename CharT = char8_t>
+        static constexpr stl::size_t count(CharT const* p, stl::size_t max) noexcept {
+            if constexpr (UTF8<CharT> || UTF16<CharT>) {
+                stl::size_t  len   = 0;
+                const CharT* start = p;
+                if (max == 0 || !*p)
+                    return 0;
+
+                next_char(p);
+
+                while (p - start < max && *p) {
+                    ++len;
+                    next_char(p);
+                }
+
+                /* only do the last len increment if we got a complete
+                 * char (don't count partial chars)
+                 */
+                if (p - start <= max)
+                    ++len;
+            } else {
+                // todo
+            }
+        }
+
+        template <typename CharT = char8_t>
+        static constexpr stl::size_t count(CharT const* start, CharT const* end) noexcept {
+            if constexpr (UTF8<CharT> || UTF16<CharT>) {
+                // todo
+            } else {
+                return end - start;
+            }
+        }
+
+        // There's a better way to count 32bit unicode if you know the start and the end.
+        template <typename CharT = char8_t>
+        static constexpr stl::size_t count(CharT const* p) noexcept {
+            stl::size_t len = 0;
+            for (; *p; next_char(p))
+                ++len;
+            return len;
+        }
 
         template <typename Ptr, typename CharT = char32_t>
         requires(!stl::is_const_v<Ptr>) static constexpr void append(Ptr& result, CharT cp) noexcept {
