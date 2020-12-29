@@ -94,24 +94,38 @@ https://godbolt.org/z/rvfofv
 ### Allocation strategies:
 https://youtu.be/nZNd5FjSquk?t=1894
 
+Dimensional Characteristics(https://youtu.be/CFzuFNSpycI?t=1099):
 - Fragmentablity
-- Density
-- Variation
-- Locality
-- Utilization
-- Contention
+- Allocation Density
+- Chunk-Size Variation
+- Access Locality
+- Memory Utilization
+- Allocator Contention
 
-### Density
+### Density and Variation
+https://youtu.be/CFzuFNSpycI?t=1130
 
-### Variation
+Global allocators are very bad for "short" and "focused" systems while ignoring Contention.
 
 ### Locality
 https://youtu.be/CFzuFNSpycI?t=2865
 for long-running systems, locality matters and how long the
 allocation and deallocation took don't.
 
+#### For long running systems:
+ - find the parts with high utilization
+ - use local allocators there
+ - or copy the data to a local allocator, use it, and copy back to the actual allocator
+
+this is because the long running systems, the time to allocate/deallocate don't matter.
+ONLY LOCALITY MATTERS IN LONG RUNNING SYSTEMS.
+
+
 ### Utilization
 https://youtu.be/CFzuFNSpycI?t=3195
+
+For systems with High Utilization, a monotonic is very performant.
+
 Never use monotonic allocator by itself when the utilization
 is low and total number of bytes allocated is large
 
