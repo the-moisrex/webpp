@@ -202,7 +202,6 @@ namespace webpp::unicode {
                 // for (++p; (*p & 0xc0) == 0x80; ++p) ;
                 p += details::utf8_skip<CharT>[*p];
             } else if constexpr (UTF16<CharT>) {
-                // todo: test this
                 ++p;
                 if (!(*p < 0xDC00 || *p > 0xDFFF))
                     ++p;
@@ -243,7 +242,6 @@ namespace webpp::unicode {
                 if ((*p & 0xc0) != 0x80)
                     return;
             } else if constexpr (UTF16<CharT>) {
-                // todo: test this
                 --p;
                 if (!(*p < 0xDC00 || *p > 0xDFFF))
                     --p;
