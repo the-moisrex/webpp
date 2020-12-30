@@ -9,6 +9,7 @@
 
 namespace webpp {
 
+    // add stuff to the stl::pmr namespace
     namespace stl::pmr {
         using namespace std::pmr;
         /**
@@ -47,21 +48,21 @@ namespace webpp {
                 //            using type = stl::allocator<T>;
                 //        };
 
-                template <typename T>
+                template <typename T = stl::byte>
                 using type = stl::pmr::polymorphic_allocator<T>;
 
                 // the resources will inherit these features
                 static constexpr alloc::feature_pack features{alloc::stateful};
 
                 // todo: add new_delete_resource
-                using resources = alloc::allocator_list<monotonic_buffer_resource_descriptor,
+                using resources = type_list<monotonic_buffer_resource_descriptor,
                                                         synchronized_pool_resource_descriptor,
                                                         unsynchronized_pool_resource_descriptor>;
             };
 
         } // namespace details
 
-        using allocator_descriptors = alloc::allocator_list<details::polymorphic_allocator_descriptor>;
+        using allocator_descriptors = type_list<details::polymorphic_allocator_descriptor>;
     } // namespace stl::pmr
 
 } // namespace webpp

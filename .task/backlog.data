@@ -217,3 +217,6 @@
 {"description":"remove magic_enums as dependency","entry":"20201203T191321Z","modified":"20201203T191321Z","status":"pending","uuid":"349645bd-0ee8-4bf0-b6ad-ed05f9840065"}
 {"description":"add 128bit support to ipv6 class for systems that supports them","entry":"20201204T130236Z","modified":"20201204T130236Z","project":"net","status":"pending","uuid":"c3b6f39a-9ef9-4dc8-8f33-20ad0aa78800"}
 {"description":"use source_group to group files logically","entry":"20201217T191021Z","modified":"20201217T191021Z","project":"cmake","status":"pending","uuid":"aeaf9a06-8efd-46e3-9b61-f516fa26de90"}
+{"description":"should we add 'using namespace std;' in webpp::istl?","entry":"20201230T121405Z","modified":"20201230T121405Z","project":"STL","status":"pending","uuid":"cbdccf5c-95fa-473e-aa76-9b102fd955d1"}
+{"description":"add errors.hpp success and failure functions are useless","end":"20201230T121529Z","entry":"20201202T171205Z","modified":"20201230T121529Z","project":"bugs","status":"completed","uuid":"9926f34f-ae50-4967-9c12-9f0b54986dd3"}
+{"description":"remove stateful and stateless from allocator features","entry":"20201230T122958Z","modified":"20201230T122958Z","project":"traits","status":"pending","uuid":"f61ca39c-b0d3-44d6-aa1e-202975962307"}

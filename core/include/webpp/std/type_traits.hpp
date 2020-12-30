@@ -334,16 +334,34 @@ namespace webpp::istl {
     /**
      * Merge two tuple-like types.
      */
-    template <typename First, typename Second>
+    template <typename... T>
     struct merge_parameters;
 
-    template <template <typename> typename TupleType, typename ...FirstItems, typename ...SecondItems>
+
+    template <typename First, typename Second, typename... Rest>
+    struct merge_parameters<First, Second, Rest...>
+      : merge_parameters<merge_parameters<First, Second>, Rest...> {};
+
+
+    template <template <typename> typename TupleType, typename... FirstItems, typename... SecondItems>
     struct merge_parameters<TupleType<FirstItems...>, TupleType<SecondItems...>> {
         using type = TupleType<FirstItems..., SecondItems...>;
     };
 
     template <typename First, typename Second>
     using merge_t = typename merge_parameters<First, Second>::type;
+
+
+
+    /**
+     * Same as stl::negation, but it takes a templated class instead of a class.
+     */
+    template <template <typename...> typename ConceptType>
+    struct templated_negation {
+        template <typename... T>
+        using type = stl::negation<ConceptType<T...>>;
+    };
+
 
 } // namespace webpp::istl
 
