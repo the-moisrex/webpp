@@ -275,10 +275,11 @@ namespace webpp::alloc {
         using alloc_res_pairs = typename alloc_res_pair_maker<allocator_descriptors>::type;
 
         // a tuple of allocators
-        using allocators_type_list = allocator_extractor<allocator_descriptors>;
+        using allocators_type = allocator_extractor<allocator_descriptors>;
 
         // a tuple of resources (not their descriptors)
-        using resources_type_list = resource_extractor<allocator_descriptors>;
+        // todo: make these unique (should we?)
+        using resources_type = resource_extractor<allocator_descriptors>;
 
         template <feature_pack FPack>
         using ranked = ranker<allocator_descriptors, FPack>;
@@ -288,6 +289,19 @@ namespace webpp::alloc {
 
         template <Allocator AllocType>
         static constexpr bool has_allocator = istl::tuple_contains<allocator_descriptors, AllocType>::value;
+
+
+      private:
+        [[no_unique_address]] resources_type resources{};
+
+      public:
+        allocator_pack(resources_type const& res) noexcept : resources{res} {};
+        allocator_pack(resources_type&& res) noexcept : resources{stl::move(res)} {};
+
+        template <typename... ResourceType>
+        allocator_pack(ResourceType&&... res) noexcept
+          : resources{istl::make_tuple_no_order<resources_type>(stl::forward<ResourceType>(res)...)} {}
+
 
         template <feature_pack FPack, typename T>
         [[nodiscard]] auto get() const noexcept {

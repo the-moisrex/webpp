@@ -28,13 +28,12 @@ namespace webpp {
                 struct monotonic_buffer_resource_descriptor {
                     using type = stl::add_pointer_t<stl::pmr::monotonic_buffer_resource>;
                     static constexpr alloc::feature_pack features{alloc::noop_dealloc,
-                                                                  alloc::stateful,
                                                                   alloc::unsync};
                 };
 
                 struct synchronized_pool_resource_descriptor {
                     using type = stl::add_pointer_t<stl::pmr::synchronized_pool_resource>;
-                    static constexpr alloc::feature_pack features{alloc::sync, alloc::stateful};
+                    static constexpr alloc::feature_pack features{alloc::sync};
                 };
 
                 struct unsynchronized_pool_resource_descriptor {
@@ -56,8 +55,8 @@ namespace webpp {
 
                 // todo: add new_delete_resource
                 using resources = type_list<monotonic_buffer_resource_descriptor,
-                                                        synchronized_pool_resource_descriptor,
-                                                        unsynchronized_pool_resource_descriptor>;
+                                            synchronized_pool_resource_descriptor,
+                                            unsynchronized_pool_resource_descriptor>;
             };
 
         } // namespace details

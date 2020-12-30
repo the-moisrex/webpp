@@ -332,7 +332,7 @@ namespace webpp::istl {
 
 
     /**
-     * Merge two tuple-like types.
+     * Merge two or more tuple-like types.
      */
     template <typename... T>
     struct merge_parameters;
@@ -348,8 +348,8 @@ namespace webpp::istl {
         using type = TupleType<FirstItems..., SecondItems...>;
     };
 
-    template <typename First, typename Second>
-    using merge_t = typename merge_parameters<First, Second>::type;
+    template <typename ...T>
+    using merge_parameters_t = typename merge_parameters<T...>::type;
 
 
 
