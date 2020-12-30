@@ -4,11 +4,30 @@
 #define WEBPP_TUPLE_H
 
 #include "./std.hpp"
+#include "./type_traits.hpp"
 
 #include <tuple>
-#include <type_traits>
 
 namespace webpp::istl {
+
+    template <typename T>
+    struct is_pair : public stl::false_type {};
+
+    template <typename T>
+    struct is_pair<T const> : public is_pair<T> {};
+
+    template <typename T>
+    struct is_pair<T volatile> : public is_pair<T> {};
+
+    template <typename T>
+    struct is_pair<T const volatile> : public is_pair<T> {};
+
+    template <typename... Types>
+    struct is_pair<stl::pair<Types...>> : public stl::true_type {};
+
+    template <typename T>
+    concept Pair = is_pair<T>::value;
+
 
     template <typename T>
     struct is_tuple : public stl::false_type {};

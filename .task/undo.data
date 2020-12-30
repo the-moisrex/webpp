@@ -732,3 +732,13 @@ new [description:"add 128bit support to ipv6 class for systems that supports the
 time 1608232221
 new [description:"use source_group to group files logically" entry:"1608232221" modified:"1608232221" project:"cmake" status:"pending" uuid:"aeaf9a06-8efd-46e3-9b61-f516fa26de90"]
 ---
+time 1609330445
+new [description:"should we add 'using namespace std;' in webpp::istl?" entry:"1609330445" modified:"1609330445" project:"STL" status:"pending" uuid:"cbdccf5c-95fa-473e-aa76-9b102fd955d1"]
+---
+time 1609330529
+old [description:"add errors.hpp success and failure functions are useless" entry:"1606929125" modified:"1606929125" project:"bugs" status:"pending" uuid:"9926f34f-ae50-4967-9c12-9f0b54986dd3"]
+new [description:"add errors.hpp success and failure functions are useless" end:"1609330529" entry:"1606929125" modified:"1609330529" project:"bugs" status:"completed" uuid:"9926f34f-ae50-4967-9c12-9f0b54986dd3"]
+---
+time 1609331398
+new [description:"remove stateful and stateless from allocator features" entry:"1609331398" modified:"1609331398" project:"traits" status:"pending" uuid:"f61ca39c-b0d3-44d6-aa1e-202975962307"]
+---

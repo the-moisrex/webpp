@@ -60,16 +60,16 @@ namespace webpp {
      *   5. copyable allocators that are passed to us
      */
     template <typename I>
-    concept MemoryResource = requires {
-        typename I::type; // the input type
-        {I::features};    // the input features of type alloc::feature_pack
+    concept ResourceDescriptor = requires {
+        typename I::type; // the resource type
+        {I::features};    // the resource features of type alloc::feature_pack
     };
 
     // one single allocator descriptor which describes an allocator and its features and its resources
     template <typename D>
     concept AllocatorDescriptor = requires {
         typename D::template type<char>; // get the allocator itself
-        typename D::resources;           // input types (a list of MemoryResource)
+        typename D::resources;           // resource types (a list of MemoryResource)
         {D::features};                   // parent features of type alloc::feature_pack
     };
 
@@ -87,7 +87,7 @@ namespace webpp {
 
     // a list of allocator descriptors
     template <typename D>
-    concept AllocatorDescriptors = istl::TupleOf<details::allocator_descriptor_validator, D>;
+    concept AllocatorDescriptorList = istl::TupleOf<details::allocator_descriptor_validator, D>;
 
     template <typename T>
     concept AllocatorPack = istl::TupleOf<details::allocator_validator, T>;
@@ -98,6 +98,102 @@ namespace webpp {
     //       3. allocator_pack: a pack of allocator's objects
     //       4. resource_pack: a pack of resources for one type of allocator
 
+
+    template <typename... AllocatorDescriptorsTypes>
+    using type_list = stl::tuple<AllocatorDescriptorsTypes...>;
+
+
+
+
+
+    /**
+     * Extract the allocators (flatten the allocator descriptor list)
+     */
+    template <AllocatorDescriptorList AllocDescTypes>
+    struct allocator_extractor;
+
+    template <AllocatorDescriptor... AllocDescType>
+    struct allocator_extractor<type_list<AllocDescType...>> {
+
+        template <typename T>
+        using type = type_list<typename AllocDescType::template type<T>...>;
+    };
+
+
+
+
+    /**
+     * Extracts all of the "resources descriptors" from the "allocator descriptor list"
+     * the type: allocator_list<ResourceDescriptor, ...>
+     */
+    template <AllocatorDescriptorList AllocDescTypes>
+    struct resource_descriptor_extractor;
+
+    template <AllocatorDescriptor... AllocDescType>
+    struct resource_descriptor_extractor<type_list<AllocDescType...>>
+      : public istl::merge_parameters<typename AllocDescType::resources...> {};
+
+
+
+
+
+    /**
+     * Extract all of the "resources" from an "allocator descriptor list".
+     * the type: type_list<Resource>
+     */
+    template <AllocatorDescriptorList AllocDescTypes>
+    struct resource_extractor;
+
+    template <AllocatorDescriptor... AllocDescType>
+    struct resource_extractor<type_list<AllocDescType...>>
+      : public istl::merge_parameters<typename resource_extractor<typename AllocDescType::resources>::type...> {};
+
+    template <ResourceDescriptor... ResDescType>
+    struct resource_extractor<type_list<ResDescType...>> {
+        using type = type_list<typename ResDescType::type...>;
+    };
+
+
+
+
+
+    template <AllocatorDescriptorList AllocDescTypes>
+    struct allocator_flattener;
+
+    template <AllocatorDescriptor... AllocDescType>
+    struct allocator_flattener<type_list<AllocDescType...>> {
+
+        template <typename T>
+        struct type : public AllocDescType::template type<T>... {};
+    };
+
+
+
+
+    /**
+     * Extract "memory resource descriptors" from an allocator descriptor
+     * in form of std::pair<AllocatorDescriptor, ResourceDescriptor>
+     */
+    template <AllocatorDescriptorList AllocDescType, typename TheSame = AllocDescType>
+    struct alloc_res_pair_maker;
+
+    template <AllocatorDescriptor... AllocDescType>
+    struct alloc_res_pair_maker<type_list<AllocDescType...>>
+      : public istl::merge_parameters<typename alloc_res_pair_maker<AllocDescType>::type...>::type {};
+
+    template <AllocatorDescriptor AllocDescType>
+    struct alloc_res_pair_maker<type_list<AllocDescType>> {
+
+        template <typename... T>
+        struct pair_maker;
+
+        template <ResourceDescriptor... ResDesc>
+        struct pair_maker<type_list<ResDesc...>> {
+            using type = type_list<std::pair<AllocDescType, ResDesc>...>;
+        };
+
+        using type = typename pair_maker<typename AllocDescType::resources>::type;
+    };
 
 
 } // namespace webpp

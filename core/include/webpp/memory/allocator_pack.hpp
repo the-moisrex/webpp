@@ -137,9 +137,6 @@ namespace webpp::alloc {
         return pack;
     }
 
-    template <typename... AllocatorDescriptorsTypes>
-    using allocator_list = stl::tuple<AllocatorDescriptorsTypes...>;
-
     // common allocator features
     // todo: complete this list
     static constexpr auto monotonic        = feature_pack{stateful, noop_dealloc, unsync};
@@ -155,10 +152,15 @@ namespace webpp::alloc {
     template <feature_pack Features>
     struct ranking_condition {
 
-        template <typename AllocDescriptor>
-        struct ranker {
-            static constexpr feature_pack alloc_features = AllocDescriptor::features;
+        template <typename DescriptorPair>
+        struct ranker;
+
+        template <typename AllocDescriptor, typename ResDescriptor>
+        struct ranker<stl::pair<AllocDescriptor, ResDescriptor>> {
             static constexpr feature_pack asked_features = Features;
+            static constexpr feature_pack alloc_features = AllocDescriptor::features;
+            static constexpr feature_pack res_features =
+              merge_features(alloc_features, ResDescriptor::features);
 
             static constexpr auto value = ([]() constexpr noexcept->long long int {
                 long long int res = 100; // initial value
@@ -166,7 +168,7 @@ namespace webpp::alloc {
                 // Checking required features first:
                 for (auto const fch : required_features) {
                     if (asked_features.is_on(fch)) {
-                        if (alloc_features.is_off(fch) || alloc_features.is_on(opposite_feature(fch))) {
+                        if (res_features.is_off(fch) || res_features.is_on(opposite_feature(fch))) {
                             return res > 0 ? res * -1 : res; // abs(res) * -1
                         }
                     }
@@ -177,23 +179,23 @@ namespace webpp::alloc {
                     const auto opposite_fch = opposite_feature(fch);
                     const auto points       = ft.second;
                     if (asked_features.is_on(fch)) {
-                        if (alloc_features.is_on(fch)) {
+                        if (res_features.is_on(fch)) {
                             res += points; // both are on
-                        } else if (alloc_features.is_on(opposite_fch)) {
+                        } else if (res_features.is_on(opposite_fch)) {
                             res -= points; // asked for it to be on, but it has the opposite one
                         }
                     } else if (asked_features.is_on(opposite_fch)) {
-                        if (alloc_features.is_on(fch)) {
+                        if (res_features.is_on(fch)) {
                             res -= points; // both are on
-                        } else if (alloc_features.is_on(opposite_fch)) {
+                        } else if (res_features.is_on(opposite_fch)) {
                             res += points; // asked for it to be on, but it has the opposite one
                         }
                     } else {
                         // the user didn't asked for it, but half a point for those allocators that have this
                         // feature and take half the point for those that have the opposite of this feature
-                        if (alloc_features.is_on(fch)) {
+                        if (res_features.is_on(fch)) {
                             res += points / 2;
-                        } else if (alloc_features.is_on(opposite_fch)) {
+                        } else if (res_features.is_on(opposite_fch)) {
                             res -= points / 2;
                         }
                     }
@@ -209,54 +211,25 @@ namespace webpp::alloc {
      * the allocator features.
      */
     template <typename DescriptorList, feature_pack AskedFeatures>
-    struct ranker;
+    struct ranker : public ranker<typename alloc_res_pair_maker<DescriptorList>::type, AskedFeatures> {};
 
-    // requires an "allocator descriptor list"
-    template <typename... AllocatorDescriptorType, feature_pack AskedFeatures>
-    struct ranker<allocator_list<AllocatorDescriptorType...>, AskedFeatures> {
+    template <istl::Pair... AllocResPairType, feature_pack AskedFeatures>
+    struct ranker<type_list<AllocResPairType...>, AskedFeatures> {
 
-        // the ranking should be used on each combination of "allocator" and its "inputs"; sorting allocators
-        // only will not result in the best solution.
+        // the ranking should be used on each combination of "allocator" and its "resources";
+        // sorting allocators only will not result in the best solution.
 
-        using best_descriptor = typename istl::ranked_types<ranking_condition<AskedFeatures>::template ranker,
-                                                            AllocatorDescriptorType...>::best::type;
+        using ranked =
+          typename istl::ranked_types<ranking_condition<AskedFeatures>::template ranker, AllocResPairType...>;
 
-        // get the allocator type that gets passed to the STL containers and such
-        template <typename T>
-        using type = typename best_descriptor::template type<T>;
-
-        // todo: get the best resource
+        using best_descriptors_pair     = typename ranked::best::type;
+        using best_allocator_descriptor = typename best_descriptors_pair::first_type;
+        using best_resource_descriptor  = typename best_descriptors_pair::second_type;
     };
 
 
 
     // todo: add "allocator pack" merger mechanism that helps in merging two or more packs of allocators
-
-    /**
-     * Extract the allocators (flatten the allocator descriptor list)
-     */
-    template <AllocatorDescriptors AllocDescTypes>
-    struct allocator_extractor;
-
-    template <AllocatorDescriptor... AllocDescType>
-    struct allocator_extractor<allocator_list<AllocDescType...>> {
-
-        template <typename T>
-        using type = allocator_list<typename AllocDescType::template type<T>...>;
-    };
-
-    /**
-     * Extract "memory resource descriptors" from an allocator descriptor
-     * in form of std::pair<AllocatorDescriptor, ResourceDescriptor>
-     */
-    template <AllocatorDescriptor AllocDescType, typename TheSame = AllocDescType>
-    struct resource_descriptor_extractor
-      : public resource_descriptor_extractor<typename AllocDescType::resources, TheSame> {};
-
-    template <MemoryResource... MemRes, typename AllocDescType>
-    struct resource_descriptor_extractor<allocator_list<MemRes...>, AllocDescType> {
-        using type = allocator_list<std::pair<AllocDescType, MemRes>...>;
-    };
 
     namespace details {
 
@@ -270,36 +243,56 @@ namespace webpp::alloc {
                 static constexpr bool value = ranking_condition<FPack>::template ranker<T>::value > 0;
             };
         };
-    }
+    } // namespace details
 
+    /**
+     * Filter allocator "List" based on the FPack.
+     */
     template <typename List, feature_pack FPack>
     using filter = istl::filter_parameters<details::features_filterer<FPack>::template type, List>;
 
+    template <typename List>
+    using filter_stateless_allocators = istl::filter_parameters<stl::is_default_constructible, List>;
+
+    template <typename List>
+    using filter_stateful_allocators =
+      istl::filter_parameters<istl::templated_negation<stl::is_default_constructible>::template type, List>;
+
 
     /**
-     * The allocator pack type; this will hold a pack of allocators
+     * The allocator pack type; this will hold a pack of allocators and their resources (if any)
      */
-    template <AllocatorDescriptors AllocDescriptorsType>
-    struct allocator_pack : public allocator_extractor<AllocDescriptorsType>::template type<char> {
-        using descriptors = AllocDescriptorsType;
+    template <AllocatorDescriptorList AllocDescriptorsType>
+    struct allocator_pack {
+
+        // the type is: allocator_list<AllocatorDescriptor, ...>
+        using allocator_descriptors = AllocDescriptorsType;
+
+        // the type is: allocator_list<ResourceDescriptor, ...>
+        using resource_descriptors = typename resource_descriptor_extractor<allocator_descriptors>::type;
+
+        // the type is: allocator_list<stl::pair<AllocatorDescriptor, ResourceDescriptor>, ...>
+        using alloc_res_pairs = typename alloc_res_pair_maker<allocator_descriptors>::type;
+
+        // a tuple of allocators
+        using allocators_type_list = allocator_extractor<allocator_descriptors>;
+
+        // a tuple of resources (not their descriptors)
+        using resources_type_list = resource_extractor<allocator_descriptors>;
 
         template <feature_pack FPack>
-        using ranked = ranker<descriptors, FPack>;
+        using ranked = ranker<allocator_descriptors, FPack>;
 
         template <feature_pack FPack, typename T>
-        using best_allocator = typename ranked<FPack>::template type<T>;
+        using best_allocator = typename ranked<FPack>::best_allocator_descriptor::template type<T>;
 
         template <Allocator AllocType>
-        static constexpr bool has_allocator = istl::tuple_contains<descriptors, AllocType>::value;
+        static constexpr bool has_allocator = istl::tuple_contains<allocator_descriptors, AllocType>::value;
 
-        // set upstream
-        // get allocator
-        // construct
-        // allocate
-        // deallocate
-        // new_object
-        // delete_object
-        // ...
+        template <feature_pack FPack, typename T>
+        [[nodiscard]] auto get() const noexcept {
+            using the_alloc_type = best_allocator<FPack, T>;
+        }
     };
 
 
@@ -315,7 +308,7 @@ namespace webpp::alloc {
 
     struct placeholder {};
 
-    template <typename T, feature_pack FPack, AllocatorDescriptors AllocDescType, typename... Args>
+    template <typename T, feature_pack FPack, AllocatorDescriptorList AllocDescType, typename... Args>
     static constexpr auto make(allocator_pack<AllocDescType>& alloc_pack, Args&&... args) noexcept {
         using alloc_pack_type = allocator_pack<AllocDescType>;
         if constexpr (!requires { typename T::allocator_type; }) {
@@ -346,7 +339,7 @@ namespace webpp::alloc {
 
     // didn't use " = feature_pack{}" as default template parameter because of lack of compiler support at the
     // time of writing this
-    template <typename T, AllocatorDescriptors AllocDescType, typename... Args>
+    template <typename T, AllocatorDescriptorList AllocDescType, typename... Args>
     static constexpr auto make(allocator_pack<AllocDescType>& alloc_pack, Args&&... args) noexcept {
         return make<T, feature_pack{}, AllocDescType, Args...>(alloc_pack, stl::forward<Args>(args)...);
     }
