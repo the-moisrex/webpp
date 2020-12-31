@@ -124,9 +124,9 @@ ONLY LOCALITY MATTERS IN LONG RUNNING SYSTEMS.
 ### Utilization
 https://youtu.be/CFzuFNSpycI?t=3195
 
-For systems with High Utilization, a monotonic is very performant.
+For systems with High Utilization, a monotonic_features is very performant.
 
-Never use monotonic allocator by itself when the utilization
+Never use monotonic_features allocator by itself when the utilization
 is low and total number of bytes allocated is large
 
 ### Contention
@@ -162,5 +162,5 @@ https://youtu.be/CFzuFNSpycI?t=3564
 - Test allocator
 - Limit allocator
 - Read/Write protectable memory allocator
-- Alarm allocator (if monotonic allocator overflows)
+- Alarm allocator (if monotonic_features allocator overflows)
 

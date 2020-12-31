@@ -26,9 +26,18 @@ namespace webpp {
                 // but std::pmr has multiple resource types for that one allocator
 
                 struct monotonic_buffer_resource_descriptor {
-                    using type = stl::add_pointer_t<stl::pmr::monotonic_buffer_resource>;
-                    static constexpr alloc::feature_pack features{alloc::noop_dealloc,
-                                                                  alloc::unsync};
+                    using type = monotonic_buffer_resource;
+                    static constexpr alloc::feature_pack features{alloc::noop_dealloc, alloc::unsync};
+
+                    // construct the allocator based on the resource
+                    static inline polymorphic_allocator<byte>
+                    construct_allocator(monotonic_buffer_resource& res) noexcept {
+                        return {&res};
+                    }
+
+                    static inline monotonic_buffer_resource construct_resource() noexcept {
+                        return {};
+                    }
                 };
 
                 struct synchronized_pool_resource_descriptor {
