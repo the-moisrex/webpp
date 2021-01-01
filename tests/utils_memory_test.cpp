@@ -12,6 +12,7 @@ using namespace webpp::alloc;
 using namespace std;
 
 TEST(MemoryTest, AllocatorPackTest) {
+    static_assert(Allocator<stl::pmr::polymorphic_allocator<char>>);
     allocator_pack<stl::pmr::allocator_descriptors> alloc_pack;
     auto str = make<string, feature_pack{noop_dealloc}>(alloc_pack, placeholder{});
     using str_t = remove_cvref_t<decltype(str)>;

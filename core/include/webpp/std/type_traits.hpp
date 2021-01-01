@@ -337,18 +337,24 @@ namespace webpp::istl {
     template <typename... T>
     struct merge_parameters;
 
+    // one tuple
+    template <template <typename> typename TupleType, typename... FirstItems>
+    struct merge_parameters<TupleType<FirstItems...>> {
+        using type = TupleType<FirstItems...>;
+    };
 
-    template <typename First, typename Second, typename... Rest>
-    struct merge_parameters<First, Second, Rest...>
-      : merge_parameters<merge_parameters<First, Second>, Rest...> {};
-
-
+    // two tuples
     template <template <typename> typename TupleType, typename... FirstItems, typename... SecondItems>
     struct merge_parameters<TupleType<FirstItems...>, TupleType<SecondItems...>> {
         using type = TupleType<FirstItems..., SecondItems...>;
     };
 
-    template <typename ...T>
+    // more than 2 tuples
+    template <typename First, typename Second, typename Third, typename... Rest>
+    struct merge_parameters<First, Second, Third, Rest...>
+      : merge_parameters<typename merge_parameters<First, Second>::type, Third, Rest...> {};
+
+    template <typename... T>
     using merge_parameters_t = typename merge_parameters<T...>::type;
 
 
@@ -360,6 +366,18 @@ namespace webpp::istl {
     struct templated_negation {
         template <typename... T>
         using type = stl::negation<ConceptType<T...>>;
+    };
+
+
+    /**
+     * Replace TupleT<OldT...> with TupleT<NewT...>
+     */
+    template <typename TupleT, typename ...T>
+    struct rebind_parameters;
+
+    template <template <typename ...>typename TupleT, typename ...OldTs, typename ...NewTs>
+    struct rebind_parameters<TupleT<OldTs...>, NewTs...> {
+        using type = TupleT<NewTs...>;
     };
 
 

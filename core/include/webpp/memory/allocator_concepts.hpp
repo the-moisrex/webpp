@@ -38,10 +38,10 @@ namespace webpp {
             {a == a1};
             {a != a1};
             {A(a)};
-            {a1 = a};
+            // {A a1 = a};
             // A a(b)};
             {A(stl::move(a))};
-            {a1 = stl::move(a)};
+            // {A a1 = stl::move(a)};
             // {A a(stl::move(b))};
         };
     };
@@ -89,8 +89,6 @@ namespace webpp {
     template <typename D>
     concept AllocatorDescriptorList = istl::TupleOf<details::allocator_descriptor_validator, D>;
 
-    template <typename T>
-    concept AllocatorPack = istl::TupleOf<details::allocator_validator, T>;
 
     // todo: types to add:
     //       1. make: make<string>(alloc)
@@ -124,13 +122,13 @@ namespace webpp {
 
     /**
      * Extracts all of the "resources descriptors" from the "allocator descriptor list"
-     * the type: allocator_list<ResourceDescriptor, ...>
+     * the type: tuple<ResourceDescriptor, ...>
      */
     template <AllocatorDescriptorList AllocDescTypes>
     struct resource_descriptor_extractor;
 
-    template <AllocatorDescriptor... AllocDescType>
-    struct resource_descriptor_extractor<type_list<AllocDescType...>>
+    template <template <typename...> typename TupleType, AllocatorDescriptor... AllocDescType>
+    struct resource_descriptor_extractor<TupleType<AllocDescType...>>
       : public istl::merge_parameters<typename AllocDescType::resources...> {};
 
 
@@ -141,16 +139,17 @@ namespace webpp {
      * Extract all of the "resources" from an "allocator descriptor list".
      * the type: type_list<Resource>
      */
-    template <AllocatorDescriptorList AllocDescTypes>
+    template <typename AllocDescTypes>
     struct resource_extractor;
 
-    template <AllocatorDescriptor... AllocDescType>
-    struct resource_extractor<type_list<AllocDescType...>>
-      : public istl::merge_parameters<typename resource_extractor<typename AllocDescType::resources>::type...> {};
+    template <template <typename...> typename TupleType, AllocatorDescriptor... AllocDescType>
+    struct resource_extractor<TupleType<AllocDescType...>>
+      : public istl::merge_parameters<
+          typename resource_extractor<typename AllocDescType::resources>::type...> {};
 
-    template <ResourceDescriptor... ResDescType>
-    struct resource_extractor<type_list<ResDescType...>> {
-        using type = type_list<typename ResDescType::type...>;
+    template <template <typename...> typename TupleType, ResourceDescriptor... ResDescType>
+    struct resource_extractor<TupleType<ResDescType...>> {
+        using type = TupleType<typename ResDescType::type...>;
     };
 
 
