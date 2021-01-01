@@ -267,13 +267,13 @@ namespace webpp::alloc {
     template <AllocatorDescriptorList AllocDescriptorsType>
     struct allocator_pack {
 
-        // the type is: allocator_list<AllocatorDescriptor, ...>
+        // the type is: tuple<AllocatorDescriptor, ...>
         using allocator_descriptors = AllocDescriptorsType;
 
-        // the type is: allocator_list<ResourceDescriptor, ...>
+        // the type is: tuple<ResourceDescriptor, ...>
         using resource_descriptors = typename resource_descriptor_extractor<allocator_descriptors>::type;
 
-        // the type is: allocator_list<stl::pair<AllocatorDescriptor, ResourceDescriptor>, ...>
+        // the type is: tuple<stl::pair<AllocatorDescriptor, ResourceDescriptor>, ...>
         using alloc_res_pairs = typename alloc_res_pair_maker<allocator_descriptors>::type;
 
         // a tuple of allocators
@@ -282,7 +282,7 @@ namespace webpp::alloc {
 
         // a tuple of resources (not their descriptors)
         // todo: make these unique (should we?)
-        using resources_type = resource_extractor<allocator_descriptors>;
+        using resources_type = typename resource_extractor<allocator_descriptors>::type;
 
         template <feature_pack FPack>
         using ranked = ranker<allocator_descriptors, FPack>;
@@ -309,12 +309,22 @@ namespace webpp::alloc {
         [[no_unique_address]] resources_type resources{};
 
       public:
+        allocator_pack(allocator_pack&&) noexcept = default;
+        allocator_pack(allocator_pack const&)     = delete; // some resources are not copy-able; so ...
+
         allocator_pack(resources_type const& res) noexcept : resources{res} {};
         allocator_pack(resources_type&& res) noexcept : resources{stl::move(res)} {};
 
         template <typename... ResourceType>
         allocator_pack(ResourceType&&... res) noexcept
-          : resources{istl::make_tuple_no_order<resources_type>(stl::forward<ResourceType>(res)...)} {}
+          : resources{istl::make_tuple_no_order<resources_type, ResourceType...>(
+              stl::forward<ResourceType>(res)...)} {}
+
+
+        template <Allocator AllocType>
+        requires(has_allocator<AllocType>) [[nodiscard]] auto get() const noexcept {
+            return stl::get<AllocType>(resources);
+        }
 
 
         template <feature_pack FPack, typename T>
@@ -398,14 +408,13 @@ namespace webpp::alloc {
         constexpr auto general(Args&&... args) {
             return make<T, general_features, Args...>(stl::forward<Args>(args)...);
         }
-
     };
 
 
 
     template <typename T, feature_pack FPack, AllocatorDescriptorList AllocDescType, typename... Args>
     static constexpr auto make(allocator_pack<AllocDescType>& alloc_pack, Args&&... args) {
-        return alloc_pack.template make<T, FPack, AllocDescType, Args...>(stl::forward<Args>(args)...);
+        return alloc_pack.template make<T, FPack, Args...>(stl::forward<Args>(args)...);
     }
 
 
@@ -413,7 +422,7 @@ namespace webpp::alloc {
     // time of writing this
     template <typename T, AllocatorDescriptorList AllocDescType, typename... Args>
     static constexpr auto make(allocator_pack<AllocDescType>& alloc_pack, Args&&... args) noexcept {
-        return make<T, feature_pack{}, AllocDescType, Args...>(alloc_pack, stl::forward<Args>(args)...);
+        return make<T, feature_pack{}, Args...>(alloc_pack, stl::forward<Args>(args)...);
     }
 
 

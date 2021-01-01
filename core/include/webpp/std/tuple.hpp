@@ -105,7 +105,10 @@ namespace webpp::istl {
     template <Tuple TupleT, typename... T>
     requires((tuple_contains<TupleT, T>::value && ...)) // check if the types are okay
       [[nodiscard]] static constexpr TupleT make_tuple_no_order(T&&... args) noexcept {
-        using no_order_tuple = stl::tuple<T...>;
+
+        // this uses the TupleT's tuple-like type; std::tuple<T...>;
+        using no_order_tuple = typename rebind_parameters<TupleT, T...>::type;
+
         if constexpr (stl::same_as<TupleT, no_order_tuple>) {
             // It's in order, so there's no need of re-ordering
             return TupleT{stl::forward<T>(args)...};

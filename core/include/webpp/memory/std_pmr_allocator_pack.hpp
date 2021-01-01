@@ -41,12 +41,12 @@ namespace webpp {
                 };
 
                 struct synchronized_pool_resource_descriptor {
-                    using type = stl::add_pointer_t<stl::pmr::synchronized_pool_resource>;
+                    using type = synchronized_pool_resource;
                     static constexpr alloc::feature_pack features{alloc::sync};
                 };
 
                 struct unsynchronized_pool_resource_descriptor {
-                    using type = stl::add_pointer_t<stl::pmr::unsynchronized_pool_resource>;
+                    using type = unsynchronized_pool_resource;
                     static constexpr alloc::feature_pack features{};
                 };
 
@@ -56,8 +56,8 @@ namespace webpp {
                 //            using type = stl::allocator<T>;
                 //        };
 
-                template <typename T = stl::byte>
-                using type = stl::pmr::polymorphic_allocator<T>;
+                template <typename T = byte>
+                using type = polymorphic_allocator<T>;
 
                 // the resources will inherit these features
                 static constexpr alloc::feature_pack features{alloc::stateful};
