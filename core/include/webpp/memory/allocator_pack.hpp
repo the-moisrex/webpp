@@ -353,10 +353,10 @@ namespace webpp::alloc {
                 using selected_allocator = AllocType<value_type>;
                 using new_type           = istl::replace_parameter<T, old_allocator_type, selected_allocator>;
                 auto the_alloc           = this->get<selected_allocator>();
-                if constexpr (istl::contains_parameter_v<new_type, placeholder>) {
+                if constexpr (istl::contains_parameter_v<type_list<Args...>, placeholder>) {
                     return new_type{
-                      istl::replace_object<placeholder, best_allocator>(stl::forward<Args>(args),
-                                                                        the_alloc)...};
+                      istl::replace_object<placeholder, selected_allocator, Args>(stl::forward<Args>(args),
+                                                                                  the_alloc)...};
                 } else if constexpr (requires {
                                          new_type{stl::allocator_arg, the_alloc, stl::forward<Args>(args)...};
                                      }) {

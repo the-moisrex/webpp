@@ -289,8 +289,7 @@ namespace webpp::istl {
 
     /**
      * Check if the type T is one of the TupleT's elements.
-     * I'm short on internet bandwidth as of writing this; so forgive me if there's already another solution
-     * of this in the STL, I don't have the luxury of searching it; so I'm just gonna implement it :)
+     * It's an alternative to "tuple_contains" in the tuple.hpp (more generalized version actually)
      */
     template <typename TupleT, typename T, stl::size_t I = parameter_count_v<TupleT> - 1>
     struct contains_parameter {
