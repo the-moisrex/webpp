@@ -235,6 +235,79 @@ namespace webpp::istl {
     using replace_parameter = typename details::change_template_parameter<T, OldType, NewType>::type;
 
 
+    /// Finds the size of a given tuple-like type.
+    template <typename T>
+    struct parameter_count;
+
+    template <typename T>
+    struct parameter_count<const T> : public parameter_count<T> {};
+
+    template <typename T>
+    struct parameter_count<volatile T> : public parameter_count<T> {};
+
+    template <typename T>
+    struct parameter_count<const volatile T> : public parameter_count<T> {};
+
+    /// class tuple_size
+    template <template <typename...> typename TupleT, typename... Elements>
+    struct parameter_count<TupleT<Elements...>>
+      : public stl::integral_constant<stl::size_t, sizeof...(Elements)> {};
+
+
+    template <typename T>
+    static constexpr stl::size_t parameter_count_v = parameter_count<T>::value;
+
+
+    /// Gives the type of the ith element of a given tuple type.
+    template <stl::size_t Index, typename T>
+    struct get_parameter;
+
+    template <stl::size_t Index, typename T>
+    struct get_parameter<Index, const T> : public stl::add_const<typename get_parameter<Index, T>::type> {};
+
+    template <stl::size_t Index, typename T>
+    struct get_parameter<Index, volatile T>
+      : public stl::add_volatile<typename get_parameter<Index, T>::type> {};
+
+    template <stl::size_t Index, typename T>
+    struct get_parameter<Index, const volatile T>
+      : public stl::add_cv<typename get_parameter<Index, T>::type> {};
+
+    // recursive case
+    template <template <typename...> typename TupleT, stl::size_t I, typename Head, typename... Tail>
+    struct get_parameter<I, TupleT<Head, Tail...>> : get_parameter<I - 1, TupleT<Tail...>> {};
+
+    // base case
+    template <template <typename...> typename TupleT, typename Head, typename... Tail>
+    struct get_parameter<0, TupleT<Head, Tail...>> {
+        using type = Head;
+    };
+
+    template <stl::size_t Index, typename T>
+    using get_parameter_t = typename get_parameter<Index, T>::type;
+
+
+    /**
+     * Check if the type T is one of the TupleT's elements.
+     * I'm short on internet bandwidth as of writing this; so forgive me if there's already another solution
+     * of this in the STL, I don't have the luxury of searching it; so I'm just gonna implement it :)
+     */
+    template <typename TupleT, typename T, stl::size_t I = parameter_count_v<TupleT> - 1>
+    struct contains_parameter {
+        static constexpr bool value =
+          stl::is_same_v<get_parameter_t<I, TupleT>, T> || contains_parameter<TupleT, T, I - 1>::value;
+    };
+
+
+    template <typename TupleT, typename T>
+    struct contains_parameter<TupleT, T, 0> {
+        static constexpr bool value = stl::is_same_v<get_parameter_t<0, TupleT>, T>;
+    };
+
+    template <typename TupleT, typename T>
+    static constexpr bool contains_parameter_v = contains_parameter<TupleT, T>::value;
+
+
     /**
      * With the help of this, you can replace a "placeholder" type with the new object you give it.
      * It's good for using in codes like this:
@@ -249,7 +322,7 @@ namespace webpp::istl {
      * @endcode
      */
     template <typename OldType, typename NewType, typename T>
-    constexpr auto replace_object(T&& obj, NewType const& new_obj) noexcept {
+    static constexpr auto replace_object(T&& obj, NewType const& new_obj) noexcept {
         if constexpr (stl::same_as<OldType, T>) {
             return new_obj;
         } else {
@@ -372,10 +445,10 @@ namespace webpp::istl {
     /**
      * Replace TupleT<OldT...> with TupleT<NewT...>
      */
-    template <typename TupleT, typename ...T>
+    template <typename TupleT, typename... T>
     struct rebind_parameters;
 
-    template <template <typename ...>typename TupleT, typename ...OldTs, typename ...NewTs>
+    template <template <typename...> typename TupleT, typename... OldTs, typename... NewTs>
     struct rebind_parameters<TupleT<OldTs...>, NewTs...> {
         using type = TupleT<NewTs...>;
     };

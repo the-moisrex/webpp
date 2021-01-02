@@ -3,7 +3,6 @@
 #ifndef WEBPP_ALLOCATOR_PACK_HPP
 #define WEBPP_ALLOCATOR_PACK_HPP
 
-#include "../std/tuple.hpp"
 #include "../std/type_traits.hpp"
 #include "../utils/flags.hpp"
 #include "allocator_concepts.hpp"
@@ -353,8 +352,8 @@ namespace webpp::alloc {
                 using value_type         = typename old_allocator_type::value_type;
                 using selected_allocator = AllocType<value_type>;
                 using new_type           = istl::replace_parameter<T, old_allocator_type, selected_allocator>;
-                auto const& the_alloc    = get<selected_allocator>();
-                if constexpr (istl::tuple_contains<new_type, placeholder>::value) {
+                auto the_alloc           = this->get<selected_allocator>();
+                if constexpr (istl::contains_parameter_v<new_type, placeholder>) {
                     return new_type{
                       istl::replace_object<placeholder, best_allocator>(stl::forward<Args>(args),
                                                                         the_alloc)...};
@@ -376,7 +375,7 @@ namespace webpp::alloc {
 
         template <typename T, Allocator AllocType, typename... Args>
         constexpr auto make(Args&&... args) {
-            return make<T, stl::allocator_traits<AllocType>::template rebind, Args...>(
+            return this->make<T, stl::allocator_traits<AllocType>::template rebind, Args...>(
               stl::forward<Args>(args)...);
         }
 
@@ -385,7 +384,7 @@ namespace webpp::alloc {
             if constexpr (FPack.empty()) {
                 using old_allocator_type = typename T::allocator_type;
                 if constexpr (allocator_pack::template has_allocator<old_allocator_type>) {
-                    return make<T, old_allocator_type, Args...>(stl::forward<Args>(args)...);
+                    return this->make<T, old_allocator_type, Args...>(stl::forward<Args>(args)...);
                 } else {
                     static_assert(false && sizeof(allocator_pack),
                                   "We don't have an allocator for this type, and you didn't specify "
@@ -394,19 +393,19 @@ namespace webpp::alloc {
                 }
             } else {
                 using best_choice = typename allocator_pack::template best_allocator_descriptor<FPack>;
-                return make<T, best_choice::template type, Args...>(stl::forward<Args>(args)...);
+                return this->make<T, best_choice::template type, Args...>(stl::forward<Args>(args)...);
             }
         }
 
 
         template <typename T, typename... Args>
         constexpr auto local(Args&&... args) {
-            return make<T, monotonic_features, Args...>(stl::forward<Args>(args)...);
+            return this->make<T, monotonic_features, Args...>(stl::forward<Args>(args)...);
         }
 
         template <typename T, typename... Args>
         constexpr auto general(Args&&... args) {
-            return make<T, general_features, Args...>(stl::forward<Args>(args)...);
+            return this->make<T, general_features, Args...>(stl::forward<Args>(args)...);
         }
     };
 
