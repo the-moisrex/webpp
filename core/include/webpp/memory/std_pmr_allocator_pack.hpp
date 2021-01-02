@@ -43,11 +43,23 @@ namespace webpp {
                 struct synchronized_pool_resource_descriptor {
                     using type = synchronized_pool_resource;
                     static constexpr alloc::feature_pack features{alloc::sync};
+
+                    // construct the allocator based on the resource
+                    static inline polymorphic_allocator<byte>
+                    construct_allocator(synchronized_pool_resource& res) noexcept {
+                        return {&res};
+                    }
                 };
 
                 struct unsynchronized_pool_resource_descriptor {
                     using type = unsynchronized_pool_resource;
                     static constexpr alloc::feature_pack features{};
+
+                    // construct the allocator based on the resource
+                    static inline polymorphic_allocator<byte>
+                    construct_allocator(unsynchronized_pool_resource& res) noexcept {
+                        return {&res};
+                    }
                 };
 
                 //        struct std_allocator_descriptor {
