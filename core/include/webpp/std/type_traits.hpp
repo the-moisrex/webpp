@@ -293,6 +293,12 @@ namespace webpp::istl {
      */
     template <typename TupleT, typename T, stl::size_t I = parameter_count_v<TupleT> - 1>
     struct contains_parameter {
+        static constexpr bool value = false;
+    };
+
+    template <typename TupleT, typename T, stl::size_t I>
+    requires(parameter_count_v<TupleT> > 0)
+    struct contains_parameter<TupleT, T, I> {
         static constexpr bool value =
           stl::is_same_v<get_parameter_t<I, TupleT>, T> || contains_parameter<TupleT, T, I - 1>::value;
     };
