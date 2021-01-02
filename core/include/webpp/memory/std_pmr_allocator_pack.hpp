@@ -26,12 +26,12 @@ namespace webpp {
                 // but std::pmr has multiple resource types for that one allocator
 
                 struct monotonic_buffer_resource_descriptor {
-                    using type = monotonic_buffer_resource;
+                    using storage_type = monotonic_buffer_resource;
                     static constexpr alloc::feature_pack features{alloc::noop_dealloc, alloc::unsync};
 
                     // construct the allocator based on the resource
                     static inline polymorphic_allocator<byte>
-                    construct_allocator(monotonic_buffer_resource& res) noexcept {
+                    construct_allocator(storage_type& res) noexcept {
                         return {&res};
                     }
 
@@ -41,23 +41,23 @@ namespace webpp {
                 };
 
                 struct synchronized_pool_resource_descriptor {
-                    using type = synchronized_pool_resource;
+                    using storage_type = synchronized_pool_resource;
                     static constexpr alloc::feature_pack features{alloc::sync};
 
                     // construct the allocator based on the resource
                     static inline polymorphic_allocator<byte>
-                    construct_allocator(synchronized_pool_resource& res) noexcept {
+                    construct_allocator(storage_type& res) noexcept {
                         return {&res};
                     }
                 };
 
                 struct unsynchronized_pool_resource_descriptor {
-                    using type = unsynchronized_pool_resource;
+                    using storage_type = unsynchronized_pool_resource;
                     static constexpr alloc::feature_pack features{};
 
                     // construct the allocator based on the resource
                     static inline polymorphic_allocator<byte>
-                    construct_allocator(unsynchronized_pool_resource& res) noexcept {
+                    construct_allocator(storage_type& res) noexcept {
                         return {&res};
                     }
                 };

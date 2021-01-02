@@ -334,7 +334,7 @@ namespace webpp::alloc {
 
         template <ResourceDescriptor ResourceDescType>
         requires(has_resource_descriptor<ResourceDescType>) [[nodiscard]] auto get_allocator() noexcept {
-            auto& res = get_resource<typename ResourceDescType::type>();
+            auto& res = get_resource<typename ResourceDescType::storage_type>();
             return ResourceDescType::construct_allocator(res);
         }
 

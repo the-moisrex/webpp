@@ -61,7 +61,7 @@ namespace webpp {
      */
     template <typename I>
     concept ResourceDescriptor = requires {
-        typename I::type; // the resource type
+        typename I::storage_type; // the resource type
         {I::features};    // the resource features of type alloc::feature_pack
     };
 
@@ -149,7 +149,7 @@ namespace webpp {
 
     template <template <typename...> typename TupleType, ResourceDescriptor... ResDescType>
     struct resource_extractor<TupleType<ResDescType...>> {
-        using type = TupleType<typename ResDescType::type...>;
+        using type = TupleType<typename ResDescType::storage_type...>;
     };
 
 
