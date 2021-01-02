@@ -72,11 +72,15 @@ namespace webpp::istl {
      * of this in the STL, I don't have the luxury of searching it; so I'm just gonna implement it :)
      */
     template <typename TupleT, typename T, stl::size_t I = stl::tuple_size_v<TupleT> - 1>
-    requires(stl::tuple_size_v<TupleT> > 0) struct tuple_contains {
+    struct tuple_contains {
+        static constexpr bool value = false;
+    };
+
+    template <typename TupleT, typename T, stl::size_t I>
+    requires(stl::tuple_size_v<TupleT> > 0) struct tuple_contains<TupleT, T, I> {
         static constexpr bool value =
           stl::is_same_v<stl::tuple_element_t<I, TupleT>, T> || tuple_contains<TupleT, T, I - 1>::value;
     };
-
 
     template <typename TupleT, typename T>
     struct tuple_contains<TupleT, T, 0> {
@@ -86,8 +90,7 @@ namespace webpp::istl {
 
     namespace details {
         template <typename TupleT, typename no_order_tuple, stl::size_t index>
-        requires(stl::tuple_size_v<TupleT>) constexpr auto tuple_get_value(
-          no_order_tuple& bad_tuple) noexcept {
+        constexpr auto tuple_get_value(no_order_tuple& bad_tuple) noexcept {
             using this_type = stl::tuple_element_t<index, TupleT>;
             if constexpr (tuple_contains<no_order_tuple, this_type>::value) {
                 return stl::get<this_type>(bad_tuple);
@@ -104,8 +107,7 @@ namespace webpp::istl {
      * The types that don't exists in the args, will be default constructed.
      */
     template <Tuple TupleT, typename... T>
-    requires((tuple_contains<TupleT, T>::value && ...) && // check if the types are okay
-             stl::tuple_size_v<TupleT> > 0)               // tuple is not empty
+    requires((tuple_contains<TupleT, T>::value && ...)) // check if the types are okay
       [[nodiscard]] static constexpr TupleT make_tuple_no_order(T&&... args) noexcept {
 
         // this uses the TupleT's tuple-like type; std::tuple<T...>;
