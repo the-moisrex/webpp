@@ -304,6 +304,13 @@ namespace webpp::alloc {
         static constexpr bool has_allocator =
           istl::tuple_contains<allocators_type<typename AllocType::value_type>, AllocType>::value;
 
+        template <typename ResourceType>
+        static constexpr bool has_resource = istl::tuple_contains<resources_type, ResourceType>::value;
+
+        template <ResourceDescriptor ResDescType>
+        static constexpr bool has_resource_descriptor =
+          istl::tuple_contains<resource_descriptors, ResDescType>::value;
+
       private:
         [[no_unique_address]] resources_type resources{};
 
@@ -320,29 +327,41 @@ namespace webpp::alloc {
               stl::forward<ResourceType>(res)...)} {}
 
 
-        template <Allocator AllocType>
-        requires(has_allocator<AllocType>) [[nodiscard]] auto get() const noexcept {
-            return stl::get<AllocType>(resources);
+        template <typename ResourceType>
+        requires(has_resource<ResourceType>) [[nodiscard]] auto& get_resource() noexcept {
+            return stl::get<ResourceType>(resources);
+        }
+
+        template <ResourceDescriptor ResourceDescType>
+        requires(has_resource_descriptor<ResourceDescType>) [[nodiscard]] auto get_allocator() noexcept {
+            auto& res = get_resource<typename ResourceDescType::type>();
+            return ResourceDescType::construct_allocator(res);
         }
 
 
         template <feature_pack FPack, typename T>
-        [[nodiscard]] auto get() const noexcept {
+        [[nodiscard]] auto get_allocator() noexcept {
             using the_alloc_type = best_allocator<FPack, T>;
+            // todo
         }
 
         template <typename T>
-        [[nodiscard]] auto local_allocator() const noexcept {
-            return get<monotonic_features, T>();
+        [[nodiscard]] auto local_allocator() noexcept {
+            return get_allocator<monotonic_features, T>();
         }
 
         template <typename T>
-        [[nodiscard]] auto general_allocator() const noexcept {
-            return get<general_features, T>();
+        [[nodiscard]] auto general_allocator() noexcept {
+            return get_allocator<general_features, T>();
         }
 
 
-        template <typename T, template <typename> typename AllocType, typename... Args>
+        // todo: you can remove AllocType here
+        template <typename T,
+                  template <typename>
+                  typename AllocType,
+                  ResourceDescriptor ResDescType,
+                  typename... Args>
         requires(has_templated_allocator<AllocType>) constexpr auto make(Args&&... args) {
             if constexpr (!requires { typename T::allocator_type; }) {
                 // doesn't have an allocator, so construct a normal object
@@ -352,7 +371,7 @@ namespace webpp::alloc {
                 using value_type         = typename old_allocator_type::value_type;
                 using selected_allocator = AllocType<value_type>;
                 using new_type           = istl::replace_parameter<T, old_allocator_type, selected_allocator>;
-                auto the_alloc           = this->get<selected_allocator>();
+                auto the_alloc           = this->get_allocator<ResDescType>();
                 if constexpr (istl::contains_parameter_v<type_list<Args...>, placeholder>) {
                     return new_type{
                       istl::replace_object<placeholder, selected_allocator, Args>(stl::forward<Args>(args),
@@ -373,9 +392,9 @@ namespace webpp::alloc {
             }
         }
 
-        template <typename T, Allocator AllocType, typename... Args>
+        template <typename T, Allocator AllocType, ResourceDescriptor ResDescType, typename... Args>
         constexpr auto make(Args&&... args) {
-            return this->make<T, stl::allocator_traits<AllocType>::template rebind, Args...>(
+            return this->make<T, stl::allocator_traits<AllocType>::template rebind, ResDescType, Args...>(
               stl::forward<Args>(args)...);
         }
 
@@ -392,8 +411,12 @@ namespace webpp::alloc {
                                   "which allocator to choose.");
                 }
             } else {
-                using best_choice = typename allocator_pack::template best_allocator_descriptor<FPack>;
-                return this->make<T, best_choice::template type, Args...>(stl::forward<Args>(args)...);
+                using best_choice        = ranked<FPack>;
+                using best_resource_desc = typename best_choice::best_resource_descriptor;
+                return this->make<T,
+                                  best_choice::best_allocator_descriptor::template type, // best allocator
+                                  best_resource_desc,
+                                  Args...>(stl::forward<Args>(args)...);
             }
         }
 
@@ -415,15 +438,6 @@ namespace webpp::alloc {
     static constexpr auto make(allocator_pack<AllocDescType>& alloc_pack, Args&&... args) {
         return alloc_pack.template make<T, FPack, Args...>(stl::forward<Args>(args)...);
     }
-
-
-    // didn't use " = feature_pack{}" as default template parameter because of lack of compiler support at the
-    // time of writing this
-    template <typename T, AllocatorDescriptorList AllocDescType, typename... Args>
-    static constexpr auto make(allocator_pack<AllocDescType>& alloc_pack, Args&&... args) noexcept {
-        return make<T, feature_pack{}, Args...>(alloc_pack, stl::forward<Args>(args)...);
-    }
-
 
 
 
