@@ -25,39 +25,45 @@ namespace webpp {
             struct polymorphic_allocator_descriptor {
                 // but std::pmr has multiple resource types for that one allocator
 
+                template <typename T = byte>
+                using allocator = polymorphic_allocator<T>;
+
+                // for internal usage; todo: should we use allocator_type instead of "type"?
+                using allocator_type = allocator<>;
+
+                // the resources will inherit these features
+                static constexpr alloc::feature_pack allocator_features{alloc::stateful};
+
                 struct monotonic_buffer_resource_descriptor {
                     using storage_type = monotonic_buffer_resource;
-                    static constexpr alloc::feature_pack features{alloc::noop_dealloc, alloc::unsync};
+                    static constexpr alloc::feature_pack resource_features{alloc::noop_dealloc, alloc::unsync};
 
                     // construct the allocator based on the resource
-                    static inline polymorphic_allocator<byte>
-                    construct_allocator(storage_type& res) noexcept {
+                    static inline allocator_type construct_allocator(storage_type& res) noexcept {
                         return {&res};
                     }
 
-                    static inline monotonic_buffer_resource construct_resource() noexcept {
+                    static inline storage_type construct_resource() noexcept {
                         return {};
                     }
                 };
 
                 struct synchronized_pool_resource_descriptor {
                     using storage_type = synchronized_pool_resource;
-                    static constexpr alloc::feature_pack features{alloc::sync};
+                    static constexpr alloc::feature_pack resource_features{alloc::sync};
 
                     // construct the allocator based on the resource
-                    static inline polymorphic_allocator<byte>
-                    construct_allocator(storage_type& res) noexcept {
+                    static inline allocator_type construct_allocator(storage_type& res) noexcept {
                         return {&res};
                     }
                 };
 
                 struct unsynchronized_pool_resource_descriptor {
                     using storage_type = unsynchronized_pool_resource;
-                    static constexpr alloc::feature_pack features{};
+                    static constexpr alloc::feature_pack resource_features{};
 
                     // construct the allocator based on the resource
-                    static inline polymorphic_allocator<byte>
-                    construct_allocator(storage_type& res) noexcept {
+                    static inline allocator_type construct_allocator(storage_type& res) noexcept {
                         return {&res};
                     }
                 };
@@ -65,14 +71,8 @@ namespace webpp {
                 //        struct std_allocator_descriptor {
                 //            static constexpr alloc::feature_pack features{alloc::stateless, alloc::sync,
                 //            alloc::low_locality};
-                //            using type = stl::allocator<T>;
+                //            using storage_type = stl::allocator<T>;
                 //        };
-
-                template <typename T = byte>
-                using type = polymorphic_allocator<T>;
-
-                // the resources will inherit these features
-                static constexpr alloc::feature_pack features{alloc::stateful};
 
                 // todo: add new_delete_resource
                 using resources = type_list<monotonic_buffer_resource_descriptor,

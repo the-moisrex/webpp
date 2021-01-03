@@ -62,16 +62,40 @@ namespace webpp {
     template <typename I>
     concept ResourceDescriptor = requires {
         typename I::storage_type; // the resource type
-        {I::features};    // the resource features of type alloc::feature_pack
+        {I::resource_features};   // the resource features of type alloc::feature_pack
     };
 
     // one single allocator descriptor which describes an allocator and its features and its resources
     template <typename D>
     concept AllocatorDescriptor = requires {
-        typename D::template type<char>; // get the allocator itself
-        typename D::resources;           // resource types (a list of MemoryResource)
-        {D::features};                   // parent features of type alloc::feature_pack
+        typename D::template allocator<char>; // get the allocator itself
+        typename D::resources;                // resource types (a list of MemoryResource)
+        {D::allocator_features};              // parent features of type alloc::feature_pack
     };
+
+    // these are that help other TMPs to extract information out of the two descriptor types.
+    namespace alloc::descriptors {
+
+        template <AllocatorDescriptor DescType>
+        struct allocator {
+            template <typename T>
+            using type = typename DescType::template allocator<T>;
+        };
+
+        template <AllocatorDescriptor T>
+        using resources = typename T::resources;
+
+        template <ResourceDescriptor T>
+        using storage = typename T::storage_type;
+
+        template <AllocatorDescriptor T>
+        static constexpr auto allocator_features = T::allocator_features;
+
+        template <ResourceDescriptor T>
+        static constexpr auto resource_features = T::resource_features;
+
+
+    } // namespace alloc::descriptors
 
     namespace details {
         template <typename T>
@@ -90,109 +114,122 @@ namespace webpp {
     concept AllocatorDescriptorList = istl::TupleOf<details::allocator_descriptor_validator, D>;
 
 
-    // todo: types to add:
-    //       1. make: make<string>(alloc)
-    //       2. buffer: stack, arena, ram
-    //       3. allocator_pack: a pack of allocator's objects
-    //       4. resource_pack: a pack of resources for one type of allocator
-
-
     template <typename... AllocatorDescriptorsTypes>
     using type_list = stl::tuple<AllocatorDescriptorsTypes...>;
 
 
 
 
+    namespace details {
+        /**
+         * Extract the allocators (flatten the allocator descriptor list)
+         */
+        template <AllocatorDescriptorList AllocDescTypes>
+        struct allocator_extractor_impl;
 
-    /**
-     * Extract the allocators (flatten the allocator descriptor list)
-     */
-    template <AllocatorDescriptorList AllocDescTypes>
-    struct allocator_extractor;
+        template <template <typename...> typename TupleT, AllocatorDescriptor... AllocDescType>
+        struct allocator_extractor_impl<TupleT<AllocDescType...>> {
 
-    template <AllocatorDescriptor... AllocDescType>
-    struct allocator_extractor<type_list<AllocDescType...>> {
-
-        template <typename T>
-        using type = type_list<typename AllocDescType::template type<T>...>;
-    };
-
-
-
-
-    /**
-     * Extracts all of the "resources descriptors" from the "allocator descriptor list"
-     * the type: tuple<ResourceDescriptor, ...>
-     */
-    template <AllocatorDescriptorList AllocDescTypes>
-    struct resource_descriptor_extractor;
-
-    template <template <typename...> typename TupleType, AllocatorDescriptor... AllocDescType>
-    struct resource_descriptor_extractor<TupleType<AllocDescType...>>
-      : public istl::merge_parameters<typename AllocDescType::resources...> {};
-
-
-
-
-
-    /**
-     * Extract all of the "resources" from an "allocator descriptor list".
-     * the type: type_list<Resource>
-     */
-    template <typename AllocDescTypes>
-    struct resource_extractor;
-
-    template <template <typename...> typename TupleType, AllocatorDescriptor... AllocDescType>
-    struct resource_extractor<TupleType<AllocDescType...>>
-      : public istl::merge_parameters<
-          typename resource_extractor<typename AllocDescType::resources>::type...> {};
-
-    template <template <typename...> typename TupleType, ResourceDescriptor... ResDescType>
-    struct resource_extractor<TupleType<ResDescType...>> {
-        using type = TupleType<typename ResDescType::storage_type...>;
-    };
-
-
-
-
-
-    template <AllocatorDescriptorList AllocDescTypes>
-    struct allocator_flattener;
-
-    template <AllocatorDescriptor... AllocDescType>
-    struct allocator_flattener<type_list<AllocDescType...>> {
-
-        template <typename T>
-        struct type : public AllocDescType::template type<T>... {};
-    };
-
-
-
-
-    /**
-     * Extract "memory resource descriptors" from an allocator descriptor
-     * in form of std::pair<AllocatorDescriptor, ResourceDescriptor>
-     */
-    template <AllocatorDescriptorList AllocDescType, typename TheSame = AllocDescType>
-    struct alloc_res_pair_maker;
-
-    template <AllocatorDescriptor... AllocDescType>
-    struct alloc_res_pair_maker<type_list<AllocDescType...>>
-      : public istl::merge_parameters<typename alloc_res_pair_maker<AllocDescType>::type...>::type {};
-
-    template <AllocatorDescriptor AllocDescType>
-    struct alloc_res_pair_maker<type_list<AllocDescType>> {
-
-        template <typename... T>
-        struct pair_maker;
-
-        template <ResourceDescriptor... ResDesc>
-        struct pair_maker<type_list<ResDesc...>> {
-            using type = type_list<std::pair<AllocDescType, ResDesc>...>;
+            template <typename T>
+            using type = TupleT<typename alloc::descriptors::allocator<AllocDescType>::template type<T>...>;
         };
 
-        using type = typename pair_maker<typename AllocDescType::resources>::type;
-    };
+
+
+        /**
+         * Extracts all of the "resources descriptors" from the "allocator descriptor list"
+         * the type: tuple<ResourceDescriptor, ...>
+         */
+        template <AllocatorDescriptorList AllocDescTypes>
+        struct resource_descriptor_extractor_impl;
+
+        template <template <typename...> typename TupleType, AllocatorDescriptor... AllocDescType>
+        struct resource_descriptor_extractor_impl<TupleType<AllocDescType...>>
+          : public istl::merge_parameters_type<alloc::descriptors::resources<AllocDescType>...> {};
+
+
+
+
+
+        /**
+         * Extract all of the "resources" from an "allocator descriptor list".
+         * the type: type_list<Resource>
+         */
+        template <typename AllocDescTypes>
+        struct resource_extractor_impl;
+
+        template <template <typename...> typename TupleType, AllocatorDescriptor... AllocDescType>
+        struct resource_extractor_impl<TupleType<AllocDescType...>>
+          : public istl::merge_parameters_type<
+              typename resource_extractor_impl<alloc::descriptors::resources<AllocDescType>>::type...> {};
+
+        template <template <typename...> typename TupleType, ResourceDescriptor... ResDescType>
+        struct resource_extractor_impl<TupleType<ResDescType...>> {
+            using type = TupleType<alloc::descriptors::storage<ResDescType>...>;
+        };
+
+
+
+
+        template <AllocatorDescriptorList AllocDescTypes>
+        struct allocator_flattener_impl;
+
+        template <AllocatorDescriptor... AllocDescType>
+        struct allocator_flattener_impl<type_list<AllocDescType...>> {
+
+            template <typename T>
+            struct type : public alloc::descriptors::allocator<AllocDescType>::template type<T>... {};
+        };
+
+
+
+        /**
+         * Extract "memory resource descriptors" from an allocator descriptor
+         * in form of std::pair<AllocatorDescriptor, ResourceDescriptor>
+         */
+        template <AllocatorDescriptorList AllocDescType, typename TheSame = AllocDescType>
+        struct alloc_res_pair_maker_impl;
+
+        template <template <typename...> typename TupleT, AllocatorDescriptor... AllocDescType>
+        struct alloc_res_pair_maker_impl<TupleT<AllocDescType...>>
+          : public istl::merge_parameters<typename alloc_res_pair_maker_impl<AllocDescType>::type...> {};
+
+        template <template <typename...> typename TupleT, AllocatorDescriptor AllocDescType>
+        struct alloc_res_pair_maker_impl<TupleT<AllocDescType>> {
+
+            template <typename T>
+            struct pair_maker;
+
+            template <template <typename...> typename TupleT2, ResourceDescriptor... ResDesc>
+            struct pair_maker<TupleT2<ResDesc...>> {
+                using type = TupleT2<stl::pair<AllocDescType, ResDesc>...>;
+            };
+
+            using type = typename pair_maker<alloc::descriptors::resources<AllocDescType>>::type;
+        };
+
+
+
+    } // namespace details
+
+    template <typename AllocDescType, typename T>
+    using allocator_extractor = typename details::allocator_extractor_impl<AllocDescType>::template type<T>;
+
+    template <AllocatorDescriptorList AllocDescTypes>
+    using resource_descriptor_extractor =
+      typename details::resource_descriptor_extractor_impl<AllocDescTypes>::type;
+
+
+    template <typename AllocDescTypes>
+    using resource_extractor = typename details::resource_extractor_impl<AllocDescTypes>::type;
+
+
+    template <AllocatorDescriptorList AllocDescTypes>
+    using allocator_flattener = typename details::allocator_flattener_impl<AllocDescTypes>::type;
+
+
+    template <AllocatorDescriptorList AllocDescType>
+    using alloc_res_pair_maker = typename details::alloc_res_pair_maker_impl<AllocDescType>::type;
 
 
 } // namespace webpp

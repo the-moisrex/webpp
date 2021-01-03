@@ -12,11 +12,11 @@ namespace webpp {
         namespace details {
             struct std_allocator_descriptor_type {
                 using resources = type_list<>;
-                static constexpr alloc::feature_pack features{alloc::stateless,
-                                                              alloc::sync,
-                                                              alloc::low_locality};
+                static constexpr alloc::feature_pack allocator_features{alloc::stateless,
+                                                                        alloc::sync,
+                                                                        alloc::low_locality};
                 template <typename T>
-                using type = stl::allocator<T>;
+                using allocator = stl::allocator<T>;
             };
         } // namespace details
 

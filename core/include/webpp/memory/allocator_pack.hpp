@@ -157,9 +157,10 @@ namespace webpp::alloc {
         template <typename AllocDescriptor, typename ResDescriptor>
         struct ranker<stl::pair<AllocDescriptor, ResDescriptor>> {
             static constexpr feature_pack asked_features = Features;
-            static constexpr feature_pack alloc_features = AllocDescriptor::features;
+            static constexpr feature_pack alloc_features =
+              alloc::descriptors::allocator_features<AllocDescriptor>;
             static constexpr feature_pack res_features =
-              merge_features(alloc_features, ResDescriptor::features);
+              merge_features(alloc_features, alloc::descriptors::resource_features<ResDescriptor>);
 
             static constexpr auto value = ([]() constexpr noexcept->long long int {
                 long long int res = 100; // initial value
@@ -210,10 +211,12 @@ namespace webpp::alloc {
      * the allocator features.
      */
     template <typename DescriptorList, feature_pack AskedFeatures>
-    struct ranker : public ranker<typename alloc_res_pair_maker<DescriptorList>::type, AskedFeatures> {};
+    struct ranker : public ranker<alloc_res_pair_maker<DescriptorList>, AskedFeatures> {};
 
-    template <istl::Pair... AllocResPairType, feature_pack AskedFeatures>
-    struct ranker<type_list<AllocResPairType...>, AskedFeatures> {
+    template <template <typename...> typename TupleT,
+              istl::Pair... AllocResPairType,
+              feature_pack AskedFeatures>
+    struct ranker<TupleT<AllocResPairType...>, AskedFeatures> {
 
         // the ranking should be used on each combination of "allocator" and its "resources";
         // sorting allocators only will not result in the best solution.
@@ -270,18 +273,18 @@ namespace webpp::alloc {
         using allocator_descriptors = AllocDescriptorsType;
 
         // the type is: tuple<ResourceDescriptor, ...>
-        using resource_descriptors = typename resource_descriptor_extractor<allocator_descriptors>::type;
+        using resource_descriptors = resource_descriptor_extractor<allocator_descriptors>;
 
         // the type is: tuple<stl::pair<AllocatorDescriptor, ResourceDescriptor>, ...>
-        using alloc_res_pairs = typename alloc_res_pair_maker<allocator_descriptors>::type;
+        using alloc_res_pairs = alloc_res_pair_maker<allocator_descriptors>;
 
         // a tuple of allocators
         template <typename T>
-        using allocators_type = typename allocator_extractor<allocator_descriptors>::template type<T>;
+        using allocators_type = allocator_extractor<allocator_descriptors, T>;
 
         // a tuple of resources (not their descriptors)
         // todo: make these unique (should we?)
-        using resources_type = typename resource_extractor<allocator_descriptors>::type;
+        using resources_type = resource_extractor<allocator_descriptors>;
 
         template <feature_pack FPack>
         using ranked = ranker<allocator_descriptors, FPack>;
@@ -294,22 +297,22 @@ namespace webpp::alloc {
 
         template <AllocatorDescriptor AllocDescType>
         static constexpr bool has_allocator_descriptor =
-          istl::tuple_contains<allocator_descriptors, AllocDescType>::value;
+          istl::contains_parameter<allocator_descriptors, AllocDescType>;
 
         template <template <typename> typename AllocType>
         static constexpr bool has_templated_allocator =
-          istl::tuple_contains<allocators_type<char>, AllocType<char>>::value;
+          istl::contains_parameter<allocators_type<char>, AllocType<char>>;
 
         template <Allocator AllocType>
         static constexpr bool has_allocator =
-          istl::tuple_contains<allocators_type<typename AllocType::value_type>, AllocType>::value;
+          istl::contains_parameter<allocators_type<typename AllocType::value_type>, AllocType>;
 
         template <typename ResourceType>
-        static constexpr bool has_resource = istl::tuple_contains<resources_type, ResourceType>::value;
+        static constexpr bool has_resource = istl::contains_parameter<resources_type, ResourceType>;
 
         template <ResourceDescriptor ResDescType>
         static constexpr bool has_resource_descriptor =
-          istl::tuple_contains<resource_descriptors, ResDescType>::value;
+          istl::contains_parameter<resource_descriptors, ResDescType>;
 
       private:
         [[no_unique_address]] resources_type resources{};
@@ -334,7 +337,7 @@ namespace webpp::alloc {
 
         template <ResourceDescriptor ResourceDescType>
         requires(has_resource_descriptor<ResourceDescType>) [[nodiscard]] auto get_allocator() noexcept {
-            auto& res = get_resource<typename ResourceDescType::storage_type>();
+            auto& res = get_resource<alloc::descriptors::storage<ResourceDescType>>();
             return ResourceDescType::construct_allocator(res);
         }
 
@@ -372,7 +375,7 @@ namespace webpp::alloc {
                 using selected_allocator = AllocType<value_type>;
                 using new_type           = istl::replace_parameter<T, old_allocator_type, selected_allocator>;
                 auto the_alloc           = this->get_allocator<ResDescType>();
-                if constexpr (istl::contains_parameter_v<type_list<Args...>, placeholder>) {
+                if constexpr (istl::contains_parameter<type_list<Args...>, placeholder>) {
                     return new_type{
                       istl::replace_object<placeholder, selected_allocator, Args>(stl::forward<Args>(args),
                                                                                   the_alloc)...};
@@ -413,8 +416,10 @@ namespace webpp::alloc {
             } else {
                 using best_choice        = ranked<FPack>;
                 using best_resource_desc = typename best_choice::best_resource_descriptor;
+                using best_allocator =
+                  alloc::descriptors::allocator<typename best_choice::best_allocator_descriptor>;
                 return this->make<T,
-                                  best_choice::best_allocator_descriptor::template type, // best allocator
+                                  best_allocator::template type, // best allocator
                                   best_resource_desc,
                                   Args...>(stl::forward<Args>(args)...);
             }
