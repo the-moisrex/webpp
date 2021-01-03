@@ -237,80 +237,80 @@ namespace webpp::istl {
 
     /// Finds the size of a given tuple-like type.
     template <typename T>
-    struct parameter_count;
+    struct parameter_count_type;
 
     template <typename T>
-    struct parameter_count<const T> : public parameter_count<T> {};
+    struct parameter_count_type<const T> : public parameter_count_type<T> {};
 
     template <typename T>
-    struct parameter_count<volatile T> : public parameter_count<T> {};
+    struct parameter_count_type<volatile T> : public parameter_count_type<T> {};
 
     template <typename T>
-    struct parameter_count<const volatile T> : public parameter_count<T> {};
+    struct parameter_count_type<const volatile T> : public parameter_count_type<T> {};
 
     /// class tuple_size
     template <template <typename...> typename TupleT, typename... Elements>
-    struct parameter_count<TupleT<Elements...>>
+    struct parameter_count_type<TupleT<Elements...>>
       : public stl::integral_constant<stl::size_t, sizeof...(Elements)> {};
 
 
     template <typename T>
-    static constexpr stl::size_t parameter_count_v = parameter_count<T>::value;
+    static constexpr stl::size_t parameter_count = parameter_count_type<T>::value;
 
 
     /// Gives the type of the ith element of a given tuple type.
     template <stl::size_t Index, typename T>
-    struct get_parameter;
+    struct nth_parameter_type;
 
     template <stl::size_t Index, typename T>
-    struct get_parameter<Index, const T> : public stl::add_const<typename get_parameter<Index, T>::type> {};
+    struct nth_parameter_type<Index, const T>
+      : public stl::add_const<typename nth_parameter_type<Index, T>::type> {};
 
     template <stl::size_t Index, typename T>
-    struct get_parameter<Index, volatile T>
-      : public stl::add_volatile<typename get_parameter<Index, T>::type> {};
+    struct nth_parameter_type<Index, volatile T>
+      : public stl::add_volatile<typename nth_parameter_type<Index, T>::type> {};
 
     template <stl::size_t Index, typename T>
-    struct get_parameter<Index, const volatile T>
-      : public stl::add_cv<typename get_parameter<Index, T>::type> {};
+    struct nth_parameter_type<Index, const volatile T>
+      : public stl::add_cv<typename nth_parameter_type<Index, T>::type> {};
 
     // recursive case
     template <template <typename...> typename TupleT, stl::size_t I, typename Head, typename... Tail>
-    struct get_parameter<I, TupleT<Head, Tail...>> : get_parameter<I - 1, TupleT<Tail...>> {};
+    struct nth_parameter_type<I, TupleT<Head, Tail...>> : nth_parameter_type<I - 1, TupleT<Tail...>> {};
 
     // base case
     template <template <typename...> typename TupleT, typename Head, typename... Tail>
-    struct get_parameter<0, TupleT<Head, Tail...>> {
+    struct nth_parameter_type<0, TupleT<Head, Tail...>> {
         using type = Head;
     };
 
     template <stl::size_t Index, typename T>
-    using get_parameter_t = typename get_parameter<Index, T>::type;
+    using nth_parameter = typename nth_parameter_type<Index, T>::type;
 
 
     /**
      * Check if the type T is one of the TupleT's elements.
      * It's an alternative to "tuple_contains" in the tuple.hpp (more generalized version actually)
      */
-    template <typename TupleT, typename T, stl::size_t I = parameter_count_v<TupleT> - 1>
-    struct contains_parameter {
+    template <typename TupleT, typename T, stl::size_t I = parameter_count<TupleT> - 1>
+    struct contains_parameter_type {
         static constexpr bool value = false;
     };
 
     template <typename TupleT, typename T, stl::size_t I>
-    requires(parameter_count_v<TupleT> > 0)
-    struct contains_parameter<TupleT, T, I> {
+    requires(parameter_count<TupleT> > 0) struct contains_parameter_type<TupleT, T, I> {
         static constexpr bool value =
-          stl::is_same_v<get_parameter_t<I, TupleT>, T> || contains_parameter<TupleT, T, I - 1>::value;
+          stl::is_same_v<nth_parameter<I, TupleT>, T> || contains_parameter_type<TupleT, T, I - 1>::value;
     };
 
 
     template <typename TupleT, typename T>
-    struct contains_parameter<TupleT, T, 0> {
-        static constexpr bool value = stl::is_same_v<get_parameter_t<0, TupleT>, T>;
+    struct contains_parameter_type<TupleT, T, 0> {
+        static constexpr bool value = stl::is_same_v<nth_parameter<0, TupleT>, T>;
     };
 
     template <typename TupleT, typename T>
-    static constexpr bool contains_parameter_v = contains_parameter<TupleT, T>::value;
+    static constexpr bool contains_parameter = contains_parameter_type<TupleT, T>::value;
 
 
     /**
@@ -413,27 +413,27 @@ namespace webpp::istl {
      * Merge two or more tuple-like types.
      */
     template <typename... T>
-    struct merge_parameters;
+    struct merge_parameters_type;
 
     // one tuple
     template <template <typename> typename TupleType, typename... FirstItems>
-    struct merge_parameters<TupleType<FirstItems...>> {
+    struct merge_parameters_type<TupleType<FirstItems...>> {
         using type = TupleType<FirstItems...>;
     };
 
     // two tuples
     template <template <typename> typename TupleType, typename... FirstItems, typename... SecondItems>
-    struct merge_parameters<TupleType<FirstItems...>, TupleType<SecondItems...>> {
+    struct merge_parameters_type<TupleType<FirstItems...>, TupleType<SecondItems...>> {
         using type = TupleType<FirstItems..., SecondItems...>;
     };
 
     // more than 2 tuples
     template <typename First, typename Second, typename Third, typename... Rest>
-    struct merge_parameters<First, Second, Third, Rest...>
-      : merge_parameters<typename merge_parameters<First, Second>::type, Third, Rest...> {};
+    struct merge_parameters_type<First, Second, Third, Rest...>
+      : merge_parameters_type<typename merge_parameters_type<First, Second>::type, Third, Rest...> {};
 
     template <typename... T>
-    using merge_parameters_t = typename merge_parameters<T...>::type;
+    using merge_parameters = typename merge_parameters_type<T...>::type;
 
 
 
