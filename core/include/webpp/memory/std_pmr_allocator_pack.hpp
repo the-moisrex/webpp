@@ -28,7 +28,6 @@ namespace webpp {
                 template <typename T = byte>
                 using allocator = polymorphic_allocator<T>;
 
-                // for internal usage; todo: should we use allocator_type instead of "type"?
                 using allocator_type = allocator<>;
 
                 // the resources will inherit these features
