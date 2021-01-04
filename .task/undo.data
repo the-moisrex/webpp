@@ -742,3 +742,6 @@ new [description:"add errors.hpp success and failure functions are useless" end:
 time 1609331398
 new [description:"remove stateful and stateless from allocator features" entry:"1609331398" modified:"1609331398" project:"traits" status:"pending" uuid:"f61ca39c-b0d3-44d6-aa1e-202975962307"]
 ---
+time 1609777443
+new [description:"add support for RFC 6570 (URI Template)" entry:"1609777443" modified:"1609777443" project:"uri" status:"pending" uuid:"a4e49b97-95b1-4cca-8a3c-3c5f054a3aa1"]
+---
