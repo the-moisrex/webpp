@@ -338,6 +338,8 @@ namespace webpp::alloc {
           : resources{istl::make_tuple_no_order<filtered_resources_type, ResourceType...>(
               stl::forward<ResourceType>(res)...)} {}
 
+        allocator_pack() noexcept = default;
+
 
         template <typename ResourceType>
         requires(has_resource<ResourceType>) [[nodiscard]] auto& get_resource() noexcept {
