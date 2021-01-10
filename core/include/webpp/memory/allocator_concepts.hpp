@@ -95,6 +95,11 @@ namespace webpp {
         static constexpr auto resource_features = T::resource_features;
 
 
+        template <ResourceDescriptor RD, typename T>
+        static inline auto construct_allocator(RD& res) noexcept {
+            return RD::template construct_allocator<T>(res);
+        }
+
     } // namespace alloc::descriptors
 
     namespace details {
@@ -202,7 +207,7 @@ namespace webpp {
 
             template <template <typename...> typename TupleT2, ResourceDescriptor... ResDesc>
             struct pair_maker<TupleT2<ResDesc...>> {
-                using type = TupleT2<stl::pair<AllocDescType, ResDesc>...>;
+                using type = TupleT2<stl::pair<AllocDescType, void>, stl::pair<AllocDescType, ResDesc>...>;
             };
 
             using type = typename pair_maker<alloc::descriptors::resources<AllocDescType>>::type;
@@ -211,6 +216,9 @@ namespace webpp {
 
 
     } // namespace details
+
+    template <AllocatorDescriptor AD>
+    static constexpr bool is_resourceless = istl::parameter_count<alloc::descriptors::resources<AD>> == 0;
 
     template <typename AllocDescType, typename T>
     using allocator_extractor = typename details::allocator_extractor_impl<AllocDescType>::template type<T>;
