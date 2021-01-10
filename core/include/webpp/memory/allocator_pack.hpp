@@ -151,8 +151,59 @@ namespace webpp::alloc {
     template <feature_pack Features>
     struct ranking_condition {
 
-        template <typename DescriptorPair>
-        struct ranker;
+
+        template <feature_pack TheFeatures, feature_pack AskedFeatures>
+        static constexpr auto value_generator = ([]() constexpr noexcept->long long int {
+            long long int res = 100; // initial value
+
+            // Checking required features first:
+            for (auto const fch : required_features) {
+                if (AskedFeatures.is_on(fch)) {
+                    if (TheFeatures.is_off(fch) || TheFeatures.is_on(opposite_feature(fch))) {
+                        return res > 0 ? res * -1 : res; // abs(res) * -1
+                    }
+                }
+            }
+
+            for (auto const ft : feature_rates) {
+                const auto fch          = ft.first;
+                const auto opposite_fch = opposite_feature(fch);
+                const auto points       = ft.second;
+                if (AskedFeatures.is_on(fch)) {
+                    if (TheFeatures.is_on(fch)) {
+                        res += points; // both are on
+                    } else if (TheFeatures.is_on(opposite_fch)) {
+                        res -= points; // asked for it to be on, but it has the opposite one
+                    }
+                } else if (AskedFeatures.is_on(opposite_fch)) {
+                    if (TheFeatures.is_on(fch)) {
+                        res -= points; // both are on
+                    } else if (TheFeatures.is_on(opposite_fch)) {
+                        res += points; // asked for it to be on, but it has the opposite one
+                    }
+                } else {
+                    // the user didn't asked for it, but half a point for those allocators that have this
+                    // feature and take half the point for those that have the opposite of this feature
+                    if (TheFeatures.is_on(fch)) {
+                        res += points / 2;
+                    } else if (TheFeatures.is_on(opposite_fch)) {
+                        res -= points / 2;
+                    }
+                }
+            }
+
+            return res;
+        })();
+
+
+        template <typename AllocDescriptor>
+        struct ranker {
+            static constexpr feature_pack asked_features = Features;
+            static constexpr feature_pack alloc_features =
+              alloc::descriptors::allocator_features<AllocDescriptor>;
+
+            static constexpr auto value = value_generator<alloc_features, asked_features>;
+        };
 
         template <typename AllocDescriptor, typename ResDescriptor>
         struct ranker<stl::pair<AllocDescriptor, ResDescriptor>> {
@@ -162,47 +213,7 @@ namespace webpp::alloc {
             static constexpr feature_pack res_features =
               merge_features(alloc_features, alloc::descriptors::resource_features<ResDescriptor>);
 
-            static constexpr auto value = ([]() constexpr noexcept->long long int {
-                long long int res = 100; // initial value
-
-                // Checking required features first:
-                for (auto const fch : required_features) {
-                    if (asked_features.is_on(fch)) {
-                        if (res_features.is_off(fch) || res_features.is_on(opposite_feature(fch))) {
-                            return res > 0 ? res * -1 : res; // abs(res) * -1
-                        }
-                    }
-                }
-
-                for (auto const ft : feature_rates) {
-                    const auto fch          = ft.first;
-                    const auto opposite_fch = opposite_feature(fch);
-                    const auto points       = ft.second;
-                    if (asked_features.is_on(fch)) {
-                        if (res_features.is_on(fch)) {
-                            res += points; // both are on
-                        } else if (res_features.is_on(opposite_fch)) {
-                            res -= points; // asked for it to be on, but it has the opposite one
-                        }
-                    } else if (asked_features.is_on(opposite_fch)) {
-                        if (res_features.is_on(fch)) {
-                            res -= points; // both are on
-                        } else if (res_features.is_on(opposite_fch)) {
-                            res += points; // asked for it to be on, but it has the opposite one
-                        }
-                    } else {
-                        // the user didn't asked for it, but half a point for those allocators that have this
-                        // feature and take half the point for those that have the opposite of this feature
-                        if (res_features.is_on(fch)) {
-                            res += points / 2;
-                        } else if (res_features.is_on(opposite_fch)) {
-                            res -= points / 2;
-                        }
-                    }
-                }
-
-                return res;
-            })();
+            static constexpr auto value = value_generator<res_features, asked_features>;
         };
     };
 
@@ -227,8 +238,8 @@ namespace webpp::alloc {
         using best_descriptors_pair     = typename ranked::best::type;
         using best_allocator_descriptor = typename best_descriptors_pair::first_type;
         using best_resource_descriptor  = typename best_descriptors_pair::second_type;
-
-        static constexpr bool has_resource = !stl::is_void_v<best_resource_descriptor>;
+        static constexpr bool has_resource =
+          !stl::is_void_v<typename descriptors::storage<best_resource_descriptor>>;
     };
 
 
@@ -277,10 +288,12 @@ namespace webpp::alloc {
         using allocators_type = allocator_extractor<allocator_descriptors, T>;
 
         // a tuple of resources (not their descriptors)
+        using resources_type = resource_extractor<allocator_descriptors>;
+
         // only the default constructible ones are here:
         // todo: make these unique (should we?)
-        using resources_type =
-          istl::filter_parameters<stl::is_default_constructible, resource_extractor<allocator_descriptors>>;
+        using filtered_resources_type =
+          typename istl::filter_parameters<stl::is_default_constructible, resources_type>::type;
 
         template <feature_pack FPack>
         using ranked = ranker<allocator_descriptors, FPack>;
@@ -311,18 +324,18 @@ namespace webpp::alloc {
           istl::contains_parameter<resource_descriptors, ResDescType>;
 
       private:
-        [[no_unique_address]] resources_type resources{};
+        [[no_unique_address]] filtered_resources_type resources{};
 
       public:
         allocator_pack(allocator_pack&&) noexcept = default;
         allocator_pack(allocator_pack const&)     = delete; // some resources are not copy-able; so ...
 
-        allocator_pack(resources_type const& res) noexcept : resources{res} {};
-        allocator_pack(resources_type&& res) noexcept : resources{stl::move(res)} {};
+        allocator_pack(filtered_resources_type const& res) noexcept : resources{res} {};
+        allocator_pack(filtered_resources_type&& res) noexcept : resources{stl::move(res)} {};
 
         template <typename... ResourceType>
         allocator_pack(ResourceType&&... res) noexcept
-          : resources{istl::make_tuple_no_order<resources_type, ResourceType...>(
+          : resources{istl::make_tuple_no_order<filtered_resources_type, ResourceType...>(
               stl::forward<ResourceType>(res)...)} {}
 
 
@@ -374,12 +387,12 @@ namespace webpp::alloc {
 
 
         // todo: you can remove AllocType here
-        template <typename T,
-                  template <typename>
-                  typename AllocType,
-                  ResourceDescriptor ResDescType,
-                  typename... Args>
-        requires(has_templated_allocator<AllocType>) constexpr auto make(Args&&... args) {
+        template <typename T, template <typename> typename AllocType, typename ResDescType, typename... Args>
+        requires(
+          has_templated_allocator<AllocType> &&
+          (ResourceDescriptor<ResDescType> ||
+           stl::is_void_v<ResDescType>) ) // the resource might be void if the allocator is resource-less
+          constexpr auto make(Args&&... args) {
             if constexpr (!requires { typename T::allocator_type; }) {
                 // doesn't have an allocator, so construct a normal object
                 return T{stl::forward<Args>(args)...};
@@ -388,7 +401,7 @@ namespace webpp::alloc {
                 using value_type         = typename old_allocator_type::value_type;
                 using selected_allocator = AllocType<value_type>;
                 using new_type           = istl::replace_parameter<T, old_allocator_type, selected_allocator>;
-                auto the_alloc           = this->get_allocator<ResDescType>();
+                auto the_alloc           = this->get_allocator<ResDescType, value_type>();
                 if constexpr (istl::contains_parameter<type_list<Args...>, placeholder>) {
                     return new_type{
                       istl::replace_object<placeholder, selected_allocator, Args>(stl::forward<Args>(args),
