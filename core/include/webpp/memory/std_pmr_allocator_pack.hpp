@@ -33,6 +33,17 @@ namespace webpp {
                 // the resources will inherit these features
                 static constexpr alloc::feature_pack allocator_features{alloc::stateful};
 
+                struct default_resource_descriptor {
+                    using storage_type = void;
+                    static constexpr alloc::feature_pack resource_features{};
+
+                    // construct the allocator based on the resource
+                    template <typename T>
+                    static inline allocator_type construct_allocator() noexcept {
+                        return {};
+                    }
+                };
+
                 struct monotonic_buffer_resource_descriptor {
                     using storage_type = monotonic_buffer_resource;
                     static constexpr alloc::feature_pack resource_features{alloc::noop_dealloc,
@@ -74,7 +85,8 @@ namespace webpp {
                 //        };
 
                 // todo: add new_delete_resource
-                using resources = type_list<monotonic_buffer_resource_descriptor,
+                using resources = type_list<default_resource_descriptor,
+                                            monotonic_buffer_resource_descriptor,
                                             synchronized_pool_resource_descriptor,
                                             unsynchronized_pool_resource_descriptor>;
             };
