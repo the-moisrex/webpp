@@ -227,6 +227,8 @@ namespace webpp::alloc {
         using best_descriptors_pair     = typename ranked::best::type;
         using best_allocator_descriptor = typename best_descriptors_pair::first_type;
         using best_resource_descriptor  = typename best_descriptors_pair::second_type;
+
+        static constexpr bool has_resource = !stl::is_void_v<best_resource_descriptor>;
     };
 
 
@@ -253,14 +255,6 @@ namespace webpp::alloc {
     template <typename List, feature_pack FPack>
     using filter = istl::filter_parameters<details::features_filterer<FPack>::template type, List>;
 
-    template <typename List>
-    using filter_stateless_allocators = istl::filter_parameters<stl::is_default_constructible, List>;
-
-    template <typename List>
-    using filter_stateful_allocators =
-      istl::filter_parameters<istl::templated_negation<stl::is_default_constructible>::template type, List>;
-
-
     struct placeholder {};
 
     /**
@@ -283,8 +277,10 @@ namespace webpp::alloc {
         using allocators_type = allocator_extractor<allocator_descriptors, T>;
 
         // a tuple of resources (not their descriptors)
+        // only the default constructible ones are here:
         // todo: make these unique (should we?)
-        using resources_type = resource_extractor<allocator_descriptors>;
+        using resources_type =
+          istl::filter_parameters<stl::is_default_constructible, resource_extractor<allocator_descriptors>>;
 
         template <feature_pack FPack>
         using ranked = ranker<allocator_descriptors, FPack>;
@@ -335,17 +331,35 @@ namespace webpp::alloc {
             return stl::get<ResourceType>(resources);
         }
 
-        template <ResourceDescriptor ResourceDescType>
+        /**
+         * Get an allocator based on the specified resource
+         */
+        template <typename ResType, typename T = stl::byte>
+        [[nodiscard]] auto get_allocator(ResType& res) noexcept {
+            return descriptors::construct_allocator<ResType, T>(res);
+        }
+
+        template <ResourceDescriptor ResourceDescType, typename T = stl::byte>
         requires(has_resource_descriptor<ResourceDescType>) [[nodiscard]] auto get_allocator() noexcept {
             auto& res = get_resource<alloc::descriptors::storage<ResourceDescType>>();
-            return ResourceDescType::construct_allocator(res);
+            return descriptors::construct_allocator<ResourceDescType, T>(res);
         }
 
 
         template <feature_pack FPack, typename T>
         [[nodiscard]] auto get_allocator() noexcept {
-            using the_alloc_type = best_allocator<FPack, T>;
-            // todo
+            using the_ranked          = ranked<FPack>;
+            using best_allocator_type = typename descriptors::allocator<
+              typename the_ranked::best_allocator_descriptor>::template type<T>;
+            if constexpr (the_ranked::has_resource) {
+                using best_resource_type =
+                  descriptors::storage<typename the_ranked::best_resource_descriptor>;
+                auto& res = get_resource<best_resource_type>();
+                return descriptors::construct_allocator<best_resource_type>(res);
+            } else {
+                // we don't have a resource
+                return best_allocator_type{};
+            }
         }
 
         template <typename T>

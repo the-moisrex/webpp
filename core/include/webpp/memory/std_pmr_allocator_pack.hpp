@@ -35,15 +35,13 @@ namespace webpp {
 
                 struct monotonic_buffer_resource_descriptor {
                     using storage_type = monotonic_buffer_resource;
-                    static constexpr alloc::feature_pack resource_features{alloc::noop_dealloc, alloc::unsync};
+                    static constexpr alloc::feature_pack resource_features{alloc::noop_dealloc,
+                                                                           alloc::unsync};
 
                     // construct the allocator based on the resource
+                    template <typename T>
                     static inline allocator_type construct_allocator(storage_type& res) noexcept {
                         return {&res};
-                    }
-
-                    static inline storage_type construct_resource() noexcept {
-                        return {};
                     }
                 };
 
@@ -52,6 +50,7 @@ namespace webpp {
                     static constexpr alloc::feature_pack resource_features{alloc::sync};
 
                     // construct the allocator based on the resource
+                    template <typename T>
                     static inline allocator_type construct_allocator(storage_type& res) noexcept {
                         return {&res};
                     }
@@ -62,6 +61,7 @@ namespace webpp {
                     static constexpr alloc::feature_pack resource_features{};
 
                     // construct the allocator based on the resource
+                    template <typename T>
                     static inline allocator_type construct_allocator(storage_type& res) noexcept {
                         return {&res};
                     }
