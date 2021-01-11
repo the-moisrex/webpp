@@ -152,8 +152,8 @@ namespace webpp::alloc {
     struct ranking_condition {
 
 
-        template <feature_pack TheFeatures, feature_pack AskedFeatures>
-        static constexpr auto value_generator = ([]() constexpr noexcept->long long int {
+        static constexpr long long int value_generator(feature_pack TheFeatures,
+                                                       feature_pack AskedFeatures) noexcept {
             long long int res = 100; // initial value
 
             // Checking required features first:
@@ -193,7 +193,7 @@ namespace webpp::alloc {
             }
 
             return res;
-        })();
+        }
 
 
         template <typename AllocDescriptor>
@@ -202,7 +202,7 @@ namespace webpp::alloc {
             static constexpr feature_pack alloc_features =
               alloc::descriptors::allocator_features<AllocDescriptor>;
 
-            static constexpr auto value = value_generator<alloc_features, asked_features>;
+            static constexpr auto value = value_generator(alloc_features, asked_features);
         };
 
         template <typename AllocDescriptor, typename ResDescriptor>
@@ -213,7 +213,7 @@ namespace webpp::alloc {
             static constexpr feature_pack res_features =
               merge_features(alloc_features, alloc::descriptors::resource_features<ResDescriptor>);
 
-            static constexpr auto value = value_generator<res_features, asked_features>;
+            static constexpr auto value = value_generator(res_features, asked_features);
         };
     };
 
