@@ -164,3 +164,73 @@ https://youtu.be/CFzuFNSpycI?t=3564
 - Read/Write protectable memory allocator
 - Alarm allocator (if monotonic_features allocator overflows)
 
+
+## Object Utilities
+
+Some of the utilities that I can think of:
+
+```c++
+int main() {
+    allocator_pack<stl::pmr::allocator_descriptors> alloc_pack;
+    
+    // use the local object
+    local<std::string> str1{alloc_pack, "hello world"};
+    
+    // use the templated version
+    local<std::basic_string> str2{alloc_pack, "hello world 2"};
+    
+    // two on the same stack:
+    resource::stack<1024> buf{alloc_pack};
+    local<std::string> str3{buf, "hello world 3"};
+    local<std::string> str4{buf, "hello world 4"};
+}
+```
+or with the name of resource_pack?
+
+```c++
+int main() {
+    resource_pack<stl::pmr::allocator_descriptors> res_pack;
+    
+    // use the local object
+    local<std::string> str1{res_pack, "hello world"};
+    
+    // use the templated version
+    local<std::basic_string> str2{res_pack, "hello world 2"};
+    
+    // two on the same stack:
+    resource::stack<1024> buf{res_pack};
+    local<std::string> str3{buf, "hello world 3"};
+    local<std::string> str4{buf, "hello world 4"};
+}
+```
+
+and in structs:
+
+```c++
+
+// this is the best way, to be as portable as possible
+template <typename Allocator>
+struct pen {};
+
+
+template <Traits TraitsType>
+struct heavy_pen {
+    using traits_type          = TraitsType;
+    using allocator_pack_type  = traits::allocator_pack<traits_type>;
+    using string_type          = traits::string<traits_type>; // global string
+    
+    allocator_pack_type allocs{};
+    
+    string_type write() {
+        local<string_type> str{allocs};
+        // calculate some string
+        return str.global_copy(); // convert to general string
+    }
+    
+    string_type read() {
+        string_type str{allocs.get_for<string_type>()};
+        return str;
+    }
+};
+
+```
