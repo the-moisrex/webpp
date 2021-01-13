@@ -207,11 +207,9 @@ int main() {
 and in structs:
 
 ```c++
-
 // this is the best way, to be as portable as possible
 template <typename Allocator>
 struct pen {};
-
 
 template <Traits TraitsType>
 struct heavy_pen {
@@ -221,16 +219,24 @@ struct heavy_pen {
     
     allocator_pack_type allocs{};
     
-    string_type write() {
+    string_type one() {
         local<string_type> str{allocs};
         // calculate some string
         return str.global_copy(); // convert to general string
     }
     
-    string_type read() {
-        string_type str{allocs.get_for<string_type>()};
+    string_type two() {
+        string_type str{allocs.template get_for<string_type>()};
+        // ...
+        return str;
+    }
+    
+    string_type three() {
+        auto str = make<string_type>(allocs);
+        // ...
         return str;
     }
 };
-
 ```
+
+
