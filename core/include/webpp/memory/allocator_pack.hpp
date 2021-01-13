@@ -276,6 +276,7 @@ namespace webpp::alloc {
         using resource_type  = descriptors::storage<typename ranked::best_resource_descriptor>;
         using allocator_type = typename descriptors::allocator<
           typename ranked::best_allocator_descriptor>::template type<value_type>;
+        using new_type = istl::replace_parameter<T, original_allocator_type, allocator_type>;
     };
 
 
