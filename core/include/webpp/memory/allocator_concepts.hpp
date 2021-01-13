@@ -218,7 +218,7 @@ namespace webpp {
             template <typename T>
             using condition = stl::is_same<alloc::descriptors::storage<T>, ResType>;
 
-            using type = istl::filter_parameters_t<condition, ResourceList>;
+            using type = istl::first_parameter<istl::filter_parameters_t<condition, ResourceList>>;
         };
 
         template <AllocatorDescriptorList AllocDescList, template <typename> typename AllocType>
@@ -228,7 +228,7 @@ namespace webpp {
               stl::is_same<typename alloc::descriptors::allocator<T>::template type<stl::byte>,
                            AllocType<stl::byte>>;
 
-            using type = istl::filter_parameters_t<condition, AllocDescList>;
+            using type = istl::first_parameter<istl::filter_parameters_t<condition, AllocDescList>>;
         };
 
 

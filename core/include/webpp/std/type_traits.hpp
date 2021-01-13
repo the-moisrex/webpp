@@ -409,6 +409,11 @@ namespace webpp::istl {
     using filter_parameters_t = typename filter_parameters<Concept, Tup>::type;
 
 
+    template <typename Tup>
+    using first_parameter = nth_parameter<0, Tup>;
+    // todo: add last_parameter as well
+
+
     /**
      * Merge two or more tuple-like types.
      */
