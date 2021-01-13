@@ -374,13 +374,16 @@ namespace webpp::alloc {
         template <Allocator AllocType, typename ResType>
         requires(has_allocator<AllocType>) [[nodiscard]] auto get_allocator(ResType& res) noexcept {
             using resource_descriptor = resource_descriptor_finder<allocator_descriptors, AllocType, ResType>;
-            return descriptors::construct_allocator<resource_descriptor>(res);
+            using value_type          = typename AllocType::value_type;
+            return descriptors::construct_allocator<resource_descriptor, value_type>(res);
         }
 
         template <Allocator AllocType, typename ResType>
         requires(has_allocator<AllocType>) [[nodiscard]] auto get_allocator() noexcept {
             using resource_descriptor = resource_descriptor_finder<allocator_descriptors, AllocType, ResType>;
-            return descriptors::construct_allocator<resource_descriptor>(get_resource<resource_descriptor>());
+            using value_type          = typename AllocType::value_type;
+            return descriptors::construct_allocator<resource_descriptor, value_type>(
+              get_resource<resource_descriptor>());
         }
 
         /**
@@ -463,8 +466,9 @@ namespace webpp::alloc {
 
         template <typename T, Allocator AllocType, ResourceDescriptor ResDescType, typename... Args>
         constexpr auto make(Args&&... args) {
-            return this->make<T, stl::allocator_traits<AllocType>::template rebind_alloc, ResDescType, Args...>(
-              stl::forward<Args>(args)...);
+            return this
+              ->make<T, stl::allocator_traits<AllocType>::template rebind_alloc, ResDescType, Args...>(
+                stl::forward<Args>(args)...);
         }
 
         template <typename T, feature_pack FPack, typename... Args>
