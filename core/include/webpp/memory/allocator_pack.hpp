@@ -266,6 +266,19 @@ namespace webpp::alloc {
     template <typename List, feature_pack FPack>
     using filter = istl::filter_parameters<details::features_filterer<FPack>::template type, List>;
 
+
+    template <typename T, feature_pack FPack, AllocatorDescriptorList AllocDescList>
+    struct alloc_finder {
+        static constexpr feature_pack features = FPack;
+        using ranked                           = ranker<AllocDescList, features>;
+        using original_allocator_type          = typename T::allocator_type;
+        using value_type                       = typename original_allocator_type::value_type;
+        using resource_type  = descriptors::storage<typename ranked::best_resource_descriptor>;
+        using allocator_type = typename descriptors::allocator<
+          typename ranked::best_allocator_descriptor>::template type<value_type>;
+    };
+
+
     struct placeholder {};
 
     /**
@@ -323,8 +336,10 @@ namespace webpp::alloc {
         static constexpr bool has_resource_descriptor =
           istl::contains_parameter<resource_descriptors, ResDescType>;
 
-        using local_allocator_type = descriptors::allocator<typename ranked<monotonic_features>::best_allocator_descriptor>;
-        using local_resource_type = descriptors::storage<typename ranked<monotonic_features>::best_resource_descriptor>;
+        using local_allocator_type =
+          descriptors::allocator<typename ranked<monotonic_features>::best_allocator_descriptor>;
+        using local_resource_type =
+          descriptors::storage<typename ranked<monotonic_features>::best_resource_descriptor>;
 
       private:
         [[no_unique_address]] filtered_resources_type resources{};
