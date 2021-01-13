@@ -215,7 +215,8 @@ template <Traits TraitsType>
 struct heavy_pen {
     using traits_type          = TraitsType;
     using allocator_pack_type  = traits::allocator_pack<traits_type>;
-    using string_type          = traits::string<traits_type>; // global string
+    static constexpr auto features = general_features;
+    using string_type          = traits::string<traits_type, features>; // global string
     
     allocator_pack_type allocs{};
     
