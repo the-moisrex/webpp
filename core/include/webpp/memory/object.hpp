@@ -11,10 +11,10 @@ namespace webpp::object {
     template <typename T,
               alloc::feature_pack     FPack,
               AllocatorDescriptorList AllocDescList = stl::pmr::allocator_descriptors>
-    struct object : public T {
+    struct object : public alloc::alloc_finder<T, alloc::monotonic_features, AllocDescList>::new_type {
       private:
-        using super         = T;
         using alloc_details = alloc::alloc_finder<T, alloc::monotonic_features, AllocDescList>;
+        using super         = typename alloc_details::new_type;
 
       public:
         using allocator_type = typename alloc_details::allocator_type;
