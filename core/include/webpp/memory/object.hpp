@@ -5,6 +5,7 @@
 
 #include "allocator_pack.hpp"
 #include "buffer.hpp"
+#include "std_pmr_allocator_pack.hpp"
 
 namespace webpp::object {
 
@@ -17,6 +18,7 @@ namespace webpp::object {
         using super         = typename alloc_details::new_type;
 
       public:
+        using object_type    = super;
         using allocator_type = typename alloc_details::allocator_type;
         using resource_type  = typename alloc_details::resource_type;
 
