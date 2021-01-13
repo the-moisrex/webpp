@@ -361,26 +361,44 @@ namespace webpp::alloc {
 
 
         template <typename ResourceType>
-        requires(has_resource<ResourceType>) [[nodiscard]] auto& get_resource() noexcept {
+        requires(!ResourceDescriptor<ResourceType> && has_resource<ResourceType>)
+          [[nodiscard]] auto& get_resource() noexcept {
             return stl::get<ResourceType>(resources);
+        }
+
+        template <ResourceDescriptor ResDescType>
+        requires(has_resource_descriptor<ResDescType>) [[nodiscard]] auto& get_resource() noexcept {
+            return get_resource<descriptors::storage<ResDescType>>();
+        }
+
+        template <Allocator AllocType, typename ResType>
+        requires(has_allocator<AllocType>) [[nodiscard]] auto get_allocator(ResType& res) noexcept {
+            using resource_descriptor = resource_descriptor_finder<allocator_descriptors, AllocType, ResType>;
+            return descriptors::construct_allocator<resource_descriptor>(res);
+        }
+
+        template <Allocator AllocType, typename ResType>
+        requires(has_allocator<AllocType>) [[nodiscard]] auto get_allocator() noexcept {
+            using resource_descriptor = resource_descriptor_finder<allocator_descriptors, AllocType, ResType>;
+            return descriptors::construct_allocator<resource_descriptor>(get_resource<resource_descriptor>());
         }
 
         /**
          * Get an allocator based on the specified resource
          */
-        template <typename ResType, typename T = stl::byte>
-        [[nodiscard]] auto get_allocator(ResType& res) noexcept {
-            return descriptors::construct_allocator<ResType, T>(res);
+        template <ResourceDescriptor ResDescType, typename T = stl::byte>
+        [[nodiscard]] auto get_allocator(ResDescType& res) noexcept {
+            return descriptors::construct_allocator<ResDescType, T>(res);
         }
 
-        template <ResourceDescriptor ResourceDescType, typename T = stl::byte>
-        requires(has_resource_descriptor<ResourceDescType>) [[nodiscard]] auto get_allocator() noexcept {
-            auto& res = get_resource<alloc::descriptors::storage<ResourceDescType>>();
-            return descriptors::construct_allocator<ResourceDescType, T>(res);
+        template <ResourceDescriptor ResDescType, typename T = stl::byte>
+        requires(has_resource_descriptor<ResDescType>) [[nodiscard]] auto get_allocator() noexcept {
+            auto& res = get_resource<alloc::descriptors::storage<ResDescType>>();
+            return descriptors::construct_allocator<ResDescType, T>(res);
         }
 
 
-        template <feature_pack FPack, typename T>
+        template <feature_pack FPack, typename T = stl::byte>
         [[nodiscard]] auto get_allocator() noexcept {
             using the_ranked          = ranked<FPack>;
             using best_allocator_type = typename descriptors::allocator<
@@ -445,7 +463,7 @@ namespace webpp::alloc {
 
         template <typename T, Allocator AllocType, ResourceDescriptor ResDescType, typename... Args>
         constexpr auto make(Args&&... args) {
-            return this->make<T, stl::allocator_traits<AllocType>::template rebind, ResDescType, Args...>(
+            return this->make<T, stl::allocator_traits<AllocType>::template rebind_alloc, ResDescType, Args...>(
               stl::forward<Args>(args)...);
         }
 

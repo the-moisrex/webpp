@@ -23,7 +23,7 @@ namespace webpp::object {
         template <typename... Args>
         requires(requires(allocator_type const& the_alloc, Args... args) {
             super{stl::allocator_arg, the_alloc, stl::forward<Args>(args)...};
-        }) object(alloc::allocator_pack<AllocDescList> const& alloc_pack, resource_type& res, Args&&... args)
+        }) object(alloc::allocator_pack<AllocDescList>& alloc_pack, resource_type& res, Args&&... args)
           : super{stl::allocator_arg,
                   alloc_pack.template get_allocator<allocator_type, resource_type>(res),
                   stl::forward<Args>(args)...} {}
@@ -31,7 +31,7 @@ namespace webpp::object {
         template <typename... Args>
         requires(requires(allocator_type const& the_alloc, Args... args) {
             super{the_alloc, stl::forward<Args>(args)...};
-        }) object(alloc::allocator_pack<AllocDescList> const& alloc_pack, resource_type& res, Args&&... args)
+        }) object(alloc::allocator_pack<AllocDescList>& alloc_pack, resource_type& res, Args&&... args)
           : super{alloc_pack.template get_allocator<allocator_type, resource_type>(res),
                   stl::forward<Args>(args)...} {}
 
@@ -40,7 +40,7 @@ namespace webpp::object {
                  requires(allocator_type const& the_alloc, Args... args) {
                      super{stl::forward<Args>(args)..., the_alloc};
                  })
-          object(alloc::allocator_pack<AllocDescList> const& alloc_pack, resource_type& res, Args&&... args)
+          object(alloc::allocator_pack<AllocDescList>& alloc_pack, resource_type& res, Args&&... args)
           : super{stl::forward<Args>(args)...,
                   alloc_pack.template get_allocator<allocator_type, resource_type>(res)} {}
 
@@ -48,7 +48,7 @@ namespace webpp::object {
         //        template <typename... Args>
         //        requires(requires(allocator_type const& the_alloc, Args... args) {
         //            super{stl::allocator_arg, the_alloc, stl::forward<Args>(args)...};
-        //        }) object(alloc::allocator_pack<AllocDescList> const& alloc_pack, Args&&... args)
+        //        }) object(alloc::allocator_pack<AllocDescList>& alloc_pack, Args&&... args)
         //          : super{stl::allocator_arg,
         //                  alloc_pack.template get_allocator<allocator_type, resource_type>(),
         //                  stl::forward<Args>(args)...} {}
@@ -56,14 +56,14 @@ namespace webpp::object {
         //        template <typename... Args>
         //        requires(requires(allocator_type const& the_alloc, Args... args) {
         //            super{the_alloc, stl::forward<Args>(args)...};
-        //        }) object(alloc::allocator_pack<AllocDescList> const& alloc_pack, Args&&... args)
+        //        }) object(alloc::allocator_pack<AllocDescList>& alloc_pack, Args&&... args)
         //          : super{alloc_pack.template get_allocator<allocator_type, resource_type>(),
         //                  stl::forward<Args>(args)...} {}
         //
         //        template <typename... Args>
         //        requires(requires(allocator_type const& the_alloc, Args... args) {
         //            super{stl::forward<Args>(args)..., the_alloc};
-        //        }) object(alloc::allocator_pack<AllocDescList> const& alloc_pack, Args&&... args)
+        //        }) object(alloc::allocator_pack<AllocDescList>& alloc_pack, Args&&... args)
         //          : super{stl::forward<Args>(args)...,
         //                  alloc_pack.template get_allocator<allocator_type, resource_type>()} {}
     };
@@ -86,7 +86,7 @@ namespace webpp::object {
         using super::object;
 
         template <typename... Args>
-        constexpr local(alloc::allocator_pack<AllocDescList> const& alloc_pack, Args&&... args)
+        constexpr local(alloc::allocator_pack<AllocDescList>& alloc_pack, Args&&... args)
           : super{alloc_pack, res, stl::forward<Args>(args)...} {}
     };
 

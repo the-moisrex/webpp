@@ -213,6 +213,24 @@ namespace webpp {
             using type = typename pair_maker<alloc::descriptors::resources<AllocDescType>>::type;
         };
 
+        template <typename ResourceList, typename ResType>
+        struct resource_descriptor_finder {
+            template <typename T>
+            using condition = stl::is_same<alloc::descriptors::storage<T>, ResType>;
+
+            using type = istl::filter_parameters_t<condition, ResourceList>;
+        };
+
+        template <AllocatorDescriptorList AllocDescList, template <typename> typename AllocType>
+        struct allocator_descriptor_finder {
+            template <typename T>
+            using condition =
+              stl::is_same<typename alloc::descriptors::allocator<T>::template type<stl::byte>,
+                           AllocType<stl::byte>>;
+
+            using type = istl::filter_parameters_t<condition, AllocDescList>;
+        };
+
 
 
     } // namespace details
@@ -231,7 +249,7 @@ namespace webpp {
     template <typename AllocDescTypes>
     using resource_extractor =
       typename istl::filter_parameters<istl::templated_negation<stl::is_void>::type,
-                              typename details::resource_extractor_impl<AllocDescTypes>::type>::type;
+                                       typename details::resource_extractor_impl<AllocDescTypes>::type>::type;
 
 
     template <AllocatorDescriptorList AllocDescTypes>
@@ -241,6 +259,26 @@ namespace webpp {
     template <AllocatorDescriptorList AllocDescType>
     using alloc_res_pair_maker = typename details::alloc_res_pair_maker_impl<AllocDescType>::type;
 
+
+    /**
+     * Find the matching allocator descriptor in the allocator list based on the specified allocator type
+     */
+    template <AllocatorDescriptorList AllocDescList, template <typename> typename AllocType>
+    using allocator_descriptor_finder =
+      typename details::allocator_descriptor_finder<AllocDescList, AllocType>::type;
+
+    /**
+     * Find the resource descriptor with ResType as its storage_type
+     */
+    template <typename ResDescList, typename ResType>
+    using resource_descriptor_finder_in_resource_list =
+      typename details::resource_descriptor_finder<ResDescList, ResType>::type;
+
+    template <AllocatorDescriptorList AllocDescList, Allocator AllocType, typename ResType>
+    using resource_descriptor_finder = resource_descriptor_finder_in_resource_list<
+      alloc::descriptors::resources<
+        allocator_descriptor_finder<AllocDescList, stl::allocator_traits<AllocType>::template rebind_alloc>>,
+      ResType>;
 
 } // namespace webpp
 
