@@ -29,7 +29,7 @@ using should_be_void = replace_parameter<
   pmr::polymorphic_allocator<char>
 >;
 
-static_assert(is_void_v<should_be_void>);
+//static_assert(is_void_v<should_be_void>);
 
 
 
@@ -41,8 +41,16 @@ struct fake_tuple {};
 
 // tuple_filter
 static_assert(is_same_v<
-  tuple_filter_t<is_void, fake_tuple<int, void, int, void, double, void>>,
+  filter_parameters_t<is_void, fake_tuple<int, void, int, void, double, void>>,
   fake_tuple<void, void, void>
 >);
+
+
+using t1 = tuple<int, string, vector<int>, int>;
+using t2 = replace_parameter<t1, int, double>;
+using t3 = recursively_replace_parameter<t1, int, double>;
+static_assert(is_same_v<t2, tuple<double, string, vector<int>, double>>);
+static_assert(is_same_v<t3, tuple<double, string, vector<double>, double>>);
+
 
 
