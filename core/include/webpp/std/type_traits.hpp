@@ -209,14 +209,67 @@ namespace webpp::istl {
                   typename... Heads,
                   typename... Tails>
         struct param_replacer<T, OldType, NewType, fake_tuple<Heads...>, fake_tuple<OldType, Tails...>>
-          : public param_replacer<T,
-                                     OldType,
-                                     NewType,
-                                     fake_tuple<Heads..., NewType>,
-                                     fake_tuple<Tails...>> {};
+          : public param_replacer<T, OldType, NewType, fake_tuple<Heads..., NewType>, fake_tuple<Tails...>> {
+        };
 
         template <template <typename...> typename T, typename OldType, typename NewType, typename... Heads>
         struct param_replacer<T, OldType, NewType, fake_tuple<Heads...>, fake_tuple<>> {
+            using type = T<Heads...>;
+        };
+
+
+
+
+
+        template <template <typename...> typename T,
+                  template <typename...>
+                  typename OldType,
+                  template <typename...>
+                  typename NewType,
+                  typename T1,
+                  typename T2>
+        struct templated_param_replacer;
+
+        // recursive case (move from T1 tuple to T2 tuple if it's not a match)
+        template <template <typename...> typename T,
+                  template <typename...>
+                  typename OldType,
+                  template <typename...>
+                  typename NewType,
+                  typename... Heads,
+                  typename This,
+                  typename... Tails>
+        struct templated_param_replacer<T, OldType, NewType, fake_tuple<Heads...>, fake_tuple<This, Tails...>>
+          : templated_param_replacer<T, OldType, NewType, fake_tuple<Heads..., This>, fake_tuple<Tails...>> {
+        };
+
+        // base case (found the old type)
+        template <template <typename...> typename T,
+                  template <typename...>
+                  typename OldType,
+                  template <typename...>
+                  typename NewType,
+                  typename... Heads,
+                  typename... Tails,
+                  typename... OldArgs>
+        struct templated_param_replacer<T,
+                                        OldType,
+                                        NewType,
+                                        fake_tuple<Heads...>,
+                                        fake_tuple<OldType<OldArgs...>, Tails...>>
+          : public templated_param_replacer<T,
+                                            OldType,
+                                            NewType,
+                                            fake_tuple<Heads..., NewType<OldArgs...>>,
+                                            fake_tuple<Tails...>> {};
+
+        template <template <typename...> typename T,
+                  template <typename...>
+                  typename OldType,
+                  template <typename...>
+                  typename NewType,
+                  typename... Heads>
+        struct templated_param_replacer<T, OldType, NewType, fake_tuple<Heads...>, fake_tuple<>> {
             using type = T<Heads...>;
         };
 
@@ -238,16 +291,9 @@ namespace webpp::istl {
                   typename... Heads,
                   typename This,
                   typename... Tails>
-        struct recursive_param_replacer<T,
-                                           OldType,
-                                           NewType,
-                                           fake_tuple<Heads...>,
-                                           fake_tuple<This, Tails...>>
-          : recursive_param_replacer<T,
-                                        OldType,
-                                        NewType,
-                                        fake_tuple<Heads..., This>,
-                                        fake_tuple<Tails...>> {};
+        struct recursive_param_replacer<T, OldType, NewType, fake_tuple<Heads...>, fake_tuple<This, Tails...>>
+          : recursive_param_replacer<T, OldType, NewType, fake_tuple<Heads..., This>, fake_tuple<Tails...>> {
+        };
 
         template <template <typename...> typename T,
                   typename OldType,
@@ -258,10 +304,10 @@ namespace webpp::istl {
                   typename... Tails,
                   typename... ThisArgs>
         struct recursive_param_replacer<T,
-                                           OldType,
-                                           NewType,
-                                           fake_tuple<Heads...>,
-                                           fake_tuple<This<ThisArgs...>, Tails...>>
+                                        OldType,
+                                        NewType,
+                                        fake_tuple<Heads...>,
+                                        fake_tuple<This<ThisArgs...>, Tails...>>
           : recursive_param_replacer<
               T,
               OldType,
@@ -270,10 +316,10 @@ namespace webpp::istl {
                          // instead of "This<Args...>" we replace the Args with the NewType if they contain
                          // the OldType
                          typename recursive_param_replacer<This,
-                                                              OldType,
-                                                              NewType,
-                                                              fake_tuple<>,
-                                                              fake_tuple<ThisArgs...>>::type>,
+                                                           OldType,
+                                                           NewType,
+                                                           fake_tuple<>,
+                                                           fake_tuple<ThisArgs...>>::type>,
               fake_tuple<Tails...>> {};
 
         // base case (found the old type)
@@ -283,18 +329,116 @@ namespace webpp::istl {
                   typename... Heads,
                   typename... Tails>
         struct recursive_param_replacer<T,
-                                           OldType,
-                                           NewType,
-                                           fake_tuple<Heads...>,
-                                           fake_tuple<OldType, Tails...>>
+                                        OldType,
+                                        NewType,
+                                        fake_tuple<Heads...>,
+                                        fake_tuple<OldType, Tails...>>
           : public recursive_param_replacer<T,
-                                               OldType,
-                                               NewType,
-                                               fake_tuple<Heads..., NewType>,
-                                               fake_tuple<Tails...>> {};
+                                            OldType,
+                                            NewType,
+                                            fake_tuple<Heads..., NewType>,
+                                            fake_tuple<Tails...>> {};
 
         template <template <typename...> typename T, typename OldType, typename NewType, typename... Heads>
         struct recursive_param_replacer<T, OldType, NewType, fake_tuple<Heads...>, fake_tuple<>> {
+            using type = T<Heads...>;
+        };
+
+
+
+
+
+        template <template <typename...> typename T,
+                  template <typename...>
+                  typename OldType,
+                  template <typename...>
+                  typename NewType,
+                  typename T1,
+                  typename T2>
+        struct recursive_templated_param_replacer;
+
+        // recursive case (move from T1 tuple to T2 tuple if it's not a match)
+        template <template <typename...> typename T,
+                  template <typename...>
+                  typename OldType,
+                  template <typename...>
+                  typename NewType,
+                  typename... Heads,
+                  typename This,
+                  typename... Tails>
+        struct recursive_templated_param_replacer<T,
+                                                  OldType,
+                                                  NewType,
+                                                  fake_tuple<Heads...>,
+                                                  fake_tuple<This, Tails...>>
+          : recursive_templated_param_replacer<T,
+                                               OldType,
+                                               NewType,
+                                               fake_tuple<Heads..., This>,
+                                               fake_tuple<Tails...>> {};
+
+        template <template <typename...> typename T,
+                  template <typename...>
+                  typename OldType,
+                  template <typename...>
+                  typename NewType,
+                  typename... Heads,
+                  template <typename...>
+                  typename This,
+                  typename... Tails,
+                  typename... ThisArgs>
+        struct recursive_templated_param_replacer<T,
+                                                  OldType,
+                                                  NewType,
+                                                  fake_tuple<Heads...>,
+                                                  fake_tuple<This<ThisArgs...>, Tails...>>
+          : recursive_templated_param_replacer<
+              T,
+              OldType,
+              NewType,
+              fake_tuple<Heads...,
+                         // instead of "This<Args...>" we replace the Args with the NewType if they contain
+                         // the OldType
+                         typename recursive_templated_param_replacer<This,
+                                                                     OldType,
+                                                                     NewType,
+                                                                     fake_tuple<>,
+                                                                     fake_tuple<ThisArgs...>>::type>,
+              fake_tuple<Tails...>> {};
+
+        // base case (found the old type), switching it to the new type
+        template <template <typename...> typename T,
+                  template <typename...>
+                  typename OldType,
+                  template <typename...>
+                  typename NewType,
+                  typename... Heads,
+                  typename... Tails,
+                  typename... OldArgs>
+        struct recursive_templated_param_replacer<T,
+                                                  OldType,
+                                                  NewType,
+                                                  fake_tuple<Heads...>,
+                                                  fake_tuple<OldType<OldArgs...>, Tails...>>
+          : public recursive_templated_param_replacer<
+              T,
+              OldType,
+              NewType,
+              fake_tuple<Heads...,
+                         NewType<typename recursive_templated_param_replacer<NewType,
+                                                                             OldType,
+                                                                             NewType,
+                                                                             fake_tuple<>,
+                                                                             fake_tuple<OldArgs...>>::type>>,
+              fake_tuple<Tails...>> {};
+
+        template <template <typename...> typename T,
+                  template <typename...>
+                  typename OldType,
+                  template <typename...>
+                  typename NewType,
+                  typename... Heads>
+        struct recursive_templated_param_replacer<T, OldType, NewType, fake_tuple<Heads...>, fake_tuple<>> {
             using type = T<Heads...>;
         };
 
@@ -308,8 +452,30 @@ namespace webpp::istl {
         template <template <typename...> typename T, typename OldType, typename NewType, typename... Types>
         struct change_parameter<T<Types...>, OldType, NewType> {
             using the_type = T<Types...>;
-            using type     = typename details::param_replacer<T, OldType, NewType, fake_tuple<>, fake_tuple<Types...>>::type;
+            using type =
+              typename details::param_replacer<T, OldType, NewType, fake_tuple<>, fake_tuple<Types...>>::type;
         };
+
+
+        template <typename T,
+                  template <typename...>
+                  typename OldType,
+                  template <typename...>
+                  typename NewType>
+        struct change_templated_parameter;
+
+        template <template <typename...> typename T,
+                  template <typename...>
+                  typename OldType,
+                  template <typename...>
+                  typename NewType,
+                  typename... Types>
+        struct change_templated_parameter<T<Types...>, OldType, NewType> {
+            using the_type = T<Types...>;
+            using type     = typename details::
+              templated_param_replacer<T, OldType, NewType, fake_tuple<>, fake_tuple<Types...>>::type;
+        };
+
 
         template <typename T, typename OldType, typename NewType>
         struct recursively_change_parameter;
@@ -321,18 +487,42 @@ namespace webpp::istl {
               recursive_param_replacer<T, OldType, NewType, fake_tuple<>, fake_tuple<Types...>>::type;
         };
 
+
+        template <typename T,
+                  template <typename...>
+                  typename OldType,
+                  template <typename...>
+                  typename NewType>
+        struct recursively_change_templated_parameter;
+
+        template <template <typename...> typename T,
+                  template <typename...>
+                  typename OldType,
+                  template <typename...>
+                  typename NewType,
+                  typename... Types>
+        struct recursively_change_templated_parameter<T<Types...>, OldType, NewType> {
+            using the_type = T<Types...>;
+            using type     = typename details::
+              recursive_templated_param_replacer<T, OldType, NewType, fake_tuple<>, fake_tuple<Types...>>::
+                type;
+        };
+
     } // namespace details
 
     template <typename T, typename OldType, typename NewType>
     using replace_parameter = typename details::change_parameter<T, OldType, NewType>::type;
 
     template <typename T, typename OldType, typename NewType>
+    using replace_templated_parameter = typename details::change_parameter<T, OldType, NewType>::type;
+
+    template <typename T, typename OldType, typename NewType>
     using recursively_replace_parameter =
       typename details::recursively_change_parameter<T, OldType, NewType>::type;
 
-    template <typename T, template <typename...> typename OldType, template <typename...> NewType>
-    using recursively_replace_parameter =
-      typename details::recursively_change_parameter<T, OldType, NewType>::type;
+    template <typename T, template <typename...> typename OldType, template <typename...> typename NewType>
+    using recursively_replace_templated_parameter =
+      typename details::recursively_change_templated_parameter<T, OldType, NewType>::type;
 
 
     /// Finds the size of a given tuple-like type.
