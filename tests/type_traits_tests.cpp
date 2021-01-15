@@ -4,6 +4,7 @@
 #include "../core/include/webpp/std/tuple.hpp"
 #include <string>
 #include <memory_resource>
+#include <list>
 
 using namespace std;
 using namespace webpp::istl;
@@ -50,10 +51,15 @@ using t1 = tuple<int, string, vector<int>, int>;
 using t2 = replace_parameter<t1, int, double>;
 using t3 = recursively_replace_parameter<t1, int, double>;
 using t4 = recursively_replace_templated_parameter<t1, allocator, pmr::polymorphic_allocator>;
+using t5 = tuple<vector<string>>;
+using t6 = recursively_replace_templated_parameter<t5, allocator, pmr::polymorphic_allocator>;
+using t7 = replace_templated_parameter<t1, vector, list>;
 
 static_assert(is_same_v<t2, tuple<double, string, vector<int>, double>>);
 static_assert(is_same_v<t3, tuple<double, string, vector<double>, double>>);
 static_assert(is_same_v<t4, tuple<int, pmr::string, pmr::vector<int>, int>>);
+static_assert(is_same_v<t6, tuple<pmr::vector<pmr::string>>>);
+static_assert(is_same_v<t7, tuple<int, string, list<int>, int>>);
 
 
 
