@@ -83,6 +83,7 @@ namespace webpp::object {
         using resource_type = typename super::resource_type;
 
         stack_type    buffer;
+        // fixme: isn't it better to use a pool instead of this?
         resource_type res{buffer.data(), buffer.size(), stl::pmr::new_delete_resource()};
 
         using super::object;
