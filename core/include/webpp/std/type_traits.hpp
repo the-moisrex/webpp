@@ -513,8 +513,9 @@ namespace webpp::istl {
     template <typename T, typename OldType, typename NewType>
     using replace_parameter = typename details::change_parameter<T, OldType, NewType>::type;
 
-    template <typename T, typename OldType, typename NewType>
-    using replace_templated_parameter = typename details::change_parameter<T, OldType, NewType>::type;
+    template <typename T, template <typename...> typename OldType, template <typename...> typename NewType>
+    using replace_templated_parameter =
+      typename details::change_templated_parameter<T, OldType, NewType>::type;
 
     template <typename T, typename OldType, typename NewType>
     using recursively_replace_parameter =
