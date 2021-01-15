@@ -276,7 +276,10 @@ namespace webpp::alloc {
         using resource_type  = descriptors::storage<typename ranked::best_resource_descriptor>;
         using allocator_type = typename descriptors::allocator<
           typename ranked::best_allocator_descriptor>::template type<value_type>;
-        using new_type = istl::replace_parameter<T, original_allocator_type, allocator_type>;
+        using new_type = istl::recursively_replace_templated_parameter<
+          T,
+          stl::allocator_traits<original_allocator_type>::template alloc_rebind,
+          stl::allocator_traits<allocator_type>::template alloc_rebind>;
     };
 
 
@@ -442,8 +445,11 @@ namespace webpp::alloc {
                 using old_allocator_type = typename T::allocator_type;
                 using value_type         = typename old_allocator_type::value_type;
                 using selected_allocator = AllocType<value_type>;
-                using new_type           = istl::replace_parameter<T, old_allocator_type, selected_allocator>;
-                auto the_alloc           = this->get_allocator<ResDescType, value_type>();
+                using new_type           = istl::recursively_replace_templated_parameter<
+                  T,
+                  stl::allocator_traits<old_allocator_type>::template alloc_rebind,
+                  stl::allocator_traits<selected_allocator>::template alloc_rebind>;
+                auto the_alloc = this->get_allocator<ResDescType, value_type>();
                 if constexpr (istl::contains_parameter<type_list<Args...>, placeholder>) {
                     return new_type{
                       istl::replace_object<placeholder, selected_allocator, Args>(stl::forward<Args>(args),
