@@ -425,11 +425,11 @@ namespace webpp::istl {
               OldType,
               NewType,
               fake_tuple<Heads...,
-                         NewType<typename recursive_templated_param_replacer<NewType,
-                                                                             OldType,
-                                                                             NewType,
-                                                                             fake_tuple<>,
-                                                                             fake_tuple<OldArgs...>>::type>>,
+                         typename recursive_templated_param_replacer<NewType,
+                                                                     OldType,
+                                                                     NewType,
+                                                                     fake_tuple<>,
+                                                                     fake_tuple<OldArgs...>>::type>,
               fake_tuple<Tails...>> {};
 
         template <template <typename...> typename T,
