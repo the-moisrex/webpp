@@ -278,8 +278,8 @@ namespace webpp::alloc {
           typename ranked::best_allocator_descriptor>::template type<value_type>;
         using new_type = istl::recursively_replace_templated_parameter<
           T,
-          stl::allocator_traits<original_allocator_type>::template alloc_rebind,
-          stl::allocator_traits<allocator_type>::template alloc_rebind>;
+          stl::allocator_traits<original_allocator_type>::template rebind_alloc,
+          stl::allocator_traits<allocator_type>::template rebind_alloc>;
     };
 
 
@@ -447,8 +447,8 @@ namespace webpp::alloc {
                 using selected_allocator = AllocType<value_type>;
                 using new_type           = istl::recursively_replace_templated_parameter<
                   T,
-                  stl::allocator_traits<old_allocator_type>::template alloc_rebind,
-                  stl::allocator_traits<selected_allocator>::template alloc_rebind>;
+                  stl::allocator_traits<old_allocator_type>::template rebind_alloc,
+                  stl::allocator_traits<selected_allocator>::template rebind_alloc>;
                 auto the_alloc = this->get_allocator<ResDescType, value_type>();
                 if constexpr (istl::contains_parameter<type_list<Args...>, placeholder>) {
                     return new_type{
