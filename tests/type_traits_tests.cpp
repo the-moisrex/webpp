@@ -49,8 +49,11 @@ static_assert(is_same_v<
 using t1 = tuple<int, string, vector<int>, int>;
 using t2 = replace_parameter<t1, int, double>;
 using t3 = recursively_replace_parameter<t1, int, double>;
+using t4 = recursively_replace_templated_parameter<t1, allocator, pmr::polymorphic_allocator>;
+
 static_assert(is_same_v<t2, tuple<double, string, vector<int>, double>>);
 static_assert(is_same_v<t3, tuple<double, string, vector<double>, double>>);
+static_assert(is_same_v<t4, tuple<double, pmr::string, pmr::vector<int>, int>>);
 
 
 
