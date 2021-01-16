@@ -82,15 +82,13 @@ namespace webpp::object {
         using stack_type    = StackType;
         using resource_type = typename super::resource_type;
 
-        stack_type    buffer;
-        // fixme: isn't it better to use a pool instead of this?
+        stack_type buffer;
         resource_type res{buffer.data(), buffer.size(), stl::pmr::new_delete_resource()};
-
-        using super::object;
 
         template <typename... Args>
         constexpr local(alloc::allocator_pack<AllocDescList>& alloc_pack, Args&&... args)
-          : super{alloc_pack, res, stl::forward<Args>(args)...} {}
+          : res{buffer.data(), buffer.size(), alloc_pack.template general_allocator<T>()},
+            super{alloc_pack, res, stl::forward<Args>(args)...} {}
     };
 
 } // namespace webpp::object
