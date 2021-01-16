@@ -524,17 +524,32 @@ namespace webpp::istl {
 
     } // namespace details
 
+    /**
+     * Replace a type parameter in a tuple-like from OldType to NewType
+     * fixme: doesn't support CVREF
+     */
     template <typename T, typename OldType, typename NewType>
     using replace_parameter = typename details::change_parameter<T, OldType, NewType>::type;
 
+    /**
+     * Replace a templated parameter in a tuple-like from OldType to NewType
+     * fixme: doesn't support CVREF
+     */
     template <typename T, template <typename...> typename OldType, template <typename...> typename NewType>
     using replace_templated_parameter =
       typename details::change_templated_parameter<T, OldType, NewType>::type;
 
+    /**
+     * Replace a type parameter in a tuple-like from OldType to NewType recursively
+     * fixme: doesn't support CVREF
+     */
     template <typename T, typename OldType, typename NewType>
     using recursively_replace_parameter =
       typename details::recursively_change_parameter<T, OldType, NewType>::type;
 
+    /**
+     * Replace a templated parameter in a tuple-like from OldType to NewType recursively
+     */
     template <typename T, template <typename...> typename OldType, template <typename...> typename NewType>
     using recursively_replace_templated_parameter =
       typename details::recursively_change_templated_parameter<T, OldType, NewType>::type;
