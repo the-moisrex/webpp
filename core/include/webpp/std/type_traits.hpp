@@ -179,15 +179,17 @@ namespace webpp::istl {
     /////// changing template parameter type from Old to New ///////
     ////////////////////////////////////////////////////////////////
 
-    template <typename T, template<typename...> typename NewType>
-    struct template_swap_type;
+    template <typename T, template <typename...> typename NewType>
+    struct template_swap_type {
+        using type = T;
+    };
 
-    template <template<typename...> typename T, template <typename ...> typename NewType, typename ...Args>
+    template <template <typename...> typename T, template <typename...> typename NewType, typename... Args>
     struct template_swap_type<T<Args...>, NewType> {
         using type = NewType<Args...>;
     };
 
-    template <typename T, template<typename...> typename NewType>
+    template <typename T, template <typename...> typename NewType>
     using template_swap = typename template_swap_type<T, NewType>::type;
 
     namespace details {
@@ -436,6 +438,20 @@ namespace webpp::istl {
 
         ////////////////////////////// recursively_change_templated_parameter //////////////////////////////
 
+        template <template <typename> typename OldType, template <typename> typename NewType, typename TT>
+        struct recursively_change_templated_parameter_replacer {
+            using type                  = void;
+            static constexpr bool value = false;
+        };
+
+        template <template <typename> typename OldType,
+                  template <typename>
+                  typename NewType,
+                  typename... Args>
+        struct recursively_change_templated_parameter_replacer<OldType, NewType, OldType<Args...>> {
+            using type                  = NewType<Args...>;
+            static constexpr bool value = true;
+        };
 
         template <typename T,
                   template <typename...>
@@ -452,15 +468,13 @@ namespace webpp::istl {
                   typename... Types>
         struct recursively_change_templated_parameter<T<Types...>, OldType, NewType> {
             template <typename TT>
-            struct recursively_change_templated_parameter_replacer {
-                using type                  = template_swap<TT, NewType>;
-                static constexpr bool value = stl::is_same_v<TT, type>;
+            struct replacer {
+                using result = recursively_change_templated_parameter_replacer<OldType, NewType, TT>;
+                using type   = typename result::type;
+                static constexpr bool value = result::value;
             };
 
-            using type = typename parameter_replacer<T,
-                                                     recursively_change_templated_parameter_replacer,
-                                                     fake_tuple<>,
-                                                     fake_tuple<Types...>>::type;
+            using type = typename parameter_replacer<T, replacer, fake_tuple<>, fake_tuple<Types...>>::type;
         };
 
 
