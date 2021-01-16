@@ -64,3 +64,13 @@ static_assert(is_same_v<t13, tuple<const pmr::polymorphic_allocator<char>>>);
 static_assert(is_same_v<t15, tuple<const tuple<pmr::polymorphic_allocator<char>>>>);
 static_assert(is_same_v<t11, tuple<pmr::map<pmr::string, pmr::string>>>);
 static_assert(is_same_v<t9, tuple<pmr::map<pmr::vector<pmr::list<pmr::string>>, pmr::vector<pmr::string>>>>);
+
+
+template <typename T>
+struct int_replacer {
+    static constexpr bool value = is_same_v<T, int>;
+    using type = double;
+};
+
+using t16 = recursive_parameter_replacer<t1, int_replacer>;
+static_assert(is_same_v<t16, tuple<double, string, vector<double>, double>>);

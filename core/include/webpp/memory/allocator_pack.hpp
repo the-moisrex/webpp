@@ -267,6 +267,30 @@ namespace webpp::alloc {
     using filter = istl::filter_parameters<details::features_filterer<FPack>::template type, List>;
 
 
+
+    namespace details {
+        template <template <typename> typename AllocType>
+        struct allocator_replacer {
+            template <typename T>
+            struct replacer {
+                static constexpr bool value = false;
+                using type                  = void;
+            };
+
+            template <Allocator T>
+            struct replacer<T> {
+                static constexpr bool value = true;
+                using value_type            = typename T::value_type;
+                using type                  = AllocType<value_type>;
+            };
+        };
+    } // namespace details
+
+    template <typename T, template <typename> typename AllocType>
+    using replace_allocators =
+      istl::recursive_parameter_replacer<T, details::allocator_replacer<AllocType>::template replacer>;
+
+
     template <typename T, feature_pack FPack, AllocatorDescriptorList AllocDescList>
     struct alloc_finder {
         static constexpr feature_pack features = FPack;
@@ -276,12 +300,8 @@ namespace webpp::alloc {
         using resource_type  = descriptors::storage<typename ranked::best_resource_descriptor>;
         using allocator_type = typename descriptors::allocator<
           typename ranked::best_allocator_descriptor>::template type<value_type>;
-        using new_type = istl::recursively_replace_templated_parameter<
-          T,
-          stl::allocator_traits<original_allocator_type>::template rebind_alloc,
-          stl::allocator_traits<allocator_type>::template rebind_alloc>;
+        using new_type = replace_allocators<T, stl::allocator_traits<allocator_type>::template rebind_alloc>;
     };
-
 
     struct placeholder {};
 
@@ -394,26 +414,36 @@ namespace webpp::alloc {
          */
         template <ResourceDescriptor ResDescType, typename T = stl::byte>
         [[nodiscard]] auto get_allocator(ResDescType& res) noexcept {
-            return descriptors::construct_allocator<ResDescType, T>(res);
+            using the_bad_alloc_type = decltype(descriptors::construct_allocator<ResDescType, T>(res));
+            // replace allocator types inside T as well
+            using new_type =
+              replace_allocators<T, stl::allocator_traits<the_bad_alloc_type>::template rebind_alloc>;
+            return descriptors::construct_allocator<ResDescType, new_type>(res);
         }
 
         template <ResourceDescriptor ResDescType, typename T = stl::byte>
         requires(has_resource_descriptor<ResDescType>) [[nodiscard]] auto get_allocator() noexcept {
-            auto& res = get_resource<alloc::descriptors::storage<ResDescType>>();
-            return descriptors::construct_allocator<ResDescType, T>(res);
+            auto& res                = get_resource<alloc::descriptors::storage<ResDescType>>();
+            using the_bad_alloc_type = decltype(descriptors::construct_allocator<ResDescType, T>(res));
+            // replace allocator types inside T as well
+            using new_type =
+              replace_allocators<T, stl::allocator_traits<the_bad_alloc_type>::template rebind_alloc>;
+            return descriptors::construct_allocator<ResDescType, new_type>(res);
         }
 
 
         template <feature_pack FPack, typename T = stl::byte>
         [[nodiscard]] auto get_allocator() noexcept {
-            using the_ranked          = ranked<FPack>;
-            using best_allocator_type = typename descriptors::allocator<
-              typename the_ranked::best_allocator_descriptor>::template type<T>;
+            using the_ranked = ranked<FPack>;
+            using best_allocator_template =
+              typename descriptors::allocator<typename the_ranked::best_allocator_descriptor>;
+            // replace allocators inside T with the new best allocator type
+            using new_type            = replace_allocators<T, best_allocator_template::template type>;
+            using best_allocator_type = typename best_allocator_template::template type<new_type>;
             if constexpr (the_ranked::has_resource) {
-                using best_resource_type =
-                  descriptors::storage<typename the_ranked::best_resource_descriptor>;
-                auto& res = get_resource<best_resource_type>();
-                return descriptors::construct_allocator<best_resource_type>(res);
+                using best_resource_desc = typename the_ranked::best_resource_descriptor;
+                auto& res                = get_resource<best_resource_desc>();
+                return descriptors::construct_allocator<best_resource_desc, new_type>(res);
             } else {
                 // we don't have a resource
                 return best_allocator_type{};
@@ -445,10 +475,8 @@ namespace webpp::alloc {
                 using old_allocator_type = typename T::allocator_type;
                 using value_type         = typename old_allocator_type::value_type;
                 using selected_allocator = AllocType<value_type>;
-                using new_type           = istl::recursively_replace_templated_parameter<
-                  T,
-                  stl::allocator_traits<old_allocator_type>::template rebind_alloc,
-                  stl::allocator_traits<selected_allocator>::template rebind_alloc>;
+                using new_type =
+                  replace_allocators<T, stl::allocator_traits<selected_allocator>::template rebind_alloc>;
                 auto the_alloc = this->get_allocator<ResDescType, value_type>();
                 if constexpr (istl::contains_parameter<type_list<Args...>, placeholder>) {
                     return new_type{
