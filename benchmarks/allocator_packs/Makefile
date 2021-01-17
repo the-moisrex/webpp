@@ -1,6 +1,6 @@
 flags = -std=c++20 -isystem /usr/local/include -L/usr/local/lib -lpthread -lbenchmark_main -lbenchmark
 optflags = -flto -Ofast -DNDEBUG -march=native -mtune=native
-files = equals_benchmark.cpp
+files = allocator_packs_benchmark.cpp
 
 all: gcc
 .PHONY: all

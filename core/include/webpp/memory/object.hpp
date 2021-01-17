@@ -107,7 +107,7 @@ namespace webpp::object {
 
     template <typename T, AllocatorDescriptorList AllocDescType, typename... Args>
     static constexpr auto make_general(alloc::allocator_pack<AllocDescType>& alloc_pack, Args&&... args) {
-        return alloc_pack.template make<T, AllocDescType, Args...>(stl::forward<Args>(args)...);
+        return alloc_pack.template general<T, Args...>(stl::forward<Args>(args)...);
     }
 
 } // namespace webpp::object
