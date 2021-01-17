@@ -329,7 +329,6 @@ namespace webpp::alloc {
         using resources_type = resource_extractor<allocator_descriptors>;
 
         // only the default constructible ones are here:
-        // todo: make these unique (should we?)
         using filtered_resources_type =
           typename istl::filter_parameters<stl::is_default_constructible, resources_type>::type;
 
@@ -357,9 +356,16 @@ namespace webpp::alloc {
         template <typename ResourceType>
         static constexpr bool has_resource = istl::contains_parameter<resources_type, ResourceType>;
 
+        template <typename ResourceType>
+        static constexpr bool has_resource_object = istl::contains_parameter<filtered_resources_type, ResourceType>;
+
         template <ResourceDescriptor ResDescType>
         static constexpr bool has_resource_descriptor =
           istl::contains_parameter<resource_descriptors, ResDescType>;
+
+        template <ResourceDescriptor ResDescType>
+        static constexpr bool has_resource_descriptor_object =
+          has_resource_object<alloc::descriptors::storage<ResDescType>>;
 
         using local_allocator_type =
           descriptors::allocator<typename ranked<local_features>::best_allocator_descriptor>;
@@ -385,13 +391,13 @@ namespace webpp::alloc {
 
 
         template <typename ResourceType>
-        requires(!ResourceDescriptor<ResourceType> && has_resource<ResourceType>)
+        requires(!ResourceDescriptor<ResourceType> && has_resource_object<ResourceType>)
           [[nodiscard]] auto& get_resource() noexcept {
             return stl::get<ResourceType>(resources);
         }
 
         template <ResourceDescriptor ResDescType>
-        requires(has_resource_descriptor<ResDescType>) [[nodiscard]] auto& get_resource() noexcept {
+        requires(has_resource_descriptor_object<ResDescType>) [[nodiscard]] auto& get_resource() noexcept {
             return get_resource<descriptors::storage<ResDescType>>();
         }
 
@@ -420,8 +426,13 @@ namespace webpp::alloc {
         requires(has_allocator<AllocType>) [[nodiscard]] auto get_allocator() noexcept {
             using resource_descriptor = resource_descriptor_finder<allocator_descriptors, AllocType, ResType>;
             using value_type          = typename AllocType::value_type;
-            return descriptors::construct_allocator<resource_descriptor, value_type>(
-              get_resource<resource_descriptor>());
+            if constexpr (!stl::is_void_v<descriptors::storage<resource_descriptor>>) {
+                return descriptors::construct_allocator<resource_descriptor, value_type>(
+                  get_resource<resource_descriptor>());
+            } else {
+                // for allocators that have no resource type
+                return descriptors::construct_allocator<resource_descriptor, value_type>();
+            }
         }
 
         /**
@@ -438,12 +449,22 @@ namespace webpp::alloc {
 
         template <ResourceDescriptor ResDescType, typename T = stl::byte>
         requires(has_resource_descriptor<ResDescType>) [[nodiscard]] auto get_allocator() noexcept {
-            auto& res                = get_resource<alloc::descriptors::storage<ResDescType>>();
-            using the_bad_alloc_type = decltype(descriptors::construct_allocator<ResDescType, T>(res));
-            // replace allocator types inside T as well
-            using new_type =
-              replace_allocators<T, stl::allocator_traits<the_bad_alloc_type>::template rebind_alloc>;
-            return descriptors::construct_allocator<ResDescType, new_type>(res);
+            using res_type = alloc::descriptors::storage<ResDescType>;
+            if constexpr (has_resource<res_type>) {
+                auto& res                = get_resource<res_type>();
+                using the_bad_alloc_type = decltype(descriptors::construct_allocator<ResDescType, T>(res));
+                // replace allocator types inside T as well
+                using new_type =
+                  replace_allocators<T, stl::allocator_traits<the_bad_alloc_type>::template rebind_alloc>;
+                return descriptors::construct_allocator<ResDescType, new_type>(res);
+            } else {
+                // The allocator doesn't have a resource
+                using the_bad_alloc_type = decltype(descriptors::construct_allocator<ResDescType, T>());
+                // replace allocator types inside T as well
+                using new_type =
+                  replace_allocators<T, stl::allocator_traits<the_bad_alloc_type>::template rebind_alloc>;
+                return descriptors::construct_allocator<ResDescType, new_type>();
+            }
         }
 
 
@@ -457,8 +478,13 @@ namespace webpp::alloc {
             using best_allocator_type = typename best_allocator_template::template type<new_type>;
             if constexpr (the_ranked::has_resource) {
                 using best_resource_desc = typename the_ranked::best_resource_descriptor;
-                auto& res                = get_resource<best_resource_desc>();
-                return descriptors::construct_allocator<best_resource_desc, new_type>(res);
+                if constexpr (has_resource_descriptor_object<best_resource_desc>) {
+                    auto& res = get_resource<best_resource_desc>();
+                    return descriptors::construct_allocator<best_resource_desc, new_type>(res);
+                } else {
+                    // for allocators with no resource
+                    return descriptors::construct_allocator<best_resource_desc, new_type>();
+                }
             } else {
                 // we don't have a resource
                 return best_allocator_type{};
@@ -562,7 +588,6 @@ namespace webpp::alloc {
     static constexpr auto make(allocator_pack<AllocDescType>& alloc_pack, Args&&... args) {
         return alloc_pack.template make<T, FPack, Args...>(stl::forward<Args>(args)...);
     }
-
 
 
 } // namespace webpp::alloc

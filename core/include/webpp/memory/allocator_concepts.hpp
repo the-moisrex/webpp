@@ -100,6 +100,11 @@ namespace webpp {
             return RD::template construct_allocator<T>(res);
         }
 
+        template <ResourceDescriptor RD, typename T>
+        static inline auto construct_allocator() noexcept {
+            return RD::template construct_allocator<T>();
+        }
+
     } // namespace alloc::descriptors
 
     namespace details {
