@@ -15,7 +15,7 @@ using namespace webpp::stl;
 TEST(MemoryTest, AllocatorPackTest) {
     static_assert(Allocator<stl::pmr::polymorphic_allocator<char>>);
     allocator_pack<stl::pmr::allocator_descriptors> alloc_pack;
-    auto str    = make<string, monotonic_features>(alloc_pack, "hello world", placeholder{});
+    auto str    = make<string, local_features>(alloc_pack, "hello world", placeholder{});
     using str_t = remove_cvref_t<decltype(str)>;
     static_assert(same_as<str_t, stl::pmr::string>);
     EXPECT_EQ(str, "hello world");
