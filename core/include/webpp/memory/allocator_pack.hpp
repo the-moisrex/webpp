@@ -362,9 +362,9 @@ namespace webpp::alloc {
           istl::contains_parameter<resource_descriptors, ResDescType>;
 
         using local_allocator_type =
-          descriptors::allocator<typename ranked<monotonic_features>::best_allocator_descriptor>;
+          descriptors::allocator<typename ranked<local_features>::best_allocator_descriptor>;
         using local_resource_type =
-          descriptors::storage<typename ranked<monotonic_features>::best_resource_descriptor>;
+          descriptors::storage<typename ranked<local_features>::best_resource_descriptor>;
 
       private:
         [[no_unique_address]] filtered_resources_type resources{};
