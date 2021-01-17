@@ -141,6 +141,7 @@ namespace webpp::alloc {
     static constexpr auto monotonic_features   = feature_pack{stateful, noop_dealloc, unsync};
     static constexpr auto sync_pool_features   = feature_pack{sync, stateful};
     static constexpr auto unsync_pool_features = feature_pack{stateful, unsync};
+    static constexpr auto local_features       = monotonic_features;
     static constexpr auto general_features     = feature_pack{stateless, sync};
 
 
@@ -394,6 +395,20 @@ namespace webpp::alloc {
             return get_resource<descriptors::storage<ResDescType>>();
         }
 
+        template <feature_pack FPack>
+        [[nodiscard]] auto& get_resource() noexcept {
+            return get_resource<typename ranker<allocator_descriptors, FPack>::best_resource_descriptor>();
+        }
+
+
+        [[nodiscard]] auto& local_resource() noexcept {
+            return get_resource<local_features>();
+        }
+
+        [[nodiscard]] auto& general_resource() noexcept {
+            return get_resource<general_features>();
+        }
+
         template <Allocator AllocType, typename ResType>
         requires(has_allocator<AllocType>) [[nodiscard]] auto get_allocator(ResType& res) noexcept {
             using resource_descriptor = resource_descriptor_finder<allocator_descriptors, AllocType, ResType>;
@@ -452,7 +467,7 @@ namespace webpp::alloc {
 
         template <typename T>
         [[nodiscard]] auto local_allocator() noexcept {
-            return get_allocator<monotonic_features, T>();
+            return get_allocator<local_features, T>();
         }
 
         template <typename T>
@@ -532,7 +547,7 @@ namespace webpp::alloc {
 
         template <typename T, typename... Args>
         constexpr auto local(Args&&... args) {
-            return this->make<T, monotonic_features, Args...>(stl::forward<Args>(args)...);
+            return this->make<T, local_features, Args...>(stl::forward<Args>(args)...);
         }
 
         template <typename T, typename... Args>
