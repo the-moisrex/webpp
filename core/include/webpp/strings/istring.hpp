@@ -13,9 +13,6 @@
 
 namespace webpp {
 
-    template <typename T>
-    concept TraitsOrVoid = stl::is_void_v<stl::remove_cvref_t<T>> || Traits<stl::remove_cvref_t<T>>;
-
     /**
      * istring = improved string
      *
@@ -28,19 +25,17 @@ namespace webpp {
      *
      * @tparam StringType
      */
-    template <typename StringType,
-              TraitsOrVoid TraitsType = typename std_traits_from<stl::remove_cvref_t<StringType>>::type>
+    template <typename StringType>
     struct istring : public stl::remove_cvref_t<StringType> {
-        using traits_type      = TraitsType;
         using string_type      = stl::remove_cvref_t<StringType>;
         using char_type        = istl::char_type_of<string_type>;
         using char_traits_type = istl::char_traits_type_of<string_type>;
-        using istring_type     = istring<StringType, TraitsType>;
+        using istring_type     = istring<StringType>;
 
-        static constexpr bool has_allocator = requires {
+        static constexpr bool has_allocator = requires(string_type str) {
             typename string_type::allocator_type;
+            str.get_allocator();
         };
-        static constexpr bool has_traits = stl::is_void_v<traits_type>;
         static constexpr bool is_mutable = requires(string_type str) {
             str.clear();
         };
@@ -58,7 +53,7 @@ namespace webpp {
         using allocator_type =
           istl::lazy_conditional_t<has_allocator,
                                    istl::templated_lazy_type<allocator_extractor, string_type>,
-                                   istl::lazy_type<traits::general_char_allocator<traits_type>>>;
+                                   istl::lazy_type<void>>;
         using alternate_std_string_type      = stl::basic_string<char_type, char_traits_type, allocator_type>;
         using alternate_std_string_view_type = stl::basic_string_view<char_type, char_traits_type>;
 
@@ -91,7 +86,9 @@ namespace webpp {
         }
 
 
+
         [[nodiscard]] constexpr alternate_std_string_type std_string() const noexcept {
+            static_assert(has_allocator, "This type doesn't have an allocator.");
             return istl::stringify_of<alternate_std_string_type>(*this, get_allocator());
         }
 
@@ -317,9 +314,6 @@ namespace webpp {
         // todo: prepend
     };
 
-
-    using std_istring      = istring<stl::string>;
-    using std_istring_view = istring<stl::string_view>;
 
     template <istl::CharType CharT, stl::size_t size>
     istring(const CharT (&)[size]) -> istring<stl::basic_string_view<CharT>>;
