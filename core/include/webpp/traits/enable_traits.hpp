@@ -24,7 +24,19 @@ namespace webpp {
         [[no_unique_address]] allocator_pack_type& alloc_pack;
         [[no_unique_address]] logger_ref           logger{};
 
-        constexpr enable_traits(allocator_pack_type& alloc_pack_obj, logger_ref logger_obj) noexcept
+        // a copy constructor essentially
+        template <typename T>
+        requires requires(T et) {
+            et.alloc_pack;
+            et.logger;
+            requires stl::same_as<typename T::traits_type, traits_type>;
+            requires stl::same_as<typename T::logger_type, logger_type>;
+            requires stl::same_as<typename T::allocator_pack_type, allocator_pack_type>;
+        }
+        constexpr enable_traits(T& obj) noexcept : alloc_pack{obj.alloc_pack}, logger{obj.logger} {}
+
+        constexpr enable_traits(allocator_pack_type& alloc_pack_obj,
+                                logger_ref           logger_obj = logger_type{}) noexcept
           : alloc_pack{alloc_pack_obj},
             logger{logger_obj} {}
 

@@ -35,12 +35,13 @@ TEST(Routes, PathTests) {
     EXPECT_TRUE(static_cast<bool>(std::is_move_constructible_v<context_type>));
     EXPECT_TRUE(static_cast<bool>(Context<context_type>));
 
-    context_type ctx{};
+    traits::allocator_pack_type<std_traits> alloc_pack;
+    context_type ctx{alloc_pack};
 
     auto nctx       = ctx.template clone<fake_mommy, string_response>();
     using nctx_type = decltype(nctx);
     EXPECT_TRUE(nctx.test);
     using context_type2 = simple_context<request_type, extension_pack<string_response, fake_mommy>>;
-    auto ctx2           = context_type2{};
+    auto ctx2           = context_type2{nctx};
     EXPECT_EQ(ctx2.string("test").body.str(), "test");
 }

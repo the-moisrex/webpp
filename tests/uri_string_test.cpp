@@ -11,7 +11,7 @@ using namespace webpp::uri;
 TEST(URITests, Creation) {
     // using set and get methods twice in a row should not affect the outcome
 
-    uri_string u("http://example.com/");
+    mutable_uri u("http://example.com/");
     EXPECT_TRUE(u.has_scheme());
     EXPECT_TRUE(u.has_host());
     EXPECT_EQ(u.str(), "http://example.com/");
@@ -72,7 +72,7 @@ TEST(URITests, Creation) {
     EXPECT_FALSE(!ipv4_host.has_host());
     EXPECT_EQ(ipv4_host.host_raw(), "192.168.1.1");
 
-    uri_string local_file("file:///home/test/folder/file.txt");
+    mutable_uri local_file("file:///home/test/folder/file.txt");
     EXPECT_EQ(local_file.path_raw(), "/home/test/folder/file.txt");
     EXPECT_TRUE(local_file.has_path());
     EXPECT_TRUE(local_file.has_scheme());
@@ -96,9 +96,9 @@ TEST(URITests, Creation) {
 }
 
 TEST(URITests, IPv6HostName) {
-    uri_string<std::string>  u;
-    std::string uri_str = "//[::1]:8080/folder/file.md?name=value&name2=value2#str";
-    u                   = uri_str;
+    uri_string<std::string> u;
+    std::string             uri_str = "//[::1]:8080/folder/file.md?name=value&name2=value2#str";
+    u                               = uri_str;
     EXPECT_EQ(u.str(), uri_str);
     EXPECT_FALSE(u.has_scheme()) << "scheme: " << u.scheme();
     EXPECT_FALSE(!u.has_host());
@@ -303,19 +303,19 @@ TEST(URITests, URL) {
 }
 
 TEST(URITests, Set) {
-    EXPECT_EQ(uri_string().scheme("ftp").str(), "ftp:");
-    EXPECT_EQ(uri_string("mailto:someone@example.com").scheme("something_else").str(),
+    EXPECT_EQ(mutable_uri().scheme("ftp").str(), "ftp:");
+    EXPECT_EQ(mutable_uri("mailto:someone@example.com").scheme("something_else").str(),
               "something_else:someone@example.com");
 
     // TODO: should this be allowed even???
-    EXPECT_EQ(uri_string("urn:mpeg:mpeg7:schema:2001urn:isbn:0451450523").scheme("ftp").str(),
+    EXPECT_EQ(mutable_uri("urn:mpeg:mpeg7:schema:2001urn:isbn:0451450523").scheme("ftp").str(),
               "ftp:mpeg:mpeg7:schema:2001urn:isbn:0451450523");
 
-    EXPECT_EQ(uri_string("http://example.com/").scheme("ftp").str(), "ftp://example.com/");
+    EXPECT_EQ(mutable_uri("http://example.com/").scheme("ftp").str(), "ftp://example.com/");
 }
 
 TEST(URITests, Domains) {
-    uri_string u("http://coded.by.moisrex.localhost/path/to/something");
+    mutable_uri u("http://coded.by.moisrex.localhost/path/to/something");
     EXPECT_FALSE(!u.has_host());
     EXPECT_EQ("coded.by.moisrex.localhost", u.host_raw());
     EXPECT_TRUE(u.has_subdomains());
@@ -444,7 +444,7 @@ TEST(URITests, Normalize) {}
 
 
 TEST(UriTests, ParseFromStringNoScheme) {
-    uri_string uri;
+    mutable_uri uri;
     ASSERT_TRUE(uri.operator=("foo/bar").is_valid());
     ASSERT_EQ("", uri.scheme());
     // fixme: the bug is in the parsing section, but I'm not worried about this bug that much for now
@@ -456,7 +456,7 @@ TEST(UriTests, ParseFromStringNoScheme) {
 }
 
 TEST(UriTests, ParseFromStringUrl) {
-    uri_string uri;
+    mutable_uri uri;
     ASSERT_TRUE(uri.operator=("http://www.example.com/foo/bar").is_valid());
     ASSERT_EQ("http", uri.scheme());
     ASSERT_EQ("www.example.com", uri.host());
@@ -469,7 +469,7 @@ TEST(UriTests, ParseFromStringUrl) {
 }
 
 TEST(UriTests, ParseFromStringUrnDefaultPathDelimiter) {
-    uri_string uri;
+    mutable_uri uri;
     ASSERT_TRUE(uri.operator=("urn:book:fantasy:Hobbit").is_valid());
     ASSERT_EQ("urn", uri.scheme());
     ASSERT_EQ("", uri.host());
@@ -498,7 +498,7 @@ TEST(UriTests, ParseFromStringPathCornerCases) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.pathIn)).is_valid()) << index;
         ASSERT_EQ(testVector.pathOut, uri.slugs<std::vector<std::string>>()) << index;
         ++index;
@@ -506,7 +506,7 @@ TEST(UriTests, ParseFromStringPathCornerCases) {
 }
 
 TEST(UriTests, ParseFromStringHasAPortNumber) {
-    uri_string uri;
+    mutable_uri uri;
     ASSERT_TRUE(uri.operator=("http://www.example.com:8080/foo/bar").is_valid());
     ASSERT_EQ("www.example.com", uri.host());
     ASSERT_TRUE(uri.has_port());
@@ -514,14 +514,14 @@ TEST(UriTests, ParseFromStringHasAPortNumber) {
 }
 
 TEST(UriTests, ParseFromStringDoesNotHaveAPortNumber) {
-    uri_string uri;
+    mutable_uri uri;
     ASSERT_TRUE(uri.operator=("http://www.example.com/foo/bar").is_valid());
     ASSERT_EQ("www.example.com", uri.host());
     ASSERT_FALSE(uri.has_port());
 }
 
 TEST(UriTests, ParseFromStringTwiceFirstWithPortNumberThenWithout) {
-    uri_string uri;
+    mutable_uri uri;
     ASSERT_TRUE(uri.operator=("http://www.example.com:8080/foo/bar").is_valid());
     ASSERT_TRUE(uri.operator=("http://www.example.com/foo/bar").is_valid());
     ASSERT_FALSE(uri.has_port());
@@ -537,29 +537,29 @@ TEST(UriTests, ParseFromStringBadPortNumberPurelyAlphabetic) {
 }
 
 TEST(UriTests, ParseFromStringBadPortNumberStartsNumericEndsAlphabetic) {
-    uri_string uri;
+    mutable_uri uri;
     ASSERT_FALSE(uri.operator=("http://www.example.com:8080spam/foo/bar").is_valid());
 }
 
 TEST(UriTests, ParseFromStringLargestValidPortNumber) {
-    uri_string uri;
+    mutable_uri uri;
     ASSERT_TRUE(uri.operator=("http://www.example.com:65535/foo/bar").is_valid());
     ASSERT_TRUE(uri.has_port());
     ASSERT_EQ(65535, uri.port_uint16());
 }
 
 TEST(UriTests, ParseFromStringBadPortNumberTooBig) {
-    uri_string uri;
+    mutable_uri uri;
     ASSERT_FALSE(uri.operator=("http://www.example.com:65536/foo/bar").is_valid());
 }
 
 TEST(UriTests, ParseFromStringBadPortNumberNegative) {
-    uri_string uri;
+    mutable_uri uri;
     ASSERT_FALSE(uri.operator=("http://www.example.com:-1234/foo/bar").is_valid());
 }
 
 TEST(UriTests, ParseFromStringEndsAfterAuthority) {
-    uri_string uri;
+    mutable_uri uri;
     ASSERT_TRUE(uri.operator=("http://www.example.com").is_valid());
 }
 
@@ -576,7 +576,7 @@ TEST(UriTests, ParseFromStringRelativeVsNonRelativeReferences) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.isRelativeReference, uri.is_relative_reference()) << index;
         ++index;
@@ -603,7 +603,7 @@ TEST(UriTests, ParseFromStringRelativeVsNonRelativePaths) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.containsRelativePath, uri.is_path_relative()) << index;
         ++index;
@@ -635,7 +635,7 @@ TEST(UriTests, ParseFromStringQueryAndFragmentElements) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.host, uri.host()) << index;
         ASSERT_EQ(testVector.query, uri.queries_string()) << index;
@@ -661,7 +661,7 @@ TEST(UriTests, ParseFromStringUserInfo) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.userInfo, uri.user_info()) << index;
         ++index;
@@ -669,7 +669,7 @@ TEST(UriTests, ParseFromStringUserInfo) {
 }
 
 TEST(UriTests, ParseFromStringTwiceFirstUserInfoThenWithout) {
-    uri_string uri;
+    mutable_uri uri;
     ASSERT_TRUE(uri.operator=("http://joe@www.example.com/foo/bar").is_valid());
     ASSERT_TRUE(uri.operator=("/foo/bar").is_valid());
     ASSERT_TRUE(uri.user_info().empty());
@@ -686,7 +686,7 @@ TEST(UriTests, ParseFromStringSchemeIllegalCharacters) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_FALSE(uri.operator=((testVector)).is_valid()) << index;
         ++index;
     }
@@ -707,7 +707,7 @@ TEST(UriTests, ParseFromStringSchemeBarelyLegal) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.scheme, uri.scheme());
         ++index;
@@ -724,7 +724,7 @@ TEST(UriTests, ParseFromStringSchemeMixedCase) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector)).is_valid()) << index;
         ASSERT_EQ("http", uri.scheme()) << ">>> Failed for test vector element " << index << " <<<";
         ++index;
@@ -732,7 +732,7 @@ TEST(UriTests, ParseFromStringSchemeMixedCase) {
 }
 
 TEST(UriTests, ParseFromStringHostEndsInDot) {
-    uri_string uri;
+    mutable_uri uri;
     ASSERT_TRUE(uri.operator=("http://example.com./foo").is_valid());
     ASSERT_EQ("example.com.", uri.host());
 }
@@ -744,7 +744,7 @@ TEST(UriTests, ParseFromStringUserInfoIllegalCharacters) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_FALSE(uri.operator=((testVector)).is_valid()) << index;
         ++index;
     }
@@ -766,7 +766,7 @@ TEST(UriTests, ParseFromStringUserInfoBarelyLegal) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.userInfo, uri.user_info());
         ++index;
@@ -781,7 +781,7 @@ TEST(UriTests, ParseFromStringHostIllegalCharacters) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_FALSE(uri.operator=((testVector)).is_valid()) << index;
         ++index;
     }
@@ -805,7 +805,7 @@ TEST(UriTests, ParseFromStringHostBarelyLegal) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.host, uri.host());
         ++index;
@@ -822,7 +822,7 @@ TEST(UriTests, ParseFromStringHostMixedCase) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector)).is_valid()) << index;
         ASSERT_EQ("www.example.com", uri.host()) << ">>> Failed for test vector element " << index << " <<<";
         ++index;
@@ -840,7 +840,7 @@ TEST(UriTests, ParseFromStringDontMisinterpretColonInOtherPlacesAsSchemeDelimite
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector)).is_valid()) << index;
         ASSERT_TRUE(uri.scheme().empty());
         ++index;
@@ -872,7 +872,7 @@ TEST(UriTests, ParseFromStringPathIllegalCharacters) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_FALSE(uri.operator=((testVector)).is_valid()) << index;
         ++index;
     }
@@ -892,7 +892,7 @@ TEST(UriTests, ParseFromStringPathBarelyLegal) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.path, uri.slugs<std::vector<std::string>>());
         ++index;
@@ -924,7 +924,7 @@ TEST(UriTests, ParseFromStringQueryIllegalCharacters) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_FALSE(uri.operator=((testVector)).is_valid()) << index;
         ++index;
     }
@@ -945,7 +945,7 @@ TEST(UriTests, ParseFromStringQueryBarelyLegal) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.query, uri.queries_string());
         ++index;
@@ -977,7 +977,7 @@ TEST(UriTests, ParseFromStringFragmentIllegalCharacters) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_FALSE(uri.operator=((testVector)).is_valid()) << index;
         ++index;
     }
@@ -998,7 +998,7 @@ TEST(UriTests, ParseFromStringFragmentBarelyLegal) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.fragment, uri.fragment());
         ++index;
@@ -1023,7 +1023,7 @@ TEST(UriTests, ParseFromStringPathsWithPercentEncodedCharacters) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.pathFirstSegment, uri.slugs()[0]);
         ++index;
@@ -1073,7 +1073,7 @@ TEST(UriTests, NormalizePath) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         uri.normalize();
         EXPECT_EQ(testVector.normalizedPathSegments, uri.slugs<std::vector<std::string>>())
@@ -1085,7 +1085,7 @@ TEST(UriTests, NormalizePath) {
 TEST(UriTests, ConstructNormalizeAndCompareEquivalentUris) {
     // This was inspired by section 6.2.2
     // of RFC 3986 (https://tools.ietf.org/html/rfc3986).
-    uri_string uri1, uri2;
+    mutable_uri uri1, uri2;
     ASSERT_TRUE(uri1.operator=("example://a/b/c/%7Bfoo%7D").is_valid());
     ASSERT_TRUE(uri2.operator=("eXAMPLE://a/./b/../b/%63/%7bfoo%7d").is_valid());
     ASSERT_NE(uri1, uri2);
@@ -1139,7 +1139,7 @@ TEST(UriTests, ReferenceResolution) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string baseUri, relativeReferenceUri, expectedTargetUri;
+        mutable_uri baseUri, relativeReferenceUri, expectedTargetUri;
         ASSERT_TRUE(baseUri.operator=((testVector.baseString)).is_valid());
         ASSERT_TRUE(relativeReferenceUri.operator=((testVector.relativeReferenceString)).is_valid()) << index;
         ASSERT_TRUE(expectedTargetUri.operator=((testVector.targetString)).is_valid()) << index;
@@ -1150,7 +1150,7 @@ TEST(UriTests, ReferenceResolution) {
 }
 
 TEST(UriTests, EmptyPathInUriWithAuthorityIsEquivalentToSlashOnlyPath) {
-    uri_string uri1, uri2;
+    mutable_uri uri1, uri2;
     ASSERT_TRUE(uri1.operator=("http://example.com").is_valid());
     ASSERT_TRUE(uri2.operator=("http://example.com/").is_valid());
     ASSERT_EQ(uri1, uri2);
@@ -1204,7 +1204,7 @@ TEST(UriTests, IPv6Address) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         uri = (testVector.uriString);
         ASSERT_EQ(testVector.isValid, uri.is_valid()) << index;
         if (uri.is_valid()) {
@@ -1234,7 +1234,7 @@ TEST(UriTests, IPvFutureAddress) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         uri = (testVector.uriString);
         ASSERT_EQ(testVector.isValid, uri.is_valid()) << index;
         if (uri.is_valid()) {
@@ -1399,7 +1399,7 @@ TEST(UriTests, ToString) {
     };
     size_t index = 0;
     for (const auto& testVector : testVectors) {
-        uri_string uri;
+        mutable_uri uri;
         uri.scheme(testVector.scheme);
         uri.user_info(testVector.userinfo);
         uri.host(testVector.host);
@@ -1426,7 +1426,7 @@ TEST(UriTests, ToString) {
 }
 
 TEST(UriTests, FragmentEmptyButPresent) {
-    uri_string uri;
+    mutable_uri uri;
     ASSERT_TRUE(uri.operator=("http://example.com#").is_valid());
     ASSERT_TRUE(uri.has_fragment());
     ASSERT_EQ("", uri.fragment());
@@ -1443,7 +1443,7 @@ TEST(UriTests, FragmentEmptyButPresent) {
 }
 
 TEST(UriTests, QueryEmptyButPresent) {
-    uri_string uri;
+    mutable_uri uri;
     ASSERT_TRUE(uri.operator=("http://example.com?").is_valid());
     ASSERT_TRUE(uri.has_queries());
     ASSERT_EQ("", uri.queries_string());
@@ -1460,9 +1460,9 @@ TEST(UriTests, QueryEmptyButPresent) {
 }
 
 TEST(UriTests, MakeACopy) {
-    uri_string uri1;
+    mutable_uri uri1;
     uri1 = "http://www.example.com/foo.txt";
-    uri_string uri2(uri1);
+    mutable_uri uri2(uri1);
     uri1.queries("bar");
     uri2.fragment("page2");
     uri2.host("example.com");
@@ -1471,9 +1471,9 @@ TEST(UriTests, MakeACopy) {
 }
 
 TEST(UriTests, AssignACopy) {
-    uri_string uri1;
+    mutable_uri uri1;
     uri1 = "http://www.example.com/foo.txt";
-    uri_string uri2;
+    mutable_uri uri2;
     uri2 = uri1;
     uri1.queries("bar");
     uri2.fragment("page2");
@@ -1483,7 +1483,7 @@ TEST(UriTests, AssignACopy) {
 }
 
 TEST(UriTests, clear_queries) {
-    uri_string uri;
+    mutable_uri uri;
     uri = "http://www.example.com/?foo=bar";
     uri.clear_queries();
     EXPECT_EQ("http://www.example.com/", uri.to_string());
@@ -1498,7 +1498,7 @@ TEST(UriTests, PercentEncodePlusInQueries) {
     //
     // To avoid issues with these web services, make sure '+' is
     // percent-encoded in a URI when the URI is encoded.
-    uri_string uri;
+    mutable_uri uri;
     uri.queries("foo+bar");
     EXPECT_EQ("?foo%2Bbar", uri.to_string());
 }

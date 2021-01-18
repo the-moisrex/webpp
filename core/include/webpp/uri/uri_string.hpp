@@ -83,18 +83,16 @@ namespace webpp::uri {
      *
      *  [protocol"://"[username[":"password]"@"]hostname[":"port]"/"?][path]["?"querystring]["#"fragment]
      */
-    template <typename StrT = stl::string, istl::StringView StrViewT = istl::string_view_type_of<StrT>>
-    struct uri_string : public allocator_holder<typename StrT::allocator_type> {
-        using string_type       = StrT;
-        using string_view_type  = StrViewT;
+    template <istl::String StrT = stl::string, istl::StringView StrViewT = istl::string_view_type_of<StrT>>
+    struct uri_string : public allocator_holder<typename stl::remove_cvref_t<StrT>::allocator_type> {
+        using string_type       = stl::remove_cvref_t<StrT>;
+        using string_view_type  = stl::remove_cvref_t<StrViewT>;
         using char_type         = istl::char_type_of<StrT>;
         using allocator_type    = typename string_type::allocator_type;
         using alloc_holder_type = allocator_holder<allocator_type>;
 
-        static constexpr bool Mutable = istl::String<string_type> && !istl::StringView<string_type>;
+        static constexpr bool Mutable = !stl::is_const_v<StrT>;
 
-        static_assert(istl::String<string_type> || istl::StringView<string_type>,
-                      "The specified StrT is not a string nor a string_view type.");
         static_assert(stl::same_as<char_type, istl::char_type_of<string_view_type>>,
                       "The specified string types do not have the same character type.");
 
@@ -377,7 +375,8 @@ namespace webpp::uri {
         constexpr uri_string(storred_str_t&& u) noexcept : data(stl::move(u)) {}
 
         constexpr uri_string(uri_string const& bu) noexcept
-          : data{bu.data},
+          : alloc_holder_type{bu.get_allocator()},
+            data{bu.data},
             scheme_end{bu.scheme_end},
             authority_start{bu.authority_start},
             user_info_end{bu.user_info_end},
@@ -387,7 +386,8 @@ namespace webpp::uri {
             fragment_start{bu.fragment_start} {}
 
         constexpr uri_string(uri_string&& bu) noexcept
-          : data{stl::move(bu.data)},
+          : alloc_holder_type{bu.get_allocator()},
+            data{stl::move(bu.data)},
             scheme_end{stl::move(bu.scheme_end)},
             authority_start{stl::move(bu.authority_start)},
             user_info_end{stl::move(bu.user_info_end)},
@@ -1917,7 +1917,8 @@ namespace webpp::uri {
     uri_string(stl::basic_string<CharT>)
       -> uri_string<stl::basic_string<CharT>, stl::basic_string_view<CharT>>;
 
-    using uri_view = uri_string<stl::string_view, stl::string_view>;
+    using mutable_uri = uri_string<stl::string, stl::string_view>;
+    using uri_view    = uri_string<const stl::string, stl::string_view>;
 
 
 
@@ -1965,8 +1966,8 @@ namespace webpp::uri {
                                          istl::StringViewifiable auto&& _p2) noexcept {
         const auto p1 = istl::string_viewify(stl::forward<decltype(_p1)>(_p1));
         const auto p2 = istl::string_viewify(stl::forward<decltype(_p2)>(_p2));
-        using str_v   = stl::remove_cvref_t<decltype(p1)>;
-        return p1 == p2 || equal_path(uri_string<str_v, str_v>{p1}, uri_string<str_v, str_v>{p2});
+        return p1 == p2 || equal_path(uri_string<const stl::string, decltype(p1)>{p1},
+                                      uri_string<const stl::string, decltype(p2)>{p2});
     }
 
     template <typename StrT, typename StrViewT>
