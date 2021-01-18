@@ -26,7 +26,7 @@ namespace webpp {
 
         constexpr bool is_signed = stl::is_same_v<T, stl::make_signed_t<T>>;
         const auto     str       = istl::string_viewify(stl::forward<decltype(_str)>(_str));
-        using char_type          = istl::char_type_of<decltype(str)>;
+        // using char_type          = istl::char_type_of<decltype(str)>;
         T ret                    = 0;
         if (!str.size())
             return ret;
@@ -72,16 +72,16 @@ namespace webpp {
         return to<type, base, throw_mistakes>(stl::forward<decltype(str)>(str)); \
     }
 
-    WEBPP_TO_FUNCTION(int, int);
-    WEBPP_TO_FUNCTION(int8, int8_t);
-    WEBPP_TO_FUNCTION(int16, int16_t);
-    WEBPP_TO_FUNCTION(int32, int32_t);
-    WEBPP_TO_FUNCTION(int64, int64_t);
-    WEBPP_TO_FUNCTION(uint, unsigned int);
-    WEBPP_TO_FUNCTION(uint8, uint8_t);
-    WEBPP_TO_FUNCTION(uint16, uint16_t);
-    WEBPP_TO_FUNCTION(uint32, uint32_t);
-    WEBPP_TO_FUNCTION(uint64, uint64_t);
+    WEBPP_TO_FUNCTION(int, int)
+    WEBPP_TO_FUNCTION(int8, int8_t)
+    WEBPP_TO_FUNCTION(int16, int16_t)
+    WEBPP_TO_FUNCTION(int32, int32_t)
+    WEBPP_TO_FUNCTION(int64, int64_t)
+    WEBPP_TO_FUNCTION(uint, unsigned int)
+    WEBPP_TO_FUNCTION(uint8, uint8_t)
+    WEBPP_TO_FUNCTION(uint16, uint16_t)
+    WEBPP_TO_FUNCTION(uint32, uint32_t)
+    WEBPP_TO_FUNCTION(uint64, uint64_t)
 
 #undef WEBPP_TO_FUNCTION
 

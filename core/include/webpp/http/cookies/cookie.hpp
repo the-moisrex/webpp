@@ -136,7 +136,7 @@ namespace webpp {
 
         void parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value, bool& _valid) noexcept {
             using name_t           = stl::remove_cvref_t<decltype(_name)>;
-            using value_t          = stl::remove_cvref_t<decltype(_value)>;
+            // using value_t          = stl::remove_cvref_t<decltype(_value)>;
             using string_view_type = stl::remove_cvref_t<decltype(str)>;
             using char_type        = typename name_t::value_type;
 

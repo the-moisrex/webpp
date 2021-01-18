@@ -157,8 +157,9 @@ namespace webpp {
         // requires ThreadPool<typename T::thread_pool>;   // thread pool
 
         typename T::string_view;
-        typename T::template string<
-          alloc::ranker<typename T::allocator_descriptors, alloc::general_features>::template type>;
+        typename T::template string <
+          typename alloc::allocator_pack<typename T::allocator_descriptors>::template general_allocator_type<
+            typename T::string_view::value_type>>;
 
         // todo: add String<typename T::string_type>; without adding a circular dependency
         // todo: add StringView<typename T::string_view_type>; without adding a circular dependency
