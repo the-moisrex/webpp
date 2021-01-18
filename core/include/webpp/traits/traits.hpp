@@ -153,7 +153,7 @@ namespace webpp {
     template <typename T>
     concept Traits = requires {
         requires AllocatorDescriptorList<typename T::allocator_descriptors>; // allocator pack
-        requires Logger<typename T::logger_type>;                         // logger type
+        requires Logger<typename T::logger_type>;                            // logger type
         // requires ThreadPool<typename T::thread_pool>;   // thread pool
 
         typename T::string_view;
@@ -191,31 +191,37 @@ namespace webpp {
     namespace traits {
 
         template <Traits TT>
+        using allocator_pack_type = alloc::allocator_pack<typename TT::allocator_descriptors>;
+
+        template <Traits TT, typename T>
+        using local_allocator = typename allocator_pack_type<TT>::template local_allocator_type<T>;
+
+        template <Traits TT, typename T>
+        using general_allocator = typename allocator_pack_type<TT>::template general_allocator_type<T>;
+
+        template <Traits TT>
         using string_view = typename TT::string_view;
 
-        template <Traits TT, template <typename> typename AllocT>
-        using string = typename TT::template string<AllocT>;
+        template <Traits TT>
+        using char_type = istl::char_type_of<string_view<TT>>;
+
+        template <Traits TT>
+        using local_string_allocator = local_allocator<TT, char_type<TT>>;
+
+        template <Traits TT>
+        using general_string_allocator = general_allocator<TT, char_type<TT>>;
+
+        template <Traits TT, Allocator AllocType>
+        using string = typename TT::template string<AllocType>;
+
+        template <Traits TT>
+        using general_string = string<TT, general_string_allocator<TT>>;
+
+        template <Traits TT>
+        using local_string = string<TT, local_string_allocator<TT>>;
 
         template <Traits TT>
         using logger = typename TT::logger_type;
-
-        //        template <Traits TT, typename T>
-        //        using local_allocator = typename TT::allocator_descriptors::template local<T>;
-        //
-        //        template <Traits TT>
-        //        using local_string_allocator = local_allocator<TT, istl::char_type_of<string_view<TT>>>;
-        //
-        //        template <Traits TT, typename T>
-        //        using general_allocator = typename TT::allocator_descriptors::template general<T>;
-        //
-        //        template <Traits TT>
-        //        using general_string_allocator = general_allocator<TT, istl::char_type_of<string_view<TT>>>;
-        //
-        //        template <Traits TT>
-        //        using general_string = typename TT::template string<general_string_allocator<TT>>;
-        //
-        //        template <Traits TT>
-        //        using local_string = typename TT::template string<local_string_allocator<TT>>;
 
     } // namespace traits
 
