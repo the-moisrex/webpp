@@ -854,8 +854,8 @@ namespace webpp {
 
 
         [[nodiscard]] auto operator()(Context auto&& ctx, Request auto const& req) const noexcept {
-            using context_type = stl::remove_cvref_t<decltype(ctx)>;
-            using request_type = stl::remove_cvref_t<decltype(req)>;
+            // using context_type = stl::remove_cvref_t<decltype(ctx)>;
+            // using request_type = stl::remove_cvref_t<decltype(req)>;
 
             return run_route(ctx, req);
         }

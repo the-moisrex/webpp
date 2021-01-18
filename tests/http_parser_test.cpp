@@ -62,7 +62,7 @@ TEST(HTTPRequestParser, HeaderLexer) {
     str sample_request = "one: 1\r\n"
                          "two: 2\r\n"
                          "The-One:Yes,NoSpaceIsNeeded\r\n";
-    http_lexer<webpp::std_traits> lexer{.raw_view = sample_request};
+    http_lexer<str, traits::general_string_allocator<std_traits>> lexer{.raw_view = sample_request};
 
     ASSERT_NO_THROW(lexer.consume_all());
     EXPECT_EQ(std::count_if(std::begin(sample_request),

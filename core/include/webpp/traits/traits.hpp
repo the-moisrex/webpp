@@ -174,10 +174,10 @@ namespace webpp {
     concept EnabledTraits = requires(T t) {
         requires Logger<typename T::logger_type>;
         requires Traits<typename T::traits_type>;
-        { t.logger }
-        ->Logger;
-        t.template local_alloc<char>();
-        t.template general_alloc<char>();
+        { t.logger } -> Logger;
+        t.alloc_pack;
+        // t.template local_alloc<char>();
+        // t.template general_alloc<char>();
     };
 
 
