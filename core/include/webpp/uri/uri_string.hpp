@@ -1917,8 +1917,9 @@ namespace webpp::uri {
     uri_string(stl::basic_string<CharT>)
       -> uri_string<stl::basic_string<CharT>, stl::basic_string_view<CharT>>;
 
+    // todo: is there a difference between uri_string and uri_view?
     template <istl::CharType CharT = char>
-    using uri_view = uri_string<stl::basic_string_view<CharT>, stl::basic_string_view<CharT>>;
+    using uri_view = uri_string<stl::basic_string<CharT>, stl::basic_string_view<CharT>>;
 
 
     //    template <typename StrT, typename StrViewT>
