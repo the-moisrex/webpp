@@ -359,7 +359,8 @@ namespace webpp {
             using context_type                = stl::remove_cvref_t<ContextType>;
             using context_ref_type            = stl::add_lvalue_reference_t<context_type>;
             using traits_type                 = typename context_type::traits_type;
-            using string_type                 = traits::string<traits_type>;
+            // todo: use local string if possible:
+            using string_type                 = traits::general_string<traits_type>;
             constexpr bool has_path_extension = requires {
                 {ctx.path};
             };

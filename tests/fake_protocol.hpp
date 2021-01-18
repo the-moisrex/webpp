@@ -28,6 +28,7 @@ namespace webpp {
 
         template <typename... Args>
         fake_proto_request(Args&&... args) noexcept : super{stl::forward<Args>(args)...} {}
+        fake_proto_request(fake_proto_request const&) = default;
 
         istl::map<traits_type, string_type, string_type> data{};
 

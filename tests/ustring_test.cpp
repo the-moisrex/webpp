@@ -6,7 +6,7 @@
 
 using namespace webpp;
 using namespace std;
-
+/*
 TEST(UString, Init) {
     utf8 str{u8"سلام"};
 }
@@ -613,3 +613,7 @@ void test_15() {
 }
 
 //  ustring &operator=(const ustring &str); where S1 is UTF-8 and S2 is UTF-16 -> should be a compile error
+
+
+
+ */

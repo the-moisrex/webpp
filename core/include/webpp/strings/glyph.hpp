@@ -57,8 +57,8 @@ namespace webpp {
         using reference         = code_point_type;
         using difference_type   = stl::ptrdiff_t;
 
-        static constexpr bool is_utf8  = UTF8<value_type>;
-        static constexpr bool is_utf16 = UTF16<value_type>;
+        static constexpr bool is_utf8  = unicode::UTF8<value_type>;
+        static constexpr bool is_utf16 = unicode::UTF16<value_type>;
 
       private:
         pointer start{nullptr};
@@ -195,9 +195,9 @@ namespace webpp {
         static_assert(sizeof(CodePointType) >= sizeof(CharT),
                       "The specified wide char type is smaller than the unicode char type");
 
-        static constexpr bool is_utf16 = UTF16<value_type>;
-        static constexpr bool is_utf8  = UTF8<value_type>;
-        static constexpr bool is_wchar = WChar<value_type>;
+        static constexpr bool is_utf16 = unicode::UTF16<value_type>;
+        static constexpr bool is_utf8  = unicode::UTF8<value_type>;
+        static constexpr bool is_wchar = unicode::WChar<value_type>;
 
         value_type value;
 

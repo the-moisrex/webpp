@@ -15,17 +15,18 @@ namespace webpp::istl {
               typename Key,
               typename T,
               typename Compare   = stl::less<Key>,
-              typename Allocator = typename Traits::template allocator<stl::pair<const Key, T>>>
+              typename Allocator = traits::general_allocator<Traits, stl::pair<const Key, T>>>
     using map = stl::map<Key, T, Compare, Allocator>;
 
     template <typename Traits,
               typename Key,
               typename T,
               typename Compare   = stl::less<Key>,
-              typename Allocator = typename Traits::template allocator<stl::pair<const Key, T>>>
+              typename Allocator = traits::general_allocator<Traits, stl::pair<const Key, T>>>
     using multimap = stl::multimap<Key, T, Compare, Allocator>;
 
 
+    // todo: use better thing here that supports the allocator pack idea
     template <typename StringType = stl::string,
               typename AllocType  = typename stl::remove_cvref_t<StringType>::allocator_type>
     using map_of_strings =

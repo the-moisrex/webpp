@@ -23,7 +23,7 @@ namespace webpp {
         using string_view           = stl::basic_string_view<char_type, char_traits>;
 
         template <typename AllocT>
-        using string = stl::basic_string<char_type, char_traits, char_type>;
+        using string = stl::basic_string<char_type, char_traits, AllocT>;
     };
 
     using std_traits    = basic_std_traits<char>;
