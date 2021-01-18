@@ -96,7 +96,9 @@ namespace webpp {
 
 
         // parse one line of a header (A header field as it called in the RFC)
-        status_code_type parse_header_field(string_view_type& str) noexcept {}
+        status_code_type parse_header_field(string_view_type& str) noexcept {
+            // todo
+        }
 
 
         // parse the header fully

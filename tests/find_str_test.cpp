@@ -10,10 +10,10 @@
 #ifdef WEBPP_EVE
 namespace mtest {
     std::size_t find_str_simple(std::string_view str1, std::string_view str2) noexcept {
-        using char_type                 = typename std::remove_cvref_t<decltype(str1)>::value_type;
-        using simd_type                 = eve::wide<char_type>;
-        using string_type               = std::string_view;
-        static constexpr auto simd_size = simd_type::size();
+        using string_type = std::string_view;
+        // using char_type   = typename std::remove_cvref_t<decltype(str1)>::value_type;
+        // using simd_type                 = eve::wide<char_type>;
+        // static constexpr auto simd_size = simd_type::size();
 
         const auto size1 = str1.size();
         const auto size2 = str2.size();
