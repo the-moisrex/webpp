@@ -79,8 +79,9 @@ namespace webpp::http {
                                   // https://developer.mozilla.org/en-US/docs/Glossary/Quality_values
         };
 
-        using allowed_encodings_type =
-          stl::vector<compression_algo_type, to_alloc<allocator_type, compression_algo_type>>;
+        using allowed_encodings_type = stl::vector<
+          compression_algo_type,
+          typename stl::allocator_traits<allocator_type>::template rebind_alloc<compression_algo_type>>;
 
         // ctor
         constexpr basic_accept_encoding(auto&&... args) noexcept
@@ -350,7 +351,7 @@ namespace webpp::http {
 
     template <Traits TraitsType>
     using accept_encoding =
-      basic_accept_encoding<traits::local_char_allocator<TraitsType>, traits::string_view<TraitsType>>;
+      basic_accept_encoding<traits::general_string_allocator<TraitsType>, traits::string_view<TraitsType>>;
 
 } // namespace webpp::http
 

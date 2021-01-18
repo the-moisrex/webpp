@@ -318,6 +318,9 @@ namespace webpp {
     template <istl::CharType CharT, stl::size_t size>
     istring(const CharT (&)[size]) -> istring<stl::basic_string_view<CharT>>;
 
+    using std_istring      = istring<stl::string>;
+    using std_istring_view = istring<stl::string_view>;
+
 
 } // namespace webpp
 
