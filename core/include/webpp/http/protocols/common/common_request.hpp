@@ -17,7 +17,10 @@ namespace webpp {
         using request_extension_list = stl::remove_cvref_t<REL>;
         using etraits                = enable_traits<traits_type>;
 
-        using etraits::enable_traits;
+
+        common_request(auto&&... args) noexcept
+          : request_extension_list{},
+            etraits{stl::forward<decltype(args)>(args)...} {}
 
 #define WEBPP_COMMON_STR_METHOD(name, value)   \
     [[nodiscard]] auto name() const noexcept { \
@@ -25,7 +28,7 @@ namespace webpp {
     }
 
         // todo: add openssl or other stuff's version as well here
-        WEBPP_COMMON_STR_METHOD(server_software, stl::format(FMT_COMPILE("WEB++/{}"), webpp_version));
+        WEBPP_COMMON_STR_METHOD(server_software, stl::format("WEB++/{}", webpp_version))
 
 #undef WEBPP_COMMON_STR_METHOD
     };

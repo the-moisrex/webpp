@@ -32,11 +32,13 @@ TEST(Router, RouterConcepts) {
 TEST(Router, RouteCreation) {
     using request = typename fake_proto<std_traits, fake_app>::request_type;
 
-    constexpr auto about_page = [](Context auto& ctx) noexcept {
+    constexpr auto about_page = [](Context auto&) noexcept {
         return "About page\n";
     };
 
-    auto   req = request{};
+    traits::allocator_pack_type<std_traits> alloc_pack;
+
+    auto   req = request{alloc_pack};
     router router1{extension_pack<string_response>{}, about_page};
     auto   res = router1(req);
     res.calculate_default_headers();
