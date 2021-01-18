@@ -68,7 +68,7 @@ TEST(FunctionalTests, DebouncedFunctions) {
 
 
 TEST(FunctionalTests, TrailingMode) {
-    using dtype = debounce_type;
+    // using dtype = debounce_type;
 
     debounce_trailing debounced_lambda([] {
 

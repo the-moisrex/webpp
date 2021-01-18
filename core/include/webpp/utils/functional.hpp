@@ -102,7 +102,7 @@ namespace webpp {
             using type = callable_as_field<Callable>;
         };
 
-    }; // namespace details
+    } // namespace details
 
 
 

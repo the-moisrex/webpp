@@ -99,6 +99,6 @@ namespace webpp {
     using simple_response_body =
       typename extension_pack<E...>::template extensie_type<TraitsType, response_body_descriptor>;
 
-}; // namespace webpp
+} // namespace webpp
 
 #endif // WEBPP_BODY_H

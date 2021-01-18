@@ -268,7 +268,7 @@ namespace webpp {
 
             auto str = istl::string_viewify(_str);
 
-            using char_type = istl::char_type_of<decltype(str)>;
+            // using char_type = istl::char_type_of<decltype(str)>;
 
             if (auto found = stl::find_if(stl::rbegin(str),
                                           stl::rend(str),

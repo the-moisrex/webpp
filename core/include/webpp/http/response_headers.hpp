@@ -79,7 +79,7 @@ namespace webpp {
         using related_extension_pack_type = typename ExtensionType::response_header_field_extensions;
 
         template <typename ExtensionListType, typename TraitsType, typename EList>
-        using mid_level_extensie_type = header_field<TraitsType, EList>;
+        using mid_level_extensie_type = header_field<traits::general_string<TraitsType>, EList>;
 
         // empty final extensie
         template <typename ExtensionListType, typename TraitsType, typename EList>

@@ -24,9 +24,8 @@ namespace webpp {
             struct type {
                 using traits_type      = TraitsType;
                 using string_view_type = traits::string_view<traits_type>;
-                using char_type        = istl::char_type_of<string_view_type>;
-                using allocator_type   = traits::general_allocator<traits_type, char_type>;
-                using string_type      = traits::string<traits_type, allocator_type>;
+                using string_type      = traits::general_string<traits_type>;
+                using allocator_type   = typename string_type::allocator_type;
 
               private:
                 using alloc_type    = allocator_type const&;
