@@ -20,17 +20,19 @@ namespace webpp {
      *
      */
     template <Traits TraitsType, typename HeaderEList, typename HeaderFieldType>
-    class response_headers : public istl::vector<TraitsType, HeaderFieldType>, public HeaderEList {
+    class response_headers
+      : public stl::vector<HeaderFieldType, traits::general_allocator<TraitsType, HeaderFieldType>>,
+        public HeaderEList {
 
-        //        using super =
-        //          istl::unordered_multiset<TraitsType, HeaderFieldType,
-        //          response_header_field_hash<HeaderFieldType>,
-        //                                   response_header_field_equals<HeaderFieldType>>;
-        using super = istl::vector<TraitsType, HeaderFieldType>;
+        // using super =
+        //   istl::unordered_multiset<TraitsType, HeaderFieldType,
+        //   response_header_field_hash<HeaderFieldType>,
+        //                            response_header_field_equals<HeaderFieldType>>;
+        using super = stl::vector<HeaderFieldType, traits::general_allocator<TraitsType, HeaderFieldType>>;
 
       public:
         using traits_type = TraitsType;
-        using string_type = traits::string<traits_type>;
+        using string_type = traits::general_string<traits_type>;
         using field_type  = HeaderFieldType;
 
         template <typename... Args>

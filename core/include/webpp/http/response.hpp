@@ -28,7 +28,7 @@ namespace webpp {
         using body_type        = BodyType;
         using headers_type     = ResponseHeaderType;
         using string_view_type = traits::string_view<traits_type>;
-        using string_type      = traits::string<traits_type>;
+        using string_type      = traits::general_string<traits_type>;
 
         body_type    body{};
         headers_type headers{};
@@ -152,7 +152,7 @@ namespace webpp {
       typename extension_pack<E...>::template extensie_type<TraitsType, basic_response_descriptor>;
 
 
-    using fake_response_type = simple_response<fake_traits_type>;
+    // using fake_response_type = simple_response<fake_traits_type>;
 
 } // namespace webpp
 #endif // WEBPP_HTTP_RESPONSE_H
