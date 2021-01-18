@@ -101,7 +101,6 @@ namespace webpp::ascii {
     template <typename CharT>                                                                                \
     requires(stl::is_integral_v<CharT> &&                                                                    \
              !stl::is_const_v<CharT>) inline void simple_##method(CharT* start, const CharT* end) noexcept { \
-        using char_type = CharT;                                                                             \
         auto* it        = start;                                                                             \
         for (; it != end; ++it)                                                                              \
             method(*it);                                                                                     \

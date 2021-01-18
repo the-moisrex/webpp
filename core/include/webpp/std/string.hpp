@@ -146,7 +146,7 @@ namespace webpp::istl {
         } else {
             return &str[0]; // it'll throw an error if it didn't work, so let's do this
         }
-    };
+    }
 
     template <typename T>
     concept ComparableToString = requires(T obj) {

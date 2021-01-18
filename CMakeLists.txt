@@ -56,10 +56,12 @@ message(STATUS "Install bin dir expression     : ${INSTALL_BINDIR}")
 message(STATUS "Install include dir expression : ${INSTALL_INCLUDEDIR}")
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(IS_GCC true)
     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS ${gcc_min_version})
         message(FATAL_ERROR "This version of GCC is not supported. We need at least version ${gcc_min_version}.")
     endif ()
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(IS_CLANG true)
     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS ${clang_min_version})
         message(FATAL_ERROR "This version of Clang is not supported. We need at least version ${clang_min_version}.")
     endif ()
@@ -67,6 +69,12 @@ endif ()
 
 
 add_compile_definitions(WEBPP_PROJECT_ROOT=${CMAKE_CURRENT_SOURCE_DIR})
+
+
+if(IS_GCC)
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fconcepts-diagnostics-depth=10 -Wall -Wpedantic -Wextra")
+endif()
+
 
 add_subdirectory(${LIB_DIR})
 add_subdirectory(${SDK_DIR})

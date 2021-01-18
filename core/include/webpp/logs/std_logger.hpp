@@ -140,6 +140,6 @@ namespace webpp {
     using stderr_logger = std_logger<stderr_functor>;
     using stdout_logger = std_logger<stdout_functor>;
 
-}; // namespace webpp
+} // namespace webpp
 
 #endif // WEBPP_STD_LOGGER_HPP
