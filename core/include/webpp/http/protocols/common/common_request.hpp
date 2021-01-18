@@ -12,10 +12,12 @@ namespace webpp {
 
 
     template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL>
-    struct common_request : public stl::remove_cvref_t<REL> {
+    struct common_request : public stl::remove_cvref_t<REL>, public enable_traits<TraitsType> {
         using traits_type            = stl::remove_cvref_t<TraitsType>;
         using request_extension_list = stl::remove_cvref_t<REL>;
+        using etraits                = enable_traits<traits_type>;
 
+        using etraits::enable_traits;
 
 #define WEBPP_COMMON_STR_METHOD(name, value)   \
     [[nodiscard]] auto name() const noexcept { \

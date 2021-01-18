@@ -23,6 +23,6 @@ namespace webpp {
     //    };
 
 
-}; // namespace webpp
+} // namespace webpp
 
 #endif // WEBPP_HTTP_HTTP_H

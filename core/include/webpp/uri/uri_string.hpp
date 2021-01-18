@@ -83,7 +83,7 @@ namespace webpp::uri {
      *
      *  [protocol"://"[username[":"password]"@"]hostname[":"port]"/"?][path]["?"querystring]["#"fragment]
      */
-    template <typename StrT, istl::StringView StrViewT = istl::string_view_type_of<StrT>>
+    template <typename StrT = stl::string, istl::StringView StrViewT = istl::string_view_type_of<StrT>>
     struct uri_string : public allocator_holder<typename StrT::allocator_type> {
         using string_type       = StrT;
         using string_view_type  = StrViewT;
@@ -449,20 +449,21 @@ namespace webpp::uri {
             return Mutable;
         }
 
-
-        bool operator==(const uri_string& other) const noexcept {
+        template <typename StringType, typename StringViewType>
+        constexpr bool operator==(const uri_string<StringType, StringViewType>& other) const noexcept {
             return ascii::iequals(str(), other.str());
         }
 
-        bool operator!=(const uri_string& other) const noexcept {
+        template <typename StringType, typename StringViewType>
+        constexpr bool operator!=(const uri_string<StringType, StringViewType>& other) const noexcept {
             return !ascii::iequals(str(), other.str());
         }
 
-        bool operator==(string_view_type const& u) const noexcept {
+        constexpr bool operator==(string_view_type const& u) const noexcept {
             return ascii::iequals(str(), u);
         }
 
-        bool operator!=(string_view_type const& u) const noexcept {
+        constexpr bool operator!=(string_view_type const& u) const noexcept {
             return !ascii::iequals(str(), u);
         }
 
@@ -1916,29 +1917,10 @@ namespace webpp::uri {
     uri_string(stl::basic_string<CharT>)
       -> uri_string<stl::basic_string<CharT>, stl::basic_string_view<CharT>>;
 
-    template <istl::CharType CharT = char>
-    using uri_view = uri_string<stl::basic_string_view<CharT>, stl::basic_string_view<CharT>>;
+    using uri_view = uri_string<stl::string_view, stl::string_view>;
 
 
-    //    template <typename StrT, typename StrViewT>
-    //    bool operator==(uri_string<StrT, StrViewT> const& one,
-    //                    uri_string<StrT, StrViewT> const& two) noexcept {
-    //        return one.operator==(two.str());
-    //    }
 
-
-    //    template <typename CharT>
-    //    bool operator==(uri<CharT> const&       one,
-    //                    const_uri<CharT> const& two) noexcept {
-    //        return one.operator==(two.str());
-    //    }
-    //
-    //    template <typename CharT>
-    //    bool operator==(const_uri<CharT> const& one,
-    //                    uri<CharT> const&       two) noexcept {
-    //        return one.operator==(two.str());
-    //    }
-    //
     template <typename Str1T, typename StrView1T, typename Str2T, typename StrView2T>
     [[nodiscard]] bool equal_path(uri_string<Str1T, StrView1T> const& p1,
                                   uri_string<Str2T, StrView2T> const& p2) noexcept {

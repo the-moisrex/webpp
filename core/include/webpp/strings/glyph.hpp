@@ -110,7 +110,8 @@ namespace webpp {
         }
 
         constexpr glyph& operator++() noexcept {
-            unicode::advance(start);
+            // todo:
+            // unicode::advance(start);
             return *this;
         }
 

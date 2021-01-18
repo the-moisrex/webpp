@@ -128,11 +128,8 @@ namespace webpp {
         using logger_ref         = typename etraits::logger_ref;
 
       public:
-        // todo: fix this ctor
-        template <typename... Args>
-        constexpr basic_context(Args&&... args) noexcept
-          : etraits(args...),
-            elist_type{stl::forward<Args>(args)...} {}
+
+        using etraits::enable_traits;
 
         constexpr basic_context(basic_context&& ctx) noexcept      = default;
         constexpr basic_context(basic_context const& ctx) noexcept = default;
