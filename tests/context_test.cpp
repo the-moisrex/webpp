@@ -26,13 +26,14 @@ struct fake_mommy {
 
 TEST(Routes, PathTests) {
 
-    EXPECT_TRUE(static_cast<bool>(Protocol<typename fake_request_type::protocol_type>));
+    // todo: do we need this?
+    // EXPECT_TRUE(static_cast<bool>(Protocol<typename request_type::protocol_type>));
 
-    EXPECT_TRUE(static_cast<bool>(Traits<typename fake_context_type::traits_type>));
-    EXPECT_TRUE(static_cast<bool>(Request<typename fake_context_type::request_type>));
-    EXPECT_TRUE(static_cast<bool>(std::is_copy_constructible_v<fake_context_type>));
-    EXPECT_TRUE(static_cast<bool>(std::is_move_constructible_v<fake_context_type>));
-    EXPECT_TRUE(static_cast<bool>(Context<fake_context_type>));
+    EXPECT_TRUE(static_cast<bool>(Traits<typename context_type::traits_type>));
+    EXPECT_TRUE(static_cast<bool>(Request<typename context_type::request_type>));
+    EXPECT_TRUE(static_cast<bool>(std::is_copy_constructible_v<context_type>));
+    EXPECT_TRUE(static_cast<bool>(std::is_move_constructible_v<context_type>));
+    EXPECT_TRUE(static_cast<bool>(Context<context_type>));
 
     context_type ctx{};
 

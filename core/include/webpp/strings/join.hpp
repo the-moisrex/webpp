@@ -43,7 +43,7 @@ namespace webpp::string {
             if constexpr (!stl::is_void_v<StringType>) {
                 return extract_allocator_of_or_default<istl::allocator_type_of<str_type>>(strs...);
             } else if constexpr (requires { str_type::allocator_type; }) { // has allocator
-                using best_alloc_type = typename str_type::allocator_type;
+                // using best_alloc_type = typename str_type::allocator_type;
                 const auto best_alloc = best_str_t::get(stl::forward<T>(strs)...).get_allocator();
                 return best_alloc;
             } else { // use default allocator

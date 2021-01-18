@@ -62,7 +62,7 @@ TEST(URITests, Creation) {
     EXPECT_TRUE(u.has_scheme());
     EXPECT_EQ(u.str(), "http://eg2.com/");
 
-    uri_view ipv4_host("https://192.168.1.1");
+    uri_view<char> ipv4_host("https://192.168.1.1");
     EXPECT_TRUE(webpp::is::ipv4(ipv4_host.host_raw()));
     EXPECT_EQ(ipv4_host.scheme(), "https");
     EXPECT_FALSE(ipv4_host.has_path());

@@ -595,7 +595,7 @@ namespace webpp {
         inline auto run_route(Context auto&& ctx, Request auto const& req) const noexcept {
             // exceptions will be handled by the router, unfortunately we're not able to do that here
 
-            using context_type = stl::add_lvalue_reference_t<stl::remove_cvref_t<decltype(ctx)>>;
+            // using context_type = stl::add_lvalue_reference_t<stl::remove_cvref_t<decltype(ctx)>>;
             auto res           = call_this_route(ctx, req);
             using res_t        = stl::remove_cvref_t<decltype(res)>;
             using n_res_t      = stl::remove_cvref_t<decltype(call_next_route(ctx, req))>;
@@ -696,7 +696,7 @@ namespace webpp {
 
         [[nodiscard]] inline auto call_next_route([[maybe_unused]] Context auto&&      ctx,
                                                   [[maybe_unused]] Request auto const& req) const noexcept {
-            using context_type = stl::remove_cvref_t<decltype(ctx)>;
+            // using context_type = stl::remove_cvref_t<decltype(ctx)>;
             if constexpr (is_next_route_valid) {
                 return call_route(super_t::next, ctx, req);
             } else {

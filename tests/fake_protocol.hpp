@@ -24,15 +24,18 @@ namespace webpp {
     struct fake_proto_request : public common_request<TraitsType, REL> {
         using super       = common_request<TraitsType, REL>;
         using traits_type = TraitsType;
-        using string_type = typename super::string_type;
+        using string_type = traits::general_string<traits_type>;
+        using string_view = traits::string_view<traits_type>;
+
+        istl::map<traits_type, string_type, string_type> data{};
 
         template <typename... Args>
         fake_proto_request(Args&&... args) noexcept : super{stl::forward<Args>(args)...} {}
         fake_proto_request(fake_proto_request const&) = default;
+        fake_proto_request(fake_proto_request&&)       noexcept = default;
 
-        istl::map<traits_type, string_type, string_type> data{};
 
-        stl::string_view get_data(auto&& str) noexcept {
+        string_view get_data(auto&& str) noexcept {
             if (auto res = stl::find(data.begin(), data.end(), str)) {
                 return *res;
             } else {
@@ -41,156 +44,156 @@ namespace webpp {
         }
 
 
-        [[nodiscard]] stl::string_view server_software() const noexcept {
+        [[nodiscard]] string_view server_software() const noexcept {
             return get_data("SERVER_SOFTWARE");
         }
 
 
-        [[nodiscard]] stl::string_view server_name() const noexcept {
+        [[nodiscard]] string_view server_name() const noexcept {
             return get_data("SERVER_NAME");
         }
 
 
-        [[nodiscard]] stl::string_view gateway_interface() const noexcept {
+        [[nodiscard]] string_view gateway_interface() const noexcept {
             return get_data("GATEWAY_INTERFACE");
         }
 
 
-        [[nodiscard]] stl::string_view server_protocol() const noexcept {
+        [[nodiscard]] string_view server_protocol() const noexcept {
             return get_data("SERVER_PROTOCOL");
         }
 
 
-        [[nodiscard]] stl::string_view server_port() const noexcept {
+        [[nodiscard]] string_view server_port() const noexcept {
             return get_data("SERVER_PORT");
         }
 
 
-        [[nodiscard]] stl::string_view request_method() const noexcept {
+        [[nodiscard]] string_view request_method() const noexcept {
             return get_data("REQUEST_METHOD");
         }
 
 
-        [[nodiscard]] stl::string_view path_info() const noexcept {
+        [[nodiscard]] string_view path_info() const noexcept {
             return get_data("PATH_INFO");
         }
 
 
-        [[nodiscard]] stl::string_view path_translated() const noexcept {
+        [[nodiscard]] string_view path_translated() const noexcept {
             return get_data("PATH_TRANSLATED");
         }
 
 
-        [[nodiscard]] stl::string_view script_name() const noexcept {
+        [[nodiscard]] string_view script_name() const noexcept {
             return get_data("SCRIPT_NAME");
         }
 
 
-        [[nodiscard]] stl::string_view query_string() const noexcept {
+        [[nodiscard]] string_view query_string() const noexcept {
             return get_data("QUERY_STRING");
         }
 
 
-        [[nodiscard]] stl::string_view remote_host() const noexcept {
+        [[nodiscard]] string_view remote_host() const noexcept {
             return get_data("REMOTE_HOST");
         }
 
 
-        [[nodiscard]] stl::string_view remote_addr() const noexcept {
+        [[nodiscard]] string_view remote_addr() const noexcept {
             return get_data("REMOTE_ADDR");
         }
 
 
-        [[nodiscard]] stl::string_view auth_type() const noexcept {
+        [[nodiscard]] string_view auth_type() const noexcept {
             return get_data("AUTH_TYPE");
         }
 
 
-        [[nodiscard]] stl::string_view remote_user() const noexcept {
+        [[nodiscard]] string_view remote_user() const noexcept {
             if (auto a = get_data("REMOTE_USER"); !a.empty())
                 return a;
             return get_data("AUTH_USER");
         }
 
 
-        [[nodiscard]] stl::string_view auth_user() const noexcept {
+        [[nodiscard]] string_view auth_user() const noexcept {
             if (auto a = get_data("AUTH_USER"); !a.empty())
                 return a;
             return get_data("REMOTE_USER");
         }
 
 
-        [[nodiscard]] stl::string_view remote_ident() const noexcept {
+        [[nodiscard]] string_view remote_ident() const noexcept {
             return get_data("REMOTE_IDENT");
         }
 
 
-        [[nodiscard]] stl::string_view request_scheme() const noexcept {
+        [[nodiscard]] string_view request_scheme() const noexcept {
             return get_data("REQUEST_SCHEME");
         }
 
 
-        [[nodiscard]] stl::string_view remote_port() const noexcept {
+        [[nodiscard]] string_view remote_port() const noexcept {
             return get_data("REMOTE_PORT");
         }
 
 
-        [[nodiscard]] stl::string_view server_addr() const noexcept {
+        [[nodiscard]] string_view server_addr() const noexcept {
             return get_data("SERVER_ADDR");
         }
 
 
-        [[nodiscard]] stl::string_view request_uri() const noexcept {
+        [[nodiscard]] string_view request_uri() const noexcept {
             return get_data("REQUEST_URI");
         }
 
 
-        [[nodiscard]] stl::string_view content_type() const noexcept {
+        [[nodiscard]] string_view content_type() const noexcept {
             return get_data("CONTENT_LENGTH");
         }
 
 
-        [[nodiscard]] stl::string_view content_length() const noexcept {
+        [[nodiscard]] string_view content_length() const noexcept {
             return get_data("CONTENT_LENGTH");
         }
 
 
-        [[nodiscard]] stl::string_view document_root() const noexcept {
+        [[nodiscard]] string_view document_root() const noexcept {
             return get_data("DOCUMENT_ROOT");
         }
 
 
-        [[nodiscard]] stl::string_view https() const noexcept {
+        [[nodiscard]] string_view https() const noexcept {
             return get_data("HTTPS");
         }
 
 
-        [[nodiscard]] stl::string_view server_admin() const noexcept {
+        [[nodiscard]] string_view server_admin() const noexcept {
             return get_data("SERVER_ADMIN");
         }
 
 
-        [[nodiscard]] stl::string_view path() const noexcept {
+        [[nodiscard]] string_view path() const noexcept {
             return get_data("PATH");
         }
 
 
-        [[nodiscard]] stl::string_view script_filename() const noexcept {
+        [[nodiscard]] string_view script_filename() const noexcept {
             return get_data("SCRIPT_FILENAME");
         }
 
 
-        [[nodiscard]] stl::string_view header(stl::string_view const& name) const noexcept {
+        [[nodiscard]] string_view header(string_view const& name) const noexcept {
             return this->header(stl::string(name));
         }
 
 
-        [[nodiscard]] stl::string_view headers() const noexcept {
+        [[nodiscard]] string_view headers() const noexcept {
             return this->headers();
         }
 
 
-        [[nodiscard]] stl::string_view body() const noexcept {
+        [[nodiscard]] string_view body() const noexcept {
             return this->body();
         }
     };
