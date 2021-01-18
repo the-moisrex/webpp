@@ -357,7 +357,8 @@ namespace webpp::alloc {
         static constexpr bool has_resource = istl::contains_parameter<resources_type, ResourceType>;
 
         template <typename ResourceType>
-        static constexpr bool has_resource_object = istl::contains_parameter<filtered_resources_type, ResourceType>;
+        static constexpr bool has_resource_object =
+          istl::contains_parameter<filtered_resources_type, ResourceType>;
 
         template <ResourceDescriptor ResDescType>
         static constexpr bool has_resource_descriptor =
@@ -367,8 +368,14 @@ namespace webpp::alloc {
         static constexpr bool has_resource_descriptor_object =
           has_resource_object<alloc::descriptors::storage<ResDescType>>;
 
-        using local_allocator_type =
-          descriptors::allocator<typename ranked<local_features>::best_allocator_descriptor>;
+        template <typename T>
+        using local_allocator_type = typename descriptors::allocator<
+          typename ranked<local_features>::best_allocator_descriptor>::template type<T>;
+
+        template <typename T>
+        using general_allocator_type = typename descriptors::allocator<
+          typename ranked<general_features>::best_allocator_descriptor>::template type<T>;
+
         using local_resource_type =
           descriptors::storage<typename ranked<local_features>::best_resource_descriptor>;
 

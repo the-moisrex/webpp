@@ -19,8 +19,7 @@ namespace webpp {
         using extension_list   = stl::remove_cvref_t<EList>;
         using string_view_type = traits::string_view<traits_type>;
         using char_type        = istl::char_type_of<string_view_type>;
-        using allocator_type   = traits::general_allocator<traits_type, char_type>;
-        using string_type      = traits::string<traits_type, allocator_type>;
+        using string_type      = traits::general_string<traits_type>;
         using etraits          = enable_traits<traits_type>;
         using app_wrapper_type = http_app_wrapper<traits_type, application_type>;
 
