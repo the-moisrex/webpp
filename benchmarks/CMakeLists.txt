@@ -26,6 +26,7 @@ set(FILE_SOURCES
         lexical_cast/lexical_cast_benchmark.cpp
         string_join/string_join_benchmark.cpp
         str_to_integral_types/str_to_integral_types_benchmark.cpp
+        allocator_packs/allocator_packs_benchmark.cpp
         )
 file(GLOB FILE_PCH *_pch.hpp)
 
