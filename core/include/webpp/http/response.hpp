@@ -81,13 +81,13 @@ namespace webpp {
             using header_field_type = typename decltype(headers)::field_type;
             using str_t             = typename header_field_type::string_type;
             if (stl::find(headers.cbegin(), headers.cend(), "Content-Type") != headers.cend())
-                headers.emplace_back(
+                headers.push_back(
                   header_field_type{.name = "Content-Type", .value = "text/html; charset=utf-8"});
 
             if (stl::find(headers.cbegin(), headers.cend(), "Content-Length") != headers.cend()) {
                 str_t value{headers.get_allocator()};
                 append_to(value, body.str().size() * sizeof(char));
-                headers.emplace_back(header_field_type{.name = "Content-Length", .value = value});
+                headers.push_back(header_field_type{.name = "Content-Length", .value = stl::move(value)});
             }
         }
 

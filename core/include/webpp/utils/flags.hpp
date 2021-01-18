@@ -43,7 +43,7 @@ namespace webpp::flags {
         static constexpr bool are_values_sequential = []() constexpr noexcept->bool {
             const auto vals = magic_enum::enum_values<type>();
             for (stl::size_t i = 0; i < vals.size(); ++i)
-                if (magic_enum::enum_integer(vals[i]) != i)
+                if (static_cast<stl::size_t>(magic_enum::enum_integer(vals[i])) != i)
                     return false;
             return true;
         }

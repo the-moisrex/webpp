@@ -52,5 +52,5 @@ TEST(MemoryTest, STDAllocatorPackTest) {
 
 
 TEST(MemoryTest, AvailableMemory) {
-    EXPECT_TRUE(available_memory() >= 0);
+    EXPECT_TRUE(available_memory() > 0);
 }
