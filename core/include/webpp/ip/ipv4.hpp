@@ -6,6 +6,7 @@
 #include "../validators/validators.hpp"
 
 #include <array>
+#include <compare>
 
 namespace webpp {
 
@@ -228,8 +229,8 @@ namespace webpp {
             parse(stl::forward<decltype(ip)>(ip));
         }
 
-        constexpr ipv4(istl::StringViewifiable auto&& ip, uint8_t __prefix) noexcept
-          : _prefix(__prefix > 32 && __prefix != 255u ? 253u : __prefix) {
+        constexpr ipv4(istl::StringViewifiable auto&& ip, uint8_t prefix_val) noexcept
+          : _prefix(prefix_val > 32 && prefix_val != 255u ? 253u : prefix_val) {
             parse(stl::forward<decltype(ip)>(ip));
         }
 
@@ -237,9 +238,9 @@ namespace webpp {
                        uint8_t octet2,
                        uint8_t octet3,
                        uint8_t octet4,
-                       uint8_t __prefix = 255) noexcept
+                       uint8_t prefix_val = 255) noexcept
           : data(parse({octet1, octet2, octet3, octet4})),
-            _prefix(__prefix > 32 && __prefix != 255u ? 253u : __prefix) {}
+            _prefix(prefix_val > 32 && prefix_val != 255u ? 253u : prefix_val) {}
 
         constexpr ipv4(uint8_t                 octet1,
                        uint8_t                 octet2,
@@ -288,100 +289,17 @@ namespace webpp {
             return *this;
         }
 
-        constexpr bool operator==(stl::array<uint8_t, 4> other) const noexcept {
-            return data == parse(other);
+        constexpr auto operator<=>(ipv4 const&) const noexcept = default;
+        constexpr auto operator<=>(stl::array<uint8_t, 4> other) const noexcept {
+            return data <=> parse(other);
         }
 
-        constexpr bool operator!=(stl::array<uint8_t, 4> other) const noexcept {
-            return data != parse(other);
+        constexpr auto operator!=(istl::StringViewifiable auto&& ip) const noexcept {
+            return operator<=>(ipv4(stl::forward<decltype(ip)>(ip)));
         }
 
-        constexpr bool operator<(stl::array<uint8_t, 4> other) const noexcept {
-            return data < parse(other);
-        }
-
-        constexpr bool operator>(stl::array<uint8_t, 4> other) const noexcept {
-            return data > parse(other);
-        }
-
-        constexpr bool operator<=(stl::array<uint8_t, 4> other) const noexcept {
-            return data <= parse(other);
-        }
-
-        constexpr bool operator>=(stl::array<uint8_t, 4> other) const noexcept {
-            return data >= parse(other);
-        }
-
-        constexpr bool operator==(ipv4 const& other) const noexcept {
-            return data == other.data && _prefix == other._prefix;
-        }
-
-        constexpr bool operator!=(ipv4 const& other) const noexcept {
-            return !operator==(other);
-        }
-
-        constexpr bool operator<(ipv4 const& other) const noexcept {
-            return data < other.data;
-        }
-
-        constexpr bool operator>(ipv4 const& other) const noexcept {
-            return data > other.data;
-        }
-
-        constexpr bool operator>=(ipv4 const& other) const noexcept {
-            return data >= other.data;
-        }
-
-        constexpr bool operator<=(ipv4 const& other) const noexcept {
-            return data <= other.data;
-        }
-
-        constexpr bool operator!=(istl::StringViewifiable auto&& ip) const noexcept {
-            return operator!=(ipv4(stl::forward<decltype(ip)>(ip)));
-        }
-
-        constexpr bool operator==(istl::StringViewifiable auto&& ip) const noexcept {
-            return operator==(ipv4(stl::forward<decltype(ip)>(ip)));
-        }
-
-        constexpr bool operator<(istl::StringViewifiable auto&& ip) const noexcept {
-            return operator<(ipv4(stl::forward<decltype(ip)>(ip)));
-        }
-
-        constexpr bool operator>(istl::StringViewifiable auto&& ip) const noexcept {
-            return operator>(ipv4(stl::forward<decltype(ip)>(ip)));
-        }
-
-        constexpr bool operator<=(istl::StringViewifiable auto&& ip) const noexcept {
-            return operator<=(ipv4(stl::forward<decltype(ip)>(ip)));
-        }
-
-        constexpr bool operator>=(istl::StringViewifiable auto&& ip) const noexcept {
-            return operator>=(ipv4(stl::forward<decltype(ip)>(ip)));
-        }
-
-        constexpr bool operator==(uint32_t const& ip) const noexcept {
-            return integer() == ip;
-        }
-
-        constexpr bool operator!=(uint32_t const& ip) const noexcept {
-            return !operator==(ip);
-        }
-
-        constexpr bool operator<(uint32_t const& ip) const noexcept {
-            return integer() < ip;
-        }
-
-        constexpr bool operator>(uint32_t const& ip) const noexcept {
-            return integer() > ip;
-        }
-
-        constexpr bool operator<=(uint32_t const& ip) const noexcept {
-            return integer() <= ip;
-        }
-
-        constexpr bool operator>=(uint32_t const& ip) const noexcept {
-            return integer() >= ip;
+        constexpr auto operator<=>(uint32_t const& ip) const noexcept {
+            return data <=> ip;
         }
 
         /**
@@ -442,10 +360,10 @@ namespace webpp {
 
         /**
          * Change the prefix of the ip
-         * @param __prefix
+         * @param prefix_val
          */
-        constexpr ipv4& prefix(uint8_t __prefix) noexcept {
-            _prefix = __prefix > 32 && __prefix != 255u ? 253u : __prefix;
+        constexpr ipv4& prefix(uint8_t prefix_val) noexcept {
+            _prefix = prefix_val > 32 && prefix_val != 255u ? 253u : prefix_val;
             return *this;
         }
 
@@ -560,78 +478,6 @@ namespace webpp {
          */
         // [[nodiscard]] string_type geographic_location() const noexcept;
     };
-
-    constexpr bool operator==(uint32_t const& one, ipv4 const& two) noexcept {
-        return two == one;
-    }
-
-    constexpr bool operator!=(uint32_t const& one, ipv4 const& two) noexcept {
-        return two == one;
-    }
-
-    constexpr bool operator<(uint32_t const& one, ipv4 const& two) noexcept {
-        return one < two.integer();
-    }
-
-    constexpr bool operator>(uint32_t const& one, ipv4 const& two) noexcept {
-        return one > two.integer();
-    }
-
-    constexpr bool operator<=(uint32_t const& one, ipv4 const& two) noexcept {
-        return one <= two.integer();
-    }
-
-    constexpr bool operator>=(uint32_t const& one, ipv4 const& two) noexcept {
-        return one >= two.integer();
-    }
-
-    constexpr bool operator==(istl::StringViewifiable auto&& one, ipv4 const& two) noexcept {
-        return two == one;
-    }
-
-    constexpr bool operator!=(istl::StringViewifiable auto&& one, ipv4 const& two) noexcept {
-        return two != one;
-    }
-
-    constexpr bool operator<(istl::StringViewifiable auto&& one, ipv4 const& two) noexcept {
-        return ipv4(stl::forward<decltype(one)>(one)) < two;
-    }
-
-    constexpr bool operator>(istl::StringViewifiable auto&& one, ipv4 const& two) noexcept {
-        return ipv4(stl::forward<decltype(one)>(one)) > two;
-    }
-
-    constexpr bool operator<=(istl::StringViewifiable auto&& one, ipv4 const& two) noexcept {
-        return ipv4(stl::forward<decltype(one)>(one)) <= two;
-    }
-
-    constexpr bool operator>=(istl::StringViewifiable auto&& one, ipv4 const& two) noexcept {
-        return ipv4(stl::forward<decltype(one)>(one)) >= two;
-    }
-
-    constexpr bool operator==(stl::array<uint8_t, 4> one, ipv4 const& two) noexcept {
-        return two == one;
-    }
-
-    constexpr bool operator!=(stl::array<uint8_t, 4> one, ipv4 const& two) noexcept {
-        return two != one;
-    }
-
-    constexpr bool operator<(stl::array<uint8_t, 4> one, ipv4 const& two) noexcept {
-        return ipv4(one) < two;
-    }
-
-    constexpr bool operator>(stl::array<uint8_t, 4> one, ipv4 const& two) noexcept {
-        return ipv4(one) > two;
-    }
-
-    constexpr bool operator<=(stl::array<uint8_t, 4> one, ipv4 const& two) noexcept {
-        return ipv4(one) <= two;
-    }
-
-    constexpr bool operator>=(stl::array<uint8_t, 4> one, ipv4 const& two) noexcept {
-        return ipv4(one) >= two;
-    }
 
 } // namespace webpp
 

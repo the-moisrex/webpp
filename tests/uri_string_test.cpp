@@ -96,7 +96,7 @@ TEST(URITests, Creation) {
 }
 
 TEST(URITests, IPv6HostName) {
-    uri_string  u;
+    uri_string<std::string>  u;
     std::string uri_str = "//[::1]:8080/folder/file.md?name=value&name2=value2#str";
     u                   = uri_str;
     EXPECT_EQ(u.str(), uri_str);
@@ -112,14 +112,14 @@ TEST(URITests, IPv6HostName) {
     EXPECT_EQ(u.host_raw(), "[::1]") << "host: " << u.host_raw();
     EXPECT_EQ(u.port_uint16(), 8080);
     EXPECT_EQ(u.port(), "8080");
-    EXPECT_TRUE(std::holds_alternative<ipv6<std_traits>>(u.host_structured()))
+    EXPECT_TRUE(std::holds_alternative<ipv6>(u.host_structured()))
       << "index: " << u.host_structured().index();
     u.clear_path();
     EXPECT_EQ(u.str(), "//[::1]:8080/?name=value&name2=value2#str");
 }
 
 TEST(URITests, WieredURIs) {
-    uri_view u1("ftp://ftp.is.co.za/rfc/rfc1808.txt");
+    uri_view<char> u1("ftp://ftp.is.co.za/rfc/rfc1808.txt");
     EXPECT_FALSE(!u1.has_host());
     EXPECT_TRUE(u1.has_scheme());
     EXPECT_EQ(u1.scheme(), "ftp");
@@ -157,7 +157,7 @@ TEST(URITests, WieredURIs) {
                   "http://example.com/?a=1&b=2+2&c=3&c=4&d=%65%6e%63%6F%64%65%64"};
 
     for (auto const& _uri : _uris) {
-        EXPECT_TRUE(uri_view(_uri).is_valid()) << "uri: " << _uri;
+        EXPECT_TRUE(uri_view<>(_uri).is_valid()) << "uri: " << _uri;
     }
 
     uri_string not_port{"http://username:password@domain.tld/path/file.ext"};
@@ -193,7 +193,7 @@ TEST(URITests, URN) {
         EXPECT_FALSE(uri_string(_urn).is_url());
     }
 
-    uri_view   a("urn:example:a123,z456");
+    uri_view<>   a("urn:example:a123,z456");
     uri_string b{"URN:example:a123,z456"};
     uri_string c{"urn:EXAMPLE:a123,z456"};
 

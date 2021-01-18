@@ -91,7 +91,7 @@ namespace webpp::uri {
         using allocator_type    = typename string_type::allocator_type;
         using alloc_holder_type = allocator_holder<allocator_type>;
 
-        static constexpr bool Mutable = istl::StringView<string_type> && !istl::String<string_type>;
+        static constexpr bool Mutable = istl::String<string_type> && !istl::StringView<string_type>;
 
         static_assert(istl::String<string_type> || istl::StringView<string_type>,
                       "The specified StrT is not a string nor a string_view type.");
@@ -1907,7 +1907,6 @@ namespace webpp::uri {
 
     template <istl::CharType CharT = char>
     uri_string(CharT const*) -> uri_string<stl::basic_string<CharT>, stl::basic_string_view<CharT>>;
-    // basic_uri(const char[])->basic_uri<std::string_view>;
 
     template <typename CharT = char>
     uri_string(stl::basic_string_view<CharT>)
@@ -1917,9 +1916,8 @@ namespace webpp::uri {
     uri_string(stl::basic_string<CharT>)
       -> uri_string<stl::basic_string<CharT>, stl::basic_string_view<CharT>>;
 
-    // todo: is there a difference between uri_string and uri_view?
     template <istl::CharType CharT = char>
-    using uri_view = uri_string<stl::basic_string<CharT>, stl::basic_string_view<CharT>>;
+    using uri_view = uri_string<stl::basic_string_view<CharT>, stl::basic_string_view<CharT>>;
 
 
     //    template <typename StrT, typename StrViewT>
