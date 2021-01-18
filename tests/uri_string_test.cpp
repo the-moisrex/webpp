@@ -62,7 +62,7 @@ TEST(URITests, Creation) {
     EXPECT_TRUE(u.has_scheme());
     EXPECT_EQ(u.str(), "http://eg2.com/");
 
-    uri_view<char> ipv4_host("https://192.168.1.1");
+    uri_view ipv4_host("https://192.168.1.1");
     EXPECT_TRUE(webpp::is::ipv4(ipv4_host.host_raw()));
     EXPECT_EQ(ipv4_host.scheme(), "https");
     EXPECT_FALSE(ipv4_host.has_path());
@@ -119,7 +119,7 @@ TEST(URITests, IPv6HostName) {
 }
 
 TEST(URITests, WieredURIs) {
-    uri_view<char> u1("ftp://ftp.is.co.za/rfc/rfc1808.txt");
+    uri_view u1("ftp://ftp.is.co.za/rfc/rfc1808.txt");
     EXPECT_FALSE(!u1.has_host());
     EXPECT_TRUE(u1.has_scheme());
     EXPECT_EQ(u1.scheme(), "ftp");
@@ -157,7 +157,7 @@ TEST(URITests, WieredURIs) {
                   "http://example.com/?a=1&b=2+2&c=3&c=4&d=%65%6e%63%6F%64%65%64"};
 
     for (auto const& _uri : _uris) {
-        EXPECT_TRUE(uri_view<>(_uri).is_valid()) << "uri: " << _uri;
+        EXPECT_TRUE(uri_view(_uri).is_valid()) << "uri: " << _uri;
     }
 
     uri_string not_port{"http://username:password@domain.tld/path/file.ext"};
@@ -193,7 +193,7 @@ TEST(URITests, URN) {
         EXPECT_FALSE(uri_string(_urn).is_url());
     }
 
-    uri_view<>   a("urn:example:a123,z456");
+    uri_view   a("urn:example:a123,z456");
     uri_string b{"URN:example:a123,z456"};
     uri_string c{"urn:EXAMPLE:a123,z456"};
 

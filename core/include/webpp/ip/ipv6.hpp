@@ -6,6 +6,7 @@
 #include "ipv4.hpp"
 
 #include <array>
+#include <compare>
 #include <variant>
 
 namespace webpp {
@@ -236,15 +237,10 @@ namespace webpp {
             return *this;
         }
 
-        bool operator==(ipv6 const& other) const noexcept {
-            return data == other.data && _prefix == other._prefix;
-        }
+        constexpr auto operator<=>(ipv6 const& other) const noexcept = default;
+        // todo: add other stuff for operator<=>
 
-        bool operator!=(ipv6 const& other) const noexcept {
-            return !operator==(other);
-        }
 
-        // TODO: add other operators
 
         explicit operator octets8_t() const noexcept {
             return octets8();

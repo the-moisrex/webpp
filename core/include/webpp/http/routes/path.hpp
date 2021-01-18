@@ -103,12 +103,12 @@ namespace webpp {
         using context_extensions = extension_pack<path_extension>;
     };
 
-    template <typename T, typename PathType, typename UriSegmentsType>
-    concept Segment = requires(T seg) {
-        // todo: update this
-        seg.template operator()<typename fake_context_type::template context_type_with_appended_extensions<
-          path_context_extension<PathType, UriSegmentsType>>>;
-    };
+    // template <typename T, typename PathType, typename UriSegmentsType>
+    // concept Segment = requires(T seg) {
+    //     // todo: update this
+    //     seg.template operator()<typename simple_context<>::template context_type_with_appended_extensions<
+    //       path_context_extension<PathType, UriSegmentsType>>>;
+    // };
 
     /**
      * Operator Path:
@@ -356,9 +356,9 @@ namespace webpp {
         operator()(ContextType&& ctx, Request auto const& req) noexcept {
             // handle inside-sub-route internal segment is done in this method
 
-            using context_type                = stl::remove_cvref_t<ContextType>;
-            using context_ref_type            = stl::add_lvalue_reference_t<context_type>;
-            using traits_type                 = typename context_type::traits_type;
+            using context_type     = stl::remove_cvref_t<ContextType>;
+            using context_ref_type = stl::add_lvalue_reference_t<context_type>;
+            using traits_type      = typename context_type::traits_type;
             // todo: use local string if possible:
             using string_type                 = traits::general_string<traits_type>;
             constexpr bool has_path_extension = requires {

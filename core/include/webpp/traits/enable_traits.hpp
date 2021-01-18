@@ -21,31 +21,31 @@ namespace webpp {
         using string_type         = traits::general_string<traits_type>;
         using allocator_pack_type = traits::allocator_pack_type<traits_type>;
 
-        [[no_unique_address]] allocator_pack_type alloc_pack{};
-        [[no_unique_address]] logger_ref          logger{};
+        [[no_unique_address]] allocator_pack_type& alloc_pack;
+        [[no_unique_address]] logger_ref           logger{};
 
-        constexpr enable_traits(allocator_pack_type&& alloc_pack_obj, logger_ref logger_obj) noexcept
-          : alloc_pack{stl::move(alloc_pack_obj)},
+        constexpr enable_traits(allocator_pack_type& alloc_pack_obj, logger_ref logger_obj) noexcept
+          : alloc_pack{alloc_pack_obj},
             logger{logger_obj} {}
 
-        constexpr enable_traits(logger_ref logger_obj, allocator_pack_type&& alloc_pack_obj) noexcept
-          : alloc_pack{stl::move(alloc_pack_obj)},
+        constexpr enable_traits(logger_ref logger_obj, allocator_pack_type& alloc_pack_obj) noexcept
+          : alloc_pack{alloc_pack_obj},
             logger{logger_obj} {}
 
-        template <typename... ResType>
-        requires((allocator_pack_type::template has_resource_object<ResType> &&
-                  ...)) // check if the allocator pack has the resources
-          constexpr explicit enable_traits(logger_ref logger_obj = logger_type{},
-                                           ResType&... resources) noexcept
-          : logger{logger_obj},
-            alloc_pack{stl::forward<ResType>(resources)...} {}
+        // template <typename... ResType>
+        // requires((allocator_pack_type::template has_resource_object<ResType> &&
+        //           ...)) // check if the allocator pack has the resources
+        //   constexpr explicit enable_traits(logger_ref logger_obj = logger_type{},
+        //                                    ResType&... resources) noexcept
+        //   : logger{logger_obj},
+        //           alloc_pack{stl::forward<ResType>(resources)...} {}
 
 
-        constexpr enable_traits()                         = default;
-        constexpr enable_traits(enable_traits const&)     = delete;
+        // constexpr enable_traits()                         = default;
+        constexpr enable_traits(enable_traits const&)     = default;
         constexpr enable_traits(enable_traits&&) noexcept = default;
-        constexpr enable_traits& operator=(enable_traits const&) = delete;
-        constexpr enable_traits& operator=(enable_traits&&) noexcept = delete;
+        constexpr enable_traits& operator=(enable_traits const&) = default;
+        constexpr enable_traits& operator=(enable_traits&&) noexcept = default;
 
 
         constexpr void swap(EnabledTraits auto& other) noexcept {

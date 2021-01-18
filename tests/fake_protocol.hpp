@@ -31,8 +31,8 @@ namespace webpp {
 
         template <typename... Args>
         fake_proto_request(Args&&... args) noexcept : super{stl::forward<Args>(args)...} {}
-        fake_proto_request(fake_proto_request const&) = default;
-        fake_proto_request(fake_proto_request&&)       noexcept = default;
+        fake_proto_request(fake_proto_request const&)     = default;
+        fake_proto_request(fake_proto_request&&) noexcept = default;
 
 
         string_view get_data(auto&& str) noexcept {

@@ -22,8 +22,7 @@ namespace webpp::uri {
         using allocator_type                = typename super::allocator_type;
         static constexpr auto allowed_chars = details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>;
 
-        template <typename... Args>
-        constexpr basic_queries(Args&&... args) : super{stl::forward<Args>(args)...} {}
+        using super::map;
 
 
         /**

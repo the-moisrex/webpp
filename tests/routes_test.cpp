@@ -18,8 +18,8 @@ using request_type = fake_proto_request<std_traits, empty_extension_pack>;
 using context_type = simple_context<request_type>;
 
 TEST(Routes, Path) {
-    request_type req;
-    context_type ctx{};
+    //    request_type req;
+    //    context_type ctx{};
 
 
     //    EXPECT_TRUE((root / number{"integer name"})(ctx));
