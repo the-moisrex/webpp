@@ -8,9 +8,21 @@
 
 namespace webpp::object {
 
+    namespace details {
+
+        template <typename ResType, typename Data>
+        struct resource_holder {
+            Data    data;
+            ResType res;
+        };
+
+        template <typename Data>
+        struct resource_holder<void, Data> {};
+    } // namespace details
+
     template <typename T, alloc::feature_pack FPack, AllocatorDescriptorList AllocDescList>
     struct object : public alloc::alloc_finder<T, FPack, AllocDescList>::new_type {
-      private:
+      protected:
         using alloc_details = alloc::alloc_finder<T, FPack, AllocDescList>;
         using super         = typename alloc_details::new_type;
 
@@ -73,25 +85,28 @@ namespace webpp::object {
                   alloc_pack.template get_allocator<allocator_type, resource_type>(res)} {}
     };
 
-
     template <typename T, typename StackType, AllocatorDescriptorList AllocDescList>
-    struct local : object<T, alloc::local_features, AllocDescList> {
+    struct local : public details::resource_holder<
+                     typename alloc::alloc_finder<T, alloc::local_features, AllocDescList>::resource_type,
+                     StackType>,
+                   public object<T, alloc::local_features, AllocDescList> {
       private:
-        using super = object<T, alloc::local_features, AllocDescList>;
+        using super      = object<T, alloc::local_features, AllocDescList>;
+        using res_holder = details::resource_holder<typename super::resource_type, StackType>;
 
       public:
         using stack_type      = StackType;
         using resource_type   = typename super::resource_type;
         using alloc_pack_type = alloc::allocator_pack<AllocDescList>;
 
-        stack_type                                             buffer;
-        [[no_unique_address]] istl::void_holder<resource_type> res;
 
-        // todo: order
         template <typename... Args>
         constexpr local(alloc_pack_type& alloc_pack, Args&&... args)
-          : res{buffer.data(), buffer.size(), &alloc_pack.general_resource()},
-            super{alloc_pack, res, stl::forward<Args>(args)...} {}
+          : res_holder{.data{}, // the stack buffer
+                       .res = resource_type{res_holder::data.data(),
+                                            res_holder::data.size(),
+                                            &alloc_pack.general_resource()}},
+            super{alloc_pack, res_holder::res, stl::forward<Args>(args)...} {}
 
         template <typename... Args>
         requires(stl::is_void_v<resource_type>) constexpr local(alloc_pack_type& alloc_pack, Args&&... args)
