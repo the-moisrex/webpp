@@ -100,7 +100,6 @@ namespace webpp {
             _comment{alloc},
             attrs{alloc} {
             auto src = istl::string_viewify(stl::forward<decltype(source)>(source));
-            // todo: this doesn't work yet
             parse_set_cookie(src); // parse name, value, and options
         }
 
@@ -258,45 +257,11 @@ namespace webpp {
 
 #undef WEBPP_METHOD_OTHERS
 
-        /**
-         * @brief decrypt-able encryption
-         */
-        value_t encrypted_value() const noexcept {
-            // todo implement this
+        auto encrypted_value() const noexcept {
+            string_type encrypted_value{this->get_allocator()};
+            details::encrypt_to(value(), encrypted_value);
+            return encrypted_value;
         }
-
-
-        /*
-         * Escapes the given string by replacing all
-         * non-alphanumeric characters with escape
-         * sequences in the form %xx, where xx is the
-         * hexadecimal character code.
-         *
-         * The following characters will be replaced
-         * with escape sequences:
-         *   - percent sign %
-         *   - less-than and greater-than < and >
-         *   - curly brackets { and }
-         *   - square brackets [ and ]
-         *   - parenthesis ( and )
-         *   - solidus /
-         *   - vertical line |
-         *   - reverse solidus (backslash /)
-         *   - quotation mark "
-         *   - apostrophe '
-         *   - circumflex accent ^
-         *   - grave accent `
-         *   - comma and semicolon , and ;
-         *   - whitespace and control characters
-         */
-        static constexpr std::string escape(const std::string& str) noexcept;
-
-        /*
-         * Unescapes the given string by replacing all
-         * escape sequences in the form %xx with the
-         * respective characters.
-         */
-        static std::string unescape(const std::string& str);
 
         string_type to_string() const {
             string_type res{get_allocator()};
@@ -312,7 +277,7 @@ namespace webpp {
             result.append("=");
             if (_version == cookie_version::version_0) {
                 // Netscape cookie
-                result.append(_value);
+                result.append(encrypted() ? encrypted_value() : _value);
                 if (!_domain.empty()) {
                     result.append("; domain=");
                     result.append(_domain);
@@ -347,7 +312,7 @@ namespace webpp {
             } else {
                 // RFC 2109 cookie
                 result.append("\"");
-                result.append(_value);
+                result.append(encrypted() ? encrypted_value() : _value);
                 result.append("\"");
                 if (!_comment.empty()) {
                     result.append("; comment=\"");
@@ -416,7 +381,7 @@ namespace webpp {
         //            return super::name == c.name && super::value == c.value;
         //        }
 
-        bool operator==(response_cookie const& c) const noexcept {
+        [[nodiscard]] constexpr bool operator==(response_cookie const& c) const noexcept {
             return _name == c._name && _value == c._value && _prefix == c._prefix &&
                    _priority == c._priority && _version == c._version && _encrypted == c._encrypted &&
                    _secure == c._secure && _http_only == c._http_only && _same_site == c._same_site &&
@@ -424,19 +389,23 @@ namespace webpp {
                    _domain == c._domain && attrs == c.attrs;
         }
 
-        bool operator<(response_cookie const& c) const noexcept {
+        [[nodiscard]] constexpr bool operator!=(response_cookie const& c) const noexcept {
+            return !operator==(c);
+        }
+
+        [[nodiscard]] constexpr bool operator<(response_cookie const& c) const noexcept {
             return _expires < c._expires;
         }
 
-        bool operator>(response_cookie const& c) const noexcept {
+        [[nodiscard]] constexpr bool operator>(response_cookie const& c) const noexcept {
             return _expires > c._expires;
         }
 
-        bool operator<=(response_cookie const& c) const noexcept {
+        [[nodiscard]] constexpr bool operator<=(response_cookie const& c) const noexcept {
             return _expires <= c._expires;
         }
 
-        bool operator>=(response_cookie const& c) const noexcept {
+        [[nodiscard]] constexpr bool operator>=(response_cookie const& c) const noexcept {
             return _expires >= c._expires;
         }
 
@@ -447,7 +416,7 @@ namespace webpp {
          * @param c
          * @return true if they have the same name, domain, and path
          */
-        [[nodiscard]] bool same_as(response_cookie const& c) const noexcept {
+        [[nodiscard]] constexpr bool same_as(response_cookie const& c) const noexcept {
             return ascii::trim_copy(_name, _name.get_allocator()) ==
                      ascii::trim_copy(c._name, c._name.get_allocator()) &&
                    _path == c._path && c._domain == _domain;

@@ -26,7 +26,7 @@ namespace webpp {
              * Check if the header value is a cookie; it only checks the key not
              * the value
              */
-            bool is_cookie() const noexcept {
+            [[nodiscard]] bool is_cookie() const noexcept {
                 if constexpr (header_type::response == super::header_direction) {
                     return super::is_name("set-cookie") || super::is_name("set-cookie2");
                 } else {
@@ -45,13 +45,13 @@ namespace webpp {
                         return response_cookie<traits_type>(value);
                     } else {
                         return response_cookie<traits_type>{}; // empty cookie
-                    };
+                    }
                 } else {
                     if (is_cookie()) {
                         return request_cookie<traits_type>(value);
                     } else {
                         return request_cookie<traits_type>{}; // empty cookie
-                    };
+                    }
                 }
             }
         };
