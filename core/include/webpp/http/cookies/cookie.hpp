@@ -119,7 +119,7 @@ namespace webpp {
             using name_t           = stl::remove_cvref_t<decltype(_name)>;
             using string_view_type = stl::remove_cvref_t<decltype(str)>;
             using char_type        = typename name_t::value_type;
-            ltrim(str);
+            ascii::ltrim(str);
             if (auto equal_pos = str.find_first_not_of(VALID_COOKIE_NAME<char_type>.data());
                 equal_pos != string_view_type::npos) {
                 // setting the name we found it
@@ -140,14 +140,14 @@ namespace webpp {
             using string_view_type = stl::remove_cvref_t<decltype(str)>;
             using char_type        = typename name_t::value_type;
 
-            parse_SE_name(str);
+            parse_SE_name(str, _name, _valid);
             if (!_valid)
-                return; // do not continue if there's no name
-            ltrim(str);
-            if (starts_with(str, '='))
+                return str; // do not continue if there's no name
+            ascii::ltrim(str);
+            if (ascii::starts_with(str, '='))
                 str.remove_prefix(1);
-            ltrim(str);
-            if (starts_with(str, '"')) {
+            ascii::ltrim(str);
+            if (ascii::starts_with(str, '"')) {
                 if (auto d_quote_end = str.find_first_not_of(VALID_COOKIE_VALUE<char_type>.data(), 1);
                     d_quote_end != string_view_type::npos) {
                     if (str[d_quote_end] == '"') {
@@ -158,13 +158,13 @@ namespace webpp {
                         // one already. You can't even use backslash to escape,
                         // so there's no worry here
                         _valid = false;
-                        return;
+                        return str;
                     }
                 } else {
                     // It won't be a valid string if there's a double quote
                     // without another one finishing it off.
                     _valid = false;
-                    return;
+                    return str;
                 }
             } else {
                 // there's no double quote in the value
@@ -185,6 +185,43 @@ namespace webpp {
             return str;
         }
 
+
+
+        static constexpr void encrypt_to(istl::StringView auto&& value, auto& to) noexcept;
+        static constexpr void decrypt_to(istl::StringView auto&& value, auto& to) noexcept;
+
+
+        /*
+         * Escapes the given string by replacing all
+         * non-alphanumeric characters with escape
+         * sequences in the form %xx, where xx is the
+         * hexadecimal character code.
+         *
+         * The following characters will be replaced
+         * with escape sequences:
+         *   - percent sign %
+         *   - less-than and greater-than < and >
+         *   - curly brackets { and }
+         *   - square brackets [ and ]
+         *   - parenthesis ( and )
+         *   - solidus /
+         *   - vertical line |
+         *   - reverse solidus (backslash /)
+         *   - quotation mark "
+         *   - apostrophe '
+         *   - circumflex accent ^
+         *   - grave accent `
+         *   - comma and semicolon , and ;
+         *   - whitespace and control characters
+         */
+        static constexpr void escape_to(istl::StringView auto&& value, auto& to) noexcept;
+
+        /*
+         * Unescapes the given string by replacing all
+         * escape sequences in the form %xx with the
+         * respective characters.
+         */
+        static constexpr void unescape_to(istl::StringView auto&& value, auto& to) noexcept;
 
     } // namespace details
 
