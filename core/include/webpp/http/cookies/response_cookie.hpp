@@ -30,7 +30,7 @@ namespace webpp {
         using priority_t         = string_type;
         using expires_t          = date_t;
         using optional_expires_t = stl::optional<date_t>;
-        using max_age_t          = unsigned long;
+        using max_age_t          = long; // max age can be negative
         using same_site_t        = same_site_value;
         using secure_t           = bool;
         using http_only_t        = bool;
@@ -47,6 +47,8 @@ namespace webpp {
           rebind_allocator<string_allocator_type, stl::pair<const string_type, string_type>>>;
 
 
+        static constexpr max_age_t MAX_AGE_EXISTENCE_VALUE = stl::numeric_limits<max_age_t>::min();
+
       private:
         name_t             _name;
         value_t            _value;
@@ -55,7 +57,7 @@ namespace webpp {
         optional_expires_t _expires;
         comment_t          _comment;
         priority_t         _priority;
-        max_age_t          _max_age   = 0;
+        max_age_t          _max_age   = MAX_AGE_EXISTENCE_VALUE;
         same_site_t        _same_site = same_site_value::not_specified;
         secure_t           _secure    = false;
         http_only_t        _http_only = false;
@@ -106,12 +108,12 @@ namespace webpp {
         /**
          * Parse a string response
          */
-        void parse_set_cookie(istl::StringView auto& str) noexcept {
+        bool parse_set_cookie(istl::StringView auto& str) noexcept {
             using string_view_type = stl::remove_cvref_t<decltype(str)>;
             bool is_valid;
             auto src = details::parse_SE_value(str, _name, _value, is_valid);
             if (!is_valid)
-                return;
+                return false;
             string_view_type key;
             string_view_type value;
             while (!str.empty()) {
@@ -146,6 +148,32 @@ namespace webpp {
                     case 'S':
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "secure")) {
                             _secure = true;
+                        } else if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "samesite")) {
+                            if (ascii::iequals<ascii::char_case_side::second_lowered>(value, "strict")) {
+                                _same_site = same_site_value::strict;
+                            } else if (ascii::iequals<ascii::char_case_side::second_lowered>(value, "lax")) {
+                                _same_site = same_site_value::lax;
+                            } else if (ascii::iequals<ascii::char_case_side::second_lowered>(value, "none")) {
+                                _same_site = same_site_value::none;
+                            } else {
+                                return false; // not valid
+                            }
+                        } else {
+                            attrs.emplace(key, value);
+                        }
+                        break;
+                    case 'h':
+                    case 'H':
+                        if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "httponly")) {
+                            _http_only = true;
+                        } else {
+                            attrs.emplace(key, value);
+                        }
+                        break;
+                    case 'm':
+                    case 'M':
+                        if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "max-age")) {
+                            max_age(to<max_age_t>(value));
                         } else {
                             attrs.emplace(key, value);
                         }
@@ -154,6 +182,7 @@ namespace webpp {
                         attrs.emplace(key, value);
                 }
             }
+            return true;
         }
 
         auto const& get_allocator() const noexcept {
@@ -177,7 +206,7 @@ namespace webpp {
 
         [[nodiscard]] bool is_removed() const noexcept {
             // todo: clang-tidy says "Use nullptr"; why?
-            return _expires && _expires.value() < stl::chrono::system_clock::now();
+            return has_max_age() ? max_age() <= 0 : (_expires && _expires.value() < stl::chrono::system_clock::now());
         }
 
         /**
@@ -234,7 +263,6 @@ namespace webpp {
         WEBPP_METHOD_STRS(path)
         WEBPP_METHOD_STRS(priority)
         WEBPP_METHOD_STRS(comment)
-        WEBPP_METHOD_STRS(max_age)
         WEBPP_METHOD_STRS(same_site)
         WEBPP_METHOD_STRS(expires)
 
@@ -257,11 +285,34 @@ namespace webpp {
 
 #undef WEBPP_METHOD_OTHERS
 
+        [[nodiscard]] bool has_expires() const noexcept {
+            return static_cast<bool>(_expires); // we can cast optional<...> to bool
+        }
+
+        [[nodiscard]] bool has_max_age() const noexcept {
+            return _max_age == MAX_AGE_EXISTENCE_VALUE;
+        }
+
+        [[nodiscard]] max_age_t max_age() const noexcept {
+            return _max_age;
+        }
+
+        /**
+         * If both Expires and Max-Age are set, Max-Age has precedence.
+         */
+        void max_age(max_age_t val) noexcept {
+            _max_age = val;
+            if (has_expires()) {
+                _expires = stl::nullopt;
+            }
+        }
+
         auto encrypted_value() const noexcept {
             string_type encrypted_value{this->get_allocator()};
             details::encrypt_to(value(), encrypted_value);
             return encrypted_value;
         }
+
 
         string_type to_string() const {
             string_type res{get_allocator()};
