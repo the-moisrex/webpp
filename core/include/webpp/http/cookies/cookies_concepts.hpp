@@ -11,17 +11,21 @@ namespace webpp {
     concept Cookie = requires(T cookie) {
         {cookie.name()};
         {cookie.value()};
-        //        {T::header_direction};
-        //        typename T::traits_type;
     };
 
-    // todo: complete this
     template <typename T>
-    concept ResponseCookie = Cookie<T>;
+    concept ResponseCookie = Cookie<T> && requires (T cookie) {
+      cookie.max_age();
+      cookie.expires();
+      cookie.path();
+      cookie.secure();
+      cookie.http_only();
+    };
 
-    // todo: complete this
     template <typename T>
-    concept RequestCookie = Cookie<T>;
+    concept RequestCookie = Cookie<T> && requires (T cookie) {
+      cookie.is_valid();
+    };
 
 } // namespace webpp
 
