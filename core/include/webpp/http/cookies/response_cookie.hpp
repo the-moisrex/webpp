@@ -6,6 +6,7 @@
 #include "../../convert/casts.hpp"
 #include "../../memory/allocators.hpp"
 #include "../../std/string.hpp"
+#include "../../strings/iequals.hpp"
 #include "./cookie.hpp"
 
 namespace webpp {
@@ -15,13 +16,6 @@ namespace webpp {
 
     template <istl::String StringType = stl::string>
     struct response_cookie {
-      private:
-        //        void parse_SE_options(istl::StringView auto& str) noexcept {
-        //            details::parse_SEvalue(str, name, value);
-        //            // todo
-        //        }
-
-      public:
         using string_type           = StringType;
         using char_type             = istl::char_type_of<string_type>;
         using string_allocator_type = typename string_type::allocator_type;
@@ -107,9 +101,61 @@ namespace webpp {
             attrs{alloc} {
             auto src = istl::string_viewify(stl::forward<decltype(source)>(source));
             // todo: this doesn't work yet
-            // parse_SE_options(src); // parse name, value, and options
+            parse_set_cookie(src); // parse name, value, and options
         }
 
+        /**
+         * Parse a string response
+         */
+        void parse_set_cookie(istl::StringView auto& str) noexcept {
+            using string_view_type = stl::remove_cvref_t<decltype(str)>;
+            bool is_valid;
+            auto src = details::parse_SE_value(str, _name, _value, is_valid);
+            if (!is_valid)
+                return;
+            string_view_type key;
+            string_view_type value;
+            while (!str.empty()) {
+
+                switch(key[0]) {
+                    case 'e':
+                    case 'E':
+                        if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "expires")) {
+                            // todo: use std::chrono::parse when it's out and if it fits
+                            // todo
+                        } else {
+                            attrs.emplace(key, value);
+                        }
+                        break;
+                    case 'd':
+                    case 'D':
+                        if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "domain")) {
+                            _domain = value;
+                        } else {
+                            attrs.emplace(key, value);
+                        }
+                        break;
+                    case 'p':
+                    case 'P':
+                        if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "path")) {
+                            _path = value;
+                        } else {
+                            attrs.emplace(key, value);
+                        }
+                        break;
+                    case 's':
+                    case 'S':
+                        if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "secure")) {
+                            _secure = true;
+                        } else {
+                            attrs.emplace(key, value);
+                        }
+                        break;
+                    default:
+                        attrs.emplace(key, value);
+                }
+            }
+        }
 
         auto const& get_allocator() const noexcept {
             return name().get_allocator(); // what? you've got a better solution? :)

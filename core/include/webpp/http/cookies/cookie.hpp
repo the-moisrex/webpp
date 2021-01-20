@@ -134,7 +134,7 @@ namespace webpp {
             }
         }
 
-        void parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value, bool& _valid) noexcept {
+        auto parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value, bool& _valid) noexcept {
             using name_t           = stl::remove_cvref_t<decltype(_name)>;
             // using value_t          = stl::remove_cvref_t<decltype(_value)>;
             using string_view_type = stl::remove_cvref_t<decltype(str)>;
@@ -182,7 +182,10 @@ namespace webpp {
             // There might be invalid characters after this. We have to
             // check the whole string for validation. But if it's determined
             // that it's invalid so far, it really is invalid.
+            return str;
         }
+
+
     } // namespace details
 
 
