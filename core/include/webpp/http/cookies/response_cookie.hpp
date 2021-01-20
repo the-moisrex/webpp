@@ -9,6 +9,8 @@
 #include "../../strings/iequals.hpp"
 #include "./cookie.hpp"
 
+#include <iomanip>
+
 namespace webpp {
 
     enum struct same_site_value : stl::uint_fast8_t { not_specified, none, lax, strict };
@@ -118,12 +120,27 @@ namespace webpp {
             string_view_type value;
             while (!str.empty()) {
 
-                switch(key[0]) {
+                switch (key[0]) {
                     case 'e':
                     case 'E':
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "expires")) {
                             // todo: use std::chrono::parse when it's out and if it fits
-                            // todo
+                            // This is an ugly code! unfortunately std::chrno::parse is not supported by Clang
+                            // and GCC at this time, so ...
+                            stl::tm tm_val{};
+                            using allocator_type   = typename value_t::allocator_type;
+                            using char_traits_type = typename value_t::traits_type;
+                            using char_type        = typename value_t::value_type;
+                            stl::basic_istringstream<char_type, char_traits_type, allocator_type> ss{
+                              istl::to_std_string(value)};
+                            ss >> stl::get_time(&tm_val, "");
+                            if (ss.fail()) {
+                                return false; // failed to do it, so we're gonna lie that it wasn't a valid
+                                              // cookie;
+                            }
+                            stl::time_t tt   = stl::make_time(&tm_val);
+                            using clock_type = typename expires_t::clock;
+                            _expires         = clock_type::from_time_t(tt);
                         } else {
                             attrs.emplace(key, value);
                         }
@@ -139,7 +156,7 @@ namespace webpp {
                     case 'p':
                     case 'P':
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "path")) {
-                            _path = value;
+                            _path = value; // todo: should we store escaped or unescaped?
                         } else {
                             attrs.emplace(key, value);
                         }
@@ -178,8 +195,7 @@ namespace webpp {
                             attrs.emplace(key, value);
                         }
                         break;
-                    default:
-                        attrs.emplace(key, value);
+                    default: attrs.emplace(key, value);
                 }
             }
             return true;
@@ -206,7 +222,8 @@ namespace webpp {
 
         [[nodiscard]] bool is_removed() const noexcept {
             // todo: clang-tidy says "Use nullptr"; why?
-            return has_max_age() ? max_age() <= 0 : (_expires && _expires.value() < stl::chrono::system_clock::now());
+            return has_max_age() ? max_age() <= 0
+                                 : (_expires && _expires.value() < stl::chrono::system_clock::now());
         }
 
         /**
@@ -284,6 +301,21 @@ namespace webpp {
         WEBPP_METHOD_OTHERS(version_t, version)
 
 #undef WEBPP_METHOD_OTHERS
+
+        /**
+         * Check if the specified domain is a valid domain for this cookie
+         */
+        [[nodiscard]] bool in_domain(istl::StringViewifiable auto&& the_domain) const noexcept {
+            // todo
+        }
+
+
+        /**
+         * Check if the specified path is valid for this cookie
+         */
+        [[nodiscard]] bool in_path(istl::StringViewifiable auto&& the_path) const noexcept {
+            // todo
+        }
 
         [[nodiscard]] bool has_expires() const noexcept {
             return static_cast<bool>(_expires); // we can cast optional<...> to bool

@@ -186,7 +186,8 @@ namespace webpp {
         }
 
 
-
+        // check if the specified string is encrypted
+        static constexpr bool is_encrypted() noexcept;
         static constexpr void encrypt_to(istl::StringView auto&& value, auto& to) noexcept;
         static constexpr void decrypt_to(istl::StringView auto&& value, auto& to) noexcept;
 

@@ -156,6 +156,22 @@ namespace webpp::istl {
         {"" == obj};
     };
 
+
+
+    template <istl::String StrT>
+    static constexpr auto to_std_string(StrT&& str) {
+        using string_type      = stl::remove_cvref_t<StrT>;
+        using allocator_type   = typename string_type::allocator_type;
+        using char_traits_type = typename string_type::traits_type;
+        using char_type        = typename string_type::value_type;
+        using std_string_type  = stl::basic_string<char_type, char_traits_type, allocator_type>;
+        if constexpr (stl::is_same_v<string_type, std_string_type>) {
+            return str;
+        } else {
+            return std_string_type{str.data(), str.size(), str.get_allocator()};
+        }
+    }
+
 } // namespace webpp::istl
 
 #endif // WEBPP_STRING_H
