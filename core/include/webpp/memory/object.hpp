@@ -112,6 +112,7 @@ namespace webpp::object {
         requires(stl::is_void_v<resource_type>) constexpr local(alloc_pack_type& alloc_pack, Args&&... args)
           : super{alloc_pack, stl::forward<Args>(args)...} {}
 
+        // todo
         constexpr auto global_copy() {}
     };
 
