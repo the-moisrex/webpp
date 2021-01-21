@@ -27,6 +27,22 @@ namespace webpp {
       cookie.is_valid();
     };
 
+    /**
+     * A cookie encryptor/decryptor is a class that will encrypt and decrypt a cookie.
+     * The types of cookie cryptors that I expect myself to implement:
+     *   - [ ] CookieAESCryptor: requires a key, so it requires configuration
+     *   - [ ] CookieCryptHash: hashes the value/[name]; requires database access or at least keep-alive-state
+     *     - [ ] Is this a session?
+     *   - [ ] CookieSessionizer: requires database ot keep-alive-storage; the value/[or optionally the name]
+     *                            will be stored somewhere and the id will be replaced
+     */
+    template <typename T>
+    concept CookieCryptor = requires (T encryptor) {
+      encryptor.encrypt_value("value");
+      encryptor.encrypt_name("name");
+      // encryptor.encrypt(Cookie);
+    };
+
 } // namespace webpp
 
 #endif // WEBPP_COOKIES_CONCEPTS_H

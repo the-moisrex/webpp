@@ -7,6 +7,8 @@
 #include "../../memory/allocators.hpp"
 #include "../../std/string.hpp"
 #include "../../strings/iequals.hpp"
+#include "../../strings/parser_utils.hpp"
+#include "../../strings/string_tokenizer.hpp"
 #include "./cookie.hpp"
 
 #include <iomanip>
@@ -112,14 +114,30 @@ namespace webpp {
          */
         bool parse_set_cookie(istl::StringView auto& str) noexcept {
             using string_view_type = stl::remove_cvref_t<decltype(str)>;
+            using char_type        = typename string_view_type::value_type;
             bool is_valid;
             auto src = details::parse_SE_value(str, _name, _value, is_valid);
             if (!is_valid)
                 return false;
-            string_view_type key;
-            string_view_type value;
-            while (!str.empty()) {
-
+            string_view_type                   key;
+            string_view_type                   value;
+            string_tokenizer<string_view_type> tokenizer{src};
+            while (tokenizer.template next<charset<char_type, 1>(';')>()) {
+                tokenizer.skip_spaces();
+                tokenizer.template skip<charset(';')>();
+                tokenizer.skip_spaces();
+                tokenizer.template next_until_not<details::VALID_COOKIE_NAME<char_type>>();
+                key = tokenizer.token();
+                if (tokenizer.template next<charset('=')>()) {
+                    tokenizer.template next_until_not<details::VALID_COOKIE_VALUE<char_type>>();
+                    value = tokenizer.token();
+                }
+                if (key.empty()) {
+                    // I'm not putting this after finding the key part because we need to get rid of the value
+                    // for the next iteration
+                    is_valid = false;
+                    continue;
+                }
                 switch (key[0]) {
                     case 'e':
                     case 'E':
@@ -128,19 +146,28 @@ namespace webpp {
                             // This is an ugly code! unfortunately std::chrno::parse is not supported by Clang
                             // and GCC at this time, so ...
                             stl::tm tm_val{};
-                            using allocator_type   = typename value_t::allocator_type;
                             using char_traits_type = typename value_t::traits_type;
-                            using char_type        = typename value_t::value_type;
-                            stl::basic_istringstream<char_type, char_traits_type, allocator_type> ss{
+                            using string_char_type = typename value_t::value_type;
+                            using allocator_type   = typename value_t::allocator_type;
+                            stl::basic_istringstream<string_char_type, char_traits_type, allocator_type> ss{
                               istl::to_std_string(value)};
-                            ss >> stl::get_time(&tm_val, "");
+                            ss >> stl::get_time(&tm_val, "%a, %d %b %Y %H:%M:%S GMT");
                             if (ss.fail()) {
-                                return false; // failed to do it, so we're gonna lie that it wasn't a valid
-                                              // cookie;
+                                is_valid = false; // failed to do it, so we're gonna lie that it wasn't a
+                                                  // valid cookie;
+                                continue;
                             }
-                            stl::time_t tt   = stl::make_time(&tm_val);
+                            stl::time_t tt   = stl::mktime(&tm_val);
                             using clock_type = typename expires_t::clock;
                             _expires         = clock_type::from_time_t(tt);
+                        } else {
+                            attrs.emplace(key, value);
+                        }
+                        break;
+                    case 'c':
+                    case 'C':
+                        if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "comment")) {
+                            _comment = value;
                         } else {
                             attrs.emplace(key, value);
                         }
@@ -157,6 +184,8 @@ namespace webpp {
                     case 'P':
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "path")) {
                             _path = value; // todo: should we store escaped or unescaped?
+                        } else if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "priority")) {
+                            _priority = value;
                         } else {
                             attrs.emplace(key, value);
                         }
@@ -173,7 +202,8 @@ namespace webpp {
                             } else if (ascii::iequals<ascii::char_case_side::second_lowered>(value, "none")) {
                                 _same_site = same_site_value::none;
                             } else {
-                                return false; // not valid
+                                attrs.emplace(key, value);
+                                is_valid = false;
                             }
                         } else {
                             attrs.emplace(key, value);
@@ -195,10 +225,25 @@ namespace webpp {
                             attrs.emplace(key, value);
                         }
                         break;
+                    case 'v':
+                    case 'V':
+                        if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "version")) {
+                            if (value == "0")
+                                _version = version_t::version_0;
+                            else if (value == "1")
+                                _version = version_t::version_1;
+                            else {
+                                attrs.emplace(key, value);
+                                is_valid = false;
+                            }
+                        } else {
+                            attrs.emplace(key, value);
+                        }
+                        break;
                     default: attrs.emplace(key, value);
                 }
             }
-            return true;
+            return is_valid;
         }
 
         auto const& get_allocator() const noexcept {
@@ -339,6 +384,20 @@ namespace webpp {
             }
         }
 
+        void expires_string_to(istl::String auto&& result) {
+            using clock_type      = typename expires_t::clock;
+            stl::time_t expires_c = clock_type::to_time_t(*_expires);
+            stl::format_to(stl::back_inserter(result),
+                           "{:%a, %d %b %Y %H:%M:%S} GMT",
+                           istl::safe_localtime(expires_c));
+        }
+
+        string_type expires_string(auto&&... args) {
+            string_type result{stl::forward<decltype(args)>(args)...};
+            expires_string_to(result);
+            return result;
+        }
+
         auto encrypted_value() const noexcept {
             string_type encrypted_value{this->get_allocator()};
             details::encrypt_to(value(), encrypted_value);
@@ -373,12 +432,9 @@ namespace webpp {
                     result.append("; priority=");
                     result.append(_priority);
                 }
-                if (_max_age != -1) {
-                    stl::time_t expires_c = system_clock::to_time_t(*_expires);
+                if (_max_age != MAX_AGE_EXISTENCE_VALUE) {
                     result.append("; expires=");
-                    stl::format_to(stl::back_inserter(result),
-                                   FMT_COMPILE("{:%a, %d %b %Y %H:%M:%S} GMT"),
-                                   istl::safe_localtime(expires_c));
+                    expires_string_to(result);
                 }
                 switch (_same_site) {
                     case same_site_value::none: result.append("; SameSite=None"); break;
@@ -423,11 +479,8 @@ namespace webpp {
                     append_to(result, _max_age);
                     result.append("\"");
                 } else if (_expires) {
-                    stl::time_t expires_c = system_clock::to_time_t(*_expires);
                     result.append("; expires=");
-                    stl::format_to(stl::back_inserter(result),
-                                   FMT_COMPILE("{:%a, %d %b %Y %H:%M:%S} GMT"),
-                                   istl::safe_localtime(expires_c));
+                    expires_string_to(result);
                 }
 
                 switch (_same_site) {

@@ -42,9 +42,10 @@ namespace webpp::http {
                 accept_encoding_option_manager{accept_encoding_options::none}>
     struct basic_accept_encoding {
         using str_v                 = StrViewT;
+        using char_type             = typename str_v::value_type;
         using str_const_iterator    = typename str_v::const_iterator;
         using allocator_type        = AllocT;
-        using string_tokenizer_type = basic_string_tokenizer<str_v, str_const_iterator>;
+        using string_tokenizer_type = string_tokenizer<str_v, str_const_iterator>;
         static constexpr flags::manager<accept_encoding_options> options = Options;
 
         /**
@@ -95,8 +96,8 @@ namespace webpp::http {
             }
             _allowed_encodings.clear();
 
-            string_tokenizer_type tokenizer(data, ",");
-            while (tokenizer.get_next()) {
+            string_tokenizer_type tokenizer(data);
+            while (tokenizer.template next<charset<char_type, 1>(',')>()) {
                 auto entry = tokenizer.token();
                 http::trim_lws(entry);
                 size_t semicolon_pos = entry.find(';');
