@@ -23,6 +23,15 @@ TEST(Cookie, ResponseCookiesCreation) {
     //      << "name should trim it too.";
 }
 
+TEST(Cookie, SetCookieHeaderParsing) {
+    res_cookie_t c{"_HFID=hfid:867155260a909c69f05d506502ca7b4db7f374884f3c8793eb7bf567c39391d15115b5516f47790a33f7a66881d6541c87a0dcda352f0153b7c27e90ff05abad; httponly; expires=Fri, 21 Jan 2022 16:08:20 GMT; secure; path=/;"};
+    EXPECT_EQ(c.name(), "_HFID");
+    EXPECT_EQ(c.value(), "hfid:867155260a909c69f05d506502ca7b4db7f374884f3c8793eb7bf567c39391d15115b5516f47790a33f7a66881d6541c87a0dcda352f0153b7c27e90ff05abad");
+    EXPECT_EQ(c.path(), "/");
+    EXPECT_TRUE(c.secure());
+    EXPECT_TRUE(c.http_only());
+}
+
 // TODO: fill here
 TEST(Cookie, CookieExpirationDate) {
     res_cookie_t c;
@@ -159,13 +168,6 @@ TEST(ResponseCookies, CookieJarUniqeness) {
 }
 
 TEST(ResponseCookies, Date) {}
-
-TEST(ResponseCookies, StringParsing) {
-
-    res_cookie_t c("name=value");
-    EXPECT_EQ("name", c.name());
-    EXPECT_EQ("value", c.value());
-}
 
 TEST(ResponseCookies, ResponseCookiesEncryption) {
     // TODO

@@ -22,6 +22,8 @@ namespace webpp {
           public:
             using traits_type = typename super::traits_type;
 
+            // todo: add flash cookies
+
             /**
              * Check if the header value is a cookie; it only checks the key not
              * the value

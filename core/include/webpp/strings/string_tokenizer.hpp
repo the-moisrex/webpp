@@ -8,6 +8,16 @@
 
 namespace webpp {
 
+    enum struct string_tokenizer_options : stl::uint_fast8_t {
+        // Specifies the delimiters should be returned as tokens
+        return_delims = 1u << 0u,
+
+        // Specifies that empty tokens should be returned. Treats the beginning and
+        // ending of the string as implicit delimiters, though doesn't return them
+        // as tokens if "return_delims" is also used.
+        return_empty_tokens = 1u << 1u,
+    };
+
     /*
      * basic_string_tokenizer is a simple string tokenizer class.  It works like an
      * iterator that with each step (see the Advance method) updates members that
@@ -17,7 +27,7 @@ namespace webpp {
      * EXAMPLE 1:
      *
      *   char input[] = "this is a test";
-     *   CStringTokenizer t(input, input + strlen(input), " ");
+     *   c_string_tokenizer t(input, input + strlen(input), " ");
      *   while (t.GetNext()) {
      *     printf("%s\n", t.token().c_str());
      *   }
@@ -33,7 +43,7 @@ namespace webpp {
      * EXAMPLE 2:
      *
      *   std::string input = "no-cache=\"foo, bar\", private";
-     *   StringTokenizer t(input, ", ");
+     *   string_tokenizer t(input, ", ");
      *   t.set_quote_chars("\"");
      *   while (t.GetNext()) {
      *     printf("%s\n", t.token().c_str());
@@ -49,9 +59,8 @@ namespace webpp {
      *
      *   bool next_is_option = false, next_is_value = false;
      *   std::string input = "text/html; charset=UTF-8; foo=bar";
-     *   StringTokenizer t(input, "; =");
-     *   t.set_options(StringTokenizer::RETURN_DELIMS);
-     *   while (t.GetNext()) {
+     *   string_tokenizer<> t(input);
+     *   while (t.next<"; =", {}, string_tokenizer_options::return_delims>()) {
      *     if (t.token_is_delim()) {
      *       switch (*t.token_begin()) {
      *         case ';':
@@ -77,95 +86,104 @@ namespace webpp {
      *   }
      *
      */
-    template <typename StringViewType, typename ConstIterType>
-    class basic_string_tokenizer {
+    template <typename StringViewType = stl::string_view,
+              typename ConstIterType  = typename StringViewType::const_iterator>
+    class string_tokenizer {
       public:
         using str_v          = StringViewType;
         using const_iterator = ConstIterType;
         using char_type      = typename str_v::value_type;
 
-        // Options that may be pass to set_options()
-        enum : stl::uint_fast8_t {
-            // Specifies the delimiters should be returned as tokens
-            return_delims = 1u << 0u,
-
-            // Specifies that empty tokens should be returned. Treats the beginning and
-            // ending of the string as implicit delimiters, though doesn't return them
-            // as tokens if "return_delims" is also used.
-            return_empty_tokens = 1u << 1u,
-        };
-        void init(const_iterator string_begin, const_iterator string_end, const str_v& delims) {
+        constexpr void init(const_iterator string_begin, const_iterator string_end) {
             _start_pos   = string_begin;
             _token_begin = string_begin;
             _token_end   = string_begin;
             _end         = string_end;
-            _delims      = delims;
-            _options     = 0;
             _is_delim    = true;
         }
 
-        basic_string_tokenizer(str_v str, str_v delims) noexcept
+        constexpr string_tokenizer(str_v str) noexcept
           : _start_pos{str.begin()},
             _token_begin{str.begin()},
             _token_end{str.begin()},
-            _end{str.end()},
-            _delims{delims} {}
+            _end{str.end()} {}
 
-        basic_string_tokenizer(const_iterator str_begin, const_iterator str_end, str_v delims) noexcept
+        constexpr string_tokenizer(const_iterator str_begin, const_iterator str_end) noexcept
           : _start_pos{str_begin},
             _token_begin{str_begin},
             _token_end{str_begin},
-            _end{str_end},
-            _delims{delims} {}
-
-        // Set the options for this tokenizer.  By default, this is 0.
-        void set_options(int options) noexcept {
-            _options = options;
-        }
+            _end{str_end} {}
 
         // Set the characters to regard as quotes.  By default, this is empty.  When
         // a quote char is encountered, the tokenizer will switch into a mode where
         // it ignores delimiters that it finds.  It switches out of this mode once it
         // finds another instance of the quote char.  If a backslash is encountered
         // within a quoted string, then the next character is skipped.
-        void set_quote_chars(str_v quotes) noexcept {
-            _quotes = quotes;
-        }
+
+
+
 
         // Call this method to advance the tokenizer to the next delimiter.  This
         // returns false if the tokenizer is complete.  This method must be called
         // before calling any of the token* methods.
-        [[nodiscard("Don't skip the value of this, you need a while loop")]] bool get_next() noexcept {
-            if (_quotes.empty() && _options == 0)
-                return quick_get_next();
-            else
-                return full_get_next();
+        template <CharSet auto Delims = charset<typename StringViewType::value_type, 0>{},
+                  CharSet auto Quotes = charset<typename StringViewType::value_type, 1>{'\0'},
+                  int          Options>
+        [[nodiscard("Don't skip the value of this, you need a while loop")]] constexpr bool next() noexcept {
+            if constexpr (Options == 0 && Quotes.empty()) {
+                return quick_get_next<Delims>();
+            } else {
+                return full_get_next<Delims, Quotes, Options>();
+            }
         }
 
+        template <CharSet auto Chars>
+        constexpr bool next_until_not() noexcept {
+            while (_token_end != _end && Chars.contains(*_token_end))
+                ++_token_end;
+            return true;
+        }
+
+        template <CharSet auto Chars>
+        constexpr void skip() noexcept {
+            while (_token_begin != _end && Chars.contains(*_token_begin))
+                ++_token_begin;
+            _token_end = _token_begin;
+        }
+
+        constexpr void skip_whitespaces() noexcept {
+            skip<ascii::standard_whitespaces>();
+        }
+
+        constexpr void skip_spaces() noexcept {
+            skip<charset<char_type, 1>(' ')>();
+        }
+
+
         // Start iterating through tokens from the beginning of the string.
-        void reset() noexcept {
+        constexpr void reset() noexcept {
             _token_end = _start_pos;
         }
 
         // Returns true if token is a delimiter.  When the tokenizer is constructed
-        // with the RETURN_DELIMS option, this method can be used to check if the
+        // with the return_relims option, this method can be used to check if the
         // returned token is actually a delimiter. Returns true before the first
         // time get_next() has been called, and after get_next() returns false.
-        [[nodiscard]] bool token_is_delim() const noexcept {
+        [[nodiscard]] constexpr bool token_is_delim() const noexcept {
             return _is_delim;
         }
 
         // If get_next() returned true, then these methods may be used to read the
         // value of the token.
-        [[nodiscard]] const_iterator token_begin() const noexcept {
+        [[nodiscard]] constexpr const_iterator token_begin() const noexcept {
             return _token_begin;
         }
 
-        [[nodiscard]] const_iterator token_end() const noexcept {
+        [[nodiscard]] constexpr const_iterator token_end() const noexcept {
             return _token_end;
         }
 
-        [[nodiscard]] str_v token() const {
+        [[nodiscard]] constexpr str_v token() const noexcept {
             return str_v(_token_begin, _token_end);
         }
 
@@ -177,7 +195,8 @@ namespace webpp {
         // Implementation of get_next() for when we have no quote characters. We have
         // two separate implementations because advance_one() is a hot spot in large
         // text files with large tokens.
-        bool quick_get_next() {
+        template <CharSet auto Delims>
+        constexpr bool quick_get_next() noexcept {
             _is_delim = false;
             for (;;) {
                 _token_begin = _token_end;
@@ -186,17 +205,18 @@ namespace webpp {
                     return false;
                 }
                 ++_token_end;
-                if (_delims.find(*_token_begin) == str_v::npos)
+                if (!Delims.contains(*_token_begin))
                     break;
                 // else skip over delimiter.
             }
-            while (_token_end != _end && _delims.find(*_token_end) == str_v::npos)
+            while (_token_end != _end && !Delims.contains(*_token_end))
                 ++_token_end;
             return true;
         }
 
         // Implementation of get_next() for when we have to take quotes into account.
-        bool full_get_next() {
+        template <CharSet auto Delims, CharSet auto Quotes, int Options>
+        constexpr bool full_get_next() noexcept {
             advance_state state;
 
             for (;;) {
@@ -216,12 +236,14 @@ namespace webpp {
                     _token_begin = _token_end;
 
                     // Slurp all non-delimiter characters into the token.
-                    while (_token_end != _end && advance_one(&state, *_token_end)) {
+                    while (_token_end != _end && advance_one<Delims, Quotes>(&state, *_token_end)) {
                         ++_token_end;
                     }
 
                     // If it's non-empty, or empty tokens were requested, return the token.
-                    if (_token_begin != _token_end || (_options & return_empty_tokens))
+                    if constexpr (Options & static_cast<int>(string_tokenizer_options::return_empty_tokens))
+                        return true;
+                    else if (_token_begin != _token_end)
                         return true;
                 }
 
@@ -248,19 +270,11 @@ namespace webpp {
 
                 // Look at the delimiter.
                 ++_token_end;
-                if (_options & return_delims)
+                if constexpr (Options & static_cast<int>(string_tokenizer_options::return_delims))
                     return true;
             }
 
             return false;
-        }
-
-        bool is_delim(char_type c) const {
-            return _delims.find(c) != str_v::npos;
-        }
-
-        bool is_quote(char_type c) const {
-            return _quotes.find(c) != str_v::npos;
         }
 
         struct advance_state {
@@ -270,7 +284,8 @@ namespace webpp {
         };
 
         // Returns true if a delimiter was not hit.
-        bool advance_one(advance_state* state, char_type c) {
+        template <CharSet auto Delims, CharSet auto Quotes>
+        static constexpr bool advance_one(advance_state* state, char_type c) noexcept {
             if (state->in_quote) {
                 if (state->in_escape) {
                     state->in_escape = false;
@@ -280,9 +295,9 @@ namespace webpp {
                     state->in_quote = false;
                 }
             } else {
-                if (is_delim(c))
+                if (Delims.contains(c))
                     return false;
-                state->in_quote = is_quote(state->quote_char = c);
+                state->in_quote = Quotes.contains(state->quote_char = c);
             }
             return true;
         }
@@ -291,21 +306,9 @@ namespace webpp {
         const_iterator _token_begin;
         const_iterator _token_end;
         const_iterator _end;
-        str_v          _delims;
-        str_v          _quotes{};
-        int            _options  = 0;
         bool           _is_delim = true;
     };
 
-    template <Traits TraitsType>
-    using string_tokenizer =
-      basic_string_tokenizer<traits::string_view<TraitsType>,
-                             typename traits::template string_view<TraitsType>::const_iterator>;
-
-    template <Traits TraitsType>
-    using c_string_tokenizer =
-      basic_string_tokenizer<traits::string_view<TraitsType>,
-                             istl::char_type_of<traits::string_view<TraitsType>> const*>;
 } // namespace webpp
 
 #endif // WEBPP_STRING_TOKENIZER_HPP
