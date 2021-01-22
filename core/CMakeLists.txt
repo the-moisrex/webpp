@@ -56,6 +56,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/std/unordered_set.hpp
         ${LIB_INCLUDE_DIR}/webpp/std/vector.hpp
         ${LIB_INCLUDE_DIR}/webpp/std/optional.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/chrono.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/validators/validators.hpp
         ${LIB_INCLUDE_DIR}/webpp/validators/email.hpp
@@ -200,16 +201,21 @@ if (SHARED_LIBRARY_EXECUTABLE)
     set_interp_path()
 endif ()
 
+
+
+
 add_library(${LIB_NAME} STATIC ${ALL_SOURCES})
 add_library(${PROJECT_NAME}::${LIB_NAME} ALIAS ${LIB_NAME})
 
 
 # boost and fmt
 find_package(Boost REQUIRED)
-find_package(fmt REQUIRED)
 target_link_libraries(${LIB_NAME}
         PUBLIC Boost::boost
         PUBLIC fmt::fmt
+        PUBLIC magic_enum::magic_enum
+        PUBLIC date::date
+        PUBLIC date::date-tz
         )
 
 
@@ -227,6 +233,10 @@ set_target_properties(${LIB_NAME} PROPERTIES
 target_include_directories(${LIB_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
+
+        $<BUILD_INTERFACE:${magic_enum_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${date_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
         )
 
 
