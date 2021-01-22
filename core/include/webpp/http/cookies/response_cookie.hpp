@@ -114,7 +114,7 @@ namespace webpp {
          */
         bool parse_set_cookie(istl::StringView auto& str) noexcept {
             using string_view_type = stl::remove_cvref_t<decltype(str)>;
-            using char_type        = typename string_view_type::value_type;
+            using strv_char_type        = typename string_view_type::value_type;
             bool is_valid;
             auto src = details::parse_SE_value(str, _name, _value, is_valid);
             if (!is_valid)
@@ -122,14 +122,14 @@ namespace webpp {
             string_view_type                   key;
             string_view_type                   value;
             string_tokenizer<string_view_type> tokenizer{src};
-            while (tokenizer.template next<charset<char_type, 1>(';')>()) {
+            while (tokenizer.template next<charset<strv_char_type, 1>(';')>()) {
                 tokenizer.skip_spaces();
                 tokenizer.template skip<charset(';')>();
                 tokenizer.skip_spaces();
-                tokenizer.template next_until_not<details::VALID_COOKIE_NAME<char_type>>();
+                tokenizer.template next_until_not<details::VALID_COOKIE_NAME<strv_char_type>>();
                 key = tokenizer.token();
-                if (tokenizer.template next<charset('=')>()) {
-                    tokenizer.template next_until_not<details::VALID_COOKIE_VALUE<char_type>>();
+                if (tokenizer.template next<charset('='), charset('"')>()) {
+                    tokenizer.template next_until_not<details::VALID_COOKIE_VALUE<strv_char_type>>();
                     value = tokenizer.token();
                 }
                 if (key.empty()) {

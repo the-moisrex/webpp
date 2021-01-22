@@ -126,9 +126,9 @@ namespace webpp {
         // Call this method to advance the tokenizer to the next delimiter.  This
         // returns false if the tokenizer is complete.  This method must be called
         // before calling any of the token* methods.
-        template <CharSet auto Delims = charset<typename StringViewType::value_type, 0>{},
-                  CharSet auto Quotes = charset<typename StringViewType::value_type, 1>{'\0'},
-                  int          Options>
+        template <CharSet auto Delims  = charset<typename StringViewType::value_type, 0>{},
+                  CharSet auto Quotes  = charset<typename StringViewType::value_type, 1>{'\0'},
+                  int          Options = 0>
         [[nodiscard("Don't skip the value of this, you need a while loop")]] constexpr bool next() noexcept {
             if constexpr (Options == 0 && Quotes.empty()) {
                 return quick_get_next<Delims>();
