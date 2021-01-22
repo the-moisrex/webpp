@@ -9,7 +9,7 @@ add_executable(${EXEC_NAME} ${LIB_SOURCES})
 target_include_directories(${EXEC_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(${EXEC_NAME}
         PRIVATE ${SLIB_NAME}
-        PRIVATE ${Boost_LIBRARIES}
+        PRIVATE Boost::boost
         )
 # now we rename resman-bin executable to resman using target properties
 set_target_properties(${EXEC_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME}.exe)

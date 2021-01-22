@@ -320,7 +320,7 @@ namespace webpp::istl {
                                                                                                             \
                                                                                                             \
     template <template <typename...> typename T,                                                            \
-              template <typename...>                                                                        \
+              template <typename>                                                                           \
               typename Replacer,                                                                            \
               typename... Heads,                                                                            \
               template <typename...>                                                                        \
@@ -362,10 +362,7 @@ namespace webpp::istl {
 
 #undef WEBPP_REMOVE_CVREF
 
-        template <template <typename...> typename T,
-                  template <typename...>
-                  typename Replacer,
-                  typename... Heads>
+        template <template <typename...> typename T, template <typename> typename Replacer, typename... Heads>
         struct parameter_replacer<T, Replacer, fake_tuple<Heads...>, fake_tuple<>> {
             using type = stl::
               conditional_t<Replacer<T<Heads...>>::value, typename Replacer<T<Heads...>>::type, T<Heads...>>;
@@ -444,14 +441,17 @@ namespace webpp::istl {
 
         ////////////////////////////// recursively_change_templated_parameter //////////////////////////////
 
-        template <template <typename> typename OldType, template <typename> typename NewType, typename TT>
+        template <template <typename...> typename OldType,
+                  template <typename...>
+                  typename NewType,
+                  typename TT>
         struct recursively_change_templated_parameter_replacer {
             using type                  = void;
             static constexpr bool value = false;
         };
 
-        template <template <typename> typename OldType,
-                  template <typename>
+        template <template <typename...> typename OldType,
+                  template <typename...>
                   typename NewType,
                   typename... Args>
         struct recursively_change_templated_parameter_replacer<OldType, NewType, OldType<Args...>> {

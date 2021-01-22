@@ -3,7 +3,7 @@
 #ifndef WEBPP_FLAGS_HPP
 #define WEBPP_FLAGS_HPP
 
-#include "../libs/magic_enum/include/magic_enum.hpp"
+#include <magic_enum.hpp>
 #include "../std/type_traits.hpp"
 
 #include <cstdint>

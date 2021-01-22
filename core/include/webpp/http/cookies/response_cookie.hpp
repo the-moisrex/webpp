@@ -5,6 +5,7 @@
 
 #include "../../convert/casts.hpp"
 #include "../../memory/allocators.hpp"
+#include "../../std/chrono.hpp"
 #include "../../std/string.hpp"
 #include "../../strings/iequals.hpp"
 #include "../../strings/parser_utils.hpp"
@@ -26,7 +27,8 @@ namespace webpp {
 
         static constexpr auto illegal_chars = charset("()[]/|\\',;");
 
-        using date_t             = stl::chrono::time_point<stl::chrono::system_clock>;
+        using clock_type         = stl::chrono::utc_clock;
+        using date_t             = stl::chrono::time_point<clock_type>;
         using name_t             = string_type;
         using value_t            = string_type;
         using domain_t           = string_type;
@@ -114,7 +116,7 @@ namespace webpp {
          */
         bool parse_set_cookie(istl::StringView auto& str) noexcept {
             using string_view_type = stl::remove_cvref_t<decltype(str)>;
-            using strv_char_type        = typename string_view_type::value_type;
+            using strv_char_type   = typename string_view_type::value_type;
             bool is_valid;
             auto src = details::parse_SE_value(str, _name, _value, is_valid);
             if (!is_valid)
@@ -142,24 +144,14 @@ namespace webpp {
                     case 'e':
                     case 'E':
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "expires")) {
-                            // todo: use std::chrono::parse when it's out and if it fits
-                            // This is an ugly code! unfortunately std::chrno::parse is not supported by Clang
-                            // and GCC at this time, so ...
-                            stl::tm tm_val{};
                             using char_traits_type = typename value_t::traits_type;
                             using string_char_type = typename value_t::value_type;
-                            using allocator_type   = typename value_t::allocator_type;
-                            stl::basic_istringstream<string_char_type, char_traits_type, allocator_type> ss{
-                              istl::to_std_string(value)};
-                            ss >> stl::get_time(&tm_val, "%a, %d %b %Y %H:%M:%S GMT");
-                            if (ss.fail()) {
-                                is_valid = false; // failed to do it, so we're gonna lie that it wasn't a
-                                                  // valid cookie;
-                                continue;
-                            }
-                            stl::time_t tt   = stl::mktime(&tm_val);
-                            using clock_type = typename expires_t::clock;
-                            _expires         = clock_type::from_time_t(tt);
+                            stl::
+                              basic_istringstream<string_char_type, char_traits_type, string_allocator_type>
+                                is{istl::stringify_of<string_type>(value, this->get_allocator())};
+                            expires_t new_expires;
+                            stl::chrono::from_stream(is, "%a, %d %b %Y %H:%M:%S GMT", new_expires);
+                            _expires = new_expires;
                         } else {
                             attrs.emplace(key, value);
                         }
@@ -246,7 +238,7 @@ namespace webpp {
             return is_valid;
         }
 
-        auto const& get_allocator() const noexcept {
+        auto get_allocator() const noexcept {
             return name().get_allocator(); // what? you've got a better solution? :)
         }
 
@@ -267,8 +259,7 @@ namespace webpp {
 
         [[nodiscard]] bool is_removed() const noexcept {
             // todo: clang-tidy says "Use nullptr"; why?
-            return has_max_age() ? max_age() <= 0
-                                 : (_expires && _expires.value() < stl::chrono::system_clock::now());
+            return has_max_age() ? max_age() <= 0 : (_expires && _expires.value() < clock_type::now());
         }
 
         /**
@@ -276,7 +267,7 @@ namespace webpp {
          */
         template <typename D, typename T>
         inline auto& expires_in(stl::chrono::duration<D, T> const& i_dur) noexcept {
-            _expires = stl::chrono::system_clock::now() + i_dur;
+            _expires = clock_type::now() + i_dur;
             return *this;
         }
 
@@ -385,11 +376,9 @@ namespace webpp {
         }
 
         void expires_string_to(istl::String auto&& result) {
-            using clock_type      = typename expires_t::clock;
-            stl::time_t expires_c = clock_type::to_time_t(*_expires);
             stl::format_to(stl::back_inserter(result),
                            "{:%a, %d %b %Y %H:%M:%S} GMT",
-                           istl::safe_localtime(expires_c));
+                           _expires.value());
         }
 
         string_type expires_string(auto&&... args) {
