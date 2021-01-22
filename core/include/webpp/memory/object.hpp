@@ -12,8 +12,8 @@ namespace webpp::object {
 
         template <typename ResType, typename Data>
         struct resource_holder {
-            Data    data;
-            ResType res;
+            Data    resource_holder_data;
+            ResType resource_holder_res;
         };
 
         template <typename Data>
@@ -102,11 +102,11 @@ namespace webpp::object {
 
         template <typename... Args>
         constexpr local(alloc_pack_type& alloc_pack, Args&&... args)
-          : res_holder{.data{}, // the stack buffer
-                       .res = resource_type{res_holder::data.data(),
-                                            res_holder::data.size(),
-                                            &alloc_pack.general_resource()}},
-            super{alloc_pack, res_holder::res, stl::forward<Args>(args)...} {}
+          : res_holder{.resource_holder_data{}, // the stack buffer
+                       .resource_holder_res = resource_type{res_holder::resource_holder_data.data(),
+                                                            res_holder::resource_holder_data.size(),
+                                                            &alloc_pack.general_resource()}},
+            super{alloc_pack, res_holder::resource_holder_res, stl::forward<Args>(args)...} {}
 
         template <typename... Args>
         requires(stl::is_void_v<resource_type>) constexpr local(alloc_pack_type& alloc_pack, Args&&... args)

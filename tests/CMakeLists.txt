@@ -2,14 +2,14 @@
 enable_testing()
 
 file(GLOB TEST_SOURCES *.cpp)
-set(TEST_NAME ${PROJECT_NAME}_test)
+set(TEST_NAME ${PROJECT_NAME}-test)
 
 option(colored "Color the output even if it's going to a pipe" OFF)
 if (colored)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=always")
 endif ()
 
-
+# todo: remove this if you can :)
 find_package(GTest REQUIRED)
 
 

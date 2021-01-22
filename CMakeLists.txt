@@ -34,7 +34,7 @@ set(INSTALL_BINDIR $<IF:$<BOOL:${CMAKE_INSTALL_BINDIR}>,${CMAKE_INSTALL_BINDIR},
 set(INSTALL_INCLUDEDIR $<IF:$<BOOL:${CMAKE_INSTALL_INCLUDEDIR}>,${CMAKE_INSTALL_INCLUDEDIR},include>)
 set(INSTALL_ARCHIVEDIR ${INSTALL_LIBDIR})
 set(gcc_min_version 10.2.0)
-set(clang_min_version 10.0.1)
+set(clang_min_version 11.0.1)
 
 message(STATUS "Project name                   : ${PROJECT_NAME}")
 message(STATUS "Library version                : ${LIB_VERSION}")
