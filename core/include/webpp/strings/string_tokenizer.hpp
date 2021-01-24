@@ -187,6 +187,10 @@ namespace webpp {
             return str_v(_token_begin, _token_end);
         }
 
+        constexpr void skip_token() noexcept {
+            _token_begin = _token_end;
+        }
+
         //        [[nodiscard]] string_view_type token_view() const noexcept {
         //            return string_view_type{&*_token_begin, std::distance(_token_begin, _token_end)};
         //        }
