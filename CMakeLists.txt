@@ -132,8 +132,8 @@ if (NOT fmt_FOUND)
     include_directories(${fmt_SOURCE_DIR}/include)
 endif ()
 
-find_package(GTest)
-if (NOT GTest_FOUND)
+find_package(GTest QUIET)
+if (NOT gtest_FOUND)
     FetchContent_Declare(
             googletest
             GIT_REPOSITORY https://github.com/google/googletest.git
