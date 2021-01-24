@@ -6,6 +6,7 @@
 #include "../../convert/casts.hpp"
 #include "../../memory/allocators.hpp"
 #include "../../std/chrono.hpp"
+#include "../../std/format.hpp"
 #include "../../std/string.hpp"
 #include "../../strings/iequals.hpp"
 #include "../../strings/parser_utils.hpp"
@@ -109,6 +110,7 @@ namespace webpp {
             attrs{alloc} {
             auto src = istl::string_viewify(stl::forward<decltype(source)>(source));
             parse_set_cookie(src); // parse name, value, and options
+            // todo: deal with the error
         }
 
         /**
@@ -130,10 +132,12 @@ namespace webpp {
                 tokenizer.skip_spaces();
                 tokenizer.template next_until_not<details::VALID_COOKIE_NAME<strv_char_type>>();
                 key = tokenizer.token();
-                if (tokenizer.template next<charset('='), charset('"')>()) {
-                    tokenizer.template next_until_not<details::VALID_COOKIE_VALUE<strv_char_type>>();
-                    value = tokenizer.token();
-                }
+                tokenizer.skip_token();
+                tokenizer.skip_spaces();
+                tokenizer.template skip<charset('=')>();
+                tokenizer.skip_spaces();
+                tokenizer.template next_until_not<details::VALID_COOKIE_VALUE<strv_char_type>>();
+                value = tokenizer.token();
                 if (key.empty()) {
                     // I'm not putting this after finding the key part because we need to get rid of the value
                     // for the next iteration
@@ -148,7 +152,7 @@ namespace webpp {
                             using string_char_type = typename value_t::value_type;
                             stl::
                               basic_istringstream<string_char_type, char_traits_type, string_allocator_type>
-                                is{istl::stringify_of<string_type>(value, this->get_allocator())};
+                                      is{istl::stringify_of<string_type>(value, this->get_allocator())};
                             expires_t new_expires;
                             stl::chrono::from_stream(is, "%a, %d %b %Y %H:%M:%S GMT", new_expires);
                             _expires = new_expires;
@@ -245,12 +249,12 @@ namespace webpp {
         auto& remove(bool i_remove = true) noexcept {
             if (i_remove) {
                 // set the expire date 10 year before now:
-                _expires = (stl::chrono::system_clock::now() -
-                            stl::chrono::duration<int, stl::ratio<60 * 60 * 24 * 365>>(10));
+                _expires =
+                  (clock_type::now() - stl::chrono::duration<int, stl::ratio<60 * 60 * 24 * 365>>(10));
             } else if (is_removed()) {
                 // set the expire date 1 year from now:
-                _expires = (stl::chrono::system_clock::now() +
-                            stl::chrono::duration<int, stl::ratio<60 * 60 * 24 * 365>>(1));
+                _expires =
+                  (clock_type::now() + stl::chrono::duration<int, stl::ratio<60 * 60 * 24 * 365>>(1));
             }
             // remove max-age if it exists because we're going with expires
             _max_age = 0;
@@ -375,10 +379,20 @@ namespace webpp {
             }
         }
 
-        void expires_string_to(istl::String auto&& result) {
-            stl::format_to(stl::back_inserter(result),
-                           "{:%a, %d %b %Y %H:%M:%S} GMT",
-                           _expires.value());
+        void expires_string_to(istl::String auto& result) {
+            if (_expires) {
+                static constexpr auto date_format = "{:%a, %d %b %Y %H:%M:%S} GMT";
+
+                // we have to do this because currently STL implementers have not yet specialized
+                // std::formatter for utc_clock type
+                if constexpr (requires { typename stl::formatter<date_t, char_type>::type; }) {
+                    stl::format_to(stl::back_inserter(result), date_format, _expires.value());
+                } else {
+                    const stl::time_t expires_c =
+                      stl::chrono::system_clock::to_time_t(clock_type::to_sys(*_expires));
+                    stl::format_to(stl::back_inserter(result), date_format, istl::safe_localtime(expires_c));
+                }
+            }
         }
 
         string_type expires_string(auto&&... args) {

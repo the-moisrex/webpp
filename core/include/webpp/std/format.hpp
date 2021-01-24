@@ -38,6 +38,8 @@ namespace webpp::stl {
     //        return fmt::format(fmt.str, args...);
     //    }
 
+    template <typename Duration, typename CharT>
+    struct formatter;
 
     template <typename... Args>
     inline auto format(Args&&... args) {
