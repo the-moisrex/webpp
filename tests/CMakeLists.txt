@@ -9,9 +9,6 @@ if (colored)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=always")
 endif ()
 
-# todo: remove this if you can :)
-find_package(GTest REQUIRED)
-
 
 add_executable(${TEST_NAME} ${TEST_SOURCES})
 target_link_libraries(${TEST_NAME}
