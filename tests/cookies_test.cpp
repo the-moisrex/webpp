@@ -7,6 +7,7 @@
 
 using res_cookie_t     = webpp::response_cookie<>;
 using res_cookie_jar_t = webpp::response_cookie_jar<>;
+using req_cookie_jar_t = webpp::request_cookie_jar<>;
 
 TEST(Cookie, ResponseCookiesCreation) {
     res_cookie_t c;
@@ -38,6 +39,18 @@ TEST(Cookie, SetCookieHeaderParsing) {
     EXPECT_TRUE(c1.http_only());
     EXPECT_FALSE(c1.secure());
     EXPECT_EQ(c1.path(), "/about");
+}
+
+TEST(Cookie, RequestCookieJarParser) {
+    req_cookie_jar_t jar;
+    EXPECT_TRUE(jar.parse("one=1; two= \"2\"; three=\"3\""));
+    ASSERT_EQ(jar.size(), 3);
+    EXPECT_EQ(jar[0].name(), "one");
+    EXPECT_EQ(jar[0].value(), "1");
+    EXPECT_EQ(jar[1].name(), "two");
+    EXPECT_EQ(jar[1].value(), "2");
+    EXPECT_EQ(jar[2].name(), "three");
+    EXPECT_EQ(jar[2].value(), "3");
 }
 
 // TODO: fill here

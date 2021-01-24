@@ -36,8 +36,8 @@ namespace webpp {
         request_cookie(request_cookie&& c) noexcept = default;
 
         request_cookie(name_t i_name, value_t i_value) noexcept
-          : _name(trim_copy(i_name)),
-            _value(trim_copy(i_value)) {}
+          : _name(ascii::trim_copy(i_name)),
+            _value(ascii::trim_copy(i_value)) {}
 
         request_cookie& operator=(const request_cookie& c) = default;
         request_cookie& operator=(request_cookie&& c) noexcept = default;
