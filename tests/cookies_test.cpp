@@ -31,6 +31,13 @@ TEST(Cookie, SetCookieHeaderParsing) {
     EXPECT_TRUE(c.secure());
     EXPECT_TRUE(c.http_only());
     EXPECT_EQ(c.expires_string(), "Fri, 21 Jan 2022 16:08:20 GMT");
+
+    res_cookie_t c1{"name = value ;   HttpOnly; path=/about  "};
+    EXPECT_EQ(c1.name(), "name");
+    EXPECT_EQ(c1.value(), "value");
+    EXPECT_TRUE(c1.http_only());
+    EXPECT_FALSE(c1.secure());
+    EXPECT_EQ(c1.path(), "/about");
 }
 
 // TODO: fill here
