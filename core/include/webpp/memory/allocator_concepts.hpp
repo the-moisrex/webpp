@@ -253,7 +253,7 @@ namespace webpp {
 
     template <typename AllocDescTypes>
     using resource_extractor =
-      typename istl::filter_parameters<istl::templated_negation<stl::is_void>::type,
+      typename istl::filter_parameters<istl::templated_negation<stl::is_void>::template type,
                                        typename details::resource_extractor_impl<AllocDescTypes>::type>::type;
 
 
