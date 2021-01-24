@@ -126,17 +126,17 @@ namespace webpp {
             string_view_type                   key;
             string_view_type                   value;
             string_tokenizer<string_view_type> tokenizer{src};
+            tokenizer.skip_spaces();
+            tokenizer.template skip<charset(';')>();
             while (tokenizer.template next<charset<strv_char_type, 1>(';')>()) {
                 tokenizer.skip_spaces();
-                tokenizer.template skip<charset(';')>();
-                tokenizer.skip_spaces();
-                tokenizer.template next_until_not<details::VALID_COOKIE_NAME<strv_char_type>>();
+                tokenizer.template next_until<details::VALID_COOKIE_NAME<strv_char_type>>();
                 key = tokenizer.token();
                 tokenizer.skip_token();
                 tokenizer.skip_spaces();
                 tokenizer.template skip<charset('=')>();
                 tokenizer.skip_spaces();
-                tokenizer.template next_until_not<details::VALID_COOKIE_VALUE<strv_char_type>>();
+                tokenizer.template next_until_not<charset(';')>();
                 value = tokenizer.token();
                 if (key.empty()) {
                     // I'm not putting this after finding the key part because we need to get rid of the value
@@ -144,9 +144,8 @@ namespace webpp {
                     is_valid = false;
                     continue;
                 }
-                switch (key[0]) {
+                switch (ascii::to_lower_copy(key[0])) {
                     case 'e':
-                    case 'E':
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "expires")) {
                             using char_traits_type = typename value_t::traits_type;
                             using string_char_type = typename value_t::value_type;
@@ -161,7 +160,6 @@ namespace webpp {
                         }
                         break;
                     case 'c':
-                    case 'C':
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "comment")) {
                             _comment = value;
                         } else {
@@ -169,7 +167,6 @@ namespace webpp {
                         }
                         break;
                     case 'd':
-                    case 'D':
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "domain")) {
                             _domain = value;
                         } else {
@@ -177,7 +174,6 @@ namespace webpp {
                         }
                         break;
                     case 'p':
-                    case 'P':
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "path")) {
                             _path = value; // todo: should we store escaped or unescaped?
                         } else if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "priority")) {
@@ -187,7 +183,6 @@ namespace webpp {
                         }
                         break;
                     case 's':
-                    case 'S':
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "secure")) {
                             _secure = true;
                         } else if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "samesite")) {
@@ -206,7 +201,6 @@ namespace webpp {
                         }
                         break;
                     case 'h':
-                    case 'H':
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "httponly")) {
                             _http_only = true;
                         } else {
@@ -214,7 +208,6 @@ namespace webpp {
                         }
                         break;
                     case 'm':
-                    case 'M':
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "max-age")) {
                             max_age(to<max_age_t>(value));
                         } else {
@@ -222,7 +215,6 @@ namespace webpp {
                         }
                         break;
                     case 'v':
-                    case 'V':
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "version")) {
                             if (value == "0")
                                 _version = version_t::version_0;
@@ -390,7 +382,7 @@ namespace webpp {
                 } else {
                     const stl::time_t expires_c =
                       stl::chrono::system_clock::to_time_t(clock_type::to_sys(*_expires));
-                    stl::format_to(stl::back_inserter(result), date_format, istl::safe_localtime(expires_c));
+                    stl::format_to(stl::back_inserter(result), date_format, *stl::gmtime(&expires_c));
                 }
             }
         }
