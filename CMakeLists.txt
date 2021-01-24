@@ -71,61 +71,81 @@ endif ()
 add_compile_definitions(WEBPP_PROJECT_ROOT=${CMAKE_CURRENT_SOURCE_DIR})
 
 
-if(IS_GCC)
+if (IS_GCC)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fconcepts-diagnostics-depth=10 -Wall -Wpedantic -Wextra")
-endif()
+endif ()
 
 
 include(FetchContent)
-FetchContent_Declare(
-        date
-        GIT_REPOSITORY https://github.com/HowardHinnant/date.git
-        GIT_TAG         origin/master
-)
-FetchContent_Declare(
-        magic_enum
-        GIT_REPOSITORY https://github.com/Neargye/magic_enum.git
-        GIT_TAG         origin/master
-)
-FetchContent_Declare(
-        fmt
-        GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-        GIT_TAG         origin/master
-)
-FetchContent_Declare(
-        googletest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG         origin/master
-)
-set(BUILD_GMOCK     OFF CACHE BOOL "Builds the googlemock subproject" FORCE)
-set(INSTALL_GTEST   ON  CACHE BOOL "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" FORCE)
 
+find_package(date QUIET)
+if (NOT date_FOUND)
+    FetchContent_Declare(
+            date
+            GIT_REPOSITORY https://github.com/HowardHinnant/date.git
+            GIT_TAG origin/master
+    )
 
-set(MAGIC_ENUM_OPT_BUILD_EXAMPLES       OFF CACHE BOOL "Build magic_enum examples" FORCE)
-set(MAGIC_ENUM_OPT_BUILD_TESTS          OFF CACHE BOOL "Build and perform magic_enum tests" FORCE)
-set(MAGIC_ENUM_OPT_INSTALL              ON  CACHE BOOL "Generate and install magic_enum target" FORCE)
+    set(USE_SYSTEM_TZ_DB         OFF CACHE BOOL "Use the operating system's timezone database" FORCE)
+    set(MANUAL_TZ_DB             OFF CACHE BOOL "User will set TZ DB manually by invoking set_install in their code" FORCE)
+    set(USE_TZ_DB_IN_DOT         OFF CACHE BOOL "Save the timezone database in the current folder" FORCE)
+    set(BUILD_SHARED_LIBS        OFF CACHE BOOL "Build a shared version of library" FORCE)
+    set(ENABLE_DATE_TESTING      OFF CACHE BOOL "Enable unit tests" FORCE)
+    set(DISABLE_STRING_VIEW      OFF CACHE BOOL "Disable string view" FORCE)
+    set(COMPILE_WITH_C_LOCALE    OFF CACHE BOOL "define ONLY_C_LOCALE=1" FORCE)
+    set(BUILD_TZ_LIB             ON  CACHE BOOL "build/install of TZ library" FORCE)
 
-set(FMT_DOC          OFF CACHE BOOL "Generate the doc target."                   FORCE)
-set(FMT_INSTALL      ON  CACHE BOOL "Generate the install target."               FORCE)
-set(FMT_TEST         OFF CACHE BOOL "Generate the test target."                  FORCE)
-set(FMT_FUZZ         OFF CACHE BOOL "Generate the fuzz target."                  FORCE)
-set(FMT_CUDA_TEST    OFF CACHE BOOL "Generate the cuda-test target."             FORCE)
-set(FMT_OS           ON  CACHE BOOL "Include core requiring OS (Windows/Posix) " FORCE)
+    FetchContent_MakeAvailable(date)
+    include_directories(${date_SOURCE_DIR}/include)
+endif ()
 
-set(USE_SYSTEM_TZ_DB         OFF CACHE BOOL "Use the operating system's timezone database" FORCE)
-set(MANUAL_TZ_DB             OFF CACHE BOOL "User will set TZ DB manually by invoking set_install in their code" FORCE)
-set(USE_TZ_DB_IN_DOT         OFF CACHE BOOL "Save the timezone database in the current folder" FORCE)
-set(BUILD_SHARED_LIBS        OFF CACHE BOOL "Build a shared version of library" FORCE)
-set(ENABLE_DATE_TESTING      OFF CACHE BOOL "Enable unit tests" FORCE)
-set(DISABLE_STRING_VIEW      OFF CACHE BOOL "Disable string view" FORCE)
-set(COMPILE_WITH_C_LOCALE    OFF CACHE BOOL "define ONLY_C_LOCALE=1" FORCE)
-set(BUILD_TZ_LIB             ON  CACHE BOOL "build/install of TZ library" FORCE)
+find_package(magic_enum QUIET)
+if (NOT magic_enum_FOUND)
+    FetchContent_Declare(
+            magic_enum
+            GIT_REPOSITORY https://github.com/Neargye/magic_enum.git
+            GIT_TAG origin/master
+    )
+    set(MAGIC_ENUM_OPT_BUILD_EXAMPLES       OFF CACHE BOOL "Build magic_enum examples" FORCE)
+    set(MAGIC_ENUM_OPT_BUILD_TESTS          OFF CACHE BOOL "Build and perform magic_enum tests" FORCE)
+    set(MAGIC_ENUM_OPT_INSTALL              ON  CACHE BOOL "Generate and install magic_enum target" FORCE)
 
-FetchContent_MakeAvailable(magic_enum fmt date googletest)
-include_directories(${magic_enum_SOURCE_DIR}/include)
-include_directories(${date_SOURCE_DIR}/include)
-include_directories(${fmt_SOURCE_DIR}/include)
-include_directories(${googletest_SOURCE_DIR}/googletest/include)
+    FetchContent_MakeAvailable(magic_enum)
+    include_directories(${magic_enum_SOURCE_DIR}/include)
+endif ()
+
+find_package(fmt QUIET)
+if (NOT fmt_FOUND)
+    FetchContent_Declare(
+            fmt
+            GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+            GIT_TAG origin/master
+    )
+    set(FMT_DOC          OFF CACHE BOOL "Generate the doc target."                   FORCE)
+    set(FMT_INSTALL      ON  CACHE BOOL "Generate the install target."               FORCE)
+    set(FMT_TEST         OFF CACHE BOOL "Generate the test target."                  FORCE)
+    set(FMT_FUZZ         OFF CACHE BOOL "Generate the fuzz target."                  FORCE)
+    set(FMT_CUDA_TEST    OFF CACHE BOOL "Generate the cuda-test target."             FORCE)
+    set(FMT_OS           ON  CACHE BOOL "Include core requiring OS (Windows/Posix) " FORCE)
+
+    FetchContent_MakeAvailable(fmt)
+    include_directories(${fmt_SOURCE_DIR}/include)
+endif ()
+
+find_package(GTest)
+if (NOT GTest_FOUND)
+    FetchContent_Declare(
+            googletest
+            GIT_REPOSITORY https://github.com/google/googletest.git
+            GIT_TAG release-1.10.0
+    )
+    set(BUILD_GMOCK OFF CACHE BOOL "Builds the googlemock subproject" FORCE)
+    set(INSTALL_GTEST ON CACHE BOOL "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" FORCE)
+
+    FetchContent_MakeAvailable(googletest)
+    include_directories(${googletest_SOURCE_DIR}/googletest/include)
+endif ()
+
 
 add_subdirectory(${LIB_DIR})
 add_subdirectory(${SDK_DIR})
