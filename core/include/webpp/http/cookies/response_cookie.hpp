@@ -161,6 +161,7 @@ namespace webpp {
                         break;
                     case 'c':
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "comment")) {
+                            ascii::rtrim(value);
                             _comment = value;
                         } else {
                             attrs.emplace(key, value);
@@ -168,6 +169,7 @@ namespace webpp {
                         break;
                     case 'd':
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "domain")) {
+                            ascii::rtrim(value);
                             _domain = value;
                         } else {
                             attrs.emplace(key, value);
@@ -175,8 +177,10 @@ namespace webpp {
                         break;
                     case 'p':
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "path")) {
+                            ascii::rtrim(value);
                             _path = value; // todo: should we store escaped or unescaped?
                         } else if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "priority")) {
+                            ascii::rtrim(value);
                             _priority = value;
                         } else {
                             attrs.emplace(key, value);
@@ -186,6 +190,7 @@ namespace webpp {
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "secure")) {
                             _secure = true;
                         } else if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "samesite")) {
+                            ascii::rtrim(value);
                             if (ascii::iequals<ascii::char_case_side::second_lowered>(value, "strict")) {
                                 _same_site = same_site_value::strict;
                             } else if (ascii::iequals<ascii::char_case_side::second_lowered>(value, "lax")) {
@@ -216,6 +221,7 @@ namespace webpp {
                         break;
                     case 'v':
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "version")) {
+                            ascii::rtrim(value);
                             if (value == "0")
                                 _version = version_t::version_0;
                             else if (value == "1")
