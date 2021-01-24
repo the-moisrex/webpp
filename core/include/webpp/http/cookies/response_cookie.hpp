@@ -116,11 +116,11 @@ namespace webpp {
         /**
          * Parse a string response
          */
-        bool parse_set_cookie(istl::StringView auto& str) noexcept {
-            using string_view_type = stl::remove_cvref_t<decltype(str)>;
+        bool parse_set_cookie(istl::StringView auto src) noexcept {
+            using string_view_type = stl::remove_cvref_t<decltype(src)>;
             using strv_char_type   = typename string_view_type::value_type;
             bool is_valid;
-            auto src = details::parse_SE_value(str, _name, _value, is_valid);
+            details::parse_SE_value(src, _name, _value, is_valid);
             if (!is_valid)
                 return false;
             string_view_type                   key;

@@ -134,7 +134,7 @@ namespace webpp {
             }
         }
 
-        auto parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value, bool& _valid) noexcept {
+        void parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value, bool& _valid) noexcept {
             using name_t           = stl::remove_cvref_t<decltype(_name)>;
             // using value_t          = stl::remove_cvref_t<decltype(_value)>;
             using string_view_type = stl::remove_cvref_t<decltype(str)>;
@@ -142,7 +142,7 @@ namespace webpp {
 
             parse_SE_name(str, _name, _valid);
             if (!_valid)
-                return str; // do not continue if there's no name
+                return; // do not continue if there's no name
             ascii::ltrim(str);
             if (ascii::starts_with(str, '='))
                 str.remove_prefix(1);
@@ -152,19 +152,19 @@ namespace webpp {
                     d_quote_end != string_view_type::npos) {
                     if (str[d_quote_end] == '"') {
                         _value = str.substr(1, d_quote_end - 1);
-                        str.remove_prefix(d_quote_end);
+                        str.remove_prefix(d_quote_end + 1);
                     } else {
                         // You can't use non double quote chars when you used
                         // one already. You can't even use backslash to escape,
                         // so there's no worry here
                         _valid = false;
-                        return str;
+                        return;
                     }
                 } else {
                     // It won't be a valid string if there's a double quote
                     // without another one finishing it off.
                     _valid = false;
-                    return str;
+                    return;
                 }
             } else {
                 // there's no double quote in the value
@@ -174,7 +174,7 @@ namespace webpp {
                     str.remove_prefix(semicolon_pos);
                 } else {
                     _value = str;
-                    str.remove_prefix(str.size() - 1);
+                    str.remove_prefix(str.size());
                 }
             }
 
@@ -182,7 +182,6 @@ namespace webpp {
             // There might be invalid characters after this. We have to
             // check the whole string for validation. But if it's determined
             // that it's invalid so far, it really is invalid.
-            return str;
         }
 
 

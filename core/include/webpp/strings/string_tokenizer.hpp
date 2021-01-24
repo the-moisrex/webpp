@@ -5,6 +5,7 @@
 
 #include "../std/cassert.hpp"
 #include "../std/string_view.hpp"
+#include "charset.hpp"
 
 namespace webpp {
 
@@ -94,6 +95,7 @@ namespace webpp {
         using const_iterator = ConstIterType;
         using char_type      = typename str_v::value_type;
 
+
         constexpr void init(const_iterator string_begin, const_iterator string_end) {
             _start_pos   = string_begin;
             _token_begin = string_begin;
@@ -158,10 +160,6 @@ namespace webpp {
             while (_token_begin != _end && Chars.contains(*_token_begin))
                 ++_token_begin;
             _token_end = _token_begin;
-        }
-
-        constexpr void skip_whitespaces() noexcept {
-            skip<ascii::standard_whitespaces>();
         }
 
         constexpr void skip_spaces() noexcept {

@@ -45,7 +45,6 @@ namespace webpp {
 
       public:
         using cookie_type = CookieType;
-        using string_type = typename cookie_type::string_type;
 
       private:
         using super = stl::vector<cookie_type, Allocator>;
