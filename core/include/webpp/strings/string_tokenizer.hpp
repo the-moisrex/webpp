@@ -138,8 +138,17 @@ namespace webpp {
         }
 
         template <CharSet auto Chars>
-        constexpr bool next_until_not() noexcept {
+        constexpr bool next_until() noexcept {
+            _token_begin = _token_end;
             while (_token_end != _end && Chars.contains(*_token_end))
+                ++_token_end;
+            return true;
+        }
+
+        template <CharSet auto Chars>
+        constexpr bool next_until_not() noexcept {
+            _token_begin = _token_end;
+            while (_token_end != _end && !Chars.contains(*_token_end))
                 ++_token_end;
             return true;
         }
