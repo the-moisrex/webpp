@@ -405,6 +405,23 @@ namespace webpp {
             return encrypted_value;
         }
 
+        auto decrypted_value() const noexcept {
+            string_type decrypted_value{this->get_allocator()};
+            details::decrypt_to(value(), decrypted_value);
+            return decrypted_value;
+        }
+
+        auto escaped_value() const noexcept {
+            string_type encrypted_value{this->get_allocator()};
+            details::cookie_value_escape_to(value(), encrypted_value);
+            return encrypted_value;
+        }
+
+        auto unescaped_value() const noexcept {
+            string_type decrypted_value{this->get_allocator()};
+            details::cookie_value_unescape_to(value(), decrypted_value);
+            return decrypted_value;
+        }
 
         string_type to_string() const {
             string_type res{get_allocator()};
