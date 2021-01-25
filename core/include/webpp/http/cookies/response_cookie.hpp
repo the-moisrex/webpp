@@ -419,7 +419,7 @@ namespace webpp {
 
         auto unescaped_value() const noexcept {
             string_type decrypted_value{this->get_allocator()};
-            details::cookie_value_unescape_to(value(), decrypted_value);
+            details::cookie_value_unescape_to(value(), decrypted_value); // todo: do something if it fails!
             return decrypted_value;
         }
 

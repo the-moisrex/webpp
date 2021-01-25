@@ -2,9 +2,10 @@
 #define WEBPP_CGI_H
 
 #include "../../convert/casts.hpp"
+#include "../../memory/object.hpp"
 #include "../../std/string_view.hpp"
 #include "../../strings/to_case.hpp"
-#include "../../traits/std_traits.hpp"
+#include "../../traits/default_traits.hpp"
 #include "../app_wrapper.hpp"
 #include "../request.hpp"
 #include "../response.hpp"
@@ -22,17 +23,14 @@
 
 namespace webpp {
 
-    // todo: add protocol extensions as well
-    template <Application App, Traits TraitsType = std_traits, ExtensionList EList = empty_extension_pack>
+    template <Application App, Traits TraitsType = default_traits, ExtensionList EList = empty_extension_pack>
     struct cgi : public common_protocol<TraitsType, App, EList> {
         using traits_type      = TraitsType;
         using application_type = App;
         using extension_list   = stl::remove_cvref_t<EList>;
-        using str_view_type    = typename TraitsType::string_view_type;
-        using str_type         = typename TraitsType::string_type;
+        using str_view_type    = traits::string_view<traits_type>;
+        using str_type         = traits::general_string<traits_type>;
         using request_type     = simple_request<traits_type, extension_list, cgi_request>;
-        using allocator_type   = typename request_type::allocator_type;
-        using app_wrapper_type = http_app_wrapper<traits_type, application_type>;
 
       private:
         using super = common_protocol<TraitsType, App, EList>;
@@ -44,8 +42,6 @@ namespace webpp {
         }
 
       public:
-        app_wrapper_type app;
-
         template <typename... Args>
         cgi(Args&&... args) : super{stl::forward<Args>(args)...} {
             ctor();
@@ -144,9 +140,8 @@ namespace webpp {
 
 
         int operator()() noexcept {
-            // todo: use a monotonic allocator
-            auto req = this->template instantiate<request_type>();
-            auto res = app(req);
+            request_type req{*this};
+            auto         res = this->app(req);
             res.calculate_default_headers();
             auto header_str = res.headers.str();
             auto str        = res.body.str();
@@ -173,6 +168,9 @@ namespace webpp {
             return EXIT_SUCCESS;
         }
     };
+
+    template <typename App>
+    cgi(App&&) -> cgi<App, default_traits, empty_extension_pack>;
 
     // fixme: implement these too:
     //    AUTH_PASSWORD

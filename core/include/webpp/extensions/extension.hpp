@@ -5,7 +5,7 @@
 
 #include "../std/std.hpp"
 #include "../std/tuple.hpp"
-#include "../traits/std_traits.hpp"
+#include "../traits/default_traits.hpp"
 #include "../traits/traits.hpp"
 
 #include <cstdint>
@@ -385,7 +385,7 @@ namespace webpp {
 
     template <typename E>
     concept ExtensionList = requires {
-        typename E::template extensie_type<std_traits, fake_extensie_descriptor>;
+        typename E::template extensie_type<default_traits, fake_extensie_descriptor>;
         typename E::template is_all<fake_extensie_descriptor::template has_related_extension_pack>;
     };
 

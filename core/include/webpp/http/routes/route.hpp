@@ -539,8 +539,13 @@ namespace webpp {
         };
 
       public:
+
+        [[nodiscard]] constexpr auto operator>>=(void(*func)(void)) const noexcept {
+            return set_next<logical_operators::none>(func);
+        }
+
         [[nodiscard]] constexpr auto operator>>=(auto&& new_route) const noexcept {
-            using rt = decltype(new_route);
+            using rt = stl::remove_cvref_t<decltype(new_route)>;
             if constexpr (stl::is_member_function_pointer_v<rt>) {
                 using mem_func_ptr_t = member_function_pointer<rt>;
                 using app_type       = typename mem_func_ptr_t::type;
@@ -550,45 +555,45 @@ namespace webpp {
                                             mem_func_ptr_t::is_noexcept>{});
             } else /*if constexpr (PotentialRoute<rt, switched_context_type<fake_context_type>>)*/ {
                 return set_next<logical_operators::none>(stl::forward<decltype(new_route)>(new_route));
-                //                } else {
-                //                    // todo: write tests for this:
-                //                    return set_next<logical_operators::none>([=](auto... args) {
-                //                        //                        static_assert(stl::is_invocable_v<decltype(new_route),
-                //                        //                        decltype(args)...>,
-                //                        //                                      "The specified route can't be called in any
-                //                        //                                      way that our router knows; " "you might need
-                //                        //                                      to change the signature of your route.");
-                //                        using nrtype = decltype(new_route);
-                //                        if constexpr (stl::is_invocable_v<nrtype, decltype(args)...>) {
-                //                            return new_route(stl::forward<decltype(args)>(args)...);
-                //                        } else if (stl::is_invocable_v<nrtype>) {
-                //                            return new_route();
-                //                        } else {
-                //                            stl::invalid_argument(
-                //                              "We're unable to run your route. We don't know how."
-                //                              " Make sure you're using a route signature that's familiar
-                //                              for us.");
-                //                        }
-                //                    });
+                // } else {
+                //     // todo: write tests for this:
+                //     return set_next<logical_operators::none>([=](auto... args) {
+                //         //                        static_assert(stl::is_invocable_v<decltype(new_route),
+                //         //                        decltype(args)...>,
+                //         //                                "The specified route can't be called in any
+                //         //                                way that our router knows; " "you might need
+                //         //                                to change the signature of your route.");
+                //         using nrtype = decltype(new_route);
+                //         if constexpr (stl::is_invocable_v<nrtype, decltype(args)...>) {
+                //             return new_route(stl::forward<decltype(args)>(args)...);
+                //         } else if (stl::is_invocable_v<nrtype>) {
+                //             return new_route();
+                //         } else {
+                //             stl::invalid_argument(
+                //               "We're unable to run your route. We don't know how."
+                //               " Make sure you're using a route signature that's familiar
+                //               for us.");
+                //         }
+                //     });
             }
         }
 
-        //            template <typename T, typename Ret, typename... Args>
-        //            [[nodiscard]] constexpr auto operator>>=(Ret (T::*mem_func_pointer)(Args...)) const
-        //            noexcept {
-        //                using app_type = T;
-        //            }
+        // template <typename T, typename Ret, typename... Args>
+        // [[nodiscard]] constexpr auto operator>>=(Ret (T::*mem_func_pointer)(Args...)) const
+        // noexcept {
+        //     using app_type = T;
+        // }
 
-        //            template <typename RT>
-        //            [[nodiscard]] constexpr auto operator=(RT&& new_route) const noexcept {
-        //                return operator>>=<RT>(stl::forward<RT>(new_route));
-        //            }
+        // template <typename RT>
+        // [[nodiscard]] constexpr auto operator=(RT&& new_route) const noexcept {
+        //     return operator>>=<RT>(stl::forward<RT>(new_route));
+        // }
         //
-        //            template <typename T, typename Ret, typename... Args>
-        //            [[nodiscard]] constexpr auto operator=(Ret (T::*mem_func_pointer)(Args...)) const
-        //            noexcept {
-        //                return operator>>=<T, Ret, Args...>(mem_func_pointer);
-        //            }
+        // template <typename T, typename Ret, typename... Args>
+        // [[nodiscard]] constexpr auto operator=(Ret (T::*mem_func_pointer)(Args...)) const
+        // noexcept {
+        //     return operator>>=<T, Ret, Args...>(mem_func_pointer);
+        // }
 
 
       private:

@@ -6,7 +6,7 @@
 #include "../std/string.hpp"
 #include "../std/string_concepts.hpp"
 #include "../std/string_view.hpp"
-#include "../traits/std_traits.hpp"
+#include "../traits/default_traits.hpp"
 #include "../traits/traits.hpp"
 #include "./size.hpp"
 
