@@ -30,8 +30,7 @@ namespace webpp {
     /**
      * Const router is a router that satisfies that "Router" concept.
      */
-    template </*fixme: ExtensionList*/ typename ExtensionListType = empty_extension_pack,
-              /*fixme: Route*/ typename... RouteType>
+    template <ExtensionList ExtensionListType = empty_extension_pack, typename... RouteType>
     struct router {
         using extension_list_type = stl::remove_cvref_t<ExtensionListType>;
 
@@ -43,6 +42,9 @@ namespace webpp {
           : routes(stl::forward<RouteType>(_route)...) {}
 
         constexpr router(RouteType&&... _route) noexcept : routes(stl::forward<RouteType>(_route)...) {}
+
+        constexpr router(router const&) noexcept = default;
+        constexpr router(router&&) noexcept      = default;
 
         //        consteval router() noexcept              = delete;
         //        consteval router(router const&) noexcept = delete;
@@ -100,7 +102,7 @@ namespace webpp {
 
       private:
         template <stl::size_t Index = 0>
-        [[nodiscard]] inline auto handle_route_results(auto&& res, auto&& ctx, auto&& req) const noexcept {
+        [[nodiscard]] constexpr auto handle_route_results(auto&& res, auto&& ctx, auto&& req) const noexcept {
             using result_type                   = stl::remove_cvref_t<decltype(res)>;
             using context_type                  = stl::remove_cvref_t<decltype(ctx)>;
             constexpr auto next_route_index     = Index + 1;
@@ -117,9 +119,10 @@ namespace webpp {
                     return handle_route_results<Index>(res.value(), stl::forward<decltype(ctx)>(ctx), req);
                 } else {
                     // return a 500 error
-                    static constexpr auto err_code = 500u;
-                    using ret_type                 = decltype(
-                      handle_route_results<Index>(res.value(), stl::forward<decltype(ctx)>(ctx), req));
+                    constexpr auto err_code = 500u;
+                    using ret_type          = decltype(handle_route_results<Index>(res.value(),
+                                                                          stl::forward<decltype(ctx)>(ctx),
+                                                                          req));
                     if constexpr (stl::is_convertible_v<typename result_type::value_type, unsigned long>) {
                         return handle_route_results<Index>(typename result_type::value_type{err_code},
                                                            stl::forward<decltype(ctx)>(ctx),
@@ -181,18 +184,17 @@ namespace webpp {
          * @return final response
          */
         template <Request RequestType>
-        Response auto operator()(RequestType& req) const noexcept {
-            using req_type     = stl::remove_cvref_t<RequestType>;
-            using context_type = simple_context<req_type, extension_list_type>;
+        constexpr Response auto operator()(RequestType& req) const noexcept {
+            using context_type = simple_context<RequestType, extension_list_type>;
             return this->template operator()<0>(context_type{req.logger, req.alloc_pack}, req);
         }
 
 
         template <stl::size_t Index = 0>
-        Response auto operator()(Context auto&& ctx, Request auto const& req) const noexcept {
+        constexpr Response auto operator()(Context auto&& ctx, Request auto const& req) const noexcept {
 
-            static constexpr bool no_routes       = route_count() == 0u;
-            static constexpr bool past_last_route = Index > (route_count() - 1);
+            constexpr bool no_routes       = route_count() == 0u;
+            constexpr bool past_last_route = Index > (route_count() - 1);
 
             if constexpr (no_routes || past_last_route) {
                 return ctx.error(404u);

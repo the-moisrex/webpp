@@ -3,7 +3,7 @@
 
 int main() {
     using namespace webpp;
-    cgi<std_traits, app> my_app;
+    cgi<default_traits, app> my_app;
     my_app();
     return 0;
 }

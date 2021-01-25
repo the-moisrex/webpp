@@ -7,7 +7,7 @@
 #include "../std/string_concepts.hpp"
 #include "../std/string_view.hpp"
 #include "../std/type_traits.hpp"
-#include "../traits/std_traits.hpp"
+#include "../traits/default_traits.hpp"
 #include "./trim.hpp"
 #include "to_case.hpp"
 

@@ -1,38 +1,24 @@
 #ifndef WEBPP_REQUEST_H
 #define WEBPP_REQUEST_H
 
+#include "../traits/traits.hpp"
+#include "./headers.hpp"
+#include "./protocols/protocol_concepts.hpp"
+#include "./request_concepts.hpp"
+#include "./response_body.hpp"
+
 
 /**
- *
- * What request class needs:
- *
- * - [ ] The INTERFACE:
- *       Because otherwise, the interface class itself has to instantiate this
- *       class and copy/move all the data over to here. So in that situation
- *       the interface has to process all the functionalities that this class
- *       can provide. But that's not what we want because there will be a lot of
- *       things that the user may not need in order to create and pass a
- *       response.
- * - [ ] The headers
- * - [ ] The body
- *
- *
- * Only the interface should be instantiating this class. There should be no
+ * Only the protocol should be instantiating this class. There should be no
  * need for anybody else to do it.
  *
  * The user has access to this class. This class should be accessed as a const
  * variable since the user should not be able to make any changes here. Every
  * action that the user has to make should be in the "response" class or other
  * relative classes that finally end up in that class. This class is only for
- * giving informations that the user or other modules need.
+ * giving information that the user or other modules need.
  *
  */
-
-#include "../traits/traits.hpp"
-#include "./headers.hpp"
-#include "./protocols/protocol_concepts.hpp"
-#include "./request_concepts.hpp"
-#include "./response_body.hpp"
 
 namespace webpp {
 
@@ -64,8 +50,6 @@ namespace webpp {
     };
 
 
-    // the reason that I commented the "Protocol" out is because the ProtocolType is most likely
-    // a not-fully-known type at that point.
     template <Traits TraitsType,
               typename EList,
               template <typename, typename, typename...>

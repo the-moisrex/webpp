@@ -33,10 +33,10 @@ namespace webpp {
      * todo: add rebind feature here
      * todo: add other version of constructor as well here
      */
-    template <Traits TraitsType, typename AppType>
-    struct http_app_wrapper : public stl::remove_cvref_t<AppType> {
-        using application_type        = stl::remove_cvref_t<AppType>;
-        using traits_type             = stl::remove_cvref_t<TraitsType>;
+    template <Traits TraitsType, Application AppType>
+    struct http_app_wrapper : public AppType {
+        using application_type        = AppType;
+        using traits_type             = TraitsType;
         using logger_type             = traits::logger<traits_type>;
         using logger_ref              = typename logger_type::logger_ref;
         using string_view_type        = traits::string_view<traits_type>;
@@ -95,7 +95,7 @@ namespace webpp {
          *
          * todo: replace status code with a more sophisticated error type that can hold more information
          */
-        [[nodiscard]] Response auto error(Request auto const& req, http::status_code err) {
+        [[nodiscard]] Response auto error(Request auto& req, http::status_code err) {
             if constexpr (requires {
                               { application_type::error(req, err) }
                               ->Response;
