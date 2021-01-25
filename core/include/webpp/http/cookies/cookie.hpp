@@ -87,11 +87,8 @@
 #include "../../strings/charset.hpp"
 #include "../../strings/to_case.hpp"
 #include "../../traits/std_traits.hpp"
+#include "../../uri/encoding.hpp"
 #include "./cookies_concepts.hpp"
-
-#include <chrono>
-#include <string_view>
-#include <type_traits>
 
 namespace webpp {
 
@@ -135,7 +132,7 @@ namespace webpp {
         }
 
         void parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value, bool& _valid) noexcept {
-            using name_t           = stl::remove_cvref_t<decltype(_name)>;
+            using name_t = stl::remove_cvref_t<decltype(_name)>;
             // using value_t          = stl::remove_cvref_t<decltype(_value)>;
             using string_view_type = stl::remove_cvref_t<decltype(str)>;
             using char_type        = typename name_t::value_type;
@@ -191,6 +188,7 @@ namespace webpp {
         static constexpr void decrypt_to(istl::StringView auto&& value, auto& to) noexcept;
 
 
+        static constexpr auto COOKIE_VALUE_ILLEGAL_CHARS = charset("()[]/|\\',;");
         /*
          * Escapes the given string by replacing all
          * non-alphanumeric characters with escape
@@ -214,14 +212,22 @@ namespace webpp {
          *   - comma and semicolon , and ;
          *   - whitespace and control characters
          */
-        static constexpr void escape_to(istl::StringView auto&& value, auto& to) noexcept;
+        static constexpr void cookie_value_escape_to(istl::StringView auto value, auto& to) noexcept {
+            encode_uri_component<uri_encoding_policy::disallowed_chars>(value,
+                                                                        to,
+                                                                        COOKIE_VALUE_ILLEGAL_CHARS);
+        }
 
         /*
          * Unescapes the given string by replacing all
          * escape sequences in the form %xx with the
          * respective characters.
          */
-        static constexpr void unescape_to(istl::StringView auto&& value, auto& to) noexcept;
+        static constexpr bool cookie_value_unescape_to(istl::StringView auto value, auto& to) noexcept {
+            return decode_uri_component<uri_encoding_policy::disallowed_chars>(value,
+                                                                               to,
+                                                                               COOKIE_VALUE_ILLEGAL_CHARS);
+        }
 
     } // namespace details
 
