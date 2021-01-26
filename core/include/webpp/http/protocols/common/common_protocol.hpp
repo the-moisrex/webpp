@@ -26,11 +26,11 @@ namespace webpp {
         app_wrapper_type app;
 
         common_protocol(application_type&& bare_app) : etraits{}, app{stl::move(bare_app)} {}
-        common_protocol(application_type const& bare_app) : etraits{}, app{bare_app} {}
-
-        common_protocol()
+        common_protocol(application_type const& bare_app)
           : etraits{},
-            app{this->logger, this->get_allocator()} {}
+            app{bare_app, this->logger, this->alloc_pack} {}
+
+        common_protocol() : etraits{}, app{this->logger, this->alloc_pack} {}
     };
 
 } // namespace webpp
