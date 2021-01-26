@@ -20,15 +20,15 @@ namespace webpp {
         using string_view_type = traits::string_view<traits_type>;
         using char_type        = traits::char_type<traits_type>;
         using string_type      = traits::general_string<traits_type>;
-        using etraits          = enable_traits<traits_type>;
+        using etraits          = enable_traits<traits_type, true>;
         using app_wrapper_type = http_app_wrapper<traits_type, application_type>;
 
         app_wrapper_type app;
 
-        common_protocol(application_type&& bare_app) : etraits{}, app{stl::move(bare_app)} {}
-        common_protocol(application_type const& bare_app)
+        template <typename... Args>
+        common_protocol(Args&&... args)
           : etraits{},
-            app{bare_app, this->logger, this->alloc_pack} {}
+            app{*static_cast<etraits*>(this), stl::forward<Args>(args)...} {}
 
         common_protocol() : etraits{}, app{this->logger, this->alloc_pack} {}
     };

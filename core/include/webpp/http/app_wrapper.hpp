@@ -42,6 +42,7 @@ namespace webpp {
         using string_view_type        = traits::string_view<traits_type>;
         using char_type               = istl::char_type_of<string_view_type>;
         using general_char_alloc_type = traits::general_allocator<traits_type, char_type>;
+        using allocator_pack_type     = traits::allocator_pack_type<traits_type>;
 
         template <typename AllocType>
         static constexpr bool app_requires_logger_and_allocator =
@@ -56,37 +57,63 @@ namespace webpp {
 
 
         // ctor that passes the enabled_traits object to daddy :)
-        template <typename T>
-        requires(!stl::same_as<http_app_wrapper, stl::remove_cvref_t<T>> && EnabledTraits<application_type> &&
-                 EnabledTraits<stl::remove_cvref_t<T>> &&
-                 requires(T tt) {
-                     application_type{stl::forward<T>(tt)};
-                 }) constexpr http_app_wrapper(T&& traits_enabled_obj) noexcept
-          : application_type{stl::forward<T>(traits_enabled_obj)} {}
+        template <EnabledTraits ETT, typename... Args>
+        requires(stl::is_constructible_v<application_type, ETT, Args...>)
+          http_app_wrapper(ETT& et_obj, Args&&... args)
+          : application_type{et_obj, stl::forward<Args>(args)...} {}
 
-        // todo: add support for other types of allocators and allocator packs
+        template <EnabledTraits ETT, typename... Args>
+        requires(stl::is_constructible_v<application_type, Args..., ETT> &&
+                 !stl::is_constructible_v<application_type, ETT, Args...>)
+          http_app_wrapper(ETT& et_obj, Args&&... args)
+          : application_type{et_obj, stl::forward<Args>(args)..., et_obj} {}
 
-        template <typename AllocType = general_char_alloc_type>
-        requires(app_requires_logger_and_allocator<AllocType>)
-          http_app_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : application_type{logger, alloc} {}
+        template <EnabledTraits ETT, typename... Args>
+        requires(stl::is_constructible_v<application_type, logger_ref, allocator_pack_type, Args...> &&
+                 !stl::is_constructible_v<application_type, Args..., ETT> &&
+                 !stl::is_constructible_v<application_type, ETT, Args...>)
+          http_app_wrapper(ETT& et_obj, Args&&... args)
+          : application_type{et_obj.logger, et_obj.alloc_pack, stl::forward<Args>(args)...} {}
 
-        template <typename AllocType = general_char_alloc_type>
-        requires(app_requires_logger && !app_requires_logger_and_allocator<AllocType>)
-          http_app_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : application_type{logger} {}
+        template <EnabledTraits ETT, typename... Args>
+        requires(stl::is_constructible_v<application_type, allocator_pack_type, logger_ref, Args...> &&
+                 !stl::is_constructible_v<application_type, logger_ref, allocator_pack_type, Args...> &&
+                 !stl::is_constructible_v<application_type, Args..., ETT> &&
+                 !stl::is_constructible_v<application_type, ETT, Args...>)
+          http_app_wrapper(ETT& et_obj, Args&&... args)
+          : application_type{et_obj.alloc_pack, et_obj.logger, stl::forward<Args>(args)...} {}
 
-        template <typename AllocType = general_char_alloc_type>
-        requires(app_requires_allocator<AllocType> && !app_requires_logger_and_allocator<AllocType> &&
-                 !app_requires_logger)
-          http_app_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : application_type{alloc} {}
+        template <EnabledTraits ETT, typename... Args>
+        requires(stl::is_constructible_v<application_type, allocator_pack_type, Args...> &&
+                 !stl::is_constructible_v<application_type, allocator_pack_type, logger_ref, Args...> &&
+                 !stl::is_constructible_v<application_type, logger_ref, allocator_pack_type, Args...> &&
+                 !stl::is_constructible_v<application_type, Args..., ETT> &&
+                 !stl::is_constructible_v<application_type, ETT, Args...>)
+          http_app_wrapper(ETT& et_obj, Args&&... args)
+          : application_type{et_obj.alloc_pack, stl::forward<Args>(args)...} {}
 
-        template <typename AllocType = general_char_alloc_type>
-        requires(app_requires_nothing && !app_requires_allocator<AllocType> && !app_requires_logger &&
-                 !app_requires_logger_and_allocator<AllocType>)
-          http_app_wrapper(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : application_type{} {}
+        template <EnabledTraits ETT, typename... Args>
+        requires(stl::is_constructible_v<application_type, logger_ref, Args...> &&
+                 !stl::is_constructible_v<application_type, allocator_pack_type, Args...> &&
+                 !stl::is_constructible_v<application_type, allocator_pack_type, logger_ref, Args...> &&
+                 !stl::is_constructible_v<application_type, logger_ref, allocator_pack_type, Args...> &&
+                 !stl::is_constructible_v<application_type, Args..., ETT> &&
+                 !stl::is_constructible_v<application_type, ETT, Args...>)
+          http_app_wrapper(ETT& et_obj, Args&&... args)
+          : application_type{et_obj.logger, stl::forward<Args>(args)...} {}
+
+        template <EnabledTraits ETT, typename... Args>
+        requires(stl::is_constructible_v<application_type, Args...> &&
+                 !stl::is_constructible_v<application_type, logger_ref, Args...> &&
+                 !stl::is_constructible_v<application_type, allocator_pack_type, Args...> &&
+                 !stl::is_constructible_v<application_type, allocator_pack_type, logger_ref, Args...> &&
+                 !stl::is_constructible_v<application_type, logger_ref, allocator_pack_type, Args...> &&
+                 !stl::is_constructible_v<application_type, Args..., ETT> &&
+                 !stl::is_constructible_v<application_type, ETT, Args...>)
+          http_app_wrapper(ETT&, Args&&... args)
+          : application_type{stl::forward<Args>(args)...} {}
+
+        // todo: add support for Allocator constructors and even references to other stuff
 
 
         /**

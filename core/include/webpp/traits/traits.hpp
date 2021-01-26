@@ -172,6 +172,7 @@ namespace webpp {
      */
     template <typename T>
     concept EnabledTraits = requires(T t) {
+        requires alloc::AllocatorPack<typename T::allocator_pack_type>;
         requires Logger<typename T::logger_type>;
         requires Traits<typename T::traits_type>;
         { t.logger } -> Logger;
