@@ -597,6 +597,13 @@ namespace webpp::alloc {
     }
 
 
+    template <typename AllocPackType>
+    concept AllocatorPack = requires {
+        typename AllocPackType::allocator_descriptors;
+        requires stl::same_as<AllocPackType, allocator_pack<typename AllocPackType::allocator_descriptors>>;
+    };
+
+
 } // namespace webpp::alloc
 
 #endif // WEBPP_ALLOCATOR_PACK_HPP
