@@ -452,6 +452,7 @@ namespace webpp {
         route operator=(route&&) = delete;
 
         template <typename... Args>
+        requires (stl::is_constructible_v<super_t, Args...>)
         constexpr route(Args&&... args) noexcept : super_t{stl::forward<Args>(args)...} {}
 
         //            /**
