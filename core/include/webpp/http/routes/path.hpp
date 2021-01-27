@@ -10,16 +10,6 @@
 
 namespace webpp {
 
-    //    namespace details {
-    //        struct fake_appended_extension {
-    //            struct path_type {
-    //                const stl::string_view current_segment = "";
-    //            } path{};
-    //        };
-    //        using fake_path_context_type = typename fake_context_type::template
-    //        context_type_with_appended_extensions<fake_appended_extension>;
-    //    }
-
     template <typename T>
     concept PathContext = Context<T>&& requires(T ctx) {
         {ctx.path};
@@ -111,13 +101,12 @@ namespace webpp {
     // };
 
     /**
-     * Operator Path:
-     *
-     * Features:
-     *   - [ ]
+     * Path Route:
+     *   This is a path type that will be used in the router and is a Route.
+     *   This struct helps the user to identify a route by its recorded HTTP request's path.
      *
      * Examples:
-     *  - path()/"page"/integer("page_num")/"profile"/user_id("user_id")
+     *  - path() / "page" / integer("page_num") / "profile" / user_id("user_id")
      */
     template <typename SegmentType = void, typename NextSegmentType = void>
     struct path {
@@ -129,10 +118,9 @@ namespace webpp {
         // false_type is just used for "void" type; we could have avoided this
         // with some semi-clever inheritance way, but that would cause more
         // code bloat that it would fix any problem
-        using segment_type =
-          stl::conditional_t<has_segment, stl::remove_cvref_t<SegmentType>, stl::false_type>;
+        using segment_type = stl::conditional_t<has_segment, stl::remove_cvref_t<SegmentType>, nothing_type>;
         using next_segment_type =
-          stl::conditional_t<has_next_segment, stl::remove_cvref_t<NextSegmentType>, stl::false_type>;
+          stl::conditional_t<has_next_segment, stl::remove_cvref_t<NextSegmentType>, nothing_type>;
 
         // if the SegmentType is itself a path
         static constexpr bool is_segment_nested =
@@ -147,15 +135,15 @@ namespace webpp {
             next_segment_type,
             path<typename next_segment_type::segment_type, typename next_segment_type::next_segment_type>>;
 
-        segment_type      segment{};
-        next_segment_type next_segment{};
+        [[no_unique_address]] segment_type      segment{};
+        [[no_unique_address]] next_segment_type next_segment{};
 
       private:
         template <typename NextSegType>
         struct make_a_path {
             NextSegType new_next_segment;
 
-            [[nodiscard]] bool operator()(PathContext auto const& ctx) const noexcept {
+            [[nodiscard]] constexpr bool operator()(PathContext auto const& ctx) const noexcept {
                 if constexpr (requires { {new_next_segment == ""}; }) {
                     return new_next_segment == *ctx.path.current_segment;
                 } else if constexpr (requires { {"" == new_next_segment}; }) {
@@ -200,15 +188,15 @@ namespace webpp {
                 // type that have an operator(context)
 
 
-                //            return operator/([=](PathContext auto const& ctx) {
-                //                if constexpr (requires { {next_segment == ""}; }) {
-                //                    return new_next_segment == ctx.path.current_segment;
-                //                } else if constexpr (requires { {"" == new_next_segment}; }) {
-                //                    return ctx.path.current_segment == new_next_segment;
-                //                } else {
-                //                    return false; // should not happen
-                //                }
-                //            });
+                // return operator/([=](PathContext auto const& ctx) {
+                //     if constexpr (requires { {next_segment == ""}; }) {
+                //         return new_next_segment == ctx.path.current_segment;
+                //     } else if constexpr (requires { {"" == new_next_segment}; }) {
+                //         return ctx.path.current_segment == new_next_segment;
+                //     } else {
+                //         return false; // should not happen
+                //     }
+                // });
                 return operator/
                   (make_a_path<seg_type>{.new_next_segment = stl::forward<NewSegType>(new_next_segment)});
             } else {
@@ -379,9 +367,12 @@ namespace webpp {
                     // todo: move this parsing into the request so we don't have to do it more than once for one request
                     uri::basic_path<string_type> uri_segments{
                       req.request_uri(),
-                      ctx.alloc_pack
-                        .template get_allocator<alloc::general_features, typename string_type::value_type>()};
+                      ctx.alloc_pack.template general_allocator<typename string_type::value_type>()};
                     using uri_segments_type = decltype(uri_segments);
+
+                    // the URI is empty, so no checking it
+                    if (uri_segments.empty())
+                        return false;
 
 
                     // context switching
