@@ -498,6 +498,21 @@ namespace webpp::alloc {
             }
         }
 
+
+        // template <typename T>
+        // requires(requires { typename T::allocator_type; }) [[nodiscard]] auto get_allocator_for() noexcept
+        // {
+        //     using type_allocator = typename T::allocator_type;
+        //     if constexpr (has_allocator<type_allocator>) {
+        //         return get_allocator<type_allocator>();
+        //     } else {
+        //         static_assert(false && sizeof(T),
+        //                       "This allocator pack doesn't support the specified "
+        //                       "allocator, you have to change the allocator; "
+        //                       "use make utility.");
+        //     }
+        // }
+
         template <typename T>
         [[nodiscard]] auto local_allocator() noexcept {
             return get_allocator<local_features, T>();
