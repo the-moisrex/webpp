@@ -134,7 +134,7 @@ namespace webpp {
         /**
          * Handle special return types here
          */
-        constexpr auto handle_results = [](auto&& ctx, auto&& res) noexcept {
+        constexpr auto handle_results = [](auto&& ctx, auto&& res) constexpr noexcept {
             using res_t = stl::remove_cvref_t<decltype(res)>;
             if constexpr (istl::Optional<res_t>) {
                 // pass it out to the router, we're not able to handle this here
