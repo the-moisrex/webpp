@@ -72,10 +72,17 @@ namespace webpp {
     //    }
 
     template <typename Route, typename... Args>
-    concept is_callable_route =
-      stl::is_invocable_v<stl::decay_t<Route>, stl::remove_cvref_t<Args>...> ||
-      stl::is_invocable_v<stl::decay_t<Route>, Args...> ||
-      stl::is_invocable_v<stl::decay_t<Route>, stl::add_lvalue_reference_t<stl::remove_cvref_t<Args>>...>;
+    concept is_callable_route = requires(Route route) {
+        requires requires(Args... args) {
+            route(args...);
+        }
+        || requires(stl::remove_cvref_t<Args>... cvref_args) {
+            route(cvref_args...);
+        }
+        || requires(stl::add_lvalue_reference_t<stl::remove_cvref_t<Args>>... cv_args) {
+            route(cv_args...);
+        };
+    };
 
     template <typename Route, typename... Args>
     concept is_nothrow_callable_route =
@@ -160,35 +167,35 @@ namespace webpp {
             }
         };
 
-        if constexpr (stl::is_invocable_v<route_type, context_type, request_type>) {
+        if constexpr (is_callable_route<route_type, context_type, request_type>) {
             // requires a context and a request
             if constexpr (!stl::is_void_v<stl::invoke_result_t<route_type, context_type, request_type>>) {
                 return handle_results(ctx, run_and_catch(_route, ctx, ctx, req));
             } else {
                 run_and_catch(_route, ctx, ctx, req);
             }
-        } else if constexpr (stl::is_invocable_v<route_type, request_type, context_type>) {
+        } else if constexpr (is_callable_route<route_type, request_type, context_type>) {
             // requires a request and a context
             if constexpr (!stl::is_void_v<stl::invoke_result_t<route_type, request_type, context_type>>) {
                 return handle_results(ctx, run_and_catch(_route, ctx, req, ctx));
             } else {
                 run_and_catch(_route, ctx, req, ctx);
             }
-        } else if constexpr (stl::is_invocable_v<route_type, context_type>) {
+        } else if constexpr (is_callable_route<route_type, context_type>) {
             // gets a context
             if constexpr (!stl::is_void_v<stl::invoke_result_t<route_type, context_type>>) {
                 return handle_results(ctx, run_and_catch(_route, ctx, ctx));
             } else {
                 run_and_catch(_route, ctx, ctx);
             }
-        } else if constexpr (stl::is_invocable_v<route_type, request_type>) {
+        } else if constexpr (is_callable_route<route_type, request_type>) {
             // requires a request
             if constexpr (!stl::is_void_v<stl::invoke_result_t<route_type, request_type>>) {
                 return handle_results(ctx, run_and_catch(_route, ctx, req));
             } else {
                 run_and_catch(_route, ctx, req);
             }
-        } else if constexpr (stl::is_invocable_v<route_type>) {
+        } else if constexpr (is_callable_route<route_type>) {
             // requires nothing
             if constexpr (!stl::is_void_v<stl::invoke_result_t<route_type>>) {
                 return handle_results(ctx, run_and_catch(_route, ctx));
