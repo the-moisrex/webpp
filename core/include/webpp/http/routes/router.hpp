@@ -186,7 +186,7 @@ namespace webpp {
         template <Request RequestType>
         constexpr Response auto operator()(RequestType& req) const noexcept {
             using context_type = simple_context<RequestType, extension_list_type>;
-            return this->template operator()<0>(context_type{req.logger, req.alloc_pack}, req);
+            return this->template operator()<0>(context_type{req}, req);
         }
 
 

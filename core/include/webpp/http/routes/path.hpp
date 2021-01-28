@@ -93,6 +93,26 @@ namespace webpp {
         using context_extensions = extension_pack<path_extension>;
     };
 
+
+    namespace details {
+
+        template <typename NextSegType>
+        struct make_a_path {
+            NextSegType new_next_segment;
+
+            [[nodiscard]] constexpr bool operator()(PathContext auto const& ctx) const noexcept {
+                if constexpr (requires { {new_next_segment == ""}; }) {
+                    return new_next_segment == *ctx.path.current_segment;
+                } else if constexpr (requires { {"" == new_next_segment}; }) {
+                    return *ctx.path.current_segment == new_next_segment;
+                } else {
+                    return false; // should not happen
+                }
+            }
+        };
+
+    } // namespace details
+
     // template <typename T, typename PathType, typename UriSegmentsType>
     // concept Segment = requires(T seg) {
     //     // todo: update this
@@ -138,23 +158,6 @@ namespace webpp {
         [[no_unique_address]] segment_type      segment{};
         [[no_unique_address]] next_segment_type next_segment{};
 
-      private:
-        template <typename NextSegType>
-        struct make_a_path {
-            NextSegType new_next_segment;
-
-            [[nodiscard]] constexpr bool operator()(PathContext auto const& ctx) const noexcept {
-                if constexpr (requires { {new_next_segment == ""}; }) {
-                    return new_next_segment == *ctx.path.current_segment;
-                } else if constexpr (requires { {"" == new_next_segment}; }) {
-                    return *ctx.path.current_segment == new_next_segment;
-                } else {
-                    return false; // should not happen
-                }
-            }
-        };
-
-      public:
         /**
          * Convert different original types to normal callable segments
          */
@@ -186,19 +189,8 @@ namespace webpp {
 
                 // Convert those segments that can be compared with a string, to a normal segment
                 // type that have an operator(context)
-
-
-                // return operator/([=](PathContext auto const& ctx) {
-                //     if constexpr (requires { {next_segment == ""}; }) {
-                //         return new_next_segment == ctx.path.current_segment;
-                //     } else if constexpr (requires { {"" == new_next_segment}; }) {
-                //         return ctx.path.current_segment == new_next_segment;
-                //     } else {
-                //         return false; // should not happen
-                //     }
-                // });
-                return operator/
-                  (make_a_path<seg_type>{.new_next_segment = stl::forward<NewSegType>(new_next_segment)});
+                return operator/(details::make_a_path<seg_type>{
+                  .new_next_segment = stl::forward<NewSegType>(new_next_segment)});
             } else {
                 // segment
 
