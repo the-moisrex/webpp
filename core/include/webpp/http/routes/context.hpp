@@ -123,13 +123,12 @@ namespace webpp {
         using request_type       = RequestType;
         using response_type      = ResponseType;
         using basic_context_type = basic_context<TraitsType, EList, RequestType, ResponseType>;
-        using etraits            = enable_traits<TraitsType>;
+        using etraits            = enable_traits<traits_type>;
         using logger_type        = typename etraits::logger_type;
         using logger_ref         = typename etraits::logger_ref;
 
       public:
-        using etraits::enable_traits;
-
+        constexpr basic_context(etraits& et_obj) noexcept : EList{}, etraits{et_obj} {}
         constexpr basic_context(basic_context&& ctx) noexcept      = default;
         constexpr basic_context(basic_context const& ctx) noexcept = default;
         constexpr basic_context& operator=(basic_context const&) = default;
