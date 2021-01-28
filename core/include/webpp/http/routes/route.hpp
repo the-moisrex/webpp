@@ -452,8 +452,8 @@ namespace webpp {
         route operator=(route&&) = delete;
 
         template <typename... Args>
-        requires (stl::is_constructible_v<super_t, Args...>)
-        constexpr route(Args&&... args) noexcept : super_t{stl::forward<Args>(args)...} {}
+        requires(stl::is_constructible_v<super_t, Args...>) constexpr route(Args&&... args) noexcept
+          : super_t{stl::forward<Args>(args)...} {}
 
         //            /**
         //             * Run the migration
@@ -540,8 +540,7 @@ namespace webpp {
         };
 
       public:
-
-        [[nodiscard]] constexpr auto operator>>=(void(*func)(void)) const noexcept {
+        [[nodiscard]] constexpr auto operator>>=(void (*func)(void)) const noexcept {
             return set_next<logical_operators::none>(func);
         }
 
@@ -602,9 +601,9 @@ namespace webpp {
             // exceptions will be handled by the router, unfortunately we're not able to do that here
 
             // using context_type = stl::add_lvalue_reference_t<stl::remove_cvref_t<decltype(ctx)>>;
-            auto res           = call_this_route(ctx, req);
-            using res_t        = stl::remove_cvref_t<decltype(res)>;
-            using n_res_t      = stl::remove_cvref_t<decltype(call_next_route(ctx, req))>;
+            const auto res                     = call_this_route(ctx, req);
+            using res_t                        = stl::remove_cvref_t<decltype(res)>;
+            using n_res_t                      = stl::remove_cvref_t<decltype(call_next_route(ctx, req))>;
             constexpr bool convertible_to_bool = stl::is_void_v<n_res_t> || stl::same_as<n_res_t, bool>;
             if constexpr (stl::same_as<res_t, bool>) {
                 // handling sub-route calls:
