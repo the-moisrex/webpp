@@ -16,6 +16,15 @@ namespace webpp {
 
         [[no_unique_address]] allocator_pack_type alloc_pack{};
         [[no_unique_address]] logger_type         logger{};
+
+
+        // template <typename... ResType>
+        // requires((allocator_pack_type::template has_resource_object<ResType> &&
+        //           ...)) // check if the allocator pack has the resources
+        //   constexpr explicit enable_traits(logger_ref logger_obj = logger_type{},
+        //                                    ResType&... resources) noexcept
+        //   : logger{logger_obj},
+        //           alloc_pack{stl::forward<ResType>(resources)...} {}
     };
 
 
@@ -39,11 +48,9 @@ namespace webpp {
         [[no_unique_address]] alloc_pack_ref alloc_pack;
         [[no_unique_address]] logger_ref     logger;
 
-        // a copy constructor essentially
-        template <typename T>
+        // a copy constructor essentially; works on enable_owner_traits as well
+        template <EnabledTraits T>
         requires requires(T et) {
-            et.alloc_pack;
-            et.logger;
             requires stl::same_as<typename T::traits_type, traits_type>;
             requires stl::same_as<typename T::logger_type, logger_type>;
             requires stl::same_as<typename T::allocator_pack_type, allocator_pack_type>;
@@ -57,15 +64,6 @@ namespace webpp {
         constexpr enable_traits(logger_ref logger_obj, alloc_pack_ref alloc_pack_obj) noexcept
           : alloc_pack{alloc_pack_obj},
             logger{logger_obj} {}
-
-        // template <typename... ResType>
-        // requires((allocator_pack_type::template has_resource_object<ResType> &&
-        //           ...)) // check if the allocator pack has the resources
-        //   constexpr explicit enable_traits(logger_ref logger_obj = logger_type{},
-        //                                    ResType&... resources) noexcept
-        //   : logger{logger_obj},
-        //           alloc_pack{stl::forward<ResType>(resources)...} {}
-
 
         constexpr explicit enable_traits(enable_traits const&) noexcept = default;
         constexpr explicit enable_traits(enable_traits&&) noexcept      = default;
