@@ -157,9 +157,8 @@ namespace webpp {
         // requires ThreadPool<typename T::thread_pool>;   // thread pool
 
         typename T::string_view;
-        typename T::template string <
-          typename alloc::allocator_pack<typename T::allocator_descriptors>::template general_allocator_type<
-            typename T::string_view::value_type>>;
+        typename T::template string<typename alloc::allocator_pack<typename T::allocator_descriptors>::
+                                      template general_allocator_type<typename T::string_view::value_type>>;
 
         // todo: add String<typename T::string_type>; without adding a circular dependency
         // todo: add StringView<typename T::string_view_type>; without adding a circular dependency
@@ -175,10 +174,10 @@ namespace webpp {
         requires alloc::AllocatorPack<typename T::allocator_pack_type>;
         requires Logger<typename T::logger_type>;
         requires Traits<typename T::traits_type>;
-        { t.logger } -> Logger;
-        t.alloc_pack;
-        // t.template local_alloc<char>();
-        // t.template general_alloc<char>();
+        { t.logger }
+        ->Logger;
+        { t.alloc_pack }
+        ->stl::same_as<alloc::allocator_pack<typename T::traits_type::allocator_descriptors>>;
     };
 
 
