@@ -194,8 +194,8 @@ namespace webpp {
          */
         template <typename... E>
         using context_type_with_appended_extensions =
-          typename original_extension_pack_type::template appended<
-            E...>::unique::template extensie_type<traits_type, context_descriptor_type, request_type>;
+          typename details::unique_types<typename original_extension_pack_type::template appended<E...>>::
+            type::template extensie_type<traits_type, context_descriptor_type, request_type>;
 
         template <typename... Args>
         constexpr final_context(Args&&... args) noexcept : EList(stl::forward<Args>(args)...) {}
