@@ -42,16 +42,10 @@ namespace webpp {
       details::good_response_types<T> || istl::OptionalOf<details::is_optional_of_response, T>;
 
     template <typename App, typename ReqType>
-    concept ApplicationAcceptingRequest = Application<App>&& requires(App app) {
-        requires requires(ReqType req) {
-            { app(req) }
-            ->Response;
-        }
-        || requires(stl::add_lvalue_reference_t<ReqType> req_ref) {
-            { app(req_ref) }
-            ->Response;
-        };
-    };
+    concept ApplicationAcceptingRequest =
+      Application<App>&& Request<ReqType> &&
+      (stl::is_invocable_v<App, ReqType> || stl::is_invocable_v<App, stl::add_lvalue_reference_t<ReqType>> ||
+       stl::is_invocable_v<App, stl::add_const_t<stl::add_lvalue_reference_t<ReqType>>>);
 
 
     template <typename T>

@@ -72,17 +72,21 @@ namespace webpp {
     //    }
 
     template <typename Route, typename... Args>
-    concept is_callable_route = requires(Route route) {
-        requires requires(Args... args) {
-            route(args...);
-        }
-        || requires(stl::remove_cvref_t<Args>... cvref_args) {
-            route(cvref_args...);
-        }
-        || requires(stl::add_lvalue_reference_t<stl::remove_cvref_t<Args>>... cv_args) {
-            route(cv_args...);
-        };
-    };
+    concept is_callable_route =
+      stl::is_invocable_v<stl::decay_t<Route>, stl::remove_cvref_t<Args>...> ||
+      stl::is_invocable_v<stl::decay_t<Route>, Args...> ||
+      stl::is_invocable_v<stl::decay_t<Route>, stl::add_lvalue_reference_t<stl::remove_cvref_t<Args>>...>;
+    //    requires(Route route) {
+    //        requires requires(Args... args) {
+    //            route(args...);
+    //        }
+    //        || requires(stl::remove_cvref_t<Args>... cvref_args) {
+    //            route(cvref_args...);
+    //        }
+    //        || requires(stl::add_lvalue_reference_t<stl::remove_cvref_t<Args>>... cv_args) {
+    //            route(cv_args...);
+    //        };
+    //    };
 
     template <typename Route, typename... Args>
     concept is_nothrow_callable_route =

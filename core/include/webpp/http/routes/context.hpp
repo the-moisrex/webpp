@@ -124,11 +124,12 @@ namespace webpp {
         using response_type      = ResponseType;
         using basic_context_type = basic_context<TraitsType, EList, RequestType, ResponseType>;
         using etraits            = enable_traits<traits_type>;
-        using logger_type        = typename etraits::logger_type;
-        using logger_ref         = typename etraits::logger_ref;
 
       public:
-        constexpr basic_context(etraits& et_obj) noexcept : EList{}, etraits{et_obj} {}
+        template <EnabledTraits ET = etraits>
+        constexpr basic_context(ET& et_obj) noexcept : EList{},
+                                                       etraits{et_obj} {}
+
         constexpr basic_context(basic_context&& ctx) noexcept      = default;
         constexpr basic_context(basic_context const& ctx) noexcept = default;
         constexpr basic_context& operator=(basic_context const&) = default;
@@ -208,7 +209,7 @@ namespace webpp {
          * Clone this context and append the new extensions along the way.
          */
         template <Extension... E>
-        [[nodiscard]] constexpr auto clone() const noexcept {
+        [[nodiscard]] constexpr auto clone() noexcept {
             using context_type = context_type_with_appended_extensions<E...>;
             return context_type{*this};
         }
