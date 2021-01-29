@@ -186,6 +186,8 @@ namespace webpp {
         template <Request RequestType>
         constexpr Response auto operator()(RequestType& req) const noexcept {
             using context_type = simple_context<RequestType, extension_list_type>;
+            static_assert(Context<context_type>,
+                          "Web++ Internal Bug: the context_type is not a match for Context concept");
             return this->template operator()<0>(context_type{req}, req);
         }
 
