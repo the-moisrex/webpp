@@ -40,7 +40,7 @@ namespace webpp {
         using char_type           = istl::char_type_of<string_view_type>;
         using string_type         = traits::general_string<traits_type>;
         using allocator_pack_type = traits::allocator_pack_type<traits_type>;
-        using alloc_pack_ref      = stl::conditional_t<sizeof(allocator_pack_type) == 0 &&
+        using alloc_pack_ref      = stl::conditional_t<sizeof(allocator_pack_type) <= 1 &&
                                                     stl::is_copy_constructible_v<allocator_pack_type>,
                                                   allocator_pack_type,
                                                   allocator_pack_type&>;

@@ -3,20 +3,14 @@
 #ifndef WEBPP_RESPONSE_CONCEPTS_H
 #define WEBPP_RESPONSE_CONCEPTS_H
 
+#include "../application/application_concepts.hpp"
 #include "../extensions/extension.hpp"
+#include "../std/optional.hpp"
 #include "../traits/std_traits.hpp"
 #include "./body_concepts.hpp"
 #include "./header_concepts.hpp"
 
 namespace webpp {
-
-    //    struct fake_response_type {
-    //        using body_type   = void;
-    //        using header_type = void;
-    //        using traits_type = fake_traits_type;
-    //        stl::true_type body;
-    //        stl::true_type header;
-    //    };
 
     namespace details {
 
@@ -29,23 +23,40 @@ namespace webpp {
             {res.headers};
         };
 
+        template <typename T>
+        concept good_response_types =
+          Response<stl::remove_cvref_t<T>> || stl::is_void_v<T> || stl::same_as<T, bool> ||
+          stl::is_integral_v<T> || istl::StringViewifiable<T>;
+
+        template <typename T>
+        struct is_optional_of_response {
+            static constexpr bool value = good_response_types<stl::remove_cvref_t<T>>;
+        };
     } // namespace details
 
     template <typename ResType>
     concept Response = details::Response<stl::remove_cvref_t<ResType>>;
 
     template <typename T>
-    struct ResponseTempl {
-        static constexpr bool value = Response<T>;
+    concept AcceptableAsResponse =
+      details::good_response_types<T> || istl::OptionalOf<details::is_optional_of_response, T>;
+
+    template <typename App, typename ReqType>
+    concept ApplicationAcceptingRequest = Application<App>&& requires(App app) {
+        requires requires(ReqType req) {
+            { app(req) }
+            ->Response;
+        }
+        || requires(stl::add_lvalue_reference_t<ReqType> req_ref) {
+            { app(req_ref) }
+            ->Response;
+        };
     };
+
 
     template <typename T>
     concept ConvertibleToResponse =
-      !stl::is_same_v<T, bool> && stl::is_integral_v<T> &&
-      (Response<T> ||
-       // stl::is_convertible_v<T, typename std_traits_from_string<T>::type> ||
-       // stl::is_convertible_v<T, typename std_traits_from_string_view<T>::type>
-       istl::StringViewifiable<T>);
+      !stl::is_same_v<T, bool> && stl::is_integral_v<T> && (Response<T> || istl::StringViewifiable<T>);
 
     template <typename ResponseType, typename T>
     concept ConstructibleWithResponse = stl::is_constructible_v<ResponseType, T>;

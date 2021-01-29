@@ -32,13 +32,9 @@ namespace webpp {
         using str_type         = traits::general_string<traits_type>;
         using request_type     = simple_request<traits_type, extension_list, cgi_request>;
 
-        static_assert(
-          requires(application_type app, request_type req) {
-              { app(req) }
-              ->Response;
-          },
-          "Your application type can't be called with a request type of our choosing or "
-          "it's response is not a valid response type.");
+        static_assert(ApplicationAcceptingRequest<application_type, request_type>,
+                      "Your application type can't be called with a request type of our choosing or "
+                      "its response is not of a valid response type.");
 
       private:
         using super = common_protocol<TraitsType, App, EList>;

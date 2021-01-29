@@ -7,13 +7,8 @@
 
 namespace webpp {
 
-    // todo: change this
     template <typename T>
-    concept Application =
-      stl::default_initializable<T> || stl::is_copy_constructible_v<T> /*&& requires(T app) {
-{ app(fake_request_type{}) }
-->Response;
-}*/;
+    concept Application = stl::default_initializable<T> || stl::is_copy_constructible_v<T>;
 
 
     template <typename T, typename LoggerType, typename AllocType>
