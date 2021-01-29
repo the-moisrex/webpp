@@ -174,10 +174,8 @@ namespace webpp {
         requires alloc::AllocatorPack<typename T::allocator_pack_type>;
         requires Logger<typename T::logger_type>;
         requires Traits<typename T::traits_type>;
-        { t.logger }
-        ->Logger;
-        { t.alloc_pack }
-        ->stl::same_as<alloc::allocator_pack<typename T::traits_type::allocator_descriptors>>;
+        t.logger;
+        t.alloc_pack;
     };
 
 
