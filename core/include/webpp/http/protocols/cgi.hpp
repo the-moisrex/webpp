@@ -32,6 +32,8 @@ namespace webpp {
         using str_type         = traits::general_string<traits_type>;
         using request_type     = simple_request<traits_type, extension_list, cgi_request>;
 
+        static_assert(Request<request_type>, "Internal problem: request_type is not a match for Request concept.");
+
         static_assert(ApplicationAcceptingRequest<application_type, request_type>,
                       "Your application type can't be called with a request type of our choosing or "
                       "its response is not of a valid response type.");
