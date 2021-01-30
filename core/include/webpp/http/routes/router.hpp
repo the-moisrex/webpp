@@ -184,8 +184,8 @@ namespace webpp {
          * @return final response
          */
         template <Request RequestType>
-        constexpr Response auto operator()(RequestType& req) const noexcept {
-            using context_type = simple_context<RequestType, extension_list_type>;
+        constexpr Response auto operator()(RequestType&& req) const noexcept {
+            using context_type = simple_context<stl::remove_cvref_t<RequestType>, extension_list_type>;
             static_assert(Context<context_type>,
                           "Web++ Internal Bug: the context_type is not a match for Context concept");
             return this->template operator()<0>(context_type{req}, req);
@@ -193,7 +193,7 @@ namespace webpp {
 
 
         template <stl::size_t Index = 0>
-        constexpr Response auto operator()(Context auto&& ctx, Request auto const& req) const noexcept {
+        constexpr Response auto operator()(Context auto&& ctx, Request auto&& req) const noexcept {
 
             constexpr bool no_routes       = route_count() == 0u;
             constexpr bool past_last_route = Index > (route_count() - 1);
@@ -211,8 +211,7 @@ namespace webpp {
                 // todo: we might have a context switching, what should we do?
                 // ctx.call_post_entryroute_methods();
                 if constexpr (requires {
-                                  { call_route(route, ctx, req) }
-                                  ->stl::same_as<void>;
+                                  { call_route(route, ctx, req) } -> stl::same_as<void>;
                               }) {
                     // because "handle_route_results" can't handle void inputs, here's how we deal with it
                     call_route(route, ctx, req);

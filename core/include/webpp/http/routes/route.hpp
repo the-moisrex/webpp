@@ -72,8 +72,7 @@ namespace webpp {
     //    }
 
     template <typename Route, typename... Args>
-    concept is_callable_route =
-      stl::is_invocable_v<stl::decay_t<Route>, stl::remove_cvref_t<Args>...> ||
+    concept is_callable_route = stl::is_invocable_v<stl::decay_t<Route>, stl::remove_cvref_t<Args>...> ||
       stl::is_invocable_v<stl::decay_t<Route>, Args...> ||
       stl::is_invocable_v<stl::decay_t<Route>, stl::add_lvalue_reference_t<stl::remove_cvref_t<Args>>...>;
     //    requires(Route route) {
@@ -96,13 +95,13 @@ namespace webpp {
                                   stl::add_lvalue_reference_t<stl::remove_cvref_t<Args>>...>;
 
 
-    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto const& req) noexcept {
+    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto& req) noexcept {
         using route_type   = decltype(_route);
         using request_type = decltype(req);
         using ctx_type     = stl::remove_cvref_t<decltype(ctx)>;
         using context_type = stl::add_lvalue_reference_t<ctx_type>;
 
-        constexpr auto run_and_catch = [](auto&& callable, Context auto const& ctx, auto&&... args) noexcept {
+        constexpr auto run_and_catch = [](auto&& callable, Context auto& ctx, auto&&... args) noexcept {
             using return_type = stl::invoke_result_t<decltype(callable), decltype(args)...>;
             if constexpr (stl::is_nothrow_invocable_v<decltype(callable), decltype(args)...>) {
                 // It's noexcept, we call it knowing that.
@@ -213,7 +212,7 @@ namespace webpp {
     }
 
 
-    // constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto const& req) noexcept(
+    // constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto&& req) noexcept(
     // is_nothrow_callable_route<decltype(_route), decltype(ctx),
     //  decltype(req)>) requires(is_callable_route<decltype(_route), decltype(ctx),
     //  decltype(req)>) {
@@ -226,7 +225,7 @@ namespace webpp {
     //    }
     //}
     //
-    // constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto const& req) noexcept(
+    // constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto&& req) noexcept(
     //      is_nothrow_callable_route<decltype(_route), decltype(req),
     //                                decltype(ctx)>) requires(is_callable_route<decltype(_route),
     //                                decltype(req),
@@ -241,7 +240,7 @@ namespace webpp {
     //        }
     //    }
     //
-    //    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto const& req) noexcept(
+    //    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto&& req) noexcept(
     //      is_nothrow_callable_route<decltype(_route), decltype(ctx)>)
     //      requires(is_callable_route<decltype(_route),
     //                                                                                             decltype(ctx)>)
@@ -255,7 +254,7 @@ namespace webpp {
     //    }
     //
     //
-    //    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto const& req) noexcept(
+    //    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto&& req) noexcept(
     //      is_nothrow_callable_route<decltype(_route), decltype(req)>)
     //      requires(is_callable_route<decltype(_route),
     //                                                                                             decltype(req)>)
@@ -268,7 +267,7 @@ namespace webpp {
     //        }
     //    }
     //
-    //    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto const& /* req */)
+    //    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto&& /* req */)
     //    noexcept(
     //      is_nothrow_callable_route<decltype(_route)>) requires(is_callable_route<decltype(_route)>) {
     //        // requires nothing
@@ -608,7 +607,7 @@ namespace webpp {
 
 
       private:
-        inline auto run_route(Context auto&& ctx, Request auto const& req) const noexcept {
+        constexpr auto run_route(Context auto&& ctx, Request auto&& req) const noexcept {
             // exceptions will be handled by the router, unfortunately we're not able to do that here
 
             // using context_type = stl::add_lvalue_reference_t<stl::remove_cvref_t<decltype(ctx)>>;
@@ -701,8 +700,7 @@ namespace webpp {
             }
         }
 
-        [[nodiscard]] inline auto call_this_route(Context auto&&      ctx,
-                                                  Request auto const& req) const noexcept {
+        [[nodiscard]] constexpr auto call_this_route(Context auto&& ctx, Request auto&& req) const noexcept {
             if constexpr (is_route_valid) {
                 return call_route(static_cast<super_t>(*this), ctx, req);
             } else {
@@ -710,8 +708,8 @@ namespace webpp {
             }
         }
 
-        [[nodiscard]] inline auto call_next_route([[maybe_unused]] Context auto&&      ctx,
-                                                  [[maybe_unused]] Request auto const& req) const noexcept {
+        [[nodiscard]] constexpr auto call_next_route([[maybe_unused]] Context auto&& ctx,
+                                                     [[maybe_unused]] Request auto&& req) const noexcept {
             // using context_type = stl::remove_cvref_t<decltype(ctx)>;
             if constexpr (is_next_route_valid) {
                 return call_route(super_t::next, ctx, req);
@@ -720,9 +718,9 @@ namespace webpp {
             }
         }
 
-        [[nodiscard]] inline bool
-        call_next_route_in_bool([[maybe_unused]] Context auto&&      ctx,
-                                [[maybe_unused]] Request auto const& req) const noexcept {
+        [[nodiscard]] constexpr bool
+        call_next_route_in_bool([[maybe_unused]] Context auto&& ctx,
+                                [[maybe_unused]] Request auto&& req) const noexcept {
             using res_type = decltype(call_next_route(stl::forward<decltype(ctx)>(ctx), req));
             using res_t    = stl::remove_cvref_t<res_type>;
             if constexpr (stl::same_as<res_t, bool>) {
@@ -745,7 +743,7 @@ namespace webpp {
         // template <typename ContextType>
         // requires(Context<stl::remove_cvref_t<ContextType>>)
         //   [[nodiscard]] constexpr bool matches(ContextType&&       ctx,
-        //                                        Request auto const& req) const noexcept {
+        //                                        Request auto&& req) const noexcept {
         //     using context_type  = decltype(ctx);
         //     using request_type  = decltype(req);
         //     using ret_type      = ;
@@ -869,10 +867,7 @@ namespace webpp {
         // }
 
 
-        [[nodiscard]] auto operator()(Context auto&& ctx, Request auto const& req) const noexcept {
-            // using context_type = stl::remove_cvref_t<decltype(ctx)>;
-            // using request_type = stl::remove_cvref_t<decltype(req)>;
-
+        [[nodiscard]] constexpr auto operator()(Context auto&& ctx, Request auto&& req) const noexcept {
             return run_route(ctx, req);
         }
     };
