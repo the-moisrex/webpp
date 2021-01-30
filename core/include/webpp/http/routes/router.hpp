@@ -25,8 +25,6 @@ namespace webpp {
     };
 
 
-    constexpr auto run_and_catch(auto&& callable, Context auto const& ctx, auto&&... args) noexcept {}
-
     /**
      * Const router is a router that satisfies that "Router" concept.
      */

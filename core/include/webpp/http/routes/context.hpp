@@ -128,14 +128,17 @@ namespace webpp {
         using etraits                = enable_traits<traits_type>;
 
       public:
-        template <EnabledTraits ET>
-        constexpr basic_context(ET&& et_obj) noexcept : basic_context_parent{stl::forward<ET>(et_obj)} {}
+        using basic_context_parent::basic_context_parent; // inherit the ctors from parent
 
-        basic_context()                                            = delete;
-        constexpr basic_context(basic_context&& ctx) noexcept      = default;
-        constexpr basic_context(basic_context const& ctx) noexcept = default;
-        constexpr basic_context& operator=(basic_context const&) = default;
-        constexpr basic_context& operator=(basic_context&&) noexcept = default;
+        //        template <EnabledTraits ET>
+        //        constexpr basic_context(ET&& et_obj) noexcept :
+        //        basic_context_parent{stl::forward<ET>(et_obj)} {}
+        //
+        //        basic_context()                                            = delete;
+        //        constexpr basic_context(basic_context&& ctx) noexcept      = default;
+        //        constexpr basic_context(basic_context const& ctx) noexcept = default;
+        //        constexpr basic_context& operator=(basic_context const&) = default;
+        //        constexpr basic_context& operator=(basic_context&&) noexcept = default;
 
 
         /**
@@ -190,6 +193,7 @@ namespace webpp {
         using original_extension_pack_type = OriginalExtensionList;
         using request_type                 = stl::remove_cvref_t<ReqType>;
         using basic_context_type           = typename final_context_parent::basic_context_type;
+        using etraits                      = typename final_context_parent::etraits;
 
         static_assert(EnabledTraits<final_context_parent>,
                       "The specified extension list type is not"
@@ -207,18 +211,19 @@ namespace webpp {
           typename details::unique_types<typename original_extension_pack_type::template appended<E...>>::
             type::template extensie_type<traits_type, context_descriptor_type, request_type>;
 
-        final_context() = delete;
+        using final_context_parent::final_context_parent; // inherit parent constructors
 
-        template <EnabledTraits ET>
-        requires(
-          !stl::same_as<ET, final_context>) // forward-referencing first arg will confuse move and copy ctors
-          constexpr final_context(ET&& et_obj) noexcept
-          : final_context_parent(et_obj) {}
-
-        constexpr final_context(final_context const&) noexcept = default;
-        constexpr final_context(final_context&&) noexcept      = default;
-        constexpr final_context& operator=(final_context const&) = default;
-        constexpr final_context& operator=(final_context&&) noexcept = default;
+        //        final_context() = delete;
+        //
+        //        template <EnabledTraits ET>
+        //        requires(
+        //          !stl::same_as<ET, final_context>) // forward-referencing first arg will confuse move and
+        //          copy ctors constexpr final_context(ET&& et_obj) noexcept : final_context_parent(et_obj) {}
+        //
+        //        constexpr final_context(final_context const&) noexcept = default;
+        //        constexpr final_context(final_context&&) noexcept      = default;
+        //        constexpr final_context& operator=(final_context const&) = default;
+        //        constexpr final_context& operator=(final_context&&) noexcept = default;
 
         /**
          * Clone this context and append the new extensions along the way.
@@ -226,7 +231,9 @@ namespace webpp {
         template <Extension... E>
         [[nodiscard]] constexpr auto clone() noexcept {
             using context_type = context_type_with_appended_extensions<E...>;
-            return context_type{*this};
+            static_assert(Context<context_type>,
+                          "Web++ Internal Bug: the context_type is not valid for some reason!");
+            return context_type{*static_cast<etraits*>(this)};
         }
 
         // todo: these methods need to be noexcept. They call unknown stuff.

@@ -90,9 +90,7 @@ namespace webpp {
 
     template <Traits TraitsType, EnabledTraits T>
     struct enable_traits_with<TraitsType, T> : public T {
-
-        template <EnabledTraits ET, typename... Args>
-        constexpr enable_traits_with(ET& et_obj, Args&&... args) : T{et_obj, stl::forward<Args>(args)...} {}
+        using T::T;
     };
 
 } // namespace webpp
