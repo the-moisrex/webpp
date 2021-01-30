@@ -170,10 +170,10 @@ namespace webpp {
      * This will probably have a run-time cost to instantiate.
      */
     template <typename T>
-    concept EnabledTraits = requires(T t) {
-        requires alloc::AllocatorPack<typename T::allocator_pack_type>;
-        requires Logger<typename T::logger_type>;
-        requires Traits<typename T::traits_type>;
+    concept EnabledTraits = requires(stl::remove_cvref_t<T> t) {
+        requires alloc::AllocatorPack<typename stl::remove_cvref_t<T>::allocator_pack_type>;
+        requires Logger<typename stl::remove_cvref_t<T>::logger_type>;
+        requires Traits<typename stl::remove_cvref_t<T>::traits_type>;
         t.logger;
         t.alloc_pack;
     };

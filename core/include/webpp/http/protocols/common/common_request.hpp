@@ -18,9 +18,10 @@ namespace webpp {
         using etraits                = enable_traits<traits_type>;
 
 
-        constexpr common_request(EnabledTraits auto& et_obj) noexcept
+        template <EnabledTraits ET>
+        constexpr common_request(ET&& et_obj) noexcept
           : request_extension_list{},
-            etraits{et_obj} {}
+            etraits{stl::forward<ET>(et_obj)} {}
 
 #define WEBPP_COMMON_STR_METHOD(name, value)   \
     [[nodiscard]] auto name() const noexcept { \

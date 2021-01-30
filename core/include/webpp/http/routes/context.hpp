@@ -128,8 +128,10 @@ namespace webpp {
         using etraits                = enable_traits<traits_type>;
 
       public:
-        constexpr basic_context(EnabledTraits auto& et_obj) noexcept : basic_context_parent{et_obj} {}
+        template <EnabledTraits ET>
+        constexpr basic_context(ET&& et_obj) noexcept : basic_context_parent{stl::forward<ET>(et_obj)} {}
 
+        basic_context()                                            = delete;
         constexpr basic_context(basic_context&& ctx) noexcept      = default;
         constexpr basic_context(basic_context const& ctx) noexcept = default;
         constexpr basic_context& operator=(basic_context const&) = default;
@@ -187,11 +189,12 @@ namespace webpp {
         using context_descriptor_type      = ContextDescriptorType;
         using original_extension_pack_type = OriginalExtensionList;
         using request_type                 = stl::remove_cvref_t<ReqType>;
+        using basic_context_type           = typename final_context_parent::basic_context_type;
 
-        static_assert(EnabledTraits<EList>,
+        static_assert(EnabledTraits<final_context_parent>,
                       "The specified extension list type is not"
                       " traits enabled; bad constructors?.");
-        static_assert(Context<EList>,
+        static_assert(Context<final_context_parent>,
                       "The specified extension list type doesn't include basic_context; "
                       "did you forget to inherit from the "
                       "passed basic context type in your extension?");
@@ -205,7 +208,13 @@ namespace webpp {
             type::template extensie_type<traits_type, context_descriptor_type, request_type>;
 
         final_context() = delete;
-        constexpr final_context(EnabledTraits auto& et_obj) noexcept : final_context_parent(et_obj) {}
+
+        template <EnabledTraits ET>
+        requires(
+          !stl::same_as<ET, final_context>) // forward-referencing first arg will confuse move and copy ctors
+          constexpr final_context(ET&& et_obj) noexcept
+          : final_context_parent(et_obj) {}
+
         constexpr final_context(final_context const&) noexcept = default;
         constexpr final_context(final_context&&) noexcept      = default;
         constexpr final_context& operator=(final_context const&) = default;
