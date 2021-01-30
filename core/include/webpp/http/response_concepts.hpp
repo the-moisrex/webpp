@@ -24,9 +24,8 @@ namespace webpp {
         };
 
         template <typename T>
-        concept good_response_types =
-          Response<stl::remove_cvref_t<T>> || stl::is_void_v<T> || stl::same_as<T, bool> ||
-          stl::is_integral_v<T> || istl::StringViewifiable<T>;
+        concept good_response_types = Response<stl::remove_cvref_t<T>> || stl::is_void_v<T> ||
+          stl::same_as<T, bool> || stl::is_integral_v<T> || istl::StringViewifiable<T>;
 
         template <typename T>
         struct is_optional_of_response {
@@ -42,10 +41,15 @@ namespace webpp {
       details::good_response_types<T> || istl::OptionalOf<details::is_optional_of_response, T>;
 
     template <typename App, typename ReqType>
-    concept ApplicationAcceptingRequest =
-      Application<App>&& Request<ReqType> &&
-      (stl::is_invocable_v<App, ReqType> || stl::is_invocable_v<App, stl::add_lvalue_reference_t<ReqType>> ||
-       stl::is_invocable_v<App, stl::add_const_t<stl::add_lvalue_reference_t<ReqType>>>);
+    concept ApplicationAcceptingRequest = Application<App> && Request<ReqType> && requires {
+        requires requires(stl::add_lvalue_reference_t<ReqType> req_ref) {
+            { App{req_ref}(req_ref) } -> Response;
+        } || requires(stl::add_const_t<stl::add_lvalue_reference_t<ReqType>> req_cref) {
+            { App{req_cref}(req_cref) } -> Response;
+        } || requires(ReqType req) {
+            { App{req}(req) } -> Response;
+        };
+    };
 
 
     template <typename T>

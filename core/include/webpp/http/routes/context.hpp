@@ -204,6 +204,7 @@ namespace webpp {
           typename details::unique_types<typename original_extension_pack_type::template appended<E...>>::
             type::template extensie_type<traits_type, context_descriptor_type, request_type>;
 
+        final_context() = delete;
         constexpr final_context(EnabledTraits auto& et_obj) noexcept : final_context_parent(et_obj) {}
         constexpr final_context(final_context const&) noexcept = default;
         constexpr final_context(final_context&&) noexcept      = default;
