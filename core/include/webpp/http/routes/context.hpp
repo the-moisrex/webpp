@@ -117,18 +117,18 @@ namespace webpp {
      *
      */
     template <Traits TraitsType, typename EList, Request RequestType, Response ResponseType>
-    struct basic_context : public EList, public enable_traits<TraitsType> {
-        using traits_type        = TraitsType;
-        using elist_type         = EList;
-        using request_type       = RequestType;
-        using response_type      = ResponseType;
-        using basic_context_type = basic_context<TraitsType, EList, RequestType, ResponseType>;
-        using etraits            = enable_traits<traits_type>;
+    struct basic_context : public enable_traits_with<TraitsType, extension_wrapper<EList>> {
+        using traits_type            = TraitsType;
+        using mother_extensions_type = EList;
+        using extension_wrapper_type = extension_wrapper<EList>;
+        using basic_context_parent   = enable_traits_with<traits_type, extension_wrapper_type>;
+        using request_type           = RequestType;
+        using response_type          = ResponseType;
+        using basic_context_type     = basic_context<TraitsType, EList, RequestType, ResponseType>;
+        using etraits                = enable_traits<traits_type>;
 
       public:
-        template <EnabledTraits ET = etraits>
-        constexpr basic_context(ET& et_obj) noexcept : EList{},
-                                                       etraits{et_obj} {}
+        constexpr basic_context(EnabledTraits auto& et_obj) noexcept : basic_context_parent{et_obj} {}
 
         constexpr basic_context(basic_context&& ctx) noexcept      = default;
         constexpr basic_context(basic_context const& ctx) noexcept = default;
@@ -160,8 +160,7 @@ namespace webpp {
                 res.headers.status_code = error_code;
                 return res;
             } else if constexpr (requires {
-                                     { data.what() }
-                                     ->istl::StringViewifiable;
+                                     { data.what() } -> istl::StringViewifiable;
                                  }) {
                 auto res                = response<string_response>(data.what());
                 res.headers.status_code = error_code;
@@ -181,13 +180,21 @@ namespace webpp {
               typename OriginalExtensionList,
               typename EList,
               typename ReqType>
-    struct final_context final : public EList {
-        using elist_type                   = EList;
+    struct final_context final : public extension_wrapper<EList> {
+        using child_extensions_type        = EList;
+        using final_context_parent         = extension_wrapper<EList>;
         using traits_type                  = TraitsType;
         using context_descriptor_type      = ContextDescriptorType;
         using original_extension_pack_type = OriginalExtensionList;
         using request_type                 = stl::remove_cvref_t<ReqType>;
-        using basic_context_type           = typename EList::basic_context_type;
+
+        static_assert(EnabledTraits<EList>,
+                      "The specified extension list type is not"
+                      " traits enabled; bad constructors?.");
+        static_assert(Context<EList>,
+                      "The specified extension list type doesn't include basic_context; "
+                      "did you forget to inherit from the "
+                      "passed basic context type in your extension?");
 
         /**
          * Append some extensions to this context type and get the type back
@@ -197,9 +204,7 @@ namespace webpp {
           typename details::unique_types<typename original_extension_pack_type::template appended<E...>>::
             type::template extensie_type<traits_type, context_descriptor_type, request_type>;
 
-        template <typename... Args>
-        constexpr final_context(Args&&... args) noexcept : EList(stl::forward<Args>(args)...) {}
-
+        constexpr final_context(EnabledTraits auto& et_obj) noexcept : final_context_parent(et_obj) {}
         constexpr final_context(final_context const&) noexcept = default;
         constexpr final_context(final_context&&) noexcept      = default;
         constexpr final_context& operator=(final_context const&) = default;

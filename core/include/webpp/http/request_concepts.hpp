@@ -22,6 +22,7 @@ namespace webpp {
      */
     template <typename T>
     concept Request = requires(stl::remove_cvref_t<T> req) {
+        requires EnabledTraits<stl::remove_cvref_t<T>>;
         /* requires Protocol<typename stl::remove_cvref_t<T>::protocol_type>&& */
         requires Traits<typename stl::remove_cvref_t<T>::traits_type>;
         requires stl::copy_constructible<stl::remove_cvref_t<T>>; // so we can make a copy of it (initial

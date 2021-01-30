@@ -77,6 +77,24 @@ namespace webpp {
         }
     };
 
+
+
+    template <Traits TraitsType, typename T>
+    struct enable_traits_with : public T, enable_traits<TraitsType> {
+
+        template <EnabledTraits ET, typename... Args>
+        constexpr enable_traits_with(ET& et_obj, Args&&... args)
+          : T{stl::forward<Args>(args)...},
+            enable_traits<TraitsType>(et_obj) {}
+    };
+
+    template <Traits TraitsType, EnabledTraits T>
+    struct enable_traits_with<TraitsType, T> : public T {
+
+        template <EnabledTraits ET, typename... Args>
+        constexpr enable_traits_with(ET& et_obj, Args&&... args) : T{et_obj, stl::forward<Args>(args)...} {}
+    };
+
 } // namespace webpp
 
 #endif // WEBPP_ENABLE_TRAITS_HPP

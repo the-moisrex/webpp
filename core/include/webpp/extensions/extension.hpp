@@ -28,12 +28,12 @@ namespace webpp {
       stl::is_class_v<T> && !stl::is_integral_v<T>;
 
     template <typename TraitsType, typename T>
-    concept MotherExtension = Extension<T>&& requires {
+    concept MotherExtension = Extension<T> && requires {
         typename T::template type<TraitsType>;
     };
 
     template <typename TraitsType, typename Parent, typename T>
-    concept ChildExtension = Extension<T>&& requires {
+    concept ChildExtension = Extension<T> && requires {
         typename T::template type<TraitsType, Parent>;
     };
 
@@ -361,10 +361,30 @@ namespace webpp {
     };
 
     template <typename E, template <typename> typename IF>
-    concept ExtensionListOf = ExtensionList<E>&& E::template is_all<IF>::value;
+    concept ExtensionListOf = ExtensionList<E> && E::template is_all<IF>::value;
 
 
     using empty_extension_pack = extension_pack<>;
+
+
+
+    /**
+     * This type is used to ease the pain of passing arguments to the constructors of the extensions
+     *
+     * The type E might not be just one extension and might be an series of extensions chained up in a virtual
+     * or non-virtual inheritance.
+     */
+    template <typename E>
+    struct extension_wrapper : public E {
+        using extension_type = E;
+
+        template <EnabledTraits ET>
+        requires(EnabledTraits<extension_type>) constexpr extension_wrapper(ET& et_obj) noexcept
+          : E{et_obj} {}
+
+        template <typename... Args>
+        constexpr extension_wrapper(Args&&... args) : E{stl::forward<Args>(args)...} {}
+    };
 
 
 } // namespace webpp
