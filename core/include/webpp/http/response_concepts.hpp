@@ -3,6 +3,7 @@
 #ifndef WEBPP_RESPONSE_CONCEPTS_H
 #define WEBPP_RESPONSE_CONCEPTS_H
 
+#include "./request_concepts.hpp"
 #include "../application/application_concepts.hpp"
 #include "../extensions/extension.hpp"
 #include "../std/optional.hpp"
@@ -41,13 +42,13 @@ namespace webpp {
       details::good_response_types<T> || istl::OptionalOf<details::is_optional_of_response, T>;
 
     template <typename App, typename ReqType>
-    concept ApplicationAcceptingRequest = Application<App> && Request<ReqType> && requires {
+    concept ApplicationAcceptingRequest = Application<App> && Request<ReqType> && requires(App app) {
         requires requires(stl::add_lvalue_reference_t<ReqType> req_ref) {
-            { App{req_ref}(req_ref) } -> Response;
+            { app(req_ref) } -> Response;
         } || requires(stl::add_const_t<stl::add_lvalue_reference_t<ReqType>> req_cref) {
-            { App{req_cref}(req_cref) } -> Response;
+            { app(req_cref) } -> Response;
         } || requires(ReqType req) {
-            { App{req}(req) } -> Response;
+            { app(req) } -> Response;
         };
     };
 
