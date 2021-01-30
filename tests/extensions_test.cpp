@@ -149,7 +149,7 @@ TEST(ExtensionsTests, ExtensionPackStuff) {
     //                               pack>,
     //                  "epack is failing at making the extensions unique");
 
-    typename pack::template mother_inherited<std_traits> ipack;
+    details::mother_inherited<std_traits, pack> ipack;
 
     EXPECT_TRUE(ipack.value_one);
     EXPECT_TRUE(ipack.value_two);
@@ -158,15 +158,14 @@ TEST(ExtensionsTests, ExtensionPackStuff) {
     struct daddy {
         bool daddy_value = true;
     };
-    typename empty_extension_pack::template children_inherited<std_traits, daddy, cpack>::type icpack;
+    typename details::children_inherited<std_traits, daddy, cpack>::type icpack;
 
     EXPECT_TRUE(icpack.cvalue_one);
     EXPECT_TRUE(icpack.cvalue_two);
     EXPECT_TRUE(icpack.cvalue_three);
     EXPECT_TRUE(icpack.daddy_value);
 
-    typename empty_extension_pack::template children_inherited<std_traits, daddy, extension_pack<cone>>::type
-      icpack2;
+    details::children_inherited<std_traits, daddy, extension_pack<cone>>::type icpack2;
 
     EXPECT_TRUE(icpack2.cvalue_one);
     EXPECT_TRUE(icpack2.daddy_value);
@@ -210,7 +209,7 @@ struct ctor_one {
 
 TEST(ExtensionsTests, ExtensionConstructors) {
     using ctor_pack  = extension_pack<ctor_one>;
-    using ictor_pack = typename ctor_pack::template mother_inherited<std_traits>;
+    using ictor_pack = details::mother_inherited<std_traits, ctor_pack>;
     using etype      = typename ctor_pack::template extensie_type<std_traits, fake_descriptor>;
 
     static_assert(std::is_constructible_v<typename ctor_one::template type<std_traits>, int, int>,
