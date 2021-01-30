@@ -95,8 +95,10 @@ namespace webpp {
                 using string_response_type =
                   typename context_type::response_type::template apply_extensions_type<details::string_body>;
 
-                template <EnabledTraits ET>
-                constexpr type(ET&& et_obj) noexcept : context_type{stl::forward<ET>(et_obj)} {}
+                using context_type::context_type; // inherit the constructors
+
+//                template <EnabledTraits ET>
+//                constexpr type(ET&& et_obj) noexcept : context_type{stl::forward<ET>(et_obj)} {}
 
                 template <typename... Args>
                 constexpr Response auto string(Args&&... args) const noexcept {

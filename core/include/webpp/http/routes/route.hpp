@@ -72,9 +72,9 @@ namespace webpp {
     //    }
 
     template <typename Route, typename... Args>
-    concept is_callable_route = stl::is_invocable_v<stl::decay_t<Route>, stl::remove_cvref_t<Args>...> ||
-      stl::is_invocable_v<stl::decay_t<Route>, Args...> ||
-      stl::is_invocable_v<stl::decay_t<Route>, stl::add_lvalue_reference_t<stl::remove_cvref_t<Args>>...>;
+    concept is_callable_route =
+      stl::is_invocable_v<Route, stl::remove_cvref_t<Args>...> || stl::is_invocable_v<Route, Args...> ||
+      stl::is_invocable_v<Route, stl::add_lvalue_reference_t<stl::remove_cvref_t<Args>>...>;
     //    requires(Route route) {
     //        requires requires(Args... args) {
     //            route(args...);
@@ -95,9 +95,9 @@ namespace webpp {
                                   stl::add_lvalue_reference_t<stl::remove_cvref_t<Args>>...>;
 
 
-    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto& req) noexcept {
-        using route_type   = decltype(_route);
-        using request_type = decltype(req);
+    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto&& req) noexcept {
+        using route_type   = stl::remove_cvref_t<decltype(_route)>;
+        using request_type = stl::remove_cvref_t<decltype(req)>;
         using ctx_type     = stl::remove_cvref_t<decltype(ctx)>;
         using context_type = stl::add_lvalue_reference_t<ctx_type>;
 
