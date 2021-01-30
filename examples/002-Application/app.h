@@ -17,7 +17,7 @@ struct app {
         return ctx.string("About page");
     }
 
-    Response auto operator()(Request auto const& req) {
+    Response auto operator()(Request auto& req) {
         using extensions = extension_pack<string_response>;
         const auto admin = []() {
             return "Nice page.";

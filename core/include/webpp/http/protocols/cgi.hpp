@@ -25,17 +25,19 @@ namespace webpp {
 
     template <Application App, Traits TraitsType = default_traits, ExtensionList EList = empty_extension_pack>
     struct cgi : public common_protocol<TraitsType, App, EList> {
-        using traits_type      = TraitsType;
-        using application_type = App;
-        using extension_list   = stl::remove_cvref_t<EList>;
-        using str_view_type    = traits::string_view<traits_type>;
-        using str_type         = traits::general_string<traits_type>;
-        using request_type     = simple_request<traits_type, extension_list, cgi_request>;
+        using traits_type          = TraitsType;
+        using application_type     = App;
+        using extension_list       = stl::remove_cvref_t<EList>;
+        using str_view_type        = traits::string_view<traits_type>;
+        using str_type             = traits::general_string<traits_type>;
+        using request_type         = simple_request<traits_type, extension_list, cgi_request>;
+        using common_protocol_type = common_protocol<TraitsType, App, EList>;
+        using app_wrapper_type     = typename common_protocol_type::app_wrapper_type;
 
         static_assert(Request<request_type>,
                       "Web++ Internal Bug: request_type is not a match for Request concept.");
 
-        static_assert(ApplicationAcceptingRequest<application_type, request_type>,
+        static_assert(ApplicationAcceptingRequest<app_wrapper_type, request_type>,
                       "Your application type can't be called with a request type of our choosing or "
                       "its response is not of a valid response type.");
 

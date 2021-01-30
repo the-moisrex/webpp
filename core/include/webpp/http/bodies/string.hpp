@@ -32,11 +32,11 @@ namespace webpp {
                 string_type content = "";
 
               public:
-                constexpr type(string_view_type str, alloc_type alloc = allocator_type{}) noexcept
+                constexpr type(string_view_type str, alloc_type alloc = allocator_type{})
                   : content{str, alloc} {}
 
                 template <typename... Args>
-                constexpr type(Args&&... args) noexcept : content{stl::forward<Args>(args)...} {}
+                constexpr type(Args&&... args) : content{stl::forward<Args>(args)...} {}
 
                 /**
                  * @brief Get a reference to the body's string
@@ -102,15 +102,14 @@ namespace webpp {
                     // check if there's an allocator in the args:
                     constexpr bool has_allocator = (istl::Allocator<Args> || ...);
                     using body_type              = typename string_response_type::body_type;
-                    if constexpr (has_allocator) {
-                        return string_response_type{body_type{stl::forward<Args>(args)...}};
-                    } else if constexpr (
-                      requires {
-                          body_type{stl::forward<Args>(args)..., context_type::get_allocator()};
-                      }) {
-                        auto body = body_type{stl::forward<Args>(args)..., context_type::get_allocator()};
-                        auto res  = string_response_type{body};
-                        return res;
+                    using value_type             = traits::char_type<traits_type>;
+                    if constexpr (!has_allocator && requires {
+                                      body_type{stl::forward<Args>(args)...,
+                                                this->alloc_pack.template general_allocator<value_type>()};
+                                  }) {
+                        return string_response_type{
+                          body_type{stl::forward<Args>(args)...,
+                                    this->alloc_pack.template general_allocator<value_type>()}};
                     } else {
                         return string_response_type{body_type{stl::forward<Args>(args)...}};
                     }

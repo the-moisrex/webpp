@@ -19,17 +19,17 @@ namespace webpp::stl {
 
     /* same_as */
     template <class T, class U>
-    concept same_as = detail::SameHelper<T, U>&& detail::SameHelper<U, T>;
+    concept same_as = detail::SameHelper<T, U> && detail::SameHelper<U, T>;
 
     /* derived_from */
     template <class Derived, class Base>
-    concept derived_from =
-      stl::is_base_of_v<Base, Derived>&& stl::is_convertible_v<const volatile Derived*, const volatile Base*>;
+    concept derived_from = stl::is_base_of_v<Base, Derived> &&
+      stl::is_convertible_v<const volatile Derived*, const volatile Base*>;
 
     /* convertible_to */
     template <class From, class To>
-    concept convertible_to =
-      stl::is_convertible_v<From, To>&& requires(stl::add_rvalue_reference_t<From> (&f)()) {
+    concept convertible_to = stl::is_convertible_v<From, To> &&
+      requires(stl::add_rvalue_reference_t<From> (&f)()) {
         static_cast<To>(f());
     };
 
@@ -41,16 +41,17 @@ namespace webpp::stl {
     concept destructible = stl::is_nothrow_destructible_v<T>;
 
     template <typename T, typename... Args>
-    concept constructible_from = stl::destructible<T>&& stl::is_constructible_v<T, Args...>;
+    concept constructible_from = stl::destructible<T> && stl::is_constructible_v<T, Args...>;
 
     template <typename T>
-    concept move_constructible = stl::constructible_from<T, T>&& stl::convertible_to<T, T>;
+    concept move_constructible = stl::constructible_from<T, T> && stl::convertible_to<T, T>;
 
     template <class T>
 
-    concept copy_constructible = stl::move_constructible<T>&& stl::constructible_from<T, T&>&&
-      stl::convertible_to<T&, T>&& stl::constructible_from<T, const T&>&& stl::convertible_to<const T&, T>&&
-        stl::constructible_from<T, const T>&& stl::convertible_to<const T, T>;
+    concept copy_constructible =
+      stl::move_constructible<T> && stl::constructible_from<T, T&> && stl::convertible_to<T&, T> &&
+      stl::constructible_from<T, const T&> && stl::convertible_to<const T&, T> &&
+      stl::constructible_from<T, const T> && stl::convertible_to<const T, T>;
 
 
 } // namespace webpp::stl
