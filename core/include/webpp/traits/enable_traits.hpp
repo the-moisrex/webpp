@@ -49,15 +49,17 @@ namespace webpp {
         [[no_unique_address]] logger_ref     logger;
 
         // a copy constructor essentially; works on enable_owner_traits as well
-        template <EnabledTraits T>
-        requires requires(T et) {
-            requires stl::same_as<typename T::traits_type, traits_type>;
-            requires stl::same_as<typename T::logger_type, logger_type>;
-            requires stl::same_as<typename T::allocator_pack_type, allocator_pack_type>;
+        template <typename T>
+        requires requires(stl::remove_cvref_t<T> et) {
+            requires !stl::same_as<stl::remove_cvref_t<T>, enable_traits>;
+            requires EnabledTraits<stl::remove_cvref_t<T>>;
+            requires stl::same_as<typename stl::remove_cvref_t<T>::traits_type, traits_type>;
+            requires stl::same_as<typename stl::remove_cvref_t<T>::logger_type, logger_type>;
+            requires stl::same_as<typename stl::remove_cvref_t<T>::allocator_pack_type, allocator_pack_type>;
         }
-        constexpr enable_traits(T& obj) noexcept : alloc_pack{obj.alloc_pack}, logger{obj.logger} {}
+        constexpr enable_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack}, logger{obj.logger} {}
 
-        constexpr enable_traits(alloc_pack_ref alloc_pack_obj, logger_ref logger_obj) noexcept
+        constexpr enable_traits(alloc_pack_ref alloc_pack_obj = {}, logger_ref logger_obj = {}) noexcept
           : alloc_pack{alloc_pack_obj},
             logger{logger_obj} {}
 
@@ -82,21 +84,11 @@ namespace webpp {
     template <Traits TraitsType, typename T>
     struct enable_traits_with : public T, public enable_traits<TraitsType> {
         using enable_traits<TraitsType>::enable_traits;
-
-        constexpr enable_traits_with(enable_traits_with const&) noexcept = default;
-        constexpr enable_traits_with(enable_traits_with&&) noexcept      = default;
-        enable_traits_with& operator=(enable_traits_with&&) noexcept = default;
-        enable_traits_with& operator=(enable_traits_with const&) noexcept = default;
     };
 
     template <Traits TraitsType, EnabledTraits T>
     struct enable_traits_with<TraitsType, T> : public T {
         using T::T;
-
-        constexpr enable_traits_with(enable_traits_with const&) noexcept = default;
-        constexpr enable_traits_with(enable_traits_with&&) noexcept      = default;
-        enable_traits_with& operator=(enable_traits_with&&) noexcept = default;
-        enable_traits_with& operator=(enable_traits_with const&) noexcept = default;
     };
 
 } // namespace webpp

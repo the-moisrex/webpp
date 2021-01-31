@@ -233,7 +233,7 @@ namespace webpp {
             using context_type = context_type_with_appended_extensions<E...>;
             static_assert(Context<context_type>,
                           "Web++ Internal Bug: the context_type is not valid for some reason!");
-            return context_type{*static_cast<etraits*>(this)};
+            return context_type{*this};
         }
 
         // todo: these methods need to be noexcept. They call unknown stuff.

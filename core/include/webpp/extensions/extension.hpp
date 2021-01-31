@@ -52,6 +52,7 @@ namespace webpp {
         template <typename Parent>
         struct vctor : public virtual Parent {
 
+            //            using Parent::Parent;
             template <typename... Args>
             requires(stl::constructible_from<Parent, Args...>) constexpr vctor(Args&&... args) noexcept
               : Parent{stl::forward<Args>(args)...} {}
@@ -65,6 +66,7 @@ namespace webpp {
         template <typename Parent>
         struct ctor : public Parent {
 
+            //            using Parent::Parent;
             template <typename... Args>
             constexpr ctor(Args&&... args) noexcept requires(stl::constructible_from<Parent, Args...>)
               : Parent{stl::forward<Args>(args)...} {}
@@ -377,11 +379,6 @@ namespace webpp {
     template <typename E>
     struct extension_wrapper : public E {
         using E::E;
-
-        constexpr extension_wrapper(extension_wrapper const&) noexcept = default;
-        constexpr extension_wrapper(extension_wrapper&&) noexcept      = default;
-        extension_wrapper& operator=(extension_wrapper&&) noexcept = default;
-        extension_wrapper& operator=(extension_wrapper const&) noexcept = default;
     };
 
 
