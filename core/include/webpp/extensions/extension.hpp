@@ -52,24 +52,27 @@ namespace webpp {
         template <typename Parent>
         struct vctor : public virtual Parent {
 
-            //            using Parent::Parent;
-            template <typename... Args>
-            requires(stl::constructible_from<Parent, Args...>) constexpr vctor(Args&&... args) noexcept
-              : Parent{stl::forward<Args>(args)...} {}
+            using Parent::Parent;
+            //            template <typename... Args>
+            //            requires(stl::constructible_from<Parent, Args...>) constexpr vctor(Args&&... args)
+            //            noexcept
+            //              : Parent{stl::forward<Args>(args)...} {}
 
             template <typename... Args>
-            requires(!stl::constructible_from<Parent, Args...>) constexpr vctor(
-              [[maybe_unused]] Args&&... args) noexcept
+            requires(!stl::constructible_from<Parent, Args...> &&
+                     stl::is_default_constructible_v<
+                       Parent>) constexpr vctor([[maybe_unused]] Args&&... args) noexcept
               : Parent{} {}
         };
 
         template <typename Parent>
         struct ctor : public Parent {
 
-            //            using Parent::Parent;
-            template <typename... Args>
-            constexpr ctor(Args&&... args) noexcept requires(stl::constructible_from<Parent, Args...>)
-              : Parent{stl::forward<Args>(args)...} {}
+            using Parent::Parent;
+            //            template <typename... Args>
+            //            constexpr ctor(Args&&... args) noexcept requires(stl::constructible_from<Parent,
+            //            Args...>)
+            //              : Parent{stl::forward<Args>(args)...} {}
 
             template <typename... Args>
             constexpr ctor([[maybe_unused]] Args&&... args) noexcept
