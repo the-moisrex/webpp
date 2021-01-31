@@ -21,7 +21,7 @@ namespace webpp {
      * This class owns its data.
      */
     template <Traits TraitsType, typename EList, typename ResponseHeaderType, typename BodyType>
-    class basic_response : public EList {
+    class basic_response : public extension_wrapper<EList> {
 
       public:
         using traits_type      = TraitsType;
@@ -29,32 +29,33 @@ namespace webpp {
         using headers_type     = ResponseHeaderType;
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
+        using elist_type       = extension_wrapper<EList>;
 
         body_type    body{};
         headers_type headers{};
 
         basic_response(auto&& arg1, auto&&... args) noexcept
           requires(!one_of<decltype(arg1), headers_type, http::status_code_type, body_type>)
-          : EList{stl::forward<decltype(args)>(args)...} {}
+          : elist_type{stl::forward<decltype(args)>(args)...} {}
 
         basic_response() noexcept                          = default;
         basic_response(basic_response const& res) noexcept = default;
         basic_response(basic_response&& res) noexcept      = default;
 
-        basic_response(http::status_code_type err_code) noexcept : EList{}, headers{err_code} {}
+        basic_response(http::status_code_type err_code) noexcept : elist_type{}, headers{err_code} {}
         basic_response(http::status_code_type err_code, string_type const& b) noexcept
-          : EList{},
+          : elist_type{},
             headers{err_code},
             body{b} {}
         basic_response(http::status_code_type err_code, string_type&& b) noexcept
-          : EList{},
+          : elist_type{},
             headers{err_code},
             body{stl::move(b)} {}
-        explicit basic_response(body_type const& b) noexcept : EList{}, body(b) {}
-        explicit basic_response(body_type&& b) noexcept : EList{}, body(stl::move(b)) {}
+        explicit basic_response(body_type const& b) noexcept : elist_type{}, body(b) {}
+        explicit basic_response(body_type&& b) noexcept : elist_type{}, body(stl::move(b)) {}
 
-        explicit basic_response(headers_type&& e) noexcept : EList{}, headers(stl::move(e)) {}
-        explicit basic_response(headers_type const& e) noexcept : EList{}, headers(e) {}
+        explicit basic_response(headers_type&& e) noexcept : elist_type{}, headers(stl::move(e)) {}
+        explicit basic_response(headers_type const& e) noexcept : elist_type{}, headers(e) {}
 
         basic_response& operator=(basic_response const&) = default;
         basic_response& operator=(basic_response&& res) noexcept = default;
@@ -78,7 +79,7 @@ namespace webpp {
         }
 
         void calculate_default_headers() noexcept {
-            using header_field_type = typename decltype(headers)::field_type;
+            using header_field_type = typename headers_type::field_type;
             using str_t             = typename header_field_type::string_type;
             if (stl::find(headers.cbegin(), headers.cend(), "Content-Type") != headers.cend())
                 headers.push_back(
@@ -104,13 +105,13 @@ namespace webpp {
 
 
     template <Traits TraitsType, typename DescriptorType, typename OriginalExtensionList, typename EList>
-    struct final_response final : public EList {
+    struct final_response final : public extension_wrapper<EList> {
         using traits_type                  = TraitsType;
-        using elist_type                   = EList;
+        using elist_type                   = extension_wrapper<EList>;
         using response_descriptor_type     = DescriptorType;
         using original_extension_pack_type = OriginalExtensionList;
 
-        using EList::EList;
+        using elist_type::elist_type;
 
 
         /**

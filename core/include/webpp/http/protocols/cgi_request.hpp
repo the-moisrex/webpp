@@ -8,6 +8,9 @@
 #include "./protocol_concepts.hpp"
 #include "common/common_request.hpp"
 
+// TODO: use GetEnvironmentVariableA for Windows operating system
+#include <unistd.h> // for environ
+
 
 namespace webpp {
 
@@ -20,6 +23,8 @@ namespace webpp {
 
       public:
         using string_view_type = typename super::string_view_type;
+        using string_type      = typename super::string_type;
+        using char_type        = typename string_type::value_type;
 
         /**
          * Get the environment value safely
@@ -282,8 +287,24 @@ namespace webpp {
          * @brief get a single header
          * @param name
          */
-        [[nodiscard]] string_view_type header(string_view_type const& name) const noexcept {
-            return header(stl::string(name));
+        [[nodiscard]] string_view_type header(string_view_type name) const noexcept {
+            return header(string_type(name, this->alloc_pack.template general_allocator<char_type>()));
+        }
+
+
+        /**
+         * Get a specific header by it's name
+         */
+        [[nodiscard]] static string_view_type header(stl::string name) noexcept {
+            // fixme: check if this is all we have to do or we have to do more too:
+            stl::transform(name.begin(), name.end(), name.begin(), [](auto const& c) {
+                if (c == '-')
+                    return '_';
+                return static_cast<char>(stl::toupper(c));
+            });
+
+            name.insert(0, "HTTP_");
+            return env(name.c_str());
         }
 
         /**
@@ -293,8 +314,20 @@ namespace webpp {
          * CGI server; and we have to recreate it based on the environment
          * variables.
          */
-        [[nodiscard]] string_view_type headers() const noexcept {
-            return headers();
+        [[nodiscard]] static string_view_type headers() noexcept {
+            // we can do this only in CGI, we have to come up with new ways for long-running protocols:
+            static string_type headers_cache;
+            if (headers_cache.empty()) {
+                // TODO: this code won't work on windows. Change when you are worried about windows
+                for (auto it = ::environ; *it; it++) {
+                    string_view_type h{*it};
+                    if (starts_with(h, "HTTP_")) {
+                        headers_cache.append(h.substr(5));
+                        // FIXME: decide if you need to convert _ to - or not.
+                    }
+                }
+            }
+            return headers_cache;
         }
 
         /**
@@ -303,8 +336,25 @@ namespace webpp {
          * the request and will not parse it. Parsing it is another methods'
          * problem that might even use this function as the source.
          */
-        [[nodiscard]] string_view_type body() const noexcept {
-            return body();
+        [[nodiscard]] string_view_type body() noexcept {
+            // again, we can do this only in cgi protocol not in other interfaces:
+            static string_type body_cache{this->alloc_pack.template general_allocator<char_type>()};
+            if (body_cache.empty()) {
+                if (auto content_length_str = env("CONTENT_LENGTH"); !content_length_str.empty()) {
+                    // now we know how much content the user is going to send
+                    // so we just create a buffer with that size
+                    auto content_length = to_uint(content_length_str);
+
+                    body_cache.resize(content_length);
+                    // todo: see if there's a better way to do this
+                    stl::cin.rdbuf()->pubsetbuf(body_cache.data(), content_length);
+                } else {
+                    // we don't know how much the user is going to send. so we use a small size buffer:
+
+                    // TODO: add something here
+                }
+            }
+            return body_cache;
         }
     };
 

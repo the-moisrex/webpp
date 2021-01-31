@@ -16,4 +16,4 @@ target_link_libraries(${EXEC_NAME}
         PRIVATE ${LIB_NAME}
         )
 set_target_properties(${EXEC_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-install(TARGETS ${EXEC_NAME} DESTINATION /srv/http/cgi-bin)
+#install(TARGETS ${EXEC_NAME} DESTINATION /srv/http/cgi-bin)

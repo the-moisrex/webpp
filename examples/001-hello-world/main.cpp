@@ -13,15 +13,15 @@ int main() {
     router _router{
       empty_extension_pack{},
       root >>=
-      [] {
+      []() {
           return "main page";
       },
-      get and root / "cgi-bin" / "webpp_helloworld" >>=
-      [](auto ctx) noexcept {
+      get and root / "cgi-bin" / "cgi-hello-world" >>=
+      []() noexcept {
           return "Hello world";
       },
-      //                   (root / "about") >>= about_page,
-      //                   get and root / "cgi-bin" / "webpp_helloworld" / "about" >>= about_page
+      // (root / "about") >>= about_page,
+      // get and root / "cgi-bin" / "cgi-hello-world" / "about" >>= about_page
     };
 
     // the app:
