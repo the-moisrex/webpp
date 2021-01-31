@@ -59,7 +59,7 @@ namespace webpp {
         }
         constexpr enable_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack}, logger{obj.logger} {}
 
-        constexpr enable_traits(alloc_pack_ref alloc_pack_obj = {}, logger_ref logger_obj = {}) noexcept
+        constexpr enable_traits(alloc_pack_ref alloc_pack_obj, logger_ref logger_obj = {}) noexcept
           : alloc_pack{alloc_pack_obj},
             logger{logger_obj} {}
 

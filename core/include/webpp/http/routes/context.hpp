@@ -229,7 +229,7 @@ namespace webpp {
          * Clone this context and append the new extensions along the way.
          */
         template <Extension... E>
-        [[nodiscard]] constexpr auto clone() noexcept {
+        [[nodiscard]] constexpr auto clone() const noexcept {
             using context_type = context_type_with_appended_extensions<E...>;
             static_assert(Context<context_type>,
                           "Web++ Internal Bug: the context_type is not valid for some reason!");

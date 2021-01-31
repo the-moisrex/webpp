@@ -11,15 +11,14 @@
 namespace webpp {
 
     template <typename T>
-    concept PathContext = Context<T>&& requires(T ctx) {
+    concept PathContext = Context<T> && requires(T ctx) {
         {ctx.path};
     };
 
 
     template <typename T>
     concept has_variable_name = requires(T seg) {
-        { seg.variable_name }
-        ->stl::convertible_to<stl::string_view>;
+        { seg.variable_name } -> stl::convertible_to<stl::string_view>;
     };
 
     /**
@@ -30,8 +29,7 @@ namespace webpp {
      */
     template <typename ContextType, typename SegType, typename T>
     concept can_parse_to = requires(SegType seg, ContextType ctx) {
-        { seg.template parse<T>(ctx) }
-        ->stl::same_as<stl::optional<T>>;
+        { seg.template parse<T>(ctx) } -> stl::same_as<stl::optional<T>>;
     };
 
     /**
@@ -333,7 +331,7 @@ namespace webpp {
       public:
         template <typename ContextType>
         requires(Context<stl::remove_cvref_t<ContextType>>) [[nodiscard]] bool
-        operator()(ContextType&& ctx, Request auto const& req) noexcept {
+        operator()(ContextType&& ctx, Request auto&& req) noexcept {
             // handle inside-sub-route internal segment is done in this method
 
             using context_type                = stl::remove_cvref_t<ContextType>;
@@ -346,7 +344,8 @@ namespace webpp {
 
             if constexpr (!has_segment) {
                 return true;
-            } else {
+            }
+            else {
 
                 // Switching the context if it doesn't have a path in it
                 if constexpr (!has_path_extension) {
