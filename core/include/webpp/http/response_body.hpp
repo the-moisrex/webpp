@@ -66,13 +66,20 @@ namespace webpp {
      *     - [ ] Downloadable files of any type (blobs)
      *
      */
-    template <Traits TraitsType, typename EList = empty_extension_pack>
-    struct response_body : public EList {
+    template <Traits TraitsType, typename EList>
+    struct response_body : public extension_wrapper<EList> {
         using traits_type = TraitsType;
-        using elist_type  = EList;
+        using elist_type  = extension_wrapper<EList>;
 
-        template <typename... Args>
-        constexpr response_body(Args&&... args) noexcept : elist_type{stl::forward<Args>(args)...} {}
+        static_assert(
+          requires(elist_type res) {
+              { res.str() } -> istl::StringView;
+          },
+          "We require at least one valid 'response body extension'.");
+
+        using elist_type::extension_wrapper; // inherit ctors from parents
+
+        // todo: implement .str or other streaming stuff here or create a "final_response_body" type
     };
 
 

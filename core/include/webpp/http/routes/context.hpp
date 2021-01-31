@@ -145,20 +145,37 @@ namespace webpp {
          * Generate a response
          */
         template <typename... NewExtensions, typename... Args>
-        [[nodiscard]] Response auto response(Args&&... args) const noexcept {
+        [[nodiscard]] constexpr Response auto response(Args&&... args) const noexcept {
             using new_response_type =
               typename response_type::template apply_extensions_type<NewExtensions...>;
             // todo: write an auto extension finder based on the Args that get passed
             return new_response_type{stl::forward<Args>(args)...};
         }
 
-        [[nodiscard]] Response auto error(http::status_code_type error_code) const noexcept {
-            return error(
-              error_code,
-              stl::format("Error {}: {}", error_code, http::status_code_reason_phrase(error_code)));
+        [[nodiscard]] constexpr Response auto error(int error_code) const noexcept {
+            return error(static_cast<http::status_code_type>(error_code));
         }
 
-        [[nodiscard]] Response auto error(http::status_code_type error_code, auto&& data) const noexcept {
+        [[nodiscard]] constexpr Response auto error(http::status_code_type error_code) const noexcept {
+            return error(error_code,
+                         stl::format(R"(<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0,viewport-fit=cover">
+    <title>{0} Error: {1}</title>
+  </head>
+  <body>
+    <h1>Error {0}: {1}</h1>
+  </body>
+</html>
+)",
+                                     error_code,
+                                     http::status_code_reason_phrase(error_code)));
+        }
+
+        [[nodiscard]] constexpr Response auto error(http::status_code_type error_code,
+                                                    auto&&                 data) const noexcept {
             using data_type = stl::remove_cvref_t<decltype(data)>;
             if constexpr (istl::StringViewifiable<data_type>) {
                 auto res                = response<string_response>(istl::string_viewify(data));

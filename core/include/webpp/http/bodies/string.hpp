@@ -18,7 +18,7 @@ namespace webpp {
 
     namespace details {
 
-        struct string_body {
+        struct string_response_body_extension {
 
             template <Traits TraitsType>
             struct type {
@@ -61,22 +61,18 @@ namespace webpp {
         };
 
         template <Traits TraitsType>
-        [[nodiscard]] bool
-        operator==(typename TraitsType::string_view_type                  str,
-                   typename string_body::template type<TraitsType> const& strbody) noexcept {
+        [[nodiscard]] bool operator==(
+          typename TraitsType::string_view_type                                     str,
+          typename string_response_body_extension::template type<TraitsType> const& strbody) noexcept {
             return strbody.str() == str;
         }
 
         template <Traits TraitsType>
-        [[nodiscard]] bool
-        operator!=(typename TraitsType::string_view_type                  str,
-                   typename string_body::template type<TraitsType> const& strbody) noexcept {
+        [[nodiscard]] bool operator!=(
+          typename TraitsType::string_view_type                                     str,
+          typename string_response_body_extension::template type<TraitsType> const& strbody) noexcept {
             return strbody.str() != str;
         }
-
-    } // namespace details
-
-    struct string_response {
 
         /**
          * This extension helps the user to create a response with the help of the context
@@ -93,12 +89,14 @@ namespace webpp {
                 using context_type = stl::remove_cvref_t<ContextType>;
                 using traits_type  = TraitsType;
                 using string_response_type =
-                  typename context_type::response_type::template apply_extensions_type<details::string_body>;
+                  typename context_type::response_type::template apply_extensions_type<
+                    details::string_response_body_extension>;
 
                 using context_type::context_type; // inherit the constructors
 
-//                template <EnabledTraits ET>
-//                constexpr type(ET&& et_obj) noexcept : context_type{stl::forward<ET>(et_obj)} {}
+                //                template <EnabledTraits ET>
+                //                constexpr type(ET&& et_obj) noexcept :
+                //                context_type{stl::forward<ET>(et_obj)} {}
 
                 template <typename... Args>
                 constexpr Response auto string(Args&&... args) const noexcept {
@@ -137,9 +135,21 @@ namespace webpp {
             };
         };
 
-        using response_body_extensions = extension_pack<details::string_body>;
-        using response_extensions      = extension_pack<string_response_extension>;
-        using context_extensions       = extension_pack<string_context_extension>;
+    } // namespace details
+
+
+    /**
+     * String Response Extension Pack.
+     *
+     * This includes these extensions:
+     *   - response body    : 1 extension (adds .str())
+     *   - response         : 1 extension (adds string_view support to response)
+     *   - context          : 1 extension (adds .string(...))
+     */
+    struct string_response {
+        using response_body_extensions = extension_pack<details::string_response_body_extension>;
+        using response_extensions      = extension_pack<details::string_response_extension>;
+        using context_extensions       = extension_pack<details::string_context_extension>;
     };
 
 

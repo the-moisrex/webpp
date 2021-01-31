@@ -161,9 +161,9 @@ namespace webpp {
             } else if constexpr (ConstructibleWithResponse<typename ctx_type::response_type, res_t>) {
                 return ctx.response(stl::forward<decltype(res)>(res));
                 // todo: consider "response extension" injection in order to get the right response type
-                //            } else if constexpr (istl::StringViewifiable<res_t>) {
-                //                return ctx.template
-                //                response<string_response>(istl::string_viewify(stl::forward<decltype(res)>(res)));
+            } else if constexpr (istl::StringViewifiable<res_t>) {
+                return ctx.template response<string_response>(
+                  istl::string_viewify(stl::forward<decltype(res)>(res)));
             } else {
                 // let's just ignore the result
                 return true;
@@ -625,9 +625,11 @@ namespace webpp {
                             return call_next_route_in_bool(ctx, req);
                         return true; // don't call the next sub-route, but call the next entry-route
                     } else if constexpr (Context<n_res_t> || Response<n_res_t>) {
+                        // if it's a context or a response, we have to use an optional object here because we
+                        // might not need to run the next route here.
                         if (res)
                             return stl::make_optional(call_next_route(ctx, req));
-                        return stl::nullopt;
+                        return stl::optional<n_res_t>{stl::nullopt};
                     } else {
                         // let the router deal with this non-sense:
                         return call_next_route(ctx, req);

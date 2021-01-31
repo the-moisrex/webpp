@@ -9,8 +9,8 @@ if (colored)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=always")
 endif ()
 
-
 add_executable(${TEST_NAME} ${TEST_SOURCES})
+set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 target_link_libraries(${TEST_NAME}
         PRIVATE ${LIB_NAME}
         PRIVATE GTest::GTest

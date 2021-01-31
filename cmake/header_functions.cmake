@@ -20,7 +20,7 @@ function(install_headers INPUT_DIR OUTPUT_DIR ALL_EXTENSIONS)
       file(
         GLOB_RECURSE LIB_FILES__ 
         LIST_DIRECTORIES false
-        "${OUTPUT_DIR}/${F}/*.h"
+        "${OUTPUT_DIR}/${F}/*.hpp"
       )
       foreach(FF IN LISTS LIB_FILES__)
         if(NOT IS_DIRECTORY "${FF}")
@@ -37,7 +37,7 @@ function(install_headers INPUT_DIR OUTPUT_DIR ALL_EXTENSIONS)
   foreach(NEW_EXT IN LISTS ALL_EXTENSIONS)
     message(STATUS "Linking header files to their corresponding \"${NEW_EXT}\" extension.")
     foreach(F IN LISTS LIB_FILES)
-      string(REPLACE ".h" "${NEW_EXT}" NEW_FILE "${F}")
+      string(REPLACE ".hpp" "${NEW_EXT}" NEW_FILE "${F}")
       if(NOT IS_DIRECTORY "${NEW_FILE}")
         message(STATUS "Linking file \"${F}\" to \"${NEW_FILE}\"")
         file(CREATE_LINK "${F}" "${NEW_FILE}" COPY_ON_ERROR)

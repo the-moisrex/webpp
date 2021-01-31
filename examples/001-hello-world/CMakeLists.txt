@@ -11,11 +11,11 @@ generate_config_file(${CMAKE_CURRENT_BINARY_DIR}/config.h index.html)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-set(EXEC_NAME webpp_helloworld)
+set(EXEC_NAME cgi-hello-world)
 
 add_executable(${EXEC_NAME} ${BIN_SOURCES})
 target_link_libraries(${EXEC_NAME}
         PRIVATE ${LIB_NAME}
         )
 set_target_properties(${EXEC_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-install(TARGETS ${EXEC_NAME} DESTINATION /srv/http/cgi-bin)
+#install(TARGETS ${EXEC_NAME} DESTINATION /srv/http/cgi-bin)

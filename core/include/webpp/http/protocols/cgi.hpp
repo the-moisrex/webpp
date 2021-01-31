@@ -18,9 +18,6 @@
 #include <iostream>
 #include <sstream>
 
-// TODO: use GetEnvironmentVariableA for Windows operating system
-#include <unistd.h> // for environ
-
 namespace webpp {
 
     template <Application App, Traits TraitsType = default_traits, ExtensionList EList = empty_extension_pack>
@@ -90,70 +87,13 @@ namespace webpp {
             return request_type::env(key);
         }
 
-        /**
-         * Get a specific header by it's name
-         */
-        [[nodiscard]] static str_view_type header(stl::string name) noexcept {
-            // fixme: check if this is all we have to do or we have to do more too:
-            stl::transform(name.begin(), name.end(), name.begin(), [](auto const& c) {
-                if (c == '-')
-                    return '_';
-                return static_cast<char>(stl::toupper(c));
-            });
-
-            name.insert(0, "HTTP_");
-            return env(name.c_str());
-        }
-
-        /**
-         * Get a list of headers as a string
-         */
-        [[nodiscard]] static str_view_type headers() noexcept {
-            // we can do this only in CGI, we have to come up with new ways for long-running protocols:
-            static str_type headers_cache;
-            if (headers_cache.empty()) {
-                // TODO: this code won't work on windows. Change when you are worried about windows
-                for (auto it = ::environ; *it; it++) {
-                    str_view_type h{*it};
-                    if (starts_with(h, "HTTP_")) {
-                        headers_cache.append(h.substr(5));
-                        // FIXME: decide if you need to convert _ to - or not.
-                    }
-                }
-            }
-            return headers_cache;
-        }
-
-        /**
-         * Get the full body as a string_view
-         */
-        [[nodiscard]] static str_view_type body() noexcept {
-            // again, we can do this only in cgi protocol not in other interfaces:
-            static str_type body_cache;
-            if (body_cache.empty()) {
-                if (auto content_length_str = env("CONTENT_LENGTH"); !content_length_str.empty()) {
-                    // now we know how much content the user is going to send
-                    // so we just create a buffer with that size
-                    auto content_length = to_uint(content_length_str);
-
-                    char* buffer = new char[content_length];
-                    stl::cin.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
-                } else {
-                    // we don't know how much the user is going to send. so we use a small size buffer:
-
-                    // TODO: add something here
-                }
-            }
-            return body_cache;
-        }
-
 
         int operator()() noexcept {
-            request_type req{*this};
-            auto         res = this->app(req);
+            request_type  req{*this};
+            Response auto res = this->app(req);
             res.calculate_default_headers();
-            auto header_str = res.headers.str();
-            auto str        = res.body.str();
+            const auto header_str = res.headers.str();
+            const auto str        = res.body.str();
 
             // From RFC: https://tools.ietf.org/html/rfc3875
             // Send status code:
@@ -224,18 +164,6 @@ namespace webpp {
     //    SERVER_PROTOCOL
     //    SERVER_SOFTWARE
     //    WEB_SERVER_API
-
-
-    // void cgi::run(router_t<cgi>& _router) noexcept {
-    //    auto self = std::make_shared<cgi>(this);
-    //    webpp::request<webpp::cgi> req(self);
-    //    auto res = _router.run(req);
-    //    std::ios_base::sync_with_stdio(false); // TODO: write tests for this
-    //    part for (auto const& [attr, value] : res.headers()) {
-    //        std::cout << attr << ": " << value << "\r\n";
-    //    }
-    //    std::cout << "\r\n" << res.body();
-    //}
 
 
 } // namespace webpp
