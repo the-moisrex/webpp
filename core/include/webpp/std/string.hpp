@@ -11,13 +11,6 @@
 // Traits aware string:
 namespace webpp::istl {
 
-
-    //    template <Traits TraitsType, typename CharT = typename TraitsType::char_type,
-    //              typename CharTraits = typename TraitsType::char_traits,
-    //              typename Allocator  = typename TraitsType::allocator>
-    //    using basic_string = stl::basic_string<CharT, CharTraits, Allocator>;
-
-
     template <typename T>
     concept String = requires(stl::remove_cvref_t<T> str) {
         //        { T{"str"} };
@@ -63,13 +56,11 @@ namespace webpp::istl {
         stl::is_standard_layout_v<typename stl::remove_cvref_t<StrT>::value_type>;
         requires requires {
             StrT{str};
-        }
-        || requires {
+        } || requires {
             str.data();
             str.size();
             StrT{str.data(), str.size()};
-        }
-        || requires {
+        } || requires {
             str.c_str();
             str.size();
             StrT{str.c_str(), str.size()};

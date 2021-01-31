@@ -19,3 +19,4 @@ cmake-build-*/
 webpp.kdev4
 *.plist
 .ccls-cache
+/.cache/

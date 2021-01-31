@@ -376,14 +376,12 @@ namespace webpp {
      */
     template <typename E>
     struct extension_wrapper : public E {
-        using extension_type = E;
+        using E::E;
 
-        template <EnabledTraits ET>
-        requires(EnabledTraits<extension_type>) constexpr extension_wrapper(ET& et_obj) noexcept
-          : E{et_obj} {}
-
-        template <typename... Args>
-        constexpr extension_wrapper(Args&&... args) : E{stl::forward<Args>(args)...} {}
+        constexpr extension_wrapper(extension_wrapper const&) noexcept = default;
+        constexpr extension_wrapper(extension_wrapper&&) noexcept      = default;
+        extension_wrapper& operator=(extension_wrapper&&) noexcept = default;
+        extension_wrapper& operator=(extension_wrapper const&) noexcept = default;
     };
 
 

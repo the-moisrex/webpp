@@ -80,17 +80,23 @@ namespace webpp {
 
 
     template <Traits TraitsType, typename T>
-    struct enable_traits_with : public T, enable_traits<TraitsType> {
+    struct enable_traits_with : public T, public enable_traits<TraitsType> {
+        using enable_traits<TraitsType>::enable_traits;
 
-        template <EnabledTraits ET, typename... Args>
-        constexpr enable_traits_with(ET& et_obj, Args&&... args)
-          : T{stl::forward<Args>(args)...},
-            enable_traits<TraitsType>(et_obj) {}
+        constexpr enable_traits_with(enable_traits_with const&) noexcept = default;
+        constexpr enable_traits_with(enable_traits_with&&) noexcept      = default;
+        enable_traits_with& operator=(enable_traits_with&&) noexcept = default;
+        enable_traits_with& operator=(enable_traits_with const&) noexcept = default;
     };
 
     template <Traits TraitsType, EnabledTraits T>
     struct enable_traits_with<TraitsType, T> : public T {
         using T::T;
+
+        constexpr enable_traits_with(enable_traits_with const&) noexcept = default;
+        constexpr enable_traits_with(enable_traits_with&&) noexcept      = default;
+        enable_traits_with& operator=(enable_traits_with&&) noexcept = default;
+        enable_traits_with& operator=(enable_traits_with const&) noexcept = default;
     };
 
 } // namespace webpp

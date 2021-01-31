@@ -17,11 +17,7 @@ namespace webpp {
         using request_extension_list = stl::remove_cvref_t<REL>;
         using etraits                = enable_traits<traits_type>;
 
-
-        template <EnabledTraits ET>
-        constexpr common_request(ET&& et_obj) noexcept
-          : request_extension_list{},
-            etraits{stl::forward<ET>(et_obj)} {}
+        using etraits::etraits;
 
 #define WEBPP_COMMON_STR_METHOD(name, value)   \
     [[nodiscard]] auto name() const noexcept { \
