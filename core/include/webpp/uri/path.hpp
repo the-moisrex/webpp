@@ -66,7 +66,7 @@ namespace webpp::uri {
         }
 
         constexpr void parse(istl::StringifiableOf<string_view_type> auto&& str) {
-            auto path = istl::string_viewify_of<string_view_type>(str);
+            auto path = istl::string_viewify_of<string_view_type>(stl::forward<decltype(str)>(str));
             if (path.empty())
                 return;
 
