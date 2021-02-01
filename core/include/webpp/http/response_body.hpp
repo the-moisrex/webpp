@@ -5,6 +5,11 @@
 
 namespace webpp {
 
+    template <typename T>
+    concept ResponseBody = requires(T res) {
+        { res.str() } -> istl::StringView;
+    };
+
     /**
      * There are two types of bodies:
      *   - The request body
@@ -71,11 +76,7 @@ namespace webpp {
         using traits_type = TraitsType;
         using elist_type  = extension_wrapper<EList>;
 
-        static_assert(
-          requires(elist_type res) {
-              { res.str() } -> istl::StringView;
-          },
-          "We require at least one valid 'response body extension'.");
+        static_assert(ResponseBody<elist_type>, "We require at least one valid 'response body extension'.");
 
         using elist_type::extension_wrapper; // inherit ctors from parents
 

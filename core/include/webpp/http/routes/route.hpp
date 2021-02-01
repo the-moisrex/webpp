@@ -550,7 +550,12 @@ namespace webpp {
         };
 
       public:
-        [[nodiscard]] constexpr auto operator>>=(void (*func)(void)) const noexcept {
+        [[nodiscard]] constexpr auto operator>>=(void (*func)()) const noexcept {
+            return set_next<logical_operators::none>(func);
+        }
+
+        template <typename ReturnType>
+        [[nodiscard]] constexpr auto operator>>=(ReturnType (*func)()) const noexcept {
             return set_next<logical_operators::none>(func);
         }
 
