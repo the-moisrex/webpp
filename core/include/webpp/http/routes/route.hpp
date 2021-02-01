@@ -170,7 +170,7 @@ namespace webpp {
         //                                  next_route_type&& _next = next_route_type{}) noexcept
         //              : super_t(stl::forward<RouteType>(super)),
         //                next(stl::forward<next_route_type>(_next)) {}
-        //
+
         constexpr basic_route(auto&& super, auto&& _next = next_route_type{}) noexcept
           : super_t(stl::forward<decltype(super)>(super)),
             next(stl::forward<decltype(_next)>(_next)) {}
@@ -209,87 +209,85 @@ namespace webpp {
 
         using route_type                      = stl::remove_cvref_t<RouteType>;
         using next_route_type                 = stl::remove_cvref_t<NextRouteType>;
-        using self_type                       = route<RouteType, Op, NextRouteType>;
         static constexpr logical_operators op = Op;
 
       private:
         using super_t = basic_route<route_type, Op, next_route_type>;
 
-        // todo: use the istl::lazy_conditional
-        template <bool Condition, template <typename...> typename T1, typename T2, typename... C>
-        struct lazy_conditional {};
-
-        template <template <typename...> typename T1, typename T2, typename... C>
-        struct lazy_conditional<true, T1, T2, C...> {
-            using type = T1<C...>;
-        };
-
-        template <template <typename...> typename T1, typename T2, typename... C>
-        struct lazy_conditional<false, T1, T2, C...> {
-            using type = T2;
-        };
-
-        template <bool Condition, template <typename...> typename T1, typename T2, typename... C>
-        using lazy_conditional_t = typename lazy_conditional<Condition, T1, T2, C...>::type;
-
-
-        template <typename R, typename C, bool IF>
-        struct is_switching_context {
-            static constexpr bool value = false;
-        };
-
-        template <typename R, typename C>
-        struct is_switching_context<R, C, true> {
-            static constexpr bool value = Context<stl::invoke_result_t<R, C>>;
-        };
-
-        template <typename R, typename C>
-        static constexpr bool is_switching_context_v =
-          is_switching_context<R, C, !stl::is_void_v<R> && stl::is_invocable_v<R, C>>::value;
-
-
-        /**
-         * Get the "switched context typed" if it's R is a route, otherwise, return the context type if
-         * the operator(C) of R is doing context switching, otherwise, return the specified default C
-         * @tparam R
-         * @tparam C
-         */
-        template <typename R, typename C>
-        struct lazy_switched_context_type {
-            using type = lazy_conditional_t<is_switching_context_v<R, C>, stl::invoke_result_t, C, R, C>;
-        };
-
-        template <typename R, typename C>
-        requires(Route<R, C>) struct lazy_switched_context_type<R, C> {
-            using type = typename R::template switched_context_type<C>;
-        };
+        // // todo: use the istl::lazy_conditional
+        // template <bool Condition, template <typename...> typename T1, typename T2, typename... C>
+        // struct lazy_conditional {};
+        //
+        // template <template <typename...> typename T1, typename T2, typename... C>
+        // struct lazy_conditional<true, T1, T2, C...> {
+        //     using type = T1<C...>;
+        // };
+        //
+        // template <template <typename...> typename T1, typename T2, typename... C>
+        // struct lazy_conditional<false, T1, T2, C...> {
+        //     using type = T2;
+        // };
+        //
+        // template <bool Condition, template <typename...> typename T1, typename T2, typename... C>
+        // using lazy_conditional_t = typename lazy_conditional<Condition, T1, T2, C...>::type;
+        //
+        //
+        // template <typename R, typename C, bool IF>
+        // struct is_switching_context {
+        //     static constexpr bool value = false;
+        // };
+        //
+        // template <typename R, typename C>
+        // struct is_switching_context<R, C, true> {
+        //     static constexpr bool value = Context<stl::invoke_result_t<R, C>>;
+        // };
+        //
+        // template <typename R, typename C>
+        // static constexpr bool is_switching_context_v =
+        //   is_switching_context<R, C, !stl::is_void_v<R> && stl::is_invocable_v<R, C>>::value;
+        //
+        //
+        // /**
+        //  * Get the "switched context typed" if it's R is a route, otherwise, return the context type if
+        //  * the operator(C) of R is doing context switching, otherwise, return the specified default C
+        //  * @tparam R
+        //  * @tparam C
+        //  */
+        // template <typename R, typename C>
+        // struct lazy_switched_context_type {
+        //     using type = lazy_conditional_t<is_switching_context_v<R, C>, stl::invoke_result_t, C, R, C>;
+        // };
+        //
+        // template <typename R, typename C>
+        // requires(Route<R, C>) struct lazy_switched_context_type<R, C> {
+        //     using type = typename R::template switched_context_type<C>;
+        // };
 
       public:
         constexpr static bool is_route_valid      = !stl::is_void_v<route_type>;
         constexpr static bool is_next_route_valid = !stl::is_void_v<next_route_type>;
 
-        template <typename R, typename C>
-        using route_switched_context_type =
-          stl::conditional_t<stl::is_invocable_v<R, C>, typename lazy_switched_context_type<R, C>::type, C>;
-
-        template <typename C>
-        using route_context_type = route_switched_context_type<route_type, C>;
-
-        template <typename C>
-        using next_route_context_type = route_switched_context_type<next_route_type, C>;
-
-        template <typename C>
-        using switched_context_type = next_route_context_type<route_context_type<C>>;
-
-        template <typename C>
-        static constexpr bool is_switching_context_recursive = stl::is_same_v<switched_context_type<C>, C>;
+        // template <typename R, typename C>
+        // using route_switched_context_type =
+        //   stl::conditional_t<stl::is_invocable_v<R, C>, typename lazy_switched_context_type<R, C>::type,
+        //   C>;
+        //
+        // template <typename C>
+        // using route_context_type = route_switched_context_type<route_type, C>;
+        //
+        // template <typename C>
+        // using next_route_context_type = route_switched_context_type<next_route_type, C>;
+        //
+        // template <typename C>
+        // using switched_context_type = next_route_context_type<route_context_type<C>>;
+        //
+        // template <typename C>
+        // static constexpr bool is_switching_context_recursive = stl::is_same_v<switched_context_type<C>, C>;
 
 
         constexpr route() noexcept : super_t{} {}
         constexpr route(route const&) noexcept = default;
         constexpr route(route&&) noexcept      = default;
-        route operator=(route const&) = delete;
-        route operator=(route&&) = delete;
 
         template <typename... Args>
         requires(stl::is_constructible_v<super_t, Args...>) constexpr route(Args&&... args) noexcept
@@ -479,7 +477,7 @@ namespace webpp {
                         // if it's a context or a response, we have to use an optional object here because we
                         // might not need to run the next route here.
                         if (res)
-                            return make_optional(call_next_route(ctx, req));
+                            return optional<n_res_t>{call_next_route(ctx, req)};
                         return optional<n_res_t>{nullopt};
                     } else {
                         // let the router deal with this non-sense:

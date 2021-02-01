@@ -71,7 +71,7 @@ namespace webpp {
      *     - [ ] Downloadable files of any type (blobs)
      *
      */
-    template <Traits TraitsType, typename EList>
+    template <Traits TraitsType, ResponseBody EList>
     struct response_body : public extension_wrapper<EList> {
         using traits_type = TraitsType;
         using elist_type  = extension_wrapper<EList>;
