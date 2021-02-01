@@ -20,7 +20,7 @@ namespace webpp {
     /**
      * This class owns its data.
      */
-    template <Traits TraitsType, typename EList, typename ResponseHeaderType, typename BodyType>
+    template <Traits TraitsType, typename EList, typename ResponseHeaderType, ResponseBody BodyType>
     class basic_response : public extension_wrapper<EList> {
 
       public:
@@ -94,11 +94,9 @@ namespace webpp {
 
 
         // static methods:
-        /*
-        static response_t file(stl::filesystem::path const& file) noexcept;
-        static response_t image(stl::string_view const& file) noexcept;
-        static response_t json_file(stl::string_view const& file) noexcept;
-         */
+        // static auto file(stl::filesystem::path const& file) noexcept;
+        // static auto image(stl::string_view const& file) noexcept;
+        // static auto json_file(stl::string_view const& file) noexcept;
     };
 
 

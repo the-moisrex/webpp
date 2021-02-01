@@ -174,6 +174,8 @@ namespace webpp {
                                      http::status_code_reason_phrase(error_code)));
         }
 
+
+
         [[nodiscard]] constexpr Response auto error(http::status_code_type error_code,
                                                     auto&&                 data) const noexcept {
             using data_type = stl::remove_cvref_t<decltype(data)>;
@@ -194,6 +196,8 @@ namespace webpp {
             }
         }
 
+        // todo: add more error handling templates here.
+        // todo: let the user customize error templates with extensions
         // todo: add all the features of returning a response each body type should have at least one method here
     };
 
@@ -386,13 +390,6 @@ namespace webpp {
     using simple_context = typename ExtensionListType::
       template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
 
-    // todo: move this into "context_concepts.h" file
-    //        using std_context_type = typename context_descriptor::template final_extensie_type<
-    //          empty_extension_pack, fake_traits_type,
-    //          basic_context<empty_extension_pack, fake_request_type, fake_response_type>,
-    //          fake_request_type>;
-
-    //    using fake_context_type = simple_context<fake_request_type>;
 } // namespace webpp
 
 #endif // WEBPP_ROUTES_CONTEXT_H
