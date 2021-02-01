@@ -593,17 +593,26 @@ namespace webpp {
             }
         }
 
+        [[nodiscard]] constexpr auto operator=(void (*func)()) const noexcept {
+            return operator>>=(func);
+        }
+
+        template <typename ReturnType>
+        [[nodiscard]] constexpr auto operator=(ReturnType (*func)()) const noexcept {
+            return operator>>=<ReturnType>(func);
+        }
+
+        [[nodiscard]] constexpr auto operator=(auto&& new_route) const noexcept {
+            return operator>>=(stl::forward<decltype(new_route)>(new_route));
+        }
+
+
         // template <typename T, typename Ret, typename... Args>
         // [[nodiscard]] constexpr auto operator>>=(Ret (T::*mem_func_pointer)(Args...)) const
         // noexcept {
         //     using app_type = T;
         // }
 
-        // template <typename RT>
-        // [[nodiscard]] constexpr auto operator=(RT&& new_route) const noexcept {
-        //     return operator>>=<RT>(stl::forward<RT>(new_route));
-        // }
-        //
         // template <typename T, typename Ret, typename... Args>
         // [[nodiscard]] constexpr auto operator=(Ret (T::*mem_func_pointer)(Args...)) const
         // noexcept {

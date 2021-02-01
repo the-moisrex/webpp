@@ -19,11 +19,6 @@
 
 namespace webpp {
 
-    template <typename T>
-    struct application_pointers {
-        static constexpr bool value = stl::is_pointer_v<T> && stl::is_class_v<stl::remove_pointer_t<T>>;
-    };
-
 
     /**
      * Const router is a router that satisfies that "Router" concept.
@@ -32,8 +27,8 @@ namespace webpp {
     struct router {
         using extension_list_type = stl::remove_cvref_t<ExtensionListType>;
 
-        // todo: Additional routes extracted from the extensions
-        //        using additional_routes = ;
+        // todo: extract additional routes from extensions
+        // todo: add router_extensions as well
         const stl::tuple<RouteType...> routes;
 
         constexpr router(ExtensionListType&&, RouteType&&... _route) noexcept
@@ -43,23 +38,6 @@ namespace webpp {
 
         constexpr router(router const&) noexcept = default;
         constexpr router(router&&) noexcept      = default;
-
-        //        consteval router() noexcept              = delete;
-        //        consteval router(router const&) noexcept = delete;
-        //        consteval router(router&&) noexcept      = delete;
-
-        //        template <typename... AppTypes>
-        //        requires((application_pointers<AppTypes>::value &&
-        //                  ...)) consteval router(stl::tuple<AppTypes...> const& _apps, RouteType&&...
-        //                  _route) noexcept
-        //          : routes(stl::forward<RouteType>(_route)...) {
-        //            stl::apply(
-        //              [&](auto&... app_ptr) {
-        //                  (..., (requires { {_route.app}; } && (_route.app = app_ptr)));
-        //              },
-        //              _apps);
-        //        }
-
 
         /**
          * @return how many routes are in this router
@@ -83,19 +61,6 @@ namespace webpp {
                 return operator[]<N + 1>(i);
             }
             throw stl::invalid_argument("The specified index is not valid");
-        }
-
-        auto error(Context auto const&    ctx,
-                   http::status_code_type error_code,
-                   stl::string_view       phrase = "") const noexcept {
-            // todo: add methods to change the default error template and individual ones
-            stl::string_view _phrase = phrase.empty() ? http::status_code_reason_phrase(error_code) : phrase;
-            return ctx.template response<string_response>(
-              error_code,
-              stl::format(
-                R"html(<!doctype html><html><head><title>{0} {1}!</title></head><body><h1>{0} {1}</h1></body></html>)html",
-                error_code,
-                _phrase));
         }
 
       private:
@@ -223,58 +188,6 @@ namespace webpp {
 
     template <typename ExtensionListType, typename... RouteType>
     router(ExtensionListType&&, RouteType&&...) -> router<ExtensionListType, RouteType...>;
-
-
-    /**
-     * This is the router; the developers need this class to inject their routes
-     * and also add more migrations.
-     *
-     * @param Interface
-    template <typename... Route, typename RouteList = const_list<Route...>>
-    struct router_t {
-        template <typename... Args>
-        constexpr router_t(Args&&... args) noexcept
-          : routes(std::forward<Args>(args)...) {
-        }
-
-
-        template <typename Route>
-        constexpr auto on(Route&& _route) noexcept {
-            static_assert(is_route<Route>::value,
-                          "The specified route is not valid.");
-
-
-            if constexpr (is_specialization_of<RouteList, std::tuple>::value)
-    {
-                // when it's a tuple
-                auto _tup =
-                  std::tuple_cat(routes,
-    std::make_tuple(std::move(_route))); return router_t<Interface,
-    decltype(_tup)>{_tup};
-
-            } else if constexpr (is_specialization_of<RouteList,
-                                                      const_list>::value) {
-                // for const_list (constexpr version)
-                auto _the_routes = routes + std::move(_route);
-                return router_t<Interface, decltype(_the_routes)>{_the_routes};
-
-            } else if constexpr (is_container_v<RouteList>) {
-                // for containers (dynamic)
-                static_assert(
-                  can_cast<Route, typename RouteList::value_type>::value,
-                  "The specified route does not match the router version of "
-                  "route.");
-                routes.emplace_back(std::forward<Route>(_route));
-
-            } else {
-                throw std::invalid_argument(
-                  "The container for routes is unknown.");
-            }
-        }
-    };
-     */
-
-
 
 
     /*

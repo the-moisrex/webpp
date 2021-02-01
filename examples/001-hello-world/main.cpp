@@ -19,7 +19,7 @@ int main() {
                    []() noexcept {
                        return "Hello world";
                    },
-                   (get and root / "page" / "one") >>= page_one,
+                   (get and root / "page" / "one") = page_one,
                    (root / "about") || (get and root / "cgi-bin" / "cgi-hello-world" / "about") >>=
                    [](auto ctx) {
                        return ctx.file("about.html");

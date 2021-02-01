@@ -84,6 +84,7 @@ namespace webpp {
          * The reason for preferring "string" over "string_type" is that the allocator is handled correctly.
          */
         struct string_context_extension {
+
             template <Traits TraitsType, Context ContextType>
             struct type : public stl::remove_cvref_t<ContextType> {
                 using context_type = stl::remove_cvref_t<ContextType>;
@@ -93,10 +94,6 @@ namespace webpp {
                     details::string_response_body_extension>;
 
                 using context_type::context_type; // inherit the constructors
-
-                //                template <EnabledTraits ET>
-                //                constexpr type(ET&& et_obj) noexcept :
-                //                context_type{stl::forward<ET>(et_obj)} {}
 
                 template <typename... Args>
                 constexpr Response auto string(Args&&... args) const noexcept {
