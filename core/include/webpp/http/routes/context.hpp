@@ -152,10 +152,6 @@ namespace webpp {
             return new_response_type{stl::forward<Args>(args)...};
         }
 
-        [[nodiscard]] constexpr Response auto error(int error_code) const noexcept {
-            return error(static_cast<http::status_code_type>(error_code));
-        }
-
         [[nodiscard]] constexpr Response auto error(http::status_code_type error_code) const noexcept {
             return error(error_code,
                          stl::format(R"(<!DOCTYPE html>

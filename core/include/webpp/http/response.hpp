@@ -20,7 +20,7 @@ namespace webpp {
     /**
      * This class owns its data.
      */
-    template <Traits TraitsType, typename EList, typename ResponseHeaderType, ResponseBody BodyType>
+    template <Traits TraitsType, typename EList, typename ResponseHeaderType, typename BodyType>
     class basic_response : public extension_wrapper<EList> {
 
       public:
