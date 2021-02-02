@@ -71,12 +71,12 @@ namespace webpp {
      *     - [ ] Downloadable files of any type (blobs)
      *
      */
-    template <Traits TraitsType, ResponseBody EList>
+    template <Traits TraitsType, typename EList>
     struct response_body : public extension_wrapper<EList> {
         using traits_type = TraitsType;
         using elist_type  = extension_wrapper<EList>;
 
-        static_assert(ResponseBody<elist_type>, "We require at least one valid 'response body extension'.");
+        // static_assert(ResponseBody<elist_type>, "We require at least one valid 'response body extension'.");
 
         using elist_type::extension_wrapper; // inherit ctors from parents
 
