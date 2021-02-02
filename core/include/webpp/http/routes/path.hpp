@@ -362,7 +362,7 @@ namespace webpp {
                     using uri_segments_type = decltype(uri_segments);
 
                     // the URI is empty, so no checking it
-                    if (uri_segments.empty() && uri_segments.errors.is_failure())
+                    if (uri_segments.empty() || uri_segments.errors.is_failure())
                         return false;
 
 
