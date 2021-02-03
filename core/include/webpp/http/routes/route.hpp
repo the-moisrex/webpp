@@ -48,11 +48,22 @@ namespace webpp {
                 return forward<decltype(res)>(res);
             } else if constexpr (Response<res_t>) {
                 return forward<decltype(res)>(res);
-            } else if constexpr (ConstructibleWithResponse<typename ctx_type::response_type, res_t>) {
+            } else if constexpr (requires {
+                                     requires ConstructibleWithResponse<typename ctx_type::response_type,
+                                                                        res_t>;
+                                     requires ResponseBody<
+                                       typename ctx_type::response_type::
+                                         body_type>; // check if the response
+                                                     // body is going to be a
+                                                     // valid response body (which requires .str from
+                                                     // extensions because response_body itself doesn't have a
+                                                     // default value generator)
+                                 }) {
                 return ctx.response(forward<decltype(res)>(res));
                 // todo: consider "response extension" injection in order to get the right response type
             } else if constexpr (istl::StringViewifiable<res_t>) {
-                return ctx.template response<string_response>(istring_viewify(forward<decltype(res)>(res)));
+                return ctx.template response<string_response>(
+                  istl::string_viewify(forward<decltype(res)>(res)));
             } else {
                 // let's just ignore the result
                 return true;
