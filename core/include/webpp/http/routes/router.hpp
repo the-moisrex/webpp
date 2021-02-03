@@ -133,8 +133,16 @@ namespace webpp {
                     return handle_route_results<Index>(move(res2), forward<decltype(ctx)>(ctx), req);
                 }
 
-            } else if constexpr (ConstructibleWithResponse<typename context_type::response_type,
-                                                           result_type>) {
+            } else if constexpr (requires {
+                                     requires ConstructibleWithResponse<typename context_type::response_type,
+                                                                        result_type>;
+                                     requires ResponseBody<
+                                       typename context_type::response_type::
+                                         body_type>; // check if the response body is going to be a valid
+                                                     // response body (which requires .str from extensions
+                                                     // because response_body itself doesn't have a default
+                                                     // value generator)
+                                 }) {
                 return ctx.response(forward<decltype(res)>(res));
                 // todo: consider "response extension" injection in order to get the right response type
             } else if constexpr (istl::StringViewifiable<result_type>) {
