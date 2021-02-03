@@ -12,7 +12,7 @@ auto page_one() {
 int main() {
     router _router{empty_extension_pack{},
                    root >>=
-                   []() {
+                   []() noexcept {
                        return "main page";
                    },
                    get and root / "cgi-bin" / "cgi-hello-world" >>=
