@@ -66,8 +66,10 @@ namespace webpp {
       private:
         template <stl::size_t Index = 0>
         [[nodiscard]] constexpr auto handle_route_results(auto&& res, auto&& ctx, auto&& req) const noexcept {
-            using result_type                   = stl::remove_cvref_t<decltype(res)>;
-            using context_type                  = stl::remove_cvref_t<decltype(ctx)>;
+            using namespace stl;
+
+            using result_type                   = remove_cvref_t<decltype(res)>;
+            using context_type                  = remove_cvref_t<decltype(ctx)>;
             constexpr auto next_route_index     = Index + 1;
             constexpr bool is_passed_last_route = Index > (route_count() - 1);
 
@@ -79,60 +81,66 @@ namespace webpp {
                 // the same goes for any other valid type
 
                 if (res) {
-                    return handle_route_results<Index>(res.value(), stl::forward<decltype(ctx)>(ctx), req);
+                    return handle_route_results<Index>(res.value(), forward<decltype(ctx)>(ctx), req);
                 } else {
                     // return a 500 error
                     constexpr auto err_code = 500u;
-                    using ret_type          = decltype(handle_route_results<Index>(res.value(),
-                                                                          stl::forward<decltype(ctx)>(ctx),
-                                                                          req));
-                    if constexpr (stl::is_convertible_v<typename result_type::value_type, unsigned long>) {
+                    using ret_type =
+                      decltype(handle_route_results<Index>(res.value(), forward<decltype(ctx)>(ctx), req));
+                    if constexpr (is_convertible_v<typename result_type::value_type, unsigned long>) {
                         return handle_route_results<Index>(typename result_type::value_type{err_code},
-                                                           stl::forward<decltype(ctx)>(ctx),
+                                                           forward<decltype(ctx)>(ctx),
                                                            req);
-                    } else if constexpr (stl::is_constructible_v<ret_type, decltype(err_code)>) {
+                    } else if constexpr (is_constructible_v<ret_type, decltype(err_code)>) {
                         return ret_type{err_code};
                     } else {
-                        return handle_route_results<Index>(err_code, stl::forward<decltype(ctx)>(ctx), req);
+                        return handle_route_results<Index>(err_code, forward<decltype(ctx)>(ctx), req);
                     }
                 }
                 // todo: check if you can run the next route as well
                 //                if constexpr (is_passed_last_route) {
                 //                    return ctx.error(404u);
                 //                } else {
-                //                    return operator()<next_route_index>(stl::forward<decltype(ctx)>(ctx),
+                //                    return operator()<next_route_index>(forward<decltype(ctx)>(ctx),
                 //                    req);
                 //                }
             } else if constexpr (Context<result_type>) {
                 // context switching is happening here
                 // just call the next route or finish it with calling the context handlers
                 if constexpr (!is_passed_last_route) {
-                    return operator()<next_route_index>(stl::forward<decltype(res)>(res), req);
+                    return operator()<next_route_index>(forward<decltype(res)>(res), req);
                 } else {
                     return ctx.error(404u);
                 }
             } else if constexpr (Response<result_type>) {
                 // we're done; don't call the next route
                 return res;
-            } else if constexpr (stl::is_same_v<result_type, bool>) {
+            } else if constexpr (is_same_v<result_type, bool>) {
                 if (res) {
-                    return operator()<next_route_index>(stl::forward<decltype(ctx)>(ctx), req);
+                    return operator()<next_route_index>(forward<decltype(ctx)>(ctx), req);
                 } else {
                     return ctx.error(404u); // doesn't matter if it's the last route or not,
                     // returning false just means finish it
                 }
-            } else if constexpr (stl::is_integral_v<result_type>) {
+            } else if constexpr (is_integral_v<result_type>) {
                 return ctx.error(res); // error code
             } else if constexpr (Route<result_type, context_type>) {
                 auto res2       = call_route(res, ctx, req);
-                using res2_type = stl::remove_cvref_t<decltype(res2)>;
-                if constexpr (stl::is_void_v<res2_type>) {
-                    return operator()<next_route_index>(stl::forward<decltype(ctx)>(ctx), req);
+                using res2_type = remove_cvref_t<decltype(res2)>;
+                if constexpr (is_void_v<res2_type>) {
+                    return operator()<next_route_index>(forward<decltype(ctx)>(ctx), req);
                 } else {
-                    return handle_route_results<Index>(stl::move(res2),
-                                                       stl::forward<decltype(ctx)>(ctx),
-                                                       req);
+                    return handle_route_results<Index>(move(res2), forward<decltype(ctx)>(ctx), req);
                 }
+
+            } else if constexpr (ConstructibleWithResponse<typename context_type::response_type,
+                                                           result_type>) {
+                return ctx.response(forward<decltype(res)>(res));
+                // todo: consider "response extension" injection in order to get the right response type
+            } else if constexpr (istl::StringViewifiable<result_type>) {
+                // Use string_response response type to handle strings
+                return ctx.template response<string_response>(
+                  istl::string_viewify(forward<decltype(res)>(res)));
             } else {
                 // we just ignore anything else the user returns
                 // this part never happens because the "call_route" converts this part to the above parts
