@@ -5,6 +5,7 @@
 
 #include "../../std/string_view.hpp"
 #include "../../traits/traits.hpp"
+#include "../request_headers.hpp"
 #include "./protocol_concepts.hpp"
 #include "common/common_request.hpp"
 
@@ -25,6 +26,12 @@ namespace webpp::http {
         using string_view_type = typename super::string_view_type;
         using string_type      = typename super::string_type;
         using char_type        = typename string_type::value_type;
+        using extension_list   = REL;
+        using header_type      = simple_request_headers<traits_type, extension_list>;
+        // using body_type
+
+        // todo
+        header_type headers;
 
         /**
          * Get the environment value safely
@@ -314,7 +321,7 @@ namespace webpp::http {
          * CGI server; and we have to recreate it based on the environment
          * variables.
          */
-        [[nodiscard]] static string_view_type headers() noexcept {
+        [[nodiscard]] static string_view_type get_headers() noexcept {
             // we can do this only in CGI, we have to come up with new ways for long-running protocols:
             static string_type headers_cache;
             if (headers_cache.empty()) {

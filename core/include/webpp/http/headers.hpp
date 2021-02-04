@@ -15,11 +15,44 @@ namespace webpp::http {
      * one single field of a header.
      */
     template <typename StringType, typename EList>
-    struct basic_header_field : public EList {
-        using string_type = StringType;
+    struct basic_header_field : public extension_wrapper<EList> {
+        using string_type    = StringType;
+        // using allocator_type = typename string_type::allocator_type;
+        using super          = extension_wrapper<EList>;
 
         string_type name;
         string_type value;
+
+//        constexpr basic_header_field(allocator_type const& alloc) noexcept
+//          : super{},
+//            name(alloc),
+//            value(alloc) {}
+
+
+        constexpr basic_header_field(string_type&& _name, string_type&& _value) noexcept
+          : super{},
+            name(stl::move(_name)),
+            value(stl::move(_value)) {}
+
+        constexpr basic_header_field(string_type const& _name, string_type const& _value) noexcept
+          : super{},
+            name(_name),
+            value(_value) {}
+
+        constexpr basic_header_field(string_type&& _name, string_type const& _value) noexcept
+          : super{},
+            name(stl::move(_name)),
+            value(_value) {}
+
+        constexpr basic_header_field(string_type const& _name, string_type&& _value) noexcept
+          : super{},
+            name(_name),
+            value(stl::move(_value)) {}
+
+        constexpr basic_header_field(basic_header_field&&) noexcept      = default;
+        constexpr basic_header_field(basic_header_field const&) noexcept = default;
+        basic_header_field& operator=(basic_header_field&&) noexcept = default;
+        basic_header_field& operator=(basic_header_field const&) noexcept = default;
 
 
         /**
@@ -95,6 +128,6 @@ namespace webpp::http {
 
 
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_HTTP_HEADERS_H
