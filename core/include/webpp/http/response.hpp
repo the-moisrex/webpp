@@ -16,11 +16,10 @@ namespace webpp::http {
     /**
      * This class owns its data.
      */
-    template <Traits TraitsType, typename EList, typename ResponseHeaderType, typename BodyType>
+    template <typename EList, typename ResponseHeaderType, typename BodyType>
     struct basic_response : public extension_wrapper<EList> {
 
         // we're not going to use trait's string type here.
-        using traits_type  = TraitsType;
         using body_type    = BodyType;
         using headers_type = ResponseHeaderType;
         using elist_type   = extension_wrapper<EList>;
@@ -76,16 +75,16 @@ namespace webpp::http {
             // todo: we can optimize this, pre-calculate the default header fields and copy when needed
             if (!has_content_type) {
                 static const header_field_type content_type_field{
-                  .name  = str_t{"Content-Type", headers.get_allocator()},
-                  .value = str_t{"text/html; charset=utf-8", headers.get_allocator()}};
+                  str_t{"Content-Type", headers.get_allocator()},
+                  str_t{"text/html; charset=utf-8", headers.get_allocator()}};
                 headers.push_back(content_type_field);
             }
 
             if (!has_content_length) {
                 str_t value{headers.get_allocator()};
                 append_to(value, body.str().size() * sizeof(char));
-                headers.push_back(header_field_type{.name  = str_t{"Content-Length", headers.get_allocator()},
-                                                    .value = stl::move(value)});
+                headers.push_back(
+                  header_field_type{str_t{"Content-Length", headers.get_allocator()}, stl::move(value)});
             }
         }
 
@@ -133,10 +132,8 @@ namespace webpp::http {
 
         template <typename ExtensionListType, typename TraitsType, typename EList>
         using mid_level_extensie_type = basic_response<
-          TraitsType,
           EList,
           typename ExtensionListType::template extensie_type<TraitsType, response_headers_descriptor>,
-
           typename ExtensionListType::template extensie_type<TraitsType, response_body_descriptor>>;
 
         // empty final extensie

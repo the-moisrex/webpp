@@ -95,13 +95,15 @@ namespace webpp {
         // with 2 or more kids
         template <Traits TraitsType, typename Mother, typename FirstKid, typename... Kids>
         struct children_inherited<TraitsType, Mother, FirstKid, Kids...> {
-            using type = typename FirstKid::template type<TraitsType, typename children_inherited<TraitsType, Mother, Kids...>::type>;
-//            struct type : public vctor<typename Kids::template type<TraitsType, vctor<Mother>>>... {
-//                template <typename... Args>
-//                constexpr type(Args&&... args) noexcept
-//                  : vctor<typename Kids::template type<TraitsType, vctor<Mother>>>{
-//                      stl::forward<Args>(args)...}... {}
-//            };
+            using type = typename FirstKid::
+              template type<TraitsType, typename children_inherited<TraitsType, Mother, Kids...>::type>;
+            //            struct type : public vctor<typename Kids::template type<TraitsType,
+            //            vctor<Mother>>>... {
+            //                template <typename... Args>
+            //                constexpr type(Args&&... args) noexcept
+            //                  : vctor<typename Kids::template type<TraitsType, vctor<Mother>>>{
+            //                      stl::forward<Args>(args)...}... {}
+            //            };
         };
 
         // without any kids
@@ -380,9 +382,7 @@ namespace webpp {
      * or non-virtual inheritance.
      */
     template <typename E>
-    struct extension_wrapper : public E {
-        using E::E;
-    };
+    using extension_wrapper = E;
 
 
 } // namespace webpp

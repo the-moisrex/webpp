@@ -27,16 +27,18 @@ namespace webpp::http {
      *       - [ ] format 2 TODO
      *
      */
-    template <Traits TraitsType, typename EList = empty_extension_pack>
-    struct request_body : public EList {
-        using traits_type      = TraitsType;
-        using string_type      = traits::string<traits_type>;
-        using string_view_type = traits::string_view<traits_type>;
-        using elist_type       = EList;
 
-        template <typename... Args>
-        constexpr request_body(Args&&... args) noexcept : elist_type{stl::forward<Args>(args)...} {}
-    };
+
+    //    template <Traits TraitsType, typename EList>
+    //    struct request_body : public extension_wrapper<EList> {
+    //        using traits_type      = TraitsType;
+    //        using string_type      = traits::string<traits_type>;
+    //        using string_view_type = traits::string_view<traits_type>;
+    //        using elist_type       = extension_wrapper<EList>;
+    //
+    //        template <typename... Args>
+    //        constexpr request_body(Args&&... args) noexcept : elist_type{stl::forward<Args>(args)...} {}
+    //    };
 
     struct request_body_descriptor {
 
@@ -51,7 +53,7 @@ namespace webpp::http {
         using related_extension_pack_type = typename ExtensionType::request_body_extensions;
 
         template <typename ExtensionListType, typename TraitsType, typename EList>
-        using mid_level_extensie_type = request_body<TraitsType, EList>;
+        using mid_level_extensie_type = extension_wrapper<EList>;
 
         // empty final extensie
         template <typename ExtensionListType, typename TraitsType, typename EList>
@@ -63,6 +65,6 @@ namespace webpp::http {
       typename extension_pack<E...>::template extensie_type<TraitsType, request_body_descriptor>;
 
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_REQUEST_BODY_HPP

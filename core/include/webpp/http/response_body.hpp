@@ -79,7 +79,7 @@ namespace webpp::http {
         // static_assert(ResponseBody<elist_type>, "We require at least one valid 'response body
         // extension'.");
 
-        using elist_type::extension_wrapper; // inherit ctors from parents
+        using elist_type::elist_type; // inherit ctors from parents
 
         // todo: implement .str or other streaming stuff here or create a "final_response_body" type
     };
