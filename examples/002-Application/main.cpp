@@ -2,9 +2,6 @@
 #include "./app.h"
 
 int main() {
-    using namespace webpp;
-
-    cgi<app> my_app;
-
+    webpp::http::cgi<website::app> my_app;
     return my_app();
 }
