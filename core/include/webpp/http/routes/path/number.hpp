@@ -12,7 +12,7 @@
 
 #include <type_traits>
 
-namespace webpp::routes {
+namespace webpp::http::routes {
 
     struct number {
         stl::string_view variable_name = "";

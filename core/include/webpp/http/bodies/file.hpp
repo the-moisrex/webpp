@@ -14,7 +14,7 @@ extern std::string_view get_static_file(std::string_view const&) noexcept;
 #    endif
 #endif
 
-namespace webpp {
+namespace webpp::http {
 
     struct file_body {
         template <Traits TraitsType>
@@ -121,6 +121,6 @@ namespace webpp {
     };
 
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // FILE_H

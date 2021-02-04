@@ -3,7 +3,7 @@
 #ifndef WEBPP_ROUTER_STATS_HPP
 #define WEBPP_ROUTER_STATS_HPP
 
-namespace webpp::inline extensions {
+namespace webpp::http::inline extensions {
     struct router_stats {
         enum class route_level : stl::uint8_t {
             none              = 0x0u,
@@ -29,6 +29,6 @@ namespace webpp::inline extensions {
         skip_next   skip : 2                      = skip_next::none;
         route_level level : 2                     = route_level::none;
     };
-} // namespace webpp::inline extensions
+} // namespace webpp::http::inline extensions
 
 #endif // WEBPP_ROUTER_STATS_HPP

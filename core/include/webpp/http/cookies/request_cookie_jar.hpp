@@ -8,7 +8,7 @@
 #include "./cookie_jar.hpp"
 #include "./request_cookie.hpp"
 
-namespace webpp {
+namespace webpp::http {
 
 
     template <typename Allocator              = std::allocator<request_cookie<stl::string_view>>,
@@ -51,6 +51,6 @@ namespace webpp {
     };
 
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_REQUEST_COOKIE_JAR_HPP

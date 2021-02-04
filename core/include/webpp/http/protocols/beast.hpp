@@ -9,7 +9,7 @@
 
 #include <boost/beast.hpp>
 
-namespace webpp {
+namespace webpp::http {
 
 
     template <ServerTraits ServerTraitsType, Application App, ExtensionList EList = empty_extension_pack>
@@ -45,6 +45,6 @@ namespace webpp {
     };
 
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_BEAST_HPP

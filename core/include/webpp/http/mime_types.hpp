@@ -6,7 +6,7 @@
 #include "../std/string_view.hpp"
 #include "../strings/iequals.hpp"
 
-namespace webpp {
+namespace webpp::http {
 
     namespace details {
         static constexpr struct mapping {
@@ -35,6 +35,6 @@ namespace webpp {
     }
 
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_MIME_TYPES_HPP

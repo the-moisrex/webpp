@@ -3,7 +3,7 @@
 
 #include "../extensions/extension.hpp"
 
-namespace webpp {
+namespace webpp::http {
 
     template <typename T>
     concept ResponseBody = requires(T res) {
@@ -76,7 +76,8 @@ namespace webpp {
         using traits_type = TraitsType;
         using elist_type  = extension_wrapper<EList>;
 
-        // static_assert(ResponseBody<elist_type>, "We require at least one valid 'response body extension'.");
+        // static_assert(ResponseBody<elist_type>, "We require at least one valid 'response body
+        // extension'.");
 
         using elist_type::extension_wrapper; // inherit ctors from parents
 
@@ -107,6 +108,6 @@ namespace webpp {
     using simple_response_body =
       typename extension_pack<E...>::template extensie_type<TraitsType, response_body_descriptor>;
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_BODY_H

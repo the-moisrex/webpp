@@ -5,6 +5,7 @@
 
 
 using namespace webpp;
+using namespace webpp::http;
 
 using req_parser = http_request_parser<std_traits>;
 

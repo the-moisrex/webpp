@@ -8,7 +8,7 @@
 #include "../../../version.hpp"
 
 
-namespace webpp {
+namespace webpp::http {
 
 
     template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL>
@@ -31,6 +31,6 @@ namespace webpp {
     };
 
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_COMMON_REQUEST_HPP

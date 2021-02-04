@@ -121,7 +121,7 @@ struct app {
     return "Home Page";
   }
 
-  auto Response operator()(auto Context& ctx) {
+  auto HTTPResponse operator()(auto Context& ctx) {
     return router(ctx);
   }
 

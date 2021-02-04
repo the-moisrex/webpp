@@ -3,7 +3,7 @@
 #ifndef WEBPP_EXTENSION_PRIORITY_H
 #define WEBPP_EXTENSION_PRIORITY_H
 
-namespace webpp::extensions {
+namespace webpp::http::inline extensions {
 
     /**
      * This struct is designed to be used in the routing system for the purpose
@@ -136,7 +136,7 @@ namespace webpp::extensions {
         ::std::array<::std::size_t, sizeof...(RouteType)> priorities =
           ([]<::std::size_t... I>(::std::index_sequence<I...>) {
               return ::std::array<::std::size_t, sizeof...(I)>{I...};
-          })(::std::make_index_sequence<sizeof...(RouteType)>());
+          }) (::std::make_index_sequence<sizeof...(RouteType)>());
 
 
         struct iterator {

@@ -4,6 +4,7 @@
 #include "../../core/include/webpp/http/routes/router.hpp"
 
 using namespace webpp;
+using namespace webpp::http;
 
 auto page_one() {
     return "Page 1";

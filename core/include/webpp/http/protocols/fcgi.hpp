@@ -6,11 +6,11 @@
 #include "../../std/set.hpp"
 #include "../../traits/enable_traits.hpp"
 #include "../app_wrapper.hpp"
-#include "../request.hpp"
 #include "./fastcgi/fcgi_manager.hpp"
 #include "./fcgi_request.hpp"
+#include "webpp/application/request.hpp"
 
-namespace webpp::fastcgi {
+namespace webpp::http::inline fastcgi {
 
 
     template <ServerTraits ServerType, typename App, typename EList = empty_extension_pack>
@@ -67,6 +67,6 @@ namespace webpp::fastcgi {
     };
 
 
-} // namespace webpp::fastcgi
+} // namespace webpp::http::inline fastcgi
 
 #endif

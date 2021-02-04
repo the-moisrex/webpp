@@ -8,7 +8,7 @@
 #include "../../request_concepts.hpp"
 #include "../../response_concepts.hpp"
 
-namespace webpp::inline extensions {
+namespace webpp::http::inline extensions {
 
     /**
      * Context Extension Request Response

@@ -3,12 +3,12 @@
 
 #include "route.hpp"
 
-namespace webpp {
+namespace webpp::http {
 
     struct method_route_condition : public stl::string_view {
         using stl::string_view::basic_string_view; // ctors
 
-        [[nodiscard]] constexpr bool operator()(Request auto const& req) const noexcept {
+        [[nodiscard]] constexpr bool operator()(HTTPRequest auto const& req) const noexcept {
             return req.request_method() == *this;
         }
     };
@@ -21,7 +21,7 @@ namespace webpp {
     constexpr auto put  = method("PUT");
     // TODO: add more methods
 
-} // namespace webpp
+} // namespace webpp::http
 
 
 #endif // WEBPP_VALVES_METHODS_H

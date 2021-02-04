@@ -6,7 +6,7 @@
 #include "../../std/map.hpp"
 #include "./common/common_request.hpp"
 
-namespace webpp {
+namespace webpp::http::inline fastcgi {
 
 
     template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL, Protocol ProtoType>
@@ -18,6 +18,6 @@ namespace webpp {
     };
 
 
-} // namespace webpp
+} // namespace webpp::http::inline fastcgi
 
 #endif // WEBPP_FCGI_REQUEST_HPP

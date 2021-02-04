@@ -6,13 +6,13 @@
 #include "../../server/server_concepts.hpp"
 #include "../../std/string_view.hpp"
 #include "../app_wrapper.hpp"
-#include "../request.hpp"
 #include "../response.hpp"
 #include "./common/common_protocol.hpp"
 #include "./self_hosted_request.hpp"
 #include "./shosted/self_hosted_session_manager.hpp"
+#include "webpp/application/request.hpp"
 
-namespace webpp {
+namespace webpp::http::inline shosted {
 
     template <ServerTraits ServerTraitsType, Application App, ExtensionList EList = empty_extension_pack>
     struct self_hosted
@@ -49,6 +49,6 @@ namespace webpp {
     //    template <Traits TraitsType, Application App, ExtensionList EList = empty_extension_pack>
     //    using server =
 
-} // namespace webpp
+} // namespace webpp::http::inline shosted
 
 #endif // WEBPP_SELF_HOSTED_HPP

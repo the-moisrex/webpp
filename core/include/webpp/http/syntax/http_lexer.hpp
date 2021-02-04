@@ -10,7 +10,7 @@
 
 #include <array>
 
-namespace webpp {
+namespace webpp::http {
 
     /**
      * https://tools.ietf.org/html/rfc7230#section-3.2

@@ -7,7 +7,7 @@
 
 #include <cstdint>
 
-namespace webpp {
+namespace webpp::http {
 
 
     /**

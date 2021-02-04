@@ -5,7 +5,6 @@
 #include "../core/include/webpp/http/app_wrapper.hpp"
 #include "../core/include/webpp/http/protocols/common/common_protocol.hpp"
 #include "../core/include/webpp/http/protocols/common/common_request.hpp"
-#include "../core/include/webpp/http/request.hpp"
 #include "../core/include/webpp/http/response.hpp"
 #include "../core/include/webpp/http/routes/router.hpp"
 #include "../core/include/webpp/std/string_view.hpp"
@@ -13,10 +12,12 @@
 #include "../core/include/webpp/traits/enable_traits.hpp"
 #include "../core/include/webpp/traits/std_traits.hpp"
 #include "./common_pch.hpp"
+#include "webpp/application/request.hpp"
 
 
 
 namespace webpp {
+    using namespace webpp::http;
 
 
     // I'm not using "Protocol" here because it's most likely a non-complete-type when it's passed
@@ -27,7 +28,7 @@ namespace webpp {
         using string_type = traits::general_string<traits_type>;
         using string_view = traits::string_view<traits_type>;
 
-        istl::map<traits_type, string_type, string_type> data{};
+        stl::map<string_type, string_type> data{};
 
         template <typename... Args>
         fake_proto_request(Args&&... args) noexcept : super{stl::forward<Args>(args)...} {}

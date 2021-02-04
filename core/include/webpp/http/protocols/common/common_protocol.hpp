@@ -8,7 +8,7 @@
 #include "../../../traits/enable_traits.hpp"
 #include "../../app_wrapper.hpp"
 
-namespace webpp {
+namespace webpp::http {
 
 
     // todo: should we inherit from EList? I don't think
@@ -31,6 +31,6 @@ namespace webpp {
                                           app{*this, stl::forward<Args>(args)...} {}
     };
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_COMMON_PROTOCOL_HPP

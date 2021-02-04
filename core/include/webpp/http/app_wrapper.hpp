@@ -12,7 +12,7 @@
 
 #include <cstdint>
 
-namespace webpp {
+namespace webpp::http {
 
     /**
      * This is the application master which lets the user to combine multiple
@@ -21,7 +21,7 @@ namespace webpp {
      */
     template <Application... AppTypes>
     struct master_application : private AppTypes... {
-        Response auto operator()(Context auto& ctx) noexcept {
+        HTTPResponse auto operator()(Context auto& ctx) noexcept {
             (AppTypes(ctx), ...); // todo: this is not correct
         }
     };
@@ -122,10 +122,10 @@ namespace webpp {
          *
          * todo: replace status code with a more sophisticated error type that can hold more information
          */
-        [[nodiscard]] Response auto error(Request auto& req, http::status_code err) {
+        [[nodiscard]] HTTPResponse auto error(HTTPRequest auto& req, http::status_code err) {
             if constexpr (requires {
                               { application_type::error(req, err) }
-                              ->Response;
+                              -> HTTPResponse;
                           }) {
                 return application_type::error(req, err);
             } else {

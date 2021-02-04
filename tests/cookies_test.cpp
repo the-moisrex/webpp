@@ -3,11 +3,12 @@
 #include "../core/include/webpp/traits/std_traits.hpp"
 #include "./common_pch.hpp"
 
+using namespace webpp;
+using namespace webpp::http;
 
-
-using res_cookie_t     = webpp::response_cookie<>;
-using res_cookie_jar_t = webpp::response_cookie_jar<>;
-using req_cookie_jar_t = webpp::request_cookie_jar<>;
+using res_cookie_t     = response_cookie<>;
+using res_cookie_jar_t = response_cookie_jar<>;
+using req_cookie_jar_t = request_cookie_jar<>;
 
 TEST(Cookie, ResponseCookiesCreation) {
     res_cookie_t c;

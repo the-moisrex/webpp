@@ -12,7 +12,7 @@
 #include <unistd.h> // for environ
 
 
-namespace webpp {
+namespace webpp::http {
 
     template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL>
     struct cgi_request : common_request<TraitsType, REL> {
@@ -358,6 +358,6 @@ namespace webpp {
         }
     };
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_CGI_REQUEST_HPP

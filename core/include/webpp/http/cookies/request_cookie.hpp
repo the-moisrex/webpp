@@ -5,7 +5,7 @@
 
 #include "./cookie.hpp"
 
-namespace webpp {
+namespace webpp::http {
 
     template <istl::StringView StringViewType = stl::string_view>
     struct request_cookie {
@@ -81,6 +81,6 @@ namespace webpp {
     };
 
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_REQUEST_COOKIES_HPP

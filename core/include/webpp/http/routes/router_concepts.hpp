@@ -8,7 +8,7 @@
 
 #include <type_traits>
 
-namespace webpp {
+namespace webpp::http {
 
     /**
      * Router:
@@ -48,6 +48,7 @@ namespace webpp {
      */
     template <typename T>
     concept Router = requires(T r) {
+        // todo: this is wrong
         typename T::initial_context_type;
         // {r()} -> Response;
         // todo: add support for operator()
@@ -63,7 +64,7 @@ namespace webpp {
     concept RouterExtension = Extension<E>;
 
     template <typename T>
-    concept RouterExtensionWithContextExtensions = RouterExtension<T>&& requires {
+    concept RouterExtensionWithContextExtensions = RouterExtension<T> && requires {
         T::template context_extensions;
     };
 
@@ -82,6 +83,6 @@ namespace webpp {
     concept RouterExtensionList = ExtensionListOf<T, is_router_extension>;
 
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_ROUTER_CONCEPTS_H
