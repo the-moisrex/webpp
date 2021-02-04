@@ -6,10 +6,11 @@
 #include "../response_concepts.hpp"
 #include "./context_concepts.hpp"
 
-namespace webpp {
+namespace webpp::http {
 
     template <typename T>
-    concept RouteResponse = Response<T> || ConvertibleToResponse<T> || Context<T> || stl::same_as<T, bool>;
+    concept RouteResponse =
+      HTTPResponse<T> || ConvertibleToResponse<T> || Context<T> || stl::same_as<T, bool>;
 
     // C = Context
     template <typename T, typename C>
@@ -24,27 +25,23 @@ namespace webpp {
     concept PotentialRoute = requires(T route, C& ctx, typename C::request_type const& req) {
         requires requires {
             {route()};
-        }
-        || requires {
+        } || requires {
             {route(ctx)};
-        }
-        || requires {
+        } || requires {
             {route(req)};
-        }
-        || requires {
+        } || requires {
             {route(ctx, req)};
-        }
-        || requires {
+        } || requires {
             {route(req, ctx)};
         };
     };
 
     template <typename T, typename C>
     concept Route = requires(T obj) {
+        requires CallableWithContext<T, typename T::template switched_context_type<C>>;
         typename T::template switched_context_type<C>;
-    }
-    &&CallableWithContext<T, typename T::template switched_context_type<C>>;
+    };
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_ROUTE_CONCEPTS_H

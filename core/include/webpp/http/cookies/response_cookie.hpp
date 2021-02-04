@@ -15,7 +15,7 @@
 
 #include <iomanip>
 
-namespace webpp {
+namespace webpp::http {
 
     enum struct same_site_value : stl::uint_fast8_t { not_specified, none, lax, strict };
 
@@ -596,6 +596,6 @@ namespace webpp {
     };
 
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_RESPONSE_COOKIES_HPP

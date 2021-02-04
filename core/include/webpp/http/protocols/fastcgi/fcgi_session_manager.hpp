@@ -3,7 +3,7 @@
 #ifndef WEBPP_FCGI_SESSION_MANAGER_HPP
 #define WEBPP_FCGI_SESSION_MANAGER_HPP
 
-namespace webpp {
+namespace webpp::http::inline fastcgi {
 
     /**
      * The session manager for the FastCGI protocol has to take care of all of the connections by all the
@@ -15,6 +15,6 @@ namespace webpp {
      */
     struct fcgi_session_manager {};
 
-} // namespace webpp
+} // namespace webpp::http::inline fastcgi
 
 #endif // WEBPP_FCGI_SESSION_MANAGER_HPP

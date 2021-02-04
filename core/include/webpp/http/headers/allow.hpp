@@ -35,6 +35,8 @@ namespace webpp::http {
      * have other means of communicating with the origin server.
      */
     struct allow {};
+
+
 } // namespace webpp::http
 
 #endif // WEBPP_ALLOW_HPP

@@ -90,7 +90,7 @@
 #include "../../uri/encoding.hpp"
 #include "./cookies_concepts.hpp"
 
-namespace webpp {
+namespace webpp::http {
 
     enum struct cookie_version : stl::uint_fast8_t { version_0 = 0, version_1 = 1 };
 
@@ -302,6 +302,6 @@ namespace webpp {
 
 
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_HTTP_COOKIES_H

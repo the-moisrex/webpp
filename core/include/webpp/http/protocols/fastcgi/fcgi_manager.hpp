@@ -5,7 +5,7 @@
 
 #include "./fcgi_protocols.hpp"
 
-namespace webpp::fastcgi {
+namespace webpp::http::inline fastcgi {
 
     struct fcgi_manager {
 

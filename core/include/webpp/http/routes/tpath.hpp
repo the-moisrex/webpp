@@ -11,7 +11,7 @@
 #include <string_view>
 
 
-namespace webpp {
+namespace webpp::http {
 
     /**
      * TODO: add types to the "{user_id}" to be able to use it as "{int:user_id}"

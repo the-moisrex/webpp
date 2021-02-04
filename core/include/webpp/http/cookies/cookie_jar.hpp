@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <memory>
 
-namespace webpp {
+namespace webpp::http {
 
     template <typename T, typename CookieType>
     concept cookie_condition = stl::is_invocable_r_v<bool, T, CookieType const&>;
@@ -19,8 +19,7 @@ namespace webpp {
     concept cookie_changer = stl::is_invocable_v<T, CookieType&>;
 
     template <typename T, typename CookieJarType>
-    concept cookie_iterator =
-      stl::same_as<stl::decay_t<T>, stl::decay_t<typename CookieJarType::iterator>> ||
+    concept cookie_iterator = stl::same_as<stl::decay_t<T>, stl::decay_t<typename CookieJarType::iterator>> ||
       stl::same_as<stl::decay_t<T>, stl::decay_t<typename CookieJarType::const_iterator>> ||
       stl::same_as<stl::decay_t<T>, stl::decay_t<typename CookieJarType::reverse_iterator>> ||
       stl::same_as<stl::decay_t<T>, stl::decay_t<typename CookieJarType::const_reverse_iterator>>;
@@ -81,6 +80,6 @@ namespace webpp {
     };
 
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_HTTP_COOKIE_JAR_H

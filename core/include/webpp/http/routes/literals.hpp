@@ -5,7 +5,7 @@
 
 #include "../../traits/std_traits.hpp"
 
-namespace webpp::inline literals {
+namespace webpp::http::inline literals {
 
 
 
@@ -18,6 +18,6 @@ namespace webpp::inline literals {
      */
 
 
-} // namespace webpp::inline literals
+} // namespace webpp::http::inline literals
 
 #endif // WEBPP_LITERALS_H

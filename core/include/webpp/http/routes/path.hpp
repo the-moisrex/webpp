@@ -8,7 +8,7 @@
 #include "../../uri/path.hpp"
 #include "route.hpp"
 
-namespace webpp {
+namespace webpp::http {
 
     template <typename T>
     concept PathContext = Context<T> && requires(T ctx) {
@@ -331,7 +331,7 @@ namespace webpp {
       public:
         template <typename ContextType>
         requires(Context<stl::remove_cvref_t<ContextType>>) [[nodiscard]] bool
-        operator()(ContextType&& ctx, Request auto&& req) noexcept {
+        operator()(ContextType&& ctx, HTTPRequest auto&& req) noexcept {
             // handle inside-sub-route internal segment is done in this method
 
             using context_type                = stl::remove_cvref_t<ContextType>;

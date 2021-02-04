@@ -11,7 +11,7 @@
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/string_body.hpp>
 
-namespace webpp {
+namespace webpp::http {
 
     namespace beast {
         using namespace boost::beast;
@@ -40,6 +40,6 @@ namespace webpp {
         beast_request(beast_request&&) noexcept = default;
     };
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_BEAST_REQUEST_HPP

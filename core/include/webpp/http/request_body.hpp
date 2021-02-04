@@ -6,7 +6,7 @@
 #include "../extensions/extension.hpp"
 
 
-namespace webpp {
+namespace webpp::http {
 
     /**
      * Request body:

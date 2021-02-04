@@ -8,7 +8,7 @@
 #include "../traits/traits.hpp"
 #include "./headers.hpp"
 
-namespace webpp {
+namespace webpp::http {
 
 
     /**
@@ -22,7 +22,7 @@ namespace webpp {
     template <Traits TraitsType, typename HeaderEList, typename HeaderFieldType>
     class response_headers
       : public stl::vector<HeaderFieldType, traits::general_allocator<TraitsType, HeaderFieldType>>,
-        public HeaderEList {
+        public extension_wrapper<HeaderEList> {
 
         // using super =
         //   istl::unordered_multiset<TraitsType, HeaderFieldType,
@@ -34,11 +34,12 @@ namespace webpp {
         using traits_type = TraitsType;
         using string_type = traits::general_string<traits_type>;
         using field_type  = HeaderFieldType;
+        using elist_type  = extension_wrapper<HeaderEList>;
 
         template <typename... Args>
         constexpr response_headers(Args&&... args) noexcept
           : super{stl::forward<Args>(args)...},
-            HeaderEList{} {}
+            elist_type{} {}
 
         http::status_code_type status_code = 200u;
 
@@ -110,6 +111,6 @@ namespace webpp {
         using final_extensie_type = EList;
     };
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_RESPONSE_HEADERS_HPP

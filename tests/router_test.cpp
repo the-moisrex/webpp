@@ -8,6 +8,7 @@
 
 
 using namespace webpp;
+using namespace webpp::http;
 using namespace std;
 
 constexpr auto _router = router{root / "page" >>=
@@ -20,7 +21,7 @@ constexpr auto _router = router{root / "page" >>=
                                 }};
 
 struct fake_app {
-    Response auto operator()(Request auto&& req) noexcept {
+    HTTPResponse auto operator()(HTTPRequest auto&& req) noexcept {
         return _router(req);
     }
 };

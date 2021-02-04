@@ -8,11 +8,7 @@
 #include "headers.hpp"
 #include "response_body.hpp"
 
-#include <filesystem>
-#include <fstream>
-#include <memory>
-
-namespace webpp {
+namespace webpp::http {
 
     template <typename T, typename... E>
     concept one_of = (stl::same_as<stl::remove_cvref_t<T>, E> || ...);
@@ -21,15 +17,13 @@ namespace webpp {
      * This class owns its data.
      */
     template <Traits TraitsType, typename EList, typename ResponseHeaderType, typename BodyType>
-    class basic_response : public extension_wrapper<EList> {
+    struct basic_response : public extension_wrapper<EList> {
 
-      public:
-        using traits_type      = TraitsType;
-        using body_type        = BodyType;
-        using headers_type     = ResponseHeaderType;
-        using string_view_type = traits::string_view<traits_type>;
-        using string_type      = traits::general_string<traits_type>;
-        using elist_type       = extension_wrapper<EList>;
+        // we're not going to use trait's string type here.
+        using traits_type  = TraitsType;
+        using body_type    = BodyType;
+        using headers_type = ResponseHeaderType;
+        using elist_type   = extension_wrapper<EList>;
 
         body_type    body{};
         headers_type headers{};
@@ -43,14 +37,7 @@ namespace webpp {
         basic_response(basic_response&& res) noexcept      = default;
 
         basic_response(http::status_code_type err_code) noexcept : elist_type{}, headers{err_code} {}
-        basic_response(http::status_code_type err_code, string_type const& b) noexcept
-          : elist_type{},
-            headers{err_code},
-            body{b} {}
-        basic_response(http::status_code_type err_code, string_type&& b) noexcept
-          : elist_type{},
-            headers{err_code},
-            body{stl::move(b)} {}
+
         explicit basic_response(body_type const& b) noexcept : elist_type{}, body(b) {}
         explicit basic_response(body_type&& b) noexcept : elist_type{}, body(stl::move(b)) {}
 
@@ -60,16 +47,6 @@ namespace webpp {
         basic_response& operator=(basic_response const&) = default;
         basic_response& operator=(basic_response&& res) noexcept = default;
 
-        basic_response& operator=(string_type const& str) noexcept {
-            body.replace_string(str);
-            return *this;
-        }
-
-        basic_response& operator=(string_type&& str) noexcept {
-            body.replace_string(stl::move(str));
-            return *this;
-        }
-
         [[nodiscard]] bool operator==(basic_response const& res) const noexcept {
             return headers == res.headers && body == res.body;
         }
@@ -78,17 +55,34 @@ namespace webpp {
             return headers != res.headers || body != res.body;
         }
 
+        /**
+         *
+         * The reason why this function exists here and not in "headers" is because this function may need
+         * access to the body as well to check the body value's type for example.
+         */
         void calculate_default_headers() noexcept {
             using header_field_type = typename headers_type::field_type;
             using str_t             = typename header_field_type::string_type;
-            if (stl::find(headers.cbegin(), headers.cend(), "Content-Type") != headers.cend())
-                headers.push_back(
-                  header_field_type{.name = "Content-Type", .value = "text/html; charset=utf-8"});
 
-            if (stl::find(headers.cbegin(), headers.cend(), "Content-Length") != headers.cend()) {
+            bool has_content_type   = false;
+            bool has_content_length = false;
+            for (const auto& header : headers) {
+                if (ascii::iequals<ascii::char_case_side::second_lowered>(header.name, "content-type"))
+                    has_content_type = true;
+                else if (ascii::iequals<ascii::char_case_side::second_lowered>(header.name, "content-length"))
+                    has_content_length = true;
+            }
+
+            // todo: we can optimize this, pre-calculate the default header fields and copy when needed
+            if (!has_content_type) {
+                headers.emplace_back(str_t{"Content-Type", headers.get_allocator()},
+                                     str_t{"text/html; charset=utf-8", headers.get_allocator()});
+            }
+
+            if (!has_content_length) {
                 str_t value{headers.get_allocator()};
                 append_to(value, body.str().size() * sizeof(char));
-                headers.push_back(header_field_type{.name = "Content-Length", .value = stl::move(value)});
+                headers.emplace_back(str_t{"Content-Length", headers.get_allocator()}, stl::move(value));
             }
         }
 
@@ -117,7 +111,7 @@ namespace webpp {
          */
         template <typename... E>
         using apply_extensions_type =
-          typename details::unique_extensions<typename original_extension_pack_type::template appended<
+          typename webpp::details::unique_extensions<typename original_extension_pack_type::template appended<
             E...>>::type::template extensie_type<traits_type, response_descriptor_type>;
     };
 
@@ -156,5 +150,5 @@ namespace webpp {
 
     // using fake_response_type = simple_response<fake_traits_type>;
 
-} // namespace webpp
+} // namespace webpp::http
 #endif // WEBPP_HTTP_RESPONSE_H

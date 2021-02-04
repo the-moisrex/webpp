@@ -7,7 +7,7 @@
 #include "./cookie_jar.hpp"
 #include "./response_cookie.hpp"
 
-namespace webpp {
+namespace webpp::http {
 
 
     template <typename Allocator = stl::allocator<char>,
@@ -151,6 +151,6 @@ namespace webpp {
         }
     };
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_RESPONSE_COOKIE_JAR_HPP

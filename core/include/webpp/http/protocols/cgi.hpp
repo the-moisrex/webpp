@@ -7,10 +7,10 @@
 #include "../../strings/to_case.hpp"
 #include "../../traits/default_traits.hpp"
 #include "../app_wrapper.hpp"
-#include "../request.hpp"
 #include "../response.hpp"
 #include "./cgi_request.hpp"
 #include "common/common_protocol.hpp"
+#include "webpp/application/request.hpp"
 
 #include <cctype>
 #include <cstdlib>
@@ -18,7 +18,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace webpp {
+namespace webpp::http {
 
     template <Application App, Traits TraitsType = default_traits, ExtensionList EList = empty_extension_pack>
     struct cgi : public common_protocol<TraitsType, App, EList> {
@@ -31,7 +31,7 @@ namespace webpp {
         using common_protocol_type = common_protocol<TraitsType, App, EList>;
         using app_wrapper_type     = typename common_protocol_type::app_wrapper_type;
 
-        static_assert(Request<request_type>,
+        static_assert(HTTPRequest<request_type>,
                       "Web++ Internal Bug: request_type is not a match for Request concept.");
 
         static_assert(ApplicationAcceptingRequest<app_wrapper_type, request_type>,
@@ -89,8 +89,8 @@ namespace webpp {
 
 
         int operator()() noexcept {
-            request_type  req{*this};
-            Response auto res = this->app(req);
+            request_type      req{*this};
+            HTTPResponse auto res = this->app(req);
             res.calculate_default_headers();
             const auto header_str = res.headers.str();
             const auto str        = res.body.str();
@@ -166,6 +166,6 @@ namespace webpp {
     //    WEB_SERVER_API
 
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_CGI_H

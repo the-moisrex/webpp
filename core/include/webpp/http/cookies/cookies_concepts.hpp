@@ -5,7 +5,7 @@
 
 #include "../../traits/traits.hpp"
 
-namespace webpp {
+namespace webpp::http {
 
     template <typename T>
     concept Cookie = requires(T cookie) {
@@ -14,17 +14,17 @@ namespace webpp {
     };
 
     template <typename T>
-    concept ResponseCookie = Cookie<T> && requires (T cookie) {
-      cookie.max_age();
-      cookie.expires();
-      cookie.path();
-      cookie.secure();
-      cookie.http_only();
+    concept ResponseCookie = Cookie<T> && requires(T cookie) {
+        cookie.max_age();
+        cookie.expires();
+        cookie.path();
+        cookie.secure();
+        cookie.http_only();
     };
 
     template <typename T>
-    concept RequestCookie = Cookie<T> && requires (T cookie) {
-      cookie.is_valid();
+    concept RequestCookie = Cookie<T> && requires(T cookie) {
+        cookie.is_valid();
     };
 
     /**
@@ -37,12 +37,12 @@ namespace webpp {
      *                            will be stored somewhere and the id will be replaced
      */
     template <typename T>
-    concept CookieCryptor = requires (T encryptor) {
-      encryptor.encrypt_value("value");
-      encryptor.encrypt_name("name");
-      // encryptor.encrypt(Cookie);
+    concept CookieCryptor = requires(T encryptor) {
+        encryptor.encrypt_value("value");
+        encryptor.encrypt_name("name");
+        // encryptor.encrypt(Cookie);
     };
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_COOKIES_CONCEPTS_H

@@ -12,7 +12,7 @@
 
 #include <utility>
 
-namespace webpp {
+namespace webpp::http {
 
 
     template <typename Route, typename... Args>
@@ -46,8 +46,10 @@ namespace webpp {
                 return forward<decltype(res)>(res);
             } else if constexpr (is_same_v<res_t, bool>) {
                 return forward<decltype(res)>(res);
-            } else if constexpr (Response<res_t>) {
+            } else if constexpr (HTTPResponse<res_t>) {
                 return forward<decltype(res)>(res);
+
+                // fixme: this code here is a duplicate of what the "router::handle_route_result" has
             } else if constexpr (requires {
                                      requires ConstructibleWithResponse<typename ctx_type::response_type,
                                                                         res_t>;
@@ -115,7 +117,7 @@ namespace webpp {
     } // namespace details
 
 
-    constexpr auto call_route(auto&& _route, Context auto&& ctx, Request auto&& req) noexcept {
+    constexpr auto call_route(auto&& _route, Context auto&& ctx, HTTPRequest auto&& req) noexcept {
         using namespace details;
         using namespace stl;
 
@@ -339,7 +341,8 @@ namespace webpp {
             }
         };
 
-        [[nodiscard]] constexpr auto call_this_route(Context auto&& ctx, Request auto&& req) const noexcept {
+        [[nodiscard]] constexpr auto call_this_route(Context auto&&     ctx,
+                                                     HTTPRequest auto&& req) const noexcept {
             if constexpr (is_route_valid) {
                 return call_route(static_cast<super_t>(*this), ctx, req);
             } else {
@@ -347,8 +350,8 @@ namespace webpp {
             }
         }
 
-        [[nodiscard]] constexpr auto call_next_route([[maybe_unused]] Context auto&& ctx,
-                                                     [[maybe_unused]] Request auto&& req) const noexcept {
+        [[nodiscard]] constexpr auto call_next_route([[maybe_unused]] Context auto&&     ctx,
+                                                     [[maybe_unused]] HTTPRequest auto&& req) const noexcept {
             // using context_type = stl::remove_cvref_t<decltype(ctx)>;
             if constexpr (is_next_route_valid) {
                 return call_route(super_t::next, ctx, req);
@@ -358,8 +361,8 @@ namespace webpp {
         }
 
         [[nodiscard]] constexpr bool
-        call_next_route_in_bool([[maybe_unused]] Context auto&& ctx,
-                                [[maybe_unused]] Request auto&& req) const noexcept {
+        call_next_route_in_bool([[maybe_unused]] Context auto&&     ctx,
+                                [[maybe_unused]] HTTPRequest auto&& req) const noexcept {
             using res_type = decltype(call_next_route(stl::forward<decltype(ctx)>(ctx), req));
             using res_t    = stl::remove_cvref_t<res_type>;
             if constexpr (stl::same_as<res_t, bool>) {
@@ -466,7 +469,7 @@ namespace webpp {
         }
 
 
-        constexpr auto operator()(Context auto&& ctx, Request auto&& req) const noexcept {
+        constexpr auto operator()(Context auto&& ctx, HTTPRequest auto&& req) const noexcept {
             using namespace stl;
             // exceptions will be handled by the router, unfortunately we're not able to do that here
 
@@ -484,7 +487,7 @@ namespace webpp {
                         if (res)
                             return call_next_route_in_bool(ctx, req);
                         return true; // don't call the next sub-route, but call the next entry-route
-                    } else if constexpr (Context<n_res_t> || Response<n_res_t>) {
+                    } else if constexpr (Context<n_res_t> || HTTPResponse<n_res_t>) {
                         // if it's a context or a response, we have to use an optional object here because we
                         // might not need to run the next route here.
                         if (res)
@@ -549,7 +552,7 @@ namespace webpp {
                     // entry-route level context-switching will going to happen in the router:
                     return res;
                 }
-            } else if constexpr (Response<res_t>) {
+            } else if constexpr (HTTPResponse<res_t>) {
                 // terminate the sub-route callings and return the response, don't even need to run the
                 // rest of the routes
                 // The strings, and other stuff that can be converted to a response have already been
@@ -564,6 +567,6 @@ namespace webpp {
     };
 
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_ROUTES_ROUTE_H

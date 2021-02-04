@@ -7,7 +7,7 @@
 #include "../../traits/traits.hpp"
 #include "../version.hpp"
 
-namespace webpp {
+namespace webpp::http {
 
 
     /**

@@ -10,17 +10,17 @@
 #include "../traits/enable_traits.hpp"
 #include "../traits/std_traits.hpp"
 
-namespace webpp {
+namespace webpp::http {
 
     /**
-     * Request types:
+     * HTTP Request types:
      *
      * Initial Request: some protocols may use copy constructor to make a copy of the initial request object
      * instead of re-constructing the request from scratch each time. With this, it's possible to calculate
      * anything that you need for every request in the request's constructor.
      */
     template <typename T>
-    concept Request = requires(stl::remove_cvref_t<T> req) {
+    concept HTTPRequest = requires(stl::remove_cvref_t<T> req) {
         requires EnabledTraits<stl::remove_cvref_t<T>>;
         // requires Protocol<typename stl::remove_cvref_t<T>::protocol_type>
         requires Traits<typename stl::remove_cvref_t<T>::traits_type>;
@@ -31,15 +31,17 @@ namespace webpp {
 
 
     template <typename T>
-    concept RequestExtension = Extension<T>;
+    concept HTTPRequestExtension = Extension<T>;
 
-    template <typename E>
-    struct is_request_extension_pack {
-        static constexpr bool value = RequestExtension<E>;
-    };
+    namespace details {
+        template <typename E>
+        struct is_request_extension_pack {
+            static constexpr bool value = HTTPRequestExtension<E>;
+        };
+    } // namespace details
 
     template <typename T>
-    concept RequestExtensionList = ExtensionListOf<T, is_request_extension_pack>;
+    concept HTTPRequestExtensionList = ExtensionListOf<T, details::is_request_extension_pack>;
 
 } // namespace webpp
 

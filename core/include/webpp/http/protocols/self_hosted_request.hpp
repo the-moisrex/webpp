@@ -6,7 +6,7 @@
 #include "./common/common_request.hpp"
 #include "./protocol_concepts.hpp"
 
-namespace webpp {
+namespace webpp::http::inline shosted {
 
 
     template <Traits TraitsType, typename REL, typename SessionManager, typename ConnectionType>
@@ -37,6 +37,6 @@ namespace webpp {
     };
 
 
-} // namespace webpp
+} // namespace webpp::http::inline shosted
 
 #endif // WEBPP_SELF_HOSTED_REQUEST_HPP

@@ -9,7 +9,7 @@
 #include "../traits/traits.hpp"
 #include "./headers.hpp"
 
-namespace webpp {
+namespace webpp::http {
 
 
     /**
@@ -21,6 +21,7 @@ namespace webpp {
      *
      */
     template <Traits TraitsType, typename HeaderEList, typename HeaderFieldType>
+    // todo: vector
     class request_headers : public istl::vector<TraitsType, HeaderFieldType>, public HeaderEList {
 
         //        using super =

@@ -134,7 +134,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/request_headers.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/response_headers.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/header_concepts.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/request.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/request_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/response.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/response_concepts.hpp
@@ -144,6 +143,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/status_code.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/version.hpp
 
+        ${LIB_INCLUDE_DIR}/webpp/application/request.hpp
         ${LIB_INCLUDE_DIR}/webpp/application/application_concepts.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/http/syntax/common.hpp

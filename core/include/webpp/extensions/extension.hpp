@@ -86,21 +86,22 @@ namespace webpp {
         template <Traits TraitsType, Extension... E>
         struct mother_inherited<TraitsType, extension_pack<E...>>
           : public ctor<typename E::template type<TraitsType>>... {
-
-            template <typename... Args>
-            constexpr mother_inherited(Args&&... args) noexcept
-              : ctor<typename E::template type<TraitsType>>{stl::forward<Args>(args)...}... {}
+            using ctor<typename E::template type<TraitsType>>::ctor...;
         };
 
-        // with 2 or more kids
         template <Traits TraitsType, typename Mother, typename... Kids>
-        struct children_inherited {
-            struct type : public vctor<typename Kids::template type<TraitsType, vctor<Mother>>>... {
-                template <typename... Args>
-                constexpr type(Args&&... args) noexcept
-                  : vctor<typename Kids::template type<TraitsType, vctor<Mother>>>{
-                      stl::forward<Args>(args)...}... {}
-            };
+        struct children_inherited;
+
+        // with 2 or more kids
+        template <Traits TraitsType, typename Mother, typename FirstKid, typename... Kids>
+        struct children_inherited<TraitsType, Mother, FirstKid, Kids...> {
+            using type = typename FirstKid::template type<TraitsType, typename children_inherited<TraitsType, Mother, Kids...>::type>;
+//            struct type : public vctor<typename Kids::template type<TraitsType, vctor<Mother>>>... {
+//                template <typename... Args>
+//                constexpr type(Args&&... args) noexcept
+//                  : vctor<typename Kids::template type<TraitsType, vctor<Mother>>>{
+//                      stl::forward<Args>(args)...}... {}
+//            };
         };
 
         // without any kids
@@ -117,9 +118,8 @@ namespace webpp {
 
         // passed with an extension pack
         template <Traits TraitsType, typename Mother, typename... Kids>
-        struct children_inherited<TraitsType, Mother, extension_pack<Kids...>> {
-            using type = typename children_inherited<TraitsType, Mother, Kids...>::type;
-        };
+        struct children_inherited<TraitsType, Mother, extension_pack<Kids...>>
+          : public children_inherited<TraitsType, Mother, Kids...> {};
 
 
 

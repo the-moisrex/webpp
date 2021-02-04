@@ -12,12 +12,7 @@
 #include "./route_concepts.hpp"
 #include "./router_concepts.hpp"
 
-#include <functional>
-#include <map>
-#include <tuple>
-#include <type_traits>
-
-namespace webpp {
+namespace webpp::http {
 
 
     /**
@@ -112,7 +107,7 @@ namespace webpp {
                 } else {
                     return ctx.error(404u);
                 }
-            } else if constexpr (Response<result_type>) {
+            } else if constexpr (HTTPResponse<result_type>) {
                 // we're done; don't call the next route
                 return res;
             } else if constexpr (is_same_v<result_type, bool>) {
@@ -162,8 +157,8 @@ namespace webpp {
          * @param req
          * @return final response
          */
-        template <Request RequestType>
-        constexpr Response auto operator()(RequestType&& req) const noexcept {
+        template <HTTPRequest RequestType>
+        constexpr HTTPResponse auto operator()(RequestType&& req) const noexcept {
             using context_type = simple_context<stl::remove_cvref_t<RequestType>, extension_list_type>;
             static_assert(Context<context_type>,
                           "Web++ Internal Bug: the context_type is not a match for Context concept");
@@ -172,7 +167,7 @@ namespace webpp {
 
 
         template <stl::size_t Index = 0>
-        constexpr Response auto operator()(Context auto&& ctx, Request auto&& req) const noexcept {
+        constexpr HTTPResponse auto operator()(Context auto&& ctx, HTTPRequest auto&& req) const noexcept {
 
             constexpr bool no_routes       = route_count() == 0u;
             constexpr bool past_last_route = Index > (route_count() - 1);

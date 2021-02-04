@@ -10,7 +10,7 @@
 #include "../response_concepts.hpp"
 #include "../routes/context_concepts.hpp"
 
-namespace webpp {
+namespace webpp::http {
 
 
     namespace details {
@@ -93,7 +93,7 @@ namespace webpp {
                 using context_type::context_type; // inherit the constructors
 
                 template <typename... Args>
-                constexpr Response auto string(Args&&... args) const noexcept {
+                constexpr HTTPResponse auto string(Args&&... args) const noexcept {
                     // check if there's an allocator in the args:
                     constexpr bool has_allocator = (istl::Allocator<Args> || ...);
                     using body_type              = typename string_response_type::body_type;
@@ -147,6 +147,6 @@ namespace webpp {
     };
 
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_HTTP_BODIES_STRING_H

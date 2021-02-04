@@ -18,7 +18,7 @@ struct application {
         return ctx.file("page.html", _user, page_num);
     }
     
-    Response auto operator()(Request auto&& req) noexcept {
+    HTTPResponse auto operator()(HTTPRequest auto&& req) noexcept {
         return _router(req);
     }
 };

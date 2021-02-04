@@ -8,9 +8,10 @@
 
 
 using namespace webpp;
+using namespace webpp::http;
 
 
-TEST(Response, Type) {
+TEST(HTTPResponse, Type) {
     using res_t                    = simple_response<std_traits, string_response>;
     constexpr auto return_callback = [] {
         return res_t("Hello");

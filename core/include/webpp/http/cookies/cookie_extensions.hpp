@@ -8,7 +8,7 @@
 
 #include <algorithm>
 
-namespace webpp {
+namespace webpp::http {
 
 
     struct cookies {

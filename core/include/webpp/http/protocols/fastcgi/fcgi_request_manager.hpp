@@ -3,7 +3,7 @@
 #ifndef WEBPP_FCGI_REQUEST_MANAGER_HPP
 #define WEBPP_FCGI_REQUEST_MANAGER_HPP
 
-namespace webpp {
+namespace webpp::http::inline fastcgi {
 
     /**
      * Since in the FCGI protocol the session manager has to handle multiple clients (multiple requests

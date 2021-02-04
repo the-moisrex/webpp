@@ -3,7 +3,7 @@
 #ifndef WEBPP_HEADER_CONCEPTS_HPP
 #define WEBPP_HEADER_CONCEPTS_HPP
 
-namespace webpp::http::headers {
+namespace webpp::http {
 
     template <typename T>
     concept Header = requires(T h) {
@@ -13,6 +13,6 @@ namespace webpp::http::headers {
         h.is_valid();
     };
 
-} // namespace webpp::http::headers
+} // namespace webpp::http
 
 #endif // WEBPP_HEADER_CONCEPTS_HPP

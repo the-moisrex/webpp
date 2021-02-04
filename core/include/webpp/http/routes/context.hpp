@@ -6,12 +6,11 @@
 #include "../../extensions/extension.hpp"
 #include "../../traits/enable_traits.hpp"
 #include "../bodies/string.hpp"
-#include "../request.hpp"
 #include "../response.hpp"
 #include "./context_concepts.hpp"
-#include "./extensions/map.hpp"
+#include "webpp/application/request.hpp"
 
-namespace webpp {
+namespace webpp::http {
 
 
     /**
@@ -116,7 +115,7 @@ namespace webpp {
      *
      *
      */
-    template <Traits TraitsType, typename EList, Request RequestType, Response ResponseType>
+    template <Traits TraitsType, typename EList, HTTPRequest RequestType, HTTPResponse ResponseType>
     struct basic_context : public enable_traits_with<TraitsType, extension_wrapper<EList>> {
         using traits_type            = TraitsType;
         using mother_extensions_type = EList;
@@ -145,14 +144,14 @@ namespace webpp {
          * Generate a response
          */
         template <typename... NewExtensions, typename... Args>
-        [[nodiscard]] constexpr Response auto response(Args&&... args) const noexcept {
+        [[nodiscard]] constexpr HTTPResponse auto response(Args&&... args) const noexcept {
             using new_response_type =
               typename response_type::template apply_extensions_type<NewExtensions...>;
             // todo: write an auto extension finder based on the Args that get passed
             return new_response_type{stl::forward<Args>(args)...};
         }
 
-        [[nodiscard]] constexpr Response auto error(http::status_code_type error_code) const noexcept {
+        [[nodiscard]] constexpr HTTPResponse auto error(http::status_code_type error_code) const noexcept {
             return error(error_code,
                          stl::format(R"(<!DOCTYPE html>
 <html lang="en">
@@ -172,8 +171,8 @@ namespace webpp {
 
 
 
-        [[nodiscard]] constexpr Response auto error(http::status_code_type error_code,
-                                                    auto&&                 data) const noexcept {
+        [[nodiscard]] constexpr HTTPResponse auto error(http::status_code_type error_code,
+                                                        auto&&                 data) const noexcept {
             using data_type = stl::remove_cvref_t<decltype(data)>;
             if constexpr (istl::StringViewifiable<data_type>) {
                 auto res                = response<string_response>(istl::string_viewify(data));
@@ -225,8 +224,8 @@ namespace webpp {
          */
         template <typename... E>
         using context_type_with_appended_extensions =
-          typename details::unique_types<typename original_extension_pack_type::template appended<E...>>::
-            type::template extensie_type<traits_type, context_descriptor_type, request_type>;
+          typename webpp::details::unique_types<typename original_extension_pack_type::template appended<
+            E...>>::type::template extensie_type<traits_type, context_descriptor_type, request_type>;
 
         using final_context_parent::final_context_parent; // inherit parent constructors
         constexpr final_context(final_context const&) noexcept = default;
@@ -371,14 +370,18 @@ namespace webpp {
           typename ExtensionListType::template extensie_type<TraitsType, basic_response_descriptor>>;
 
 
-        template <ExtensionList OriginalExtensionListType, Traits TraitsType, typename EList, Request ReqType>
+        template <ExtensionList OriginalExtensionListType,
+                  Traits        TraitsType,
+                  typename EList,
+                  HTTPRequest ReqType>
         using final_extensie_type =
           final_context<TraitsType, context_descriptor, OriginalExtensionListType, EList, ReqType>;
     };
 
 
 
-    template <Request ReqType, /* fixme: ExtensionList */ typename ExtensionListType = empty_extension_pack>
+    template <HTTPRequest ReqType,
+              /* fixme: ExtensionList */ typename ExtensionListType = empty_extension_pack>
     requires requires {
         typename ExtensionListType::
           template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
@@ -386,6 +389,6 @@ namespace webpp {
     using simple_context = typename ExtensionListType::
       template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_ROUTES_CONTEXT_H

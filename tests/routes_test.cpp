@@ -5,10 +5,12 @@
 
 
 using namespace webpp;
+using namespace webpp::http;
+
 
 struct fake_app {
 
-    Response auto operator()(Request auto&& req) {
+    HTTPResponse auto operator()(HTTPRequest auto&& req) {
         router _router{[]() {}};
         return _router(req);
     }
