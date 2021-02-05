@@ -26,10 +26,12 @@ namespace webpp::http {
         using application_type     = App;
         using extension_list       = stl::remove_cvref_t<EList>;
         using str_view_type        = traits::string_view<traits_type>;
+        using char_type            = traits::char_type<traits_type>;
         using str_type             = traits::general_string<traits_type>;
-        using request_type         = simple_request<traits_type, extension_list, cgi_request>;
+        using local_allocator_type = traits::local_allocator<traits_type, char_type>;
         using common_protocol_type = common_protocol<TraitsType, App, EList>;
         using app_wrapper_type     = typename common_protocol_type::app_wrapper_type;
+        using request_type = simple_request<traits_type, extension_list, cgi_request, local_allocator_type>;
 
         static_assert(HTTPRequest<request_type>,
                       "Web++ Internal Bug: request_type is not a match for Request concept.");
@@ -89,7 +91,8 @@ namespace webpp::http {
 
 
         int operator()() noexcept {
-            request_type      req{*this};
+            // we're putting the request on local allocator; yay us :)
+            request_type      req{this->alloc_pack.template local_allocator<char_type>(), *this};
             HTTPResponse auto res = this->app(req);
             res.calculate_default_headers();
             const auto header_str = res.headers.str();
@@ -102,14 +105,13 @@ namespace webpp::http {
             // extension-code = 3digit
             // reason-phrase  = *TEXT
 
-            // todo: use <format> or {fmt}
             // todo: give the user the ability to change the status phrase
-            stl::stringstream status_line;
-            status_line << "Status: " << res.headers.status_code << " "
-                        << http::status_code_reason_phrase(res.headers.status_code) << "\r\n";
-
-            auto _status_line_str = status_line.str();
-            write(_status_line_str.data(), _status_line_str.size());
+            auto status_line = object::make_local<str_type>(this->alloc_pack);
+            stl::format_to(stl::back_inserter(status_line), "Status: {} {}\r\n",
+                           res.headers.status_code,
+                           http::status_code_reason_phrase(res.headers.status_code)
+                           );
+            write(status_line.data(), status_line.size());
 
             write(header_str.data(), header_str.size());
             write("\r\n", 2);

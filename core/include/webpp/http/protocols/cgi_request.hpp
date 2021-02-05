@@ -15,7 +15,7 @@
 
 namespace webpp::http {
 
-    template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL>
+    template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL, Allocator AllocType>
     struct cgi_request : common_request<TraitsType, REL> {
         using traits_type = TraitsType;
 
@@ -23,14 +23,14 @@ namespace webpp::http {
         using super = common_request<TraitsType, REL>;
 
       public:
+        using allocator_type   = AllocType; // this allocator is designed to be used inside the request itself
         using string_view_type = typename super::string_view_type;
         using string_type      = typename super::string_type;
         using char_type        = typename string_type::value_type;
         using extension_list   = REL;
-        using header_type      = simple_request_headers<traits_type, extension_list>;
+        using header_type      = simple_request_headers<traits_type, extension_list, allocator_type>;
         // using body_type
 
-        // todo
         header_type headers;
 
         /**
@@ -44,7 +44,9 @@ namespace webpp::http {
 
 
         template <typename... Args>
-        cgi_request(Args&&... args) : super(stl::forward<Args>(args)...) {}
+        constexpr cgi_request(allocator_type const& alloc, Args&&... args)
+          : super(stl::forward<Args>(args)...),
+            headers{alloc} {}
 
         /**
          * @brief get the server's software
