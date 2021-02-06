@@ -299,6 +299,7 @@ namespace webpp {
                   typename... ExtraArgs>
         struct mid_level_extractor {
 
+            // these are the applied mother extensions
             using mother_pack = typename mother_inherited<
               TraitsType,
               typename merge_extensions<RootExtensionPack,
@@ -354,17 +355,13 @@ namespace webpp {
                                                                                            ExtensieDescriptor,
                                                                                            ExtraArgs...>>;
 
-            using mother_pack = typename ExtensieDescriptor::template final_extensie_type<
-              RootExtensionPack,
-              TraitsType,
-
+            using mother_pack =
               // child extensions + the mid-level extensie + mother extensions
               typename details::children_inherited<
                 TraitsType,
                 details::
                   mid_level_extensie_type<RootExtensionPack, TraitsType, ExtensieDescriptor, ExtraArgs...>,
-                mid_level_extensie_children>::type,
-              ExtraArgs...>;
+                mid_level_extensie_children>::type;
 
             template <typename T>
             struct extractor {
@@ -401,6 +398,11 @@ namespace webpp {
         using this_epack = extension_pack<E...>;
 
 
+        // this will apply only the "Mother Extension" and gives you the result of that.
+        // this does not apply the child extensions
+        template <Traits TraitsType, typename ExtensieDescriptor>
+        using mother_extensie_type =
+          typename details::mid_level_extractor<this_epack, TraitsType, ExtensieDescriptor>::mother_pack;
 
         /**
          * Apply extensions into one type
@@ -446,11 +448,11 @@ namespace webpp {
 
 
     template <typename T>
-    concept RootExtensionList = sizeof(T) <= 1;
+    concept RootExtensionList = ExtensionList<T>;
 
 
-    struct empty_root_extension_lists{};
-    using empty_extension_pack = extension_pack<>;
+    using empty_extension_pack       = extension_pack<>;
+    using empty_root_extension_lists = empty_extension_pack;
 
 
 
