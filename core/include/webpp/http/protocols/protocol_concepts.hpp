@@ -31,8 +31,16 @@ namespace webpp::http {
     concept HTTPProtocolExtensionList = ExtensionList<T>;
 
 
-    template <RootExtensionList EList>
-    using http_protocol_extensions = typename EList::protocol_extensions;
+    struct http_protocol_descriptor {
+        template <RootExtensionList REL>
+        using related_extension_pack_type = typename REL::protocol_extensions;
+    };
+
+    // this will apply only the "Mother Extension" and gives you the result of that.
+    // this does not apply the child extensions
+    template <Traits TraitsType, RootExtensionList REList>
+    using apply_protocol_extensions =
+      typename REList::template mother_extensie_type<TraitsType, http_protocol_descriptor>;
 
 } // namespace webpp::http
 

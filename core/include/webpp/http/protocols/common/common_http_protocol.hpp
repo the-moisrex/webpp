@@ -12,11 +12,12 @@
 namespace webpp::http {
 
 
-    template <Traits TraitsType, Application App, HTTPProtocolExtensionList EList>
-    struct common_http_protocol : public enable_owner_traits<TraitsType>, public EList {
+    template <Traits TraitsType, Application App, RootExtensionList REList>
+    struct common_http_protocol : public enable_owner_traits<TraitsType>,
+                                  public apply_protocol_extensions<TraitsType, REList> {
         using traits_type             = TraitsType;
         using application_type        = stl::remove_cvref_t<App>;
-        using protocol_extension_list = EList;
+        using root_extensions         = REList;
         using string_view_type        = traits::string_view<traits_type>;
         using char_type               = traits::char_type<traits_type>;
         using string_type             = traits::general_string<traits_type>;
@@ -28,7 +29,7 @@ namespace webpp::http {
 
         template <typename... Args>
         common_http_protocol(Args&&... args) : etraits{},
-                                          app{*this, stl::forward<Args>(args)...} {}
+                                               app{*this, stl::forward<Args>(args)...} {}
     };
 
 } // namespace webpp::http
