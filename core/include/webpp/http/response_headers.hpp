@@ -69,12 +69,6 @@ namespace webpp::http {
 
     struct response_header_field_descriptor {
 
-        template <typename ExtensionType>
-        struct has_related_extension_pack {
-            static constexpr bool value = requires {
-                typename ExtensionType::response_header_field_extensions;
-            };
-        };
 
         template <typename ExtensionType>
         using related_extension_pack_type = typename ExtensionType::response_header_field_extensions;
@@ -82,20 +76,11 @@ namespace webpp::http {
         template <typename ExtensionListType, typename TraitsType, typename EList>
         using mid_level_extensie_type = header_field<traits::general_string<TraitsType>, EList>;
 
-        // empty final extensie
-        template <typename ExtensionListType, typename TraitsType, typename EList>
-        using final_extensie_type = EList;
     };
 
 
 
     struct response_headers_descriptor {
-        template <typename ExtensionType>
-        struct has_related_extension_pack {
-            static constexpr bool value = requires {
-                typename ExtensionType::response_headers_extensions;
-            };
-        };
 
         template <typename ExtensionType>
         using related_extension_pack_type = typename ExtensionType::response_headers_extensions;
@@ -106,9 +91,6 @@ namespace webpp::http {
           EList,
           typename ExtensionListType::template extensie_type<TraitsType, response_header_field_descriptor>>;
 
-        // empty final extensie
-        template <typename ExtensionListType, typename TraitsType, typename EList>
-        using final_extensie_type = EList;
     };
 
 } // namespace webpp::http

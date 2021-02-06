@@ -5,7 +5,7 @@
 
 #include "../../std/string_view.hpp"
 #include "beast_request.hpp"
-#include "common/common_protocol.hpp"
+#include "common/common_http_protocol.hpp"
 
 #include <boost/beast.hpp>
 

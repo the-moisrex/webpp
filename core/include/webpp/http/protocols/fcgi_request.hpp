@@ -4,7 +4,7 @@
 #define WEBPP_FCGI_REQUEST_HPP
 
 #include "../../std/map.hpp"
-#include "./common/common_request.hpp"
+#include "./common/common_http_request.hpp"
 
 namespace webpp::http::inline fastcgi {
 

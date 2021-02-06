@@ -25,37 +25,39 @@ namespace webpp {
     /**
      * If you want to add features to all of the request types, you can use this type
      */
-    template <typename ReqType>
-    using final_request = ReqType;
+    template <Traits TraitsType, typename ReqType>
+    struct final_request final : public ReqType {
+        using traits_type      = TraitsType;
+        using string_view_type = traits::string_view<traits_type>;
+
+        using ReqType::ReqType;
+
+        [[nodiscard]] string_view_type version() const noexcept {
+            return webpp_version;
+        }
+    };
 
     template <template <typename, typename, typename...> typename MidLevelRequestType,
               typename... AdditionalReqArgs>
     struct request_descriptor {
         template <typename ExtensionType>
-        struct has_related_extension_pack {
-            static constexpr bool value = requires {
-                typename ExtensionType::request_extensions;
-            };
-        };
-
-        template <typename ExtensionType>
         using related_extension_pack_type = typename ExtensionType::request_extensions;
 
-        template <typename ExtensionListType, typename TraitsType, typename EList>
-        using mid_level_extensie_type = MidLevelRequestType<TraitsType, EList, AdditionalReqArgs...>;
+        template <RootExtensionList RootExtensions, Traits TraitsType, typename RequestEList>
+        using mid_level_extensie_type = MidLevelRequestType<TraitsType, RequestEList, AdditionalReqArgs...>;
 
         // empty final extensie
-        template <typename ExtensionListType, typename TraitsType, typename EList>
-        using final_extensie_type = final_request<EList>;
+        template <RootExtensionList RootExtensions, Traits TraitsType, typename MidLevelRequestWithExtensions>
+        using final_extensie_type = final_request<TraitsType, MidLevelRequestWithExtensions>;
     };
 
 
-    template <Traits TraitsType,
-              typename EList,
+    template <Traits        TraitsType,
+              ExtensionList RootExtensions,
               template <typename, typename, typename...>
               typename MidLevelRequestType,
               typename... MidLevelRequestTemplateArgs>
-    using simple_request = typename EList::template extensie_type<
+    using simple_request = typename RootExtensions::template extensie_type<
       TraitsType,
       request_descriptor<MidLevelRequestType, MidLevelRequestTemplateArgs...>>;
 

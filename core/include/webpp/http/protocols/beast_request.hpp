@@ -6,7 +6,7 @@
 #include "../../std/string_view.hpp"
 #include "../../traits/traits.hpp"
 #include "./protocol_concepts.hpp"
-#include "common/common_request.hpp"
+#include "common/common_http_request.hpp"
 
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/string_body.hpp>

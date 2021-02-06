@@ -13,13 +13,6 @@
 
 namespace webpp {
 
-    struct fake_extension {
-        template <typename T>
-        using type = void;
-    };
-
-    struct fake_extensie {};
-
     // todo: check this, it's old
     template <typename T>
     concept Extension =
@@ -37,6 +30,16 @@ namespace webpp {
         typename T::template type<TraitsType, Parent>;
     };
 
+
+    template <typename ExtensionDescriptorType, typename TraitsType>
+    concept HasMidLevelExtensie = requires {
+        ExtensionDescriptorType::template mid_level_extensie_type;
+    };
+
+    template <typename ExtensionDescriptorType, typename TraitsType>
+    concept HasFinalExtensie = requires {
+        ExtensionDescriptorType::template final_extensie_type;
+    };
 
     template <Extension... E>
     struct extension_pack;
@@ -80,14 +83,26 @@ namespace webpp {
               : Parent{} {}
         };
 
+
+        /// Mother
+
         template <Traits TraitsType, typename Es>
         struct mother_inherited;
 
         template <Traits TraitsType, Extension... E>
-        struct mother_inherited<TraitsType, extension_pack<E...>>
-          : public ctor<typename E::template type<TraitsType>>... {
-            using ctor<typename E::template type<TraitsType>>::ctor...;
+        struct mother_inherited<TraitsType, extension_pack<E...>> {
+            struct type : public ctor<typename E::template type<TraitsType>>... {
+                using ctor<typename E::template type<TraitsType>>::ctor...;
+            };
         };
+
+        template <Traits TraitsType, Extension E>
+        struct mother_inherited<TraitsType, extension_pack<E>> {
+            using type = typename E::template type<TraitsType>;
+        };
+
+
+        /// Child
 
         template <Traits TraitsType, typename Mother, typename... Kids>
         struct children_inherited;
@@ -220,7 +235,7 @@ namespace webpp {
 
 
         template <Traits TraitsType>
-        struct mother_type {
+        struct is_mother_condition {
             template <typename T>
             struct type {
                 static constexpr bool value = MotherExtension<TraitsType, T>;
@@ -228,7 +243,7 @@ namespace webpp {
         };
 
         template <Traits TraitsType, typename Parent>
-        struct child_type {
+        struct is_child_condition {
             template <typename T>
             struct type {
                 static constexpr bool value = ChildExtension<TraitsType, Parent, T>;
@@ -240,7 +255,7 @@ namespace webpp {
                   template <typename>
                   typename Extractor,
                   typename... EPack>
-        struct epack_miner {};
+        struct epack_miner;
 
         template <template <typename...> typename PackType,
                   template <typename>
@@ -250,6 +265,121 @@ namespace webpp {
             using type = PackType<Extractor<EPack>...>;
         };
 
+        template <typename ExtensieDescriptor>
+        struct has_related_extension_condition {
+            template <typename ExtensionType>
+            struct type {
+                static constexpr bool value = requires {
+                    typename ExtensieDescriptor::template related_extension_pack_type<ExtensionType>;
+                };
+            };
+        };
+
+        template <typename RootExtensionPack, typename ExtensieDescriptor, template <typename> typename IF>
+        using merge_extensions = typename details::unique_types<
+          typename details::flatten_epacks<typename details::epack_miner<
+            extension_pack,
+            ExtensieDescriptor::template related_extension_pack_type,
+
+            // filter the packs that contain the interested packs
+            typename details::filter_epack<extension_pack,
+                                           has_related_extension_condition<ExtensieDescriptor>::template type,
+                                           RootExtensionPack>::type
+
+            >::type>::type
+          // append the individual lonely extensions in the big epack
+          ::template appended<typename details::filter_epack<extension_pack, IF, RootExtensionPack>::type>>::
+          type;
+
+
+
+        template <typename RootExtensionPack,
+                  typename TraitsType,
+                  typename ExtensieDescriptor,
+                  typename... ExtraArgs>
+        struct mid_level_extractor {
+
+            using mother_pack = typename mother_inherited<
+              TraitsType,
+              typename merge_extensions<RootExtensionPack,
+                                        ExtensieDescriptor,
+                                        is_mother_condition<TraitsType>::template type>::
+                template mother_extensions<TraitsType>>::type;
+
+            template <typename T>
+            struct extractor {
+                using type = typename T::
+                  template mid_level_extensie_type<RootExtensionPack, TraitsType, mother_pack, ExtraArgs...>;
+            };
+
+            // if we have a mid-level extensie type:
+            //    - Okay, pass the "mother pack" to the "mid-level extensie"
+            // if not:
+            //    - The just use the "mother pack" as the extensie type
+            using type = istl::lazy_conditional_t<HasMidLevelExtensie<ExtensieDescriptor, TraitsType>,
+                                                  istl::templated_lazy_type<extractor, ExtensieDescriptor>,
+                                                  istl::lazy_type<mother_pack>>;
+        };
+
+        // Mid-Level extensie type
+        template <typename RootExtensionPack,
+                  Traits TraitsType,
+                  typename ExtensieDescriptor,
+                  typename... ExtraArgs>
+        using mid_level_extensie_type =
+          typename mid_level_extractor<RootExtensionPack, TraitsType, ExtensieDescriptor, ExtraArgs...>::type;
+
+
+
+
+
+        template <typename RootExtensionPack,
+                  typename TraitsType,
+                  typename ExtensieDescriptor,
+                  typename... ExtraArgs>
+        struct final_extensie_extractor {
+
+            // Mid-Level extensie children (will extend the mid-level extensie and will be extended by the
+            // final extensie)
+            using mid_level_extensie_children = typename details::merge_extensions<
+              RootExtensionPack,
+              ExtensieDescriptor,
+              details::is_child_condition<
+                TraitsType,
+                details::
+                  mid_level_extensie_type<RootExtensionPack, TraitsType, ExtensieDescriptor, ExtraArgs...>>::
+                template type>::template child_extensions<TraitsType,
+                                                          details::mid_level_extensie_type<RootExtensionPack,
+                                                                                           TraitsType,
+                                                                                           ExtensieDescriptor,
+                                                                                           ExtraArgs...>>;
+
+            using mother_pack = typename ExtensieDescriptor::template final_extensie_type<
+              RootExtensionPack,
+              TraitsType,
+
+              // child extensions + the mid-level extensie + mother extensions
+              typename details::children_inherited<
+                TraitsType,
+                details::
+                  mid_level_extensie_type<RootExtensionPack, TraitsType, ExtensieDescriptor, ExtraArgs...>,
+                mid_level_extensie_children>::type,
+              ExtraArgs...>;
+
+            template <typename T>
+            struct extractor {
+                using type = typename T::
+                  template final_extensie_type<RootExtensionPack, TraitsType, mother_pack, ExtraArgs...>;
+            };
+
+            // if we have a final extensie type:
+            //    - Okay, pass the "mother pack" to the "mid-level extensie"
+            // if not:
+            //    - The just use the "mother pack" as the extensie type
+            using type = istl::lazy_conditional_t<HasFinalExtensie<ExtensieDescriptor, TraitsType>,
+                                                  istl::templated_lazy_type<extractor, ExtensieDescriptor>,
+                                                  istl::lazy_type<mother_pack>>;
+        };
 
 
     } // namespace details
@@ -262,56 +392,14 @@ namespace webpp {
 
         template <Traits TraitsType>
         using mother_extensions = typename details::
-          filter<extension_pack, details::mother_type<TraitsType>::template type, E...>::type;
+          filter<extension_pack, details::is_mother_condition<TraitsType>::template type, E...>::type;
 
         template <Traits TraitsType, typename Parent>
         using child_extensions = typename details::
-          filter<extension_pack, details::child_type<TraitsType, Parent>::template type, E...>::type;
+          filter<extension_pack, details::is_child_condition<TraitsType, Parent>::template type, E...>::type;
 
         using this_epack = extension_pack<E...>;
 
-
-
-        template <typename ExtensieDescriptor, template <typename> typename IF>
-        using merge_extensions = typename details::unique_types<
-          typename details::flatten_epacks<typename details::epack_miner<
-            extension_pack,
-            ExtensieDescriptor::template related_extension_pack_type,
-
-            // filter the packs that contain the interested packs
-            typename details::filter_epack<extension_pack,
-                                           ExtensieDescriptor::template has_related_extension_pack,
-                                           this_epack>::type
-
-            >::type>::type
-          // append the individual lonely extensions in the big epack
-          ::template appended<typename details::filter_epack<extension_pack, IF, this_epack>::type>>::type;
-
-
-
-        // Mid-Level extensie type
-        template <Traits TraitsType, typename ExtensieDescriptor, typename... ExtraArgs>
-        using mid_level_extensie_type = typename ExtensieDescriptor::template mid_level_extensie_type<
-          this_epack,
-          TraitsType,
-          details::mother_inherited<
-            TraitsType,
-            typename details::unique_extensions<
-              typename merge_extensions<ExtensieDescriptor, details::mother_type<TraitsType>::template type>::
-                template mother_extensions<TraitsType>>::type>,
-          ExtraArgs...>;
-
-
-        // Mid-Level extensie children (will extend the mid-level extensie and will be extended by the final
-        // extensie)
-        template <Traits TraitsType, typename ExtensieDescriptor, typename... ExtraArgs>
-        using mid_level_extensie_children = typename merge_extensions<
-          ExtensieDescriptor,
-          details::child_type<
-            TraitsType,
-            mid_level_extensie_type<TraitsType, ExtensieDescriptor, ExtraArgs...>>::template type>::
-          template child_extensions<TraitsType,
-                                    mid_level_extensie_type<TraitsType, ExtensieDescriptor, ExtraArgs...>>;
 
 
         /**
@@ -319,17 +407,8 @@ namespace webpp {
          * todo: first filter based on extensie, then filter based on mother or child
          */
         template <Traits TraitsType, typename ExtensieDescriptor, typename... ExtraArgs>
-        using extensie_type = typename ExtensieDescriptor::template final_extensie_type<
-          this_epack,
-          TraitsType,
-
-          // child extensions + the mid-level extensie + mother extensions
-          typename details::children_inherited<
-            TraitsType,
-            mid_level_extensie_type<TraitsType, ExtensieDescriptor, ExtraArgs...>,
-            mid_level_extensie_children<TraitsType, ExtensieDescriptor, ExtraArgs...>>::type,
-
-          ExtraArgs...>;
+        using extensie_type = typename details::
+          final_extensie_extractor<this_epack, TraitsType, ExtensieDescriptor, ExtraArgs...>::type;
 
 
         /**
@@ -346,11 +425,6 @@ namespace webpp {
 
     struct fake_extensie_descriptor {
         template <typename ExtensionType>
-        struct has_related_extension_pack {
-            static constexpr bool value = true;
-        };
-
-        template <typename ExtensionType>
         struct related_extension_pack_type {};
 
         template <typename EPackType, typename TraitsType, typename EList>
@@ -364,13 +438,18 @@ namespace webpp {
     template <typename E>
     concept ExtensionList = requires {
         typename E::template extensie_type<default_traits, fake_extensie_descriptor>;
-        typename E::template is_all<fake_extensie_descriptor::template has_related_extension_pack>;
+        // typename E::template is_all<fake_extensie_descriptor::template has_related_extension_pack>;
     };
 
     template <typename E, template <typename> typename IF>
     concept ExtensionListOf = ExtensionList<E> && E::template is_all<IF>::value;
 
 
+    template <typename T>
+    concept RootExtensionList = sizeof(T) <= 1;
+
+
+    struct empty_root_extension_lists{};
     using empty_extension_pack = extension_pack<>;
 
 
@@ -383,6 +462,22 @@ namespace webpp {
      */
     template <typename E>
     using extension_wrapper = E;
+
+    template <typename T>
+    concept ExtensionDescriptor = requires {
+        typename T::template related_extension_pack<empty_extension_pack>;
+    };
+
+
+    namespace details {
+
+        template <ExtensionList EList, ExtensionDescriptor EDesc>
+        struct extension_extractor;
+
+    }
+
+    template <ExtensionList EList, ExtensionDescriptor EDesc>
+    using extension_extractor = void;
 
 
 } // namespace webpp

@@ -1,19 +1,19 @@
 // Created by moisrex on 11/28/20.
 
-#ifndef WEBPP_COMMON_PROTOCOL_HPP
-#define WEBPP_COMMON_PROTOCOL_HPP
+#ifndef WEBPP_COMMON_HTTP_PROTOCOL_HPP
+#define WEBPP_COMMON_HTTP_PROTOCOL_HPP
 
 #include "../../../extensions/extension.hpp"
 #include "../../../server/server_concepts.hpp"
 #include "../../../traits/enable_traits.hpp"
 #include "../../app_wrapper.hpp"
+#include "../protocol_concepts.hpp"
 
 namespace webpp::http {
 
 
-    // todo: should we inherit from EList? I don't think
-    template <Traits TraitsType, Application App, ExtensionList EList>
-    struct common_protocol : public enable_owner_traits<TraitsType>, public extension_wrapper<EList> {
+    template <Traits TraitsType, Application App, HTTPProtocolExtensionList EList>
+    struct common_http_protocol : public enable_owner_traits<TraitsType>, public EList {
         using traits_type             = TraitsType;
         using application_type        = stl::remove_cvref_t<App>;
         using protocol_extension_list = EList;
@@ -27,10 +27,10 @@ namespace webpp::http {
         app_wrapper_type app;
 
         template <typename... Args>
-        common_protocol(Args&&... args) : etraits{},
+        common_http_protocol(Args&&... args) : etraits{},
                                           app{*this, stl::forward<Args>(args)...} {}
     };
 
 } // namespace webpp::http
 
-#endif // WEBPP_COMMON_PROTOCOL_HPP
+#endif // WEBPP_COMMON_HTTP_PROTOCOL_HPP

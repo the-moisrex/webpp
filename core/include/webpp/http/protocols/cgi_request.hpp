@@ -7,7 +7,7 @@
 #include "../../traits/traits.hpp"
 #include "../request_headers.hpp"
 #include "./protocol_concepts.hpp"
-#include "common/common_request.hpp"
+#include "common/common_http_request.hpp"
 
 // TODO: use GetEnvironmentVariableA for Windows operating system
 #include <unistd.h> // for environ
@@ -15,38 +15,30 @@
 
 namespace webpp::http {
 
-    template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL, Allocator AllocType>
-    struct cgi_request : common_request<TraitsType, REL> {
+    template <Traits TraitsType, HTTPRequestExtensionList REL, ExtensionList RootExtensions>
+    struct cgi_request : common_http_request<TraitsType, REL, RootExtensions> {
         using traits_type = TraitsType;
 
       private:
-        using super = common_request<TraitsType, REL>;
+        using super = common_http_request<TraitsType, REL, RootExtensions>;
 
       public:
-        using allocator_type   = AllocType; // this allocator is designed to be used inside the request itself
         using string_view_type = typename super::string_view_type;
         using string_type      = typename super::string_type;
         using char_type        = typename string_type::value_type;
-        using extension_list   = REL;
-        using header_type      = simple_request_headers<traits_type, extension_list, allocator_type>;
-        // using body_type
 
-        header_type headers;
+        using super::common_http_request;
 
         /**
          * Get the environment value safely
          */
         [[nodiscard]] static string_view_type env(char const* key) noexcept {
-            if (auto value = getenv(key))
+            if (const auto value = getenv(key))
                 return value;
             return {};
         }
 
 
-        template <typename... Args>
-        constexpr cgi_request(allocator_type const& alloc, Args&&... args)
-          : super(stl::forward<Args>(args)...),
-            headers{alloc} {}
 
         /**
          * @brief get the server's software
@@ -296,7 +288,7 @@ namespace webpp::http {
          * @brief get a single header
          * @param name
          */
-        [[nodiscard]] string_view_type header(string_view_type name) const noexcept {
+        [[nodiscard]] string_view_type get_header(string_view_type name) const noexcept {
             return header(string_type(name, this->alloc_pack.template general_allocator<char_type>()));
         }
 
@@ -304,7 +296,7 @@ namespace webpp::http {
         /**
          * Get a specific header by it's name
          */
-        [[nodiscard]] static string_view_type header(stl::string name) noexcept {
+        [[nodiscard]] static string_view_type get_header(stl::string name) noexcept {
             // fixme: check if this is all we have to do or we have to do more too:
             stl::transform(name.begin(), name.end(), name.begin(), [](auto const& c) {
                 if (c == '-')
@@ -345,7 +337,7 @@ namespace webpp::http {
          * the request and will not parse it. Parsing it is another methods'
          * problem that might even use this function as the source.
          */
-        [[nodiscard]] string_view_type body() noexcept {
+        [[nodiscard]] string_view_type get_body() noexcept {
             // again, we can do this only in cgi protocol not in other interfaces:
             static string_type body_cache{this->alloc_pack.template general_allocator<char_type>()};
             if (body_cache.empty()) {
