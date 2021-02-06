@@ -86,12 +86,6 @@ namespace webpp::http {
 
 
     struct response_body_descriptor {
-        template <typename ExtensionType>
-        struct has_related_extension_pack {
-            static constexpr bool value = requires {
-                typename ExtensionType::response_body_extensions;
-            };
-        };
 
         template <typename ExtensionType>
         using related_extension_pack_type = typename ExtensionType::response_body_extensions;
@@ -99,9 +93,6 @@ namespace webpp::http {
         template <typename ExtensionListType, typename TraitsType, typename EList>
         using mid_level_extensie_type = response_body<TraitsType, EList>;
 
-        // empty final extensie
-        template <typename ExtensionListType, typename TraitsType, typename EList>
-        using final_extensie_type = EList;
     };
 
     template <Traits TraitsType, Extension... E>

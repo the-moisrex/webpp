@@ -8,7 +8,6 @@
 #include "../extensions/extension.hpp"
 #include "../logs/log_concepts.hpp"
 #include "../traits/enable_traits.hpp"
-#include "../traits/std_traits.hpp"
 
 namespace webpp::http {
 
@@ -42,6 +41,11 @@ namespace webpp::http {
 
     template <typename T>
     concept HTTPRequestExtensionList = ExtensionListOf<T, details::is_request_extension_pack>;
+
+
+    // todo: complete this
+    template <typename T>
+    concept HTTPRequestBodyExtensionList = ExtensionList<T>;
 
 } // namespace webpp
 

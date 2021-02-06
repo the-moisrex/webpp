@@ -3,8 +3,8 @@
 
 #include "../core/include/webpp/convert/casts.hpp"
 #include "../core/include/webpp/http/app_wrapper.hpp"
-#include "../core/include/webpp/http/protocols/common/common_protocol.hpp"
-#include "../core/include/webpp/http/protocols/common/common_request.hpp"
+#include "../core/include/webpp/http/protocols/common/common_http_protocol.hpp"
+#include "../core/include/webpp/http/protocols/common/common_http_request.hpp"
 #include "../core/include/webpp/http/response.hpp"
 #include "../core/include/webpp/http/routes/router.hpp"
 #include "../core/include/webpp/std/string_view.hpp"
@@ -21,9 +21,9 @@ namespace webpp {
 
 
     // I'm not using "Protocol" here because it's most likely a non-complete-type when it's passed
-    template <Traits TraitsType, typename REL>
-    struct fake_proto_request : public common_request<TraitsType, REL> {
-        using super       = common_request<TraitsType, REL>;
+    template <Traits TraitsType, HTTPRequestExtensionList REL, RootExtensionList RT>
+    struct fake_proto_request : public common_http_request<TraitsType, REL, RT> {
+        using super       = common_http_request<TraitsType, REL, RT>;
         using traits_type = TraitsType;
         using string_type = traits::general_string<traits_type>;
         using string_view = traits::string_view<traits_type>;
@@ -184,25 +184,25 @@ namespace webpp {
         }
 
 
-        [[nodiscard]] string_view header(string_view const& name) const noexcept {
+        [[nodiscard]] string_view get_header(string_view const& name) const noexcept {
             return this->header(stl::string(name));
         }
 
 
-        [[nodiscard]] string_view headers() const noexcept {
+        [[nodiscard]] string_view get_headers() const noexcept {
             return this->headers();
         }
 
 
-        [[nodiscard]] string_view body() const noexcept {
+        [[nodiscard]] string_view get_body() const noexcept {
             return this->body();
         }
     };
 
 
     template <Traits TraitsType, Application App, ExtensionList EList = empty_extension_pack>
-    struct fake_proto : public common_protocol<TraitsType, App, EList> {
-        using super        = common_protocol<TraitsType, App, EList>;
+    struct fake_proto : public common_http_protocol<TraitsType, App, EList> {
+        using super        = common_http_protocol<TraitsType, App, EList>;
         using traits_type  = TraitsType;
         using request_type = simple_request<traits_type, EList, fake_proto_request>;
 
@@ -214,7 +214,7 @@ namespace webpp {
             req{this->logger, this->get_allocator()} {}
 
 
-        void operator()() noexcept {
+        int operator()() noexcept {
             auto res = app(req);
             res.calculate_default_headers();
             auto header_str = res.headers.str();
@@ -227,8 +227,21 @@ namespace webpp {
             data << header_str;
             data << str;
             // todo: what should I do with this request
+
+            return 0;
         }
     };
+
+
+    struct fake_app {
+
+        auto opreator()(auto&& req) {
+            return false;
+        }
+    };
+
+    static_assert(HTTPProtocol<fake_proto<default_traits, fake_app>>,
+                  "FakeProto is not really a valid Protocol");
 
 
 } // namespace webpp

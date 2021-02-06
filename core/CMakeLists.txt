@@ -125,8 +125,8 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/fastcgi/fcgi_manager.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/beast.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/beast_request.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/protocols/common/common_request.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/protocols/common/common_protocol.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/common/common_http_request.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/common/common_http_protocol.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/http/response_body.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/request_body.hpp
@@ -202,8 +202,6 @@ if (SHARED_LIBRARY_EXECUTABLE)
 endif ()
 
 
-
-
 add_library(${LIB_NAME} STATIC ${ALL_SOURCES})
 add_library(${PROJECT_NAME}::${LIB_NAME} ALIAS ${LIB_NAME})
 
@@ -238,7 +236,6 @@ target_include_directories(${LIB_NAME} PUBLIC
         $<BUILD_INTERFACE:${date_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
         )
-
 
 
 install(TARGETS ${LIB_NAME}

@@ -347,14 +347,6 @@ namespace webpp::http {
     struct context_descriptor {
 
         template <Extension ExtensionType>
-        struct has_related_extension_pack {
-            static constexpr bool value = requires {
-                typename ExtensionType::context_extensions;
-            };
-        };
-
-
-        template <Extension ExtensionType>
         using related_extension_pack_type = typename ExtensionType::context_extensions;
 
 

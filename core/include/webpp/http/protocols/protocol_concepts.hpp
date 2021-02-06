@@ -14,7 +14,7 @@ namespace webpp::http {
      * file.
      */
     template <typename T>
-    concept Protocol = requires(T proto) {
+    concept HTTPProtocol = requires(T proto) {
         requires EnabledTraits<T>;
         requires HTTPRequest<typename T::request_type>;
         requires Application<typename T::application_type>;
@@ -22,10 +22,17 @@ namespace webpp::http {
         { proto.app } -> ApplicationWrapper; // get the app
         // should be able to pass an app to it as well
 
-        { proto.is_ssl_available() }
-        noexcept->stl::same_as<bool>;
+        { proto.is_ssl_available() } -> stl::same_as<bool>;
         { proto() } -> stl::same_as<int>;
     };
+
+    // todo
+    template <typename T>
+    concept HTTPProtocolExtensionList = ExtensionList<T>;
+
+
+    template <RootExtensionList EList>
+    using http_protocol_extensions = typename EList::protocol_extensions;
 
 } // namespace webpp::http
 

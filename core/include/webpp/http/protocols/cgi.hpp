@@ -7,31 +7,32 @@
 #include "../../strings/to_case.hpp"
 #include "../../traits/default_traits.hpp"
 #include "../app_wrapper.hpp"
+#include "../request_body.hpp"
 #include "../response.hpp"
 #include "./cgi_request.hpp"
-#include "common/common_protocol.hpp"
+#include "common/common_http_protocol.hpp"
 #include "webpp/application/request.hpp"
 
-#include <cctype>
-#include <cstdlib>
-#include <functional>
 #include <iostream>
-#include <sstream>
 
 namespace webpp::http {
 
-    template <Application App, Traits TraitsType = default_traits, ExtensionList EList = empty_extension_pack>
-    struct cgi : public common_protocol<TraitsType, App, EList> {
-        using traits_type          = TraitsType;
-        using application_type     = App;
-        using extension_list       = stl::remove_cvref_t<EList>;
-        using str_view_type        = traits::string_view<traits_type>;
-        using char_type            = traits::char_type<traits_type>;
-        using str_type             = traits::general_string<traits_type>;
-        using local_allocator_type = traits::local_allocator<traits_type, char_type>;
-        using common_protocol_type = common_protocol<TraitsType, App, EList>;
-        using app_wrapper_type     = typename common_protocol_type::app_wrapper_type;
-        using request_type = simple_request<traits_type, extension_list, cgi_request, local_allocator_type>;
+    template <Application       App,
+              Traits            TraitsType = default_traits,
+              RootExtensionList REList     = empty_root_extension_lists>
+    struct cgi : public common_http_protocol<TraitsType, App, stl::remove_cvref_t<REList>> {
+        using traits_type            = TraitsType;
+        using application_type       = App;
+        using extension_list         = stl::remove_cvref_t<REList>;
+        using string_view_type       = traits::string_view<traits_type>;
+        using char_type              = traits::char_type<traits_type>;
+        using string_type            = traits::general_string<traits_type>;
+        using local_allocator_type   = traits::local_allocator<traits_type, char_type>;
+        using general_allocator_type = traits::general_allocator<traits_type, char_type>;
+        using common_protocol_type   = common_http_protocol<TraitsType, App, REList>;
+        using app_wrapper_type       = typename common_protocol_type::app_wrapper_type;
+        using root_extensions        = stl::remove_cvref_t<REList>;
+        using request_type = simple_request<traits_type, extension_list, cgi_request, root_extensions>;
 
         static_assert(HTTPRequest<request_type>,
                       "Web++ Internal Bug: request_type is not a match for Request concept.");
@@ -41,7 +42,7 @@ namespace webpp::http {
                       "its response is not of a valid response type.");
 
       private:
-        using super = common_protocol<TraitsType, App, EList>;
+        using super = common_http_protocol<TraitsType, App, REList>;
 
         void ctor() noexcept {
             // I'm not using C here; so why should I pay for it!
@@ -92,8 +93,7 @@ namespace webpp::http {
 
         int operator()() noexcept {
             // we're putting the request on local allocator; yay us :)
-            request_type      req{this->alloc_pack.template local_allocator<char_type>(), *this};
-            HTTPResponse auto res = this->app(req);
+            HTTPResponse auto res = this->app(request_type{*this});
             res.calculate_default_headers();
             const auto header_str = res.headers.str();
             const auto str        = res.body.str();
@@ -106,11 +106,11 @@ namespace webpp::http {
             // reason-phrase  = *TEXT
 
             // todo: give the user the ability to change the status phrase
-            auto status_line = object::make_local<str_type>(this->alloc_pack);
-            stl::format_to(stl::back_inserter(status_line), "Status: {} {}\r\n",
+            auto status_line = object::make_local<string_type>(this->alloc_pack);
+            stl::format_to(stl::back_inserter(status_line),
+                           "Status: {} {}\r\n",
                            res.headers.status_code,
-                           http::status_code_reason_phrase(res.headers.status_code)
-                           );
+                           http::status_code_reason_phrase(res.headers.status_code));
             write(status_line.data(), status_line.size());
 
             write(header_str.data(), header_str.size());

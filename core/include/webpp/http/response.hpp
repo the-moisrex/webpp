@@ -120,12 +120,6 @@ namespace webpp::http {
 
 
     struct basic_response_descriptor {
-        template <typename ExtensionType>
-        struct has_related_extension_pack {
-            static constexpr bool value = requires {
-                typename ExtensionType::response_extensions;
-            };
-        };
 
         template <typename ExtensionType>
         using related_extension_pack_type = typename ExtensionType::response_extensions;

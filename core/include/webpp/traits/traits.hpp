@@ -190,6 +190,9 @@ namespace webpp {
     namespace traits {
 
         template <Traits TT>
+        using allocator_descriptors = typename TT::allocator_descriptors;
+
+        template <Traits TT>
         using allocator_pack_type = alloc::allocator_pack<typename TT::allocator_descriptors>;
 
         template <Traits TT, typename T>
