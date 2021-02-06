@@ -32,6 +32,9 @@ namespace webpp {
 
         using ReqType::ReqType;
 
+        /**
+         * Get the Web++ Library version
+         */
         [[nodiscard]] string_view_type version() const noexcept {
             return webpp_version;
         }

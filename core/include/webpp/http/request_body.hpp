@@ -47,7 +47,7 @@ namespace webpp::http {
         using mid_level_extensie_type = request_body<TraitsType, BEList>;
     };
 
-    template <Traits TraitsType, typename RootExtensions>
+    template <Traits TraitsType, RootExtensionList RootExtensions>
     using simple_request_body =
       typename RootExtensions::template extensie_type<TraitsType, request_body_descriptor>;
 
