@@ -11,18 +11,15 @@
 
 namespace webpp {
 
-    template <typename CharT,
-              typename AllocatorDescType = stl::allocator_descriptors>
+    template <typename CharT>
     struct basic_std_traits {
-        using traits_type           = basic_std_traits<CharT, AllocatorDescType>;
         using char_type             = CharT;
-        using char_traits           = stl::char_traits<char_type>;
         using logger_type           = stderr_logger;
-        using allocator_descriptors = AllocatorDescType;
-        using string_view           = stl::basic_string_view<char_type, char_traits>;
+        using allocator_descriptors = stl::allocator_descriptors;
+        using string_view           = stl::basic_string_view<char_type, stl::char_traits<char_type>>;
 
         template <typename AllocT>
-        using string = stl::basic_string<char_type, char_traits, AllocT>;
+        using string = stl::basic_string<char_type, stl::char_traits<char_type>, AllocT>;
     };
 
     using std_traits    = basic_std_traits<char>;

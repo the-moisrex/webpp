@@ -9,10 +9,16 @@
 namespace webpp {
 
     // todo: specialize for monotonic buffer resource and stuff
+    template <typename CharT>
+    struct basic_std_pmr_traits {
+        using char_type             = CharT;
+        using logger_type           = stderr_logger;
+        using allocator_descriptors = stl::pmr::allocator_descriptors;
+        using string_view           = stl::basic_string_view<char_type, stl::char_traits<char_type>>;
 
-    template <typename CharT, typename Allocator = stl::pmr::allocator_descriptors>
-    using basic_std_pmr_traits = basic_std_traits<CharT, Allocator>;
-
+        template <typename AllocT>
+        using string = stl::basic_string<char_type, stl::char_traits<char_type>, AllocT>;
+    };
 
 
     //    template <typename T>
