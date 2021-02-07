@@ -36,9 +36,9 @@ namespace webpp {
         typename ExtensionDescriptorType::template mid_level_extensie_type<Args...>;
     };
 
-    template <typename ExtensionDescriptorType, typename TraitsType>
+    template <typename ExtensionDescriptorType, typename... Args>
     concept HasFinalExtensie = requires {
-        ExtensionDescriptorType::template final_extensie_type;
+        typename ExtensionDescriptorType::template final_extensie_type<Args...>;
     };
 
     template <Extension... E>
@@ -322,10 +322,13 @@ namespace webpp {
             //    - Okay, pass the "mother pack" to the "mid-level extensie"
             // if not:
             //    - The just use the "mother pack" as the extensie type
-            using type = istl::lazy_conditional_t<
-              HasMidLevelExtensie<ExtensieDescriptor, TraitsType, mother_pack, ExtraArgs...>,
-              istl::templated_lazy_type<extractor, ExtensieDescriptor>,
-              istl::lazy_type<mother_pack>>;
+            using type = istl::lazy_conditional_t<HasMidLevelExtensie<ExtensieDescriptor,
+                                                                      RootExtensionPack,
+                                                                      TraitsType,
+                                                                      mother_pack,
+                                                                      ExtraArgs...>,
+                                                  istl::templated_lazy_type<extractor, ExtensieDescriptor>,
+                                                  istl::lazy_type<mother_pack>>;
         };
 
         // Mid-Level extensie type
@@ -379,9 +382,10 @@ namespace webpp {
             //    - Okay, pass the "mother pack" to the "mid-level extensie"
             // if not:
             //    - The just use the "mother pack" as the extensie type
-            using type = istl::lazy_conditional_t<HasFinalExtensie<ExtensieDescriptor, TraitsType>,
-                                                  istl::templated_lazy_type<extractor, ExtensieDescriptor>,
-                                                  istl::lazy_type<mother_pack>>;
+            using type = istl::lazy_conditional_t<
+              HasFinalExtensie<ExtensieDescriptor, RootExtensionPack, TraitsType, mother_pack, ExtraArgs...>,
+              istl::templated_lazy_type<extractor, ExtensieDescriptor>,
+              istl::lazy_type<mother_pack>>;
         };
 
 
