@@ -31,9 +31,9 @@ namespace webpp {
     };
 
 
-    template <typename ExtensionDescriptorType, typename TraitsType>
+    template <typename ExtensionDescriptorType, typename... Args>
     concept HasMidLevelExtensie = requires {
-        ExtensionDescriptorType::template mid_level_extensie_type;
+        typename ExtensionDescriptorType::template mid_level_extensie_type<Args...>;
     };
 
     template <typename ExtensionDescriptorType, typename TraitsType>
@@ -99,6 +99,11 @@ namespace webpp {
         template <Traits TraitsType, Extension E>
         struct mother_inherited<TraitsType, extension_pack<E>> {
             using type = typename E::template type<TraitsType>;
+        };
+
+        template <Traits TraitsType>
+        struct mother_inherited<TraitsType, extension_pack<>> {
+            using type = istl::nothing_type;
         };
 
 
@@ -317,9 +322,10 @@ namespace webpp {
             //    - Okay, pass the "mother pack" to the "mid-level extensie"
             // if not:
             //    - The just use the "mother pack" as the extensie type
-            using type = istl::lazy_conditional_t<HasMidLevelExtensie<ExtensieDescriptor, TraitsType>,
-                                                  istl::templated_lazy_type<extractor, ExtensieDescriptor>,
-                                                  istl::lazy_type<mother_pack>>;
+            using type = istl::lazy_conditional_t<
+              HasMidLevelExtensie<ExtensieDescriptor, TraitsType, mother_pack, ExtraArgs...>,
+              istl::templated_lazy_type<extractor, ExtensieDescriptor>,
+              istl::lazy_type<mother_pack>>;
         };
 
         // Mid-Level extensie type
