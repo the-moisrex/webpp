@@ -56,10 +56,10 @@ namespace webpp {
         struct vctor : public virtual Parent {
 
             using Parent::Parent;
-            //            template <typename... Args>
-            //            requires(stl::constructible_from<Parent, Args...>) constexpr vctor(Args&&... args)
-            //            noexcept
-            //              : Parent{stl::forward<Args>(args)...} {}
+            // template <typename... Args>
+            // requires(stl::constructible_from<Parent, Args...>) constexpr vctor(Args&&... args)
+            // noexcept
+            //   : Parent{stl::forward<Args>(args)...} {}
 
             template <typename... Args>
             requires(!stl::constructible_from<Parent, Args...> &&
@@ -72,10 +72,10 @@ namespace webpp {
         struct ctor : public Parent {
 
             using Parent::Parent;
-            //            template <typename... Args>
-            //            constexpr ctor(Args&&... args) noexcept requires(stl::constructible_from<Parent,
-            //            Args...>)
-            //              : Parent{stl::forward<Args>(args)...} {}
+            // template <typename... Args>
+            // constexpr ctor(Args&&... args) noexcept requires(stl::constructible_from<Parent,
+            // Args...>)
+            //   : Parent{stl::forward<Args>(args)...} {}
 
             template <typename... Args>
             constexpr ctor([[maybe_unused]] Args&&... args) noexcept
@@ -117,13 +117,13 @@ namespace webpp {
         struct children_inherited<TraitsType, Mother, FirstKid, Kids...> {
             using type = typename FirstKid::
               template type<TraitsType, typename children_inherited<TraitsType, Mother, Kids...>::type>;
-            //            struct type : public vctor<typename Kids::template type<TraitsType,
-            //            vctor<Mother>>>... {
-            //                template <typename... Args>
-            //                constexpr type(Args&&... args) noexcept
-            //                  : vctor<typename Kids::template type<TraitsType, vctor<Mother>>>{
-            //                      stl::forward<Args>(args)...}... {}
-            //            };
+            //  struct type : public vctor<typename Kids::template type<TraitsType,
+            //  vctor<Mother>>>... {
+            //      template <typename... Args>
+            //      constexpr type(Args&&... args) noexcept
+            //        : vctor<typename Kids::template type<TraitsType, vctor<Mother>>>{
+            //            stl::forward<Args>(args)...}... {}
+            //  };
         };
 
         // without any kids
@@ -304,18 +304,20 @@ namespace webpp {
                   typename... ExtraArgs>
         struct mid_level_extractor {
 
+            using mother_pack = typename merge_extensions<
+              RootExtensionPack,
+              ExtensieDescriptor,
+              is_mother_condition<TraitsType>::template type>::template mother_extensions<TraitsType>;
+
             // these are the applied mother extensions
-            using mother_pack = typename mother_inherited<
-              TraitsType,
-              typename merge_extensions<RootExtensionPack,
-                                        ExtensieDescriptor,
-                                        is_mother_condition<TraitsType>::template type>::
-                template mother_extensions<TraitsType>>::type;
+            using applied_mother_pack = typename mother_inherited<TraitsType, mother_pack>::type;
 
             template <typename T>
             struct extractor {
-                using type = typename T::
-                  template mid_level_extensie_type<RootExtensionPack, TraitsType, mother_pack, ExtraArgs...>;
+                using type = typename T::template mid_level_extensie_type<RootExtensionPack,
+                                                                          TraitsType,
+                                                                          applied_mother_pack,
+                                                                          ExtraArgs...>;
             };
 
             // if we have a mid-level extensie type:
@@ -325,10 +327,10 @@ namespace webpp {
             using type = istl::lazy_conditional_t<HasMidLevelExtensie<ExtensieDescriptor,
                                                                       RootExtensionPack,
                                                                       TraitsType,
-                                                                      mother_pack,
+                                                                      applied_mother_pack,
                                                                       ExtraArgs...>,
                                                   istl::templated_lazy_type<extractor, ExtensieDescriptor>,
-                                                  istl::lazy_type<mother_pack>>;
+                                                  istl::lazy_type<applied_mother_pack>>;
         };
 
         // Mid-Level extensie type
@@ -410,8 +412,8 @@ namespace webpp {
         // this will apply only the "Mother Extension" and gives you the result of that.
         // this does not apply the child extensions
         template <Traits TraitsType, typename ExtensieDescriptor>
-        using mother_extensie_type =
-          typename details::mid_level_extractor<this_epack, TraitsType, ExtensieDescriptor>::mother_pack;
+        using mother_extensie_type = typename details::
+          mid_level_extractor<this_epack, TraitsType, ExtensieDescriptor>::applied_mother_pack;
 
         /**
          * Apply extensions into one type

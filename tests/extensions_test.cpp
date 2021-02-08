@@ -10,8 +10,8 @@ using namespace webpp;
 TEST(ExtensionsTests, ExtensionConcepts) {
     EXPECT_FALSE(static_cast<bool>(Extension<int>));
 
-    EXPECT_TRUE(static_cast<bool>(Extension<fake_extension>));
-    EXPECT_FALSE(static_cast<bool>(ExtensionList<::std::tuple<fake_extension, fake_extension>>));
+    // EXPECT_TRUE(static_cast<bool>(Extension<fake_extension>));
+    // EXPECT_FALSE(static_cast<bool>(ExtensionList<::std::tuple<fake_extension, fake_extension>>));
 }
 
 struct one {
@@ -202,7 +202,7 @@ struct ctor_one {
 
 TEST(ExtensionsTests, ExtensionConstructors) {
     using ctor_pack  = extension_pack<ctor_one>;
-    using ictor_pack = details::mother_inherited<std_traits, ctor_pack>;
+    using ictor_pack = typename details::mother_inherited<std_traits, ctor_pack>::type;
     using etype      = typename ctor_pack::template extensie_type<std_traits, fake_descriptor>;
 
     static_assert(std::is_constructible_v<typename ctor_one::template type<std_traits>, int, int>,
