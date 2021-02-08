@@ -275,7 +275,7 @@ namespace webpp {
             template <typename ExtensionType>
             struct type {
                 static constexpr bool value = requires {
-                    typename ExtensieDescriptor::template related_extension_pack_type<ExtensionType>;
+                    typename ExtensieDescriptor::template extractor_type<ExtensionType>;
                 };
             };
         };
@@ -284,7 +284,7 @@ namespace webpp {
         using merge_extensions = typename details::unique_types<
           typename details::flatten_epacks<typename details::epack_miner<
             extension_pack,
-            ExtensieDescriptor::template related_extension_pack_type,
+            ExtensieDescriptor::template extractor_type,
 
             // filter the packs that contain the interested packs
             typename details::filter_epack<extension_pack,
@@ -364,13 +364,12 @@ namespace webpp {
                                                                                            ExtensieDescriptor,
                                                                                            ExtraArgs...>>;
 
-            using mother_pack =
-              // child extensions + the mid-level extensie + mother extensions
-              typename details::children_inherited<
-                TraitsType,
-                details::
-                  mid_level_extensie_type<RootExtensionPack, TraitsType, ExtensieDescriptor, ExtraArgs...>,
-                mid_level_extensie_children>::type;
+            // child extensions + the mid-level extensie + mother extensions
+            using mother_pack = typename details::children_inherited<
+              TraitsType,
+              details::
+                mid_level_extensie_type<RootExtensionPack, TraitsType, ExtensieDescriptor, ExtraArgs...>,
+              mid_level_extensie_children>::type;
 
             template <typename T>
             struct extractor {
@@ -437,7 +436,7 @@ namespace webpp {
 
     struct fake_extensie_descriptor {
         template <typename ExtensionType>
-        struct related_extension_pack_type {};
+        struct extractor_type {};
 
         template <typename EPackType, typename TraitsType, typename EList>
         struct mid_level_extensie_type : public EList {};

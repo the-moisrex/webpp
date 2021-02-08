@@ -71,7 +71,7 @@ namespace webpp::http {
 
 
         template <typename ExtensionType>
-        using related_extension_pack_type = typename ExtensionType::response_header_field_extensions;
+        using extractor_type = typename ExtensionType::response_header_field_extensions;
 
         template <typename ExtensionListType, typename TraitsType, typename EList>
         using mid_level_extensie_type = header_field<traits::general_string<TraitsType>, EList>;
@@ -83,7 +83,7 @@ namespace webpp::http {
     struct response_headers_descriptor {
 
         template <typename ExtensionType>
-        using related_extension_pack_type = typename ExtensionType::response_headers_extensions;
+        using extractor_type = typename ExtensionType::response_headers_extensions;
 
         template <typename ExtensionListType, typename TraitsType, typename EList>
         using mid_level_extensie_type = response_headers<
