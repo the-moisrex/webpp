@@ -6,6 +6,9 @@
 #include "../../../std/format.hpp"
 #include "../../../traits/enable_traits.hpp"
 #include "../../../version.hpp"
+#include "../../request_body.hpp"
+#include "../../request_headers.hpp"
+#include "../../../memory/object.hpp"
 
 
 namespace webpp::http {

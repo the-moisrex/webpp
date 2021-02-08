@@ -1,11 +1,12 @@
 #ifndef WEBPP_REQUEST_H
 #define WEBPP_REQUEST_H
 
-#include "webpp/http/headers.hpp"
-#include "webpp/http/protocols/protocol_concepts.hpp"
-#include "webpp/http/request_concepts.hpp"
-#include "webpp/http/response_body.hpp"
-#include "webpp/traits/traits.hpp"
+#include "../http/headers.hpp"
+#include "../http/protocols/protocol_concepts.hpp"
+#include "../http/request_concepts.hpp"
+#include "../http/response_body.hpp"
+#include "../traits/traits.hpp"
+#include "../version.hpp"
 
 
 /**
