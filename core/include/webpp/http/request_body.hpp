@@ -41,7 +41,7 @@ namespace webpp::http {
     struct request_body_descriptor {
 
         template <typename ExtensionType>
-        using related_extension_pack_type = typename ExtensionType::request_body_extensions;
+        using extractor_type = typename ExtensionType::request_body_extensions;
 
         template <RootExtensionList RootExtensions, Traits TraitsType, HTTPRequestBodyExtensionList BEList>
         using mid_level_extensie_type = request_body<TraitsType, BEList>;

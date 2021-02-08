@@ -99,7 +99,7 @@ struct exes_with_kids {
 
 struct fake_descriptor {
     template <typename ExtensionType>
-    using related_extension_pack_type = typename ExtensionType::fake_extensions;
+    using extractor_type = typename ExtensionType::fake_extensions;
 
     template <typename ExtensionListType, typename TraitsType, typename EList>
     struct mid_level_extensie_type : public EList {

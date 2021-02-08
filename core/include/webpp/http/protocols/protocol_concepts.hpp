@@ -33,7 +33,7 @@ namespace webpp::http {
 
     struct http_protocol_descriptor {
         template <RootExtensionList REL>
-        using related_extension_pack_type = typename REL::protocol_extensions;
+        using extractor_type = typename REL::protocol_extensions;
     };
 
     // this will apply only the "Mother Extension" and gives you the result of that.

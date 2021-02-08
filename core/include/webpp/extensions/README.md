@@ -170,7 +170,7 @@ The hierarchy of the extensions is like this:
 For each extensie, it is required to write a type with these types in them so the extension pack
 can detect which extensions should be used where.
 
-- `related_extension_pack_type` (required)
+- `extractor_type` (required)
 - `mid_level_extensie_type` (required)
 - `final_extensie_type` (required) (could be optional, but that's for later)
 

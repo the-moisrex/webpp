@@ -122,7 +122,7 @@ namespace webpp::http {
     struct basic_response_descriptor {
 
         template <typename ExtensionType>
-        using related_extension_pack_type = typename ExtensionType::response_extensions;
+        using extractor_type = typename ExtensionType::response_extensions;
 
         template <typename ExtensionListType, typename TraitsType, typename EList>
         using mid_level_extensie_type = basic_response<

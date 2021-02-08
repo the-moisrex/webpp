@@ -88,7 +88,7 @@ namespace webpp::http {
     struct response_body_descriptor {
 
         template <typename ExtensionType>
-        using related_extension_pack_type = typename ExtensionType::response_body_extensions;
+        using extractor_type = typename ExtensionType::response_body_extensions;
 
         template <typename ExtensionListType, typename TraitsType, typename EList>
         using mid_level_extensie_type = response_body<TraitsType, EList>;

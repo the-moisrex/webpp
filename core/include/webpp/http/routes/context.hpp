@@ -347,7 +347,7 @@ namespace webpp::http {
     struct context_descriptor {
 
         template <Extension ExtensionType>
-        using related_extension_pack_type = typename ExtensionType::context_extensions;
+        using extractor_type = typename ExtensionType::context_extensions;
 
 
         template <ExtensionList ExtensionListType,

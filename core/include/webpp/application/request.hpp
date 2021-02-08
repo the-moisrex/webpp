@@ -44,7 +44,7 @@ namespace webpp {
               typename... AdditionalReqArgs>
     struct request_descriptor {
         template <typename ExtensionType>
-        using related_extension_pack_type = typename ExtensionType::request_extensions;
+        using extractor_type = typename ExtensionType::request_extensions;
 
         template <RootExtensionList RootExtensions, Traits TraitsType, typename RequestEList>
         using mid_level_extensie_type = MidLevelRequestType<TraitsType, RequestEList, AdditionalReqArgs...>;
