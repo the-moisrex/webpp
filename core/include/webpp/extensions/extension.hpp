@@ -458,6 +458,22 @@ namespace webpp {
     concept ExtensionListOf = ExtensionList<E> && E::template is_all<IF>::value;
 
 
+    /**
+     * The root extension list,
+     * An extension list of extension lists which include extension lists
+     *
+     * @code
+     *   extension_list<
+     *     extension_list<
+     *       struct {
+     *         protocol_extensions = {Extension, ...},
+     *         ...
+     *       },
+     *       ...
+     *     >
+     *   >
+     * @endcode
+     */
     template <typename T>
     concept RootExtensionList = ExtensionList<T>;
 
