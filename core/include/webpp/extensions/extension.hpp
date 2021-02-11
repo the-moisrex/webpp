@@ -281,20 +281,19 @@ namespace webpp {
         };
 
         template <typename RootExtensionPack, typename ExtensieDescriptor, template <typename> typename IF>
-        using merge_extensions = typename details::unique_types<
-          typename details::flatten_epacks<typename details::epack_miner<
+        using merge_extensions = typename unique_types<
+          typename flatten_epacks<typename epack_miner<
             extension_pack,
             ExtensieDescriptor::template extractor_type,
 
             // filter the packs that contain the interested packs
-            typename details::filter_epack<extension_pack,
-                                           has_related_extension_condition<ExtensieDescriptor>::template type,
-                                           RootExtensionPack>::type
+            typename filter_epack<extension_pack,
+                                  has_related_extension_condition<ExtensieDescriptor>::template type,
+                                  RootExtensionPack>::type
 
             >::type>::type
           // append the individual lonely extensions in the big epack
-          ::template appended<typename details::filter_epack<extension_pack, IF, RootExtensionPack>::type>>::
-          type;
+          ::template appended<typename filter_epack<extension_pack, IF, RootExtensionPack>::type>>::type;
 
 
 
@@ -353,24 +352,23 @@ namespace webpp {
 
             // Mid-Level extensie children (will extend the mid-level extensie and will be extended by the
             // final extensie)
-            using mid_level_extensie_children = typename details::merge_extensions<
+            using mid_level_extensie_children = typename merge_extensions<
               RootExtensionPack,
               ExtensieDescriptor,
-              details::is_child_condition<
+              is_child_condition<
                 TraitsType,
-                details::
-                  mid_level_extensie_type<RootExtensionPack, TraitsType, ExtensieDescriptor, ExtraArgs...>>::
-                template type>::template child_extensions<TraitsType,
-                                                          details::mid_level_extensie_type<RootExtensionPack,
-                                                                                           TraitsType,
-                                                                                           ExtensieDescriptor,
-                                                                                           ExtraArgs...>>;
+
+                mid_level_extensie_type<RootExtensionPack, TraitsType, ExtensieDescriptor, ExtraArgs...>>::
+                template type>::
+              template child_extensions<
+                TraitsType,
+                mid_level_extensie_type<RootExtensionPack, TraitsType, ExtensieDescriptor, ExtraArgs...>>;
 
             // child extensions + the mid-level extensie + mother extensions
-            using mother_pack = typename details::children_inherited<
+            using mother_pack = typename children_inherited<
               TraitsType,
-              details::
-                mid_level_extensie_type<RootExtensionPack, TraitsType, ExtensieDescriptor, ExtraArgs...>,
+
+              mid_level_extensie_type<RootExtensionPack, TraitsType, ExtensieDescriptor, ExtraArgs...>,
               mid_level_extensie_children>::type;
 
             template <typename T>

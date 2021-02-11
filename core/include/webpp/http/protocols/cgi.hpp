@@ -23,7 +23,6 @@ namespace webpp::http {
     struct cgi : public common_http_protocol<TraitsType, App, stl::remove_cvref_t<REList>> {
         using traits_type            = TraitsType;
         using application_type       = App;
-        using extension_list         = stl::remove_cvref_t<REList>;
         using string_view_type       = traits::string_view<traits_type>;
         using char_type              = traits::char_type<traits_type>;
         using string_type            = traits::general_string<traits_type>;
@@ -32,7 +31,7 @@ namespace webpp::http {
         using common_protocol_type   = common_http_protocol<TraitsType, App, REList>;
         using app_wrapper_type       = typename common_protocol_type::app_wrapper_type;
         using root_extensions        = stl::remove_cvref_t<REList>;
-        using request_type = simple_request<traits_type, extension_list, cgi_request, root_extensions>;
+        using request_type = simple_request<traits_type, root_extensions, cgi_request, root_extensions>;
 
         static_assert(HTTPRequest<request_type>,
                       "Web++ Internal Bug: request_type is not a match for Request concept.");
