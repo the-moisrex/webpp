@@ -357,7 +357,6 @@ namespace webpp {
               ExtensieDescriptor,
               is_child_condition<
                 TraitsType,
-
                 mid_level_extensie_type<RootExtensionPack, TraitsType, ExtensieDescriptor, ExtraArgs...>>::
                 template type>::
               template child_extensions<
@@ -367,7 +366,6 @@ namespace webpp {
             // child extensions + the mid-level extensie + mother extensions
             using mother_pack = typename children_inherited<
               TraitsType,
-
               mid_level_extensie_type<RootExtensionPack, TraitsType, ExtensieDescriptor, ExtraArgs...>,
               mid_level_extensie_children>::type;
 

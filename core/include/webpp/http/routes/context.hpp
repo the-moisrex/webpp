@@ -116,10 +116,10 @@ namespace webpp::http {
      *
      */
     template <Traits TraitsType, typename EList, HTTPRequest RequestType, HTTPResponse ResponseType>
-    struct basic_context : public enable_traits_with<TraitsType, extension_wrapper<EList>> {
+    struct basic_context : public enable_traits_with<TraitsType, EList> {
         using traits_type            = TraitsType;
         using mother_extensions_type = EList;
-        using extension_wrapper_type = extension_wrapper<EList>;
+        using extension_wrapper_type = EList;
         using basic_context_parent   = enable_traits_with<traits_type, extension_wrapper_type>;
         using request_type           = RequestType;
         using response_type          = ResponseType;
@@ -201,9 +201,9 @@ namespace webpp::http {
               typename OriginalExtensionList,
               typename EList,
               typename ReqType>
-    struct final_context final : public extension_wrapper<EList> {
+    struct final_context final : public EList {
         using child_extensions_type        = EList;
-        using final_context_parent         = extension_wrapper<EList>;
+        using final_context_parent         = EList;
         using traits_type                  = TraitsType;
         using context_descriptor_type      = ContextDescriptorType;
         using original_extension_pack_type = OriginalExtensionList;

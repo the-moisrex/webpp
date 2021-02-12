@@ -17,12 +17,12 @@ namespace webpp::http {
      * This class owns its data.
      */
     template <typename EList, typename ResponseHeaderType, typename BodyType>
-    struct basic_response : public extension_wrapper<EList> {
+    struct basic_response : public EList {
 
         // we're not going to use trait's string type here.
         using body_type    = BodyType;
         using headers_type = ResponseHeaderType;
-        using elist_type   = extension_wrapper<EList>;
+        using elist_type   = EList;
 
         body_type    body{};
         headers_type headers{};
@@ -99,9 +99,9 @@ namespace webpp::http {
 
 
     template <Traits TraitsType, typename DescriptorType, typename OriginalExtensionList, typename EList>
-    struct final_response final : public extension_wrapper<EList> {
+    struct final_response final : public EList {
         using traits_type                  = TraitsType;
-        using elist_type                   = extension_wrapper<EList>;
+        using elist_type                   = EList;
         using response_descriptor_type     = DescriptorType;
         using original_extension_pack_type = OriginalExtensionList;
 

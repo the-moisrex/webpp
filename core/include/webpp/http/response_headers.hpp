@@ -22,7 +22,7 @@ namespace webpp::http {
     template <Traits TraitsType, typename HeaderEList, typename HeaderFieldType>
     class response_headers
       : public stl::vector<HeaderFieldType, traits::general_allocator<TraitsType, HeaderFieldType>>,
-        public extension_wrapper<HeaderEList> {
+        public HeaderEList {
 
         // using super =
         //   istl::unordered_multiset<TraitsType, HeaderFieldType,
@@ -34,7 +34,7 @@ namespace webpp::http {
         using traits_type = TraitsType;
         using string_type = traits::general_string<traits_type>;
         using field_type  = HeaderFieldType;
-        using elist_type  = extension_wrapper<HeaderEList>;
+        using elist_type  = HeaderEList;
 
         template <typename... Args>
         constexpr response_headers(Args&&... args) noexcept
