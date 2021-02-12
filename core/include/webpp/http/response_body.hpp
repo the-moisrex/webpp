@@ -72,9 +72,9 @@ namespace webpp::http {
      *
      */
     template <Traits TraitsType, typename EList>
-    struct response_body : public extension_wrapper<EList> {
+    struct response_body : public EList {
         using traits_type = TraitsType;
-        using elist_type  = extension_wrapper<EList>;
+        using elist_type  = EList;
 
         // static_assert(ResponseBody<elist_type>, "We require at least one valid 'response body
         // extension'.");

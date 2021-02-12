@@ -15,18 +15,18 @@ namespace webpp::http {
      * one single field of a header.
      */
     template <typename StringType, typename EList>
-    struct basic_header_field : public extension_wrapper<EList> {
-        using string_type    = StringType;
+    struct basic_header_field : public EList {
+        using string_type = StringType;
         // using allocator_type = typename string_type::allocator_type;
-        using super          = extension_wrapper<EList>;
+        using super = EList;
 
         string_type name;
         string_type value;
 
-//        constexpr basic_header_field(allocator_type const& alloc) noexcept
-//          : super{},
-//            name(alloc),
-//            value(alloc) {}
+        //        constexpr basic_header_field(allocator_type const& alloc) noexcept
+        //          : super{},
+        //            name(alloc),
+        //            value(alloc) {}
 
 
         constexpr basic_header_field(string_type&& _name, string_type&& _value) noexcept

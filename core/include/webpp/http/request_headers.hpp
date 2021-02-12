@@ -23,9 +23,9 @@ namespace webpp::http {
      */
     template <typename HeaderEList, typename HeaderFieldType, Allocator AllocType>
     class request_headers : public stl::vector<HeaderFieldType, AllocType>,
-                            public extension_wrapper<HeaderEList> {
+                            public HeaderEList {
         using super      = stl::vector<HeaderFieldType, AllocType>;
-        using elist_type = extension_wrapper<HeaderEList>;
+        using elist_type = HeaderEList;
 
       public:
         using field_type = HeaderFieldType;

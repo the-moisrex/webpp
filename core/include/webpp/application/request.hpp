@@ -47,11 +47,17 @@ namespace webpp {
         template <typename ExtensionType>
         using extractor_type = typename ExtensionType::request_extensions;
 
-        template <RootExtensionList RootExtensions, Traits TraitsType, typename RequestEList>
+        template <RootExtensionList RootExtensions,
+                  Traits            TraitsType,
+                  typename RequestEList,
+                  typename... extra>
         using mid_level_extensie_type = MidLevelRequestType<TraitsType, RequestEList, AdditionalReqArgs...>;
 
         // empty final extensie
-        template <RootExtensionList RootExtensions, Traits TraitsType, typename MidLevelRequestWithExtensions>
+        template <RootExtensionList RootExtensions,
+                  Traits            TraitsType,
+                  typename MidLevelRequestWithExtensions,
+                  typename... extra>
         using final_extensie_type = final_request<TraitsType, MidLevelRequestWithExtensions>;
     };
 
