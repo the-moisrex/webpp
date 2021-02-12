@@ -17,8 +17,7 @@ namespace webpp {
     template <typename T>
     concept Extension =
       stl::copy_constructible<T> && !stl::is_final_v<T> && stl::is_default_constructible_v<T> &&
-      stl::is_move_constructible_v<T> && stl::is_move_assignable_v<T> && stl::is_copy_assignable_v<T> &&
-      stl::is_class_v<T> && !stl::is_integral_v<T>;
+      stl::is_move_constructible_v<T> && !stl::is_integral_v<T>;
 
     template <typename TraitsType, typename T>
     concept MotherExtension = Extension<T> && requires {

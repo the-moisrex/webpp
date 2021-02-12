@@ -13,7 +13,7 @@
 
 namespace webpp::http {
 
-    template <Traits TraitsType, HTTPRequestExtensionList REL, RootExtensionList RootExtensions>
+    template <Traits TraitsType, HTTPRequestExtensionParent REL, RootExtensionList RootExtensions>
     struct common_http_request : public REL, public enable_traits<TraitsType> {
         using root_extensions            = RootExtensions;
         using traits_type                = TraitsType;

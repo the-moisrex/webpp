@@ -42,6 +42,9 @@ namespace webpp::http {
     template <typename T>
     concept HTTPRequestExtensionList = ExtensionListOf<T, details::is_request_extension_pack>;
 
+    template <typename T>
+    concept HTTPRequestExtensionParent = HTTPRequestExtension<T>;
+
 
     // todo: complete this
     template <typename T>

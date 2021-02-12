@@ -15,8 +15,8 @@
 
 namespace webpp::http {
 
-    template <Traits TraitsType, HTTPRequestExtensionList REL, ExtensionList RootExtensions>
-    struct cgi_request : common_http_request<TraitsType, REL, RootExtensions> {
+    template <Traits TraitsType, HTTPRequestExtensionParent REL, RootExtensionList RootExtensions>
+    struct cgi_request : public common_http_request<TraitsType, REL, RootExtensions> {
         using traits_type = TraitsType;
 
       private:
