@@ -33,6 +33,11 @@ namespace webpp {
 
         using ReqType::ReqType;
 
+        constexpr final_request(final_request const&)     = default;
+        constexpr final_request(final_request&&) noexcept = default;
+        constexpr final_request& operator=(final_request const&) = default;
+        constexpr final_request& operator=(final_request&&) noexcept = default;
+
         /**
          * Get the Web++ Library version
          */
