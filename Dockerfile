@@ -15,4 +15,4 @@ RUN mkdir build && \
     make install 
 
 # run tests
-RUN cd build && ./webpptest
+RUN cd build && ./webpp-test
