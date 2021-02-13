@@ -20,3 +20,4 @@ webpp.kdev4
 *.plist
 .ccls-cache
 /.cache/
+.theia/
