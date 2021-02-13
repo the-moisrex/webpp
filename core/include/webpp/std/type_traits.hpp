@@ -652,7 +652,8 @@ namespace webpp::istl {
                                                                      TupleType<This, Heads...>,
                                                                      TupleType<Tails...>,
                                                                      TupleType>
-          : filter_parameters_impl<Concept, TupleType<Heads...>, TupleType<This, Tails...>, TupleType> {};
+          : filter_parameters_impl<Concept, TupleType<Heads...>, TupleType<This, Tails...>, TupleType> {
+        };
 
         // remove the first one
         template <template <typename...> typename Concept,
@@ -665,7 +666,8 @@ namespace webpp::istl {
                                                                       TupleType<This, Heads...>,
                                                                       TupleType<Tails...>,
                                                                       TupleType>
-          : filter_parameters_impl<Concept, TupleType<Heads...>, TupleType<Tails...>, TupleType> {};
+          : filter_parameters_impl<Concept, TupleType<Heads...>, TupleType<Tails...>, TupleType> {
+        };
 
         // We're at the end of the line, no Heads left to check
         template <template <typename...> typename Concept,
@@ -755,6 +757,59 @@ namespace webpp::istl {
     struct rebind_parameters<TupleT<OldTs...>, NewTs...> {
         using type = TupleT<NewTs...>;
     };
+
+
+
+
+
+    namespace details {
+
+        template <typename TupleT, typename T>
+        struct prepend;
+
+        template <template <typename...> typename TupleT, typename F, typename... L>
+        struct prepend<TupleT<L...>, F> {
+            using type = TupleT<F, L...>;
+        };
+
+        template <typename TupleT, typename T>
+        struct append;
+
+        template <template <typename...> typename TupleT, typename F, typename... L>
+        struct append<TupleT<L...>, F> {
+            using type = TupleT<L..., F>;
+        };
+
+        struct special_unique_type;
+
+        template <typename TupleT>
+        struct unique_types;
+
+
+        template <template <typename...> typename TupleT, typename First, typename... U>
+        struct unique_types<TupleT<First, U...>> {
+            using the_rest = typename unique_types<TupleT<U...>>::type;
+            using type     = stl::conditional_t<((!stl::is_same_v<First, U>) &&...),
+                                            typename prepend<the_rest, First>::type,
+                                            the_rest>;
+        };
+
+        template <template <typename...> typename TupleT, typename... U>
+        struct unique_types<TupleT<special_unique_type, U...>> {
+            using type = TupleT<U...>;
+        };
+
+    } // namespace details
+
+
+    template <typename TupleT, typename T>
+    using prepend_parameter = typename details::prepend<TupleT, T>::type;
+
+    template <typename TupleT, typename T>
+    using append_parameter = typename details::append<TupleT, T>::type;
+
+    template <typename T>
+    using unique_parameters = typename details::unique_types<T>::type;
 
 
 } // namespace webpp::istl
