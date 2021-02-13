@@ -176,26 +176,16 @@ namespace webpp {
 
 
 
-        template <template <typename...> typename PackType, typename... F>
-        struct prepend {
-            using type = PackType<F...>;
-        };
-
-        template <template <typename...> typename PackType, typename F, typename... L>
-        struct prepend<PackType, F, extension_pack<L...>> {
-            using type = PackType<F, L...>;
-        };
-
         template <template <typename...> typename PackType,
                   template <typename>
                   typename IF,
                   typename First = void,
                   typename... EI>
         struct filter {
-            using type = stl::conditional_t<
-              IF<First>::value,
-              typename prepend<PackType, First, typename filter<PackType, IF, EI...>::type>::type,
-              typename filter<PackType, IF, EI...>::type>;
+            using type =
+              stl::conditional_t<IF<First>::value,
+                                 istl::prepend_parameter<typename filter<PackType, IF, EI...>::type, First>,
+                                 typename filter<PackType, IF, EI...>::type>;
         };
 
         template <template <typename...> typename PackType, template <typename> typename IF, typename... EI>
@@ -212,30 +202,6 @@ namespace webpp {
         struct filter_epack<PackType, IF, extension_pack<EI...>> {
             using type = typename filter<PackType, IF, EI...>::type;
         };
-
-        template <typename First = void, typename... U>
-        struct unique_types {
-            using type = stl::conditional_t<
-              ((!std::is_same_v<First, U>) &&...),
-              typename prepend<extension_pack, First, typename unique_types<U...>::type>::type,
-              typename unique_types<U...>::type>;
-        };
-
-        template <typename... U>
-        struct unique_types<void, U...> {
-            using type = extension_pack<U...>;
-        };
-
-        template <typename... U>
-        struct unique_types<extension_pack<U...>> {
-            using type = typename unique_types<U...>::type;
-        };
-
-        template <typename E>
-        struct unique_extensions;
-
-        template <typename... E>
-        struct unique_extensions<extension_pack<E...>> : unique_types<E...> {};
 
 
         template <Traits TraitsType>
@@ -280,7 +246,7 @@ namespace webpp {
         };
 
         template <typename RootExtensionPack, typename ExtensieDescriptor, template <typename> typename IF>
-        using merge_extensions = typename unique_types<
+        using merge_extensions = typename istl::unique_parameters<
           typename flatten_epacks<typename epack_miner<
             extension_pack,
             ExtensieDescriptor::template extractor_type,
@@ -290,7 +256,7 @@ namespace webpp {
                                   has_related_extension_condition<ExtensieDescriptor>::template type,
                                   RootExtensionPack>::type
 
-            >::type>::type
+            >::type>
           // append the individual lonely extensions in the big epack
           ::template appended<typename filter_epack<extension_pack, IF, RootExtensionPack>::type>>::type;
 

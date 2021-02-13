@@ -113,8 +113,8 @@ namespace webpp::http {
          */
         template <typename... E>
         using apply_extensions_type =
-          typename webpp::details::unique_extensions<typename original_extension_pack_type::template appended<
-            E...>>::type::template extensie_type<traits_type, response_descriptor_type>;
+          typename istl::unique_parameters<typename original_extension_pack_type::template appended<E...>>::
+            template extensie_type<traits_type, response_descriptor_type>;
     };
 
 
