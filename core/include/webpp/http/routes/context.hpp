@@ -224,8 +224,8 @@ namespace webpp::http {
          */
         template <typename... E>
         using context_type_with_appended_extensions =
-          typename webpp::details::unique_types<typename original_extension_pack_type::template appended<
-            E...>>::type::template extensie_type<traits_type, context_descriptor_type, request_type>;
+          typename istl::unique_parameters<typename original_extension_pack_type::template appended<E...>>::
+            template extensie_type<traits_type, context_descriptor_type, request_type>;
 
         using final_context_parent::final_context_parent; // inherit parent constructors
         constexpr final_context(final_context const&) noexcept = default;
