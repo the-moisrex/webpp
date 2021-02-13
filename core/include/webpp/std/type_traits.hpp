@@ -794,9 +794,10 @@ namespace webpp::istl {
                                             the_rest>;
         };
 
-        template <template <typename...> typename TupleT, typename... U>
-        struct unique_types<TupleT<special_unique_type, U...>> {
-            using type = TupleT<U...>;
+        // the end condition
+        template <template <typename...> typename TupleT>
+        struct unique_types<TupleT<>> {
+            using type = TupleT<>;
         };
 
     } // namespace details

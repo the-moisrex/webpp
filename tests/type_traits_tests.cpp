@@ -74,3 +74,10 @@ struct int_replacer {
 
 using t16 = recursive_parameter_replacer<t1, int_replacer>;
 static_assert(is_same_v<t16, tuple<double, string, vector<double>, double>>);
+
+
+
+
+using ut = unique_parameters<tuple<void, void, int, int, int>>;
+static_assert(is_same_v<ut, tuple<void, int>>);
+
