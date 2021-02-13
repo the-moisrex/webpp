@@ -22,9 +22,14 @@ namespace webpp::http {
      *
      */
     template <typename HeaderEList, typename HeaderFieldType, Allocator AllocType>
-    class request_headers : public stl::vector<HeaderFieldType, AllocType>,
-                            public HeaderEList {
-        using super      = stl::vector<HeaderFieldType, AllocType>;
+    class request_headers
+      : public stl::vector<HeaderFieldType,
+                           typename stl::allocator_traits<AllocType>::template rebind_alloc<HeaderFieldType>>,
+        public HeaderEList {
+
+        using super =
+          stl::vector<HeaderFieldType,
+                      typename stl::allocator_traits<AllocType>::template rebind_alloc<HeaderFieldType>>;
         using elist_type = HeaderEList;
 
       public:
@@ -48,7 +53,6 @@ namespace webpp::http {
 
         template <typename ExtensionListType, typename TraitsType, typename EList>
         using mid_level_extensie_type = header_field_view<TraitsType, EList>;
-
     };
 
 
@@ -63,7 +67,6 @@ namespace webpp::http {
           EList,
           typename ExtensionListType::template extensie_type<TraitsType, request_header_field_descriptor>,
           AllocType>;
-
     };
 
 
