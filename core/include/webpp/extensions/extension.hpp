@@ -176,34 +176,6 @@ namespace webpp {
 
 
 
-        template <template <typename...> typename PackType,
-                  template <typename>
-                  typename IF,
-                  typename First = void,
-                  typename... EI>
-        struct filter {
-            using type =
-              stl::conditional_t<IF<First>::value,
-                                 istl::prepend_parameter<typename filter<PackType, IF, EI...>::type, First>,
-                                 typename filter<PackType, IF, EI...>::type>;
-        };
-
-        template <template <typename...> typename PackType, template <typename> typename IF, typename... EI>
-        struct filter<PackType, IF, void, EI...> {
-            using type = PackType<EI...>;
-        };
-
-        template <template <typename...> typename PackType, template <typename> typename IF, typename... EI>
-        struct filter_epack {
-            using type = typename filter<PackType, IF, EI...>::type;
-        };
-
-        template <template <typename...> typename PackType, template <typename> typename IF, typename... EI>
-        struct filter_epack<PackType, IF, extension_pack<EI...>> {
-            using type = typename filter<PackType, IF, EI...>::type;
-        };
-
-
         template <Traits TraitsType>
         struct is_mother_condition {
             template <typename T>
@@ -252,13 +224,12 @@ namespace webpp {
             ExtensieDescriptor::template extractor_type,
 
             // filter the packs that contain the interested packs
-            typename filter_epack<extension_pack,
-                                  has_related_extension_condition<ExtensieDescriptor>::template type,
-                                  RootExtensionPack>::type
+            istl::filter_parameters_t<has_related_extension_condition<ExtensieDescriptor>::template type,
+                                      RootExtensionPack>
 
             >::type>
           // append the individual lonely extensions in the big epack
-          ::template appended<typename filter_epack<extension_pack, IF, RootExtensionPack>::type>>::type;
+          ::template appended<istl::filter_parameters_t<IF, RootExtensionPack>>>::type;
 
 
 
@@ -360,12 +331,14 @@ namespace webpp {
         using appended = extension_pack<E..., NE...>;
 
         template <Traits TraitsType>
-        using mother_extensions = typename details::
-          filter<extension_pack, details::is_mother_condition<TraitsType>::template type, E...>::type;
+        using mother_extensions =
+          istl::filter_parameters_t<details::is_mother_condition<TraitsType>::template type,
+                                    extension_pack<E...>>;
 
         template <Traits TraitsType, typename Parent>
-        using child_extensions = typename details::
-          filter<extension_pack, details::is_child_condition<TraitsType, Parent>::template type, E...>::type;
+        using child_extensions =
+          istl::filter_parameters_t<details::is_child_condition<TraitsType, Parent>::template type,
+                                    extension_pack<E...>>;
 
         using this_epack = extension_pack<E...>;
 
