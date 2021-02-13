@@ -13,8 +13,8 @@ add_executable(${TEST_NAME} ${TEST_SOURCES})
 set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 target_link_libraries(${TEST_NAME}
         PRIVATE ${LIB_NAME}
-        PRIVATE GTest::GTest
-        PRIVATE GTest::Main
+        PRIVATE gtest         # GTest::GTest
+        PRIVATE gtest_main    # GTest::Main
         PRIVATE fmt::fmt
         )
 add_test(${TEST_NAME} ${TEST_NAME})
