@@ -802,12 +802,15 @@ namespace webpp::istl {
     } // namespace details
 
 
+    // prepend the specified type T at the beginning of the specified tuple-like type "TupleT"
     template <typename TupleT, typename T>
     using prepend_parameter = typename details::prepend<TupleT, T>::type;
 
+    // append the specified type T at the end of tuple-like type TupleT
     template <typename TupleT, typename T>
     using append_parameter = typename details::append<TupleT, T>::type;
 
+    // make the template parameters of the specified tuple-like type, "unique" (remove the duplicates)
     template <typename T>
     using unique_parameters = typename details::unique_types<T>::type;
 
