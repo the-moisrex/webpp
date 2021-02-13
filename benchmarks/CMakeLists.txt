@@ -30,9 +30,20 @@ set(FILE_SOURCES
         )
 file(GLOB FILE_PCH *_pch.hpp)
 
-find_package(benchmark REQUIRED)
+
 find_package(Boost REQUIRED)
 find_package(Threads REQUIRED)
+find_package(benchmark QUIET)
+if (NOT benchmark_FOUND)
+    FetchContent_Declare(
+            benchmark
+            GIT_REPOSITORY https://github.com/google/benchmark.git
+            GIT_TAG origin/master
+    )
+    set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "" FORCE)
+    set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(benchmark)
+endif ()
 
 add_executable(${exec_name}
         ${FILE_SOURCES}
