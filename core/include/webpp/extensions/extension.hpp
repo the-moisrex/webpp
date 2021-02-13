@@ -227,9 +227,9 @@ namespace webpp {
             istl::filter_parameters_t<has_related_extension_condition<ExtensieDescriptor>::template type,
                                       RootExtensionPack>
 
-            >::type>
+            >::type>::type
           // append the individual lonely extensions in the big epack
-          ::template appended<istl::filter_parameters_t<IF, RootExtensionPack>>>::type;
+          ::template appended<istl::filter_parameters_t<IF, RootExtensionPack>>>;
 
 
 
