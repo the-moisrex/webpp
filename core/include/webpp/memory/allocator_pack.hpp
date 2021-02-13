@@ -304,6 +304,19 @@ namespace webpp::alloc {
         using new_type = replace_allocators<T, stl::allocator_traits<allocator_type>::template rebind_alloc>;
     };
 
+    // specializes the alloc_finder so it can work with the types that don't support allocators
+    template <typename T, feature_pack FPack, AllocatorDescriptorList AllocDescList>
+    requires(!requires { typename T::allocator_type; }) struct alloc_finder<T, FPack, AllocDescList> {
+        static constexpr feature_pack features = FPack;
+        using ranked                           = ranker<AllocDescList, features>;
+        using value_type                       = stl::byte;
+        using original_allocator_type          = typename descriptors::allocator<
+          typename ranked::best_allocator_descriptor>::template type<value_type>;
+        using resource_type  = descriptors::storage<typename ranked::best_resource_descriptor>;
+        using allocator_type = original_allocator_type;
+        using new_type       = T;
+    };
+
     struct placeholder {};
 
     /**
