@@ -780,8 +780,6 @@ namespace webpp::istl {
             using type = TupleT<L..., F>;
         };
 
-        struct special_unique_type;
-
         template <typename TupleT>
         struct unique_types;
 
