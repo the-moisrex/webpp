@@ -28,6 +28,7 @@ namespace webpp::http {
         using request_extensions         = REL;
         using headers_type = simple_request_headers<traits_type, root_extensions, local_allocator_type>;
         using body_type    = simple_request_body<traits_type, root_extensions>;
+        // fixme: this local and object will make the request non-copyable.
         using headers_object_type = object::local<headers_type, stack<>, allocator_descriptors_type>;
         using body_object_type =
           object::object<body_type, alloc::general_features, allocator_descriptors_type>;
