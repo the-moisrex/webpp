@@ -3,12 +3,12 @@
 #ifndef WEBPP_COMMON_HTTP_REQUEST_HPP
 #define WEBPP_COMMON_HTTP_REQUEST_HPP
 
+#include "../../../memory/object.hpp"
 #include "../../../std/format.hpp"
 #include "../../../traits/enable_traits.hpp"
 #include "../../../version.hpp"
 #include "../../request_body.hpp"
 #include "../../request_headers.hpp"
-#include "../../../memory/object.hpp"
 
 
 namespace webpp::http {
@@ -34,6 +34,11 @@ namespace webpp::http {
 
         headers_object_type headers{this->alloc_pack};
         body_object_type    body{this->alloc_pack};
+
+        constexpr common_http_request(common_http_request const&)     = default;
+        constexpr common_http_request(common_http_request&&) noexcept = default;
+        constexpr common_http_request& operator=(common_http_request const&) noexcept = default;
+        constexpr common_http_request& operator=(common_http_request&&) noexcept = default;
 
         using etraits::etraits;
     };
