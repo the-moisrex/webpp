@@ -108,88 +108,91 @@ Learn more about TaskWarrior in their own documentation.
 Current Todo List (use `./gtask-markdown list` to generate this table again):
 
 ### Todo List
-Last updated time: Fri Dec 18 10:37:51 AM UTC 2020
+Last updated time: Tue Feb 16 01:54:33 PM UTC 2021
 
 
-| ID | Age  | Project     | Description                                                                                                                                     | Urg |
-| -- | ---- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
-| 11 | 1.2y |             | put the validations in their own file                                                                                                           |    2 |
-| 18 | 11mo |             | Use Steganography in your project, it's cool                                                                                                    | 1.86 |
-| 50 | 8mo  |             | add thread_pool support                                                                                                                         | 1.39 |
-| 62 | 8mo  |             | add jetbrains logo                                                                                                                              | 1.34 |
-| 75 | 2w   |             | remove magic_enums as dependency                                                                                                                | 0.08 |
-|  8 | 1.3y | ams         | consider help functions for webassembly                                                                                                         |    3 |
-| 74 | 2w   | bugs        | add errors.hpp success and failure functions are useless                                                                                        | 1.08 |
-| 63 | 7mo  | clang       | Add custom clang-check matchers to chatch some bugs before they happen for the final user                                                       | 2.23 |
-| 53 | 8mo  | cluster     | add clustering communication base classes                                                                                                       | 2.37 |
-| 54 | 8mo  | cluster     | clusters can run a thread_pool too                                                                                                              | 2.37 |
-| 55 | 8mo  | cluster     | implement thread_pool classes                                                                                                                   | 2.37 |
-| 56 | 8mo  | cluster     | thread-safe properties with the help of marcos or pre-compile code generation based on the spacified class or type                              | 2.35 |
-| 57 | 8mo  | cluster     | see if it's possible to use operator overloading magics to implement threadsafe properties                                                      | 2.35 |
-|  3 | 1.4y | cmake       | use components like cefeika                                                                                                                     |    3 |
-|  6 | 1.3y | cmake       | consider cpp modules                                                                                                                            |    3 |
-|  7 | 1.3y | cmake       | add different packages for distribution                                                                                                         |    3 |
-| 28 | 9mo  | cmake       | add pre-compiling the static files feature in the cmake for different file types in the generate_static_file function                           | 2.61 |
-| 30 | 8mo  | cmake       | configure and use sanitizers                                                                                                                    | 2.45 |
-| 77 | 15h  | cmake       | use source_group to group files logically                                                                                                       |    1 |
-| 29 | 9mo  | codegen     | forms for auto code generation, so the user can easily write a boilerplate and change the code later.                                           | 2.59 |
-| 65 | 6mo  | cookies     | parse response cookies                                                                                                                          | 2.12 |
-| 66 | 6mo  | cookies     | add cookie extensions                                                                                                                           | 2.12 |
-| 67 | 6mo  | cookies     | add extension for session management                                                                                                            | 2.12 |
-| 68 | 6mo  | cookies     | implement encrypted cookies                                                                                                                     | 2.12 |
-| 32 | 8mo  | fcgi        | convert endpoint fromats                                                                                                                        | 2.44 |
-| 33 | 8mo  | fcgi        | find where to add the thread_pool                                                                                                               | 2.44 |
-| 34 | 8mo  | fcgi        | add the ctor of threadpool                                                                                                                      | 2.44 |
-| 35 | 8mo  | fcgi        | use threadpool in running the io_context                                                                                                        | 2.44 |
-| 36 | 8mo  | fcgi        | restart the server when the endpoints change                                                                                                    | 2.44 |
-| 37 | 8mo  | fcgi        | learn boost::cpp03::server4::server::operator() example                                                                                         | 2.44 |
-| 38 | 8mo  | fcgi        | add thread_count in fcgi class                                                                                                                  | 2.44 |
-| 39 | 8mo  | fcgi        | implement request methods in fcgi                                                                                                               | 2.44 |
-| 40 | 8mo  | fcgi        | write a fcgi hello world example                                                                                                                | 2.44 |
-| 41 | 8mo  | fcgi        | write fcgi tests                                                                                                                                | 2.44 |
-| 42 | 8mo  | fcgi        | read the fcgi header async                                                                                                                      | 2.44 |
-| 43 | 8mo  | fcgi        | parse the fcgi header                                                                                                                           | 2.44 |
-| 44 | 8mo  | fcgi        | read the rest of the fcgi request                                                                                                               | 2.44 |
-| 45 | 8mo  | fcgi        | parse the rest of the fcgi request                                                                                                              | 2.44 |
-| 46 | 8mo  | fcgi        | add constructors for protocols' file's classes                                                                                                  | 2.44 |
-| 47 | 8mo  | fcgi        | figure out a way to listen on multiple endpoints                                                                                                | 2.44 |
-| 12 | 1.0y | functional  | implement trailing in debounce class                                                                                                            |    3 |
-| 13 | 1.0y | functional  | add a way to use a thread pool in the debounce class                                                                                            |    3 |
-| 14 | 1.0y | functional  | make property class thread safe if the user wants it                                                                                            |    3 |
-| 15 | 1.0y | functional  | add functionality to check if the user is running the program in debug mode or release mode                                                     |    3 |
-| 16 | 1.0y | functional  | add functionality to the properties class and debounced class to check if the user is going to have a race condition or not if all possible     |    3 |
-| 17 | 1.0y | functional  | check if you actually need the function_ref class or not                                                                                        |    3 |
-| 64 | 6mo  | headers     | give the user the ability to change the status phrase of status code                                                                            | 2.12 |
-|  1 | 1.5y | interfaces  | implement fcgi                                                                                                                                  |    3 |
-|  5 | 1.3y | interfaces  | implement wsgi                                                                                                                                  |    3 |
-| 19 | 10mo | modules     | add mother modules to the server's templtes                                                                                                     | 2.65 |
-| 10 | 1.2y | net         | add mac address class                                                                                                                           |    3 |
-| 21 | 10mo | net         | add fragment routing methods in uri (think about it first)                                                                                      | 2.65 |
-| 22 | 10mo | net         | implement put_query in uri                                                                                                                      | 2.65 |
-| 23 | 10mo | net         | implement get_query in uri                                                                                                                      | 2.65 |
-| 24 | 10mo | net         | implement remove_query in uri                                                                                                                   | 2.65 |
-| 25 | 10mo | net         | implement append_query in uri                                                                                                                   | 2.65 |
-| 26 | 10mo | net         | implement pop_path in uri                                                                                                                       | 2.65 |
-| 27 | 10mo | net         | implement append_path in uri                                                                                                                    | 2.65 |
-| 76 | 13d  | net         | add 128bit support to ipv6 class for systems that supports them                                                                                 | 1.07 |
-|  2 | 1.4y | performance | implement half-lazy loading of images/... stuff                                                                                                 |    3 |
-| 49 | 8mo  | performance | optimize ipv6 and checkout the benchmark                                                                                                        |  2.4 |
-| 70 | 2w   | performance | add logger_allocator custom allocator                                                                                                           | 1.09 |
-| 71 | 2w   | performance | add add null_allocator custom allocator to help debug allocations                                                                               | 1.09 |
-| 72 | 2w   | performance | add add allocator category concept                                                                                                              | 1.09 |
-| 73 | 2w   | performance | add add allocator categories to the traits                                                                                                      | 1.09 |
-| 48 | 8mo  | pub         | Make travis build successful                                                                                                                    | 2.42 |
-| 20 | 10mo | request     | sort paths in router based on views and how much time it takes for them to be evaluated                                                         | 2.65 |
-| 51 | 8mo  | tests       | add a high level testing library that uses gtest and catch2 and boost.test and others                                                           | 2.39 |
-| 52 | 8mo  | tests       | convert existing tests into your own testing library                                                                                            | 2.39 |
-| 69 | 2w   | tests       | write tests for utils/errors                                                                                                                    | 1.09 |
-| 58 | 8mo  | thread      | add fast and thread-safe class template for containers                                                                                          | 2.34 |
-| 31 | 8mo  | uri         | add support for encrypted URIs                                                                                                                  | 2.45 |
-|  9 | 1.3y | utils       | implement property class                                                                                                                        |    3 |
-| 59 | 8mo  | valves      | a valve that limits user visits                                                                                                                 | 2.34 |
-| 60 | 8mo  | valves      | a valve that only allows guests                                                                                                                 | 2.34 |
-| 61 | 8mo  | valves      | a valve that only allows registered users                                                                                                       | 2.34 |
-|  4 | 1.3y | webrtc      | watch WebRTC tutorials                                                                                                                          |    3 |
+| ID | Age    | Project     | Description                                                                                                                                     | Urg |
+| -- | ------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| 11 | 1.4y   |             | put the validations in their own file                                                                                                           |    2 |
+| 18 | 1.1y   |             | Use Steganography in your project, it's cool                                                                                                    |    2 |
+| 50 |  10mo  |             | add thread_pool support                                                                                                                         | 1.72 |
+| 62 |  10mo  |             | add jetbrains logo                                                                                                                              | 1.67 |
+| 74 |  10w   |             | remove magic_enums as dependency                                                                                                                | 0.41 |
+| 77 |   6w   | STL         | should we add 'using namespace std;' in webpp::istl?                                                                                            | 1.26 |
+|  8 | 1.5y   | ams         | consider help functions for webassembly                                                                                                         |    3 |
+| 63 |   9mo  | clang       | Add custom clang-check matchers to chatch some bugs before they happen for the final user                                                       | 2.56 |
+| 53 |  10mo  | cluster     | add clustering communication base classes                                                                                                       |  2.7 |
+| 54 |  10mo  | cluster     | clusters can run a thread_pool too                                                                                                              |  2.7 |
+| 55 |  10mo  | cluster     | implement thread_pool classes                                                                                                                   |  2.7 |
+| 56 |  10mo  | cluster     | thread-safe properties with the help of marcos or pre-compile code generation based on the spacified class or type                              | 2.68 |
+| 57 |  10mo  | cluster     | see if it's possible to use operator overloading magics to implement threadsafe properties                                                      | 2.68 |
+|  3 | 1.6y   | cmake       | use components like cefeika                                                                                                                     |    3 |
+|  6 | 1.5y   | cmake       | consider cpp modules                                                                                                                            |    3 |
+|  7 | 1.5y   | cmake       | add different packages for distribution                                                                                                         |    3 |
+| 28 |  11mo  | cmake       | add pre-compiling the static files feature in the cmake for different file types in the generate_static_file function                           | 2.93 |
+| 30 |  10mo  | cmake       | configure and use sanitizers                                                                                                                    | 2.78 |
+| 76 |   8w   | cmake       | use source_group to group files logically                                                                                                       | 1.33 |
+| 29 |  11mo  | codegen     | forms for auto code generation, so the user can easily write a boilerplate and change the code later.                                           | 2.92 |
+| 65 |   8mo  | cookies     | parse response cookies                                                                                                                          | 2.45 |
+| 66 |   8mo  | cookies     | add cookie extensions                                                                                                                           | 2.45 |
+| 67 |   8mo  | cookies     | add extension for session management                                                                                                            | 2.45 |
+| 68 |   8mo  | cookies     | implement encrypted cookies                                                                                                                     | 2.45 |
+| 32 |  10mo  | fcgi        | convert endpoint fromats                                                                                                                        | 2.77 |
+| 33 |  10mo  | fcgi        | find where to add the thread_pool                                                                                                               | 2.77 |
+| 34 |  10mo  | fcgi        | add the ctor of threadpool                                                                                                                      | 2.77 |
+| 35 |  10mo  | fcgi        | use threadpool in running the io_context                                                                                                        | 2.77 |
+| 36 |  10mo  | fcgi        | restart the server when the endpoints change                                                                                                    | 2.77 |
+| 37 |  10mo  | fcgi        | learn boost::cpp03::server4::server::operator() example                                                                                         | 2.77 |
+| 38 |  10mo  | fcgi        | add thread_count in fcgi class                                                                                                                  | 2.77 |
+| 39 |  10mo  | fcgi        | implement request methods in fcgi                                                                                                               | 2.77 |
+| 40 |  10mo  | fcgi        | write a fcgi hello world example                                                                                                                | 2.77 |
+| 41 |  10mo  | fcgi        | write fcgi tests                                                                                                                                | 2.77 |
+| 42 |  10mo  | fcgi        | read the fcgi header async                                                                                                                      | 2.77 |
+| 43 |  10mo  | fcgi        | parse the fcgi header                                                                                                                           | 2.77 |
+| 44 |  10mo  | fcgi        | read the rest of the fcgi request                                                                                                               | 2.77 |
+| 45 |  10mo  | fcgi        | parse the rest of the fcgi request                                                                                                              | 2.77 |
+| 46 |  10mo  | fcgi        | add constructors for protocols' file's classes                                                                                                  | 2.77 |
+| 47 |  10mo  | fcgi        | figure out a way to listen on multiple endpoints                                                                                                | 2.77 |
+| 12 | 1.2y   | functional  | implement trailing in debounce class                                                                                                            |    3 |
+| 13 | 1.2y   | functional  | add a way to use a thread pool in the debounce class                                                                                            |    3 |
+| 14 | 1.2y   | functional  | make property class thread safe if the user wants it                                                                                            |    3 |
+| 15 | 1.2y   | functional  | add functionality to check if the user is running the program in debug mode or release mode                                                     |    3 |
+| 16 | 1.2y   | functional  | add functionality to the properties class and debounced class to check if the user is going to have a race condition or not if all possible     |    3 |
+| 17 | 1.2y   | functional  | check if you actually need the function_ref class or not                                                                                        |    3 |
+| 64 |   8mo  | headers     | give the user the ability to change the status phrase of status code                                                                            | 2.46 |
+|  1 | 1.6y   | interfaces  | implement fcgi                                                                                                                                  |    3 |
+|  5 | 1.5y   | interfaces  | implement wsgi                                                                                                                                  |    3 |
+| 80 |  16s   | log         | use c++20 std::source_location for logging                                                                                                      |    1 |
+| 19 |  12mo  | modules     | add mother modules to the server's templtes                                                                                                     | 2.98 |
+| 10 | 1.4y   | net         | add mac address class                                                                                                                           |    3 |
+| 21 |  12mo  | net         | add fragment routing methods in uri (think about it first)                                                                                      | 2.98 |
+| 22 |  12mo  | net         | implement put_query in uri                                                                                                                      | 2.98 |
+| 23 |  12mo  | net         | implement get_query in uri                                                                                                                      | 2.98 |
+| 24 |  12mo  | net         | implement remove_query in uri                                                                                                                   | 2.98 |
+| 25 |  12mo  | net         | implement append_query in uri                                                                                                                   | 2.98 |
+| 26 |  12mo  | net         | implement pop_path in uri                                                                                                                       | 2.98 |
+| 27 |  12mo  | net         | implement append_path in uri                                                                                                                    | 2.98 |
+| 75 |  10w   | net         | add 128bit support to ipv6 class for systems that supports them                                                                                 | 1.41 |
+|  2 | 1.6y   | performance | implement half-lazy loading of images/... stuff                                                                                                 |    3 |
+| 49 |  10mo  | performance | optimize ipv6 and checkout the benchmark                                                                                                        | 2.73 |
+| 70 |  11w   | performance | add logger_allocator custom allocator                                                                                                           | 1.42 |
+| 71 |  11w   | performance | add add null_allocator custom allocator to help debug allocations                                                                               | 1.42 |
+| 72 |  11w   | performance | add add allocator category concept                                                                                                              | 1.42 |
+| 73 |  11w   | performance | add add allocator categories to the traits                                                                                                      | 1.42 |
+| 48 |  10mo  | pub         | Make travis build successful                                                                                                                    | 2.75 |
+| 20 |  12mo  | request     | sort paths in router based on views and how much time it takes for them to be evaluated                                                         | 2.98 |
+| 51 |  10mo  | tests       | add a high level testing library that uses gtest and catch2 and boost.test and others                                                           | 2.72 |
+| 52 |  10mo  | tests       | convert existing tests into your own testing library                                                                                            | 2.72 |
+| 69 |  11w   | tests       | write tests for utils/errors                                                                                                                    | 1.42 |
+| 58 |  10mo  | thread      | add fast and thread-safe class template for containers                                                                                          | 2.68 |
+| 78 |   6w   | traits      | remove stateful and stateless from allocator features                                                                                           | 1.26 |
+| 31 |  10mo  | uri         | add support for encrypted URIs                                                                                                                  | 2.78 |
+| 79 |   6w   | uri         | add support for RFC 6570 (URI Template)                                                                                                         | 1.23 |
+|  9 | 1.5y   | utils       | implement property class                                                                                                                        |    3 |
+| 59 |  10mo  | valves      | a valve that limits user visits                                                                                                                 | 2.67 |
+| 60 |  10mo  | valves      | a valve that only allows guests                                                                                                                 | 2.67 |
+| 61 |  10mo  | valves      | a valve that only allows registered users                                                                                                       | 2.67 |
+|  4 | 1.5y   | webrtc      | watch WebRTC tutorials                                                                                                                          |    3 |
 
 
 
