@@ -29,7 +29,10 @@ namespace webpp::http {
         using headers_type = simple_request_headers<traits_type, root_extensions, local_allocator_type>;
         using body_type    = simple_request_body<traits_type, root_extensions>;
         // fixme: this local and object will make the request non-copyable.
-        using headers_object_type = object::local<headers_type, stack<>, allocator_descriptors_type>;
+        // fixme: I am using general allocator here, but we can use a local allocator here for headers
+        // using headers_object_type = object::local<headers_type, stack<>, allocator_descriptors_type>;
+        using headers_object_type =
+          object::object<headers_type, alloc::general_features, allocator_descriptors_type>;
         using body_object_type =
           object::object<body_type, alloc::general_features, allocator_descriptors_type>;
 
