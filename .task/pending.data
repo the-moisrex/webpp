@@ -77,3 +77,4 @@
 [description:"should we add 'using namespace std;' in webpp::istl?" entry:"1609330445" modified:"1609330445" project:"STL" status:"pending" uuid:"cbdccf5c-95fa-473e-aa76-9b102fd955d1"]
 [description:"remove stateful and stateless from allocator features" entry:"1609331398" modified:"1609331398" project:"traits" status:"pending" uuid:"f61ca39c-b0d3-44d6-aa1e-202975962307"]
 [description:"add support for RFC 6570 (URI Template)" entry:"1609777443" modified:"1609777443" project:"uri" status:"pending" uuid:"a4e49b97-95b1-4cca-8a3c-3c5f054a3aa1"]
+[description:"use c++20 std::source_location for logging" entry:"1613483657" modified:"1613483657" project:"log" status:"pending" uuid:"138f8cf7-d1ca-4fcd-8e0a-ed825280e1e8"]

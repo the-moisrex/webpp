@@ -221,6 +221,7 @@ namespace webpp::http {
 
         /**
          * Get the number or segments in this path
+         * todo: use consteval instead?
          */
         [[nodiscard]] static constexpr stl::size_t size() noexcept {
             stl::size_t _size = 0;
