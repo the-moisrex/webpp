@@ -40,24 +40,27 @@ namespace webpp {
         using char_type           = istl::char_type_of<string_view_type>;
         using string_type         = traits::general_string<traits_type>;
         using allocator_pack_type = traits::allocator_pack_type<traits_type>;
-        using alloc_pack_ref      = stl::conditional_t<sizeof(allocator_pack_type) <= 1 &&
-                                                    stl::is_copy_constructible_v<allocator_pack_type>,
-                                                  allocator_pack_type,
-                                                  allocator_pack_type&>;
+        using alloc_pack_ref =
+          stl::conditional_t<sizeof(allocator_pack_type) <= sizeof(allocator_pack_type*) &&
+                               stl::is_trivially_copy_constructible_v<allocator_pack_type>,
+                             allocator_pack_type,
+                             allocator_pack_type&>;
 
         [[no_unique_address]] alloc_pack_ref alloc_pack;
         [[no_unique_address]] logger_ref     logger;
 
         // a copy constructor essentially; works on enable_owner_traits as well
         template <typename T>
-        requires requires(stl::remove_cvref_t<T> et) {
-            requires !stl::same_as<stl::remove_cvref_t<T>, enable_traits>;
-            requires EnabledTraits<stl::remove_cvref_t<T>>;
-            requires stl::same_as<typename stl::remove_cvref_t<T>::traits_type, traits_type>;
-            requires stl::same_as<typename stl::remove_cvref_t<T>::logger_type, logger_type>;
-            requires stl::same_as<typename stl::remove_cvref_t<T>::allocator_pack_type, allocator_pack_type>;
-        }
-        constexpr enable_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack}, logger{obj.logger} {}
+        requires(!stl::same_as<stl::remove_cvref_t<T>, enable_traits> &&
+                 requires(stl::remove_cvref_t<T> et) {
+                     requires EnabledTraits<stl::remove_cvref_t<T>>;
+                     requires stl::same_as<typename stl::remove_cvref_t<T>::traits_type, traits_type>;
+                     requires stl::same_as<typename stl::remove_cvref_t<T>::logger_type, logger_type>;
+                     requires stl::same_as<typename stl::remove_cvref_t<T>::allocator_pack_type,
+                                           allocator_pack_type>;
+                 }) constexpr enable_traits(T&& obj) noexcept
+          : alloc_pack{obj.alloc_pack},
+            logger{obj.logger} {}
 
         constexpr enable_traits(alloc_pack_ref alloc_pack_obj, logger_ref logger_obj = {}) noexcept
           : alloc_pack{alloc_pack_obj},

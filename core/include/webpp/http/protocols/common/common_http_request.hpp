@@ -10,11 +10,10 @@
 #include "../../request_body.hpp"
 #include "../../request_headers.hpp"
 
-
 namespace webpp::http {
 
     template <Traits TraitsType, HTTPRequestExtensionParent REL, RootExtensionList RootExtensions>
-    struct common_http_request : public REL, public enable_traits<TraitsType> {
+    struct common_http_request : public enable_traits<TraitsType>, public REL {
         using root_extensions            = RootExtensions;
         using traits_type                = TraitsType;
         using request_extension_list     = REL;
@@ -36,17 +35,23 @@ namespace webpp::http {
         using body_object_type =
           object::object<body_type, alloc::general_features, allocator_descriptors_type>;
 
-        headers_object_type headers{this->alloc_pack};
-        body_object_type    body{this->alloc_pack};
+        headers_object_type headers;
+        body_object_type    body;
+
+
+        template <EnabledTraits ET>
+        requires(!stl::same_as<stl::remove_cvref_t<ET>, common_http_request>) // not if it's copy/move ctor
+          constexpr common_http_request(ET&& et) noexcept
+          : enable_traits<TraitsType>(et),
+            REL{},
+            headers{et.alloc_pack},
+            body{et.alloc_pack} {}
 
         constexpr common_http_request(common_http_request const&)     = default;
         constexpr common_http_request(common_http_request&&) noexcept = default;
         constexpr common_http_request& operator=(common_http_request const&) noexcept = default;
         constexpr common_http_request& operator=(common_http_request&&) noexcept = default;
-
-        using etraits::etraits;
     };
-
 
 } // namespace webpp::http
 
