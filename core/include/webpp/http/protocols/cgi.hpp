@@ -22,6 +22,7 @@ namespace webpp::http {
               RootExtensionList REList     = empty_root_extension_lists>
     struct cgi : public common_http_protocol<TraitsType, App, stl::remove_cvref_t<REList>> {
         using traits_type            = TraitsType;
+        using etraits                = enable_owner_traits<traits_type>;
         using application_type       = App;
         using string_view_type       = traits::string_view<traits_type>;
         using char_type              = traits::char_type<traits_type>;
@@ -92,7 +93,8 @@ namespace webpp::http {
 
         int operator()() noexcept {
             // we're putting the request on local allocator; yay us :)
-            HTTPResponse auto res = this->app(request_type{*this});
+            static_assert(stl::constructible_from<request_type, cgi>);
+            HTTPResponse auto res = this->app(request_type{this->alloc_pack, this->logger});
             res.calculate_default_headers();
             const auto header_str = res.headers.str();
             const auto str        = res.body.str();
