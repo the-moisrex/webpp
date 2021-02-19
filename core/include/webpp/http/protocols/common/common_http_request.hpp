@@ -42,7 +42,7 @@ namespace webpp::http {
         template <EnabledTraits ET>
         requires(!stl::same_as<stl::remove_cvref_t<ET>, common_http_request>) // not if it's copy/move ctor
           constexpr common_http_request(ET&& et) noexcept
-          : enable_traits<TraitsType>(et),
+          : etraits{et},
             REL{},
             headers{et.alloc_pack},
             body{et.alloc_pack} {}
