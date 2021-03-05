@@ -7,6 +7,7 @@
 
 #include "../std/type_traits.hpp"
 
+#include <cstdint>
 #include <cstring>
 #include <limits>
 
@@ -15,8 +16,8 @@ namespace webpp::ascii {
 
     template <typename INT>
     constexpr auto digit_count() noexcept {
-        uint_fast8_t t = 0;
-        INT          a = stl::numeric_limits<INT>::max();
+        stl::uint_fast8_t t = 0;
+        INT               a = stl::numeric_limits<INT>::max();
         while (a /= 10)
             ++t;
         return t;
