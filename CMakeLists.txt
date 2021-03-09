@@ -55,13 +55,24 @@ message(STATUS "Install archive dir expression : ${INSTALL_ARCHIVEDIR}")
 message(STATUS "Install bin dir expression     : ${INSTALL_BINDIR}")
 message(STATUS "Install include dir expression : ${INSTALL_INCLUDEDIR}")
 
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(IS_DEBUG TRUE)
+    message(STATUS "Debug mode is enabled.")
+else()
+    set(IS_DEBUG FALSE)
+    message(STATUS "Debug mode is disabled.")
+endif()
+
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(IS_GCC true)
+    set(IS_GCC TRUE)
+    set(IS_CLANG FALSE)
     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS ${gcc_min_version})
         message(FATAL_ERROR "This version of GCC is not supported. We need at least version ${gcc_min_version}.")
     endif ()
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(IS_CLANG true)
+    set(IS_GCC FALSE)
+    set(IS_CLANG TRUE)
     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS ${clang_min_version})
         message(FATAL_ERROR "This version of Clang is not supported. We need at least version ${clang_min_version}.")
     endif ()
@@ -71,7 +82,7 @@ endif ()
 add_compile_definitions(WEBPP_PROJECT_ROOT=${CMAKE_CURRENT_SOURCE_DIR})
 
 
-if (IS_GCC)
+if (IS_GCC AND IS_DEBUG)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fconcepts-diagnostics-depth=10 -Wall -Wpedantic -Wextra")
 endif ()
 
@@ -136,27 +147,29 @@ if (NOT fmt_FOUND)
     include_directories(${fmt_SOURCE_DIR}/include)
 endif ()
 
-find_package(GTest QUIET)
-if (NOT gtest_FOUND)
-    message(STATUS "Downloading googletest project")
-    FetchContent_Declare(
-            googletest
-            GIT_REPOSITORY https://github.com/google/googletest.git
-            GIT_TAG release-1.10.0
-    )
-    set(BUILD_GMOCK OFF CACHE BOOL "Builds the googlemock subproject" FORCE)
-    set(INSTALL_GTEST ON CACHE BOOL "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" FORCE)
+if (IS_DEBUG)
+    find_package(GTest QUIET)
+    if (NOT gtest_FOUND)
+        message(STATUS "Downloading googletest project")
+        FetchContent_Declare(
+                googletest
+                GIT_REPOSITORY https://github.com/google/googletest.git
+                GIT_TAG release-1.10.0
+        )
+        set(BUILD_GMOCK OFF CACHE BOOL "Builds the googlemock subproject" FORCE)
+        set(INSTALL_GTEST ON CACHE BOOL "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" FORCE)
 
-    FetchContent_MakeAvailable(googletest)
-    include_directories(${googletest_SOURCE_DIR}/googletest/include)
-endif ()
+        FetchContent_MakeAvailable(googletest)
+        include_directories(${googletest_SOURCE_DIR}/googletest/include)
+    endif ()
+endif()
 
 
 add_subdirectory(${LIB_DIR})
 add_subdirectory(${SDK_DIR})
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-  add_subdirectory(${TESTS_DIR})
-  add_subdirectory(${BENCHMARKS_DIR})
-  add_subdirectory(${EXAMPLES_DIR})
+if (IS_DEBUG)
+    add_subdirectory(${TESTS_DIR})
+    add_subdirectory(${BENCHMARKS_DIR})
+    add_subdirectory(${EXAMPLES_DIR})
 endif ()
 
