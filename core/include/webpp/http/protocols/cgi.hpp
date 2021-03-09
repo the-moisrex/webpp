@@ -1,6 +1,7 @@
 #ifndef WEBPP_CGI_H
 #define WEBPP_CGI_H
 
+#include "../../application/request.hpp"
 #include "../../convert/casts.hpp"
 #include "../../memory/object.hpp"
 #include "../../std/string_view.hpp"
@@ -10,8 +11,7 @@
 #include "../request_body.hpp"
 #include "../response.hpp"
 #include "./cgi_request.hpp"
-#include "common/common_http_protocol.hpp"
-#include "webpp/application/request.hpp"
+#include "./common/common_http_protocol.hpp"
 
 #include <iostream>
 
