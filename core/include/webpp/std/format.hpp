@@ -84,6 +84,8 @@ namespace webpp::istl {
         }
 
     } // namespace details
+
+
     // Thread-safe replacement for std::localtime
     inline std::tm safe_localtime(std::time_t time) {
         struct dispatcher {
@@ -130,6 +132,7 @@ namespace webpp::istl {
     inline std::tm safe_localtime(std::chrono::time_point<std::chrono::system_clock> time_point) {
         return localtime(std::chrono::system_clock::to_time_t(time_point));
     }
+
 #endif
 } // namespace webpp::istl
 
