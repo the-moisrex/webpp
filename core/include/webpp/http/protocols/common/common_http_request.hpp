@@ -34,18 +34,21 @@ namespace webpp::http {
           object::object<headers_type, alloc::general_features, allocator_descriptors_type>;
         using body_object_type =
           object::object<body_type, alloc::general_features, allocator_descriptors_type>;
+        using general_resource_type = typename headers_object_type::resource_type;
 
-        headers_object_type headers;
-        body_object_type    body;
+        [[no_unique_address]] general_resource_type alloc_resource{};
+        headers_object_type                         headers;
+        [[no_unique_address]] body_object_type      body;
 
 
-        template <EnabledTraits ET>
-        requires(!stl::same_as<stl::remove_cvref_t<ET>, common_http_request>) // not if it's copy/move ctor
+        template <typename ET>
+        requires(!stl::same_as<stl::remove_cvref_t<ET>, common_http_request> && // not if it's copy/move ctor
+                 EnabledTraits<ET>)                                             // it's traits' enabled object
           constexpr common_http_request(ET&& et) noexcept
           : etraits{et},
             REL{},
-            headers{et.alloc_pack},
-            body{et.alloc_pack} {}
+            headers{et.alloc_pack, alloc_resource},
+            body{et.alloc_pack, alloc_resource} {}
 
         constexpr common_http_request(common_http_request const&)     = default;
         constexpr common_http_request(common_http_request&&) noexcept = default;
