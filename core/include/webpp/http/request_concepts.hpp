@@ -26,6 +26,8 @@ namespace webpp::http {
 
         // so we can make a copy of it (initial request)
         // requires stl::copy_constructible<stl::remove_cvref_t<T>>;
+
+        // todo: should we uncomment this?
         // requires requires {
         //    stl::remove_cvref_t<T>{req};
         // };
