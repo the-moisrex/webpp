@@ -40,7 +40,7 @@ namespace webpp {
             str.clear();
         };
 
-      private:
+      private :
         // this will get you the allocator inside the StrT which should be the above "string_type"
         // this is aimed to find the allocator_type inside the string but make sure not to raise any errors,
         // when there's no allocator_type
@@ -103,7 +103,7 @@ namespace webpp {
         void for_each(auto&& func, auto&& simd_func) noexcept(
           noexcept(func(this->data()))
 #ifdef WEBPP_EVE
-            && noexcept(simd_func(stl::declval<eve::wide<char_type>>()))
+            && noexcept(simd_func(stl::declval<eve::wide<char_type>>(), this->data()))
 #endif
         ) {
             auto*       it     = this->data();
@@ -117,7 +117,7 @@ namespace webpp {
             if (_size > simd_size) {
                 const auto* almost_end = it_end - (_size % simd_size);
                 for (; it != almost_end; it += simd_size) {
-                    stl::invoke(simd_func, simd_type{it});
+                    stl::invoke(simd_func, simd_type{it}, it);
                 }
                 // do the rest
                 it -= simd_size;
@@ -157,6 +157,7 @@ namespace webpp {
                 it -= simd_size;
             }
 #endif
+            // todo: use simd here too
             for (; it != it_end; ++it) {
                 if (!stl::invoke(func, it)) {
                     return false;
@@ -312,6 +313,31 @@ namespace webpp {
         }
 
         // todo: prepend
+
+
+
+        void replace(char_type ch1, char_type ch2) noexcept {
+            static_assert(is_mutable, "You can't use replace method when the string is not mutable.");
+#ifdef WEBPP_EVE
+            using simd_type  = eve::wide<char_type>;
+            using simd_utype = eve::wide<stl::make_unsigned_t<char_type>>;
+            const simd_utype simd_ch1{ch1};
+            const simd_utype simd_ch2{ch2};
+#endif
+            this->for_each(
+              [=](auto* it) constexpr noexcept {
+                  if (*it == ch1)
+                      *it = ch2;
+              },
+              [=](simd_type const& values, char_type* it) constexpr noexcept {
+#ifdef WEBPP_EVE
+                  const auto uvalues =
+                    eve::bit_cast(stl::forward<decltype(values)>(values), eve::as_<simd_utype>());
+                  const auto res = eve::if_else(uvalues == ch1, simd_ch2, simd_ch1);
+                  eve::store(eve::bit_cast(res, eve::as_<simd_type>()), it);
+#endif
+              });
+        }
     };
 
 
