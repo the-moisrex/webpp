@@ -319,9 +319,10 @@ namespace webpp::http {
                 // this means this function has a "next" valve already,
                 // so it goes to the next's next valve
                 // this way we recursively create a valve type and return it.
-                route<next_route_type, TheOp, NewRouteType> n{super_t::next,
-                                                              stl::forward<NewRouteType>(new_route)};
-                return route<route_type, op, decltype(n)>{*this, n};
+                using encapsulated_new_route = route<next_route_type, TheOp, NewRouteType>;
+                return route<route_type, op, encapsulated_new_route>{
+                  *this,
+                  encapsulated_new_route{super_t::next, stl::forward<NewRouteType>(new_route)}};
             }
         }
 
@@ -473,82 +474,84 @@ namespace webpp::http {
             using namespace stl;
             // exceptions will be handled by the router, unfortunately we're not able to do that here
 
-            const auto res                     = call_this_route(ctx, req);
-            using res_t                        = remove_cvref_t<decltype(res)>;
-            using n_res_t                      = remove_cvref_t<decltype(call_next_route(ctx, req))>;
-            constexpr bool convertible_to_bool = is_void_v<n_res_t> || same_as<n_res_t, bool>;
-
-            if constexpr (same_as<res_t, bool>) {
-                // handling sub-route calls:
-                if constexpr (logical_operators::none == op) {
-                    // practically the same as AND but without converting the result to boolean
-
-                    if constexpr (convertible_to_bool) {
-                        if (res)
-                            return call_next_route_in_bool(ctx, req);
-                        return true; // don't call the next sub-route, but call the next entry-route
-                    } else /* if constexpr (Context<n_res_t> || HTTPResponse<n_res_t>) */ {
-                        // if it's a context or a response, we have to use an optional object here because we
-                        // might not need to run the next route here.
-                        if (res)
-                            return optional<n_res_t>{call_next_route(ctx, req)};
-                        return optional<n_res_t>{nullopt};
-                    }
-                } else if constexpr (logical_operators::AND == op) {
-                    // don't rely on operator && for not executing the next route, because the user may
-                    // have overloaded the operator &&
-                    if constexpr (convertible_to_bool) {
-                        if (!res)
-                            return true; // continue checking other entry-routes, but not sub-routes
-                        return call_next_route_in_bool(ctx, req);
-                    } else {
-                        if (!res)
-                            return decltype(make_optional(call_next_route(ctx, req))){nullopt};
-                        return make_optional(call_next_route(ctx, req));
-                    }
-                } else if constexpr (logical_operators::OR == op) {
-                    // Same as "and", we will not use operator ||
-                    if constexpr (convertible_to_bool) {
-                        if (res)
-                            return true; // continue checking entry-routes but not the sub-routes
-                        return call_next_route_in_bool(ctx, req);
-                    } else {
-                        if (res)
-                            return nullopt;
-                        return make_optional(call_next_route(ctx, req));
-                    }
-                } else if constexpr (logical_operators::XOR == op) {
-                    // In operator xor, the next route will be called no matter the result of the current
-                    // route so there's no need for doing the same thing that we did above, but since they
-                    // may have changed the meaning of the operator ^, it's not a bad idea to do so, but
-                    // I'm too lazy :)
-                    if constexpr (convertible_to_bool) {
-                        return res ^ call_next_route_in_bool(ctx, req);
-                    } else {
-                        throw invalid_argument("Cannot use xor operator with non-bool route.");
-                    }
-                } else {
-                    // should not happen ever.
-                    return;
-                }
-            } else if constexpr (Context<res_t>) {
-                // perform sub-route context switching
-                if constexpr (is_next_route_valid) {
-                    return call_next_route(res, req);
-                } else {
-                    // entry-route level context-switching will going to happen in the router:
-                    return res;
-                }
-            } else if constexpr (HTTPResponse<res_t>) {
-                // terminate the sub-route callings and return the response, don't even need to run the
-                // rest of the routes
-                // The strings, and other stuff that can be converted to a response have already been
-                // converted to a response in the "call_route" function.
-                return res;
+            using res_t = remove_cvref_t<decltype(call_this_route(ctx, req))>;
+            if constexpr (is_void_v<res_t>) {
+                call_this_route(ctx, req); // nothing to worry about, it's void
             } else {
-                // even though the user should not return something useless, and the "call_route" function
-                // takes care of these stuff, we still ignore the result and just run the next routes
-                return call_next_route(ctx, req);
+                const auto res                     = call_this_route(ctx, req);
+                using n_res_t                      = remove_cvref_t<decltype(call_next_route(ctx, req))>;
+                constexpr bool convertible_to_bool = is_void_v<n_res_t> || same_as<n_res_t, bool>;
+
+                if constexpr (same_as<res_t, bool>) {
+                    // handling sub-route calls:
+                    if constexpr (logical_operators::none == op) {
+                        // practically the same as AND but without converting the result to boolean
+                        if constexpr (is_void_v<n_res_t>) {
+                            // just because we can't have an optional<void>
+                            if (res)
+                                call_next_route(ctx, req);
+                        } else {
+                            if (res)
+                                return optional<n_res_t>{call_next_route(ctx, req)};
+                            return optional<n_res_t>{nullopt};
+                        }
+                    } else if constexpr (logical_operators::AND == op) {
+                        // don't rely on operator && for not executing the next route, because the user may
+                        // have overloaded the operator &&
+                        if constexpr (convertible_to_bool) {
+                            if (!res)
+                                return true; // continue checking other entry-routes, but not sub-routes
+                            return call_next_route_in_bool(ctx, req);
+                        } else {
+                            if (!res)
+                                return optional<n_res_t>{nullopt};
+                            return optional<n_res_t>{call_next_route(ctx, req)};
+                        }
+                    } else if constexpr (logical_operators::OR == op) {
+                        // Same as "and", we will not use operator ||
+                        if constexpr (convertible_to_bool) {
+                            if (res)
+                                return true; // continue checking entry-routes but not the sub-routes
+                            return call_next_route_in_bool(ctx, req);
+                        } else {
+                            if (res)
+                                return nullopt;
+                            return make_optional(call_next_route(ctx, req));
+                        }
+                    } else if constexpr (logical_operators::XOR == op) {
+                        // In operator xor, the next route will be called no matter the result of the current
+                        // route so there's no need for doing the same thing that we did above, but since they
+                        // may have changed the meaning of the operator ^, it's not a bad idea to do so, but
+                        // I'm too lazy :)
+                        if constexpr (convertible_to_bool) {
+                            return res ^ call_next_route_in_bool(ctx, req);
+                        } else {
+                            throw invalid_argument("Cannot use xor operator with non-bool route.");
+                        }
+                    } else {
+                        // should not happen ever.
+                        return;
+                    }
+                } else if constexpr (Context<res_t>) {
+                    // perform sub-route context switching
+                    if constexpr (is_next_route_valid) {
+                        return call_next_route(res, req);
+                    } else {
+                        // entry-route level context-switching will going to happen in the router:
+                        return res;
+                    }
+                } else if constexpr (HTTPResponse<res_t>) {
+                    // terminate the sub-route callings and return the response, don't even need to run the
+                    // rest of the routes
+                    // The strings, and other stuff that can be converted to a response have already been
+                    // converted to a response in the "call_route" function.
+                    return res;
+                } else {
+                    // even though the user should not return something useless, and the "call_route" function
+                    // takes care of these stuff, we still ignore the result and just run the next routes
+                    ctx.logger.warning("Router", "We're ignoring one of your route's results.");
+                    return call_next_route(ctx, req);
+                }
             }
         }
     };

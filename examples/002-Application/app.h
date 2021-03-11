@@ -25,14 +25,14 @@ namespace website {
                 return "Nice page.";
             };
             router _router{extensions{},
-                           get and (relative / "home") >>=
+                           (get and (relative / "home")) >>=
                            [this](Context auto& ctx) {
                                return this->home(ctx);
                            },
-                           get & (relative / "about" >>=
-                                  [this](Context auto& ctx) {
-                                      return this->about(ctx);
-                                  }),
+                           get & (relative / "about") >>=
+                           [this](Context auto& ctx) {
+                               return this->about(ctx);
+                           },
                            relative / "admin" >>= admin};
 
             return _router(req);
