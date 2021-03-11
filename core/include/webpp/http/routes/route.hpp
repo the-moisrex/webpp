@@ -487,24 +487,17 @@ namespace webpp::http {
                         if (res)
                             return call_next_route_in_bool(ctx, req);
                         return true; // don't call the next sub-route, but call the next entry-route
-                    } else if constexpr (Context<n_res_t> || HTTPResponse<n_res_t>) {
+                    } else /* if constexpr (Context<n_res_t> || HTTPResponse<n_res_t>) */ {
                         // if it's a context or a response, we have to use an optional object here because we
                         // might not need to run the next route here.
                         if (res)
                             return optional<n_res_t>{call_next_route(ctx, req)};
                         return optional<n_res_t>{nullopt};
-                    } else {
-                        // let the router deal with this non-sense:
-                        return call_next_route(ctx, req);
                     }
                 } else if constexpr (logical_operators::AND == op) {
                     // don't rely on operator && for not executing the next route, because the user may
                     // have overloaded the operator &&
-                    if constexpr (same_as<n_res_t, bool>) {
-                        if (!res)
-                            return true; // continue checking other entry-routes, but not sub-routes
-                        return call_next_route(ctx, req);
-                    } else if constexpr (convertible_to_bool) {
+                    if constexpr (convertible_to_bool) {
                         if (!res)
                             return true; // continue checking other entry-routes, but not sub-routes
                         return call_next_route_in_bool(ctx, req);
@@ -515,11 +508,7 @@ namespace webpp::http {
                     }
                 } else if constexpr (logical_operators::OR == op) {
                     // Same as "and", we will not use operator ||
-                    if constexpr (same_as<n_res_t, bool>) {
-                        if (res)
-                            return true; // continue checking entry-routes but not the sub-routes
-                        return call_next_route(ctx, req);
-                    } else if constexpr (convertible_to_bool) {
+                    if constexpr (convertible_to_bool) {
                         if (res)
                             return true; // continue checking entry-routes but not the sub-routes
                         return call_next_route_in_bool(ctx, req);
@@ -533,9 +522,7 @@ namespace webpp::http {
                     // route so there's no need for doing the same thing that we did above, but since they
                     // may have changed the meaning of the operator ^, it's not a bad idea to do so, but
                     // I'm too lazy :)
-                    if constexpr (same_as<n_res_t, bool>) {
-                        return res ^ call_next_route(ctx, req);
-                    } else if constexpr (convertible_to_bool) {
+                    if constexpr (convertible_to_bool) {
                         return res ^ call_next_route_in_bool(ctx, req);
                     } else {
                         throw invalid_argument("Cannot use xor operator with non-bool route.");
