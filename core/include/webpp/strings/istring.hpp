@@ -31,6 +31,7 @@ namespace webpp {
         using char_type        = istl::char_type_of<string_type>;
         using char_traits_type = istl::char_traits_type_of<string_type>;
         using istring_type     = istring<StringType>;
+        using pointer          = typename string_type::pointer;
 
         static constexpr bool has_allocator = requires(string_type str) {
             typename string_type::allocator_type;
@@ -100,10 +101,9 @@ namespace webpp {
             return std_string();
         }
 
-        void for_each(auto&& func, auto&& simd_func) noexcept(
-          noexcept(func(this->data()))
+        void for_each(auto&& func, auto&& simd_func) noexcept(noexcept(func(this->data()))
 #ifdef WEBPP_EVE
-            && noexcept(simd_func(stl::declval<eve::wide<char_type>>(), this->data()))
+                                                                && noexcept(simd_func(this->data()))
 #endif
         ) {
             auto*       it     = this->data();
@@ -117,7 +117,7 @@ namespace webpp {
             if (_size > simd_size) {
                 const auto* almost_end = it_end - (_size % simd_size);
                 for (; it != almost_end; it += simd_size) {
-                    stl::invoke(simd_func, simd_type{it}, it);
+                    stl::invoke(simd_func, it);
                 }
                 // do the rest
                 it -= simd_size;
@@ -137,7 +137,7 @@ namespace webpp {
             }
         }
 
-        [[nodiscard]] constexpr auto if_all(auto&& func, auto&& simd_func) const noexcept {
+        [[nodiscard]] constexpr bool if_all(auto&& func, auto&& simd_func) const noexcept {
             auto*       it     = this->data();
             const auto  _size  = this->size();
             const auto* it_end = it + _size;
@@ -149,7 +149,7 @@ namespace webpp {
             if (_size > simd_size) {
                 const auto* almost_end = it_end - (_size % simd_size);
                 for (; it != almost_end; it += simd_size) {
-                    if (!stl::invoke(simd_func, simd_type{it})) {
+                    if (!stl::invoke(simd_func, it)) {
                         return false;
                     }
                 }
@@ -167,7 +167,7 @@ namespace webpp {
         }
 
 
-        [[nodiscard]] constexpr auto if_all(auto&& func) const noexcept {
+        [[nodiscard]] constexpr bool if_all(auto&& func) const noexcept {
             auto*       it     = this->data();
             const auto  _size  = this->size();
             const auto* it_end = it + _size;
@@ -179,7 +179,7 @@ namespace webpp {
             return true;
         }
 
-        [[nodiscard]] constexpr auto if_any(auto&& func, auto&& simd_func) const noexcept {
+        [[nodiscard]] constexpr bool if_any(auto&& func, auto&& simd_func) const noexcept {
             auto*       it     = this->data();
             const auto  _size  = this->size();
             const auto* it_end = it + _size;
@@ -208,7 +208,7 @@ namespace webpp {
         }
 
 
-        [[nodiscard]] constexpr auto if_any(auto&& func) const noexcept {
+        [[nodiscard]] constexpr bool if_any(auto&& func) const noexcept {
             auto*       it     = this->data();
             const auto  _size  = this->size();
             const auto* it_end = it + _size;
@@ -224,32 +224,41 @@ namespace webpp {
 
 
         [[nodiscard]] constexpr bool is_ascii_lower() const noexcept {
-            return if_all(
-              [](auto* it) constexpr noexcept { return *it >= 'a' && *it <= 'z'; },
-              [](auto&& values) noexcept {
 #ifdef WEBPP_EVE
-                  using simd_utype = eve::wide<stl::make_unsigned_t<char_type>>;
-                  static const simd_utype small_a{'a'};
-                  const auto              u_values = eve::bit_cast(values, eve::as_<simd_utype>());
-                  const auto              res      = eve::is_less(eve::sub(u_values, small_a), 25);
-                  return eve::all(res);
+            using simd_utype = eve::wide<stl::make_unsigned_t<char_type>>;
+            using simd_type  = eve::wide<char_type>;
+            const simd_utype small_a{'a'};
 #endif
-              });
+            return this->if_all(
+              [](auto* it) constexpr noexcept { return *it >= 'a' && *it <= 'z'; }
+#ifdef WEBPP_EVE
+              ,
+              [=](auto* it) noexcept {
+                  const auto u_values = eve::bit_cast(simd_type{it}, eve::as_<simd_utype>());
+                  const auto res      = eve::is_less(eve::sub(u_values, small_a), 25);
+                  return eve::all(res);
+              }
+#endif
+            );
         }
 
         [[nodiscard]] constexpr bool is_ascii_upper() const noexcept {
-            // todo: add a benchmark for this
-            return if_all(
-              [](auto* it) constexpr noexcept { return *it >= 'A' && *it <= 'Z'; },
-              [](auto&& values) noexcept {
 #ifdef WEBPP_EVE
-                  using simd_utype = eve::wide<stl::make_unsigned_t<char_type>>;
-                  static const simd_utype big_a{'A'};
-                  const auto              u_values = eve::bit_cast(values, eve::as_<simd_utype>());
-                  const auto              res      = eve::is_less(eve::sub(u_values, big_a), 25);
-                  return eve::all(res);
+            using simd_utype = eve::wide<stl::make_unsigned_t<char_type>>;
+            using simd_type  = eve::wide<char_type>;
+            const simd_utype big_a{'A'};
 #endif
-              });
+            return this->if_all(
+              [](auto* it) constexpr noexcept { return *it >= 'A' && *it <= 'Z'; }
+#ifdef WEBPP_EVE
+              ,
+              [=](auto* it) constexpr noexcept {
+                  const auto u_values = eve::bit_cast(simd_type{it}, eve::as_<simd_utype>());
+                  const auto res      = eve::is_less(eve::sub(u_values, big_a), 25);
+                  return eve::all(res);
+              }
+#endif
+            );
         }
 
         //        [[nodiscard]] constexpr bool is_lower(range) const noexcept;
@@ -328,15 +337,16 @@ namespace webpp {
               [=](auto* it) constexpr noexcept {
                   if (*it == ch1)
                       *it = ch2;
-              },
-              [=](simd_type const& values, char_type* it) constexpr noexcept {
+              }
 #ifdef WEBPP_EVE
-                  const auto uvalues =
-                    eve::bit_cast(stl::forward<decltype(values)>(values), eve::as_<simd_utype>());
-                  const auto res = eve::if_else(uvalues == ch1, simd_ch2, simd_ch1);
+              ,
+              [=](auto* it) constexpr noexcept {
+                  const auto uvalues = eve::bit_cast(simd_type{it}, eve::as_<simd_utype>());
+                  const auto res     = eve::if_else(uvalues == ch1, simd_ch2, simd_ch1);
                   eve::store(eve::bit_cast(res, eve::as_<simd_type>()), it);
+              }
 #endif
-              });
+            );
         }
     };
 
