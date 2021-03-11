@@ -40,3 +40,12 @@ TEST(IString, Trim) {
     test = "t    \t";
     EXPECT_EQ("t", test.rtrim_copy());
 }
+
+TEST(IString, Replace) {
+    std_istring test = "000xxx000";
+    test.replace('x', '1');
+    EXPECT_EQ("000111000", test);
+    test.replace('0', '2');
+    EXPECT_EQ("222111222", test);
+}
+
