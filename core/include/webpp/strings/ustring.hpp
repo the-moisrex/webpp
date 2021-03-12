@@ -797,8 +797,9 @@ namespace webpp {
                 capacity(str.allocated_capacity);
                 str.data(str.local_buf);
                 str.set_length(0);
-            } else
+            } else {
                 construct(str.begin(), str.end());
+            }
         }
 
 
