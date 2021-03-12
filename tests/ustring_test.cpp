@@ -6,10 +6,17 @@
 
 using namespace webpp;
 using namespace std;
-/*
-TEST(UString, Init) {
-    utf8 str{u8"سلام"};
+
+TEST(UString, UTF8_Init) {
+    utf8 one{u8"hello world"};
+    utf8 two{"hello world"};
+    utf8 three{u8"سلام"};
+    EXPECT_EQ(one, "hello world");
+    EXPECT_EQ(two, "hello world");
+    EXPECT_EQ(three,u8"سلام");
 }
+
+/*
 
 void test_1() {
     bool ok = true;
