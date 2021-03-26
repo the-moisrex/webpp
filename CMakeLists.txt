@@ -87,6 +87,7 @@ if (NOT date_FOUND)
     )
 
     set(USE_SYSTEM_TZ_DB         OFF CACHE BOOL "Use the operating system's timezone database" FORCE)
+    set(USE_OS_TZDB              OFF CACHE BOOL "" FORCE) # I'm not sure if it's working or not
     set(MANUAL_TZ_DB             OFF CACHE BOOL "User will set TZ DB manually by invoking set_install in their code" FORCE)
     set(USE_TZ_DB_IN_DOT         OFF CACHE BOOL "Save the timezone database in the current folder" FORCE)
     set(BUILD_SHARED_LIBS        OFF CACHE BOOL "Build a shared version of library" FORCE)
