@@ -86,6 +86,26 @@ namespace webpp::istl {
         {alloc != alloc};
         typename A::value_type;
     };
+    
+    /**
+     * This concept always returns true. Use it for:
+     *   - for explicitly saying that it does capture all
+     *   - instead of commenting the whole in-development concepts, fill them with this temporarily.
+     */
+    template <typename T>
+    concept All = requires {
+    	typename A::yes;
+    } || !requires {
+    	typename A::yes;
+    };
+    
+    
+    /**
+     * This concept is always false
+     */
+    template <typename T>
+    concept None = !All<T>;
+    
 } // namespace webpp::istl
 
 #endif // WEBPP_STD_CONCEPTS_H
