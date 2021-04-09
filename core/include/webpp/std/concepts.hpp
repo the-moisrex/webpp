@@ -94,9 +94,9 @@ namespace webpp::istl {
      */
     template <typename T>
     concept All = requires {
-    	typename A::yes;
+    	typename T::yes;
     } || !requires {
-    	typename A::yes;
+    	typename T::yes;
     };
     
     
