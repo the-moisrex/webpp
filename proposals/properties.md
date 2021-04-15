@@ -10,10 +10,16 @@ The memory usage needs to be low because we're going to use this for lots of thi
 
 ### Separate memory for each property
 
+- [ ] easier for the user and the implementer
+
+
 ### All in one place
+
+- [ ] Is there a reason to have separate storages?
 
 ### Stored in an allocator
 
+- [ ] Passing an allocator for just an int?
 
 ## Performance
 
