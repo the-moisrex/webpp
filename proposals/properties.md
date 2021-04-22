@@ -35,3 +35,24 @@ Since there is a sync penalty, we have to optimize the syncing implementations s
 
 ## Using inside an Application class
 
+Example usage:
+
+````c++
+class app {
+
+  sync<int> visits = 0;
+
+  auto page() {
+    return "page";
+  }
+
+  auto operator(Request auto&& req) {
+    // ...
+    visits++;
+    return res;
+  }
+
+};
+````
+
+
