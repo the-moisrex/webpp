@@ -38,7 +38,7 @@ Since there is a sync penalty, we have to optimize the syncing implementations s
 Example usage:
 
 ````c++
-class app {
+struct app {
 
   sync<int> visits = 0;
 
@@ -46,9 +46,30 @@ class app {
     return "page";
   }
 
-  auto operator(Request auto&& req) {
+  auto operator()(Request auto&& req) {
     // ...
     visits++;
+    return res;
+  }
+
+};
+
+
+
+struct app2 {
+  
+  observable<int> request_count = 0;
+
+  app2() {
+    request_count.connect([] (auto val) {
+      if (val > 100)
+        notify_admin();
+    });
+  }
+
+  auto operator()(auto&& req) {
+    // ...
+    request_count++;
     return res;
   }
 
