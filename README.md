@@ -30,6 +30,7 @@ help you with these kinda projects someday:
 
 - Develop a static/dynamic website easily in C++
 - Using other people's already written websites/modules/components in your app
+- Writing long-runnig web apps and store temporary data in variables instead of database (not all languages can do that)
 
 ## Why C++?
 
