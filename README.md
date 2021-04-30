@@ -13,6 +13,40 @@ This project on:
 
 Look at the [Core Readme file](./core/README.md) for the core concepts of the project.
 
+## Project goals
+
+- To remove the necessity for dealing with low-level networking APIs
+- Cross-Platform: no need to deal with OS-specific APIs
+- Modular: to use other people's written apps and modules in your code easily
+- Cross-Protocol: Remove the necessity for dealing with specific protocols (CGI/FCGI/...)
+- Cross-Database-API: being able to access wide range of databases without dealing with DB-specific APIs and switch between them in the config files instead of changing the code itself.
+- Parallelization Access: being able to compute things in parallel easily
+- Implement Common Patterns easily
+
+## What can you should be able to do with this library?
+
+The project is still in development, but this framework should be able to
+help you with these kinda projects someday:
+
+- Develop a static/dynamic website easily in C++
+- Using other people's already written websites/modules/components in your app
+
+## Why C++?
+
+The most question that I get while talking to other developers is why C++?
+Well there are multiple answers:
+
+- C++ does have the potential specially the newer versions of C++
+- Having full power of C++ and your OS at your disposal
+- WebAssembly is getting stronger, you will be able to write both back-end and front-end in the same language with C++ (even though you already can if you choose JavaScript for example, but here's another option)
+- Has the potiential to be faster than other languages
+- C++ can be easy if the library is easy to use.
+- Using modern C++ is fun
+- Compile-Time computation is something that youeither can't achive or it's going to be difficult to achieve in other languages
+- Remove the necessity to learn other languages if you're already familiar with C++
+- Using older codes in your project more easily
+- Multi-threading access: not all languages provide that access easily specially in a web framework
+
 ## Dependencies
 
 These are the dependencies this project requires for certain parts of the project
