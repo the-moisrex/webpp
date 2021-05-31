@@ -1,8 +1,8 @@
 #ifndef WEBPP_SDK_CMDS_CMD
 #define WEBPP_SDK_CMDS_CMD
 
-#include "../../../core/include/webpp/std/string.hpp"
-#include "../../../core/include/webpp/std/string_view.hpp"
+#include "../../core/include/webpp/std/string.hpp"
+#include "../../core/include/webpp/std/string_view.hpp"
 
 
 namespace webpp::sdk::cmd {
