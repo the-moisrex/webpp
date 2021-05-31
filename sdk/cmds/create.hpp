@@ -14,13 +14,11 @@ namespace webpp::sdk::cmd {
     struct create : public command {
 
         // the name of the command
-        virtual constexpr stl::string_view name() noexcept const {
-		return "create";
-	}
+        virtual constexpr stl::string_view name() noexcept const override;
 
 
         // description of the command
-        virtual constexpr stl::string desc() noexcept const = 0;
+        virtual constexpr stl::string desc() noexcept const override;
     };
 
 } // namespace webpp::sdk::cmd
