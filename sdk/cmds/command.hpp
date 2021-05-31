@@ -16,11 +16,11 @@ namespace webpp::sdk::cmd {
     struct command {
 
         // the name of the command
-        virtual constexpr stl::string_view name() noexcept const = 0;
+        virtual stl::string_view name() noexcept const = 0;
 
 
         // description of the command
-        virtual constexpr stl::string desc() noexcept const = 0;
+        virtual stl::string desc() noexcept const = 0;
     };
 
 } // namespace webpp::sdk::cmd
