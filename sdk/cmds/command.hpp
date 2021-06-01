@@ -20,7 +20,7 @@ namespace webpp::sdk::cmd {
 
 
         // description of the command
-        virtual stl::string desc() noexcept const = 0;
+        virtual stl::string_view desc() noexcept const = 0;
 
         // Run the command
         virtual void handle();
