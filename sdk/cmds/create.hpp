@@ -11,9 +11,15 @@ namespace webpp::sdk::cmd {
      *
      * Create a new thing
      */
-    struct create final : public command {
+    struct create : public command {
         stl::string_view name() noexcept const override;
-        stl::string desc() noexcept const override;
+        stl::string      desc() const override;
+        void             handle() override;
+
+      protected:
+        // A batch is a series of files and directories that have
+        // a knowm name.
+        virtual stl::string batch_name() const
     };
 
 } // namespace webpp::sdk::cmd
