@@ -6,10 +6,20 @@
 
 namespace webpp::sdk::cmd {
 
+
+
+	/**
+	 * The selected template of a project will be detailed in
+	 * this struct.
+	 */
+	struct project_template;
+
+
     /**
-     * Create command
+     * Create a new project
      *
-     * Create a new thing
+     * Syntax:
+     *   webpp new project MySite
      */
     struct create_project : public create {
         stl::string_view name() noexcept const override;
@@ -26,8 +36,7 @@ namespace webpp::sdk::cmd {
 	stl::string project_name() const;
 
 	// Get the selected template name
-	// There's a default value
-	stl::string template_name() const;
+	project_template get_project_template() const;
     };
 
 } // namespace webpp::sdk::cmd
