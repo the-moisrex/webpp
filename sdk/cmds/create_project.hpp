@@ -8,11 +8,11 @@ namespace webpp::sdk::cmd {
 
 
 
-	/**
-	 * The selected template of a project will be detailed in
-	 * this struct.
-	 */
-	struct project_template;
+    /**
+     * The selected template of a project will be detailed in
+     * this struct.
+     */
+    struct project_template;
 
 
     /**
@@ -31,12 +31,12 @@ namespace webpp::sdk::cmd {
         // a knowm name.
         virtual stl::string batch_name() const = 0;
 
-	// Get the selected project name
-	// Empty when it's not specified.
-	stl::string project_name() const;
+        // Get the selected project name
+        // Empty when it's not specified.
+        stl::string project_name() const;
 
-	// Get the selected template name
-	project_template get_project_template() const;
+        // Get the selected template name
+        project_template get_project_template() const;
     };
 
 } // namespace webpp::sdk::cmd

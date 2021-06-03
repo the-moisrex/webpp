@@ -1,5 +1,6 @@
 {
-	"*.cpp": {"alternate": "{}.h"},
-	"*.h"  : {"alternate": "{}.cpp"}
+	"*.h"    : {"alternate": "{}.cpp"},
+	"*.cpp"  : {"alternate": "{}.hpp"},
+	"*.hpp"  : {"alternate": "{}.cpp"}
 }
 
