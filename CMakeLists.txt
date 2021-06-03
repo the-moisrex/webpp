@@ -80,6 +80,7 @@ include(FetchContent)
 
 find_package(date QUIET)
 if (NOT date_FOUND)
+    message(STATUS "Downloading date project")
     FetchContent_Declare(
             date
             GIT_REPOSITORY https://github.com/HowardHinnant/date.git
@@ -102,6 +103,7 @@ endif ()
 
 find_package(magic_enum QUIET)
 if (NOT magic_enum_FOUND)
+    message(STATUS "Downloading magic_enum project")
     FetchContent_Declare(
             magic_enum
             GIT_REPOSITORY https://github.com/Neargye/magic_enum.git
@@ -117,6 +119,7 @@ endif ()
 
 find_package(fmt QUIET)
 if (NOT fmt_FOUND)
+    message(STATUS "Downloading fmt project")
     FetchContent_Declare(
             fmt
             GIT_REPOSITORY https://github.com/fmtlib/fmt.git
@@ -135,6 +138,7 @@ endif ()
 
 find_package(GTest QUIET)
 if (NOT gtest_FOUND)
+    message(STATUS "Downloading googletest project")
     FetchContent_Declare(
             googletest
             GIT_REPOSITORY https://github.com/google/googletest.git
