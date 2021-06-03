@@ -3,8 +3,20 @@
 using namespace webpp;
 using namespace webpp::sdk::cmd;
 
-struct project_template{
-	
+struct project_template {
+  private:
+    stl::string_view name; // template name
+
+  public:
+    
+  project_template(stl::string_view inp_name) {
+
+  }
+
+  // check if the project template is a valid template or not
+  bool is_valid() const {
+
+  }
 };
 
 void create_project::handle() override {
