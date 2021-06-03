@@ -35,10 +35,11 @@ find_package(Boost REQUIRED)
 find_package(Threads REQUIRED)
 find_package(benchmark QUIET)
 if (NOT benchmark_FOUND)
+    message(STATUS "Downloading google benchmark project")
     FetchContent_Declare(
             benchmark
             GIT_REPOSITORY https://github.com/google/benchmark.git
-            GIT_TAG origin/master
+            GIT_TAG v1.5.4
     )
     set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "" FORCE)
     set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
