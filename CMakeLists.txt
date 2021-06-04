@@ -84,18 +84,18 @@ if (NOT date_FOUND)
     FetchContent_Declare(
             date
             GIT_REPOSITORY https://github.com/HowardHinnant/date.git
-            GIT_TAG origin/master
+            GIT_TAG v3.0.1
     )
 
     set(USE_SYSTEM_TZ_DB         OFF CACHE BOOL "Use the operating system's timezone database" FORCE)
-    set(USE_OS_TZDB              OFF CACHE BOOL "" FORCE) # I'm not sure if it's working or not
+    set(USE_OS_TZDB              ON  CACHE BOOL "" FORCE) # I'm not sure if it's working or not
     set(MANUAL_TZ_DB             OFF CACHE BOOL "User will set TZ DB manually by invoking set_install in their code" FORCE)
     set(USE_TZ_DB_IN_DOT         OFF CACHE BOOL "Save the timezone database in the current folder" FORCE)
     set(BUILD_SHARED_LIBS        OFF CACHE BOOL "Build a shared version of library" FORCE)
     set(ENABLE_DATE_TESTING      OFF CACHE BOOL "Enable unit tests" FORCE)
     set(DISABLE_STRING_VIEW      OFF CACHE BOOL "Disable string view" FORCE)
     set(COMPILE_WITH_C_LOCALE    OFF CACHE BOOL "define ONLY_C_LOCALE=1" FORCE)
-    set(BUILD_TZ_LIB             ON  CACHE BOOL "build/install of TZ library" FORCE)
+    set(BUILD_TZ_LIB             OFF CACHE BOOL "build/install of TZ library" FORCE)
 
     FetchContent_MakeAvailable(date)
     include_directories(${date_SOURCE_DIR}/include)
@@ -154,7 +154,9 @@ endif ()
 
 add_subdirectory(${LIB_DIR})
 add_subdirectory(${SDK_DIR})
-add_subdirectory(${TESTS_DIR})
-add_subdirectory(${BENCHMARKS_DIR})
-add_subdirectory(${EXAMPLES_DIR})
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+  add_subdirectory(${TESTS_DIR})
+  add_subdirectory(${BENCHMARKS_DIR})
+  add_subdirectory(${EXAMPLES_DIR})
+endif ()
 
