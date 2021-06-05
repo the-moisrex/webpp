@@ -2,17 +2,16 @@
 
 #include <filesystem>
 #include <vector>
+#include <fstream>
 
 using namespace webpp;
 using namespace webpp::sdk::cmd;
 
 // One template
 struct project_template {
-  private:
     stl::string_view name; // template name
 
-  public:
-    project_template(stl::string_view inp_name) : name(inp_name) {}
+    static create_from_file(stl::ifatream file);
 };
 
 
