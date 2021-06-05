@@ -1,55 +1,45 @@
 #include "create_project.hpp"
 
 #include <filesystem>
+#include <vector>
 
 using namespace webpp;
 using namespace webpp::sdk::cmd;
 
-// the struct that creates the project template's object
-struct template_manager {
-    stl::string_view root_dir; // templates' root directory
-
-    // scan the root directory for the list of available templates
-    void scan();
-
-  private:
-    static constexpr stl::size_t scan_limit = 10;
-    static constexpr stl::string_view tmpl_extension = ".tmpl";
-    void deep_scan(stl::size_t index = 0);
-    void add_template_file(stl::string_view file_path);
-};
-
 // One template
 struct project_template {
   private:
-    stl::string_view name;     // template name
+    stl::string_view name; // template name
 
   public:
     project_template(stl::string_view inp_name) : name(inp_name) {}
-
 };
 
 
-void tmeplate_manager::deep_scan(stl::size_t index) {
-  if (index > scan_limit) 
-    return; // don't scan this deep
+// the struct that creates the project template's object
+struct template_manager {
+    stl::string_view              root_dir; // templates' root directory
+    stl::vector<project_template> tmpls;    // project templates
 
-  for (auto const entry : fs::directory_iterator(root_dir)) {
+    // scan the root directory for the list of available templates
+    void scan();
+    void add_template_file(stl::string_view file_path);
 
-    // todo: you can optimize this by making it multithreaded
-    if (entry.is_directory()) {
-      deep_scan(index+1);
+  private:
+    static constexpr stl::string_view tmpl_extension = ".tmpl";
+};
+
+void tmeplate_manager::scan() {
+    using fs = stl::filesystem;
+    for (auto const entry : fs::recursive_directory_iterator(root_dir)) {
+        const auto ext = entry.path().extension();
+        if (entry.is_regular_file() && ext == tmpl_extension) {
+            add_template_file(entry.path().string());
+        }
     }
-
-    if (entry.is_regular_file() && ext == tmpl_extension) {
-      add_template_file(entry.path().string());
-    }
-  }
 }
 
-void template_manager::add_template_file(stl::string_view file) {
-  
-}
+void template_manager::add_template_file(stl::string_view file) {}
 
 void create_project::handle() override {
     const stl::string proj_name = project_name();
