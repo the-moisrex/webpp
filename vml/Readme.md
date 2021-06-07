@@ -4,14 +4,18 @@ to generate HTML/CSS/JS/WASM/Media outputs and God willing
 someday will grow to output other stacks as well.
 
 ## Concepts
-This language is made of two sub-DSLs (Domain Specific Language):
+There are 3 layers to this:
 
-- Input DSL
-- Output DSL
+- [ ] Input DSL (Domain Specific Language)
+- [ ] Back-end AST
+- [ ] Output Generator
 
-The input DSL is the one that you will make your website with
-and the output DSL is the one that actually decides what
-the output will look like.
+The input DSL is what you write.
+
+The output generator is what generates the output based on the AST.
+
+The Back-End AST is what the Input DSL gets converted to (it's the middle man whom everyone knows).
+
 
 ## Language Features
 I hope this language will have these features at least:
@@ -28,3 +32,17 @@ I hope this language will have these features at least:
 - [ ] Performant
 - [ ] Multithreaded when necessary: for example the task of downloading a remote file or processing a media can be multithreaded to save time.
 - [ ] Constexpr friendly
+
+## Output types
+There can be infinite number of outputs; but we'll start
+with some simple ideas:
+
+- [ ] Self contained HTML file.
+- [ ] 3 HTML/CSS/JS files
+- [ ] Qt Quick
+- [ ] Android XML
+- [ ] ReactJS
+- [ ] VueJS
+- [ ] GTK with C
+
+
