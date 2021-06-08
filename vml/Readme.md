@@ -46,3 +46,22 @@ with some simple ideas:
 - [ ] GTK with C
 
 
+## DSL Examples
+''''
+version 1.0
+
+import Page, Header, Footer
+import html
+
+
+root {
+  Header{}
+  for page in pages:
+    Page {
+      name: page.name
+    }
+  Footer {
+
+  }
+}
+''''
