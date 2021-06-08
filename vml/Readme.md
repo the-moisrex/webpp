@@ -47,7 +47,7 @@ with some simple ideas:
 
 
 ## DSL Examples
-''''
+````
 version 1.0
 
 import Page, Header, Footer
@@ -61,7 +61,17 @@ root {
       name: page.name
     }
   Footer {
-
+    div.page > div#footer-center {
+      // what does it mean for a class or an ID in other
+      // output generators?
+      text: html("this is <b>bold</b>")
+    }
   }
 }
-''''
+````
+
+````
+<Page>
+  
+</Page>
+````
