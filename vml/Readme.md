@@ -44,6 +44,8 @@ with some simple ideas:
 - [ ] ReactJS
 - [ ] VueJS
 - [ ] GTK with C
+- [ ] C++ class
+- [ ] Web++ View Class
 
 
 ## DSL Examples
@@ -61,17 +63,18 @@ root {
       name: page.name
     }
   Footer {
+   client.onclick: {
+              // C++ webassembly code
+         }
+   server.onclick: {
+     // C++ code to run on server
+   }
     div.page > div#footer-center {
       // what does it mean for a class or an ID in other
       // output generators?
-      text: html("this is <b>bold</b>")
+      text: html"this is <b>bold</b>"
     }
   }
 }
 ````
 
-````
-<Page>
-  
-</Page>
-````
