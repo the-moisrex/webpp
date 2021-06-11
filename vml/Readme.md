@@ -78,3 +78,12 @@ root {
 }
 ````
 
+## Syntax
+
+````
+ver:                  'version' ver_num
+ver_num:              ((digit+) '.'?)+
+
+import:               'import' (name ','?)+
+
+````
