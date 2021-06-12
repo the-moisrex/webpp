@@ -33,6 +33,14 @@ I hope this language will have these features at least:
 - [ ] Multithreaded when necessary: for example the task of downloading a remote file or processing a media can be multithreaded to save time.
 - [ ] Constexpr friendly
 
+## Input DSLs
+The input languages:
+
+- Dynamic JSON Generator
+- Dynamic TEXT FILE Generator (replacer)
+- HTML/CSS
+- VML
+
 ## Output types
 There can be infinite number of outputs; but we'll start
 with some simple ideas:
@@ -46,6 +54,7 @@ with some simple ideas:
 - [ ] GTK with C
 - [ ] C++ class
 - [ ] Web++ View Class
+- [ ] JSON / XML / ...
 
 
 ## DSL Examples
@@ -87,3 +96,16 @@ ver_num:              ((digit+) '.'?)+
 import:               'import' (name ','?)+
 
 ````
+
+## Input DSL Concept
+The concept is the common features of all related DSLs.
+
+Related DSL common features:
+
+- Can import other types
+
+## Output Generator Concept
+An output generator essentially returns something that
+will be viewd in the client.
+
+
