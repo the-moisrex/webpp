@@ -106,6 +106,6 @@ Related DSL common features:
 
 ## Output Generator Concept
 An output generator essentially returns something that
-will be viewd in the client.
+will be viewed in the client.
 
 
