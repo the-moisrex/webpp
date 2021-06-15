@@ -213,7 +213,7 @@ target_link_libraries(${LIB_NAME}
         PUBLIC fmt::fmt
         PUBLIC magic_enum::magic_enum
         PUBLIC date::date
-        PUBLIC date::date-tz
+        # PUBLIC date::date-tz
         )
 
 
