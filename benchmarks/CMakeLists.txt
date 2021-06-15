@@ -43,6 +43,12 @@ if (NOT benchmark_FOUND)
     )
     set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "" FORCE)
     set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+
+    # to fix termux error
+    set(CMAKE_CROSSCOMPILING ON CACHE BOOL "" FORCE)
+    set(RUN_HAVE_STD_REGEX OFF CACHE BOOL "" FORCE)
+    set(RUN_HAVE_POSIX_REGEX OFF CACHE BOOL "" FORCE)
+
     FetchContent_MakeAvailable(benchmark)
 endif ()
 
