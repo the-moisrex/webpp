@@ -33,6 +33,13 @@ file(GLOB FILE_PCH *_pch.hpp)
 
 find_package(Boost REQUIRED)
 find_package(Threads REQUIRED)
+
+
+# to fix termux error
+set(CMAKE_CROSSCOMPILING ON CACHE BOOL "" FORCE)
+set(RUN_HAVE_STD_REGEX OFF CACHE BOOL "" FORCE)
+set(RUN_HAVE_POSIX_REGEX OFF CACHE BOOL "" FORCE)
+
 find_package(benchmark QUIET)
 if (NOT benchmark_FOUND)
     message(STATUS "Downloading google benchmark project")
@@ -43,11 +50,6 @@ if (NOT benchmark_FOUND)
     )
     set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "" FORCE)
     set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
-
-    # to fix termux error
-    set(CMAKE_CROSSCOMPILING ON CACHE BOOL "" FORCE)
-    set(RUN_HAVE_STD_REGEX OFF CACHE BOOL "" FORCE)
-    set(RUN_HAVE_POSIX_REGEX OFF CACHE BOOL "" FORCE)
 
     FetchContent_MakeAvailable(benchmark)
 endif ()
