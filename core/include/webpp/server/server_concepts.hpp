@@ -41,8 +41,7 @@ namespace webpp {
     concept Server = requires(T server) {
         typename T::connection_type;
         requires ThreadPool<typename T::thread_pool_type>;
-        { server() }
-        ->stl::same_as<int>;
+        { server() } -> stl::same_as<int>;
     };
 
     /**
@@ -53,7 +52,7 @@ namespace webpp {
      *   - Self Hosting
      */
     template <typename T>
-    concept LongRunningServer = Server<T>&& requires(T srv) {
+    concept LongRunningServer = Server<T> && requires(T srv) {
         srv.sync_app(true); // enable or disable "Thread Sync for app"
     };
 
@@ -65,7 +64,7 @@ namespace webpp {
      *   - xinetd protocol
      */
     template <typename T>
-    concept SingleRequestServer = Server<T>&& requires(T srv) {
+    concept SingleRequestServer = Server<T> && requires(T srv) {
         srv.enable_std_stealing(); // steal cout and cin and cerr guts
         srv.disable_std_stealing();
     };
