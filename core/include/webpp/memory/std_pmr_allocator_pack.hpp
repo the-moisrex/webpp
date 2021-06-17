@@ -3,9 +3,19 @@
 #ifndef WEBPP_STD_PMR_ALLOCATOR_PACK_HPP
 #define WEBPP_STD_PMR_ALLOCATOR_PACK_HPP
 
-#include "allocator_pack.hpp"
 
+// fallback
 #include "../std/memory_resource.hpp"
+#ifndef webpp_has_memeory_resource
+#    warning \
+      "Using std_allocator_pack as a fallback for std_pmr_allocator_pack due to not having access to <memory_resource> header file."
+#    include "std_allocator_pack.hpp"
+namespace webpp::stl::pmr {
+    using allocator_descriptors = stl::allocator_descriptors;
+}
+#else
+#    include "allocator_pack.hpp"
+
 
 namespace webpp {
 
@@ -98,4 +108,5 @@ namespace webpp {
 
 } // namespace webpp
 
+#endif
 #endif // WEBPP_STD_PMR_ALLOCATOR_PACK_HPP
