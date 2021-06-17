@@ -47,11 +47,17 @@ namespace webpp::stl {
     concept move_constructible = stl::constructible_from<T, T> && stl::convertible_to<T, T>;
 
     template <class T>
-
     concept copy_constructible =
       stl::move_constructible<T> && stl::constructible_from<T, T&> && stl::convertible_to<T&, T> &&
       stl::constructible_from<T, const T&> && stl::convertible_to<const T&, T> &&
       stl::constructible_from<T, const T> && stl::convertible_to<const T, T>;
+
+    template <class T>
+    concept default_initializable = stl::constructible_from<T> && requires {
+        T{};
+    } && requires {
+        ::new (static_cast<void*>(nullptr)) T;
+    };
 
 
 } // namespace webpp::stl
