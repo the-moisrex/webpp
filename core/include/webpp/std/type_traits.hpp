@@ -622,7 +622,8 @@ namespace webpp::istl {
      */
     template <typename OldType, typename NewType, typename T>
     static constexpr auto replace_object(T&& obj, NewType const& new_obj) noexcept {
-        if constexpr (stl::same_as<OldType, T>) {
+        // Can't use same_as because it's going to be a circular dependency with <concepts> file
+        if constexpr (stl::is_same_v<OldType, T> && stl::is_same_v<T, OldType>) {
             return new_obj;
         } else {
             return stl::forward<T>(obj);

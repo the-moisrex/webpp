@@ -36,9 +36,11 @@ find_package(Threads REQUIRED)
 
 
 # to fix termux error
-set(CMAKE_CROSSCOMPILING ON CACHE BOOL "" FORCE)
-set(RUN_HAVE_STD_REGEX OFF CACHE BOOL "" FORCE)
-set(RUN_HAVE_POSIX_REGEX OFF CACHE BOOL "" FORCE)
+# https://github.com/google/benchmark/issues/351
+# set(CMAKE_CROSSCOMPILING ON CACHE BOOL "" FORCE)
+# set(RUN_HAVE_STD_REGEX OFF CACHE BOOL "" FORCE)
+# set(RUN_HAVE_POSIX_REGEX OFF CACHE BOOL "" FORCE)
+# set(RUN_HAVE_GNU_POSIX_REGEX ON CACHE BOOL "" FORCE)
 
 find_package(benchmark QUIET)
 if (NOT benchmark_FOUND)

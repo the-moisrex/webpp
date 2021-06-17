@@ -86,7 +86,7 @@ namespace webpp::istl {
         {alloc != alloc};
         typename A::value_type;
     };
-    
+
     /**
      * This concept always returns true. Use it for:
      *   - for explicitly saying that it does capture all
@@ -94,18 +94,19 @@ namespace webpp::istl {
      */
     template <typename T>
     concept All = requires {
-    	typename T::yes;
-    } || !requires {
-    	typename T::yes;
+        typename T::yes;
+    }
+    || !requires {
+        typename T::yes;
     };
-    
-    
+
+
     /**
      * This concept is always false
      */
     template <typename T>
     concept None = !All<T>;
-    
+
 } // namespace webpp::istl
 
 #endif // WEBPP_STD_CONCEPTS_H
