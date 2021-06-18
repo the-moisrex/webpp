@@ -10,16 +10,18 @@
 #include "../traits/traits.hpp"
 #include "./size.hpp"
 
-// clang-format off
-#include eve_include(wide)
-#include eve_include(function/store)
-#include eve_include(function/add)
-#include eve_include(function/sub)
-#include eve_include(function/any)
-#include eve_include(function/is_less)
-// clang-format on
-
 #include <algorithm>
+
+
+#ifdef WEBPP_EVE
+#    include <eve/function/add.hpp>
+#    include <eve/function/any.hpp>
+#    include <eve/function/is_less.hpp>
+#    include <eve/function/store.hpp>
+#    include <eve/function/sub.hpp>
+#    include <eve/wide.hpp>
+#endif
+
 
 namespace webpp::ascii {
 

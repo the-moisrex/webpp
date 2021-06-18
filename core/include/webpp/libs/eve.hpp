@@ -16,12 +16,6 @@
 #endif
 
 #ifdef WEBPP_EVE
-#    define eve_include(eve_file) <eve/eve_file.hpp>
-#else
-#    define eve_include(eve_file) // nothing
-#endif
-
-#ifdef WEBPP_EVE
 namespace eve {}
 namespace webpp::eve {
     using namespace ::eve;
