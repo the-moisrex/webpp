@@ -42,7 +42,7 @@ namespace webpp::stl {
     struct formatter;
 
     template <typename... Args>
-    inline auto format(Args&&... args) {
+    constexpr auto format(Args&&... args) {
         return fmt::format(stl::forward<Args>(args)...);
     }
 
