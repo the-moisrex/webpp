@@ -34,7 +34,7 @@ namespace webpp::http {
           object::object<headers_type, alloc::general_features, allocator_descriptors_type>;
         using body_object_type =
           object::object<body_type, alloc::general_features, allocator_descriptors_type>;
-        using general_resource_type = typename headers_object_type::resource_type;
+        using general_resource_type = typename headers_object_type::resource_type_field;
 
         [[no_unique_address]] general_resource_type alloc_resource{};
         headers_object_type                         headers;

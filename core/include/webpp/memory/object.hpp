@@ -27,10 +27,11 @@ namespace webpp::object {
         using super         = typename alloc_details::new_type;
 
       public:
-        using object_type     = super;
-        using allocator_type  = typename alloc_details::allocator_type;
-        using resource_type   = typename alloc_details::resource_type;
-        using alloc_pack_type = alloc::allocator_pack<AllocDescList>;
+        using object_type         = super;
+        using allocator_type      = typename alloc_details::allocator_type;
+        using resource_type       = typename alloc_details::resource_type;
+        using resource_type_field = typename alloc_details::resource_type_field;
+        using alloc_pack_type     = alloc::allocator_pack<AllocDescList>;
 
         static constexpr bool has_resource = !stl::is_void_v<resource_type>;
         using res_ref =
