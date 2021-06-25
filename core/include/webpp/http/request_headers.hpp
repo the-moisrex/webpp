@@ -35,7 +35,7 @@ namespace webpp::http {
       public:
         using field_type = HeaderFieldType;
 
-        using super::vector;
+        using super::super;
 
         // todo: fix this
         constexpr request_headers(istl::StringViewifiable auto&& header_string, auto&&... args)
