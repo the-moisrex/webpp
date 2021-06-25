@@ -718,13 +718,13 @@ namespace webpp::istl {
     struct merge_parameters_type;
 
     // one tuple
-    template <template <typename> typename TupleType, typename... FirstItems>
+    template <template <typename...> typename TupleType, typename... FirstItems>
     struct merge_parameters_type<TupleType<FirstItems...>> {
         using type = TupleType<FirstItems...>;
     };
 
     // two tuples
-    template <template <typename> typename TupleType, typename... FirstItems, typename... SecondItems>
+    template <template <typename...> typename TupleType, typename... FirstItems, typename... SecondItems>
     struct merge_parameters_type<TupleType<FirstItems...>, TupleType<SecondItems...>> {
         using type = TupleType<FirstItems..., SecondItems...>;
     };

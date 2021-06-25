@@ -147,7 +147,7 @@ namespace webpp {
 
 
         /**
-         * Extracts all of the "resources descriptors" from the "allocator descriptor list"
+         * Extracts all the "resources descriptors" from the "allocator descriptor list"
          * the type: tuple<ResourceDescriptor, ...>
          */
         template <AllocatorDescriptorList AllocDescTypes>
@@ -162,7 +162,7 @@ namespace webpp {
 
 
         /**
-         * Extract all of the "resources" from an "allocator descriptor list".
+         * Extract all the "resources" from an "allocator descriptor list".
          * the type: type_list<Resource>
          */
         template <typename AllocDescTypes>
