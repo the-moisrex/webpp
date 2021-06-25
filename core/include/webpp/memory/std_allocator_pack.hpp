@@ -11,7 +11,7 @@ namespace webpp {
     namespace stl {
         namespace details {
             struct std_allocator_descriptor_type {
-                struct default_resource_descriptor{
+                struct default_resource_descriptor {
                     using storage_type = void;
                     static constexpr alloc::feature_pack resource_features{};
 
@@ -21,6 +21,7 @@ namespace webpp {
                         return {};
                     }
                 };
+
                 using resources = type_list<default_resource_descriptor>;
                 static constexpr alloc::feature_pack allocator_features{alloc::stateless,
                                                                         alloc::sync,
