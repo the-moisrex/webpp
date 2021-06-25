@@ -12,14 +12,7 @@ namespace webpp::flags {
 
     static constexpr stl::uint8_t none = 0u;
 
-    [[nodiscard]]
-#ifdef __cpp_consteval
-    consteval
-#else
-    constexpr
-#endif
-      auto
-      item(stl::size_t index) noexcept {
+    [[nodiscard]] constexpr auto item(stl::size_t index) noexcept {
         return 0x1u << index;
     }
 
