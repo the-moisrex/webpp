@@ -37,45 +37,70 @@ namespace webpp::object {
         using res_ref =
           stl::conditional_t<has_resource, stl::add_lvalue_reference_t<resource_type>, istl::nothing_type>;
 
+      protected:
+        template <typename... Args>
+        static constexpr bool support_tag_alloc_args = requires(allocator_type const& the_alloc,
+                                                                Args... args) {
+            super{stl::allocator_arg, the_alloc, stl::forward<Args>(args)...};
+        };
+
+        template <typename... Args>
+        static constexpr bool support_alloc_args = requires(allocator_type const& the_alloc, Args... args) {
+            super{the_alloc, stl::forward<Args>(args)...};
+        };
+
+        template <typename... Args>
+        static constexpr bool support_args_alloc = requires(allocator_type const& the_alloc, Args... args) {
+            super{stl::forward<Args>(args)..., the_alloc};
+        };
+
+
+        template <typename... Args>
+        static constexpr bool support_tag_args = requires(Args... args) {
+            super{stl::allocator_arg, stl::forward<Args>(args)...};
+        };
+
+        template <typename... Args>
+        static constexpr bool support_args = requires(Args... args) {
+            super{stl::forward<Args>(args)...};
+        };
+
+      public :
+
+
         /// these 2 are for when the object doesn't support allocators at all.
 
         template <typename... Args>
-        requires(!requires(allocator_type const& the_alloc, Args... args) {
-            super{stl::allocator_arg, the_alloc, stl::forward<Args>(args)...};
-        }) constexpr object([[maybe_unused]] alloc_pack_type& alloc_pack, Args&&... args)
+        requires(support_tag_args<Args...> && !support_tag_alloc_args<Args...>) constexpr object(
+          [[maybe_unused]] alloc_pack_type& alloc_pack,
+          Args&&... args)
           : super{stl::allocator_arg, stl::forward<Args>(args)...} {}
 
         template <typename... Args>
-        requires(!requires(allocator_type const& the_alloc, Args... args) {
-            super{the_alloc, stl::forward<Args>(args)...};
-        }) constexpr object([[maybe_unused]] alloc_pack_type& alloc_pack,
-                            [[maybe_unused]] res_ref          res,
-                            Args&&... args)
+        requires(support_args<Args...> && !support_alloc_args<Args...> &&
+                 !support_tag_args<Args...>) constexpr object([[maybe_unused]] alloc_pack_type& alloc_pack,
+                                                              [[maybe_unused]] res_ref          res,
+                                                              Args&&... args)
           : super{stl::forward<Args>(args)...} {}
 
         /// these 3 are for when we don't have resource and the user is smart enough to not pass one as well
 
         template <typename... Args>
         requires(!has_resource &&
-                 requires(allocator_type const& the_alloc, Args... args) {
-                     super{stl::allocator_arg, the_alloc, stl::forward<Args>(args)...};
-                 }) constexpr object(alloc_pack_type& alloc_pack, Args&&... args)
+                 support_tag_alloc_args<Args...>) constexpr object(alloc_pack_type& alloc_pack,
+                                                                   Args&&... args)
           : super{stl::allocator_arg,
                   alloc_pack.template get_allocator<allocator_type, void>(),
                   stl::forward<Args>(args)...} {}
 
         template <typename... Args>
-        requires(!has_resource &&
-                 requires(allocator_type const& the_alloc, Args... args) {
-                     super{the_alloc, stl::forward<Args>(args)...};
-                 }) constexpr object(alloc_pack_type& alloc_pack, Args&&... args)
+        requires(!has_resource && support_alloc_args<Args...>) constexpr object(alloc_pack_type& alloc_pack,
+                                                                                Args&&... args)
           : super{alloc_pack.template get_allocator<allocator_type, void>(), stl::forward<Args>(args)...} {}
 
         template <typename... Args>
         requires(!has_resource && sizeof...(Args) > 0 && // to resolve some ambiguity with the above version
-                 requires(allocator_type const& the_alloc, Args... args) {
-                     super{stl::forward<Args>(args)..., the_alloc};
-                 }) constexpr object(alloc_pack_type& alloc_pack, Args&&... args)
+                 support_args_alloc<Args...>) constexpr object(alloc_pack_type& alloc_pack, Args&&... args)
           : super{stl::forward<Args>(args)..., alloc_pack.template get_allocator<allocator_type, void>()} {}
 
 
@@ -83,56 +108,50 @@ namespace webpp::object {
 
         template <typename... Args>
         requires(!has_resource &&
-                 requires(allocator_type const& the_alloc, Args... args) {
-                     super{stl::allocator_arg, the_alloc, stl::forward<Args>(args)...};
-                 }) constexpr object(alloc_pack_type& alloc_pack,
-                                     [[maybe_unused]] istl::nothing_type,
-                                     Args&&... args)
+                 support_tag_alloc_args<Args...>) constexpr object(alloc_pack_type& alloc_pack,
+                                                                   [[maybe_unused]] istl::nothing_type,
+                                                                   Args&&... args)
           : super{stl::allocator_arg,
                   alloc_pack.template get_allocator<allocator_type, void>(),
                   stl::forward<Args>(args)...} {}
 
         template <typename... Args>
         requires(!has_resource &&
-                 requires(allocator_type const& the_alloc, Args... args) {
-                     super{the_alloc, stl::forward<Args>(args)...};
-                 }) constexpr object(alloc_pack_type& alloc_pack,
-                                     [[maybe_unused]] istl::nothing_type,
-                                     Args&&... args)
+                 support_alloc_args<Args...>) constexpr object(alloc_pack_type& alloc_pack,
+                                                               [[maybe_unused]] istl::nothing_type,
+                                                               Args&&... args)
           : super{alloc_pack.template get_allocator<allocator_type, void>(), stl::forward<Args>(args)...} {}
 
         template <typename... Args>
         requires(!has_resource && sizeof...(Args) > 0 && // to resolve some ambiguity with the above version
-                 requires(allocator_type const& the_alloc, Args... args) {
-                     super{stl::forward<Args>(args)..., the_alloc};
-                 }) constexpr object(alloc_pack_type& alloc_pack,
-                                     [[maybe_unused]] istl::nothing_type,
-                                     Args&&... args)
+                 support_args_alloc<Args...>) constexpr object(alloc_pack_type& alloc_pack,
+                                                               [[maybe_unused]] istl::nothing_type,
+                                                               Args&&... args)
           : super{stl::forward<Args>(args)..., alloc_pack.template get_allocator<allocator_type, void>()} {}
 
 
         /// these 3 are for when you pass a valid resource
 
         template <typename... Args>
-        requires(has_resource&& requires(allocator_type const& the_alloc, Args... args) {
-            super{stl::allocator_arg, the_alloc, stl::forward<Args>(args)...};
-        }) constexpr object(alloc_pack_type& alloc_pack, res_ref res, Args&&... args)
+        requires(has_resource&& support_tag_alloc_args<Args...>) constexpr object(alloc_pack_type& alloc_pack,
+                                                                                  res_ref          res,
+                                                                                  Args&&... args)
           : super{stl::allocator_arg,
                   alloc_pack.template get_allocator<allocator_type, resource_type>(res),
                   stl::forward<Args>(args)...} {}
 
         template <typename... Args>
-        requires(has_resource&& requires(allocator_type const& the_alloc, Args... args) {
-            super{the_alloc, stl::forward<Args>(args)...};
-        }) constexpr object(alloc_pack_type& alloc_pack, res_ref res, Args&&... args)
+        requires(has_resource&& support_alloc_args<Args...>) constexpr object(alloc_pack_type& alloc_pack,
+                                                                              res_ref          res,
+                                                                              Args&&... args)
           : super{alloc_pack.template get_allocator<allocator_type, resource_type>(res),
                   stl::forward<Args>(args)...} {}
 
         template <typename... Args>
         requires(has_resource && sizeof...(Args) > 0 && // to resolve some ambiguity with the above version
-                 requires(allocator_type const& the_alloc, Args... args) {
-                     super{stl::forward<Args>(args)..., the_alloc};
-                 }) constexpr object(alloc_pack_type& alloc_pack, res_ref res, Args&&... args)
+                 support_args_alloc<Args...>) constexpr object(alloc_pack_type& alloc_pack,
+                                                               res_ref          res,
+                                                               Args&&... args)
           : super{stl::forward<Args>(args)...,
                   alloc_pack.template get_allocator<allocator_type, resource_type>(res)} {}
     };
