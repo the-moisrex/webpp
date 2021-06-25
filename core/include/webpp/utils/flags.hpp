@@ -3,10 +3,10 @@
 #ifndef WEBPP_FLAGS_HPP
 #define WEBPP_FLAGS_HPP
 
-#include <magic_enum.hpp>
 #include "../std/type_traits.hpp"
 
 #include <cstdint>
+#include <magic_enum.hpp>
 
 namespace webpp::flags {
 
@@ -49,9 +49,6 @@ namespace webpp::flags {
         }
         ();
 
-#ifdef __cpp_using_enum
-        using enum type;
-#endif
         base_type value = none;
 
         [[nodiscard]] static constexpr base_type value_of(type v) noexcept {
