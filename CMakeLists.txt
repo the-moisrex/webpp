@@ -134,7 +134,7 @@ if (NOT fmt_FOUND)
     FetchContent_Declare(
             fmt
             GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-            GIT_TAG origin/master
+            GIT_TAG 8.0.0
     )
     set(FMT_DOC          OFF CACHE BOOL "Generate the doc target."                   FORCE)
     set(FMT_INSTALL      ON  CACHE BOOL "Generate the install target."               FORCE)

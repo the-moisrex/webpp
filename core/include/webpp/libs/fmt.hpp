@@ -7,10 +7,4 @@
 #    define WEBPP_FMT
 #endif
 
-#ifdef WEBPP_FMT
-#    define fmt(file) <fmt/file.h>
-#else
-#    define fmt(file) // nothing, we actually wnat to make an error
-#endif
-
 #endif // WEBPP_FMT_HPP
