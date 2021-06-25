@@ -9,11 +9,11 @@
 #if __cpp_lib_format
 #    include <format>
 #    define FMT_COMPILE(formatted_string) (formatted_string)
-#elif __has_include(fmt(format))
-#    include fmt(format)
-#    include fmt(printf)
-#    include fmt(chrono)
-#    include fmt(compile)
+#elif __has_include(<fmt/format.h>)
+#    include <fmt/chrono.h>
+#    include <fmt/compile.h>
+#    include <fmt/format.h>
+#    include <fmt/printf.h>
 #    define WEBPP_FMT_LIB 1
 namespace webpp::stl {
 
