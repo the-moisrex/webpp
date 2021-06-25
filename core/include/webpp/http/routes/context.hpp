@@ -153,7 +153,7 @@ namespace webpp::http {
 
         [[nodiscard]] constexpr HTTPResponse auto error(http::status_code_type error_code) const noexcept {
             return error(error_code,
-                         stl::format(FMT_COMPILE(R"(<!DOCTYPE html>
+                         stl::format(R"(<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
@@ -164,7 +164,7 @@ namespace webpp::http {
     <h1>Error {0}: {1}</h1>
   </body>
 </html>
-)"),
+)",
                                      error_code,
                                      http::status_code_reason_phrase(error_code)));
         }
