@@ -298,13 +298,17 @@ namespace webpp::alloc {
         using ranked                           = ranker<AllocDescList, features>;
         using original_allocator_type          = typename T::allocator_type;
         using value_type                       = typename original_allocator_type::value_type;
-        using resource_type  = descriptors::storage<typename ranked::best_resource_descriptor>;
+        using resource_type = descriptors::storage<typename ranked::best_resource_descriptor>;
+
+        // resource field type can be used as a class field and can be inherited.
+        using resource_type_field =
+          stl::conditional_t<stl::is_void_v<resource_type>, istl::nothing_type, resource_type>;
         using allocator_type = typename descriptors::allocator<
           typename ranked::best_allocator_descriptor>::template type<value_type>;
         using new_type = replace_allocators<T, stl::allocator_traits<allocator_type>::template rebind_alloc>;
     };
 
-    // specializes the alloc_finder so it can work with the types that don't support allocators
+    // specializes the alloc_finder, so it can work with the types that don't support allocators
     template <typename T, feature_pack FPack, AllocatorDescriptorList AllocDescList>
     requires(!requires { typename T::allocator_type; }) struct alloc_finder<T, FPack, AllocDescList> {
         static constexpr feature_pack features = FPack;
@@ -312,7 +316,11 @@ namespace webpp::alloc {
         using value_type                       = stl::byte;
         using original_allocator_type          = typename descriptors::allocator<
           typename ranked::best_allocator_descriptor>::template type<value_type>;
-        using resource_type  = descriptors::storage<typename ranked::best_resource_descriptor>;
+        using resource_type = descriptors::storage<typename ranked::best_resource_descriptor>;
+
+        // resource field type can be used as a class field and can be inherited.
+        using resource_type_field =
+          stl::conditional_t<stl::is_void_v<resource_type>, istl::nothing_type, resource_type>;
         using allocator_type = original_allocator_type;
         using new_type       = T;
     };
