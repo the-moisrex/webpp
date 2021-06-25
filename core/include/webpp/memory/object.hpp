@@ -38,6 +38,8 @@ namespace webpp::object {
           stl::conditional_t<has_resource, stl::add_lvalue_reference_t<resource_type>, istl::nothing_type>;
 
       protected:
+        /// These are the concepts that's going to be used to choose the best constructors
+
         template <typename... Args>
         static constexpr bool support_tag_alloc_args = requires(allocator_type const& the_alloc,
                                                                 Args... args) {
@@ -116,10 +118,10 @@ namespace webpp::object {
                   stl::forward<Args>(args)...} {}
 
         template <typename... Args>
-        requires(!has_resource &&
-                 support_alloc_args<Args...>) constexpr object(alloc_pack_type& alloc_pack,
-                                                               [[maybe_unused]] istl::nothing_type,
-                                                               Args&&... args)
+        requires(!has_resource && support_alloc_args<Args...> &&
+                 !support_tag_alloc_args<Args...>) constexpr object(alloc_pack_type& alloc_pack,
+                                                                    [[maybe_unused]] istl::nothing_type,
+                                                                    Args&&... args)
           : super{alloc_pack.template get_allocator<allocator_type, void>(), stl::forward<Args>(args)...} {}
 
         template <typename... Args>
@@ -141,9 +143,10 @@ namespace webpp::object {
                   stl::forward<Args>(args)...} {}
 
         template <typename... Args>
-        requires(has_resource&& support_alloc_args<Args...>) constexpr object(alloc_pack_type& alloc_pack,
-                                                                              res_ref          res,
-                                                                              Args&&... args)
+        requires(has_resource&& support_alloc_args<Args...> &&
+                 !support_tag_alloc_args<Args...>) constexpr object(alloc_pack_type& alloc_pack,
+                                                                    res_ref          res,
+                                                                    Args&&... args)
           : super{alloc_pack.template get_allocator<allocator_type, resource_type>(res),
                   stl::forward<Args>(args)...} {}
 
