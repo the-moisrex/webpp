@@ -56,11 +56,9 @@ namespace webpp {
 
         // FNV-1a 32bit hashing algorithm.
         // initial source from: https://gist.github.com/Lee-R/3839813
-        static constexpr stl::uint32_t fnv1a_32(istl::StringViewifiable auto&& _str) noexcept {
-            auto const str   = istl::string_viewify(stl::forward<decltype(_str)>(_str));
-            auto const count = str.size();
-            return ((count ? fnv1a_32(str.substr(0u, str.size() - 1u)) : 2166136261u) ^ str[count]) *
-                   16777619u;
+        template <typename CharT>
+        static constexpr stl::uint32_t fnv1a_32(const CharT* str, stl::size_t count) noexcept {
+            return ((count ? fnv1a_32<CharT>(str, count - 1u) : 2166136261u) ^ str[count]) * 16777619u;
         }
     } // namespace hashing
 
@@ -85,8 +83,8 @@ namespace webpp {
 #endif
       stl::underlying_type_t<T>
       success(istl::StringViewifiable auto&& _str) noexcept {
-        return 0 -
-               static_cast<stl::underlying_type_t<T>>(hashing::fnv1a_32(stl::forward<decltype(_str)>(_str)));
+        auto const str = std::string_view(std::forward<decltype(_str)>(_str));
+        return 0 - static_cast<stl::underlying_type_t<T>>(hashing::fnv1a_32(str.data(), str.size()));
     }
 
     template <typename T>
@@ -98,8 +96,8 @@ namespace webpp {
 #endif
       stl::underlying_type_t<T>
       failure(istl::StringViewifiable auto&& _str) noexcept {
-        return 1 +
-               static_cast<stl::underlying_type_t<T>>(hashing::fnv1a_32(stl::forward<decltype(_str)>(_str)));
+        auto const str = std::string_view(std::forward<decltype(_str)>(_str));
+        return 1 + static_cast<stl::underlying_type_t<T>>(hashing::fnv1a_32(str.data(), str.size()));
     }
 
 
