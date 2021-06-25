@@ -166,7 +166,7 @@ namespace webpp::alloc {
                 }
             }
 
-            for (auto const ft : feature_rates) {
+            for (auto const& ft : feature_rates) {
                 const auto fch          = ft.first;
                 const auto opposite_fch = opposite_feature(fch);
                 const auto points       = ft.second;
