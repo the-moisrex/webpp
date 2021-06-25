@@ -554,6 +554,46 @@ namespace webpp::http {
                 }
             }
         }
+
+        /**
+         * Generate a string representation of this route
+         */
+        template <Context CtxT, HTTPRequest ReqT>
+        void append_as_string(istl::String auto& out, CtxT&& ctx, ReqT&& req) {
+            using namespace stl;
+            using res_t   = remove_cvref_t<decltype(call_this_route(ctx, req))>;
+            using n_res_t = remove_cvref_t<decltype(call_next_route(ctx, req))>;
+
+            // print this route
+            if constexpr (is_void_v<res_t>) {
+                out.append(">> action");
+            } else if constexpr (same_as<res_t, bool>) {
+                // todo: find out the name or type of the validator
+                switch (op) {
+                    case logical_operators::none: out.append(">> validator"); break;
+                    case logical_operators::AND: out.append("&&"); break;
+                    case logical_operators::OR: out.append("||"); break;
+                    case logical_operators::XOR: out.append("^"); break;
+                }
+            } else if constexpr (ConvertibleToResponse<n_res_t>) {
+                // todo: find out the type of the response
+                out.append(">> response");
+            } else {
+                out.append(">> unknown");
+            }
+
+            // print the next route
+            if constexpr (!is_void_v<n_res_t>) {
+                this->next.append_as_string(out, forward<CtxT>(ctx), forward<ReqT>(req));
+            }
+        }
+
+        template <typename StrT = stl::string>
+        [[nodiscard]] StrT to_string() {
+            StrT out;
+            append_as_string(out);
+            return out;
+        }
     };
 
 
