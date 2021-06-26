@@ -166,8 +166,8 @@ namespace webpp::http {
         }
 
 
-        template <stl::size_t Index = 0>
-        constexpr HTTPResponse auto operator()(Context auto&& ctx, HTTPRequest auto&& req) const noexcept {
+        template <stl::size_t Index = 0, Context CtxT, HTTPRequest ReqT>
+        constexpr HTTPResponse auto operator()(CtxT&& ctx, ReqT&& req) const noexcept {
 
             constexpr bool no_routes       = route_count() == 0u;
             constexpr bool past_last_route = Index > (route_count() - 1);
@@ -191,9 +191,32 @@ namespace webpp::http {
                     call_route(route, ctx, req);
                     return ctx.error(404u);
                 } else {
+                    // handle_route_results will call the next route too; so don't need to handle the next
+                    // route here in this function.
                     return handle_route_results<Index>(call_route(route, ctx, req), ctx, req);
                 }
             }
+        }
+
+        template <istl::String StrT, HTTPRequest ReqT, stl::size_t Index = 0>
+        void append_as_string(StrT& out, ReqT&& req) const {
+            auto const this_route = stl::get<Index>(routes);
+            using context_type    = simple_context<stl::remove_cvref_t<ReqT>, extension_list_type>;
+            this_route.append_as_string(out, context_type{req}, req);
+
+            // print the next route as well
+            constexpr bool last_route = Index == (route_count() - 1);
+            if constexpr (!last_route) {
+                out.append("\n");
+                append_as_string<StrT, ReqT, Index + 1>(out, stl::forward<ReqT>(req));
+            }
+        }
+
+        template <istl::String StrT = stl::string, HTTPRequest ReqT>
+        StrT to_string(ReqT&& req) const {
+            StrT out;
+            append_as_string(out, stl::forward<ReqT>(req));
+            return out;
         }
     };
 
@@ -235,6 +258,6 @@ namespace webpp::http {
      */
 
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_ROUTER_H
