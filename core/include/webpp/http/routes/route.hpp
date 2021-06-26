@@ -29,50 +29,6 @@ namespace webpp::http {
 
     namespace details {
 
-        /**
-         * Handle special return types here
-         */
-        constexpr auto handle_route_results(auto&& ctx, auto&& res) noexcept {
-            using namespace stl;
-            using res_t    = remove_cvref_t<decltype(res)>;
-            using ctx_type = remove_cvref_t<decltype(ctx)>;
-            if constexpr (istl::Optional<res_t>) {
-                // pass it out to the router, we're not able to handle this here
-                return forward<decltype(res)>(res);
-            } else if constexpr (Context<res_t>) {
-                // we're not able to do a context switching here,
-                // route: is responsible for sub-route context switching
-                // router: is responsible for entry-route context switching
-                return forward<decltype(res)>(res);
-            } else if constexpr (is_same_v<res_t, bool>) {
-                return forward<decltype(res)>(res);
-            } else if constexpr (HTTPResponse<res_t>) {
-                return forward<decltype(res)>(res);
-
-                // fixme: this code here is a duplicate of what the "router::handle_route_result" has
-            } else if constexpr (requires {
-                                     requires ConstructibleWithResponse<typename ctx_type::response_type,
-                                                                        res_t>;
-                                     requires ResponseBody<
-                                       typename ctx_type::response_type::
-                                         body_type>; // check if the response
-                                                     // body is going to be a
-                                                     // valid response body (which requires .str from
-                                                     // extensions because response_body itself doesn't have a
-                                                     // default value generator)
-                                 }) {
-                return ctx.response(forward<decltype(res)>(res));
-                // todo: consider "response extension" injection in order to get the right response type
-            } else if constexpr (istl::StringViewifiable<res_t>) {
-                return ctx.template response<string_response>(
-                  istl::string_viewify(forward<decltype(res)>(res)));
-            } else {
-                // let's just ignore the result
-                return true;
-            }
-        }
-
-
         constexpr auto run_and_catch(auto&& callable, Context auto& ctx, auto&&... args) noexcept {
             using namespace stl;
 
@@ -129,35 +85,35 @@ namespace webpp::http {
         if constexpr (is_callable_route<route_type, context_type, request_type>) {
             // requires a context and a request
             if constexpr (!is_void_v<invoke_result_t<route_type, context_type, request_type>>) {
-                return handle_route_results(ctx, run_and_catch(_route, ctx, ctx, req));
+                return run_and_catch(_route, ctx, ctx, req);
             } else {
                 run_and_catch(_route, ctx, ctx, req);
             }
         } else if constexpr (is_callable_route<route_type, request_type, context_type>) {
             // requires a request and a context
             if constexpr (!is_void_v<invoke_result_t<route_type, request_type, context_type>>) {
-                return handle_route_results(ctx, run_and_catch(_route, ctx, req, ctx));
+                return run_and_catch(_route, ctx, req, ctx);
             } else {
                 run_and_catch(_route, ctx, req, ctx);
             }
         } else if constexpr (is_callable_route<route_type, context_type>) {
             // gets a context
             if constexpr (!is_void_v<invoke_result_t<route_type, context_type>>) {
-                return handle_route_results(ctx, run_and_catch(_route, ctx, ctx));
+                return run_and_catch(_route, ctx, ctx);
             } else {
                 run_and_catch(_route, ctx, ctx);
             }
         } else if constexpr (is_callable_route<route_type, request_type>) {
             // requires a request
             if constexpr (!is_void_v<invoke_result_t<route_type, request_type>>) {
-                return handle_route_results(ctx, run_and_catch(_route, ctx, req));
+                return run_and_catch(_route, ctx, req);
             } else {
                 run_and_catch(_route, ctx, req);
             }
         } else if constexpr (is_callable_route<route_type>) {
             // requires nothing
             if constexpr (!is_void_v<invoke_result_t<route_type>>) {
-                return handle_route_results(ctx, run_and_catch(_route, ctx));
+                return run_and_catch(_route, ctx);
             } else {
                 run_and_catch(_route, ctx);
             }
