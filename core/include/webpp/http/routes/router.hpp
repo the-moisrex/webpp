@@ -59,12 +59,15 @@ namespace webpp::http {
         }
 
       private:
-        template <stl::size_t Index = 0>
-        [[nodiscard]] constexpr auto handle_route_results(auto&& res, auto&& ctx, auto&& req) const noexcept {
+        /**
+         * This function will call the next route if the returned result of the current route allows it
+         */
+        template <stl::size_t Index = 0, typename ResT, Context CtxT, HTTPRequest ReqT>
+        [[nodiscard]] constexpr auto handle_route_results(ResT&& res, CtxT&& ctx, ReqT&& req) const noexcept {
             using namespace stl;
 
-            using result_type                   = remove_cvref_t<decltype(res)>;
-            using context_type                  = remove_cvref_t<decltype(ctx)>;
+            using result_type                   = remove_cvref_t<ResT>;
+            using context_type                  = remove_cvref_t<CtxT>;
             constexpr auto next_route_index     = Index + 1;
             constexpr bool is_passed_last_route = Index > (route_count() - 1);
 
@@ -76,34 +79,39 @@ namespace webpp::http {
                 // the same goes for any other valid type
 
                 if (res) {
-                    return handle_route_results<Index>(res.value(), forward<decltype(ctx)>(ctx), req);
+                    return handle_route_results<Index>(res.value(), forward<CtxT>(ctx), req);
                 } else {
-                    // return a 500 error
-                    constexpr auto err_code = 500u;
-                    using ret_type =
-                      decltype(handle_route_results<Index>(res.value(), forward<decltype(ctx)>(ctx), req));
-                    if constexpr (is_convertible_v<typename result_type::value_type, unsigned long>) {
-                        return handle_route_results<Index>(typename result_type::value_type{err_code},
-                                                           forward<decltype(ctx)>(ctx),
-                                                           req);
-                    } else if constexpr (is_constructible_v<ret_type, decltype(err_code)>) {
-                        return ret_type{err_code};
+                    if constexpr (is_passed_last_route) {
+                        // return a 404 error
+                        constexpr auto err_code = 404u;
+                        using ret_type =
+                          decltype(handle_route_results<Index>(res.value(), forward<CtxT>(ctx), req));
+                        if constexpr (is_convertible_v<typename result_type::value_type, unsigned long>) {
+                            return handle_route_results<Index>(typename result_type::value_type{err_code},
+                                                               forward<CtxT>(ctx),
+                                                               req);
+                        } else if constexpr (is_constructible_v<ret_type, decltype(err_code)>) {
+                            return ret_type{err_code};
+                        } else {
+                            return handle_route_results<Index>(err_code, forward<CtxT>(ctx), req);
+                        }
                     } else {
-                        return handle_route_results<Index>(err_code, forward<decltype(ctx)>(ctx), req);
+                        // Check the next route
+                        return operator()<next_route_index>(forward<CtxT>(ctx), req);
                     }
                 }
                 // todo: check if you can run the next route as well
                 //                if constexpr (is_passed_last_route) {
                 //                    return ctx.error(404u);
                 //                } else {
-                //                    return operator()<next_route_index>(forward<decltype(ctx)>(ctx),
+                //                    return operator()<next_route_index>(forward<CtxT>(ctx),
                 //                    req);
                 //                }
             } else if constexpr (Context<result_type>) {
                 // context switching is happening here
                 // just call the next route or finish it with calling the context handlers
                 if constexpr (!is_passed_last_route) {
-                    return operator()<next_route_index>(forward<decltype(res)>(res), req);
+                    return operator()<next_route_index>(forward<ResT>(res), req);
                 } else {
                     return ctx.error(404u);
                 }
@@ -112,7 +120,7 @@ namespace webpp::http {
                 return res;
             } else if constexpr (is_same_v<result_type, bool>) {
                 if (res) {
-                    return operator()<next_route_index>(forward<decltype(ctx)>(ctx), req);
+                    return operator()<next_route_index>(forward<CtxT>(ctx), req);
                 } else {
                     return ctx.error(404u); // doesn't matter if it's the last route or not,
                     // returning false just means finish it
@@ -123,9 +131,9 @@ namespace webpp::http {
                 auto res2       = call_route(res, ctx, req);
                 using res2_type = remove_cvref_t<decltype(res2)>;
                 if constexpr (is_void_v<res2_type>) {
-                    return operator()<next_route_index>(forward<decltype(ctx)>(ctx), req);
+                    return operator()<next_route_index>(forward<CtxT>(ctx), req);
                 } else {
-                    return handle_route_results<Index>(move(res2), forward<decltype(ctx)>(ctx), req);
+                    return handle_route_results<Index>(move(res2), forward<CtxT>(ctx), req);
                 }
 
             } else if constexpr (requires {
@@ -138,12 +146,11 @@ namespace webpp::http {
                                                      // because response_body itself doesn't have a default
                                                      // value generator)
                                  }) {
-                return ctx.response(forward<decltype(res)>(res));
+                return ctx.response(forward<ResT>(res));
                 // todo: consider "response extension" injection in order to get the right response type
             } else if constexpr (istl::StringViewifiable<result_type>) {
                 // Use string_response response type to handle strings
-                return ctx.template response<string_response>(
-                  istl::string_viewify(forward<decltype(res)>(res)));
+                return ctx.template response<string_response>(istl::string_viewify(forward<ResT>(res)));
             } else {
                 // we just ignore anything else the user returns
                 // this part never happens because the "call_route" converts this part to the above parts
@@ -166,13 +173,16 @@ namespace webpp::http {
         }
 
 
+        /**
+         * Call the routes with the specified request and context.
+         */
         template <stl::size_t Index = 0, Context CtxT, HTTPRequest ReqT>
         constexpr HTTPResponse auto operator()(CtxT&& ctx, ReqT&& req) const noexcept {
 
-            constexpr bool no_routes       = route_count() == 0u;
-            constexpr bool past_last_route = Index > (route_count() - 1);
+            constexpr bool no_routes         = route_count() == 0u;
+            constexpr bool passed_last_route = Index > (route_count() - 1);
 
-            if constexpr (no_routes || past_last_route) {
+            if constexpr (no_routes || passed_last_route) {
                 return ctx.error(404u);
             } else {
 
@@ -198,6 +208,9 @@ namespace webpp::http {
             }
         }
 
+        /**
+         * Append a string representation of the routes
+         */
         template <istl::String StrT, HTTPRequest ReqT, stl::size_t Index = 0>
         void append_as_string(StrT& out, ReqT&& req) const {
             auto const this_route = stl::get<Index>(routes);
@@ -212,6 +225,9 @@ namespace webpp::http {
             }
         }
 
+        /**
+         * Get a string representation of the routes.
+         */
         template <istl::String StrT = stl::string, HTTPRequest ReqT>
         StrT to_string(ReqT&& req) const {
             StrT out;
@@ -222,40 +238,6 @@ namespace webpp::http {
 
     template <typename ExtensionListType, typename... RouteType>
     router(ExtensionListType&&, RouteType&&...) -> router<ExtensionListType, RouteType...>;
-
-
-    /*
-    struct dynamic_route {
-
-      protected:
-        // todo: maybe don't use std::function? it's slow a bit (but not that much)
-        using callback_t = std::function<void()>;
-
-        callback_t callback = nullptr;
-
-      public:
-        // fixme: it gives me error when I put "noexcept" here:
-        dynamic_route() = default;
-        dynamic_route(callback_t callback) noexcept : callback(callback) {
-        }
-
-        template <typename C>
-        dynamic_route& operator=(C&& callback) noexcept {
-            this->callback = [=](req_t req, res_t res) noexcept {
-                return call_route(callback, req, res);
-            };
-            return *this;
-        }
-
-        auto operator()(req_t req, res_t res) noexcept {
-            return callback(req, res);
-        }
-
-        inline bool is_match(req_t req) noexcept {
-            return condition(req);
-        }
-    };
-     */
 
 
 } // namespace webpp::http
