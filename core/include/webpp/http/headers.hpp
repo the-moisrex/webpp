@@ -13,6 +13,8 @@ namespace webpp::http {
     /**
      * This is the header class witch will contain the name, and the value of
      * one single field of a header.
+     *
+     * This templated struct should satisfy the HTTPHeaderField concept.
      */
     template <typename StringType, typename EList>
     struct basic_header_field : public EList {
