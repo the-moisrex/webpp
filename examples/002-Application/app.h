@@ -4,6 +4,7 @@
 #define WEBPP_EXAMPLE_APP_H
 
 #include "../../core/include/webpp/http/http.hpp"
+#include <iostream>
 
 namespace website {
 
@@ -34,6 +35,9 @@ namespace website {
                                return this->about(ctx);
                            },
                            relative / "admin" >>= admin};
+
+            // for debugging purposes
+            std::cerr << _router.to_string(req) << std::endl;
 
             return _router(req);
         }

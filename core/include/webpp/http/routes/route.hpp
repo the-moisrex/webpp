@@ -555,41 +555,54 @@ namespace webpp::http {
             }
         }
 
+      private:
+        template <typename ResT>
+        static void append_route_as_string(istl::String auto& out) {
+            using namespace stl;
+
+            // print this route
+            if constexpr (is_void_v<ResT>) {
+                out.append(" >> action");
+            } else if constexpr (same_as<ResT, bool>) {
+                // todo: find out the name or type of the validator
+                switch (op) {
+                    case logical_operators::none: out.append(" >> validator"); break;
+                    case logical_operators::AND: out.append(" &&"); break;
+                    case logical_operators::OR: out.append(" ||"); break;
+                    case logical_operators::XOR: out.append(" ^"); break;
+                }
+            } else if constexpr (ConvertibleToResponse<ResT>) {
+                // todo: find out the type of the response
+                out.append(" >> response");
+            } else {
+                out.append(" >> unknown");
+            }
+        }
+
+      public:
         /**
          * Generate a string representation of this route
          */
         template <Context CtxT, HTTPRequest ReqT>
-        void append_as_string(istl::String auto& out, CtxT&& ctx, ReqT&& req) {
+        void append_as_string(istl::String auto& out, CtxT&& ctx, ReqT&& req) const {
             using namespace stl;
             using res_t   = remove_cvref_t<decltype(call_this_route(ctx, req))>;
             using n_res_t = remove_cvref_t<decltype(call_next_route(ctx, req))>;
 
-            // print this route
-            if constexpr (is_void_v<res_t>) {
-                out.append(">> action");
-            } else if constexpr (same_as<res_t, bool>) {
-                // todo: find out the name or type of the validator
-                switch (op) {
-                    case logical_operators::none: out.append(">> validator"); break;
-                    case logical_operators::AND: out.append("&&"); break;
-                    case logical_operators::OR: out.append("||"); break;
-                    case logical_operators::XOR: out.append("^"); break;
-                }
-            } else if constexpr (ConvertibleToResponse<n_res_t>) {
-                // todo: find out the type of the response
-                out.append(">> response");
-            } else {
-                out.append(">> unknown");
-            }
+            append_route_as_string<res_t>(out);
 
             // print the next route
-            if constexpr (!is_void_v<n_res_t>) {
-                this->next.append_as_string(out, forward<CtxT>(ctx), forward<ReqT>(req));
+            if constexpr (is_next_route_valid) {
+                if constexpr (requires { this->next.template append_as_string<CtxT, ReqT>(out, ctx, req); }) {
+                    this->next.template append_as_string<CtxT, ReqT>(out, ctx, req);
+                } else {
+                    append_route_as_string<n_res_t>(out);
+                }
             }
         }
 
         template <typename StrT = stl::string>
-        [[nodiscard]] StrT to_string() {
+        [[nodiscard]] StrT to_string() const {
             StrT out;
             append_as_string(out);
             return out;
