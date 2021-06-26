@@ -176,6 +176,7 @@ namespace webpp::http {
             constexpr bool passed_last_route = Index > (route_count() - 1);
 
             if constexpr (no_routes || passed_last_route) {
+                // this is adds a 404 error response to the end of the routes essentially
                 return ctx.error(404u);
             } else {
 
