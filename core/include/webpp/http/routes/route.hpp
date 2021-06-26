@@ -119,8 +119,8 @@ namespace webpp::http {
                 run_and_catch(_route, ctx);
             }
         } else {
-            throw invalid_argument(
-              "We don't know how to call your entry route. Change your route's signature.");
+            static_assert_false(route_type,
+                                "We don't know how to call your entry route. Change your route's signature.");
         }
     }
 
@@ -290,7 +290,7 @@ namespace webpp::http {
             [[nodiscard]] auto operator()(auto... args) noexcept(is_noexcept) {
                 // yes we know app must not be nullptr, but route should only be used with router,
                 // and the router will set the app if it can otherwise the router can throw an
-                // error at compile time or at least at initialization time instead of when the
+                // error at compile time or at least at initialization time instead of when
                 // a user's request comes to this specific route. This makes sure the developers
                 // will catch this error sooner.
                 assert(app != nullptr); // You did not supply the correct app to the router
