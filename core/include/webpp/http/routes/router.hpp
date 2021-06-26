@@ -100,13 +100,6 @@ namespace webpp::http {
                         return operator()<next_route_index>(forward<CtxT>(ctx), req);
                     }
                 }
-                // todo: check if you can run the next route as well
-                //                if constexpr (is_passed_last_route) {
-                //                    return ctx.error(404u);
-                //                } else {
-                //                    return operator()<next_route_index>(forward<CtxT>(ctx),
-                //                    req);
-                //                }
             } else if constexpr (Context<result_type>) {
                 // context switching is happening here
                 // just call the next route or finish it with calling the context handlers
