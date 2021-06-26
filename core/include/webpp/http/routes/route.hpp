@@ -29,37 +29,38 @@ namespace webpp::http {
 
     namespace details {
 
-        constexpr auto run_and_catch(auto&& callable, Context auto& ctx, auto&&... args) noexcept {
+        template <typename CallableT, Context CtxT, typename... Args>
+        constexpr auto run_and_catch(CallableT && callable, CtxT & ctx, Args && ... args) noexcept {
             using namespace stl;
 
-            using return_type = invoke_result_t<decltype(callable), decltype(args)...>;
-            if constexpr (is_nothrow_invocable_v<decltype(callable), decltype(args)...>) {
+            using return_type = invoke_result_t<CallableT, Args...>;
+            if constexpr (is_nothrow_invocable_v<CallableT, Args...>) {
                 // It's noexcept, we call it knowing that.
-                return callable(forward<decltype(args)>(args)...);
-            } else if constexpr (is_invocable_v<decltype(callable), decltype(args)...>) {
+                return callable(forward<Args>(args)...);
+            } else if constexpr (is_invocable_v<CallableT, Args...>) {
 
                 if constexpr (is_void_v<return_type>) {
                     try {
-                        callable(forward<decltype(args)>(args)...);
+                        callable(forward<Args>(args)...);
                     } catch (...) {
                         // nothing to do
                     }
                 } else if constexpr (same_as<return_type, bool>) {
                     try {
-                        return callable(forward<decltype(args)>(args)...);
+                        return callable(forward<Args>(args)...);
                     } catch (...) { return false; }
                 } else if constexpr (istl::Optional<return_type>) {
                     try {
-                        return callable(forward<decltype(args)>(args)...);
+                        return callable(forward<Args>(args)...);
                     } catch (...) {
                         // return 500 error on failure hoping the response type supports it
                         // todo: add more error handling stuff here to the result
                         return typename return_type::value_type{500u};
                     }
                 } else {
-                    using optional_type = decltype(make_optional(callable(forward<decltype(args)>(args)...)));
+                    using optional_type = decltype(make_optional(callable(forward<Args>(args)...)));
                     try {
-                        return make_optional(callable(forward<decltype(args)>(args)...));
+                        return make_optional(callable(forward<Args>(args)...));
                     } catch (...) { return optional_type{nullopt}; }
                 }
 
