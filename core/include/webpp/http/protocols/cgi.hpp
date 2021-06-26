@@ -94,7 +94,7 @@ namespace webpp::http {
         int operator()() noexcept {
             // we're putting the request on local allocator; yay us :)
             static_assert(stl::constructible_from<request_type, cgi>);
-            HTTPResponse auto res = this->app(request_type{*static_cast<cgi*>(this)});
+            HTTPResponse auto res = this->app(request_type{*this});
             res.calculate_default_headers();
             const auto header_str = res.headers.str();
             const auto str        = res.body.str();

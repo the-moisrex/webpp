@@ -21,7 +21,7 @@ namespace webpp::http {
      *   Interpreted as: "Subject: ¡Hola, señor!"
      *
      */
-    template <typename HeaderEList, typename HeaderFieldType, Allocator AllocType>
+    template <typename HeaderEList, HTTPHeaderField HeaderFieldType, Allocator AllocType>
     class request_headers
       : public stl::vector<HeaderFieldType,
                            typename stl::allocator_traits<AllocType>::template rebind_alloc<HeaderFieldType>>,
@@ -41,7 +41,7 @@ namespace webpp::http {
         constexpr request_headers(istl::StringViewifiable auto&& header_string, auto&&... args)
           : super{stl::forward<decltype(args)>(args)...},
             elist_type{} {
-            parse_header_string(istl::string_viewify(header_string));
+            parse_header_string(istl::string_viewify(stl::forward<decltype(header_string)>(header_string)));
         }
     };
 

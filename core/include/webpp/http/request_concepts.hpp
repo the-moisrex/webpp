@@ -7,6 +7,7 @@
 
 #include "../extensions/extension.hpp"
 #include "../logs/log_concepts.hpp"
+#include "../std/string_concepts.hpp"
 #include "../traits/enable_traits.hpp"
 
 namespace webpp::http {
@@ -56,6 +57,16 @@ namespace webpp::http {
     // todo: complete this
     template <typename T>
     concept HTTPRequestBodyExtensionList = ExtensionList<T>;
+
+
+    /**
+     * This is an HTTP Header Field concept.
+     */
+    template <typename T>
+    concept HTTPHeaderField = requires(T field) {
+        { field.name } -> istl::StringViewifiable;
+        { field.value } -> istl::StringViewifiable;
+    };
 
 } // namespace webpp::http
 
