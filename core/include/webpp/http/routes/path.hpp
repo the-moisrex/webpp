@@ -379,7 +379,7 @@ namespace webpp::http {
 
                     // todo: (is there something we should do here?) nothing to do if the segment counts don't match
 
-                    // re-running the this member function with the new switched context type
+                    // re-running this member function with the new switched context type
                     return operator()(stl::move(new_ctx), req);
                 } else {
 
@@ -410,7 +410,7 @@ namespace webpp::http {
                         if constexpr (has_next_segment) {
                             return call_segment(next_segment, ctx, req);
                         } else {
-                            // return the results of the this segment because it's the last segment
+                            // return the results of this segment because it's the last segment
                             return res;
                         }
                     }
