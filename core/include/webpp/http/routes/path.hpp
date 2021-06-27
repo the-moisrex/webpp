@@ -315,7 +315,7 @@ namespace webpp::http {
         [[nodiscard]] static inline bool call_segment(auto&& seg, auto&& ctx, auto const& req) noexcept {
             using context_type = decltype(ctx);
             using req_type     = decltype(req);
-            using seg_type     = decltype(seg);
+            using seg_type     = stl::remove_cvref_t<decltype(seg)>;
             if constexpr (stl::is_invocable_v<seg_type, context_type, req_type>) {
                 return call_and_catch(seg, ctx, req);
             } else if constexpr (stl::is_invocable_v<seg_type, req_type, context_type>) {
@@ -325,7 +325,7 @@ namespace webpp::http {
             } else if constexpr (stl::is_invocable_v<seg_type>) {
                 return call_and_catch(seg);
             } else {
-                throw stl::invalid_argument("The specified segment in the path cannot be called.");
+                static_assert_false(seg_type, "The specified segment in the path cannot be called.");
             }
         }
 
@@ -340,7 +340,7 @@ namespace webpp::http {
             using traits_type                 = typename context_type::traits_type;
             using string_type                 = traits::general_string<traits_type>;
             constexpr bool has_path_extension = requires {
-                {ctx.path};
+                ctx.path;
             };
 
             if constexpr (!has_segment) {
