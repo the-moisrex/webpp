@@ -339,14 +339,11 @@ namespace webpp::http {
             using context_ref_type            = stl::add_lvalue_reference_t<context_type>;
             using traits_type                 = typename context_type::traits_type;
             using string_type                 = traits::general_string<traits_type>;
-            constexpr bool has_path_extension = requires {
-                ctx.path;
-            };
+            constexpr bool has_path_extension = (requires { ctx.path; });
 
             if constexpr (!has_segment) {
                 return true;
-            }
-            else {
+            } else {
 
                 // Switching the context if it doesn't have a path in it
                 if constexpr (!has_path_extension) {
