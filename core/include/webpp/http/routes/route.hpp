@@ -299,17 +299,19 @@ namespace webpp::http {
             }
         };
 
-        [[nodiscard]] constexpr auto call_this_route(Context auto&&     ctx,
-                                                     HTTPRequest auto&& req) const noexcept {
+        template <Context CtxT, HTTPRequest ReqT>
+        constexpr auto call_this_route(CtxT&& ctx, ReqT&& req) const noexcept {
             if constexpr (is_route_valid) {
-                return call_route(static_cast<super_t>(*this), ctx, req);
+                return call_route(static_cast<super_t>(*this),
+                                  stl::forward<CtxT>(ctx),
+                                  stl::forward<ReqT>(req));
             } else {
                 return; // void
             }
         }
 
-        [[nodiscard]] constexpr auto call_next_route([[maybe_unused]] Context auto&&     ctx,
-                                                     [[maybe_unused]] HTTPRequest auto&& req) const noexcept {
+        constexpr auto call_next_route([[maybe_unused]] Context auto&&     ctx,
+                                       [[maybe_unused]] HTTPRequest auto&& req) const noexcept {
             if constexpr (is_next_route_valid) {
                 return call_route(super_t::next, ctx, req);
             } else {
