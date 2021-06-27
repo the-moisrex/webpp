@@ -710,6 +710,24 @@ namespace webpp::istl {
     using first_parameter = nth_parameter<0, Tup>;
     // todo: add last_parameter as well
 
+    /**
+     * Get the first template parameter in the specified variadic template or void if nothing is there.
+     */
+    template <typename...>
+    struct first_type {
+        using type = void;
+    };
+
+    template <typename T>
+    struct first_type<T> {
+        using type = T;
+    };
+
+    template <typename ...T>
+    using first_type_t = typename first_type<T...>::type;
+
+
+
 
     /**
      * Merge two or more tuple-like types.
@@ -814,6 +832,16 @@ namespace webpp::istl {
     template <typename T>
     using unique_parameters = typename details::unique_types<T>::type;
 
+
+    // from: http://open-std.org/JTC1/SC22/WG21/docs/papers/2020/p2098r1.pdf
+    template <class T, template <class...> class Primary>
+    struct is_specialization_of : stl::false_type {};
+
+    template <template <class...> class Primary, class... Args>
+    struct is_specialization_of<Primary<Args...>, Primary> : stl::true_type {};
+
+    template <class T, template <class...> class Primary>
+    inline constexpr bool is_specialization_of_v = is_specialization_of<T, Primary>::value;
 
 } // namespace webpp::istl
 

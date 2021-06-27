@@ -341,6 +341,13 @@ namespace webpp::http {
             return set_next<logical_operators::none>(func);
         }
 
+        /*
+                template <typename RetType, typename ClassType>
+                [[nodiscard]] constexpr auto operator>>=(RetType ClassType::*pm) noexcept {
+                    return set_next<logical_operators::none>(stl::mem_fn(pm));
+                }
+        */
+
         template <typename RouteT>
         [[nodiscard]] constexpr auto operator>>=(RouteT&& new_route) const noexcept {
             using rt = stl::remove_cvref_t<RouteT>;
