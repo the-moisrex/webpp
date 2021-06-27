@@ -463,17 +463,14 @@ namespace webpp::http {
                                 if (res)
                                     call_next_route(ctx, req);
                             } else {
-                                if (res) {
-                                    if constexpr (istl::Optional<n_res_t>) {
-                                        return call_next_route(ctx, req);
-                                    } else {
-                                        return optional<n_res_t>{call_next_route(ctx, req)};
-                                    }
-                                }
                                 if constexpr (istl::Optional<n_res_t>) {
-                                    return n_res_t{nullopt}; // n_res_t is an optional type itself.
+                                    if (res)
+                                        return n_res_t{nullopt};
+                                    return call_next_route(ctx, req);
                                 } else {
-                                    return optional<n_res_t>{nullopt};
+                                    if (res)
+                                        return call_next_route(ctx, req);
+                                    return optional<n_res_t>{call_next_route(ctx, req)};
                                 }
                             }
                         } else if constexpr (logical_operators::AND == op) {
@@ -484,9 +481,15 @@ namespace webpp::http {
                                     return true; // continue checking other entry-routes, but not sub-routes
                                 return call_next_route_in_bool(ctx, req);
                             } else {
-                                if (!res)
-                                    return optional<n_res_t>{nullopt};
-                                return optional<n_res_t>{call_next_route(ctx, req)};
+                                if constexpr (istl::Optional<n_res_t>) {
+                                    if (!res)
+                                        return n_res_t{nullopt};
+                                    return call_next_route(ctx, req);
+                                } else {
+                                    if (!res)
+                                        return optional<n_res_t>{nullopt};
+                                    return optional<n_res_t>{call_next_route(ctx, req)};
+                                }
                             }
                         } else if constexpr (logical_operators::OR == op) {
                             // Same as "and", we will not use operator ||
@@ -495,9 +498,15 @@ namespace webpp::http {
                                     return true; // continue checking entry-routes but not the sub-routes
                                 return call_next_route_in_bool(ctx, req);
                             } else {
-                                if (res)
-                                    return nullopt;
-                                return make_optional(call_next_route(ctx, req));
+                                if constexpr (istl::Optional<n_res_t>) {
+                                    if (res)
+                                        return n_res_t{nullopt};
+                                    return call_next_route(ctx, req);
+                                } else {
+                                    if (res)
+                                        return optional<n_res_t>{nullopt};
+                                    return optional<n_res_t>(call_next_route(ctx, req));
+                                }
                             }
                         } else if constexpr (logical_operators::XOR == op) {
                             // In operator xor, the next route will be called no matter the result of the
