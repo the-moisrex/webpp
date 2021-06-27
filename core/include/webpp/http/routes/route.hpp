@@ -469,7 +469,7 @@ namespace webpp::http {
                                     return call_next_route(ctx, req);
                                 } else {
                                     if (res)
-                                        return call_next_route(ctx, req);
+                                        return optional<n_res_t>{nullopt};
                                     return optional<n_res_t>{call_next_route(ctx, req)};
                                 }
                             }
