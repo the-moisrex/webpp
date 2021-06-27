@@ -11,6 +11,11 @@ namespace webpp::http {
         [[nodiscard]] constexpr bool operator()(HTTPRequest auto const& req) const noexcept {
             return req.request_method() == *this;
         }
+
+        template <istl::String StrT = stl::string>
+        void append_name_to(StrT& out) const {
+            append_to(out, *this);
+        }
     };
 
     using method = route<method_route_condition>;

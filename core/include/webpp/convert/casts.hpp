@@ -27,7 +27,7 @@ namespace webpp {
         constexpr bool is_signed = stl::is_same_v<T, stl::make_signed_t<T>>;
         const auto     str       = istl::string_viewify(stl::forward<decltype(_str)>(_str));
         // using char_type          = istl::char_type_of<decltype(str)>;
-        T ret                    = 0;
+        T ret = 0;
         if (!str.size())
             return ret;
 
@@ -124,14 +124,20 @@ namespace webpp {
     // todo: GCC's to_chars implementation doesn't support floating point numbers
     template <typename ValueType, typename... R>
     constexpr bool append_to(istl::String auto& str, ValueType value, R&&... args) noexcept {
-        constexpr stl::size_t   _size = ascii::digit_count<ValueType>() + 1;
-        stl::array<char, _size> chars;
-        if (auto res = stl::to_chars(chars.data(), chars.data() + _size, value, stl::forward<R>(args)...);
-            res.ec == stl::errc()) {
-            str.append(chars.data(), (res.ptr - chars.data()));
+        if constexpr (istl::StringViewifiable<ValueType>) {
+            str.append(value);
+            (append_to(str, stl::forward<R>(args)), ...);
             return true;
+        } else {
+            constexpr stl::size_t   _size = ascii::digit_count<ValueType>() + 1;
+            stl::array<char, _size> chars;
+            if (auto res = stl::to_chars(chars.data(), chars.data() + _size, value, stl::forward<R>(args)...);
+                res.ec == stl::errc()) {
+                str.append(chars.data(), (res.ptr - chars.data()));
+                return true;
+            }
+            return false;
         }
-        return false;
     }
 
 

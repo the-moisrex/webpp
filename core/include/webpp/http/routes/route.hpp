@@ -310,7 +310,6 @@ namespace webpp::http {
 
         [[nodiscard]] constexpr auto call_next_route([[maybe_unused]] Context auto&&     ctx,
                                                      [[maybe_unused]] HTTPRequest auto&& req) const noexcept {
-            // using context_type = stl::remove_cvref_t<decltype(ctx)>;
             if constexpr (is_next_route_valid) {
                 return call_route(super_t::next, ctx, req);
             } else {
@@ -513,26 +512,45 @@ namespace webpp::http {
         }
 
       private:
-        template <typename ResT>
-        static void append_route_as_string(istl::String auto& out) {
+        template <typename ResT, bool First = false>
+        static void append_route_as_string(istl::String auto& out, auto& the_route) {
             using namespace stl;
 
             // print this route
             if constexpr (is_void_v<ResT>) {
-                out.append(" >> action");
+                if constexpr (First) {
+                    append_to(out, "action");
+                } else {
+                    append_to(out, " >> action");
+                }
             } else if constexpr (same_as<ResT, bool>) {
                 // todo: find out the name or type of the validator
-                switch (op) {
-                    case logical_operators::none: out.append(" >> validator"); break;
-                    case logical_operators::AND: out.append(" &&"); break;
-                    case logical_operators::OR: out.append(" ||"); break;
-                    case logical_operators::XOR: out.append(" ^"); break;
+                if constexpr (!First) {
+                    switch (op) {
+                        case logical_operators::none: append_to(out, " >> "); break;
+                        case logical_operators::AND: append_to(out, " && "); break;
+                        case logical_operators::OR: append_to(out, " || "); break;
+                        case logical_operators::XOR: append_to(out, " ^ "); break;
+                    }
+                }
+                if constexpr (requires { the_route.append_name_to(out); }) {
+                    the_route.append_name_to(out);
                 }
             } else if constexpr (ConvertibleToResponse<ResT>) {
                 // todo: find out the type of the response
-                out.append(" >> response");
+                if constexpr (First) {
+                    append_to(out, "response");
+                } else {
+                    append_to(out, " >> response");
+                }
+            } else if constexpr (requires { the_route.append_name_to(out); }) {
+                the_route.append_name_to(out);
             } else {
-                out.append(" >> unknown");
+                if constexpr (First) {
+                    append_to(out, "[unknown]");
+                } else {
+                    append_to(out, " >> [unknown]");
+                }
             }
         }
 
@@ -540,20 +558,20 @@ namespace webpp::http {
         /**
          * Generate a string representation of this route
          */
-        template <Context CtxT, HTTPRequest ReqT>
+        template <Context CtxT, HTTPRequest ReqT, bool First = true>
         void append_as_string(istl::String auto& out, CtxT&& ctx, ReqT&& req) const {
             using namespace stl;
             using res_t   = remove_cvref_t<decltype(call_this_route(ctx, req))>;
             using n_res_t = remove_cvref_t<decltype(call_next_route(ctx, req))>;
 
-            append_route_as_string<res_t>(out);
+            append_route_as_string<res_t, First>(out, *this);
 
             // print the next route
             if constexpr (is_next_route_valid) {
                 if constexpr (requires { this->next.template append_as_string<CtxT, ReqT>(out, ctx, req); }) {
                     this->next.template append_as_string<CtxT, ReqT>(out, ctx, req);
                 } else {
-                    append_route_as_string<n_res_t>(out);
+                    append_route_as_string<n_res_t, false>(out, this->next);
                 }
             }
         }
