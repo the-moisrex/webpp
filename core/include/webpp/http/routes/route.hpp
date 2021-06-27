@@ -463,9 +463,18 @@ namespace webpp::http {
                                 if (res)
                                     call_next_route(ctx, req);
                             } else {
-                                if (res)
-                                    return optional<n_res_t>{call_next_route(ctx, req)};
-                                return optional<n_res_t>{nullopt};
+                                if (res) {
+                                    if constexpr (istl::Optional<n_res_t>) {
+                                        return call_next_route(ctx, req);
+                                    } else {
+                                        return optional<n_res_t>{call_next_route(ctx, req)};
+                                    }
+                                }
+                                if constexpr (istl::Optional<n_res_t>) {
+                                    return n_res_t{nullopt}; // n_res_t is an optional type itself.
+                                } else {
+                                    return optional<n_res_t>{nullopt};
+                                }
                             }
                         } else if constexpr (logical_operators::AND == op) {
                             // don't rely on operator && for not executing the next route, because the user
