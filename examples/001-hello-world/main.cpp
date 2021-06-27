@@ -11,20 +11,21 @@ auto page_one() {
 }
 
 int main() {
-    router _router{empty_extension_pack{},
-                   root >>=
+    router _router{root >>=
                    []() noexcept {
                        return "main page";
-                   },
-                   get and root / "cgi-bin" / "cgi-hello-world" >>=
-                   []() noexcept {
-                       return "Hello world";
-                   },
-                   (get and root / "page" / "one") = page_one,
-                   (root / "about") || (get and root / "cgi-bin" / "cgi-hello-world" / "about") >>=
-                   [](auto ctx) {
-                       return ctx.file("about.html");
-                   }};
+                   }
+//                   ,
+//                   get and root / "cgi-bin" / "cgi-hello-world" >>=
+//                   []() noexcept {
+//                       return "Hello world";
+//                   },
+//                   (get and root / "page" / "one") = page_one,
+//                   (root / "about") || (get and root / "cgi-bin" / "cgi-hello-world" / "about") >>=
+//                   [](auto ctx) {
+//                       return ctx.file("about.html");
+//                   }
+    };
 
     // the app:
     return cgi(_router)();
