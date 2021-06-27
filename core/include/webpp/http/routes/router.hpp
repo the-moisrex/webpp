@@ -201,9 +201,9 @@ namespace webpp::http {
                 // ctx.call_pre_entryroute_methods();
                 // todo: we might have a context switching, what should we do?
                 // ctx.call_post_entryroute_methods();
-                if constexpr (requires {
-                                  { call_route(route, ctx, req) } -> stl::same_as<void>;
-                              }) {
+
+                using res_t = stl::remove_cvref_t<decltype(call_route(route, ctx, req))>;
+                if constexpr (stl::is_void_v<res_t>) {
                     // because "handle_route_results" can't handle void inputs, here's how we deal with it
                     call_route(route, ctx, req);
                     return ctx.error(404u);
