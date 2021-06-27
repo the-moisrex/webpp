@@ -18,9 +18,18 @@ namespace webpp::http {
     /**
      * Const router is a router that satisfies that "Router" concept.
      */
-    template <ExtensionList ExtensionListType = empty_extension_pack, typename... RouteType>
+    template <ExtensionList ExtensionListType = empty_extension_pack,
+              typename AppType                = void,
+              typename... RouteType>
     struct router {
-        using extension_list_type = stl::remove_cvref_t<ExtensionListType>;
+        using extension_list_type         = stl::remove_cvref_t<ExtensionListType>;
+        using app_type                    = stl::remove_cvref_t<AppType>;
+        static constexpr bool has_app_ref = !stl::is_void_v<app_type>;
+        using app_ref =
+          stl::conditional_t<has_app_ref, stl::add_lvalue_reference_t<app_type>, istl::nothing_type>;
+
+        [[no_unique_address]] const app_ref app{};
+
 
         // todo: extract additional routes from extensions
         // todo: add router_extensions as well
@@ -28,6 +37,10 @@ namespace webpp::http {
 
         constexpr router(ExtensionListType&&, RouteType&&... _route) noexcept
           : routes(stl::forward<RouteType>(_route)...) {}
+
+        constexpr router(ExtensionListType&&, app_ref app_ref_obj, RouteType&&... _route) noexcept
+          : app{app_ref_obj},
+            routes(stl::forward<RouteType>(_route)...) {}
 
         constexpr router(RouteType&&... _route) noexcept : routes(stl::forward<RouteType>(_route)...) {}
 
@@ -231,7 +244,16 @@ namespace webpp::http {
     };
 
     template <typename ExtensionListType, typename... RouteType>
-    router(ExtensionListType&&, RouteType&&...) -> router<ExtensionListType, RouteType...>;
+    router(ExtensionListType&&, RouteType&&...) -> router<ExtensionListType, void, RouteType...>;
+
+    template <typename ExtensionListType, Application AppType, typename... RouteType>
+    router(ExtensionListType&&, AppType&, RouteType&&...) -> router<ExtensionListType, AppType, RouteType...>;
+
+    template <typename... RouteType>
+    requires(sizeof...(RouteType) > 1 &&
+             !istl::is_specialization_of_v<istl::first_type_t<RouteType...>, extension_pack>)
+      router(RouteType&&...)
+    ->router<empty_extension_pack, void, RouteType...>;
 
 
 } // namespace webpp::http

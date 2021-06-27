@@ -4,6 +4,7 @@
 #define WEBPP_EXAMPLE_APP_H
 
 #include "../../core/include/webpp/http/http.hpp"
+
 #include <iostream>
 
 namespace website {
@@ -25,8 +26,7 @@ namespace website {
             const auto admin = []() {
                 return "Nice page.";
             };
-            router _router{extensions{},
-                           (get and (relative / "home")) >>=
+            router _router{(get and (relative / "home")) >>=
                            [this](Context auto& ctx) {
                                return this->home(ctx);
                            },
