@@ -301,13 +301,7 @@ namespace webpp::http {
 
         template <Context CtxT, HTTPRequest ReqT>
         constexpr auto call_this_route(CtxT&& ctx, ReqT&& req) const noexcept {
-            if constexpr (is_route_valid) {
-                return call_route(static_cast<super_t>(*this),
-                                  stl::forward<CtxT>(ctx),
-                                  stl::forward<ReqT>(req));
-            } else {
-                return; // void
-            }
+            return call_route(static_cast<super_t>(*this), stl::forward<CtxT>(ctx), stl::forward<ReqT>(req));
         }
 
         constexpr auto call_next_route([[maybe_unused]] Context auto&&     ctx,
