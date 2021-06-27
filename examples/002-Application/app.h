@@ -22,7 +22,7 @@ namespace website {
         }
 
         auto operator()(auto&& req) {
-            using extensions = webpp::extension_pack<string_response>;
+            // using extensions = webpp::extension_pack<string_response>;
             const auto admin = []() {
                 return "Nice page.";
             };
