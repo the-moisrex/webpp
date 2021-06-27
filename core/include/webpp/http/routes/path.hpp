@@ -380,11 +380,11 @@ namespace webpp::http {
                     return operator()(stl::move(new_ctx), req);
                 } else {
 
-                    // nothing to do if we the user's requesting a segment that we don't have
+                    // nothing to do if the user's requesting a segment that we don't have
                     if (!ctx.path.next_segment())
                         return false;
 
-                    using result_type = stl::invoke_result_t<segment_type, context_ref_type>;
+                    using result_type = decltype(call_segment(segment, ctx, req));
 
                     // if the result of this segment is void
                     if constexpr (stl::is_void_v<result_type>) {
