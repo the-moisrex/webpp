@@ -359,7 +359,7 @@ namespace webpp {
 
 
         /**
-         * Check if all of the extensions are the correct type
+         * Check if all the extensions are the correct type
          * @tparam IF
          */
         template <template <typename> typename IF>
