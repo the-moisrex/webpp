@@ -22,11 +22,12 @@ namespace website {
         }
 
         auto operator()(auto&& req) {
-            // using extensions = webpp::extension_pack<string_response>;
+            using extensions = webpp::extension_pack<string_response>;
             const auto admin = []() {
                 return "Nice page.";
             };
-            router _router{(get and (relative / "home")) >>=
+            router _router{extensions{},
+                           (get and (relative / "home")) >>=
                            [this](Context auto& ctx) {
                                return this->home(ctx);
                            },

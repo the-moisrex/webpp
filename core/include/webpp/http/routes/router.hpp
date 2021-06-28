@@ -73,75 +73,32 @@ namespace webpp::http {
 
       private:
         /**
-         * This function will call the next route if the returned result of the current route allows it
+         * This function will handle the edge cases of the returned types of the routes.
+         * @returns bool to terminate or continue checking the next route
+         * @returns response
+         * @returns Context so context switching can happen in the caller
+         * @returns optional; an optional that doesn't contain value will cause the next route to be called
          */
-        template <stl::size_t Index = 0, typename ResT, Context CtxT, HTTPRequest ReqT>
+        template <typename ResT, Context CtxT, HTTPRequest ReqT>
         [[nodiscard]] constexpr auto handle_route_results(ResT&& res, CtxT&& ctx, ReqT&& req) const noexcept {
             using namespace stl;
 
-            using result_type                   = remove_cvref_t<ResT>;
-            using context_type                  = remove_cvref_t<CtxT>;
-            constexpr auto next_route_index     = Index + 1;
-            constexpr bool is_passed_last_route = Index > (route_count() - 1);
+            using result_type  = remove_cvref_t<ResT>;
+            using context_type = remove_cvref_t<CtxT>;
 
-            // Don't handle the edge cases of return types here, do it in the "call_route" function
-            // for example, a function that returns strings and can be converted into a response
-            // is going to be converted into a response in the "call_route" function
-            if constexpr (istl::Optional<result_type>) {
-                // if res is a context, context switching is automatically happens here,
-                // the same goes for any other valid type
-
-                if (res) {
-                    return handle_route_results<Index>(res.value(), forward<CtxT>(ctx), req);
-                } else {
-                    if constexpr (is_passed_last_route) {
-                        // return a 404 error
-                        constexpr auto err_code = 404u;
-                        using ret_type =
-                          decltype(handle_route_results<Index>(res.value(), forward<CtxT>(ctx), req));
-                        if constexpr (is_convertible_v<typename result_type::value_type, unsigned long>) {
-                            return handle_route_results<Index>(typename result_type::value_type{err_code},
-                                                               forward<CtxT>(ctx),
-                                                               req);
-                        } else if constexpr (is_constructible_v<ret_type, decltype(err_code)>) {
-                            return ret_type{err_code};
-                        } else {
-                            return handle_route_results<Index>(err_code, forward<CtxT>(ctx), req);
-                        }
-                    } else {
-                        // Check the next route
-                        return operator()<next_route_index>(forward<CtxT>(ctx), req);
-                    }
-                }
-            } else if constexpr (Context<result_type>) {
-                // context switching is happening here
-                // just call the next route or finish it with calling the context handlers
-                if constexpr (!is_passed_last_route) {
-                    return operator()<next_route_index>(forward<ResT>(res), req);
-                } else {
-                    return ctx.error(404u);
-                }
-            } else if constexpr (HTTPResponse<result_type>) {
+            if constexpr (HTTPResponse<result_type>) {
                 // we're done; don't call the next route
                 return res;
-            } else if constexpr (is_same_v<result_type, bool>) {
-                if (res) {
-                    return operator()<next_route_index>(forward<CtxT>(ctx), req);
-                } else {
-                    return ctx.error(404u); // doesn't matter if it's the last route or not,
-                    // returning false just means finish it
-                }
             } else if constexpr (is_integral_v<result_type>) {
                 return ctx.error(res); // error code
             } else if constexpr (Route<result_type, context_type>) {
                 auto res2       = call_route(res, ctx, req);
                 using res2_type = remove_cvref_t<decltype(res2)>;
                 if constexpr (is_void_v<res2_type>) {
-                    return operator()<next_route_index>(forward<CtxT>(ctx), req);
+                    return true; // run the next route
                 } else {
-                    return handle_route_results<Index>(move(res2), forward<CtxT>(ctx), req);
+                    return handle_route_results(move(res2), forward<CtxT>(ctx), req);
                 }
-
             } else if constexpr (requires {
                                      requires ConstructibleWithResponse<typename context_type::response_type,
                                                                         result_type>;
@@ -153,14 +110,71 @@ namespace webpp::http {
                                                      // value generator)
                                  }) {
                 return ctx.response(forward<ResT>(res));
-                // todo: consider "response extension" injection in order to get the right response type
             } else if constexpr (istl::StringViewifiable<result_type>) {
-                // Use string_response response type to handle strings
-                return ctx.template response<string_response>(istl::string_viewify(forward<ResT>(res)));
+                if constexpr (context_type::template has_extension<string_response>()) {
+                    // Use string_response, response type to handle strings
+                    return ctx.template response<string_response>(istl::string_viewify(forward<ResT>(res)));
+                } else {
+                    static_assert_false(
+                      result_type,
+                      "You returned a string, but the router doesn't have access to string_response extension. Pass it as an extension to the router.");
+                }
             } else {
+                // todo: consider "response extension" injection in order to get the right response type
+
                 // we just ignore anything else the user returns
                 // this part never happens because the "call_route" converts this part to the above parts
                 return ctx.error(404u);
+            }
+        }
+
+
+        template <stl::size_t Index = 0, typename ResT, Context CtxT, HTTPRequest ReqT>
+        constexpr HTTPResponse auto next_route(ResT&& res, CtxT&& ctx, ReqT&& req) const noexcept {
+            using result_type = stl::remove_cvref_t<ResT>;
+
+            constexpr auto next_route_index = Index + 1;
+            constexpr bool is_last_route    = Index == (route_count() - 1);
+
+            // there are 5 scenarios that can happen in the top level routers:
+            //   1. Top level context switching and call the next route
+            //   2. Route handling termination
+            //   3. Response has found
+            //   4. Checking the next route otherwise
+            //   5. Optional response
+
+            if constexpr (istl::Optional<result_type>) {
+                if (res) {
+                    // Call this function for the same route, but strip out the optional struct
+                    return next_route<Index>(handle_route_results(res.value(), stl::forward<CtxT>(ctx), req));
+                } else {
+                    // Just call the next route
+                    return operator()<next_route_index>(stl::forward<CtxT>(ctx), req);
+                }
+            } else if constexpr (Context<result_type>) {
+                // context switching
+                if constexpr (is_last_route) {
+                    ctx.logger.warning(
+                      "Router",
+                      "Router got Context Switching action on the last route. 404 will be returned.");
+                }
+
+                // calling the next route will return 404 error
+                return operator()<next_route_index>(stl::forward<ResT>(res), req);
+            } else if constexpr (HTTPResponse<result_type>) {
+                // we found our response
+                return res;
+            } else if constexpr (stl::same_as<result_type, bool>) {
+                // if the user returns "true", then we'll check the next route, otherwise, it's a
+                // "route handling termination signal" for us.
+                if (res) {
+                    return operator()<next_route_index>(ctx, req);
+                } else {
+                    return ctx.error(404u);
+                }
+            } else {
+                ctx.logger.error("Router", "unknown response type");
+                return ctx.error(500u, "Unknown response type.");
             }
         }
 
@@ -208,9 +222,9 @@ namespace webpp::http {
                     call_route(route, ctx, req);
                     return ctx.error(404u);
                 } else {
-                    // handle_route_results will call the next route too; so don't need to handle the next
-                    // route here in this function.
-                    return handle_route_results<Index>(call_route(route, ctx, req), ctx, req);
+                    return next_route<Index + 1>(handle_route_results(call_route(route, ctx, req), ctx, req),
+                                                 ctx,
+                                                 req);
                 }
             }
         }

@@ -219,6 +219,11 @@ namespace webpp::http {
                       "did you forget to inherit from the "
                       "passed basic context type in your extension?");
 
+        template <typename Ext>
+        [[nodiscard]] static constexpr bool has_extension() noexcept {
+            return istl::contains_parameter<original_extension_pack_type, Ext>;
+        }
+
         /**
          * Append some extensions to this context type and get the type back
          */
