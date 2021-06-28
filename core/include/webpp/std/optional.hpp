@@ -43,12 +43,12 @@ namespace webpp::istl {
     };
 
     template <typename T>
-    concept Optional = stl::is_convertible_v<T, bool> &&
-      (is_std_optional<T>::value || requires(stl::remove_cvref_t<T> obj) {
-          typename stl::remove_cvref_t<T>::value_type;
-          { obj.value() } -> stl::same_as<typename stl::remove_cvref_t<T>::value_type>;
-          { obj.value_or(obj) } -> stl::same_as<typename stl::remove_cvref_t<T>::value_type>;
-      });
+    concept Optional = (is_std_optional<T>::value || requires(stl::remove_cvref_t<T> obj) {
+        typename stl::remove_cvref_t<T>::value_type;
+        { obj.value() } -> stl::same_as<typename stl::remove_cvref_t<T>::value_type>;
+        { obj.value_or(obj) } -> stl::same_as<typename stl::remove_cvref_t<T>::value_type>;
+        { obj == true } -> stl::same_as<bool>; // convertible to bool
+    });
 
     template <typename Q, typename T>
     concept OptionalOfType = Optional<T> && stl::same_as<typename T::value_type, Q>;

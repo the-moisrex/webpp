@@ -2,6 +2,7 @@
 
 #include "../core/include/webpp/std/tuple.hpp"
 #include "../core/include/webpp/std/type_traits.hpp"
+#include "../core/include/webpp/std/optional.hpp"
 
 #include <list>
 #include <map>
@@ -80,4 +81,10 @@ static_assert(is_same_v<t16, tuple<double, string, vector<double>, double>>);
 
 using ut = unique_parameters<tuple<void, void, int, int, int>>;
 static_assert(is_same_v<ut, tuple<void, int>>);
+
+
+
+/// Optional ///
+
+static_assert(Optional<optional<int>>, "Optional doesn't work properly");
 
