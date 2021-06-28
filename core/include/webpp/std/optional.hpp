@@ -32,6 +32,11 @@ namespace webpp::stl {
 
 namespace webpp::istl {
 
+    /**
+     * Check if the specified type is a specialization of std::optional
+     * We could use is_specialization_of for this, but it'll require including <type_traits>
+     * so we just implement it manually here.
+     */
     template <typename T>
     struct is_std_optional {
         static constexpr bool value = false;
