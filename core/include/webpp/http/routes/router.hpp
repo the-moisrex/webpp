@@ -144,8 +144,9 @@ namespace webpp::http {
             if constexpr (istl::Optional<result_type>) {
                 if (res) {
                     // Call this function for the same route, but strip out the optional struct
-                    return next_route<Index>(
-                      handle_primary_results(res.value(), stl::forward<CtxT>(ctx), req));
+                    return next_route<Index>(handle_primary_results(res.value(), ctx, req),
+                                             stl::forward<CtxT>(ctx),
+                                             req);
                 } else {
                     // Just call the next route
                     return operator()<next_route_index>(stl::forward<CtxT>(ctx), req);
