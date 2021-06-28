@@ -80,15 +80,15 @@ namespace webpp::http {
          * @returns optional; an optional that doesn't contain value will cause the next route to be called
          */
         template <typename ResT, Context CtxT, HTTPRequest ReqT>
-        [[nodiscard]] constexpr auto handle_route_results(ResT&& res, CtxT&& ctx, ReqT&& req) const noexcept {
+        [[nodiscard]] constexpr auto
+        handle_primary_results(ResT&& res, CtxT&& ctx, ReqT&& req) const noexcept {
             using namespace stl;
 
             using result_type  = remove_cvref_t<ResT>;
             using context_type = remove_cvref_t<CtxT>;
 
-            if constexpr (HTTPResponse<result_type>) {
-                // we're done; don't call the next route
-                return res;
+            if constexpr (HTTPResponse<result_type> || istl::Optional<result_type>) {
+                return res; // let the "next_route" function handle it
             } else if constexpr (is_integral_v<result_type>) {
                 return ctx.error(res); // error code
             } else if constexpr (Route<result_type, context_type>) {
@@ -97,7 +97,7 @@ namespace webpp::http {
                 if constexpr (is_void_v<res2_type>) {
                     return true; // run the next route
                 } else {
-                    return handle_route_results(move(res2), forward<CtxT>(ctx), req);
+                    return handle_primary_results(move(res2), forward<CtxT>(ctx), req);
                 }
             } else if constexpr (requires {
                                      requires ConstructibleWithResponse<typename context_type::response_type,
@@ -122,9 +122,7 @@ namespace webpp::http {
             } else {
                 // todo: consider "response extension" injection in order to get the right response type
 
-                // we just ignore anything else the user returns
-                // this part never happens because the "call_route" converts this part to the above parts
-                return ctx.error(404u);
+                static_assert_false(result_type, "We don't know how to handle your output.");
             }
         }
 
@@ -146,7 +144,8 @@ namespace webpp::http {
             if constexpr (istl::Optional<result_type>) {
                 if (res) {
                     // Call this function for the same route, but strip out the optional struct
-                    return next_route<Index>(handle_route_results(res.value(), stl::forward<CtxT>(ctx), req));
+                    return next_route<Index>(
+                      handle_primary_results(res.value(), stl::forward<CtxT>(ctx), req));
                 } else {
                     // Just call the next route
                     return operator()<next_route_index>(stl::forward<CtxT>(ctx), req);
@@ -222,9 +221,10 @@ namespace webpp::http {
                     call_route(route, ctx, req);
                     return ctx.error(404u);
                 } else {
-                    return next_route<Index + 1>(handle_route_results(call_route(route, ctx, req), ctx, req),
-                                                 ctx,
-                                                 req);
+                    return next_route<Index + 1>(
+                      handle_primary_results(call_route(route, ctx, req), ctx, req),
+                      ctx,
+                      req);
                 }
             }
         }

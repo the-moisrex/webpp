@@ -202,14 +202,16 @@ namespace webpp::http {
               typename EList,
               typename ReqType>
     struct final_context final : public EList {
-        using child_extensions_type        = EList;
-        using final_context_parent         = EList;
         using traits_type                  = TraitsType;
-        using context_descriptor_type      = ContextDescriptorType;
         using original_extension_pack_type = OriginalExtensionList;
-        using request_type                 = stl::remove_cvref_t<ReqType>;
-        using basic_context_type           = typename final_context_parent::basic_context_type;
-        using etraits                      = typename final_context_parent::etraits;
+        using mother_extensions_type =
+          typename original_extension_pack_type::template mother_extensions<traits_type>;
+        using child_extensions_type   = EList;
+        using final_context_parent    = EList;
+        using context_descriptor_type = ContextDescriptorType;
+        using request_type            = stl::remove_cvref_t<ReqType>;
+        using basic_context_type      = typename final_context_parent::basic_context_type;
+        using etraits                 = typename final_context_parent::etraits;
 
         static_assert(EnabledTraits<final_context_parent>,
                       "The specified extension list type is not"

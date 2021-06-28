@@ -12,6 +12,7 @@ auto page_one() {
 
 int main() {
     router _router{
+      extension_pack<string_response>{},
       root >>=
       []() noexcept {
           return "main page";
