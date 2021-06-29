@@ -86,7 +86,7 @@ build-example-cgi-application:
 
 
 run-example-cgi-application:
-  stage: run-cgi-application
+  stage: run-example-cgi-application
   script:
     - REQUIRES_URI=/ REQUEST_METHOD=GET $CI_PROJECT_DIR/build/cgi-application
   cache:
