@@ -2,6 +2,7 @@
 image: gcc
 
 stages:
+  - install
   - build
   - build-test
   - run-test
@@ -10,21 +11,32 @@ stages:
   - build-example-cgi-application
   - run-example-cgi-application
 
-build:
-  stage: build
+install:
+  stage: install
   # instead of calling g++ directly you can also use some build toolkit like make
   # install the necessary build tools when needed
-  before_script:
+  script:
     - apt update && apt -y install make cmake libboost-dev libboost-program-options-dev libgtest-dev
     - mkdir -p /usr/src/googletest/googletest/build
     - cd /usr/src/googletest/googletest/build
     - cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ..
     - cmake --build . -- -j
+  artifacts:
+    paths:
+      - build/
+  cache:
+    key: builddirs
+    paths:
+     - build/
+     - /usr/src/googletest/googletest/build/
+
+build:
+  stage: build
+  script:
     - cd "$CI_PROJECT_DIR"
     - mkdir -p build
     - cd ./build
     - cmake -DCMAKE_BUILD_TYPE=Debug -G "Unix Makefiles" ..
-  script:
     - cmake --build . -- -j
   artifacts:
     paths:
