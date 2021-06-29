@@ -148,7 +148,8 @@ namespace webpp::http {
                                              stl::forward<CtxT>(ctx),
                                              req);
                 } else {
-                    // Just call the next route
+                    // We don't need to handle the result of this route, because there's none;
+                    // So we just call the next route for the result.
                     return operator()<next_route_index>(stl::forward<CtxT>(ctx), req);
                 }
             } else if constexpr (Context<result_type>) {
@@ -210,7 +211,6 @@ namespace webpp::http {
                 // handling root-level route calls:
                 auto route = stl::get<Index>(routes);
 
-                // It's noexcept, we call it knowing that.
                 // todo
                 // ctx.call_pre_entryroute_methods();
                 // todo: we might have a context switching, what should we do?
