@@ -1,5 +1,6 @@
 FROM alpine:latest 
 COPY . /usr/src/webpp
+RUN rm -rf /usr/src/webpp/build
 WORKDIR /usr/src/webpp
 
 # install packages
@@ -11,8 +12,8 @@ RUN apk update && \
 # make project & tests and install
 RUN mkdir build -p && \
     cd build && \
-    cmake .. && \
-    make install 
+    cmake -DCMAKE_BUILD_TYPE=Debug .. && \
+    make install -j
 
 # run tests
-RUN cd build && ./webpp-test
+RUN cd build && ./webpptest
