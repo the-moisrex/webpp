@@ -13,7 +13,8 @@ RUN apk update && \
 RUN mkdir build -p && \
     cd build && \
     cmake -DCMAKE_BUILD_TYPE=Debug .. && \
-    make install -j
+    make install -j && \
+    make webpp-test -j
 
 # run tests
-RUN cd build && ./webpptest
+RUN cd build && ./webpp-test
