@@ -319,19 +319,6 @@ namespace webpp::http {
             }
         }
 
-        [[nodiscard]] constexpr bool
-        call_next_route_in_bool([[maybe_unused]] Context auto&&     ctx,
-                                [[maybe_unused]] HTTPRequest auto&& req) const noexcept {
-            using res_type = decltype(call_next_route(stl::forward<decltype(ctx)>(ctx), req));
-            using res_t    = stl::remove_cvref_t<res_type>;
-            if constexpr (stl::same_as<res_t, bool>) {
-                return call_next_route(stl::forward<decltype(ctx)>(ctx), req);
-            } else {
-                // ignore the results
-                (void) call_next_route(stl::forward<decltype(ctx)>(ctx), req);
-                return true;
-            }
-        }
 
       public:
         [[nodiscard]] constexpr auto operator>>=(void (*func)()) const noexcept {
@@ -452,7 +439,6 @@ namespace webpp::http {
                     // we do have a next route, so let's call it
 
                     using n_res_t = remove_cvref_t<decltype(call_route(super_t::next, ctx, req))>;
-                    constexpr bool convertible_to_bool = is_void_v<n_res_t> || same_as<n_res_t, bool>;
 
                     if constexpr (same_as<res_t, bool>) {
                         // handling sub-route calls:
@@ -462,61 +448,66 @@ namespace webpp::http {
                                 // just because we can't have an optional<void>
                                 if (res)
                                     call_next_route(ctx, req);
-                            } else {
-                                if constexpr (istl::Optional<n_res_t>) {
-                                    if (res)
-                                        return n_res_t{nullopt};
+                            } else if constexpr (same_as<n_res_t, bool>) {
+                                if (res)
                                     return call_next_route(ctx, req);
-                                } else {
-                                    if (res)
-                                        return optional<n_res_t>{nullopt};
-                                    return optional<n_res_t>{call_next_route(ctx, req)};
-                                }
+                                return false;
+                            } else if constexpr (istl::Optional<n_res_t>) {
+                                if (!res)
+                                    return n_res_t{nullopt};
+                                return call_next_route(ctx, req);
+                            } else {
+                                if (!res)
+                                    return optional<n_res_t>{nullopt};
+                                return optional<n_res_t>{call_next_route(ctx, req)};
                             }
                         } else if constexpr (logical_operators::AND == op) {
                             // don't rely on operator && for not executing the next route, because the user
                             // may have overloaded the operator &&
-                            if constexpr (convertible_to_bool) {
-                                if (!res)
-                                    return true; // continue checking other entry-routes, but not sub-routes
-                                return call_next_route_in_bool(ctx, req);
-                            } else {
-                                if constexpr (istl::Optional<n_res_t>) {
-                                    if (!res)
-                                        return n_res_t{nullopt};
+                            if constexpr (is_void_v<n_res_t>) {
+                                if (res)
+                                    call_next_route(ctx, req);
+                            } else if constexpr (same_as<n_res_t, bool>) {
+                                if (res)
                                     return call_next_route(ctx, req);
-                                } else {
-                                    if (!res)
-                                        return optional<n_res_t>{nullopt};
-                                    return optional<n_res_t>{call_next_route(ctx, req)};
-                                }
+                                return false;
+                            } else if constexpr (istl::Optional<n_res_t>) {
+                                if (!res)
+                                    return n_res_t{nullopt};
+                                return call_next_route(ctx, req);
+                            } else {
+                                if (!res)
+                                    return optional<n_res_t>{nullopt};
+                                return optional<n_res_t>{call_next_route(ctx, req)};
                             }
+
                         } else if constexpr (logical_operators::OR == op) {
                             // Same as "and", we will not use operator ||
-                            if constexpr (convertible_to_bool) {
+                            if constexpr (is_void_v<n_res_t>) {
                                 if (res)
-                                    return true; // continue checking entry-routes but not the sub-routes
-                                return call_next_route_in_bool(ctx, req);
+                                    call_next_route(ctx, req);
+                            } else if constexpr (same_as<n_res_t, bool>) {
+                                if (res)
+                                    return true;
+                                return call_next_route(ctx, req);
+                            } else if constexpr (istl::Optional<n_res_t>) {
+                                if (res)
+                                    return n_res_t{nullopt};
+                                return call_next_route(ctx, req);
                             } else {
-                                if constexpr (istl::Optional<n_res_t>) {
-                                    if (res)
-                                        return n_res_t{nullopt};
-                                    return call_next_route(ctx, req);
-                                } else {
-                                    if (res)
-                                        return optional<n_res_t>{nullopt};
-                                    return optional<n_res_t>(call_next_route(ctx, req));
-                                }
+                                if (res)
+                                    return optional<n_res_t>{nullopt};
+                                return optional<n_res_t>(call_next_route(ctx, req));
                             }
                         } else if constexpr (logical_operators::XOR == op) {
                             // In operator xor, the next route will be called no matter the result of the
                             // current route so there's no need for doing the same thing that we did above,
                             // but since they may have changed the meaning of the operator ^, it's not a bad
                             // idea to do so, but I'm too lazy :)
-                            if constexpr (convertible_to_bool) {
-                                return res ^ call_next_route_in_bool(ctx, req);
+                            if constexpr (same_as<n_res_t, bool>) {
+                                return res ^ call_next_route(ctx, req);
                             } else {
-                                throw invalid_argument("Cannot use xor operator with non-bool route.");
+                                static_assert_false(n_res_t, "Cannot use xor operator with non-bool route.");
                             }
                         } else {
                             // should not happen ever.
