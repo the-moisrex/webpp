@@ -366,15 +366,14 @@ namespace webpp::http {
                     return operator()(stl::move(new_ctx), req);
                 } else {
 
-                    // nothing to do if the user's requesting a segment that we don't have
-                    if (!ctx.path.next_segment())
-                        return false;
 
                     using result_type = decltype(call_segment(segment, ctx, req));
 
                     // if the result of this segment is void
                     if constexpr (stl::is_void_v<result_type>) {
                         call_segment(segment, ctx, req);
+                        if (!ctx.path.next_segment())
+                            return false;
                         if constexpr (has_next_segment) {
                             return call_segment(next_segment, ctx, req);
                         } else {
@@ -390,6 +389,8 @@ namespace webpp::http {
                             if (!res)
                                 return false;
                         }
+                        if (!ctx.path.next_segment())
+                            return false;
                         if constexpr (has_next_segment) {
                             return call_segment(next_segment, ctx, req);
                         } else {
