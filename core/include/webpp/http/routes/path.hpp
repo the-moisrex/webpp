@@ -4,6 +4,7 @@
 #define WEBPP_PATH_H
 
 #include "../../std/optional.hpp"
+#include "../../std/tuple.hpp"
 #include "../../strings/fixed_string.hpp"
 #include "../../uri/path.hpp"
 #include "route.hpp"
@@ -45,17 +46,8 @@ namespace webpp::http {
         using segments_type          = UriSegmentsType;
         using segments_iterator_type = typename segments_type::iterator;
 
-        // todo: also give access to the segments the user specified
-
         segments_type          segments{};
         segments_iterator_type current_segment{};
-
-        path_type* pth = nullptr;
-
-        void next_segment() noexcept {
-            // todo: should this method be private?
-            ++current_segment;
-        }
 
         /**
          * Check there is any other segments left or not
@@ -98,13 +90,13 @@ namespace webpp::http {
 
         template <typename NextSegType>
         struct make_a_path {
-            NextSegType new_next_segment;
+            NextSegType segment;
 
             [[nodiscard]] constexpr bool operator()(PathContext auto const& ctx) const noexcept {
-                if constexpr (requires { {new_next_segment == ""}; }) {
-                    return new_next_segment == *ctx.path.current_segment;
-                } else if constexpr (requires { {"" == new_next_segment}; }) {
-                    return *ctx.path.current_segment == new_next_segment;
+                if constexpr (requires { {segment == ""}; }) {
+                    return segment == *ctx.path.current_segment;
+                } else if constexpr (requires { {"" == segment}; }) {
+                    return *ctx.path.current_segment == segment;
                 } else {
                     return false; // should not happen
                 }
@@ -112,13 +104,6 @@ namespace webpp::http {
         };
 
     } // namespace details
-
-    // template <typename T, typename PathType, typename UriSegmentsType>
-    // concept Segment = requires(T seg) {
-    //     // todo: update this
-    //     seg.template operator()<typename simple_context<>::template context_type_with_appended_extensions<
-    //       path_context_extension<PathType, UriSegmentsType>>>;
-    // };
 
     /**
      * Path Route:
@@ -128,41 +113,19 @@ namespace webpp::http {
      * Examples:
      *  - path() / "page" / integer("page_num") / "profile" / user_id("user_id")
      */
-    template <typename SegmentType = void, typename NextSegmentType = void>
-    struct path {
+    template <typename... Segments>
+    struct path : stl::tuple<Segments...> {
 
-        static constexpr bool has_segment      = !stl::is_void_v<SegmentType>;
-        static constexpr bool has_next_segment = !stl::is_void_v<NextSegmentType>;
+        using tuple_type = stl::tuple<Segments...>;
+        using path_type  = path<Segments...>;
 
-        using path_type = path<SegmentType, NextSegmentType>;
-        // false_type is just used for "void" type; we could have avoided this
-        // with some semi-clever inheritance way, but that would cause more
-        // code bloat that it would fix any problem
-        using segment_type = stl::conditional_t<has_segment, stl::remove_cvref_t<SegmentType>, nothing_type>;
-        using next_segment_type =
-          stl::conditional_t<has_next_segment, stl::remove_cvref_t<NextSegmentType>, nothing_type>;
-
-        // if the SegmentType is itself a path
-        static constexpr bool is_segment_nested =
-          has_segment &&
-          stl::same_as<segment_type,
-                       path<typename segment_type::segment_type, typename segment_type::next_segment_type>>;
-
-        // if the NextSegmentType is itself a path (which normally should not happen)
-        static constexpr bool is_next_segment_nested =
-          has_next_segment &&
-          stl::same_as<
-            next_segment_type,
-            path<typename next_segment_type::segment_type, typename next_segment_type::next_segment_type>>;
-
-        [[no_unique_address]] segment_type      segment{};
-        [[no_unique_address]] next_segment_type next_segment{};
+        using tuple_type::tuple; // constructors
 
         /**
          * Convert different original types to normal callable segments
          */
         template <typename NewSegType>
-        constexpr auto operator/(NewSegType&& new_next_segment) const noexcept {
+        constexpr auto operator/(NewSegType&& next_segment) const noexcept {
             using namespace stl;
             using seg_type = remove_cvref_t<NewSegType>;
 
@@ -173,40 +136,26 @@ namespace webpp::http {
                 // int_type[N] => string_view
                 using char_type     = remove_all_extents_t<seg_type>;
                 using str_view_type = basic_string_view<char_type>;
-                return operator/<str_view_type>(forward<NewSegType>(new_next_segment));
+                return operator/<str_view_type>(forward<NewSegType>(next_segment));
             } else if constexpr (is_pointer_v<seg_type> && is_integral_v<remove_pointer_t<seg_type>>) {
                 // char* => string_view
                 using char_type = remove_pointer_t<seg_type>;
-                return operator/<basic_string_view<char_type>>(forward<NewSegType>(new_next_segment));
+                return operator/<basic_string_view<char_type>>(forward<NewSegType>(next_segment));
             } else if constexpr (is_integral_v<seg_type>) {
                 // integral types
                 return operator/([=](PathContext auto const& ctx) constexpr noexcept->bool {
-                    return to<seg_type>(ctx.path.current_segment) == new_next_segment;
+                    return to<seg_type>(ctx.path.current_segment) == next_segment;
                 });
             } else if constexpr (istl::ComparableToString<seg_type> && is_class_v<seg_type>) {
 
                 // Convert those segments that can be compared with a string, to a normal segment
                 // type that have an operator(context)
                 return operator/
-                  (details::make_a_path<seg_type>{.new_next_segment = forward<NewSegType>(new_next_segment)});
+                  (details::make_a_path<seg_type>{.segment = forward<NewSegType>(next_segment)});
             } else {
                 // segment
-
-                // Add a new segment to the path and get a new path containing that specific segment
-                // and all the previous ones
-                if constexpr (!has_segment) {
-                    return route<path<seg_type, void>>{
-                      path<seg_type, void>{.segment = forward<NewSegType>(new_next_segment)}};
-                } else if constexpr (!has_next_segment) {
-                    return route<path<segment_type, seg_type>>{
-                      path<segment_type, seg_type>{.segment = segment, .next_segment = new_next_segment}};
-                } else {
-                    using next_segment_t   = seg_type;
-                    using new_segment_type = path<path<segment_type, next_segment_type>, next_segment_t>;
-                    return route<new_segment_type>{
-                      new_segment_type{.segment      = *this,
-                                       .next_segment = forward<NewSegType>(new_next_segment)}};
-                }
+                return path<Segments..., NewSegType>{(stl::get<Segments>(*this), ...),
+                                                     stl::forward<NewSegType>(next_segment)};
 
                 // todo: or give a compile time error if you can
                 //                return operator/([=](Context auto const& ctx) constexpr noexcept {
@@ -214,83 +163,11 @@ namespace webpp::http {
                 //                                     "The specified segment is not a valid segment type;"
                 //                                     " it should be callable or comparable to a string "
                 //                                     "or a known type that we can make it callable.",
-                //                                     new_next_segment);
+                //                                     next_segment);
                 //                });
             }
         }
 
-        /**
-         * Get the number of segments in this path
-         * todo: use consteval instead?
-         */
-        [[nodiscard]] static constexpr stl::size_t size() noexcept {
-            stl::size_t _size = 0;
-            if constexpr (has_segment) {
-                if constexpr (requires { {segment_type::size()}; }) {
-                    _size += segment_type::size();
-                } else {
-                    ++_size;
-                }
-            }
-            if constexpr (has_next_segment) {
-                if constexpr (requires { {next_segment_type::size()}; }) {
-                    _size += next_segment_type::size();
-                } else {
-                    ++_size;
-                }
-            }
-            return _size;
-        }
-
-        /**
-         * Get a segment (or something which that segment can be parsed into) based on the specified variable
-         * name
-         */
-        template <Context ContextType, typename T>
-        [[nodiscard]] stl::optional<T> get(ContextType const&      ctx,
-                                           stl::string_view const& variable_name) const noexcept {
-            if constexpr (has_segment) {
-                if constexpr (is_segment_nested) {
-                    if (auto res = segment.template get<T>(variable_name))
-                        return res;
-                } else if constexpr ((stl::is_convertible_v<T, segment_type> ||
-                                      can_parse_to<ContextType,
-                                                   segment_type,
-                                                   T>) &&has_variable_name<segment_type>) {
-                    if (variable_name == segment.variable_name) {
-                        if constexpr (stl::is_convertible_v<T, segment_type>) {
-                            return segment;
-                        } else if constexpr (can_parse_to<ContextType, segment_type, T>) {
-                            return segment.template parse<T>(ctx);
-                        }
-                    }
-                } else {
-                    // we should return stl::nullopt, but we avoid returning
-                    // anything here because we need to check the
-                    // next_segment_type as well.
-                }
-            }
-
-            if constexpr (has_next_segment) {
-                if constexpr (is_next_segment_nested) {
-                    if (auto res = next_segment.template get<T>(variable_name))
-                        return res;
-                } else if constexpr ((stl::is_convertible_v<T, next_segment_type> ||
-                                      can_parse_to<ContextType,
-                                                   next_segment_type,
-                                                   T>) &&has_variable_name<next_segment_type>) {
-                    if (variable_name == next_segment.variable_name) {
-                        if constexpr (stl::is_convertible_v<T, next_segment_type>) {
-                            return next_segment;
-                        } else if constexpr (can_parse_to<ContextType, next_segment_type, T>) {
-                            return next_segment.template parse<T>(ctx);
-                        }
-                    }
-                }
-            }
-
-            return stl::nullopt;
-        }
 
       private:
         /**
@@ -335,93 +212,102 @@ namespace webpp::http {
         }
 
       public:
-        template <typename ContextType>
-        requires(Context<stl::remove_cvref_t<ContextType>>) [[nodiscard]] bool
-        operator()(ContextType&& ctx, HTTPRequest auto&& req) noexcept {
-            // handle inside-sub-route internal segment is done in this method
+        static constexpr stl::size_t size() noexcept {
+            return sizeof...(Segments);
+        }
+
+
+        template <typename ContextType, typename ReqType>
+        constexpr auto switch_context(ContextType&& ctx, ReqType const& req) const noexcept {
 
             using context_type                = stl::remove_cvref_t<ContextType>;
             using traits_type                 = typename context_type::traits_type;
             using string_type                 = traits::general_string<traits_type>;
             constexpr bool has_path_extension = (requires { ctx.path; });
 
-            if constexpr (!has_segment) {
-                return true;
+            if constexpr (has_path_extension) {
+                return ctx;
             } else {
 
-                // Switching the context if it doesn't have a path in it
-                if constexpr (!has_path_extension) {
-                    // Performing in-place context switching (meaning we switch the context for the current
-                    // segment and not just the next segment)
+                // Performing in-place context switching (meaning we switch the context for the current
+                // segment and not just the next segment)
 
-                    // parse the uri
-                    // todo: we can optimize this, right? it parses the whole uri, do we need the whole uri? I think yes
-                    // fixme: should we decode it? if we decode it we need to care about the UTF-8 stuff as well?
-                    // todo: move this parsing into the request so we don't have to do it more than once for one request
-                    uri::basic_path<string_type> uri_segments{
-                      req.request_uri(),
-                      ctx.alloc_pack.template general_allocator<typename string_type::value_type>()};
-                    using uri_segments_type = decltype(uri_segments);
+                // parse the uri
+                // todo: we can optimize this, right? it parses the whole uri, do we need the whole uri? I think yes
+                // fixme: should we decode it? if we decode it we need to care about the UTF-8 stuff as well?
+                // todo: move this parsing into the request so we don't have to do it more than once for one request
+                uri::basic_path<string_type> uri_segments{
+                  req.request_uri(),
+                  ctx.alloc_pack.template general_allocator<typename string_type::value_type>()};
+                using uri_segments_type = decltype(uri_segments);
 
-                    // the URI is empty, so no checking it
-                    if (uri_segments.empty() || uri_segments.errors.is_failure())
-                        return false;
+                // the URI is empty, so no checking it
+                if (uri_segments.empty() || uri_segments.errors.is_failure())
+                    return false;
 
 
-                    // context switching
-                    auto new_ctx = ctx.template clone<path_context_extension<path_type, uri_segments_type>>();
-                    static_assert(
-                      requires { new_ctx.path; },
-                      "For some reason, we're not able to perform context switching.");
+                // context switching
+                auto new_ctx = ctx.template clone<path_context_extension<path_type, uri_segments_type>>();
+                static_assert(
+                  requires { new_ctx.path; },
+                  "For some reason, we're not able to perform context switching.");
 
-                    new_ctx.path.segments        = stl::move(uri_segments);
-                    new_ctx.path.current_segment = new_ctx.path.segments.begin();
-                    new_ctx.path.pth             = this;
+                new_ctx.path.segments        = stl::move(uri_segments);
+                new_ctx.path.current_segment = new_ctx.path.segments.begin();
 
-                    // todo: (is there something we should do here?) nothing to do if the segment counts don't match
+                return new_ctx;
+            }
+        }
 
-                    // re-running this member function with the new switched context type
-                    return operator()(stl::move(new_ctx), req);
-                } else {
+        template <typename ContextType>
+        requires(Context<stl::remove_cvref_t<ContextType>>) [[nodiscard]] bool
+        operator()(ContextType&& ctx, HTTPRequest auto&& req) noexcept {
+            // handle inside-sub-route internal segment is done in this method
 
-                    // if the result of calling this segment is NOT void
-                    const auto res = call_segment(segment, ctx, req);
-                    // don't check the rest of the segments if it's not a
-                    // match for the current segment
-                    if (!res)
-                        return false;
-                    ctx.path.next_segment();
-                    if constexpr (has_next_segment) {
-                        if (ctx.path.is_last_segment())
-                            return false;
-                        return call_segment(next_segment, ctx, req);
-                    } else {
-                        // return the results of this segment because it's the last segment
-                        // return true;
-                        return ctx.path.is_empty_last();
-                    }
-                }
+            constexpr bool has_path_extension = (requires { ctx.path; });
+
+            if constexpr (has_path_extension) {
+                // we do have the path extension applied, so we're safe to run it
+                return (ctx.path.segments.size() == size()) && // don't bother checking the path
+                                                               // if the size of the paths are not equal
+                       ([&, this]<stl::size_t... index>(stl::index_sequence<index...>) constexpr noexcept {
+                           // First, increment the current segment in the path extension
+                           // then call the segment
+                           // then check whether the next segment needs to be called or not
+                           return (
+                             (ctx.path.next_segment(), call_segment(stl::get<index>(*this), ctx, req)) &&
+                             ...);
+                       })(stl::make_index_sequence<size()>{});
+            } else {
+                // Inject path extension with the help of "context switching"
+                // Attention: this better be done outside the path struct because if it's for example done
+                // in the router, then all the paths will have access to the same parsed URI info instead
+                // of re-parsing on each route.
+
+
+                // re-running this member function with the new switched context type
+                return operator()(switch_context(stl::forward<ContextType>(ctx), req), req);
             }
         }
 
 
         template <istl::String StrT = stl::string>
-        void append_name_to(StrT& out) const noexcept(has_segment) {
-            if constexpr (has_segment) {
-                append_to(out, " / ");
-                if constexpr (requires { segment.append_to(out); }) {
-                    segment.append_to(out);
-                } else {
-                    append_to(out, "[unknown]");
-                }
-                if constexpr (has_next_segment) {
-                    if constexpr (requires { next_segment.append_to(out); }) {
-                        next_segment.append_to(out);
-                    } else {
-                        append_to(out, " / [unknown last path]");
-                    }
-                }
-            }
+        void append_name_to(StrT& out) const noexcept {
+            //            if constexpr (has_segment) {
+            //                append_to(out, " / ");
+            //                if constexpr (requires { segment.append_to(out); }) {
+            //                    segment.append_to(out);
+            //                } else {
+            //                    append_to(out, "[unknown]");
+            //                }
+            //                if constexpr (has_next_segment) {
+            //                    if constexpr (requires { next_segment.append_to(out); }) {
+            //                        next_segment.append_to(out);
+            //                    } else {
+            //                        append_to(out, " / [unknown last path]");
+            //                    }
+            //                }
+            //            }
         }
     };
 
