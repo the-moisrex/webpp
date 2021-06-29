@@ -56,18 +56,6 @@ namespace webpp::http {
             // todo: should this method be private?
             return ++current_segment != segments.end();
         }
-
-        //        template <fixed_string segment_variable_name>
-        //        [[nodiscard]] constexpr auto const& segment() const noexcept {
-        //            // using seg_type = ;
-        //        }
-
-        auto const& segment(string_view_type const& segment_var_name) const noexcept {}
-
-        template <typename T>
-        T segment(string_view_type const& segment_variable_name) const noexcept {
-            return pth->template get<T>(*this);
-        }
     };
 
     /**
@@ -161,34 +149,32 @@ namespace webpp::http {
          */
         template <typename NewSegType>
         constexpr auto operator/(NewSegType&& new_next_segment) const noexcept {
-            using seg_type = stl::remove_cvref_t<NewSegType>;
+            using namespace stl;
+            using seg_type = remove_cvref_t<NewSegType>;
 
             /*if constexpr (Segment<seg_type, path_type,
                                   decltype(basic_uri<fake_traits_type, false>{}.path_structured())>) {
             } else*/
-            if constexpr (stl::is_array_v<seg_type> &&
-                          stl::is_integral_v<stl::remove_all_extents_t<seg_type>>) {
+            if constexpr (is_array_v<seg_type> && is_integral_v<remove_all_extents_t<seg_type>>) {
                 // int_type[N] => string_view
-                using char_type = stl::remove_all_extents_t<seg_type>;
-                return operator/
-                  <stl::basic_string_view<char_type>>(stl::forward<NewSegType>(new_next_segment));
-            } else if constexpr (stl::is_pointer_v<seg_type> &&
-                                 stl::is_integral_v<stl::remove_pointer_t<seg_type>>) {
+                using char_type     = remove_all_extents_t<seg_type>;
+                using str_view_type = basic_string_view<char_type>;
+                return operator/<str_view_type>(forward<NewSegType>(new_next_segment));
+            } else if constexpr (is_pointer_v<seg_type> && is_integral_v<remove_pointer_t<seg_type>>) {
                 // char* => string_view
-                using char_type = stl::remove_pointer_t<seg_type>;
-                return operator/
-                  <stl::basic_string_view<char_type>>(stl::forward<NewSegType>(new_next_segment));
-            } else if constexpr (stl::is_integral_v<seg_type>) {
+                using char_type = remove_pointer_t<seg_type>;
+                return operator/<basic_string_view<char_type>>(forward<NewSegType>(new_next_segment));
+            } else if constexpr (is_integral_v<seg_type>) {
                 // integral types
                 return operator/([=](PathContext auto const& ctx) constexpr noexcept->bool {
                     return to<seg_type>(ctx.path.current_segment) == new_next_segment;
                 });
-            } else if constexpr (istl::ComparableToString<seg_type> && stl::is_class_v<seg_type>) {
+            } else if constexpr (istl::ComparableToString<seg_type> && is_class_v<seg_type>) {
 
                 // Convert those segments that can be compared with a string, to a normal segment
                 // type that have an operator(context)
-                return operator/(details::make_a_path<seg_type>{
-                  .new_next_segment = stl::forward<NewSegType>(new_next_segment)});
+                return operator/
+                  (details::make_a_path<seg_type>{.new_next_segment = forward<NewSegType>(new_next_segment)});
             } else {
                 // segment
 
@@ -196,7 +182,7 @@ namespace webpp::http {
                 // and all the previous ones
                 if constexpr (!has_segment) {
                     return route<path<seg_type, void>>{
-                      path<seg_type, void>{.segment = stl::forward<NewSegType>(new_next_segment)}};
+                      path<seg_type, void>{.segment = forward<NewSegType>(new_next_segment)}};
                 } else if constexpr (!has_next_segment) {
                     return route<path<segment_type, seg_type>>{
                       path<segment_type, seg_type>{.segment = segment, .next_segment = new_next_segment}};
@@ -205,7 +191,7 @@ namespace webpp::http {
                     using new_segment_type = path<path<segment_type, next_segment_type>, next_segment_t>;
                     return route<new_segment_type>{
                       new_segment_type{.segment      = *this,
-                                       .next_segment = stl::forward<NewSegType>(new_next_segment)}};
+                                       .next_segment = forward<NewSegType>(new_next_segment)}};
                 }
 
                 // todo: or give a compile time error if you can
@@ -220,7 +206,7 @@ namespace webpp::http {
         }
 
         /**
-         * Get the number or segments in this path
+         * Get the number of segments in this path
          * todo: use consteval instead?
          */
         [[nodiscard]] static constexpr stl::size_t size() noexcept {
@@ -265,7 +251,7 @@ namespace webpp::http {
                         }
                     }
                 } else {
-                    // we should return stl::nullopt but we avoid returning
+                    // we should return stl::nullopt, but we avoid returning
                     // anything here because we need to check the
                     // next_segment_type as well.
                 }
@@ -296,13 +282,14 @@ namespace webpp::http {
         /**
          * Call the segment and catch the exceptions if there are any
          */
-        static inline bool call_and_catch(auto&& callable, auto&&... args) noexcept {
-            if constexpr (stl::is_nothrow_invocable_v<decltype(callable), decltype(args)...>) {
+        template <typename CallableT, typename... Args>
+        static inline bool call_and_catch(CallableT&& callable, Args&&... args) noexcept {
+            if constexpr (stl::is_nothrow_invocable_v<CallableT, Args...>) {
                 // It's noexcept, we call it knowing that.
-                return callable(stl::forward<decltype(args)>(args)...);
-            } else if constexpr (stl::is_invocable_v<decltype(callable), decltype(args)...>) {
+                return callable(stl::forward<Args>(args)...);
+            } else if constexpr (stl::is_invocable_v<CallableT, Args...>) {
                 try {
-                    return callable(stl::forward<decltype(args)>(args)...);
+                    return callable(stl::forward<Args>(args)...);
                 } catch (...) { return false; }
             } else {
                 return false;
@@ -366,7 +353,7 @@ namespace webpp::http {
                     // context switching
                     auto new_ctx = ctx.template clone<path_context_extension<path_type, uri_segments_type>>();
                     static_assert(
-                      requires { {new_ctx.path}; },
+                      requires { new_ctx.path; },
                       "For some reason, we're not able to perform context switching.");
 
                     new_ctx.path.segments        = stl::move(uri_segments);
