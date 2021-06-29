@@ -84,11 +84,10 @@ namespace webpp::http {
 
             template <Traits TraitsType, Context ContextType>
             struct type : public stl::remove_cvref_t<ContextType> {
-                using context_type = stl::remove_cvref_t<ContextType>;
-                using traits_type  = TraitsType;
-                using string_response_type =
-                  typename context_type::response_type::template apply_extensions_type<
-                    details::string_response_body_extension>;
+                using context_type         = stl::remove_cvref_t<ContextType>;
+                using traits_type          = TraitsType;
+                using string_response_type = typename context_type::response_type;
+                // ::template apply_extensions_type<details::string_response_body_extension>;
 
                 using context_type::context_type; // inherit the constructors
 
