@@ -3,7 +3,12 @@ image: gcc
 
 stages:
   - build
-  - test
+  - build-test
+  - run-test
+  - build-example-cgi-hello-world
+  - run-example-cgi-hello-world
+  - build-example-cgi-application
+  - run-example-cgi-application
 
 build:
   stage: build
@@ -14,13 +19,13 @@ build:
     - mkdir -p /usr/src/googletest/googletest/build
     - cd /usr/src/googletest/googletest/build
     - cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ..
-    - cmake --build . -- -j10
+    - cmake --build . -- -j
     - cd "$CI_PROJECT_DIR"
     - mkdir -p build
     - cd ./build
-    - cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ..
+    - cmake -DCMAKE_BUILD_TYPE=Debug -G "Unix Makefiles" ..
   script:
-    - cmake --build . -- -j10
+    - cmake --build . -- -j
   artifacts:
     paths:
       - build/
@@ -31,12 +36,60 @@ build:
      - /usr/src/googletest/googletest/build/
 
 # run tests using the binary built before
-test:
-  stage: test
+build-test:
+  stage: build-test
   script:
-    - $CI_PROJECT_DIR/build/webpptest
+    - cd $CI_PROJECT_DIR/build
+    - make webpp-test -j
   cache:
     key: builddirs
     paths:
      - build/
 
+run-test:
+  stage: run-test
+  script:
+    - $CI_PROJECT_DIR/build/webpp-test
+  cache:
+    key: builddirs
+    paths:
+     - build/
+
+build-example-cgi-hello-world:
+  stage: build-example-cgi-hello-world
+  script:
+    - cd $CI_PROJECT_DIR/build
+    - make cgi-hello-world -j
+  cache:
+    key: builddirs
+    paths:
+     - build/
+
+run-example-cgi-hello-world:
+  stage: run-cgi-hello-world
+  script:
+    - REQUIRES_URI=/ REQUEST_METHOD=GET $CI_PROJECT_DIR/build/cgi-hello-world
+  cache:
+    key: builddirs
+    paths:
+     - build/
+
+build-example-cgi-application:
+  stage: build-example-cgi-application
+  script:
+    - cd $CI_PROJECT_DIR/build
+    - make cgi-application -j
+  cache:
+    key: builddirs
+    paths:
+     - build/
+
+
+run-example-cgi-application:
+  stage: run-cgi-application
+  script:
+    - REQUIRES_URI=/ REQUEST_METHOD=GET $CI_PROJECT_DIR/build/cgi-application
+  cache:
+    key: builddirs
+    paths:
+     - build/
