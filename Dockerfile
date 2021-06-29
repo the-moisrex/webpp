@@ -5,7 +5,7 @@ WORKDIR /usr/src/webpp
 
 # install packages
 RUN apk update && \
-    apk add make cmake boost-dev gtest-dev && \
+    apk add git make cmake boost-dev gtest-dev && \
     apk add -u g++=10.3.1_git20210625-r0 --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main 
 
 
