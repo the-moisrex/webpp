@@ -56,6 +56,13 @@ namespace webpp::http {
             // todo: should this method be private?
             return ++current_segment != segments.end();
         }
+
+        /**
+         * Check there is any other segments left or not
+         */
+        [[nodiscard]] bool is_last_segment() const noexcept {
+            return current_segment == segments.cend();
+        }
     };
 
     /**
@@ -290,8 +297,12 @@ namespace webpp::http {
             } else if constexpr (stl::is_invocable_v<CallableT, Args...>) {
                 try {
                     return callable(stl::forward<Args>(args)...);
-                } catch (...) { return false; }
+                } catch (...) {
+                    return false;
+                    // todo: add a warning here for the user
+                }
             } else {
+                // todo: add an error here
                 return false;
             }
         }
@@ -366,37 +377,18 @@ namespace webpp::http {
                     return operator()(stl::move(new_ctx), req);
                 } else {
 
-
-                    using result_type = decltype(call_segment(segment, ctx, req));
-
-                    // if the result of this segment is void
-                    if constexpr (stl::is_void_v<result_type>) {
-                        call_segment(segment, ctx, req);
-                        if (!ctx.path.next_segment())
-                            return false;
-                        if constexpr (has_next_segment) {
-                            return call_segment(next_segment, ctx, req);
-                        } else {
-                            return true;
-                        }
+                    // if the result of calling this segment is NOT void
+                    const auto res = call_segment(segment, ctx, req);
+                    // don't check the rest of the segments if it's not a
+                    // match for the current segment
+                    if (!res || !ctx.path.next_segment())
+                        return false;
+                    if constexpr (has_next_segment) {
+                        return call_segment(next_segment, ctx, req);
                     } else {
-
-                        // if the result of calling this segment is NOT void
-                        const auto res = call_segment(segment, ctx, req);
-                        if constexpr (stl::is_same_v<result_type, bool>) {
-                            // don't check the rest of the segments if it's not a
-                            // match for the current segment
-                            if (!res)
-                                return false;
-                        }
-                        if (!ctx.path.next_segment())
-                            return false;
-                        if constexpr (has_next_segment) {
-                            return call_segment(next_segment, ctx, req);
-                        } else {
-                            // return the results of this segment because it's the last segment
-                            return res;
-                        }
+                        // return the results of this segment because it's the last segment
+                        // return true;
+                        return ctx.path.is_last_segment();
                     }
                 }
             }
