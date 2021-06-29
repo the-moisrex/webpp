@@ -12,7 +12,7 @@ namespace webpp::http {
 
     template <typename T>
     concept PathContext = Context<T> && requires(T ctx) {
-        {ctx.path};
+        ctx.path;
     };
 
 
@@ -52,16 +52,23 @@ namespace webpp::http {
 
         path_type* pth = nullptr;
 
-        bool next_segment() noexcept {
+        void next_segment() noexcept {
             // todo: should this method be private?
-            return ++current_segment != segments.end();
+            ++current_segment;
         }
 
         /**
          * Check there is any other segments left or not
          */
         [[nodiscard]] bool is_last_segment() const noexcept {
-            return current_segment == segments.cend();
+            return current_segment == segments.cend() - 1;
+        }
+
+        /**
+         * Checks if we're on the last segment and the last segment is empty string
+         */
+        [[nodiscard]] bool is_empty_last() const noexcept {
+            return is_last_segment() && current_segment->empty();
         }
     };
 
@@ -381,14 +388,17 @@ namespace webpp::http {
                     const auto res = call_segment(segment, ctx, req);
                     // don't check the rest of the segments if it's not a
                     // match for the current segment
-                    if (!res || !ctx.path.next_segment())
+                    if (!res)
                         return false;
+                    ctx.path.next_segment();
                     if constexpr (has_next_segment) {
+                        if (ctx.path.is_last_segment())
+                            return false;
                         return call_segment(next_segment, ctx, req);
                     } else {
                         // return the results of this segment because it's the last segment
                         // return true;
-                        return ctx.path.is_last_segment();
+                        return ctx.path.is_empty_last();
                     }
                 }
             }

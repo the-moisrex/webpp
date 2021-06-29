@@ -16,7 +16,7 @@ int main() {
                    root >>=
                    []() noexcept {
                        return "main page";
-                   },
+                   }/*,
                    (get and root / "page" / "one") = page_one,
                    get and root / "cgi-bin" / "cgi-hello-world" >>=
                    []() noexcept {
@@ -25,7 +25,7 @@ int main() {
                    (root / "about") || (get and root / "cgi-bin" / "cgi-hello-world" / "about") >>=
                    [](auto ctx) {
                        return ctx.file("about.html");
-                   }};
+                   }*/};
 
     // run the app:
     return cgi(_router)();
