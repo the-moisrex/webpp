@@ -66,7 +66,7 @@ build-example-cgi-hello-world:
      - build/
 
 run-example-cgi-hello-world:
-  stage: run-cgi-hello-world
+  stage: run-example-cgi-hello-world
   script:
     - REQUIRES_URI=/ REQUEST_METHOD=GET $CI_PROJECT_DIR/build/cgi-hello-world
   cache:
