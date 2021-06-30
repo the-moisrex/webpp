@@ -33,6 +33,12 @@ namespace webpp::http {
         { seg.template parse<T>(ctx) } -> stl::same_as<stl::optional<T>>;
     };
 
+    template <typename CtxT>
+    concept HasPathExtension = Context<CtxT> && requires(CtxT ctx) {
+        ctx.path;
+    };
+
+
     /**
      * This class is used as a field type in the context type of the
      * internal sub routes of the "path" sub route.
@@ -48,6 +54,14 @@ namespace webpp::http {
 
         segments_type          segments{};
         segments_iterator_type current_segment{};
+
+
+        /**
+         * Next Segment
+         */
+        [[nodiscard("Don't waste CPU cycles checking what's not there")]] bool next_segment() noexcept {
+            return ++current_segment != segments.end();
+        }
 
         /**
          * Check there is any other segments left or not
@@ -154,8 +168,10 @@ namespace webpp::http {
                   (details::make_a_path<seg_type>{.segment = forward<NewSegType>(next_segment)});
             } else {
                 // segment
-                return path<Segments..., NewSegType>{(stl::get<Segments>(*this), ...),
-                                                     stl::forward<NewSegType>(next_segment)};
+                using new_path_type = path<Segments..., NewSegType>;
+                return ([&, this]<stl::size_t... index>(stl::index_sequence<index...>) constexpr noexcept {
+                    return new_path_type{stl::get<index>(*this)..., stl::forward<NewSegType>(next_segment)};
+                })(stl::make_index_sequence<size()>{});
 
                 // todo: or give a compile time error if you can
                 //                return operator/([=](Context auto const& ctx) constexpr noexcept {
@@ -220,12 +236,11 @@ namespace webpp::http {
         template <typename ContextType, typename ReqType>
         constexpr auto switch_context(ContextType&& ctx, ReqType const& req) const noexcept {
 
-            using context_type                = stl::remove_cvref_t<ContextType>;
-            using traits_type                 = typename context_type::traits_type;
-            using string_type                 = traits::general_string<traits_type>;
-            constexpr bool has_path_extension = (requires { ctx.path; });
+            using context_type = stl::remove_cvref_t<ContextType>;
+            using traits_type  = typename context_type::traits_type;
+            using string_type  = traits::general_string<traits_type>;
 
-            if constexpr (has_path_extension) {
+            if constexpr (HasPathExtension<context_type>) {
                 return ctx;
             } else {
 
@@ -241,10 +256,6 @@ namespace webpp::http {
                   ctx.alloc_pack.template general_allocator<typename string_type::value_type>()};
                 using uri_segments_type = decltype(uri_segments);
 
-                // the URI is empty, so no checking it
-                if (uri_segments.empty() || uri_segments.errors.is_failure())
-                    return false;
-
 
                 // context switching
                 auto new_ctx = ctx.template clone<path_context_extension<path_type, uri_segments_type>>();
@@ -259,23 +270,33 @@ namespace webpp::http {
             }
         }
 
+        template <Context CtxT>
+        static constexpr bool verify_context(CtxT const& ctx) noexcept {
+            if constexpr (HasPathExtension<CtxT>) {
+                // the URI is empty, so no checking it
+                return ctx.path.segments.empty() && ctx.path.segments.errors.is_failure();
+            } else {
+                return false;
+            }
+        }
+
         template <typename ContextType>
         requires(Context<stl::remove_cvref_t<ContextType>>) [[nodiscard]] bool
         operator()(ContextType&& ctx, HTTPRequest auto&& req) noexcept {
             // handle inside-sub-route internal segment is done in this method
 
-            constexpr bool has_path_extension = (requires { ctx.path; });
 
-            if constexpr (has_path_extension) {
+            if constexpr (HasPathExtension<ContextType>) {
                 // we do have the path extension applied, so we're safe to run it
-                return (ctx.path.segments.size() == size()) && // don't bother checking the path
+                return (ctx.path.segments.size() == size()) && // Don't bother checking the path
                                                                // if the size of the paths are not equal
+                       verify_context(ctx) &&                  // Check if the request and context are valid
                        ([&, this]<stl::size_t... index>(stl::index_sequence<index...>) constexpr noexcept {
                            // First, increment the current segment in the path extension
                            // then call the segment
                            // then check whether the next segment needs to be called or not
                            return (
-                             (ctx.path.next_segment(), call_segment(stl::get<index>(*this), ctx, req)) &&
+                             (ctx.path.next_segment() && call_segment(stl::get<index>(*this), ctx, req)) &&
                              ...);
                        })(stl::make_index_sequence<size()>{});
             } else {
