@@ -202,6 +202,9 @@ namespace webpp::http {
 
             constexpr bool no_routes         = route_count() == 0u;
             constexpr bool passed_last_route = Index > (route_count() - 1);
+            constexpr auto next_route_index  = Index + 1;
+
+            // todo: inject "path extension" here so you don't have to parse the URI for every route
 
             if constexpr (no_routes || passed_last_route) {
                 // this is adds a 404 error response to the end of the routes essentially
@@ -222,7 +225,7 @@ namespace webpp::http {
                     call_route(route, ctx, req);
                     return ctx.error(404u);
                 } else {
-                    return next_route<Index + 1>(
+                    return next_route<next_route_index>(
                       handle_primary_results(call_route(route, ctx, req), ctx, req),
                       ctx,
                       req);
