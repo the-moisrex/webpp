@@ -372,8 +372,6 @@ namespace webpp::http {
             }
         }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic   ignored "misc-unconventional-assign-operator"
         [[nodiscard]] constexpr auto operator=(void (*func)()) const noexcept {
             return operator>>=(func);
         }
@@ -386,7 +384,6 @@ namespace webpp::http {
         [[nodiscard]] constexpr auto operator=(auto&& new_route) const noexcept {
             return operator>>=(stl::forward<decltype(new_route)>(new_route));
         }
-#pragma clang diagnostic pop
 
 
         // template <typename T, typename Ret, typename... Args>

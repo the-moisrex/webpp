@@ -59,8 +59,8 @@ namespace webpp::http {
         /**
          * Next Segment
          */
-        [[nodiscard("Don't waste CPU cycles checking what's not there")]] bool next_segment() noexcept {
-            return ++current_segment != segments.end();
+        void next_segment() noexcept {
+            ++current_segment;
         }
 
         /**
@@ -215,13 +215,21 @@ namespace webpp::http {
             using req_type     = decltype(req);
             using seg_type     = stl::remove_cvref_t<decltype(seg)>;
             if constexpr (stl::is_invocable_v<seg_type, context_type, req_type>) {
-                return call_and_catch(seg, ctx, req);
+                bool const res = call_and_catch(seg, ctx, req);
+                ctx.path.next_segment();
+                return res;
             } else if constexpr (stl::is_invocable_v<seg_type, req_type, context_type>) {
-                return call_and_catch(seg, req, ctx);
+                bool const res = call_and_catch(seg, req, ctx);
+                ctx.path.next_segment();
+                return res;
             } else if constexpr (stl::is_invocable_v<seg_type, context_type>) {
-                return call_and_catch(seg, ctx);
+                bool const res = call_and_catch(seg, ctx);
+                ctx.path.next_segment();
+                return res;
             } else if constexpr (stl::is_invocable_v<seg_type>) {
-                return call_and_catch(seg);
+                bool const res = call_and_catch(seg);
+                ctx.path.next_segment();
+                return res;
             } else {
                 static_assert_false(seg_type, "The specified segment in the path cannot be called.");
             }
@@ -274,7 +282,7 @@ namespace webpp::http {
         static constexpr bool verify_context(CtxT const& ctx) noexcept {
             if constexpr (HasPathExtension<CtxT>) {
                 // the URI is empty, so no checking it
-                return ctx.path.segments.empty() && ctx.path.segments.errors.is_failure();
+                return !ctx.path.segments.empty() && !ctx.path.segments.errors.is_failure();
             } else {
                 return false;
             }
@@ -285,7 +293,6 @@ namespace webpp::http {
         operator()(ContextType&& ctx, HTTPRequest auto&& req) noexcept {
             // handle inside-sub-route internal segment is done in this method
 
-
             if constexpr (HasPathExtension<ContextType>) {
                 // we do have the path extension applied, so we're safe to run it
                 return (ctx.path.segments.size() == size()) && // Don't bother checking the path
@@ -295,9 +302,7 @@ namespace webpp::http {
                            // First, increment the current segment in the path extension
                            // then call the segment
                            // then check whether the next segment needs to be called or not
-                           return (
-                             (ctx.path.next_segment() && call_segment(stl::get<index>(*this), ctx, req)) &&
-                             ...);
+                           return (call_segment(stl::get<index>(*this), ctx, req) && ...);
                        })(stl::make_index_sequence<size()>{});
             } else {
                 // Inject path extension with the help of "context switching"
