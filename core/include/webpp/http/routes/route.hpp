@@ -171,6 +171,9 @@ namespace webpp::http {
         void operator()(Context auto const&) const noexcept {}
     };
 
+    /**
+     * todo: should we convert router to a tuple like I did with the path class?
+     */
     template <typename RouteType     = void,
               logical_operators Op   = logical_operators::none,
               typename NextRouteType = void>

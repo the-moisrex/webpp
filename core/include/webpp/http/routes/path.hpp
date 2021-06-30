@@ -168,10 +168,12 @@ namespace webpp::http {
                   (details::make_a_path<seg_type>{.segment = forward<NewSegType>(next_segment)});
             } else {
                 // segment
-                using new_path_type = path<Segments..., NewSegType>;
-                return ([&, this]<stl::size_t... index>(stl::index_sequence<index...>) constexpr noexcept {
-                    return new_path_type{stl::get<index>(*this)..., stl::forward<NewSegType>(next_segment)};
-                })(stl::make_index_sequence<size()>{});
+                using new_path_type  = path<Segments..., NewSegType>;
+                using new_route_type = route<new_path_type>;
+                return new_route_type{
+                  ([&, this]<stl::size_t... index>(stl::index_sequence<index...>) constexpr noexcept {
+                      return new_path_type{stl::get<index>(*this)..., stl::forward<NewSegType>(next_segment)};
+                  })(stl::make_index_sequence<size()>{})};
 
                 // todo: or give a compile time error if you can
                 //                return operator/([=](Context auto const& ctx) constexpr noexcept {
