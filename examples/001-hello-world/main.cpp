@@ -26,7 +26,7 @@ int main() {
                    },
                    (root / "about") || (get and root / "cgi-bin" / "cgi-hello-world" / "about") >>=
                    [](auto ctx) {
-                       return ctx.file("about.html");
+                       return ctx.string("about.html");
                    }};
 
     // run the app:
