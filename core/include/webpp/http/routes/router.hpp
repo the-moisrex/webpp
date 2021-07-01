@@ -202,7 +202,7 @@ namespace webpp::http {
 
             constexpr bool no_routes         = route_count() == 0u;
             constexpr bool passed_last_route = Index > (route_count() - 1);
-            constexpr auto next_route_index  = Index + 1;
+            // constexpr auto next_route_index  = Index + 1;
 
             // todo: inject "path extension" here so you don't have to parse the URI for every route
 
@@ -225,10 +225,9 @@ namespace webpp::http {
                     call_route(route, ctx, req);
                     return ctx.error(404u);
                 } else {
-                    return next_route<next_route_index>(
-                      handle_primary_results(call_route(route, ctx, req), ctx, req),
-                      ctx,
-                      req);
+                    return next_route<Index>(handle_primary_results(call_route(route, ctx, req), ctx, req),
+                                             ctx,
+                                             req);
                 }
             }
         }

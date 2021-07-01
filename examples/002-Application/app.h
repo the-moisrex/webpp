@@ -27,15 +27,15 @@ namespace website {
                 return "Nice page.";
             };
             router _router{extensions{},
-                           (get and (relative / "home")) >>=
+                           (get and (root / "home")) >>=
                            [this](Context auto& ctx) {
                                return this->home(ctx);
                            },
-                           get & (relative / "about") >>=
+                           get & (root / "about") >>=
                            [this](Context auto& ctx) {
                                return this->about(ctx);
                            },
-                           relative / "admin" >>= admin};
+                           root / "admin" >>= admin};
 
             // for debugging purposes
             std::cerr << _router.to_string(req) << std::endl;
