@@ -61,8 +61,8 @@ namespace webpp {
 
 
       public:
-        // we use +1 so we don't copy the null terminator character as well
-        consteval charset(const value_type (&str)[N + 1]) noexcept
+        // we use +1, so we don't copy the null terminator character as well
+        constexpr charset(const value_type (&str)[N + 1]) noexcept
           : super{to_array(stl::make_index_sequence<N>(), str)} {}
 
         template <typename... T>
@@ -78,7 +78,7 @@ namespace webpp {
          *     These are the character sets to include.
          */
         template <stl::size_t N1, stl::size_t N2, stl::size_t... NN>
-        consteval charset(charset<value_type, N1> const& set1,
+        constexpr charset(charset<value_type, N1> const& set1,
                           charset<value_type, N2> const& set2,
                           charset<value_type, NN> const&... c_sets) noexcept
           : super{merge<N1, N2, NN...>(set1, set2, c_sets...)} {
