@@ -78,6 +78,12 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     endif ()
 endif ()
 
+if (IS_CLANG AND LIBCXX)
+    # This is not the perfect way to do this, but ...
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+endif ()
+
 
 add_compile_definitions(WEBPP_PROJECT_ROOT=${CMAKE_CURRENT_SOURCE_DIR})
 
