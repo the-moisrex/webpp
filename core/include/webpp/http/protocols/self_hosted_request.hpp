@@ -10,9 +10,9 @@ namespace webpp::http::inline shosted {
 
 
     template <Traits TraitsType, typename REL, typename SessionManager, typename ConnectionType>
-    struct self_hosted_request : public common_request<TraitsType, REL>, private ConnectionType {
+    struct self_hosted_request : public common_http_request<TraitsType, REL>, private ConnectionType {
       private:
-        using super = common_request<TraitsType, REL>;
+        using super = common_http_request<TraitsType, REL>;
 
       public:
         using session_manager_type = SessionManager;
