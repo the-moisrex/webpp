@@ -16,13 +16,13 @@ namespace webpp::http::inline shosted {
 
     template <ServerTraits ServerTraitsType, Application App, ExtensionList EList = empty_extension_pack>
     struct self_hosted
-      : public common_protocol<typename ServerTraitsType::traits_type, App, EList, self_hosted_request> {
+      : public common_http_protocol<typename ServerTraitsType::traits_type, App, EList, self_hosted_request> {
 
         using server_traits_type = SeverTraitsType;
         using traits_type        = typename server_traits_type::traits_type;
 
       private:
-        using super = common_protocol<traits_type, App, EList, self_hosted_request>;
+        using super = common_http_protocol<traits_type, App, EList, self_hosted_request>;
 
       public:
         using request_type = typename super::request_type;

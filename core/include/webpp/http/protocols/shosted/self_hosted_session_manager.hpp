@@ -20,13 +20,13 @@ namespace webpp::http::inline shosted {
      * todo: see if we need a "shosted request manager" type too because of HTTP/2.0 that can handle multiple requests within one connection
      * todo: Send 204 (No Content) when you don't want the application fails to get you a body
      */
-    template <Traits TraitsType, typename AppWrapperType, Request RequestType, Connection ConnectionType>
+    template <Traits TraitsType, typename AppWrapperType, HTTPRequest RequestType, Connection ConnectionType>
     struct self_hosted_session_manager : public ConnectionType {
         static constexpr auto buffer_size     = default_buffer_size;
         static constexpr auto logger_category = "SelfHosted/Session";
 
         using connection_type  = ConnectionType;
-        using traits_type      = typename etraits::traits_type;
+        using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
         using char_type        = istl::char_type_of<string_view_type>;
         using allocator_type   = traits::general_allocator<traits_type, char_type>;
