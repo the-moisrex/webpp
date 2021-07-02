@@ -12,8 +12,40 @@
 
 #include <utility>
 
+/**
+ * Call a member function while you're inside that class
+ */
+#define mem_call(member_name)                                      \
+    [this]<typename... Args>(Args && ... args) constexpr noexcept( \
+      noexcept(this->*member_name(stl::forward<Args>(args)...))) { \
+        return this->*member_name(stl::forward<Args>(args)...);    \
+    };
+
 namespace webpp::http {
 
+    /**
+     * This struct will help the user to call member functions easily
+    template <typename T>
+    struct proxy {
+        T& obj;
+
+        T* operator->() const noexcept {
+            return &obj;
+        }
+
+        template <typename Ret, typename... Args>
+        auto operator->*(Ret (T::*member_function)(Args&&...)) const noexcept {
+            return [&](Args && ... the_args) constexpr {
+                return obj->*member_function(stl::forward<Args>(the_args)...);
+            };
+        }
+
+        template <typename R, typename... Args>
+        inline auto operator()(R T::*member_func, Args&&... args) {
+            return obj->*member_func(stl::forward<Args>(args)...);
+        }
+    };
+     */
 
     template <typename Route, typename... Args>
     concept is_callable_route =
@@ -333,12 +365,6 @@ namespace webpp::http {
             return set_next<logical_operators::none>(func);
         }
 
-        /*
-                template <typename RetType, typename ClassType>
-                [[nodiscard]] constexpr auto operator>>=(RetType ClassType::*pm) noexcept {
-                    return set_next<logical_operators::none>(stl::mem_fn(pm));
-                }
-        */
 
         template <typename RouteT>
         [[nodiscard]] constexpr auto operator>>=(RouteT&& new_route) const noexcept {

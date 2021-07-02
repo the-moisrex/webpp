@@ -1,5 +1,5 @@
 
-set(EXEC_NAME cgi-application)
+set(EXEC_NAME self_hosted_blog)
 file(GLOB BIN_SOURCES *.cpp)
 
 #file(READ index.html INDEX_HTML)

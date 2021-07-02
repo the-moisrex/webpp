@@ -4,6 +4,7 @@
 #define WEBPP_EXAMPLE_BLOG_H
 
 #include "../../core/include/webpp/http/http.hpp"
+#include "admin.hpp"
 
 
 namespace website {
@@ -11,6 +12,7 @@ namespace website {
     using namespace webpp::http;
 
     struct blog {
+        admin admin_panel{};
 
         auto home(auto const& ctx) noexcept {
             return ctx.string("Home page");
@@ -22,9 +24,6 @@ namespace website {
 
         auto operator()(auto&& req) {
             using extensions = webpp::extension_pack<string_response>;
-            const auto admin = []() {
-                return "Nice page.";
-            };
             router _router{extensions{},
                            (get and (root / "home")) >>=
                            [this](Context auto& ctx) {
@@ -34,7 +33,7 @@ namespace website {
                            [this](Context auto& ctx) {
                                return this->about(ctx);
                            },
-                           root / "admin" >>= admin};
+                           root / "admin" >>= admin_panel};
 
             // for debugging purposes
             std::cerr << _router.to_string(req) << std::endl;
