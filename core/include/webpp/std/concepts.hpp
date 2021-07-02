@@ -8,7 +8,7 @@
 
 #include <memory> // for Allocator
 
-#if __has_include(<concepts>) && __cpp_concepts
+#if __has_include(<concepts>) && __cpp_lib_concepts
 #    include <concepts>
 #else
 namespace webpp::stl {
