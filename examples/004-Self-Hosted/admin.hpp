@@ -8,13 +8,13 @@
 #include <functional>
 
 namespace website {
-
+    using namespace webpp;
     using namespace webpp::http;
 
     struct admin {
 
-        using extensions = webpp::extension_pack<string_response, json_response>;
-        router<extensions> _router{
+        using my_extensions = extension_pack<string_response, json_response>;
+        router<my_extensions> _router{
           // home
           relative / "home" >>= file("admin/page.html"),
           relative / "help" >>= mem_call(help)
