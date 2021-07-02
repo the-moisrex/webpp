@@ -15,11 +15,11 @@
 /**
  * Call a member function while you're inside that class
  */
-#define mem_call(member_name)                                      \
-    [this]<typename... Args>(Args && ... args) constexpr noexcept( \
-      noexcept(this->*member_name(stl::forward<Args>(args)...))) { \
-        return this->*member_name(stl::forward<Args>(args)...);    \
-    };
+#define mem_call(member_name)                                               \
+    ([this]<typename... Args>(Args && ... args) constexpr noexcept(         \
+      noexcept(this->*member_name(::webpp::stl::forward<Args>(args)...))) { \
+        return this->*member_name(::webpp::stl::forward<Args>(args)...);    \
+    })
 
 namespace webpp::http {
 
