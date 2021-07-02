@@ -1,7 +1,7 @@
 // Created by moisrex on 11/4/20.
 
-#ifndef WEBPP_CONSTANTS_HPP
-#define WEBPP_CONSTANTS_HPP
+#ifndef WEBPP_URI_CONSTANTS_HPP
+#define WEBPP_URI_CONSTANTS_HPP
 
 #include "../../strings/charset.hpp"
 
@@ -106,4 +106,4 @@ namespace webpp::uri::details {
 
 } // namespace webpp::uri::details
 
-#endif // WEBPP_CONSTANTS_HPP
+#endif // WEBPP_URI_CONSTANTS_HPP
