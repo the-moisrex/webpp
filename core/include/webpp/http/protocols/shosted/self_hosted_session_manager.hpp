@@ -14,7 +14,7 @@
 namespace webpp::http::inline shosted {
 
     /**
-     * For a self hosted server, the session manager class will be created once for each request (well,
+     * For a self-hosted server, the session manager class will be created once for each request (well,
      * actually for each connection to be exact); this might not be the case for other server types.
      *
      * todo: see if we need a "shosted request manager" type too because of HTTP/2.0 that can handle multiple requests within one connection

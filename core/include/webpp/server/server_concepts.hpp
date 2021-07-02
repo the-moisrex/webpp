@@ -133,6 +133,8 @@ namespace webpp {
      */
     template <typename T>
     concept ServerTraits = requires {
+        typename T::traits_type;
+        typename T::thread_pool_type;
         requires Traits<typename T::traits_type>;
         requires ThreadPool<typename T::thread_pool_type>;
         T::template server_type; // <session_manager, thread_pool_type>
