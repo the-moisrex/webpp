@@ -183,6 +183,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/server/posix/posix_std_pmr_traits.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/json/json_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/json/rapidjson.hpp
 
         ${LIB_INCLUDE_DIR}/main.hpp
         ${LIB_INCLUDE_DIR}/webpp.hpp
@@ -216,6 +217,8 @@ target_link_libraries(${LIB_NAME}
         # PUBLIC date::date-tz
         )
 
+find_package(RapidJSON)
+
 
 #if (SHARED_LIBRARY_EXECUTABLE)
 # setting the entry point for a shared library so it can be treated like an executable
@@ -235,6 +238,7 @@ target_include_directories(${LIB_NAME} PUBLIC
         $<BUILD_INTERFACE:${magic_enum_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${date_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
+        ${RAPIDJSON_INCLUDE_DIR}
         )
 
 

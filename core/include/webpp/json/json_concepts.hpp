@@ -14,62 +14,66 @@ namespace webpp {
         noexcept->stl::same_as<bool>; // int is just an example
 
 #define WEBPP_IS_METHOD(type) \
-    { key.is_##type() }       \
-    noexcept->stl::same_as<bool>;
+    { key.is_##type() } -> stl::same_as<bool>;
 
         WEBPP_IS_METHOD(null)
         WEBPP_IS_METHOD(bool)
-        WEBPP_IS_METHOD(char)
-        WEBPP_IS_METHOD(short)
+        // WEBPP_IS_METHOD(char)
+        // WEBPP_IS_METHOD(short)
         WEBPP_IS_METHOD(int)
         WEBPP_IS_METHOD(long)
-        WEBPP_IS_METHOD(long_long)
+        // WEBPP_IS_METHOD(long_long)
         WEBPP_IS_METHOD(double)
-        WEBPP_IS_METHOD(long_double)
+        // WEBPP_IS_METHOD(long_double)
         WEBPP_IS_METHOD(float)
-        WEBPP_IS_METHOD(int8)
-        WEBPP_IS_METHOD(int16)
-        WEBPP_IS_METHOD(int32)
-        WEBPP_IS_METHOD(int64)
+        // WEBPP_IS_METHOD(int8)
+        // WEBPP_IS_METHOD(int16)
+        // WEBPP_IS_METHOD(int32)
+        // WEBPP_IS_METHOD(int64)
         WEBPP_IS_METHOD(uint)
-        WEBPP_IS_METHOD(uint8)
-        WEBPP_IS_METHOD(uint16)
-        WEBPP_IS_METHOD(uint32)
+        // WEBPP_IS_METHOD(uint8)
+        // WEBPP_IS_METHOD(uint16)
+        // WEBPP_IS_METHOD(uint32)
         WEBPP_IS_METHOD(uint64)
         WEBPP_IS_METHOD(string)
         WEBPP_IS_METHOD(array)
         WEBPP_IS_METHOD(object)
+        WEBPP_IS_METHOD(number)
 
 #undef WEBPP_IS_METHOD
     };
 
     template <typename T>
     concept JsonValue = requires(T val) {
+        val.begin();
+        val.end();
+
 #define WEBPP_IS_METHOD(name) \
     { val.is_##name() } -> stl::same_as<bool>;
 
         WEBPP_IS_METHOD(null)
         WEBPP_IS_METHOD(bool)
-        WEBPP_IS_METHOD(char)
-        WEBPP_IS_METHOD(short)
+        // WEBPP_IS_METHOD(char)
+        // WEBPP_IS_METHOD(short)
         WEBPP_IS_METHOD(int)
         WEBPP_IS_METHOD(long)
-        WEBPP_IS_METHOD(long_long)
+        // WEBPP_IS_METHOD(long_long)
         WEBPP_IS_METHOD(double)
-        WEBPP_IS_METHOD(long_double)
+        // WEBPP_IS_METHOD(long_double)
         WEBPP_IS_METHOD(float)
-        WEBPP_IS_METHOD(int8)
-        WEBPP_IS_METHOD(int16)
-        WEBPP_IS_METHOD(int32)
-        WEBPP_IS_METHOD(int64)
+        // WEBPP_IS_METHOD(int8)
+        // WEBPP_IS_METHOD(int16)
+        // WEBPP_IS_METHOD(int32)
+        // WEBPP_IS_METHOD(int64)
         WEBPP_IS_METHOD(uint)
-        WEBPP_IS_METHOD(uint8)
-        WEBPP_IS_METHOD(uint16)
-        WEBPP_IS_METHOD(uint32)
-        WEBPP_IS_METHOD(uint64)
+        // WEBPP_IS_METHOD(uint8)
+        // WEBPP_IS_METHOD(uint16)
+        // WEBPP_IS_METHOD(uint32)
+        // WEBPP_IS_METHOD(uint64)
         WEBPP_IS_METHOD(string)
         WEBPP_IS_METHOD(array)
         WEBPP_IS_METHOD(object)
+        WEBPP_IS_METHOD(number)
 
 #undef WEBPP_IS_METHOD
 
