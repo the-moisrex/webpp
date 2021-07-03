@@ -13,10 +13,10 @@ namespace webpp::database {
      *
      * @code
      *   auto user = db["users"].where("id", 20).first();
-     *   user.age++;                            // operator is overloaded, sync is the default.
-     *   user.sync.age += 20;                   // do it NOW
-     *   user.async.username = "hello world";   // wait for it
-     *   user.commit();                         // run username change NOW
+     *   user["age"]++;                            // operator is overloaded, sync is the default.
+     *   user.sync["age"] += 20;                   // do it NOW
+     *   user.async["username"] = "hello world";   // wait for it
+     *   user.commit();                            // run username change NOW
      *
      *   auto usr = user.async;
      *   // we should be able to use this instead of keep getting the .async version
