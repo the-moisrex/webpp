@@ -46,8 +46,7 @@ namespace webpp {
     template <typename T>
     concept JsonValue = requires(T val) {
 #define WEBPP_IS_METHOD(name) \
-    { val.is_##name() }       \
-    ->stl::same_as<bool>;
+    { val.is_##name() } -> stl::same_as<bool>;
 
         WEBPP_IS_METHOD(null)
         WEBPP_IS_METHOD(bool)
@@ -75,9 +74,8 @@ namespace webpp {
 #undef WEBPP_IS_METHOD
 
         // todo: should we add stl::optional<...> ?
-#define WEBPP_AS_METHOD(type)   \
-    { val.template as<type>() } \
-    ->stl::same_as<type>;
+#define WEBPP_AS_METHOD(type) \
+    { val.template as<type>() } -> stl::same_as<type>;
 
         WEBPP_AS_METHOD(bool)
         WEBPP_AS_METHOD(char)
@@ -114,10 +112,8 @@ namespace webpp {
         doc.pretty_string();
         doc.uglified_string();
         doc.size();
-        { doc[0] }
-        ->JsonValue;
-        { doc["key"] }
-        ->JsonValue;
+        { doc[0] } -> JsonValue;
+        { doc["key"] } -> JsonValue;
         { doc.key() }
         noexcept->JsonKey;
         { doc.back_end() }
