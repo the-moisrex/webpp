@@ -18,26 +18,32 @@ extern std::string_view get_static_file(std::string_view const&) noexcept;
 namespace webpp::http {
 
     namespace details {
-        struct file_body {
-            template <Traits TraitsType>
-            struct type {
+        struct file_body_extension {
+
+            using dependencies = extension_pack<string_response_body_extension>;
+
+            template <Traits TraitsType, typename StringBody>
+            struct type : StringBody {
+              private:
+                using super = StringBody;
+
+              public:
                 using traits_type      = TraitsType;
-                using string_view_type = traits::string_view<traits_type>;
-                using char_type        = istl::char_type_of<string_view_type>;
-                using allocator_type   = traits::general_allocator<traits_type, char_type>;
-                using string_type      = traits::string<traits_type, allocator_type>;
+                using string_view_type = typename super::string_view_type;
+                using allocator_type   = typename super::allocator_type;
+                using string_type      = typename super::string_type;
                 using alloc_type       = allocator_type const&;
+                using char_type        = typename super::char_type;
                 using ifstream_type    = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
 
               private:
-                string_type     content;
                 stl::error_code _error{};
 
                 void load_file(stl::filesystem::path const& filepath, allocator_type alloc) noexcept {
 #ifdef WEBPP_EMBEDDED_FILES
                     if (auto content = ::get_static_file(filepath); !content.empty()) {
-                        content = string_type{content, alloc};
-                        _error  = stl::error_code{}; // reset the error_code
+                        this->content = string_type{this->content, alloc};
+                        _error        = stl::error_code{}; // reset the error_code
                         return;
                     }
 #endif
@@ -57,7 +63,7 @@ namespace webpp::http {
                         in.seekg(0);
                         in.read(result.get(), size);
                         // todo: cache the results
-                        content =
+                        this->content =
                           string_type{result.get(), static_cast<stl::string_view::size_type>(size), alloc};
                         return;
                     } else {
@@ -67,7 +73,7 @@ namespace webpp::http {
                 }
 
               public:
-                constexpr type(alloc_type alloc = allocator_type{}) noexcept : content{"", alloc} {}
+                constexpr type(alloc_type alloc = allocator_type{}) noexcept : super::content{"", alloc} {}
 
                 constexpr type(string_view_type filename, alloc_type alloc = allocator_type{}) noexcept {
                     load_file(filename, alloc);
@@ -79,18 +85,16 @@ namespace webpp::http {
                 //                load_file(filename, alloc);
                 //            }
 
-                constexpr type(type const& fbody) noexcept : content{fbody.content}, _error{fbody._error} {}
+                constexpr type(type const& fbody) noexcept
+                  : super::content{fbody.content},
+                    _error{fbody._error} {}
 
                 constexpr type(type&& fbody) noexcept
-                  : content{stl::move(fbody.content)},
+                  : super{stl::move(fbody)},
                     _error{stl::move(fbody._error)} {}
 
                 void load(stl::filesystem::path _file) noexcept {
-                    load_file(_file, content.get_allocator());
-                }
-
-                [[nodiscard]] string_type const& str() const noexcept {
-                    return content;
+                    load_file(_file, this->content.get_allocator());
                 }
 
                 [[nodiscard]] auto const& error() const noexcept {
@@ -98,35 +102,39 @@ namespace webpp::http {
                 }
 
                 [[nodiscard]] bool operator==(string_view_type str) const noexcept {
-                    return str == content;
+                    return str == this->content;
                 }
 
                 [[nodiscard]] bool operator!=(string_view_type str) const noexcept {
-                    return str != content;
+                    return str != this->content;
                 }
             };
         };
 
-        template <Traits TraitsType>
-        [[nodiscard]] bool
-        operator==(typename TraitsType::string_view_type                str,
-                   typename file_body::template type<TraitsType> const& filebody) noexcept {
-            return filebody.str() == str;
-        }
 
-        template <Traits TraitsType>
-        [[nodiscard]] bool
-        operator!=(typename TraitsType::string_view_type                str,
-                   typename file_body::template type<TraitsType> const& filebody) noexcept {
-            return filebody.str() != str;
-        }
+        struct file_context_extension {
+
+            template <Traits TraitsType, typename Mother>
+            struct type : public Mother {
+                using response_type = typename Mother::response_type;
+
+                // ctor
+                using Mother::Mother;
+
+
+                response_type load(stl::filesystem::path _file) noexcept {
+                    load_file(_file, Mother::get_allocator());
+                }
+            };
+        };
     } // namespace details
 
 
 
 
     struct file_response {
-        using response_body_extensions = extension_pack<details::file_body>;
+        using response_body_extensions = extension_pack<details::file_body_extension>;
+        using context_extensions       = extension_pack<details::file_context_extension>;
     };
 
 

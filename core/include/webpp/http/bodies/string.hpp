@@ -23,8 +23,9 @@ namespace webpp::http {
                 using string_view_type = traits::string_view<traits_type>;
                 using string_type      = traits::general_string<traits_type>;
                 using allocator_type   = typename string_type::allocator_type;
+                using char_type        = traits::char_type<traits_type>;
 
-              private:
+              protected: // the file extension will use the "content" directly
                 using alloc_type    = allocator_type const&;
                 string_type content = "";
 
@@ -53,6 +54,10 @@ namespace webpp::http {
 
                 [[nodiscard]] bool operator!=(string_view_type str) const noexcept {
                     return str != content;
+                }
+
+                [[nodiscard]] auto get_allocator() const noexcept {
+                    return content.get_allocator();
                 }
             };
         };
