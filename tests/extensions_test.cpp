@@ -237,6 +237,8 @@ struct third {
     struct type : Mother {};
 };
 
+static_assert(stl::same_as<typename details::dependencies<third>::type, extension_pack<third, second, first>>);
+
 struct third_descriptor {
     template <typename ExtensionType>
     using extractor_type = typename ExtensionType::test_extensions;

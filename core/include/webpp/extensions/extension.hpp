@@ -139,11 +139,13 @@ namespace webpp {
         struct dependencies {
             using type = extension_pack<E...>;
         };
+        template <typename... E, typename... Es>
+        struct dependencies<extension_pack<E...>, Es...> : dependencies<E..., Es...> {};
 
         template <HasDependencies First, typename... E>
         struct dependencies<First, E...> {
-            using deps           = typename First::dependencies;
-            using deps_with_deps = typename dependencies<deps>::type;
+            using deps           = typename First::dependencies;      // extension_pack<...>
+            using deps_with_deps = typename dependencies<deps>::type; // extension_pack<...>
 
             // the "First" needs to go before the "deps" because we order matters here
             // the children_inherited will inherit each of them in reverse order, so ...
