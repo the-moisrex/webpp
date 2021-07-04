@@ -1,3 +1,4 @@
+#include "../../core/include/webpp/http/bodies/file.hpp"
 #include "../../core/include/webpp/http/protocols/cgi.hpp"
 #include "../../core/include/webpp/http/routes/methods.hpp"
 #include "../../core/include/webpp/http/routes/path.hpp"
@@ -13,7 +14,7 @@ auto page_one() {
 }
 
 int main() {
-    using extensions = extension_pack<string_response>;
+    using extensions = extension_pack<file_response>;
     router _router{extensions{},
                    root >>=
                    []() noexcept {
@@ -26,7 +27,7 @@ int main() {
                    },
                    (root / "about") || (get and root / "cgi-bin" / "cgi-hello-world" / "about") >>=
                    [](auto ctx) {
-                       return ctx.string("about.html");
+                       return ctx.file("about.html");
                    }};
 
     // run the app:

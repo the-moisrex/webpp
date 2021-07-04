@@ -6,6 +6,7 @@
 #include "./string.hpp"
 
 #include <filesystem>
+#include <fstream>
 
 #ifdef WEBPP_EMBEDDED_FILES
 #    if CONFIG_FILE != ""
@@ -39,7 +40,7 @@ namespace webpp::http {
               private:
                 stl::error_code _error{};
 
-                void load_file(stl::filesystem::path const& filepath, allocator_type alloc) noexcept {
+                void load_file(stl::filesystem::path const& filepath) noexcept {
 #ifdef WEBPP_EMBEDDED_FILES
                     if (auto content = ::get_static_file(filepath); !content.empty()) {
                         this->content = string_type{this->content, alloc};
@@ -52,19 +53,20 @@ namespace webpp::http {
                     // todo: add unix specializations for performance and having fun reasons
                     // TODO: change the replace_string with replace_string_view if the file is cached
 
-                    if (auto in = ifstream_type{filepath.c_str(), stl::ios::binary | stl::ios::ate};
+                    if (auto in = ifstream_type(filepath.c_str(), stl::ios::binary | stl::ios::ate);
                         in.is_open()) {
                         // details on this matter:
                         // https://stackoverflow.com/questions/11563963/writing-a-binary-file-in-c-very-fast/39097696#39097696
                         // stl::unique_ptr<char[]> buffer{new char[buffer_size]};
                         // in.rdbuf()->pubsetbuf(buffer.get(), buffer_size); // speed boost, I think
                         auto                         size = in.tellg();
-                        stl::unique_ptr<char_type[]> result(alloc.allocate(size));
+                        stl::unique_ptr<char_type[]> result(this->get_allocator().allocate(size));
                         in.seekg(0);
                         in.read(result.get(), size);
                         // todo: cache the results
-                        this->content =
-                          string_type{result.get(), static_cast<stl::string_view::size_type>(size), alloc};
+                        this->content = string_type{result.get(),
+                                                    static_cast<stl::string_view::size_type>(size),
+                                                    this->get_allocator()};
                         return;
                     } else {
                         // todo: error code here
@@ -73,10 +75,11 @@ namespace webpp::http {
                 }
 
               public:
-                constexpr type(alloc_type alloc = allocator_type{}) noexcept : super::content{"", alloc} {}
+                constexpr type(alloc_type alloc = allocator_type{}) noexcept : super{"", alloc} {}
 
-                constexpr type(string_view_type filename, alloc_type alloc = allocator_type{}) noexcept {
-                    load_file(filename, alloc);
+                constexpr type(string_view_type filename, alloc_type alloc = allocator_type{}) noexcept
+                  : super{"", alloc} {
+                    load_file(filename);
                 }
 
                 // fixme: why? why can't I have non-constexpr constructor?
@@ -85,9 +88,7 @@ namespace webpp::http {
                 //                load_file(filename, alloc);
                 //            }
 
-                constexpr type(type const& fbody) noexcept
-                  : super::content{fbody.content},
-                    _error{fbody._error} {}
+                constexpr type(type const& fbody) noexcept : super{fbody}, _error{fbody._error} {}
 
                 constexpr type(type&& fbody) noexcept
                   : super{stl::move(fbody)},
@@ -122,8 +123,8 @@ namespace webpp::http {
                 using Mother::Mother;
 
 
-                response_type load(stl::filesystem::path _file) noexcept {
-                    load_file(_file, Mother::get_allocator());
+                response_type file(stl::filesystem::path _file) noexcept {
+                    return response_type{_file};
                 }
             };
         };
@@ -133,6 +134,7 @@ namespace webpp::http {
 
 
     struct file_response {
+        using dependencies             = extension_pack<string_response>;
         using response_body_extensions = extension_pack<details::file_body_extension>;
         using context_extensions       = extension_pack<details::file_context_extension>;
     };

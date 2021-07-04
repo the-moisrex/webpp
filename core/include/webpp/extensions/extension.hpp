@@ -264,10 +264,10 @@ namespace webpp {
                   typename... ExtraArgs>
         struct mid_level_extractor {
 
-            using mother_pack = typename merge_extensions<
+            using mother_pack = istl::unique_parameters<typename merge_extensions<
               RootExtensionPack,
               ExtensieDescriptor,
-              is_mother_condition<TraitsType>::template type>::template mother_extensions<TraitsType>;
+              is_mother_condition<TraitsType>::template type>::template mother_extensions<TraitsType>>;
 
             // these are the applied mother extensions
             using applied_mother_pack = typename mother_inherited<TraitsType, mother_pack>::type;
@@ -352,6 +352,9 @@ namespace webpp {
     template <Extension... E>
     struct extension_pack {
 
+        // these are the dependencies
+        using include_dependencies = typename details::dependencies<E...>::type;
+
         template <typename... NE>
         using appended = extension_pack<E..., NE...>;
 
@@ -359,13 +362,13 @@ namespace webpp {
         template <Traits TraitsType>
         using mother_extensions =
           istl::filter_parameters_t<details::is_mother_condition<TraitsType>::template type,
-                                    extension_pack<E...>>;
+                                    include_dependencies>;
 
         // This type does not handle the dependencies
         template <Traits TraitsType, typename Parent>
         using child_extensions =
           istl::filter_parameters_t<details::is_child_condition<TraitsType, Parent>::template type,
-                                    extension_pack<E...>>;
+                                    include_dependencies>;
 
         using this_epack = extension_pack<E...>;
 
@@ -374,7 +377,7 @@ namespace webpp {
         // this does not apply the child extensions
         template <Traits TraitsType, typename ExtensieDescriptor>
         using mother_extensie_type = typename details::
-          mid_level_extractor<this_epack, TraitsType, ExtensieDescriptor>::applied_mother_pack;
+          mid_level_extractor<include_dependencies, TraitsType, ExtensieDescriptor>::applied_mother_pack;
 
         /**
          * Apply extensions into one type
@@ -382,7 +385,7 @@ namespace webpp {
          */
         template <Traits TraitsType, typename ExtensieDescriptor, typename... ExtraArgs>
         using extensie_type = typename details::
-          final_extensie_extractor<this_epack, TraitsType, ExtensieDescriptor, ExtraArgs...>::type;
+          final_extensie_extractor<include_dependencies, TraitsType, ExtensieDescriptor, ExtraArgs...>::type;
 
 
         /**
