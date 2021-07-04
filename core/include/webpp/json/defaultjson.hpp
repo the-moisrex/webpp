@@ -8,4 +8,8 @@
 
 #include "rapidjson.hpp"
 
+namespace webpp::json {
+    using namespace webpp::json::rapidjson; // this is the trick we use, to make an implementation default
+}
+
 #endif // WEBPP_DEFAULTJSON_HPP

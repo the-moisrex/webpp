@@ -185,6 +185,9 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/json/json_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/json/rapidjson.hpp
 
+        ${LIB_INCLUDE_DIR}/webpp/db/query.hpp
+        ${LIB_INCLUDE_DIR}/webpp/db/database_concepts.hpp
+
         ${LIB_INCLUDE_DIR}/main.hpp
         ${LIB_INCLUDE_DIR}/webpp.hpp
         )

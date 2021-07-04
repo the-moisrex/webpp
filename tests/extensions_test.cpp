@@ -215,3 +215,35 @@ TEST(ExtensionsTests, ExtensionConstructors) {
     EXPECT_EQ(d1.a, 6);
     EXPECT_EQ((etype{4, 2}.a), 6);
 }
+
+
+struct first {
+
+    template <typename TraitsType>
+    struct type {
+        using first = int;
+    };
+};
+
+struct second {
+    using dependencies = extension_pack<first>;
+    template <typename TraitsType, typename Mother>
+    struct type : Mother {};
+};
+
+struct third {
+    using dependencies = extension_pack<second>;
+    template <typename TraitsType, typename Mother>
+    struct type : Mother {};
+};
+
+struct third_descriptor {
+    template <typename ExtensionType>
+    using extractor_type = typename ExtensionType::test_extensions;
+};
+
+struct third_pack {
+    using test_extensions = extension_pack<third>;
+};
+using third_extensie = typename extension_pack<third_pack>::template extensie_type<std_traits, third_descriptor>;
+static_assert(stl::same_as<typename third_extensie::first, int>);

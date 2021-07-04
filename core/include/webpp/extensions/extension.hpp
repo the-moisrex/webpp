@@ -40,6 +40,11 @@ namespace webpp {
         typename ExtensionDescriptorType::template final_extensie_type<Args...>;
     };
 
+    template <typename T>
+    concept HasDependencies = requires {
+        typename T::dependencies;
+    };
+
     template <Extension... E>
     struct extension_pack;
 
@@ -125,6 +130,33 @@ namespace webpp {
             //  };
         };
 
+
+
+        /**
+         * This TMP will find, flatten, and re-orders the extensions and their dependencies.
+         */
+        template <typename... E>
+        struct dependencies {
+            using type = extension_pack<E...>;
+        };
+
+        template <HasDependencies First, typename... E>
+        struct dependencies<First, E...> {
+            using deps           = typename First::dependencies;
+            using deps_with_deps = typename dependencies<deps>::type;
+
+            // the "First" needs to go before the "deps" because we order matters here
+            // the children_inherited will inherit each of them in reverse order, so ...
+            using type = istl::
+              merge_parameters<extension_pack<First>, deps_with_deps, typename dependencies<E...>::type>;
+        };
+
+        template <typename First, typename... E>
+        struct dependencies<First, E...> {
+            using type = istl::merge_parameters<extension_pack<First>, typename dependencies<E...>::type>;
+        };
+
+
         // without any kids
         template <Traits TraitsType, typename Mother>
         struct children_inherited<TraitsType, Mother> {
@@ -141,8 +173,6 @@ namespace webpp {
         template <Traits TraitsType, typename Mother, typename... Kids>
         struct children_inherited<TraitsType, Mother, extension_pack<Kids...>>
           : public children_inherited<TraitsType, Mother, Kids...> {};
-
-
 
 
 
@@ -193,18 +223,12 @@ namespace webpp {
         };
 
 
-        template <template <typename...> typename PackType,
-                  template <typename>
-                  typename Extractor,
-                  typename... EPack>
+        template <template <typename> typename Extractor, typename... EPack>
         struct epack_miner;
 
-        template <template <typename...> typename PackType,
-                  template <typename>
-                  typename Extractor,
-                  typename... EPack>
-        struct epack_miner<PackType, Extractor, extension_pack<EPack...>> {
-            using type = PackType<Extractor<EPack>...>;
+        template <template <typename> typename Extractor, typename... EPack>
+        struct epack_miner<Extractor, extension_pack<EPack...>> {
+            using type = extension_pack<Extractor<EPack>...>;
         };
 
         template <typename ExtensieDescriptor>
@@ -219,8 +243,7 @@ namespace webpp {
 
         template <typename RootExtensionPack, typename ExtensieDescriptor, template <typename> typename IF>
         using merge_extensions = typename istl::unique_parameters<
-          typename flatten_epacks<typename epack_miner<
-            extension_pack,
+          typename dependencies<typename flatten_epacks<typename epack_miner<
             ExtensieDescriptor::template extractor_type,
 
             // filter the packs that contain the interested packs
@@ -228,8 +251,8 @@ namespace webpp {
                                       RootExtensionPack>
 
             >::type>::type
-          // append the individual lonely extensions in the big epack
-          ::template appended<istl::filter_parameters_t<IF, RootExtensionPack>>>;
+                                // append the individual lonely extensions in the big epack
+                                ::template appended<istl::filter_parameters_t<IF, RootExtensionPack>>>::type>;
 
 
 
@@ -330,11 +353,13 @@ namespace webpp {
         template <typename... NE>
         using appended = extension_pack<E..., NE...>;
 
+        // This type does not handle the dependencies
         template <Traits TraitsType>
         using mother_extensions =
           istl::filter_parameters_t<details::is_mother_condition<TraitsType>::template type,
                                     extension_pack<E...>>;
 
+        // This type does not handle the dependencies
         template <Traits TraitsType, typename Parent>
         using child_extensions =
           istl::filter_parameters_t<details::is_child_condition<TraitsType, Parent>::template type,

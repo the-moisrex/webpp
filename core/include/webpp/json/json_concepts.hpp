@@ -115,6 +115,7 @@ namespace webpp {
         doc.parse("{}");
         doc.pretty_string();
         doc.uglified_string();
+        doc.template to_string<stl::string>(stl::allocator<char>());
         doc.size();
         { doc[0] } -> JsonValue;
         { doc["key"] } -> JsonValue;
