@@ -3,6 +3,7 @@
 #ifndef WEBPP_EXAMPLE_ADMIN_H
 #define WEBPP_EXAMPLE_ADMIN_H
 
+#include "../../core/include/webpp/http/bodies/json.hpp"
 #include "../../core/include/webpp/http/http.hpp"
 
 #include <functional>
@@ -16,7 +17,7 @@ namespace website {
         using my_extensions = extension_pack<string_response, json_response>;
         router<my_extensions> _router{
           // home
-          relative / "home" >>= file("admin/page.html"),
+          relative / "home" >>= static_file("admin/page.html"),
           relative / "help" >>= mem_call(help)
           // done
         };

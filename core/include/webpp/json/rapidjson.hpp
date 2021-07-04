@@ -9,7 +9,7 @@
 #    include <rapidjson/document.h>
 
 
-namespace webpp::json::inline rapidjson {
+namespace webpp::json::rapidjson {
     using namespace ::rapidjson;
 
     template <Traits TraitsType>
