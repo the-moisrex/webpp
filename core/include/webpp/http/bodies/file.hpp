@@ -19,33 +19,27 @@ extern std::string_view get_static_file(std::string_view const&) noexcept;
 namespace webpp::http {
 
     namespace details {
-        struct file_body_extension {
 
-            using dependencies = extension_pack<string_response_body_extension>;
+        struct file_context_extension {
 
-            template <Traits TraitsType, typename StringBody>
-            struct type : StringBody {
-              private:
-                using super = StringBody;
+            template <Traits TraitsType, typename Mother>
+            struct type : public Mother {
+                using traits_type   = TraitsType;
+                using response_type = typename Mother::response_type;
+                using body_type     = typename response_type::body_type;
+                using string_type   = typename body_type::string_type;
+                using char_type     = traits::char_type<traits_type>;
+                using ifstream_type = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
+
+                // ctor
+                using Mother::Mother;
+
 
               public:
-                using traits_type      = TraitsType;
-                using string_view_type = typename super::string_view_type;
-                using allocator_type   = typename super::allocator_type;
-                using string_type      = typename super::string_type;
-                using alloc_type       = allocator_type const&;
-                using char_type        = typename super::char_type;
-                using ifstream_type    = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
-
-              private:
-                stl::error_code _error{};
-
-                void load_file(stl::filesystem::path const& filepath) noexcept {
+                response_type file(stl::filesystem::path const& filepath) noexcept {
 #ifdef WEBPP_EMBEDDED_FILES
                     if (auto content = ::get_static_file(filepath); !content.empty()) {
-                        this->content = string_type{this->content, alloc};
-                        _error        = stl::error_code{}; // reset the error_code
-                        return;
+                        return string_type{this->content, alloc};
                     }
 #endif
 
@@ -64,78 +58,30 @@ namespace webpp::http {
                         in.seekg(0);
                         in.read(result.get(), size);
                         // todo: cache the results
-                        this->content = string_type{result.get(),
-                                                    static_cast<stl::string_view::size_type>(size),
-                                                    this->get_allocator()};
-                        return;
+                        return string_type{result.get(),
+                                           static_cast<stl::string_view::size_type>(size),
+                                           this->get_allocator()};
                     } else {
-                        // todo: error code here
+                        this->logger.error("Response/File",
+                                           "Cannot load the specified file: %s",
+                                           filepath.string());
                         // todo: retry feature
+                        if constexpr (this->is_debug()) {
+                            return this->error(500u);
+                        } else {
+                            return this->error(500u,
+                                               stl::format("We're not able to load the specified file: {}",
+                                                           filepath.string()));
+                        }
                     }
-                }
-
-              public:
-                constexpr type(alloc_type alloc = allocator_type{}) noexcept : super{"", alloc} {}
-
-                constexpr type(string_view_type filename, alloc_type alloc = allocator_type{}) noexcept
-                  : super{"", alloc} {
-                    load_file(filename);
-                }
-
-                // fixme: why? why can't I have non-constexpr constructor?
-                //            type(stl::filesystem::path filename, alloc_type alloc = allocator_type{})
-                //            noexcept {
-                //                load_file(filename, alloc);
-                //            }
-
-                constexpr type(type const& fbody) noexcept : super{fbody}, _error{fbody._error} {}
-
-                constexpr type(type&& fbody) noexcept
-                  : super{stl::move(fbody)},
-                    _error{stl::move(fbody._error)} {}
-
-                void load(stl::filesystem::path _file) noexcept {
-                    load_file(_file, this->content.get_allocator());
-                }
-
-                [[nodiscard]] auto const& error() const noexcept {
-                    return _error;
-                }
-
-                [[nodiscard]] bool operator==(string_view_type str) const noexcept {
-                    return str == this->content;
-                }
-
-                [[nodiscard]] bool operator!=(string_view_type str) const noexcept {
-                    return str != this->content;
-                }
-            };
-        };
-
-
-        struct file_context_extension {
-
-            template <Traits TraitsType, typename Mother>
-            struct type : public Mother {
-                using response_type = typename Mother::response_type;
-
-                // ctor
-                using Mother::Mother;
-
-
-                response_type file(stl::filesystem::path _file) noexcept {
-                    return response_type{_file};
                 }
             };
         };
     } // namespace details
 
 
-
-
     struct file_response {
-        using dependencies             = extension_pack<string_response>;
-        using response_body_extensions = extension_pack<details::file_body_extension>;
+        using response_body_extensions = extension_pack<details::string_response_body_extension>;
         using context_extensions       = extension_pack<details::file_context_extension>;
     };
 

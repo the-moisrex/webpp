@@ -79,9 +79,7 @@ namespace webpp::http {
         // static_assert(ResponseBody<elist_type>, "We require at least one valid 'response body
         // extension'.");
 
-        using elist_type::elist_type; // inherit ctors from parents
-
-        // todo: implement .str or other streaming stuff here or create a "final_response_body" type
+        using EList::EList;
     };
 
 
@@ -92,7 +90,6 @@ namespace webpp::http {
 
         template <typename ExtensionListType, typename TraitsType, typename EList>
         using mid_level_extensie_type = response_body<TraitsType, EList>;
-
     };
 
     template <Traits TraitsType, Extension... E>

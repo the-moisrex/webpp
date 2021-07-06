@@ -116,23 +116,6 @@ namespace webpp::http {
             };
         };
 
-        struct string_response_extension {
-            template <Traits TraitsType, typename ResType>
-            struct type : public ResType {
-                using ResType::ResType;
-                using body_type   = typename ResType::body_type;
-                using string_type = typename body_type::string_type;
-
-                template <typename T>
-                requires(!stl::is_same_v<stl::remove_cvref_t<T>, type> &&
-                         istl::StringViewifiable<T>) constexpr type(T&& str_view) noexcept
-                  : ResType{body_type{stl::forward<T>(str_view)}} {}
-
-                constexpr type(string_type const& str) noexcept : ResType{body_type{str}} {}
-                constexpr type(string_type&& str) noexcept : ResType{body_type{stl::move(str)}} {}
-            };
-        };
-
     } // namespace details
 
 
@@ -146,7 +129,6 @@ namespace webpp::http {
      */
     struct string_response {
         using response_body_extensions = extension_pack<details::string_response_body_extension>;
-        using response_extensions      = extension_pack<details::string_response_extension>;
         using context_extensions       = extension_pack<details::string_context_extension>;
     };
 
