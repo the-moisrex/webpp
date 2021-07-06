@@ -88,11 +88,6 @@ namespace webpp::http {
             }
         }
 
-
-        // static methods:
-        // static auto file(stl::filesystem::path const& file) noexcept;
-        // static auto image(stl::string_view const& file) noexcept;
-        // static auto json_file(stl::string_view const& file) noexcept;
     };
 
 
