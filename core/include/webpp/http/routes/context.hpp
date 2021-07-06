@@ -162,6 +162,16 @@ namespace webpp::http {
             }
         }
 
+
+        [[nodiscard]] constexpr static bool is_debug() noexcept {
+            // todo: configure this in cmake
+#ifdef DEBUG
+            return true;
+#else
+            return false;
+#endif
+        }
+
         [[nodiscard]] constexpr HTTPResponse auto error(http::status_code_type error_code) const noexcept {
             return error(error_code,
                          stl::format(R"(<!DOCTYPE html>

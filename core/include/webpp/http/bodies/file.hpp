@@ -18,6 +18,13 @@ extern std::string_view get_static_file(std::string_view const&) noexcept;
 
 namespace webpp::http {
 
+    struct file_options {
+        bool     cache          = true;
+        bool     retry          = true;
+        unsigned retry_count    = 2;
+        void*    global_storage = nullptr; // todo
+    };
+
     namespace details {
 
         struct file_context_extension {
@@ -36,12 +43,15 @@ namespace webpp::http {
 
 
               public:
-                response_type file(stl::filesystem::path const& filepath) noexcept {
+                response_type file(stl::filesystem::path const& filepath,
+                                   file_options const&          options = {}) noexcept {
 #ifdef WEBPP_EMBEDDED_FILES
                     if (auto content = ::get_static_file(filepath); !content.empty()) {
                         return string_type{this->content, alloc};
                     }
 #endif
+
+                    // todo: cache
 
                     // TODO: performance tests
                     // todo: add unix specializations for performance and having fun reasons
@@ -58,9 +68,9 @@ namespace webpp::http {
                         in.seekg(0);
                         in.read(result.get(), size);
                         // todo: cache the results
-                        return string_type{result.get(),
-                                           static_cast<stl::string_view::size_type>(size),
-                                           this->get_allocator()};
+                        return body_type{string_type{result.get(),
+                                                     static_cast<stl::string_view::size_type>(size),
+                                                     this->get_allocator()}};
                     } else {
                         this->logger.error("Response/File",
                                            "Cannot load the specified file: %s",
