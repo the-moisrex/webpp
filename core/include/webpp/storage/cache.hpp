@@ -8,7 +8,7 @@ namespace webpp {
 
     /**
      * This class is designed to contain other caching systems inside it.
-     * It's purpose is to have a unified caching system for different types.
+     * Its purpose is to have a unified caching system for different types.
      * You can use different caching system for different key and values
      * You even can use different caching methods available in the wild with
      * this class.

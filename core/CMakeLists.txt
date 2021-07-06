@@ -188,6 +188,9 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/db/query.hpp
         ${LIB_INCLUDE_DIR}/webpp/db/database_concepts.hpp
 
+        ${LIB_INCLUDE_DIR}/webpp/storage/cache.hpp
+        ${LIB_INCLUDE_DIR}/webpp/storage/passive_cache.hpp
+
         ${LIB_INCLUDE_DIR}/main.hpp
         ${LIB_INCLUDE_DIR}/webpp.hpp
         )
