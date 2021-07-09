@@ -12,7 +12,7 @@ namespace webpp::database {
      * Example usages that I hope to implement:
      *
      * @code
-     *   auto user = db["users"].where("id", 20).first();
+     *   auto user = db.tables["users"].where("id", 20).first();
      *   user["age"]++;                            // operator is overloaded, sync is the default.
      *   user.sync["age"] += 20;                   // do it NOW
      *   user.async["username"] = "hello world";   // wait for it
@@ -21,8 +21,8 @@ namespace webpp::database {
      *   auto usr = user.async;
      *   // we should be able to use this instead of keep getting the .async version
      *
-     *   auto posts = db["posts"].where(field("id") > 10);                  // haven't fetched them yet
-     *   auto names = db["names"].where("date"_field > (now() - 100_days));
+     *   auto posts = db.tables["posts"].where(field("id") > 10);                  // haven't fetched them yet
+     *   auto names = db.tablea["names"].where("date"_field > (now() - 100_days));
      *   auto pics = db.tables["pictures"]
      *                  .select("src")
      *                  .where(
