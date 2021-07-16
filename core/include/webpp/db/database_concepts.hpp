@@ -52,19 +52,25 @@ namespace webpp::database {
 
 
     template <typename T>
-    concept Connection = requires (T db) {
+    concept Connection = requires(T db) {
         db.execute("");
         // todo
     };
 
     template <typename T>
-    concept Handler = requires (T handler) {
-        handler.transaction([](){});
+    concept Handler = requires(T handler) {
+        handler.transaction([]() {});
         handler.transaction.start();
         handler.transaction.end();
         handler.transaction.get(); // [[nodiscard]] requires the user to give it a name
         handler.execute("");
     };
-}
+
+
+    template <typename T>
+    concept DatabaseTraits = requires {
+        typename T::query_builder_helper;
+    };
+} // namespace webpp::database
 
 #endif // WEBPP_DATABASE_CONCEPTS_HPP
