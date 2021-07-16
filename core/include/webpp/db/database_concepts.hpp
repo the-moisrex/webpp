@@ -62,7 +62,7 @@ namespace webpp::database {
         handler.transaction([](){});
         handler.transaction.start();
         handler.transaction.end();
-        handler.transaction.raii(); // [[nodiscard]] requires the user to give it a name
+        handler.transaction.get(); // [[nodiscard]] requires the user to give it a name
         handler.execute("");
     };
 }
