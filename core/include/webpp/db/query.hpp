@@ -3,23 +3,29 @@
 #ifndef WEBPP_QUERY_HPP
 #define WEBPP_QUERY_HPP
 
+#include "../traits/traits.hpp"
 
 namespace webpp::database {
 
 
     struct query {};
 
+    template <Traits TraitsType>
+    struct query_builder;
 
     /**
      * The holder of a single row from the results of a query in the database
      */
+    template <Traits TraitsType>
     struct row {
+        using traits_type        = TraitsType;
+        using query_builder_type = query_builder<traits_type>;
 
         /**
          * Sync
          */
         struct sync_type {
-            query_builder& builder;
+            query_builder_type& builder;
 
         } sync{.builder = *this};
 
@@ -27,10 +33,9 @@ namespace webpp::database {
          * Async
          */
         struct async_type {
-            query_builder& builder;
+            query_builder_type& builder;
 
         } async{.builder = *this};
-
     };
 
     template <Traits TraitsType>
