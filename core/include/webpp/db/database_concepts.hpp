@@ -48,6 +48,17 @@ namespace webpp::database {
      *      // ...
      *   });
      * @endcode
+     *
+     *
+     * Examples of the user comfiguring the database:
+     * @code
+     *   int main() {
+     *     database::mysql localhost;
+     *     application app;
+     *     app.databases.push_back(std::move(localhost));
+     *     return app();
+     *   }
+     * @endcode
      */
 
 
