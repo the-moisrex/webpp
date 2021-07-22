@@ -74,10 +74,11 @@ namespace webpp::json::rapidjson {
 
         // implement the parse method
         template <istl::StringViewifiable StrT>
-        void parse(StrT&& json_string) const {
+        void parse(StrT&& json_string) {
             const auto json_str_view = istl::string_viewify(stl::forward<StrT>(json_string));
-            return this->Parse(json_str_view.data(), json_str_view.size());
+            this->Parse(json_str_view.data(), json_str_view.size());
         }
+
     };
 
 } // namespace webpp::json::inline rapidjson
