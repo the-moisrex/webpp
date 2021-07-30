@@ -9,18 +9,20 @@
 namespace webpp::database {
 
 
-    template <istl::String StrT>
-    struct query {
-        using str_t = StrT;
+    /**
+     * This class is used gather the necessary informations to create a SELECT query.
+     */
+    template <istl::StringView StrVT>
+    struct select_query {
+        using strv = StrVT;
 
       private:
-        str_t tables_value;
-        str_t select_value;
+        strv tables_value;
+        strv select_value;
 
       public:
-        template <istl::StringifiableOf<str_t> T>
-        constexpr query& select(T&& val) noexcept {
-            select_value = istl::stringify_of<str_t>(stl::forward<T>(val));
+        constexpr query& select(strv val) noexcept {
+            select_value = val;
             return *this;
         }
     };
