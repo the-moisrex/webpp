@@ -3,12 +3,26 @@
 #ifndef WEBPP_QUERY_HPP
 #define WEBPP_QUERY_HPP
 
+#include "../std/string.hpp"
 #include "../traits/traits.hpp"
 
 namespace webpp::database {
 
 
-    struct query {};
+    template <istl::String StrT>
+    struct query {
+        using str_t = StrT;
+
+      private:
+        str_t tables_value;
+        str_t select_value;
+
+      public:
+        template <istl::Stringifiable T>
+        constexpr query& select(T&& val) noexcept {
+            select_value = istl::stringify<str_t>(stl::forward<T>(val));
+        }
+    };
 
     template <Traits TraitsType>
     struct query_builder;
