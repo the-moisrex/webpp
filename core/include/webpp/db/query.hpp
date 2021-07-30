@@ -18,9 +18,10 @@ namespace webpp::database {
         str_t select_value;
 
       public:
-        template <istl::Stringifiable T>
+        template <istl::StringifiableOf<str_t> T>
         constexpr query& select(T&& val) noexcept {
-            select_value = istl::stringify<str_t>(stl::forward<T>(val));
+            select_value = istl::stringify_of<str_t>(stl::forward<T>(val));
+            return *this;
         }
     };
 
