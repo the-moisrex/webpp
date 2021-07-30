@@ -22,7 +22,7 @@ namespace webpp::database {
      *   // we should be able to use this instead of keep getting the .async version
      *
      *   auto posts = db.tables["posts"].where(field("id") > 10);                  // haven't fetched them yet
-     *   auto names = db.tablea["names"].where("date"_field > (now() - 100_days));
+     *   auto names = db.tables["names"].where("date"_field > (now() - 100_days));
      *   auto pics = db.tables["pictures"]
      *                  .select("src")
      *                  .where(
