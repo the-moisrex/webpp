@@ -791,12 +791,12 @@ namespace webpp::istl {
             using type = TupleT<F, L...>;
         };
 
-        template <typename TupleT, typename T>
+        template <typename TupleT, typename... T>
         struct append;
 
-        template <template <typename...> typename TupleT, typename F, typename... L>
-        struct append<TupleT<L...>, F> {
-            using type = TupleT<L..., F>;
+        template <template <typename...> typename TupleT, typename... F, typename... L>
+        struct append<TupleT<L...>, F...> {
+            using type = TupleT<L..., F...>;
         };
 
         template <typename TupleT>
@@ -825,8 +825,8 @@ namespace webpp::istl {
     using prepend_parameter = typename details::prepend<TupleT, T>::type;
 
     // append the specified type T at the end of tuple-like type TupleT
-    template <typename TupleT, typename T>
-    using append_parameter = typename details::append<TupleT, T>::type;
+    template <typename TupleT, typename... T>
+    using append_parameter = typename details::append<TupleT, T...>::type;
 
     // make the template parameters of the specified tuple-like type, "unique" (remove the duplicates)
     template <typename T>
@@ -842,6 +842,30 @@ namespace webpp::istl {
 
     template <class T, template <class...> class Primary>
     inline constexpr bool is_specialization_of_v = is_specialization_of<T, Primary>::value;
+
+
+    namespace details {
+
+        template <typename FirstType, typename TheType, stl::size_t N>
+        struct repeat_type {
+            using type = append_parameter<append_parameter<FirstType, TheType>,
+                                          typename repeat_type<FirstType, TheType, N - 1>::type>;
+        };
+
+
+
+        template <typename FirstType, typename TheType>
+        struct repeat_type<FirstType, TheType, 0> {
+            using type = FirstType;
+        };
+    } // namespace details
+
+    // Repeat Template Type
+    template <template <typename...> typename TemplateType,
+              stl::size_t N,
+              typename TheType,
+              typename... FirstTypes>
+    using repeat_type = details::repeat_type<TemplateType<FirstTypes...>, TheType, N>;
 
 } // namespace webpp::istl
 
