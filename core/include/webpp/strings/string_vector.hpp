@@ -15,8 +15,15 @@ namespace webpp {
      *
      * Holds string_views of the same string efficiantly. 
      */
-    template <istl::StringView StrVT, StrVT... Names>
-    struct basic_string_variant {};
+    template <istl::CharType CharT, auto... Names>
+    struct basic_string_variant {
+      using char_type = CharT;
+      private:
+        stl::variant<char_type const *> data;
+
+      public:
+
+    };
 
 
     // string vector: same as above, but you can add to it
