@@ -13,16 +13,18 @@ namespace webpp {
     /**
      * String Variant
      *
-     * Holds string_views of the same string efficiantly. 
+     * Holds string_views of the same string efficiantly.
      */
     template <istl::CharType CharT, auto... Names>
     struct basic_string_variant {
-      using char_type = CharT;
+        using char_type                          = CharT;
+        static constexpr stl::size_t field_count = sizeof...(Names);
+        using tuple_type = istl::repeat_type<stl::tuple, char_type const*, field_count>;
+
       private:
-        stl::variant<char_type const *> data;
+        tuple_type data;
 
       public:
-
     };
 
 
