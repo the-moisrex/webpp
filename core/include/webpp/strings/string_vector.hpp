@@ -21,6 +21,9 @@ namespace webpp {
         static constexpr stl::size_t piece_count = sizeof...(Names);
         using tuple_type                         = istl::repeat_type<stl::tuple, str_ptr, piece_count + 1>;
 
+        template <auto the_name>
+        constexpr static stl::size_t index_of = istl::index_of_item<the_name, Names...>::value;
+
       private:
         tuple_type data;
 
@@ -36,10 +39,20 @@ namespace webpp {
             auto const len       = end_ptr - start_ptr;
             return StrV{start_ptr, len};
         }
+
+        template <auto Name, istl::StringView StrV = stl::string_view>
+        constexpr StrV view() const noexcept {
+            constexpr auto index = index_of<Name>;
+            return view<index, StrV>();
+        }
     };
 
+    template <istl::CharType CharT>
+    struct string_piece {};
 
     // string vector: same as above, but you can add to it
+    template <istl::CharType CharT, Allocator AllocType = stl::allocator<CharT>>
+    struct basic_string_vector : stl::vector<string_piece<CharT>, AllocType> {};
 
 
 } // namespace webpp
