@@ -867,6 +867,36 @@ namespace webpp::istl {
               typename... FirstTypes>
     using repeat_type = details::repeat_type<TemplateType<FirstTypes...>, TheType, N>;
 
+
+
+
+    template <typename...>
+    struct index_of_type;
+
+    // found it
+    template <typename T, typename... R>
+    struct index_of_type<T, T, R...> : stl::integral_constant<size_t, 0> {};
+
+    // still looking
+    template <typename T, typename F, typename... R>
+    struct index_of_type<T, F, R...>
+      : stl::integral_constant<stl::size_t, 1 + index_of_type<T, R...>::value> {};
+
+
+
+    template <auto...>
+    struct index_of_item;
+
+    // found it
+    template <auto T, auto... R>
+    struct index_of_item<T, T, R...> : stl::integral_constant<size_t, 0> {};
+
+    // still looking
+    template <auto T, auto F, auto... R>
+    struct index_of_item<T, F, R...>
+      : stl::integral_constant<stl::size_t, 1 + index_of_item<T, R...>::value> {};
+
+
 } // namespace webpp::istl
 
 #endif // WEBPP_TYPE_TRAITS_HPP
