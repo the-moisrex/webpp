@@ -41,7 +41,7 @@ namespace webpp {
         }
 
         template <auto Name, istl::StringView StrV = stl::string_view>
-        constexpr StrV view() const noexcept {
+        constexpr StrV view_of() const noexcept {
             constexpr auto index = index_of<Name>;
             return view<index, StrV>();
         }
