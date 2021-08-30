@@ -12,7 +12,7 @@ namespace webpp {
     /**
      * String Splits
      *
-     * Holds string_views of the same string efficiantly.
+     * Holds string_views of the same string in a manner that's memory efficiant.
      */
     template <istl::CharType CharT, auto... Names>
     struct basic_string_splits {
@@ -46,6 +46,14 @@ namespace webpp {
             return view<index, StrV>();
         }
     };
+
+
+    template <istl::CharType CharT, auto... Names>
+    using string_splits = basic_string_splits<char, Names...>;
+
+
+
+
 
     template <istl::CharType CharT>
     struct string_piece {};

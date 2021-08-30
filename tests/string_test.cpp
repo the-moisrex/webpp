@@ -1,5 +1,6 @@
 // Created by moisrex on 11/20/20.
 #include "../core/include/webpp/strings/join.hpp"
+#include "../core/include/webpp/strings/string_vector.hpp"
 #include "./common_pch.hpp"
 
 
@@ -15,4 +16,11 @@ TEST(String, Join) {
     EXPECT_EQ(res, "one two three four");
 
     EXPECT_EQ(string::join(std::string("one, "), 1, 2), "one, 12");
+}
+
+
+
+TEST(String, StringPieces) {
+    string_splits<"one", "two"> pieces{"one two"};
+    EXPECT_TRUE(pieces.template view_of<"one">().empty());
 }
