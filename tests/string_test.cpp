@@ -5,6 +5,7 @@
 
 
 using namespace webpp;
+using namespace webpp::string;
 
 TEST(String, Join) {
     std::string      one   = "one ";

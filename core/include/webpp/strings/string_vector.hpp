@@ -6,7 +6,7 @@
 #include "../std/string_view.hpp"
 #include "../std/type_traits.hpp"
 
-namespace webpp {
+namespace webpp::string {
 
 
     /**
@@ -63,7 +63,7 @@ namespace webpp {
     struct basic_string_vector : stl::vector<string_piece<CharT>, AllocType> {};
 
 
-} // namespace webpp
+} // namespace webpp::string
 
 
 #endif
