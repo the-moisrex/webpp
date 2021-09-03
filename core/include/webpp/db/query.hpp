@@ -90,6 +90,9 @@ namespace webpp::database {
         }
 
 
+        /**
+         * Run the select query and get the results back.
+         */
         collection_type get() {
             // todo
         }

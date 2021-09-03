@@ -3,6 +3,8 @@
 #ifndef WEBPP_DATABASE_CONCEPTS_HPP
 #define WEBPP_DATABASE_CONCEPTS_HPP
 
+#include "../std/concepts.hpp"
+
 /**
  * This file is the place to print all the database related C++20 concepts
  */
@@ -65,6 +67,8 @@ namespace webpp::database {
     template <typename T>
     concept Connection = requires(T db) {
         db.execute("");
+        { db.open() } -> stl::same_as<bool>;
+        { db.close() } -> stl::same_as<bool>;
         // todo
     };
 

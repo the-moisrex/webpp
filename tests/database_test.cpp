@@ -7,6 +7,7 @@
 using namespace webpp;
 using namespace webpp::database;
 
-TEST(Database, QueryBuilder) {
+using qbuilder = query_builder<std_traits>;
 
+TEST(Database, QueryBuilder) {
 }
