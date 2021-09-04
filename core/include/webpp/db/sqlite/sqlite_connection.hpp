@@ -38,13 +38,14 @@ namespace webpp::database {
 
 
     // source: https://raw.githubusercontent.com/sqlitebrowser/sqlitebrowser/master/src/sqlitedb.cpp
-    void sqlite_version(string_type& sqlite, string_type& sqlcipher) {
-        sqlite = string_type(SQLITE_VERSION);
+    template <istl::String StrT>
+    void sqlite_version(StrT& sqlite, StrT& sqlcipher) {
+        sqlite = StrT(SQLITE_VERSION);
 
         // The SQLCipher version must be queried via a pragma and for a pragma we need a database
         // connection. Because we want to be able to query the SQLCipher version without opening a
         // database file first, we open a separate connection to an in-memory database here.
-        sqlcipher = string_type();
+        sqlcipher = StrT();
 #ifdef ENABLE_SQLCIPHER
         sqlite3* dummy;
         if (sqlite3_open(":memory:", &dummy) == SQLITE_OK) {
