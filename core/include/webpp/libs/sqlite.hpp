@@ -3,6 +3,7 @@
 
 // some of the source is from: https://raw.githubusercontent.com/sqlitebrowser/sqlitebrowser/master/src/sqlite.h
 
+// todo: add sqlite encryption support to the API
 #ifdef ENABLE_SQLCIPHER
 #    define SQLITE_TEMP_STORE 2
 #    define SQLITE_HAS_CODEC
