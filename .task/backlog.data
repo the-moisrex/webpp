@@ -222,3 +222,5 @@
 {"description":"remove stateful and stateless from allocator features","entry":"20201230T122958Z","modified":"20201230T122958Z","project":"traits","status":"pending","uuid":"f61ca39c-b0d3-44d6-aa1e-202975962307"}
 {"description":"add support for RFC 6570 (URI Template)","entry":"20210104T162403Z","modified":"20210104T162403Z","project":"uri","status":"pending","uuid":"a4e49b97-95b1-4cca-8a3c-3c5f054a3aa1"}
 {"description":"use c++20 std::source_location for logging","entry":"20210216T135417Z","modified":"20210216T135417Z","project":"log","status":"pending","uuid":"138f8cf7-d1ca-4fcd-8e0a-ed825280e1e8"}
+{"description":"implement gzip using zlib","entry":"20211004T163350Z","modified":"20211004T163350Z","project":"crypto","status":"pending","uuid":"9f0446e0-f04e-40b6-abd2-73c26c55c02e"}
+{"description":"implement gzip using openssl if possible","entry":"20211004T163451Z","modified":"20211004T163451Z","project":"crypto","status":"pending","uuid":"d4345a8e-074a-4af4-b5e3-c0cf64ac4dcd"}
