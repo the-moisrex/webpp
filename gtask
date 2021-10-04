@@ -3,11 +3,18 @@
 TASKDATA=".task";
 TASKRC=".taskrc";
 
-until [ "$(realpath "$TASKRC")" = "/.taskrc" -o -f "$TASKRC" ]; do
+until [ "$(realpath "$TASKRC")" = "/.taskrc" -o \
+        "$(realpath "$TASKRC")" = "/" -o \
+        -f "$TASKRC" \
+      ]; do
   TASKRC="../${TASKRC}";
 done;
 
-until [ "$(realpath "$TASKDATA")" = "/.task" -o -d "$TASKDATA" ]; do
+until [ \
+        "$(realpath "$TASKDATA")" = "/.task" -o \
+        "$(realpath "$TASKDATA")" = "/" -o \
+        -d "$TASKDATA" \
+      ]; do
   TASKDATA="../${TASKDATA}";
 done;
 
