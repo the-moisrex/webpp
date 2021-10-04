@@ -3,11 +3,11 @@
 TASKDATA=".task";
 TASKRC=".taskrc";
 
-until [ "$(realpath "$TASKRC")" = "/" -o -f "$TASKRC" ]; do
+until [ "$(realpath "$TASKRC")" = "/.taskrc" -o -f "$TASKRC" ]; do
   TASKRC="../${TASKRC}";
 done;
 
-until [ "$(realpath "$TASKDATA")" = "/" -o -d "$TASKDATA" ]; do
+until [ "$(realpath "$TASKDATA")" = "/.task" -o -d "$TASKDATA" ]; do
   TASKDATA="../${TASKDATA}";
 done;
 
@@ -16,10 +16,13 @@ TASKDATAGIT="$(realpath $(dirname "$TASKDATA"))/.git";
 
 
 if [ -d "$TASKDATA" -a -f "$TASKRC" -a -d "$TASKRCGIT" -a -d "$TASKDATAGIT" ]; then
+  echo "TASKDATA=\"${TASKDATA}\" TASKRC=\"${TASKRC}\" task $@";
   TASKDATA="${TASKDATA}" TASKRC="${TASKRC}" task $@;
 elif [ -f "$TASKRC" -a -d "$TASKRCGIT" ]; then
+  echo "TASKRC=\"${TASKRC}\" task $@";
   TASKRC="${TASKRC}" task $@;
 elif [ -d "$TASKDATA" -a -d "$TASKDATAGIT" ]; then
+  echo "TASKDATA=\"${TASKDATA}\" task $@";
   TASKDATA="${TASKDATA}" task $@;
 else
   task $@;
