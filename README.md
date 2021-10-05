@@ -143,7 +143,7 @@ Learn more about TaskWarrior in their own documentation.
 Current Todo List (use `./gtask-markdown list` to generate this table again):
 
 ### Todo List
-Last updated time: Tue Oct  5 05:56:03 PM UTC 2021
+Last updated time: Tue Oct  5 06:00:27 PM UTC 2021
 
 | ID | Age    | Project     | Description                                                                                                                                     | Urg |
 | -- | ------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
@@ -171,8 +171,7 @@ Last updated time: Tue Oct  5 05:56:03 PM UTC 2021
 | 66 | 1.4y   | cookies     | add cookie extensions                                                                                                                           |    3 |
 | 67 | 1.4y   | cookies     | add extension for session management                                                                                                            |    3 |
 | 68 | 1.4y   | cookies     | implement encrypted cookies                                                                                                                     |    3 |
-| 81 |   1d   | crypto      | implement gzip using zlib                                                                                                                       | 1.01 |
-| 82 |   1d   | crypto      | implement gzip using openssl if possible                                                                                                        | 1.01 |
+| 81 |   1d   | crypto      | implement gzip using openssl if possible                                                                                                        | 1.01 |
 | 32 | 1.5y   | fcgi        | convert endpoint fromats                                                                                                                        |    3 |
 | 33 | 1.5y   | fcgi        | find where to add the thread_pool                                                                                                               |    3 |
 | 34 | 1.5y   | fcgi        | add the ctor of threadpool                                                                                                                      |    3 |
@@ -225,7 +224,7 @@ Last updated time: Tue Oct  5 05:56:03 PM UTC 2021
 | 31 | 1.5y   | uri         | add support for encrypted URIs                                                                                                                  |    3 |
 | 79 |   9mo  | uri         | add support for RFC 6570 (URI Template)                                                                                                         |  2.5 |
 |  9 | 2.1y   | utils       | implement property class                                                                                                                        |    3 |
-| 83 |   1h   | utils       | Add archive file compression utilities like .zip                                                                                                |    1 |
+| 82 |   1h   | utils       | Add archive file compression utilities like .zip                                                                                                |    1 |
 | 59 | 1.5y   | valves      | a valve that limits user visits                                                                                                                 |    3 |
 | 60 | 1.5y   | valves      | a valve that only allows guests                                                                                                                 |    3 |
 | 61 | 1.5y   | valves      | a valve that only allows registered users                                                                                                       |    3 |

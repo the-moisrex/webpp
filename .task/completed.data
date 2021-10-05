@@ -1,3 +1,4 @@
+[description:"implement gzip using zlib" end:"1633456785" entry:"1633365230" modified:"1633456785" project:"crypto" status:"completed" uuid:"9f0446e0-f04e-40b6-abd2-73c26c55c02e"]
 [description:"add errors.hpp success and failure functions are useless" end:"1609330529" entry:"1606929125" modified:"1609330529" project:"bugs" status:"completed" uuid:"9926f34f-ae50-4967-9c12-9f0b54986dd3"]
 [description:"projects" end:"1607022740" entry:"1607022725" modified:"1607022742" status:"deleted" uuid:"27286d5e-96ff-4c8a-b3d1-dbed6a527d12"]
 [description:"find a better way to specialize empty_t" end:"1606824632" entry:"1587144992" modified:"1606824632" project:"valves" status:"completed" uuid:"725c4707-29eb-4549-94c2-615190b86ae8"]
