@@ -754,3 +754,6 @@ new [description:"implement gzip using zlib" entry:"1633365230" modified:"163336
 time 1633365291
 new [description:"implement gzip using openssl if possible" entry:"1633365291" modified:"1633365291" project:"crypto" status:"pending" uuid:"d4345a8e-074a-4af4-b5e3-c0cf64ac4dcd"]
 ---
+time 1633451918
+new [description:"Add archive file compression utilities like .zip" entry:"1633451918" modified:"1633451918" project:"utils" status:"pending" uuid:"5847c25e-52bb-4074-8432-4f658fa9399d"]
+---
