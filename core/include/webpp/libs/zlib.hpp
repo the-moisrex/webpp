@@ -5,6 +5,7 @@
 
 #if __has_include(<zlib.h>)
 #    define WEBPP_ZLIB
+#    include <zlib.h>
 #endif
 
 
