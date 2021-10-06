@@ -1,0 +1,6 @@
+if (IS_DEBUG)
+    find_package(GTest QUIET)
+    if (NOT gtest_FOUND)
+        CPMAddPackage("gh:google/googletest@1.10.0#release-1.10.0")
+    endif ()
+endif ()

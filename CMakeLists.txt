@@ -120,23 +120,6 @@ endif ()
 find_package(ZLIB QUIET)
 # todo: add fallback for zlib
 
-if (IS_DEBUG)
-    find_package(GTest QUIET)
-    if (NOT gtest_FOUND)
-        message(STATUS "Downloading googletest project")
-        FetchContent_Declare(
-                googletest
-                GIT_REPOSITORY https://github.com/google/googletest.git
-                GIT_TAG release-1.10.0
-        )
-        set(BUILD_GMOCK OFF CACHE BOOL "Builds the googlemock subproject" FORCE)
-        set(INSTALL_GTEST ON CACHE BOOL "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" FORCE)
-
-        FetchContent_MakeAvailable(googletest)
-        include_directories(${googletest_SOURCE_DIR}/googletest/include)
-    endif ()
-endif ()
-
 
 add_subdirectory(${LIB_DIR})
 add_subdirectory(${SDK_DIR})
