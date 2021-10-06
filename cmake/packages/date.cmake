@@ -8,8 +8,4 @@ set(DISABLE_STRING_VIEW OFF CACHE BOOL "Disable string view" FORCE)
 set(COMPILE_WITH_C_LOCALE OFF CACHE BOOL "define ONLY_C_LOCALE=1" FORCE)
 set(BUILD_TZ_LIB OFF CACHE BOOL "build/install of TZ library" FORCE)
 
-CPMAddPackage(
-        NAME date
-        GITHUB_REPOSITORY HowardHinnant/date
-        GIT_TAG v3.0.1
-)
+CPMAddPackage("gh:HowardHinnant/date@3.0.1#v3.0.1")
