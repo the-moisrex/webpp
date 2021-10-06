@@ -12,6 +12,7 @@ namespace webpp {
 
         /**
          * Compress the input with gzip
+         * Original source from: drogon project
          **/
         template <istl::String StrT = stl::string>
         static StrT compress(typename StrT::const_pointer data, const stl::size_t ndata) {
@@ -31,7 +32,7 @@ namespace webpp {
                 }
                 string_type outstr;
                 outstr.resize(compressBound(static_cast<uLong>(ndata)));
-                strm.next_in  = static_cast<Bytef*>(data);
+                strm.next_in  = (Bytef*) data;
                 strm.avail_in = static_cast<uInt>(ndata);
                 int ret;
                 do {
@@ -60,6 +61,7 @@ namespace webpp {
 
         /**
          * Decompress gzip data
+         * Original source from: drogon project
          */
         template <istl::String StrT = stl::string>
         static StrT decompress(typename StrT::const_pointer data, const stl::size_t ndata) {
@@ -89,7 +91,7 @@ namespace webpp {
                 if (strm.total_out >= decompressed.length()) {
                     decompressed.resize(decompressed.length() * 2);
                 }
-                strm.next_out  = static_cast<Bytef*>(decompressed.data() + strm.total_out);
+                strm.next_out  = (Bytef*) decompressed.data() + strm.total_out;
                 strm.avail_out = static_cast<uInt>(decompressed.length() - strm.total_out);
                 // Inflate another chunk
                 int status = inflate(&strm, Z_SYNC_FLUSH);
