@@ -169,6 +169,9 @@ else()
     message(STATUS "Brotli found on system")
 endif ()
 
+find_package(ZLIB QUIET)
+# todo: add fallback for zlib
+
 if (IS_DEBUG)
     find_package(GTest QUIET)
     if (NOT gtest_FOUND)
