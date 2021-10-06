@@ -154,20 +154,20 @@ if (NOT fmt_FOUND)
     include_directories(${fmt_SOURCE_DIR}/include)
 endif ()
 
-#find_package(Brotli QUIET)
-#if (NOT Brotli_FOUND)
-#    message(STATUS "Downloading Brotli project")
-#    FetchContent_Declare(
-#            brotli
-#            URL https://github.com/google/brotli/archive/refs/tags/v1.0.9.tar.gz
-#    )
-#
-#
-#    FetchContent_MakeAvailable(brotli)
-#    include_directories(${BROTLI_INCLUDE_DIRS})
-#else()
-#    message(STATUS "Brotli found on system")
-#endif ()
+find_package(Brotli QUIET)
+if (NOT Brotli_FOUND)
+    message(STATUS "Downloading Brotli project")
+    FetchContent_Declare(
+            brotli
+            URL https://github.com/google/brotli/archive/refs/tags/v1.0.9.tar.gz
+    )
+
+
+    FetchContent_MakeAvailable(brotli)
+    include_directories(${BROTLI_INCLUDE_DIRS})
+else()
+    message(STATUS "Brotli found on system")
+endif ()
 
 if (IS_DEBUG)
     find_package(GTest QUIET)
