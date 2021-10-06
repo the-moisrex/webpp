@@ -94,6 +94,7 @@ endif ()
 
 
 include(FetchContent)
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/modules")
 
 set(USE_SYSTEM_TZ_DB OFF CACHE BOOL "Use the operating system's timezone database" FORCE)
 set(USE_OS_TZDB ON CACHE BOOL "" FORCE) # I'm not sure if it's working or not
@@ -152,6 +153,21 @@ if (NOT fmt_FOUND)
     FetchContent_MakeAvailable(fmt)
     include_directories(${fmt_SOURCE_DIR}/include)
 endif ()
+
+#find_package(Brotli QUIET)
+#if (NOT Brotli_FOUND)
+#    message(STATUS "Downloading Brotli project")
+#    FetchContent_Declare(
+#            brotli
+#            URL https://github.com/google/brotli/archive/refs/tags/v1.0.9.tar.gz
+#    )
+#
+#
+#    FetchContent_MakeAvailable(brotli)
+#    include_directories(${BROTLI_INCLUDE_DIRS})
+#else()
+#    message(STATUS "Brotli found on system")
+#endif ()
 
 if (IS_DEBUG)
     find_package(GTest QUIET)

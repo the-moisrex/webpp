@@ -6,6 +6,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/configs/constants.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/libs/asio.hpp
+        ${LIB_INCLUDE_DIR}/webpp/libs/brotli.hpp
         ${LIB_INCLUDE_DIR}/webpp/libs/eve.hpp
         ${LIB_INCLUDE_DIR}/webpp/libs/ctre.hpp
         ${LIB_INCLUDE_DIR}/webpp/libs/cryptopp.hpp
@@ -220,6 +221,7 @@ target_link_libraries(${LIB_NAME}
         PUBLIC fmt::fmt
         PUBLIC magic_enum::magic_enum
         PUBLIC date::date
+        # PUBLIC brotli::brotli
         # PUBLIC date::date-tz
         )
 
