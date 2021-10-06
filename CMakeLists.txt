@@ -117,8 +117,6 @@ else()
     message(STATUS "Brotli found on system")
 endif ()
 
-find_package(ZLIB QUIET)
-# todo: add fallback for zlib
 
 
 add_subdirectory(${LIB_DIR})
