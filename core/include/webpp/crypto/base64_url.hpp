@@ -17,7 +17,7 @@ namespace webpp::base64 {
 
     enum struct url_decode_policy {
         require_padding, // require inputs contain trailing padding if non-aligned.
-        ignore_padding,  // accept inputs regardless of whether or not they have the correct padding.
+        ignore_padding,  // accept inputs regardless of whether they have the correct padding.
         disallow_padding // reject inputs if they contain any trailing padding.
     };
 
@@ -69,7 +69,7 @@ namespace webpp::base64 {
         using str_t = stl::remove_cvref_t<decltype(output)>;
         using str_v = stl::remove_cvref_t<decltype(input)>;
 
-        // Characters outside of the base64url alphabet are disallowed, which includes
+        // Characters outside the base64url alphabet are disallowed, which includes
         // the {+, /} characters found in the conventional base64 alphabet.
         if (input.find_first_of(base64_chars) != str_v::npos)
             return false;
