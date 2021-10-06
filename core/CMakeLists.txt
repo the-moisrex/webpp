@@ -214,8 +214,6 @@ add_library(${LIB_NAME} STATIC ${ALL_SOURCES})
 add_library(${PROJECT_NAME}::${LIB_NAME} ALIAS ${LIB_NAME})
 
 
-# boost and fmt
-find_package(Boost REQUIRED)
 target_link_libraries(${LIB_NAME}
         PUBLIC Boost::boost
         PUBLIC fmt::fmt
@@ -226,7 +224,6 @@ target_link_libraries(${LIB_NAME}
         # PUBLIC date::date-tz
         )
 
-find_package(RapidJSON)
 
 
 #if (SHARED_LIBRARY_EXECUTABLE)
