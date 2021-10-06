@@ -2,6 +2,7 @@
 # set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/modules")
 
 # include CPM
+# CPM Module examples: https://github.com/cpm-cmake/CPM.cmake/wiki/More-Snippets
 set(current_dir "${CMAKE_CURRENT_LIST_DIR}")
 set(CURRENT_CPM_VERSION "")
 set(CPM_USE_LOCAL_PACKAGES ON)
