@@ -52,7 +52,7 @@ namespace webpp::database {
      * @endcode
      *
      *
-     * Examples of the user comfiguring the database:
+     * Examples of the user configuring the database:
      * @code
      *   int main() {
      *     database::mysql localhost;
