@@ -4,6 +4,7 @@
 #define WEBPP_RAPIDJSON_HPP
 
 #if __has_include(<rapidjson/document.h>)
+#    define WEBPP_RAPIDJSON_READY
 #    include "../std/string_view.hpp"
 
 #    include <rapidjson/document.h>

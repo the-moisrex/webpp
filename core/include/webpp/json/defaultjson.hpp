@@ -8,8 +8,12 @@
 
 #include "rapidjson.hpp"
 
+#ifdef WEBPP_RAPIDJSON_READY
 namespace webpp::json {
     using namespace webpp::json::rapidjson; // this is the trick we use, to make an implementation default
 }
+#else
+#    error "We don't have access to any json implementation"
+#endif
 
 #endif // WEBPP_DEFAULTJSON_HPP
