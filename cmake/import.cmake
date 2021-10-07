@@ -19,6 +19,7 @@ if (EXISTS "${CPM_FILE}")
     include("${CPM_FILE}")
 else ()
     # download CPM if the user didn't clone this repository with its submodules
+    message(STATUS "Downloading CPM (CMake Dependency Manager)")
     include("${current_dir}/get_cpm.cmake")
 endif ()
 
