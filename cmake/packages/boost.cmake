@@ -78,7 +78,7 @@ else()
         #        )
     endfunction()
 
-    # Separating these two because they're special
+    # Separating these because they're special
     CPMAddPackage(
             NAME boost_boost
             URL https://github.com/boostorg/boost/archive/refs/tags/boost-${boost_version}.zip
