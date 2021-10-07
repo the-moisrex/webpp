@@ -49,6 +49,28 @@ CPMAddPackage(
 list(APPEND CMAKE_MODULE_PATH ${boost_cmake_SOURCE_DIR}/include)
 
 
+function(boost_export component_name)
+    install(
+            TARGETS ${component_name}
+            EXPORT "${component_name}Config"
+            LIBRARY DESTINATION ${INSTALL_LIBDIR}
+            ARCHIVE DESTINATION ${INSTALL_LIBDIR}
+            RUNTIME DESTINATION ${INSTALL_BINDIR}
+            INCLUDES DESTINATION ${INSTALL_INCLUDEDIR}
+    )
+    export(
+            TARGETS ${component_name}
+            NAMESPACE Boost::${component_name}
+            FILE "${CMAKE_CURRENT_BINARY_DIR}/${component_name}InternalConfig.cmake"
+    )
+    #        install(
+    #                EXPORT "${component_name}Config"
+    #                FILE "${component_name}Config.cmake"
+    #                NAMESPACE Boost::
+    #                DESTINATION "${CMAKE_INSTALL_DATADIR}/boost"
+    #        )
+endfunction()
+
 # Separating these two because they're special
 CPMAddPackage(
         NAME boost_boost
@@ -66,7 +88,7 @@ CPMAddPackage(
         URL https://github.com/boostorg/mp11/archive/refs/tags/boost-${boost_version}.zip
         VERSION ${boost_version}
 )
-
+boost_export(boost_mp11)
 
 include(BoostInstall)
 # include(BoostFetch)
@@ -86,4 +108,5 @@ foreach (component IN LISTS boost_deps boost_components)
             VERSION ${boost_version}
             HEADER_DIRECTORY ${${component_name}_SOURCE_DIR}/include
     )
+    boost_export(${component_name})
 endforeach ()

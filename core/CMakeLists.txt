@@ -213,9 +213,8 @@ endif ()
 add_library(${LIB_NAME} STATIC ${ALL_SOURCES})
 add_library(${PROJECT_NAME}::${LIB_NAME} ALIAS ${LIB_NAME})
 
-
 target_link_libraries(${LIB_NAME}
-        INTERFACE Boost::asio
+        PUBLIC Boost::asio
         PUBLIC fmt::fmt
         PUBLIC magic_enum::magic_enum
         PUBLIC date::date
