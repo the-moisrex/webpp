@@ -90,6 +90,8 @@ else()
             VERSION ${boost_version}
     )
 
+    # The reason for mp11 being excluded is explained in the issue that I opened here:
+    # link: https://github.com/boostorg/mp11/issues/67
     CPMAddPackage(
             NAME boost_mp11
             URL https://github.com/boostorg/mp11/archive/refs/tags/boost-${boost_version}.zip
