@@ -22,25 +22,25 @@ namespace webpp::json::rapidjson {
             return rapidjson_value_type::Is<T>();
         }
 
-#    define WEBPP_IS_METHOD(type_name, is_func, get_func, set_func) \
-        [[nodiscard]] bool is_##type() const {                      \
-            return rapidjson_value_type::is_func();                 \
-        }                                                           \
-                                                                    \
-        void set_##type(type const& val) {                          \
-            rapidjson_value_type::set_func(val);                    \
-        }                                                           \
-                                                                    \
-        void set_##type(type&& val) {                               \
-            rapidjson_value_type::set_func(stl::move(val));         \
-        }                                                           \
-                                                                    \
-        [[nodiscard]] type get_##type() const {                     \
-            return rapidjson_value_type::get_func();                \
-        }                                                           \
-                                                                    \
-        [[nodiscard]] operator type() const {                       \
-            return rapidjson_value_type::get_func();                \
+#    define WEBPP_IS_METHOD(type, is_func, get_func, set_func) \
+        [[nodiscard]] bool is_##type() const {                 \
+            return rapidjson_value_type::is_func();            \
+        }                                                      \
+                                                               \
+        void set_##type(type const& val) {                     \
+            rapidjson_value_type::set_func(val);               \
+        }                                                      \
+                                                               \
+        void set_##type(type&& val) {                          \
+            rapidjson_value_type::set_func(stl::move(val));    \
+        }                                                      \
+                                                               \
+        [[nodiscard]] type get_##type() const {                \
+            return rapidjson_value_type::get_func();           \
+        }                                                      \
+                                                               \
+        [[nodiscard]] operator type() const {                  \
+            return rapidjson_value_type::get_func();           \
         }
 
         // WEBPP_IS_METHOD(null, IsNull, SetNull)
@@ -78,10 +78,9 @@ namespace webpp::json::rapidjson {
             const auto json_str_view = istl::string_viewify(stl::forward<StrT>(json_string));
             this->Parse(json_str_view.data(), json_str_view.size());
         }
-
     };
 
-} // namespace webpp::json::inline rapidjson
+} // namespace webpp::json::rapidjson
 
 #endif
 
