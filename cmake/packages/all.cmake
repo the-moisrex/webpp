@@ -1,5 +1,7 @@
 set(current_dir "${CMAKE_SOURCE_DIR}/cmake/packages/")
 
+include(${current_dir}/boost.cmake)
+include(${current_dir}/json.cmake)
 include(${current_dir}/date.cmake)
 include(${current_dir}/magic_enum.cmake)
 include(${current_dir}/fmt.cmake)

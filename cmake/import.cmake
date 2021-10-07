@@ -6,6 +6,10 @@
 set(current_dir "${CMAKE_CURRENT_LIST_DIR}")
 set(CURRENT_CPM_VERSION "")
 set(CPM_USE_LOCAL_PACKAGES ON)
+
+# this is done for find_package to be able to find the FindModule.cmake files
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
+
 include(${PROJECT_SOURCE_DIR}/cmake/CPM.cmake/cmake/CPM.cmake)
 
 # download CPM if the user didn't clone this repository with its submodules

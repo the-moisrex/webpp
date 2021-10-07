@@ -96,14 +96,6 @@ endif ()
 include(./cmake/import.cmake)
 
 
-find_package(Boost REQUIRED)
-find_package(RapidJSON)
-
-
-
-
-
-
 
 add_subdirectory(${LIB_DIR})
 add_subdirectory(${SDK_DIR})
