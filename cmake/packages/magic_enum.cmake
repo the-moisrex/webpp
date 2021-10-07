@@ -1,7 +1,6 @@
 CPMAddPackage(
         NAME magic_enum
         URL https://github.com/Neargye/magic_enum/archive/refs/tags/v0.7.3.tar.gz
-        VERSION 0.7.3
 )
 set(MAGIC_ENUM_OPT_BUILD_EXAMPLES OFF CACHE BOOL "Build magic_enum examples" FORCE)
 set(MAGIC_ENUM_OPT_BUILD_TESTS OFF CACHE BOOL "Build and perform magic_enum tests" FORCE)

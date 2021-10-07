@@ -114,7 +114,7 @@ Requirements for building and testing:
 * Googletest (gtest)
 
 ```bash
-git clone https://gitlab.com/webpp/webpp.git
+git clone https://gitlab.com/webpp/webpp.git --depth=1
 cd webpp/
 mkdir build/
 cd build

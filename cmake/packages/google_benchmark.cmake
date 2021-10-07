@@ -1,8 +1,7 @@
 CPMAddPackage(
         NAME benchmark
-        GITHUB_REPOSITORY google/benchmark
-        VERSION 1.5.0
-        OPTIONS "BENCHMARK_ENABLE_TESTING Off" "BENCHMARK_USE_LIBCXX ON"
+        URL "https://github.com/google/benchmark/archive/refs/tags/v1.6.0.zip"
+        OPTIONS "BENCHMARK_ENABLE_TESTING OFF"
 )
 
 if (benchmark_ADDED)

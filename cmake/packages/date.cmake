@@ -8,4 +8,8 @@ set(DISABLE_STRING_VIEW OFF CACHE BOOL "Disable string view" FORCE)
 set(COMPILE_WITH_C_LOCALE OFF CACHE BOOL "define ONLY_C_LOCALE=1" FORCE)
 set(BUILD_TZ_LIB OFF CACHE BOOL "build/install of TZ library" FORCE)
 
-CPMAddPackage("gh:HowardHinnant/date@3.0.1#v3.0.1")
+CPMAddPackage(
+        NAME date
+        URL https://github.com/HowardHinnant/date/archive/refs/tags/v3.0.1.tar.gz
+        VERSION 3.0.1
+)

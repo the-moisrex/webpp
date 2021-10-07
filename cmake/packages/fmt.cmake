@@ -1,7 +1,6 @@
 CPMAddPackage(
         NAME fmt
         URL https://github.com/fmtlib/fmt/releases/download/8.0.1/fmt-8.0.1.zip
-        VERSION 8.0.1
 )
 set(FMT_DOC OFF CACHE BOOL "Generate the doc target." FORCE)
 set(FMT_INSTALL ON CACHE BOOL "Generate the install target." FORCE)

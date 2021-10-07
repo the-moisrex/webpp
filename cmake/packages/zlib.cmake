@@ -1,5 +1,8 @@
 find_package(ZLIB QUIET)
 if (NOT ZLIB_FOUND)
     # todo: check if this works
-    CPMAddPackage("gh:madler/zlib@1.2.11#v1.2.11")
+    CPMAddPackage(
+            NAME zlib
+            URL "https://github.com/madler/zlib/archive/refs/tags/v1.2.11.zip"
+    )
 endif ()
