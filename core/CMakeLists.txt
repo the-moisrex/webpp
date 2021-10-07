@@ -58,6 +58,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/std/vector.hpp
         ${LIB_INCLUDE_DIR}/webpp/std/optional.hpp
         ${LIB_INCLUDE_DIR}/webpp/std/chrono.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/iterator.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/validators/validators.hpp
         ${LIB_INCLUDE_DIR}/webpp/validators/email.hpp
@@ -222,7 +223,6 @@ target_link_libraries(${LIB_NAME}
         zlib
         # PUBLIC date::date-tz
         )
-
 
 
 #if (SHARED_LIBRARY_EXECUTABLE)

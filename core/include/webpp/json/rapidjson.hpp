@@ -102,6 +102,8 @@ namespace webpp::json::rapidjson {
         using general_allocator_type = traits::general_allocator<traits_type, char_type>;
         using value_type             = value<traits_type>;
 
+        document() = default;
+
         // implement the parse method
         template <istl::StringViewifiable StrT>
         void parse(StrT&& json_string) {

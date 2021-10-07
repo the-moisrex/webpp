@@ -4,8 +4,34 @@
 #define WEBPP_JSON_CONCEPTS_HPP
 
 #include "../std/concepts.hpp"
+#include "../std/iterator.hpp"
 
 namespace webpp {
+
+    template <typename T>
+    concept JsonIterator = requires(T it) {
+        requires stl::random_access_iterator<T>;
+    };
+
+    template <typename T>
+    concept JsonArray = requires(T arr) {
+        { arr.begin() } -> JsonIterator;
+        { arr.end() } -> JsonIterator;
+        { arr.cbegin() } -> JsonIterator;
+        { arr.cend() } -> JsonIterator;
+
+        // todo: find, clear, ... methods
+    };
+
+    template <typename T>
+    concept JsonObject = requires(T obj) {
+        { arr.begin() } -> JsonIterator;
+        { arr.end() } -> JsonIterator;
+        { arr.cbegin() } -> JsonIterator;
+        { arr.cend() } -> JsonIterator;
+
+        // todo: find, clear, ... methods
+    };
 
     template <typename T>
     concept JsonKey = requires(T key) {
