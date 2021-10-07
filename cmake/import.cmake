@@ -14,10 +14,11 @@ set(CPM_USE_LOCAL_PACKAGES ON)
 # this is done for find_package to be able to find the FindModule.cmake files
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
 
-include(${PROJECT_SOURCE_DIR}/cmake/CPM.cmake/cmake/CPM.cmake)
-
-# download CPM if the user didn't clone this repository with its submodules
-if ("${CURRENT_CPM_VERSION}" STREQUAL "")
+set(CPM_FILE "${PROJECT_SOURCE_DIR}/cmake/CPM.cmake/cmake/CPM.cmake")
+if (EXISTS "${CPM_FILE}")
+    include("${CPM_FILE}")
+else ()
+    # download CPM if the user didn't clone this repository with its submodules
     include("${current_dir}/get_cpm.cmake")
 endif ()
 
