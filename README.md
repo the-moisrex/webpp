@@ -230,7 +230,3 @@ Last updated time: Tue Oct  5 06:00:27 PM UTC 2021
 | 61 | 1.5y   | valves      | a valve that only allows registered users                                                                                                       |    3 |
 |  4 | 2.1y   | webrtc      | watch WebRTC tutorials                                                                                                                          |    3 |
 
-
-
-## Supported by:
-[JetBrains](https://www.jetbrains.com/?from=webpp)
