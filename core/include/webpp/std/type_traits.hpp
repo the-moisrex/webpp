@@ -875,7 +875,7 @@ namespace webpp::istl {
 
     // found it
     template <typename T, typename... R>
-    struct index_of_type<T, T, R...> : stl::integral_constant<size_t, 0> {};
+    struct index_of_type<T, T, R...> : stl::integral_constant<stl::size_t, 0> {};
 
     // still looking
     template <typename T, typename F, typename... R>
@@ -889,7 +889,7 @@ namespace webpp::istl {
 
     // found it
     template <auto T, auto... R>
-    struct index_of_item<T, T, R...> : stl::integral_constant<size_t, 0> {};
+    struct index_of_item<T, T, R...> : stl::integral_constant<stl::size_t, 0> {};
 
     // still looking
     template <auto T, auto F, auto... R>
