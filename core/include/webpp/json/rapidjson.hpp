@@ -5,6 +5,7 @@
 
 #if __has_include(<rapidjson/document.h>)
 #    define WEBPP_RAPIDJSON_READY
+#    include "../std/string.hpp"
 #    include "../std/string_view.hpp"
 
 #    include <rapidjson/document.h>
@@ -17,52 +18,79 @@ namespace webpp::json::rapidjson {
     struct value : ::rapidjson::Value {
         using traits_type          = TraitsType;
         using rapidjson_value_type = ::rapidjson::Value;
+        using string_type          = traits::general_string<traits_type>;
+        using string_view_type     = traits::string_view<traits_type>;
 
         template <typename T>
         [[nodiscard]] bool is() const {
             return rapidjson_value_type::Is<T>();
         }
 
-#    define WEBPP_IS_METHOD(type, is_func, get_func, set_func) \
-        [[nodiscard]] bool is_##type() const {                 \
-            return rapidjson_value_type::is_func();            \
-        }                                                      \
-                                                               \
-        void set_##type(type const& val) {                     \
-            rapidjson_value_type::set_func(val);               \
-        }                                                      \
-                                                               \
-        void set_##type(type&& val) {                          \
-            rapidjson_value_type::set_func(stl::move(val));    \
-        }                                                      \
-                                                               \
-        [[nodiscard]] type get_##type() const {                \
-            return rapidjson_value_type::get_func();           \
-        }                                                      \
-                                                               \
-        [[nodiscard]] operator type() const {                  \
-            return rapidjson_value_type::get_func();           \
+#    define WEBPP_IS_METHOD(real_type, type_name, is_func, get_func, set_func) \
+        [[nodiscard]] bool is_##type_name() const {                            \
+            return rapidjson_value_type::is_func();                            \
+        }                                                                      \
+                                                                               \
+        value& set_##type_name(real_type const& val) {                         \
+            rapidjson_value_type::set_func(val);                               \
+            return *this;                                                      \
+        }                                                                      \
+                                                                               \
+        value& set_##type_name(real_type&& val) {                              \
+            rapidjson_value_type::set_func(stl::move(val));                    \
+            return *this;                                                      \
+        }                                                                      \
+                                                                               \
+        [[nodiscard]] real_type get_##type_name() const {                      \
+            return rapidjson_value_type::get_func();                           \
+        }
+
+#    define WEBPP_IS_OPERATOR(real_type, type_name) \
+        [[nodiscard]] operator real_type() const {  \
+            return get_##type_name();               \
         }
 
         // WEBPP_IS_METHOD(null, IsNull, SetNull)
-        WEBPP_IS_METHOD(bool, IsBool, GetBool, SetBool)
-        WEBPP_IS_METHOD(int, IsInt, GetInt, SetInt)
-        WEBPP_IS_METHOD(long, IsInt64, GetInt64, SetInt64)
-        WEBPP_IS_METHOD(long_long, IsInt64, GetInt64, SetInt64)
-        WEBPP_IS_METHOD(double, IsDouble, GetDouble, SetDouble)
-        WEBPP_IS_METHOD(float, IsFloat, GetFloat, SetFloat)
-        WEBPP_IS_METHOD(uint, IsUint, GetUint, SetUint)
-        WEBPP_IS_METHOD(uint64, IsUint64, GetUint64, SetUint64)
-        WEBPP_IS_METHOD(string, IsString, GetString, SetString)
+        WEBPP_IS_METHOD(bool, bool, IsBool, GetBool, SetBool)
+        WEBPP_IS_METHOD(int, int, IsInt, GetInt, SetInt)
+        WEBPP_IS_METHOD(long, long, IsInt64, GetInt64, SetInt64)
+        WEBPP_IS_METHOD(long long, long_long, IsInt64, GetInt64, SetInt64)
+        WEBPP_IS_METHOD(double, double, IsDouble, GetDouble, SetDouble)
+        WEBPP_IS_METHOD(float, float, IsFloat, GetFloat, SetFloat)
+        WEBPP_IS_METHOD(uint16_t, uint, IsUint, GetUint, SetUint)
+        WEBPP_IS_METHOD(uint64_t, uint64, IsUint64, GetUint64, SetUint64)
+        // WEBPP_IS_METHOD(stl::string, string, IsString, GetString, SetString)
+
+        WEBPP_IS_OPERATOR(bool, bool)
+        WEBPP_IS_OPERATOR(int, int)
+        WEBPP_IS_OPERATOR(long, long)
+        WEBPP_IS_OPERATOR(long long, long_long)
+        WEBPP_IS_OPERATOR(double, double)
+        WEBPP_IS_OPERATOR(float, float)
+        WEBPP_IS_OPERATOR(uint16_t, uint)
+        WEBPP_IS_OPERATOR(uint64_t, uint64)
+        WEBPP_IS_OPERATOR(string_type, string)
 
         // set here has no values!
-        WEBPP_IS_METHOD(array, IsArray, GetArray, SetArray)
-        WEBPP_IS_METHOD(object, IsObject, GetObject, SetObject)
+        WEBPP_IS_METHOD(auto, array, IsArray, GetArray, SetArray)
+        WEBPP_IS_METHOD(auto, object, IsObject, GetObject, SetObject)
         // WEBPP_IS_METHOD(number, IsNumber, GetNumber, SetNumber)
         // WEBPP_IS_METHOD(true, IsTrue)
         // WEBPP_IS_METHOD(false, IsFalse)
 
 #    undef WEBPP_IS_METHOD
+#    undef WEBPP_IS_OPERATOR
+
+
+        string_type get_string() const {
+            return string_type{rapidjson_value_type::GetString(), rapidjson_value_type::GetStringLength()};
+        }
+
+        value& set_string(string_view_type str) {
+            // todo: use allocator if possible
+            rapidjson_value_type::SetString(str.data(), str.size());
+            return *this;
+        }
     };
 
     template <Traits TraitsType>
