@@ -4,7 +4,7 @@ include(../cmake/compilers.cmake)
 
 if (IS_GCC OR IS_CLANG)
     set(OPTIMIZATION_FLAGS "-s" "-Ofast" "-flto" "-DNDEBUG" "-Qy" "-ffunction-sections" "-fdata-sections" "-Wl,--gc-sections")
-    if (NATIVE_ARCH)
+    if (NATIVE_ARCH AND IS_GCC)
         set(OPTIMIZATION_FLAGS "${OPTIMIZATION_FLAGS}" "-march=native" "-mtune=native")
     endif()
 else()
