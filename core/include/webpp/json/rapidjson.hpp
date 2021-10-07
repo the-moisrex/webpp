@@ -72,8 +72,9 @@ namespace webpp::json::rapidjson {
         WEBPP_IS_OPERATOR(string_type, string)
 
         // set here has no values!
-        WEBPP_IS_METHOD(auto, array, IsArray, GetArray, SetArray)
-        WEBPP_IS_METHOD(auto, object, IsObject, GetObject, SetObject)
+        // todo: make custom Array and Object structs and don't rely on rapidjson
+        WEBPP_IS_METHOD(rapidjson_value_type::Array, array, IsArray, GetArray, SetArray)
+        WEBPP_IS_METHOD(rapidjson_value_type::Object, object, IsObject, GetObject, SetObject)
         // WEBPP_IS_METHOD(number, IsNumber, GetNumber, SetNumber)
         // WEBPP_IS_METHOD(true, IsTrue)
         // WEBPP_IS_METHOD(false, IsFalse)
