@@ -70,9 +70,9 @@ namespace webpp {
         WEBPP_AS_METHOD(short)
         WEBPP_AS_METHOD(int)
         WEBPP_AS_METHOD(long)
-        WEBPP_AS_METHOD(long long)
+        // WEBPP_AS_METHOD(long long)
         WEBPP_AS_METHOD(double)
-        WEBPP_AS_METHOD(long double)
+        // WEBPP_AS_METHOD(long double)
         WEBPP_AS_METHOD(float)
         WEBPP_AS_METHOD(int8_t)
         WEBPP_AS_METHOD(int16_t)
@@ -90,7 +90,7 @@ namespace webpp {
 
     template <typename T>
     concept JsonDocument = requires(T doc) {
-        requires JsonObject<T>;
+        requires JsonValue<T>;
         doc.parse("{}");
         doc.pretty_string();
         doc.uglified_string();
