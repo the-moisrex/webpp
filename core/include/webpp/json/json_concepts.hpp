@@ -14,25 +14,31 @@ namespace webpp {
     };
 
 
+    /**
+     * This is a JSON Object,
+     * Object could be a json key or a json value.
+     * Of course the implementation is different for keys and values.
+     * For example, iterating over a json key which is an integer, is just doesn't have a meaning.
+     */
     template <typename T>
-    concept JsonValue = requires(T val) {
-        { val.size() } -> stl::same_as<stl::size_t>;
-        { val.begin() } -> JsonIterator;
-        { val.end() } -> JsonIterator;
-        { val.cbegin() } -> JsonIterator;
-        { val.cend() } -> JsonIterator;
-        { val.is_null() } -> stl::same_as<bool>;
-        val.clear();
+    concept JSONObject = requires(T obj) {
+        { obj.size() } -> stl::same_as<stl::size_t>;
+        { obj.begin() } -> JsonIterator;
+        { obj.end() } -> JsonIterator;
+        { obj.cbegin() } -> JsonIterator;
+        { obj.cend() } -> JsonIterator;
+        { obj.is_null() } -> stl::same_as<bool>;
+        obj.clear();
 
         // Structured binding helper:
         //   for (auto [key, value] : doc);
-        { val.operator stl::pair<T, T>() } -> stl::same_as<stl::pair<T, T>>;
-        { val.key_value() } -> stl::same_as<stl::pair<T, T>>; // with explicit function name
+        { obj.operator stl::pair<T, T>() } -> stl::same_as<stl::pair<T, T>>;
+        { obj.key_value() } -> stl::same_as<stl::pair<T, T>>; // with explicit function name
 
             // todo: find, clear, ... methods
 
 #define WEBPP_IS_METHOD(name) \
-    { val.is_##name() } -> stl::same_as<bool>;
+    { obj.is_##name() } -> stl::same_as<bool>;
 
         WEBPP_IS_METHOD(null)
         WEBPP_IS_METHOD(bool)
@@ -62,8 +68,8 @@ namespace webpp {
 
         // todo: should we add stl::optional<...> ?
 #define WEBPP_AS_METHOD(type)                          \
-    { val.template as<type>() } -> stl::same_as<type>; \
-    { val.as_##type() } -> stl::same_as<type>;
+    { obj.template as<type>() } -> stl::same_as<type>; \
+    { obj.as_##type() } -> stl::same_as<type>;
 
         WEBPP_AS_METHOD(bool)
         WEBPP_AS_METHOD(char)
@@ -89,15 +95,15 @@ namespace webpp {
     };
 
     template <typename T>
-    concept JsonDocument = requires(T doc) {
-        requires JsonValue<T>;
+    concept JSONDocument = requires(T doc) {
+        requires JSONObject<T>;
         doc.parse("{}");
         doc.pretty_string();
         doc.uglified_string();
         doc.template to_string<stl::string>(stl::allocator<char>());
-        { doc[0] } -> JsonValue;
-        { doc["key"] } -> JsonValue;
-        { doc.key() } -> JsonValue;
+        { doc[0] } -> JSONObject;
+        { doc["key"] } -> JSONObject;
+        { doc.key() } -> JSONObject;
     };
 
 } // namespace webpp
