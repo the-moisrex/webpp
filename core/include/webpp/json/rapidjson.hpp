@@ -9,6 +9,8 @@
 #    include "../std/string_view.hpp"
 #    include "../traits/default_traits.hpp"
 
+#    include <filesystem>
+
 #    define RAPIDJSON_HAS_STDSTRING 1
 #    include <rapidjson/document.h>
 
@@ -162,7 +164,30 @@ namespace webpp::json::rapidjson {
         using value_type              = value<traits_type>;
         using rapidjson_document_type = details::generic_object<traits_type, ::rapidjson::Document>;
 
+        /**
+         * A document containing null
+         */
         document() = default;
+
+        /**
+         * Get the file and parse it.
+         */
+        document(stl::filesystem::path file_path) {
+            // todo
+        }
+
+        /**
+         * Parse the json string specified here
+         */
+        template <istl::StringViewifiable StrT>
+        document(StrT&& json_string) {
+            parse(stl::forward<StrT>(json_string));
+        }
+
+        /**
+         * A document containing the specified, already parsed, value
+         */
+        document(value_type&& val) : rapidjson_document_type{.obj_handle = val} {}
 
         // implement the parse method
         template <istl::StringViewifiable StrT>
