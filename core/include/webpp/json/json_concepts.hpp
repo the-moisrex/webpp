@@ -21,9 +21,15 @@ namespace webpp {
         { val.end() } -> JsonIterator;
         { val.cbegin() } -> JsonIterator;
         { val.cend() } -> JsonIterator;
-        { val.is_empty() } -> stl::same_as<bool>;
+        { val.is_null() } -> stl::same_as<bool>;
         val.clear();
-        // todo: find, clear, ... methods
+
+        // Structured binding helper:
+        //   for (auto [key, value] : doc);
+        { val.operator stl::pair<T, T>() } -> stl::same_as<stl::pair<T, T>>;
+        { val.key_value() } -> stl::same_as<stl::pair<T, T>>; // with explicit function name
+
+            // todo: find, clear, ... methods
 
 #define WEBPP_IS_METHOD(name) \
     { val.is_##name() } -> stl::same_as<bool>;
@@ -55,8 +61,9 @@ namespace webpp {
 #undef WEBPP_IS_METHOD
 
         // todo: should we add stl::optional<...> ?
-#define WEBPP_AS_METHOD(type) \
-    { val.template as<type>() } -> stl::same_as<type>;
+#define WEBPP_AS_METHOD(type)                          \
+    { val.template as<type>() } -> stl::same_as<type>; \
+    { val.as_##type() } -> stl::same_as<type>;
 
         WEBPP_AS_METHOD(bool)
         WEBPP_AS_METHOD(char)

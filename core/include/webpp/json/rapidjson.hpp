@@ -84,6 +84,7 @@ namespace webpp::json::rapidjson {
             WEBPP_IS_OPERATOR(uint16_t, uint)
             WEBPP_IS_OPERATOR(uint64_t, uint64)
             WEBPP_IS_OPERATOR(string_type, string)
+            WEBPP_IS_OPERATOR(string_view_type, string_view)
 
             // set here has no values!
             // todo: make custom Array and Object structs and don't rely on rapidjson
@@ -97,8 +98,13 @@ namespace webpp::json::rapidjson {
 #    undef WEBPP_IS_OPERATOR
 
 
+
             string_type as_string() const {
                 return string_type{obj_handle.GetString(), obj_handle.GetStringLength()};
+            }
+
+            string_view_type as_string_view() const {
+                return string_view_type{obj_handle.GetString(), obj_handle.GetStringLength()};
             }
 
             general_value& set_string(string_view_type str) {
