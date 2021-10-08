@@ -14,40 +14,48 @@
 
 
 namespace webpp::json::rapidjson {
-    using namespace ::rapidjson;
+    // using namespace ::rapidjson;
 
     namespace details {
 
-        template <Traits TraitsType, typename Parent>
-        struct general_value : protected Parent {
+        template <Traits TraitsType, typename ObjectType>
+        struct general_value {
             using traits_type          = TraitsType;
             using rapidjson_value_type = ::rapidjson::Value;
             using string_type          = traits::general_string<traits_type>;
             using string_view_type     = traits::string_view<traits_type>;
             using char_type            = traits::char_type<traits_type>;
+            using object_type          = ObjectType;
+
+          protected:
+            object_type obj_handle{};
+
+          public:
+            general_value() = default;
+            general_value(object_type obj) : obj_handle{obj} {}
 
             template <typename T>
             [[nodiscard]] bool is() const {
-                return rapidjson_value_type::Is<T>();
+                return obj_handle.template Is<T>();
             }
 
 #    define WEBPP_IS_METHOD(real_type, type_name, is_func, get_func, set_func) \
         [[nodiscard]] bool is_##type_name() const {                            \
-            return rapidjson_value_type::is_func();                            \
+            return obj_handle.is_func();                                       \
         }                                                                      \
                                                                                \
         general_value& set_##type_name(real_type const& val) {                 \
-            rapidjson_value_type::set_func(val);                               \
+            obj_handle.set_func(val);                                          \
             return *this;                                                      \
         }                                                                      \
                                                                                \
         general_value& set_##type_name(real_type&& val) {                      \
-            rapidjson_value_type::set_func(stl::move(val));                    \
+            obj_handle.set_func(stl::move(val));                               \
             return *this;                                                      \
         }                                                                      \
                                                                                \
         [[nodiscard]] real_type as_##type_name() const {                       \
-            return rapidjson_value_type::get_func();                           \
+            return obj_handle.get_func();                                      \
         }
 
 
@@ -90,32 +98,48 @@ namespace webpp::json::rapidjson {
 
 
             string_type as_string() const {
-                return string_type{rapidjson_value_type::GetString(),
-                                   rapidjson_value_type::GetStringLength()};
+                return string_type{obj_handle.GetString(), obj_handle.GetStringLength()};
             }
 
             general_value& set_string(string_view_type str) {
                 // todo: use allocator if possible
-                rapidjson_value_type::SetString(str.data(), str.size());
+                obj_handle.SetString(str.data(), str.size());
                 return *this;
             }
 
 
-            template <stl::size_t N>
-            [[nodiscard]] auto operator[](char_type const child_name[N]) {
-                using value_type =
-                  stl::remove_cvref_t<decltype(rapidjson_value_type::operator[](child_name))>;
-                using new_value_type = stl::add_lvalue_reference<general_value<traits_type, value_type>>;
-                return new_value_type{rapidjson_value_type::operator[](child_name)};
+            template <typename T>
+            [[nodiscard]] auto operator[](T&& val) {
+                return general_value<traits_type, object_type&>{obj_handle[stl::forward<T>(val)]};
             }
 
-            template <stl::size_t N>
-            [[nodiscard]] auto operator[](char_type const child_name[N]) const {
-                using value_type =
-                  stl::remove_cvref_t<decltype(rapidjson_value_type::operator[](child_name))>;
-                using new_value_type = stl::add_cv_t<general_value<traits_type, value_type>>;
-                return new_value_type{rapidjson_value_type::operator[](child_name)};
-            }
+
+            //            template <stl::size_t N>
+            //            [[nodiscard]] auto operator[](char_type const child_name[N]) {
+            //                return
+            //                obj_handle.operator[](::rapidjson::GenericStringRef<char_type>(child_name,
+            //                N));
+            //            }
+
+            //            template <stl::size_t N>
+            //            [[nodiscard]] auto operator[](char_type const child_name[N]) const {
+            //                using value_type =
+            //                  stl::remove_cvref_t<decltype(rapidjson_value_type::operator[](child_name))>;
+            //                using new_value_type = stl::add_cv_t<general_value<traits_type, value_type>>;
+            //                return new_value_type{rapidjson_value_type::operator[](StringRef(child_name))};
+            //            }
+
+#    define RENAME(ret_type, orig_name, new_name, details) \
+        ret_type new_name() details {                      \
+            return obj_handle.orig_name();                 \
+        }
+
+            RENAME(stl::size_t, Size, size, const);
+            RENAME(bool, Empty, empty, const);
+            RENAME(stl::size_t, Capacity, capacity, const);
+            RENAME(void, Clear, clear, );
+
+#    undef RENAME
         };
 
     } // namespace details
@@ -124,21 +148,22 @@ namespace webpp::json::rapidjson {
     using value = details::general_value<TraitsType, ::rapidjson::Value>;
 
     template <Traits TraitsType = default_traits>
-    struct document : public details::general_value<TraitsType, Document> {
+    struct document : public details::general_value<TraitsType, ::rapidjson::Document> {
         using traits_type             = TraitsType;
         using string_view_type        = traits::string_view<traits_type>;
         using char_type               = traits::char_type<traits_type>;
         using general_allocator_type  = traits::general_allocator<traits_type, char_type>;
         using value_type              = value<traits_type>;
-        using rapidjson_document_type = details::general_value<traits_type, Document>;
+        using rapidjson_document_type = details::general_value<traits_type, ::rapidjson::Document>;
 
         document() = default;
 
         // implement the parse method
         template <istl::StringViewifiable StrT>
-        void parse(StrT&& json_string) {
+        document& parse(StrT&& json_string) {
             const auto json_str_view = istl::string_viewify(stl::forward<StrT>(json_string));
-            rapidjson_document_type::Parse(json_str_view.data(), json_str_view.size());
+            this->obj_handle.Parse(json_str_view.data(), json_str_view.size());
+            return *this;
         }
     };
 
