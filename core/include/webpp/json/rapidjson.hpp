@@ -19,7 +19,7 @@ namespace webpp::json::rapidjson {
     namespace details {
 
         template <Traits TraitsType, typename ObjectType>
-        struct general_value {
+        struct generic_object {
             using traits_type          = TraitsType;
             using rapidjson_value_type = ::rapidjson::Value;
             using string_type          = traits::general_string<traits_type>;
@@ -31,8 +31,8 @@ namespace webpp::json::rapidjson {
             object_type obj_handle{};
 
           public:
-            general_value() = default;
-            general_value(object_type obj) : obj_handle{obj} {}
+            generic_object() = default;
+            generic_object(object_type obj) : obj_handle{obj} {}
 
             template <typename T>
             [[nodiscard]] bool is() const {
@@ -44,12 +44,12 @@ namespace webpp::json::rapidjson {
             return obj_handle.is_func();                                       \
         }                                                                      \
                                                                                \
-        general_value& set_##type_name(real_type const& val) {                 \
+        generic_object& set_##type_name(real_type const& val) {                \
             obj_handle.set_func(val);                                          \
             return *this;                                                      \
         }                                                                      \
                                                                                \
-        general_value& set_##type_name(real_type&& val) {                      \
+        generic_object& set_##type_name(real_type&& val) {                     \
             obj_handle.set_func(stl::move(val));                               \
             return *this;                                                      \
         }                                                                      \
@@ -107,7 +107,7 @@ namespace webpp::json::rapidjson {
                 return string_view_type{obj_handle.GetString(), obj_handle.GetStringLength()};
             }
 
-            general_value& set_string(string_view_type str) {
+            generic_object& set_string(string_view_type str) {
                 // todo: use allocator if possible
                 obj_handle.SetString(str.data(), str.size());
                 return *this;
@@ -116,7 +116,7 @@ namespace webpp::json::rapidjson {
 
             template <typename T>
             [[nodiscard]] auto operator[](T&& val) {
-                return general_value<traits_type, object_type&>{obj_handle[stl::forward<T>(val)]};
+                return generic_object<traits_type, object_type&>{obj_handle[stl::forward<T>(val)]};
             }
 
 
@@ -151,16 +151,16 @@ namespace webpp::json::rapidjson {
     } // namespace details
 
     template <Traits TraitsType = default_traits>
-    using value = details::general_value<TraitsType, ::rapidjson::Value>;
+    using value = details::generic_object<TraitsType, ::rapidjson::Value>;
 
     template <Traits TraitsType = default_traits>
-    struct document : public details::general_value<TraitsType, ::rapidjson::Document> {
+    struct document : public details::generic_object<TraitsType, ::rapidjson::Document> {
         using traits_type             = TraitsType;
         using string_view_type        = traits::string_view<traits_type>;
         using char_type               = traits::char_type<traits_type>;
         using general_allocator_type  = traits::general_allocator<traits_type, char_type>;
         using value_type              = value<traits_type>;
-        using rapidjson_document_type = details::general_value<traits_type, ::rapidjson::Document>;
+        using rapidjson_document_type = details::generic_object<traits_type, ::rapidjson::Document>;
 
         document() = default;
 
