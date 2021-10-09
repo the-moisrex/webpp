@@ -24,6 +24,29 @@ namespace webpp::json::rapidjson {
      */
     namespace details {
 
+        /**
+         * This is a json object which means it can hold a key/value pair of value objects.
+         */
+        template <JSONValue ValueType>
+        struct generic_object : public ValueType {
+            using value_type          = ValueType;
+            using traits_type         = typename value_type::traits_type;
+            using key_type            = value_type; // both key and value types are the same
+            using key_value_pair_type = stl::pair<key_type, value_type>;
+
+            [[nodiscard]] key_type key() {}
+
+            [[nodiscard]] value_type value() {}
+
+            [[nodiscard]] key_value_pair_type key_value() {
+                return {key(), value()};
+            }
+
+            [[nodiscard]] operator key_value_pair_type() {
+                return key_value();
+            }
+        };
+
         template <Traits TraitsType, typename ValueType>
         struct generic_value {
             using traits_type          = TraitsType;
@@ -34,36 +57,37 @@ namespace webpp::json::rapidjson {
             using value_type           = ValueType;
             using value_ref            = stl::add_lvalue_reference_t<value_type>; // add & to obj
             using value_ref_holder     = generic_value<traits_type, value_ref>;   // ref holder
+            using object_type          = generic_object<value_type>;
 
           protected:
-            value_type obj_handle{};
+            value_type val_handle{};
 
           public:
             generic_value() = default;
-            generic_value(value_ref obj) : obj_handle{obj} {}
+            generic_value(value_ref obj) : val_handle{obj} {}
 
             template <typename T>
             [[nodiscard]] bool is() const {
-                return obj_handle.template Is<T>();
+                return val_handle.template Is<T>();
             }
 
 #    define WEBPP_IS_METHOD(real_type, type_name, is_func, get_func, set_func) \
         [[nodiscard]] bool is_##type_name() const {                            \
-            return obj_handle.is_func();                                       \
+            return val_handle.is_func();                                       \
         }                                                                      \
                                                                                \
         generic_value& set_##type_name(real_type const& val) {                 \
-            obj_handle.set_func(val);                                          \
+            val_handle.set_func(val);                                          \
             return *this;                                                      \
         }                                                                      \
                                                                                \
         generic_value& set_##type_name(real_type&& val) {                      \
-            obj_handle.set_func(stl::move(val));                               \
+            val_handle.set_func(stl::move(val));                               \
             return *this;                                                      \
         }                                                                      \
                                                                                \
         [[nodiscard]] real_type as_##type_name() const {                       \
-            return obj_handle.get_func();                                      \
+            return val_handle.get_func();                                      \
         }
 
 
@@ -108,23 +132,23 @@ namespace webpp::json::rapidjson {
 
 
             string_type as_string() const {
-                return string_type{obj_handle.GetString(), obj_handle.GetStringLength()};
+                return string_type{val_handle.GetString(), val_handle.GetStringLength()};
             }
 
             string_view_type as_string_view() const {
-                return string_view_type{obj_handle.GetString(), obj_handle.GetStringLength()};
+                return string_view_type{val_handle.GetString(), val_handle.GetStringLength()};
             }
 
             generic_value& set_string(string_view_type str) {
                 // todo: use allocator if possible
-                obj_handle.SetString(str.data(), str.size());
+                val_handle.SetString(str.data(), str.size());
                 return *this;
             }
 
 
             template <typename T>
             [[nodiscard]] value_ref_holder operator[](T&& val) {
-                return {obj_handle[stl::forward<T>(val)]};
+                return {val_handle[stl::forward<T>(val)]};
             }
 
 
@@ -145,41 +169,19 @@ namespace webpp::json::rapidjson {
 
 #    define RENAME(ret_type, orig_name, new_name, details) \
         ret_type new_name() details {                      \
-            return obj_handle.orig_name();                 \
+            return val_handle.orig_name();                 \
         }
 
             RENAME(stl::size_t, Size, size, const);
             RENAME(bool, Empty, empty, const);
             RENAME(stl::size_t, Capacity, capacity, const);
             RENAME(void, Clear, clear, );
+            RENAME(object_type, GetObject, as_object, );
 
 #    undef RENAME
         };
 
 
-
-        /**
-         * This is a json object which means it can hold a key/value pair of value objects.
-         */
-        template <JSONValue ValueType>
-        struct generic_object : public ValueType {
-            using value_type          = ValueType;
-            using traits_type         = typename value_type::traits_type;
-            using key_type            = value_type; // both key and value types are the same
-            using key_value_pair_type = stl::pair<key_type, value_type>;
-
-            [[nodiscard]] key_type key() {}
-
-            [[nodiscard]] value_type value() {}
-
-            [[nodiscard]] key_value_pair_type key_value() {
-                return {key(), value()};
-            }
-
-            [[nodiscard]] operator key_value_pair_type() {
-                return key_value();
-            }
-        };
 
     } // namespace details
 
@@ -224,7 +226,7 @@ namespace webpp::json::rapidjson {
         template <istl::StringViewifiable StrT>
         document& parse(StrT&& json_string) {
             const auto json_str_view = istl::string_viewify(stl::forward<StrT>(json_string));
-            this->obj_handle.Parse(json_str_view.data(), json_str_view.size());
+            this->val_handle.Parse(json_str_view.data(), json_str_view.size());
             return *this;
         }
     };
