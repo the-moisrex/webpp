@@ -6,7 +6,7 @@
 
 // fallback
 #include "../std/memory_resource.hpp"
-#ifndef webpp_has_memeory_resource
+#ifndef webpp_has_memory_resource
 #    warning \
       "Using std_allocator_pack as a fallback for std_pmr_allocator_pack due to not having access to <memory_resource> header file."
 #    include "std_allocator_pack.hpp"
