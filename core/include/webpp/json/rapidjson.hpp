@@ -47,18 +47,22 @@ namespace webpp::json::rapidjson {
             }
         };
 
+        template <typename IteratorType>
+        using generic_iterator = IteratorType;
+
         template <Traits TraitsType, typename ValueType>
         struct generic_value {
-            using traits_type          = TraitsType;
-            using rapidjson_value_type = ::rapidjson::Value;
-            using string_type          = traits::general_string<traits_type>;
-            using string_view_type     = traits::string_view<traits_type>;
-            using char_type            = traits::char_type<traits_type>;
-            using value_type           = ValueType;
-            using generic_value_type   = generic_value<traits_type, value_type>;
-            using value_ref            = stl::add_lvalue_reference_t<value_type>; // add & to obj
-            using value_ref_holder     = generic_value<traits_type, value_ref>;   // ref holder
-            using object_type          = generic_object<generic_value_type>;
+            using traits_type           = TraitsType;
+            using rapidjson_value_type  = ::rapidjson::Value;
+            using string_type           = traits::general_string<traits_type>;
+            using string_view_type      = traits::string_view<traits_type>;
+            using char_type             = traits::char_type<traits_type>;
+            using value_type            = ValueType;
+            using generic_value_type    = generic_value<traits_type, value_type>;
+            using value_ref             = stl::add_lvalue_reference_t<value_type>; // add & to obj
+            using value_ref_holder      = generic_value<traits_type, value_ref>;   // ref holder
+            using object_type           = generic_object<generic_value_type>;
+            using generic_iterator_type = generic_iterator<typename value_type::ValueIterator>;
 
           protected:
             value_type val_handle{};
@@ -178,6 +182,13 @@ namespace webpp::json::rapidjson {
             RENAME(stl::size_t, Capacity, capacity, const);
             RENAME(void, Clear, clear, );
             RENAME(object_type, GetObject, as_object, );
+
+            RENAME(generic_iterator_type, Begin, begin, );
+            RENAME(generic_iterator_type, Begin, begin, const);
+            RENAME(generic_iterator_type, End, end, );
+            RENAME(generic_iterator_type, End, end, const);
+            RENAME(generic_iterator_type, Begin, cbegin, const);
+            RENAME(generic_iterator_type, End, cend, const);
 
 #    undef RENAME
         };
