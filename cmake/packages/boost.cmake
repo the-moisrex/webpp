@@ -1,7 +1,7 @@
 set(Boost_USE_MULTITHREAD ON)
 find_package(Boost REQUIRED)
 
-if (Boost_FOUND)
+if (NOT Boost_FOUND)
     add_library(Boost::asio ALIAS Boost::boost)
 else()
 
@@ -92,6 +92,7 @@ else()
 
     # The reason for mp11 being excluded is explained in the issue that I opened here:
     # link: https://github.com/boostorg/mp11/issues/67
+    # The issue will be fixed what I hope in boost 78.0.0
     CPMAddPackage(
             NAME boost_mp11
             URL https://github.com/boostorg/mp11/archive/refs/tags/boost-${boost_version}.zip
