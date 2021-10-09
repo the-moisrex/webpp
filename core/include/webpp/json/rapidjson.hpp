@@ -11,30 +11,36 @@
 
 #    include <filesystem>
 
-#    define RAPIDJSON_HAS_STDSTRING 1
+#    define RAPIDJSON_HAS_STDSTRING 1 // enable std::string support for rapidjson (todo: do we need it?)
 #    include <rapidjson/document.h>
 
 
 namespace webpp::json::rapidjson {
     // using namespace ::rapidjson;
 
+    /**
+     * todo: add a choise to use rapidjson's allocator
+     * todo: use traits_type's allocator correctly if possible
+     */
     namespace details {
 
-        template <Traits TraitsType, typename ObjectType>
-        struct generic_object {
+        template <Traits TraitsType, typename ValueType>
+        struct generic_value {
             using traits_type          = TraitsType;
             using rapidjson_value_type = ::rapidjson::Value;
             using string_type          = traits::general_string<traits_type>;
             using string_view_type     = traits::string_view<traits_type>;
             using char_type            = traits::char_type<traits_type>;
-            using object_type          = ObjectType;
+            using value_type           = ValueType;
+            using value_ref            = stl::add_lvalue_reference_t<value_type>; // add & to obj
+            using value_ref_holder     = generic_value<traits_type, value_ref>;   // ref holder
 
           protected:
-            object_type obj_handle{};
+            value_type obj_handle{};
 
           public:
-            generic_object() = default;
-            generic_object(object_type obj) : obj_handle{obj} {}
+            generic_value() = default;
+            generic_value(value_ref obj) : obj_handle{obj} {}
 
             template <typename T>
             [[nodiscard]] bool is() const {
@@ -46,12 +52,12 @@ namespace webpp::json::rapidjson {
             return obj_handle.is_func();                                       \
         }                                                                      \
                                                                                \
-        generic_object& set_##type_name(real_type const& val) {                \
+        generic_value& set_##type_name(real_type const& val) {                 \
             obj_handle.set_func(val);                                          \
             return *this;                                                      \
         }                                                                      \
                                                                                \
-        generic_object& set_##type_name(real_type&& val) {                     \
+        generic_value& set_##type_name(real_type&& val) {                      \
             obj_handle.set_func(stl::move(val));                               \
             return *this;                                                      \
         }                                                                      \
@@ -109,7 +115,7 @@ namespace webpp::json::rapidjson {
                 return string_view_type{obj_handle.GetString(), obj_handle.GetStringLength()};
             }
 
-            generic_object& set_string(string_view_type str) {
+            generic_value& set_string(string_view_type str) {
                 // todo: use allocator if possible
                 obj_handle.SetString(str.data(), str.size());
                 return *this;
@@ -117,8 +123,8 @@ namespace webpp::json::rapidjson {
 
 
             template <typename T>
-            [[nodiscard]] auto operator[](T&& val) {
-                return generic_object<traits_type, object_type&>{obj_handle[stl::forward<T>(val)]};
+            [[nodiscard]] value_ref_holder operator[](T&& val) {
+                return {obj_handle[stl::forward<T>(val)]};
             }
 
 
@@ -150,19 +156,44 @@ namespace webpp::json::rapidjson {
 #    undef RENAME
         };
 
+
+
+        /**
+         * This is a json object which means it can hold a key/value pair of value objects.
+         */
+        template <JSONValue ValueType>
+        struct generic_object : public ValueType {
+            using value_type          = ValueType;
+            using traits_type         = typename value_type::traits_type;
+            using key_type            = value_type; // both key and value types are the same
+            using key_value_pair_type = stl::pair<key_type, value_type>;
+
+            [[nodiscard]] key_type key() {}
+
+            [[nodiscard]] value_type value() {}
+
+            [[nodiscard]] key_value_pair_type key_value() {
+                return {key(), value()};
+            }
+
+            [[nodiscard]] operator key_value_pair_type() {
+                return key_value();
+            }
+        };
+
     } // namespace details
 
     template <Traits TraitsType = default_traits>
-    using value = details::generic_object<TraitsType, ::rapidjson::Value>;
+    using value = details::generic_value<TraitsType, ::rapidjson::Value>;
 
     template <Traits TraitsType = default_traits>
-    struct document : public details::generic_object<TraitsType, ::rapidjson::Document> {
+    struct document : public details::generic_value<TraitsType, ::rapidjson::Document> {
         using traits_type             = TraitsType;
         using string_view_type        = traits::string_view<traits_type>;
         using char_type               = traits::char_type<traits_type>;
         using general_allocator_type  = traits::general_allocator<traits_type, char_type>;
         using value_type              = value<traits_type>;
-        using rapidjson_document_type = details::generic_object<traits_type, ::rapidjson::Document>;
+        using rapidjson_document_type = details::generic_value<traits_type, ::rapidjson::Document>;
 
         /**
          * A document containing null
