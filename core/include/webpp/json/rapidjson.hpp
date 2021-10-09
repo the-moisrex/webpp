@@ -27,7 +27,7 @@ namespace webpp::json::rapidjson {
         /**
          * This is a json object which means it can hold a key/value pair of value objects.
          */
-        template <JSONValue ValueType>
+        template </* JSONValue */ typename ValueType> // to avoid incomplete type error, we're using typename
         struct generic_object : public ValueType {
             using value_type          = ValueType;
             using traits_type         = typename value_type::traits_type;
@@ -55,9 +55,10 @@ namespace webpp::json::rapidjson {
             using string_view_type     = traits::string_view<traits_type>;
             using char_type            = traits::char_type<traits_type>;
             using value_type           = ValueType;
+            using generic_value_type   = generic_value<traits_type, value_type>;
             using value_ref            = stl::add_lvalue_reference_t<value_type>; // add & to obj
             using value_ref_holder     = generic_value<traits_type, value_ref>;   // ref holder
-            using object_type          = generic_object<value_type>;
+            using object_type          = generic_object<generic_value_type>;
 
           protected:
             value_type val_handle{};
