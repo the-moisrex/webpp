@@ -1,6 +1,7 @@
 if (IS_DEBUG)
     find_package(GTest QUIET)
     if (NOT gtest_FOUND)
+        include(CPM)
         CPMAddPackage(
                 NAME googletest
                 URL https://github.com/google/googletest/archive/refs/tags/release-1.11.0.tar.gz

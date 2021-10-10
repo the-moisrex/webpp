@@ -15,7 +15,10 @@ set(CPM_USE_LOCAL_PACKAGES ON)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
 
 set(CPM_FILE "${PROJECT_SOURCE_DIR}/cmake/CPM.cmake/cmake/CPM.cmake")
+
 if (EXISTS "${CPM_FILE}")
+    # make it easily known for everyone:
+    list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/CPM.cmake/cmake")
     include("${CPM_FILE}")
 else ()
     # download CPM if the user didn't clone this repository with its submodules
@@ -24,25 +27,31 @@ else ()
     ## the rest of this is from get_cpm.cmake of the project CPM.cmake
     set(CPM_DOWNLOAD_VERSION 0.34.0)
 
-    if(CPM_SOURCE_CACHE)
+    if (CPM_SOURCE_CACHE)
         # Expand relative path. This is important if the provided path contains a tilde (~)
         get_filename_component(CPM_SOURCE_CACHE ${CPM_SOURCE_CACHE} ABSOLUTE)
-        set(CPM_DOWNLOAD_LOCATION "${CPM_SOURCE_CACHE}/cpm/CPM_${CPM_DOWNLOAD_VERSION}.cmake")
-    elseif(DEFINED ENV{CPM_SOURCE_CACHE})
-        set(CPM_DOWNLOAD_LOCATION "$ENV{CPM_SOURCE_CACHE}/cpm/CPM_${CPM_DOWNLOAD_VERSION}.cmake")
-    else()
-        set(CPM_DOWNLOAD_LOCATION "${CMAKE_BINARY_DIR}/cmake/CPM_${CPM_DOWNLOAD_VERSION}.cmake")
-    endif()
+        set(CPM_DOWNLOAD_LOCATION "${CPM_SOURCE_CACHE}/cpm/CPM.cmake")
+        set(CPM_DOWNLOAD_PATH "${CPM_SOURCE_CACHE}/cpm")
+    elseif (DEFINED ENV{CPM_SOURCE_CACHE})
+        set(CPM_DOWNLOAD_LOCATION "$ENV{CPM_SOURCE_CACHE}/cpm/CPM.cmake")
+        set(CPM_DOWNLOAD_PATH "$ENV{CPM_SOURCE_CACHE}/cpm")
+    else ()
+        set(CPM_DOWNLOAD_LOCATION "${CMAKE_BINARY_DIR}/cmake/CPM.cmake")
+        set(CPM_DOWNLOAD_PATH "${CMAKE_BINARY_DIR}/cmake")
+    endif ()
 
-    if(NOT (EXISTS ${CPM_DOWNLOAD_LOCATION}))
+    if (NOT (EXISTS ${CPM_DOWNLOAD_LOCATION}))
         message(STATUS "Downloading CPM.cmake to ${CPM_DOWNLOAD_LOCATION}")
-        file(DOWNLOAD
+        file(
+                DOWNLOAD
                 https://github.com/cpm-cmake/CPM.cmake/releases/download/v${CPM_DOWNLOAD_VERSION}/CPM.cmake
                 ${CPM_DOWNLOAD_LOCATION}
-                )
-    endif()
+        )
+    endif ()
 
     message(STATUS "Using CPM file from: ${CPM_DOWNLOAD_LOCATION}")
+
+    list(APPEND CMAKE_MODULE_PATH "${CPM_DOWNLOAD_PATH}")
     include(${CPM_DOWNLOAD_LOCATION})
 
 
