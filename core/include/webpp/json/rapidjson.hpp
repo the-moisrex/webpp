@@ -182,6 +182,8 @@ namespace webpp::json::rapidjson {
             RENAME(stl::size_t, Capacity, capacity, const);
             RENAME(void, Clear, clear, );
             RENAME(object_type, GetObject, as_object, );
+            RENAME(bool, IsNull, is_null, const);
+            RENAME(bool, IsString, is_string, const);
 
             RENAME(generic_iterator_type, Begin, begin, );
             RENAME(generic_iterator_type, Begin, begin, const);
