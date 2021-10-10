@@ -5,6 +5,8 @@
 
 #include "../std/concepts.hpp"
 #include "../std/iterator.hpp"
+#include "../std/string.hpp"
+#include "../std/string_view.hpp"
 
 namespace webpp {
 
@@ -12,7 +14,6 @@ namespace webpp {
     concept JsonIterator = requires(T it) {
         requires stl::random_access_iterator<T>;
     };
-
 
     /**
      * This is a JSON Value,
@@ -30,42 +31,48 @@ namespace webpp {
         { val.is_null() } -> stl::same_as<bool>;
         val.clear();
 
+        { val.is_object() } -> stl::same_as<bool>;
+        val.as_object(); // -> JSONObject, but it'll be a circular dependency
+        { val.is_string() } -> stl::same_as<bool>;
+        { val.as_string() } -> istl::String;
+        { val.as_string_view() } -> istl::StringView;
+        { val.is_array() } -> stl::same_as<bool>;
+        val.as_array(); // JSONArray
 
         // todo: find, clear, ... methods
 
-#define WEBPP_IS_METHOD(name) \
-    { val.is_##name() } -> stl::same_as<bool>;
+#define WEBPP_IS_METHOD(name, type)                    \
+    { val.template as<type>() } -> stl::same_as<type>; \
+    { val.is_##name() } -> stl::same_as<bool>;         \
+    { val.as_##name() } -> stl::same_as<type>;
 
-        WEBPP_IS_METHOD(null)
-        WEBPP_IS_METHOD(bool)
+        // WEBPP_IS_METHOD(null)
+        WEBPP_IS_METHOD(bool, bool)
         // WEBPP_IS_METHOD(char)
         // WEBPP_IS_METHOD(short)
-        WEBPP_IS_METHOD(int)
-        WEBPP_IS_METHOD(long)
+        WEBPP_IS_METHOD(int, int)
+        WEBPP_IS_METHOD(long, long)
         // WEBPP_IS_METHOD(long_long)
-        WEBPP_IS_METHOD(double)
+        WEBPP_IS_METHOD(double, double)
         // WEBPP_IS_METHOD(long_double)
-        WEBPP_IS_METHOD(float)
+        WEBPP_IS_METHOD(float, float)
         // WEBPP_IS_METHOD(int8)
         // WEBPP_IS_METHOD(int16)
         // WEBPP_IS_METHOD(int32)
         // WEBPP_IS_METHOD(int64)
-        WEBPP_IS_METHOD(uint)
+        WEBPP_IS_METHOD(uint, unsigned)
         // WEBPP_IS_METHOD(uint8)
         // WEBPP_IS_METHOD(uint16)
         // WEBPP_IS_METHOD(uint32)
         // WEBPP_IS_METHOD(uint64)
-        WEBPP_IS_METHOD(string)
-        WEBPP_IS_METHOD(array)
-        WEBPP_IS_METHOD(object)
-        WEBPP_IS_METHOD(number)
+        // WEBPP_IS_METHOD(number)
 
 #undef WEBPP_IS_METHOD
 
         // todo: should we add stl::optional<...> ?
 #define WEBPP_AS_METHOD(type)                          \
     { val.template as<type>() } -> stl::same_as<type>; \
-    { val.as_##type() } -> stl::same_as<type>;
+    { val.as_##name() } -> stl::same_as<type>;
 
         WEBPP_AS_METHOD(bool)
         WEBPP_AS_METHOD(char)
@@ -85,7 +92,6 @@ namespace webpp {
         WEBPP_AS_METHOD(uint16_t)
         WEBPP_AS_METHOD(uint32_t)
         WEBPP_AS_METHOD(uint64_t)
-        // todo: add string, vector, list, ...
 
 #undef WEBPP_AS_METHOD
     };
@@ -101,7 +107,7 @@ namespace webpp {
 
 
         // Structured binding helper:
-        //   for (auto [key, objue] : doc);
+        //   for (auto [key, value] : doc);
         { obj.operator stl::pair<T, T>() } -> stl::same_as<stl::pair<T, T>>;
         { obj.key_objue() } -> stl::same_as<stl::pair<T, T>>; // with explicit function name
     };
