@@ -18,4 +18,5 @@ if(NOT (EXISTS ${CPM_DOWNLOAD_LOCATION}))
   )
 endif()
 
+message(STATUS "Using CPM file from: ${CPM_DOWNLOAD_LOCATION}")
 include(${CPM_DOWNLOAD_LOCATION})
