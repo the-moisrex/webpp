@@ -1,3 +1,4 @@
+set(BROTLI_DISABLE_TESTS ON)
 find_package(brotli QUIET)
 if (NOT brotli_FOUND)
     include(CPM)
