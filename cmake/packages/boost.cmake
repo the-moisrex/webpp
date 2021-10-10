@@ -1,7 +1,7 @@
 set(Boost_USE_MULTITHREAD ON)
 find_package(Boost REQUIRED)
 
-if (NOT Boost_FOUND)
+if (Boost_FOUND)
     add_library(Boost::asio ALIAS Boost::boost)
 else()
 
