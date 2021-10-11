@@ -11,10 +11,41 @@
 namespace webpp::json {
 
     /**
-     * Check if it's a json key
+     * Number includes:
+     *   - integer types
+     *   - float, double
+     *   - bool (even though in JavaScript it's a different type)
      */
     template <typename T>
-    concept JSONKey = istl::StringViewifiable<T> || stl::is_arithmetic_v<T>;
+    concept JSONNumber = stl::is_arithmetic_v<T>;
+
+    /**
+     * Honestly I accept any type that can be converted into a string or a string_view
+     */
+    template <typename T>
+    concept JSONString = istl::StringViewifiable<T>;
+
+
+    /**
+     * This is a json array type. It's not a C++ std::array; it's more of a std::vector but it's called
+     * array because JavaScript likes to call list, array :)
+     */
+    template <typename T>
+    concept JSONArray = requires {
+        typename T::value_type;
+    }
+    and requires(T arr, typename T::value_type val) {
+        { arr.begin() } -> stl::random_access_iterator;
+        { arr.end() } -> stl::random_access_iterator;
+        { arr.cbegin() } -> stl::random_access_iterator;
+        { arr.cend() } -> stl::random_access_iterator;
+
+        { arr.size() } -> stl::same_as<stl::size_t>;
+
+        arr.push_back(val); // push_back is so vector like, so we use that instead of the other possible names
+        arr.emplace_back(val);
+        arr.clear();
+    };
 
     /**
      * This is a JSON Object
@@ -25,17 +56,28 @@ namespace webpp::json {
         obj[0];
         obj["key"];
 
-        // iterator
+        // Iterator for this type should be of type: pair<key, value>
+        // This is because it would allow structured binding to work in a for loop:
+        //   for (auto [key, value] : doc.as_object());
         { obj.begin() } -> stl::random_access_iterator;
         { obj.end() } -> stl::random_access_iterator;
         { obj.cbegin() } -> stl::random_access_iterator;
         { obj.cend() } -> stl::random_access_iterator;
 
-        // Structured binding helper:
-        //   for (auto [key, value] : doc);
-        { obj.operator stl::pair<T, T>() } -> stl::same_as<stl::pair<T, T>>;
-        { obj.key_value() } -> stl::same_as<stl::pair<T, T>>; // with explicit function name
+        { obj.size() } -> stl::same_as<stl::size_t>;
+
+        obj.insert("value"); // push_back is so vector like, Object is more like a std::map
+        obj.emplace("value");
+        obj.clear();
+
+        { obj.has("member") } -> stl::same_as<bool>; // the input is of type JSONKey
     };
+
+    /**
+     * Check if it's a json key
+     */
+    template <typename T>
+    concept JSONKey = JSONString<T> || JSONNumber<T>;
 
     /**
      * This is a JSON Value,
@@ -45,11 +87,8 @@ namespace webpp::json {
      */
     template <typename T>
     concept JSONValue = requires(T val) {
-        { val.size() } -> stl::same_as<stl::size_t>;
+        requires JSONObject<T>;
         { val.is_null() } -> stl::same_as<bool>;
-        val.clear();
-
-        { val.has("member") } -> stl::same_as<bool>;
 
         // object related methods
         { val.is_object() } -> stl::same_as<bool>;
