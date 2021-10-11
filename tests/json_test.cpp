@@ -1,8 +1,9 @@
 // Created by moisrex
 
 
-#include "../core/include/webpp/json/json_concepts.hpp"
 #include "../core/include/webpp/json/defaultjson.hpp"
+#include "../core/include/webpp/json/json_concepts.hpp"
+#include "../core/include/webpp/json/json_common.hpp"
 #include "./common_pch.hpp"
 
 using namespace webpp;
@@ -27,4 +28,25 @@ TEST(JSONTest, Parse) {
     auto [key, value] = doc;
     EXPECT_EQ(key.as_string(), "id");
     EXPECT_EQ(value.as_int(), 20);
+}
+
+
+
+TEST(JSONTest, Fields) {
+    using namespace std;
+
+    field<int>            user_id{"id"};
+    field<string>         username{"username"};
+    field<vector<string>> emails{"emails"};
+
+    document doc{R"JSON({
+        "username": "the-moisrex",
+        "emails":   ["one@example.com", "two@example.com"]
+        "id":       666
+    })JSON"};
+
+    (user_id, username, emails) = doc;
+
+
+    object(username, user_id, emails);
 }

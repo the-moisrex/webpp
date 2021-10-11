@@ -27,16 +27,16 @@ namespace webpp::json {
         /**
          * In this code:
          * @code
-         *   user_id, username, emails = obj
+         *   (user_id, username, emails) = obj
          * @endcode
          * This is the operator= used there.
          */
         template <JSONObject ObjectType>
-        field_pack& operator=(ObjectType&& obj) {
+        field_pack& operator=(ObjectType& obj) {
             stl::apply(
-              []<typename NT>(field<NT>& field) {
+              [&obj]<typename ValueType>(field<ValueType>& field) {
                   if (obj.has(field.key)) {
-                      field = obj.template as<value_type>;
+                      field = obj.template as<ValueType>;
                   }
               },
               *this);
@@ -67,8 +67,8 @@ namespace webpp::json {
 
 
         template <typename NewT>
-        [[nodiscard]] operator,(field<NewT>& input_field) noexcept {
-            return field_pack<T, NewT>{*this, input_field};
+        [[nodiscard]] field_pack<T, NewT> operator,(field<NewT>& input_field) noexcept {
+            return {*this, input_field};
         }
     };
 } // namespace webpp::json
