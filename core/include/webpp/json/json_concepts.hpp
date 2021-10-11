@@ -8,11 +8,33 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 
-namespace webpp {
+namespace webpp::json {
 
+    /**
+     * Check if it's a json key
+     */
     template <typename T>
-    concept JsonIterator = requires(T it) {
-        requires stl::random_access_iterator<T>;
+    concept JSONKey = istl::StringViewifiable<T> || stl::is_arithmetic_v<T>;
+
+    /**
+     * This is a JSON Object
+     */
+    template <typename T>
+    concept JSONObject = requires(T obj) {
+        // Object should be definable without the help of Value. So I'm not gonna do "-> JSONValue" here.
+        obj[0];
+        obj["key"];
+
+        // iterator
+        { obj.begin() } -> stl::random_access_iterator;
+        { obj.end() } -> stl::random_access_iterator;
+        { obj.cbegin() } -> stl::random_access_iterator;
+        { obj.cend() } -> stl::random_access_iterator;
+
+        // Structured binding helper:
+        //   for (auto [key, value] : doc);
+        { obj.operator stl::pair<T, T>() } -> stl::same_as<stl::pair<T, T>>;
+        { obj.key_value() } -> stl::same_as<stl::pair<T, T>>; // with explicit function name
     };
 
     /**
@@ -24,12 +46,10 @@ namespace webpp {
     template <typename T>
     concept JSONValue = requires(T val) {
         { val.size() } -> stl::same_as<stl::size_t>;
-        { val.begin() } -> JsonIterator;
-        { val.end() } -> JsonIterator;
-        { val.cbegin() } -> JsonIterator;
-        { val.cend() } -> JsonIterator;
         { val.is_null() } -> stl::same_as<bool>;
         val.clear();
+
+        { val.has("member") } -> stl::same_as<bool>;
 
         // object related methods
         { val.is_object() } -> stl::same_as<bool>;
@@ -104,24 +124,6 @@ namespace webpp {
 #undef WEBPP_AS_METHOD
     };
 
-    /**
-     * This is a JSON Object
-     */
-    template <typename T>
-    concept JSONObject = requires(T obj) {
-        requires JSONValue<T>;
-        { obj.key() } -> JSONValue;
-        { obj.value() } -> JSONValue;
-        { obj[0] } -> JSONValue;
-        { obj["key"] } -> JSONValue;
-
-
-        // Structured binding helper:
-        //   for (auto [key, value] : doc);
-        { obj.operator stl::pair<T, T>() } -> stl::same_as<stl::pair<T, T>>;
-        { obj.key_value() } -> stl::same_as<stl::pair<T, T>>; // with explicit function name
-    };
-
 
     /**
      * JSON Document will contain a JSON Document
@@ -136,6 +138,6 @@ namespace webpp {
         // T{stl::filesystem::path{"file.json"}}; // read from file.
     };
 
-} // namespace webpp
+} // namespace webpp::json
 
 #endif // WEBPP_JSON_CONCEPTS_HPP
