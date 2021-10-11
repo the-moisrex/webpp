@@ -31,13 +31,21 @@ namespace webpp {
         { val.is_null() } -> stl::same_as<bool>;
         val.clear();
 
+        // object related methods
         { val.is_object() } -> stl::same_as<bool>;
         val.as_object(); // -> JSONObject, but it'll be a circular dependency
+
+        // array related methods
+        { val.is_array() } -> stl::same_as<bool>;
+        val.as_array(); // JSONArray
+
+        // string related methods
         { val.is_string() } -> stl::same_as<bool>;
         { val.as_string() } -> istl::String;
         { val.as_string_view() } -> istl::StringView;
-        { val.is_array() } -> stl::same_as<bool>;
-        val.as_array(); // JSONArray
+        val.pretty_string();
+        val.uglified_string();
+        val.template to_string<stl::string>(stl::allocator<char>());
 
         // todo: find, clear, ... methods
 
@@ -104,24 +112,28 @@ namespace webpp {
         requires JSONValue<T>;
         { obj.key() } -> JSONValue;
         { obj.value() } -> JSONValue;
+        { obj[0] } -> JSONValue;
+        { obj["key"] } -> JSONValue;
 
 
         // Structured binding helper:
         //   for (auto [key, value] : doc);
         { obj.operator stl::pair<T, T>() } -> stl::same_as<stl::pair<T, T>>;
-        { obj.key_objue() } -> stl::same_as<stl::pair<T, T>>; // with explicit function name
+        { obj.key_value() } -> stl::same_as<stl::pair<T, T>>; // with explicit function name
     };
 
+
+    /**
+     * JSON Document will contain a JSON Document
+     */
     template <typename T>
     concept JSONDocument = requires(T doc) {
-        requires JSONValue<T>;
+        requires JSONObject<T>;
         doc.parse("{}");
-        doc.pretty_string();
-        doc.uglified_string();
-        doc.template to_string<stl::string>(stl::allocator<char>());
-        { doc[0] } -> JSONValue;
-        { doc["key"] } -> JSONValue;
-        { doc.key() } -> JSONValue;
+        T{"{}"};                // parse
+        T{};                    // will contain a null value
+        T{T{"{}"}.as_object()}; // passing an object/value as input
+        // T{stl::filesystem::path{"file.json"}}; // read from file.
     };
 
 } // namespace webpp
