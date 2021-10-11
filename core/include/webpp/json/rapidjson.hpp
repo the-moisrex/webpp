@@ -30,9 +30,9 @@ namespace webpp::json::rapidjson {
 
         /**
          * This is a json object which means it can hold a key/value pair of value objects.
+         * The ValueType is a rapidjson value type not a generic value type.
          */
-        template <Traits TraitsType,
-                  /* JSONValue */ typename ValueType> // to avoid incomplete type error, we're using typename
+        template <Traits TraitsType, typename ValueType>
         struct generic_object {
             using rapidjson_value_type = ValueType;
             using traits_type          = TraitsType;
@@ -44,6 +44,7 @@ namespace webpp::json::rapidjson {
             template <JSONKey KeyType>
             [[nodiscard]] value_type operator[](KeyType&& key) {
                 if constexpr (JSONNumber<KeyType>) {
+                    // fixme: write tests for this, this will run the "index" version, right?
                     return value_type::operator[](key);
                 } else if constexpr (JSONString<KeyType>) {
                     // The key is convertible to string_view
@@ -51,6 +52,11 @@ namespace webpp::json::rapidjson {
                       istl::string_viewify_of<string_view_type>(stl::forward<KeyType>(key));
                     return obj_handle[::rapidjson::StringRef(key_view.data(), key_view.size())];
                 }
+            }
+
+            generic_object& clear() {
+                obj_handle.Clear();
+                return *this;
             }
 
           protected:
