@@ -24,28 +24,37 @@ namespace webpp::json::rapidjson {
      */
     namespace details {
 
+        template <Traits TraitsType, typename ValueType>
+        struct generic_value;
+
+
         /**
          * This is a json object which means it can hold a key/value pair of value objects.
          */
-        template </* JSONValue */ typename ValueType> // to avoid incomplete type error, we're using typename
-        struct generic_object : public ValueType {
-            using value_type          = ValueType;
-            using traits_type         = typename value_type::traits_type;
-            using key_type            = value_type; // both key and value types are the same
-            using key_value_pair_type = stl::pair<key_type, value_type>;
-            using string_view_type    = traits::string_view<traits_type>;
+        template <Traits TraitsType,
+                  /* JSONValue */ typename ValueType> // to avoid incomplete type error, we're using typename
+        struct generic_object {
+            using rapidjson_value_type = ValueType;
+            using traits_type          = TraitsType;
+            using value_type           = generic_value<traits_type, rapidjson_value_type>;
+            using string_view_type     = traits::string_view<traits_type>;
 
-            [[nodiscard]] key_type key() {}
+            generic_object(rapidjson_value_type& obj) : obj_handle{obj} {}
 
-            [[nodiscard]] value_type value() {}
-
-            [[nodiscard]] key_value_pair_type key_value() {
-                return {key(), value()};
+            template <JSONKey KeyType>
+            [[nodiscard]] value_type operator[](KeyType&& key) {
+                if constexpr (JSONNumber<KeyType>) {
+                    return value_type::operator[](key);
+                } else if constexpr (JSONString<KeyType>) {
+                    // The key is convertible to string_view
+                    auto const key_view =
+                      istl::string_viewify_of<string_view_type>(stl::forward<KeyType>(key));
+                    return obj_handle[::rapidjson::StringRef(key_view.data(), key_view.size())];
+                }
             }
 
-            [[nodiscard]] operator key_value_pair_type() {
-                return key_value();
-            }
+          protected:
+            rapidjson_value_type& obj_handle;
         };
 
         template <typename IteratorType>
@@ -62,7 +71,7 @@ namespace webpp::json::rapidjson {
             using generic_value_type    = generic_value<traits_type, value_type>;
             using value_ref             = stl::add_lvalue_reference_t<value_type>; // add & to obj
             using value_ref_holder      = generic_value<traits_type, value_ref>;   // ref holder
-            using object_type           = generic_object<generic_value_type>;
+            using object_type           = generic_object<traits_type, rapidjson_value_type>;
             using generic_iterator_type = generic_iterator<typename value_type::ValueIterator>;
 
           protected:

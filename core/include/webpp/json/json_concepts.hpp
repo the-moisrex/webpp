@@ -87,7 +87,8 @@ namespace webpp::json {
      */
     template <typename T>
     concept JSONValue = requires(T val) {
-        requires JSONObject<T>;
+        requires JSONObject<T>; // using JSONObject as the default. If the users want, they can use
+                                // .as_array() function to get the same thing as an array
         { val.is_null() } -> stl::same_as<bool>;
 
         // object related methods
