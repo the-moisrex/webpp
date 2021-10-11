@@ -6,6 +6,7 @@
 #include "../std/optional.hpp"
 #include "../std/string_view.hpp"
 #include "../std/tuple.hpp"
+#include "json_concepts.hpp"
 
 namespace webpp::json {
 
@@ -15,9 +16,31 @@ namespace webpp::json {
     template <typename... T>
     struct field_pack : public stl::tuple<field<T>&...> {
 
+        /**
+         * Add more field types to the field pack
+         */
         template <typename NewT>
-        [[nodiscard]] operator,(field<NewT>& input_field) noexcept {
-            return field_pack<T&..., NewT&>{stl::tuple_cat(*this, stl::tuple<field<NewT>&>(input_field))};
+        [[nodiscard]] field_pack<T&..., NewT&> operator,(field<NewT>& input_field) noexcept {
+            return {stl::tuple_cat(*this, stl::tuple<field<NewT>&>(input_field))};
+        }
+
+        /**
+         * In this code:
+         * @code
+         *   user_id, username, emails = obj
+         * @endcode
+         * This is the operator= used there.
+         */
+        template <JSONObject ObjectType>
+        field_pack& operator=(ObjectType&& obj) {
+            stl::apply(
+              []<typename NT>(field<NT>& field) {
+                  if (obj.has(field.key)) {
+                      field = obj.template as<value_type>;
+                  }
+              },
+              *this);
+            return *this;
         }
     };
 
