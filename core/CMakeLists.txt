@@ -185,6 +185,8 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/server/posix/posix_std_pmr_traits.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/json/json_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/json/defaultjson.hpp
+        ${LIB_INCLUDE_DIR}/webpp/json/json_common.hpp
         ${LIB_INCLUDE_DIR}/webpp/json/rapidjson.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/db/query.hpp
