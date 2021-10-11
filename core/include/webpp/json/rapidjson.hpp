@@ -19,7 +19,7 @@ namespace webpp::json::rapidjson {
     // using namespace ::rapidjson;
 
     /**
-     * todo: add a choise to use rapidjson's allocator
+     * todo: add a choice to use rapidjson's allocator
      * todo: use traits_type's allocator correctly if possible
      */
     namespace details {
@@ -27,6 +27,78 @@ namespace webpp::json::rapidjson {
         template <Traits TraitsType, typename ValueType>
         struct generic_value;
 
+
+        /**
+         * Generic number will hold
+         *   - json numeric values
+         *   - booleans
+         * It hold booleans too because it's not JavaScript and bools are still numbers! :)
+         */
+        template <Traits TraitsType, typename ValueType>
+        struct generic_number {
+            using rapidjson_value_type = ValueType;
+            using traits_type          = TraitsType;
+            using value_type           = generic_value<traits_type, rapidjson_value_type>;
+            using string_view_type     = traits::string_view<traits_type>;
+
+            generic_number(rapidjson_value_type& val) : val_handle{val} {}
+
+            /**
+             * Get the number as the specified numeric type
+             */
+            template <JSONNumber T>
+            [[nodiscard]] T as() const {
+                return val_handle.template Get<T>();
+            }
+
+
+            /**
+             * Checks whether a number can be losslessly converted to a float.
+             */
+            [[nodiscard]] bool is_lossless_float() const {
+                return val_handle.IsLosslessFloat();
+            }
+
+
+#    define WEBPP_GETTER(name, type)           \
+        [[nodiscard]] operator type() const {  \
+            return as<type>();                 \
+        }                                      \
+                                               \
+        [[nodiscard]] bool as_##name() const { \
+            return as<type>();                 \
+        }
+
+
+            WEBPP_GETTER(bool, bool)
+            // WEBPP_GETTER(char)
+            // WEBPP_GETTER(short)
+            // WEBPP_GETTER(int, int)
+            // WEBPP_GETTER(long, long)
+            // WEBPP_GETTER(long_long)
+            WEBPP_GETTER(double, double)
+            // WEBPP_GETTER(long_double)
+            WEBPP_GETTER(float, float)
+            // WEBPP_GETTER(int8)
+            // WEBPP_GETTER(int16)
+            // WEBPP_GETTER(int32)
+            // WEBPP_GETTER(int64)
+            // WEBPP_GETTER(uint, unsigned)
+            WEBPP_GETTER(uint8, stl::uint8_t)
+            WEBPP_GETTER(uint16, stl::uint16_t)
+            WEBPP_GETTER(uint32, stl::uint32_t)
+            WEBPP_GETTER(uint64, stl::uint64_t)
+            WEBPP_GETTER(int8, stl::int8_t)
+            WEBPP_GETTER(int16, stl::int16_t)
+            WEBPP_GETTER(int32, stl::int32_t)
+            WEBPP_GETTER(int64, stl::int64_t)
+            // WEBPP_GETTER(number)
+
+#    undef WEBPP_GETTER
+
+          protected:
+            rapidjson_value_type val_handle;
+        };
 
         /**
          * This is a json object which means it can hold a key/value pair of value objects.
