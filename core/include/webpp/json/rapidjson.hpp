@@ -33,6 +33,7 @@ namespace webpp::json::rapidjson {
             using traits_type         = typename value_type::traits_type;
             using key_type            = value_type; // both key and value types are the same
             using key_value_pair_type = stl::pair<key_type, value_type>;
+            using string_view_type    = traits::string_view<traits_type>;
 
             [[nodiscard]] key_type key() {}
 
@@ -75,6 +76,14 @@ namespace webpp::json::rapidjson {
             [[nodiscard]] bool is() const {
                 return val_handle.template Is<T>();
             }
+
+            /**
+             * Check if it has a member
+             */
+            [[nodiscard]] bool has(string_view_type key) const {
+                return val_handle.HasMember(::rapidjson::StringRef(key.data(), key.size()));
+            }
+
 
 #    define WEBPP_IS_METHOD(real_type, type_name, is_func, get_func, set_func) \
         [[nodiscard]] bool is_##type_name() const {                            \
@@ -234,7 +243,10 @@ namespace webpp::json::rapidjson {
         /**
          * A document containing the specified, already parsed, value
          */
-        document(value_type&& val) : rapidjson_document_type{.obj_handle = val} {}
+        template <typename ConvertibleToValue>
+        requires(stl::convertible_to<ConvertibleToValue, value_type>) // check if it's a value or an object
+          document(ConvertibleToValue&& val)
+          : rapidjson_document_type{.obj_handle = stl::forward<ConvertibleToValue>(val)} {}
 
         // implement the parse method
         template <istl::StringViewifiable StrT>

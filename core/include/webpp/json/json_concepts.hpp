@@ -31,6 +31,8 @@ namespace webpp {
         { val.is_null() } -> stl::same_as<bool>;
         val.clear();
 
+        { val.has("member") } -> stl::same_as<bool>;
+
         // object related methods
         { val.is_object() } -> stl::same_as<bool>;
         val.as_object(); // -> JSONObject, but it'll be a circular dependency
