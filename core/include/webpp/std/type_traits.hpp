@@ -834,13 +834,13 @@ namespace webpp::istl {
 
 
     // from: http://open-std.org/JTC1/SC22/WG21/docs/papers/2020/p2098r1.pdf
-    template <class T, template <class...> class Primary>
+    template <typename T, template <typename...> typename Primary>
     struct is_specialization_of : stl::false_type {};
 
-    template <template <class...> class Primary, class... Args>
+    template <template <typename...> typename Primary, typename... Args>
     struct is_specialization_of<Primary<Args...>, Primary> : stl::true_type {};
 
-    template <class T, template <class...> class Primary>
+    template <typename T, template <typename...> typename Primary>
     inline constexpr bool is_specialization_of_v = is_specialization_of<T, Primary>::value;
 
 

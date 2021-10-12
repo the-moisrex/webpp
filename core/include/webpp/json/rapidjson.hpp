@@ -8,6 +8,7 @@
 #    include "../std/string.hpp"
 #    include "../std/string_view.hpp"
 #    include "../traits/default_traits.hpp"
+#    include "json_concepts.hpp"
 
 #    include <filesystem>
 
@@ -101,14 +102,15 @@ namespace webpp::json::rapidjson {
          * This is a json object which means it can hold a key/value pair of value objects.
          * The ValueType is a rapidjson value type not a generic value type.
          */
-        template <Traits TraitsType, typename ValueType>
+        template <Traits TraitsType, typename ObjectType>
+        // requires(istl::is_specialization_of_v<ObjectType, ::rapidjson::GenericObject>)
         struct generic_object {
-            using rapidjson_value_type = ValueType;
-            using traits_type          = TraitsType;
-            using value_type           = generic_value<traits_type, rapidjson_value_type>;
-            using string_view_type     = traits::string_view<traits_type>;
+            using rapidjson_object_type = ObjectType;
+            using traits_type           = TraitsType;
+            using value_type            = generic_value<traits_type, rapidjson_object_type>;
+            using string_view_type      = traits::string_view<traits_type>;
 
-            generic_object(rapidjson_value_type& obj) : obj_handle{obj} {}
+            generic_object(rapidjson_object_type& obj) : obj_handle{obj} {}
 
             template <JSONKey KeyType>
             [[nodiscard]] value_type operator[](KeyType&& key) {
@@ -128,8 +130,12 @@ namespace webpp::json::rapidjson {
                 return *this;
             }
 
+            [[nodiscard]] stl::size_t size() const noexcept {
+                return obj_handle.Size();
+            }
+
           protected:
-            rapidjson_value_type& obj_handle;
+            rapidjson_object_type obj_handle;
         };
 
         template <typename IteratorType>
@@ -146,8 +152,10 @@ namespace webpp::json::rapidjson {
             using generic_value_type    = generic_value<traits_type, value_type>;
             using value_ref             = stl::add_lvalue_reference_t<value_type>; // add & to obj
             using value_ref_holder      = generic_value<traits_type, value_ref>;   // ref holder
-            using object_type           = generic_object<traits_type, rapidjson_value_type>;
-            using generic_iterator_type = generic_iterator<typename value_type::ValueIterator>;
+            using rapidjson_object_type = typename rapidjson_value_type::Object;
+            using object_type           = generic_object<traits_type, rapidjson_object_type>;
+            using generic_iterator_type =
+              generic_iterator<typename stl::remove_cvref_t<value_type>::ValueIterator>;
 
           protected:
             value_type val_handle{};
@@ -320,7 +328,8 @@ namespace webpp::json::rapidjson {
          * Parse the json string specified here
          */
         template <istl::StringViewifiable StrT>
-        document(StrT&& json_string) {
+        requires(!stl::same_as<stl::remove_cvref_t<StrT>, document>) // not a copy/move ctor
+          document(StrT&& json_string) {
             parse(stl::forward<StrT>(json_string));
         }
 
@@ -328,7 +337,8 @@ namespace webpp::json::rapidjson {
          * A document containing the specified, already parsed, value
          */
         template <typename ConvertibleToValue>
-        requires(stl::convertible_to<ConvertibleToValue, value_type>) // check if it's a value or an object
+        requires(stl::convertible_to<ConvertibleToValue, value_type> && // check if it's a value or an object
+                 !stl::same_as<stl::remove_cvref_t<ConvertibleToValue>, document>)
           document(ConvertibleToValue&& val)
           : rapidjson_document_type{.obj_handle = stl::forward<ConvertibleToValue>(val)} {}
 

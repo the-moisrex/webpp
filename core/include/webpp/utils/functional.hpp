@@ -147,13 +147,6 @@ namespace webpp {
                                           // an error
       >;
 
-    // Tests if T is a specialization of Template
-    template <typename T, template <typename...> class Template>
-    struct is_specialization_of : stl::false_type {};
-
-    template <template <typename...> class Template, typename... Args>
-    struct is_specialization_of<Template<Args...>, Template> : stl::true_type {};
-
     template <class... Ts>
     struct overloaded : Ts... {
         using Ts::operator()...;
