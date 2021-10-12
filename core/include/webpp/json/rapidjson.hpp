@@ -15,6 +15,17 @@
 #    define RAPIDJSON_HAS_STDSTRING 1 // enable std::string support for rapidjson (todo: do we need it?)
 #    include <rapidjson/document.h>
 
+// a path for issue: https://github.com/Tencent/rapidjson/pull/1947
+#    if (RAPIDJSON_MAJOR_VERSION == 1 && RAPIDJSON_MINOR_VERSION == 1 && RAPIDJSON_PATCH_VERSION == 0)
+namespace rapidjson {
+    template <bool Const, typename Encoding, typename Allocator>
+    GenericMemberIterator<Const, Encoding, Allocator>
+    operator+(typename GenericMemberIterator<Const, Encoding, Allocator>::DifferenceType n,
+              GenericMemberIterator<Const, Encoding, Allocator> const                    j) {
+        return j + n;
+    }
+} // namespace rapidjson
+#    endif
 
 namespace webpp::json::rapidjson {
     // using namespace ::rapidjson;
@@ -132,6 +143,29 @@ namespace webpp::json::rapidjson {
 
             [[nodiscard]] stl::size_t size() const noexcept {
                 return obj_handle.Size();
+            }
+
+            template <JSONKey KeyT, JSONValue ValT>
+            generic_object& insert(KeyT&& key, ValT&& val) {
+                auto const key_view = istl::string_viewify_of<string_view_type>(stl::forward<KeyT>(key));
+                obj_handle.AddMember(::rapidjson::StringRef(key_view.data(), key_view.size()),
+                                     stl::forward<ValT>(val));
+                return *this;
+            }
+
+            static_assert(stl::random_access_iterator<typename rapidjson_object_type::MemberIterator>);
+            auto begin() const {
+                return obj_handle.MemberBegin();
+            }
+            auto end() const {
+                return obj_handle.MemberEnd();
+            }
+
+            auto cbegin() const {
+                return obj_handle.MemberBegin();
+            }
+            auto cend() const {
+                return obj_handle.MemberEnd();
             }
 
           protected:
@@ -257,6 +291,11 @@ namespace webpp::json::rapidjson {
                 return {val_handle[stl::forward<T>(val)]};
             }
 
+            template <typename T>
+            generic_value& operator=(T&& val) {
+                val_handle = stl::forward<T>(val);
+                return *this;
+            }
 
             //            template <stl::size_t N>
             //            [[nodiscard]] auto operator[](char_type const child_name[N]) {
