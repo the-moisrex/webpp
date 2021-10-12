@@ -66,11 +66,12 @@ namespace webpp::json {
 
         { obj.size() } -> stl::same_as<stl::size_t>;
 
-        obj.insert("value"); // push_back is so vector like, Object is more like a std::map
-        obj.emplace("value");
+        obj.insert("key", "value"); // push_back is so vector like, Object is more like a std::map
+        obj.emplace("key", "value");
+        obj["key"] = "value";
         obj.clear();
 
-        { obj.has("member") } -> stl::same_as<bool>; // the input is of type JSONKey
+        { obj.contains("member") } -> stl::same_as<bool>; // the input is of type JSONKey
     };
 
     /**
