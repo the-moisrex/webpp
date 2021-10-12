@@ -24,6 +24,13 @@ namespace rapidjson {
               GenericMemberIterator<Const, Encoding, Allocator> const                    j) {
         return j + n;
     }
+
+    // This part doesn't need to be sent to rapidjson, it's already there (https://github.com/the-moisrex/rapidjson/blob/f14d5097e51fc19582884a517699adef09edbff7/include/rapidjson/document.h#L262)
+    template <bool Const, typename Encoding, typename Allocator>
+    bool operator==(GenericMemberIterator<Const, Encoding, Allocator> const n,
+                    GenericMemberIterator<Const, Encoding, Allocator> const j) {
+        return n.operator->() == j.operator->();
+    }
 } // namespace rapidjson
 #    endif
 
@@ -142,7 +149,7 @@ namespace webpp::json::rapidjson {
             }
 
             [[nodiscard]] stl::size_t size() const noexcept {
-                return obj_handle.Size();
+                return obj_handle.MemberCount();
             }
 
             template <JSONKey KeyT, JSONValue ValT>
@@ -151,6 +158,11 @@ namespace webpp::json::rapidjson {
                 obj_handle.AddMember(::rapidjson::StringRef(key_view.data(), key_view.size()),
                                      stl::forward<ValT>(val));
                 return *this;
+            }
+
+            template <JSONKey KeyT, JSONValue ValT>
+            generic_object& emplace(KeyT&& key, ValT&& val) {
+                return insert<KeyT, ValT>(stl::forward<KeyT>(key), stl::forward<ValT>(val));
             }
 
             static_assert(stl::random_access_iterator<typename rapidjson_object_type::MemberIterator>);
@@ -166,6 +178,12 @@ namespace webpp::json::rapidjson {
             }
             auto cend() const {
                 return obj_handle.MemberEnd();
+            }
+
+            template <JSONKey KeyT>
+            [[nodiscard]] bool contains(KeyT&& key) const {
+                const auto key_view = istl::string_viewify_of<string_view_type>(stl::forward<KeyT>(key));
+                return obj_handle.HasMember(key_view.data()); // fixme: not passing the length
             }
 
           protected:
@@ -206,7 +224,7 @@ namespace webpp::json::rapidjson {
             /**
              * Check if it has a member
              */
-            [[nodiscard]] bool has(string_view_type key) const {
+            [[nodiscard]] bool contains(string_view_type key) const {
                 return val_handle.HasMember(::rapidjson::StringRef(key.data(), key.size()));
             }
 
