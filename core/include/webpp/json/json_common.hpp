@@ -20,7 +20,7 @@ namespace webpp::json {
          * Add more field types to the field pack
          */
         template <typename NewT>
-        [[nodiscard]] field_pack<T&..., NewT&> operator,(field<NewT>& input_field) noexcept {
+        [[nodiscard]] field_pack<T..., NewT> operator,(field<NewT>& input_field) noexcept {
             return {stl::tuple_cat(*this, stl::tuple<field<NewT>&>(input_field))};
         }
 
@@ -54,7 +54,7 @@ namespace webpp::json {
         using value_type          = T;
         using optional_value_type = stl::optional<value_type>;
 
-        key_type key;
+        key_type key{};
 
         constexpr field(key_type input_key) noexcept : key{input_key} {}
         constexpr field(key_type input_key, value_type const& input_value) noexcept
