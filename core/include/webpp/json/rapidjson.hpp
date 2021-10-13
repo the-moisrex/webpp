@@ -44,9 +44,47 @@ namespace webpp::json::rapidjson {
      */
     namespace details {
 
+        template <typename IteratorType>
+        using generic_iterator = IteratorType;
+
         template <Traits TraitsType, typename ValueType>
         struct generic_value;
 
+        template <Traits TraitsType, typename ArrayType>
+        struct generic_array {
+            using traits_type          = TraitsType;
+            using rapidjson_array_type = ArrayType;
+
+            generic_array(rapidjson_array_type& arr) : arr_handle{arr} {}
+
+            [[nodiscard]] stl::size_t size() const {
+                return arr_handle.Size();
+            }
+
+            [[nodiscard]] stl::size_t capacity() const {
+                return arr_handle.Capacity();
+            }
+
+
+            auto begin() const {
+                return arr_handle.Begin();
+            }
+            auto end() const {
+                return arr_handle.End();
+            }
+
+            auto cbegin() const {
+                return arr_handle.Begin();
+            }
+            auto cend() const {
+                return arr_handle.End();
+            }
+
+
+
+          protected:
+            rapidjson_array_type& arr_handle;
+        };
 
         /**
          * Generic number will hold
@@ -191,9 +229,6 @@ namespace webpp::json::rapidjson {
             rapidjson_object_type obj_handle;
         };
 
-        template <typename IteratorType>
-        using generic_iterator = IteratorType;
-
         template <Traits TraitsType, typename ValueType>
         struct generic_value {
             using traits_type           = TraitsType;
@@ -207,6 +242,8 @@ namespace webpp::json::rapidjson {
             using value_ref_holder      = generic_value<traits_type, value_ref>;   // ref holder
             using rapidjson_object_type = typename rapidjson_value_type::Object;
             using object_type           = generic_object<traits_type, rapidjson_object_type>;
+            using rapidjson_array_type  = typename rapidjson_value_type::Array;
+            using array_type            = generic_array<traits_type, rapidjson_array_type>;
             using generic_iterator_type =
               generic_iterator<typename stl::remove_cvref_t<value_type>::ValueIterator>;
 
@@ -341,8 +378,11 @@ namespace webpp::json::rapidjson {
             RENAME(stl::size_t, Capacity, capacity, const);
             RENAME(void, Clear, clear, );
             RENAME(object_type, GetObject, as_object, );
+            RENAME(array_type, GetArray, as_array, );
             RENAME(bool, IsNull, is_null, const);
             RENAME(bool, IsString, is_string, const);
+            RENAME(bool, IsObject, is_object, const);
+            RENAME(bool, IsArray, is_array, const);
 
             RENAME(generic_iterator_type, Begin, begin, );
             RENAME(generic_iterator_type, Begin, begin, const);

@@ -41,10 +41,13 @@ namespace webpp::json {
         { arr.cend() } -> stl::random_access_iterator;
 
         { arr.size() } -> stl::same_as<stl::size_t>;
+        { arr.capacity() } -> stl::same_as<stl::size_t>;
 
         arr.push_back(val); // push_back is so vector like, so we use that instead of the other possible names
         arr.emplace_back(val);
         arr.clear();
+
+        // todo: add erase methods
     };
 
     /**
