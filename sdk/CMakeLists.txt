@@ -11,6 +11,7 @@ target_link_libraries(${EXEC_NAME}
         PRIVATE ${LIB_NAME}
         PRIVATE Boost::boost
         PRIVATE Boost::program_options
+        PRIVATE zlib
         )
 # now we rename resman-bin executable to resman using target properties
 set_target_properties(${EXEC_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME}.exe)
