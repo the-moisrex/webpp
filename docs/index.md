@@ -1,37 +1,24 @@
-## Welcome to GitHub Pages
+## WEB++ (Modern C++ Web Framework)
+Develop your backend, and God willing the front-end someday, with C++.
 
-You can use the [editor on GitHub](https://github.com/the-moisrex/webpp/edit/dev/docs/index.md) to maintain and preview the content for your website in Markdown files.
+### Why C++?
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+Even though C++ practically runs the web and you can see C++'s steps every step of the way that your request goes, from your browser to web servers,
+people still think that C++ is not a good language for web development. It may have been true for a long time; but in the modern C++, we think C++ is
+one of the best languages that can help you make the best websites and services.
 
-### Markdown
+C++ is good for web development because:
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+* It's as fast as a language can get
+* It doesn't let you make stupid mistakes that a static analyzer can catch
+* It can be run in unsafe environments since you don't have to share your source codes
+* Has access to every corner of the operating system
+* Has access to hardwares like GPUs
+* It can put life into the old codes
+* You can run un-safe codes if your job depends on it :)
+* Your web app doesn't have be re-run every time a request comes, it can remember everything
+* Your website can be used in small IoT devices
+* You can share your website's binaries and let the users run them in their own systems without sharing your sources
+* It can run other languages; other languages use web servers that are written in C++ after all
 
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/the-moisrex/webpp/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+I mean, C++ is already running the internet, it's a shame not to take over the web services too :)
