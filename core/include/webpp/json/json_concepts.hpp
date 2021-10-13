@@ -144,7 +144,7 @@ namespace webpp::json {
      */
     template <typename T>
     concept JSONDocument = requires(T doc) {
-        requires JSONObject<T>;
+        requires JSONValue<T>;
         doc.parse("{}");
         T{"{}"};                // parse
         T{};                    // will contain a null value

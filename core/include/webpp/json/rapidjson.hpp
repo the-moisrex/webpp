@@ -268,22 +268,22 @@ namespace webpp::json::rapidjson {
 
 
 #    define IS_METHOD(real_type, type_name, is_func, get_func, set_func) \
-        [[nodiscard]] bool is_##type_name() const {                            \
-            return val_handle.is_func();                                       \
-        }                                                                      \
-                                                                               \
-        generic_value& set_##type_name(real_type const& val) {                 \
-            val_handle.set_func(val);                                          \
-            return *this;                                                      \
-        }                                                                      \
-                                                                               \
-        generic_value& set_##type_name(real_type&& val) {                      \
-            val_handle.set_func(stl::move(val));                               \
-            return *this;                                                      \
-        }                                                                      \
-                                                                               \
-        [[nodiscard]] real_type as_##type_name() const {                       \
-            return val_handle.get_func();                                      \
+        [[nodiscard]] bool is_##type_name() const {                      \
+            return val_handle.is_func();                                 \
+        }                                                                \
+                                                                         \
+        generic_value& set_##type_name(real_type const& val) {           \
+            val_handle.set_func(val);                                    \
+            return *this;                                                \
+        }                                                                \
+                                                                         \
+        generic_value& set_##type_name(real_type&& val) {                \
+            val_handle.set_func(stl::move(val));                         \
+            return *this;                                                \
+        }                                                                \
+                                                                         \
+        [[nodiscard]] real_type as_##type_name() const {                 \
+            return val_handle.get_func();                                \
         }
 
 
@@ -403,12 +403,17 @@ namespace webpp::json::rapidjson {
 
     template <Traits TraitsType = default_traits>
     struct document : public details::generic_value<TraitsType, ::rapidjson::Document> {
-        using traits_type             = TraitsType;
-        using string_view_type        = traits::string_view<traits_type>;
-        using char_type               = traits::char_type<traits_type>;
-        using general_allocator_type  = traits::general_allocator<traits_type, char_type>;
-        using value_type              = value<traits_type>;
-        using rapidjson_document_type = details::generic_value<traits_type, ::rapidjson::Document>;
+        using traits_type              = TraitsType;
+        using string_view_type         = traits::string_view<traits_type>;
+        using char_type                = traits::char_type<traits_type>;
+        using general_allocator_type   = traits::general_allocator<traits_type, char_type>;
+        using value_type               = value<traits_type>;
+        using rapidjson_document_type  = ::rapidjson::Document;
+        using rapidjson_value_type     = typename rapidjson_document_type::ValueType;
+        using rapidjson_allocator_type = typename rapidjson_document_type::AllocatorType;
+        using object_type   = details::generic_object<traits_type, typename rapidjson_value_type::Object>;
+        using array_type    = details::generic_array<traits_type, typename rapidjson_value_type::Array>;
+        using document_type = details::generic_value<traits_type, ::rapidjson::Document>;
 
         /**
          * A document containing null
@@ -438,7 +443,10 @@ namespace webpp::json::rapidjson {
         requires(stl::convertible_to<ConvertibleToValue, value_type> && // check if it's a value or an object
                  !stl::same_as<stl::remove_cvref_t<ConvertibleToValue>, document>)
           document(ConvertibleToValue&& val)
-          : rapidjson_document_type{.obj_handle = stl::forward<ConvertibleToValue>(val)} {}
+          : document_type{stl::forward<ConvertibleToValue>(val)} {}
+
+        template <JSONObject ObjType>
+        document(ObjType&& obj) : document_type{stl::forward<ObjType>(obj)} {}
 
         // implement the parse method
         template <istl::StringViewifiable StrT>
