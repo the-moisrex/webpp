@@ -231,24 +231,38 @@ namespace webpp::json::rapidjson {
 
         template <Traits TraitsType, typename ValueType>
         struct generic_value {
+          private:
+            // DocType could be a document or an GenericObject actually
+            template <typename DocType>
+            struct value_type_finder {
+                using type = typename DocType::ValueType;
+            };
+
+          public:
+            // finding the rapidjson's ValueType even if the ValueType is a ::rapidjson::Document type or a
+            // ::rapidjson::GenericObject
+            static constexpr bool has_ref = !stl::same_as<ValueType, stl::remove_cvref_t<ValueType>>;
+            using value_type              = istl::lazy_conditional_t<
+              (requires { typename stl::remove_cvref_t<ValueType>::ValueType; }),
+              istl::templated_lazy_type<value_type_finder, stl::remove_cvref_t<ValueType>>,
+              istl::lazy_type<stl::remove_cvref_t<ValueType>>>;
             using traits_type           = TraitsType;
-            using rapidjson_value_type  = ::rapidjson::Value;
             using string_type           = traits::general_string<traits_type>;
             using string_view_type      = traits::string_view<traits_type>;
             using char_type             = traits::char_type<traits_type>;
-            using value_type            = ValueType;
             using generic_value_type    = generic_value<traits_type, value_type>;
             using value_ref             = stl::add_lvalue_reference_t<value_type>; // add & to obj
-            using value_ref_holder      = generic_value<traits_type, value_ref>;   // ref holder
-            using rapidjson_object_type = typename rapidjson_value_type::Object;
+            using auto_ref_value_type   = stl::conditional_t<has_ref, value_ref, value_type>;
+            using value_ref_holder      = generic_value<traits_type, value_ref>; // ref holder
+            using rapidjson_object_type = typename value_type::Object;
             using object_type           = generic_object<traits_type, rapidjson_object_type>;
-            using rapidjson_array_type  = typename rapidjson_value_type::Array;
+            using rapidjson_array_type  = typename value_type::Array;
             using array_type            = generic_array<traits_type, rapidjson_array_type>;
             using generic_iterator_type =
               generic_iterator<typename stl::remove_cvref_t<value_type>::ValueIterator>;
 
           protected:
-            value_type val_handle{};
+            auto_ref_value_type val_handle{};
 
           public:
             generic_value() = default;
