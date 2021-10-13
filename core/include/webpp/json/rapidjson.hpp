@@ -273,6 +273,11 @@ namespace webpp::json::rapidjson {
                 return val_handle.template Is<T>();
             }
 
+            template <typename T>
+            [[nodiscard]] T as() const {
+                return val_handle.template Get<T>();
+            }
+
             /**
              * Check if it has a member
              */
