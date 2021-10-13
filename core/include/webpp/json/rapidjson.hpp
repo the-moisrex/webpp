@@ -267,7 +267,7 @@ namespace webpp::json::rapidjson {
             }
 
 
-#    define WEBPP_IS_METHOD(real_type, type_name, is_func, get_func, set_func) \
+#    define IS_METHOD(real_type, type_name, is_func, get_func, set_func) \
         [[nodiscard]] bool is_##type_name() const {                            \
             return val_handle.is_func();                                       \
         }                                                                      \
@@ -293,14 +293,14 @@ namespace webpp::json::rapidjson {
         }
 
             // WEBPP_IS_METHOD(null, IsNull, SetNull)
-            WEBPP_IS_METHOD(bool, bool, IsBool, GetBool, SetBool)
-            WEBPP_IS_METHOD(int, int, IsInt, GetInt, SetInt)
-            WEBPP_IS_METHOD(long, long, IsInt64, GetInt64, SetInt64)
-            WEBPP_IS_METHOD(long long, long_long, IsInt64, GetInt64, SetInt64)
-            WEBPP_IS_METHOD(double, double, IsDouble, GetDouble, SetDouble)
-            WEBPP_IS_METHOD(float, float, IsFloat, GetFloat, SetFloat)
-            WEBPP_IS_METHOD(uint16_t, uint, IsUint, GetUint, SetUint)
-            WEBPP_IS_METHOD(uint64_t, uint64, IsUint64, GetUint64, SetUint64)
+            IS_METHOD(bool, bool, IsBool, GetBool, SetBool)
+            IS_METHOD(int, int, IsInt, GetInt, SetInt)
+            IS_METHOD(long, long, IsInt64, GetInt64, SetInt64)
+            IS_METHOD(long long, long_long, IsInt64, GetInt64, SetInt64)
+            IS_METHOD(double, double, IsDouble, GetDouble, SetDouble)
+            IS_METHOD(float, float, IsFloat, GetFloat, SetFloat)
+            IS_METHOD(uint16_t, uint, IsUint, GetUint, SetUint)
+            IS_METHOD(uint64_t, uint64, IsUint64, GetUint64, SetUint64)
             // WEBPP_IS_METHOD(stl::string, string, IsString, GetString, SetString)
 
             WEBPP_IS_OPERATOR(bool, bool)
@@ -322,7 +322,7 @@ namespace webpp::json::rapidjson {
             // WEBPP_IS_METHOD(true, IsTrue)
             // WEBPP_IS_METHOD(false, IsFalse)
 
-#    undef WEBPP_IS_METHOD
+#    undef IS_METHOD
 #    undef WEBPP_IS_OPERATOR
 
 

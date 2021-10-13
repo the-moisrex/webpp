@@ -113,59 +113,29 @@ namespace webpp::json {
 
         // todo: find, clear, ... methods
 
-#define WEBPP_IS_METHOD(name, type)                    \
-    { val.template as<type>() } -> stl::same_as<type>; \
-    { val.is_##name() } -> stl::same_as<bool>;         \
-    { val.as_##name() } -> stl::same_as<type>;
-
-        // WEBPP_IS_METHOD(null)
-        WEBPP_IS_METHOD(bool, bool)
-        // WEBPP_IS_METHOD(char)
-        // WEBPP_IS_METHOD(short)
-        WEBPP_IS_METHOD(int, int)
-        WEBPP_IS_METHOD(long, long)
-        // WEBPP_IS_METHOD(long_long)
-        WEBPP_IS_METHOD(double, double)
-        // WEBPP_IS_METHOD(long_double)
-        WEBPP_IS_METHOD(float, float)
-        // WEBPP_IS_METHOD(int8)
-        // WEBPP_IS_METHOD(int16)
-        // WEBPP_IS_METHOD(int32)
-        // WEBPP_IS_METHOD(int64)
-        WEBPP_IS_METHOD(uint, unsigned)
-        // WEBPP_IS_METHOD(uint8)
-        // WEBPP_IS_METHOD(uint16)
-        // WEBPP_IS_METHOD(uint32)
-        // WEBPP_IS_METHOD(uint64)
-        // WEBPP_IS_METHOD(number)
-
-#undef WEBPP_IS_METHOD
-
         // todo: should we add stl::optional<...> ?
-#define WEBPP_AS_METHOD(type)                          \
+#define AS_METHOD(name, type)                          \
     { val.template as<type>() } -> stl::same_as<type>; \
-    { val.as_##name() } -> stl::same_as<type>;
+    { val.as_##name() } -> stl::same_as<type>;         \
+    { val.template is<type>() } -> stl::same_as<bool>; \
+    { val.is_##name() } -> stl::same_as<bool>;
 
-        WEBPP_AS_METHOD(bool)
-        WEBPP_AS_METHOD(char)
-        WEBPP_AS_METHOD(short)
-        WEBPP_AS_METHOD(int)
-        WEBPP_AS_METHOD(long)
-        // WEBPP_AS_METHOD(long long)
-        WEBPP_AS_METHOD(double)
-        // WEBPP_AS_METHOD(long double)
-        WEBPP_AS_METHOD(float)
-        WEBPP_AS_METHOD(int8_t)
-        WEBPP_AS_METHOD(int16_t)
-        WEBPP_AS_METHOD(int32_t)
-        WEBPP_AS_METHOD(int64_t)
-        WEBPP_AS_METHOD(unsigned)
-        WEBPP_AS_METHOD(uint8_t)
-        WEBPP_AS_METHOD(uint16_t)
-        WEBPP_AS_METHOD(uint32_t)
-        WEBPP_AS_METHOD(uint64_t)
+        AS_METHOD(bool, bool)
+        AS_METHOD(char, char)
+        // todo: add char8_t
+        AS_METHOD(double, double)
+        AS_METHOD(long_double, long double)
+        AS_METHOD(float, float)
+        AS_METHOD(int8, stl::int8_t)
+        AS_METHOD(int16, stl::int16_t)
+        AS_METHOD(int32, stl::int32_t)
+        AS_METHOD(int64, stl::int64_t)
+        AS_METHOD(uint8, stl::uint8_t)
+        AS_METHOD(uint16, stl::uint16_t)
+        AS_METHOD(uint32, stl::uint32_t)
+        AS_METHOD(uint64, stl::uint64_t)
 
-#undef WEBPP_AS_METHOD
+#undef AS_METHOD
     };
 
 
