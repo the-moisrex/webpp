@@ -14,6 +14,7 @@
 
 #    define RAPIDJSON_HAS_STDSTRING 1 // enable std::string support for rapidjson (todo: do we need it?)
 #    include <rapidjson/document.h>
+#    include <rapidjson/prettywriter.h>
 
 #    if (RAPIDJSON_MAJOR_VERSION == 1 && RAPIDJSON_MINOR_VERSION == 1 && RAPIDJSON_PATCH_VERSION == 0)
 namespace rapidjson {
@@ -313,23 +314,29 @@ namespace webpp::json::rapidjson {
 
             // WEBPP_IS_METHOD(null, IsNull, SetNull)
             IS_METHOD(bool, bool, IsBool, GetBool, SetBool)
-            IS_METHOD(int, int, IsInt, GetInt, SetInt)
-            IS_METHOD(long, long, IsInt64, GetInt64, SetInt64)
-            IS_METHOD(long long, long_long, IsInt64, GetInt64, SetInt64)
+            IS_METHOD(stl::int8_t, int8, IsInt, GetInt, SetInt)
+            IS_METHOD(stl::int16_t, int16, IsInt, GetInt, SetInt)
+            IS_METHOD(stl::int32_t, int32, IsInt, GetInt, SetInt)
+            IS_METHOD(stl::int64_t, int64, IsInt, GetInt, SetInt)
             IS_METHOD(double, double, IsDouble, GetDouble, SetDouble)
             IS_METHOD(float, float, IsFloat, GetFloat, SetFloat)
-            IS_METHOD(uint16_t, uint, IsUint, GetUint, SetUint)
-            IS_METHOD(uint64_t, uint64, IsUint64, GetUint64, SetUint64)
+            IS_METHOD(stl::uint8_t, uint8, IsUint, GetUint, SetUint)
+            IS_METHOD(stl::uint16_t, uint16, IsUint, GetUint, SetUint)
+            IS_METHOD(stl::uint32_t, uint32, IsUint, GetUint, SetUint)
+            IS_METHOD(stl::uint64_t, uint64, IsUint64, GetUint64, SetUint64)
             // WEBPP_IS_METHOD(stl::string, string, IsString, GetString, SetString)
 
             WEBPP_IS_OPERATOR(bool, bool)
-            WEBPP_IS_OPERATOR(int, int)
-            WEBPP_IS_OPERATOR(long, long)
-            WEBPP_IS_OPERATOR(long long, long_long)
+            WEBPP_IS_OPERATOR(stl::int8_t, int8)
+            WEBPP_IS_OPERATOR(stl::int16_t, int16)
+            WEBPP_IS_OPERATOR(stl::int32_t, int32)
+            WEBPP_IS_OPERATOR(stl::int64_t, int64)
+            WEBPP_IS_OPERATOR(stl::uint8_t, uint8)
+            WEBPP_IS_OPERATOR(stl::uint16_t, uint16)
+            WEBPP_IS_OPERATOR(stl::uint32_t, uint32)
+            WEBPP_IS_OPERATOR(stl::uint64_t, uint64)
             WEBPP_IS_OPERATOR(double, double)
             WEBPP_IS_OPERATOR(float, float)
-            WEBPP_IS_OPERATOR(unsigned, uint)
-            WEBPP_IS_OPERATOR(uint64_t, uint64)
             WEBPP_IS_OPERATOR(string_type, string)
             WEBPP_IS_OPERATOR(string_view_type, string_view)
 
@@ -346,8 +353,15 @@ namespace webpp::json::rapidjson {
 
 
 
-            string_type as_string() const {
-                return string_type{val_handle.GetString(), val_handle.GetStringLength()};
+            template <istl::String StrT = string_type, typename... Args>
+            StrT as_string(Args&&... string_args) const {
+                if constexpr (sizeof...(Args) == 0) {
+                    return StrT{val_handle.GetString(), val_handle.GetStringLength()};
+                } else {
+                    StrT output{stl::forward<Args>(string_args)...};
+                    output.append(val_handle.GetString(), val_handle.GetStringLength());
+                    return output;
+                }
             }
 
             string_view_type as_string_view() const {
@@ -360,6 +374,17 @@ namespace webpp::json::rapidjson {
                 return *this;
             }
 
+            template <istl::String StrT = string_type, typename... Args>
+            StrT pretty(Args&&... string_args) const {
+                StrT output{stl::forward<Args>(string_args)...};
+                ::rapidjson::PrettyWriter<stl::istringstream>{output};
+                return output;
+            }
+
+            template <istl::String StrT = string_type, typename... Args>
+            StrT uglified(Args&&... string_args) const {
+                return as_string();
+            }
 
             template <typename T>
             [[nodiscard]] value_ref_holder operator[](T&& val) {
