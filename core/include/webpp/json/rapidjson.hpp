@@ -192,7 +192,7 @@ namespace webpp::json::rapidjson {
                 return obj_handle.MemberCount();
             }
 
-            template <JSONKey KeyT, JSONValue ValT>
+            template <JSONKey KeyT, PotentialJSONValue ValT>
             generic_object& insert(KeyT&& key, ValT&& val) {
                 auto const key_view = istl::string_viewify_of<string_view_type>(stl::forward<KeyT>(key));
                 obj_handle.AddMember(::rapidjson::StringRef(key_view.data(), key_view.size()),
@@ -200,7 +200,7 @@ namespace webpp::json::rapidjson {
                 return *this;
             }
 
-            template <JSONKey KeyT, JSONValue ValT>
+            template <JSONKey KeyT, PotentialJSONValue ValT>
             generic_object& emplace(KeyT&& key, ValT&& val) {
                 return insert<KeyT, ValT>(stl::forward<KeyT>(key), stl::forward<ValT>(val));
             }
