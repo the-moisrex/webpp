@@ -91,8 +91,8 @@ namespace webpp::json {
      */
     template <typename T>
     concept JSONValue = requires(T val) {
-        requires JSONObject<T>; // using JSONObject as the default. If the users want, they can use
-                                // .as_array() function to get the same thing as an array
+        // requires JSONObject<T>; // using JSONObject as the default. If the users want, they can use
+        // .as_array() function to get the same thing as an array
         { val.is_null() } -> stl::same_as<bool>;
 
         // object related methods
@@ -105,15 +105,11 @@ namespace webpp::json {
 
         // string related methods
         { val.is_string() } -> stl::same_as<bool>;
-        { val.as_string() } -> istl::String;
         { val.as_string_view() } -> istl::StringView;
-        val.pretty_string();
-        val.uglified_string();
-        val.template to_string<stl::string>(stl::allocator<char>());
+        { val.pretty() } -> istl::String;
+        { val.uglified() } -> istl::String;
+        { val.template as_string<stl::string>(stl::allocator<char>()) } -> istl::String;
 
-        // todo: find, clear, ... methods
-
-        // todo: should we add stl::optional<...> ?
 #define AS_METHOD(name, type)                          \
     { val.template as<type>() } -> stl::same_as<type>; \
     { val.as_##name() } -> stl::same_as<type>;         \
@@ -121,10 +117,10 @@ namespace webpp::json {
     { val.is_##name() } -> stl::same_as<bool>;
 
         AS_METHOD(bool, bool)
-        AS_METHOD(char, char)
+        // AS_METHOD(char, char)
         // todo: add char8_t
         AS_METHOD(double, double)
-        AS_METHOD(long_double, long double)
+        // AS_METHOD(long_double, long double)
         AS_METHOD(float, float)
         AS_METHOD(int8, stl::int8_t)
         AS_METHOD(int16, stl::int16_t)
