@@ -11,6 +11,9 @@
 namespace webpp::json {
 
 
+    /**
+     * A helper to get the values out of json files
+     */
     template <typename T, typename ObjT>
     requires requires(ObjT json_obj) {
         { json_obj.template as<T>() } -> stl::same_as<T>;
@@ -19,6 +22,9 @@ namespace webpp::json {
         return obj.template as<T>();
     }
 
+    /**
+     * A helper to check if the json value is of the specified type
+     */
     template <typename T, typename ObjT>
     requires requires(ObjT json_obj) {
         { json_obj.template is<T>() } -> stl::same_as<bool>;

@@ -144,6 +144,7 @@ namespace webpp::json {
         { val.uglified() } -> istl::String;
         { val.template as_string<stl::string>(stl::allocator<char>()) } -> istl::String;
 
+        // todo: add default value as<...> functions
 #define AS_METHOD(name, type)                          \
     { val.template as<type>() } -> stl::same_as<type>; \
     { val.as_##name() } -> stl::same_as<type>;         \
