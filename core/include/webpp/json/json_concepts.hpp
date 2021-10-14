@@ -63,8 +63,6 @@ namespace webpp::json {
         typename T::value_type;
     }
     and requires(T arr, typename T::value_type val) {
-        requires JSONCommon<T>;
-
         { arr.begin() } -> stl::random_access_iterator;
         { arr.end() } -> stl::random_access_iterator;
         { arr.cbegin() } -> stl::random_access_iterator;
@@ -85,8 +83,6 @@ namespace webpp::json {
      */
     template <typename T>
     concept JSONObject = requires(T obj) {
-        requires JSONCommon<T>;
-
         // Object should be definable without the help of Value. So I'm not gonna do "-> JSONValue" here.
         obj[0];
         obj["key"];
