@@ -17,13 +17,13 @@ static_assert(JSONValue<typename doc_type::value_type>);
 TEST(JSONTest, Parse) {
     document doc;
     doc.parse("{id: 20}");
-    EXPECT_FALSE(doc.is_int());
+    EXPECT_FALSE(doc.is<int>());
 
     EXPECT_EQ(doc.size(), 1);
 
     auto id = doc["id"].as_object();
-    EXPECT_TRUE(id.is_int());
-    EXPECT_EQ(id.as_int(), 20);
+    EXPECT_TRUE(is<int>(id));
+    EXPECT_EQ(as<int>(id), 20);
 
     auto [key, value] = doc;
     EXPECT_EQ(key.as_string(), "id");

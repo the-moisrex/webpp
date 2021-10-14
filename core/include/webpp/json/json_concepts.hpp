@@ -25,6 +25,34 @@ namespace webpp::json {
     template <typename T>
     concept JSONString = istl::StringViewifiable<T>;
 
+    /**
+     * Common JSON Value methods.
+     */
+    template <typename T>
+    concept JSONCommon = requires (T val) {
+
+#define AS_METHOD(name, type)                          \
+    { val.template is<type>() } -> stl::same_as<bool>; \
+    { val.is_##name() } -> stl::same_as<bool>;
+
+        AS_METHOD(bool, bool)
+        // AS_METHOD(char, char)
+        // todo: add char8_t
+        AS_METHOD(double, double)
+        // AS_METHOD(long_double, long double)
+        AS_METHOD(float, float)
+        AS_METHOD(int8, stl::int8_t)
+        AS_METHOD(int16, stl::int16_t)
+        AS_METHOD(int32, stl::int32_t)
+        AS_METHOD(int64, stl::int64_t)
+        AS_METHOD(uint8, stl::uint8_t)
+        AS_METHOD(uint16, stl::uint16_t)
+        AS_METHOD(uint32, stl::uint32_t)
+        AS_METHOD(uint64, stl::uint64_t)
+
+#undef AS_METHOD
+    };
+
 
     /**
      * This is a json array type. It's not a C++ std::array; it's more of a std::vector but it's called
@@ -35,6 +63,8 @@ namespace webpp::json {
         typename T::value_type;
     }
     and requires(T arr, typename T::value_type val) {
+        requires JSONCommon<T>;
+
         { arr.begin() } -> stl::random_access_iterator;
         { arr.end() } -> stl::random_access_iterator;
         { arr.cbegin() } -> stl::random_access_iterator;
@@ -55,6 +85,8 @@ namespace webpp::json {
      */
     template <typename T>
     concept JSONObject = requires(T obj) {
+        requires JSONCommon<T>;
+
         // Object should be definable without the help of Value. So I'm not gonna do "-> JSONValue" here.
         obj[0];
         obj["key"];
@@ -91,6 +123,8 @@ namespace webpp::json {
      */
     template <typename T>
     concept JSONValue = requires(T val) {
+        requires JSONCommon<T>;
+
         // requires JSONObject<T>; // using JSONObject as the default. If the users want, they can use
         // .as_array() function to get the same thing as an array
         { val.is_null() } -> stl::same_as<bool>;
@@ -113,8 +147,6 @@ namespace webpp::json {
 #define AS_METHOD(name, type)                          \
     { val.template as<type>() } -> stl::same_as<type>; \
     { val.as_##name() } -> stl::same_as<type>;         \
-    { val.template is<type>() } -> stl::same_as<bool>; \
-    { val.is_##name() } -> stl::same_as<bool>;
 
         AS_METHOD(bool, bool)
         // AS_METHOD(char, char)
