@@ -10,6 +10,24 @@
 
 namespace webpp::json {
 
+
+    template <typename T, typename ObjT>
+    requires requires(ObjT json_obj) {
+        { json_obj.template as<T>() } -> stl::same_as<T>;
+    }
+    [[nodiscard]] T as(ObjT&& obj) {
+        return obj.template as<T>();
+    }
+
+    template <typename T, typename ObjT>
+    requires requires(ObjT json_obj) {
+        { json_obj.template is<T>() } -> stl::same_as<bool>;
+    }
+    [[nodiscard]] bool is(ObjT const& obj) {
+        return obj.template is<T>();
+    }
+
+
     template <typename T>
     struct field;
 
