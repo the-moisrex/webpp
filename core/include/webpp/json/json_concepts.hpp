@@ -134,6 +134,9 @@ namespace webpp::json {
 #undef AS_METHOD
     };
 
+    template <typename T>
+    concept PotentialJSONValue =
+      JSONValue<T> || JSONString<T> || JSONNumber<T> || JSONArray<T> || JSONObject<T>;
 
     /**
      * JSON Document will contain a JSON Document
