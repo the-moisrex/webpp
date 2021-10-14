@@ -93,8 +93,15 @@ namespace webpp::json::rapidjson {
             json_common() = default;
             json_common(value_ref obj) : val_handle{obj} {}
 
+            template <istl::StringViewifiable StrT>
+            value_ref_holder operator=(StrT&& val) {
+                auto const val_view = istl::string_viewify_of<string_view_type>(stl::forward<StrT>(val));
+                val_handle          = ::rapidjson::StringRef(val_view.data(), val_view.size());
+                return *this;
+            }
+
             template <typename T>
-            value_ref operator=(T&& val) {
+            value_ref_holder operator=(T&& val) {
                 val_handle = stl::forward<T>(val);
                 return *this;
             }
@@ -115,12 +122,12 @@ namespace webpp::json::rapidjson {
             return val_handle.is_func();                                 \
         }                                                                \
                                                                          \
-        value_ref set_##type_name(real_type const& val) {                \
+        value_ref_holder set_##type_name(real_type const& val) {         \
             val_handle.set_func(val);                                    \
             return *this;                                                \
         }                                                                \
                                                                          \
-        value_ref set_##type_name(real_type&& val) {                     \
+        value_ref_holder set_##type_name(real_type&& val) {              \
             val_handle.set_func(stl::move(val));                         \
             return *this;                                                \
         }                                                                \
@@ -204,7 +211,7 @@ namespace webpp::json::rapidjson {
                 return string_view_type{val_handle.GetString(), val_handle.GetStringLength()};
             }
 
-            value_ref set_string(string_view_type str) {
+            value_ref_holder set_string(string_view_type str) {
                 // todo: use allocator if possible
                 val_handle.SetString(str.data(), str.size());
                 return *this;
@@ -227,6 +234,12 @@ namespace webpp::json::rapidjson {
             auto_ref_value_type val_handle{};
         };
 
+
+
+
+        /**
+         * This is a generic array holder
+         */
         template <Traits TraitsType, typename ArrayType>
         struct generic_array {
             using traits_type          = TraitsType;
@@ -298,14 +311,12 @@ namespace webpp::json::rapidjson {
          */
         template <Traits TraitsType, typename ObjectType>
         // requires(istl::is_specialization_of_v<ObjectType, ::rapidjson::GenericObject>)
-        struct generic_object : public json_common<TraitsType, ObjectType> {
+        struct generic_object {
             using rapidjson_object_type = ObjectType;
             using traits_type           = TraitsType;
             using value_type            = generic_value<traits_type, rapidjson_object_type>;
             using string_view_type      = traits::string_view<traits_type>;
-            using json_common_type      = json_common<TraitsType, ObjectType>;
 
-            using json_common_type::json_common;
 
             template <JSONKey KeyType>
             [[nodiscard]] value_type operator[](KeyType&& key) {
@@ -382,7 +393,11 @@ namespace webpp::json::rapidjson {
             using rapidjson_array_type  = typename common_type::rapidjson_array_type;
             using array_type            = typename common_type::array_type;
             using generic_iterator_type = typename common_type::generic_iterator_type;
+            using json_common_type      = json_common<TraitsType, ValueType>;
 
+
+            using json_common_type::json_common;
+            using json_common_type::operator=;
 
             /**
              * Check if it has a member
@@ -450,9 +465,9 @@ namespace webpp::json::rapidjson {
         using rapidjson_document_type  = ::rapidjson::Document;
         using rapidjson_value_type     = typename rapidjson_document_type::ValueType;
         using rapidjson_allocator_type = typename rapidjson_document_type::AllocatorType;
-        using object_type   = details::generic_object<traits_type, typename rapidjson_value_type::Object>;
-        using array_type    = details::generic_array<traits_type, typename rapidjson_value_type::Array>;
-        using document_type = details::generic_value<traits_type, ::rapidjson::Document>;
+        using object_type = details::generic_object<traits_type, typename rapidjson_value_type::Object>;
+        using array_type  = details::generic_array<traits_type, typename rapidjson_value_type::Array>;
+        using generic_value_type = details::generic_value<traits_type, rapidjson_document_type>;
 
         /**
          * A document containing null
@@ -462,7 +477,7 @@ namespace webpp::json::rapidjson {
         /**
          * Get the file and parse it.
          */
-        document(stl::filesystem::path file_path) {
+        explicit document(stl::filesystem::path file_path) {
             // todo
         }
 
@@ -471,7 +486,8 @@ namespace webpp::json::rapidjson {
          */
         template <istl::StringViewifiable StrT>
         requires(!stl::same_as<stl::remove_cvref_t<StrT>, document>) // not a copy/move ctor
-          document(StrT&& json_string) {
+          document(StrT&& json_string)
+          : generic_value_type{} {
             parse(stl::forward<StrT>(json_string));
         }
 
@@ -479,13 +495,22 @@ namespace webpp::json::rapidjson {
          * A document containing the specified, already parsed, value
          */
         template <typename ConvertibleToValue>
-        requires(stl::convertible_to<ConvertibleToValue, value_type> && // check if it's a value or an object
-                 !stl::same_as<stl::remove_cvref_t<ConvertibleToValue>, document>)
+        requires(stl::convertible_to<stl::remove_cvref_t<ConvertibleToValue>,
+                                     value_type> && // check if it's a value or an object
+                 !stl::same_as<stl::remove_cvref_t<stl::remove_cvref_t<ConvertibleToValue>>, document>)
           document(ConvertibleToValue&& val)
-          : document_type{stl::forward<ConvertibleToValue>(val)} {}
+          : generic_value_type{stl::forward<ConvertibleToValue>(val)} {}
 
         template <JSONObject ObjType>
-        document(ObjType&& obj) : document_type{stl::forward<ObjType>(obj)} {}
+        document(ObjType&& obj) : generic_value_type{stl::forward<ObjType>(obj)} {}
+
+
+        template <typename T>
+        document& operator=(T&& val) {
+            static_cast<generic_value_type*>(this)->operator=(stl::forward<T>(val));
+            return *this;
+        }
+
 
         // implement the parse method
         template <istl::StringViewifiable StrT>
