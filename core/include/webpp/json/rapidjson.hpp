@@ -59,20 +59,19 @@ namespace webpp::json::rapidjson {
          */
         template <Traits TraitsType, typename RapidJSONIterator>
         struct generic_member_iterator : public stl::remove_pointer_t<RapidJSONIterator> {
-            using base_type                = stl::remove_pointer_t<RapidJSONIterator>;
-            using traits_type              = TraitsType;
-            using rapidjson_value_type     = stl::remove_cvref_t<typename base_type::Reference>;
-            using value_type               = generic_value<traits_type, rapidjson_value_type>;
-            using non_const_iterator       = typename base_type::NonConstIterator;
-            using iterator                 = generic_member_iterator;
-            using diff_t                   = typename base_type::DifferenceType;
-            using rapidjson_const_iterator = typename base_type::ConstIterator;
-            using const_iterator           = generic_member_iterator<traits_type, rapidjson_const_iterator>;
-            using rapidjson_reference      = typename base_type::Reference;
-            using rapidjson_generic_member = stl::remove_cvref_t<rapidjson_reference>;
+            using base_type                  = stl::remove_pointer_t<RapidJSONIterator>;
+            using traits_type                = TraitsType;
+            using rapidjson_member_reference = typename base_type::Reference;
+            using rapidjson_member_type      = stl::remove_cvref_t<rapidjson_member_reference>;
+            using rapidjson_value_type       = decltype(stl::declval<rapidjson_member_type>().name);
+            using value_type                 = generic_value<traits_type, rapidjson_value_type>;
+            using non_const_iterator         = typename base_type::NonConstIterator;
+            using iterator                   = generic_member_iterator;
+            using diff_t                     = typename base_type::DifferenceType;
+            using rapidjson_const_iterator   = typename base_type::ConstIterator;
+            using const_iterator             = generic_member_iterator<traits_type, rapidjson_const_iterator>;
             struct member_type {
-                member_type(rapidjson_generic_member const& mem) : key{mem.name}, value{mem.value} {}
-                member_type(rapidjson_generic_member& mem) : key{mem.name}, value{mem.value} {}
+                member_type(rapidjson_member_reference mem) : key{mem.name}, value{mem.value} {}
 
                 value_type key;
                 value_type value;
@@ -192,6 +191,11 @@ namespace webpp::json::rapidjson {
               (requires { typename stl::remove_cvref_t<ValueType>::ValueType; }),
               istl::templated_lazy_type<value_type_finder, stl::remove_cvref_t<ValueType>>,
               istl::lazy_type<stl::remove_cvref_t<ValueType>>>;
+
+            static_assert(
+              requires { typename value_type::Object; },
+              "The specified ValueType doesn't seem to be a valid rapidjson value");
+
             using traits_type           = TraitsType;
             using string_type           = traits::general_string<traits_type>;
             using string_view_type      = traits::string_view<traits_type>;

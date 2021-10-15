@@ -88,6 +88,7 @@ namespace webpp::ascii {
 
     /**
      * Check if two strings are equal case-insensitively
+     * todo: update with the new eve project tools; example: https://godbolt.org/z/qzjsG4Prd
      */
     template <char_case_side Side = char_case_side::both_unknown>
     [[nodiscard]] static inline bool iequals(istl::StringViewifiable auto&& _str1,
