@@ -45,9 +45,6 @@ namespace webpp::json::rapidjson {
      */
     namespace details {
 
-        template <typename IteratorType>
-        using generic_iterator = IteratorType;
-
         template <Traits TraitsType, typename ValueType>
         struct generic_value;
 
@@ -56,6 +53,126 @@ namespace webpp::json::rapidjson {
 
         template <Traits TraitsType, typename ObjectType>
         struct generic_object;
+
+        /**
+         * Generic Member Iterator
+         */
+        template <Traits TraitsType, typename RapidJSONIterator>
+        struct generic_member_iterator : public stl::remove_pointer_t<RapidJSONIterator> {
+            using base_type                = stl::remove_pointer_t<RapidJSONIterator>;
+            using traits_type              = TraitsType;
+            using rapidjson_value_type     = stl::remove_cvref_t<typename base_type::Reference>;
+            using value_type               = generic_value<traits_type, rapidjson_value_type>;
+            using non_const_iterator       = typename base_type::NonConstIterator;
+            using iterator                 = generic_member_iterator;
+            using diff_t                   = typename base_type::DifferenceType;
+            using rapidjson_const_iterator = typename base_type::ConstIterator;
+            using const_iterator           = generic_member_iterator<traits_type, rapidjson_const_iterator>;
+            using rapidjson_reference      = typename base_type::Reference;
+            using rapidjson_generic_member = stl::remove_cvref_t<rapidjson_reference>;
+            struct member_type {
+                member_type(rapidjson_generic_member const& mem) : key{mem.name}, value{mem.value} {}
+                member_type(rapidjson_generic_member& mem) : key{mem.name}, value{mem.value} {}
+
+                value_type key;
+                value_type value;
+            };
+            using pointer   = stl::add_pointer_t<member_type>;
+            using reference = stl::add_lvalue_reference_t<member_type>;
+
+            using base_type::base_type;
+
+            generic_member_iterator(base_type const& iter) : base_type{iter} {}
+            generic_member_iterator(base_type&& iter) : base_type{stl::move(iter)} {}
+            generic_member_iterator(generic_member_iterator const& iter)     = default;
+            generic_member_iterator(generic_member_iterator&& iter) noexcept = default;
+
+            iterator& operator=(non_const_iterator const& it) {
+                base_type::operator=(it);
+                return *this;
+            }
+
+
+            iterator& operator++() {
+                base_type::operator++();
+                return *this;
+            }
+            iterator& operator--() {
+                base_type::operator--();
+                return *this;
+            }
+
+            iterator operator++(int) {
+                iterator old(*this);
+                this->   operator++();
+                return old;
+            }
+            iterator operator--(int) {
+                iterator old(*this);
+                this->   operator--();
+                return old;
+            }
+
+
+            iterator operator+(diff_t n) const {
+                return base_type::operator+(n);
+            }
+            iterator operator-(diff_t n) const {
+                return base_type::operator-(n);
+            }
+
+            iterator& operator+=(diff_t n) {
+                base_type::operator+=(n);
+                return *this;
+            }
+            iterator& operator-=(diff_t n) {
+                base_type::operator-=(n);
+                return *this;
+            }
+
+
+
+            bool operator==(const_iterator that) const {
+                return base_type::operator==(that);
+            }
+            bool operator!=(const_iterator that) const {
+                return base_type::operator!=(that);
+            }
+            bool operator<=(const_iterator that) const {
+                return base_type::operator<=(that);
+            }
+            bool operator>=(const_iterator that) const {
+                return base_type::operator>=(that);
+            }
+            bool operator<(const_iterator that) const {
+                return base_type::operator<(that);
+            }
+            bool operator>(const_iterator that) const {
+                return base_type::operator>(that);
+            }
+
+
+
+            reference operator*() const {
+                return base_type::operator*();
+            }
+            pointer operator->() const {
+                return base_type::operator->();
+            }
+            reference operator[](diff_t n) const {
+                return base_type::operator[](n);
+            }
+
+
+
+            diff_t operator-(const_iterator that) const {
+                return base_type::operator-(that);
+            }
+        };
+
+
+
+
 
         template <Traits TraitsType, typename ValueType>
         struct json_common {
@@ -87,8 +204,6 @@ namespace webpp::json::rapidjson {
             using object_type           = generic_object<traits_type, rapidjson_object_type>;
             using rapidjson_array_type  = typename value_type::Array;
             using array_type            = generic_array<traits_type, rapidjson_array_type>;
-            using generic_iterator_type =
-              generic_iterator<typename stl::remove_cvref_t<value_type>::ValueIterator>;
 
             json_common() = default;
             json_common(value_ref obj) : val_handle{obj} {}
@@ -312,10 +427,14 @@ namespace webpp::json::rapidjson {
         template <Traits TraitsType, typename ObjectType>
         // requires(istl::is_specialization_of_v<ObjectType, ::rapidjson::GenericObject>)
         struct generic_object {
-            using rapidjson_object_type = ObjectType;
-            using traits_type           = TraitsType;
-            using value_type            = generic_value<traits_type, rapidjson_object_type>;
-            using string_view_type      = traits::string_view<traits_type>;
+            using rapidjson_object_type           = ObjectType;
+            using traits_type                     = TraitsType;
+            using value_type                      = generic_value<traits_type, rapidjson_object_type>;
+            using string_view_type                = traits::string_view<traits_type>;
+            using rapidjson_member_iterator       = typename rapidjson_object_type::MemberIterator;
+            using rapidjson_const_member_iterator = typename rapidjson_object_type::ConstMemberIterator;
+            using iterator_type       = generic_member_iterator<traits_type, rapidjson_member_iterator>;
+            using const_iterator_type = generic_member_iterator<traits_type, rapidjson_const_member_iterator>;
 
 
             template <JSONKey KeyType>
@@ -354,17 +473,17 @@ namespace webpp::json::rapidjson {
             }
 
             static_assert(stl::random_access_iterator<typename rapidjson_object_type::MemberIterator>);
-            auto begin() const {
+            iterator_type begin() const {
                 return obj_handle.MemberBegin();
             }
-            auto end() const {
+            iterator_type end() const {
                 return obj_handle.MemberEnd();
             }
 
-            auto cbegin() const {
+            iterator_type cbegin() const {
                 return obj_handle.MemberBegin();
             }
-            auto cend() const {
+            iterator_type cend() const {
                 return obj_handle.MemberEnd();
             }
 
@@ -392,7 +511,6 @@ namespace webpp::json::rapidjson {
             using object_type           = typename common_type::object_type;
             using rapidjson_array_type  = typename common_type::rapidjson_array_type;
             using array_type            = typename common_type::array_type;
-            using generic_iterator_type = typename common_type::generic_iterator_type;
             using json_common_type      = json_common<TraitsType, ValueType>;
 
 
@@ -438,12 +556,12 @@ namespace webpp::json::rapidjson {
             RENAME(stl::size_t, Capacity, capacity, const);
             RENAME(void, Clear, clear, );
 
-            RENAME(generic_iterator_type, Begin, begin, );
-            RENAME(generic_iterator_type, Begin, begin, const);
-            RENAME(generic_iterator_type, End, end, );
-            RENAME(generic_iterator_type, End, end, const);
-            RENAME(generic_iterator_type, Begin, cbegin, const);
-            RENAME(generic_iterator_type, End, cend, const);
+            //            RENAME(generic_iterator_type, Begin, begin, );
+            //            RENAME(generic_iterator_type, Begin, begin, const);
+            //            RENAME(generic_iterator_type, End, end, );
+            //            RENAME(generic_iterator_type, End, end, const);
+            //            RENAME(generic_iterator_type, Begin, cbegin, const);
+            //            RENAME(generic_iterator_type, End, cend, const);
 
 #    undef RENAME
         };
