@@ -10,6 +10,7 @@
 #    include "../traits/default_traits.hpp"
 #    include "json_concepts.hpp"
 
+#    include <compare>
 #    include <filesystem>
 
 #    define RAPIDJSON_HAS_STDSTRING 1 // enable std::string support for rapidjson (todo: do we need it?)
@@ -70,14 +71,21 @@ namespace webpp::json::rapidjson {
             using diff_t                     = typename base_type::DifferenceType;
             using rapidjson_const_iterator   = typename base_type::ConstIterator;
             using const_iterator             = generic_member_iterator<traits_type, rapidjson_const_iterator>;
-            struct member_type {
-                member_type(rapidjson_member_reference mem) : key{mem.name}, value{mem.value} {}
 
-                value_type key;
-                value_type value;
+            template <typename MemberValType>
+            struct member_type {
+
+                member_type(auto&& mem) : key{mem.name}, value{mem.value} {}
+                auto operator<=>(member_type const&) const = default;
+                auto operator<=>(MemberValType const& val) const {
+                    return val <=> value;
+                }
+
+                MemberValType key;
+                MemberValType value;
             };
-            using pointer   = stl::add_pointer_t<member_type>;
-            using reference = stl::add_lvalue_reference_t<member_type>;
+            using pointer   = member_type<stl::add_pointer_t<value_type>>;
+            using reference = member_type<stl::add_lvalue_reference_t<value_type>>;
 
             using base_type::base_type;
 
@@ -154,6 +162,25 @@ namespace webpp::json::rapidjson {
                 return base_type::operator>(that);
             }
 
+            bool operator==(iterator const& that) const {
+                return base_type::operator==(that);
+            }
+            bool operator!=(iterator const& that) const {
+                return base_type::operator!=(that);
+            }
+            bool operator<=(iterator const& that) const {
+                return base_type::operator<=(that);
+            }
+            bool operator>=(iterator const& that) const {
+                return base_type::operator>=(that);
+            }
+            bool operator<(iterator const& that) const {
+                return base_type::operator<(that);
+            }
+            bool operator>(iterator const& that) const {
+                return base_type::operator>(that);
+            }
+
 
 
             reference operator*() const {
@@ -173,6 +200,12 @@ namespace webpp::json::rapidjson {
             }
         };
 
+        template <Traits TraitsType, typename RapidJSONIterator>
+        generic_member_iterator<TraitsType, RapidJSONIterator>
+        operator+(typename generic_member_iterator<TraitsType, RapidJSONIterator>::diff_t n,
+                  generic_member_iterator<TraitsType, RapidJSONIterator> const&           j) {
+            return j + n;
+        }
 
 
 
