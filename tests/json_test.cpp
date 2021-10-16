@@ -2,17 +2,19 @@
 
 
 #include "../core/include/webpp/json/defaultjson.hpp"
-#include "../core/include/webpp/json/json_concepts.hpp"
 #include "../core/include/webpp/json/json_common.hpp"
+#include "../core/include/webpp/json/json_concepts.hpp"
 #include "./common_pch.hpp"
 
 using namespace webpp;
 using namespace webpp::json;
 
-using doc_type = document<>;
+using doc_type    = document<>;
+using value_type  = typename doc_type::value_type;
+using object_type = typename doc_type::object_type;
+static_assert(JSONObject<object_type>);
+static_assert(JSONValue<value_type>);
 static_assert(JSONDocument<doc_type>);
-static_assert(JSONObject<typename doc_type::object_type>);
-static_assert(JSONValue<typename doc_type::value_type>);
 
 TEST(JSONTest, Parse) {
     document doc;
