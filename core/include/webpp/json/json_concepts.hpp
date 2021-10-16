@@ -29,7 +29,7 @@ namespace webpp::json {
      * Common JSON Value methods.
      */
     template <typename T>
-    concept JSONCommon = requires (T val) {
+    concept JSONCommon = requires(T val) {
 
 #define AS_METHOD(name, type)                          \
     { val.template is<type>() } -> stl::same_as<bool>; \
@@ -127,7 +127,7 @@ namespace webpp::json {
 
         // object related methods
         { val.is_object() } -> stl::same_as<bool>;
-        val.as_object(); // -> JSONObject, but it'll be a circular dependency
+        { val.as_object() } -> JSONObject;
 
         // array related methods
         { val.is_array() } -> stl::same_as<bool>;
@@ -140,10 +140,10 @@ namespace webpp::json {
         { val.uglified() } -> istl::String;
         { val.template as_string<stl::string>(stl::allocator<char>()) } -> istl::String;
 
-        // todo: add default value as<...> functions
+            // todo: add default value as<...> functions
 #define AS_METHOD(name, type)                          \
     { val.template as<type>() } -> stl::same_as<type>; \
-    { val.as_##name() } -> stl::same_as<type>;         \
+    { val.as_##name() } -> stl::same_as<type>;
 
         AS_METHOD(bool, bool)
         // AS_METHOD(char, char)
