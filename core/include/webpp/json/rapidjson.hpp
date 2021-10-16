@@ -86,12 +86,11 @@ namespace webpp::json::rapidjson {
             generic_member_iterator(generic_member_iterator const& iter)     = default;
             generic_member_iterator(generic_member_iterator&& iter) noexcept = default;
 
-            iterator& operator=(generic_member_iterator&& iter) noexcept = default;
-            iterator& operator=(generic_member_iterator const& iter) noexcept = default;
+            iterator& operator=(iterator&& iter) noexcept = default;
+            iterator& operator=(iterator const& iter) noexcept = default;
 
-            template <typename T>
-            iterator& operator=(T&& iter) {
-                base_type::opreator = (stl::forward<T>(iter));
+            iterator& operator=(const non_const_iterator& iter) {
+                base_type::opreator = (iter);
                 return *this;
             }
 
