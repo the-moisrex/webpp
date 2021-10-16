@@ -210,7 +210,7 @@ namespace webpp::json::rapidjson {
 
 
 
-        template <Traits TraitsType, typename ValueType>
+        template <Traits TraitsType, typename ValueContainer>
         struct json_common {
 
           private:
@@ -223,11 +223,13 @@ namespace webpp::json::rapidjson {
           public:
             // finding the rapidjson's ValueType even if the ValueType is a ::rapidjson::Document type or a
             // ::rapidjson::GenericObject
-            static constexpr bool has_ref = !stl::same_as<ValueType, stl::remove_cvref_t<ValueType>>;
-            using value_type              = istl::lazy_conditional_t<
-              (requires { typename stl::remove_cvref_t<ValueType>::ValueType; }),
-              istl::templated_lazy_type<value_type_finder, stl::remove_cvref_t<ValueType>>,
-              istl::lazy_type<stl::remove_cvref_t<ValueType>>>;
+            static constexpr bool has_ref =
+              !stl::same_as<ValueContainer, stl::remove_cvref_t<ValueContainer>>;
+            using container_type = ValueContainer;
+            using value_type     = istl::lazy_conditional_t<
+              (requires { typename stl::remove_cvref_t<ValueContainer>::ValueType; }),
+              istl::templated_lazy_type<value_type_finder, stl::remove_cvref_t<ValueContainer>>,
+              istl::lazy_type<stl::remove_cvref_t<ValueContainer>>>;
 
             static_assert(
               requires { typename value_type::Object; },
@@ -387,7 +389,7 @@ namespace webpp::json::rapidjson {
 
 
           protected:
-            auto_ref_value_type val_handle{};
+            container_type val_handle{};
         };
 
 
