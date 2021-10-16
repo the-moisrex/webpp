@@ -66,6 +66,14 @@ namespace webpp::json {
               *this);
             return *this;
         }
+
+        template <typename ObjHolder>
+        requires requires(ObjHolder holder) {
+            { holder.as_object() } -> JSONObject;
+        }
+        field_pack& operator=(ObjHolder& obj) {
+            return operator=(obj.as_object());
+        }
     };
 
     /**
