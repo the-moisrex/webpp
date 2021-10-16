@@ -479,6 +479,10 @@ namespace webpp::json::rapidjson {
             using iterator_type       = generic_member_iterator<traits_type, rapidjson_member_iterator>;
             using const_iterator_type = generic_member_iterator<traits_type, rapidjson_const_member_iterator>;
 
+            // todo: add more optimization for reference and const reference and move
+            // rapidjson_object_type might be a reference itself.
+            generic_object(rapidjson_object_type obj) : obj_handle{obj} {}
+
 
             template <JSONKey KeyType>
             [[nodiscard]] value_type operator[](KeyType&& key) {
