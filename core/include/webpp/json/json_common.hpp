@@ -40,6 +40,10 @@ namespace webpp::json {
     template <typename... T>
     struct field_pack : public stl::tuple<field<T>&...> {
 
+        using tuple_type = stl::tuple<field<T>&...>;
+
+        using tuple_type::tuple; // ctor
+
         /**
          * Add more field types to the field pack
          */
