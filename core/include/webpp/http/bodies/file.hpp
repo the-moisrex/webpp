@@ -91,8 +91,9 @@ namespace webpp::http {
 
 
     struct file_response {
-        using response_body_extensions = extension_pack<details::string_response_body_extension>;
-        using context_extensions       = extension_pack<details::file_context_extension>;
+        using response_body_extensions =
+          extension_pack<details::string_response_body_extension, details::file_context_extension>;
+        using context_extensions = extension_pack<details::file_context_extension>;
     };
 
 
