@@ -87,12 +87,64 @@ namespace webpp::http {
                 }
             };
         };
+
+
+        struct response_body_file_extension {
+
+            template <Traits TraitsType, typename Mother>
+            struct type : public Mother {
+                using traits_type   = TraitsType;
+                using response_type = typename Mother::response_type;
+                using body_type     = typename response_type::body_type;
+                using string_type   = typename body_type::string_type;
+                using char_type     = traits::char_type<traits_type>;
+                using ifstream_type = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
+
+                // ctor
+                using Mother::Mother;
+
+
+              public:
+                bool load(stl::filesystem::path const& filepath, file_options const& options = {}) noexcept {
+#ifdef WEBPP_EMBEDDED_FILES
+                    if (auto content = ::get_static_file(filepath); !content.empty()) {
+                        return string_type{this->content, alloc};
+                    }
+#endif
+
+                    // todo: cache
+
+                    // TODO: performance tests
+                    // todo: add unix specializations for performance and having fun reasons
+                    // TODO: change the replace_string with replace_string_view if the file is cached
+
+                    if (auto in = ifstream_type(filepath.c_str(), stl::ios::binary | stl::ios::ate);
+                        in.is_open()) {
+                        // details on this matter:
+                        // https://stackoverflow.com/questions/11563963/writing-a-binary-file-in-c-very-fast/39097696#39097696
+                        // stl::unique_ptr<char[]> buffer{new char[buffer_size]};
+                        // in.rdbuf()->pubsetbuf(buffer.get(), buffer_size); // speed boost, I think
+                        auto                         size = in.tellg();
+                        stl::unique_ptr<char_type[]> result(this->get_allocator().allocate(size));
+                        in.seekg(0);
+                        in.read(result.get(), size);
+                        // todo: cache the results
+                        *this = string_type{result.get(),
+                                            static_cast<stl::string_view::size_type>(size),
+                                            this->get_allocator()};
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            };
+        };
     } // namespace details
 
 
     struct file_response {
         using response_body_extensions =
-          extension_pack<details::string_response_body_extension, details::file_context_extension>;
+          extension_pack<details::string_response_body_extension, details::response_body_file_extensions>;
         using context_extensions = extension_pack<details::file_context_extension>;
     };
 
