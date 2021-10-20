@@ -1,7 +1,8 @@
 #ifndef WEBPP_CACHE_CACHE_H
 #define WEBPP_CACHE_CACHE_H
 
-#include <type_traits>
+#include "../std/type_traits.hpp"
+
 #include <utility>
 
 namespace webpp {

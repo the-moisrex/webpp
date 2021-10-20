@@ -7,10 +7,9 @@
 
 #include "../../../std/optional.hpp"
 #include "../../../std/string_view.hpp"
+#include "../../../std/type_traits.hpp"
 #include "../../../validators/validators.hpp"
 #include "../path.hpp"
-
-#include <type_traits>
 
 namespace webpp::http::routes {
 
@@ -43,6 +42,6 @@ namespace webpp::http::routes {
     // todo: other types including:
     // double, float, unsigned, short, ...
 
-} // namespace webpp::routes
+} // namespace webpp::http::routes
 
 #endif // WEBPP_NUMBER_H

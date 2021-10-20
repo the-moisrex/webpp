@@ -4,8 +4,8 @@
 #define WEBPP_LOG_CONCEPTS_HPP
 
 #include "../std/concepts.hpp"
+#include "../std/type_traits.hpp"
 
-#include <type_traits>
 #include <system_error>
 
 namespace webpp {
