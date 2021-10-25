@@ -7,3 +7,4 @@ if (NOT ZLIB_FOUND)
             URL "https://github.com/madler/zlib/archive/refs/tags/v1.2.11.zip"
     )
 endif ()
+

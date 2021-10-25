@@ -222,7 +222,7 @@ target_link_libraries(${LIB_NAME}
         PUBLIC magic_enum::magic_enum
         PUBLIC date::date
         ${BROTLI_SHARED_LIBS}
-        zlib
+        PUBLIC ZLIB::ZLIB
         # PUBLIC date::date-tz
         )
 
