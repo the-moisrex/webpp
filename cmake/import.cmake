@@ -25,7 +25,7 @@ else ()
     message(STATUS "Downloading CPM (CMake Dependency Manager)")
 
     ## the rest of this is from get_cpm.cmake of the project CPM.cmake
-    set(CPM_DOWNLOAD_VERSION 0.34.0)
+    set(CPM_DOWNLOAD_VERSION 1.0.0-development-version)
 
     if (CPM_SOURCE_CACHE)
         # Expand relative path. This is important if the provided path contains a tilde (~)
