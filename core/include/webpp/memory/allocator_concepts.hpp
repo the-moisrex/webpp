@@ -47,7 +47,7 @@ namespace webpp {
     };
 
     template <typename T, typename Alloc>
-    concept AllocatorOf = Allocator<Alloc>&& stl::same_as<typename Alloc::value_type, T>;
+    concept AllocatorOf = Allocator<Alloc> && stl::is_same_v<typename Alloc::value_type, T>;
 
     // static_assert(Allocator<stl::allocator<int>>, "There's a problem with Allocator concept");
 
@@ -96,7 +96,7 @@ namespace webpp {
 
 
         template <ResourceDescriptor RD, typename T>
-        static inline auto construct_allocator(storage<RD>& res) noexcept {
+        static inline auto construct_allocator(storage<RD> & res) noexcept {
             return RD::template construct_allocator<T>(res);
         }
 

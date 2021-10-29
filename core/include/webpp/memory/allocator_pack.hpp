@@ -3,6 +3,7 @@
 #ifndef WEBPP_ALLOCATOR_PACK_HPP
 #define WEBPP_ALLOCATOR_PACK_HPP
 
+#include "../std/concepts.hpp"
 #include "../std/type_traits.hpp"
 #include "../utils/flags.hpp"
 #include "allocator_concepts.hpp"

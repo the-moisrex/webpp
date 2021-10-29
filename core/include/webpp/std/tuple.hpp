@@ -113,7 +113,7 @@ namespace webpp::istl {
         // this uses the TupleT's tuple-like type; std::tuple<T...>;
         using no_order_tuple = typename rebind_parameters<TupleT, stl::remove_cvref_t<T>...>::type;
 
-        if constexpr (stl::same_as<TupleT, no_order_tuple>) {
+        if constexpr (stl::is_same_v<TupleT, no_order_tuple>) {
             // It's in order, so there's no need of re-ordering
             return TupleT{stl::forward<T>(args)...};
         } else {
