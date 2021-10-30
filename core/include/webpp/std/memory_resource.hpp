@@ -3,6 +3,8 @@
 #    define webpp_has_memory_resource 1
 #elif __has_include(<boost/container/pmr/memory_resource.hpp>)
 #    include <boost/container/pmr/memory_resource.hpp>
+#    include <boost/container/pmr/monotonic_buffer_resource.hpp>
+#    include <boost/container/pmr/polymorphic_allocator.hpp>
 #    define webpp_has_memory_resource         1
 #    define webpp_using_boost_memory_resource 1
 namespace webpp::stl::pmr {
