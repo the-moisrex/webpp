@@ -5,6 +5,8 @@
 #    include <boost/container/pmr/memory_resource.hpp>
 #    include <boost/container/pmr/monotonic_buffer_resource.hpp>
 #    include <boost/container/pmr/polymorphic_allocator.hpp>
+#    include <boost/container/pmr/synchronized_pool_resource.hpp>
+#    include <boost/container/pmr/unsynchronized_pool_resource.hpp>
 #    define webpp_has_memory_resource         1
 #    define webpp_using_boost_memory_resource 1
 namespace webpp::stl::pmr {
