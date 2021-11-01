@@ -144,7 +144,7 @@ namespace webpp::http {
 
     struct file_response {
         using response_body_extensions =
-          extension_pack<details::string_response_body_extension, details::response_body_file_extensions>;
+          extension_pack<details::string_response_body_extension, details::response_body_file_extension>;
         using context_extensions = extension_pack<details::file_context_extension>;
     };
 
