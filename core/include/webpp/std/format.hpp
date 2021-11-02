@@ -42,13 +42,14 @@ namespace webpp::stl {
     struct formatter;
 
     template <typename... Args>
-    constexpr auto format(Args&&... args) noexcept(noexcept(fmt::format(stl::forward<Args>(args)...))) {
-        return fmt::format(stl::forward<Args>(args)...);
+    constexpr decltype(auto)
+    format(Args&&... args) noexcept(noexcept(fmt::format(forward<Args>(args)...))) {
+        return fmt::format(forward<Args>(args)...);
     }
 
     template <typename... Args>
-    inline auto format_to(Args&&... args) {
-        return fmt::format_to(stl::forward<Args>(args)...);
+    inline decltype(auto) format_to(Args&&... args) {
+        return fmt::format_to(forward<Args>(args)...);
     }
 
 } // namespace webpp::stl
