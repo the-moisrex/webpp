@@ -95,8 +95,7 @@ namespace webpp::http {
             template <Traits TraitsType, typename Mother>
             struct type : public Mother {
                 using traits_type   = TraitsType;
-                using response_type = typename Mother::response_type;
-                using body_type     = typename response_type::body_type;
+                using body_type     = Mother;
                 using string_type   = typename body_type::string_type;
                 using char_type     = traits::char_type<traits_type>;
                 using ifstream_type = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
