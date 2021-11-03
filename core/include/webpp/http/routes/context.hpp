@@ -173,8 +173,10 @@ namespace webpp::http {
         }
 
         [[nodiscard]] constexpr HTTPResponse auto error(http::status_code_type error_code) const noexcept {
-            return error(error_code,
-                         stl::format(R"(<!DOCTYPE html>
+            using str_t = traits::general_string<traits_type>;
+            auto msg    = object::make_general<str_t>(this->alloc_pack);
+            stl::format_to(stl::back_inserter(msg),
+                           R"(<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
@@ -186,8 +188,9 @@ namespace webpp::http {
   </body>
 </html>
 )",
-                                     error_code,
-                                     http::status_code_reason_phrase(error_code)));
+                           error_code,
+                           http::status_code_reason_phrase(error_code));
+            return error(error_code, stl::move(msg));
         }
 
 
