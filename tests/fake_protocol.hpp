@@ -204,7 +204,7 @@ namespace webpp {
     struct fake_proto : public common_http_protocol<TraitsType, App, EList> {
         using super        = common_http_protocol<TraitsType, App, EList>;
         using traits_type  = TraitsType;
-        using request_type = simple_request<traits_type, EList, fake_proto_request>;
+        using request_type = simple_request<traits_type, EList, fake_proto_request, EList>;
 
         request_type req;
 
