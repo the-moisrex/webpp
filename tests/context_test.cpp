@@ -5,14 +5,16 @@
 using namespace webpp;
 using namespace webpp::http;
 
-struct fake_app {
-    HTTPResponse auto operator()(HTTPRequest auto&& req) {
-        router _router{[]() {}};
-        return _router(req);
-    }
-};
+namespace fake {
+    struct app {
+        HTTPResponse auto operator()(HTTPRequest auto&& req) {
+            router _router{[]() {}};
+            return _router(req);
+        }
+    };
+} // namespace fake
 
-using request_type = typename fake_proto<std_traits, fake_app>::request_type;
+using request_type = typename fake_proto<std_traits, fake::app>::request_type;
 using context_type = simple_context<request_type>;
 
 struct fake_mommy {
