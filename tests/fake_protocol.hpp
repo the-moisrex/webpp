@@ -200,7 +200,7 @@ namespace webpp {
     };
 
 
-    template <Traits TraitsType, Application App, ExtensionList EList = empty_extension_pack>
+    template <Traits TraitsType, Application App, RootExtensionList EList = empty_root_extension_lists>
     struct fake_proto : public common_http_protocol<TraitsType, App, EList> {
         using super        = common_http_protocol<TraitsType, App, EList>;
         using traits_type  = TraitsType;
