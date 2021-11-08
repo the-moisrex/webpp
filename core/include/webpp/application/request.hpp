@@ -23,10 +23,18 @@
 
 namespace webpp {
 
+    namespace details {
+
+        // this concept is private because I don't see being useful for the user
+        // todo: finish this based on common_requeat type
+        template <typename T>
+        concept RequestParent = EnabledTraits<T>;
+    } // namespace details
+
     /**
      * If you want to add features to all of the request types, you can use this type
      */
-    template <Traits TraitsType, typename ReqType>
+    template <Traits TraitsType, details::RequestParent ReqType>
     struct final_request final : public ReqType {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
