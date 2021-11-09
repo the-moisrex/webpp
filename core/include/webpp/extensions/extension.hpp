@@ -105,6 +105,8 @@ namespace webpp {
             using type = typename E::template type<TraitsType>;
         };
 
+        // Empty extension pack will result in using a nothing_type as the parent since we're not able to
+        // inherit from void.
         template <Traits TraitsType>
         struct mother_inherited<TraitsType, extension_pack<>> {
             using type = istl::nothing_type;
