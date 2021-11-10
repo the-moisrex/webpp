@@ -9,12 +9,18 @@
 #if __cpp_lib_format
 #    include <format>
 #    define FMT_COMPILE(formatted_string) (formatted_string)
+namespace webpp::fmt {
+    using namespace ::std; // to mame std::format available
+}
 #elif __has_include(<fmt/format.h>)
 #    include <fmt/chrono.h>
 #    include <fmt/compile.h>
 #    include <fmt/format.h>
 #    include <fmt/printf.h>
 #    define WEBPP_FMT_LIB 1
+namespace webpp::fmt {
+    using namespace ::fmt;
+}
 namespace webpp::stl {
 
     // from: https://twitter.com/vzverovich/status/1327762206734237698?s=20
@@ -42,8 +48,7 @@ namespace webpp::stl {
     struct formatter;
 
     template <typename... Args>
-    constexpr decltype(auto)
-    format(Args&&... args) noexcept(noexcept(fmt::format(forward<Args>(args)...))) {
+    constexpr decltype(auto) format(Args&&... args) noexcept(noexcept(fmt::format(forward<Args>(args)...))) {
         return fmt::format(forward<Args>(args)...);
     }
 
