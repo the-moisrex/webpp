@@ -74,7 +74,7 @@ namespace webpp::posix {
         void resolve() noexcept {
             if (result == nullptr) {
                 int res = getaddrinfo(nullptr, service.data(), &hints, &result);
-                webpp_assert(res == 0, stl::format("posix::getaddrinfo error: {}", gai_strerror(res)));
+                webpp_assert(res == 0, fmt::format("posix::getaddrinfo error: {}", gai_strerror(res)));
             }
         }
 
@@ -163,7 +163,7 @@ namespace webpp::posix {
                 if (sock == -1) {
                     etraits::logger.warning(
                       logger_cat,
-                      stl::format("Can't open a socket for {}:{}; trying the next one if exists",
+                      fmt::format("Can't open a socket for {}:{}; trying the next one if exists",
                                   ep.server_name(),
                                   ep.service()),
                       errno);
@@ -183,7 +183,7 @@ namespace webpp::posix {
                 if (bind(sock, it->ai_addr, it->ai_addrlen) == -1) {
                     etraits::logger.warning(
                       logger_cat,
-                      stl::format("Can't bind to a socket for {}:{}; trying the next one if exists",
+                      fmt::format("Can't bind to a socket for {}:{}; trying the next one if exists",
                                   ep.server_name(),
                                   ep.service()),
                       errno);

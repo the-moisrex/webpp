@@ -50,7 +50,7 @@ namespace webpp::string {
                 return typename str_type::allocator_type{};
             }
         }();
-        // todo: use stl::format if the elected allocator and string type are default
+        // todo: use fmt::format if the elected allocator and string type are default
         str_type str{alloc};
         if constexpr (requires { str.reserve(merged_size); }) {
             str.reserve(merged_size);
@@ -76,11 +76,11 @@ namespace webpp::string {
                                   }) {
                  str.push_back(lexical::cast<str_type>(stl::forward<T>(strs), alloc));
              } else if constexpr (requires {
-                                      stl::format_to(stl::back_inserter(str),
+                                      fmt::format_to(stl::back_inserter(str),
                                                      FMT_COMPILE("{}"),
                                                      stl::forward<T>(strs));
                                   }) {
-                 stl::format_to(stl::back_inserter(str), FMT_COMPILE("{}"), stl::forward<T>(strs));
+                 fmt::format_to(stl::back_inserter(str), FMT_COMPILE("{}"), stl::forward<T>(strs));
              } else [[unlikely]] {
                  throw stl::invalid_argument("We're not able to append the specified string");
              }

@@ -81,7 +81,7 @@ namespace webpp::http {
                         } else {
                             return this->error(
                               500u,
-                              stl::format(FMT_COMPILE("We're not able to load the specified file: {}"),
+                              fmt::format(FMT_COMPILE("We're not able to load the specified file: {}"),
                                           filepath.string()));
                         }
                     }

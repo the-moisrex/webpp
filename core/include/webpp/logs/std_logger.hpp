@@ -84,7 +84,7 @@ namespace webpp {
         stl::size_t space_count =                                                                           \
           6 + logging_type_string_size(logging_type::logging_name) + istl::string_viewify(category).size(); \
         auto old_details = istl::string_viewify(stl::forward<decltype(details)>(details));                  \
-        auto new_details = stl::format(FMT_COMPILE("{2}\n{1: >{0}}error message: {3}"),                     \
+        auto new_details = fmt::format("{2}\n{1: >{0}}error message: {3}",                                  \
                                        stl::move(space_count),                                              \
                                        "",                                                                  \
                                        old_details,                                                         \
@@ -100,7 +100,7 @@ namespace webpp {
         stl::size_t space_count =                                                                           \
           6 + logging_type_string_size(logging_type::logging_name) + istl::string_viewify(category).size(); \
         auto old_details = istl::string_viewify(stl::forward<decltype(details)>(details));                  \
-        auto new_details = stl::format(FMT_COMPILE("{2}\n{1: >{0}}error message: {3}"),                     \
+        auto new_details = fmt::format("{2}\n{1: >{0}}error message: {3}",                                  \
                                        stl::move(space_count),                                              \
                                        "",                                                                  \
                                        old_details,                                                         \

@@ -175,7 +175,7 @@ namespace webpp::http {
         [[nodiscard]] constexpr HTTPResponse auto error(http::status_code_type error_code) const noexcept {
             using str_t = traits::general_string<traits_type>;
             auto msg    = object::make_general<str_t>(this->alloc_pack);
-            stl::format_to(stl::back_inserter(msg),
+            fmt::format_to(stl::back_inserter(msg),
                            R"(<!DOCTYPE html>
 <html lang="en">
   <head>

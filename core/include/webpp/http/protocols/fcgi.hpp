@@ -55,7 +55,7 @@ namespace webpp::http::inline fastcgi {
                                   default_listen_port);
                 if (!ec) {
                     etraits::logger.critical(logging_category,
-                                             stl::format("We're not able to listen to {}:{}",
+                                             fmt::format("We're not able to listen to {}:{}",
                                                          default_listen_address,
                                                          default_listen_port),
                                              ec);

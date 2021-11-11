@@ -6,8 +6,8 @@
 #include asio_include(ip/tcp)
 // clang-format on
 
-#include "./asio_constants.hpp"
 #include "../../std/format.hpp"
+#include "./asio_constants.hpp"
 
 
 namespace webpp {
@@ -68,7 +68,7 @@ namespace webpp {
                 socket.get_option(keep_alive_option);
                 session.logger.info(
                   session.logger_category,
-                  stl::format("Session keep alive option: {}", keep_alive_option.value() ? "true" : "false"));
+                  fmt::format("Session keep alive option: {}", keep_alive_option.value() ? "true" : "false"));
             }
 
             socket.async_write_some(

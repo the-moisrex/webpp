@@ -124,12 +124,11 @@ namespace webpp::http {
          */
         [[nodiscard]] HTTPResponse auto error(HTTPRequest auto& req, http::status_code err) {
             if constexpr (requires {
-                              { application_type::error(req, err) }
-                              -> HTTPResponse;
+                              { application_type::error(req, err) } -> HTTPResponse;
                           }) {
                 return application_type::error(req, err);
             } else {
-                return stl::format(FMT_COMPILE("<!doctype html>\n"
+                return fmt::format(FMT_COMPILE("<!doctype html>\n"
                                                "<html>\n"
                                                "  <head>\n"
                                                "    <title>{0} - {1}</title>\n"
@@ -144,6 +143,6 @@ namespace webpp::http {
         }
     };
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif

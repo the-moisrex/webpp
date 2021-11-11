@@ -383,12 +383,12 @@ namespace webpp::http {
 
                 // we have to do this because currently STL implementers have not yet specialized
                 // std::formatter for utc_clock type
-                if constexpr (requires { typename stl::formatter<date_t, char_type>::type; }) {
-                    stl::format_to(stl::back_inserter(result), date_format, _expires.value());
+                if constexpr (requires { typename fmt::formatter<date_t, char_type>::type; }) {
+                    fmt::format_to(stl::back_inserter(result), date_format, _expires.value());
                 } else {
                     const stl::time_t expires_c =
                       stl::chrono::system_clock::to_time_t(clock_type::to_sys(*_expires));
-                    stl::format_to(stl::back_inserter(result), date_format, *stl::gmtime(&expires_c));
+                    fmt::format_to(stl::back_inserter(result), date_format, *stl::gmtime(&expires_c));
                 }
             }
         }

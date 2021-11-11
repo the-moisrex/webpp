@@ -827,7 +827,7 @@ namespace webpp {
             using char_type      = istl::char_type_of<decltype(output)>;
             char_type buffer[40] = {};
             auto      _octets    = octets16();
-            stl::format_to(buffer,
+            fmt::format_to(buffer,
                            "{:x}:{:x}:{:x}:{:x}:{:x}:{:x}:{:x}:{:x}",
                            _octets[0],
                            _octets[1],
@@ -905,7 +905,7 @@ namespace webpp {
                                            "d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9"
                                            "eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafb"
                                            "fcfdfeff";
-                auto hex_val = hex_table + octet;
+                auto           hex_val   = hex_table + octet;
                 if (octet > 0xfu)
                     buffer[index++] = *hex_val;
                 ++hex_val;

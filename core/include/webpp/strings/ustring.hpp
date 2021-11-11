@@ -20,7 +20,7 @@ namespace webpp {
         // Helper for ustring and ustring_view members.
         constexpr stl::size_t sv_check(stl::size_t size, stl::size_t pos, const char* s) {
             if (pos > size)
-                throw stl::out_of_range(stl::format("%s: pos (which is %zu) > size "
+                throw stl::out_of_range(fmt::format("%s: pos (which is %zu) > size "
                                                     "(which is %zu)",
                                                     s,
                                                     pos,
@@ -493,7 +493,7 @@ namespace webpp {
       private:
         size_type check(size_type pos, const char* s) const {
             if (pos > this->size())
-                throw stl::out_of_range(stl::format("%s: pos (which is %zu) > "
+                throw stl::out_of_range(fmt::format("%s: pos (which is %zu) > "
                                                     "this->size() (which is %zu)",
                                                     s,
                                                     pos,
@@ -1232,7 +1232,7 @@ namespace webpp {
          */
         [[nodiscard]] const_reference at(size_type n) const {
             if (n >= this->size())
-                throw stl::out_of_range(stl::format("ustring::at: n "
+                throw stl::out_of_range(fmt::format("ustring::at: n "
                                                     "(which is %zu) >= this->size() "
                                                     "(which is %zu)",
                                                     n,
@@ -1252,7 +1252,7 @@ namespace webpp {
          */
         reference at(size_type n) {
             if (n >= size())
-                throw stl::out_of_range(stl::format("ustring::at: n "
+                throw stl::out_of_range(fmt::format("ustring::at: n "
                                                     "(which is %zu) >= this->size() "
                                                     "(which is %zu)",
                                                     n,
