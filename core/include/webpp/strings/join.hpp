@@ -76,11 +76,9 @@ namespace webpp::string {
                                   }) {
                  str.push_back(lexical::cast<str_type>(stl::forward<T>(strs), alloc));
              } else if constexpr (requires {
-                                      fmt::format_to(stl::back_inserter(str),
-                                                     FMT_COMPILE("{}"),
-                                                     stl::forward<T>(strs));
+                                      fmt::format_to(stl::back_inserter(str), "{}", stl::forward<T>(strs));
                                   }) {
-                 fmt::format_to(stl::back_inserter(str), FMT_COMPILE("{}"), stl::forward<T>(strs));
+                 fmt::format_to(stl::back_inserter(str), "{}", stl::forward<T>(strs));
              } else [[unlikely]] {
                  throw stl::invalid_argument("We're not able to append the specified string");
              }

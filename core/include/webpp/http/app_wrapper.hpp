@@ -128,15 +128,15 @@ namespace webpp::http {
                           }) {
                 return application_type::error(req, err);
             } else {
-                return fmt::format(FMT_COMPILE("<!doctype html>\n"
-                                               "<html>\n"
-                                               "  <head>\n"
-                                               "    <title>{0} - {1}</title>\n"
-                                               "  <head>\n"
-                                               "  <body>\n"
-                                               "    <h1>{0} - {1}</h1>\n"
-                                               "  </body>\n"
-                                               "</html>\n"),
+                return fmt::format("<!doctype html>\n"
+                                   "<html>\n"
+                                   "  <head>\n"
+                                   "    <title>{0} - {1}</title>\n"
+                                   "  <head>\n"
+                                   "  <body>\n"
+                                   "    <h1>{0} - {1}</h1>\n"
+                                   "  </body>\n"
+                                   "</html>\n",
                                    err,
                                    http::status_code_reason_phrase(err));
             }

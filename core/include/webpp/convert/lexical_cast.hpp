@@ -57,12 +57,12 @@ namespace webpp::lexical {
                 // implemented so we're asking fmt for help; maybe we should use std::to_string
                 // todo: you can make this faster
                 Target res{the_alloc};
-                fmt::format_to(stl::back_inserter(res), FMT_COMPILE("{}"), stl::forward<Source>(source));
+                fmt::format_to(stl::back_inserter(res), "{}", stl::forward<Source>(source));
                 return res;
             } else {
                 // todo: you can make this faster
                 Target res{the_alloc};
-                fmt::format_to(stl::back_inserter(res), FMT_COMPILE("{}"), stl::forward<Source>(source));
+                fmt::format_to(stl::back_inserter(res), "{}", stl::forward<Source>(source));
                 return res;
             }
         } else if constexpr (stl::is_integral_v<target_t>) {

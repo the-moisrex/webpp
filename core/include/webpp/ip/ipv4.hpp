@@ -307,13 +307,13 @@ namespace webpp {
          */
         [[nodiscard]] auto str() const noexcept {
             const auto _octets = octets();
-            return fmt::format(FMT_COMPILE("{}.{}.{}.{}"), _octets[0], _octets[1], _octets[2], _octets[3]);
+            return fmt::format("{}.{}.{}.{}", _octets[0], _octets[1], _octets[2], _octets[3]);
         }
 
         void str_to(istl::String auto& str) const noexcept {
             const auto _octets = octets();
             fmt::format_to(stl::back_inserter(str),
-                           FMT_COMPILE("{}.{}.{}.{}"),
+                           "{}.{}.{}.{}",
                            _octets[0],
                            _octets[1],
                            _octets[2],

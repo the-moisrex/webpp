@@ -79,10 +79,9 @@ namespace webpp::http {
                         if constexpr (this->is_debug()) {
                             return this->error(500u);
                         } else {
-                            return this->error(
-                              500u,
-                              fmt::format(FMT_COMPILE("We're not able to load the specified file: {}"),
-                                          filepath.string()));
+                            return this->error(500u,
+                                               fmt::format("We're not able to load the specified file: {}",
+                                                           filepath.string()));
                         }
                     }
                 }

@@ -60,7 +60,7 @@ static void LexicalCast_FMT_Compile(benchmark::State& state) {
     const auto ints = the_ints;
     int        i    = 0;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(fmt::format(FMT_COMPILE("{}"), ints[i++ % ints.size()]));
+        benchmark::DoNotOptimize(fmt::format("{}", ints[i++ % ints.size()]));
     }
 }
 BENCHMARK(LexicalCast_FMT_Compile);
@@ -70,7 +70,7 @@ static void LexicalCast_FMT_FormatTo(benchmark::State& state) {
     int        i    = 0;
     for (auto _ : state) {
         std::string str;
-        fmt::format_to(std::back_inserter(str), FMT_COMPILE("{}"), ints[i++ % ints.size()]);
+        fmt::format_to(std::back_inserter(str), "{}", ints[i++ % ints.size()]);
         benchmark::DoNotOptimize(str);
     }
 }
