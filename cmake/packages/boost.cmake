@@ -1,5 +1,5 @@
 set(Boost_USE_MULTITHREAD ON)
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED COMPONENTS container)
 
 if (Boost_FOUND)
     add_library(Boost::asio ALIAS Boost::boost)
@@ -37,6 +37,8 @@ else()
     ##      cat packages.txt | sort | uniq | grep -v boost | tr '\n' ';' | xclip -selection clipboard
     ##   6. then paste it in "boost_deps" list
     ##   7. goto step 3 if there's still errors
+
+    # todo: add container to the list
     set(boost_deps "algorithm;align;array;assert;atomic;bind;chrono;concept_check;config;container;container_hash;context;conversion;core;coroutine;date_time;detail;exception;function;function_types;fusion;integer;intrusive;io;iterator;lexical_cast;move;mpl;numeric_conversion;optional;pool;predef;preprocessor;range;ratio;rational;regex;smart_ptr;static_assert;system;thread;throw_exception;tokenizer;tuple;type_index;typeof;type_traits;unordered;utility;winapi;lambda")
 
     # Since Boost's support for CMake is still experimental, it's intentionally disabled by default. To enable it
