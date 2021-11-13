@@ -18,8 +18,7 @@ set(CPM_FILE "${PROJECT_SOURCE_DIR}/cmake/CPM.cmake/cmake/CPM.cmake")
 
 if (EXISTS "${CPM_FILE}")
     # make it easily known for everyone:
-    list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/CPM.cmake/cmake")
-    include("${CPM_FILE}")
+    set(CPM_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/CPM.cmake/cmake")
 else ()
     # download CPM if the user didn't clone this repository with its submodules
     message(STATUS "Downloading CPM (CMake Dependency Manager)")
@@ -50,12 +49,17 @@ else ()
     endif ()
 
     message(STATUS "Using CPM file from: ${CPM_DOWNLOAD_LOCATION}")
-
-    list(APPEND CMAKE_MODULE_PATH "${CPM_DOWNLOAD_PATH}")
-    include(${CPM_DOWNLOAD_LOCATION})
-
+    set(CPM_MODULE_PATH ${CPM_DOWNLOAD_PATH})
 
 endif ()
+
+# Make cpm module available for all
+list(APPEND CMAKE_MODULE_PATH ${CPM_MODULE_PATH})
+message(STATUS "CPM path added to CMAKE_MODULE_PATH: ${CPM_MODULE_PATH}")
+
+# import CPM module
+include(CPM)
+
 
 # import all packages
 include(${CMAKE_SOURCE_DIR}/cmake/packages/all.cmake)
