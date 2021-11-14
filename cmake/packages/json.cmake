@@ -10,7 +10,8 @@ include(CPM)
 # endif()
 
 
+# Using the master branch since the 1.1.0 is buggy
 CPMAddPackage(
         NAME RapidJSON
-        URL https://github.com/Tencent/rapidjson/archive/refs/tags/v1.1.0.zip
+        URL https://github.com/Tencent/rapidjson/archive/refs/heads/master.zip
 )
