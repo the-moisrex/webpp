@@ -4,6 +4,7 @@
 #define WEBPP_QUERY_HPP
 
 #include "../std/string.hpp"
+#include "../std/string_view.hpp"
 #include "../traits/traits.hpp"
 
 namespace webpp::database {
