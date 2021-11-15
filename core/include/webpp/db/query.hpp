@@ -22,7 +22,7 @@ namespace webpp::database {
         strv select_value;
 
       public:
-        constexpr query& select(strv val) noexcept {
+        constexpr select_query& select(strv val) noexcept {
             select_value = val;
             return *this;
         }
