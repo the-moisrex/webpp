@@ -30,6 +30,8 @@ namespace webpp::stl {
 #    error "There's no <optional>" // todo: check if we need this
 #endif
 
+#include "./concepts.hpp"
+
 namespace webpp::istl {
 
     /**
