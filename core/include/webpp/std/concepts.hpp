@@ -17,6 +17,14 @@ namespace webpp::stl {
         concept SameHelper = stl::is_same_v<T, U>;
     }
 
+    /* integral */
+    template <class T>
+    concept integral = stl::is_integral_v<T>;
+
+    /* signed_integral */
+    template <class T>
+    concept signed_integral = stl::integral<T> && stl::is_signed_v<T>;
+
     /* same_as */
     template <class T, class U>
     concept same_as = detail::SameHelper<T, U> && detail::SameHelper<U, T>;
@@ -32,9 +40,6 @@ namespace webpp::stl {
       requires(stl::add_rvalue_reference_t<From> (&f)()) {
         static_cast<To>(f());
     };
-
-    template <typename T>
-    concept integral = stl::is_integral_v<T>;
 
 
     template <typename T>
