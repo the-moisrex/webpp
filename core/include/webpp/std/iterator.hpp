@@ -188,7 +188,7 @@ namespace webpp::stl {
 
     /// Requirements on types that can be incremented with ++.
     template <typename Iter>
-    concept weakly_incrementable = movable<Iter> && requires(Iter __i) {
+    concept weakly_incrementable = movable<Iter> && requires(Iter i) {
         typename iter_difference_t<Iter>;
         requires details::is_signed_integer_like<iter_difference_t<Iter>>;
         { ++i } -> same_as<Iter&>;
