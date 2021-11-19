@@ -14,16 +14,16 @@
 namespace webpp::stl {
     namespace detail {
         template <class T, class U>
-        concept SameHelper = stl::is_same_v<T, U>;
+        concept SameHelper = is_same_v<T, U>;
     }
 
     /* integral */
     template <class T>
-    concept integral = stl::is_integral_v<T>;
+    concept integral = is_integral_v<T>;
 
     /* signed_integral */
     template <class T>
-    concept signed_integral = stl::integral<T> && stl::is_signed_v<T>;
+    concept signed_integral = integral<T> && is_signed_v<T>;
 
     /* same_as */
     template <class T, class U>
@@ -31,38 +31,79 @@ namespace webpp::stl {
 
     /* derived_from */
     template <class Derived, class Base>
-    concept derived_from = stl::is_base_of_v<Base, Derived> &&
-      stl::is_convertible_v<const volatile Derived*, const volatile Base*>;
+    concept derived_from =
+      is_base_of_v<Base, Derived> && is_convertible_v<const volatile Derived*, const volatile Base*>;
 
     /* convertible_to */
     template <class From, class To>
-    concept convertible_to = stl::is_convertible_v<From, To> &&
-      requires(stl::add_rvalue_reference_t<From> (&f)()) {
-        static_cast<To>(f());
+    concept convertible_to = is_convertible_v<From, To> && requires {
+        static_cast<To>(declval<From>());
     };
 
 
     template <typename T>
-    concept destructible = stl::is_nothrow_destructible_v<T>;
+    concept destructible = is_nothrow_destructible_v<T>;
 
     template <typename T, typename... Args>
-    concept constructible_from = stl::destructible<T> && stl::is_constructible_v<T, Args...>;
+    concept constructible_from = destructible<T> && is_constructible_v<T, Args...>;
 
     template <typename T>
-    concept move_constructible = stl::constructible_from<T, T> && stl::convertible_to<T, T>;
+    concept move_constructible = constructible_from<T, T> && convertible_to<T, T>;
 
     template <class T>
-    concept copy_constructible =
-      stl::move_constructible<T> && stl::constructible_from<T, T&> && stl::convertible_to<T&, T> &&
-      stl::constructible_from<T, const T&> && stl::convertible_to<const T&, T> &&
-      stl::constructible_from<T, const T> && stl::convertible_to<const T, T>;
+    concept copy_constructible = move_constructible<T> && constructible_from<T, T&> &&
+      convertible_to<T&, T> && constructible_from<T, const T&> && convertible_to<const T&, T> &&
+      constructible_from<T, const T> && convertible_to<const T, T>;
 
     template <class T>
-    concept default_initializable = stl::constructible_from<T> && requires {
+    concept default_initializable = constructible_from<T> && requires {
         T{};
     } && requires {
         ::new (static_cast<void*>(nullptr)) T;
     };
+
+
+    namespace details {
+        template <class B>
+        concept boolean_testable_impl = convertible_to<B, bool>;
+
+        template <class B>
+        concept boolean_testable = boolean_testable_impl<B> && requires(B && b) {
+            { !forward<B>(b) } -> boolean_testable_impl;
+        };
+
+
+        template <class T, class U>
+        concept WeaklyEqualityComparableWith =
+          requires(const remove_reference_t<T>& t, const remove_reference_t<U>& u) {
+            { t == u } -> boolean_testable;
+            { t != u } -> boolean_testable;
+            { u == t } -> boolean_testable;
+            { u != t } -> boolean_testable;
+        };
+
+
+    } // namespace details
+
+    template <class T>
+    concept equality_comparable = details::WeaklyEqualityComparableWith<T, T>;
+
+    template <class T, class U>
+    concept equality_comparable_with =
+      equality_comparable<T> && equality_comparable<U> && common_reference_with < const remove_reference_t<T>
+    &, const remove_reference_t<U>& >
+         &&equality_comparable<
+           common_reference_t<const remove_reference_t<T>&, const remove_reference_t<U>&>>&&
+           details::WeaklyEqualityComparableWith<T, U>;
+
+    template <class T>
+    concept semiregular = copyable<T> && default_initializable<T>;
+
+    template <class T>
+    concept regular = semiregular<T> && equality_comparable<T>;
+
+
+
 
 
 } // namespace webpp::stl
