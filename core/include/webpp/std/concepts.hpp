@@ -11,6 +11,7 @@
 #if __has_include(<concepts>) && __cpp_lib_concepts
 #    include <concepts>
 #else
+#    include <concepts>
 namespace webpp::stl {
     namespace detail {
         template <class T, class U>
@@ -62,6 +63,11 @@ namespace webpp::stl {
         ::new (static_cast<void*>(nullptr)) T;
     };
 
+
+    template <class T, class U>
+
+    concept common_reference_with = same_as<common_reference_t<T, U>, common_reference_t<U, T>> &&
+      convertible_to<T, common_reference_t<T, U>> && convertible_to<U, common_reference_t<T, U>>;
 
     namespace details {
         template <class B>
