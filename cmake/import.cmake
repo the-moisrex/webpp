@@ -2,8 +2,6 @@
 # set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/modules")
 
 
-find_package(Threads REQUIRED)
-
 
 # include CPM
 # CPM Module examples: https://github.com/cpm-cmake/CPM.cmake/wiki/More-Snippets
