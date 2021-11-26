@@ -4,6 +4,255 @@
 #include <memory> // for allocators
 
 namespace webpp::stl {
+
+
+
+
+
+    namespace details {
+        // Let COPYCV(FROM, TO) be an alias for type TO with the addition of FROM's
+        // top-level cv-qualifiers.
+        template <class From, class To>
+        struct copy_cv {
+            using type = To;
+        };
+
+        template <class From, class To>
+        struct copy_cv<const From, To> {
+            using type = add_const_t<To>;
+        };
+
+        template <class From, class To>
+        struct copy_cv<volatile From, To> {
+            using type = add_volatile_t<To>;
+        };
+
+        template <class From, class To>
+        struct copy_cv<const volatile From, To> {
+            using type = add_cv_t<To>;
+        };
+
+        template <class From, class To>
+        using copy_cv_t = typename copy_cv<From, To>::type;
+
+        template <class From, class To>
+        struct copy_cvref {
+            using type = copy_cv_t<From, To>;
+        };
+
+        template <class From, class To>
+        struct copy_cvref<From&, To> {
+            using type = add_lvalue_reference_t<copy_cv_t<From, To>>;
+        };
+
+        template <class From, class To>
+        struct copy_cvref<From&&, To> {
+            using type = add_rvalue_reference_t<copy_cv_t<From, To>>;
+        };
+
+        template <class From, class To>
+        using copy_cvref_t = typename copy_cvref<From, To>::type;
+
+    } // namespace details
+
+
+
+    // common_reference
+    // Let COND_RES(X, Y) be:
+    template <class Xp, class Yp>
+    using __cond_res = decltype(false ? declval<Xp (&)()>()() : declval<Yp (&)()>()());
+
+
+    // Let `XREF(A)` denote a unary alias template `T` such that `T<U>` denotes the same type as `U`
+    // with the addition of `A`'s cv and reference qualifiers, for a non-reference cv-unqualified type
+    // `U`.
+    // [Note: `XREF(A)` is `__xref<A>::template __apply`]
+    template <class Tp>
+    struct __xref {
+        template <class Up>
+        using __apply = details::copy_cvref_t<Tp, Up>;
+    };
+
+
+    // Given types A and B, let X be remove_reference_t<A>, let Y be remove_reference_t<B>,
+    // and let COMMON-REF(A, B) be:
+    template <class Ap, class Bp, class Xp = remove_reference_t<Ap>, class Yp = remove_reference_t<Bp>>
+    struct __common_ref;
+
+
+    template <class Xp, class Yp>
+    using __common_ref_t = typename __common_ref<Xp, Yp>::__type;
+
+
+    template <class Xp, class Yp>
+    using __cv_cond_res = __cond_res<details::copy_cv_t<Xp, Yp>&, details::copy_cv_t<Yp, Xp>&>;
+
+
+
+
+    //    If A and B are both lvalue reference types, COMMON-REF(A, B) is
+    //    COND-RES(COPYCV(X, Y)&, COPYCV(Y, X)&) if that type exists and is a reference type.
+    template <class Ap, class Bp, class Xp, class Yp>
+    requires requires {
+        typename __cv_cond_res<Xp, Yp>;
+    } && is_reference_v<__cv_cond_res<Xp, Yp>>
+    struct __common_ref<Ap&, Bp&, Xp, Yp> {
+        using __type = __cv_cond_res<Xp, Yp>;
+    };
+
+
+    //    Otherwise, let C be remove_reference_t<COMMON-REF(X&, Y&)>&&. ...
+    template <class Xp, class Yp>
+    using __common_ref_C = remove_reference_t<__common_ref_t<Xp&, Yp&>>&&;
+
+
+
+
+    //    .... If A and B are both rvalue reference types, C is well-formed, and
+    //    is_convertible_v<A, C> && is_convertible_v<B, C> is true, then COMMON-REF(A, B) is C.
+    template <class Ap, class Bp, class Xp, class Yp>
+    requires requires {
+        typename __common_ref_C<Xp, Yp>;
+    } && is_convertible_v<Ap&&, __common_ref_C<Xp, Yp>> && is_convertible_v<Bp&&, __common_ref_C<Xp, Yp>>
+    struct __common_ref<Ap&&, Bp&&, Xp, Yp> {
+        using __type = __common_ref_C<Xp, Yp>;
+    };
+
+
+    //    Otherwise, let D be COMMON-REF(const X&, Y&). ...
+    template <class Tp, class Up>
+    using __common_ref_D = __common_ref_t<const Tp&, Up&>;
+
+
+    //    ... If A is an rvalue reference and B is an lvalue reference and D is well-formed and
+    //    is_convertible_v<A, D> is true, then COMMON-REF(A, B) is D.
+    template <class Ap, class Bp, class Xp, class Yp>
+    requires requires {
+        typename __common_ref_D<Xp, Yp>;
+    } && is_convertible_v<Ap&&, __common_ref_D<Xp, Yp>>
+    struct __common_ref<Ap&&, Bp&, Xp, Yp> {
+        using __type = __common_ref_D<Xp, Yp>;
+    };
+
+
+    //    Otherwise, if A is an lvalue reference and B is an rvalue reference, then
+    //    COMMON-REF(A, B) is COMMON-REF(B, A).
+    template <class Ap, class Bp, class Xp, class Yp>
+    struct __common_ref<Ap&, Bp&&, Xp, Yp> : __common_ref<Bp&&, Ap&> {};
+
+
+    //    Otherwise, COMMON-REF(A, B) is ill-formed.
+    template <class Ap, class Bp, class Xp, class Yp>
+    struct __common_ref {};
+
+
+    // Note C: For the common_reference trait applied to a parameter pack [...]
+
+
+    template <class...>
+    struct common_reference;
+
+
+    template <class... _Types>
+    using common_reference_t = typename common_reference<_Types...>::type;
+
+
+    // bullet 1 - sizeof...(T) == 0
+    template <>
+    struct common_reference<> {};
+
+
+    // bullet 2 - sizeof...(T) == 1
+    template <class Tp>
+    struct common_reference<Tp> {
+        using type = Tp;
+    };
+
+
+    // bullet 3 - sizeof...(T) == 2
+    template <class Tp, class Up>
+    struct __common_reference_sub_bullet3;
+    template <class Tp, class Up>
+    struct __common_reference_sub_bullet2 : __common_reference_sub_bullet3<Tp, Up> {};
+    template <class Tp, class Up>
+    struct __common_reference_sub_bullet1 : __common_reference_sub_bullet2<Tp, Up> {};
+
+
+    // sub-bullet 1 - If T1 and T2 are reference types and COMMON-REF(T1, T2) is well-formed, then
+    // the member typedef `type` denotes that type.
+    template <class Tp, class Up>
+    struct common_reference<Tp, Up> : __common_reference_sub_bullet1<Tp, Up> {};
+
+
+    template <class Tp, class Up>
+    requires is_reference_v<Tp> && is_reference_v<Up> && requires {
+        typename __common_ref_t<Tp, Up>;
+    }
+    struct __common_reference_sub_bullet1<Tp, Up> {
+        using type = __common_ref_t<Tp, Up>;
+    };
+
+
+    // sub-bullet 2 - Otherwise, if basic_common_reference<remove_cvref_t<T1>, remove_cvref_t<T2>, XREF(T1),
+    // XREF(T2)>::type is well-formed, then the member typedef `type` denotes that type.
+    template <class, class, template <class> class, template <class> class>
+    struct basic_common_reference {};
+
+
+    template <class Tp, class Up>
+    using __basic_common_reference_t = typename basic_common_reference<remove_cvref_t<Tp>,
+                                                                       remove_cvref_t<Up>,
+                                                                       __xref<Tp>::template __apply,
+                                                                       __xref<Up>::template __apply>::type;
+
+
+    template <class Tp, class Up>
+    requires requires {
+        typename __basic_common_reference_t<Tp, Up>;
+    }
+    struct __common_reference_sub_bullet2<Tp, Up> {
+        using type = __basic_common_reference_t<Tp, Up>;
+    };
+
+
+    // sub-bullet 3 - Otherwise, if COND-RES(T1, T2) is well-formed,
+    // then the member typedef `type` denotes that type.
+    template <class Tp, class Up>
+    requires requires {
+        typename __cond_res<Tp, Up>;
+    }
+    struct __common_reference_sub_bullet3<Tp, Up> {
+        using type = __cond_res<Tp, Up>;
+    };
+
+
+
+
+    // sub-bullet 4 & 5 - Otherwise, if common_type_t<T1, T2> is well-formed,
+    //                    then the member typedef `type` denotes that type.
+    //                  - Otherwise, there shall be no member `type`.
+    template <class Tp, class Up>
+    struct __common_reference_sub_bullet3 : common_type<Tp, Up> {};
+
+
+    // bullet 4 - If there is such a type `C`, the member typedef type shall denote the same type, if
+    //            any, as `common_reference_t<C, Rest...>`.
+    template <class Tp, class Up, class _Vp, class... _Rest>
+    requires requires {
+        typename common_reference_t<Tp, Up>;
+    }
+    struct common_reference<Tp, Up, _Vp, _Rest...>
+      : common_reference<common_reference_t<Tp, Up>, _Vp, _Rest...> {};
+
+
+    // bullet 5 - Otherwise, there shall be no member `type`.
+    template <class...>
+    struct common_reference {};
+
+
+
+
+
     namespace detail {
         template <class T, class U>
         concept SameHelper = is_same_v<T, U>;
@@ -98,9 +347,6 @@ namespace webpp::stl {
 
     template <class T>
     concept regular = semiregular<T> && equality_comparable<T>;
-
-
-
 
 
 } // namespace webpp::stl
