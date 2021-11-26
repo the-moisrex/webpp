@@ -16,6 +16,7 @@ CPMAddPackage(
         URL https://github.com/Tencent/rapidjson/archive/refs/heads/master.zip
 )
 
+# rapidjson for some reason adds this flag for clang too which is wrong.
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   string(REPLACE "-march=native" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
