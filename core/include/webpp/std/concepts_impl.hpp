@@ -1,6 +1,7 @@
 #ifndef WEBPP_STD_CONCEPTS_WEBPP
 #define WEBPP_STD_CONCEPTS_WEBPP
 
+#include <memory> // for allocators
 
 namespace webpp::stl {
     namespace detail {
