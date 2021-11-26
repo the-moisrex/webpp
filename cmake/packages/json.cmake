@@ -15,3 +15,7 @@ CPMAddPackage(
         NAME RapidJSON
         URL https://github.com/Tencent/rapidjson/archive/refs/heads/master.zip
 )
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  string(REPLACE "-march=native" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+endif()
