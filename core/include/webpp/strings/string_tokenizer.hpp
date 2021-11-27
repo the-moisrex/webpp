@@ -95,6 +95,8 @@ namespace webpp {
         using const_iterator = ConstIterType;
         using char_type      = typename str_v::value_type;
 
+        static constexpr bool is_raw_pointer_iterator = stl::is_pointer_v<const_iterator>;
+
 
         constexpr void init(const_iterator string_begin, const_iterator string_end) {
             _start_pos   = string_begin;
@@ -191,7 +193,11 @@ namespace webpp {
         }
 
         [[nodiscard]] constexpr str_v token() const noexcept {
-            return str_v(_token_begin, _token_end);
+            if constexpr (is_raw_pointer_iterator) {
+                return str_v(_token_begin, _token_end - _token_begin);
+            } else {
+                return str_v(_token_begin, _token_end);
+            }
         }
 
         constexpr void skip_token() noexcept {
