@@ -208,7 +208,7 @@ namespace webpp::stl {
 
     template <typename Sent, typename Iter>
     concept sentinel_for =
-      semiregular<Sent> && input_or_output_iterator<Iter> && details::__weakly_eq_cmp_with<Sent, Iter>;
+      semiregular<Sent> && input_or_output_iterator<Iter> && details::WeaklyEqualityComparableWith<Sent, Iter>;
 
     template <typename Sent, typename Iter>
     inline constexpr bool disable_sized_sentinel_for = false;
