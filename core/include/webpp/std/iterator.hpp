@@ -183,7 +183,23 @@ namespace webpp::stl {
         concept is_signed_integer_like =
           signed_integral<T> || is_signed_int128<T> || same_as<T, max_diff_type>;
 
+        template <class In>
+        concept __IndirectlyReadableImpl = requires(const In in) {
+            typename iter_value_t<In>;
+            typename iter_reference_t<In>;
+            typename iter_rvalue_reference_t<In>;
+            { *in } -> same_as<iter_reference_t<In>>;
+            { ranges::iter_move(in) } -> same_as<iter_rvalue_reference_t<In>>;
+        }
+        &&common_reference_with<iter_reference_t<In>&&, iter_value_t<In>&>&&
+            common_reference_with<iter_reference_t<In>&&, iter_rvalue_reference_t<In>&&>&&
+            common_reference_with<iter_rvalue_reference_t<In>&&, const iter_value_t<In>&>;
+
+
     } // namespace details
+
+    template <class In>
+    concept indirectly_readable = details::__IndirectlyReadableImpl<remove_cvref_t<In>>;
 
 
     /// Requirements on types that can be incremented with ++.
@@ -207,8 +223,8 @@ namespace webpp::stl {
     &&weakly_incrementable<Iter>;
 
     template <typename Sent, typename Iter>
-    concept sentinel_for =
-      semiregular<Sent> && input_or_output_iterator<Iter> && details::WeaklyEqualityComparableWith<Sent, Iter>;
+    concept sentinel_for = semiregular<Sent> && input_or_output_iterator<Iter> &&
+      details::WeaklyEqualityComparableWith<Sent, Iter>;
 
     template <typename Sent, typename Iter>
     inline constexpr bool disable_sized_sentinel_for = false;
