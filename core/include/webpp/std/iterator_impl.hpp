@@ -27,6 +27,8 @@ namespace webpp::stl {
         };
     } // namespace details
 
+
+
     template <details::dereferenceable T>
     using iter_reference_t = decltype(*std::declval<T&>());
 
@@ -144,6 +146,67 @@ namespace webpp::stl {
 
     template <typename T>
     using iter_difference_t = details::iter_diff_t<remove_cvref_t<T>>;
+
+
+
+
+
+    namespace ranges::__iter_move {
+        void iter_move();
+
+        template <class _Ip>
+        concept __unqualified_iter_move = requires(_Ip&& __i) {
+            iter_move(_VSTD::forward<_Ip>(__i));
+        };
+
+        // [iterator.cust.move]/1
+        // The name ranges::iter_move denotes a customization point object.
+        // The expression ranges::iter_move(E) for a subexpression E is
+        // expression-equivalent to:
+        struct __fn {
+            // [iterator.cust.move]/1.1
+            // iter_move(E), if E has class or enumeration type and iter_move(E) is a
+            // well-formed expression when treated as an unevaluated operand, [...]
+            template <class _Ip>
+            requires __class_or_enum<remove_cvref_t<_Ip>> && __unqualified_iter_move<_Ip>
+            [[nodiscard]] _LIBCPP_HIDE_FROM_ABI constexpr decltype(auto) operator()(_Ip&& __i) const
+              noexcept(noexcept(iter_move(_VSTD::forward<_Ip>(__i)))) {
+                return iter_move(_VSTD::forward<_Ip>(__i));
+            }
+
+            // [iterator.cust.move]/1.2
+            // Otherwise, if the expression *E is well-formed:
+            //  1.2.1 if *E is an lvalue, std::move(*E);
+            //  1.2.2 otherwise, *E.
+            template <class _Ip>
+            requires(!(__class_or_enum<remove_cvref_t<_Ip>> && __unqualified_iter_move<_Ip>) ) &&
+              requires(_Ip&& __i) {
+                *_VSTD::forward<_Ip>(__i);
+            }
+            [[nodiscard]] _LIBCPP_HIDE_FROM_ABI constexpr decltype(auto) operator()(_Ip&& __i) const
+              noexcept(noexcept(*_VSTD::forward<_Ip>(__i))) {
+                if constexpr (is_lvalue_reference_v<decltype(*_VSTD::forward<_Ip>(__i))>) {
+                    return _VSTD::move(*_VSTD::forward<_Ip>(__i));
+                } else {
+                    return *_VSTD::forward<_Ip>(__i);
+                }
+            }
+
+            // [iterator.cust.move]/1.3
+            // Otherwise, ranges::iter_move(E) is ill-formed.
+        };
+    } // namespace ranges::__iter_move
+
+    namespace ranges::inline __cpo {
+        inline constexpr auto iter_move = __iter_move::__fn{};
+    }
+
+    template <details::dereferenceable _Tp>
+    requires requires(_Tp& __t) {
+        { ranges::iter_move(__t) } -> details::can_reference;
+    }
+    using iter_rvalue_reference_t = decltype(ranges::iter_move(declval<_Tp&>()));
+
 
 
 
