@@ -369,6 +369,17 @@ namespace webpp::stl {
         { i - s } -> same_as<iter_difference_t<Iter>>;
     };
 
+    // [iterator.concept.writable]
+    template <class _Out, class _Tp>
+    concept indirectly_writable = requires(_Out&& __o, _Tp&& __t) {
+        *__o                       = _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
+        *_VSTD::forward<_Out>(__o) = _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
+        const_cast<const iter_reference_t<_Out>&&>(*__o) =
+          _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
+        const_cast<const iter_reference_t<_Out>&&>(*_VSTD::forward<_Out>(__o)) =
+          _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
+    };
+
     template <typename Iter>
     concept input_iterator = input_or_output_iterator<Iter> && indirectly_readable<Iter> && requires {
         typename details::iter_concept<Iter>;
