@@ -15,7 +15,6 @@ target_link_libraries(${TEST_NAME}
         PRIVATE ${LIB_NAME}
         PRIVATE gtest         # GTest::GTest
         PRIVATE gtest_main    # GTest::Main
-        PRIVATE fmt::fmt
         )
 add_test(${TEST_NAME} ${TEST_NAME})
 
@@ -56,7 +55,6 @@ if (TRUE)
             PRIVATE ${LIB_NAME}
             PRIVATE gtest         # GTest::GTest
             PRIVATE gtest_main    # GTest::Main
-            PRIVATE fmt::fmt
             )
     add_test(${name} ${name})
 
