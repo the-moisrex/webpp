@@ -19,7 +19,7 @@ namespace webpp::string {
         using char_type                          = CharT;
         using str_ptr                            = char_type const*;
         static constexpr stl::size_t piece_count = sizeof...(Names);
-        using tuple_type                         = istl::repeat_type<stl::tuple, str_ptr, piece_count + 1>;
+        using tuple_type                         = istl::repeat_type<piece_count + 1, stl::tuple, str_ptr>;
 
         template <auto the_name>
         constexpr static stl::size_t index_of = istl::index_of_item<the_name, Names...>::value;
