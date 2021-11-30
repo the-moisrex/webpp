@@ -30,7 +30,7 @@ namespace webpp::string {
       public:
         constexpr basic_string_splits() noexcept = default;
         constexpr basic_string_splits(str_ptr ptr, stl::size_t len) noexcept
-          : data{ptr, (Names, ptr + len), ...} {}
+          : data{ptr, (Names, ...), ptr + len} {}
 
         template <stl::size_t Index, istl::StringView StrV = stl::string_view>
         constexpr StrV view() const noexcept {
@@ -48,7 +48,7 @@ namespace webpp::string {
     };
 
 
-    template <istl::CharType CharT, auto... Names>
+    template <auto... Names>
     using string_splits = basic_string_splits<char, Names...>;
 
 
