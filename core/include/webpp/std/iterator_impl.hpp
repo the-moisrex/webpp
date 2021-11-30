@@ -391,9 +391,39 @@ namespace webpp::stl {
         *i++ = std::forward<T>(t);
     };
 
+
+    // [concept.totallyordered]
+
+    template <class _Tp>
+    using __make_const_lvalue_ref = const typename remove_reference<_Tp>::type&;
+
+
+    template <class _Tp, class _Up>
+    concept __partially_ordered_with = requires(__make_const_lvalue_ref<_Tp> __t,
+                                                __make_const_lvalue_ref<_Up> __u) {
+        { __t < __u } -> details::boolean_testable;
+        { __t > __u } -> details::boolean_testable;
+        { __t <= __u } -> details::boolean_testable;
+        { __t >= __u } -> details::boolean_testable;
+        { __u < __t } -> details::boolean_testable;
+        { __u > __t } -> details::boolean_testable;
+        { __u <= __t } -> details::boolean_testable;
+        { __u >= __t } -> details::boolean_testable;
+    };
+
+    template <class _Tp>
+    concept totally_ordered = equality_comparable<_Tp> && __partially_ordered_with<_Tp, _Tp>;
+
+    template <class _Tp, class _Up>
+    concept totally_ordered_with =
+      totally_ordered<_Tp> && totally_ordered<_Up> && equality_comparable_with<_Tp, _Up> &&
+      totally_ordered<common_reference_t<__make_const_lvalue_ref<_Tp>, __make_const_lvalue_ref<_Up>>> &&
+      __partially_ordered_with<_Tp, _Up>;
+
+
     template <typename Iter>
     concept forward_iterator =
-      input_iterator<Iter> && derived_from<details::__iter_concept<Iter>, forward_iterator_tag> &&
+      input_iterator<Iter> && derived_from<details::iter_concept<Iter>, forward_iterator_tag> &&
       incrementable<Iter> && sentinel_for<Iter, Iter>;
 
     template <typename Iter>
