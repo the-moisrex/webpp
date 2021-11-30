@@ -79,7 +79,7 @@ namespace webpp::string {
                                       fmt::format_to(stl::back_inserter(str), "{}", stl::forward<T>(strs));
                                   }) {
                  fmt::format_to(stl::back_inserter(str), "{}", stl::forward<T>(strs));
-             } else [[unlikely]] {
+             } else { // unlikely
                  throw stl::invalid_argument("We're not able to append the specified string");
              }
          }()),
