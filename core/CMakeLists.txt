@@ -227,6 +227,7 @@ target_link_libraries(${LIB_NAME}
         PUBLIC ${PROJECT_NAME}::json
         ${BROTLI_SHARED_LIBS}
         PUBLIC ZLIB::ZLIB
+        PUBLIC ctre::ctre
         # PUBLIC date::date-tz
         )
 
