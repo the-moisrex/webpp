@@ -14,5 +14,5 @@ target_link_libraries(${EXEC_NAME}
         PRIVATE ZLIB::ZLIB
         )
 # now we rename resman-bin executable to resman using target properties
-set_target_properties(${EXEC_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME}.exe)
+set_target_properties(${EXEC_NAME} PROPERTIES OUTPUT_NAME wpp)
 install(TARGETS ${EXEC_NAME} DESTINATION bin)
