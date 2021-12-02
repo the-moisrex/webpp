@@ -70,12 +70,13 @@ namespace webpp::is {
      * @return true if the specified str is an email
      */
     [[nodiscard]] bool email(istl::StringViewifiable auto&& _str) noexcept {
-        auto str = istl::string_viewify(_str);
-        // todo
-        //            constexpr auto pattern =
-        //            ctll::fixed_string{"^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+"
-        //                                                        "(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"};
-        //            return ctre::match<pattern>(str);
+        const auto     str = istl::string_viewify(stl::forward<decltype(_str)>(_str));
+        // constexpr auto pattern =
+        //   ctll::fixed_string{R"regex(^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+)regex"};
+        // constexpr auto pattern =
+        // ctll::fixed_string{"^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+"
+        //                                             "(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"};
+        // return ctre::match<pattern>(str);
         return false;
     }
 
