@@ -24,3 +24,12 @@ TEST(Crypto, Base64) {
     EXPECT_TRUE(base64::decode(enc, dec));
     EXPECT_EQ(orig, dec);
 }
+
+TEST(Crypto, Base64URL) {
+    // well, actually this is not the best test!
+    std::string orig = "https://tools.ietf.org/html/rfc4648#section-5";
+    std::string enc, dec;
+    base64::url_encode(orig, enc);
+    EXPECT_TRUE(base64::url_decode(enc, dec));
+    EXPECT_EQ(orig, dec);
+}
