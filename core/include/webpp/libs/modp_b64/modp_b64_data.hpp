@@ -1,4 +1,3 @@
-
 #ifndef WEBPP_MODP_B64_DATA_HPP
 #define WEBPP_MODP_B64_DATA_HPP
 
@@ -357,7 +356,6 @@ namespace webpp::modp_b64 {
     ();
 
 
-#endif
 
 } // namespace webpp::modp_b64
 
