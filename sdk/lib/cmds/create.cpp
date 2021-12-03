@@ -1,7 +1,7 @@
 #include "create.hpp"
 
 using namespace webpp;
-using namespace webpp::sdk::cmd;
+using namespace webpp::sdk;
 
 /**
  * Create files:

@@ -1,11 +1,11 @@
 #ifndef WEBPP_SDK_CMDS_CMD
 #define WEBPP_SDK_CMDS_CMD
 
-#include "../../core/include/webpp/std/string.hpp"
-#include "../../core/include/webpp/std/string_view.hpp"
+#include <webpp/std/string.hpp>
+#include <webpp/std/string_view.hpp>
 
 
-namespace webpp::sdk::cmd {
+namespace webpp::sdk {
 
     /**
      * Command abstraction
@@ -16,17 +16,17 @@ namespace webpp::sdk::cmd {
     struct command {
 
         // the name of the command
-        virtual stl::string_view name() noexcept const = 0;
+        virtual stl::string_view name() const noexcept = 0;
 
 
         // description of the command
-        virtual stl::string_view desc() noexcept const = 0;
+        virtual stl::string_view desc() const noexcept = 0;
 
         // Run the command
         virtual void handle();
     };
 
-} // namespace webpp::sdk::cmd
+} // namespace webpp::sdk
 
 
 #endif // WEBPP_SDK_CMDS_CMD

@@ -4,7 +4,7 @@
 #include "command.hpp"
 
 
-namespace webpp::sdk::cmd {
+namespace webpp::sdk {
 
     /**
      * Create command
@@ -12,8 +12,8 @@ namespace webpp::sdk::cmd {
      * Create a new thing
      */
     struct create : public command {
-        stl::string_view name() noexcept const override;
-        stl::string_view desc() noexcept const override;
+        stl::string_view name() const noexcept override;
+        stl::string_view desc() const noexcept override;
         void             handle() override;
 
       protected:
@@ -22,7 +22,7 @@ namespace webpp::sdk::cmd {
         virtual stl::string batch_name() const = 0;
     };
 
-} // namespace webpp::sdk::cmd
+} // namespace webpp::sdk
 
 
 #endif // WEBPP_SDK_CMDS_CREATE

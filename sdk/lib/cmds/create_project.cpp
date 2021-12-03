@@ -1,11 +1,11 @@
 #include "create_project.hpp"
 
 #include <filesystem>
-#include <vector>
 #include <fstream>
+#include <vector>
 
 using namespace webpp;
-using namespace webpp::sdk::cmd;
+using namespace webpp::sdk;
 
 // One template
 struct project_template {

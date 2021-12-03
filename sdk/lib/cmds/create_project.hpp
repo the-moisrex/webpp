@@ -4,7 +4,7 @@
 #include "create.hpp"
 
 
-namespace webpp::sdk::cmd {
+namespace webpp::sdk {
 
 
 
@@ -22,8 +22,8 @@ namespace webpp::sdk::cmd {
      *   webpp new project MySite
      */
     struct create_project : public create {
-        stl::string_view name() noexcept const override;
-        stl::string_view desc() noexcept const override;
+        stl::string_view name() const noexcept override;
+        stl::string_view desc() const noexcept override;
         void             handle() override;
 
       protected:
@@ -39,7 +39,7 @@ namespace webpp::sdk::cmd {
         project_template get_project_template() const;
     };
 
-} // namespace webpp::sdk::cmd
+} // namespace webpp::sdk
 
 
 #endif // WEBPP_SDK_CMDS_CREATE_PROJECT
