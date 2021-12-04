@@ -29,7 +29,7 @@ namespace webpp::sdk {
       protected:
         // A batch is a series of files and directories that have
         // a knowm name.
-        virtual stl::string batch_name() const = 0;
+        virtual stl::string batch_name() const override = 0;
 
         // Get the selected project name
         // Empty when it's not specified.
