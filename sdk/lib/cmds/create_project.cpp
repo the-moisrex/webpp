@@ -47,7 +47,7 @@ namespace webpp::sdk {
             return;
         }
 
-        const project_tempplate tmpl = get_project_template();
+        const project_template tmpl = get_project_template();
         if (!tmpl.is_valid()) {
             print_error("The specified template is not valid.");
             return;
