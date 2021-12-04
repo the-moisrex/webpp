@@ -47,6 +47,7 @@ if (TRUE)
   foreach(source ${TEST_SOURCES})
     get_filename_component(identifier "${source}" NAME)
     string(REPLACE "_test.cpp" "" identifier "${identifier}")
+    string(REPLACE "_" "-" identifier "${identifier}")
     set(name "test-${identifier}")
     message(STATUS "Test available: ${identifier}")
 
