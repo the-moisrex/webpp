@@ -169,6 +169,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/logs/log_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/logs/spdlog_logger.hpp
         ${LIB_INCLUDE_DIR}/webpp/logs/std_logger.hpp
+        ${LIB_INCLUDE_DIR}/webpp/logs/default_logger.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/server/server_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_thread_pool.hpp
