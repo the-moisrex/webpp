@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <vector>
+#include <webpp/logs/default_logger.hpp>
 
 
 namespace webpp::sdk {
@@ -42,14 +43,15 @@ namespace webpp::sdk {
 
     void create_project::handle() {
         const stl::string proj_name = project_name();
+        default_logger    logger{};
         if (proj_name.empty()) {
-            print_error("Please specify a valid name for the project.");
+            logger.error("Please specify a valid name for the project.");
             return;
         }
 
         const project_template tmpl = get_project_template();
         if (!tmpl.is_valid()) {
-            print_error("The specified template is not valid.");
+            logger.error("The specified template is not valid.");
             return;
         }
 
