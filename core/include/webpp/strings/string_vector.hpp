@@ -59,8 +59,18 @@ namespace webpp::string {
     struct string_piece {};
 
     // string vector: same as above, but you can add to it
-    template <istl::CharType CharT, Allocator AllocType = stl::allocator<CharT>>
+    template <istl::CharType CharT = char, Allocator AllocType = stl::allocator<CharT>>
     struct basic_string_vector : stl::vector<string_piece<CharT>, AllocType> {};
+
+    using string_vector = basic_string_vector<>;
+
+
+    // split strings with the specified delimiter
+    template <typename StringVec = string_vector, istl::StringViewifiable StrV>
+    StringVec split(StrV&& str, istl::CharType auto delims...) {}
+
+    template <typename StringVec = string_vector, istl::StringViewifiable... StrV>
+    StringVec split(StrV&& str, StrV&& delims...) {}
 
 
 } // namespace webpp::string
