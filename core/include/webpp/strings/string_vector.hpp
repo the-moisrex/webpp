@@ -6,7 +6,7 @@
 #include "../std/string_view.hpp"
 #include "../std/type_traits.hpp"
 
-namespace webpp::string {
+namespace webpp::strings {
 
 
     /**
@@ -67,10 +67,10 @@ namespace webpp::string {
 
     // split strings with the specified delimiter
     template <typename StringVec = string_vector, istl::StringViewifiable StrV>
-    StringVec split(StrV&& str, istl::CharType auto delims...) {}
+    StringVec split(StrV&& str, istl::CharType auto ...delims) {}
 
-    template <typename StringVec = string_vector, istl::StringViewifiable... StrV>
-    StringVec split(StrV&& str, StrV&& delims...) {}
+    template <typename StringVec = string_vector, istl::StringViewifiable InpStrV, istl::StringViewifiable... StrV>
+    StringVec split(InpStrV&& str, StrV&& ...delims) {}
 
 
 } // namespace webpp::string

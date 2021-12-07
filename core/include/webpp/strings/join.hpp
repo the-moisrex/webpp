@@ -8,7 +8,7 @@
 #include "../std/string.hpp"
 #include "./size.hpp"
 
-namespace webpp::string {
+namespace webpp::strings {
 
     namespace details {
 
@@ -97,6 +97,6 @@ namespace webpp::string {
     //        return result;
     //    };
 
-} // namespace webpp::string
+} // namespace webpp::strings
 
 #endif // WEBPP_JOIN_HPP
