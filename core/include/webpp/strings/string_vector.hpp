@@ -17,7 +17,7 @@ namespace webpp::strings {
      */
     template <istl::basic_fixed_string... Names>
     struct string_splits {
-        using char_type = typename istl::first_parameter<decltype(Names)...>::value_type;
+        using char_type = typename istl::first_parameter<stl::tuple<decltype(Names)...>>::value_type;
         using str_ptr   = char_type const*;
         static constexpr stl::size_t piece_count = sizeof...(Names);
         using tuple_type                         = istl::repeat_type<piece_count + 1, stl::tuple, str_ptr>;
