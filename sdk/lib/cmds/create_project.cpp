@@ -13,6 +13,9 @@ namespace webpp::sdk {
         stl::string_view name; // template name
 
         static project_template create_from_file(stl::ifstream file);
+
+        // check if the template is valid
+        bool is_valid();
     };
 
 

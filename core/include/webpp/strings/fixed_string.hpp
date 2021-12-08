@@ -1,6 +1,14 @@
 #ifndef WEBPP_FIXED_STRING_H
 #define WEBPP_FIXED_STRING_H
 
+#include <fixed_string.hpp>
+
+
+namespace webpp::istl {
+    using namespace fixstr;
+}
+
+/*
 #include "../std/string_view.hpp"
 
 #include <cstddef>
@@ -253,5 +261,7 @@ namespace webpp {
     fixed_string(fixed_string<N>) -> fixed_string<N>;
 
 } // namespace webpp
+
+*/
 
 #endif // WEBPP_FIXED_STRING_H

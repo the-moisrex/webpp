@@ -5,6 +5,7 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../std/type_traits.hpp"
+#include "./fixed_string.hpp"
 
 namespace webpp::strings {
 
@@ -14,10 +15,10 @@ namespace webpp::strings {
      *
      * Holds string_views of the same string in a manner that's memory efficiant.
      */
-    template <istl::CharType CharT, auto... Names>
-    struct basic_string_splits {
-        using char_type                          = CharT;
-        using str_ptr                            = char_type const*;
+    template <istl::basic_fixed_string... Names>
+    struct string_splits {
+        using char_type = typename istl::first_parameter<decltype(Names)...>::value_type;
+        using str_ptr   = char_type const*;
         static constexpr stl::size_t piece_count = sizeof...(Names);
         using tuple_type                         = istl::repeat_type<piece_count + 1, stl::tuple, str_ptr>;
 
@@ -28,9 +29,8 @@ namespace webpp::strings {
         tuple_type data;
 
       public:
-        constexpr basic_string_splits() noexcept = default;
-        constexpr basic_string_splits(str_ptr ptr, stl::size_t len) noexcept
-          : data{ptr, (Names, ...), ptr + len} {}
+        constexpr string_splits() noexcept = default;
+        constexpr string_splits(str_ptr ptr, stl::size_t len) noexcept : data{ptr, (Names, ...), ptr + len} {}
 
         template <stl::size_t Index, istl::StringView StrV = stl::string_view>
         constexpr StrV view() const noexcept {
@@ -48,11 +48,6 @@ namespace webpp::strings {
     };
 
 
-    template <auto... Names>
-    using string_splits = basic_string_splits<char, Names...>;
-
-
-
 
 
     template <istl::CharType CharT>
@@ -67,13 +62,15 @@ namespace webpp::strings {
 
     // split strings with the specified delimiter
     template <typename StringVec = string_vector, istl::StringViewifiable StrV>
-    StringVec split(StrV&& str, istl::CharType auto ...delims) {}
+    StringVec split(StrV&& str, istl::CharType auto... delims) {}
 
-    template <typename StringVec = string_vector, istl::StringViewifiable InpStrV, istl::StringViewifiable... StrV>
-    StringVec split(InpStrV&& str, StrV&& ...delims) {}
+    template <typename StringVec = string_vector,
+              istl::StringViewifiable InpStrV,
+              istl::StringViewifiable... StrV>
+    StringVec split(InpStrV&& str, StrV&&... delims) {}
 
 
-} // namespace webpp::string
+} // namespace webpp::strings
 
 
 #endif

@@ -226,6 +226,7 @@ target_link_libraries(${LIB_NAME}
         PUBLIC magic_enum::magic_enum
         PUBLIC date::date
         PUBLIC ${PROJECT_NAME}::json
+        PUBLIC fixed_string::fixed_string
         ${BROTLI_SHARED_LIBS}
         PUBLIC ZLIB::ZLIB
         PUBLIC ctre::ctre

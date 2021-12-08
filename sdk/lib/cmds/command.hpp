@@ -26,6 +26,10 @@ namespace webpp::sdk {
         virtual void handle();
     };
 
+
+    // parse the args, and run the command
+    void run_command(int argc, char** argv);
+
 } // namespace webpp::sdk
 
 

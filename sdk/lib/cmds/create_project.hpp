@@ -19,7 +19,9 @@ namespace webpp::sdk {
      * Create a new project
      *
      * Syntax:
-     *   webpp new project MySite
+     *   wpp new project MySite
+     *
+     *   MySite is the project name
      */
     struct create_project : public create {
         stl::string_view name() const noexcept override;

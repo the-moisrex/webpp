@@ -5,18 +5,18 @@
 
 
 using namespace webpp;
-using namespace webpp::string;
+using namespace webpp::strings;
 
 TEST(String, Join) {
     stl::string      one   = "one ";
-    stl::pmr::string two   = "two ";
+    stl::string      two   = "two ";
     stl::string_view three = "three";
-    auto const       res   = string::join(one, two, three, " four");
+    auto const       res   = join(one, two, three, " four");
     static_assert(
       stl::same_as<typename decltype(res)::allocator_type, typename decltype(two)::allocator_type>);
     EXPECT_EQ(res, "one two three four");
 
-    EXPECT_EQ(string::join(stl::string("one, "), 1, 2), "one, 12");
+    EXPECT_EQ(join(stl::string("one, "), 1, 2), "one, 12");
 }
 
 
