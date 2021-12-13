@@ -1,6 +1,6 @@
 // Created by moisrex on 11/20/20.
 #include "../core/include/webpp/strings/join.hpp"
-#include "../core/include/webpp/strings/string_vector.hpp"
+#include "../core/include/webpp/strings/splits.hpp"
 #include "./common_pch.hpp"
 
 
