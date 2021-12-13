@@ -22,7 +22,7 @@ namespace webpp::strings {
         static constexpr stl::size_t piece_count = sizeof...(Names);
         using tuple_type                         = istl::repeat_type<piece_count + 1, stl::tuple, str_ptr>;
 
-        template <auto the_name>
+        template <istl::basic_fixed_string the_name>
         constexpr static stl::size_t index_of = istl::index_of_item<the_name, Names...>::value;
 
       private:
@@ -40,7 +40,7 @@ namespace webpp::strings {
             return StrV{start_ptr, len};
         }
 
-        template <auto Name, istl::StringView StrV = stl::string_view>
+        template <istl::basic_fixed_string Name, istl::StringView StrV = stl::string_view>
         constexpr StrV view_of() const noexcept {
             constexpr auto index = index_of<Name>;
             return view<index, StrV>();
