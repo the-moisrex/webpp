@@ -17,8 +17,9 @@ namespace webpp::strings {
      */
     template <istl::basic_fixed_string... Names>
     struct string_splits {
-        using char_type = typename istl::first_parameter<stl::tuple<decltype(Names)...>>::value_type;
-        using str_ptr   = char_type const*;
+        using char_type        = typename istl::first_parameter<stl::tuple<decltype(Names)...>>::value_type;
+        using string_view_type = stl::basic_string_view<char_type>;
+        using str_ptr          = char_type const*;
         static constexpr stl::size_t piece_count = sizeof...(Names);
         using tuple_type                         = istl::repeat_type<piece_count + 1, stl::tuple, str_ptr>;
 
@@ -30,7 +31,15 @@ namespace webpp::strings {
 
       public:
         constexpr string_splits() noexcept = default;
-        constexpr string_splits(str_ptr ptr, stl::size_t len) noexcept : data{ptr, (Names, ...), ptr + len} {}
+        constexpr string_splits(string_view_type str) noexcept : string_splits{str.data(), str.size()} {}
+
+        constexpr string_splits(str_ptr ptr, stl::size_t len) noexcept
+          : data{(([last_pos = 0ul, data_str = string_view_type{ptr, len}](auto&& name) mutable -> str_ptr {
+                      last_pos = data_str.find(name, last_pos);
+                      return data_str.data() + last_pos;
+                  })(Names),
+                  ...),
+                 ptr + len} {}
 
         template <stl::size_t Index, istl::StringView StrV = stl::string_view>
         constexpr StrV view() const noexcept {
