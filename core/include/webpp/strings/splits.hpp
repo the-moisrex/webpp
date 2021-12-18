@@ -34,11 +34,12 @@ namespace webpp::strings {
         constexpr string_splits(string_view_type str) noexcept : string_splits{str.data(), str.size()} {}
 
         constexpr string_splits(str_ptr ptr, stl::size_t len) noexcept
-          : data{(([last_pos = 0ul, data_str = string_view_type{ptr, len}](auto&& name) mutable -> str_ptr {
-                      last_pos = data_str.find(name, last_pos);
-                      return data_str.data() + last_pos;
-                  })(Names),
-                  ...),
+          : data{(
+                   [last_pos = 0ul, data_str = string_view_type{ptr, len}](auto&& name) mutable -> str_ptr {
+                       last_pos = data_str.find(name, last_pos);
+                       return data_str.data() + last_pos;
+                   }(Names),
+                   ...),
                  ptr + len} {}
 
         template <stl::size_t Index, istl::StringView StrV = stl::string_view>
