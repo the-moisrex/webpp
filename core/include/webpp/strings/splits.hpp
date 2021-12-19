@@ -21,18 +21,20 @@ namespace webpp::strings {
         using string_view_type = stl::basic_string_view<char_type>;
         using str_ptr          = char_type const*;
         static constexpr stl::size_t piece_count = sizeof...(Names);
-        using tuple_type                         = istl::repeat_type<piece_count + 1, stl::tuple, str_ptr>;
+        // using tuple_type                         = istl::repeat_type<piece_count + 1, stl::tuple, str_ptr>;
+        using data_type = stl::array<str_ptr, piece_count>;
 
         template <istl::basic_fixed_string the_name>
         constexpr static stl::size_t index_of = istl::index_of_item<the_name, Names...>::value;
 
       private:
-        tuple_type data;
+        data_type data;
 
       public:
         constexpr string_splits() noexcept = default;
         constexpr string_splits(string_view_type str) noexcept : string_splits{str.data(), str.size()} {}
 
+        /*
         constexpr string_splits(str_ptr ptr, stl::size_t len) noexcept
           : data{(
                    [last_pos = 0ul, data_str = string_view_type{ptr, len}](auto&& name) mutable -> str_ptr {
@@ -41,12 +43,26 @@ namespace webpp::strings {
                    }(Names),
                    ...),
                  ptr + len} {}
+        */
+        constexpr string_splits(str_ptr ptr, stl::size_t len) {
+            stl::generate(stl::begin(data),
+                          stl::end(data),
+                          [index    = 0,
+                           names    = data_type{Names.data()...},
+                           last_pos = 0ul,
+                           data_str = string_view_type{ptr, len}]() mutable -> str_ptr {
+                              const auto name = names[index++];
+                              last_pos        = data_str.find(name, last_pos);
+                              return data_str.data() + last_pos;
+                          });
+            data.back() = ptr + len;
+        }
 
         template <stl::size_t Index, istl::StringView StrV = stl::string_view>
         constexpr StrV view() const noexcept {
-            auto const start_ptr = stl::get<Index>(data);
-            auto const end_ptr   = stl::get<Index + 1>(data);
-            auto const len       = end_ptr - start_ptr;
+            auto const        start_ptr = stl::get<Index>(data);
+            auto const        end_ptr   = stl::get<Index + 1>(data);
+            stl::size_t const len       = end_ptr - start_ptr;
             return StrV{start_ptr, len};
         }
 

@@ -23,11 +23,6 @@ TEST(String, Join) {
 
 TEST(String, StringPieces) {
     using ptype       = string_splits<"one", "two">;
-    using tup_type    = typename ptype::tuple_type;
-    using ptr_t       = typename ptype::str_ptr;
-    using tup_crafted = stl::tuple<ptr_t, ptr_t, ptr_t>;
-    EXPECT_TRUE(static_cast<bool>(stl::is_same_v<tup_type, tup_crafted>));
-
     ptype pieces{"one two"};
 
     // fixme: I don't understand this line that I wrote!!!
