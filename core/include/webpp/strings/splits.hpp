@@ -55,17 +55,17 @@ namespace webpp::strings {
 
         template <Delimiter... DelimT>
         constexpr string_splits(str_ptr ptr, stl::size_t len, DelimT&&... delims) {
-            auto func = [delimiters = stl::make_tuple(stl::forward<DelimT>(delims)...),
-                         last_pos   = 0ul,
-                         data_str   = string_view_type{ptr, len}]<stl::size_t Index>(
-                          istl::value_holder<Index>) mutable -> str_ptr {
+            auto pos_finder = [delimiters = stl::make_tuple(stl::forward<DelimT>(delims)...),
+                               last_pos   = 0ul,
+                               data_str   = string_view_type{ptr, len}]<stl::size_t Index>(
+                                istl::value_holder<Index>) mutable -> str_ptr {
                 constexpr stl::size_t delim_index = stl::clamp(Index, 0ul, sizeof...(delims) - 1);
                 const auto            delim       = stl::get<delim_index>(delimiters);
                 last_pos                          = data_str.find(delim, last_pos);
                 return data_str.data() + last_pos;
             };
             ([&]<stl::size_t... I>(stl::index_sequence<I...>) {
-                (func(istl::value_holder<I>{}), ...); // call the func
+                ((data[I] = pos_finder(istl::value_holder<I>{})), ...); // call the func
             })(stl::make_index_sequence<piece_count - 1>());
             data.back() = ptr + len;
         }
