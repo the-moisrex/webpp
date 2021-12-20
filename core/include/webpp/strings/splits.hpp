@@ -2,12 +2,16 @@
 #define WEBPP_STRING_VECTOR
 
 
+#include "../std/algorithm.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../std/type_traits.hpp"
 #include "./fixed_string.hpp"
 
 namespace webpp::strings {
+
+    template <typename D>
+    concept Delimiter = istl::StringViewifiable<D> || istl::CharType<D>;
 
 
     /**
@@ -22,10 +26,12 @@ namespace webpp::strings {
         using str_ptr          = char_type const*;
         static constexpr stl::size_t piece_count = sizeof...(Names);
         // using tuple_type                         = istl::repeat_type<piece_count + 1, stl::tuple, str_ptr>;
-        using data_type = stl::array<str_ptr, piece_count>;
+        using data_type = stl::array<str_ptr, piece_count + 1>;
 
         template <istl::basic_fixed_string the_name>
         constexpr static stl::size_t index_of = istl::index_of_item<the_name, Names...>::value;
+
+        static constexpr char_type default_delimiter = ' ';
 
       private:
         data_type data;
@@ -44,17 +50,23 @@ namespace webpp::strings {
                    ...),
                  ptr + len} {}
         */
-        constexpr string_splits(str_ptr ptr, stl::size_t len) {
-            stl::generate(stl::begin(data),
-                          stl::end(data),
-                          [index    = 0,
-                           names    = data_type{Names.data()...},
-                           last_pos = 0ul,
-                           data_str = string_view_type{ptr, len}]() mutable -> str_ptr {
-                              const auto name = names[index++];
-                              last_pos        = data_str.find(name, last_pos);
-                              return data_str.data() + last_pos;
-                          });
+
+        constexpr string_splits(str_ptr ptr, stl::size_t len) : string_splits{ptr, len, default_delimiter} {}
+
+        template <Delimiter... DelimT>
+        constexpr string_splits(str_ptr ptr, stl::size_t len, DelimT&&... delims) {
+            auto func = [delimiters = stl::make_tuple(stl::forward<DelimT>(delims)...),
+                         last_pos   = 0ul,
+                         data_str   = string_view_type{ptr, len}]<stl::size_t Index>(
+                          istl::value_holder<Index>) mutable -> str_ptr {
+                constexpr stl::size_t delim_index = stl::clamp(Index, 0ul, sizeof...(delims) - 1);
+                const auto            delim       = stl::get<delim_index>(delimiters);
+                last_pos                          = data_str.find(delim, last_pos);
+                return data_str.data() + last_pos;
+            };
+            ([&]<stl::size_t... I>(stl::index_sequence<I...>) {
+                (func(istl::value_holder<I>{}), ...); // call the func
+            })(stl::make_index_sequence<piece_count - 1>());
             data.back() = ptr + len;
         }
 

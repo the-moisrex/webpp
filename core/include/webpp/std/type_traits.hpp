@@ -15,6 +15,12 @@ namespace webpp::istl {
     template <typename T>
     using void_holder = stl::conditional_t<stl::is_void_v<T>, nothing_type, T>;
 
+    template <typename T>
+    struct type_holder {};
+
+    template <auto V>
+    struct value_holder {};
+
 
     template <typename T>
     struct lazy_type {

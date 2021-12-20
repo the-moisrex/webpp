@@ -25,6 +25,5 @@ TEST(String, StringPieces) {
     using ptype       = string_splits<"one", "two">;
     ptype pieces{"one two"};
 
-    // fixme: I don't understand this line that I wrote!!!
-    EXPECT_TRUE(pieces.template view_of<"one">().empty());
+    EXPECT_EQ(pieces.template view_of<"one">(), "one");
 }
