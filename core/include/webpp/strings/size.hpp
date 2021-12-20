@@ -53,6 +53,8 @@ namespace webpp::ascii {
             return constexpr_array_type<T>::array_length; // todo: I'm not sure if this works or not
         } else if constexpr (requires { stl::strlen(str); }) {
             return stl::strlen(str);
+        } else if constexpr (istl::CharType<T>) {
+            return 1;
         } else {
             // todo: is it possible to optimize this with SIMD?
             const T* end = str;

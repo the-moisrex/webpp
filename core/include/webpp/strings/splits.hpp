@@ -7,6 +7,7 @@
 #include "../std/string_view.hpp"
 #include "../std/type_traits.hpp"
 #include "./fixed_string.hpp"
+#include "./size.hpp"
 
 namespace webpp::strings {
 
@@ -62,12 +63,14 @@ namespace webpp::strings {
                 constexpr stl::size_t delim_index = stl::clamp(Index, 0ul, sizeof...(delims) - 1);
                 const auto            delim       = stl::get<delim_index>(delimiters);
                 last_pos                          = data_str.find(delim, last_pos);
+                last_pos += ascii::size(delim);
                 return data_str.data() + last_pos;
             };
+            data[0] = ptr; // first element is the start of the string
             ([&]<stl::size_t... I>(stl::index_sequence<I...>) {
-                ((data[I] = pos_finder(istl::value_holder<I>{})), ...); // call the func
+                ((data[I + 1] = pos_finder(istl::value_holder<I>{})), ...); // call the func
             })(stl::make_index_sequence<piece_count - 1>());
-            data.back() = ptr + len;
+            data.back() = ptr + len; // last element is the end of the string
         }
 
         template <stl::size_t Index, istl::StringView StrV = stl::string_view>
