@@ -41,6 +41,10 @@ namespace webpp::strings {
         constexpr string_splits() noexcept = default;
         constexpr string_splits(string_view_type str) noexcept : string_splits{str.data(), str.size()} {}
 
+        template <Delimiter... DelimT>
+        constexpr string_splits(string_view_type str, DelimT&&... delims) noexcept
+          : string_splits{str.data(), str.size(), stl::forward<DelimT>(delims)...} {}
+
         /*
         constexpr string_splits(str_ptr ptr, stl::size_t len) noexcept
           : data{(
@@ -74,7 +78,8 @@ namespace webpp::strings {
         }
 
         template <stl::size_t Index, istl::StringView StrV = stl::string_view>
-        constexpr StrV view() const noexcept {
+        requires(Index + 1 < piece_count) // Index should be in bounds of data array
+          constexpr StrV view() const noexcept {
             auto const        start_ptr = stl::get<Index>(data);
             auto const        end_ptr   = stl::get<Index + 1>(data);
             stl::size_t const len       = end_ptr - start_ptr;
