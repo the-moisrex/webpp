@@ -45,17 +45,6 @@ namespace webpp::strings {
         constexpr string_splits(string_view_type str, DelimT&&... delims) noexcept
           : string_splits{str.data(), str.size(), stl::forward<DelimT>(delims)...} {}
 
-        /*
-        constexpr string_splits(str_ptr ptr, stl::size_t len) noexcept
-          : data{(
-                   [last_pos = 0ul, data_str = string_view_type{ptr, len}](auto&& name) mutable -> str_ptr {
-                       last_pos = data_str.find(name, last_pos);
-                       return data_str.data() + last_pos;
-                   }(Names),
-                   ...),
-                 ptr + len} {}
-        */
-
         constexpr string_splits(str_ptr ptr, stl::size_t len) : string_splits{ptr, len, default_delimiter} {}
 
         template <Delimiter... DelimT>
