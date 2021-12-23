@@ -16,18 +16,16 @@ namespace webpp::strings {
 
 
     /**
-     * String Splits
+     * String Splits (an array of string_views
      *
      * Holds string_views of the same string in a manner that's memory efficiant.
      */
-    template <istl::basic_fixed_string... Names>
-    struct string_splits {
-        using char_type        = typename istl::first_parameter<stl::tuple<decltype(Names)...>>::value_type;
-        using string_view_type = stl::basic_string_view<char_type>;
-        using str_ptr          = char_type const*;
+    template <istl::StringView StrV, istl::basic_fixed_string... Names>
+    struct string_splits : public stl::array<StrV, sizeof...(Names)> {
+        using string_view_type                   = StrV;
+        using char_type                          = istl::char_type<string_view_type>;
         static constexpr stl::size_t piece_count = sizeof...(Names);
-        // using tuple_type                         = istl::repeat_type<piece_count + 1, stl::tuple, str_ptr>;
-        using data_type = stl::array<str_ptr, piece_count + 1>;
+        using data_type                          = stl::array<string_view_type, piece_count>;
 
         template <istl::basic_fixed_string the_name>
         constexpr static stl::size_t index_of = istl::index_of_item<the_name, Names...>::value;
@@ -66,13 +64,10 @@ namespace webpp::strings {
             data.back() = ptr + len; // last element is the end of the string
         }
 
-        template <stl::size_t Index, istl::StringView StrV = stl::string_view>
+        template <stl::size_t Index>
         requires(Index + 1 < piece_count) // Index should be in bounds of data array
           constexpr StrV view() const noexcept {
-            auto const        start_ptr = stl::get<Index>(data);
-            auto const        end_ptr   = stl::get<Index + 1>(data);
-            stl::size_t const len       = end_ptr - start_ptr;
-            return StrV{start_ptr, len};
+            return stl::get<Index>(data);
         }
 
         template <istl::basic_fixed_string Name, istl::StringView StrV = stl::string_view>
@@ -85,14 +80,60 @@ namespace webpp::strings {
 
 
 
-    template <istl::CharType CharT>
-    struct string_piece {};
-
     // string vector: same as above, but you can add to it
     template <istl::CharType CharT = char, Allocator AllocType = stl::allocator<CharT>>
     struct basic_string_vector : stl::vector<string_piece<CharT>, AllocType> {};
 
     using string_vector = basic_string_vector<>;
+
+
+    template <typename T>
+    struct splitter_iterator final {
+        using splitter_type    = T;
+        using string_view_type = typename splitter_type::string_view_type;
+    };
+
+    /**
+     * String splitter struct.
+     *
+     * This class will help to split a string_splits
+     */
+    template <istl::StringView StrV = stl::string_view, Delimiter... DelimT>
+    struct basic_splitter final {
+        using string_view_type        = StrV;
+        using delimiter_type          = stl::tuple<DelimT...>;
+        using self_type               = basic_splitter;
+        using iterator_type           = splitter_iterator<self_type>;
+        using default_collection_type = stl::vector<string_view_type>;
+
+      private:
+        string_view_type str;
+        delimiter_type   delims;
+
+      public:
+        constexpr basic_splitter(string_view_type str, DelimT&&... delims_input) noexcept
+          : str{str},
+            delims{stl::forward<DelimT>(delims_input)...} {}
+
+        iterator_type begin() noexcept {}
+
+        iterator_type end() noexcept {}
+
+        template <typename Vec = default_collection_type>
+        Vec& split(Vec& vec) {
+            return vec;
+        }
+
+        /**
+         * Split the strings and get a vector
+         */
+        template <typename Vec = default_collection_type, typename... Args>
+        Vec split(Args&&... args) {
+            Vec vec{stl::forward<Args>(args)...};
+            split<Vec>(vec);
+            return vec;
+        }
+    };
 
 
     // split strings with the specified delimiter
