@@ -27,3 +27,10 @@ TEST(String, StringPieces) {
 
     EXPECT_EQ(pieces.template view_of<"one">(), "one");
 }
+
+
+TEST(String, Splitter) {
+    splitter   email_splitter{"test@email.com", '@'};
+    auto const email = email_splitter.template split_to<2>();
+    EXPECT_EQ(stl::get<0>(email), "test");
+}
