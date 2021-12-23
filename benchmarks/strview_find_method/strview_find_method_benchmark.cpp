@@ -2,7 +2,7 @@
 
 using namespace std;
 
-string_view str = "long string 1 long string 1long string 1long string 1long string 1long "
+string      str = "long string 1 long string 1long string 1long string 1long string 1long "
                   "string 1long string 1long string 1long string 1long string 1long string "
                   "1long string 1long string 1long string 1long string 1long string 1long "
                   "string 1long string 1long string 1long string 1long string 1long string "
@@ -15,6 +15,7 @@ string_view str = "long string 1 long string 1long string 1long string 1long str
                   "1long string 1long string 1long string 1long string 1long string 1long "
                   "string 1 *";
 static void FindStr(benchmark::State& state) {
+    str += " oh oh"; // to make sure the string is dynamic and not constexpr
     for (auto _ : state) {
         const auto c = str.find("*");
         benchmark::DoNotOptimize(c);
