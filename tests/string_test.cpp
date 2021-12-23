@@ -31,6 +31,13 @@ TEST(String, StringPieces) {
 
 TEST(String, Splitter) {
     splitter   email_splitter{"test@email.com", '@'};
-    auto const email = email_splitter.template split_to<2>();
+    auto const email = email_splitter.split();
+    EXPECT_EQ(email[0], "test");
+}
+
+
+TEST(String, SplitterConstexpr) {
+    constexpr splitter email_splitter{"test@email.com", '@'};
+    constexpr auto     email = email_splitter.template split_to<2>();
     EXPECT_EQ(stl::get<0>(email), "test");
 }
