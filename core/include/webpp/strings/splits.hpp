@@ -23,7 +23,7 @@ namespace webpp::strings {
     template <istl::StringView StrV, istl::basic_fixed_string... Names>
     struct string_splits : public stl::array<StrV, sizeof...(Names)> {
         using string_view_type                   = StrV;
-        using char_type                          = istl::char_type<string_view_type>;
+        using char_type                          = istl::char_type_of<string_view_type>;
         static constexpr stl::size_t piece_count = sizeof...(Names);
         using data_type                          = stl::array<string_view_type, piece_count>;
 
@@ -87,7 +87,12 @@ namespace webpp::strings {
     using string_vector = basic_string_vector<>;
 
 
-    template <typename T>
+    /**
+     * The logic of finding the next piece will be placed here.
+     *
+     * I'd love to make this a coroutine!
+     */
+    template <typename T, stl::size_t DelimIndex = 0>
     struct splitter_iterator final {
         using splitter_type    = T;
         using splitter_ptr     = stl::add_pointer_t<splitter_type>;
@@ -95,20 +100,31 @@ namespace webpp::strings {
         using iterator         = splitter_iterator;
 
         // iterator traits
-        using difference_type   = long;
+        using difference_type   = stl::size_t;
         using value_type        = string_view_type;
-        using pointer           = const long*;
-        using reference         = const long&;
+        using pointer           = stl::add_pointer_t<value_type>;
+        using reference         = value_type;
         using iterator_category = stl::forward_iterator_tag;
         using iterator_concept  = stl::forward_iterator_tag;
 
+        static constexpr stl::size_t delim_size       = splitter_type::delimiter_size;
+        static constexpr stl::size_t delim_index      = DelimIndex;
+        static constexpr stl::size_t next_delim_index = stl::clamp(delim_index, 0ul, delim_size);
+
+        using next_iterator = splitter_iterator<splitter_type, next_delim_index>;
+
 
         constexpr splitter_iterator() noexcept = default; // .end()
-        constexpr splitter_iterator(splitter_ptr ptr) noexcept : spltr{ptr} {}
+        constexpr splitter_iterator(splitter_ptr ptr, difference_type init_pos = 0) noexcept
+          : spltr{ptr},
+            last_pos{init_pos} {}
 
-        iterator& operator++() {
-            num = TO >= FROM ? num + 1 : num - 1;
-            return *this;
+        constexpr next_iterator operator++() const {
+            auto const delim = spltr->template delimiter<delim_index>();
+            last_pos         = data_str.find(delim, last_pos);
+            last_pos += ascii::size(delim);
+            return data_str.data() + last_pos;
+            return next_iterator{spltr, last_pos};
         }
         iterator operator++(int) {
             iterator retval = *this;
@@ -121,13 +137,16 @@ namespace webpp::strings {
         [[nodiscard]] constexpr bool operator!=(iterator other) const noexcept {
             return !(*this == other);
         }
-        long operator*() {
+        value_type operator*() {
+            // can't dereference an iterator that points to nothing
+            assert(spltr != nullptr);
             return num;
         }
 
 
       private:
-        splitter_ptr spltr = nullptr;
+        splitter_ptr    spltr    = nullptr;
+        difference_type last_pos = 0;
     };
 
 
@@ -144,9 +163,11 @@ namespace webpp::strings {
         using iterator_type           = splitter_iterator<self_type>;
         using default_collection_type = stl::vector<string_view_type>;
 
+        static constexpr stl::size_t delimiter_size = sizeof...(DelimT);
+
       private:
         string_view_type str;
-        delimiter_type   delims;
+        delimiter_type   delims; // todo: add whitespaces as default delimiters
 
       public:
         constexpr basic_splitter(string_view_type str, DelimT&&... delims_input) noexcept
@@ -175,6 +196,16 @@ namespace webpp::strings {
             split<Vec>(vec);
             return vec;
         }
+
+        template <stl::size_t Index>
+        [[nodiscard]] constexpr auto delimiter() const noexcept {
+            constexpr stl::size_t delim_index = stl::clamp(Index, 0ul, delims.size() - 1);
+            const auto            delim       = stl::get<delim_index>(delims);
+            return delim;
+        }
+
+
+        // todo: add a way to use coroutines here as another way of doing the same thing
     };
 
 
