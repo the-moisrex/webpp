@@ -33,6 +33,11 @@ TEST(String, Splitter) {
     splitter   email_splitter{"test@email.com", '@'};
     auto const email = email_splitter.split();
     EXPECT_EQ(email[0], "test");
+    stl::size_t                     index = 0;
+    stl::array<stl::string_view, 2> parts{{"test", "email.com"}};
+    for (auto part : email_splitter) {
+        EXPECT_EQ(part, parts[index++])
+    }
 }
 
 
