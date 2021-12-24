@@ -16,7 +16,7 @@ namespace webpp::strings {
 
 
     /**
-     * String Splits (an array of string_views
+     * String Splits (an array of string_views)
      *
      * Holds string_views of the same string in a manner that's memory efficiant.
      */
@@ -90,8 +90,46 @@ namespace webpp::strings {
     template <typename T>
     struct splitter_iterator final {
         using splitter_type    = T;
+        using splitter_ptr     = stl::add_pointer_t<splitter_type>;
         using string_view_type = typename splitter_type::string_view_type;
+        using iterator         = splitter_iterator;
+
+        // iterator traits
+        using difference_type   = long;
+        using value_type        = string_view_type;
+        using pointer           = const long*;
+        using reference         = const long&;
+        using iterator_category = stl::forward_iterator_tag;
+        using iterator_concept  = stl::forward_iterator_tag;
+
+
+        constexpr splitter_iterator() noexcept = default; // .end()
+        constexpr splitter_iterator(splitter_ptr ptr) noexcept : spltr{ptr} {}
+
+        iterator& operator++() {
+            num = TO >= FROM ? num + 1 : num - 1;
+            return *this;
+        }
+        iterator operator++(int) {
+            iterator retval = *this;
+            ++(*this);
+            return retval;
+        }
+        [[nodiscard]] constexpr bool operator==(iterator other) const noexcept {
+            return num == other.num;
+        }
+        [[nodiscard]] constexpr bool operator!=(iterator other) const noexcept {
+            return !(*this == other);
+        }
+        long operator*() {
+            return num;
+        }
+
+
+      private:
+        splitter_ptr spltr = nullptr;
     };
+
 
     /**
      * String splitter struct.
@@ -115,9 +153,13 @@ namespace webpp::strings {
           : str{str},
             delims{stl::forward<DelimT>(delims_input)...} {}
 
-        iterator_type begin() noexcept {}
+        iterator_type begin() noexcept {
+            return {this};
+        }
 
-        iterator_type end() noexcept {}
+        const iterator_type end() const noexcept {
+            return {};
+        }
 
         template <typename Vec = default_collection_type>
         Vec& split(Vec& vec) {
