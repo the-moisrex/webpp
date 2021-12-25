@@ -92,7 +92,7 @@ namespace webpp::strings {
      *
      * I'd love to make this a coroutine!
      */
-    template <typename T, stl::size_t DelimIndex = 0>
+    template <typename T>
     struct splitter_iterator final {
         using splitter_type    = T;
         using splitter_ptr     = stl::add_pointer_t<splitter_type>;
@@ -111,20 +111,17 @@ namespace webpp::strings {
         static constexpr stl::size_t delim_index      = DelimIndex;
         static constexpr stl::size_t next_delim_index = stl::clamp(delim_index, 0ul, delim_size);
 
-        using next_iterator = splitter_iterator<splitter_type, next_delim_index>;
-
-
-        constexpr splitter_iterator() noexcept = default; // .end()
+        constexpr splitter_iterator() noexcept                         = default; // .end()
+        constexpr splitter_iterator(splitter_iterator const&) noexcept = default; // .end()
         constexpr splitter_iterator(splitter_ptr ptr, difference_type init_pos = 0) noexcept
           : spltr{ptr},
             last_pos{init_pos} {}
 
-        constexpr next_iterator operator++() const {
+        iterator& operator++() {
             auto const delim = spltr->template delimiter<delim_index>();
             last_pos         = data_str.find(delim, last_pos);
             last_pos += ascii::size(delim);
             return data_str.data() + last_pos;
-            return next_iterator{spltr, last_pos};
         }
         iterator operator++(int) {
             iterator retval = *this;
@@ -132,7 +129,7 @@ namespace webpp::strings {
             return retval;
         }
         [[nodiscard]] constexpr bool operator==(iterator other) const noexcept {
-            return num == other.num;
+            return last_pos == other.last_pos && spltr == other.spltr;
         }
         [[nodiscard]] constexpr bool operator!=(iterator other) const noexcept {
             return !(*this == other);
@@ -204,6 +201,11 @@ namespace webpp::strings {
             return delim;
         }
 
+        [[nodiscard]] constexpr auto delimiter(stl::size_t index) const noexcept {
+            const stl::size_t delim_index = stl::clamp(index, 0ul, delims.size() - 1);
+            const auto        delim       = stl::get<delim_index>(delims);
+            return delim;
+        }
 
         // todo: add a way to use coroutines here as another way of doing the same thing
     };
