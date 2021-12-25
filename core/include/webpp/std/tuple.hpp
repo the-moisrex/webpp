@@ -62,7 +62,7 @@ namespace webpp::istl {
 
 
     template <template <typename> typename Concept, typename Tup>
-    concept TupleOf = Tuple<Tup>&& is_tuple_of<Concept, Tup>::value;
+    concept TupleOf = Tuple<Tup> && is_tuple_of<Concept, Tup>::value;
 
 
 
@@ -125,6 +125,24 @@ namespace webpp::istl {
                 return TupleT{details::tuple_get_value<TupleT, no_order_tuple, ints>(bad_tuple)...};
             })(stl::make_index_sequence<stl::tuple_size_v<TupleT>>{}, stl::forward<T>(args)...);
         }
+    }
+
+
+
+
+
+    /**
+     * Run a function on the specified tuple and the index
+     * Index can be gotten dynamically
+     */
+    template <std::size_t I = 0, typename FuncT, template <typename...> typename Tup, typename... Tp>
+    requires(I >= sizeof...(Tp)) static constexpr void for_index(int, Tup<Tp...>&, FuncT&&) {}
+
+    template <stl::size_t I = 0, typename FuncT, template <typename...> typename Tup, typename... Tp>
+    requires(I < sizeof...(Tp)) static constexpr void for_index(int index, Tup<Tp...>& t, FuncT&& f) {
+        if (index == 0)
+            f(stl::get<I>(t));
+        for_index<I + 1, FuncT, Tup, Tp...>(index - 1, t, stl::forward<FuncT>(f));
     }
 
 
