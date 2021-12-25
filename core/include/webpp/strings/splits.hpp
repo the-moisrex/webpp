@@ -107,10 +107,6 @@ namespace webpp::strings {
         using iterator_category = stl::forward_iterator_tag;
         using iterator_concept  = stl::forward_iterator_tag;
 
-        static constexpr stl::size_t delim_size       = splitter_type::delimiter_size;
-        static constexpr stl::size_t delim_index      = DelimIndex;
-        static constexpr stl::size_t next_delim_index = stl::clamp(delim_index, 0ul, delim_size);
-
         constexpr splitter_iterator() noexcept                         = default; // .end()
         constexpr splitter_iterator(splitter_iterator const&) noexcept = default; // .end()
         constexpr splitter_iterator(splitter_ptr ptr, difference_type init_pos = 0) noexcept
@@ -121,29 +117,35 @@ namespace webpp::strings {
             auto const delim = spltr->template delimiter<delim_index>();
             last_pos         = data_str.find(delim, last_pos);
             last_pos += ascii::size(delim);
-            return data_str.data() + last_pos;
+            start_pos = finish_pos;
+            return *this;
         }
+
         iterator operator++(int) {
             iterator retval = *this;
             ++(*this);
             return retval;
         }
+
         [[nodiscard]] constexpr bool operator==(iterator other) const noexcept {
-            return last_pos == other.last_pos && spltr == other.spltr;
+            return start_pos == other.start_pos && finish_pos == other.finish_pos && spltr == other.spltr;
         }
+
         [[nodiscard]] constexpr bool operator!=(iterator other) const noexcept {
             return !(*this == other);
         }
+
         value_type operator*() {
             // can't dereference an iterator that points to nothing
             assert(spltr != nullptr);
-            return num;
+            return spltr->substr(start_pos, finish_pos);
         }
 
 
       private:
-        splitter_ptr    spltr    = nullptr;
-        difference_type last_pos = 0;
+        splitter_ptr    spltr      = nullptr;
+        difference_type start_pos  = 0;
+        difference_type finish_pos = 0;
     };
 
 
@@ -160,7 +162,6 @@ namespace webpp::strings {
         using iterator_type           = splitter_iterator<self_type>;
         using default_collection_type = stl::vector<string_view_type>;
 
-        static constexpr stl::size_t delimiter_size = sizeof...(DelimT);
 
       private:
         string_view_type str;
@@ -175,7 +176,7 @@ namespace webpp::strings {
             return {this};
         }
 
-        const iterator_type end() const noexcept {
+        [[nodiscard]] constexpr iterator_type end() const noexcept {
             return {};
         }
 
@@ -196,15 +197,18 @@ namespace webpp::strings {
 
         template <stl::size_t Index>
         [[nodiscard]] constexpr auto delimiter() const noexcept {
-            constexpr stl::size_t delim_index = stl::clamp(Index, 0ul, delims.size() - 1);
+            constexpr stl::size_t delim_index = delimiter_clamp(Index);
             const auto            delim       = stl::get<delim_index>(delims);
             return delim;
         }
 
-        [[nodiscard]] constexpr auto delimiter(stl::size_t index) const noexcept {
-            const stl::size_t delim_index = stl::clamp(index, 0ul, delims.size() - 1);
-            const auto        delim       = stl::get<delim_index>(delims);
-            return delim;
+        [[nodiscard]] static constexpr auto delimiter_clamp(stl::size_t index) noexcept {
+            return stl::clamp(index, 0ul, delims.size() - 1);
+        }
+
+
+        [[nodiscard]] constexpr string_view_type substr(stl::size_t start_pos, stl::size_t finish_pos) {
+            return str.substr(start_pos, finish_pos);
         }
 
         // todo: add a way to use coroutines here as another way of doing the same thing
