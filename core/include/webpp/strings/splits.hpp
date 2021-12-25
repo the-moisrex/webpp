@@ -109,15 +109,27 @@ namespace webpp::strings {
 
         constexpr splitter_iterator() noexcept                         = default; // .end()
         constexpr splitter_iterator(splitter_iterator const&) noexcept = default; // .end()
-        constexpr splitter_iterator(splitter_ptr ptr, difference_type init_pos = 0) noexcept
+        constexpr splitter_iterator(splitter_ptr    ptr,
+                                    difference_type start_pos   = 0,
+                                    difference_type finish_pos  = 0,
+                                    stl::size_t     delim_index = 0) noexcept
           : spltr{ptr},
-            last_pos{init_pos} {}
+            start_pos{start_pos},
+            finish_pos{finish_pos},
+            delim_index{delim_index} {}
 
         iterator& operator++() {
-            auto const delim = spltr->template delimiter<delim_index>();
-            last_pos         = data_str.find(delim, last_pos);
-            last_pos += ascii::size(delim);
             start_pos = finish_pos;
+            spltr->on_delimiter(delim_index++, [this]<Delimiter DT>(DT&& delim) {
+                if constexpr (istl::CharType<DT> || istl::StringView<DT>) {
+                    finish_pos = spltr.str.find(delim, finish_pos);
+                    finish_pos += ascii::size(delim);
+                    // todo: add array support
+                    // todo: add functor support
+                } else {
+                    static_assert_false(DT, "Unknown delimiter type");
+                }
+            });
             return *this;
         }
 
@@ -128,7 +140,8 @@ namespace webpp::strings {
         }
 
         [[nodiscard]] constexpr bool operator==(iterator other) const noexcept {
-            return start_pos == other.start_pos && finish_pos == other.finish_pos && spltr == other.spltr;
+            return start_pos == other.start_pos && finish_pos == other.finish_pos && spltr == other.spltr &&
+                   delim_index == other.delim_index;
         }
 
         [[nodiscard]] constexpr bool operator!=(iterator other) const noexcept {
@@ -143,9 +156,10 @@ namespace webpp::strings {
 
 
       private:
-        splitter_ptr    spltr      = nullptr;
-        difference_type start_pos  = 0;
-        difference_type finish_pos = 0;
+        splitter_ptr    spltr       = nullptr;
+        difference_type start_pos   = 0;
+        difference_type finish_pos  = 0;
+        stl::size_t     delim_index = 0;
     };
 
 
@@ -155,13 +169,15 @@ namespace webpp::strings {
      * This class will help to split a string_splits
      */
     template <istl::StringView StrV = stl::string_view, Delimiter... DelimT>
-    struct basic_splitter final {
+    requires(sizeof...(DelimT) > 0) // we must have at least one delimiter
+      struct basic_splitter final {
         using string_view_type        = StrV;
         using delimiter_type          = stl::tuple<DelimT...>;
         using self_type               = basic_splitter;
         using iterator_type           = splitter_iterator<self_type>;
         using default_collection_type = stl::vector<string_view_type>;
 
+        friend iterator_type;
 
       private:
         string_view_type str;
@@ -182,6 +198,7 @@ namespace webpp::strings {
 
         template <typename Vec = default_collection_type>
         Vec& split(Vec& vec) {
+            stl::copy(this->begin(), this->end(), stl::back_inserter(vec));
             return vec;
         }
 
@@ -203,7 +220,13 @@ namespace webpp::strings {
         }
 
         [[nodiscard]] static constexpr auto delimiter_clamp(stl::size_t index) noexcept {
-            return stl::clamp(index, 0ul, delims.size() - 1);
+            return stl::clamp(index, 0ul, sizeof...(DelimT) - 1);
+        }
+
+        template <typename FuncT>
+        constexpr void on_delimiter(stl::size_t index, FuncT&& functor) {
+            auto const dindex = delimiter_clamp(index);
+            istl::for_index(dindex, delims, stl::forward<FuncT>(functor));
         }
 
 
@@ -214,6 +237,9 @@ namespace webpp::strings {
         // todo: add a way to use coroutines here as another way of doing the same thing
     };
 
+
+    template <Delimiter... DelimT>
+    using splitter = basic_splitter<stl::string_view, DelimT...>;
 
     // split strings with the specified delimiter
     template <typename StringVec = string_vector, istl::StringViewifiable StrV>

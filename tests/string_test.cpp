@@ -36,7 +36,7 @@ TEST(String, Splitter) {
     stl::size_t                     index = 0;
     stl::array<stl::string_view, 2> parts{{"test", "email.com"}};
     for (auto part : email_splitter) {
-        EXPECT_EQ(part, parts[index++])
+        EXPECT_EQ(part, parts[index++]);
     }
 }
 
