@@ -2,6 +2,7 @@
 #define WEBPP_STRING_VECTOR
 
 
+#include "../common/meta.hpp"
 #include "../std/algorithm.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
@@ -19,7 +20,6 @@ namespace webpp::strings {
      * String Splits (an array of string_views)
      *
      * Holds string_views of the same string in a manner that's memory efficiant.
-     */
     template <istl::StringView StrV, istl::basic_fixed_string... Names>
     struct string_splits : public stl::array<StrV, sizeof...(Names)> {
         using string_view_type                   = StrV;
@@ -77,14 +77,17 @@ namespace webpp::strings {
         }
     };
 
+     */
 
 
 
     // string vector: same as above, but you can add to it
+    /*
     template <istl::CharType CharT = char, Allocator AllocType = stl::allocator<CharT>>
     struct basic_string_vector : stl::vector<string_piece<CharT>, AllocType> {};
 
     using string_vector = basic_string_vector<>;
+    */
 
 
     /**
@@ -241,6 +244,7 @@ namespace webpp::strings {
     template <Delimiter... DelimT>
     using splitter = basic_splitter<stl::string_view, DelimT...>;
 
+    /*
     // split strings with the specified delimiter
     template <typename StringVec = string_vector, istl::StringViewifiable StrV>
     StringVec split(StrV&& str, istl::CharType auto... delims) {}
@@ -249,7 +253,7 @@ namespace webpp::strings {
               istl::StringViewifiable InpStrV,
               istl::StringViewifiable... StrV>
     StringVec split(InpStrV&& str, StrV&&... delims) {}
-
+    */
 
 } // namespace webpp::strings
 
