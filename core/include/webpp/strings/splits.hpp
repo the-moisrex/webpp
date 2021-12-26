@@ -6,8 +6,6 @@
 #include "../std/algorithm.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
-#include "../std/type_traits.hpp"
-#include "./fixed_string.hpp"
 #include "./size.hpp"
 
 namespace webpp::strings {
