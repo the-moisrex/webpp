@@ -171,7 +171,7 @@ namespace webpp::strings {
      */
     template <istl::StringView StrV = stl::string_view, Delimiter... DelimT>
     requires(sizeof...(DelimT) > 0) // we must have at least one delimiter
-      struct basic_splitter final {
+      struct basic_splitter {
         using string_view_type        = StrV;
         using delimiter_type          = stl::tuple<DelimT...>;
         using self_type               = basic_splitter;
@@ -240,7 +240,14 @@ namespace webpp::strings {
 
 
     template <Delimiter... DelimT>
-    using splitter = basic_splitter<stl::string_view, DelimT...>;
+    requires(sizeof...(DelimT) > 0) // we must have at least one delimiter
+      struct splitter : basic_splitter<stl::string_view, DelimT...> {
+        using basic_splitter<stl::string_view, DelimT...>::basic_splitter;
+    };
+
+
+    template <typename T, Delimiter... DelimT>
+    splitter(T&&, DelimT&&...) -> splitter<DelimT...>;
 
     /*
     // split strings with the specified delimiter

@@ -21,12 +21,14 @@ TEST(String, Join) {
 
 
 
+/*
 TEST(String, StringPieces) {
     using ptype = string_splits<"one", "two">;
     ptype pieces{"one two", " "};
 
     EXPECT_EQ(pieces.template view_of<"one">(), "one");
 }
+*/
 
 
 TEST(String, Splitter) {
