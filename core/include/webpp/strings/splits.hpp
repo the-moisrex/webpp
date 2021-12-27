@@ -141,6 +141,8 @@ namespace webpp::strings {
         }
 
         [[nodiscard]] constexpr bool operator==(iterator other) const noexcept {
+            if (spltr == nullptr && other.spltr == nullptr)
+                return true;
             return start_pos == other.start_pos && finish_pos == other.finish_pos && spltr == other.spltr &&
                    delim_index == other.delim_index;
         }
@@ -190,7 +192,7 @@ namespace webpp::strings {
             delims{stl::forward<DelimT>(delims_input)...} {}
 
         iterator_type begin() noexcept {
-            return {this};
+            return iterator_type{this}.operator++();
         }
 
         [[nodiscard]] constexpr iterator_type end() const noexcept {

@@ -32,7 +32,12 @@ TEST(String, StringPieces) {
 
 
 TEST(String, Splitter) {
-    splitter   email_splitter{"test@email.com", '@'};
+    splitter email_splitter{"test@email.com", '@'};
+    auto     it  = email_splitter.begin();
+    auto     eit = email_splitter.end();
+    EXPECT_EQ(it, it);
+    EXPECT_EQ(eit, eit);
+    EXPECT_NE(it, eit);
     auto const email = email_splitter.split();
     EXPECT_EQ(email[0], "test");
     stl::size_t                     index = 0;
