@@ -123,7 +123,7 @@ namespace webpp::strings {
             start_pos = finish_pos;
             spltr->on_delimiter(delim_index++, [this]<Delimiter DT>(DT&& delim) {
                 if constexpr (istl::CharType<DT> || istl::StringView<DT>) {
-                    finish_pos = spltr.str.find(delim, finish_pos);
+                    finish_pos = spltr->str.find(delim, finish_pos);
                     finish_pos += ascii::size(delim);
                     // todo: add array support
                     // todo: add functor support
