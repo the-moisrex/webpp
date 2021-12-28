@@ -120,11 +120,17 @@ namespace webpp::strings {
             delim_index{delim_index} {}
 
         iterator& operator++() {
-            start_pos = finish_pos;
             spltr->on_delimiter(delim_index++, [this]<Delimiter DT>(DT&& delim) {
-                if constexpr (istl::CharType<DT> || istl::StringView<DT>) {
-                    finish_pos = spltr->str.find(delim, finish_pos);
+                if (finish_pos != 0)
                     finish_pos += ascii::size(delim);
+                start_pos = finish_pos;
+                if constexpr (istl::CharType<DT> || istl::StringView<DT>) {
+                    const auto len = spltr->str.size();
+                    finish_pos     = stl::min(len, spltr->str.find(delim, finish_pos));
+                    if (finish_pos == len) {
+                        // finished
+                        spltr = nullptr;
+                    }
                     // todo: add array support
                     // todo: add functor support
                 } else {
