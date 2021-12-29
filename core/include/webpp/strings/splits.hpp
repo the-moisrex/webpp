@@ -94,7 +94,7 @@ namespace webpp::strings {
      * I'd love to make this a coroutine!
      */
     template <typename T>
-    struct splitter_iterator final {
+    struct splitter_iterator {
         using splitter_type    = T;
         using splitter_ptr     = stl::add_pointer_t<splitter_type>;
         using string_view_type = typename splitter_type::string_view_type;
@@ -120,17 +120,19 @@ namespace webpp::strings {
             delim_index{delim_index} {}
 
         iterator& operator++() {
-            spltr->on_delimiter(delim_index++, [this]<Delimiter DT>(DT&& delim) {
+            assert(spltr != nullptr);
+            const auto len = spltr->str.size();
+            if (finish_pos == len) {
+                // finished
+                spltr = nullptr;
+                return *this;
+            }
+            spltr->on_delimiter(delim_index++, [this, len]<Delimiter DT>(DT&& delim) {
                 if (finish_pos != 0)
                     finish_pos += ascii::size(delim);
                 start_pos = finish_pos;
                 if constexpr (istl::CharType<DT> || istl::StringView<DT>) {
-                    const auto len = spltr->str.size();
-                    finish_pos     = stl::min(len, spltr->str.find(delim, finish_pos));
-                    if (finish_pos == len) {
-                        // finished
-                        spltr = nullptr;
-                    }
+                    finish_pos = stl::min(len, spltr->str.find(delim, finish_pos));
                     // todo: add array support
                     // todo: add functor support
                 } else {

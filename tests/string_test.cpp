@@ -38,15 +38,20 @@ TEST(String, Splitter) {
     EXPECT_EQ(it, it);
     EXPECT_EQ(eit, eit);
     EXPECT_NE(it, eit);
-    auto const email = email_splitter.split();
-    EXPECT_EQ(email.size(), 2);
-    EXPECT_EQ(email[0], "test");
-    EXPECT_EQ(email[1], "email.com");
+    it++;
+    EXPECT_NE(it, eit);
+    EXPECT_EQ(*it, "email.com");
+    it++;
+    EXPECT_EQ(it, eit);
     stl::size_t                     index = 0;
     stl::array<stl::string_view, 2> parts{{"test", "email.com"}};
     for (auto part : email_splitter) {
         EXPECT_EQ(part, parts[index++]);
     }
+    auto const email = email_splitter.split();
+    EXPECT_EQ(email.size(), 2);
+    EXPECT_EQ(email[0], "test");
+    EXPECT_EQ(email[1], "email.com");
     index = 0;
     for (auto part : email) {
         EXPECT_EQ(part, parts[index]) << part << " should be the same as " << parts[index];
