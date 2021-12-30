@@ -166,8 +166,8 @@ namespace webpp::strings {
 
         template <typename Arr = default_array_type>
         constexpr void split_array(Arr& data) const noexcept {
-            const auto pos_finder = [this,
-                                     last_pos = 0ul]<stl::size_t Index>(istl::value_holder<Index>) mutable {
+            constexpr auto array_size = stl::tuple_size<Arr>::value;
+            auto pos_finder = [this, last_pos = 0ul]<stl::size_t Index>(istl::value_holder<Index>) mutable {
                 constexpr stl::size_t delim_index = stl::clamp(Index, 0ul, delim_count - 1);
                 const auto            delim       = stl::get<delim_index>(delims);
                 auto                  pos         = str.find(delim, last_pos);
@@ -178,7 +178,7 @@ namespace webpp::strings {
             };
             ([&]<stl::size_t... I>(stl::index_sequence<I...>) {
                 ((data[I] = pos_finder(istl::value_holder<I>{})), ...); // call the func
-            })(stl::make_index_sequence<delim_count - 1>());
+            })(stl::make_index_sequence<array_size>());
         }
 
         template <typename Arr = default_array_type, typename... Args>

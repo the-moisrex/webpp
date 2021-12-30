@@ -53,6 +53,6 @@ TEST(String, Splitter) {
 
 TEST(String, SplitterConstexpr) {
     constexpr splitter email_splitter{"test@email.com", '@'};
-    constexpr auto     email = email_splitter.split_array();
+    auto               email = email_splitter.split_array();
     EXPECT_EQ(stl::get<0>(email), "test");
 }
