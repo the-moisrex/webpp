@@ -168,12 +168,12 @@ namespace webpp::strings {
         constexpr void split_array(Arr& data) const noexcept {
             constexpr auto array_size = stl::tuple_size<Arr>::value;
             auto pos_finder = [this, last_pos = 0ul]<stl::size_t Index>(istl::value_holder<Index>) mutable {
-                constexpr stl::size_t delim_index = stl::clamp(Index, 0ul, delim_count - 1);
-                const auto            delim       = stl::get<delim_index>(delims);
-                auto                  pos         = str.find(delim, last_pos);
+                constexpr auto delim_index = stl::clamp(Index, 0ul, delim_count - 1);
+                const auto     delim       = stl::get<delim_index>(delims);
+                const auto     pos         = stl::min(str.size() - 1, str.find(delim, last_pos));
+                const auto     ret         = str.substr(last_pos, pos - last_pos);
+                last_pos                   = pos;
                 last_pos += ascii::size(delim);
-                auto const ret = str.substr(pos, last_pos - pos);
-                last_pos       = pos;
                 return ret;
             };
             ([&]<stl::size_t... I>(stl::index_sequence<I...>) {
