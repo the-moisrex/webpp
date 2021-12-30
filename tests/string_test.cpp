@@ -21,15 +21,6 @@ TEST(String, Join) {
 
 
 
-/*
-TEST(String, StringPieces) {
-    using ptype = string_splits<"one", "two">;
-    ptype pieces{"one two", " "};
-
-    EXPECT_EQ(pieces.template view_of<"one">(), "one");
-}
-*/
-
 
 TEST(String, Splitter) {
     splitter email_splitter{"test@email.com", '@'};
@@ -60,10 +51,8 @@ TEST(String, Splitter) {
 }
 
 
-/*
 TEST(String, SplitterConstexpr) {
     constexpr splitter email_splitter{"test@email.com", '@'};
-    constexpr auto     email = email_splitter.template split_to<2>();
+    constexpr auto     email = email_splitter.split_array();
     EXPECT_EQ(stl::get<0>(email), "test");
 }
-*/

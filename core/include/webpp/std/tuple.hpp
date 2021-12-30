@@ -136,7 +136,9 @@ namespace webpp::istl {
      * Index can be gotten dynamically
      */
     template <std::size_t I = 0, typename FuncT, template <typename...> typename Tup, typename... Tp>
-    requires(I >= sizeof...(Tp)) static constexpr void for_index(int, Tup<Tp...>&, FuncT&&) {}
+    requires(I >= sizeof...(Tp)) static constexpr void for_index(int, Tup<Tp...> const&, FuncT&&) {
+        // ending condition function
+    }
 
     template <stl::size_t I = 0, typename FuncT, template <typename...> typename Tup, typename... Tp>
     requires(I < sizeof...(Tp)) static constexpr void for_index(int index, Tup<Tp...>& t, FuncT&& f) {
@@ -145,6 +147,12 @@ namespace webpp::istl {
         for_index<I + 1, FuncT, Tup, Tp...>(index - 1, t, stl::forward<FuncT>(f));
     }
 
+    template <stl::size_t I = 0, typename FuncT, template <typename...> typename Tup, typename... Tp>
+    requires(I < sizeof...(Tp)) static constexpr void for_index(int index, Tup<Tp...> const& t, FuncT&& f) {
+        if (index == 0)
+            f(stl::get<I>(t));
+        for_index<I + 1, FuncT, Tup, Tp...>(index - 1, t, stl::forward<FuncT>(f));
+    }
 
 } // namespace webpp::istl
 
