@@ -14,7 +14,7 @@ auto page_one() {
 }
 
 int main() {
-    using extensions = extension_pack<file_response>;
+    using extensions = extension_pack<file_response, string_response>;
     router _router{extensions{},
                    root >>=
                    []() noexcept {
