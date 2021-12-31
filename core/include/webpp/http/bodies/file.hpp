@@ -75,11 +75,11 @@ namespace webpp::http {
                         //                              static_cast<stl::string_view::size_type>(size),
                         //                              this->get_allocator()}};
                     } else {
-                        this->logger.error("Response/File",
-                                           "Cannot load the specified file: %s",
-                                           filepath.string());
+                        this->logger.error(
+                          "Response/File",
+                          fmt::format("Cannot load the specified file: {}", filepath.string()));
                         // todo: retry feature
-                        if constexpr (this->is_debug()) {
+                        if constexpr (Mother::is_debug()) {
                             return this->error(500u);
                         } else {
                             return this->error(500u,
