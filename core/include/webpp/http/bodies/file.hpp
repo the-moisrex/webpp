@@ -2,6 +2,7 @@
 #define WEBPP_HTTP_FILE_H
 
 #include "../../extensions/extension.hpp"
+#include "../../memory/object.hpp"
 #include "../../traits/traits.hpp"
 #include "./string.hpp"
 
@@ -66,7 +67,7 @@ namespace webpp::http {
                         const auto size = in.tellg();
                         // stl::unique_ptr<char_type[]> result(static_cast<char_type*>(
                         //  this->alloc_pack.template local_allocator<char_type[]>().allocate(size)));
-                        auto result = this->alloc_pack.template general<string_type>();
+                        auto result = object::make_general<string_type>(*this);
                         result.reserve(size);
                         in.seekg(0);
                         in.read(result.data(), size);
@@ -128,10 +129,10 @@ namespace webpp::http {
                         // stl::unique_ptr<char[]> buffer{new char[buffer_size]};
                         // in.rdbuf()->pubsetbuf(buffer.get(), buffer_size); // speed boost, I think
                         const auto size   = in.tellg();
-                        auto       result = this->alloc_pack.template general<string_type>();
+                        auto       result = object::make_general<string_type>(*this);
                         result.reserve(size);
                         in.seekg(0);
-                        in.read(result.get(), size);
+                        in.read(result.data(), size);
                         // todo: cache the results
                         *this = result;
                         return true;

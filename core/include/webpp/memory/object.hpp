@@ -215,6 +215,27 @@ namespace webpp::object {
         return alloc_pack.template general<T, Args...>(stl::forward<Args>(args)...);
     }
 
+    template <typename T, typename AllocHolderType, typename... Args>
+    static constexpr auto make_general(AllocHolderType&& holder, Args&&... args) {
+        if constexpr (requires { holder.alloc_pack; }) {
+            return holder.alloc_pack.template general<T, Args...>(stl::forward<Args>(args)...);
+        } else if constexpr (requires { holder.get_allocator(); }) {
+            if constexpr (requires {
+                              T{stl::allocator_arg, holder.get_allocator(), stl::forward<Args>(args)...};
+                          }) {
+                return T{stl::allocator_arg, holder.get_allocator(), stl::forward<Args>(args)...};
+            } else if constexpr (requires { T{stl::forward<Args>(args)..., holder.get_allocator()}; }) {
+                return T{stl::forward<Args>(args)..., holder.get_allocator()};
+            } else {
+                // dont know how to use the allocator
+                return T{stl::forward<Args>(args)...};
+            }
+        } else {
+            // no allocator
+            return T{stl::forward<Args>(args)...};
+        }
+    }
+
 } // namespace webpp::object
 
 #endif // WEBPP_OBJECT_HPP
