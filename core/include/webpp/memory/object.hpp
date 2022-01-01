@@ -203,14 +203,6 @@ namespace webpp::object {
 
 
     template <typename T, AllocatorDescriptorList AllocDescType, typename... Args>
-    static constexpr local<T, stack<>, AllocDescType>
-    make_local(alloc::allocator_pack<AllocDescType>& alloc_pack, Args&&... args) {
-        return {alloc_pack, stl::forward<Args>(args)...};
-    }
-
-
-
-    template <typename T, AllocatorDescriptorList AllocDescType, typename... Args>
     static constexpr auto make_general(alloc::allocator_pack<AllocDescType>& alloc_pack, Args&&... args) {
         return alloc_pack.template general<T, Args...>(stl::forward<Args>(args)...);
     }
@@ -235,6 +227,25 @@ namespace webpp::object {
             return T{stl::forward<Args>(args)...};
         }
     }
+
+
+    template <typename T, AllocatorDescriptorList AllocDescType, typename... Args>
+    static constexpr local<T, stack<>, AllocDescType>
+    make_local(alloc::allocator_pack<AllocDescType>& alloc_pack, Args&&... args) {
+        return {alloc_pack, stl::forward<Args>(args)...};
+    }
+
+    template <typename T, typename AllocHolderType, typename... Args>
+    static constexpr auto make_local(AllocHolderType&& holder, Args&&... args) {
+        if constexpr (requires { holder.alloc_pack; }) {
+            return make_local<T>(holder.alloc_pack, stl::forward<Args>(args)...);
+        } else {
+            // no local allocator
+            return make_general<T>(stl::forward<AllocHolderType>(holder), stl::forward<Args>(args)...);
+        }
+    }
+
+
 
 } // namespace webpp::object
 
