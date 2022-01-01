@@ -63,10 +63,11 @@ namespace webpp::http {
                         // https://stackoverflow.com/questions/11563963/writing-a-binary-file-in-c-very-fast/39097696#39097696
                         // stl::unique_ptr<char[]> buffer{new char[buffer_size]};
                         // in.rdbuf()->pubsetbuf(buffer.get(), buffer_size); // speed boost, I think
-                        auto size = in.tellg();
+                        const auto size = in.tellg();
                         // stl::unique_ptr<char_type[]> result(static_cast<char_type*>(
                         //  this->alloc_pack.template local_allocator<char_type[]>().allocate(size)));
                         auto result = this->alloc_pack.template general<string_type>();
+                        result.reserve(size);
                         in.seekg(0);
                         in.read(result.data(), size);
                         // todo: cache the results
@@ -126,14 +127,13 @@ namespace webpp::http {
                         // https://stackoverflow.com/questions/11563963/writing-a-binary-file-in-c-very-fast/39097696#39097696
                         // stl::unique_ptr<char[]> buffer{new char[buffer_size]};
                         // in.rdbuf()->pubsetbuf(buffer.get(), buffer_size); // speed boost, I think
-                        auto                         size = in.tellg();
-                        stl::unique_ptr<char_type[]> result(this->get_allocator().allocate(size));
+                        const auto size   = in.tellg();
+                        auto       result = this->alloc_pack.template general<string_type>();
+                        result.reserve(size);
                         in.seekg(0);
                         in.read(result.get(), size);
                         // todo: cache the results
-                        *this = string_type{result.get(),
-                                            static_cast<stl::string_view::size_type>(size),
-                                            this->get_allocator()};
+                        *this = result;
                         return true;
                     } else {
                         return false;
