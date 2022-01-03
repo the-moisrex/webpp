@@ -15,6 +15,11 @@ TEST(String, iequals) {
     const auto res = iequals(one, two);
     EXPECT_TRUE(res);
     EXPECT_TRUE(iequals<char_case_side::second_lowered>("OnE", "one"));
+    EXPECT_EQ(iequals("123 One Two aZ", "123 oNe TWo Az"), true);
+    EXPECT_EQ(iequals("103 One Two aZ", "123 oNe TWo Az"), false);
+    EXPECT_EQ(iequals("not the same size as", "123 oNe TWo Az"), false);
+    EXPECT_EQ(iequals("Short", "SHorT"), true);
+    EXPECT_EQ(iequals("Shor", "Short"), false);
 }
 
 TEST(String, Join) {
