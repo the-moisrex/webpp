@@ -12,7 +12,7 @@ include(CPM)
 
 # Using the master branch since the 1.1.0 is buggy
 CPMAddPackage(
-        NAME RapidJSON
+        NAME rapidjson
         URL https://github.com/Tencent/rapidjson/archive/refs/heads/master.zip
 )
 
@@ -20,6 +20,5 @@ CPMAddPackage(
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   string(REPLACE "-march=native" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
-
 
 add_library(${PROJECT_NAME}::json ALIAS rapidjson)
