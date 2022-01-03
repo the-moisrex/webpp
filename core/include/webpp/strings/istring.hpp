@@ -11,6 +11,10 @@
 #include "./trim.hpp"
 #include "to_case.hpp"
 
+#ifdef WEBPP_EVE
+#    include <eve/algo/all_of.hpp>
+#endif
+
 namespace webpp {
 
     /**
@@ -32,6 +36,10 @@ namespace webpp {
         using char_traits_type = istl::char_traits_type_of<string_type>;
         using istring_type     = istring<StringType>;
         using pointer          = typename string_type::pointer;
+        using uchar_type       = stl::make_unsigned_t<char_type>;
+#ifdef WEBPP_EVE
+        using uchar_ptr_type = stl::add_pointer_t<stl::add_const_t<uchar_type>>;
+#endif
 
         static constexpr bool has_allocator = requires(string_type str) {
             typename string_type::allocator_type;
@@ -73,6 +81,10 @@ namespace webpp {
         template <typename... Args>
         constexpr istring(Args&&... args) noexcept(noexcept(string_type(stl::forward<Args>(args)...)))
           : string_type{stl::forward<Args>(args)...} {}
+
+        [[nodiscard]] istring_type copy() const {
+            return {*this};
+        }
 
         auto get_allocator() const noexcept {
             if constexpr (has_allocator) {
@@ -221,44 +233,39 @@ namespace webpp {
         }
 
 
+#ifdef WEBPP_EVE
+        [[nodiscard]] uchar_type* wide_begin() noexcept {
+            return reinterpret_cast<uchar_type*>(this->data());
+        }
+
+        [[nodiscard]] uchar_type const* wide_begin() const noexcept {
+            return reinterpret_cast<uchar_type const*>(this->data());
+        }
+
+        [[nodiscard]] uchar_type const* wide_end() const noexcept {
+            return wide_begin() + this->size();
+        }
+
+        [[nodiscard]] auto as_wide_range() noexcept {
+            return eve::algo::as_range(this->wide_begin(), wide_end());
+        }
+
+        [[nodiscard]] auto const as_wide_range() const noexcept {
+            return eve::algo::as_range(this->wide_begin(), wide_end());
+        }
+#endif
 
 
         [[nodiscard]] constexpr bool is_ascii_lower() const noexcept {
-#ifdef WEBPP_EVE
-            using simd_utype = eve::wide<stl::make_unsigned_t<char_type>>;
-            using simd_type  = eve::wide<char_type>;
-            const simd_utype small_a{'a'};
-#endif
-            return this->if_all(
-              [](auto* it) constexpr noexcept { return *it >= 'a' && *it <= 'z'; }
-#ifdef WEBPP_EVE
-              ,
-              [=](auto* it) noexcept {
-                  const auto u_values = eve::bit_cast(simd_type{it}, eve::as_<simd_utype>());
-                  const auto res      = eve::is_less(eve::sub(u_values, small_a), 25);
-                  return eve::all(res);
-              }
-#endif
-            );
+            return eve::algo::all_of(this->as_wide_range(), [](eve::wide<uchar_type> c) {
+                return (c - 'a') < 25u;
+            });
         }
 
         [[nodiscard]] constexpr bool is_ascii_upper() const noexcept {
-#ifdef WEBPP_EVE
-            using simd_utype = eve::wide<stl::make_unsigned_t<char_type>>;
-            using simd_type  = eve::wide<char_type>;
-            const simd_utype big_a{'A'};
-#endif
-            return this->if_all(
-              [](auto* it) constexpr noexcept { return *it >= 'A' && *it <= 'Z'; }
-#ifdef WEBPP_EVE
-              ,
-              [=](auto* it) constexpr noexcept {
-                  const auto u_values = eve::bit_cast(simd_type{it}, eve::as_<simd_utype>());
-                  const auto res      = eve::is_less(eve::sub(u_values, big_a), 25);
-                  return eve::all(res);
-              }
-#endif
-            );
+            return eve::algo::all_of(this->as_wide_range(), [](eve::wide<uchar_type> c) {
+                return (c - 'A') < 25u;
+            });
         }
 
         //        [[nodiscard]] constexpr bool is_lower(range) const noexcept;
@@ -275,11 +282,11 @@ namespace webpp {
         }
 
         [[nodiscard]] constexpr istring_type ascii_to_upper_copy() const noexcept {
-            return istring_type{*this}.ascii_to_upper();
+            return copy().ascii_to_upper();
         }
 
         [[nodiscard]] constexpr istring_type ascii_to_lower_copy() const noexcept {
-            return istring_type{*this}.ascii_to_lower();
+            return copy().ascii_to_lower();
         }
 
         template <CharSet CS = decltype(ascii::standard_whitespaces)>
@@ -327,26 +334,10 @@ namespace webpp {
 
         void replace(char_type ch1, char_type ch2) noexcept {
             static_assert(is_mutable, "You can't use replace method when the string is not mutable.");
-#ifdef WEBPP_EVE
-            using simd_type  = eve::wide<char_type>;
-            using simd_utype = eve::wide<stl::make_unsigned_t<char_type>>;
-            const simd_utype simd_ch1{ch1};
-            const simd_utype simd_ch2{ch2};
-#endif
-            this->for_each(
-              [=](auto* it) constexpr noexcept {
-                  if (*it == ch1)
-                      *it = ch2;
-              }
-#ifdef WEBPP_EVE
-              ,
-              [=](auto* it) constexpr noexcept {
-                  const auto uvalues = eve::bit_cast(simd_type{it}, eve::as_<simd_utype>());
-                  const auto res     = eve::if_else(uvalues == ch1, simd_ch2, simd_ch1);
-                  eve::store(eve::bit_cast(res, eve::as_<simd_type>()), it);
-              }
-#endif
-            );
+
+            eve::algo::transform_inplace(as_wide_range(), [=](eve::wide<uchar_type> c) {
+                return eve::if_else(c == ch1, ch2, c);
+            });
         }
     };
 

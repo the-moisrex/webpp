@@ -123,25 +123,25 @@ namespace webpp::ascii {
 #ifdef WEBPP_EVE
 
         inline void eve_to_lower(istl::String auto& str) noexcept {
-            using value_type = typename stl::remove_cvref_t<decltype(str)>::value_type;
-            using char_type  = stl::make_unsigned_t<value_type>;
-            static constexpr char_type alphabet_length = 'z' - 'a';
-            static constexpr char_type a_A_offset      = 'a' - 'A';
-            auto                       start           = reinterpret_cast<char_type*>(str.data());
-            const auto                 finish          = start + str.size();
+            using value_type  = typename stl::remove_cvref_t<decltype(str)>::value_type;
+            using char_type   = stl::make_unsigned_t<value_type>;
+            auto       start  = reinterpret_cast<char_type*>(str.data());
+            const auto finish = start + str.size();
             eve::algo::transform_inplace(eve::algo::as_range(start, finish), [](auto c) {
+                static constexpr char_type alphabet_length = 'z' - 'a';
+                static constexpr char_type a_A_offset      = 'a' - 'A';
                 return eve::add[(c - 'A') <= alphabet_length](c, a_A_offset);
             });
         }
 
         inline void eve_to_upper(istl::String auto& str) noexcept {
-            using value_type = typename stl::remove_cvref_t<decltype(str)>::value_type;
-            using char_type  = stl::make_unsigned_t<value_type>;
-            static constexpr char_type alphabet_length = 'z' - 'a';
-            static constexpr char_type a_A_offset      = 'a' - 'A';
-            auto                       start           = reinterpret_cast<char_type*>(str.data());
-            const auto                 finish          = start + str.size();
+            using value_type  = typename stl::remove_cvref_t<decltype(str)>::value_type;
+            using char_type   = stl::make_unsigned_t<value_type>;
+            auto       start  = reinterpret_cast<char_type*>(str.data());
+            const auto finish = start + str.size();
             eve::algo::transform_inplace(eve::algo::as_range(start, finish), [](auto c) {
+                static constexpr char_type alphabet_length = 'z' - 'a';
+                static constexpr char_type a_A_offset      = 'a' - 'A';
                 return eve::sub[(c - 'a') <= alphabet_length](c, a_A_offset);
             });
         }
