@@ -3,7 +3,13 @@
 #ifndef WEBPP_IEQUALS_HPP
 #define WEBPP_IEQUALS_HPP
 
+#include "./size.hpp"
 #include "./to_case.hpp"
+
+#ifdef WEBPP_EVE
+#    include <eve/algo/equal.hpp>
+#endif
+
 
 namespace webpp::ascii {
 
@@ -111,14 +117,60 @@ namespace webpp::ascii {
             return istl::string_viewify(_str1) == istl::string_viewify(_str2);
         } else {
 
-            auto*       it1     = istl::string_data(_str1);
-            auto*       it2     = istl::string_data(_str2);
-            const auto* it1_end = it1 + _size;
+
 
 #ifdef WEBPP_EVE
-            using simd_type  = eve::wide<char_type>;
-            using simd_utype = eve::wide<stl::make_unsigned_t<char_type>>;
 
+            using uchar_type = stl::make_unsigned_t<char_type>;
+            // converting them to uint8_t; because our to upper algorithm relies on unsigned integers.
+            auto* f1 = reinterpret_cast<uchar_type const*>(istl::string_data(_str1));
+            auto* l1 = f1 + size(_str1);
+            auto* f2 = reinterpret_cast<uchar_type const*>(istl::string_data(_str2));
+
+            using simd_utype = eve::wide<uchar_type>;
+
+            struct equal_checker {
+
+                const uchar_type alphabet_length = 'z' - 'a';
+                const uchar_type a_A_offset      = 'a' - 'A';
+
+                constexpr auto to_upper(simd_utype c) const noexcept {
+                    // eve::sub[condition](a, b) is an equivalent to `eve::if_else(condition, a - b, a)`
+                    // but it will also use masked instructions when those are avaliable.
+
+                    // Traditional `to_upper` is written like 'a' <= c && c <= 'z`.
+                    // However, we can utilize underflow(overflow?) when subtracting unsigned numbers.
+                    // c - 'a' <= 'z' -'a' if and only if 'a' <= c && c <= 'z'
+
+                    return eve::sub[(c - 'a') <= alphabet_length](c, a_A_offset);
+                }
+
+                constexpr auto to_lower(simd_utype c) const noexcept {
+                    return eve::add[(c - 'A') <= alphabet_length](c, a_A_offset);
+                }
+
+                constexpr auto operator()(simd_utype a, simd_utype b) const noexcept {
+                    if constexpr (char_case_side::first_uppered == Side) {
+                        return a == to_upper(b);
+                    } else if constexpr (char_case_side::second_uppered == Side) {
+                        return to_upper(a) == b;
+                    } else if constexpr (char_case_side::first_lowered == Side) {
+                        return a == to_lower(b);
+                    } else if constexpr (char_case_side::second_lowered == Side) {
+                        return to_lower(a) == b;
+                    } else if constexpr (char_case_side::both_uppered == Side ||
+                                         char_case_side::both_lowered == Side) {
+                        return a == b;
+                    } else {
+                        return to_lower(a) == to_lower(b);
+                    }
+                }
+            };
+
+            return eve::algo::equal(eve::algo::as_range(f1, l1), f2, equal_checker{});
+
+
+            /*
             constexpr auto simd_size = simd_type::size();
             if (_size > simd_size) {
                 const auto*      almost_end = it1_end - (_size % simd_size);
@@ -183,7 +235,12 @@ namespace webpp::ascii {
                 it2 -= simd_size;
             }
             // todo: SIMDify this part as well, you can do better by re-calculating: https://youtu.be/1ir_nEfKQ7A?t=402
-#endif
+            */
+#else
+            auto*       it1     = istl::string_data(_str1);
+            auto*       it2     = istl::string_data(_str2);
+            const auto* it1_end = it1 + _size;
+
             for (; it1 != it1_end; ++it1, ++it2) {
                 if (*it1 != *it2) {
                     // compiler seems to be able to optimize this better than us
@@ -212,6 +269,7 @@ namespace webpp::ascii {
                 }
             }
             return true;
+#endif
         }
 
 

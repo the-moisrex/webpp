@@ -1,4 +1,5 @@
 // Created by moisrex on 11/20/20.
+#include "../core/include/webpp/strings/iequals.hpp"
 #include "../core/include/webpp/strings/join.hpp"
 #include "../core/include/webpp/strings/splits.hpp"
 #include "./common_pch.hpp"
@@ -6,6 +7,15 @@
 
 using namespace webpp;
 using namespace webpp::strings;
+using namespace webpp::ascii;
+
+TEST(String, iequals) {
+    const auto one = "Hello World!";
+    const auto two = "hELLo WORLd!";
+    const auto res = iequals(one, two);
+    EXPECT_TRUE(res);
+    EXPECT_TRUE(iequals<char_case_side::second_lowered>("OnE", "one"));
+}
 
 TEST(String, Join) {
     stl::string      one   = "one ";

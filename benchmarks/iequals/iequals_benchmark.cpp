@@ -149,7 +149,7 @@ using namespace webpp;
     auto*       it2     = istl::string_data(_str2);
     const auto* it1_end = it1 + _size;
 
-#ifdef WEBPP_EVE
+#ifdef WEBPP_EVE_OLD
     using simd_type  = webpp::eve::wide<char_type>;
     using simd_utype = webpp::eve::wide<stl::make_unsigned_t<char_type>>;
 

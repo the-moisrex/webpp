@@ -6,6 +6,7 @@
 #define WEBPP_SIZE_HPP
 
 #include "../std/type_traits.hpp"
+#include "../std/string_concepts.hpp"
 
 #include <cstdint>
 #include <cstring>
