@@ -9,6 +9,9 @@ include(CPM)
   set(CMAKE_CROSS_COMPILING OFF)
 # endif()
 
+set(RAPIDJSON_BUILD_TESTS OFF)
+set(RAPIDJSON_BUILD_DOC OFF)
+set(RAPIDJSON_BUILD_EXAMPLES OFF)
 
 # Using the master branch since the 1.1.0 is buggy
 CPMAddPackage(
@@ -20,5 +23,6 @@ CPMAddPackage(
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   string(REPLACE "-march=native" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
+
 
 add_library(${PROJECT_NAME}::json ALIAS rapidjson)
