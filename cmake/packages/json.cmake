@@ -9,14 +9,16 @@ include(CPM)
   set(CMAKE_CROSS_COMPILING OFF)
 # endif()
 
-set(RAPIDJSON_BUILD_TESTS OFF)
-set(RAPIDJSON_BUILD_DOC OFF)
-set(RAPIDJSON_BUILD_EXAMPLES OFF)
-
 # Using the master branch since the 1.1.0 is buggy
 CPMAddPackage(
         NAME rapidjson
         URL https://github.com/Tencent/rapidjson/archive/refs/heads/master.zip
+        OPTIONS
+                "RAPIDJSON_BUILD_TESTS OFF"
+                "RAPIDJSON_BUILD_DOC OFF"
+                "RAPIDJSON_BUILD_EXAMPLES OFF"
+                "RAPIDJSON_BUILD_CXX11 OFF"
+                "RAPIDJSON_BUILD_CXX17 ON"
 )
 
 # rapidjson for some reason adds this flag for clang too which is wrong.
