@@ -1,5 +1,6 @@
 include(CPM)
 
+option(CPM_USE_LOCAL_PACKAGES "Use local packages" OFF)
 
 # To fix:
 # https://github.com/Tencent/rapidjson/issues/1816
@@ -27,13 +28,34 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 
-#if (NOT RAPIDJSON_FOUND AND EXISTS "/usr/include/rapidjson")
-#        # Adding custom code for rapidjson because it seems like we don't have access to the original cmake
-#        # file provided by rapidjson itself
-#        message(STATUS "Adding custom library for RapidJSON.")
-#        set(json_target ${PROJECT_NAME}::json)
-#        add_library(RapidJSON "/usr/include/rapidjson/rapidjson.h")
-#        target_include_directories(RapidJSON PUBLIC "/usr/include")
-#endif ()
+if (NOT RAPIDJSON_FOUND AND EXISTS "/usr/include/rapidjson")
+        # Adding custom code for rapidjson because it seems like we don't have access to the original cmake
+        # file provided by rapidjson itself
+        message(STATUS "Adding custom library for RapidJSON.")
+        set(json_target RapidJSON)
+        add_library(${json_target} "/usr/include/rapidjson/rapidjson.h")
+        target_include_directories(${json_target} PUBLIC "/usr/include")
+        set_target_properties(${json_target} PROPERTIES LANGUAGE CXX)
+        set_target_properties(${json_target} PROPERTIES LINKER_LANGUAGE CXX)
+
+
+        install(TARGETS ${json_target}
+                EXPORT "${json_target}Config"
+                LIBRARY DESTINATION ${INSTALL_LIBDIR}
+                ARCHIVE DESTINATION ${INSTALL_LIBDIR}
+                RUNTIME DESTINATION ${INSTALL_BINDIR}
+                INCLUDES DESTINATION ${INSTALL_INCLUDEDIR}
+                )
+        export(TARGETS ${json_target}
+                NAMESPACE ${json_target}
+                FILE "${CMAKE_CURRENT_BINARY_DIR}/${LIB_NAME}InternalConfig.cmake"
+                )
+        install(EXPORT "${json_target}Config"
+                FILE "${json_target}Config.cmake"
+                NAMESPACE ${PROJECT_NAME}::json
+                DESTINATION "${CMAKE_INSTALL_DATADIR}/${json_target}"
+                )
+
+endif ()
 
 add_library(${PROJECT_NAME}::json ALIAS RapidJSON)

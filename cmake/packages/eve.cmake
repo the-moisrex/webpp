@@ -7,4 +7,6 @@ CPMAddPackage(
         VERSION 2021.10.0
         OPTIONS
                 "EVE_BUILD_TEST OFF"
+                "EVE_BUILD_BENCHMARKS OFF"
+                "EVE_BUILD_DOCUMENTATION OFF"
 )

@@ -17,7 +17,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 #option(SHARED_LIBRARY_EXECUTABLE "Make the shared library executable." OFF)
 option(NATIVE_ARCH "Optimize the binaries for this system architecture only." OFF)
-option(VERBOSE OFF CACHE BOOL "Verbose printing")
+option(VERBOSE "Verbose printing" OFF)
 
 # output the libraries and executables in the cmake home directory instead of
 # their own folders
