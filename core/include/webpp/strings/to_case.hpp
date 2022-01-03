@@ -122,27 +122,25 @@ namespace webpp::ascii {
 
 #ifdef WEBPP_EVE
 
-        inline void eve_to_lower(istl::StringView auto& str) noexcept {
+        inline void eve_to_lower(istl::String auto& str) noexcept {
             using value_type = typename stl::remove_cvref_t<decltype(str)>::value_type;
-            static_assert(sizeof(value_type) == sizeof(stl::uint8_t),
-                          "The specified string type's char size doesn't work with our SIMD algorithm.");
-            static constexpr std::uint8_t alphabet_length = 'z' - 'a';
-            static constexpr std::uint8_t a_A_offset      = 'a' - 'A';
-            std::uint8_t*                 start           = reinterpret_cast<stl::uint8_t*>(str.data());
-            std::uint8_t*                 finish          = start + str.size();
+            using char_type  = stl::make_unsigned_t<value_type>;
+            static constexpr char_type alphabet_length = 'z' - 'a';
+            static constexpr char_type a_A_offset      = 'a' - 'A';
+            auto                       start           = reinterpret_cast<char_type*>(str.data());
+            const auto                 finish          = start + str.size();
             eve::algo::transform_inplace(eve::algo::as_range(start, finish), [](auto c) {
                 return eve::add[(c - 'A') <= alphabet_length](c, a_A_offset);
             });
         }
 
-        inline void eve_to_upper(istl::StringView auto& str) noexcept {
+        inline void eve_to_upper(istl::String auto& str) noexcept {
             using value_type = typename stl::remove_cvref_t<decltype(str)>::value_type;
-            static_assert(sizeof(value_type) == sizeof(stl::uint8_t),
-                          "The specified string type's char size doesn't work with our SIMD algorithm.");
-            static constexpr std::uint8_t alphabet_length = 'z' - 'a';
-            static constexpr std::uint8_t a_A_offset      = 'a' - 'A';
-            std::uint8_t*                 start           = reinterpret_cast<stl::uint8_t*>(str.data());
-            std::uint8_t*                 finish          = start + str.size();
+            using char_type  = stl::make_unsigned_t<value_type>;
+            static constexpr char_type alphabet_length = 'z' - 'a';
+            static constexpr char_type a_A_offset      = 'a' - 'A';
+            auto                       start           = reinterpret_cast<char_type*>(str.data());
+            const auto                 finish          = start + str.size();
             eve::algo::transform_inplace(eve::algo::as_range(start, finish), [](auto c) {
                 return eve::sub[(c - 'a') <= alphabet_length](c, a_A_offset);
             });
