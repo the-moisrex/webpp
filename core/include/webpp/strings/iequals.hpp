@@ -122,7 +122,7 @@ namespace webpp::ascii {
 #ifdef WEBPP_EVE
 
             using uchar_type = stl::make_unsigned_t<char_type>;
-            // converting them to uint8_t; because our to upper algorithm relies on unsigned integers.
+            // converting them to unsigned types; because our to upper algorithm relies on unsigned integers.
             auto* f1 = reinterpret_cast<uchar_type const*>(istl::string_data(_str1));
             auto* l1 = f1 + size(_str1);
             auto* f2 = reinterpret_cast<uchar_type const*>(istl::string_data(_str2));
@@ -160,7 +160,7 @@ namespace webpp::ascii {
                         return to_lower(a) == b;
                     } else if constexpr (char_case_side::both_uppered == Side ||
                                          char_case_side::both_lowered == Side) {
-                        return a == b;
+                        return a == b; // even though this shouldn't happen at all
                     } else {
                         return to_lower(a) == to_lower(b);
                     }
