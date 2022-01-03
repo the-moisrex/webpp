@@ -14,10 +14,9 @@
 
 
 #ifdef WEBPP_EVE
+#    include <eve/algo/transform.hpp>
+#    include <eve/algo/views/zip.hpp>
 #    include <eve/function/add.hpp>
-#    include <eve/function/any.hpp>
-#    include <eve/function/is_less.hpp>
-#    include <eve/function/store.hpp>
 #    include <eve/function/sub.hpp>
 #    include <eve/wide.hpp>
 #endif
@@ -122,91 +121,27 @@ namespace webpp::ascii {
 #undef WEBPP_ALGO
 
 #ifdef WEBPP_EVE
-        //        inline void eve_to_lower(std::string &str) noexcept
-        //        {
-        //            using char_type = char;
-        //            constexpr auto simd_size = 64;
-        //            using simd_type = eve::wide<char_type, eve::fixed<simd_size>>;
-        //            using simd_utype = eve::wide<unsigned char, eve::fixed<simd_size>>;
-        //
-        //            char_type* it = str.data();
-        //            const auto size = str.size();
-        //            const char_type* end = it + size;
-        //            const char_type* almost_end = end - (size % simd_size);
-        //
-        //            simd_utype shift(32);
-        //            for (; it != almost_end; it += simd_size)
-        //            {
-        //                auto values  = eve::bit_cast(simd_type{it}, eve::as_<simd_utype>());
-        //                auto shifted = values+shift;
-        //                auto data = eve::if_else( eve::saturated_(eve::sub)(values - 65,25) == 0
-        //                  , shifted
-        //                  , values
-        //                );
-        //                eve::store( eve::bit_cast(data,eve::as_<simd_type>()), it);
-        //            }
-        //
-        //            // doing the rest
-        //            for (it -= simd_size; it != end; ++it)
-        //                *it = std::tolower(*it);
-        //        }
 
-
-        inline void eve_to_lower(istl::Stringifiable auto& str) noexcept {
-            using char_type                 = istl::char_type_of<decltype(str)>;
-            using simd_type                 = eve::wide<char_type>;
-            using simd_utype                = eve::wide<stl::make_unsigned_t<char_type>>;
-            static constexpr auto simd_size = simd_type::size();
-
-            char_type*       it    = istl::string_data(str);
-            const auto       _size = size(str);
-            const char_type* end   = it + _size;
-            if (_size > simd_size) {
-                const char_type* almost_end = end - (_size % simd_size);
-                // const simd_utype shift(0b00100000);
-                const simd_utype diff('a' - 'A');
-                const simd_utype big_a('A');
-                for (; it != almost_end; it += simd_size) {
-                    const auto values = eve::bit_cast(simd_type{it}, eve::as_<simd_utype>());
-                    const auto data =
-                      eve::if_else(eve::is_less(eve::sub(values, big_a), 25), eve::add(values, diff), values);
-                    eve::store(eve::bit_cast(data, eve::as_<simd_type>()), it);
-                }
-                // do the rest
-                simple_to_lower(it - simd_size, end);
-            } else {
-                simple_to_lower(it, end);
-            }
+        inline void eve_to_lower(auto& str) noexcept {
+            static constexpr std::uint8_t alphabet_length = 'z' - 'a';
+            static constexpr std::uint8_t a_A_offset      = 'a' - 'A';
+            std::uint8_t*                 start           = reinterpret_cast<std::uint8_t*>(str.data());
+            std::uint8_t*                 finish          = start + str.size();
+            eve::algo::transform_inplace(eve::algo::as_range(start, finish), [](auto c) {
+                return eve::add[(c - 'A') <= alphabet_length](c, a_A_offset);
+            });
         }
 
-        inline void eve_to_upper(istl::Stringifiable auto& str) noexcept {
-            using char_type                 = istl::char_type_of<decltype(str)>;
-            using simd_type                 = eve::wide<char_type>;
-            using simd_utype                = eve::wide<stl::make_unsigned_t<char_type>>;
-            static constexpr auto simd_size = simd_type::size();
-
-            char_type*       it    = istl::string_data(str);
-            const auto       _size = size(str);
-            const char_type* end   = it + _size;
-            if (_size > simd_size) {
-                const char_type* almost_end = end - (_size % simd_size);
-                // const simd_utype shift(0b01011111);
-                const simd_utype diff('a' - 'A');
-                const simd_utype small_a('a');
-                for (; it != almost_end; it += simd_size) {
-                    const auto values = eve::bit_cast(simd_type{it}, eve::as_<simd_utype>());
-                    // const auto shifted = values & shift;
-                    const auto data = eve::if_else(eve::is_less(eve::sub(values, small_a), 25),
-                                                   eve::sub(values, diff),
-                                                   values);
-                    eve::store(eve::bit_cast(data, eve::as_<simd_type>()), it);
-                }
-                // do the rest
-                simple_to_upper(it - simd_size, end);
-            } else {
-                simple_to_upper(it, end);
-            }
+        inline void eve_to_upper(auto& str) noexcept {
+            static constexpr std::uint8_t alphabet_length = 'z' - 'a';
+            static constexpr std::uint8_t a_A_offset      = 'a' - 'A';
+            std::uint8_t*                 start           = reinterpret_cast<std::uint8_t*>(str.data());
+            std::uint8_t*                 finish          = start + str.size();
+            eve::algo::transform_inplace(eve::algo::as_range(start, finish), [](auto c) {
+                return eve::sub[(c - 'a') <= alphabet_length](c, a_A_offset);
+            });
         }
+
 #endif
     } // namespace algo
 
