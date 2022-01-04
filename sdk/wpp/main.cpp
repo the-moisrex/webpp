@@ -2,26 +2,34 @@
 #include <functional>
 #include <iostream>
 #include <tuple>
+#include <wsdk/cmds/create_project.hpp>
 
-void check_args(
-  const int                                                                                        argc,
-  char const* const* const                                                                         argv,
-  std::vector<std::pair<std::string,
-                        std::function<void(boost::program_options::options_description const&,
-                                           boost::program_options::variables_map const&)>>> const& actions,
-  std::function<void(boost::program_options::options_description const&,
-                     boost::program_options::variables_map const&)> const& default_action) {
+using namespace webpp;
+
+using action_type = std::function<void(boost::program_options::options_description const&,
+                                       boost::program_options::variables_map const&)>;
+using action_list = std::vector<std::pair<std::string, action_type>>;
+
+
+void check_args(const int                argc,
+                char const* const* const argv,
+                action_list const&       actions,
+                action_type const&       default_action) {
+
     using namespace boost::program_options;
 
     options_description desc("Program options");
-    desc.add_options()("update,u",
-                       bool_switch()->default_value(false)->implicit_value(true),
-                       "update the databases")("help,h",
-                                               bool_switch()->default_value(false)->implicit_value(true),
-                                               "print this help")(
-      "cmd",
-      value<std::string>()->default_value("help")->required(),
-      "The command")("cmd_opts", value<std::vector<std::string>>()->multitoken(), "The command options.");
+    desc.add_options() // start of options
+      ("update,u",
+       bool_switch()->default_value(false)->implicit_value(true),
+       "update the databases") // update
+      ("help,h",
+       bool_switch()->default_value(false)->implicit_value(true),
+       "print this help") // help
+      ("cmd",
+       value<std::string>()->default_value("help")->required(),
+       "The command") // command
+      ("cmd_opts", value<std::vector<std::string>>()->multitoken(), "The command options.");
 
     positional_options_description pos;
     pos.add("cmd", 1);
@@ -50,6 +58,7 @@ void print_help(boost::program_options::options_description const& desc,
 
 void create_template(boost::program_options::options_description const& desc,
                      boost::program_options::variables_map const& /* vm */) {
+
     // TODO: complete me
 }
 

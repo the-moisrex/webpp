@@ -1,4 +1,4 @@
-#include "create_project.hpp"
+#include "../../include/wsdk/cmds/create_project.hpp"
 
 #include <filesystem>
 #include <fstream>
