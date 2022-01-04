@@ -387,7 +387,7 @@ namespace webpp::json::rapidjson {
 
             template <istl::String StrT = string_type, typename... Args>
             StrT uglified(Args&&... string_args) const {
-                return as_string();
+                return as_string(stl::forward<Args>(string_args)...);
             }
 
 
