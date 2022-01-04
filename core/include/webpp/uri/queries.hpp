@@ -41,7 +41,7 @@ namespace webpp::uri {
         }
 
         void append_to(istl::String auto& str) const {
-            for (const auto [key, value] : *this) {
+            for (const auto& [key, value] : *this) {
                 encode_uri_component(key, str, allowed_chars);
                 encode_uri_component(value, str, allowed_chars);
             }
