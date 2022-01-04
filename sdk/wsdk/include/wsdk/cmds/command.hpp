@@ -3,6 +3,7 @@
 
 #include <webpp/std/string.hpp>
 #include <webpp/std/string_view.hpp>
+#include <webpp/std/vector.hpp>
 
 
 namespace webpp::sdk {
@@ -27,8 +28,17 @@ namespace webpp::sdk {
     };
 
 
-    // parse the args, and run the command
-    void run_command(int argc, char** argv);
+    /**
+     * @brief Add the list of the commands
+     */
+    struct command_manager {
+
+        // input the list of commands here
+        stl::vector<command> commands;
+
+        // parse the args, and run the command
+        void run_command(int argc, char** argv);
+    };
 
 } // namespace webpp::sdk
 

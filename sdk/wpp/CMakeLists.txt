@@ -1,10 +1,10 @@
-file(GLOB LIB_SOURCES *.cpp)
+file(GLOB_RECURSE EXEC_SOURCES *.hpp *.cpp)
 
-set(EXEC_NAME ${PROJECT_NAME}-bin)
+set(EXEC_NAME wpp)
 
 find_package(Boost REQUIRED COMPONENTS program_options)
 
-add_executable(${EXEC_NAME} ${LIB_SOURCES})
+add_executable(${EXEC_NAME} ${EXEC_SOURCES})
 target_include_directories(${EXEC_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(${EXEC_NAME}
         PRIVATE ${LIB_NAME}
