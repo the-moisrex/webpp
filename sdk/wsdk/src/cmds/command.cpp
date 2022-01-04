@@ -6,106 +6,95 @@
 #include <functional>
 #include <iostream>
 #include <tuple>
+#include <webpp/strings/join.hpp>
 
 
 namespace webpp::sdk {
 
-    using action_type = std::function<void(boost::program_options::options_description const&,
-                                           boost::program_options::variables_map const&)>;
-    using action_list = std::vector<std::pair<std::string, action_type>>;
+    using namespace boost::program_options;
+    using namespace webpp::stl;
 
 
-    void check_args(const int                argc,
-                    char const* const* const argv,
-                    action_list const&       actions,
-                    action_type const&       default_action) {
 
-        using namespace boost::program_options;
+    struct command_description {
+      public:
+        int                 argc;
+        char const* const*  argv;
+        options_description root_desc{"Program options"};
 
-        options_description desc("Program options");
-        desc.add_options() // start of options
-          ("update,u",
-           bool_switch()->default_value(false)->implicit_value(true),
-           "update the databases") // update
-          ("help,h",
-           bool_switch()->default_value(false)->implicit_value(true),
-           "print this help") // help
-          ("cmd",
-           value<std::string>()->default_value("help")->required(),
-           "The command") // command
-          ("cmd_opts", value<std::vector<std::string>>()->multitoken(), "The command options.");
+      public:
+        command_description(int argc, char const* const* argv) : argc{argc}, argv{argv} {}
 
-        positional_options_description pos;
-        pos.add("cmd", 1);
-        pos.add("cmd_opts", -1);
+        int process_args() {
 
-        variables_map vm;
-        store(command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
-        notify(vm);
+            root_desc.add_options() // start of options
+              ("help,h",
+               bool_switch()->default_value(false)->implicit_value(true),
+               "print this help") // help
+              ("cmd",
+               value<string>()->default_value("help")->required(),
+               "The command") // command
+              ("cmd_opts", value<vector<string>>()->multitoken(), "The command options.");
 
-        for (auto const& action : actions) {
-            if (vm.count(action.first)) {
-                action.second(desc, vm);
-                return;
+            positional_options_description pos;
+            pos.add("cmd", 1);
+            pos.add("cmd_opts", -1);
+
+            variables_map vm;
+            store(command_line_parser(argc, argv).options(root_desc).positional(pos).run(), vm);
+            notify(vm);
+
+            if (vm.count("new")) {
+                const auto        create_args     = vm["cmd_opts"].template as<vector<string>>();
+                const stl::string create_args_str = strings::join_with(create_args, " ");
+                create_project    creator{.command_desc = *this};
+                return creator.handle(create_args_str);
             }
+
+            if (vm.count("help")) {
+                return print_help();
+            }
+
+
+            // running default action
+            cout << "Please specify a command; here's the help:" << endl;
+            print_help();
+            return 1;
         }
 
-        // running default action
-        default_action(desc, vm);
-    }
+        // this is also the default action
+        int print_help() const {
+            cout << root_desc << endl;
+            return 0;
+        }
 
-    void print_help(boost::program_options::options_description const& desc,
-                    boost::program_options::variables_map const& /* vm */) {
-        using namespace std;
-        cout << desc << endl;
-    }
+        void session_manager() {
+            // TODO: complete me
+            // TODO: clean the sessions
+            // TODO: clean session data for a specific user
 
-    void create_template(boost::program_options::options_description const& desc,
-                         boost::program_options::variables_map const& /* vm */) {
+            auto cmds = vm["cmd_opts"].as<vector<string>>();
+            if (cmds.size() > 0) {
+                auto cmd = cmds.at(0);
 
-        // TODO: complete me
-    }
+                // Clean the sessions
+                if ("clean" == cmd || "clear" == cmd) {
+                    if (cmds.size() == 1) { // Clean all the data
 
-    void update_db(boost::program_options::options_description const& desc,
-                   boost::program_options::variables_map const& /* vm */) {
-        // TODO: complete me
-    }
-
-    void session_manager(boost::program_options::options_description const& desc,
-                         boost::program_options::variables_map const&       vm) {
-        // TODO: complete me
-        // TODO: clean the sessions
-        // TODO: clean session data for a specific user
-
-        using namespace std;
-
-        auto cmds = vm["cmd_opts"].as<vector<string>>();
-        if (cmds.size() > 0) {
-            auto cmd = cmds.at(0);
-
-            // Clean the sessions
-            if ("clean" == cmd || "clear" == cmd) {
-                if (cmds.size() == 1) { // Clean all the data
-
-                } else {
-                    // clean based on other values
+                    } else {
+                        // clean based on other values
+                    }
                 }
+            } else {
+                cerr << "There's nothing to do." << endl;
             }
-        } else {
-            cerr << "There's nothing to do." << endl;
         }
-    }
+    };
 
 
     int command_manager::run_command(int argc, char const** argv) {
-        check_args(argc,
-                   argv,
-                   {{"help", print_help},
-                    {"create", create_template},
-                    {"session", session_manager},
-                    {"update", update_db}},
-                   print_help);
-        return 0;
+        command_description description{argc, argv};
+        return description.process_args();
     }
 
 

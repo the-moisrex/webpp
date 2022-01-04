@@ -8,33 +8,13 @@
 
 namespace webpp::sdk {
 
-    /**
-     * Command abstraction
-     *
-     * This class is the abstract class and the helper class
-     * that all the commands will be extend from.
-     */
-    struct command {
-
-        // the name of the command
-        virtual stl::string_view name() const noexcept = 0;
-
-
-        // description of the command
-        virtual stl::string_view desc() const noexcept = 0;
-
-        // Run the command
-        virtual void handle();
-    };
+    struct command_description;
 
 
     /**
      * @brief Add the list of the commands
      */
     struct command_manager {
-
-        // input the list of commands here
-        stl::vector<command> commands;
 
         // parse the args, and run the command
         int run_command(int argc, char const** argv);

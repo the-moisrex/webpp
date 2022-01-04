@@ -35,6 +35,24 @@ TEST(String, Join) {
 }
 
 
+TEST(String, JoinWith) {
+    stl::string              one   = "one";
+    stl::string              two   = "two";
+    stl::string              three = "three";
+    stl::vector<stl::string> strings;
+    istl::collection::emplace(strings, one, two, three, "four");
+    auto const res = join_with(strings, ' ');
+    static_assert(
+      stl::same_as<typename decltype(res)::allocator_type, typename decltype(two)::allocator_type>);
+    EXPECT_EQ(res, "one two three four");
+
+    using tup_type = stl::tuple<stl::string, stl::string, stl::string, stl::string_view>;
+    tup_type   tup{one, two, three, "four"};
+    const auto tup_res = join_with(tup, ' ');
+    EXPECT_EQ(tup_res, "one two three four");
+}
+
+
 
 
 TEST(String, Splitter) {

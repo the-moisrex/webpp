@@ -64,6 +64,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/std/concepts_impl.hpp
         ${LIB_INCLUDE_DIR}/webpp/std/type_traits.hpp
         ${LIB_INCLUDE_DIR}/webpp/std/string_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/collection.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/validators/validators.hpp
         ${LIB_INCLUDE_DIR}/webpp/validators/email.hpp

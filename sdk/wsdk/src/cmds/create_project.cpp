@@ -1,5 +1,6 @@
 #include "../../include/wsdk/cmds/create_project.hpp"
 
+#include <boost/program_options.hpp>
 #include <filesystem>
 #include <fstream>
 #include <vector>
@@ -7,6 +8,9 @@
 
 
 namespace webpp::sdk {
+
+    using namespace boost::program_options;
+    using namespace webpp::stl;
 
     // One template
     struct project_template {
@@ -44,18 +48,33 @@ namespace webpp::sdk {
 
     void template_manager::add_template_file(stl::string_view file) {}
 
-    void create_project::handle() {
+
+    void create_project::handle_args() {
+        options_description create_desc{"Create a new thing"};
+        create_desc.add_options()("help,h",
+                                  bool_switch()->default_value(false)->implicit_value(true),
+                                  "print help for create command.") // help
+          ;
+
+        positional_options_description pos;
+        pos.add("cmd", -1);
+        pos.add("cmd_opts", -1);
+    }
+
+
+
+    int create_project::handle() {
         const stl::string proj_name = project_name();
         default_logger    logger{};
         if (proj_name.empty()) {
             logger.error("Please specify a valid name for the project.");
-            return;
+            return 1;
         }
 
         const project_template tmpl = get_project_template();
         if (!tmpl.is_valid()) {
             logger.error("The specified template is not valid.");
-            return;
+            return 1;
         }
 
         // check if the project's directory exists or not:
@@ -65,7 +84,10 @@ namespace webpp::sdk {
 
         tmpl.scan(); // scan for files to find templates.
         tmpl.map_files_to_directory(project_dir);
+
+        return 0;
     }
+
 
 
 } // namespace webpp::sdk

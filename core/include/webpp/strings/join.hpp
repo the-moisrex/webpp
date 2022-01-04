@@ -4,8 +4,10 @@
 #define WEBPP_JOIN_HPP
 
 #include "../convert/lexical_cast.hpp"
+#include "../std/collection.hpp"
 #include "../std/format.hpp"
 #include "../std/string.hpp"
+#include "../std/tuple.hpp"
 #include "./size.hpp"
 
 namespace webpp::strings {
@@ -85,6 +87,18 @@ namespace webpp::strings {
          }()),
          ...);
         return str;
+    }
+
+    /**
+     * @brief joins a collection of strings into one string
+     * @param vec is a collection or a tuple
+     * @param separators are a list of separators that will be put in between the strings. the last one will
+     * continue to be used if there are more strings than there are separators.
+     * @example join_with(vec, ' ')
+     */
+    template <typename StringType = void, typename C, typename... SeparatorTypes>
+    constexpr auto join_with(C const& vec, SeparatorTypes&&... separators) {
+
     }
 
     // todo: add join_to
