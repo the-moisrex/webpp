@@ -46,10 +46,10 @@ TEST(String, JoinWith) {
       stl::same_as<typename decltype(res)::allocator_type, typename decltype(two)::allocator_type>);
     EXPECT_EQ(res, "one two three four");
 
-    using tup_type = stl::tuple<stl::string, stl::string, stl::string, stl::string_view>;
-    tup_type   tup{one, two, three, "four"};
-    const auto tup_res = join_with(tup, ' ');
-    EXPECT_EQ(tup_res, "one two three four");
+    //    using tup_type = stl::tuple<stl::string, stl::string, stl::string, stl::string_view>;
+    //    tup_type   tup{one, two, three, "four"};
+    //    const auto tup_res = join_with(tup, ' ');
+    //    EXPECT_EQ(tup_res, "one two three four");
 }
 
 

@@ -15,6 +15,17 @@ namespace webpp::strings {
 
     namespace details {
 
+        template <typename T>
+        constexpr void append_delimiter(auto& output, T&& in) {
+            if constexpr (istl::CharType<T>) {
+                output.push_back(stl::forward<T>(in));
+            } else if constexpr (requires { output.append(stl::forward<T>(in)); }) {
+                output.append(stl::forward<T>(in));
+            } else {
+                output.append(stl::begin(in), stl::end(in));
+            }
+        }
+
         /**
          * A condition that will be used to rank the string type to choose the best string type that matches
          * these conditions:
@@ -107,30 +118,39 @@ namespace webpp::strings {
                 necessary_storage_size += ascii::max_size(item);
             output.reserve(necessary_storage_size);
 
-
-            constexpr stl::size_t delim_count = stl::tuple_size_v<DelimTuple>;
-            auto                  it          = vec.begin();
+            // handle the first one
+            auto it = vec.begin();
             if (it != vec.end()) {
-                output.append(*it);
+                // we use append because the user may want to join at the end of an string
+                details::append_delimiter(output, *it);
                 ++it;
             }
-            auto pos_finder = [&]<stl::size_t DelimIndex>(istl::value_holder<DelimIndex>) {
-                if (it == vec.end())
-                    return;
-                output.append(stl::get<DelimIndex>(delims));
-                output.append(*it);
-            };
-            ([&]<stl::size_t... I>(stl::index_sequence<I...>) {
-                ((pos_finder(istl::value_holder<I>{})), ...); // call the func
-            })(stl::make_index_sequence<delim_count>());
 
-            const auto last_delim = stl::get<delim_count - 1>(delims);
-            for (; it != it.end(); ++it) {
-                output.append(last_delim);
-                output.append(*it);
+            constexpr stl::size_t delim_count = stl::tuple_size_v<DelimTuple>;
+            if constexpr (delim_count > 0) {
+                auto pos_finder = [&]<stl::size_t DelimIndex>(istl::value_holder<DelimIndex>) {
+                    if (it == vec.end())
+                        return;
+                    details::append_delimiter(output, stl::get<DelimIndex>(delims));
+                    details::append_delimiter(output, *it);
+                    ++it;
+                };
+                ([&]<stl::size_t... I>(stl::index_sequence<I...>) {
+                    ((pos_finder(istl::value_holder<I>{})), ...); // call the func
+                })(stl::make_index_sequence<delim_count>());
+
+                const auto last_delim = stl::get<delim_count - 1>(delims);
+                for (; it != vec.end(); ++it) {
+                    details::append_delimiter(output, last_delim);
+                    details::append_delimiter(output, *it);
+                }
+            } else {
+                for (; it != vec.end(); ++it) {
+                    details::append_delimiter(output, *it);
+                }
             }
         } else if constexpr (istl::Tuple<C>) {
-            stl::size_t const merged_size = ((istl::Stringifiable<T> ? ascii::max_size(strs) : 0) + ...);
+            ///  stl::size_t const merged_size = ((istl::Stringifiable<T> ? ascii::max_size(strs) : 0) + ...);
 
         } else {
             static_assert_false(C, "The specified arguments must be a collection or a tuple like type.");
@@ -150,17 +170,16 @@ namespace webpp::strings {
                         return vec[0].get_allocator();
                 }
                 return allocator_type{}; // default initialize the allocator
-            }};
-            join_with<StringType, C, SeparatorTypes...>(str,
-                                                        vec,
-                                                        stl::forward<SeparatorTypes>(separators)...);
+            }()};
+            join_with<StringType, C>(str, vec, stl::make_tuple(stl::forward<SeparatorTypes>(separators)...));
             return str;
         } else if constexpr (istl::Tuple<C>) {
-            stl::size_t const merged_size = ((istl::Stringifiable<T> ? ascii::max_size(strs) : 0) + ...);
-            using best_str_t = typename istl::ranked_types<details::string_type_ranker, T...>::best;
-            using str_type   = stl::conditional_t<stl::is_void_v<StringType>,
-                                                stl::remove_cvref_t<typename best_str_t::type>,
-                                                StringType>;
+            //            stl::size_t const merged_size = ((istl::Stringifiable<T> ? ascii::max_size(strs) :
+            //            0) + ...); using best_str_t = typename
+            //            istl::ranked_types<details::string_type_ranker, T...>::best; using str_type   =
+            //            stl::conditional_t<stl::is_void_v<StringType>,
+            //                                                stl::remove_cvref_t<typename best_str_t::type>,
+            //                                                StringType>;
         } else {
             static_assert_false(C, "The specified arguments must be a collection or a tuple like type.");
         }
