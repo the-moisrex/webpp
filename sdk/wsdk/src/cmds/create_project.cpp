@@ -3,6 +3,7 @@
 #include <boost/program_options.hpp>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <vector>
 #include <webpp/logs/default_logger.hpp>
 
@@ -49,23 +50,52 @@ namespace webpp::sdk {
     void template_manager::add_template_file(stl::string_view file) {}
 
 
-    void create_project::handle_args() {
+
+
+
+    int create_project::handle(vector<string> args) {
+
         options_description create_desc{"Create a new thing"};
-        create_desc.add_options()("help,h",
-                                  bool_switch()->default_value(false)->implicit_value(true),
-                                  "print help for create command.") // help
+        create_desc.add_options() // create options
+          ("help,h",
+           bool_switch()->default_value(false)->implicit_value(true),
+           "print help for create command.") // help
+          ("subcommand",
+           value<string>()->default_value("help")->required(),
+           "The subcommand of 'new' command to run") // sub-command
           ;
 
         positional_options_description pos;
-        pos.add("cmd", -1);
+        pos.add("subcommand", -1);
         pos.add("cmd_opts", -1);
+
+        variables_map vm;
+        store(command_line_parser(args).options(create_desc).positional(pos).run(), vm);
+        notify(vm);
+
+        if (!vm.count("subcommand"))
+            return 1;
+
+        const auto sub_command = vm["subcommand"].as<string>();
+
+        if (sub_command == "help" || vm.count("help")) {
+            cout << create_desc << endl;
+            return 0;
+        }
+
+        if (sub_command == "project") {
+            // handle project
+            args.erase(args.begin()); // remove the first element because it's "project"
+            return handle_project(args);
+        }
+
+        cout << create_desc << endl;
+        return 0;
     }
 
+    int create_project::handle_project(stl::vector<std::string>) {
 
-
-    int create_project::handle() {
-        const stl::string proj_name = project_name();
-        default_logger    logger{};
+        default_logger logger{};
         if (proj_name.empty()) {
             logger.error("Please specify a valid name for the project.");
             return 1;

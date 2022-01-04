@@ -46,7 +46,7 @@ namespace webpp::sdk {
 
             if (vm.count("new")) {
                 const auto        create_args     = vm["cmd_opts"].template as<vector<string>>();
-                const stl::string create_args_str = strings::join_with(create_args, " ");
+                const stl::string create_args_str = strings::join_with(create_args, ' ');
                 create_project    creator{.command_desc = *this};
                 return creator.handle(create_args_str);
             }

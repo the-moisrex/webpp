@@ -19,10 +19,13 @@ namespace webpp::sdk {
         command_description& command_desc;
 
         stl::string_view desc() const noexcept;
-        int              handle(stl::string);
+
+        // wpp new ....
+        int handle(stl::vector<stl::string>);
 
       private:
-        void handle_args();
+        // wpp new project ....
+        int handle_project(stl::vector<stl::string>);
     };
 
 } // namespace webpp::sdk
