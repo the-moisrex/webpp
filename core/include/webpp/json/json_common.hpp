@@ -48,8 +48,15 @@ namespace webpp::json {
          * Add more field types to the field pack
          */
         template <typename NewT>
-        [[nodiscard]] field_pack<T..., NewT> operator,(field<NewT>& input_field) noexcept {
-            return {stl::tuple_cat(*this, stl::tuple<field<NewT>&>(input_field))};
+        [[nodiscard]] auto operator,(field<NewT>& input_field) noexcept {
+            // this is tuple_cat, but using tuple_cat with non-tuple types is undefined behaviour (even though
+            // they could've easily generalized it)
+            // more info: https://en.cppreference.com/w/cpp/utility/tuple/tuple_cat
+            return stl::apply(
+              [&]<typename... OT>(OT & ... fields) {
+                  return field_pack<T..., NewT>{fields..., input_field};
+              },
+              *static_cast<tuple_type*>(this));
         }
 
         /**
@@ -102,6 +109,8 @@ namespace webpp::json {
             key{input_key} {}
 
 
+        // get a field pack
+        // example: (username, password) = doc;
         template <typename NewT>
         [[nodiscard]] field_pack<T, NewT> operator,(field<NewT>& input_field) noexcept {
             return {*this, input_field};
