@@ -72,13 +72,11 @@ namespace webpp::istl {
         stl::is_standard_layout_v<typename stl::remove_cvref_t<StrViewType>::value_type>;
         requires requires {
             StrViewType{str};
-        }
-        || requires {
+        } || requires {
             str.data();
             str.size();
             StrViewType{str.data(), str.size()};
-        }
-        || requires {
+        } || requires {
             str.c_str();
             str.size();
             StrViewType{str.c_str(), str.size()};

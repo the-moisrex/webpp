@@ -9,6 +9,7 @@
 #include "../std/string.hpp"
 #include "../std/tuple.hpp"
 #include "./size.hpp"
+#include "./strings_concepts.hpp"
 
 namespace webpp::strings {
 
@@ -96,9 +97,73 @@ namespace webpp::strings {
      * continue to be used if there are more strings than there are separators.
      * @example join_with(vec, ' ')
      */
-    template <typename StringType = void, typename C, typename... SeparatorTypes>
-    constexpr auto join_with(C const& vec, SeparatorTypes&&... separators) {
+    template <istl::String StringType = stl::string, typename C, istl::Tuple DelimTuple>
+    constexpr void join_with(StringType& output, C const& vec, DelimTuple const& delims) {
+        if constexpr (istl::Collection<C>) {
 
+            // reserve storage beforehand:
+            stl::size_t necessary_storage_size = output.size();
+            for (auto const& item : vec)
+                necessary_storage_size += ascii::max_size(item);
+            output.reserve(necessary_storage_size);
+
+
+            constexpr stl::size_t delim_count = stl::tuple_size_v<DelimTuple>;
+            auto                  it          = vec.begin();
+            if (it != vec.end()) {
+                output.append(*it);
+                ++it;
+            }
+            auto pos_finder = [&]<stl::size_t DelimIndex>(istl::value_holder<DelimIndex>) {
+                if (it == vec.end())
+                    return;
+                output.append(stl::get<DelimIndex>(delims));
+                output.append(*it);
+            };
+            ([&]<stl::size_t... I>(stl::index_sequence<I...>) {
+                ((pos_finder(istl::value_holder<I>{})), ...); // call the func
+            })(stl::make_index_sequence<delim_count>());
+
+            const auto last_delim = stl::get<delim_count - 1>(delims);
+            for (; it != it.end(); ++it) {
+                output.append(last_delim);
+                output.append(*it);
+            }
+        } else if constexpr (istl::Tuple<C>) {
+            stl::size_t const merged_size = ((istl::Stringifiable<T> ? ascii::max_size(strs) : 0) + ...);
+
+        } else {
+            static_assert_false(C, "The specified arguments must be a collection or a tuple like type.");
+        }
+    }
+
+    template <istl::String StringType = stl::string, typename C, typename... SeparatorTypes>
+    constexpr auto join_with(C const& vec, SeparatorTypes&&... separators) {
+        if constexpr (istl::Collection<C>) {
+            using value_type          = typename C::value_type;
+            using default_string_type = stl::remove_cvref_t<StringType>;
+            using string_type = stl::conditional_t<istl::String<value_type>, value_type, default_string_type>;
+            using allocator_type = typename string_type::allocator_type;
+            string_type str{[&vec] {
+                if constexpr (istl::String<value_type>) {
+                    if (vec.size())
+                        return vec[0].get_allocator();
+                }
+                return allocator_type{}; // default initialize the allocator
+            }};
+            join_with<StringType, C, SeparatorTypes...>(str,
+                                                        vec,
+                                                        stl::forward<SeparatorTypes>(separators)...);
+            return str;
+        } else if constexpr (istl::Tuple<C>) {
+            stl::size_t const merged_size = ((istl::Stringifiable<T> ? ascii::max_size(strs) : 0) + ...);
+            using best_str_t = typename istl::ranked_types<details::string_type_ranker, T...>::best;
+            using str_type   = stl::conditional_t<stl::is_void_v<StringType>,
+                                                stl::remove_cvref_t<typename best_str_t::type>,
+                                                StringType>;
+        } else {
+            static_assert_false(C, "The specified arguments must be a collection or a tuple like type.");
+        }
     }
 
     // todo: add join_to
