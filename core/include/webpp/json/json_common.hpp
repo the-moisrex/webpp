@@ -67,12 +67,12 @@ namespace webpp::json {
          * This is the operator= used there.
          */
         template <JSONObject ObjectType>
-        field_pack& operator=(ObjectType& obj) {
+        field_pack& operator=(ObjectType&& obj) {
             stl::apply(
-              [&obj]<typename ValueType>(field<ValueType>& field) {
-                  if (obj.has(field.key)) {
-                      field = obj.template as<ValueType>;
-                  }
+              [&obj]<typename... ValueType>(field<ValueType> & ... fields) {
+                  // it's the same as this simple if statement:
+                  // if (obj.contains(field.key) field = obj.as<value_type>();
+                  ((obj.contains(fields.key) && (fields = obj.template as<ValueType>())), ...);
               },
               *this);
             return *this;
@@ -82,7 +82,7 @@ namespace webpp::json {
         requires requires(ObjHolder holder) {
             { holder.as_object() } -> JSONObject;
         }
-        field_pack& operator=(ObjHolder& obj) {
+        field_pack& operator=(ObjHolder&& obj) {
             return operator=(obj.as_object());
         }
     };
