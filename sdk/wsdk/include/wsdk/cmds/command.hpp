@@ -37,7 +37,7 @@ namespace webpp::sdk {
         stl::vector<command> commands;
 
         // parse the args, and run the command
-        void run_command(int argc, char** argv);
+        int run_command(int argc, char const** argv);
     };
 
 } // namespace webpp::sdk
