@@ -5,16 +5,19 @@
 
 #if __has_include(<rapidjson/document.h>)
 #    define WEBPP_RAPIDJSON_READY
+#    include "../memory/buffer.hpp"
 #    include "../std/string.hpp"
 #    include "../std/string_view.hpp"
 #    include "../traits/default_traits.hpp"
 #    include "json_concepts.hpp"
 
 #    include <compare>
+#    include <cstdio>
 #    include <filesystem>
 
 #    define RAPIDJSON_HAS_STDSTRING 1 // enable std::string support for rapidjson (todo: do we need it?)
 #    include <rapidjson/document.h>
+#    include <rapidjson/filereadstream.h>
 #    include <rapidjson/prettywriter.h>
 
 #    if (RAPIDJSON_MAJOR_VERSION == 1 && RAPIDJSON_MINOR_VERSION == 1 && RAPIDJSON_PATCH_VERSION == 0)
@@ -643,7 +646,13 @@ namespace webpp::json::rapidjson {
          * Get the file and parse it.
          */
         explicit document(stl::filesystem::path file_path) {
-            // todo
+            stl::FILE* fp = stl::fopen(file_path.c_str(), "rb");
+
+            stack<65536>                read_buffer;
+            ::rapidjson::FileReadStream is(fp, read_buffer.data(), read_buffer.size());
+            this->ParseStream(is);
+
+            stl::fclose(fp);
         }
 
         /**
