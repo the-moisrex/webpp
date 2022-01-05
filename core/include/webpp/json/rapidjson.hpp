@@ -543,7 +543,7 @@ namespace webpp::json::rapidjson {
             [[nodiscard]] value_type operator[](KeyType&& key) {
                 if constexpr (JSONNumber<KeyType>) {
                     // fixme: write tests for this, this will run the "index" version, right?
-                    return obj_handle.operator[](key);
+                    return obj_handle.operator[](rapidjson_plain_value_type{key});
                 } else if constexpr (JSONString<KeyType>) {
                     // The key is convertible to string_view
                     auto const key_view =
@@ -630,14 +630,10 @@ namespace webpp::json::rapidjson {
             }
 
 
+            // this method will assume that the value is an object
             template <typename T>
             [[nodiscard]] auto operator[](T&& val) {
-                using res_type = decltype(this->val_handle[stl::forward<T>(val)]);
-                if constexpr (stl::same_as<res_type, stl::remove_cvref_t<res_type>>) {
-                    return generic_value_type{this->val_handle[stl::forward<T>(val)]};
-                } else {
-                    return value_ref_holder{this->val_handle[stl::forward<T>(val)]};
-                }
+                return this->as_object()[stl::forward<T>(val)];
             }
 
             template <typename T>

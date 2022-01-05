@@ -43,10 +43,13 @@ TEST(JSONTest, Fields) {
     document doc{R"JSON({
         "username": "the-moisrex",
         "emails":   ["one@example.com", "two@example.com"]
-        "id":       666
+        "id":       313
     })JSON"};
 
     (user_id, username /*, emails */) = doc;
+
+    EXPECT_EQ(user_id.value(), 313);
+    EXPECT_EQ(username.value(), "the-moisrex");
 
     // let's first fix other issues then we'd add object
     // object(username, user_id, emails);
