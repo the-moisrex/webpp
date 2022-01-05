@@ -636,11 +636,6 @@ namespace webpp::json::rapidjson {
                 return this->as_object()[stl::forward<T>(val)];
             }
 
-            template <typename T>
-            [[nodiscard]] value_const_ref_holder operator[](T&& val) const {
-                return {this->val_handle[stl::forward<T>(val)]};
-            }
-
 
             //            template <stl::size_t N>
             //            [[nodiscard]] auto operator[](char_type const child_name[N]) {
