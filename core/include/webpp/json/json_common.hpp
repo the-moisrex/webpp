@@ -72,9 +72,10 @@ namespace webpp::json {
               [&obj]<typename... ValueType>(field<ValueType> & ... fields) {
                   // it's the same as this simple if statement:
                   // if (obj.contains(field.key) field = obj.as<value_type>();
-                  ((obj.contains(fields.key) && (fields = obj.template as<ValueType>())), ...);
+                  ((obj.contains(fields.key) && ((fields = obj[fields.key].template as<ValueType>()), true)),
+                   ...);
               },
-              *this);
+              *static_cast<tuple_type*>(this));
             return *this;
         }
 

@@ -44,6 +44,42 @@ namespace webpp::json::rapidjson {
     // using namespace ::rapidjson;
 
     /**
+     * @brief The goal of this struct is to make this code happen:
+     * @code
+     *   for (auto [key, value] : doc.as_object()) {
+     *       cout << key << ": " << value << endl;
+     *   }
+     * @endcode
+     */
+    template <typename MemberValType>
+    struct key_value_pair {
+        using key_type   = MemberValType;
+        using value_type = MemberValType;
+
+        constexpr key_value_pair(key_value_pair const& p) : key{p.key}, value{p.value} {}
+        constexpr key_value_pair(key_value_pair&&) noexcept = default;
+
+        constexpr key_value_pair(key_type const& k, value_type const& v) : key{k}, value{v} {}
+        constexpr key_value_pair(key_type& k, value_type& v) : key{k}, value{v} {}
+        constexpr key_value_pair(key_type&& k, value_type&& v) : key{stl::move(k)}, value{stl::move(v)} {}
+        constexpr key_value_pair(key_type const& k, value_type& v) : key{k}, value{v} {}
+        constexpr key_value_pair(key_type const& k, value_type&& v) : key{k}, value{stl::move(v)} {}
+        constexpr key_value_pair(key_type& k, value_type const& v) : key{k}, value{v} {}
+        constexpr key_value_pair(key_type&& k, value_type const& v) : key{stl::move(k)}, value{v} {}
+
+        key_value_pair& operator=(key_value_pair const&) = default;
+        key_value_pair& operator=(key_value_pair&&) noexcept = default;
+
+        auto operator<=>(key_value_pair const&) const = default;
+        auto operator<=>(MemberValType const& val) const {
+            return val <=> value;
+        }
+
+        key_type   key;
+        value_type value;
+    };
+
+    /**
      * todo: add a choice to use rapidjson's allocator
      * todo: use traits_type's allocator correctly if possible
      */
@@ -64,42 +100,31 @@ namespace webpp::json::rapidjson {
         template <Traits TraitsType, typename RapidJSONIterator>
         struct generic_member_iterator : public stl::remove_pointer_t<RapidJSONIterator> {
 
-            /**
-             * @brief The goal of this struct is to make this code happen:
-             * @code
-             *   for (auto [key, value] : doc.as_object()) {
-             *       cout << key << ": " << value << endl;
-             *   }
-             * @endcode
-             */
-            template <typename MemberValType>
-            struct member_type {
+            using traits_type                 = TraitsType;
+            using base_type                   = stl::remove_pointer_t<RapidJSONIterator>;
+            using rapidjson_reference         = typename base_type::reference;
+            using rapidjson_pointer           = typename base_type::pointer;
+            using rapidjson_difference_type   = typename base_type::difference_type;
+            using rapidjson_value_type        = typename base_type::value_type;
+            using rapidjson_iterator_category = typename base_type::iterator_category;
+            using rapidjson_const_iterator    = typename base_type::ConstIterator;
+            using rapidjson_iterator          = typename base_type::NonConstIterator;
+            using rapidjson_member_value_type =
+              stl::remove_cvref_t<decltype(stl::declval<stl::remove_cvref_t<rapidjson_value_type>>().name)>;
+            using rapidjson_member_value_type_auto =
+              stl::conditional_t<stl::is_const_v<rapidjson_value_type>,
+                                 stl::add_cv_t<rapidjson_member_value_type>,
+                                 stl::add_lvalue_reference_t<rapidjson_member_value_type>>;
 
-                member_type(auto&& mem) : key{mem.name}, value{mem.value} {}
-                auto operator<=>(member_type const&) const = default;
-                auto operator<=>(MemberValType const& val) const {
-                    return val <=> value;
-                }
+            using item_type = generic_value<traits_type, rapidjson_member_value_type>;
 
-                MemberValType key;
-                MemberValType value;
-            };
-
-            using base_type                  = stl::remove_pointer_t<RapidJSONIterator>;
-            using traits_type                = TraitsType;
-            using rapidjson_member_reference = typename base_type::Reference;
-            using rapidjson_member_type      = stl::remove_cvref_t<rapidjson_member_reference>;
-            using rapidjson_value_type       = decltype(stl::declval<rapidjson_member_type>().name);
-            using item_type                  = generic_value<traits_type, rapidjson_value_type>;
-            using value_type                 = member_type<item_type>;
-            using non_const_iterator         = typename base_type::NonConstIterator;
-            using iterator                   = generic_member_iterator;
-            using diff_t                     = typename base_type::DifferenceType;
-            using rapidjson_const_iterator   = typename base_type::ConstIterator;
-            using const_iterator             = generic_member_iterator<traits_type, rapidjson_const_iterator>;
-
-            using pointer   = member_type<stl::add_pointer_t<item_type>>;
-            using reference = member_type<stl::add_lvalue_reference_t<item_type>>;
+            using iterator          = generic_member_iterator;
+            using const_iterator    = generic_member_iterator<traits_type, rapidjson_const_iterator> const;
+            using iterator_category = rapidjson_iterator_category;
+            using value_type        = key_value_pair<item_type>;
+            using pointer           = value_type;
+            using reference         = value_type;
+            using difference_type   = rapidjson_difference_type;
 
             using base_type::base_type;
 
@@ -111,10 +136,10 @@ namespace webpp::json::rapidjson {
             iterator& operator=(iterator&& iter) noexcept = default;
             iterator& operator=(iterator const& iter) noexcept = default;
 
-            iterator& operator=(const non_const_iterator& iter) {
-                base_type::opreator = (iter);
-                return *this;
-            }
+            //            iterator& operator=(const iterator& iter) {
+            //                base_type::opreator = (iter);
+            //                return *this;
+            //            }
 
 
 
@@ -139,18 +164,18 @@ namespace webpp::json::rapidjson {
             }
 
 
-            iterator operator+(diff_t n) const {
+            iterator operator+(difference_type n) const {
                 return base_type::operator+(n);
             }
-            iterator operator-(diff_t n) const {
+            iterator operator-(difference_type n) const {
                 return base_type::operator-(n);
             }
 
-            iterator& operator+=(diff_t n) {
+            iterator& operator+=(difference_type n) {
                 base_type::operator+=(n);
                 return *this;
             }
-            iterator& operator-=(diff_t n) {
+            iterator& operator-=(difference_type n) {
                 base_type::operator-=(n);
                 return *this;
             }
@@ -198,18 +223,19 @@ namespace webpp::json::rapidjson {
 
 
             reference operator*() const {
-                return base_type::operator*();
+                auto& res = base_type::operator*();
+                return {res.name.Move(), res.value.Move()};
             }
             pointer operator->() const {
                 return base_type::operator->();
             }
-            reference operator[](diff_t n) const {
+            reference operator[](difference_type n) const {
                 return base_type::operator[](n);
             }
 
 
 
-            diff_t operator-(const_iterator that) const {
+            difference_type operator-(const_iterator that) const {
                 return base_type::operator-(that);
             }
         };
@@ -264,10 +290,16 @@ namespace webpp::json::rapidjson {
             using rapidjson_array_type   = typename value_type::Array;
             using array_type             = generic_array<traits_type, rapidjson_array_type>;
 
-            json_common() = default;
+            constexpr json_common()                       = default;
+            constexpr json_common(json_common const&)     = default;
+            constexpr json_common(json_common&&) noexcept = default;
 
-            template <typename ValT>
-            json_common(ValT&& obj) : val_handle{stl::forward<ValT>(obj)} {}
+            json_common& operator=(json_common&&) noexcept = default;
+            json_common& operator=(json_common const&) = default;
+
+
+            template <typename... ValT>
+            json_common(ValT&&... obj) : val_handle{stl::forward<ValT>(obj)...} {}
 
             template <istl::StringViewifiable StrT>
             value_ref_holder operator=(StrT&& val) {
@@ -558,6 +590,7 @@ namespace webpp::json::rapidjson {
                 return obj_handle.HasMember(key_view.data()); // fixme: not passing the length
             }
 
+
           protected:
             rapidjson_object_type obj_handle;
         };
@@ -578,11 +611,10 @@ namespace webpp::json::rapidjson {
             using rapidjson_array_type   = typename common_type::rapidjson_array_type;
             using array_type             = typename common_type::array_type;
             using value_type             = typename common_type::value_type;
-            using json_common_type       = json_common<TraitsType, ValueType>;
 
 
-            using json_common_type::json_common;
-            using json_common_type::operator=;
+            using json_common<TraitsType, ValueType>::json_common;
+            using json_common<TraitsType, ValueType>::operator=;
 
             /**
              * Check if it has a member

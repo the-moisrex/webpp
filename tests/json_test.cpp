@@ -27,7 +27,7 @@ TEST(JSONTest, Parse) {
     EXPECT_TRUE(is<int>(id));
     EXPECT_EQ(as<int>(id), 20);
 
-    for (auto [key, value] : doc.as_object()) {
+    for (auto const& [key, value] : doc.as_object()) {
         EXPECT_EQ(key.as_string(), "id");
         EXPECT_EQ(as<int>(value), 20);
     }

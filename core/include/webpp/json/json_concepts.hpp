@@ -63,6 +63,9 @@ namespace webpp::json {
         typename T::value_type;
     }
     and requires(T arr, typename T::value_type val) {
+
+        { arr[0] } -> JSONCommon; // just because we can't use JSONValue here
+
         { arr.begin() } -> stl::random_access_iterator;
         { arr.end() } -> stl::random_access_iterator;
         { arr.cbegin() } -> stl::random_access_iterator;
@@ -76,6 +79,17 @@ namespace webpp::json {
         arr.clear();
 
         // todo: add erase methods
+    };
+
+    /**
+     * @brief this is a custom std::pair or a tuple essentially.
+     * It's here to make structure binding work.
+     * @param pair
+     */
+    template <typename T>
+    concept JSONPair = requires(T pair) {
+        { pair.key } -> JSONCommon;   // JSONKey in fact
+        { pair.value } -> JSONCommon; // JSONValue in fact, but we can't use it here
     };
 
     /**
@@ -97,8 +111,8 @@ namespace webpp::json {
 
         { obj.size() } -> stl::same_as<stl::size_t>;
 
-        obj.insert("key", "value"); // push_back is so vector like, Object is more like a std::map
-        obj.emplace("key", "value");
+        obj.insert("key", "value");  // push_back is so vector like, Object is more like a std::map
+        obj.emplace("key", "value"); // todo: add allocator support maybe?
         obj["key"] = "value";
         obj.clear();
 
