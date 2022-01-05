@@ -518,11 +518,15 @@ namespace webpp::json::rapidjson {
          * The ValueType is a rapidjson value type not a generic value type.
          */
         template <Traits TraitsType, typename ObjectType>
-        // requires(istl::is_specialization_of_v<ObjectType, ::rapidjson::GenericObject>)
         struct generic_object {
+
+            static_assert(istl::is_valued_specialization_of_v<ObjectType, ::rapidjson::GenericObject>,
+                          "it's an object not a value");
+
             using rapidjson_object_type           = ObjectType;
+            using rapidjson_plain_value_type      = typename rapidjson_object_type::PlainType;
             using traits_type                     = TraitsType;
-            using value_type                      = generic_value<traits_type, rapidjson_object_type>;
+            using value_type                      = generic_value<traits_type, rapidjson_plain_value_type>;
             using string_view_type                = traits::string_view<traits_type>;
             using rapidjson_member_iterator       = typename rapidjson_object_type::MemberIterator;
             using rapidjson_const_member_iterator = typename rapidjson_object_type::ConstMemberIterator;
@@ -543,7 +547,8 @@ namespace webpp::json::rapidjson {
                     // The key is convertible to string_view
                     auto const key_view =
                       istl::string_viewify_of<string_view_type>(stl::forward<KeyType>(key));
-                    return obj_handle[::rapidjson::StringRef(key_view.data(), key_view.size())];
+                    return obj_handle[rapidjson_plain_value_type{
+                      ::rapidjson::StringRef(key_view.data(), key_view.size())}];
                 }
             }
 
