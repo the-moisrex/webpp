@@ -116,7 +116,7 @@ namespace webpp::json::rapidjson {
                                  stl::add_cv_t<rapidjson_member_value_type>,
                                  stl::add_lvalue_reference_t<rapidjson_member_value_type>>;
 
-            using item_type = generic_value<traits_type, rapidjson_member_value_type>;
+            using item_type = generic_value<traits_type, rapidjson_member_value_type_auto>;
 
             using iterator          = generic_member_iterator;
             using const_iterator    = generic_member_iterator<traits_type, rapidjson_const_iterator> const;
@@ -538,7 +538,7 @@ namespace webpp::json::rapidjson {
             [[nodiscard]] value_type operator[](KeyType&& key) {
                 if constexpr (JSONNumber<KeyType>) {
                     // fixme: write tests for this, this will run the "index" version, right?
-                    return value_type::operator[](key);
+                    return obj_handle.operator[](key);
                 } else if constexpr (JSONString<KeyType>) {
                     // The key is convertible to string_view
                     auto const key_view =

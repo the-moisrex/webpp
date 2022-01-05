@@ -110,6 +110,12 @@ namespace webpp::json {
             key{input_key} {}
 
 
+        template <typename U>
+        constexpr field& operator=(U&& val) {
+            optional_value_type::operator=(stl::forward<T>(val));
+            return *this;
+        }
+
         // get a field pack
         // example: (username, password) = doc;
         template <typename NewT>
