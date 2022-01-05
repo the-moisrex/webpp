@@ -850,6 +850,7 @@ namespace webpp::istl {
     inline constexpr bool is_specialization_of_v = is_specialization_of<T, Primary>::value;
 
     // valued specialization is exactly the same as above, but it supports some auto values as well
+    // this has a very limitted use case, so don't worry about it if it seems useless to you.
     template <typename T, template <auto, typename...> typename Primary>
     struct is_valued_specialization_of : stl::false_type {};
 

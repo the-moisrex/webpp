@@ -523,10 +523,11 @@ namespace webpp::json::rapidjson {
             static_assert(istl::is_valued_specialization_of_v<ObjectType, ::rapidjson::GenericObject>,
                           "it's an object not a value");
 
-            using rapidjson_object_type           = ObjectType;
-            using rapidjson_plain_value_type      = typename rapidjson_object_type::PlainType;
-            using traits_type                     = TraitsType;
-            using value_type                      = generic_value<traits_type, rapidjson_plain_value_type>;
+            using rapidjson_object_type      = ObjectType;
+            using rapidjson_plain_value_type = typename rapidjson_object_type::PlainType;
+            using traits_type                = TraitsType;
+            using value_type =
+              generic_value<traits_type, stl::add_lvalue_reference_t<rapidjson_plain_value_type>>;
             using string_view_type                = traits::string_view<traits_type>;
             using rapidjson_member_iterator       = typename rapidjson_object_type::MemberIterator;
             using rapidjson_const_member_iterator = typename rapidjson_object_type::ConstMemberIterator;
