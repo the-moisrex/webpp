@@ -63,18 +63,6 @@ namespace webpp::json::rapidjson {
          */
         template <Traits TraitsType, typename RapidJSONIterator>
         struct generic_member_iterator : public stl::remove_pointer_t<RapidJSONIterator> {
-            using base_type                  = stl::remove_pointer_t<RapidJSONIterator>;
-            using traits_type                = TraitsType;
-            using rapidjson_member_reference = typename base_type::Reference;
-            using rapidjson_member_type      = stl::remove_cvref_t<rapidjson_member_reference>;
-            using rapidjson_value_type       = decltype(stl::declval<rapidjson_member_type>().name);
-            using value_type                 = generic_value<traits_type, rapidjson_value_type>;
-            using non_const_iterator         = typename base_type::NonConstIterator;
-            using iterator                   = generic_member_iterator;
-            using diff_t                     = typename base_type::DifferenceType;
-            using rapidjson_const_iterator   = typename base_type::ConstIterator;
-            using const_iterator             = generic_member_iterator<traits_type, rapidjson_const_iterator>;
-
             template <typename MemberValType>
             struct member_type {
 
@@ -87,8 +75,22 @@ namespace webpp::json::rapidjson {
                 MemberValType key;
                 MemberValType value;
             };
-            using pointer   = member_type<stl::add_pointer_t<value_type>>;
-            using reference = member_type<stl::add_lvalue_reference_t<value_type>>;
+
+            using base_type                  = stl::remove_pointer_t<RapidJSONIterator>;
+            using traits_type                = TraitsType;
+            using rapidjson_member_reference = typename base_type::Reference;
+            using rapidjson_member_type      = stl::remove_cvref_t<rapidjson_member_reference>;
+            using rapidjson_value_type       = decltype(stl::declval<rapidjson_member_type>().name);
+            using item_type                  = generic_value<traits_type, rapidjson_value_type>;
+            using value_type                 = member_type<item_type>;
+            using non_const_iterator         = typename base_type::NonConstIterator;
+            using iterator                   = generic_member_iterator;
+            using diff_t                     = typename base_type::DifferenceType;
+            using rapidjson_const_iterator   = typename base_type::ConstIterator;
+            using const_iterator             = generic_member_iterator<traits_type, rapidjson_const_iterator>;
+
+            using pointer   = member_type<stl::add_pointer_t<item_type>>;
+            using reference = member_type<stl::add_lvalue_reference_t<item_type>>;
 
             using base_type::base_type;
 
@@ -238,21 +240,25 @@ namespace webpp::json::rapidjson {
               requires { typename value_type::Object; },
               "The specified ValueType doesn't seem to be a valid rapidjson value");
 
-            using traits_type           = TraitsType;
-            using string_type           = traits::general_string<traits_type>;
-            using string_view_type      = traits::string_view<traits_type>;
-            using char_type             = traits::char_type<traits_type>;
-            using generic_value_type    = generic_value<traits_type, value_type>;
-            using value_ref             = stl::add_lvalue_reference_t<value_type>; // add & to obj
-            using auto_ref_value_type   = stl::conditional_t<has_ref, value_ref, value_type>;
-            using value_ref_holder      = generic_value<traits_type, value_ref>; // ref holder
-            using rapidjson_object_type = typename value_type::Object;
-            using object_type           = generic_object<traits_type, rapidjson_object_type>;
-            using rapidjson_array_type  = typename value_type::Array;
-            using array_type            = generic_array<traits_type, rapidjson_array_type>;
+            using traits_type            = TraitsType;
+            using string_type            = traits::general_string<traits_type>;
+            using string_view_type       = traits::string_view<traits_type>;
+            using char_type              = traits::char_type<traits_type>;
+            using generic_value_type     = generic_value<traits_type, value_type>;
+            using value_ref              = stl::add_lvalue_reference_t<value_type>; // add & to obj
+            using value_const_ref        = stl::add_const_t<value_ref>;             // add const
+            using auto_ref_value_type    = stl::conditional_t<has_ref, value_ref, value_type>;
+            using value_ref_holder       = generic_value<traits_type, value_ref>;       // ref holder
+            using value_const_ref_holder = generic_value<traits_type, value_const_ref>; // ref holder
+            using rapidjson_object_type  = typename value_type::Object;
+            using object_type            = generic_object<traits_type, rapidjson_object_type>;
+            using rapidjson_array_type   = typename value_type::Array;
+            using array_type             = generic_array<traits_type, rapidjson_array_type>;
 
             json_common() = default;
-            json_common(value_ref obj) : val_handle{obj} {}
+
+            template <typename ValT>
+            json_common(ValT&& obj) : val_handle{stl::forward<ValT>(obj)} {}
 
             template <istl::StringViewifiable StrT>
             value_ref_holder operator=(StrT&& val) {
@@ -549,19 +555,21 @@ namespace webpp::json::rapidjson {
 
         template <Traits TraitsType, typename ValueType>
         struct generic_value : public json_common<TraitsType, ValueType> {
-            using traits_type           = TraitsType;
-            using common_type           = json_common<traits_type, ValueType>;
-            using string_type           = typename common_type::string_type;
-            using string_view_type      = typename common_type::string_view_type;
-            using char_type             = typename common_type::char_type;
-            using generic_value_type    = typename common_type::generic_value_type;
-            using value_ref             = typename common_type::value_ref;
-            using value_ref_holder      = typename common_type::value_ref_holder;
-            using rapidjson_object_type = typename common_type::rapidjson_object_type;
-            using object_type           = typename common_type::object_type;
-            using rapidjson_array_type  = typename common_type::rapidjson_array_type;
-            using array_type            = typename common_type::array_type;
-            using json_common_type      = json_common<TraitsType, ValueType>;
+            using traits_type            = TraitsType;
+            using common_type            = json_common<traits_type, ValueType>;
+            using string_type            = typename common_type::string_type;
+            using string_view_type       = typename common_type::string_view_type;
+            using char_type              = typename common_type::char_type;
+            using generic_value_type     = typename common_type::generic_value_type;
+            using value_ref              = typename common_type::value_ref;
+            using value_ref_holder       = typename common_type::value_ref_holder;
+            using value_const_ref_holder = typename common_type::value_const_ref_holder;
+            using rapidjson_object_type  = typename common_type::rapidjson_object_type;
+            using object_type            = typename common_type::object_type;
+            using rapidjson_array_type   = typename common_type::rapidjson_array_type;
+            using array_type             = typename common_type::array_type;
+            using value_type             = typename common_type::value_type;
+            using json_common_type       = json_common<TraitsType, ValueType>;
 
 
             using json_common_type::json_common;
@@ -576,7 +584,17 @@ namespace webpp::json::rapidjson {
 
 
             template <typename T>
-            [[nodiscard]] value_ref_holder operator[](T&& val) {
+            [[nodiscard]] auto operator[](T&& val) {
+                using res_type = decltype(this->val_handle[stl::forward<T>(val)]);
+                if constexpr (stl::same_as<res_type, stl::remove_cvref_t<res_type>>) {
+                    return generic_value_type{this->val_handle[stl::forward<T>(val)]};
+                } else {
+                    return value_ref_holder{this->val_handle[stl::forward<T>(val)]};
+                }
+            }
+
+            template <typename T>
+            [[nodiscard]] value_const_ref_holder operator[](T&& val) const {
                 return {this->val_handle[stl::forward<T>(val)]};
             }
 
@@ -669,14 +687,12 @@ namespace webpp::json::rapidjson {
          * A document containing the specified, already parsed, value
          */
         template <typename ConvertibleToValue>
-        requires(stl::convertible_to<stl::remove_cvref_t<ConvertibleToValue>,
-                                     value_type> && // check if it's a value or an object
-                 !stl::same_as<stl::remove_cvref_t<stl::remove_cvref_t<ConvertibleToValue>>, document>)
+        requires(!istl::StringViewifiable<ConvertibleToValue> &&
+                 (stl::convertible_to<stl::remove_cvref_t<ConvertibleToValue>,
+                                      value_type> && // check if it's a value or an object
+                  !stl::same_as<stl::remove_cvref_t<stl::remove_cvref_t<ConvertibleToValue>>, document>) )
           document(ConvertibleToValue&& val)
           : generic_value_type{stl::forward<ConvertibleToValue>(val)} {}
-
-        template <JSONObject ObjType>
-        document(ObjType&& obj) : generic_value_type{stl::forward<ObjType>(obj)} {}
 
 
         template <typename T>
