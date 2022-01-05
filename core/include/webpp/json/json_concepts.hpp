@@ -90,10 +90,10 @@ namespace webpp::json {
         // Iterator for this type should be of type: pair<key, value>
         // This is because it would allow structured binding to work in a for loop:
         //   for (auto [key, value] : doc.as_object());
-        { obj.begin() } -> stl::random_access_iterator;
-        { obj.end() } -> stl::random_access_iterator;
-        { obj.cbegin() } -> stl::random_access_iterator;
-        { obj.cend() } -> stl::random_access_iterator;
+        {obj.begin()} /* -> stl::random_access_iterator */;
+        {obj.end()} /* -> stl::random_access_iterator */;
+        {obj.cbegin()} /* -> stl::random_access_iterator */;
+        {obj.cend()} /* -> stl::random_access_iterator */;
 
         { obj.size() } -> stl::same_as<stl::size_t>;
 
