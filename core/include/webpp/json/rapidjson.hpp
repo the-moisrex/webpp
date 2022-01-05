@@ -63,6 +63,15 @@ namespace webpp::json::rapidjson {
          */
         template <Traits TraitsType, typename RapidJSONIterator>
         struct generic_member_iterator : public stl::remove_pointer_t<RapidJSONIterator> {
+
+            /**
+             * @brief The goal of this struct is to make this code happen:
+             * @code
+             *   for (auto [key, value] : doc.as_object()) {
+             *       cout << key << ": " << value << endl;
+             *   }
+             * @endcode
+             */
             template <typename MemberValType>
             struct member_type {
 
@@ -632,6 +641,31 @@ namespace webpp::json::rapidjson {
             //            RENAME(generic_iterator_type, End, cend, const);
 
 #    undef RENAME
+
+            // this is a nice idea, but we have to have common iterator wrapper for this to work
+            /*
+#    define webpp_iterator_method(iter_name, constness)                                               \
+                                                                                                      \
+        auto iter_name() constness {                                                                  \
+            if (this->is_array()) {                                                                   \
+                return this->as_array().iter_name();                                                  \
+            } else if (this->is_object()) {                                                           \
+                return this->as_object().iter_name();                                                 \
+            } else if (this->is_string()) {                                                           \
+                return this->as_string_view().iter_name();                                            \
+            } else {                                                                                  \
+                throw stl::invalid_argument("This json value is not an array, object,"                \
+                                            " or a string so you cannot get an iterator out of it."); \
+            }                                                                                         \
+        }
+
+            webpp_iterator_method(begin, )         // begin
+              webpp_iterator_method(end, )         // end
+              webpp_iterator_method(cbegin, const) // cbegin
+              webpp_iterator_method(cend, const)   // cend
+
+#    undef webpp_iterator_method
+            */
         };
 
 
