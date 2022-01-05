@@ -38,9 +38,9 @@ TEST(JSONTest, Parse) {
 TEST(JSONTest, Fields) {
     using namespace std;
 
-    field<int>            user_id{"id"};
-    field<string>         username{"username"};
-    field<vector<string>> emails{"emails"};
+    field<int>    user_id{"id"};
+    field<string> username{"username"};
+    // field<vector<string>> emails{"emails"};
 
     document doc{R"JSON({
         "username": "the-moisrex",
@@ -48,7 +48,7 @@ TEST(JSONTest, Fields) {
         "id":       666
     })JSON"};
 
-    (user_id, username, emails) = doc;
+    (user_id, username /*, emails */) = doc;
 
     // let's first fix other issues then we'd add object
     // object(username, user_id, emails);
