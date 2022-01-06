@@ -45,19 +45,20 @@ TEST(JSONTest, Fields) {
     field<string> username{"username"};
     // field<vector<string>> emails{"emails"};
 
-    document doc;
-    doc.parse(R"JSON({
+    document         doc;
+    stl::string_view json_string = R"JSON({
         "username": "the-moisrex",
-        "emails":   ["one@example.com", "two@example.com"]
+        "emails":   ["one@example.com", "two@example.com"],
         "id":       313
-    })JSON");
+    })JSON";
+    doc.parse(json_string);
 
-    EXPECT_TRUE(doc.is_object());
+    EXPECT_TRUE(doc.is_object()) << json_string;
 
     (user_id, username /*, emails */) = doc;
 
-    EXPECT_EQ(user_id.value(), 313);
-    EXPECT_EQ(username.value(), "the-moisrex");
+    EXPECT_EQ(*user_id, 313);
+    EXPECT_EQ(username, "the-moisrex");
 
     // let's first fix other issues then we'd add object
     // object(username, user_id, emails);
