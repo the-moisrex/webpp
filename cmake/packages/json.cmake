@@ -58,4 +58,10 @@ if (NOT RAPIDJSON_FOUND AND EXISTS "/usr/include/rapidjson")
 
 endif ()
 
-add_library(${PROJECT_NAME}::json ALIAS RapidJSON)
+if (TARGET rapidjson)
+  add_library(${PROJECT_NAME}::json ALIAS rapidjson)
+elseif (TARGET RapidJSON)
+  add_library(${PROJECT_NAME}::json ALIAS RapidJSON)
+else ()
+  message(WARNING "Can't find the right rapidjson's target name")
+endif()
