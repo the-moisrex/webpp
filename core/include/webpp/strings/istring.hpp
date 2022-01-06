@@ -250,7 +250,7 @@ namespace webpp {
             return eve::algo::as_range(this->wide_begin(), wide_end());
         }
 
-        [[nodiscard]] auto const as_wide_range() const noexcept {
+        [[nodiscard]] auto as_wide_range() const noexcept {
             return eve::algo::as_range(this->wide_begin(), wide_end());
         }
 #endif

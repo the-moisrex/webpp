@@ -42,7 +42,7 @@ namespace webpp::json {
 
         using tuple_type = stl::tuple<field<T>&...>;
 
-        using tuple_type::tuple; // ctor
+        using stl::tuple<field<T>&...>::tuple; // ctor
 
         /**
          * Add more field types to the field pack
@@ -75,7 +75,7 @@ namespace webpp::json {
             this->apply([&obj]<typename... ValueType>(field<ValueType> & ... fields) {
                 // it's the same as this simple if statement:
                 // if (obj.contains(field.key) field = obj.as<value_type>();
-                ((obj.contains(fields.key) && ((fields = obj[fields.key].template as<ValueType>()), true)),
+                (void(obj.contains(fields.key) && ((fields = obj[fields.key].template as<ValueType>()))),
                  ...);
             });
             return *this;
