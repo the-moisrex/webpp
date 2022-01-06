@@ -9,6 +9,7 @@
 #    include "../std/string.hpp"
 #    include "../std/string_view.hpp"
 #    include "../traits/default_traits.hpp"
+#    include "json_common.hpp"
 #    include "json_concepts.hpp"
 
 #    include <compare>
@@ -301,16 +302,23 @@ namespace webpp::json::rapidjson {
             template <typename... ValT>
             json_common(ValT&&... obj) : val_handle{stl::forward<ValT>(obj)...} {}
 
-            template <istl::StringViewifiable StrT>
-            value_ref_holder operator=(StrT&& val) {
-                auto const val_view = istl::string_viewify_of<string_view_type>(stl::forward<StrT>(val));
-                val_handle          = ::rapidjson::StringRef(val_view.data(), val_view.size());
-                return *this;
-            }
 
             template <typename T>
-            value_ref_holder operator=(T&& val) {
-                val_handle = stl::forward<T>(val);
+            auto& operator=(T&& val) {
+                using type = stl::remove_cvref_t<T>;
+                if constexpr (istl::StringViewifiable<T>) {
+                    auto const val_view = istl::string_viewify_of<string_view_type>(stl::forward<T>(val));
+                    val_handle          = ::rapidjson::StringRef(val_view.data(), val_view.size());
+                } else if constexpr (istl::is_specialization_of_v<type, json::field>) {
+                    this->as_object()[val.key] = val.value();
+                } else if constexpr (istl::is_specialization_of_v<type, json::field_pack>) {
+                    val.apply([this](auto&&... field) {
+                        auto obj = this->as_object();
+                        ((obj[field.key] = field.value()), ...);
+                    });
+                } else {
+                    val_handle = stl::forward<T>(val);
+                }
                 return *this;
             }
 
@@ -543,13 +551,15 @@ namespace webpp::json::rapidjson {
             [[nodiscard]] value_type operator[](KeyType&& key) {
                 if constexpr (JSONNumber<KeyType>) {
                     // fixme: write tests for this, this will run the "index" version, right?
-                    return obj_handle.operator[](rapidjson_plain_value_type{key});
+                    return obj_handle.operator[](rapidjson_plain_value_type{stl::forward<KeyType>(key)});
                 } else if constexpr (JSONString<KeyType>) {
                     // The key is convertible to string_view
                     auto const key_view =
                       istl::string_viewify_of<string_view_type>(stl::forward<KeyType>(key));
                     return obj_handle[rapidjson_plain_value_type{
                       ::rapidjson::StringRef(key_view.data(), key_view.size())}];
+                } else {
+                    return obj_handle[stl::forward<KeyType>(key)];
                 }
             }
 

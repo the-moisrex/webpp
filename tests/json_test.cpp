@@ -60,6 +60,20 @@ TEST(JSONTest, Fields) {
     EXPECT_EQ(*user_id, 313);
     EXPECT_EQ(username, "the-moisrex");
 
+    username = "moisrex";
+    doc      = username; // change the username inside the json document
+
+    EXPECT_EQ(username, "moisrex");
+    EXPECT_EQ(doc["username"].as_string_view(), "moisrex");
+
+    username = "admin";
+    user_id  = 72;
+
+    doc = (username, user_id);
+
+    EXPECT_EQ(doc["username"].as_string(), "admin");
+    EXPECT_EQ(doc["id"].as_int32(), 72);
+
     // let's first fix other issues then we'd add object
     // object(username, user_id, emails);
 }

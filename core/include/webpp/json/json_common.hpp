@@ -52,11 +52,15 @@ namespace webpp::json {
             // this is tuple_cat, but using tuple_cat with non-tuple types is undefined behaviour (even though
             // they could've easily generalized it)
             // more info: https://en.cppreference.com/w/cpp/utility/tuple/tuple_cat
-            return stl::apply(
-              [&]<typename... OT>(OT & ... fields) {
-                  return field_pack<T..., NewT>{fields..., input_field};
-              },
-              *static_cast<tuple_type*>(this));
+            return this->apply([&]<typename... OT>(OT & ... fields) {
+                return field_pack<T..., NewT>{fields..., input_field};
+            });
+        }
+
+
+        template <typename F>
+        constexpr decltype(auto) apply(F&& func) {
+            return stl::apply(stl::forward<F>(func), *static_cast<tuple_type*>(this));
         }
 
         /**
@@ -68,14 +72,12 @@ namespace webpp::json {
          */
         template <JSONObject ObjectType>
         field_pack& operator=(ObjectType&& obj) {
-            stl::apply(
-              [&obj]<typename... ValueType>(field<ValueType> & ... fields) {
-                  // it's the same as this simple if statement:
-                  // if (obj.contains(field.key) field = obj.as<value_type>();
-                  ((obj.contains(fields.key) && ((fields = obj[fields.key].template as<ValueType>()), true)),
-                   ...);
-              },
-              *static_cast<tuple_type*>(this));
+            this->apply([&obj]<typename... ValueType>(field<ValueType> & ... fields) {
+                // it's the same as this simple if statement:
+                // if (obj.contains(field.key) field = obj.as<value_type>();
+                ((obj.contains(fields.key) && ((fields = obj[fields.key].template as<ValueType>()), true)),
+                 ...);
+            });
             return *this;
         }
 
