@@ -18,7 +18,11 @@ static_assert(JSONDocument<doc_type>);
 
 TEST(JSONTest, Parse) {
     document doc;
-    doc.parse("{id: 20}");
+    EXPECT_TRUE(doc.is_null());
+    EXPECT_FALSE(doc.is_object());
+    doc.parse("{id: 20, username: 'moisrex'}");
+    EXPECT_FALSE(doc.is_null()) << "We have an object now, it shouldn't be null";
+    EXPECT_TRUE(doc.is_object()) << "There's an object right there.";
     EXPECT_FALSE(doc.is<int>());
 
     auto id = doc["id"];
