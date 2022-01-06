@@ -9,6 +9,7 @@
 #include "../std/type_traits.hpp"
 #include "../traits/default_traits.hpp"
 #include "./trim.hpp"
+#include "splits.hpp"
 #include "to_case.hpp"
 
 #ifdef WEBPP_EVE
@@ -338,6 +339,11 @@ namespace webpp {
             eve::algo::transform_inplace(as_wide_range(), [=](eve::wide<uchar_type> c) {
                 return eve::if_else(c == ch1, ch2, c);
             });
+        }
+
+        template <strings::Delimiter... DelimT>
+        [[nodiscard]] auto splitter(DelimT&&... delims) const noexcept {
+            return strings::basic_splitter<istring_type, DelimT...>{*this, stl::forward<DelimT>(delims)...};
         }
     };
 

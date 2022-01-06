@@ -49,3 +49,16 @@ TEST(IString, Replace) {
     EXPECT_EQ("222111222", test);
 }
 
+TEST(IString, Split) {
+    std_istring const email_string = "user@domain.com";
+    auto const        email        = email_string.splitter('@', '.');
+    auto const        vec          = email.split();
+    auto const        arr          = email.split_array();
+    EXPECT_EQ(vec[0], "user");
+    EXPECT_EQ(vec[1], "domain");
+    EXPECT_EQ(vec[2], "com");
+
+    EXPECT_EQ(arr[0], "user");
+    EXPECT_EQ(arr[1], "domain");
+    EXPECT_EQ(arr[2], "com");
+}

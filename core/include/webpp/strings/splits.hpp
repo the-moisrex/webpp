@@ -112,8 +112,9 @@ namespace webpp::strings {
      *
      * This class will help to split a string_splits
      */
-    template <istl::StringView StrV = stl::string_view, Delimiter... DelimT>
-    requires(sizeof...(DelimT) > 0) // we must have at least one delimiter
+    template <typename StrV = stl::string_view, Delimiter... DelimT>
+    requires((istl::StringView<StrV> || istl::String<StrV>) && // it can be a string or string view
+             sizeof...(DelimT) > 0)                            // we must have at least one delimiter
       struct basic_splitter {
 
         static constexpr auto delim_count = sizeof...(DelimT);
