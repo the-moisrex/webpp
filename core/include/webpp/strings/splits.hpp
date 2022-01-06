@@ -162,7 +162,7 @@ namespace webpp::strings {
         template <typename Vec = default_collection_type, typename... Args>
         Vec split(Args&&... args) const {
             Vec vec{stl::forward<Args>(args)...};
-            vec.reserve(delim_count); // we're gambling here
+            vec.reserve(delim_count + 1); // we're gambling here
             split<Vec>(vec);
             return vec;
         }
