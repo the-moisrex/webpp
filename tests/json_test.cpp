@@ -45,11 +45,14 @@ TEST(JSONTest, Fields) {
     field<string> username{"username"};
     // field<vector<string>> emails{"emails"};
 
-    document doc{R"JSON({
+    document doc;
+    doc.parse(R"JSON({
         "username": "the-moisrex",
         "emails":   ["one@example.com", "two@example.com"]
         "id":       313
-    })JSON"};
+    })JSON");
+
+    EXPECT_TRUE(doc.is_object());
 
     (user_id, username /*, emails */) = doc;
 
