@@ -46,8 +46,8 @@ namespace webpp::uri {
             if (this->empty())
                 return; // nothing to add
             // out.reserve(out.size() + this->size() + 1);
-            out += ':';
-            out += *this;
+            out.push_back(':');
+            out.append(*this);
         }
 
         [[nodiscard]] constexpr uint16_t value() const {

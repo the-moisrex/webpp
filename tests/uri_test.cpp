@@ -17,7 +17,7 @@ TEST(URITests, Generation) {
     EXPECT_EQ(str.size(), 0);
 
     u.scheme = "https";
-    EXPECT_EQ(u.to_string(), "https:");
+    EXPECT_EQ(u.to_string(), "https://");
     u.host = "webpp.dev";
     EXPECT_EQ(u.to_string(), "https://webpp.dev");
 }

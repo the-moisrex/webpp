@@ -26,8 +26,11 @@ namespace webpp::uri {
         void append_to(istl::String auto& out) const {
             if (!this->empty()) {
                 // out.reserve(out.size() + this->size() + 1);
-                out += *this;
-                out += ':';
+                out.append(*this);
+                out.push_back(':');
+                out.append("//");
+            } else {
+                out.append("//");
             }
         }
     };

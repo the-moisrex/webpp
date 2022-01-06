@@ -23,7 +23,7 @@ namespace webpp::uri {
 
         void append_to(istl::String auto& str) const {
             if (!this->empty()) {
-                str += '#';
+                str.push_back('#');
                 encode_uri_component(*this, str, allowed_chars);
             }
         }
