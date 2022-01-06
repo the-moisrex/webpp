@@ -66,6 +66,10 @@ namespace webpp::strings {
                 start_pos = finish_pos;
                 if constexpr (istl::CharType<DT> || istl::StringView<DT>) {
                     finish_pos = stl::min(len, spltr->str.find(delim, finish_pos));
+                } else if constexpr (istl::StringViewifiable<DT>) {
+                    finish_pos =
+                      stl::min(len,
+                               spltr->str.find(istl::string_viewify_of<string_view_type>(delim), finish_pos));
                     // todo: add array support
                     // todo: add functor support
                 } else {
@@ -158,6 +162,7 @@ namespace webpp::strings {
         template <typename Vec = default_collection_type, typename... Args>
         Vec split(Args&&... args) const {
             Vec vec{stl::forward<Args>(args)...};
+            vec.reserve(delim_count); // we're gambling here
             split<Vec>(vec);
             return vec;
         }

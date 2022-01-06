@@ -56,7 +56,7 @@ TEST(String, JoinWith) {
 
 
 TEST(String, Splitter) {
-    splitter email_splitter{"test@email.com", '@'};
+    splitter email_splitter{"test@email.com", '@', "."};
     auto     it  = email_splitter.begin();
     auto     eit = email_splitter.end();
     EXPECT_EQ(it, it);
@@ -64,18 +64,21 @@ TEST(String, Splitter) {
     EXPECT_NE(it, eit);
     it++;
     EXPECT_NE(it, eit);
-    EXPECT_EQ(*it, "email.com");
+    EXPECT_EQ(*it, "email");
     it++;
+    EXPECT_EQ(*it, "com");
+    ++it;
     EXPECT_EQ(it, eit);
     stl::size_t                     index = 0;
-    stl::array<stl::string_view, 2> parts{{"test", "email.com"}};
+    stl::array<stl::string_view, 3> parts{{"test", "email", "com"}};
     for (auto part : email_splitter) {
         EXPECT_EQ(part, parts[index++]);
     }
     auto const email = email_splitter.split();
-    EXPECT_EQ(email.size(), 2);
+    EXPECT_EQ(email.size(), 3);
     EXPECT_EQ(email[0], "test");
-    EXPECT_EQ(email[1], "email.com");
+    EXPECT_EQ(email[1], "email");
+    EXPECT_EQ(email[2], "com");
     index = 0;
     for (auto part : email) {
         EXPECT_EQ(part, parts[index]) << part << " should be the same as " << parts[index];
