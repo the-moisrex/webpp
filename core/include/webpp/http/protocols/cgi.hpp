@@ -112,11 +112,11 @@ namespace webpp::http {
                            "Status: {} {}\r\n",
                            res.headers.status_code,
                            http::status_code_reason_phrase(res.headers.status_code));
-            write(status_line.data(), status_line.size());
+            write(status_line.data(), static_cast<stl::streamsize>(status_line.size()));
 
-            write(header_str.data(), header_str.size());
-            write("\r\n", 2);
-            write(str.data(), str.size());
+            write(header_str.data(), static_cast<stl::streamsize>(header_str.size()));
+            write("\r\n", 2l);
+            write(str.data(), static_cast<stl::streamsize>(str.size()));
             return EXIT_SUCCESS;
         }
     };

@@ -133,7 +133,7 @@ namespace webpp {
             stl::array<char, _size> chars;
             if (auto res = stl::to_chars(chars.data(), chars.data() + _size, value, stl::forward<R>(args)...);
                 res.ec == stl::errc()) {
-                str.append(chars.data(), (res.ptr - chars.data()));
+                str.append(chars.data(), static_cast<stl::size_t>(res.ptr - chars.data()));
                 return true;
             }
             return false;

@@ -44,8 +44,8 @@ namespace webpp::http {
 
 
               public:
-                response_type file(stl::filesystem::path const& filepath,
-                                   file_options const&          options = {}) noexcept {
+                response_type file(stl::filesystem::path const&         filepath,
+                                   [[maybe_unused]] file_options const& options = {}) noexcept {
 #ifdef WEBPP_EMBEDDED_FILES
                     if (auto content = ::get_static_file(filepath); !content.empty()) {
                         return string_type{this->content, alloc};
@@ -68,7 +68,7 @@ namespace webpp::http {
                         // stl::unique_ptr<char_type[]> result(static_cast<char_type*>(
                         //  this->alloc_pack.template local_allocator<char_type[]>().allocate(size)));
                         auto result = object::make_general<string_type>(*this);
-                        result.reserve(size);
+                        result.reserve(static_cast<stl::size_t>(size));
                         in.seekg(0);
                         in.read(result.data(), size);
                         // todo: cache the results
@@ -109,7 +109,8 @@ namespace webpp::http {
 
 
               public:
-                bool load(stl::filesystem::path const& filepath, file_options const& options = {}) noexcept {
+                bool load(stl::filesystem::path const&         filepath,
+                          [[maybe_unused]] file_options const& options = {}) noexcept {
 #ifdef WEBPP_EMBEDDED_FILES
                     if (auto content = ::get_static_file(filepath); !content.empty()) {
                         return string_type{this->content, alloc};

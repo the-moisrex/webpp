@@ -58,7 +58,9 @@ namespace webpp {
         // initial source from: https://gist.github.com/Lee-R/3839813
         template <typename CharT>
         static constexpr stl::uint32_t fnv1a_32(const CharT* str, stl::size_t count) noexcept {
-            return ((count ? fnv1a_32<CharT>(str, count - 1u) : 2166136261u) ^ str[count]) * 16777619u;
+            return ((count ? fnv1a_32<CharT>(str, count - 1u) : 2166136261u) ^
+                    static_cast<stl::uint32_t>(str[count])) *
+                   16777619u;
         }
     } // namespace hashing
 

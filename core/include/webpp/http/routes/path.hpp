@@ -319,24 +319,24 @@ namespace webpp::http {
         }
 
 
-        template <istl::String StrT = stl::string>
-        void append_name_to(StrT& out) const noexcept {
-            //            if constexpr (has_segment) {
-            //                append_to(out, " / ");
-            //                if constexpr (requires { segment.append_to(out); }) {
-            //                    segment.append_to(out);
-            //                } else {
-            //                    append_to(out, "[unknown]");
-            //                }
-            //                if constexpr (has_next_segment) {
-            //                    if constexpr (requires { next_segment.append_to(out); }) {
-            //                        next_segment.append_to(out);
-            //                    } else {
-            //                        append_to(out, " / [unknown last path]");
-            //                    }
-            //                }
-            //            }
-        }
+        //        template <istl::String StrT = stl::string>
+        //        void append_name_to(StrT& out) const noexcept {
+        //            if constexpr (has_segment) {
+        //                append_to(out, " / ");
+        //                if constexpr (requires { segment.append_to(out); }) {
+        //                    segment.append_to(out);
+        //                } else {
+        //                    append_to(out, "[unknown]");
+        //                }
+        //                if constexpr (has_next_segment) {
+        //                    if constexpr (requires { next_segment.append_to(out); }) {
+        //                        next_segment.append_to(out);
+        //                    } else {
+        //                        append_to(out, " / [unknown last path]");
+        //                    }
+        //                }
+        //            }
+        //        }
     };
 
     // the root path

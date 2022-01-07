@@ -146,10 +146,10 @@ namespace webpp {
      */
     template <istl::CharType CharT = char, CharT First, CharT Last>
     [[nodiscard]] static constexpr auto charset_range() noexcept {
-        constexpr auto the_size = static_cast<stl::size_t>(Last) - static_cast<stl::size_t>(First) + 1;
+        constexpr stl::size_t    the_size = static_cast<stl::size_t>(Last - First) + 1ul;
         charset<CharT, the_size> data;
-        for (auto it = First; it != Last; ++it)
-            data[it - First] = it;
+        for (CharT it = First; it != Last; ++it)
+            data[static_cast<stl::size_t>(it - First)] = it;
         data[static_cast<stl::size_t>(Last - First)] = Last;
         return data;
     }
