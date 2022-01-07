@@ -53,11 +53,19 @@ if (TRUE)
 
     add_executable(${name} ${source})
     set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-    target_link_libraries(${name}
-            PRIVATE ${LIB_NAME}
-            PRIVATE gtest         # GTest::GTest
-            PRIVATE gtest_main    # GTest::Main
-            )
+    if (TARGET gtest AND TARGET gtest_main)
+            target_link_libraries(${name}
+                    PRIVATE ${LIB_NAME}
+                    PRIVATE gtest         # GTest::GTest
+                    PRIVATE gtest_main    # GTest::Main
+                    )
+    elseif (TARGET GTest::GTest AND TARGET GTest::Main)
+            target_link_libraries(${name}
+                    PRIVATE ${LIB_NAME}
+                    PRIVATE GTest::GTest
+                    PRIVATE GTest::Main
+                    )
+    endif ()
     add_test(${name} ${name})
 
     target_precompile_headers(${name} PUBLIC common_pch.hpp)

@@ -113,7 +113,10 @@ include(./cmake/import.cmake)
 
 add_subdirectory(${LIB_DIR})
 add_subdirectory(${SDK_DIR})
-add_subdirectory(${TESTS_DIR})
-add_subdirectory(${BENCHMARKS_DIR})
-add_subdirectory(${EXAMPLES_DIR})
+
+if (IS_DEBUG)
+    add_subdirectory(${TESTS_DIR})
+    add_subdirectory(${BENCHMARKS_DIR})
+    add_subdirectory(${EXAMPLES_DIR})
+endif ()
 
