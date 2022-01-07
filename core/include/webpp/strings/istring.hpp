@@ -351,7 +351,7 @@ namespace webpp {
                 return eve::if_else(c == ch1, ch2, c);
             });
 #else
-            stl::transform(this->begin(), this->end(), [=](char_type c) {
+            stl::transform(this->begin(), this->end(), this->begin(), [=](char_type c) {
                 return c == ch1 ? ch2 : c;
             });
 #endif
