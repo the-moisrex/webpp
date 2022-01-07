@@ -118,12 +118,13 @@ namespace webpp::istl {
             return TupleT{stl::forward<T>(args)...};
         } else {
             // re-order, and default-construct those that don't exists in the args
-            return ([]<stl::size_t... ints>(stl::index_sequence<ints...>, T && ... args) constexpr noexcept {
-                no_order_tuple bad_tuple{stl::forward<T>(args)...};
-                // It's a free function and not a lambda because C++ is stupid and doesn't
-                // understand that "ints" in the lambda template is a parameter pack
-                return TupleT{details::tuple_get_value<TupleT, no_order_tuple, ints>(bad_tuple)...};
-            })(stl::make_index_sequence<stl::tuple_size_v<TupleT>>{}, stl::forward<T>(args)...);
+            return (
+              []<stl::size_t... ints>(stl::index_sequence<ints...>, T && ... sub_args) constexpr noexcept {
+                  no_order_tuple bad_tuple{stl::forward<T>(sub_args)...};
+                  // It's a free function and not a lambda because C++ is stupid and doesn't
+                  // understand that "ints" in the lambda template is a parameter pack
+                  return TupleT{details::tuple_get_value<TupleT, no_order_tuple, ints>(bad_tuple)...};
+              })(stl::make_index_sequence<stl::tuple_size_v<TupleT>>{}, stl::forward<T>(args)...);
         }
     }
 
@@ -136,19 +137,21 @@ namespace webpp::istl {
      * Index can be gotten dynamically
      */
     template <std::size_t I = 0, typename FuncT, template <typename...> typename Tup, typename... Tp>
-    requires(I >= sizeof...(Tp)) static constexpr void for_index(int, Tup<Tp...> const&, FuncT&&) {
+    requires(I >= sizeof...(Tp)) static constexpr void for_index(stl::size_t, Tup<Tp...> const&, FuncT&&) {
         // ending condition function
     }
 
     template <stl::size_t I = 0, typename FuncT, template <typename...> typename Tup, typename... Tp>
-    requires(I < sizeof...(Tp)) static constexpr void for_index(int index, Tup<Tp...>& t, FuncT&& f) {
+    requires(I < sizeof...(Tp)) static constexpr void for_index(stl::size_t index, Tup<Tp...>& t, FuncT&& f) {
         if (index == 0)
             f(stl::get<I>(t));
         for_index<I + 1, FuncT, Tup, Tp...>(index - 1, t, stl::forward<FuncT>(f));
     }
 
     template <stl::size_t I = 0, typename FuncT, template <typename...> typename Tup, typename... Tp>
-    requires(I < sizeof...(Tp)) static constexpr void for_index(int index, Tup<Tp...> const& t, FuncT&& f) {
+    requires(I < sizeof...(Tp)) static constexpr void for_index(stl::size_t       index,
+                                                                Tup<Tp...> const& t,
+                                                                FuncT&&           f) {
         if (index == 0)
             f(stl::get<I>(t));
         for_index<I + 1, FuncT, Tup, Tp...>(index - 1, t, stl::forward<FuncT>(f));

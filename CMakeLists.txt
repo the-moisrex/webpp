@@ -90,7 +90,7 @@ add_compile_definitions(WEBPP_PROJECT_ROOT=${CMAKE_CURRENT_SOURCE_DIR})
 
 
 if (IS_GCC AND IS_DEBUG)
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fconcepts-diagnostics-depth=10 -Wall -Wpedantic -Wextra")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fconcepts-diagnostics-depth=10 -Wall -Wpedantic -Wextra -Wconversion -Wshadow")
 endif ()
 
 

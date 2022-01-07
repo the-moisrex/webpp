@@ -12,7 +12,8 @@ namespace webpp::flags {
 
     static constexpr stl::uint8_t none = 0u;
 
-    [[nodiscard]] constexpr auto item(stl::size_t index) noexcept {
+    template <typename T>
+    requires(stl::is_unsigned_v<T>) [[nodiscard]] constexpr T item(T index) noexcept {
         return 0x1u << index;
     }
 
@@ -25,17 +26,17 @@ namespace webpp::flags {
         using type                             = Values;
         static constexpr stl::size_t base_size = magic_enum::enum_count<type>();
         using base_type                        = stl::conditional_t<
-          (base_size <= sizeof(stl::uint8_t) * 8),
+          (base_size <= sizeof(stl::uint8_t) * 8ul),
           stl::uint8_t,
           stl::conditional_t<
-            (base_size <= sizeof(stl::uint16_t) * 8),
+            (base_size <= sizeof(stl::uint16_t) * 8ul),
             stl::uint16_t,
-            stl::conditional_t<(base_size <= sizeof(stl::uint32_t) * 8), stl::uint32_t, stl::uint64_t>>>;
+            stl::conditional_t<(base_size <= sizeof(stl::uint32_t) * 8ul), stl::uint32_t, stl::uint64_t>>>;
         // There is a clang bug (or magic_enum bug)
         // GitHub issue: https://github.com/Neargye/magic_enum/issues/65
         static constexpr bool are_values_sequential = []() constexpr noexcept->bool {
             const auto vals = magic_enum::enum_values<type>();
-            for (stl::size_t i = 0; i < vals.size(); ++i)
+            for (stl::size_t i = 0ul; i < vals.size(); ++i)
                 if (static_cast<stl::size_t>(magic_enum::enum_integer(vals[i])) != i)
                     return false;
             return true;

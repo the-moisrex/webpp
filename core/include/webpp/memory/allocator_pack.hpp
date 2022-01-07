@@ -605,10 +605,10 @@ namespace webpp::alloc {
             } else {
                 using best_choice        = ranked<FPack>;
                 using best_resource_desc = typename best_choice::best_resource_descriptor;
-                using best_allocator =
+                using best_allocator_desc =
                   alloc::descriptors::allocator<typename best_choice::best_allocator_descriptor>;
                 return this->make<T,
-                                  best_allocator::template type, // best allocator
+                                  best_allocator_desc::template type, // best allocator
                                   best_resource_desc,
                                   Args...>(stl::forward<Args>(args)...);
             }
