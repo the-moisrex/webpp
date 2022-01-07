@@ -3,7 +3,7 @@
 #ifndef WEBPP_TYPE_TRAITS_HPP
 #define WEBPP_TYPE_TRAITS_HPP
 
-#include "./std.hpp"
+#include "std.hpp"
 
 #include <type_traits>
 #include <utility> // for move and forward

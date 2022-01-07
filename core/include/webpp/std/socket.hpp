@@ -10,7 +10,7 @@
 // __has_include is a C++20 feature and we're testing <socket> header which
 // is not yet part of C++ standard but hopefully will be added in C++23
 
-#include "./std.hpp"
+#include "std.hpp"
 
 #if __has_include(<socket>)
 #    define STD_SOCKET STLLIB_STANDARD

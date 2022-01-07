@@ -4,8 +4,8 @@
 #define WEBPP_RESPONSE_COOKIE_JAR_HPP
 
 #include "../../traits/traits.hpp"
-#include "./cookie_jar.hpp"
-#include "./response_cookie.hpp"
+#include "cookie_jar.hpp"
+#include "response_cookie.hpp"
 
 namespace webpp::http {
 

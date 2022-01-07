@@ -3,8 +3,8 @@
 #ifndef WEBPP_IEQUALS_HPP
 #define WEBPP_IEQUALS_HPP
 
-#include "./size.hpp"
-#include "./to_case.hpp"
+#include "size.hpp"
+#include "to_case.hpp"
 
 #ifdef WEBPP_EVE
 #    include <eve/algo/equal.hpp>

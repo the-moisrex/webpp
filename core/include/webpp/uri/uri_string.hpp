@@ -15,10 +15,10 @@
 #include "../traits/traits.hpp"
 #include "../utils/errors.hpp"
 #include "../validators/validators.hpp"
-#include "./details/constants.hpp"
-#include "./encoding.hpp"
-#include "./path.hpp"
-#include "./queries.hpp"
+#include "details/constants.hpp"
+#include "encoding.hpp"
+#include "path.hpp"
+#include "queries.hpp"
 
 
 /**

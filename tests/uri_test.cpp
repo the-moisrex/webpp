@@ -2,7 +2,7 @@
 
 #include "../core/include/webpp/uri/uri.hpp"
 
-#include "./common_pch.hpp"
+#include "common_pch.hpp"
 
 
 using namespace webpp;

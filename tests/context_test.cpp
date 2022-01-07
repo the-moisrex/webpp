@@ -1,6 +1,6 @@
 // Created by moisrex on 7/1/20.
-#include "./common_pch.hpp"
-#include "./fake_protocol.hpp"
+#include "common_pch.hpp"
+#include "fake_protocol.hpp"
 
 using namespace webpp;
 using namespace webpp::http;

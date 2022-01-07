@@ -1,4 +1,4 @@
-#include "./website.hpp"
+#include "website.hpp"
 
 #include <webpp/http/protocols/self_hosted.hpp>
 

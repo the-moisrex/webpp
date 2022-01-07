@@ -3,7 +3,7 @@
 #ifndef WEBPP_STRING_CONCEPTS_HPP
 #define WEBPP_STRING_CONCEPTS_HPP
 
-#include "./concepts.hpp"
+#include "concepts.hpp"
 
 namespace webpp::istl {
 

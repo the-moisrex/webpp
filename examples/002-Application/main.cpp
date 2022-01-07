@@ -1,4 +1,4 @@
-#include "./app.h"
+#include "app.h"
 
 #include <webpp/http/protocols/cgi.hpp>
 

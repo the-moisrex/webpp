@@ -4,7 +4,7 @@
 #define WEBPP_ASIO_STD_TRAITS_HPP
 
 #include "../../traits/default_traits.hpp"
-#include "./asio_traits.hpp"
+#include "asio_traits.hpp"
 
 namespace webpp {
 

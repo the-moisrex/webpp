@@ -4,7 +4,7 @@
 #include "../core/include/webpp/json/defaultjson.hpp"
 #include "../core/include/webpp/json/json_common.hpp"
 #include "../core/include/webpp/json/json_concepts.hpp"
-#include "./common_pch.hpp"
+#include "common_pch.hpp"
 
 using namespace webpp;
 using namespace webpp::json;

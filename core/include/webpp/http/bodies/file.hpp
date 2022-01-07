@@ -4,7 +4,7 @@
 #include "../../extensions/extension.hpp"
 #include "../../memory/object.hpp"
 #include "../../traits/traits.hpp"
-#include "./string.hpp"
+#include "string.hpp"
 
 #include <filesystem>
 #include <fstream>

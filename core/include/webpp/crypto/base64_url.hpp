@@ -3,7 +3,7 @@
 #ifndef WEBPP_BASE64_URL_HPP
 #define WEBPP_BASE64_URL_HPP
 
-#include "./base64.hpp"
+#include "base64.hpp"
 
 #include <algorithm>
 

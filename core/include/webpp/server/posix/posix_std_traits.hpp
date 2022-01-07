@@ -4,7 +4,7 @@
 #define WEBPP_POSIX_STD_TRAITS_HPP
 
 #include "../../traits/default_traits.hpp"
-#include "./posix_traits.hpp"
+#include "posix_traits.hpp"
 
 namespace webpp::posix {
 

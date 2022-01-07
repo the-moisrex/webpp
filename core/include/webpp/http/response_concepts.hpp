@@ -7,9 +7,9 @@
 #include "../extensions/extension.hpp"
 #include "../std/optional.hpp"
 #include "../traits/std_traits.hpp"
-#include "./body_concepts.hpp"
-#include "./header_concepts.hpp"
-#include "./request_concepts.hpp"
+#include "body_concepts.hpp"
+#include "header_concepts.hpp"
+#include "request_concepts.hpp"
 
 namespace webpp::http {
 

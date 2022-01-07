@@ -3,7 +3,7 @@
 #ifndef WEBPP_PARSER_UTILS_HPP
 #define WEBPP_PARSER_UTILS_HPP
 
-#include "./charset.hpp"
+#include "charset.hpp"
 
 namespace webpp::ascii {
 

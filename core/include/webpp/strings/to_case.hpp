@@ -8,7 +8,7 @@
 #include "../std/string_view.hpp"
 #include "../traits/default_traits.hpp"
 #include "../traits/traits.hpp"
-#include "./size.hpp"
+#include "size.hpp"
 
 #include <algorithm>
 

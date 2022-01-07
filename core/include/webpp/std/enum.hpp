@@ -3,8 +3,8 @@
 #ifndef WEBPP_ENUM_HPP
 #define WEBPP_ENUM_HPP
 
-#include "./concepts.hpp"
-#include "./type_traits.hpp"
+#include "concepts.hpp"
+#include "type_traits.hpp"
 
 namespace webpp::istl {
 

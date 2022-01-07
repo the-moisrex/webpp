@@ -3,7 +3,7 @@
 #ifndef WEBPP_FCGI_MANAGER_HPP
 #define WEBPP_FCGI_MANAGER_HPP
 
-#include "./fcgi_protocols.hpp"
+#include "fcgi_protocols.hpp"
 
 namespace webpp::http::inline fastcgi {
 

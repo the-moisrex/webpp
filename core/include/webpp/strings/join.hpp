@@ -8,8 +8,8 @@
 #include "../std/format.hpp"
 #include "../std/string.hpp"
 #include "../std/tuple.hpp"
-#include "./size.hpp"
-#include "./strings_concepts.hpp"
+#include "size.hpp"
+#include "strings_concepts.hpp"
 
 namespace webpp::strings {
 

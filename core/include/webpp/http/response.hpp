@@ -3,8 +3,8 @@
 
 #include "../convert/casts.hpp"
 #include "../traits/traits.hpp"
-#include "./response_concepts.hpp"
-#include "./response_headers.hpp"
+#include "response_concepts.hpp"
+#include "response_headers.hpp"
 #include "headers.hpp"
 #include "response_body.hpp"
 

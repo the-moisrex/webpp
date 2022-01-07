@@ -5,8 +5,8 @@
 
 #include "../../strings/parser_utils.hpp"
 #include "../../strings/string_tokenizer.hpp"
-#include "./cookie_jar.hpp"
-#include "./request_cookie.hpp"
+#include "cookie_jar.hpp"
+#include "request_cookie.hpp"
 
 namespace webpp::http {
 

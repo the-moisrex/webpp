@@ -3,7 +3,7 @@
 #ifndef WEBPP_UTILITY_HPP
 #define WEBPP_UTILITY_HPP
 
-#include "./std.hpp"
+#include "std.hpp"
 #include <utility>
 
 namespace webpp::istl {

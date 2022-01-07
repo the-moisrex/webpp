@@ -3,8 +3,8 @@
 #ifndef WEBPP_STD_CONCEPTS_H
 #define WEBPP_STD_CONCEPTS_H
 
-#include "./std.hpp"
-#include "./type_traits.hpp"
+#include "std.hpp"
+#include "type_traits.hpp"
 
 #if __has_include(<concepts>) && __cpp_lib_concepts
 #    include <concepts>

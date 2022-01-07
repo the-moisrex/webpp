@@ -7,9 +7,9 @@
 #include "../../std/string_view.hpp"
 #include "../app_wrapper.hpp"
 #include "../response.hpp"
-#include "./common/common_http_protocol.hpp"
-#include "./self_hosted_request.hpp"
-#include "./shosted/self_hosted_session_manager.hpp"
+#include "common/common_http_protocol.hpp"
+#include "self_hosted_request.hpp"
+#include "shosted/self_hosted_session_manager.hpp"
 #include "webpp/application/request.hpp"
 
 namespace webpp::http::inline shosted {

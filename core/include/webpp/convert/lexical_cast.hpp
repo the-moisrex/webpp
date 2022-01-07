@@ -7,7 +7,7 @@
 #include "../std/format.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
-#include "./casts.hpp"
+#include "casts.hpp"
 
 namespace webpp::lexical {
 

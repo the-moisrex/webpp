@@ -4,7 +4,7 @@
 #define WEBPP_FORMAT_H
 
 #include "../libs/fmt.hpp"
-#include "./std.hpp"
+#include "std.hpp"
 
 #if __cpp_lib_format
 #    include <format>

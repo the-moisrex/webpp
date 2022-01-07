@@ -5,7 +5,7 @@
 
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
-#include "./charset.hpp"
+#include "charset.hpp"
 
 namespace webpp::ascii {
 

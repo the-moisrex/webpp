@@ -5,7 +5,7 @@
 // currently experimental version of internet is buggy. Hopefully that will be
 // fixed later.
 
-#include "./std.hpp"
+#include "std.hpp"
 
 #if __has_include(<buffer>)
 #    include <buffer>

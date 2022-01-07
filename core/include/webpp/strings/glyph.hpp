@@ -4,7 +4,7 @@
 #define WEBPP_GLYPH_HPP
 
 #include "../std/type_traits.hpp"
-#include "./unicode.hpp"
+#include "unicode.hpp"
 
 #include <compare>
 

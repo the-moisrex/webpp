@@ -8,9 +8,9 @@
 #include "../bodies/string.hpp"
 #include "../request_concepts.hpp"
 #include "../response_concepts.hpp"
-#include "./context.hpp"
-#include "./route_concepts.hpp"
-#include "./router_concepts.hpp"
+#include "context.hpp"
+#include "route_concepts.hpp"
+#include "router_concepts.hpp"
 
 namespace webpp::http {
 

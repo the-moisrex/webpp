@@ -2,7 +2,7 @@
 #include "../core/include/webpp/strings/iequals.hpp"
 #include "../core/include/webpp/strings/join.hpp"
 #include "../core/include/webpp/strings/splits.hpp"
-#include "./common_pch.hpp"
+#include "common_pch.hpp"
 
 
 using namespace webpp;

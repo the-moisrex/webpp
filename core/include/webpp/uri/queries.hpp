@@ -5,8 +5,8 @@
 
 #include "../memory/allocators.hpp"
 #include "../std/map.hpp"
-#include "./details/constants.hpp"
-#include "./encoding.hpp"
+#include "details/constants.hpp"
+#include "encoding.hpp"
 
 namespace webpp::uri {
 

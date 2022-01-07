@@ -4,8 +4,8 @@
 #define WEBPP_USER_INFO_HPP
 
 #include "../std/string.hpp"
-#include "./details/constants.hpp"
-#include "./encoding.hpp"
+#include "details/constants.hpp"
+#include "encoding.hpp"
 
 namespace webpp::uri {
 

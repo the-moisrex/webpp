@@ -4,7 +4,7 @@
 #define WEBPP_OPTIONAL_H
 
 
-#include "./std.hpp"
+#include "std.hpp"
 
 // from example here: https://eel.is/c++draft/cpp.cond#15
 // todo: we can improve this more:
@@ -30,7 +30,7 @@ namespace webpp::stl {
 #    error "There's no <optional>" // todo: check if we need this
 #endif
 
-#include "./concepts.hpp"
+#include "concepts.hpp"
 
 namespace webpp::istl {
 

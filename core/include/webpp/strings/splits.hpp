@@ -5,8 +5,8 @@
 #include "../common/meta.hpp"
 #include "../std/algorithm.hpp"
 #include "../std/string.hpp"
-#include "./size.hpp"
-#include "./strings_concepts.hpp"
+#include "size.hpp"
+#include "strings_concepts.hpp"
 
 namespace webpp::strings {
 

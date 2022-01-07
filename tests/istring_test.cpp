@@ -2,7 +2,7 @@
 
 #include "../core/include/webpp/strings/istring.hpp"
 
-#include "./common_pch.hpp"
+#include "common_pch.hpp"
 
 
 

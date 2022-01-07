@@ -5,7 +5,7 @@
 
 #include "../../std/vector.hpp"
 #include "../../strings/trim.hpp"
-#include "./cookie.hpp"
+#include "cookie.hpp"
 
 #include <algorithm>
 #include <memory>

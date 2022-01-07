@@ -11,7 +11,7 @@
 #include "../../strings/iequals.hpp"
 #include "../../strings/parser_utils.hpp"
 #include "../../strings/string_tokenizer.hpp"
-#include "./cookie.hpp"
+#include "cookie.hpp"
 
 #include <iomanip>
 

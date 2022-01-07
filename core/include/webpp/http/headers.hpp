@@ -3,7 +3,7 @@
 
 #include "../std/std.hpp"
 #include "../strings/iequals.hpp"
-#include "./status_code.hpp"
+#include "status_code.hpp"
 
 #include <cstdint>
 

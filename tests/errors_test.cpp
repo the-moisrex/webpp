@@ -3,7 +3,7 @@
 
 #include "../core/include/webpp/utils/errors.hpp"
 
-#include "./common_pch.hpp"
+#include "common_pch.hpp"
 
 
 using namespace webpp;

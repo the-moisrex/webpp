@@ -1,7 +1,7 @@
 // Created by moisrex on 1/27/20.
 #include "../core/include/webpp/strings/iequals.hpp"
 #include "../core/include/webpp/strings/to_case.hpp"
-#include "./common_pch.hpp"
+#include "common_pch.hpp"
 
 
 

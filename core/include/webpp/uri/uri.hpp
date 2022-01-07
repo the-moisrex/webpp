@@ -3,13 +3,13 @@
 #ifndef WEBPP_URI_HPP
 #define WEBPP_URI_HPP
 
-#include "./fragment.hpp"
-#include "./host.hpp"
-#include "./path.hpp"
-#include "./port.hpp"
-#include "./queries.hpp"
-#include "./scheme.hpp"
-#include "./user_info.hpp"
+#include "fragment.hpp"
+#include "host.hpp"
+#include "path.hpp"
+#include "port.hpp"
+#include "queries.hpp"
+#include "scheme.hpp"
+#include "user_info.hpp"
 
 namespace webpp::uri {
 

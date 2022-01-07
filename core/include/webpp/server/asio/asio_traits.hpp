@@ -4,8 +4,8 @@
 #define WEBPP_ASIO_TRAITS_HPP
 
 #include "../server_concepts.hpp"
-#include "./asio_server.hpp"
-#include "./asio_thread_pool.hpp"
+#include "asio_server.hpp"
+#include "asio_thread_pool.hpp"
 
 namespace webpp {
 

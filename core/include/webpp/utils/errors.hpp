@@ -4,7 +4,7 @@
 #define WEBPP_ERRORS_HPP
 
 #include "../std/string_view.hpp"
-#include "./flags.hpp"
+#include "flags.hpp"
 
 #include <variant>
 

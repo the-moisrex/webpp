@@ -8,8 +8,8 @@
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
 #include "../utils/errors.hpp"
-#include "./details/constants.hpp"
-#include "./encoding.hpp"
+#include "details/constants.hpp"
+#include "encoding.hpp"
 
 #include <numeric>
 

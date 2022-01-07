@@ -5,7 +5,7 @@
 #include "../core/include/webpp/memory/object.hpp"
 #include "../core/include/webpp/memory/std_allocator_pack.hpp"
 #include "../core/include/webpp/memory/std_pmr_allocator_pack.hpp"
-#include "./common_pch.hpp"
+#include "common_pch.hpp"
 
 
 using namespace webpp;
