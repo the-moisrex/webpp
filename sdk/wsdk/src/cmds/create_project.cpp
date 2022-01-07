@@ -39,7 +39,7 @@ namespace webpp::sdk {
 
     void template_manager::scan() {
         namespace fs = std::filesystem;
-        for (auto const entry : fs::recursive_directory_iterator(root_dir)) {
+        for (auto const& entry : fs::recursive_directory_iterator(root_dir)) {
             const auto ext = entry.path().extension();
             if (entry.is_regular_file() && ext == tmpl_extension) {
                 add_template_file(entry.path().string());
@@ -47,7 +47,7 @@ namespace webpp::sdk {
         }
     }
 
-    void template_manager::add_template_file(stl::string_view file) {}
+    void template_manager::add_template_file(stl::string_view /*file*/) {}
 
 
 
@@ -93,9 +93,16 @@ namespace webpp::sdk {
         return 0;
     }
 
-    int create_project::handle_project(stl::vector<std::string>) {
+    int create_project::handle_project(stl::vector<std::string> args) {
+        webpp::default_logger logger;
 
-        default_logger logger{};
+        if (args.empty()) {
+            logger.error("Please specify a project name.");
+            return 1;
+        }
+
+        stl::string proj_name{args.front()};
+
         if (proj_name.empty()) {
             logger.error("Please specify a valid name for the project.");
             return 1;
