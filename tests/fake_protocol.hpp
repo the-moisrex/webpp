@@ -235,7 +235,7 @@ namespace webpp {
 
     struct fake_app {
 
-        auto operator()(auto&& req) {
+        auto operator()([[maybe_unused]] auto&& req) {
             return false;
         }
     };

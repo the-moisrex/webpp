@@ -80,16 +80,16 @@ namespace webpp::ascii {
 
     template <char_case_side Side = char_case_side::both_unknown, istl::CharType CharT>
     [[nodiscard]] static constexpr bool iequals(istl::StringViewifiable auto&& a, CharT b) noexcept {
-        if (a.size() != 1)
+        if (a.size() != 1ul)
             return false;
-        return iequals<Side, CharT>(a[0], b);
+        return iequals<Side, CharT>(a[0ul], b);
     }
 
     template <char_case_side Side = char_case_side::both_unknown, istl::CharType CharT>
     [[nodiscard]] static constexpr bool iequals(CharT a, istl::StringViewifiable auto&& b) noexcept {
-        if (a.size() != 1)
+        if (a.size() != 1ul)
             return false;
-        return iequals<Side, CharT>(a, b[0]);
+        return iequals<Side, CharT>(a, b[0ul]);
     }
 
     /**

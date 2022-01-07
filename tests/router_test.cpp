@@ -20,7 +20,7 @@ constexpr auto _router = router{root / "page" >>=
                                     return "test 2";
                                 }};
 
-struct fake_app {
+struct fake_app_struct {
     HTTPResponse auto operator()(HTTPRequest auto&& req) noexcept {
         return _router(req);
     }
@@ -31,7 +31,7 @@ TEST(Router, RouterConcepts) {
 }
 
 TEST(Router, RouteCreation) {
-    using request = typename fake_proto<std_traits, fake_app>::request_type;
+    using request = typename fake_proto<std_traits, fake_app_struct>::request_type;
 
     constexpr auto about_page = [](Context auto&) noexcept {
         return "About page\n";

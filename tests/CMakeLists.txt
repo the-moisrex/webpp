@@ -4,11 +4,6 @@ enable_testing()
 file(GLOB TEST_SOURCES *_test.cpp)
 set(TEST_NAME ${PROJECT_NAME}-tests)
 
-option(colored "Color the output even if it's going to a pipe" OFF)
-if (colored)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=always")
-endif ()
-
 add_executable(${TEST_NAME} ${TEST_SOURCES})
 set_target_properties(${EXEC_NAME} PROPERTIES OUTPUT_NAME tests)
 set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)

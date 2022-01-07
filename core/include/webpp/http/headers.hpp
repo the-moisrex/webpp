@@ -1,7 +1,6 @@
 #ifndef WEBPP_HTTP_HEADERS_H
 #define WEBPP_HTTP_HEADERS_H
 
-#include "../std/std.hpp"
 #include "../strings/iequals.hpp"
 #include "status_code.hpp"
 

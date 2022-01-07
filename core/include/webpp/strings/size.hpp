@@ -5,8 +5,8 @@
 #ifndef WEBPP_SIZE_HPP
 #define WEBPP_SIZE_HPP
 
-#include "../std/type_traits.hpp"
 #include "../std/string_concepts.hpp"
+#include "../std/type_traits.hpp"
 
 #include <cstdint>
 #include <cstring>
@@ -19,7 +19,7 @@ namespace webpp::ascii {
     constexpr auto digit_count() noexcept {
         stl::uint_fast8_t t = 0;
         INT               a = stl::numeric_limits<INT>::max();
-        while (a /= 10)
+        while (a /= INT(10))
             ++t;
         return t;
     }
