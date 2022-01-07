@@ -8,9 +8,12 @@
 #include "../std/string_view.hpp"
 #include "../std/type_traits.hpp"
 #include "../traits/default_traits.hpp"
-#include "./trim.hpp"
 #include "splits.hpp"
 #include "to_case.hpp"
+#include "trim.hpp"
+#include "validators.hpp"
+
+#include <algorithm>
 
 #ifdef WEBPP_EVE
 #    include <eve/algo/all_of.hpp>
@@ -258,15 +261,23 @@ namespace webpp {
 
 
         [[nodiscard]] constexpr bool is_ascii_lower() const noexcept {
+#ifdef WEBPP_EVE
             return eve::algo::all_of(this->as_wide_range(), [](eve::wide<uchar_type> c) {
                 return (c - 'a') < 25u;
             });
+#else
+            return ascii::is::lowercase(*this);
+#endif
         }
 
         [[nodiscard]] constexpr bool is_ascii_upper() const noexcept {
+#ifdef WEBPP_EVE
             return eve::algo::all_of(this->as_wide_range(), [](eve::wide<uchar_type> c) {
                 return (c - 'A') < 25u;
             });
+#else
+            return ascii::is::uppercase(*this);
+#endif
         }
 
         //        [[nodiscard]] constexpr bool is_lower(range) const noexcept;
@@ -335,10 +346,15 @@ namespace webpp {
 
         void replace(char_type ch1, char_type ch2) noexcept {
             static_assert(is_mutable, "You can't use replace method when the string is not mutable.");
-
+#ifdef WEBPP_EVE
             eve::algo::transform_inplace(as_wide_range(), [=](eve::wide<uchar_type> c) {
                 return eve::if_else(c == ch1, ch2, c);
             });
+#else
+            stl::transform(this->begin(), this->end(), [=](char_type c) {
+                return c == ch1 ? ch2 : c;
+            });
+#endif
         }
 
         template <strings::Delimiter... DelimT>
