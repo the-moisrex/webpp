@@ -3,9 +3,8 @@
 #ifndef WEBPP_EXAMPLE_APP_H
 #define WEBPP_EXAMPLE_APP_H
 
-#include "../../core/include/webpp/http/http.hpp"
-
 #include <iostream>
+#include <webpp/http/http.hpp>
 
 namespace website {
 

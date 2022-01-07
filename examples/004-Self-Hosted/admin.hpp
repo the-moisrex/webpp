@@ -3,10 +3,9 @@
 #ifndef WEBPP_EXAMPLE_ADMIN_H
 #define WEBPP_EXAMPLE_ADMIN_H
 
-#include "../../core/include/webpp/http/bodies/json.hpp"
-#include "../../core/include/webpp/http/http.hpp"
-
 #include <functional>
+#include <webpp/http/bodies/json.hpp>
+#include <webpp/http/http.hpp>
 
 namespace website {
     using namespace webpp;

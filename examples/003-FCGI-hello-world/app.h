@@ -3,7 +3,7 @@
 #ifndef WEBPP_APP_H
 #define WEBPP_APP_H
 
-#include "../../core/include/webpp.hpp"
+#include <webpp.hpp>
 
 using namespace webpp;
 
@@ -22,17 +22,19 @@ struct app {
         const auto admin = []() {
             return "Nice page.";
         };
+
         constexpr auto home_root = root / stl::string_view{"home"};
+
         router _router{extensions{},
-                       home_root && get >>=
+                       home_root&& get >>=
                        [this](Context auto& ctx) {
                            return this->home(ctx);
                        },
-                                 get & (root / "about" >>=
-                                        [this](Context auto& ctx) {
-                                            return this->about(ctx);
-                                        }),
-                                 root / "admin" >>= admin};
+                       get & (root / "about" >>=
+                              [this](Context auto& ctx) {
+                                  return this->about(ctx);
+                              }),
+                       root / "admin" >>= admin};
 
         return _router(req);
     }

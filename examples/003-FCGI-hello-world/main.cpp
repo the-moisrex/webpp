@@ -1,5 +1,6 @@
-#include "../../core/include/webpp/http/interfaces/fcgi.hpp"
 #include "./app.h"
+
+#include <webpp/http/interfaces/fcgi.hpp>
 
 int main() {
     using namespace webpp;

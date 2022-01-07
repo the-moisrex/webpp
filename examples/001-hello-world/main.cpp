@@ -1,10 +1,9 @@
-#include "../../core/include/webpp/http/bodies/file.hpp"
-#include "../../core/include/webpp/http/protocols/cgi.hpp"
-#include "../../core/include/webpp/http/routes/methods.hpp"
-#include "../../core/include/webpp/http/routes/path.hpp"
-#include "../../core/include/webpp/http/routes/router.hpp"
-
 #include <iostream>
+#include <webpp/http/bodies/file.hpp>
+#include <webpp/http/protocols/cgi.hpp>
+#include <webpp/http/routes/methods.hpp>
+#include <webpp/http/routes/path.hpp>
+#include <webpp/http/routes/router.hpp>
 
 using namespace webpp;
 using namespace webpp::http;

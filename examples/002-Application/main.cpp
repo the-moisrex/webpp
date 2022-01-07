@@ -1,5 +1,6 @@
-#include "../../core/include/webpp/http/protocols/cgi.hpp"
 #include "./app.h"
+
+#include <webpp/http/protocols/cgi.hpp>
 
 int main() {
     webpp::http::cgi<website::app> my_app;

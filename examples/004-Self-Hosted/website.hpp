@@ -3,8 +3,9 @@
 #ifndef WEBPP_EXAMPLE_BLOG_H
 #define WEBPP_EXAMPLE_BLOG_H
 
-#include "../../core/include/webpp/http/http.hpp"
 #include "admin.hpp"
+
+#include <webpp/http/http.hpp>
 
 
 namespace website {
