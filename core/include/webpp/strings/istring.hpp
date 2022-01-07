@@ -99,22 +99,22 @@ namespace webpp {
         }
 
         [[nodiscard]] constexpr alternate_std_string_view_type std_string_view() const noexcept {
-            return istl::string_viewify_of<alternate_std_string_view_type>(*this);
+            return istl::string_viewify_of<alternate_std_string_view_type, istring_type>(*this);
         }
 
 
 
         [[nodiscard]] constexpr alternate_std_string_type std_string() const noexcept {
             static_assert(has_allocator, "This type doesn't have an allocator.");
-            return istl::stringify_of<alternate_std_string_type>(*this, get_allocator());
+            return istl::stringify_of<alternate_std_string_type, istring_type>(*this, get_allocator());
         }
 
         explicit operator alternate_std_string_view_type() const noexcept {
-            return std_string_view();
+            return this->std_string_view();
         }
 
         explicit operator alternate_std_string_type() const noexcept {
-            return std_string();
+            return this->std_string();
         }
 
         void for_each(auto&& func, auto&& simd_func) noexcept(noexcept(func(this->data()))
