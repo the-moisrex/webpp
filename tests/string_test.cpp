@@ -93,7 +93,7 @@ TEST(String, SplitterConstexpr) {
     EXPECT_EQ(stl::get<0>(email), "test");
 
     constexpr splitter email_splitter2{"test@email.com", stl::string_view{"@"}, '.'};
-    constexpr auto     email2 = email_splitter.split_array();
+    constexpr auto     email2 = email_splitter2.split_array();
     ASSERT_EQ(email2.size(), 3);
     if constexpr (stl::tuple_size_v<decltype(email2)> == 3) {
         EXPECT_EQ(stl::get<0>(email2), "test");
