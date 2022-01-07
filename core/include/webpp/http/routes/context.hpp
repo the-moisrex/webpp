@@ -277,10 +277,10 @@ namespace webpp::http {
          */
         template <Extension... E>
         [[nodiscard]] constexpr auto clone() const noexcept {
-            using context_type = context_type_with_appended_extensions<E...>;
-            static_assert(Context<context_type>,
+            using local_context_type = context_type_with_appended_extensions<E...>;
+            static_assert(Context<local_context_type>,
                           "Web++ Internal Bug: the context_type is not valid for some reason!");
-            return context_type{*this};
+            return local_context_type{*this};
         }
 
         // todo: these methods need to be noexcept. They call unknown stuff.
