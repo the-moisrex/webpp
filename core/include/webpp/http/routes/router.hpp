@@ -244,7 +244,7 @@ namespace webpp::http {
             // print the next route as well
             constexpr bool last_route = Index == (route_count() - 1);
             if constexpr (!last_route) {
-                out.append("\n");
+                out.push_back('\n');
                 append_as_string<StrT, ReqT, Index + 1>(out, stl::forward<ReqT>(req));
             }
         }

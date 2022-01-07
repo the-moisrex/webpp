@@ -26,6 +26,10 @@ namespace website {
                 return "Nice page.";
             };
             router _router{extensions{},
+                           (get and root) >>=
+                           [] {
+                               return "main page";
+                           },
                            (get and (root / "home")) >>=
                            [this](Context auto& ctx) {
                                return this->home(ctx);

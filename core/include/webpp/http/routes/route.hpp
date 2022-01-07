@@ -564,9 +564,10 @@ namespace webpp::http {
         }
 
       private:
-        template <typename ResT, bool First = false>
-        static void append_route_as_string(istl::String auto& out, auto& the_route) {
+        template <typename ResT, bool First = false, typename RoutT>
+        static void append_route_as_string(istl::String auto& out, RoutT& the_route) {
             using namespace stl;
+
 
             // print this route
             if constexpr (is_void_v<ResT>) {
@@ -587,6 +588,8 @@ namespace webpp::http {
                 }
                 if constexpr (requires { the_route.append_name_to(out); }) {
                     the_route.append_name_to(out);
+                } else {
+                    append_to(out, "condition");
                 }
             } else if constexpr (ConvertibleToResponse<ResT>) {
                 // todo: find out the type of the response
@@ -596,7 +599,7 @@ namespace webpp::http {
                     append_to(out, " >> response");
                 }
             } else if constexpr (requires { the_route.append_name_to(out); }) {
-                the_route.append_name_to(out);
+                the_route.append_name_to(out); // method_route_condition has this method
             } else {
                 if constexpr (First) {
                     append_to(out, "[unknown]");
@@ -620,8 +623,10 @@ namespace webpp::http {
 
             // print the next route
             if constexpr (is_next_route_valid) {
-                if constexpr (requires { this->next.template append_as_string<CtxT, ReqT>(out, ctx, req); }) {
-                    this->next.template append_as_string<CtxT, ReqT>(out, ctx, req);
+                if constexpr (requires {
+                                  this->next.template append_as_string<CtxT, ReqT, false>(out, ctx, req);
+                              }) {
+                    this->next.template append_as_string<CtxT, ReqT, false>(out, ctx, req);
                 } else {
                     append_route_as_string<n_res_t, false>(out, this->next);
                 }

@@ -3,13 +3,13 @@
 #ifndef WEBPP_RESPONSE_CONCEPTS_H
 #define WEBPP_RESPONSE_CONCEPTS_H
 
-#include "./request_concepts.hpp"
 #include "../application/application_concepts.hpp"
 #include "../extensions/extension.hpp"
 #include "../std/optional.hpp"
 #include "../traits/std_traits.hpp"
 #include "./body_concepts.hpp"
 #include "./header_concepts.hpp"
+#include "./request_concepts.hpp"
 
 namespace webpp::http {
 
@@ -55,7 +55,8 @@ namespace webpp::http {
 
     template <typename T>
     concept ConvertibleToResponse =
-      !stl::is_same_v<T, bool> && stl::is_integral_v<T> && (HTTPResponse<T> || istl::StringViewifiable<T>);
+      !stl::is_same_v<T, bool> && !stl::is_integral_v<T> &&
+      (HTTPResponse<T> || istl::StringViewifiable<T> || istl::StringViewifiable<T>);
 
     template <typename ResponseType, typename T>
     concept ConstructibleWithResponse = stl::is_constructible_v<ResponseType, T>;
@@ -71,6 +72,6 @@ namespace webpp::http {
     template <typename T>
     concept HTTPResponseExtensionList = ExtensionListOf<T, is_response_extension_list>;
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_RESPONSE_CONCEPTS_H

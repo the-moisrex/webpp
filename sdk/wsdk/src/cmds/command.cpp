@@ -23,7 +23,9 @@ namespace webpp::sdk {
         options_description root_desc{"Program options"};
 
       public:
-        command_description(int argc, char const* const* argv) : argc{argc}, argv{argv} {}
+        command_description(int input_argc, char const* const* input_argv)
+          : argc{input_argc},
+            argv{input_argv} {}
 
         int process_args() {
 
@@ -45,10 +47,10 @@ namespace webpp::sdk {
             notify(vm);
 
             if (vm.count("new")) {
-                const auto        create_args     = vm["cmd_opts"].template as<vector<string>>();
-                const stl::string create_args_str = strings::join_with(create_args, ' ');
-                create_project    creator{.command_desc = *this};
-                return creator.handle(create_args_str);
+                auto create_args = vm["cmd_opts"].template as<vector<string>>();
+                create_args.erase(create_args.begin()); // remove "new"
+                create_project creator{.command_desc = *this};
+                return creator.handle(create_args);
             }
 
             if (vm.count("help")) {
@@ -72,22 +74,6 @@ namespace webpp::sdk {
             // TODO: complete me
             // TODO: clean the sessions
             // TODO: clean session data for a specific user
-
-            auto cmds = vm["cmd_opts"].as<vector<string>>();
-            if (cmds.size() > 0) {
-                auto cmd = cmds.at(0);
-
-                // Clean the sessions
-                if ("clean" == cmd || "clear" == cmd) {
-                    if (cmds.size() == 1) { // Clean all the data
-
-                    } else {
-                        // clean based on other values
-                    }
-                }
-            } else {
-                cerr << "There's nothing to do." << endl;
-            }
         }
     };
 

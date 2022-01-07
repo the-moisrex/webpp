@@ -133,7 +133,7 @@ namespace webpp::http {
         using tuple_type = stl::tuple<Segments...>;
         using path_type  = path<Segments...>;
 
-        using tuple_type::tuple; // constructors
+        using stl::tuple<Segments...>::tuple; // constructors
 
         /**
          * Convert different original types to normal callable segments
@@ -319,24 +319,20 @@ namespace webpp::http {
         }
 
 
-        //        template <istl::String StrT = stl::string>
-        //        void append_name_to(StrT& out) const noexcept {
-        //            if constexpr (has_segment) {
-        //                append_to(out, " / ");
-        //                if constexpr (requires { segment.append_to(out); }) {
-        //                    segment.append_to(out);
-        //                } else {
-        //                    append_to(out, "[unknown]");
-        //                }
-        //                if constexpr (has_next_segment) {
-        //                    if constexpr (requires { next_segment.append_to(out); }) {
-        //                        next_segment.append_to(out);
-        //                    } else {
-        //                        append_to(out, " / [unknown last path]");
-        //                    }
-        //                }
-        //            }
-        //        }
+        template <istl::String StrT = stl::string>
+        void append_name_to(StrT& out) const {
+            ([&, this]<stl::size_t... index>(stl::index_sequence<index...>) constexpr noexcept {
+                (([&](auto const& seg) {
+                     out.append(" /");
+                     if constexpr (requires { out.append(seg.data(), seg.size()); }) {
+                         out.append(seg.data(), seg.size());
+                     } else {
+                         out.append(" [path]");
+                     }
+                 })(stl::get<index>(*this)),
+                 ...);
+            })(stl::make_index_sequence<size()>{});
+        }
     };
 
     // the root path
