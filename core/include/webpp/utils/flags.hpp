@@ -14,7 +14,7 @@ namespace webpp::flags {
 
     template <typename T>
     requires(stl::is_unsigned_v<T>) [[nodiscard]] constexpr T item(T index) noexcept {
-        return 0x1u << index;
+        return static_cast<T>(0x1u << index);
     }
 
     /**
@@ -47,9 +47,9 @@ namespace webpp::flags {
 
         [[nodiscard]] static constexpr base_type value_of(type v) noexcept {
             if constexpr (are_values_sequential) {
-                return item(magic_enum::enum_integer(v));
+                return item<base_type>(magic_enum::enum_integer(v));
             } else {
-                return item(magic_enum::enum_index(v).value());
+                return item<base_type>(magic_enum::enum_index(v).value());
             }
         }
 
