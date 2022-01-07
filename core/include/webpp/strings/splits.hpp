@@ -99,7 +99,7 @@ namespace webpp::strings {
         value_type operator*() {
             // can't dereference an iterator that points to nothing
             assert(spltr != nullptr);
-            return spltr->str.substr(start_pos, finish_pos);
+            return spltr->str.substr(start_pos, finish_pos - start_pos);
         }
 
 
