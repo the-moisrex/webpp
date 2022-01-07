@@ -134,7 +134,7 @@ namespace webpp::istl {
     requires(StringViewifiableOfTemplate<StrViewT, StrT>)
       [[nodiscard]] constexpr auto string_viewify_of(StrT&& str) noexcept {
         using deduced_type = details::string_view::deduced_type<StrViewT, StrT>;
-        return string_viewify_of<deduced_type>(stl::forward<StrT>(str));
+        return string_viewify_of<deduced_type, StrT>(stl::forward<StrT>(str));
     }
 
 
