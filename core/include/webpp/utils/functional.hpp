@@ -55,8 +55,8 @@ namespace webpp {
             stl::remove_pointer_t<Callable>* func;
 
           public:
-            constexpr explicit make_func_ptr_inheritable(stl::remove_pointer_t<Callable>* func) noexcept
-              : func(func) {}
+            constexpr explicit make_func_ptr_inheritable(stl::remove_pointer_t<Callable>* input_func) noexcept
+              : func(input_func) {}
 
             template <typename... Args>
             decltype(auto) operator()(Args&&... args) const

@@ -158,7 +158,7 @@ namespace webpp::flags {
         }
 
         constexpr void off(type v) noexcept {
-            value &= ~value_of(v);
+            value &= static_cast<base_type>(~value_of(v));
         }
 
         [[nodiscard]] constexpr bool is_on(type v) const noexcept {

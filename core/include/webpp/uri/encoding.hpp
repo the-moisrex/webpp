@@ -26,11 +26,11 @@ namespace webpp {
             if (digits_left) {
                 decoded_char <<= 4;
                 if (c >= '0' && c <= '9') { // DIGITS
-                    decoded_char += c - '0';
+                    decoded_char += static_cast<char_type>(c - '0');
                 } else if (c >= 'A' && c <= 'F') { // UPPER_HEX
-                    decoded_char += c - 'A' + 10;
+                    decoded_char += static_cast<char_type>(c - 'A' + 10);
                 } else if (c >= 'a' && c <= 'f') { // LOWER_HEX
-                    decoded_char += c - 'a' + 10;
+                    decoded_char += static_cast<char_type>(c - 'a' + 10);
                 } else {
                     return false;
                 }
