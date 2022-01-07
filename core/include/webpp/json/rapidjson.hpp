@@ -585,7 +585,7 @@ namespace webpp::json::rapidjson {
                 return insert<KeyT, ValT>(stl::forward<KeyT>(key), stl::forward<ValT>(val));
             }
 
-            static_assert(stl::random_access_iterator<typename rapidjson_object_type::MemberIterator>);
+            // static_assert(stl::random_access_iterator<typename rapidjson_object_type::MemberIterator>);
             iterator_type begin() const {
                 return obj_handle.MemberBegin();
             }
