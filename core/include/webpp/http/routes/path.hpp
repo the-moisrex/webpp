@@ -264,6 +264,7 @@ namespace webpp::http {
                 uri::basic_path<string_type> uri_segments{
                   req.request_uri(),
                   ctx.alloc_pack.template general_allocator<typename string_type::value_type>()};
+                uri_segments.fix();
                 using uri_segments_type = decltype(uri_segments);
 
 

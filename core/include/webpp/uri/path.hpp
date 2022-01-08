@@ -183,6 +183,14 @@ namespace webpp::uri {
                 return sum;
             }() + this->size() - 1;
         }
+
+
+        void fix() {
+            // remove the last empty string
+            if (this->size() && this->back().empty()) {
+                (void) this->pop_back();
+            }
+        }
     };
 
 
