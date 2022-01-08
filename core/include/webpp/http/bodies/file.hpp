@@ -131,8 +131,8 @@ namespace webpp::http {
                         // in.rdbuf()->pubsetbuf(buffer.get(), buffer_size); // speed boost, I think
                         const auto size   = in.tellg();
                         auto       result = object::make_general<string_type>(*this);
-                        result.reserve(size);
-                        in.seekg(0);
+                        result.reserve(static_cast<stl::size_t>(size));
+                        in.seekg(0l);
                         in.read(result.data(), size);
                         // todo: cache the results
                         *this = result;

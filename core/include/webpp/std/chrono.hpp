@@ -10,7 +10,10 @@
 #    include <date/date.h>
 #    include <date/tz.h>
 namespace webpp::stl::chrono {
-    using namespace ::std::chrono;
+    // using namespace ::std::chrono;
+    using ::std::chrono::duration;
+    using ::std::chrono::system_clock;
+    using ::std::chrono::time_point;
     using namespace ::date;
 } // namespace webpp::stl::chrono
 #else

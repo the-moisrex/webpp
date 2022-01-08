@@ -41,7 +41,7 @@ namespace website {
                            root / "admin" >>= admin};
 
             // for debugging purposes
-            std::cerr << _router.to_string(req) << std::endl;
+            // std::cerr << _router.to_string(req) << std::endl;
 
             return _router(req);
         }
