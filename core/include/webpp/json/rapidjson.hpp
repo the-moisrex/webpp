@@ -521,6 +521,13 @@ namespace webpp::json::rapidjson {
             }
         };
 
+        namespace details {
+            define_is_specialization_of(is_generic_object,
+                                        auto             WEBPP_COMMA typename...,
+                                        auto Item        WEBPP_COMMA typename... Args,
+                                        Item WEBPP_COMMA Args...)
+        };
+
         /**
          * This is a json object which means it can hold a key/value pair of value objects.
          * The ValueType is a rapidjson value type not a generic value type.
@@ -528,7 +535,7 @@ namespace webpp::json::rapidjson {
         template <Traits TraitsType, typename ObjectType>
         struct generic_object {
 
-            static_assert(istl::is_valued_specialization_of_v<ObjectType, ::rapidjson::GenericObject>,
+            static_assert(details::is_generic_object_v<ObjectType, ::rapidjson::GenericObject>,
                           "it's an object not a value");
 
             using rapidjson_object_type      = ObjectType;

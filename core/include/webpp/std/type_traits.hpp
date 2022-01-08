@@ -839,20 +839,25 @@ namespace webpp::istl {
     using unique_parameters = typename details::unique_types<T>::type;
 
 
-    // from: http://open-std.org/JTC1/SC22/WG21/docs/papers/2020/p2098r1.pdf
-    template <typename T, template <typename...> typename Primary>
-    struct is_specialization_of : stl::false_type {};
+    // initially from: http://open-std.org/JTC1/SC22/WG21/docs/papers/2020/p2098r1.pdf
+#define WEBPP_COMMA ,
+#define define_is_specialization_of(name, types, types_with_names, names) \
+    template <typename T, template <types> typename Primary>              \
+    struct name : stl::false_type {};                                     \
+                                                                          \
+    template <template <types> typename Primary, types_with_names>        \
+    struct name<Primary<names>, Primary> : stl::true_type {};             \
+                                                                          \
+    template <typename T, template <types> typename Primary>              \
+    inline constexpr bool name##_v = name<T, Primary>::value;
 
-    template <template <typename...> typename Primary, typename... Args>
-    struct is_specialization_of<Primary<Args...>, Primary> : stl::true_type {};
+    define_is_specialization_of(is_specialization_of, typename..., typename... Args, Args...)
 
-    template <typename T, template <typename...> typename Primary>
-    inline constexpr bool is_specialization_of_v = is_specialization_of<T, Primary>::value;
 
-    // valued specialization is exactly the same as above, but it supports some auto values as well
-    // this has a very limitted use case, so don't worry about it if it seems useless to you.
-    template <typename T, template <auto, typename...> typename Primary>
-    struct is_valued_specialization_of : stl::false_type {};
+      // valued specialization is exactly the same as above, but it supports some auto values as well
+      // this has a very limited use case, so don't worry about it if it seems useless to you.
+      template <typename T, template <auto, typename...> typename Primary>
+      struct is_valued_specialization_of : stl::false_type {};
 
     template <template <auto, typename...> typename Primary, auto Val, typename... Args>
     struct is_valued_specialization_of<Primary<Val, Args...>, Primary> : stl::true_type {};

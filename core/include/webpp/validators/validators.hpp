@@ -70,7 +70,7 @@ namespace webpp::is {
      * @return true if the specified str is an email
      */
     [[nodiscard]] bool email(istl::StringViewifiable auto&& _str) noexcept {
-        const auto     str = istl::string_viewify(stl::forward<decltype(_str)>(_str));
+        const auto str = istl::string_viewify(stl::forward<decltype(_str)>(_str));
         // constexpr auto pattern =
         //   ctll::fixed_string{R"regex(^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+)regex"};
         // constexpr auto pattern =
@@ -108,12 +108,12 @@ namespace webpp::is {
     [[nodiscard]] constexpr bool ipv4(istl::StringViewifiable auto&& _str) noexcept {
         auto        str = istl::string_viewify(_str);
         stl::size_t next_dot;
-        for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
+        for (uint8_t octet_index = 0u; octet_index != 4u; octet_index++) {
             next_dot       = str.find('.');
             auto octet_str = str.substr(0, next_dot);
-            if (octet_str.size() > 3 || !ascii::is::digit(octet_str) || to_uint(octet_str) > 255)
+            if (octet_str.size() > 3ul || !ascii::is::digit(octet_str) || to_uint(octet_str) > 255u)
                 return false;
-            str.remove_prefix(octet_str.size() + (octet_index != 3));
+            str.remove_prefix(octet_str.size() + (octet_index != 3u));
         }
         return str.empty();
     }
@@ -127,15 +127,15 @@ namespace webpp::is {
     [[nodiscard]] constexpr bool subnet(istl::StringViewifiable auto&& _str) noexcept {
         auto        str      = istl::string_viewify(_str);
         stl::size_t next_dot = 0;
-        for (uint8_t octet_index = 0; octet_index != 4; octet_index++) {
+        for (uint8_t octet_index = 0u; octet_index != 4u; octet_index++) {
             next_dot       = str.find('.');
             auto octet_str = str.substr(0, next_dot);
-            if (octet_str.size() > 3 || !ascii::is::digit(octet_str)) {
+            if (octet_str.size() > 3ul || !ascii::is::digit(octet_str)) {
                 return false;
             }
-            if (auto octet_int = to_uint(octet_str); octet_int > 255 || subnet_octet(octet_int))
+            if (auto octet_int = to_uint(octet_str); octet_int > 255u || subnet_octet(octet_int))
                 return false;
-            str.remove_prefix(octet_str.size() + (octet_index != 3));
+            str.remove_prefix(octet_str.size() + (octet_index != 3u));
         }
         return str.empty();
     }
@@ -146,7 +146,7 @@ namespace webpp::is {
      * @return bool an indication weather or not the specified input is a
      * valid ipv4 subnet mask or not
      */
-    [[nodiscard]] constexpr bool subnet(stl::array<uint8_t, 4> const& octets) noexcept {
+    [[nodiscard]] constexpr bool subnet(stl::array<uint8_t, 4ul> const& octets) noexcept {
         for (auto const& octet : octets)
             if (!subnet_octet(octet))
                 return false;
@@ -171,12 +171,12 @@ namespace webpp::is {
                                           return divider_chars.contains(c);
                                       });
             found != stl::rend(str)) {
-            auto index = stl::distance(stl::begin(str), found.base()) - 1;
-            if (!is::ipv4(str.substr(0, index)))
+            stl::size_t index = static_cast<stl::size_t>(stl::distance(stl::begin(str), found.base())) - 1ul;
+            if (!is::ipv4(str.substr(0ul, index)))
                 return false;
-            if (auto prefix = str.substr(index + 1); ascii::is::digit(prefix)) {
+            if (auto prefix = str.substr(index + 1ul); ascii::is::digit(prefix)) {
                 auto _prefix = to_uint(prefix);
-                return _prefix >= 0 && _prefix <= 32;
+                return _prefix >= 0ul && _prefix <= 32ul;
             }
             return false;
         }
@@ -275,15 +275,15 @@ namespace webpp::is {
                                           return divider_chars.contains(c);
                                       });
             found != stl::rend(str)) {
-            auto index = stl::distance(stl::begin(str), found.base()) - 1;
+            stl::size_t index = static_cast<stl::size_t>(stl::distance(stl::begin(str), found.base())) - 1ul;
             if (auto prefix = str.substr(index + 1); ascii::is::digit(prefix)) {
-                int _prefix = to_uint(prefix);
-                if (!(_prefix >= 0 && _prefix <= 128))
+                unsigned _prefix = to_uint(prefix);
+                if (!(_prefix >= 0u && _prefix <= 128u))
                     return false;
             } else {
                 return false;
             }
-            if (is::ipv6(str.substr(0, index)))
+            if (is::ipv6(str.substr(0ul, index)))
                 return true;
         }
         return false;

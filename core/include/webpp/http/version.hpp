@@ -14,11 +14,11 @@ namespace webpp::http {
     class version {
       private:
         // parse version from string
-        constexpr uint32_t parse_string(auto&& str) noexcept {
+        constexpr stl::uint32_t parse_string(auto&& str) noexcept {
             auto dot   = str.find('.');
             auto major = to_uint16(str.substr(0, dot));
             auto minor = to_uint16(str.substr(dot + 1, str.size()));
-            return major << 16u | minor;
+            return static_cast<stl::uint32_t>(major << 16u | minor);
         }
 
       public:
@@ -36,7 +36,8 @@ namespace webpp::http {
         version& operator=(version&&) noexcept = default;
 
         // Build from unsigned major/minor pair.
-        constexpr version(uint16_t major, uint16_t minor) noexcept : value(major << 16u | minor) {}
+        constexpr version(uint16_t major, uint16_t minor) noexcept
+          : value(static_cast<stl::uint32_t>(major << 16u | minor)) {}
 
         // Major version number.
         [[nodiscard]] constexpr uint16_t major_value() const noexcept {
@@ -71,7 +72,7 @@ namespace webpp::http {
         // todo: use <=> operator
 
       private:
-        uint32_t value = 0; // Packed as <major>:<minor>
+        uint32_t value = 0ul; // Packed as <major>:<minor>
     };
 
     template <stl::size_t N>

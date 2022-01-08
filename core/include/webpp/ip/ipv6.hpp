@@ -11,6 +11,13 @@
 
 namespace webpp {
 
+    namespace details {
+        define_is_specialization_of(is_specializes_array,
+                                    typename WEBPP_COMMA   stl::size_t,
+                                    typename T WEBPP_COMMA stl::size_t N,
+                                    T WEBPP_COMMA                      N)
+    };
+
     struct ipv6 {
         // todo: add support for systems that support 128bit integer types
 
@@ -40,7 +47,7 @@ namespace webpp {
         static constexpr auto interface_identifier_offset = 8u; // Interface Identifier offset in bytes
         static constexpr auto interface_identifier_size   = 8u; // Interface Identifier size in bytes
 
-        // I didn't go with a union because in OpenThread project they did and
+        // I didn't go with a union because in OpenThread project they did, and
         // they had to deal with endianness of their data. I rather use shifts
         // and host's byte order instead of getting my hands dirty with host's
         // byte order. Network's byte order is big endian btw, but here we just
@@ -48,7 +55,7 @@ namespace webpp {
         // these data over the network.
         octets_t data = {}; // filled with zeros
 
-        // 255 means it's doesn't have prefix
+        // 255 means it doesn't have prefixed
         // 254 means the ip is not valid
         // 253 means the prefix is not valid (it's not being used for now)
         uint8_t _prefix = 255u;
@@ -185,9 +192,13 @@ namespace webpp {
         }
 
       public:
-        constexpr explicit ipv6(istl::StringViewifiable auto&& str, uint8_t prefix_value = 255u) noexcept
+        template <typename StrT>
+        requires(istl::StringViewifiable<StrT> &&
+                 !details::is_specializes_array_v<stl::remove_cvref_t<StrT>,
+                                                  stl::array>) // it shouldn't be array
+          constexpr explicit ipv6(StrT&& str, uint8_t prefix_value = 255u) noexcept
           : _prefix(prefix_value > 128u && prefix_value != 255u ? 253u : prefix_value) {
-            parse(stl::forward<decltype(str)>(str));
+            parse(stl::forward<StrT>(str));
         }
         constexpr explicit ipv6(octets8_t const& _octets, uint8_t prefix_value = 255u) noexcept
           : data(_octets),
@@ -207,8 +218,10 @@ namespace webpp {
 
         ipv6& operator=(ipv6 const& ip) noexcept = default;
 
-        ipv6& operator=(istl::StringViewifiable auto&& str) noexcept {
-            parse(stl::forward<decltype(str)>(str));
+        template <typename StrT>
+        requires(istl::StringViewifiable<StrT> && !stl::is_array_v<stl::remove_cvref_t<StrT>>) ipv6&
+        operator=(StrT&& str) noexcept {
+            parse(stl::forward<StrT>(str));
             _prefix = 255u;
             return *this;
         }
@@ -289,8 +302,8 @@ namespace webpp {
             constexpr stl::size_t len     = ndata.size();
             using t                       = uint16_t;
             for (stl::size_t i = 0; i < len; i++) {
-                ndata[i] = (static_cast<t>(_octets[i * 2u + 0u]) << (16u - 8u * 1u)) |
-                           (static_cast<t>(_octets[i * 2u + 1u]) << (16u - 8u * 2u));
+                ndata[i] = static_cast<uint16_t>((static_cast<t>(_octets[i * 2u + 0u]) << (16u - 8u * 1u)) |
+                                                 (static_cast<t>(_octets[i * 2u + 1u]) << (16u - 8u * 2u)));
             }
             return ndata;
         }

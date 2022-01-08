@@ -189,32 +189,18 @@ namespace webpp::ascii {
 
     template <typename T>
     [[nodiscard]] constexpr bool starts_with(istl::StringViewifiable auto&& _str, T&& data) noexcept {
-        auto str = istl::string_viewify(_str);
-#ifdef CXX20
-        return str.starts_with(stl::forward<T>(data));
-#else
-        return str.rfind(stl::forward<T>(data), 0) == 0;
-#endif
+        return istl::string_viewify(_str).starts_with(stl::forward<T>(data));
     }
 
     [[nodiscard]] constexpr bool ends_with(istl::StringViewifiable auto&&     _str,
                                            istl::char_type_of<decltype(_str)> c) noexcept {
-        auto str = istl::string_viewify(_str);
+        const auto str = istl::string_viewify(_str);
         return !str.empty() && str.back() == c;
     }
 
     [[nodiscard]] constexpr bool ends_with(istl::StringViewifiable auto&& _str,
                                            istl::StringViewifiable auto&& _ending) noexcept {
-        auto                   str = istl::string_viewify(_str);
-        stl::basic_string_view ending{_ending};
-#ifdef CXX20
-        return str.ends_with(ending);
-#else
-        if (str.length() >= ending.length()) {
-            return (0 == str.compare(str.length() - ending.length(), ending.length(), ending));
-        }
-        return false;
-#endif
+        return istl::string_viewify(_str).ends_with(istl::string_viewify(_ending));
     }
 
 

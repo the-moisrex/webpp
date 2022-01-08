@@ -47,9 +47,9 @@ namespace webpp::flags {
 
         [[nodiscard]] static constexpr base_type value_of(type v) noexcept {
             if constexpr (are_values_sequential) {
-                return item<base_type>(magic_enum::enum_integer(v));
+                return item<base_type>(static_cast<base_type>(magic_enum::enum_integer(v)));
             } else {
-                return item<base_type>(magic_enum::enum_index(v).value());
+                return item<base_type>(static_cast<base_type>(magic_enum::enum_index(v).value()));
             }
         }
 

@@ -44,10 +44,10 @@ TEST(FunctionalTests, DebouncedFunctions) {
 
     // lambdas
 
-    auto lambda_test = debounce([](int limit) {
+    auto lambda_test = debounce([](int _limit) {
         static auto i = 0;
         i++;
-        EXPECT_LT(i, limit);
+        EXPECT_LT(i, _limit);
     });
 
     for (int i = 0; i < limit; i++)

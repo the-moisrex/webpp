@@ -5,7 +5,6 @@
 #    include <eve/function/any.hpp>
 #    include <eve/wide.hpp>
 #endif
-// clang-format on
 
 #ifdef WEBPP_EVE
 namespace mtest {
@@ -36,7 +35,7 @@ namespace mtest {
                 if (it2 == it2start) {
                     found = it1;
                 } else if (it2 == it2end - 1) {
-                    return found - it1start;
+                    return static_cast<std::size_t>(found - it1start);
                 }
                 ++it2;
             } else {

@@ -117,8 +117,11 @@ namespace webpp {
         uint8_t _prefix = 255u;
 
         constexpr void parse(istl::StringViewifiable auto&& m_data) noexcept {
-            const auto _data = istl::string_viewify(stl::forward<decltype(m_data)>(m_data));
-            if (_data.size() > 15 || _data.size() < 7) {
+            const auto _data       = istl::string_viewify(stl::forward<decltype(m_data)>(m_data));
+            using string_view_type = stl::remove_cvref_t<decltype(_data)>;
+            using char_type        = typename string_view_type::value_type;
+
+            if (_data.size() > 15ul || _data.size() < 7ul) {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
@@ -129,55 +132,55 @@ namespace webpp {
 
             const auto octet_1 = _data.substr(0u, first_dot);
             if (first_dot == len || octet_1.empty() || octet_1.size() > 3 || !ascii::is::digit(octet_1) ||
-                (ascii::starts_with(octet_1, '0') && octet_1.size() != 1)) {
+                (ascii::starts_with(octet_1, static_cast<char_type>('0')) && octet_1.size() != 1)) {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
 
-            stl::size_t second_dot = first_dot + 1;
+            stl::size_t second_dot = first_dot + 1ul;
             while (_data[second_dot] != '.' && second_dot != len)
                 second_dot++;
 
-            const auto octet_2 = _data.substr(first_dot + 1u, second_dot - (first_dot + 1));
-            if (second_dot == len || octet_2.empty() || octet_2.size() > 3 || !ascii::is::digit(octet_2) ||
-                (ascii::starts_with(octet_2, '0') && octet_2.size() != 1)) {
+            const auto octet_2 = _data.substr(first_dot + 1u, second_dot - (first_dot + 1ul));
+            if (second_dot == len || octet_2.empty() || octet_2.size() > 3ul || !ascii::is::digit(octet_2) ||
+                (ascii::starts_with(octet_2, '0') && octet_2.size() != 1ul)) {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
 
-            stl::size_t third_dot = second_dot + 1;
+            stl::size_t third_dot = second_dot + 1ul;
             while (_data[third_dot] != '.' && third_dot != len)
                 third_dot++;
 
             const auto octet_3 = _data.substr(second_dot + 1u, third_dot - (second_dot + 1));
-            if (third_dot == len || octet_3.empty() || octet_3.size() > 3 || !ascii::is::digit(octet_3) ||
-                (ascii::starts_with(octet_3, '0') && octet_3.size() != 1)) {
+            if (third_dot == len || octet_3.empty() || octet_3.size() > 3ul || !ascii::is::digit(octet_3) ||
+                (ascii::starts_with(octet_3, '0') && octet_3.size() != 1ul)) {
                 _prefix = 254u; // the ip is not valid
                 return;         // parsing failed.
             }
 
-            stl::size_t slash = third_dot + 1;
+            stl::size_t slash = third_dot + 1ul;
             while (slash != len && _data[slash] != '/')
                 slash++;
 
-            const auto octet_4 = _data.substr(third_dot + 1u, slash - (third_dot + 1));
+            const auto octet_4 = _data.substr(third_dot + 1u, slash - (third_dot + 1ul));
 
-            if (octet_4.empty() || octet_4.size() > 3 || !ascii::is::digit(octet_4) ||
-                (ascii::starts_with(octet_4, '0') && octet_4.size() != 1)) {
+            if (octet_4.empty() || octet_4.size() > 3ul || !ascii::is::digit(octet_4) ||
+                (ascii::starts_with(octet_4, '0') && octet_4.size() != 1ul)) {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
 
             if (slash != len) {
-                const auto prefix_str = _data.substr(slash + 1);
-                if (prefix_str.empty() || (ascii::starts_with(prefix_str, '0') && prefix_str.size() != 1) ||
+                const auto prefix_str = _data.substr(slash + 1ul);
+                if (prefix_str.empty() || (ascii::starts_with(prefix_str, '0') && prefix_str.size() != 1ul) ||
                     !ascii::is::digit(prefix_str)) {
                     _prefix = 254u; // the ip is not valid
                     return;
                 }
                 const auto prefix_val = to_uint(prefix_str);
-                if (prefix_val > 32) {
-                    _prefix = 254; // the ip is not valid
+                if (prefix_val > 32u) {
+                    _prefix = 254u; // the ip is not valid
                     return;
                 }
                 _prefix = static_cast<uint8_t>(prefix_val);
@@ -188,7 +191,7 @@ namespace webpp {
             const auto oc3 = to_uint(octet_3);
             const auto oc4 = to_uint(octet_4);
 
-            if (oc1 > 255 || oc2 > 255 || oc3 > 255 || oc4 > 255) {
+            if (oc1 > 255u || oc2 > 255u || oc3 > 255u || oc4 > 255u) {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
