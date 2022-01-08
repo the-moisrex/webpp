@@ -31,7 +31,7 @@ struct fake_mommy {
     using context_extensions = extension_pack<my_context_extension>;
 };
 
-TEST(Routes, PathTests) {
+TEST(Routes, ContextTests) {
 
     // todo: do we need this?
     // EXPECT_TRUE(static_cast<bool>(Protocol<typename request_type::protocol_type>));
