@@ -195,7 +195,8 @@ namespace webpp {
         template <typename StrT>
         requires(istl::StringViewifiable<StrT> &&
                  !details::is_specializes_array_v<stl::remove_cvref_t<StrT>,
-                                                  stl::array>) // it shouldn't be array
+                                                  stl::array> && // it shouldn't be array
+                 !stl::same_as<stl::remove_cvref_t<StrT>, ipv6>) // so it's not copy ctor
           constexpr explicit ipv6(StrT&& str, uint8_t prefix_value = 255u) noexcept
           : _prefix(prefix_value > 128u && prefix_value != 255u ? 253u : prefix_value) {
             parse(stl::forward<StrT>(str));
