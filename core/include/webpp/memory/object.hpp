@@ -79,10 +79,10 @@ namespace webpp::object {
           : super{stl::allocator_arg, stl::forward<Args>(args)...} {}
 
         template <typename... Args>
-        requires(support_args<Args...> && !support_alloc_args<Args...> &&
-                 !support_tag_args<Args...>) constexpr object([[maybe_unused]] alloc_pack_type& alloc_pack,
-                                                              [[maybe_unused]] res_ref          res,
-                                                              Args&&... args)
+        requires(support_args<Args...> && !support_alloc_args<Args...> && !support_tag_args<Args...> &&
+                 !support_args_alloc<Args...>) constexpr object([[maybe_unused]] alloc_pack_type& alloc_pack,
+                                                                [[maybe_unused]] res_ref          res,
+                                                                Args&&... args)
           : super{stl::forward<Args>(args)...} {}
 
         /// these 3 are for when we don't have resource and the user is smart enough to not pass one as well

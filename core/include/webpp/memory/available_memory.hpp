@@ -21,7 +21,7 @@ namespace webpp {
     unsigned long long available_memory() noexcept {
 #ifdef __unix__
         static auto pagesize = sysconf(_SC_PAGE_SIZE);
-        return sysconf(_SC_AVPHYS_PAGES) * pagesize;
+        return static_cast<unsigned long long int>(sysconf(_SC_AVPHYS_PAGES) * pagesize);
 #elif _WIN32
         // TODO: test this part on windows too
         // https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-globalmemorystatusex?redirectedfrom=MSDN
