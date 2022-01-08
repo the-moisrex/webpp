@@ -84,8 +84,11 @@ namespace webpp::http {
         handle_primary_results(ResT&& res, CtxT&& ctx, ReqT&& req) const noexcept {
             using namespace stl;
 
-            using result_type  = remove_cvref_t<ResT>;
-            using context_type = remove_cvref_t<CtxT>;
+            using result_type       = remove_cvref_t<ResT>;
+            using context_type      = remove_cvref_t<CtxT>;
+            using local_string_type = typename context_type::string_type;
+            using response_type     = typename context_type::response_type;
+            using body_type         = typename response_type::body_type;
 
             if constexpr (HTTPResponse<result_type> || istl::Optional<result_type>) {
                 return res; // let the "next_route" function handle it
@@ -113,7 +116,10 @@ namespace webpp::http {
             } else if constexpr (istl::StringViewifiable<result_type>) {
                 if constexpr (context_type::template has_extension<string_response>()) {
                     // Use string_response, response type to handle strings
-                    return ctx.template response<string_response>(istl::string_viewify(forward<ResT>(res)));
+                    using char_type = typename local_string_type::value_type;
+                    return response_type{body_type{istl::stringify_of<local_string_type>(
+                      forward<ResT>(res),
+                      ctx.alloc_pack.template general_allocator<char_type>())}};
                 } else {
                     static_assert_false(
                       result_type,

@@ -136,7 +136,7 @@ namespace webpp::istl {
      * Run a function on the specified tuple and the index
      * Index can be gotten dynamically
      */
-    template <std::size_t I = 0, typename FuncT, template <typename...> typename Tup, typename... Tp>
+    template <stl::size_t I = 0, typename FuncT, template <typename...> typename Tup, typename... Tp>
     requires(I >= sizeof...(Tp)) static constexpr void for_index(stl::size_t, Tup<Tp...> const&, FuncT&&) {
         // ending condition function
     }

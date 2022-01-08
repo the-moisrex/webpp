@@ -164,6 +164,19 @@ namespace webpp::http {
         }
 
 
+
+        /**
+         * Generate a response while passing the specified arguments as the body of that response
+         */
+        template <typename... NewExtensions, typename... Args>
+        [[nodiscard]] constexpr HTTPResponse auto response_body(Args&&... args) const noexcept {
+            using new_response_type =
+              typename response_type::template apply_extensions_type<NewExtensions...>;
+            using local_body_type = typename new_response_type::body_type;
+            return response<NewExtensions..., Args...>(local_body_type{stl::forward<Args>(args)...});
+        }
+
+
         [[nodiscard]] constexpr static bool is_debug() noexcept {
             // todo: configure this in cmake
 #ifdef DEBUG

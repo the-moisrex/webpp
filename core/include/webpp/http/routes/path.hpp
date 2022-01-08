@@ -280,6 +280,9 @@ namespace webpp::http {
             }
         }
 
+        /**
+         * Check if the specified context has a path extension or not
+         */
         template <Context CtxT>
         static constexpr bool verify_context(CtxT const& ctx) noexcept {
             if constexpr (HasPathExtension<CtxT>) {
