@@ -48,7 +48,14 @@ TEST(Routes, PathTests) {
     auto nctx = ctx.template clone<typename fake_mommy::my_context_extension, string_response>();
     // using nctx_type = decltype(nctx);
     EXPECT_TRUE(nctx.test);
+
     using context_type2 = simple_context<request_type, extension_pack<string_response, fake_mommy>>;
+    EXPECT_TRUE(static_cast<bool>(Traits<typename context_type2::traits_type>));
+    EXPECT_TRUE(static_cast<bool>(HTTPRequest<typename context_type2::request_type>));
+    EXPECT_TRUE(static_cast<bool>(std::is_copy_constructible_v<context_type2>));
+    EXPECT_TRUE(static_cast<bool>(std::is_move_constructible_v<context_type2>));
+    EXPECT_TRUE(static_cast<bool>(Context<context_type2>));
+
     context_type2 ctx2{nctx};
     auto          res = ctx2.string("test");
     EXPECT_EQ(res.body, "test") << res.body.str();

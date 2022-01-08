@@ -24,6 +24,7 @@ namespace webpp::http {
         using headers_type  = ResponseHeaderType;
         using elist_type    = EList;
         using response_type = basic_response<EList, ResponseHeaderType, BodyType>;
+        using traits_type   = typename body_type::traits_type;
 
         body_type    body{};
         headers_type headers{};
@@ -129,16 +130,16 @@ namespace webpp::http {
         template <typename ExtensionType>
         using extractor_type = typename ExtensionType::response_extensions;
 
-        template <typename ExtensionListType, typename TraitsType, typename EList>
+        template <typename OrigExtensions, Traits TraitsType, typename EList>
         using mid_level_extensie_type = basic_response<
           EList,
-          typename ExtensionListType::template extensie_type<TraitsType, response_headers_descriptor>,
-          typename ExtensionListType::template extensie_type<TraitsType, response_body_descriptor>>;
+          typename OrigExtensions::template extensie_type<TraitsType, response_headers_descriptor>,
+          typename OrigExtensions::template extensie_type<TraitsType, response_body_descriptor>>;
 
         // empty final extensie
-        template <typename ExtensionListType, typename TraitsType, typename EList>
+        template <typename OrigExtensions, Traits TraitsType, typename EList>
         using final_extensie_type =
-          final_response<TraitsType, basic_response_descriptor, ExtensionListType, EList>;
+          final_response<TraitsType, basic_response_descriptor, OrigExtensions, EList>;
     };
 
 
