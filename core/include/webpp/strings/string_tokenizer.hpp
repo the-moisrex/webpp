@@ -194,7 +194,7 @@ namespace webpp {
 
         [[nodiscard]] constexpr str_v token() const noexcept {
             if constexpr (is_raw_pointer_iterator) {
-                return str_v(_token_begin, _token_end - _token_begin);
+                return str_v(_token_begin, static_cast<stl::size_t>(_token_end - _token_begin));
             } else {
                 return str_v(_token_begin, _token_end);
             }

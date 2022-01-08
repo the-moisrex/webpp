@@ -123,10 +123,10 @@ TEST(ResponseCookies, CookieJar) {
       << ").";
 
     for (auto const& a : jar2) {
-        auto found = jar2.find(a.name());
-        EXPECT_TRUE(found->value() == a.value())
+        auto found_it = jar2.find(a.name());
+        EXPECT_TRUE(found_it->value() == a.value())
           << "Checking all the values in the cookie jar (cookie name: " << a.name() << "=" << a.value()
-          << "; found: " << found->name() << "=" << found->value() << ")";
+          << "; found: " << found_it->name() << "=" << found_it->value() << ")";
     }
 }
 

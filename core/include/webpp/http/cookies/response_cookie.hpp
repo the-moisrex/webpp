@@ -81,8 +81,9 @@ namespace webpp::http {
             _value{alloc},
             _domain{alloc},
             _path{alloc},
+            _expires{},
             _comment{alloc},
-            attrs{alloc} {};
+            attrs{alloc} {}
 
         constexpr response_cookie(istl::Stringifiable auto&&   name,
                                   istl::Stringifiable auto&&   value,
@@ -91,8 +92,9 @@ namespace webpp::http {
             _value{istl::stringify_of<value_t>(stl::forward<decltype(value)>(value), alloc), alloc},
             _domain{alloc},
             _path{alloc},
+            _expires{},
             _comment{alloc},
-            attrs{alloc} {};
+            attrs{alloc} {}
 
 
         /**
@@ -106,6 +108,7 @@ namespace webpp::http {
             _value{alloc},
             _domain{alloc},
             _path{alloc},
+            _expires{},
             _comment{alloc},
             attrs{alloc} {
             auto src = istl::string_viewify(stl::forward<decltype(source)>(source));
