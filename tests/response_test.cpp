@@ -14,7 +14,7 @@ using namespace webpp::http;
 TEST(HTTPResponse, Type) {
     using res_t                    = simple_response<std_traits, string_response>;
     constexpr auto return_callback = [] {
-        return res_t("Hello");
+        return res_t::with_body("Hello");
     };
     using ret_type       = ::std::invoke_result_t<decltype(return_callback)>;
     constexpr bool one   = ::std::is_same_v<ret_type, res_t>;

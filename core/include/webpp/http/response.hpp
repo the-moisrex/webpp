@@ -3,10 +3,10 @@
 
 #include "../convert/casts.hpp"
 #include "../traits/traits.hpp"
-#include "response_concepts.hpp"
-#include "response_headers.hpp"
 #include "headers.hpp"
 #include "response_body.hpp"
+#include "response_concepts.hpp"
+#include "response_headers.hpp"
 
 namespace webpp::http {
 
@@ -26,6 +26,16 @@ namespace webpp::http {
 
         body_type    body{};
         headers_type headers{};
+
+        template <typename... Args>
+        [[nodiscard]] constexpr static basic_response with_body(Args&&... args) {
+            return basic_response{body_type{stl::forward<Args>(args)...}};
+        }
+
+        template <typename... Args>
+        [[nodiscard]] constexpr static basic_response with_headers(Args&&... args) {
+            return basic_response{headers_type{stl::forward<Args>(args)...}};
+        }
 
         basic_response(auto&& arg1, auto&&... args) noexcept
           requires(!one_of<decltype(arg1), headers_type, http::status_code_type, body_type>)
@@ -87,7 +97,6 @@ namespace webpp::http {
                   header_field_type{str_t{"Content-Length", headers.get_allocator()}, stl::move(value)});
             }
         }
-
     };
 
 
