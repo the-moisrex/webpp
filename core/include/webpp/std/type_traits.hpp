@@ -840,7 +840,8 @@ namespace webpp::istl {
 
 
     // initially from: http://open-std.org/JTC1/SC22/WG21/docs/papers/2020/p2098r1.pdf
-#define WEBPP_COMMA ,
+#define WEBPP_COMMA           ,
+#define WEBPP_SINGLE_ARG(...) __VA_ARGS__
 #define define_is_specialization_of(name, types, types_with_names, names) \
     template <typename T, template <types> typename Primary>              \
     struct name : stl::false_type {};                                     \
@@ -849,7 +850,7 @@ namespace webpp::istl {
     struct name<Primary<names>, Primary> : stl::true_type {};             \
                                                                           \
     template <typename T, template <types> typename Primary>              \
-    inline constexpr bool name##_v = name<T, Primary>::value;
+    inline constexpr bool name##_v = WEBPP_SINGLE_ARG(name)<T, Primary>::value;
 
     define_is_specialization_of(is_specialization_of, typename..., typename... Args, Args...)
 

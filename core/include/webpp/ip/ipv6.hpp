@@ -13,9 +13,9 @@ namespace webpp {
 
     namespace details {
         define_is_specialization_of(is_specializes_array,
-                                    typename WEBPP_COMMA   stl::size_t,
-                                    typename T WEBPP_COMMA stl::size_t N,
-                                    T WEBPP_COMMA                      N)
+                                    WEBPP_SINGLE_ARG(typename, stl::size_t),
+                                    WEBPP_SINGLE_ARG(typename T, stl::size_t N),
+                                    WEBPP_SINGLE_ARG(T, N))
     };
 
     struct ipv6 {
