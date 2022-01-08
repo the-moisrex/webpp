@@ -399,12 +399,11 @@ namespace webpp::http {
                   Traits        TraitsType,
                   typename EList, // extension_pack
                   typename ReqType>
-        using mid_level_extensie_type = basic_context<
-          TraitsType,
-          EList,
-          ReqType,
-          // getting the extensie_type of the basic_response
-          typename ExtensionListType::template extensie_type<TraitsType, basic_response_descriptor>>;
+        using mid_level_extensie_type = basic_context<TraitsType,
+                                                      EList,
+                                                      ReqType,
+                                                      // getting the extensie_type of the basic_response
+                                                      simple_response_pack<TraitsType, ExtensionListType>>;
 
 
         template <ExtensionList OriginalExtensionListType,

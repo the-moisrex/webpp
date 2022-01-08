@@ -142,9 +142,13 @@ namespace webpp::http {
     };
 
 
+    template <Traits TraitsType, typename ExtensionListType>
+    using simple_response_pack =
+      typename ExtensionListType::template extensie_type<TraitsType, basic_response_descriptor>;
+
     template <Traits TraitsType, Extension... E>
-    using simple_response =
-      typename extension_pack<E...>::template extensie_type<TraitsType, basic_response_descriptor>;
+    using simple_response = simple_response_pack<TraitsType, extension_pack<E...>>;
+
 
 
     // using fake_response_type = simple_response<fake_traits_type>;

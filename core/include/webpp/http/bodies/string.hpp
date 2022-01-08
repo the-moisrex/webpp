@@ -88,29 +88,30 @@ namespace webpp::http {
         struct string_context_extension {
 
             template <Traits TraitsType, Context ContextType>
-            struct type : public stl::remove_cvref_t<ContextType> {
-                using context_type         = stl::remove_cvref_t<ContextType>;
+            struct type : public ContextType {
+                using context_type         = ContextType;
                 using traits_type          = TraitsType;
                 using string_response_type = typename context_type::response_type;
+                using body_type            = typename string_response_type::body_type;
+                using char_type            = traits::char_type<traits_type>;
                 // ::template apply_extensions_type<details::string_response_body_extension>;
 
                 using context_type::context_type; // inherit the constructors
 
                 template <typename... Args>
-                constexpr HTTPResponse auto string(Args&&... args) const noexcept {
+                constexpr HTTPResponse auto string(Args&&... args) const {
                     // check if there's an allocator in the args:
                     constexpr bool has_allocator = (istl::Allocator<Args> || ...);
-                    using body_type              = typename string_response_type::body_type;
-                    using value_type             = traits::char_type<traits_type>;
                     if constexpr (!has_allocator && requires {
-                                      body_type{stl::forward<Args>(args)...,
-                                                this->alloc_pack.template general_allocator<value_type>()};
+                                      string_response_type::with_body(
+                                        stl::forward<Args>(args)...,
+                                        this->alloc_pack.template general_allocator<char_type>());
                                   }) {
-                        return string_response_type{
-                          body_type{stl::forward<Args>(args)...,
-                                    this->alloc_pack.template general_allocator<value_type>()}};
+                        return string_response_type::with_body(
+                          stl::forward<Args>(args)...,
+                          this->alloc_pack.template general_allocator<char_type>());
                     } else {
-                        return string_response_type{body_type{stl::forward<Args>(args)...}};
+                        return string_response_type::with_body(stl::forward<Args>(args)...);
                     }
                 }
             };

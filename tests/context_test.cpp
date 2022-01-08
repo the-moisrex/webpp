@@ -18,13 +18,17 @@ using request_type = typename fake_proto<std_traits, fake::app>::request_type;
 using context_type = simple_context<request_type>;
 
 struct fake_mommy {
-    template <typename TraitsType>
-    struct type {
-        bool test             = true;
-        type()                = default;
-        type(type const&)     = default;
-        type(type&&) noexcept = default;
+    struct my_context_extension {
+        template <Traits TraitsType>
+        struct type {
+            bool test             = true;
+            type()                = default;
+            type(type const&)     = default;
+            type(type&&) noexcept = default;
+        };
     };
+
+    using context_extensions = extension_pack<my_context_extension>;
 };
 
 TEST(Routes, PathTests) {
@@ -41,10 +45,12 @@ TEST(Routes, PathTests) {
     traits::allocator_pack_type<std_traits> alloc_pack;
     context_type                            ctx{alloc_pack};
 
-    auto nctx = ctx.template clone<fake_mommy, string_response>();
+    auto nctx = ctx.template clone<typename fake_mommy::my_context_extension, string_response>();
     // using nctx_type = decltype(nctx);
     EXPECT_TRUE(nctx.test);
     using context_type2 = simple_context<request_type, extension_pack<string_response, fake_mommy>>;
-    auto ctx2           = context_type2{nctx};
-    EXPECT_EQ(ctx2.string("test").body.str(), "test");
+    context_type2 ctx2{nctx};
+    auto          res = ctx2.string("test");
+    EXPECT_EQ(res.body, "test") << res.body.str();
+    EXPECT_TRUE(ctx2.test);
 }
