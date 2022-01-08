@@ -21,9 +21,9 @@ namespace webpp {
 
 
     // I'm not using "Protocol" here because it's most likely a non-complete-type when it's passed
-    template <Traits TraitsType, HTTPRequestExtensionList REL, RootExtensionList RT>
-    struct fake_proto_request : public common_http_request<TraitsType, REL, RT> {
-        using super       = common_http_request<TraitsType, REL, RT>;
+    template <Traits TraitsType, HTTPRequestExtensionParent REL, RootExtensionList RootExtensions>
+    struct fake_proto_request : public common_http_request<TraitsType, REL, RootExtensions> {
+        using super       = common_http_request<TraitsType, REL, RootExtensions>;
         using traits_type = TraitsType;
         using string_type = traits::general_string<traits_type>;
         using string_view = traits::string_view<traits_type>;
@@ -43,6 +43,11 @@ namespace webpp {
                 return "";
             }
         }
+
+        constexpr bool is_ssl_available() noexcept {
+            return false;
+        }
+
 
 
         [[nodiscard]] string_view server_software() const noexcept {
@@ -212,6 +217,10 @@ namespace webpp {
         fake_proto(Args&&... args) noexcept
           : super{stl::forward<Args>(args)...},
             req{this->logger, this->get_allocator()} {}
+
+        constexpr bool is_ssl_available() noexcept {
+            return false;
+        }
 
 
         int operator()() noexcept {

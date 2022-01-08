@@ -26,7 +26,7 @@ namespace webpp {
     namespace details {
 
         // this concept is private because I don't see being useful for the user
-        // todo: finish this based on common_requeat type
+        // todo: finish this based on common_request type
         template <typename T>
         concept RequestParent = EnabledTraits<T>;
     } // namespace details
