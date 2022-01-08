@@ -20,21 +20,22 @@ namespace webpp::http {
     struct basic_response : public EList {
 
         // we're not going to use trait's string type here.
-        using body_type    = BodyType;
-        using headers_type = ResponseHeaderType;
-        using elist_type   = EList;
+        using body_type     = BodyType;
+        using headers_type  = ResponseHeaderType;
+        using elist_type    = EList;
+        using response_type = basic_response<EList, ResponseHeaderType, BodyType>;
 
         body_type    body{};
         headers_type headers{};
 
         template <typename... Args>
-        [[nodiscard]] constexpr static basic_response with_body(Args&&... args) {
-            return basic_response{body_type{stl::forward<Args>(args)...}};
+        [[nodiscard]] constexpr static auto with_body(Args&&... args) {
+            return response_type{body_type{stl::forward<Args>(args)...}};
         }
 
         template <typename... Args>
-        [[nodiscard]] constexpr static basic_response with_headers(Args&&... args) {
-            return basic_response{headers_type{stl::forward<Args>(args)...}};
+        [[nodiscard]] constexpr static auto with_headers(Args&&... args) {
+            return response_type{headers_type{stl::forward<Args>(args)...}};
         }
 
         basic_response(auto&& arg1, auto&&... args) noexcept

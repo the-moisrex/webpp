@@ -16,7 +16,7 @@ TEST(HTTPResponse, Type) {
     constexpr auto return_callback = [] {
         return res_t::with_body("Hello");
     };
-    using ret_type       = ::std::invoke_result_t<decltype(return_callback)>;
+    using ret_type       = stl::remove_cvref_t<::std::invoke_result_t<decltype(return_callback)>>;
     constexpr bool one   = ::std::is_same_v<ret_type, res_t>;
     constexpr bool two   = ::std::is_convertible_v<ret_type, res_t>;
     constexpr bool three = ::std::is_convertible_v<res_t, res_t>;
