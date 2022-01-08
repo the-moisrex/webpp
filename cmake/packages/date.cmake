@@ -14,6 +14,6 @@ CPMAddPackage(
                 "ENABLE_DATE_TESTING OFF"
                 "DISABLE_STRING_VIEW OFF"
                 "COMPILE_WITH_C_LOCALE OFF"
-                "BUILD_TZ_LIB OFF"
+                "BUILD_TZ_LIB ON"
 
 )

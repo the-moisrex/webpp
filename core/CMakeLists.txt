@@ -234,6 +234,7 @@ target_link_libraries(${LIB_NAME}
         PUBLIC fmt::fmt
         PUBLIC magic_enum::magic_enum
         PUBLIC date::date
+        PUBLIC date::date-tz
         PUBLIC ${PROJECT_NAME}::json
         PUBLIC fixed_string::fixed_string
         ${BROTLI_SHARED_LIBS}
