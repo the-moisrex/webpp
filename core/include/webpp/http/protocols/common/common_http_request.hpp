@@ -40,6 +40,15 @@ namespace webpp::http {
         headers_object_type                         headers;
         [[no_unique_address]] body_object_type      body;
 
+        template <typename AP>
+        requires(!stl::same_as<stl::remove_cvref_t<AP>, common_http_request> && // not if it's copy/move ctor
+                 alloc::AllocatorPack<stl::remove_cvref_t<AP>>)                 // it's allocator_pack
+          constexpr common_http_request(AP&& ap) noexcept
+          : etraits{ap},
+            REL{},
+            headers{ap, alloc_resource},
+            body{ap, alloc_resource} {}
+
 
         template <typename ET>
         requires(!stl::same_as<stl::remove_cvref_t<ET>, common_http_request> && // not if it's copy/move ctor

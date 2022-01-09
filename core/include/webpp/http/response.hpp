@@ -104,7 +104,7 @@ namespace webpp::http {
         using body_type     = typename response_type::body_type;
         using headers_type  = typename response_type::headers_type;
 
-        using elist_type::elist_type;
+        using EList::EList;
 
 
         template <typename... Args>
