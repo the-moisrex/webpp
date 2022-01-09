@@ -16,17 +16,15 @@ namespace webpp {
      *   - [LegacyRandomAccessIterator](https://en.cppreference.com/w/cpp/named_req/RandomAccessIterator)
      *
      */
-    template <typename StorageUnitType = storage_unit<>> // todo: use a pointer instead of a type
-    struct unicode_iterator : stl::random_access_iterator_tag {
-        using storage_unit_type = StorageUnitType;
-        using code_point_type   = typename storage_unit_type::code_point_type;
-        using iterator_type     = code_point_type; // todo: this should be a pointer or a const pointer
-        using traits_type       = stl::iterator_traits<iterator_type>;
-        using iterator_category = typename traits_type::iterator_category;
-        using value_type        = typename traits_type::value_type;
-        using difference_type   = typename traits_type::difference_type;
-        using reference         = typename traits_type::reference; // todo
-        using pointer           = typename traits_type::pointer;   // todo
+    template <typename CodePointType, typename CharT>
+    struct unicode_iterator {
+        using code_point_type   = CodePointType;
+        using iterator_type     = unicode_iterator<CodePointType, CharT>;
+        using value_type        = CharT;
+        using difference_type   = stl::ptrdiff_t;
+        using reference         = stl::add_lvalue_reference_t<value_type>;
+        using pointer           = stl::add_pointer_t<value_type>;
+        using iterator_category = stl::random_access_iterator_tag;
         using iterator_concept  = stl::random_access_iterator_tag;
 
       private:
@@ -37,8 +35,7 @@ namespace webpp {
         explicit constexpr unicode_iterator(const pointer& i) noexcept : current(i) {}
 
         // Allow iterator to const_iterator conversion
-        constexpr unicode_iterator(const unicode_iterator<storage_unit_type>& i) noexcept
-          : current(i.base()) {}
+        constexpr unicode_iterator(const iterator_type& i) noexcept : current(i.content) {}
 
         // Forward iterator requirements
         constexpr reference operator*() const noexcept {
@@ -49,23 +46,27 @@ namespace webpp {
             return current;
         }
 
-        constexpr unicode_iterator& operator++() noexcept {
+        constexpr iterator_type& operator++() noexcept {
             ++current;
             return *this;
         }
 
-        constexpr unicode_iterator operator++(int) noexcept {
-            return unicode_iterator(current++);
+        constexpr iterator_type operator++(int) const noexcept {
+            iterator_type new_it{current};
+            ++new_it;
+            return new_it;
         }
 
         // Bidirectional iterator requirements
-        constexpr unicode_iterator& operator--() noexcept {
+        constexpr iterator_type& operator--() noexcept {
             --current;
             return *this;
         }
 
-        constexpr unicode_iterator operator--(int) noexcept {
-            return unicode_iterator(current--);
+        constexpr iterator_type operator--(int) const noexcept {
+            iterator_type new_it(current);
+            --new_it;
+            return new_it;
         }
 
         // Random access iterator requirements
@@ -73,29 +74,28 @@ namespace webpp {
             return current[n];
         }
 
-        constexpr unicode_iterator& operator+=(difference_type n) noexcept {
+        constexpr iterator_type& operator+=(difference_type n) noexcept {
             current += n;
             return *this;
         }
 
-        constexpr unicode_iterator operator+(difference_type n) const noexcept {
-            return unicode_iterator(current + n);
+        constexpr iterator_type operator+(difference_type n) const noexcept {
+            return iterator_type(current + n);
         }
 
-        constexpr unicode_iterator& operator-=(difference_type n) noexcept {
+        constexpr iterator_type& operator-=(difference_type n) noexcept {
             current -= n;
             return *this;
         }
 
-        constexpr unicode_iterator operator-(difference_type n) const noexcept {
-            return unicode_iterator(current - n);
+        constexpr iterator_type operator-(difference_type n) const noexcept {
+            return iterator_type(current - n);
         }
 
         constexpr const pointer& base() const noexcept {
             return current;
         }
 
-        // todo: add comparison operators
 
         //        constexpr size_type operator-(difference_type other) const noexcept {
         //            uni_iterator_adapter a = *this;
@@ -122,20 +122,20 @@ namespace webpp {
         //        }
     };
 
-    template <typename IteratorL, typename IteratorR>
-    requires requires(IteratorL lhs, IteratorR rhs) {
+    template <typename CPL, typename CPR, typename CharTL, typename CharTR>
+    requires requires(CharTL lhs, CharTR rhs) {
         { lhs == rhs } -> stl::convertible_to<bool>;
     }
-    constexpr bool operator==(const unicode_iterator<IteratorL>& lhs,
-                              const unicode_iterator<IteratorR>& rhs) noexcept(noexcept(lhs.base() ==
-                                                                                        rhs.base())) {
+    constexpr bool operator==(const unicode_iterator<CPL, CharTL>& lhs,
+                              const unicode_iterator<CPR, CharTR>& rhs) noexcept(noexcept(lhs.base() ==
+                                                                                          rhs.base())) {
         return lhs.base() == rhs.base();
     }
 
-    template <typename IteratorL, typename IteratorR>
+    template <typename CPL, typename CPR, typename CharTL, typename CharTR>
     constexpr auto
-    operator<=>(const unicode_iterator<IteratorL>& lhs,
-                const unicode_iterator<IteratorR>& rhs) noexcept(noexcept(lhs.base() <=> rhs.base())) {
+    operator<=>(const unicode_iterator<CPL, CharTL>& lhs,
+                const unicode_iterator<CPR, CharTR>& rhs) noexcept(noexcept(lhs.base() <=> rhs.base())) {
         return lhs.base() <=> rhs.base();
     }
 
