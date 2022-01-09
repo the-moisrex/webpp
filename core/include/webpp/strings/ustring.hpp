@@ -203,24 +203,24 @@ namespace webpp {
         };
 
       public:
-        using value_type      = CharT;
+        using value_type = CharT;
 
         // code point type is the value that the user will get when it's run through an iterator.
         // It's CharT if CharT is not a storage unit, if it is, then it's storage_unit::code_point_type
         using code_point_type =
-        istl::lazy_conditional_t<is_storage_unit<value_type>,
-          istl::templated_lazy_type<lazy_code_point_extractor, value_type>,
-          istl::lazy_type<value_type>>;
-        using allocator_type  = typename alloc_traits::template rebind_alloc<value_type>;
-        using traits_type     = CharTraitsType;
-        using reference       = value_type&;
-        using const_reference = value_type const&;
-        using size_type       = typename stl::allocator_traits<allocator_type>::size_type;
-        using difference_type = typename stl::allocator_traits<allocator_type>::difference_type;
-        using pointer         = typename stl::allocator_traits<allocator_type>::pointer;
-        using const_pointer   = typename stl::allocator_traits<allocator_type>::const_pointer;
+          istl::lazy_conditional_t<is_storage_unit<value_type>,
+                                   istl::templated_lazy_type<lazy_code_point_extractor, value_type>,
+                                   istl::lazy_type<value_type>>;
+        using allocator_type         = typename alloc_traits::template rebind_alloc<value_type>;
+        using traits_type            = CharTraitsType;
+        using reference              = value_type&;
+        using const_reference        = value_type const&;
+        using size_type              = typename stl::allocator_traits<allocator_type>::size_type;
+        using difference_type        = typename stl::allocator_traits<allocator_type>::difference_type;
+        using pointer                = typename stl::allocator_traits<allocator_type>::pointer;
+        using const_pointer          = typename stl::allocator_traits<allocator_type>::const_pointer;
         using iterator               = unicode_iterator<code_point_type, value_type>;
-        using const_iterator         = unicode_iterator<const code_point_type, value_type>;
+        using const_iterator         = stl::add_const_t<iterator>;
         using reverse_iterator       = stl::reverse_iterator<iterator>;
         using const_reverse_iterator = stl::reverse_iterator<const_iterator>;
 
@@ -1001,7 +1001,7 @@ namespace webpp {
          *  character in the %string.
          */
         [[nodiscard]] const_iterator begin() const noexcept {
-            return const_iterator(data());
+            return const_iterator{data()};
         }
 
         /**
