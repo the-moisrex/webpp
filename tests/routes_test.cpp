@@ -16,8 +16,8 @@ struct fake_app {
     }
 };
 
-using request_type = fake_proto_request<std_traits, empty_extension_pack>;
-using context_type = simple_context<request_type>;
+//using request_type = fake_proto_request<std_traits, empty_extension_pack>;
+//using context_type = simple_context<request_type>;
 
 TEST(Routes, Path) {
     //    request_type req;

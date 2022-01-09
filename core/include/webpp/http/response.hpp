@@ -29,16 +29,6 @@ namespace webpp::http {
         body_type    body{};
         headers_type headers{};
 
-        template <typename... Args>
-        [[nodiscard]] constexpr static auto with_body(Args&&... args) {
-            return response_type{body_type{stl::forward<Args>(args)...}};
-        }
-
-        template <typename... Args>
-        [[nodiscard]] constexpr static auto with_headers(Args&&... args) {
-            return response_type{headers_type{stl::forward<Args>(args)...}};
-        }
-
         basic_response(auto&& arg1, auto&&... args) noexcept
           requires(!one_of<decltype(arg1), headers_type, http::status_code_type, body_type>)
           : elist_type{stl::forward<decltype(args)>(args)...} {}
@@ -110,9 +100,22 @@ namespace webpp::http {
         using elist_type                   = EList;
         using response_descriptor_type     = DescriptorType;
         using original_extension_pack_type = OriginalExtensionList;
+        using response_type = final_response<TraitsType, DescriptorType, OriginalExtensionList, EList>;
+        using body_type     = typename response_type::body_type;
+        using headers_type  = typename response_type::headers_type;
 
         using elist_type::elist_type;
 
+
+        template <typename... Args>
+        [[nodiscard]] constexpr static auto with_body(Args&&... args) {
+            return response_type{body_type{stl::forward<Args>(args)...}};
+        }
+
+        template <typename... Args>
+        [[nodiscard]] constexpr static auto with_headers(Args&&... args) {
+            return response_type{headers_type{stl::forward<Args>(args)...}};
+        }
 
         /**
          * Append some extensions to this context type and get the type back

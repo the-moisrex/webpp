@@ -211,6 +211,8 @@ namespace webpp {
         using traits_type  = TraitsType;
         using request_type = simple_request<traits_type, EList, fake_proto_request, EList>;
 
+        static_assert(HTTPRequest<request_type>, "request type is not request; why?");
+
         request_type req;
 
         template <typename... Args>
