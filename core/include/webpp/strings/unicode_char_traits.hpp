@@ -71,7 +71,7 @@ namespace webpp {
             const char_type* p = pp;
             while (!eq(*p, char_type())) {
                 if constexpr (sizeof(char_type) == sizeof(char8_t)) {
-                    if (*p < 0x80 || *p > 0xBF) {
+                    if (*p < static_cast<char_type>(0x80) || *p > static_cast<char_type>(0xBF)) {
                         // ascii or first byte of a multi byte sequence
                         ++i;
                     }
