@@ -16,7 +16,7 @@ namespace webpp {
         concept is_value = stl::is_integral_v<T>;
 
         template <typename T>
-        concept is_pointer = stl::is_pointer_v<T>&& is_value<stl::remove_pointer_t<T>>;
+        concept is_pointer = stl::is_pointer_v<T> && is_value<stl::remove_pointer_t<T>>;
 
 
     } // namespace details
@@ -37,8 +37,9 @@ namespace webpp {
         pointer       start;
 
         template <typename T>
-        requires (stl::same_as<T, value_type> || stl::same_as<T, code_point_type>)
-        constexpr stl::strong_ordering operator<=>(T val) const noexcept {
+        requires(stl::same_as<T, value_type> ||
+                 stl::same_as<T, code_point_type>) constexpr stl::strong_ordering
+        operator<=>(T val) const noexcept {
             if constexpr (stl::same_as<T, value_type>) {
                 return *start <=> val;
             } else {
@@ -101,7 +102,7 @@ namespace webpp {
 
 
         constexpr stl::strong_ordering operator<=>(glyph const&) const noexcept = default;
-        constexpr stl::strong_ordering operator<=>(pointer const&p) const noexcept {
+        constexpr stl::strong_ordering operator<=>(pointer const& p) const noexcept {
             return start <=> p;
         }
 
@@ -231,12 +232,13 @@ namespace webpp {
         }
 
         template <typename IntT>
-        constexpr stl::strong_ordering operator<=>(storage_unit<IntT> val) const noexcept {
+        requires(details::is_value<stl::remove_cvref_t<IntT>>) constexpr stl::strong_ordering
+        operator<=>(storage_unit<IntT> val) const noexcept {
             return value <=> static_cast<value_type>(val.value);
         }
 
         template <typename IntT>
-        requires(stl::is_integral_v<stl::remove_cvref_t<IntT>>) constexpr stl::strong_ordering
+        requires(details::is_value<stl::remove_cvref_t<IntT>>) constexpr stl::strong_ordering
         operator<=>(IntT&& val) const noexcept {
             return value <=> val;
         }
@@ -246,6 +248,11 @@ namespace webpp {
     using utf16_storage_unit  = storage_unit<char16_t, char32_t>;
     using utf32_storage_unit  = storage_unit<char32_t, char32_t>;
     using wchar_strorage_unit = storage_unit<wchar_t, wchar_t>;
+
+
+    template <typename T>
+    static constexpr bool is_storage_unit = istl::is_specialization_of_v<T, storage_unit>;
+
 
     static_assert(stl::is_standard_layout_v<storage_unit<>>, "The glyph won't work in std::basic_string");
     static_assert(stl::is_trivial_v<storage_unit<>>, "The glyph needs to be a trivial type");

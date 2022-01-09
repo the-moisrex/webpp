@@ -629,7 +629,7 @@ namespace webpp {
 
 
 
-
+      public:
         // Construct/copy/destroy:
         // NB: We overload ctors in some cases instead of using default
         // arguments, per 17.4.4.4 para. 2 item 2.
@@ -838,6 +838,28 @@ namespace webpp {
         requires(convertible_to_ustring_view<T>) explicit ustring(const T&              t,
                                                                   const allocator_type& a = allocator_type())
           : ustring(sv_wrapper(to_string_view(t)), a) {}
+
+
+        //        template <stl::size_t N>
+        //        explicit ustring(const value_type val[N], const allocator_type& a = allocator_type{})
+        //          : data_start{val},
+        //            alloc{a} {}
+
+
+        template <stl::size_t N>
+        explicit ustring(typename value_type::value_type const val[N],
+                         const allocator_type&                 a = allocator_type{})
+          : ustring{reinterpret_cast<value_type const*>(val), N, a} {}
+
+        explicit ustring(typename value_type::value_type const* val,
+                         const allocator_type&                  a = allocator_type{})
+          : ustring{reinterpret_cast<value_type const*>(val), a} {}
+
+        template <typename ValT>
+        requires(sizeof(ValT) == sizeof(typename value_type::value_type)) explicit ustring(
+          ValT const*           val,
+          const allocator_type& a = allocator_type{})
+          : ustring{reinterpret_cast<value_type const*>(val), a} {}
 
         /**
          *  @brief  Destroy the string instance.
@@ -3394,7 +3416,6 @@ namespace webpp {
         return lhs.compare(rhs) == 0;
     }
 
-#if __cpp_lib_three_way_comparison
     /**
      *  @brief  Three-way comparison of a string and a C string.
      *  @param lhs  A string.
@@ -3421,193 +3442,14 @@ namespace webpp {
       -> decltype(details::char_traits_cmp_cat<ChTraitsT>(0)) {
         return details::char_traits_cmp_cat<ChTraitsT>(lhs.compare(rhs));
     }
-#else
-    /**
-     *  @brief  Test equivalence of C string and string.
-     *  @param lhs  C string.
-     *  @param rhs  String.
-     *  @return  True if @a rhs.compare(@a lhs) == 0.  False otherwise.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline bool operator==(const CharT* lhs, const ustring<CharT, ChTraitsT, AllocT>& rhs) {
-        return rhs.compare(lhs) == 0;
-    }
 
-    // operator !=
-    /**
-     *  @brief  Test difference of two strings.
-     *  @param lhs  First string.
-     *  @param rhs  Second string.
-     *  @return  True if @a lhs.compare(@a rhs) != 0.  False otherwise.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline bool operator!=(const ustring<CharT, ChTraitsT, AllocT>& lhs,
-                           const ustring<CharT, ChTraitsT, AllocT>& rhs) noexcept {
-        return !(lhs == rhs);
-    }
+    // template <typename CharT, typename ChTraitsT, typename AllocT, typename CharT2>
+    // requires(sizeof(CharT2) == sizeof(CharT)) inline auto
+    // operator<=>(const ustring<CharT, ChTraitsT, AllocT>& lhs, const CharT2* rhs) noexcept
+    //   -> decltype(details::char_traits_cmp_cat<ChTraitsT>(0)) {
+    //     return details::char_traits_cmp_cat<ChTraitsT>(lhs.compare(reinterpret_cast<const CharT*>(rhs)));
+    // }
 
-    /**
-     *  @brief  Test difference of C string and string.
-     *  @param lhs  C string.
-     *  @param rhs  String.
-     *  @return  True if @a rhs.compare(@a lhs) != 0.  False otherwise.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline bool operator!=(const CharT* lhs, const ustring<CharT, ChTraitsT, AllocT>& rhs) {
-        return !(lhs == rhs);
-    }
-
-    /**
-     *  @brief  Test difference of string and C string.
-     *  @param lhs  String.
-     *  @param rhs  C string.
-     *  @return  True if @a lhs.compare(@a rhs) != 0.  False otherwise.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline bool operator!=(const ustring<CharT, ChTraitsT, AllocT>& lhs, const CharT* rhs) {
-        return !(lhs == rhs);
-    }
-
-    // operator <
-    /**
-     *  @brief  Test if string precedes string.
-     *  @param lhs  First string.
-     *  @param rhs  Second string.
-     *  @return  True if @a lhs precedes @a rhs.  False otherwise.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline bool operator<(const ustring<CharT, ChTraitsT, AllocT>& lhs,
-                          const ustring<CharT, ChTraitsT, AllocT>& rhs) noexcept {
-        return lhs.compare(rhs) < 0;
-    }
-
-    /**
-     *  @brief  Test if string precedes C string.
-     *  @param lhs  String.
-     *  @param rhs  C string.
-     *  @return  True if @a lhs precedes @a rhs.  False otherwise.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline bool operator<(const ustring<CharT, ChTraitsT, AllocT>& lhs, const CharT* rhs) {
-        return lhs.compare(rhs) < 0;
-    }
-
-    /**
-     *  @brief  Test if C string precedes string.
-     *  @param lhs  C string.
-     *  @param rhs  String.
-     *  @return  True if @a lhs precedes @a rhs.  False otherwise.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline bool operator<(const CharT* lhs, const ustring<CharT, ChTraitsT, AllocT>& rhs) {
-        return rhs.compare(lhs) > 0;
-    }
-
-    // operator >
-    /**
-     *  @brief  Test if string follows string.
-     *  @param lhs  First string.
-     *  @param rhs  Second string.
-     *  @return  True if @a lhs follows @a rhs.  False otherwise.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline bool operator>(const ustring<CharT, ChTraitsT, AllocT>& lhs,
-                          const ustring<CharT, ChTraitsT, AllocT>& rhs) noexcept {
-        return lhs.compare(rhs) > 0;
-    }
-
-    /**
-     *  @brief  Test if string follows C string.
-     *  @param lhs  String.
-     *  @param rhs  C string.
-     *  @return  True if @a lhs follows @a rhs.  False otherwise.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline bool operator>(const ustring<CharT, ChTraitsT, AllocT>& lhs, const CharT* rhs) {
-        return lhs.compare(rhs) > 0;
-    }
-
-    /**
-     *  @brief  Test if C string follows string.
-     *  @param lhs  C string.
-     *  @param rhs  String.
-     *  @return  True if @a lhs follows @a rhs.  False otherwise.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline bool operator>(const CharT* lhs, const ustring<CharT, ChTraitsT, AllocT>& rhs) {
-        return rhs.compare(lhs) < 0;
-    }
-
-    // operator <=
-    /**
-     *  @brief  Test if string doesn't follow string.
-     *  @param lhs  First string.
-     *  @param rhs  Second string.
-     *  @return  True if @a lhs doesn't follow @a rhs.  False otherwise.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline bool operator<=(const ustring<CharT, ChTraitsT, AllocT>& lhs,
-                           const ustring<CharT, ChTraitsT, AllocT>& rhs) noexcept {
-        return lhs.compare(rhs) <= 0;
-    }
-
-    /**
-     *  @brief  Test if string doesn't follow C string.
-     *  @param lhs  String.
-     *  @param rhs  C string.
-     *  @return  True if @a lhs doesn't follow @a rhs.  False otherwise.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline bool operator<=(const ustring<CharT, ChTraitsT, AllocT>& lhs, const CharT* rhs) {
-        return lhs.compare(rhs) <= 0;
-    }
-
-    /**
-     *  @brief  Test if C string doesn't follow string.
-     *  @param lhs  C string.
-     *  @param rhs  String.
-     *  @return  True if @a lhs doesn't follow @a rhs.  False otherwise.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline bool operator<=(const CharT* lhs, const ustring<CharT, ChTraitsT, AllocT>& rhs) {
-        return rhs.compare(lhs) >= 0;
-    }
-
-    // operator >=
-    /**
-     *  @brief  Test if string doesn't precede string.
-     *  @param lhs  First string.
-     *  @param rhs  Second string.
-     *  @return  True if @a lhs doesn't precede @a rhs.  False otherwise.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline bool operator>=(const ustring<CharT, ChTraitsT, AllocT>& lhs,
-                           const ustring<CharT, ChTraitsT, AllocT>& rhs) noexcept {
-        return lhs.compare(rhs) >= 0;
-    }
-
-    /**
-     *  @brief  Test if string doesn't precede C string.
-     *  @param lhs  String.
-     *  @param rhs  C string.
-     *  @return  True if @a lhs doesn't precede @a rhs.  False otherwise.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline bool operator>=(const ustring<CharT, ChTraitsT, AllocT>& lhs, const CharT* rhs) {
-        return lhs.compare(rhs) >= 0;
-    }
-
-    /**
-     *  @brief  Test if C string doesn't precede string.
-     *  @param lhs  C string.
-     *  @param rhs  String.
-     *  @return  True if @a lhs doesn't precede @a rhs.  False otherwise.
-     */
-    template <typename CharT, typename ChTraitsT, typename AllocT>
-    inline bool operator>=(const CharT* lhs, const ustring<CharT, ChTraitsT, AllocT>& rhs) {
-        return rhs.compare(lhs) <= 0;
-    }
-#endif // three-way comparison
 
     /**
      *  @brief  Swap contents of two strings.

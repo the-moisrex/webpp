@@ -13,7 +13,8 @@ TEST(UString, UTF8_Init) {
     utf8 three{u8"سلام"};
     EXPECT_EQ(one, "hello world");
     EXPECT_EQ(two, "hello world");
-    EXPECT_EQ(three,u8"سلام");
+    EXPECT_EQ(three, u8"سلام");
+    EXPECT_EQ(three, "سلام"); // super weird stuff, I know
 }
 
 /*
