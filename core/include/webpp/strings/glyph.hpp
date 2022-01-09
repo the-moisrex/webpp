@@ -231,18 +231,37 @@ namespace webpp {
             return static_cast<IntType>(value);
         }
 
-        template <typename IntT>
-        requires(details::is_value<stl::remove_cvref_t<IntT>>) constexpr stl::strong_ordering
-        operator<=>(storage_unit<IntT> val) const noexcept {
-            return value <=> static_cast<value_type>(val.value);
-        }
+        constexpr bool operator==(storage_unit const& val) const noexcept = default;
+
 
         template <typename IntT>
         requires(details::is_value<stl::remove_cvref_t<IntT>>) constexpr stl::strong_ordering
         operator<=>(IntT&& val) const noexcept {
             return value <=> val;
         }
+
+        template <typename IntT>
+        requires(details::is_value<stl::remove_cvref_t<IntT>>) constexpr stl::strong_ordering
+        operator<=>(storage_unit<IntT> val) const noexcept {
+            return value <=> static_cast<value_type>(val.value);
+        }
     };
+
+
+
+    template <typename CharT, typename CodePointT>
+    constexpr bool operator==(CharT lhs, const storage_unit<CharT, CodePointT>& rhs) noexcept {
+        return rhs == lhs;
+    }
+
+    template <typename ChT, typename CharT, typename CodePointT>
+    requires requires(ChT str, CharT val) {
+        static_cast<CharT>(str) <=> val;
+    }
+    constexpr auto operator<=>(ChT&& str, const storage_unit<CharT, CodePointT>& unit) noexcept {
+        return static_cast<CharT>(str) == unit.value;
+    }
+
 
     using utf8_storage_unit   = storage_unit<char8_t, char32_t>;
     using utf16_storage_unit  = storage_unit<char16_t, char32_t>;

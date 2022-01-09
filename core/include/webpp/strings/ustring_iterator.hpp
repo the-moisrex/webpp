@@ -122,6 +122,22 @@ namespace webpp {
         //        }
     };
 
+    template <typename IteratorL, typename IteratorR>
+    requires requires(IteratorL lhs, IteratorR rhs) {
+        { lhs == rhs } -> stl::convertible_to<bool>;
+    }
+    constexpr bool operator==(const unicode_iterator<IteratorL>& lhs,
+                              const unicode_iterator<IteratorR>& rhs) noexcept(noexcept(lhs.base() ==
+                                                                                        rhs.base())) {
+        return lhs.base() == rhs.base();
+    }
+
+    template <typename IteratorL, typename IteratorR>
+    constexpr auto
+    operator<=>(const unicode_iterator<IteratorL>& lhs,
+                const unicode_iterator<IteratorR>& rhs) noexcept(noexcept(lhs.base() <=> rhs.base())) {
+        return lhs.base() <=> rhs.base();
+    }
 
 
 } // namespace webpp

@@ -3416,6 +3416,14 @@ namespace webpp {
         return lhs.compare(rhs) == 0;
     }
 
+
+    template <typename CharT, typename ChTraitsT, typename AllocT, typename CharT2>
+    requires(sizeof(CharT) == sizeof(CharT2)) inline bool
+    operator==(const ustring<CharT, ChTraitsT, AllocT>& lhs, const CharT2* rhs) {
+        return lhs.compare(reinterpret_cast<const CharT*>(rhs)) == 0;
+    }
+
+
     /**
      *  @brief  Three-way comparison of a string and a C string.
      *  @param lhs  A string.
