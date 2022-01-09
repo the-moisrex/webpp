@@ -165,36 +165,36 @@ namespace webpp::modp_b64 {
 
         if (len > 2) {
             for (; i < len - 2; i += 3) {
-                t1   = str[i];
-                t2   = str[i + 1];
-                t3   = str[i + 2];
-                *p++ = e0[t1];
-                *p++ = e1[((t1 & 0x03) << 4) | ((t2 >> 4) & 0x0F)];
-                *p++ = e1[((t2 & 0x0F) << 2) | ((t3 >> 6) & 0x03)];
-                *p++ = e2[t3];
+                t1   = static_cast<std::uint8_t>(str[i]);
+                t2   = static_cast<std::uint8_t>(str[i + 1]);
+                t3   = static_cast<std::uint8_t>(str[i + 2]);
+                *p++ = static_cast<std::uint8_t>(e0[t1]);
+                *p++ = static_cast<std::uint8_t>(e1[((t1 & 0x03) << 4) | ((t2 >> 4) & 0x0F)]);
+                *p++ = static_cast<std::uint8_t>(e1[((t2 & 0x0F) << 2) | ((t3 >> 6) & 0x03)]);
+                *p++ = static_cast<std::uint8_t>(e2[t3]);
             }
         }
 
         switch (len - i) {
             case 0: break;
             case 1:
-                t1   = str[i];
-                *p++ = e0[t1];
-                *p++ = e1[(t1 & 0x03) << 4];
+                t1   = static_cast<std::uint8_t>(str[i]);
+                *p++ = static_cast<std::uint8_t>(e0[t1]);
+                *p++ = static_cast<std::uint8_t>(e1[(t1 & 0x03) << 4]);
                 *p++ = CHARPAD;
                 *p++ = CHARPAD;
                 break;
             default: /* case 2 */
-                t1   = str[i];
-                t2   = str[i + 1];
-                *p++ = e0[t1];
-                *p++ = e1[((t1 & 0x03) << 4) | ((t2 >> 4) & 0x0F)];
-                *p++ = e2[(t2 & 0x0F) << 2];
+                t1   = static_cast<std::uint8_t>(str[i]);
+                t2   = static_cast<std::uint8_t>(str[i + 1]);
+                *p++ = static_cast<std::uint8_t>(e0[t1]);
+                *p++ = static_cast<std::uint8_t>(e1[((t1 & 0x03) << 4) | ((t2 >> 4) & 0x0F)]);
+                *p++ = static_cast<std::uint8_t>(e2[(t2 & 0x0F) << 2]);
                 *p++ = CHARPAD;
         }
 
         *p = '\0';
-        return p - reinterpret_cast<std::uint8_t*>(dest);
+        return static_cast<std::size_t>(p - reinterpret_cast<std::uint8_t*>(dest));
     }
 
 
