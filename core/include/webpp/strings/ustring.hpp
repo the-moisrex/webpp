@@ -9,6 +9,14 @@
 #include "unicode_char_traits.hpp"
 #include "ustring_iterator.hpp"
 
+/**
+ * Resources to use for optimization purposes:
+ * CppCon 2018: Bob Steagall “Fast Conversion From UTF-8 with C++, DFAs, and SSE Intrinsics”
+ * https://youtu.be/5FQ87-Ecb-A
+ * https://github.com/BobSteagall/utf_utils
+ * https://github.com/tzlaine/text
+ *
+ */
 namespace webpp {
 
     template <Allocator AllocType = stl::allocator<unicode::storage_unit<>>>
