@@ -8,6 +8,8 @@
 #    define has_compare
 #endif
 
+#include "unicode.hpp"
+
 #include <algorithm>
 
 namespace webpp {
@@ -31,7 +33,7 @@ namespace webpp {
     };
 
 
-    template <typename CharT = char8_t>
+    template <typename CharT>
     struct unicode_char_traits {
         using char_type  = CharT;
         using int_type   = typename char_types<CharT>::int_type;
@@ -67,24 +69,25 @@ namespace webpp {
         }
 
         static constexpr stl::size_t length(const char_type* pp) noexcept {
-            stl::size_t      i = 0;
-            const char_type* p = pp;
-            while (!eq(*p, char_type())) {
-                if constexpr (sizeof(char_type) == sizeof(char8_t)) {
-                    if (*p < static_cast<char_type>(0x80) || *p > static_cast<char_type>(0xBF)) {
-                        // ascii or first byte of a multi byte sequence
-                        ++i;
-                    }
-                } else if constexpr (sizeof(char_type) == sizeof(char16_t)) {
-                    if (*p < 0xDC00 || *p > 0xDFFF) {
-                        ++i;
-                    }
-                } else {
-                    ++i;
-                }
-                ++p;
-            }
-            return i;
+            return unicode::unchecked::count(pp);
+            // stl::size_t      i = 0;
+            // const char_type* p = pp;
+            // while (!eq(*p, char_type())) {
+            //     if constexpr (sizeof(char_type) == sizeof(char8_t)) {
+            //         if (*p < static_cast<char_type>(0x80) || *p > static_cast<char_type>(0xBF)) {
+            //             // ascii or first byte of a multi byte sequence
+            //             ++i;
+            //         }
+            //     } else if constexpr (sizeof(char_type) == sizeof(char16_t)) {
+            //         if (*p < 0xDC00 || *p > 0xDFFF) {
+            //             ++i;
+            //         }
+            //     } else {
+            //         ++i;
+            //     }
+            //     ++p;
+            // }
+            // return i;
         }
 
 
@@ -100,7 +103,7 @@ namespace webpp {
         static constexpr char_type* move(char_type* s1, const char_type* s2, stl::size_t n) {
             if (n == 0)
                 return s1;
-#ifdef cpp_lib_is_constant_evaluated
+#ifdef __cpp_lib_is_constant_evaluated
             if (stl::is_constant_evaluated()) {
                 if (s1 > s2 && s1 < s2 + n)
                     stl::copy_backward(s2, s2 + n, s1);
@@ -140,7 +143,7 @@ namespace webpp {
         }
 
         static constexpr int_type eof() {
-            return static_cast<int_type>(_GLIBCXX_STDIO_EOF);
+            return static_cast<int_type>(-1);
         }
 
         static constexpr int_type not_eof(const int_type& c) {

@@ -4,7 +4,7 @@
 #define WEBPP_USTRING_ITERATOR_HPP
 
 #include "../std/type_traits.hpp"
-#include "glyph.hpp"
+#include "unicode_ptr.hpp"
 
 #include <iterator>
 
@@ -23,7 +23,7 @@ namespace webpp {
         using value_type        = CharT;
         using difference_type   = stl::ptrdiff_t;
         using reference         = stl::add_lvalue_reference_t<value_type>;
-        using pointer           = stl::add_pointer_t<value_type>;
+        using pointer           = typename stl::iterator_traits<value_type>::pointer;
         using iterator_category = stl::random_access_iterator_tag;
         using iterator_concept  = stl::random_access_iterator_tag;
 
@@ -52,9 +52,7 @@ namespace webpp {
         }
 
         constexpr iterator_type operator++(int) const noexcept {
-            iterator_type new_it{current};
-            ++new_it;
-            return new_it;
+            return iterator_type{current}.operator++();
         }
 
         // Bidirectional iterator requirements
@@ -64,9 +62,7 @@ namespace webpp {
         }
 
         constexpr iterator_type operator--(int) const noexcept {
-            iterator_type new_it(current);
-            --new_it;
-            return new_it;
+            return iterator_type(current).operator--();
         }
 
         // Random access iterator requirements

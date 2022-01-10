@@ -3,17 +3,109 @@
 #ifndef WEBPP_USTRING_HPP
 #define WEBPP_USTRING_HPP
 
+#include "../memory/allocator_concepts.hpp"
 #include "../std/format.hpp"
+#include "../std/memory_resource.hpp"
 #include "unicode_char_traits.hpp"
 #include "ustring_iterator.hpp"
 
 namespace webpp {
 
-#ifdef __CHAR_BIT__
+    template <Allocator AllocType = stl::allocator<unicode::storage_unit<>>>
+    struct ustring_allocator_wrapper : AllocType {
+        using parent_allocator_type   = AllocType;
+        using parent_value_type       = typename parent_allocator_type::value_type;
+        using parent_allocator_traits = stl::allocator_traits<parent_allocator_type>;
+
+        using wrapper_type = ustring_allocator_wrapper<AllocType>;
+
+        static_assert(unicode::is_storage_unit_v<parent_value_type>,
+                      "The specified allocator is not usable for ustring");
+
+        // this right here is the point of the whole wrapper:
+        using pointer       = typename parent_value_type::pointer;
+        using const_pointer = stl::add_const_t<typename pointer::const_pointer>;
+
+        // we need this, because if we don't do this, the "rebind" will use the AllocType and not the
+        // wrapped version of AllocType after the "rebind".
+        template <typename... T>
+        struct rebind {
+            using other =
+              ustring_allocator_wrapper<typename parent_allocator_traits::template rebind_alloc<T...>>;
+        };
+
+        using AllocType::AllocType;
+    };
+
+
+    template <unicode::StorageUnit CharT     = unicode::storage_unit<>,
+              Allocator            AllocType = stl::allocator<CharT>>
+    struct ustring
+      : stl::basic_string<CharT, unicode_char_traits<CharT>, ustring_allocator_wrapper<AllocType>> {
+        using basic_string_type =
+          stl::basic_string<CharT, unicode_char_traits<CharT>, ustring_allocator_wrapper<AllocType>>;
+
+
+        using value_type     = typename basic_string_type::value_type;
+        using allocator_type = typename basic_string_type::allocator_type;
+        using unit_type      = typename value_type::char_type;
+        using pointer        = typename basic_string_type::pointer;
+        using const_pointer  = typename basic_string_type::const_pointer;
+
+
+        static_assert(unicode::is_storage_unit_v<value_type>,
+                      "The specified value type is not a ustring storage unit");
+
+        template <typename T>
+        static constexpr bool same_size_unit = sizeof(T) == sizeof(unit_type);
+
+        // ctor
+        using stl::basic_string<CharT, unicode_char_traits<CharT>, ustring_allocator_wrapper<AllocType>>::
+          basic_string;
+
+
+        template <typename NewCharT>
+        requires(same_size_unit<NewCharT>) // both are the same size
+          explicit ustring(NewCharT const* val, const allocator_type& a = allocator_type{})
+          : ustring{reinterpret_cast<value_type const*>(val), a} {}
+
+        template <typename NewCharT>
+        requires(same_size_unit<NewCharT> && !stl::same_as<NewCharT, value_type>) // both are the same size
+          constexpr auto
+          operator==(NewCharT const* val) noexcept {
+            return *this == reinterpret_cast<value_type const*>(val);
+        }
+
+        template <typename NewCharT>
+        requires(same_size_unit<NewCharT> && !stl::same_as<NewCharT, value_type>) // both are the same size
+          constexpr auto
+          operator<=>(NewCharT const* val) noexcept {
+            return *this <=> reinterpret_cast<value_type const*>(val);
+        }
+    };
+
+
+    //    template <typename NewCharT, typename CharT, typename ChTraitsT, typename AllocT>
+    //    constexpr auto operator==(NewCharT const* val, const ustring<CharT, ChTraitsT, AllocT>& rhs)
+    //    noexcept {
+    //        return rhs == val;
+    //    }
+    //
+    //    template <typename NewCharT, typename CharT, typename ChTraitsT, typename AllocT>
+    //    constexpr auto operator==(const ustring<CharT, ChTraitsT, AllocT>& lhs, NewCharT const* val)
+    //    noexcept {
+    //        return lhs.operator==(val);
+    //    }
+
+
+#if false
+
+
+#    ifdef __CHAR_BIT__
     static constexpr unsigned char_bits = __CHAR_BIT__;
-#else
+#    else
     static constexpr unsigned char_bits = 8;
-#endif
+#    endif
 
     namespace details {
 
@@ -151,7 +243,7 @@ namespace webpp {
         };
 
 
-#if __cpp_lib_three_way_comparison
+#    if __cpp_lib_three_way_comparison
         template <typename ChTraits>
         constexpr auto char_traits_cmp_cat(int cmp) noexcept {
             if constexpr (requires { typename ChTraits::comparison_category; }) {
@@ -162,7 +254,7 @@ namespace webpp {
                 return static_cast<stl::weak_ordering>(cmp <=> 0);
             }
         }
-#endif // C++20
+#    endif // C++20
 
     } // namespace details
 
@@ -219,8 +311,8 @@ namespace webpp {
         using difference_type        = typename stl::allocator_traits<allocator_type>::difference_type;
         using pointer                = typename stl::allocator_traits<allocator_type>::pointer;
         using const_pointer          = typename stl::allocator_traits<allocator_type>::const_pointer;
-        using iterator               = unicode_iterator<code_point_type, value_type>;
-        using const_iterator         = stl::add_const_t<iterator>;
+        using iterator               = <pointer, value_type>;
+        using const_iterator         = unicode_iterator<const_pointer, value_type>;
         using reverse_iterator       = stl::reverse_iterator<iterator>;
         using const_reverse_iterator = stl::reverse_iterator<const_iterator>;
 
@@ -1148,13 +1240,13 @@ namespace webpp {
 
         ///  A non-binding request to reduce capacity() to size().
         void shrink_to_fit() noexcept {
-#if cpp_exceptions
+#    if cpp_exceptions
             if (capacity() > size()) {
                 try {
                     reserve(0);
                 } catch (...) {}
             }
-#endif
+#    endif
         }
 
         /**
@@ -3141,9 +3233,9 @@ namespace webpp {
          *  ordered first.
          */
         [[nodiscard]] int compare(const value_type* s) const noexcept {
-#ifdef __glibcxx_requires_string
+#    ifdef __glibcxx_requires_string
             __glibcxx_requires_string(s);
-#endif
+#    endif
             const size_type size  = this->size();
             const size_type osize = traits_type::length(s);
             const size_type len   = stl::min(size, osize);
@@ -3576,7 +3668,7 @@ namespace webpp {
     ustring<CharT, ChTraitsT, AllocT>::copy(CharT* s, size_type n, size_type pos) const {
         check(pos, "ustring::copy");
         n = limit(pos, n);
-        glibcxx_requires_string_len(s, n);
+        __glibcxx_requires_string_len(s, n);
         if (n)
             copy(s, data() + pos, n);
         // 21.3.5.7 par 3: do not append null.  (good.)
@@ -3857,28 +3949,33 @@ namespace webpp {
     //#endif // _GLIBCXX_EXTERN_TEMPLATE
     //
 
-    using utf8  = ustring<utf8_storage_unit>;
-    using utf16 = ustring<utf16_storage_unit>;
-    using utf32 = ustring<utf32_storage_unit>;
+#endif
 
+    template <Allocator AllocT = stl::allocator<unicode::utf8_storage_unit>>
+    using utf8 = ustring<unicode::utf8_storage_unit, AllocT>;
+
+    template <Allocator AllocT = stl::allocator<unicode::utf16_storage_unit>>
+    using utf16 = ustring<unicode::utf16_storage_unit, AllocT>;
+
+    template <Allocator AllocT = stl::allocator<unicode::utf32_storage_unit>>
+    using utf32 = ustring<unicode::utf32_storage_unit, AllocT>;
+
+#if false and __cpp_lib_memory_resource
     namespace pmr {
-        using namespace stl::pmr;
+        using namespace std::pmr;
 
-        template <typename T>
+        template <typename T = stl::byte>
         struct polymorphic_allocator;
 
-        using utf8  = ustring<utf8_storage_unit,
-                             unicode_char_traits<utf8_storage_unit>,
-                             polymorphic_allocator<utf8_storage_unit>>;
-        using utf16 = ustring<utf16_storage_unit,
-                              unicode_char_traits<utf16_storage_unit>,
-                              polymorphic_allocator<utf16_storage_unit>>;
-        using utf32 = ustring<utf32_storage_unit,
-                              unicode_char_traits<utf32_storage_unit>,
-                              polymorphic_allocator<utf32_storage_unit>>;
+        using utf8 =
+          ustring<unicode::utf8_storage_unit, polymorphic_allocator<>>;
+        using utf16 =
+          ustring<unicode::utf16_storage_unit, polymorphic_allocator<>>;
+        using utf32 =
+          ustring<unicode::utf32_storage_unit, polymorphic_allocator<>>;
     } // namespace pmr
+#endif
 
 } // namespace webpp
-
 
 #endif // WEBPP_USTRING_HPP
