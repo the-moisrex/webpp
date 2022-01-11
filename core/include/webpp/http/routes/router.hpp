@@ -88,7 +88,6 @@ namespace webpp::http {
             using context_type      = remove_cvref_t<CtxT>;
             using local_string_type = typename context_type::string_type;
             using response_type     = typename context_type::response_type;
-            using body_type         = typename response_type::body_type;
 
             if constexpr (HTTPResponse<result_type> || istl::Optional<result_type>) {
                 return res; // let the "next_route" function handle it

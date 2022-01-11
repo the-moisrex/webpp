@@ -18,8 +18,6 @@ namespace webpp::http {
 
         struct json_response_body_extension {
 
-            // we're going to use "string extension" as a place to store the data
-            using dependencies = extension_pack<string_response_body_extension>;
 
             template <Traits TraitsType, ResponseBody BodyType>
             struct type : BodyType {
@@ -31,11 +29,23 @@ namespace webpp::http {
                 using allocator_type     = typename super::allocator_type;
                 using string_type        = typename super::string_type;
                 using json_document_type = json::document<traits_type>;
+                using json_value_type    = typename json_document_type::value_type;
+                using json_object_type   = typename json_document_type::object_type;
+                using json_array_type    = typename json_document_type::array_type;
 
               private:
                 using alloc_type = allocator_type const&;
 
               public:
+                constexpr type(json_array_type const& arr, alloc_type alloc = allocator_type{})
+                  : super{arr.template to_string<string_type>(alloc), alloc} {}
+
+                constexpr type(json_value_type const& val, alloc_type alloc = allocator_type{})
+                  : super{val.template to_string<string_type>(alloc), alloc} {}
+
+                constexpr type(json_object_type const& obj, alloc_type alloc = allocator_type{})
+                  : super{obj.template to_string<string_type>(alloc), alloc} {}
+
                 constexpr type(json_document_type const& doc, alloc_type alloc = allocator_type{})
                   : super{doc.template to_string<string_type>(alloc), alloc} {}
             };
@@ -58,7 +68,7 @@ namespace webpp::http {
 
                 template <istl::StringViewifiable StrT>
                 constexpr HTTPResponse auto json_file(StrT&& file_path) const noexcept {
-                    // todo
+                    return json(stl::filesystem::path{istl::string_viewify(stl::forward<StrT>(file_path))});
                 }
 
                 template <typename... Args>
@@ -101,6 +111,9 @@ namespace webpp::http {
      * String Response Extension Pack.
      */
     struct json_response {
+        // we're going to use "string extension" as a place to store the data
+        using dependencies = extension_pack<string_response>;
+
         using response_body_extensions = extension_pack<details::json_response_body_extension>;
         using response_extensions      = extension_pack<details::json_response_extension>;
         using context_extensions       = extension_pack<details::json_context_extension>;
