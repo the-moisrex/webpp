@@ -152,11 +152,9 @@ namespace webpp {
         allocator_type alloc;
     };
 
-    struct nothing_type {};
-
     template <typename AllocType, bool Mutable>
     using conditional_allocator_holder =
-      stl::conditional_t<Mutable, allocator_holder<AllocType>, nothing_type>;
+      stl::conditional_t<Mutable, allocator_holder<AllocType>, istl::nothing_type>;
 
 } // namespace webpp
 
