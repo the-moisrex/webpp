@@ -139,8 +139,8 @@ namespace webpp {
             if constexpr (stl::is_same_v<T, allocator_value_type>) {
                 return alloc;
             } else {
-                return rebind_allocator<allocator_type, T>(
-                  alloc); // using copy ctor, so this should work for most allocator types
+                // using copy ctor, so this should work for most allocator types
+                return rebind_allocator<allocator_type, T>(alloc);
             }
         }
 

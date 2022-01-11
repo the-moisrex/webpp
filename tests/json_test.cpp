@@ -75,3 +75,17 @@ TEST(JSONTest, Fields) {
     // let's first fix other issues then we'd add object
     // object(username, user_id, emails);
 }
+
+
+TEST(JSONTest, Create) {
+    document doc;
+    ASSERT_NO_FATAL_FAILURE(doc["dummy"]);
+    doc["page"] = "/about";
+    doc["username"] = "admin";
+    doc["id"] = 313;
+    doc["friends"] = stl::array{"Jason", "Jane", "Amy", "Rose"};
+    EXPECT_EQ(doc["page"], "/about");
+    EXPECT_TRUE(doc.contains("friends"));
+    EXPECT_TRUE(doc["username"].is_string());
+}
+
