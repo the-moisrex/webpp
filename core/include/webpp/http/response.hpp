@@ -104,8 +104,8 @@ namespace webpp::http {
         using body_type     = typename response_type::body_type;
         using headers_type  = typename response_type::headers_type;
 
-        static_assert(ResponseBody<body_type>, "Body is not a valid body type.");
-        static_assert(Header<headers_type>, "Header is not a valid header.");
+        static_assert(HTTPResponseBody<body_type>, "Body is not a valid body type.");
+        static_assert(HTTPHeader<headers_type>, "Header is not a valid header.");
 
         using EList::EList;
 

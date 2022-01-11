@@ -69,7 +69,6 @@ namespace webpp::http {
 
     struct response_header_field_descriptor {
 
-
         template <typename ExtensionType>
         using extractor_type = typename ExtensionType::response_header_field_extensions;
 

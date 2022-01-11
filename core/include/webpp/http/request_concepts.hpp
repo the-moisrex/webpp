@@ -59,15 +59,6 @@ namespace webpp::http {
     concept HTTPRequestBodyExtensionList = ExtensionList<T>;
 
 
-    /**
-     * This is an HTTP Header Field concept.
-     */
-    template <typename T>
-    concept HTTPHeaderField = requires(T field) {
-        { field.name } -> istl::StringViewifiable;
-        { field.value } -> istl::StringViewifiable;
-    };
-
 } // namespace webpp::http
 
 #endif // WEBPP_REQUEST_CONCEPTS_H

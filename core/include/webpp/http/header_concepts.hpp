@@ -10,20 +10,19 @@
 namespace webpp::http {
 
     template <typename T>
-    concept Header = requires(T h) {
+    concept HTTPHeader = requires(T h) {
         requires Traits<typename T::traits_type>;
-        {T::header_direction};
-        { T::is_mutable } -> stl::same_as<bool>;
+        { h.str() } -> istl::StringViewifiable;
     };
 
     template <typename T>
-    concept HeaderField = requires(T f) {
+    concept HTTPHeaderField = requires(T f) {
         requires Traits<typename T::traits_type>;
-        T::header_direction;
-        { T::is_mutable } -> stl::same_as<bool>;
         requires requires(traits::string_view<typename T::traits_type> str_view) {
             { f.is_name(str_view) } -> stl::same_as<bool>;
         };
+        { f.name } -> istl::StringViewifiable;
+        { f.value } -> istl::StringViewifiable;
     };
 
 } // namespace webpp::http

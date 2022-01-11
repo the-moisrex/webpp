@@ -19,7 +19,7 @@ namespace webpp::http {
         struct json_response_body_extension {
 
 
-            template <Traits TraitsType, ResponseBody BodyType>
+            template <Traits TraitsType, HTTPResponseBody BodyType>
             struct type : BodyType {
               private:
                 using super = BodyType;
@@ -37,6 +37,8 @@ namespace webpp::http {
                 using alloc_type = allocator_type const&;
 
               public:
+                using BodyType::BodyType;
+
                 constexpr type(json_array_type const& arr, alloc_type alloc = allocator_type{})
                   : super{arr.template to_string<string_type>(alloc), alloc} {}
 
