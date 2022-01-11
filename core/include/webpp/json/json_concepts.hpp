@@ -123,7 +123,7 @@ namespace webpp::json {
      * Check if it's a json key
      */
     template <typename T>
-    concept JSONKey = JSONString<T> || JSONNumber<T>;
+    concept JSONKey = JSONString<stl::remove_cvref_t<T>> || JSONNumber<stl::remove_cvref_t<T>>;
 
     /**
      * This is a JSON Value,

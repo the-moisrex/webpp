@@ -64,6 +64,7 @@ namespace webpp::http {
                 using context_type       = stl::remove_cvref_t<ContextType>;
                 using traits_type        = TraitsType;
                 using json_response_type = typename context_type::response_type;
+                using json_document_type = json::document<traits_type>;
                 // ::template apply_extensions_type<details::json_response_body_extension>;
 
                 using context_type::context_type; // inherit the constructors
@@ -89,6 +90,11 @@ namespace webpp::http {
                     } else {
                         return json_response_type::with_body(stl::forward<Args>(args)...);
                     }
+                }
+
+
+                constexpr json_document_type json_doc() const {
+                    return object::make_general<json_document_type>(*this);
                 }
             };
         };

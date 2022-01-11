@@ -5,6 +5,7 @@
 
 #if __has_include(<rapidjson/document.h>)
 #    define WEBPP_RAPIDJSON_READY
+#    include "../common/meta.hpp"
 #    include "../memory/buffer.hpp"
 #    include "../std/string.hpp"
 #    include "../std/string_view.hpp"
@@ -433,6 +434,11 @@ namespace webpp::json::rapidjson {
                 return *this;
             }
 
+            auto& set_object() {
+                val_handle.SetObject();
+                return *this;
+            }
+
             template <istl::String StrT = string_type, typename... Args>
             StrT pretty(Args&&... string_args) const {
                 StrT output{stl::forward<Args>(string_args)...};
@@ -558,13 +564,22 @@ namespace webpp::json::rapidjson {
             [[nodiscard]] value_type operator[](KeyType&& key) {
                 if constexpr (JSONNumber<KeyType>) {
                     // fixme: write tests for this, this will run the "index" version, right?
-                    return obj_handle.operator[](rapidjson_plain_value_type{stl::forward<KeyType>(key)});
+                    const auto key_value = rapidjson_plain_value_type{stl::forward<KeyType>(key)};
+                    return obj_handle[key_value];
                 } else if constexpr (JSONString<KeyType>) {
                     // The key is convertible to string_view
-                    auto const key_view =
+                    const auto key_view =
                       istl::string_viewify_of<string_view_type>(stl::forward<KeyType>(key));
-                    return obj_handle[rapidjson_plain_value_type{
-                      ::rapidjson::StringRef(key_view.data(), key_view.size())}];
+                    const auto key_obj =
+                      rapidjson_plain_value_type{::rapidjson::StringRef(key_view.data(), key_view.size())};
+                    if (!contains(key_obj)) {
+                        // fixme: figure out a way to use allocator here
+                        obj_handle.AddMember(
+                          key_obj,
+                          rapidjson_plain_value_type{},
+                          typename rapidjson_plain_value_type::AllocatorType{}); // null value
+                    }
+                    return obj_handle[key_obj];
                 } else {
                     return obj_handle[stl::forward<KeyType>(key)];
                 }
@@ -582,6 +597,7 @@ namespace webpp::json::rapidjson {
             template <JSONKey KeyT, PotentialJSONValue ValT>
             generic_object& insert(KeyT&& key, ValT&& val) {
                 auto const key_view = istl::string_viewify_of<string_view_type>(stl::forward<KeyT>(key));
+                // todo: AddMember can use an allocator
                 obj_handle.AddMember(::rapidjson::StringRef(key_view.data(), key_view.size()),
                                      stl::forward<ValT>(val));
                 return *this;
@@ -607,10 +623,16 @@ namespace webpp::json::rapidjson {
                 return obj_handle.MemberEnd();
             }
 
-            template <JSONKey KeyT>
+            template <typename KeyT>
             [[nodiscard]] bool contains(KeyT&& key) const {
-                const auto key_view = istl::string_viewify_of<string_view_type>(stl::forward<KeyT>(key));
-                return obj_handle.HasMember(key_view.data()); // fixme: not passing the length
+                if constexpr (JSONKey<KeyT>) {
+                    const auto key_view = istl::string_viewify_of<string_view_type>(stl::forward<KeyT>(key));
+                    return obj_handle.HasMember(key_view.data()); // fixme: not passing the length
+                } else if constexpr (stl::same_as<KeyT, rapidjson_plain_value_type>) {
+                    return obj_handle.HasMember(key);
+                } else {
+                    static_assert_false(KeyT, "KeyT is not a valid json key.");
+                }
             }
 
 
