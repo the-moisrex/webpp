@@ -48,7 +48,31 @@ namespace webpp::json::rapidjson {
 
     template <typename T>
     struct rapidjson_allocator_wrapper : T {
+        using value_type = char;
 
+
+#    define RENAME(old_name, new_sig) \
+        new_sig {                     \
+            return this->old_name();  \
+        }
+
+        RENAME(Capacity, auto capacity() const)
+        RENAME(Size, stl::size_t size() const)
+        RENAME(Clear, void clear())
+
+#    undef RENAME
+
+        void* malloc(stl::size_t size) {
+            return this->Malloc(size);
+        }
+
+        void* realloc(void* original_ptr, size_t original_size, size_t new_size) {
+            return this->Realloc(original_ptr, original_size, new_size);
+        }
+
+        static void free(void* ptr) {
+            T::Free(ptr);
+        }
     };
 
     /**
@@ -555,7 +579,8 @@ namespace webpp::json::rapidjson {
             typename stl::remove_cvref_t<ObjectType>::AllocatorType;
         } // GenericAllocator has an Allocator itself.
         struct generic_object
-          : public allocator_holder<typename stl::remove_cvref_t<ObjectType>::AllocatorType> {
+          : public allocator_holder<
+              rapidjson_allocator_wrapper<typename stl::remove_cvref_t<ObjectType>::AllocatorType>> {
 
             static_assert(details::is_generic_object_v<ObjectType, ::rapidjson::GenericObject>,
                           "it's an object not a value");
