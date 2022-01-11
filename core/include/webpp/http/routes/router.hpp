@@ -101,16 +101,7 @@ namespace webpp::http {
                 } else {
                     return handle_primary_results(move(res2), forward<CtxT>(ctx), req);
                 }
-            } else if constexpr (requires {
-                                     requires ConstructibleWithResponse<typename context_type::response_type,
-                                                                        result_type>;
-                                     requires ResponseBody<
-                                       typename context_type::response_type::
-                                         body_type>; // check if the response body is going to be a valid
-                                                     // response body (which requires .str from extensions
-                                                     // because response_body itself doesn't have a default
-                                                     // value generator)
-                                 }) {
+            } else if constexpr (ConstructibleWithResponse<response_type, result_type>) {
                 return ctx.response(forward<ResT>(res));
             } else if constexpr (istl::StringViewifiable<result_type>) {
                 if constexpr (context_type::template has_extension<string_response>()) {

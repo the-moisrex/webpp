@@ -7,7 +7,7 @@ namespace webpp::http {
 
     template <typename T>
     concept ResponseBody = requires(T res) {
-        { res.str() } -> istl::StringView;
+        { res.str() } -> istl::StringViewifiable;
     };
 
     /**
