@@ -117,9 +117,9 @@ namespace webpp::http {
                 if constexpr (context_type::template has_extension<string_response>()) {
                     // Use string_response, response type to handle strings
                     using char_type = typename local_string_type::value_type;
-                    return response_type{body_type{istl::stringify_of<local_string_type>(
+                    return response_type::with_body(istl::stringify_of<local_string_type>(
                       forward<ResT>(res),
-                      ctx.alloc_pack.template general_allocator<char_type>())}};
+                      ctx.alloc_pack.template general_allocator<char_type>()));
                 } else {
                     static_assert_false(
                       result_type,

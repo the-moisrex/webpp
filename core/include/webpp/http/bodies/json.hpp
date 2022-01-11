@@ -6,6 +6,7 @@
 
 #include "../../extensions/extension.hpp"
 #include "../../json/defaultjson.hpp"
+#include "../response_body.hpp"
 #include "../response_concepts.hpp"
 #include "../routes/context_concepts.hpp"
 #include "file.hpp"
@@ -70,11 +71,11 @@ namespace webpp::http {
                                       body_type{stl::forward<Args>(args)...,
                                                 this->alloc_pack.template general_allocator<value_type>()};
                                   }) {
-                        return json_response_type{
-                          body_type{stl::forward<Args>(args)...,
-                                    this->alloc_pack.template general_allocator<value_type>()}};
+                        return json_response_type::with_body(
+                          stl::forward<Args>(args)...,
+                          this->alloc_pack.template general_allocator<value_type>());
                     } else {
-                        return json_response_type{body_type{stl::forward<Args>(args)...}};
+                        return json_response_type::with_body(stl::forward<Args>(args)...);
                     }
                 }
             };
