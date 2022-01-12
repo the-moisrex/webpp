@@ -8,6 +8,8 @@
 #    include "../common/meta.hpp"
 #    include "../memory/allocators.hpp"
 #    include "../memory/buffer.hpp"
+#    include "../std/array.hpp"
+#    include "../std/collection.hpp"
 #    include "../std/string.hpp"
 #    include "../std/string_view.hpp"
 #    include "../traits/default_traits.hpp"
@@ -367,6 +369,7 @@ namespace webpp::json::rapidjson {
             using object_type            = generic_object<traits_type, rapidjson_object_type>;
             using rapidjson_array_type   = typename value_type::Array;
             using array_type             = generic_array<traits_type, rapidjson_array_type>;
+            using rapidjson_value_type   = value_type;
 
             constexpr json_common()                       = default;
             constexpr json_common(json_common const&)     = default;
@@ -393,6 +396,14 @@ namespace webpp::json::rapidjson {
                         auto obj = this->as_object();
                         ((obj[field.key] = field.value()), ...);
                     });
+                } else if constexpr (JSONArray<T> || stl::is_array_v<T> ||
+                                     istl::is_specialization_of_array_v<T> || istl::Collection<T>) {
+                    rapidjson_value_type data{::rapidjson::kArrayType, this->get_allocator().native_alloc()};
+                    for (auto&& item : val) {
+                        data.PushBack(rapidjson_value_type{item}.Move(),
+                                      this->get_allocator().native_alloc());
+                    }
+                    val_handle = stl::move(data);
                 } else {
                     val_handle = stl::forward<T>(val);
                 }

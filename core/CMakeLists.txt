@@ -40,6 +40,8 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/traits/std_pmr_traits.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/std/enum.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/algorithm.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/array.hpp
         ${LIB_INCLUDE_DIR}/webpp/std/buffer.hpp
         ${LIB_INCLUDE_DIR}/webpp/std/executor.hpp
         ${LIB_INCLUDE_DIR}/webpp/std/format.hpp
@@ -210,14 +212,14 @@ set(ALL_SOURCES
 
 
 if (VERBOSE)
-        set(ALL_SOURCES_SHORT "")
-        foreach (source ${ALL_SOURCES})
-            string(REPLACE "${PROJECT_SOURCE_DIR}/" "" SOURCE_SHORT ${source})
-            list(APPEND ALL_SOURCES_SHORT ${SOURCE_SHORT})
-        endforeach ()
-        string(REPLACE ";" "\n                                    " ALL_SOURCES_SHORT_P "${ALL_SOURCES_SHORT}")
-        message(STATUS "Source Files                   : ${ALL_SOURCES_SHORT_P}")
-endif() # verbose
+    set(ALL_SOURCES_SHORT "")
+    foreach (source ${ALL_SOURCES})
+        string(REPLACE "${PROJECT_SOURCE_DIR}/" "" SOURCE_SHORT ${source})
+        list(APPEND ALL_SOURCES_SHORT ${SOURCE_SHORT})
+    endforeach ()
+    string(REPLACE ";" "\n                                    " ALL_SOURCES_SHORT_P "${ALL_SOURCES_SHORT}")
+    message(STATUS "Source Files                   : ${ALL_SOURCES_SHORT_P}")
+endif () # verbose
 
 if (SHARED_LIBRARY_EXECUTABLE)
     include(../cmake/dyn_lib_entry_point.cmake)
