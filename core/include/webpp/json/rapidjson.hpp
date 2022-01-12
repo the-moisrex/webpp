@@ -48,13 +48,19 @@ namespace webpp::json::rapidjson {
 
     // A wrapper for MemoryPoolAllocator and others to match std::allocator and a-like
     template <typename T>
-    struct rapidjson_allocator_wrapper : T {
-        using value_type = char;
+    struct rapidjson_allocator_wrapper {
+        using value_type                             = char;
+        using size_type                              = stl::size_t;
+        using difference_type                        = stl::ptrdiff_t;
+        using propagate_on_container_move_assignment = stl::true_type;
+
+
+        T& alloc;
 
 
 #    define RENAME(old_name, new_sig) \
         new_sig {                     \
-            return this->old_name();  \
+            return alloc.old_name();  \
         }
 
         RENAME(Capacity, auto capacity() const)
@@ -64,15 +70,26 @@ namespace webpp::json::rapidjson {
 #    undef RENAME
 
         void* malloc(stl::size_t size) {
-            return this->Malloc(size);
+            return alloc.Malloc(size);
         }
 
         void* realloc(void* original_ptr, size_t original_size, size_t new_size) {
-            return this->Realloc(original_ptr, original_size, new_size);
+            return alloc.Realloc(original_ptr, original_size, new_size);
         }
 
         static void free(void* ptr) {
             T::Free(ptr);
+        }
+
+
+        // C++ allocator compatibility
+
+        [[nodiscard]] constexpr value_type* allocate(size_type n) {
+            return reinterpret_cast<value_type*>(malloc(n));
+        }
+
+        constexpr void deallocate(value_type* p, [[maybe_unused]] size_type n) {
+            free(reinterpret_cast<void*>(p));
         }
     };
 
@@ -719,8 +736,12 @@ namespace webpp::json::rapidjson {
             using json_common<TraitsType, ValueType>::json_common;
             using json_common<TraitsType, ValueType>::operator=;
 
+            constexpr generic_value(const generic_value&)     = default;
+            constexpr generic_value(generic_value&&) noexcept = default;
+
             template <typename V>
-            constexpr generic_value(V&& val, allocator_type const& alloc = {})
+            requires(!stl::is_same_v<stl::remove_cvref_t<V>, generic_value>) // no ctor
+              constexpr generic_value(V&& val, allocator_type const& alloc = {})
               : allocator_holder<rapidjson_allocator_wrapper<ValueType>>(alloc),
                 json_common<TraitsType, ValueType>(stl::forward<V>(val)) {}
 
