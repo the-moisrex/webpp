@@ -655,7 +655,6 @@ namespace webpp::json::rapidjson {
                       istl::string_viewify_of<string_view_type>(stl::forward<KeyType>(key));
                     const auto key_ref = ::rapidjson::StringRef(key_view.data(), key_view.size());
                     if (!contains(key_ref)) {
-                        // fixme: figure out a way to use allocator here
                         obj_handle.AddMember(rapidjson_plain_value_type{key_ref},
                                              rapidjson_plain_value_type{},
                                              this->get_allocator().native_alloc()); // null value
@@ -678,10 +677,9 @@ namespace webpp::json::rapidjson {
             template <JSONKey KeyT, PotentialJSONValue ValT>
             generic_object& insert(KeyT&& key, ValT&& val) {
                 auto const key_view = istl::string_viewify_of<string_view_type>(stl::forward<KeyT>(key));
-                // todo: AddMember can use an allocator
                 obj_handle.AddMember(::rapidjson::StringRef(key_view.data(), key_view.size()),
                                      stl::forward<ValT>(val),
-                                     this->get_allocator());
+                                     this->get_allocator().native_alloc());
                 return *this;
             }
 
@@ -762,9 +760,9 @@ namespace webpp::json::rapidjson {
             requires(!stl::is_same_v<stl::remove_cvref_t<V>, generic_value>) // no ctor
               constexpr generic_value( // NOLINT(bugprone-forwarding-reference-overload)
                 V&&                   val,
-                allocator_type const& alloc = {})
+                allocator_type const& inp_alloc = {})
               : json_common<TraitsType, ValueType>(stl::forward<V>(val)),
-                allocator_holder<rapidjson_allocator_wrapper<ValueType>>(alloc) {}
+                allocator_holder<rapidjson_allocator_wrapper<ValueType>>(inp_alloc) {}
 
             /**
              * Check if it has a member
@@ -877,8 +875,8 @@ namespace webpp::json::rapidjson {
         /**
          * Get the file and parse it.
          */
-        explicit document(const stl::filesystem::path& file_path, allocator_type const& alloc = {})
-          : generic_value_type{alloc} {
+        explicit document(const stl::filesystem::path& file_path, allocator_type const& inp_alloc = {})
+          : generic_value_type{inp_alloc} {
             stl::FILE* fp = stl::fopen(file_path.c_str(), "rb");
 
             stack<65536>                read_buffer;
