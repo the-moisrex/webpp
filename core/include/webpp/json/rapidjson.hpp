@@ -55,14 +55,18 @@ namespace webpp::json::rapidjson {
         using propagate_on_container_move_assignment = stl::true_type;
 
 
-        T& alloc;
+        T* alloc = nullptr;
 
+        constexpr rapidjson_allocator_wrapper()                                   = default;
         constexpr rapidjson_allocator_wrapper(rapidjson_allocator_wrapper const&) = default;
+        constexpr rapidjson_allocator_wrapper(T& the_alloc) : alloc{&the_alloc} {}
+        constexpr rapidjson_allocator_wrapper(T const& the_alloc) : alloc{&the_alloc} {}
 
+        constexpr rapidjson_allocator_wrapper& operator=(rapidjson_allocator_wrapper const&) = default;
 
 #    define RENAME(old_name, new_sig) \
         new_sig {                     \
-            return alloc.old_name();  \
+            return alloc->old_name(); \
         }
 
         RENAME(Capacity, auto capacity() const)
@@ -72,11 +76,11 @@ namespace webpp::json::rapidjson {
 #    undef RENAME
 
         void* malloc(stl::size_t size) {
-            return alloc.Malloc(size);
+            return alloc->Malloc(size);
         }
 
         void* realloc(void* original_ptr, size_t original_size, size_t new_size) {
-            return alloc.Realloc(original_ptr, original_size, new_size);
+            return alloc->Realloc(original_ptr, original_size, new_size);
         }
 
         static void free(void* ptr) {
@@ -750,7 +754,9 @@ namespace webpp::json::rapidjson {
 
             template <typename V>
             requires(!stl::is_same_v<stl::remove_cvref_t<V>, generic_value>) // no ctor
-              constexpr generic_value(V&& val, allocator_type const& alloc = {})
+              constexpr generic_value( // NOLINT(bugprone-forwarding-reference-overload)
+                V&&                   val,
+                allocator_type const& alloc = {})
               : allocator_holder<rapidjson_allocator_wrapper<ValueType>>(alloc),
                 json_common<TraitsType, ValueType>(stl::forward<V>(val)) {}
 
