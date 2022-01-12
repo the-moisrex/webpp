@@ -314,6 +314,11 @@ namespace webpp::json::rapidjson {
 
 
 
+        /**
+         * @brief This is the common things between values' types.
+         * @tparam TraitsType
+         * @tparam ValueContainer
+         */
         template <Traits TraitsType, typename ValueContainer>
         struct json_common {
 
