@@ -57,6 +57,8 @@ namespace webpp::json::rapidjson {
 
         T& alloc;
 
+        constexpr rapidjson_allocator_wrapper(rapidjson_allocator_wrapper const&) = default;
+
 
 #    define RENAME(old_name, new_sig) \
         new_sig {                     \
@@ -216,15 +218,11 @@ namespace webpp::json::rapidjson {
                 return *this;
             }
 
-            iterator operator++(int) {
-                iterator old(*this);
-                this->   operator++();
-                return old;
+            iterator operator++(int) { // NOLINT(cert-dcl21-cpp)
+                return iterator(*this).operator++();
             }
-            iterator operator--(int) {
-                iterator old(*this);
-                this->   operator--();
-                return old;
+            iterator operator--(int) { // NOLINT(cert-dcl21-cpp)
+                return iterator(*this).operator--();
             }
 
 
@@ -714,6 +712,12 @@ namespace webpp::json::rapidjson {
             rapidjson_object_type obj_handle;
         };
 
+
+        /**
+         * Rapidjson GenericValue wrapper
+         * @tparam TraitsType
+         * @tparam ValueType
+         */
         template <Traits TraitsType, typename ValueType>
         requires requires {
             typename stl::remove_cvref_t<ValueType>::AllocatorType;
@@ -832,6 +836,10 @@ namespace webpp::json::rapidjson {
     template <Traits TraitsType = default_traits>
     using value = details::generic_value<TraitsType, ::rapidjson::Value>;
 
+    /**
+     * Rapidjson's GenericDocument wrapper
+     * @tparam TraitsType
+     */
     template <Traits TraitsType = default_traits>
     struct document : public details::generic_value<TraitsType, ::rapidjson::Document> {
         using traits_type              = TraitsType;
@@ -846,6 +854,8 @@ namespace webpp::json::rapidjson {
         using array_type  = details::generic_array<traits_type, typename rapidjson_value_type::Array>;
         using generic_value_type = details::generic_value<traits_type, rapidjson_document_type>;
         using allocator_type     = typename rapidjson_document_type::AllocatorType;
+
+        using generic_value_type::operator=;
 
         /**
          * A document containing null
@@ -871,7 +881,7 @@ namespace webpp::json::rapidjson {
          */
         template <istl::StringViewifiable StrT>
         requires(!stl::same_as<stl::remove_cvref_t<StrT>, document>) // not a copy/move ctor
-          document(StrT&& json_string)
+          document(StrT&& json_string) // NOLINT(bugprone-forwarding-reference-overload)
           : generic_value_type{} {
             parse(stl::forward<StrT>(json_string));
         }
@@ -884,15 +894,8 @@ namespace webpp::json::rapidjson {
                  (stl::convertible_to<stl::remove_cvref_t<ConvertibleToValue>,
                                       value_type> && // check if it's a value or an object
                   !stl::same_as<stl::remove_cvref_t<stl::remove_cvref_t<ConvertibleToValue>>, document>) )
-          document(ConvertibleToValue&& val)
+          document(ConvertibleToValue&& val) // NOLINT(bugprone-forwarding-reference-overload)
           : generic_value_type{stl::forward<ConvertibleToValue>(val)} {}
-
-
-        template <typename T>
-        document& operator=(T&& val) {
-            static_cast<generic_value_type*>(this)->operator=(stl::forward<T>(val));
-            return *this;
-        }
 
 
         // implement the parse method
