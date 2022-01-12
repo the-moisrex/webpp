@@ -46,6 +46,7 @@ namespace rapidjson {
 namespace webpp::json::rapidjson {
     // using namespace ::rapidjson;
 
+    // A wrapper for MemoryPoolAllocator and others to match std::allocator and a-like
     template <typename T>
     struct rapidjson_allocator_wrapper : T {
         using value_type = char;
@@ -74,6 +75,14 @@ namespace webpp::json::rapidjson {
             T::Free(ptr);
         }
     };
+
+    // if they pass a GenericObject or GenericValue itself.
+    template <typename T>
+    requires requires {
+        typename stl::remove_cvref_t<T>::AllocatorType;
+    }
+    struct rapidjson_allocator_wrapper<T>
+      : public rapidjson_allocator_wrapper<typename stl::remove_cvref_t<T>::AllocatorType> {};
 
     /**
      * @brief The goal of this struct is to make this code happen:
@@ -578,9 +587,7 @@ namespace webpp::json::rapidjson {
         requires requires {
             typename stl::remove_cvref_t<ObjectType>::AllocatorType;
         } // GenericAllocator has an Allocator itself.
-        struct generic_object
-          : public allocator_holder<
-              rapidjson_allocator_wrapper<typename stl::remove_cvref_t<ObjectType>::AllocatorType>> {
+        struct generic_object : public allocator_holder<rapidjson_allocator_wrapper<ObjectType>> {
 
             static_assert(details::is_generic_object_v<ObjectType, ::rapidjson::GenericObject>,
                           "it's an object not a value");
@@ -595,14 +602,13 @@ namespace webpp::json::rapidjson {
             using rapidjson_const_member_iterator = typename rapidjson_object_type::ConstMemberIterator;
             using iterator_type       = generic_member_iterator<traits_type, rapidjson_member_iterator>;
             using const_iterator_type = generic_member_iterator<traits_type, rapidjson_const_member_iterator>;
-            using allocator_holder_type =
-              allocator_holder<typename stl::remove_cvref_t<ObjectType>::AllocatorType>;
-            using allocator_type = typename allocator_holder_type::allocator_type;
+            using allocator_holder_type = allocator_holder<rapidjson_allocator_wrapper<ObjectType>>;
+            using allocator_type        = typename allocator_holder_type::allocator_type;
 
             // todo: add more optimization for reference and const reference and move
             // rapidjson_object_type might be a reference itself.
             constexpr generic_object(rapidjson_object_type obj, allocator_type const& alloc = {})
-              : allocator_holder<typename ObjectType::AllocatorType>(alloc),
+              : allocator_holder<rapidjson_allocator_wrapper<ObjectType>>(alloc),
                 obj_handle{obj} {}
 
 
@@ -690,9 +696,8 @@ namespace webpp::json::rapidjson {
         requires requires {
             typename stl::remove_cvref_t<ValueType>::AllocatorType;
         } // has an allocator
-        struct generic_value
-          : public json_common<TraitsType, ValueType>,
-            public allocator_holder<typename stl::remove_cvref_t<ValueType>::AllocatorType> {
+        struct generic_value : public json_common<TraitsType, ValueType>,
+                               public allocator_holder<rapidjson_allocator_wrapper<ValueType>> {
             using traits_type            = TraitsType;
             using common_type            = json_common<traits_type, ValueType>;
             using string_type            = typename common_type::string_type;
@@ -707,9 +712,8 @@ namespace webpp::json::rapidjson {
             using rapidjson_array_type   = typename common_type::rapidjson_array_type;
             using array_type             = typename common_type::array_type;
             using value_type             = typename common_type::value_type;
-            using allocator_holder_type =
-              allocator_holder<typename stl::remove_cvref_t<ValueType>::AllocatorType>;
-            using allocator_type = typename allocator_holder_type::allocator_type;
+            using allocator_holder_type  = allocator_holder<rapidjson_allocator_wrapper<ValueType>>;
+            using allocator_type         = typename allocator_holder_type::allocator_type;
 
 
             using json_common<TraitsType, ValueType>::json_common;
@@ -717,7 +721,7 @@ namespace webpp::json::rapidjson {
 
             template <typename V>
             constexpr generic_value(V&& val, allocator_type const& alloc = {})
-              : allocator_holder<typename stl::remove_cvref_t<ValueType>::AllocatorType>(alloc),
+              : allocator_holder<rapidjson_allocator_wrapper<ValueType>>(alloc),
                 json_common<TraitsType, ValueType>(stl::forward<V>(val)) {}
 
             /**
