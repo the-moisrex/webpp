@@ -398,7 +398,7 @@ namespace webpp::json::rapidjson {
                     });
                 } else if constexpr (JSONArray<T> || stl::is_array_v<T> ||
                                      istl::is_specialization_of_array_v<T> || istl::Collection<T>) {
-                    rapidjson_value_type data{::rapidjson::kArrayType, this->get_allocator().native_alloc()};
+                    rapidjson_value_type data{::rapidjson::kArrayType};
                     for (auto&& item : val) {
                         data.PushBack(rapidjson_value_type{item}.Move(),
                                       this->get_allocator().native_alloc());
