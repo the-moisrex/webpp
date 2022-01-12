@@ -14,6 +14,8 @@ static_assert(JSONObject<object_type>);
 static_assert(JSONValue<value_type>);
 static_assert(JSONDocument<doc_type>);
 
+using json_impls = stl::tuple<json::rapidjson::document<>>;
+
 TEST(JSONTest, Parse) {
     document doc;
     EXPECT_TRUE(doc.is_null());
@@ -76,24 +78,30 @@ TEST(JSONTest, Fields) {
     // object(username, user_id, emails);
 }
 
-
 TEST(JSONTest, Create) {
-    document doc;
-    ASSERT_NO_FATAL_FAILURE(doc["dummy"]);
-    doc["page"]     = "/about";
-    doc["username"] = "admin";
-    doc["id"]       = 313;
-    doc["friends"]  = stl::array{"Jason", "Jane", "Amy", "Rose"};
-    EXPECT_EQ(doc["page"], "/about");
-    EXPECT_TRUE(doc.contains("friends"));
-    EXPECT_TRUE(doc["username"].is_string());
+    stl::apply(
+      [](JSONDocument auto&&... docs) {
+          (..., ([](auto&& doc) {
+               ASSERT_NO_FATAL_FAILURE((void) doc["dummy"]);
+               doc["page"]     = "/about";
+               doc["username"] = "admin";
+               doc["id"]       = 313;
+               doc["friends"]  = stl::array{"Jason", "Jane", "Amy", "Rose"};
+               EXPECT_EQ(doc["page"], "/about");
+               EXPECT_TRUE(doc.contains("friends"));
+               EXPECT_TRUE(doc["username"].is_string());
 
-    doc["info"] = {
-      {"firstname", "Jane"}, // first name
-      {"lastname", "Doe"},   // last name
-      {"id", 313}            // id
-    };
+#if feature_support
+               doc["info"] = {
+                 {"firstname", "Jane"}, // first name
+                 {"lastname", "Doe"},   // last name
+                 {"id", 313}            // id
+               };
+#endif
 
-    EXPECT_EQ(doc["info"]["firstname"], "Jane");
-    EXPECT_EQ(doc["info"]["id"], 313);
+               EXPECT_EQ(doc["info"]["firstname"], "Jane");
+               EXPECT_EQ(doc["info"]["id"], 313);
+           })(stl::forward<decltype(docs)>(docs)));
+      },
+      json_impls());
 }
