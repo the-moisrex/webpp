@@ -80,12 +80,20 @@ TEST(JSONTest, Fields) {
 TEST(JSONTest, Create) {
     document doc;
     ASSERT_NO_FATAL_FAILURE(doc["dummy"]);
-    doc["page"] = "/about";
+    doc["page"]     = "/about";
     doc["username"] = "admin";
-    doc["id"] = 313;
-    doc["friends"] = stl::array{"Jason", "Jane", "Amy", "Rose"};
+    doc["id"]       = 313;
+    doc["friends"]  = stl::array{"Jason", "Jane", "Amy", "Rose"};
     EXPECT_EQ(doc["page"], "/about");
     EXPECT_TRUE(doc.contains("friends"));
     EXPECT_TRUE(doc["username"].is_string());
-}
 
+    doc["info"] = {
+      {"firstname", "Jane"}, // first name
+      {"lastname", "Doe"},   // last name
+      {"id", 313}            // id
+    };
+
+    EXPECT_EQ(doc["info"]["firstname"], "Jane");
+    EXPECT_EQ(doc["info"]["id"], 313);
+}
