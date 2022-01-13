@@ -94,7 +94,8 @@ namespace webpp::http {
 
 
                 constexpr json_document_type json_doc() const {
-                    return object::make_general<json_document_type>(*this);
+                    // fixme: should we use the default allocator?
+                    return json_document_type{};
                 }
             };
         };
