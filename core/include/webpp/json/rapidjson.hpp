@@ -181,7 +181,12 @@ namespace webpp::json::rapidjson {
          * Generic Member Iterator
          */
         template <Traits TraitsType, typename RapidJSONIterator>
-        struct generic_member_iterator : public stl::remove_pointer_t<RapidJSONIterator> {
+        struct generic_member_iterator
+          : public stl::remove_pointer_t<RapidJSONIterator>,
+            public allocator_holder<rapidjson_allocator_wrapper<typename stl::remove_cvref_t<
+              decltype(stl::declval<typename stl::remove_cvref_t<
+                         typename stl::remove_cvref_t<RapidJSONIterator>::reference>>()
+                         .name)>::AllocatorType>> {
 
             using traits_type                 = TraitsType;
             using base_type                   = stl::remove_pointer_t<RapidJSONIterator>;
@@ -198,6 +203,12 @@ namespace webpp::json::rapidjson {
               stl::conditional_t<stl::is_const_v<rapidjson_value_type>,
                                  stl::add_cv_t<rapidjson_member_value_type>,
                                  stl::add_lvalue_reference_t<rapidjson_member_value_type>>;
+            using allocator_holder_type =
+              allocator_holder<rapidjson_allocator_wrapper<typename stl::remove_cvref_t<
+                decltype(stl::declval<typename stl::remove_cvref_t<
+                           typename stl::remove_cvref_t<RapidJSONIterator>::reference>>()
+                           .name)>::AllocatorType>>;
+            using allocator_type = typename allocator_holder_type::allocator_type;
 
             using item_type = generic_value<traits_type, rapidjson_member_value_type_auto>;
 
@@ -209,10 +220,12 @@ namespace webpp::json::rapidjson {
             using reference         = value_type;
             using difference_type   = rapidjson_difference_type;
 
-            using base_type::base_type;
-
-            generic_member_iterator(base_type const& iter) : base_type{iter} {}
-            generic_member_iterator(base_type&& iter) : base_type{stl::move(iter)} {}
+            generic_member_iterator(base_type const& iter, allocator_type const& the_alloc)
+              : base_type{iter},
+                allocator_holder_type{the_alloc} {}
+            generic_member_iterator(base_type&& iter, allocator_type const& the_alloc)
+              : base_type{stl::move(iter)},
+                allocator_holder_type{the_alloc} {}
             generic_member_iterator(generic_member_iterator const& iter)     = default;
             generic_member_iterator(generic_member_iterator&& iter) noexcept = default;
 
@@ -303,7 +316,7 @@ namespace webpp::json::rapidjson {
 
             reference operator*() const {
                 auto& res = base_type::operator*();
-                return {res.name.Move(), res.value.Move()};
+                return {{res.name.Move(), this->get_allocator()}, {res.value.Move(), this->get_allocator()}};
             }
             pointer operator->() const {
                 return base_type::operator->();
@@ -335,7 +348,9 @@ namespace webpp::json::rapidjson {
          * @tparam ValueContainer
          */
         template <Traits TraitsType, typename ValueContainer>
-        struct json_common : public allocator_holder<rapidjson_allocator_wrapper<ValueContainer>> {
+        struct json_common
+          : public allocator_holder<
+              rapidjson_allocator_wrapper<typename stl::remove_cvref_t<ValueContainer>::AllocatorType>> {
 
           private:
             // DocType could be a document or an GenericObject actually
@@ -374,8 +389,9 @@ namespace webpp::json::rapidjson {
             using rapidjson_array_type   = typename value_type::Array;
             using array_type             = generic_array<traits_type, rapidjson_array_type>;
             using rapidjson_value_type   = value_type;
-            using allocator_holder_type  = allocator_holder<rapidjson_allocator_wrapper<ValueContainer>>;
-            using allocator_type         = typename allocator_holder_type::allocator_type;
+            using allocator_holder_type  = allocator_holder<
+              rapidjson_allocator_wrapper<typename stl::remove_cvref_t<ValueContainer>::AllocatorType>>;
+            using allocator_type = typename allocator_holder_type::allocator_type;
 
             constexpr json_common()                       = default;
             constexpr json_common(json_common const&)     = default;
@@ -391,10 +407,12 @@ namespace webpp::json::rapidjson {
                 val_handle{stl::forward<ValT>(obj)} {}
 
             template <typename ValT>
+            requires requires(ValT v) {
+                v.GetAllocator();
+            }
             json_common(ValT&& obj)
               : allocator_holder_type{obj.GetAllocator()},
                 val_handle{stl::forward<ValT>(obj)} {}
-
 
             template <typename T>
             auto& operator=(T&& val) {
@@ -667,7 +685,9 @@ namespace webpp::json::rapidjson {
         requires requires {
             typename stl::remove_cvref_t<ObjectType>::AllocatorType;
         } // GenericAllocator has an Allocator itself.
-        struct generic_object : public allocator_holder<rapidjson_allocator_wrapper<ObjectType>> {
+        struct generic_object
+          : public allocator_holder<
+              rapidjson_allocator_wrapper<typename stl::remove_cvref_t<ObjectType>::AllocatorType>> {
 
             static_assert(details::is_generic_object_v<ObjectType, ::rapidjson::GenericObject>,
                           "it's an object not a value");
@@ -682,13 +702,14 @@ namespace webpp::json::rapidjson {
             using rapidjson_const_member_iterator = typename rapidjson_object_type::ConstMemberIterator;
             using iterator_type       = generic_member_iterator<traits_type, rapidjson_member_iterator>;
             using const_iterator_type = generic_member_iterator<traits_type, rapidjson_const_member_iterator>;
-            using allocator_holder_type = allocator_holder<rapidjson_allocator_wrapper<ObjectType>>;
-            using allocator_type        = typename allocator_holder_type::allocator_type;
+            using allocator_holder_type = allocator_holder<
+              rapidjson_allocator_wrapper<typename stl::remove_cvref_t<ObjectType>::AllocatorType>>;
+            using allocator_type = typename allocator_holder_type::allocator_type;
 
             // todo: add more optimization for reference and const reference and move
             // rapidjson_object_type might be a reference itself.
-            constexpr generic_object(rapidjson_object_type obj, allocator_type const& the_alloc = {})
-              : allocator_holder<rapidjson_allocator_wrapper<ObjectType>>(the_alloc),
+            constexpr generic_object(rapidjson_object_type obj, allocator_type const& the_alloc)
+              : allocator_holder_type(the_alloc),
                 obj_handle{obj} {}
 
 
@@ -697,7 +718,7 @@ namespace webpp::json::rapidjson {
                 if constexpr (JSONNumber<KeyType>) {
                     // fixme: write tests for this, this will run the "index" version, right?
                     const auto key_value = rapidjson_plain_value_type{stl::forward<KeyType>(key)};
-                    return obj_handle[key_value];
+                    return value_type{obj_handle[key_value], this->get_allocator()};
                 } else if constexpr (JSONString<KeyType>) {
                     // The key is convertible to string_view
                     const auto key_view =
@@ -708,9 +729,9 @@ namespace webpp::json::rapidjson {
                                              rapidjson_plain_value_type{},
                                              this->get_allocator().native_alloc()); // null value
                     }
-                    return obj_handle[rapidjson_plain_value_type{key_ref}];
+                    return value_type{obj_handle[rapidjson_plain_value_type{key_ref}], this->get_allocator()};
                 } else {
-                    return obj_handle[stl::forward<KeyType>(key)];
+                    return value_type{obj_handle[stl::forward<KeyType>(key)], this->get_allocator()};
                 }
             }
 
@@ -739,17 +760,17 @@ namespace webpp::json::rapidjson {
 
             // static_assert(stl::random_access_iterator<typename rapidjson_object_type::MemberIterator>);
             iterator_type begin() const {
-                return obj_handle.MemberBegin();
+                return {obj_handle.MemberBegin(), this->get_allocator()};
             }
             iterator_type end() const {
-                return obj_handle.MemberEnd();
+                return {obj_handle.MemberEnd(), this->get_allocator()};
             }
 
             iterator_type cbegin() const {
-                return obj_handle.MemberBegin();
+                return {obj_handle.MemberBegin(), this->get_allocator()};
             }
             iterator_type cend() const {
-                return obj_handle.MemberEnd();
+                return {obj_handle.MemberEnd(), this->get_allocator()};
             }
 
             template <typename KeyT>
@@ -809,8 +830,14 @@ namespace webpp::json::rapidjson {
             requires(!stl::is_same_v<stl::remove_cvref_t<V>, generic_value>) // no ctor
               constexpr generic_value( // NOLINT(bugprone-forwarding-reference-overload)
                 V&&                   val,
-                allocator_type const& inp_alloc = {})
+                allocator_type const& inp_alloc)
               : json_common<TraitsType, ValueType>(stl::forward<V>(val), inp_alloc) {}
+
+            template <typename V>
+            requires(!stl::is_same_v<stl::remove_cvref_t<V>, generic_value>) // no ctor
+              constexpr generic_value( // NOLINT(bugprone-forwarding-reference-overload)
+                V&& val)
+              : json_common<TraitsType, ValueType>(stl::forward<V>(val)) {}
 
             /**
              * Check if it has a member
@@ -930,8 +957,7 @@ namespace webpp::json::rapidjson {
         /**
          * Get the file and parse it.
          */
-        explicit document(const stl::filesystem::path& file_path, allocator_type const& inp_alloc = {})
-          : generic_value_type{inp_alloc} {
+        explicit document(const stl::filesystem::path& file_path) {
             stl::FILE* fp = stl::fopen(file_path.c_str(), "rb");
 
             stack<65536>                read_buffer;
