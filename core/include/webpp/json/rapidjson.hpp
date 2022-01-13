@@ -67,6 +67,10 @@ namespace webpp::json::rapidjson {
         constexpr rapidjson_allocator_wrapper(T& the_alloc) : alloc{&the_alloc} {}
         constexpr rapidjson_allocator_wrapper(T const& the_alloc) : alloc{&the_alloc} {}
 
+        template <typename U>
+        constexpr rapidjson_allocator_wrapper(rapidjson_allocator_wrapper<U> const& wrapper)
+          : alloc{wrapper.alloc} {}
+
         constexpr rapidjson_allocator_wrapper& operator=(rapidjson_allocator_wrapper const&) = default;
 
 #    define RENAME(old_name, new_sig) \
@@ -507,8 +511,6 @@ namespace webpp::json::rapidjson {
             return val_handle.orig_name();                 \
         }
 
-            RENAME(object_type, GetObject, as_object, );
-            RENAME(array_type, GetArray, as_array, );
             RENAME(bool, IsNull, is_null, const);
             RENAME(bool, IsString, is_string, const);
             RENAME(bool, IsObject, is_object, const);
@@ -516,6 +518,14 @@ namespace webpp::json::rapidjson {
 
 #    undef RENAME
 
+            [[nodiscard]] constexpr object_type as_object() {
+                using new_alloc_type = typename object_type::allocator_type;
+                return object_type{val_handle.GetObject(), new_alloc_type{this->get_allocator()}};
+            }
+
+            [[nodiscard]] constexpr array_type as_array() {
+                return array_type{val_handle.GetArray()};
+            }
 
             template <istl::String StrT = string_type, typename... Args>
             StrT as_string(Args&&... string_args) const {
