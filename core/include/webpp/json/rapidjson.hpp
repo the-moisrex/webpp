@@ -420,7 +420,7 @@ namespace webpp::json::rapidjson {
                                           this->get_allocator().native_alloc());
                         }
                     }
-                    val_handle = stl::move(data);
+                    val_handle = data.Move();
                 } else {
                     val_handle = stl::forward<T>(val);
                 }
@@ -570,36 +570,47 @@ namespace webpp::json::rapidjson {
         struct generic_array {
             using traits_type          = TraitsType;
             using rapidjson_array_type = ArrayType;
+            using rapidjson_value_type = typename rapidjson_array_type::ValueType;
+            using value_type           = generic_value<traits_type, rapidjson_value_type>;
 
-            generic_array(rapidjson_array_type& arr) : arr_handle{arr} {}
+            constexpr generic_array(rapidjson_array_type& arr) : arr_handle{arr} {}
+            constexpr generic_array(rapidjson_array_type const& arr) : arr_handle{arr} {}
+            constexpr generic_array(rapidjson_value_type& arr) : arr_handle{arr.GetArray()} {}
+            constexpr generic_array(rapidjson_value_type const& arr) : arr_handle{arr.GetArray()} {}
 
-            [[nodiscard]] stl::size_t size() const {
+            [[nodiscard]] constexpr stl::size_t size() const {
                 return arr_handle.Size();
             }
 
-            [[nodiscard]] stl::size_t capacity() const {
+            [[nodiscard]] constexpr stl::size_t capacity() const {
                 return arr_handle.Capacity();
             }
 
 
-            auto begin() const {
+            template <JSONNumber T>
+            [[nodiscard]] constexpr auto& operator[](T index) {
+                return *stl::find(begin(), end(), static_cast<::rapidjson::SizeType>(index));
+            }
+
+
+            constexpr auto begin() const {
                 return arr_handle.Begin();
             }
-            auto end() const {
+            constexpr auto end() const {
                 return arr_handle.End();
             }
 
-            auto cbegin() const {
+            constexpr auto cbegin() const {
                 return arr_handle.Begin();
             }
-            auto cend() const {
+            constexpr auto cend() const {
                 return arr_handle.End();
             }
 
 
 
           protected:
-            rapidjson_array_type& arr_handle;
+            rapidjson_array_type arr_handle;
         };
 
         /**
@@ -702,7 +713,7 @@ namespace webpp::json::rapidjson {
                 return obj_handle.MemberCount();
             }
 
-            template <JSONKey KeyT, PotentialJSONValue ValT>
+            template <JSONKey KeyT, typename ValT>
             generic_object& insert(KeyT&& key, ValT&& val) {
                 auto const key_view = istl::string_viewify_of<string_view_type>(stl::forward<KeyT>(key));
                 obj_handle.AddMember(::rapidjson::StringRef(key_view.data(), key_view.size()),
@@ -711,7 +722,7 @@ namespace webpp::json::rapidjson {
                 return *this;
             }
 
-            template <JSONKey KeyT, PotentialJSONValue ValT>
+            template <JSONKey KeyT, typename ValT>
             generic_object& emplace(KeyT&& key, ValT&& val) {
                 return insert<KeyT, ValT>(stl::forward<KeyT>(key), stl::forward<ValT>(val));
             }
@@ -775,6 +786,7 @@ namespace webpp::json::rapidjson {
             using value_type             = typename common_type::value_type;
             using allocator_holder_type  = allocator_holder<rapidjson_allocator_wrapper<ValueType>>;
             using allocator_type         = typename allocator_holder_type::allocator_type;
+            using rapidjson_value_type   = typename common_type::rapidjson_value_type;
 
 
             using json_common<TraitsType, ValueType>::json_common;
@@ -800,8 +812,15 @@ namespace webpp::json::rapidjson {
 
             // this method will assume that the value is an object
             template <typename T>
-            [[nodiscard]] auto operator[](T&& val) {
-                return this->as_object()[stl::forward<T>(val)];
+            [[nodiscard]] decltype(auto) operator[](T&& val) {
+                if constexpr (JSONNumber<T>) {
+                    return this->as_array()[stl::forward<T>(val)];
+                } else if (this->is_object()) {
+                    return this->as_object()[stl::forward<T>(val)];
+                } else {
+                    this->set_object();
+                    return this->as_object().emplace(val, rapidjson_value_type{})[val];
+                }
             }
 
 
