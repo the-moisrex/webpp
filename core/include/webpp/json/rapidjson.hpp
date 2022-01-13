@@ -390,11 +390,10 @@ namespace webpp::json::rapidjson {
             using rapidjson_array_type   = typename value_type::Array;
             using array_type             = generic_array<traits_type, rapidjson_array_type>;
             using rapidjson_value_type   = value_type;
-            using allocator_holder_type  =
+            using allocator_type  =
               rapidjson_allocator_wrapper<typename stl::remove_cvref_t<ValueContainer>::AllocatorType>;
-            using allocator_type = typename allocator_holder_type::allocator_type;
 
-            constexpr json_common() : val_handle{}, alloc_holder{val_handle.GetAllocator()} {}
+            constexpr json_common() : val_handle{}, alloc{val_handle.GetAllocator()} {}
             constexpr json_common(json_common const&)     = default;
             constexpr json_common(json_common&&) noexcept = default;
 
@@ -405,13 +404,13 @@ namespace webpp::json::rapidjson {
             template <typename ValT>
             json_common(ValT&& obj, allocator_type const& inp_alloc)
               : val_handle{stl::forward<ValT>(obj)},
-                alloc_holder{inp_alloc} {}
+                alloc{inp_alloc} {}
 
             template <typename ValT>
             requires requires(ValT v) {
                 v.GetAllocator();
             }
-            json_common(ValT&& obj) : val_handle{stl::forward<ValT>(obj)}, alloc_holder{obj.GetAllocator()} {}
+            json_common(ValT&& obj) : val_handle{stl::forward<ValT>(obj)}, alloc{obj.GetAllocator()} {}
 
             template <typename T>
             auto& operator=(T&& val) {
@@ -583,12 +582,12 @@ namespace webpp::json::rapidjson {
 
 
             [[nodiscard]] constexpr decltype(auto) get_allocator() const {
-                return alloc_holder.get_allocator();
+                return alloc;
             }
 
           protected:
             container_type        val_handle{};
-            allocator_holder_type alloc;
+            allocator_type alloc;
         };
 
 
