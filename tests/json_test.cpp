@@ -86,8 +86,9 @@ TEST(JSONTest, Create) {
                doc["page"]     = "/about";
                doc["username"] = "admin";
                doc["id"]       = 313;
+               doc["is_admin"] = false;
                doc["friends"]  = stl::array{"Jason", "Jane", "Amy", "Rose"};
-               EXPECT_EQ(doc["page"], "/about");
+               EXPECT_EQ(doc["page"].as_string(), "/about");
                EXPECT_TRUE(doc.contains("friends"));
                EXPECT_TRUE(doc["username"].is_string());
 
@@ -99,8 +100,8 @@ TEST(JSONTest, Create) {
                };
 #endif
 
-               EXPECT_EQ(doc["info"]["firstname"], "Jane");
-               EXPECT_EQ(doc["info"]["id"], 313);
+               EXPECT_EQ(doc["info"]["firstname"].as_string(), "Jane");
+               EXPECT_EQ(doc["info"]["id"].as_int32(), 313);
            })(stl::forward<decltype(docs)>(docs)));
       },
       json_impls());

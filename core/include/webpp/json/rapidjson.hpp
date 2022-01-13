@@ -331,7 +331,7 @@ namespace webpp::json::rapidjson {
          * @tparam ValueContainer
          */
         template <Traits TraitsType, typename ValueContainer>
-        struct json_common {
+        struct json_common : public allocator_holder<rapidjson_allocator_wrapper<ValueContainer>> {
 
           private:
             // DocType could be a document or an GenericObject actually
@@ -370,6 +370,8 @@ namespace webpp::json::rapidjson {
             using rapidjson_array_type   = typename value_type::Array;
             using array_type             = generic_array<traits_type, rapidjson_array_type>;
             using rapidjson_value_type   = value_type;
+            using allocator_holder_type  = allocator_holder<rapidjson_allocator_wrapper<ValueContainer>>;
+            using allocator_type         = typename allocator_holder_type::allocator_type;
 
             constexpr json_common()                       = default;
             constexpr json_common(json_common const&)     = default;
@@ -379,8 +381,15 @@ namespace webpp::json::rapidjson {
             json_common& operator=(json_common const&) = default;
 
 
-            template <typename... ValT>
-            json_common(ValT&&... obj) : val_handle{stl::forward<ValT>(obj)...} {}
+            template <typename ValT>
+            json_common(ValT&& obj, allocator_type const& inp_alloc)
+              : allocator_holder_type{inp_alloc},
+                val_handle{stl::forward<ValT>(obj)} {}
+
+            template <typename ValT>
+            json_common(ValT&& obj)
+              : allocator_holder_type{obj.GetAllocator()},
+                val_handle{stl::forward<ValT>(obj)} {}
 
 
             template <typename T>
@@ -400,8 +409,16 @@ namespace webpp::json::rapidjson {
                                      istl::is_specialization_of_array_v<T> || istl::Collection<T>) {
                     rapidjson_value_type data{::rapidjson::kArrayType};
                     for (auto&& item : val) {
-                        data.PushBack(rapidjson_value_type{item}.Move(),
-                                      this->get_allocator().native_alloc());
+                        using item_type = stl::remove_cvref_t<decltype(item)>;
+                        if constexpr (requires { rapidjson_value_type{item}; }) {
+                            data.PushBack(rapidjson_value_type{item}.Move(),
+                                          this->get_allocator().native_alloc());
+                        } else if constexpr (istl::StringViewifiable<item_type>) {
+                            const auto item_view = istl::string_viewify(stl::move(item));
+                            const auto item_ref  = ::rapidjson::StringRef(item_view.data(), item_view.size());
+                            data.PushBack(rapidjson_value_type{item_ref}.Move(),
+                                          this->get_allocator().native_alloc());
+                        }
                     }
                     val_handle = stl::move(data);
                 } else {
@@ -741,8 +758,7 @@ namespace webpp::json::rapidjson {
         requires requires {
             typename stl::remove_cvref_t<ValueType>::AllocatorType;
         } // has an allocator
-        struct generic_value : public json_common<TraitsType, ValueType>,
-                               public allocator_holder<rapidjson_allocator_wrapper<ValueType>> {
+        struct generic_value : public json_common<TraitsType, ValueType> {
             using traits_type            = TraitsType;
             using common_type            = json_common<traits_type, ValueType>;
             using string_type            = typename common_type::string_type;
@@ -772,8 +788,7 @@ namespace webpp::json::rapidjson {
               constexpr generic_value( // NOLINT(bugprone-forwarding-reference-overload)
                 V&&                   val,
                 allocator_type const& inp_alloc = {})
-              : json_common<TraitsType, ValueType>(stl::forward<V>(val)),
-                allocator_holder<rapidjson_allocator_wrapper<ValueType>>(inp_alloc) {}
+              : json_common<TraitsType, ValueType>(stl::forward<V>(val), inp_alloc) {}
 
             /**
              * Check if it has a member
