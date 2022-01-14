@@ -1,7 +1,7 @@
 // Created by moisrex on 7/3/21.
 
-#ifndef WEBPP_JSON_HPP
-#define WEBPP_JSON_HPP
+#ifndef WEBPP_HTTP_BODIES_JSON_HPP
+#define WEBPP_HTTP_BODIES_JSON_HPP
 
 
 #include "../../extensions/extension.hpp"
@@ -16,8 +16,8 @@ namespace webpp::http {
 
     namespace details {
 
+        // todo: do this for every implementation
         struct json_response_body_extension {
-
 
             template <Traits TraitsType, HTTPResponseBody BodyType>
             struct type : BodyType {
@@ -40,16 +40,16 @@ namespace webpp::http {
                 using BodyType::BodyType;
 
                 constexpr type(json_array_type const& arr, alloc_type alloc = allocator_type{})
-                  : super{arr.template to_string<string_type>(alloc), alloc} {}
+                  : super{arr.template uglified<string_type>(alloc), alloc} {}
 
                 constexpr type(json_value_type const& val, alloc_type alloc = allocator_type{})
-                  : super{val.template to_string<string_type>(alloc), alloc} {}
+                  : super{val.template uglified<string_type>(alloc), alloc} {}
 
                 constexpr type(json_object_type const& obj, alloc_type alloc = allocator_type{})
-                  : super{obj.template to_string<string_type>(alloc), alloc} {}
+                  : super{obj.template uglified<string_type>(alloc), alloc} {}
 
                 constexpr type(json_document_type const& doc, alloc_type alloc = allocator_type{})
-                  : super{doc.template to_string<string_type>(alloc), alloc} {}
+                  : super{doc.template uglified<string_type>(alloc), alloc} {}
             };
         };
 
@@ -60,8 +60,8 @@ namespace webpp::http {
         struct json_context_extension {
 
             template <Traits TraitsType, Context ContextType>
-            struct type : public stl::remove_cvref_t<ContextType> {
-                using context_type       = stl::remove_cvref_t<ContextType>;
+            struct type : public ContextType {
+                using context_type       = ContextType;
                 using traits_type        = TraitsType;
                 using json_response_type = typename context_type::response_type;
                 using json_document_type = json::document<traits_type>;
@@ -78,11 +78,11 @@ namespace webpp::http {
                 constexpr HTTPResponse auto json(Args&&... args) const noexcept {
                     // check if there's an allocator in the args:
                     constexpr bool has_allocator = (istl::Allocator<Args> || ...);
-                    using body_type              = typename json_response_type::body_type;
                     using value_type             = traits::char_type<traits_type>;
                     if constexpr (!has_allocator && requires {
-                                      body_type{stl::forward<Args>(args)...,
-                                                this->alloc_pack.template general_allocator<value_type>()};
+                                      json_response_type::with_body(
+                                        stl::forward<Args>(args)...,
+                                        this->alloc_pack.template general_allocator<value_type>());
                                   }) {
                         return json_response_type::with_body(
                           stl::forward<Args>(args)...,
@@ -132,4 +132,4 @@ namespace webpp::http {
 } // namespace webpp::http
 
 
-#endif // WEBPP_JSON_HPP
+#endif // WEBPP_HTTP_BODIES_JSON_HPP

@@ -123,10 +123,10 @@ namespace webpp::http {
         /**
          * Append some extensions to this context type and get the type back
          */
-        template <typename... E>
+        template <Extension... E>
         using apply_extensions_type =
-          typename istl::unique_parameters<typename original_extension_pack_type::template appended<E...>>::
-            template extensie_type<traits_type, response_descriptor_type>;
+          typename istl::unique_parameters<typename original_extension_pack_type::template appended<
+            stl::remove_cvref_t<E>...>>::template extensie_type<traits_type, response_descriptor_type>;
     };
 
 

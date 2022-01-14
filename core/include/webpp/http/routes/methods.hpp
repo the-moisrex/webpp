@@ -8,7 +8,8 @@ namespace webpp::http {
     struct method_route_condition : public stl::string_view {
         using stl::string_view::basic_string_view; // ctors
 
-        [[nodiscard]] constexpr bool operator()(HTTPRequest auto const& req) const noexcept {
+        template <HTTPRequest ReqT>
+        [[nodiscard]] constexpr bool operator()(ReqT const& req) const noexcept {
             return req.request_method() == *this;
         }
 

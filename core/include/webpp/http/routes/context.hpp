@@ -128,23 +128,18 @@ namespace webpp::http {
         using etraits                = enable_traits<traits_type>;
 
       public:
-        using basic_context_parent::basic_context_parent; // inherit the ctors from parent
+        using enable_traits_with<TraitsType, EList>::enable_traits_with; // inherit the ctors from parent
+
         constexpr basic_context(basic_context&& ctx) noexcept      = default;
         constexpr basic_context(basic_context const& ctx) noexcept = default;
         constexpr basic_context& operator=(basic_context const&) = default;
         constexpr basic_context& operator=(basic_context&&) noexcept = default;
 
-        //        template <EnabledTraits ET>
-        //        constexpr basic_context(ET&& et_obj) noexcept :
-        //        basic_context_parent{stl::forward<ET>(et_obj)} {}
-        //
-        //        basic_context()                                            = delete;
-
 
         /**
          * Generate a response
          */
-        template <typename... NewExtensions, typename... Args>
+        template <Extension... NewExtensions, typename... Args>
         [[nodiscard]] constexpr HTTPResponse auto response(Args&&... args) const noexcept {
             using new_response_type =
               typename response_type::template apply_extensions_type<NewExtensions...>;
@@ -158,6 +153,8 @@ namespace webpp::http {
                 // ctx is EnabledTraits type, passing ctx as the first argument will help the extensions to be
                 // able to have access to the etraits.
                 return new_response_type{*this, stl::forward<Args>(args)...};
+
+                // todo: add more ways for passing the allocator too.
             } else {
                 return new_response_type{stl::forward<Args>(args)...};
             }
@@ -168,12 +165,11 @@ namespace webpp::http {
         /**
          * Generate a response while passing the specified arguments as the body of that response
          */
-        template <typename... NewExtensions, typename... Args>
+        template <Extension... NewExtensions, typename... Args>
         [[nodiscard]] constexpr HTTPResponse auto response_body(Args&&... args) const noexcept {
             using new_response_type =
               typename response_type::template apply_extensions_type<NewExtensions...>;
-            using local_body_type = typename new_response_type::body_type;
-            return response<NewExtensions..., Args...>(local_body_type{stl::forward<Args>(args)...});
+            return new_response_type::with_body(stl::forward<Args>(args)...);
         }
 
 

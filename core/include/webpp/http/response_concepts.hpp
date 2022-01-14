@@ -61,6 +61,9 @@ namespace webpp::http {
     template <typename ResponseType, typename T>
     concept ConstructibleWithResponse = stl::is_constructible_v<ResponseType, T>;
 
+    template <typename ResponseBodyType, typename T>
+    concept ConstructibleWithResponseBody = stl::is_constructible_v<ResponseBodyType, T>;
+
     template <typename T>
     concept HTTPResponseExtension = Extension<T>;
 

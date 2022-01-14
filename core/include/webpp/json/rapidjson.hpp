@@ -390,7 +390,7 @@ namespace webpp::json::rapidjson {
             using rapidjson_array_type   = typename value_type::Array;
             using array_type             = generic_array<traits_type, rapidjson_array_type>;
             using rapidjson_value_type   = value_type;
-            using allocator_type  =
+            using allocator_type =
               rapidjson_allocator_wrapper<typename stl::remove_cvref_t<ValueContainer>::AllocatorType>;
 
             constexpr json_common() : val_handle{}, alloc{val_handle.GetAllocator()} {}
@@ -568,25 +568,13 @@ namespace webpp::json::rapidjson {
                 return *this;
             }
 
-            template <istl::String StrT = string_type, typename... Args>
-            StrT pretty(Args&&... string_args) const {
-                StrT output{stl::forward<Args>(string_args)...};
-                ::rapidjson::PrettyWriter<stl::istringstream>{output};
-                return output;
-            }
-
-            template <istl::String StrT = string_type, typename... Args>
-            StrT uglified(Args&&... string_args) const {
-                return as_string(stl::forward<Args>(string_args)...);
-            }
-
 
             [[nodiscard]] constexpr decltype(auto) get_allocator() const {
                 return alloc;
             }
 
           protected:
-            container_type        val_handle{};
+            container_type val_handle{};
             allocator_type alloc;
         };
 
@@ -938,6 +926,7 @@ namespace webpp::json::rapidjson {
     struct document : public details::generic_value<TraitsType, ::rapidjson::Document> {
         using traits_type              = TraitsType;
         using string_view_type         = traits::string_view<traits_type>;
+        using string_type              = traits::general_string<traits_type>;
         using char_type                = traits::char_type<traits_type>;
         using general_allocator_type   = traits::general_allocator<traits_type, char_type>;
         using value_type               = value<traits_type>;
@@ -997,6 +986,39 @@ namespace webpp::json::rapidjson {
             const auto json_str_view = istl::string_viewify(stl::forward<StrT>(json_string));
             this->val_handle.Parse(json_str_view.data(), json_str_view.size());
             return *this;
+        }
+
+
+        template <istl::String StrT = string_type, typename... Args>
+        [[nodiscard]] StrT pretty(Args&&... string_args) const {
+            StrT output{stl::forward<Args>(string_args)...};
+            pretty(output);
+            return output;
+        }
+
+        // todo: UTF8 support
+        template <istl::String StrT = string_type>
+        void pretty(StrT& output) const {
+            ::rapidjson::StringBuffer                            buf;
+            ::rapidjson::PrettyWriter<::rapidjson::StringBuffer> writer{buf};
+            this->value_handle.Accept(writer);
+            output.append(buf.GetString(), buf.GetSize());
+        }
+
+        // todo: add ascii and stream support
+        template <istl::String StrT = string_type>
+        void uglified(StrT& output) const {
+            ::rapidjson::StringBuffer                      buf;
+            ::rapidjson::Writer<::rapidjson::StringBuffer> writer(buf);
+            this->val_handle.Accept(writer);
+            output.append(buf.GetString(), buf.GetSize());
+        }
+
+        template <istl::String StrT = string_type, typename... Args>
+        [[nodiscard]] StrT uglified(Args&&... args) const {
+            StrT output{stl::forward<Args>(args)...};
+            uglified(output);
+            return output;
         }
     };
 

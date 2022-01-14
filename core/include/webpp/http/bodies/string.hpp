@@ -34,6 +34,9 @@ namespace webpp::http {
                   : content{str, alloc} {}
 
                 template <typename... Args>
+                requires requires(Args... args) {
+                    string_type{args...};
+                }
                 constexpr type(Args&&... args) : content{stl::forward<Args>(args)...} {}
 
                 /**
