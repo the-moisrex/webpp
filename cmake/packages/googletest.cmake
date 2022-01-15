@@ -7,7 +7,11 @@ if (IS_DEBUG)
                 URL https://github.com/google/googletest/archive/refs/tags/release-1.11.0.tar.gz
                 GIT_TAG release-1.11.0
                 VERSION 1.11.0
-                OPTIONS "INSTALL_GTEST OFF" "gtest_force_shared_crt ON"
+                OPTIONS
+                    "INSTALL_GTEST OFF"
+                    "gtest_force_shared_crt ON"
+                    "BUILD_GMOCK OFF"
+                    "BUILD_TESTING OFF"
         )
     endif ()
 endif ()

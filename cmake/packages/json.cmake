@@ -1,6 +1,5 @@
 include(CPM)
 
-option(CPM_USE_LOCAL_PACKAGES "Use local packages" OFF)
 
 # To fix:
 # https://github.com/Tencent/rapidjson/issues/1816
@@ -23,7 +22,7 @@ CPMAddPackage(
 )
 
 # rapidjson for some reason adds this flag for clang too which is wrong.
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+if (IS_CLANG)
   string(REPLACE "-march=native" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
 
