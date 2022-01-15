@@ -55,6 +55,10 @@ if (NOT RAPIDJSON_FOUND AND EXISTS "/usr/include/rapidjson")
                 DESTINATION "${CMAKE_INSTALL_DATADIR}/${json_target}"
                 )
 
+else ()
+    add_library(rapidjson INTERFACE IMPORTED)
+    set_property(TARGET rapidjson PROPERTY
+            INTERFACE_INCLUDE_DIRECTORIES ${RapidJSON_SOURCE_DIR}/include)
 endif ()
 
 if (TARGET rapidjson)
