@@ -13,7 +13,7 @@ namespace webpp {
      *   - ASIO: the asio library whether it's ::boost::asio or ::asio
      *   - Standard Memory Resources: Default new and delete (std::allocator) memory resources
      */
-    using asio_std_traits = asio_traits<default_traits>;
+    using asio_std_traits = asio_traits<std_traits>;
 } // namespace webpp
 
 #endif // WEBPP_ASIO_STD_TRAITS_HPP

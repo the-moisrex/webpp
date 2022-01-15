@@ -34,6 +34,15 @@ namespace webpp {
             counter.fetch_sub(1, std::memory_order_relaxed);
             return *this;
         }
+
+        constexpr bool operator==(stl::integral auto value) const noexcept {
+            return counter == static_cast<T>(value);
+        }
+
+
+        constexpr auto operator<=>(stl::integral auto value) const noexcept {
+            return counter <=> static_cast<T>(value);
+        }
     };
 
 } // namespace webpp

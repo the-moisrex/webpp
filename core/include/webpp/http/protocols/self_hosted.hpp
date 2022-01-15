@@ -3,6 +3,8 @@
 #ifndef WEBPP_SELF_HOSTED_HPP
 #define WEBPP_SELF_HOSTED_HPP
 
+#include "../../application/request.hpp"
+#include "../../server/default_server_traits.hpp"
 #include "../../server/server_concepts.hpp"
 #include "../../std/string_view.hpp"
 #include "../app_wrapper.hpp"
@@ -10,13 +12,12 @@
 #include "common/common_http_protocol.hpp"
 #include "self_hosted_request.hpp"
 #include "shosted/self_hosted_session_manager.hpp"
-#include "webpp/application/request.hpp"
 
 namespace webpp::http::inline shosted {
 
-    template <ServerTraits      ServerTraitsType,
-              Application       App,
-              RootExtensionList RootExtensions = empty_extension_pack>
+    template <Application       App,
+              ServerTraits      ServerTraitsType = default_server_traits,
+              RootExtensionList RootExtensions   = empty_extension_pack>
     struct self_hosted
       : public common_http_protocol<typename ServerTraitsType::traits_type, App, RootExtensions> {
 
