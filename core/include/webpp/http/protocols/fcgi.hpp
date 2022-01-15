@@ -1,6 +1,8 @@
 #ifndef WEBPP_INTERFACE_FCGI
 #define WEBPP_INTERFACE_FCGI
 
+#include "../../application/request.hpp"
+#include "../../server/default_server_traits.hpp"
 #include "../../server/server_concepts.hpp"
 #include "../../std/internet.hpp"
 #include "../../std/set.hpp"
@@ -8,12 +10,13 @@
 #include "../app_wrapper.hpp"
 #include "fastcgi/fcgi_manager.hpp"
 #include "fcgi_request.hpp"
-#include "webpp/application/request.hpp"
 
 namespace webpp::http::inline fastcgi {
 
 
-    template <ServerTraits ServerType, typename App, typename EList = empty_extension_pack>
+    template <typename App,
+              ServerTraits ServerType = default_server_traits,
+              typename EList          = empty_extension_pack>
     struct fcgi : public enable_traits<typename ServerType::traits_type> {
         using server_type      = ServerType;
         using traits_type      = typename server_type::traits_type;
@@ -44,7 +47,7 @@ namespace webpp::http::inline fastcgi {
             endpoints{alloc},
             server{logger, alloc} {}
 
-        static constexpr [[nodiscard]] bool is_ssl_available() const noexcept {
+        [[nodiscard]] static constexpr bool is_ssl_available() noexcept {
             return false; // it's not, it's FCGI, we just don't know
         }
 
@@ -54,11 +57,11 @@ namespace webpp::http::inline fastcgi {
                 endpoints.emplace(stl::net::ip::make_address(default_listen_address, ec),
                                   default_listen_port);
                 if (!ec) {
-                    etraits::logger.critical(logging_category,
-                                             fmt::format("We're not able to listen to {}:{}",
-                                                         default_listen_address,
-                                                         default_listen_port),
-                                             ec);
+                    this->logger.critical(logging_category,
+                                          fmt::format("We're not able to listen to {}:{}",
+                                                      default_listen_address,
+                                                      default_listen_port),
+                                          ec);
                     return;
                 }
             }

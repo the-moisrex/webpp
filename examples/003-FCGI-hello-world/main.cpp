@@ -1,10 +1,8 @@
 #include "app.h"
 
-#include <webpp/http/interfaces/fcgi.hpp>
+#include <webpp/http/protocols/fcgi.hpp>
 
 int main() {
-    using namespace webpp;
-    http<fcgi<default_traits, app>> my_app;
-    my_app();
-    return 0;
+    webpp::http::fastcgi::fcgi<app> my_app;
+    return my_app();
 }

@@ -180,6 +180,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/logs/default_logger.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/server/server_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/server/default_server_traits.hpp
         ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_thread_pool.hpp
         ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_traits.hpp
         ${LIB_INCLUDE_DIR}/webpp/server/asio/asio_connection.hpp

@@ -26,7 +26,7 @@ struct app {
         constexpr auto home_root = root / stl::string_view{"home"};
 
         router _router{extensions{},
-                       home_root&& get >>=
+                       get and home_root >>=
                        [this](Context auto& ctx) {
                            return this->home(ctx);
                        },

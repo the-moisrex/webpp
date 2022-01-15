@@ -3,13 +3,14 @@
 #ifndef WEBPP_ASIO_TRAITS_HPP
 #define WEBPP_ASIO_TRAITS_HPP
 
+#include "../../traits/default_traits.hpp"
 #include "../server_concepts.hpp"
 #include "asio_server.hpp"
 #include "asio_thread_pool.hpp"
 
 namespace webpp {
 
-    template <Traits TraitsType, ThreadPool ThreadPoolType = asio_thread_pool>
+    template <Traits TraitsType = default_traits, ThreadPool ThreadPoolType = asio_thread_pool>
     struct asio_traits {
         using traits_type      = TraitsType;
         using thread_pool_type = ThreadPoolType;
