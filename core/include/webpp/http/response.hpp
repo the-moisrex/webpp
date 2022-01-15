@@ -29,24 +29,28 @@ namespace webpp::http {
         body_type    body{};
         headers_type headers{};
 
-        basic_response(auto&& arg1, auto&&... args) noexcept
-          requires(!one_of<decltype(arg1), headers_type, http::status_code_type, body_type>)
-          : elist_type{stl::forward<decltype(args)>(args)...} {}
+        template <typename Arg1, typename... Args>
+        constexpr basic_response([[maybe_unused]] Arg1&& arg1, Args&&... args) noexcept
+          requires(!one_of<Arg1, headers_type, http::status_code_type, body_type> &&
+                   stl::is_constructible_v<elist_type, Args...>)
+          : elist_type{stl::forward<Args>(args)...} {}
 
-        basic_response() noexcept                          = default;
-        basic_response(basic_response const& res) noexcept = default;
-        basic_response(basic_response&& res) noexcept      = default;
+        constexpr basic_response() noexcept                          = default;
+        constexpr basic_response(basic_response const& res) noexcept = default;
+        constexpr basic_response(basic_response&& res) noexcept      = default;
 
-        basic_response(http::status_code_type err_code) noexcept : elist_type{}, headers{err_code} {}
+        constexpr basic_response(http::status_code_type err_code) noexcept
+          : elist_type{},
+            headers{err_code} {}
 
-        explicit basic_response(body_type const& b) noexcept : elist_type{}, body(b) {}
-        explicit basic_response(body_type&& b) noexcept : elist_type{}, body(stl::move(b)) {}
+        constexpr explicit basic_response(body_type const& b) noexcept : elist_type{}, body(b) {}
+        constexpr explicit basic_response(body_type&& b) noexcept : elist_type{}, body(stl::move(b)) {}
 
-        explicit basic_response(headers_type&& e) noexcept : elist_type{}, headers(stl::move(e)) {}
-        explicit basic_response(headers_type const& e) noexcept : elist_type{}, headers(e) {}
+        constexpr explicit basic_response(headers_type&& e) noexcept : elist_type{}, headers(stl::move(e)) {}
+        constexpr explicit basic_response(headers_type const& e) noexcept : elist_type{}, headers(e) {}
 
-        basic_response& operator=(basic_response const&) = default;
-        basic_response& operator=(basic_response&& res) noexcept = default;
+        constexpr basic_response& operator=(basic_response const&) = default;
+        constexpr basic_response& operator=(basic_response&& res) noexcept = default;
 
         [[nodiscard]] bool operator==(basic_response const& res) const noexcept {
             return headers == res.headers && body == res.body;
@@ -119,6 +123,39 @@ namespace webpp::http {
         [[nodiscard]] constexpr static auto with_headers(Args&&... args) {
             return response_type{headers_type{stl::forward<Args>(args)...}};
         }
+
+        template <Extension... NewExtensions, typename... Args>
+        [[nodiscard]] static constexpr HTTPResponse auto create(Args&&... args) {
+            using new_response_type =
+              typename response_type::template apply_extensions_type<NewExtensions...>;
+            return new_response_type{stl::forward<Args>(args)...};
+        }
+
+        /**
+         * Generate a response
+         */
+        template <Extension... NewExtensions, EnabledTraits ET, typename... Args>
+        [[nodiscard]] static constexpr HTTPResponse auto create(ET&& et, Args&&... args) {
+            using new_response_type =
+              typename response_type::template apply_extensions_type<NewExtensions...>;
+            // todo: write an auto extension finder based on the Args that get passed
+
+
+            if constexpr (requires { new_response_type{et, stl::forward<Args>(args)...}; }) {
+                // ctx is EnabledTraits type, passing ctx as the first argument will help the extensions to be
+                // able to have access to the etraits.
+                return new_response_type{et, stl::forward<Args>(args)...};
+
+                // todo: add more ways for passing the allocator too.
+            } else if constexpr (requires { new_response_type{stl::forward<Args>(args)..., et}; }) {
+                // ctx is EnabledTraits type, passing ctx as the first argument will help the extensions to be
+                // able to have access to the etraits.
+                return new_response_type{stl::forward<Args>(args)..., et};
+            } else {
+                return new_response_type{stl::forward<Args>(args)...};
+            }
+        }
+
 
         /**
          * Append some extensions to this context type and get the type back

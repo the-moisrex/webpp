@@ -25,13 +25,10 @@ namespace webpp::http {
                 using super = BodyType;
 
               public:
-                using traits_type        = TraitsType;
-                using allocator_type     = typename super::allocator_type;
-                using string_type        = typename super::string_type;
-                using json_document_type = json::document<traits_type>;
-                using json_value_type    = typename json_document_type::value_type;
-                using json_object_type   = typename json_document_type::object_type;
-                using json_array_type    = typename json_document_type::array_type;
+                using traits_type    = TraitsType;
+                using allocator_type = typename super::allocator_type;
+                using string_type    = typename super::string_type;
+                using char_type      = typename super::char_type;
 
               private:
                 using alloc_type = allocator_type const&;
@@ -39,16 +36,29 @@ namespace webpp::http {
               public:
                 using BodyType::BodyType;
 
-                constexpr type(json_array_type const& arr, alloc_type alloc = allocator_type{})
-                  : super{arr.template uglified<string_type>(alloc), alloc} {}
+                template <EnabledTraits ET, json::JSONDocument DocT>
+                requires requires(ET et, DocT doc) {
+                    super{et,
+                          doc.template uglified<string_type>(
+                            et.alloc_pack.template general_allocator<char_type>())};
+                }
+                constexpr type(ET&& et, DocT const& doc)
+                  : super{et,
+                          doc.template uglified<string_type>(
+                            et.alloc_pack.template general_allocator<char_type>())} {}
 
-                constexpr type(json_value_type const& val, alloc_type alloc = allocator_type{})
-                  : super{val.template uglified<string_type>(alloc), alloc} {}
 
-                constexpr type(json_object_type const& obj, alloc_type alloc = allocator_type{})
-                  : super{obj.template uglified<string_type>(alloc), alloc} {}
+                template <EnabledTraits ET, json::JSONDocument DocT>
+                requires requires(ET et, DocT doc) {
+                    super{doc.template uglified<string_type>(
+                      et.alloc_pack.template general_allocator<char_type>())};
+                }
+                constexpr type(ET&& et, DocT const& doc)
+                  : super{doc.template uglified<string_type>(
+                      et.alloc_pack.template general_allocator<char_type>())} {}
 
-                constexpr type(json_document_type const& doc, alloc_type alloc = allocator_type{})
+                template <json::JSONDocument DocT>
+                constexpr type(DocT const& doc, alloc_type alloc = allocator_type{})
                   : super{doc.template uglified<string_type>(alloc), alloc} {}
             };
         };
@@ -103,13 +113,35 @@ namespace webpp::http {
         struct json_response_extension {
             template <Traits TraitsType, typename ResType>
             struct type : public ResType {
+                using body_type   = typename ResType::body_type;
+                using traits_type = TraitsType;
+
                 using ResType::ResType;
-                using body_type          = typename ResType::body_type;
-                using traits_type        = TraitsType;
-                using json_document_type = json::document<traits_type>;
 
                 // pass it to the body
-                constexpr type(json_document_type const& doc) noexcept : ResType{body_type{doc}} {}
+                template <EnabledTraits ET, json::JSONDocument DocT>
+                requires requires(ET et, DocT doc) {
+                    ResType{et, body_type{et, doc}};
+                }
+                constexpr type(ET&& et, DocT const& doc) noexcept : ResType{et, body_type{et, doc}} {
+                    this->add_headers();
+                }
+
+
+
+                template <EnabledTraits ET, json::JSONDocument DocT>
+                requires requires(ET et, DocT doc) {
+                    ResType{body_type{et, doc}};
+                }
+                constexpr type(ET&& et, DocT const& doc) noexcept : ResType{body_type{et, doc}} {
+                    this->add_headers();
+                }
+
+              private:
+                constexpr void add_headers() {
+                    // todo: encoding support
+                    this->headers.emplace_back("Content-Type", "application/json; charset=utf-8");
+                }
             };
         };
 

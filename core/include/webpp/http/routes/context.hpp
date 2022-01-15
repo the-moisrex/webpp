@@ -141,23 +141,7 @@ namespace webpp::http {
          */
         template <Extension... NewExtensions, typename... Args>
         [[nodiscard]] constexpr HTTPResponse auto response(Args&&... args) const noexcept {
-            using new_response_type =
-              typename response_type::template apply_extensions_type<NewExtensions...>;
-            // todo: write an auto extension finder based on the Args that get passed
-
-
-            if constexpr (requires {
-                              requires EnabledTraits<new_response_type>;
-                              new_response_type{*this, stl::forward<Args>(args)...};
-                          }) {
-                // ctx is EnabledTraits type, passing ctx as the first argument will help the extensions to be
-                // able to have access to the etraits.
-                return new_response_type{*this, stl::forward<Args>(args)...};
-
-                // todo: add more ways for passing the allocator too.
-            } else {
-                return new_response_type{stl::forward<Args>(args)...};
-            }
+            return response_type::template create<NewExtensions...>(*this, stl::forward<Args>(args)...);
         }
 
 

@@ -102,10 +102,10 @@ namespace webpp::http {
                 } else {
                     return handle_primary_results(move(res2), forward<CtxT>(ctx), req);
                 }
-            } else if constexpr (ConstructibleWithResponseBody<body_type, result_type>) {
-                return ctx.response_body(forward<ResT>(res));
             } else if constexpr (ConstructibleWithResponse<response_type, result_type>) {
                 return ctx.response(forward<ResT>(res));
+            } else if constexpr (ConstructibleWithResponseBody<body_type, result_type>) {
+                return ctx.response_body(forward<ResT>(res));
             } else if constexpr (istl::StringViewifiable<result_type>) {
                 if constexpr (context_type::template has_extension<string_response>()) {
                     // Use string_response, response type to handle strings

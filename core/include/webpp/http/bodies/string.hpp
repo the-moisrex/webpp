@@ -30,14 +30,15 @@ namespace webpp::http {
                 string_type content = "";
 
               public:
+                constexpr type() = default;
+
                 constexpr type(string_view_type str, alloc_type alloc = allocator_type{})
                   : content{str, alloc} {}
 
                 template <typename... Args>
-                requires requires(Args... args) {
-                    string_type{args...};
-                }
-                constexpr type(Args&&... args) : content{stl::forward<Args>(args)...} {}
+                requires(sizeof...(Args) > 0 && stl::is_constructible_v<string_type, Args...>) // string args
+                  constexpr type(Args&&... args)
+                  : content{stl::forward<Args>(args)...} {}
 
                 /**
                  * @brief Get a reference to the body's string
