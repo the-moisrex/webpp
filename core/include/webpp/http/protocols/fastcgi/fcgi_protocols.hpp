@@ -8,7 +8,7 @@
 // https://github.com/eddic/fastcgipp
 // http://www.mit.edu/~yandros/doc/specs/fcgi-spec.html
 
-namespace webpp::http::inline fastcgi {
+namespace webpp::http::fastcgi {
 
     static constexpr unsigned chunk_size = 8u;
 
@@ -291,6 +291,6 @@ namespace webpp::http::inline fastcgi {
     static constexpr management_reply max_reqs_reply{"FCGI_MAX_REQS", "50"};
     static constexpr management_reply mpxs_conns_reply{"FCGI_MPXS_CONNS", "1"};
 
-} // namespace webpp::fastcgi
+} // namespace webpp::http::fastcgi
 
 #endif

@@ -6,7 +6,7 @@
 #include "common/common_http_request.hpp"
 #include "protocol_concepts.hpp"
 
-namespace webpp::http::inline shosted {
+namespace webpp::http::shosted {
 
 
     template <Traits TraitsType,
@@ -42,6 +42,6 @@ namespace webpp::http::inline shosted {
     };
 
 
-} // namespace webpp::http::inline shosted
+} // namespace webpp::http::shosted
 
 #endif // WEBPP_SELF_HOSTED_REQUEST_HPP

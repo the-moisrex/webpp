@@ -7,7 +7,7 @@
 
 #include <cstdint>
 
-namespace webpp::http::inline shosted {
+namespace webpp::http::shosted {
 
     struct limits_type {
         stl::uint16_t uri = 255;
@@ -17,6 +17,6 @@ namespace webpp::http::inline shosted {
         } body;
     };
 
-} // namespace webpp::http::inline shosted
+} // namespace webpp::http::shosted
 
 #endif // WEBPP_LIMITS_HPP

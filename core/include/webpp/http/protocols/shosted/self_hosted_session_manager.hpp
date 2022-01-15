@@ -11,7 +11,7 @@
 
 #include <array>
 
-namespace webpp::http::inline shosted {
+namespace webpp::http::shosted {
 
     /**
      * For a self-hosted server, the session manager class will be created once for each request (well,
@@ -72,6 +72,6 @@ namespace webpp::http::inline shosted {
         }
     };
 
-} // namespace webpp::http::inline shosted
+} // namespace webpp::http::shosted
 
 #endif // WEBPP_SELF_HOSTED_SESSION_MANAGER_HPP
