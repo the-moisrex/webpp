@@ -5,8 +5,8 @@
 
 #include "../../std/string_view.hpp"
 #include "../../traits/traits.hpp"
-#include "protocol_concepts.hpp"
 #include "common/common_http_request.hpp"
+#include "protocol_concepts.hpp"
 
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/string_body.hpp>
@@ -17,19 +17,20 @@ namespace webpp::http {
         using namespace boost::beast;
     }
 
-    template <Traits TraitsType, typename REL, typename BodyType, typename FieldType = beast::http::fields>
-    struct beast_request : public common_request<TraitsType, REL>,
+    // template <Traits TraitsType, typename REL, typename BodyType, typename FieldType = beast::http::fields>
+    template <Traits TraitsType, HTTPRequestExtensionParent REL, RootExtensionList RootExtensions>
+    struct beast_request : public common_http_request<TraitsType, REL, RootExtensions>,
                            public beast::http::request<BodyType, FieldType> {
         using traits_type            = stl::remove_cvref_t<TraitsType>;
         using request_extension_list = REL;
-        using string_type            = traits::string<traits_type>;
+        using string_type            = traits::general_string<traits_type>;
         using string_view_type       = traits::string_view<traits_type>;
         using beast_request_type     = beast::http::request<BodyType, FieldType>;
         using body_type              = BodyType;
         using field_type             = FieldType;
 
       private:
-        using super = common_request<TraitsType, REL>;
+        using super = common_http_request<TraitsType, REL>;
 
       public:
         template <typename... Args>
