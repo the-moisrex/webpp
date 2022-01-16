@@ -78,18 +78,43 @@
  * - [ ] get a list of all keys in a key (sub-keys)
  */
 
+#include "../std/optional.hpp"
+#include "../std/string_view.hpp"
+
 namespace webpp {
 
     template <typename T>
     concept Config = requires(T config) {
-        {config["key"]};     // string_view
-        {config.get("key")}; // optional<string_view>
+        { config["section"]["key"] } -> stl::same_as<typename T::string_view_type>; // string_view
+        { config.find("key") } -> istl::Optional;                                   // optional<string_view>
+        { config.get("key", "default_value") } -> stl::same_as<typename T::string_view_type>;
+        { config.get("section", "key", "default_value") } -> stl::same_as<typename T::string_view_type>;
+        {
+            config.get("file.ini", "section", "key", "default_value")
+            } -> stl::same_as<typename T::string_view_type>;
+#ifdef false and CXX23
+        { config["section", "key", "default_value"] } -> stl::same_as<typename T::string_view_type>;
+#endif
 
-        {config.set("key", "value")};
+        config.set("key", "value");
 
-        config.has("key"); // bool
-        config.clear();    // clear the configs
-        config.flush();    // bool
+        { config.has("key") } -> stl::same_as<bool>;
+        config.clear(); // clear the configs
+        config.save();  // bool
+
+        { T::supports(".ini") } -> stl::same_as<bool>;
+
+        config.add_file("file.ini");
+
+        // iterators
+        config.begin();
+        config.end();
+        config.keys().begin();
+        config.keys().end();
+        config.values().begin();
+        config.values().end();
+        config.sections().begin();
+        config.sections().end();
     };
 
 
