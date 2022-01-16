@@ -85,15 +85,11 @@ namespace webpp {
 
     template <typename T>
     concept Config = requires(T config) {
-        { config["section"]["key"] } -> stl::same_as<typename T::string_view_type>; // string_view
-        { config.find("key") } -> istl::Optional;                                   // optional<string_view>
-        { config.get("key", "default_value") } -> stl::same_as<typename T::string_view_type>;
-        { config.get("section", "key", "default_value") } -> stl::same_as<typename T::string_view_type>;
-        {
-            config.get("file.ini", "section", "key", "default_value")
-            } -> stl::same_as<typename T::string_view_type>;
+        {config.get("key", "default_value")};
+        {config.get("section", "key", "default_value")};
+        {config.get("file.ini", "section", "key", "default_value")};
 #ifdef false and CXX23
-        { config["section", "key", "default_value"] } -> stl::same_as<typename T::string_view_type>;
+        {config["section", "key", "default_value"]};
 #endif
 
         config.set("key", "value");
@@ -115,6 +111,13 @@ namespace webpp {
         config.values().end();
         config.sections().begin();
         config.sections().end();
+
+
+        // type support
+        { as<int>(config.get("key")) } -> stl::same_as<int>;
+        { config["key"].template as<int>() } -> stl::same_as<int>;
+        { config["key"].as_string() } -> stl::same_as<typename T::string_type>;
+        config["key"].as_array();
     };
 
 
