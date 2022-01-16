@@ -118,6 +118,8 @@ namespace webpp {
         { config["key"].template as<int>() } -> stl::same_as<int>;
         { config["key"].as_string() } -> stl::same_as<typename T::string_type>;
         config["key"].as_array();
+
+        config.env("key"); // get environment value
     };
 
 
