@@ -63,6 +63,8 @@ namespace webpp::unicode {
         using pointer                 = stl::add_pointer_t<char_type>;
         using difference_type         = stl::ptrdiff_t;
         using const_storage_unit_type = typename storage_unit_type::const_storage_unit_type;
+        using iterator_category       = stl::random_access_iterator_tag;
+        using iterator_concept        = stl::random_access_iterator_tag;
 
         using element_type  = storage_unit_type;
         using reference     = element_type&;
@@ -127,7 +129,7 @@ namespace webpp::unicode {
             return *this;
         }
 
-        constexpr unicode_ptr operator++(int) noexcept {
+        constexpr unicode_ptr operator++(int) noexcept { // NOLINT(cert-dcl21-cpp)
             return unicode_ptr{*this}.operator++();
         }
 
@@ -136,7 +138,7 @@ namespace webpp::unicode {
             return *this;
         }
 
-        constexpr unicode_ptr operator--(int) noexcept {
+        constexpr unicode_ptr operator--(int) noexcept { // NOLINT(cert-dcl21-cpp)
             return unicode_ptr{*this}.operator--();
         }
 
