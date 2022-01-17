@@ -3,6 +3,7 @@
 #ifndef WEBPP_UNICODE_PTR_HPP
 #define WEBPP_UNICODE_PTR_HPP
 
+#include "../std/concepts.hpp"
 #include "../std/type_traits.hpp"
 #include "unicode.hpp"
 
