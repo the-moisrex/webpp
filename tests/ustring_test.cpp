@@ -11,7 +11,7 @@ TEST(UString, UTF8_Init) {
     utf8<> one{u8"hello world"};
     utf8<> two{"hello world"};
     utf8<> three{u8"سلام"};
-    EXPECT_TRUE(one.operator==("hello world"));
+    // EXPECT_TRUE(one.operator==("hello world"));
     EXPECT_EQ(one, "hello world");
     EXPECT_EQ(two, "hello world");
     EXPECT_EQ(three, u8"سلام");

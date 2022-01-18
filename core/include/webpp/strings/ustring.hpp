@@ -50,15 +50,17 @@ namespace webpp {
               Allocator            AllocType = stl::allocator<CharT>>
     struct ustring
       : stl::basic_string<CharT, unicode_char_traits<CharT>, ustring_allocator_wrapper<AllocType>> {
+
         using basic_string_type =
           stl::basic_string<CharT, unicode_char_traits<CharT>, ustring_allocator_wrapper<AllocType>>;
 
 
-        using value_type     = typename basic_string_type::value_type;
-        using allocator_type = typename basic_string_type::allocator_type;
-        using unit_type      = typename value_type::char_type;
-        using pointer        = typename basic_string_type::pointer;
-        using const_pointer  = typename basic_string_type::const_pointer;
+        using value_type       = typename basic_string_type::value_type;
+        using allocator_type   = typename basic_string_type::allocator_type;
+        using unit_type        = typename value_type::char_type;
+        using pointer          = typename basic_string_type::pointer;
+        using const_pointer    = typename basic_string_type::const_pointer;
+        using char_traits_type = typename basic_string_type::traits_type;
 
 
         static_assert(unicode::is_storage_unit_v<value_type>,
@@ -77,12 +79,16 @@ namespace webpp {
           explicit ustring(NewCharT const* val, const allocator_type& a = allocator_type{})
           : ustring{reinterpret_cast<value_type const*>(val), a} {}
 
+        /*
         template <typename NewCharT>
         requires(same_size_unit<NewCharT> && !stl::same_as<NewCharT, value_type>) // both are the same size
           constexpr auto
           operator==(NewCharT const* val) noexcept {
-            return *this == reinterpret_cast<value_type const*>(val);
+            return operator==
+              <value_type, char_traits_type, allocator_type>(static_cast<basic_string_type const&>(*this),
+                                                             reinterpret_cast<value_type const*>(val));
         }
+        */
 
         template <typename NewCharT>
         requires(same_size_unit<NewCharT> && !stl::same_as<NewCharT, value_type>) // both are the same size
@@ -90,20 +96,25 @@ namespace webpp {
           operator<=>(NewCharT const* val) noexcept {
             return *this <=> reinterpret_cast<value_type const*>(val);
         }
+
+
+        auto& basic_string() {
+            return static_cast<basic_string_type>(*this);
+        }
     };
 
 
-    //    template <typename NewCharT, typename CharT, typename ChTraitsT, typename AllocT>
-    //    constexpr auto operator==(NewCharT const* val, const ustring<CharT, ChTraitsT, AllocT>& rhs)
-    //    noexcept {
-    //        return rhs == val;
-    //    }
-    //
-    //    template <typename NewCharT, typename CharT, typename ChTraitsT, typename AllocT>
-    //    constexpr auto operator==(const ustring<CharT, ChTraitsT, AllocT>& lhs, NewCharT const* val)
-    //    noexcept {
-    //        return lhs.operator==(val);
-    //    }
+    template <typename NewCharT, typename CharT, typename AllocT>
+    constexpr auto operator==(const ustring<CharT, AllocT>& lhs, NewCharT const* val) noexcept {
+        using ustring_type      = ustring<CharT, AllocT>;
+        using basic_string_type = typename ustring_type::basic_string_type;
+        using value_type        = typename basic_string_type::value_type;
+        using allocator_type    = typename basic_string_type::allocator_type;
+        using char_traits_type  = typename basic_string_type::traits_type;
+        return stl::operator==
+          <value_type, char_traits_type, allocator_type>(lhs.basic_string(),
+                                                         reinterpret_cast<value_type const*>(val));
+    }
 
 
 #if false
