@@ -79,6 +79,8 @@ namespace webpp::unicode {
         pointer start{nullptr};
 
       public:
+        constexpr unicode_ptr() = default;
+
         template <typename T>
         requires(sizeof(T) == sizeof(char_type) && !stl::same_as<T, char_type>) // same size but not char_type
           constexpr unicode_ptr(T* p) noexcept

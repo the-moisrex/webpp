@@ -77,7 +77,7 @@ namespace webpp {
         template <typename NewCharT>
         requires(same_size_unit<NewCharT>) // both are the same size
           explicit ustring(NewCharT const* val, const allocator_type& a = allocator_type{})
-          : ustring{reinterpret_cast<value_type const*>(val), a} {}
+          : basic_string_type{reinterpret_cast<value_type const*>(val), a} {}
 
         /*
         template <typename NewCharT>
