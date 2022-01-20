@@ -94,6 +94,15 @@ namespace webpp::unicode {
             return r;
         }
 
+        // this is used by std::pointer_traits<T>::to_address
+        static element_type* to_address(pointer p) noexcept {
+            return reinterpret_cast<element_type*>(p);
+        }
+
+        static constexpr element_type* to_address(element_type* p) noexcept {
+            return p;
+        }
+
         constexpr operator pointer() noexcept {
             return start;
         }
@@ -107,9 +116,13 @@ namespace webpp::unicode {
             return reinterpret_cast<element_type const*>(start);
         }
 
+        constexpr operator element_type*() noexcept {
+            return reinterpret_cast<element_type*>(start);
+        }
+
         // todo
-        constexpr pointer operator->() const noexcept {
-            return start;
+        constexpr element_type* operator->() const noexcept {
+            return reinterpret_cast<element_type*>(start);
         }
 
         // Random access iterator requirements
