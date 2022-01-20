@@ -172,7 +172,7 @@ namespace webpp::unicode {
         }
 
         constexpr reference operator[](difference_type n) noexcept {
-            return unicode_ptr{*this}.operator+=(n);
+            return operator+(n).operator*();
         }
     };
 
