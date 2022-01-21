@@ -71,6 +71,10 @@ namespace webpp::unicode {
         using reference     = element_type&;
         using const_pointer = unicode_ptr<const_storage_unit_type>;
 
+        static constexpr bool is_storage_const = stl::is_const_v<storage_unit_type>;
+        using element_ptr =
+          stl::add_pointer_t<stl::conditional_t<is_storage_const, const element_type, element_type>>;
+
 
         static constexpr bool is_utf8  = unicode::UTF8<char_type>;
         static constexpr bool is_utf16 = unicode::UTF16<char_type>;
@@ -120,9 +124,8 @@ namespace webpp::unicode {
             return reinterpret_cast<element_type*>(start);
         }
 
-        // todo
-        constexpr element_type* operator->() const noexcept {
-            return reinterpret_cast<element_type*>(start);
+        constexpr element_ptr operator->() const noexcept {
+            return reinterpret_cast<element_ptr>(start);
         }
 
         // Random access iterator requirements
