@@ -101,26 +101,26 @@ namespace webpp::unicode {
             if ((val & 0xFC00u) == 0xD800u) {
                 // we have two chars
                 val <<= sizeof(char16_t) * 8u;
-                auto const next_val = p + 1;
+                auto const next_val = p + 1u;
                 val |= *next_val;
                 return val;
             }
             return static_cast<code_point_type>(val); // this is the only char
         } else if constexpr (is_utf8) {
-            constexpr auto shift_bit_count = sizeof(char8_t) * 8u;
+            constexpr char_type shift_bit_count = sizeof(char8_t) * 8u;
             if ((val & 0x80u) == 0) {
                 // we have one char
                 return static_cast<code_point_type>(val);
             } else if ((val & 0xE0u) == 0xC0u) {
                 // we have 2 chars
                 val <<= shift_bit_count;
-                auto const next_val = p + 1;
+                auto const next_val = p + 1u;
                 val |= *next_val;
                 return val;
             } else if ((val & 0xF0u) == 0xE0u) {
                 // we have 3 chars
                 val <<= shift_bit_count;
-                auto next_val = p + 1;
+                auto next_val = p + 1u;
                 val |= *next_val;
                 val <<= shift_bit_count;
                 ++next_val;
@@ -129,7 +129,7 @@ namespace webpp::unicode {
             } else if ((val & 0xF8u) == 0xF0u) {
                 // we have 4 chars
                 val <<= shift_bit_count;
-                auto next_val = p + 1;
+                auto next_val = p + 1u;
                 val |= *next_val;
                 val <<= shift_bit_count;
                 ++next_val;
