@@ -67,13 +67,15 @@ namespace webpp::unicode {
         using iterator_category       = stl::random_access_iterator_tag;
         using iterator_concept        = stl::random_access_iterator_tag;
 
+        static constexpr bool is_storage_const = stl::is_const_v<storage_unit_type>;
+
         using element_type  = storage_unit_type;
-        using reference     = element_type&;
+        using reference     = stl::conditional_t<is_storage_const, const element_type&, element_type&>;
         using const_pointer = unicode_ptr<const_storage_unit_type>;
 
-        static constexpr bool is_storage_const = stl::is_const_v<storage_unit_type>;
         using element_ptr =
           stl::add_pointer_t<stl::conditional_t<is_storage_const, const element_type, element_type>>;
+        using const_element_ptr = stl::add_const_t<element_ptr>;
 
 
         static constexpr bool is_utf8  = unicode::UTF8<char_type>;
@@ -124,8 +126,8 @@ namespace webpp::unicode {
             return reinterpret_cast<element_type*>(start);
         }
 
-        constexpr element_ptr operator->() const noexcept {
-            return reinterpret_cast<element_ptr>(start);
+        constexpr const_element_ptr operator->() const noexcept {
+            return reinterpret_cast<const_element_ptr>(start);
         }
 
         // Random access iterator requirements
@@ -139,7 +141,7 @@ namespace webpp::unicode {
             return start <=> p;
         }
 
-        constexpr reference operator*() const noexcept {
+        constexpr code_point_type operator*() const noexcept {
             return unicode::code_point<char_type, code_point_type>(start);
         }
 
@@ -187,7 +189,7 @@ namespace webpp::unicode {
             return ret;
         }
 
-        constexpr reference operator[](difference_type n) noexcept {
+        constexpr code_point_type operator[](difference_type n) noexcept {
             return operator+(n).operator*();
         }
     };
