@@ -202,7 +202,7 @@ namespace webpp::unicode {
         using char_type               = CharT;
         using code_point_type         = CodePointType;
         using type                    = storage_unit<CharT, CodePointType>;
-        using const_storage_unit_type = storage_unit<const CharT, CodePointType>;
+        using const_storage_unit_type = const storage_unit<const CharT, CodePointType>;
 
         // the std::iterator_traits uses this to get the pointer type
         using pointer = unicode_ptr<type>;

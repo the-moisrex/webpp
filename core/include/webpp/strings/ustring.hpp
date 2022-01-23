@@ -99,7 +99,7 @@ namespace webpp {
 
 
         auto& basic_string() {
-            return static_cast<basic_string_type>(*this);
+            return static_cast<basic_string_type&>(*this);
         }
     };
 
