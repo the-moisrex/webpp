@@ -63,6 +63,12 @@ namespace webpp::http {
                 [[nodiscard]] auto get_allocator() const noexcept {
                     return content.get_allocator();
                 }
+
+                template <typename Arg>
+                constexpr auto& operator=(Arg arg) {
+                    content.operator=(stl::forward<Arg>(arg));
+                    return *this;
+                }
             };
         };
 

@@ -113,7 +113,8 @@ namespace webpp::http {
                           [[maybe_unused]] file_options const& options = {}) noexcept {
 #ifdef WEBPP_EMBEDDED_FILES
                     if (auto content = ::get_static_file(filepath); !content.empty()) {
-                        return string_type{this->content, alloc};
+                        *this = string_type{this->content, alloc};
+                        return;
                     }
 #endif
 

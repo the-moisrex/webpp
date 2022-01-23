@@ -52,6 +52,8 @@ TEST(Body, File) {
     handle.close();
 
     body_t the_body;
+    the_body = "data";
+    EXPECT_EQ(the_body.str(), "data");
     the_body.load(file);
     EXPECT_EQ(the_body.str(), "Hello World");
     std::filesystem::remove(file);
