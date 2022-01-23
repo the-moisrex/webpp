@@ -150,8 +150,6 @@ namespace webpp::json {
         // string related methods
         { val.is_string() } -> stl::same_as<bool>;
         { val.as_string_view() } -> istl::StringView;
-        { val.pretty() } -> istl::String;
-        { val.uglified() } -> istl::String;
         { val.template as_string<stl::string>(stl::allocator<char>()) } -> istl::String;
 
             // todo: add default value as<...> functions
@@ -192,6 +190,8 @@ namespace webpp::json {
         T{};                    // will contain a null value
         T{T{"{}"}.as_object()}; // passing an object/value as input
         // T{stl::filesystem::path{"file.json"}}; // read from file.
+        { doc.pretty() } -> istl::String;
+        { doc.uglified() } -> istl::String;
     };
 
 } // namespace webpp::json
