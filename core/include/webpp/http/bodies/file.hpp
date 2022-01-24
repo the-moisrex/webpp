@@ -123,6 +123,7 @@ namespace webpp::http {
                     // TODO: performance tests
                     // todo: add unix specializations for performance and having fun reasons
                     // TODO: change the replace_string with replace_string_view if the file is cached
+                    // checkout this implementation: https://stackoverflow.com/a/17925143/4987470
 
                     if (auto in = ifstream_type(filepath.c_str(), stl::ios::binary | stl::ios::ate);
                         in.is_open()) {
