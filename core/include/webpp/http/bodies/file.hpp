@@ -114,7 +114,7 @@ namespace webpp::http {
 #ifdef WEBPP_EMBEDDED_FILES
                     if (auto content = ::get_static_file(filepath); !content.empty()) {
                         *this = string_type{this->content, alloc};
-                        return;
+                        return true;
                     }
 #endif
 

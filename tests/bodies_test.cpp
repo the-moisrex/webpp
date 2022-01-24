@@ -58,10 +58,12 @@ TEST(Body, File) {
 
     ASSERT_EQ(file_out, "Hello World");
 
+    // so the file is okay
+
     body_t the_body;
     the_body = "data";
     EXPECT_EQ(the_body.str(), "data");
-    the_body.load(file);
+    ASSERT_TRUE(the_body.load(file));
     EXPECT_EQ(the_body.str(), "Hello World");
     std::filesystem::remove(file);
 }
