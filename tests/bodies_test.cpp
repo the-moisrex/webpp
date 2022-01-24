@@ -51,6 +51,13 @@ TEST(Body, File) {
     handle << "Hello World";
     handle.close();
 
+    std::ifstream     in{file};
+    std::stringstream buf;
+    buf << in.rdbuf();
+    std::string file_out = buf.str();
+
+    ASSERT_EQ(file_out, "Hello World");
+
     body_t the_body;
     the_body = "data";
     EXPECT_EQ(the_body.str(), "data");
