@@ -3,9 +3,10 @@
 #ifndef WEBPP_ATOMIC_COUNTER_HPP
 #define WEBPP_ATOMIC_COUNTER_HPP
 
-#include "../std/std.hpp"
+#include "../std/concepts.hpp"
 
 #include <atomic>
+#include <compare>
 
 namespace webpp {
 

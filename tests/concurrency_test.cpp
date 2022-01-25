@@ -13,7 +13,7 @@ TEST(ConcurrencyTest, AtomicCounter) {
 
     atomic_counter<int> counter;
 
-    jthread th{[&] {
+    thread th{[&] {
         for (int i = 0; i != 100; i++)
             ++counter;
     }};
