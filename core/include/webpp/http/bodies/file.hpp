@@ -131,9 +131,10 @@ namespace webpp::http {
                         // https://stackoverflow.com/questions/11563963/writing-a-binary-file-in-c-very-fast/39097696#39097696
                         // stl::unique_ptr<char[]> buffer{new char[buffer_size]};
                         // in.rdbuf()->pubsetbuf(buffer.get(), buffer_size); // speed boost, I think
-                        const auto size   = in.tellg();
-                        auto       result = object::make_general<string_type>(*this);
-                        result.reserve(static_cast<stl::size_t>(size));
+                        const auto        size          = in.tellg();
+                        const stl::size_t reserved_size = static_cast<stl::size_t>(size);
+                        auto              result        = object::make_general<string_type>(*this);
+                        result.resize(reserved_size);
                         in.seekg(0l);
                         in.read(result.data(), size);
                         // todo: cache the results
