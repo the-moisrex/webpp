@@ -33,7 +33,7 @@ TEST(Router, RouterConcepts) {
 TEST(Router, RouteCreation) {
     using request = typename fake_proto<std_traits, fake_app_struct>::request_type;
 
-    constexpr auto about_page = [](Context auto&) noexcept {
+    constexpr auto about_page = [] noexcept {
         return "About page\n";
     };
 
