@@ -117,9 +117,10 @@ namespace webpp {
             return this->std_string();
         }
 
-        void for_each(auto&& func, auto&& simd_func) noexcept(noexcept(func(this->data()))
+        void for_each(auto&&                  func,
+                      [[maybe_unused]] auto&& simd_func) noexcept(noexcept(func(this->data()))
 #ifdef WEBPP_EVE
-                                                                && noexcept(simd_func(this->data()))
+                                                                    && noexcept(simd_func(this->data()))
 #endif
         ) {
             auto*       it     = this->data();
@@ -153,7 +154,7 @@ namespace webpp {
             }
         }
 
-        [[nodiscard]] constexpr bool if_all(auto&& func, auto&& simd_func) const noexcept {
+        [[nodiscard]] constexpr bool if_all(auto&& func, [[maybe_unused]] auto&& simd_func) const noexcept {
             auto*       it     = this->data();
             const auto  _size  = this->size();
             const auto* it_end = it + _size;
@@ -195,7 +196,7 @@ namespace webpp {
             return true;
         }
 
-        [[nodiscard]] constexpr bool if_any(auto&& func, auto&& simd_func) const noexcept {
+        [[nodiscard]] constexpr bool if_any(auto&& func, [[maybe_unused]] auto&& simd_func) const noexcept {
             auto*       it     = this->data();
             const auto  _size  = this->size();
             const auto* it_end = it + _size;
