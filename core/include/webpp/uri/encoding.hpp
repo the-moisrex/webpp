@@ -99,7 +99,9 @@ namespace webpp {
         auto       it         = input.data();
         const auto input_end  = it + input_size;
         { // todo: see if this is necessary/performant
-            const auto new_capacity = output.size() + input_size * 1.5; // 1.5 is by chance
+            const auto new_capacity =
+              output.size() +
+              static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5); // 1.5 is by chance
             if (output.capacity() < new_capacity)
                 output.reserve(new_capacity);
         }
