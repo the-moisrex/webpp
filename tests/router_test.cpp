@@ -44,8 +44,8 @@ TEST(Router, RouteCreation) {
     auto   res = router1(req);
     res.calculate_default_headers();
     EXPECT_EQ(router1.route_count(), 1);
-    EXPECT_EQ(res.body.str(), "About page\n");
     EXPECT_EQ(res.headers.status_code, 200);
+    EXPECT_EQ(res.body.str(), "About page\n");
 
     router router2{extension_pack<string_response>{}, alloc_pack, [](Context auto&& ctx) noexcept {
                        return ctx.string("testing");

@@ -36,7 +36,8 @@ namespace webpp::http {
                   : content{str, alloc} {}
 
                 template <typename... Args>
-                requires(sizeof...(Args) > 0 && stl::is_constructible_v<string_type, Args...>) // string args
+                requires(sizeof...(Args) > 0 &&
+                         requires(Args... args) { string_type{stl::forward<Args>(args)...}; }) // string args
                   constexpr type(Args&&... args)
                   : content{stl::forward<Args>(args)...} {}
 
