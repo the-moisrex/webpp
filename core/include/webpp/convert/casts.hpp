@@ -24,18 +24,14 @@ namespace webpp {
          * glib's implementation if you need help: https://fossies.org/linux/glib/glib/gstrfuncs.c
          */
 
-        constexpr bool is_signed = stl::is_same_v<T, stl::make_signed_t<T>>;
-        const auto     str       = istl::string_viewify(stl::forward<decltype(_str)>(_str));
-        // using char_type          = istl::char_type_of<decltype(str)>;
-        T ret = 0;
+        const auto str = istl::string_viewify(stl::forward<decltype(_str)>(_str));
+        T          ret = 0;
         if (!str.size())
             return ret;
 
         auto c = str.begin();
-        if constexpr (is_signed) {
-            if (*c == '-' || *c == '+')
-                c++; // first character can be - or +
-        }
+        if (*c == '-' || *c == '+')
+            c++; // first character can be - or +
         for (; c != str.end(); c++) {
             auto ch = *c;
             if constexpr (base <= 10) {
@@ -60,9 +56,7 @@ namespace webpp {
             ret *= base;
             ret += static_cast<T>(ch);
         }
-        if constexpr (is_signed) {
-            ret *= str.front() == '-' ? -1 : 1;
-        }
+        ret *= static_cast<T>(str.front() == '-' ? -1 : 1);
         return ret;
     }
 
