@@ -9,14 +9,15 @@
 namespace website {
 
     using namespace webpp::http;
+    using namespace webpp;
 
     struct app {
 
-        auto home(auto const& ctx) noexcept {
+        auto home(Context auto&& ctx) noexcept {
             return ctx.string("Home page");
         }
 
-        auto about(auto const& ctx) {
+        auto about(Context auto&& ctx) {
             return ctx.string("About page");
         }
 
@@ -30,14 +31,8 @@ namespace website {
                            [] {
                                return "main page";
                            },
-                           (get and (root / "home")) >>=
-                           [this](Context auto& ctx) {
-                               return this->home(ctx);
-                           },
-                           get & (root / "about") >>=
-                           [this](Context auto& ctx) {
-                               return this->about(ctx);
-                           },
+                           (get and (root / "home")) >>= mem_call(home),
+                           get & (root / "about") >>= mem_call(about),
                            root / "admin" >>= admin};
 
             // for debugging purposes
