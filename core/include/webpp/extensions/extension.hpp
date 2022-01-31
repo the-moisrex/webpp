@@ -475,6 +475,21 @@ namespace webpp {
     using extension_extractor = void;
 
 
+
+    /**
+     * This struct will help the user to create an extension from
+     * a templated type and package it in a simple type.
+     */
+    template <template <typename...> typename E>
+    struct as_extension {
+        template <typename... T>
+        requires requires {
+            typename E<T...>;
+        }
+        using type = E<T...>;
+    };
+
+
 } // namespace webpp
 
 #endif // WEBPP_EXTENSION_H

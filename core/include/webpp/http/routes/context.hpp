@@ -405,6 +405,13 @@ namespace webpp::http {
     using simple_context = typename ExtensionListType::
       template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
 
+
+    template <Extension... E>
+    struct as_context_extensions {
+        using context_extensions = extension_pack<E...>;
+    };
+
+
 } // namespace webpp::http
 
 #endif // WEBPP_ROUTES_CONTEXT_H
