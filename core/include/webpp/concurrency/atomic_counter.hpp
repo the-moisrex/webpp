@@ -10,15 +10,18 @@
 
 namespace webpp {
 
-    template <typename T = stl::size_t>
+    template <stl::integral T = stl::size_t>
     struct atomic_counter {
-        stl::atomic<T> counter;
+        stl::atomic<T> counter{0};
 
-        inline void up() noexcept {
-            counter.fetch_add(1, std::memory_order_relaxed);
+        constexpr atomic_counter(T init) noexcept : counter{init} {}
+        constexpr atomic_counter() noexcept = default;
+
+        constexpr void up() noexcept {
+            add(1);
         }
 
-        inline bool down() noexcept {
+        constexpr bool down() noexcept {
             if (counter.fetch_sub(1, std::memory_order_release) == 1) {
                 std::atomic_thread_fence(std::memory_order_acquire);
                 return true;
@@ -26,13 +29,42 @@ namespace webpp {
             return false;
         }
 
-        atomic_counter& operator++() noexcept {
+        constexpr atomic_counter& operator=(const atomic_counter& rhs) {
+            counter = rhs.counter.load(std::memory_order_relaxed);
+            return *this;
+        }
+
+        constexpr T get() const noexcept {
+            return counter.load(std::memory_order_relaxed);
+        }
+
+        constexpr void set(T n) noexcept {
+            counter.store(n, std::memory_order_relaxed);
+        }
+
+        constexpr T add_fetch(T n) noexcept {
+            return counter.fetch_add(n, std::memory_order_relaxed) + n;
+        }
+
+        constexpr void add(T n) noexcept {
+            counter.fetch_add(n, std::memory_order_relaxed);
+        }
+
+        constexpr T sub_fetch(T n) noexcept {
+            return counter.fetch_sub(n, std::memory_order_relaxed) - n;
+        }
+
+        constexpr void sub(T n) noexcept {
+            counter.fetch_sub(n, std::memory_order_relaxed);
+        }
+
+        constexpr atomic_counter& operator++() noexcept {
             up();
             return *this;
         }
 
-        atomic_counter& operator--() noexcept {
-            counter.fetch_sub(1, std::memory_order_relaxed);
+        constexpr atomic_counter& operator--() noexcept {
+            sub(1);
             return *this;
         }
 
@@ -45,6 +77,8 @@ namespace webpp {
             return counter <=> static_cast<T>(value);
         }
     };
+
+
 
 } // namespace webpp
 
