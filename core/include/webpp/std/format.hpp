@@ -59,18 +59,20 @@ namespace webpp::stl {
 
 } // namespace webpp::stl
 #else
+#    define webpp_no_fmt
 #    error "We don't have access to <format> nor {fmt} library."
 #endif
 
 
+#ifndef webpp_no_fmt
 namespace webpp::istl {
-#if WEBPP_FMT_LIB
+#    if WEBPP_FMT_LIB
     template <typename... Args>
     inline auto safe_localtime(Args&&... args) {
         return ::fmt::localtime(stl::forward<Args>(args)...);
     }
 
-#else
+#    else
 
     // A fallback for when the fmt library is not available
 
@@ -78,7 +80,7 @@ namespace webpp::istl {
 
 // Prevents expansion of a preceding token as a function-style macro.
 // Usage: f FMT_NOMACRO()
-#    define WEBPP_FMT_NOMACRO
+#        define WEBPP_FMT_NOMACRO
 
         template <typename T = void>
         struct null {};
@@ -118,7 +120,7 @@ namespace webpp::istl {
                 return res == 0;
             }
 
-#    if !_MSC_VER
+#        if !_MSC_VER
             bool fallback(details::null<>) {
                 using namespace fmt::detail;
                 std::tm* tm = std::localtime(&time_);
@@ -126,7 +128,7 @@ namespace webpp::istl {
                     tm_ = *tm;
                 return tm != nullptr;
             }
-#    endif
+#        endif
         };
         dispatcher lt(time);
         // Too big time values may be unsupported.
@@ -139,8 +141,9 @@ namespace webpp::istl {
         return localtime(std::chrono::system_clock::to_time_t(time_point));
     }
 
-#endif
+#    endif
 } // namespace webpp::istl
+#endif
 
 
 #endif // WEBPP_FORMAT_H
