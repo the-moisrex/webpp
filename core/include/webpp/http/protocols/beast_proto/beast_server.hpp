@@ -2,24 +2,39 @@
 #define WEBPP_HTTP_PROTO_BEAST_SERVER_HPP
 
 #include "../../../libs/asio.hpp"
+#include "../../../std/string_view.hpp"
 #include "beast_session_manager.hpp"
 
 namespace webpp::http::beast_proto {
 
     template <Traits TraitsType>
     struct beast_server {
-        using traits_type  = TraitsType;
-        using steady_timer = asio::steady_timer;
-        using duration     = typename steady_timer::duration;
+        using traits_type      = TraitsType;
+        using steady_timer     = asio::steady_timer;
+        using duration         = typename steady_timer::duration;
+        using address_type     = asio::ip::address;
+        using string_view_type = traits::string_view<traits_type>;
 
       private:
+        address_type bind_address;
+
       public:
         // each request should finish before this
         duration timeout{stl::chrono::seconds(3)};
 
+        beast_server& address(string_view_type addr) noexcept {
+            boost::system::error_code ec;
+            bind_address = asio::ip::make_address(to_std_string_view(addr), ec);
+            if (ec) {
+                logger.error("Cannot set address", ec);
+            }
+            return *this;
+        }
+
+
 
         // run the server
-        int operator()() noexcept {
+        [[nodiscard]] int operator()() noexcept {
             try {
                 //
                 return 0;
