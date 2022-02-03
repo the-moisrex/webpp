@@ -4,6 +4,7 @@
 #define WEBPP_BEAST_HPP
 
 #include "../../std/string_view.hpp"
+#include "beast_proto/beast_server.hpp"
 #include "beast_request.hpp"
 #include "common/common_http_protocol.hpp"
 
@@ -12,16 +13,13 @@
 namespace webpp::http {
 
 
-    template <Application   App,
-              ServerTraits  ServerTraitsType = default_server_traits,
-              ExtensionList EList            = empty_extension_pack>
+    template <Application App, ExtensionList EList = empty_extension_pack>
     struct beast : public common_protocol<typename ServerTraitsType::traits_type, App, EList> {
         using server_traits_type = SeverTraitsType;
         using traits_type        = typename server_traits_type::traits_type;
         using application_type   = App;
         using protocol_type      = beast<traits_type, application_type, extension_list>;
-        using server_type =
-          typename server_traits_type::template server_type<beast_session_manager<traits_type, request_type>>;
+        using server_type        = beast_proto::beast_server<traits_type, request_type>;
 
         template <typename BodyType, typename FieldType = boost::beast::http::fields>
         using request_type = simple_request<traits_type, extension_list, beast_request, BodyType, FieldType>;
