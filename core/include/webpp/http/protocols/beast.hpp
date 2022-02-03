@@ -39,8 +39,8 @@ namespace webpp::http {
             return false; // todo: change this
         }
 
-        void operator()() noexcept {
-            server();
+        int operator()() noexcept {
+            return server();
         }
     };
 

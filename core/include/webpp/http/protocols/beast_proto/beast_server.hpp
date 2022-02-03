@@ -19,8 +19,14 @@ namespace webpp::http::beast_proto {
 
 
         // run the server
-        int operator()() {
-            //
+        int operator()() noexcept {
+            try {
+                //
+                return 0;
+            } catch (...) {
+                logger.error("Unknown error");
+                return -1;
+            }
         }
     };
 
