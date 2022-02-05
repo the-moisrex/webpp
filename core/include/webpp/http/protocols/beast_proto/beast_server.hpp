@@ -3,6 +3,7 @@
 
 #include "../../../libs/asio.hpp"
 #include "../../../std/string_view.hpp"
+#include "../../../traits/enable_traits.hpp"
 #include "beast_session_manager.hpp"
 
 // clang-format off
@@ -13,7 +14,7 @@
 namespace webpp::http::beast_proto {
 
     template <Traits TraitsType>
-    struct beast_server {
+    struct beast_server : public enable_traits<TraitsType> {
         using traits_type      = TraitsType;
         using steady_timer     = asio::steady_timer;
         using duration         = typename steady_timer::duration;
@@ -31,7 +32,7 @@ namespace webpp::http::beast_proto {
             asio::error_code ec;
             bind_address = asio::ip::make_address(to_std_string_view(addr), ec);
             if (ec) {
-                logger.error("Cannot set address", ec);
+                this->logger.fatal("Cannot set address", ec);
             }
             return *this;
         }
@@ -44,7 +45,7 @@ namespace webpp::http::beast_proto {
                 //
                 return 0;
             } catch (...) {
-                logger.error("Unknown error");
+                this->logger.fatal("Unknown error");
                 return -1;
             }
         }
