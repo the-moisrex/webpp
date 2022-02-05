@@ -17,6 +17,21 @@
 
 namespace webpp::http::beast_proto {
 
+    namespace details {
+        struct beast_session : stl::enable_shared_from_this<beast_session> {
+            using acceptor_type = asio::ip::tcp::acceptor;
+            using socket_type   = asio::ip::tcp::socket;
+            using endpoint_type = asio::ip::tcp::endpoint;
+
+          private:
+            socket_type   sock;
+            acceptor_type acceptor;
+
+          public:
+            beast_session(asio::io_context& io, endpoint_type const& ep) : sock{io}, acceptor{io, ep} {}
+        };
+    } // namespace details
+
     template <Traits TraitsType>
     struct beast_server : public enable_traits<TraitsType> {
         using traits_type      = TraitsType;
@@ -26,6 +41,7 @@ namespace webpp::http::beast_proto {
         using string_view_type = traits::string_view<traits_type>;
         using port_type        = unsigned short;
         using thread_pool_type = asio::thread_pool;
+        using session_type     = details::beast_session;
 
       private:
         address_type     bind_address;
@@ -33,6 +49,12 @@ namespace webpp::http::beast_proto {
         asio::io_context io;
         thread_pool_type pool;
         stl::size_t      pool_count;
+
+        void accept() {
+            stl::allocate_shared<session_type>(this->allocs.general_allocator<session_type>(),
+                                               io,
+                                               endpoint_type{bind_address, bind_port});
+        }
 
         int start_io() noexcept {
             try {
