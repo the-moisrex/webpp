@@ -6,9 +6,13 @@
 #include "../../../traits/enable_traits.hpp"
 #include "beast_session_manager.hpp"
 
+#include <thread>
+
 // clang-format off
 #include asio_include(steady_timer)
 #include asio_include(ip/address)
+#include asio_include(thread_pool)
+#include asio_include(post)
 // clang-format on
 
 namespace webpp::http::beast_proto {
@@ -21,20 +25,22 @@ namespace webpp::http::beast_proto {
         using address_type     = asio::ip::address;
         using string_view_type = traits::string_view<traits_type>;
         using port_type        = unsigned short;
+        using thread_pool_type = asio::thread_pool;
 
       private:
-        address_type        bind_address;
-        port_type           bind_port;
-        asio::io_context    io;
-        thread_manager_type th_man;
-        bool                stop_server_flag = false;
+        address_type     bind_address;
+        port_type        bind_port;
+        asio::io_context io;
+        thread_pool_type pool;
+        stl::size_t      pool_count;
 
         int start_io() noexcept {
-            if (stop_server_flag)
-                return 0;
             try {
                 io.run();
                 return 0;
+            } catch (stl::exception const& err) {
+                this->logger.fatal("Error while starting io server.", err);
+                return -1;
             } catch (...) {
                 // todo: possible data race
                 this->logger.fatal("Unknown server error");
@@ -45,8 +51,10 @@ namespace webpp::http::beast_proto {
         }
 
       public:
-        beast_server(int concurrency_hint) : io{concurrency_hint} {}
-        beast_server() : io{stl::thread::hardware_concurrency()} {}
+        beast_server(stl::size_t concurrency_hint = stl::thread::hardware_concurrency())
+          : io{static_cast<int>(concurrency_hint)},
+            pool{concurrency_hint - 1}, // the main thread is one thread itself
+            pool_count{concurrency_hint} {}
 
 
         // each request should finish before this
@@ -75,11 +83,13 @@ namespace webpp::http::beast_proto {
 
         // run the server
         [[nodiscard]] int operator()() noexcept {
+            for (stl::size_t id = 1; id != pool_count; id++) {
+                asio::post(pool, [this] noexcept {
+                    start_io();
+                });
+            }
             for (;;)
                 start_io();
-            th_man.run([this] noexcept {
-                return start_io();
-            });
         }
     };
 
