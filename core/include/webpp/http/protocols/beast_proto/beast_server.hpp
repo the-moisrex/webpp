@@ -5,6 +5,11 @@
 #include "../../../std/string_view.hpp"
 #include "beast_session_manager.hpp"
 
+// clang-format off
+#include asio_include(steady_timer)
+#include asio_include(ip/address)
+// clang-format on
+
 namespace webpp::http::beast_proto {
 
     template <Traits TraitsType>
@@ -23,7 +28,7 @@ namespace webpp::http::beast_proto {
         duration timeout{stl::chrono::seconds(3)};
 
         beast_server& address(string_view_type addr) noexcept {
-            boost::system::error_code ec;
+            asio::error_code ec;
             bind_address = asio::ip::make_address(to_std_string_view(addr), ec);
             if (ec) {
                 logger.error("Cannot set address", ec);
