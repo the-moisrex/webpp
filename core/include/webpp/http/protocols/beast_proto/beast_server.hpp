@@ -20,11 +20,35 @@ namespace webpp::http::beast_proto {
         using duration         = typename steady_timer::duration;
         using address_type     = asio::ip::address;
         using string_view_type = traits::string_view<traits_type>;
+        using port_type        = unsigned short;
 
       private:
-        address_type bind_address;
+        address_type        bind_address;
+        port_type           bind_port;
+        asio::io_context    io;
+        thread_manager_type th_man;
+        bool                stop_server_flag = false;
+
+        int start_io() noexcept {
+            if (stop_server_flag)
+                return 0;
+            try {
+                io.run();
+                return 0;
+            } catch (...) {
+                // todo: possible data race
+                this->logger.fatal("Unknown server error");
+
+                // todo: try running the server again
+                return -1;
+            }
+        }
 
       public:
+        beast_server(int concurrency_hint) : io{concurrency_hint} {}
+        beast_server() : io{stl::thread::hardware_concurrency()} {}
+
+
         // each request should finish before this
         duration timeout{stl::chrono::seconds(3)};
 
@@ -38,16 +62,24 @@ namespace webpp::http::beast_proto {
         }
 
 
+        beast_server& port(port_type p) noexcept {
+            bind_port = p;
+            return *this;
+        }
+
+        beast_server& post();
+        beast_server& defer();
+
+
+
 
         // run the server
         [[nodiscard]] int operator()() noexcept {
-            try {
-                //
-                return 0;
-            } catch (...) {
-                this->logger.fatal("Unknown error");
-                return -1;
-            }
+            for (;;)
+                start_io();
+            th_man.run([this] noexcept {
+                return start_io();
+            });
         }
     };
 
