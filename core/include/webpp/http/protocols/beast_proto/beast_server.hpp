@@ -24,13 +24,38 @@ namespace webpp::http::beast_proto {
             using acceptor_type = asio::ip::tcp::acceptor;
             using socket_type   = asio::ip::tcp::socket;
             using endpoint_type = asio::ip::tcp::endpoint;
+            using steady_timer  = asio::steady_timer;
+            using duration      = typename steady_timer::duration;
+            using request_type  = beast_request<traits_type>;
+            using buffer_type   = beast::flat_buffer;
 
           private:
             socket_type   sock;
             acceptor_type acceptor;
+            steady_timer  timer;
+            buffer_type   buf{default_buffer_size}; // fixme: see if this is using our allocator
+
 
           public:
-            beast_session(asio::io_context& io, endpoint_type const& ep) : sock{io}, acceptor{io, ep} {}
+            beast_session(asio::io_context& io, endpoint_type const& ep, duration const& dur)
+              : sock{io},
+                acceptor{io, ep},
+                timer{io, dur} {}
+
+
+
+            // Asynchronously receive a complete request message.
+            void async_read_request() {
+                http::async_read(
+                  sock,
+                  buf,
+                  req,
+                  [self = this->shared_from_this()](beast::error_code            ec,
+                                                    [[maybe_unused]] std::size_t bytes_transferred) {
+                      if (!ec)
+                          self->process_request();
+                  });
+            }
         };
     } // namespace details
 
@@ -56,7 +81,8 @@ namespace webpp::http::beast_proto {
         void accept() {
             stl::allocate_shared<session_type>(this->allocs.template general_allocator<session_type>(),
                                                io,
-                                               endpoint_type{bind_address, bind_port});
+                                               endpoint_type{bind_address, bind_port},
+                                               timeout);
         }
 
         int start_io() noexcept {
@@ -76,14 +102,16 @@ namespace webpp::http::beast_proto {
         }
 
       public:
+        // each request should finish before this
+        duration timeout{stl::chrono::seconds(3)};
+
+
+
         beast_server(stl::size_t concurrency_hint = stl::thread::hardware_concurrency())
           : io{static_cast<int>(concurrency_hint)},
             pool{concurrency_hint - 1}, // the main thread is one thread itself
             pool_count{concurrency_hint} {}
 
-
-        // each request should finish before this
-        duration timeout{stl::chrono::seconds(3)};
 
         beast_server& address(string_view_type addr) noexcept {
             asio::error_code ec;

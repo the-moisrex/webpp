@@ -11,11 +11,8 @@
 #include <boost/beast/http/dynamic_body.hpp>
 #include <boost/beast/http/message.hpp>
 
-namespace webpp::http {
+namespace webpp::http::beast_proto {
 
-    namespace beast {
-        using namespace boost::beast;
-    }
 
     // template <Traits TraitsType, typename REL, typename BodyType, typename FieldType = beast::http::fields>
     template <Traits TraitsType, HTTPRequestExtensionParent REL, RootExtensionList RootExtensions>
@@ -41,6 +38,6 @@ namespace webpp::http {
         beast_request(beast_request&&) noexcept = default;
     };
 
-} // namespace webpp::http
+} // namespace webpp::http::beast_proto
 
 #endif // WEBPP_BEAST_REQUEST_HPP
