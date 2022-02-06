@@ -13,6 +13,7 @@
 #include asio_include(ip/address)
 #include asio_include(thread_pool)
 #include asio_include(post)
+#include asio_include(ip/tcp)
 // clang-format on
 
 namespace webpp::http::beast_proto {
@@ -42,6 +43,7 @@ namespace webpp::http::beast_proto {
         using port_type        = unsigned short;
         using thread_pool_type = asio::thread_pool;
         using session_type     = details::beast_session;
+        using endpoint_type    = asio::ip::tcp::endpoint;
 
       private:
         address_type     bind_address;
@@ -51,7 +53,7 @@ namespace webpp::http::beast_proto {
         stl::size_t      pool_count;
 
         void accept() {
-            stl::allocate_shared<session_type>(this->allocs.general_allocator<session_type>(),
+            stl::allocate_shared<session_type>(this->allocs.template general_allocator<session_type>(),
                                                io,
                                                endpoint_type{bind_address, bind_port});
         }
@@ -106,7 +108,7 @@ namespace webpp::http::beast_proto {
         // run the server
         [[nodiscard]] int operator()() noexcept {
             for (stl::size_t id = 1; id != pool_count; id++) {
-                asio::post(pool, [this] noexcept {
+                asio::post(pool, [this] {
                     start_io();
                 });
             }
