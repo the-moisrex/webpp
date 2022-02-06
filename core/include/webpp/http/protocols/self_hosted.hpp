@@ -10,7 +10,7 @@
 #include "../app_wrapper.hpp"
 #include "../response.hpp"
 #include "common/common_http_protocol.hpp"
-#include "self_hosted_request.hpp"
+#include "shosted/self_hosted_request.hpp"
 #include "shosted/self_hosted_session_manager.hpp"
 
 namespace webpp::http::inline shosted {
