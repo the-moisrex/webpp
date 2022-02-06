@@ -103,9 +103,6 @@ namespace webpp::http::beast_proto {
         beast_server& post();
         beast_server& defer();
 
-
-
-
         // run the server
         [[nodiscard]] int operator()() noexcept {
             for (stl::size_t id = 1; id != pool_count; id++) {
