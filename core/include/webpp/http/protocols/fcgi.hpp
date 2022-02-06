@@ -9,7 +9,7 @@
 #include "../../traits/enable_traits.hpp"
 #include "../app_wrapper.hpp"
 #include "fastcgi/fcgi_manager.hpp"
-#include "fcgi_request.hpp"
+#include "fastcgi/fcgi_request.hpp"
 
 namespace webpp::http::inline fastcgi {
 
