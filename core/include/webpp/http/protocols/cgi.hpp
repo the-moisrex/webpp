@@ -10,7 +10,7 @@
 #include "../app_wrapper.hpp"
 #include "../request_body.hpp"
 #include "../response.hpp"
-#include "cgi_request.hpp"
+#include "cgi_proto/cgi_request.hpp"
 #include "common/common_http_protocol.hpp"
 
 #include <iostream>
