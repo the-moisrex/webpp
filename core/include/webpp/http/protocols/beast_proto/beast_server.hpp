@@ -4,6 +4,7 @@
 #include "../../../libs/asio.hpp"
 #include "../../../std/string_view.hpp"
 #include "../../../traits/enable_traits.hpp"
+#include "beast_request.hpp"
 #include "beast_session_manager.hpp"
 
 #include <thread>
