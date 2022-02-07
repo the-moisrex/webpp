@@ -1,11 +1,11 @@
 #ifndef WEBPP_HTTP_PROTO_BEAST_SERVER_HPP
 #define WEBPP_HTTP_PROTO_BEAST_SERVER_HPP
 
+#include "../../../configs/constants.hpp"
 #include "../../../libs/asio.hpp"
 #include "../../../std/string_view.hpp"
 #include "../../../traits/enable_traits.hpp"
 #include "beast_request.hpp"
-#include "beast_session_manager.hpp"
 
 #include <thread>
 
@@ -17,12 +17,15 @@
 #include asio_include(ip/tcp)
 // clang-format on
 
+#include <boost/beast/core/flat_buffer.hpp>
+#include <boost/beast/http/read.hpp>
+
 namespace webpp::http::beast_proto {
 
     namespace details {
 
         template <Traits TraitsType, typename RootExtensionsT>
-        struct beast_session : stl::enable_shared_from_this<beast_session> {
+        struct beast_session : stl::enable_shared_from_this<beast_session<TraitsType, RootExtensionsT>> {
             using traits_type     = TraitsType;
             using root_extensions = RootExtensionsT;
             using acceptor_type   = asio::ip::tcp::acceptor;
@@ -31,7 +34,7 @@ namespace webpp::http::beast_proto {
             using steady_timer    = asio::steady_timer;
             using duration        = typename steady_timer::duration;
             using request_type = simple_request<traits_type, root_extensions, beast_request, root_extensions>;
-            using buffer_type  = beast::flat_buffer;
+            using buffer_type  = boost::beast::flat_buffer;
 
           private:
             socket_type   sock;
@@ -51,11 +54,11 @@ namespace webpp::http::beast_proto {
 
             // Asynchronously receive a complete request message.
             void async_read_request() {
-                http::async_read(
+                boost::beast::http::async_read(
                   sock,
                   buf,
                   req,
-                  [self = this->shared_from_this()](beast::error_code            ec,
+                  [self = this->shared_from_this()](boost::beast::error_code     ec,
                                                     [[maybe_unused]] std::size_t bytes_transferred) {
                       if (!ec)
                           self->process_request();

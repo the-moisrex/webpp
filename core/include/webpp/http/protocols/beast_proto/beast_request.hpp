@@ -17,9 +17,7 @@ namespace webpp::http::beast_proto {
 
     // template <Traits TraitsType, typename REL, typename BodyType, typename FieldType = beast::http::fields>
     template <Traits TraitsType, HTTPRequestExtensionParent REL, RootExtensionList RootExtensions>
-    struct beast_request
-      : public common_http_request<TraitsType, REL, RootExtensions>,
-        public boost::beast::http::request<boost::beast::http::dynamic_body, boost::beast::http::fields> {
+    struct beast_request : public common_http_request<TraitsType, REL, RootExtensions> {
 
 
         using traits_type            = stl::remove_cvref_t<TraitsType>;
@@ -31,7 +29,9 @@ namespace webpp::http::beast_proto {
         using beast_request_type     = boost::beast::http::request<beast_body_type, beast_field_type>;
 
       private:
-        using super = common_http_request<TraitsType, REL>;
+        using super = common_http_request<TraitsType, REL, RootExtensions>;
+
+        beast_request_type breq; // beast request
 
       public:
         template <typename... Args>
