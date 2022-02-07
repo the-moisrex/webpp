@@ -20,19 +20,24 @@
 namespace webpp::http::beast_proto {
 
     namespace details {
+
+        template <Traits TraitsType, typename RootExtensionsT>
         struct beast_session : stl::enable_shared_from_this<beast_session> {
-            using acceptor_type = asio::ip::tcp::acceptor;
-            using socket_type   = asio::ip::tcp::socket;
-            using endpoint_type = asio::ip::tcp::endpoint;
-            using steady_timer  = asio::steady_timer;
-            using duration      = typename steady_timer::duration;
-            using request_type  = beast_request<traits_type>;
-            using buffer_type   = beast::flat_buffer;
+            using traits_type     = TraitsType;
+            using root_extensions = RootExtensionsT;
+            using acceptor_type   = asio::ip::tcp::acceptor;
+            using socket_type     = asio::ip::tcp::socket;
+            using endpoint_type   = asio::ip::tcp::endpoint;
+            using steady_timer    = asio::steady_timer;
+            using duration        = typename steady_timer::duration;
+            using request_type = simple_request<traits_type, root_extensions, beast_request, root_extensions>;
+            using buffer_type  = beast::flat_buffer;
 
           private:
             socket_type   sock;
             acceptor_type acceptor;
             steady_timer  timer;
+            request_type  req;
             buffer_type   buf{default_buffer_size}; // fixme: see if this is using our allocator
 
 
@@ -57,18 +62,20 @@ namespace webpp::http::beast_proto {
                   });
             }
         };
+
     } // namespace details
 
-    template <Traits TraitsType>
+    template <Traits TraitsType, typename RootExtensionsT>
     struct beast_server : public enable_traits<TraitsType> {
         using traits_type      = TraitsType;
+        using root_extensions  = RootExtensionsT;
         using steady_timer     = asio::steady_timer;
         using duration         = typename steady_timer::duration;
         using address_type     = asio::ip::address;
         using string_view_type = traits::string_view<traits_type>;
         using port_type        = unsigned short;
         using thread_pool_type = asio::thread_pool;
-        using session_type     = details::beast_session;
+        using session_type     = details::beast_session<traits_type, root_extensions>;
         using endpoint_type    = asio::ip::tcp::endpoint;
 
       private:
