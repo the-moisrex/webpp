@@ -40,6 +40,11 @@ namespace webpp::http::beast_proto {
 
         beast_request(beast_request const&)     = delete; // no copying for now
         beast_request(beast_request&&) noexcept = default;
+
+
+        beast_request_type& as_beast_request() noexcept {
+            return breq;
+        }
     };
 
 } // namespace webpp::http::beast_proto

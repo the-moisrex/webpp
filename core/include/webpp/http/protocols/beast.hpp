@@ -17,11 +17,11 @@ namespace webpp::http {
         using application_type = App;
         using extension_list   = EList;
         using protocol_type    = beast<application_type, traits_type, extension_list>;
-        using server_type      = beast_proto::beast_server<traits_type, extension_list>;
+        using server_type      = beast_proto::beast_server<traits_type, extension_list, application_type>;
         using app_wrapper_type = http_app_wrapper<traits_type, application_type>;
 
-        server_type      server;
         app_wrapper_type app;
+        server_type      server;
 
       private:
         using super = common_http_protocol<TraitsType, App, EList>;
@@ -29,8 +29,8 @@ namespace webpp::http {
       public:
         template <typename... Args>
         beast(Args&&... args) : super{stl::forward<Args>(args)...},
-                                server{*this},
-                                app{*this} {}
+                                app{*this},
+                                server{*this, this->app} {}
 
         [[nodiscard]] static constexpr bool is_ssl_available() noexcept {
             return false; // todo: change this
