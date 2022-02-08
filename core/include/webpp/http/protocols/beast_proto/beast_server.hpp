@@ -3,8 +3,10 @@
 
 #include "../../../configs/constants.hpp"
 #include "../../../libs/asio.hpp"
+#include "../../../memory/object.hpp"
 #include "../../../std/string_view.hpp"
 #include "../../../traits/enable_traits.hpp"
+#include "../../../uri/uri.hpp"
 #include "../../response_concepts.hpp"
 #include "beast_request.hpp"
 
@@ -158,8 +160,21 @@ namespace webpp::http::beast_proto {
         beast_server& post();
         beast_server& defer();
 
+        [[nodiscars]] bool is_ssl_active() const noexcept {
+            return false;
+        }
+
+        uri::uri binded_uri() const {
+            auto u   = object::make_general<uri::uri>(*this);
+            u.scheme = is_ssl_active() ? "https" : "http";
+            u.host =(bind_address.to_string();
+            u.port = bind_port;
+            return u;
+        }
+
         // run the server
         [[nodiscard]] int operator()() noexcept {
+            this->logger.info(stl::format("Starting beast server on {}", binded_uri().str()));
             for (stl::size_t id = 1; id != pool_count; id++) {
                 asio::post(pool, [this] {
                     start_io();
