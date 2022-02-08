@@ -25,11 +25,11 @@ namespace webpp::http::beast_proto {
 
     namespace details {
 
-        template <Traits TraitsType, typename RootExtensionsT, typename AppRef>
-        struct beast_session
-          : stl::enable_shared_from_this<beast_session<TraitsType, RootExtensionsT, AppRef>> {
-            using traits_type     = TraitsType;
-            using root_extensions = RootExtensionsT;
+        template <typename ServerT>
+        struct beast_session : stl::enable_shared_from_this<beast_session<ServerT>> {
+            using server_type     = ServerT;
+            using traits_type     = typename server_type::traits_type;
+            using root_extensions = typename server_type::root_extensions;
             using acceptor_type   = asio::ip::tcp::acceptor;
             using socket_type     = asio::ip::tcp::socket;
             using endpoint_type   = asio::ip::tcp::endpoint;
@@ -37,9 +37,10 @@ namespace webpp::http::beast_proto {
             using duration        = typename steady_timer::duration;
             using request_type = simple_request<traits_type, root_extensions, beast_request, root_extensions>;
             using buffer_type  = boost::beast::flat_buffer;
-            using app_wrapper_ref = AppRef;
+            using app_wrapper_ref = typename server_type::app_wrapper_ref;
 
           private:
+            server_type&    server;
             socket_type     sock;
             acceptor_type   acceptor;
             steady_timer    timer;
@@ -49,14 +50,12 @@ namespace webpp::http::beast_proto {
 
 
           public:
-            beast_session(asio::io_context&    io,
-                          endpoint_type const& ep,
-                          duration const&      dur,
-                          app_wrapper_ref      the_app_ref)
-              : sock{io},
-                acceptor{io, ep},
-                timer{io, dur},
-                app_ref{the_app_ref} {}
+            beast_session(server_type& serv_ref)
+              : server{serv_ref},
+                sock{server.io},
+                acceptor{server.io, {server.bind_address, server.port}},
+                timer{server.io, server.timeout},
+                app_ref{server.app_ref} {}
 
 
 
@@ -71,6 +70,8 @@ namespace webpp::http::beast_proto {
                       if (!ec) {
                           const HTTPResponse auto res = self->app_ref(self->req);
                           // todo
+                      } else {
+                          self->server.logger.warning("Connection error.", ec);
                       }
                   });
             }
@@ -80,23 +81,26 @@ namespace webpp::http::beast_proto {
 
     template <Traits TraitsType, typename RootExtensionsT, typename App>
     struct beast_server : public enable_traits<TraitsType> {
-        using traits_type      = TraitsType;
-        using root_extensions  = RootExtensionsT;
-        using steady_timer     = asio::steady_timer;
-        using duration         = typename steady_timer::duration;
-        using address_type     = asio::ip::address;
-        using string_view_type = traits::string_view<traits_type>;
-        using port_type        = unsigned short;
-        using thread_pool_type = asio::thread_pool;
-        using endpoint_type    = asio::ip::tcp::endpoint;
-        using etraits          = enable_traits<traits_type>;
-        using app_wrapper_ref  = stl::add_lvalue_reference_t<App>;
-        using session_type     = details::beast_session<traits_type, root_extensions, app_wrapper_ref>;
+        using traits_type       = TraitsType;
+        using root_extensions   = RootExtensionsT;
+        using steady_timer      = asio::steady_timer;
+        using duration          = typename steady_timer::duration;
+        using address_type      = asio::ip::address;
+        using string_view_type  = traits::string_view<traits_type>;
+        using port_type         = unsigned short;
+        using thread_pool_type  = asio::thread_pool;
+        using endpoint_type     = asio::ip::tcp::endpoint;
+        using etraits           = enable_traits<traits_type>;
+        using app_wrapper_ref   = stl::add_lvalue_reference_t<App>;
+        using beast_server_type = beast_server;
+        using session_type      = details::beast_session<beast_server_type>;
 
         // each request should finish before this
         duration timeout{stl::chrono::seconds(3)};
 
       private:
+        friend session_type;
+
         address_type     bind_address;
         port_type        bind_port;
         asio::io_context io;
@@ -106,10 +110,7 @@ namespace webpp::http::beast_proto {
 
         void accept() {
             stl::allocate_shared<session_type>(this->allocs.template general_allocator<session_type>(),
-                                               io,
-                                               endpoint_type{bind_address, bind_port},
-                                               timeout,
-                                               app_ref);
+                                               *this);
         }
 
         int start_io() noexcept {
