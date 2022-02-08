@@ -40,12 +40,12 @@ namespace webpp::http::inline fastcgi {
         app_wrapper_type                     app;
 
 
-        template <typename AllocType = allocator_type>
-        fcgi(logger_ref logger = logger_type{}, AllocType const& alloc = AllocType{})
-          : etraits{logger, alloc},
-            app{logger, alloc},
-            endpoints{alloc},
-            server{logger, alloc} {}
+        template <typename... Args>
+        fcgi(Args&&... args)
+          : super{stl::forward<Args>(args)...},
+            app{*this},
+            endpoints{}, // todo: pass allocator
+            server{*this} {}
 
         [[nodiscard]] static constexpr bool is_ssl_available() noexcept {
             return false; // it's not, it's FCGI, we just don't know

@@ -80,6 +80,7 @@ namespace webpp::http::beast_proto {
         using thread_pool_type = asio::thread_pool;
         using session_type     = details::beast_session<traits_type, root_extensions>;
         using endpoint_type    = asio::ip::tcp::endpoint;
+        using etraits          = enable_traits<traits_type>;
 
       private:
         address_type     bind_address;
@@ -116,9 +117,11 @@ namespace webpp::http::beast_proto {
         duration timeout{stl::chrono::seconds(3)};
 
 
-
-        beast_server(stl::size_t concurrency_hint = stl::thread::hardware_concurrency())
-          : io{static_cast<int>(concurrency_hint)},
+        template <typename ET>
+        requires(EnabledTraits<stl::remove_cvref_t<ET>>)
+          beast_server(ET&& et, stl::size_t concurrency_hint = stl::thread::hardware_concurrency())
+          : etraits{stl::forward<ET>(et)},
+            io{static_cast<int>(concurrency_hint)},
             pool{concurrency_hint - 1}, // the main thread is one thread itself
             pool_count{concurrency_hint} {}
 
