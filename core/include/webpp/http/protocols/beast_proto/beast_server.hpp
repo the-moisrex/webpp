@@ -82,6 +82,9 @@ namespace webpp::http::beast_proto {
         using endpoint_type    = asio::ip::tcp::endpoint;
         using etraits          = enable_traits<traits_type>;
 
+        // each request should finish before this
+        duration timeout{stl::chrono::seconds(3)};
+
       private:
         address_type     bind_address;
         port_type        bind_port;
@@ -101,11 +104,11 @@ namespace webpp::http::beast_proto {
                 io.run();
                 return 0;
             } catch (stl::exception const& err) {
-                this->logger.fatal("Error while starting io server.", err);
+                this->logger.error("Error while starting io server.", err);
                 return -1;
             } catch (...) {
                 // todo: possible data race
-                this->logger.fatal("Unknown server error");
+                this->logger.error("Unknown server error");
 
                 // todo: try running the server again
                 return -1;
@@ -113,10 +116,6 @@ namespace webpp::http::beast_proto {
         }
 
       public:
-        // each request should finish before this
-        duration timeout{stl::chrono::seconds(3)};
-
-
         template <typename ET>
         requires(EnabledTraits<stl::remove_cvref_t<ET>>)
           beast_server(ET&& et, stl::size_t concurrency_hint = stl::thread::hardware_concurrency())
@@ -130,7 +129,7 @@ namespace webpp::http::beast_proto {
             asio::error_code ec;
             bind_address = asio::ip::make_address(to_std_string_view(addr), ec);
             if (ec) {
-                this->logger.fatal("Cannot set address", ec);
+                this->logger.error("Cannot set address", ec);
             }
             return *this;
         }
