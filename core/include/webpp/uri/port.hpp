@@ -5,9 +5,7 @@
 
 #include "../convert/casts.hpp"
 #include "../std/string.hpp"
-#include "../validators/validators.hpp"
 
-#include <charconv>
 
 namespace webpp::uri {
 
@@ -39,7 +37,13 @@ namespace webpp::uri {
             if (port_num < 0 || port_num > 65535)
                 throw stl::invalid_argument("The specified port number is not in a valid range.");
 
-            append_to(*this, port_num, stl::chars_format::fixed);
+            webpp::append_to(*this, port_num, stl::chars_format::fixed);
+        }
+
+        constexpr basic_port& operator=(stl::integral auto val) {
+            this->clear();
+            webpp::append_to(*this, val, stl::chars_format::fixed);
+            return *this;
         }
 
         void append_to(istl::String auto& out) {
