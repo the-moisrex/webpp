@@ -160,7 +160,7 @@ namespace webpp::http::beast_proto {
         beast_server& post();
         beast_server& defer();
 
-        [[nodiscars]] bool is_ssl_active() const noexcept {
+        [[nodiscard]] bool is_ssl_active() const noexcept {
             return false;
         }
 
@@ -174,7 +174,7 @@ namespace webpp::http::beast_proto {
 
         // run the server
         [[nodiscard]] int operator()() noexcept {
-            this->logger.info(stl::format("Starting beast server on {}", binded_uri().to_string()));
+            this->logger.info(fmt::format("Starting beast server on {}", binded_uri().to_string()));
             for (stl::size_t id = 1; id != pool_count; id++) {
                 asio::post(pool, [this] {
                     start_io();

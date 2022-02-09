@@ -563,7 +563,11 @@ namespace webpp::alloc {
                 using new_type =
                   replace_allocators<T, stl::allocator_traits<selected_allocator>::template rebind_alloc>;
                 auto the_alloc = this->get_allocator<ResDescType, value_type>();
-                if constexpr (istl::contains_parameter<type_list<Args...>, placeholder>) {
+                if constexpr (requires { new_type::create(the_alloc, stl::forward<Args>(args)...); }) {
+                    return new_type::create(the_alloc, stl::forward<Args>(args)...);
+                } else if constexpr (requires { new_type::create(stl::forward<Args>(args)..., the_alloc); }) {
+                    return new_type::create(stl::forward<Args>(args)..., the_alloc);
+                } else if constexpr (istl::contains_parameter<type_list<Args...>, placeholder>) {
                     return new_type{
                       istl::replace_object<placeholder, selected_allocator, Args>(stl::forward<Args>(args),
                                                                                   the_alloc)...};

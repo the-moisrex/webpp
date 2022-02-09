@@ -5,6 +5,7 @@
 
 #include "../memory/allocators.hpp"
 #include "../std/string.hpp"
+#include "../std/string_view.hpp"
 #include "../std/vector.hpp"
 
 namespace webpp::uri {
@@ -21,6 +22,14 @@ namespace webpp::uri {
         template <typename... T>
         constexpr basic_host(T&&... args) : super{stl::forward<T>(args)...} {}
 
+
+        template <istl::StringViewifiable StrT>
+        constexpr basic_host& operator=(StrT&& str) {
+            const auto s = istl::stringify_of<string_type>(stl::forward<StrT>(str), this->get_allocator());
+            // todo: split it based on the domains
+            this->push_back(s);
+            return *this;
+        }
 
         /**
          * Top Level Domain; sometimes called the extension
