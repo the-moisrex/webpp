@@ -132,14 +132,15 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/cgi.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/fcgi.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/self_hosted.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/protocols/cgi_request.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/protocols/fcgi_request.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/protocols/self_hosted_request.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/cgi_proto/cgi_request.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/fastcgi/fcgi_request.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/shosted/self_hosted_request.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/shosted/self_hosted_session_manager.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/fastcgi/fcgi_protocols.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/fastcgi/fcgi_manager.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/beast.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/protocols/beast_request.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/beast_proto/beast_request.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/beast_proto/beast_server.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/common/common_http_request.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/common/common_http_protocol.hpp
 
