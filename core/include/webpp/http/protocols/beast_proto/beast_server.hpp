@@ -167,8 +167,8 @@ namespace webpp::http::beast_proto {
         uri::uri binded_uri() const {
             auto u   = object::make_general<uri::uri>(*this);
             u.scheme = is_ssl_active() ? "https" : "http";
-            u.host =(bind_address.to_string();
-            u.port = bind_port;
+            u.host   = bind_address.to_string();
+            u.port   = bind_port;
             return u;
         }
 
