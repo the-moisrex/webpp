@@ -164,7 +164,7 @@ namespace webpp::http::beast_proto {
             return false;
         }
 
-        uri::uri binded_uri() const {
+        auto binded_uri() const {
             auto u   = object::make_general<uri::uri>(*this);
             u.scheme = is_ssl_active() ? "https" : "http";
             u.host   = bind_address.to_string();
@@ -174,7 +174,7 @@ namespace webpp::http::beast_proto {
 
         // run the server
         [[nodiscard]] int operator()() noexcept {
-            this->logger.info(stl::format("Starting beast server on {}", binded_uri().str()));
+            this->logger.info(stl::format("Starting beast server on {}", binded_uri().to_string()));
             for (stl::size_t id = 1; id != pool_count; id++) {
                 asio::post(pool, [this] {
                     start_io();
