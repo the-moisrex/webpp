@@ -104,7 +104,7 @@ namespace webpp::http::beast_proto {
         friend session_type;
 
         address_type     bind_address;
-        port_type        bind_port;
+        port_type        bind_port = 80;
         asio::io_context io;
         thread_pool_type pool;
         stl::size_t      pool_count;
