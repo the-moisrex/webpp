@@ -164,6 +164,22 @@ namespace webpp::http::beast_proto {
             return false;
         }
 
+
+        [[nodiscard]] static constexpr bool is_ssl_available() noexcept {
+            return false;
+        }
+
+        beast_server& enable_ssl() {
+            if constexpr (is_ssl_available()) {
+                // todo
+                if (bind_port == 80)
+                    bind_port = 443;
+            } else {
+                this->logger.warning("Cannot enable SSL");
+            }
+            return *this;
+        }
+
         auto binded_uri() const {
             auto u   = object::make_general<uri::uri>(*this);
             u.scheme = is_ssl_active() ? "https" : "http";
