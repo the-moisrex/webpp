@@ -9,6 +9,10 @@
 #include <charconv>
 #include <stdexcept>
 
+#ifndef __cpp_lib_to_chars
+#    include "../std/format.hpp"
+#endif
+
 namespace webpp {
 
     /**
@@ -111,8 +115,12 @@ namespace webpp {
 
     template <typename ValueType, typename... R>
     constexpr auto append_to(char* ptr, ValueType value, R&&... args) noexcept {
+#ifdef __cpp_lib_to_chars
         constexpr stl::size_t _size = ascii::digit_count<ValueType>() + 1;
         return stl::to_chars(ptr, ptr + _size, value, stl::forward<R>(args)...);
+#else
+        // todo
+#endif
     }
 
     // todo: GCC's to_chars implementation doesn't support floating point numbers
@@ -123,6 +131,7 @@ namespace webpp {
             (append_to(str, stl::forward<R>(args)), ...);
             return true;
         } else {
+#ifdef __cpp_lib_to_chars
             constexpr stl::size_t   _size = ascii::digit_count<ValueType>() + 1;
             stl::array<char, _size> chars;
             if (auto res = stl::to_chars(chars.data(), chars.data() + _size, value, stl::forward<R>(args)...);
@@ -131,6 +140,10 @@ namespace webpp {
                 return true;
             }
             return false;
+#else
+            fmt::format_to(stl::back_inserter(str), "{}", value);
+            return true;
+#endif
         }
     }
 
