@@ -144,7 +144,7 @@ namespace webpp::http::beast_proto {
 
         beast_server& address(string_view_type addr) noexcept {
             asio::error_code ec;
-            bind_address = asio::ip::make_address(to_std_string_view(addr), ec);
+            bind_address = asio::ip::make_address(istl::to_std_string_view(addr), ec);
             if (ec) {
                 this->logger.error("Cannot set address", ec);
             }
