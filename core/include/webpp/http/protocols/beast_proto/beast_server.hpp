@@ -39,7 +39,8 @@ namespace webpp::http::beast_proto {
             using duration        = typename steady_timer::duration;
             using request_type = simple_request<traits_type, root_extensions, beast_request, root_extensions>;
             using buffer_type  = boost::beast::flat_buffer;
-            using app_wrapper_ref = typename server_type::app_wrapper_ref;
+            using app_wrapper_ref     = typename server_type::app_wrapper_ref;
+            using beast_response_type = boost::beast::response<boost::beast::dynamic_body>;
 
           private:
             server_type&    server;
@@ -51,6 +52,12 @@ namespace webpp::http::beast_proto {
             buffer_type     buf{default_buffer_size}; // fixme: see if this is using our allocator
 
 
+            beast_response_type make_beast_response(beast_response_type breq, HTTPResponse auto&& res) const {
+                beast_response_type bres;
+                bres.version(breq.version());
+                return bres;
+            }
+
           public:
             beast_session(server_type& serv_ref)
               : server{serv_ref},
@@ -58,6 +65,8 @@ namespace webpp::http::beast_proto {
                 acceptor{server.io, {server.bind_address, server.port}},
                 timer{server.io, server.timeout},
                 app_ref{server.app_ref} {}
+
+
 
 
 
@@ -71,7 +80,9 @@ namespace webpp::http::beast_proto {
                                                     [[maybe_unused]] std::size_t bytes_transferred) {
                       if (!ec) {
                           self->server.logger.info("Recieved a request");
-                          const HTTPResponse auto res = self->app_ref(self->req);
+                          self->generate_beast_response(self->req.as_beast_request(),
+                                                        self->app_ref(self->req));
+
                           // todo
                       } else {
                           self->server.logger.warning("Connection error.", ec);
