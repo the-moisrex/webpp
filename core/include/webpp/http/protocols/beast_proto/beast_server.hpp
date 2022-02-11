@@ -70,6 +70,7 @@ namespace webpp::http::beast_proto {
                   [self = this->shared_from_this()](boost::beast::error_code     ec,
                                                     [[maybe_unused]] std::size_t bytes_transferred) {
                       if (!ec) {
+                          self->server.logger.info("Recieved a request");
                           const HTTPResponse auto res = self->app_ref(self->req);
                           // todo
                       } else {
