@@ -40,7 +40,7 @@ namespace webpp::http::beast_proto {
             using request_type = simple_request<traits_type, root_extensions, beast_request, root_extensions>;
             using buffer_type  = boost::beast::flat_buffer;
             using app_wrapper_ref     = typename server_type::app_wrapper_ref;
-            using beast_response_type = boost::beast::response<boost::beast::dynamic_body>;
+            using beast_response_type = boost::beast::http::response<boost::beast::http::dynamic_body>;
 
           private:
             server_type&    server;
