@@ -32,8 +32,6 @@ namespace webpp::http::beast_proto {
             using server_type     = ServerT;
             using traits_type     = typename server_type::traits_type;
             using root_extensions = typename server_type::root_extensions;
-            using acceptor_type   = asio::ip::tcp::acceptor;
-            using socket_type     = asio::ip::tcp::socket;
             using endpoint_type   = asio::ip::tcp::endpoint;
             using steady_timer    = asio::steady_timer;
             using duration        = typename steady_timer::duration;
@@ -44,8 +42,6 @@ namespace webpp::http::beast_proto {
 
           private:
             server_type&    server;
-            socket_type     sock;
-            acceptor_type   acceptor;
             steady_timer    timer;
             request_type    req;
             app_wrapper_ref app_ref;
@@ -61,10 +57,10 @@ namespace webpp::http::beast_proto {
           public:
             beast_session(server_type& serv_ref)
               : server{serv_ref},
-                sock{server.io},
-                acceptor{server.io, {server.bind_address, server.port}},
                 timer{server.io, server.timeout},
-                app_ref{server.app_ref} {}
+                app_ref{server.app_ref} {
+                async_read_request();
+            }
 
 
 
@@ -72,16 +68,16 @@ namespace webpp::http::beast_proto {
 
             // Asynchronously receive a complete request message.
             void async_read_request() {
+                server.logger.info("Started reading request.");
                 boost::beast::http::async_read(
-                  sock,
+                  server.sock,
                   buf,
                   req.as_beast_request(),
                   [self = this->shared_from_this()](boost::beast::error_code     ec,
                                                     [[maybe_unused]] std::size_t bytes_transferred) {
                       if (!ec) {
                           self->server.logger.info("Recieved a request");
-                          self->generate_beast_response(self->req.as_beast_request(),
-                                                        self->app_ref(self->req));
+                          self->make_beast_response(self->req.as_beast_request(), self->app_ref(self->req));
 
                           // todo
                       } else {
@@ -108,6 +104,8 @@ namespace webpp::http::beast_proto {
         using app_wrapper_ref   = stl::add_lvalue_reference_t<App>;
         using beast_server_type = beast_server;
         using session_type      = details::beast_session<beast_server_type>;
+        using acceptor_type     = asio::ip::tcp::acceptor;
+        using socket_type       = asio::ip::tcp::socket;
 
         // each request should finish before this
         duration timeout{stl::chrono::seconds(3)};
@@ -118,13 +116,20 @@ namespace webpp::http::beast_proto {
         address_type     bind_address;
         port_type        bind_port = 80;
         asio::io_context io;
+        socket_type      sock;
+        acceptor_type    acceptor;
         thread_pool_type pool;
         stl::size_t      pool_count;
         app_wrapper_ref  app_ref;
 
-        void accept() {
-            stl::allocate_shared<session_type>(this->allocs.template general_allocator<session_type>(),
-                                               *this);
+        void async_accept() noexcept {
+            acceptor.async_accept(sock, [this](boost::beast::error_code ec) noexcept {
+                if (!ec)
+                    stl::allocate_shared<session_type>(
+                      this->alloc_pack.template general_allocator<session_type>(),
+                      *this);
+                this->async_accept();
+            });
         }
 
         int start_io() noexcept {
@@ -149,6 +154,8 @@ namespace webpp::http::beast_proto {
                        stl::size_t     concurrency_hint = stl::thread::hardware_concurrency())
           : etraits{stl::forward<ET>(et)},
             io{static_cast<int>(concurrency_hint)},
+            sock{io},
+            acceptor{io},
             pool{concurrency_hint - 1}, // the main thread is one thread itself
             pool_count{concurrency_hint},
             app_ref{the_app_ref} {}
@@ -200,8 +207,18 @@ namespace webpp::http::beast_proto {
             return u;
         }
 
+
         // run the server
         [[nodiscard]] int operator()() noexcept {
+            boost::beast::error_code ec;
+            acceptor.bind({bind_address, bind_port}, ec);
+            if (ec) {
+                this->logger.error(fmt::format("Cannot accept requests on {}", binded_uri().to_string()), ec);
+                return -1;
+            }
+
+            async_accept();
+
             this->logger.info(fmt::format("Starting beast server on {}", binded_uri().to_string()));
             for (stl::size_t id = 1; id != pool_count; id++) {
                 asio::post(pool, [this] {
