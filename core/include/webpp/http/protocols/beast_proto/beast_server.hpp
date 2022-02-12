@@ -58,6 +58,7 @@ namespace webpp::http::beast_proto {
             beast_session(server_type& serv_ref)
               : server{serv_ref},
                 timer{server.io, server.timeout},
+                req{server},
                 app_ref{server.app_ref} {
                 async_read_request();
             }

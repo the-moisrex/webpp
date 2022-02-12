@@ -35,8 +35,7 @@ namespace webpp::http::beast_proto {
 
       public:
         template <typename... Args>
-        beast_request(Args&&... args) noexcept : super(stl::forward<Args>(args)...),
-                                                 beast_request_type{} {}
+        beast_request(Args&&... args) noexcept : super(stl::forward<Args>(args)...) {}
 
         beast_request(beast_request const&)     = delete; // no copying for now
         beast_request(beast_request&&) noexcept = default;
