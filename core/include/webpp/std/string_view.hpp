@@ -103,7 +103,7 @@ namespace webpp::istl {
     template <typename StrViewT, typename StrT>
     requires(StringViewifiableOf<StrViewT, StrT>)
       [[nodiscard]] constexpr auto string_viewify_of(StrT&& str) noexcept {
-        if constexpr (StringView<StrT>) {
+        if constexpr (StringView<StrT> && stl::is_same_v<StrT, StrViewT>) {
             return str;
         } else if constexpr (requires { StrViewT{str}; }) {
             return StrViewT{str};

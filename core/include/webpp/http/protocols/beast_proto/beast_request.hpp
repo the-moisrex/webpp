@@ -44,6 +44,10 @@ namespace webpp::http::beast_proto {
         beast_request_type& as_beast_request() noexcept {
             return breq;
         }
+
+        [[nodiscard]] string_view_type request_uri() const {
+            return istl::string_viewify_of<string_view_type>(breq.target());
+        }
     };
 
 } // namespace webpp::http::beast_proto
