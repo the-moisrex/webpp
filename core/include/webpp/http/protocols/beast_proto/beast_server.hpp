@@ -4,6 +4,7 @@
 #include "../../../configs/constants.hpp"
 #include "../../../libs/asio.hpp"
 #include "../../../memory/object.hpp"
+#include "../../../std/format.hpp"
 #include "../../../std/string_view.hpp"
 #include "../../../traits/enable_traits.hpp"
 #include "../../../uri/uri.hpp"
@@ -64,9 +65,6 @@ namespace webpp::http::beast_proto {
             }
 
 
-
-
-
             // Asynchronously receive a complete request message.
             void async_read_request() {
                 server.logger.info("Started reading request.");
@@ -90,6 +88,12 @@ namespace webpp::http::beast_proto {
 
     } // namespace details
 
+
+
+
+    /**
+     * Beast Server
+     */
     template <Traits TraitsType, typename RootExtensionsT, typename App>
     struct beast_server : public enable_traits<TraitsType> {
         using traits_type       = TraitsType;
