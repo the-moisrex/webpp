@@ -77,9 +77,10 @@ namespace webpp::http::beast_proto {
                                                     [[maybe_unused]] std::size_t bytes_transferred) {
                       if (!ec) {
                           self->server.logger.info("Recieved a request");
-                          self->make_beast_response(self->req.as_beast_request(), self->app_ref(self->req));
+                          const auto bres =
+                            self->make_beast_response(self->req.as_beast_request(), self->app_ref(self->req));
 
-                          // todo
+
                       } else {
                           self->server.logger.warning("Connection error.", ec);
                       }
