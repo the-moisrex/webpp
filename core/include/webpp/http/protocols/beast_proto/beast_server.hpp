@@ -40,6 +40,7 @@ namespace webpp::http::beast_proto {
             using buffer_type  = boost::beast::flat_buffer;
             using app_wrapper_ref     = typename server_type::app_wrapper_ref;
             using beast_response_type = boost::beast::http::response<boost::beast::http::dynamic_body>;
+            using beast_request_type  = typename request_type::beast_request_type;
 
           private:
             server_type&    server;
@@ -49,7 +50,7 @@ namespace webpp::http::beast_proto {
             buffer_type     buf{default_buffer_size}; // fixme: see if this is using our allocator
 
 
-            beast_response_type make_beast_response(beast_response_type breq, HTTPResponse auto&& res) const {
+            beast_response_type make_beast_response(beast_request_type breq, HTTPResponse auto&& res) const {
                 beast_response_type bres;
                 bres.version(breq.version());
                 return bres;
