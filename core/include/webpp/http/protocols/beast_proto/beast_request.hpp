@@ -48,6 +48,11 @@ namespace webpp::http::beast_proto {
         [[nodiscard]] string_view_type request_uri() const {
             return istl::string_viewify_of<string_view_type>(breq.target());
         }
+
+
+        [[nodiscard]] string_view_type request_method() const {
+            return istl::string_viewify_of<string_view_type>(breq.method_string());
+        }
     };
 
 } // namespace webpp::http::beast_proto
