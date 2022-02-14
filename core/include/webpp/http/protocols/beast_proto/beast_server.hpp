@@ -217,9 +217,20 @@ namespace webpp::http::beast_proto {
         // run the server
         [[nodiscard]] int operator()() noexcept {
             boost::beast::error_code ec;
-            acceptor.bind({bind_address, bind_port}, ec);
+            const endpoint_type      ep{bind_address, bind_port};
+            acceptor.open(ep.protocol(), ec);
             if (ec) {
-                this->logger.error(fmt::format("Cannot accept requests on {}", binded_uri().to_string()), ec);
+                this->logger.error(fmt::format("Cannot open protocol for {}", binded_uri().to_string()), ec);
+                return -1;
+            }
+            acceptor.bind(ep, ec);
+            if (ec) {
+                this->logger.error(fmt::format("Cannot bind to {}", binded_uri().to_string()), ec);
+                return -1;
+            }
+            acceptor.listen(asio::socket_base::max_listen_connections, ec);
+            if (ec) {
+                this->logger.error(fmt::format("Cannot listen to {}", binded_uri().to_string()), ec);
                 return -1;
             }
 
