@@ -23,6 +23,7 @@
 
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http/read.hpp>
+#include <boost/beast/http/write.hpp>
 
 namespace webpp::http::beast_proto {
 
@@ -51,8 +52,10 @@ namespace webpp::http::beast_proto {
 
 
             beast_response_type make_beast_response(beast_request_type breq, HTTPResponse auto&& res) const {
+                res.calculate_default_headers();
                 beast_response_type bres;
                 bres.version(breq.version());
+                // bres.content_length(res.body.size());
                 return bres;
             }
 
@@ -79,8 +82,14 @@ namespace webpp::http::beast_proto {
                           self->server.logger.info("Recieved a request");
                           const auto bres =
                             self->make_beast_response(self->req.as_beast_request(), self->app_ref(self->req));
-
-
+                          boost::beast::http::async_write(
+                            self->server.sock,
+                            bres,
+                            [self = self->shared_from_this()](boost::beast::error_code ec,
+                                                              stl::size_t) noexcept {
+                                self->server.sock.shutdown(asio::ip::tcp::socket::shutdown_send, ec);
+                                self->timer.cancel();
+                            });
                       } else {
                           self->server.logger.warning("Connection error.", ec);
                       }
