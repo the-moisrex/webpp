@@ -21,7 +21,7 @@
 #include asio_include(ip/tcp)
 // clang-format on
 
-#include <boost/beast/core/flat_buffer.hpp>
+#include <boost/beast/core.hpp>
 #include <boost/beast/http/read.hpp>
 #include <boost/beast/http/write.hpp>
 
@@ -55,6 +55,10 @@ namespace webpp::http::beast_proto {
                 res.calculate_default_headers();
                 beast_response_type bres;
                 bres.version(breq.version());
+                for (auto const& h : res.headers) {
+                    bres.set(h.name, h.value);
+                }
+                boost::beast::ostream(bres.body()) << res.body.str();
                 // bres.content_length(res.body.size());
                 return bres;
             }
