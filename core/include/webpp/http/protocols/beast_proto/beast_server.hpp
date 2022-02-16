@@ -51,6 +51,18 @@ namespace webpp::http::beast_proto {
             buffer_type     buf{default_buffer_size}; // fixme: see if this is using our allocator
 
 
+          public:
+            beast_session(server_type& serv_ref)
+              : server{serv_ref},
+                timer{server.io, server.timeout},
+                req{server},
+                app_ref{server.app_ref} {}
+
+            void start() {
+                async_read_request();
+            }
+
+          private:
             beast_response_type make_beast_response(beast_request_type breq, HTTPResponse auto&& res) const {
                 res.calculate_default_headers();
                 beast_response_type bres;
@@ -63,14 +75,6 @@ namespace webpp::http::beast_proto {
                 return bres;
             }
 
-          public:
-            beast_session(server_type& serv_ref)
-              : server{serv_ref},
-                timer{server.io, server.timeout},
-                req{server},
-                app_ref{server.app_ref} {
-                async_read_request();
-            }
 
 
             // Asynchronously receive a complete request message.
@@ -82,7 +86,7 @@ namespace webpp::http::beast_proto {
                   buf,
                   req.as_beast_request(),
                   [self](boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred) {
-                      if (!ec) {
+                      if (!ec) [[likely]] {
                           self->server.logger.info("Recieved a request");
                           self->async_write_response();
                       } else {
@@ -93,7 +97,6 @@ namespace webpp::http::beast_proto {
 
 
             void async_write_response() {
-
                 const auto bres = make_beast_response(req.as_beast_request(), app_ref(req));
                 auto       self = this->shared_from_this();
                 boost::beast::http::async_write(
@@ -150,10 +153,12 @@ namespace webpp::http::beast_proto {
 
         void async_accept() noexcept {
             acceptor.async_accept(sock, [this](boost::beast::error_code ec) noexcept {
-                if (!ec)
+                if (!ec) {
                     stl::allocate_shared<session_type>(
                       this->alloc_pack.template general_allocator<session_type>(),
-                      *this);
+                      *this)
+                      ->start();
+                }
                 this->async_accept();
             });
         }
