@@ -76,30 +76,36 @@ namespace webpp::http::beast_proto {
             // Asynchronously receive a complete request message.
             void async_read_request() {
                 server.logger.info("Started reading request.");
+                auto self = this->shared_from_this();
                 boost::beast::http::async_read(
                   server.sock,
                   buf,
                   req.as_beast_request(),
-                  [self = this->shared_from_this()](boost::beast::error_code     ec,
-                                                    [[maybe_unused]] std::size_t bytes_transferred) {
+                  [self](boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred) {
                       if (!ec) {
                           self->server.logger.info("Recieved a request");
-                          const auto bres =
-                            self->make_beast_response(self->req.as_beast_request(), self->app_ref(self->req));
-                          boost::beast::http::async_write(
-                            self->server.sock,
-                            bres,
-                            [self = self->shared_from_this()](boost::beast::error_code ec,
-                                                              stl::size_t) noexcept {
-                                self->server.sock.shutdown(asio::ip::tcp::socket::shutdown_send, ec);
-                                self->timer.cancel();
-                            });
+                          self->async_write_response();
                       } else {
                           self->server.logger.warning("Connection error.", ec);
                       }
                   });
             }
+
+
+            void async_write_response() {
+
+                const auto bres = make_beast_response(req.as_beast_request(), app_ref(req));
+                auto       self = this->shared_from_this();
+                boost::beast::http::async_write(
+                  server.sock,
+                  bres,
+                  [self](boost::beast::error_code ec, stl::size_t) noexcept {
+                      self->server.sock.shutdown(asio::ip::tcp::socket::shutdown_send, ec);
+                      self->timer.cancel();
+                  });
+            }
         };
+
 
     } // namespace details
 
