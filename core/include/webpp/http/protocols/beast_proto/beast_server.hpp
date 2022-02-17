@@ -44,7 +44,7 @@ namespace webpp::http::beast_proto {
             using beast_request_type  = typename request_type::beast_request_type;
 
           private:
-            server_type&    server;
+            server_type&    server; // fixme: race condition
             steady_timer    timer;
             request_type    req;
             app_wrapper_ref app_ref;
@@ -58,6 +58,10 @@ namespace webpp::http::beast_proto {
                 req{server},
                 app_ref{server.app_ref} {}
 
+            /**
+             * Running async_read_request directly in the constructor will not make
+             * make_shared (or alike) functions work properly.
+             */
             void start() {
                 async_read_request();
             }
@@ -152,12 +156,15 @@ namespace webpp::http::beast_proto {
         app_wrapper_ref  app_ref;
 
         void async_accept() noexcept {
+            this->logger.info("Accepting Request");
             acceptor.async_accept(sock, [this](boost::beast::error_code ec) noexcept {
                 if (!ec) {
                     stl::allocate_shared<session_type>(
                       this->alloc_pack.template general_allocator<session_type>(),
                       *this)
                       ->start();
+                } else {
+                    this->logger.warning("Accepting error", ec);
                 }
                 this->async_accept();
             });
