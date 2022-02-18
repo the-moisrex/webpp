@@ -185,6 +185,9 @@ namespace webpp::http::beast_proto {
         }
 
       public:
+        beast_server(beast_server const&) = delete;
+        beast_server& operator=(beast_server const&) = delete;
+
         template <typename ET>
         requires(EnabledTraits<stl::remove_cvref_t<ET>>)
           beast_server(ET&&            et,
