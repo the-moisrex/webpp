@@ -226,13 +226,26 @@ namespace webpp::http::beast_proto {
             return false;
         }
 
-        beast_server& enable_ssl() {
+        beast_server& enable_ssl() noexcept {
             if constexpr (is_ssl_available()) {
-                // todo
+                if (!is_ssl_active()) {
+                    // todo
+                }
                 if (bind_port == 80)
                     bind_port = 443;
             } else {
                 this->logger.warning("Cannot enable SSL");
+            }
+            return *this;
+        }
+
+        beast_server& disable_ssl() noexcept {
+            if constexpr (is_ssl_available()) {
+                if (is_ssl_active()) {
+                    // todo
+                }
+                if (bind_port == 443)
+                    bind_port = 80;
             }
             return *this;
         }
