@@ -39,11 +39,14 @@ namespace webpp::http::beast_proto {
             using duration        = typename steady_timer::duration;
             using request_type = simple_request<traits_type, root_extensions, beast_request, root_extensions>;
             using buffer_type  = boost::beast::flat_buffer;
-            using app_wrapper_ref           = typename server_type::app_wrapper_ref;
-            using beast_response_type       = boost::beast::http::response<boost::beast::http::dynamic_body>;
-            using beast_request_type        = typename request_type::beast_request_type;
-            using beast_request_body_type   = boost::beast::http::string_body;
-            using beast_request_parser_type = boost::beast::http::request_parser<beast_request_body_type>;
+            using app_wrapper_ref     = typename server_type::app_wrapper_ref;
+            using allocator_pack_type = typename server_type::allocator_pack_type;
+            using allocator_type      = typename allocator_pack_type::template local_allocator_type<char>;
+            using beast_fields_type   = boost::beast::http::basic_fields<allocator_type>;
+            using beast_body_type     = boost::beast::http::string_body;
+            using beast_response_type = boost::beast::http::response<beast_body_type, beast_fields_type>;
+            using beast_request_type  = typename request_type::beast_request_type;
+            using beast_request_parser_type = boost::beast::http::request_parser<beast_request_type>;
 
           private:
             server_type&    server; // fixme: race condition
