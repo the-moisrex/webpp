@@ -39,9 +39,11 @@ namespace webpp::http::beast_proto {
             using duration        = typename steady_timer::duration;
             using request_type = simple_request<traits_type, root_extensions, beast_request, root_extensions>;
             using buffer_type  = boost::beast::flat_buffer;
-            using app_wrapper_ref     = typename server_type::app_wrapper_ref;
-            using beast_response_type = boost::beast::http::response<boost::beast::http::dynamic_body>;
-            using beast_request_type  = typename request_type::beast_request_type;
+            using app_wrapper_ref           = typename server_type::app_wrapper_ref;
+            using beast_response_type       = boost::beast::http::response<boost::beast::http::dynamic_body>;
+            using beast_request_type        = typename request_type::beast_request_type;
+            using beast_request_body_type   = boost::beast::http::string_body;
+            using beast_request_parser_type = boost::beast::http::request_parser<beast_request_body_type>;
 
           private:
             server_type&    server; // fixme: race condition
@@ -88,7 +90,7 @@ namespace webpp::http::beast_proto {
                 boost::beast::http::async_read(
                   server.sock,
                   buf,
-                  req.as_beast_request(),
+                  req.get_parser(),
                   [self](boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred) {
                       if (!ec) [[likely]] {
                           self->server.logger.info("Recieved a request");
