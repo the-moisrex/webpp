@@ -27,7 +27,7 @@ namespace website {
                            (get and root) >>=
                            [] {
                                document doc;
-                               doc["page"] = "about";
+                               doc["page"] = "home";
                                return doc;
                            },
                            (get and root / "about") >>=
