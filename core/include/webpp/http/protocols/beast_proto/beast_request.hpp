@@ -8,9 +8,10 @@
 #include "../common/common_http_request.hpp"
 #include "../protocol_concepts.hpp"
 
-#include <boost/beast/http/dynamic_body.hpp>
 #include <boost/beast/http/fields.hpp>
 #include <boost/beast/http/message.hpp>
+#include <boost/beast/http/parser.hpp>
+#include <boost/beast/http/string_body.hpp>
 
 namespace webpp::http::beast_proto {
 
@@ -23,10 +24,10 @@ namespace webpp::http::beast_proto {
         using request_extension_list    = REL;
         using string_type               = traits::general_string<traits_type>;
         using string_view_type          = traits::string_view<traits_type>;
-        using beast_body_type           = boost::beast::http::dynamic_body;
+        using beast_body_type           = boost::beast::http::string_body;
         using beast_field_type          = boost::beast::http::fields;
         using beast_request_type        = boost::beast::http::request<beast_body_type, beast_field_type>;
-        using allocator_type            = traits::local_allocator<traits_type>;
+        using allocator_type            = traits::local_allocator<traits_type, char>;
         using beast_request_parser_type = boost::beast::http::request_parser<beast_body_type, allocator_type>;
 
       private:
@@ -52,11 +53,11 @@ namespace webpp::http::beast_proto {
         }
 
         [[nodiscard]] string_view_type request_uri() const {
-            return istl::string_viewify_of<string_view_type>(breq.target());
+            return istl::string_viewify_of<string_view_type>(parser.get().target());
         }
 
         [[nodiscard]] string_view_type request_method() const {
-            return istl::string_viewify_of<string_view_type>(breq.method_string());
+            return istl::string_viewify_of<string_view_type>(parser.get().method_string());
         }
     };
 

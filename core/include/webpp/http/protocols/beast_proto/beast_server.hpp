@@ -45,8 +45,9 @@ namespace webpp::http::beast_proto {
             using beast_fields_type   = boost::beast::http::basic_fields<allocator_type>;
             using beast_body_type     = boost::beast::http::string_body;
             using beast_response_type = boost::beast::http::response<beast_body_type, beast_fields_type>;
-            using beast_request_type  = typename request_type::beast_request_type;
-            using beast_request_parser_type = boost::beast::http::request_parser<beast_request_type>;
+            using beast_response_serializer_type =
+              boost::beast::http::response_serializer<beast_body_type, beast_fields_type>;
+            using beast_request_type = typename request_type::beast_request_type;
 
           private:
             server_type&    server; // fixme: race condition
@@ -93,7 +94,7 @@ namespace webpp::http::beast_proto {
                 boost::beast::http::async_read(
                   server.sock,
                   buf,
-                  req.get_parser(),
+                  req.beast_parser(),
                   [self](boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred) {
                       if (!ec) [[likely]] {
                           self->server.logger.info("Recieved a request");
@@ -106,7 +107,7 @@ namespace webpp::http::beast_proto {
 
 
             void async_write_response() {
-                const auto bres = make_beast_response(req.as_beast_request(), app_ref(req));
+                const auto bres = make_beast_response(req.beast_parser().get(), app_ref(req));
                 auto       self = this->shared_from_this();
                 boost::beast::http::async_write(
                   server.sock,
