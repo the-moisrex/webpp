@@ -80,8 +80,9 @@ namespace webpp::http::beast_proto {
                 for (auto const& h : res.headers) {
                     bres.set(h.name, h.value);
                 }
-                boost::beast::ostream(bres.body()) << res.body.str();
+                bres.body() = res.body.str();
                 // bres.content_length(res.body.size());
+                bres.prepare_payload();
                 return bres;
             }
 
@@ -109,9 +110,10 @@ namespace webpp::http::beast_proto {
             void async_write_response() {
                 const auto bres = make_beast_response(req.beast_parser().get(), app_ref(req));
                 auto       self = this->shared_from_this();
+                beast_response_serializer_type str_serializer{bres};
                 boost::beast::http::async_write(
                   server.sock,
-                  bres,
+                  str_serializer,
                   [self](boost::beast::error_code ec, stl::size_t) noexcept {
                       self->server.sock.shutdown(asio::ip::tcp::socket::shutdown_send, ec);
                       self->timer.cancel();
