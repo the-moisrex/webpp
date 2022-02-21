@@ -48,9 +48,11 @@ namespace webpp::http::beast_proto {
             using beast_response_serializer_type =
               boost::beast::http::response_serializer<beast_body_type, beast_fields_type>;
             using beast_request_type = typename request_type::beast_request_type;
+            using socket_type        = asio::ip::tcp::socket;
 
           private:
             server_type&    server; // fixme: race condition
+            socket_type     sock;
             steady_timer    timer;
             request_type    req;
             app_wrapper_ref app_ref;
@@ -58,8 +60,9 @@ namespace webpp::http::beast_proto {
 
 
           public:
-            beast_session(server_type& serv_ref)
+            beast_session(server_type& serv_ref, socket_type&& in_sock)
               : server{serv_ref},
+                sock{stl::move(in_sock)},
                 timer{server.io, server.timeout},
                 req{server},
                 app_ref{server.app_ref} {}
@@ -70,6 +73,7 @@ namespace webpp::http::beast_proto {
              */
             void start() {
                 async_read_request();
+                check_deadline();
             }
 
           private:
@@ -93,7 +97,7 @@ namespace webpp::http::beast_proto {
                 server.logger.info("Started reading request.");
                 auto self = this->shared_from_this();
                 boost::beast::http::async_read(
-                  server.sock,
+                  sock,
                   buf,
                   req.beast_parser(),
                   [self](boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred) {
@@ -112,14 +116,46 @@ namespace webpp::http::beast_proto {
                 auto       self = this->shared_from_this();
                 beast_response_serializer_type str_serializer{bres};
                 boost::beast::http::async_write(
-                  server.sock,
+                  sock,
                   str_serializer,
                   [self](boost::beast::error_code ec, stl::size_t) noexcept {
-                      self->server.sock.shutdown(asio::ip::tcp::socket::shutdown_send, ec);
+                      if (ec) {
+                          self->server.logger.warning("Write error on socket.", ec);
+                      }
+                      self->sock.shutdown(asio::ip::tcp::socket::shutdown_send, ec);
+                      if (ec) {
+                          self->server.logger.warning("Error on sending shutdown into socket.", ec);
+                      }
                       self->timer.cancel();
                   });
             }
+
+
+
+            void check_deadline() noexcept {
+                // The deadline may have moved, so check it has really passed.
+                if (timer.expiry() <= stl::chrono::steady_clock::now()) {
+                    // Close socket to cancel any outstanding operation.
+                    boost::beast::error_code ec;
+                    sock.close(ec);
+                    if (ec) {
+                        server.logger.warning("Error on socket close.", ec);
+                    }
+
+                    // Sleep indefinitely until we're given a new deadline.
+                    timer.expires_at((stl::chrono::steady_clock::time_point::max)());
+                }
+
+                timer.async_wait([this](boost::beast::error_code ec) {
+                    if (ec) {
+                        server.logger.warning("Error on timer wait.", ec);
+                    }
+                    check_deadline();
+                });
+            }
         };
+
+
 
 
     } // namespace details
@@ -157,19 +193,20 @@ namespace webpp::http::beast_proto {
         address_type     bind_address;
         port_type        bind_port = 80;
         asio::io_context io;
-        socket_type      sock;
         acceptor_type    acceptor;
+        socket_type      temp_sock;
         thread_pool_type pool;
         stl::size_t      pool_count;
         app_wrapper_ref  app_ref;
 
         void async_accept() noexcept {
             this->logger.info("Accepting Request");
-            acceptor.async_accept(sock, [this](boost::beast::error_code ec) noexcept {
+            acceptor.async_accept(temp_sock, [this](boost::beast::error_code ec) noexcept {
                 if (!ec) {
                     stl::allocate_shared<session_type>(
                       this->alloc_pack.template general_allocator<session_type>(),
-                      *this)
+                      *this,
+                      stl::move(temp_sock))
                       ->start();
                 } else {
                     this->logger.warning("Accepting error", ec);
@@ -203,8 +240,8 @@ namespace webpp::http::beast_proto {
                        stl::size_t     concurrency_hint = stl::thread::hardware_concurrency())
           : etraits{stl::forward<ET>(et)},
             io{static_cast<int>(concurrency_hint)},
-            sock{io},
             acceptor{io},
+            temp_sock{io},
             pool{concurrency_hint - 1}, // the main thread is one thread itself
             pool_count{concurrency_hint},
             app_ref{the_app_ref} {}
