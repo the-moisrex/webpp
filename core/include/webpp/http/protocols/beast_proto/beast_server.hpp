@@ -11,6 +11,7 @@
 #include "../../response_concepts.hpp"
 #include "beast_request.hpp"
 
+#include <list>
 #include <thread>
 
 // clang-format off
@@ -178,7 +179,6 @@ namespace webpp::http::beast_proto {
         using port_type         = unsigned short;
         using thread_pool_type  = asio::thread_pool;
         using endpoint_type     = asio::ip::tcp::endpoint;
-        using etraits           = enable_traits<traits_type>;
         using app_wrapper_ref   = stl::add_lvalue_reference_t<App>;
         using beast_server_type = beast_server;
         using worker_type       = details::beast_worker<beast_server_type>;
