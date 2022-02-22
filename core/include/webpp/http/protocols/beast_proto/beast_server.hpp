@@ -30,7 +30,7 @@ namespace webpp::http::beast_proto {
     namespace details {
 
         template <typename ServerT>
-        struct beast_session : stl::enable_shared_from_this<beast_session<ServerT>> {
+        struct beast_worker : stl::enable_shared_from_this<beast_worker<ServerT>> {
             using server_type     = ServerT;
             using traits_type     = typename server_type::traits_type;
             using root_extensions = typename server_type::root_extensions;
@@ -60,7 +60,7 @@ namespace webpp::http::beast_proto {
 
 
           public:
-            beast_session(server_type& serv_ref, socket_type&& in_sock)
+            beast_worker(server_type& serv_ref, socket_type&& in_sock)
               : server{serv_ref},
                 sock{stl::move(in_sock)},
                 timer{server.io, server.timeout},
@@ -169,6 +169,7 @@ namespace webpp::http::beast_proto {
     template <Traits TraitsType, typename RootExtensionsT, typename App>
     struct beast_server : public enable_traits<TraitsType> {
         using traits_type       = TraitsType;
+        using etraits           = enable_traits<TraitsType>;
         using root_extensions   = RootExtensionsT;
         using steady_timer      = asio::steady_timer;
         using duration          = typename steady_timer::duration;
@@ -180,15 +181,17 @@ namespace webpp::http::beast_proto {
         using etraits           = enable_traits<traits_type>;
         using app_wrapper_ref   = stl::add_lvalue_reference_t<App>;
         using beast_server_type = beast_server;
-        using session_type      = details::beast_session<beast_server_type>;
+        using worker_type       = details::beast_worker<beast_server_type>;
         using acceptor_type     = asio::ip::tcp::acceptor;
         using socket_type       = asio::ip::tcp::socket;
+        using allocator_type    = typename etraits::allocator_pack_type::template local_allocator_type<char>;
+        using workers_type      = stl::list<worker_type, allocator_type>;
 
         // each request should finish before this
         duration timeout{stl::chrono::seconds(3)};
 
       private:
-        friend session_type;
+        friend worker_type;
 
         address_type     bind_address;
         port_type        bind_port = 80;
@@ -197,14 +200,15 @@ namespace webpp::http::beast_proto {
         socket_type      temp_sock;
         thread_pool_type pool;
         stl::size_t      pool_count;
+        workers_type     workers;
         app_wrapper_ref  app_ref;
 
         void async_accept() noexcept {
             this->logger.info("Accepting Request");
             acceptor.async_accept(temp_sock, [this](boost::beast::error_code ec) noexcept {
                 if (!ec) {
-                    stl::allocate_shared<session_type>(
-                      this->alloc_pack.template general_allocator<session_type>(),
+                    stl::allocate_shared<worker_type>(
+                      this->alloc_pack.template general_allocator<worker_type>(),
                       *this,
                       stl::move(temp_sock))
                       ->start();
@@ -244,7 +248,11 @@ namespace webpp::http::beast_proto {
             temp_sock{io},
             pool{concurrency_hint - 1}, // the main thread is one thread itself
             pool_count{concurrency_hint},
-            app_ref{the_app_ref} {}
+            app_ref{the_app_ref} {
+
+            // initialize N http workers
+            workers.resize(pool_count, {*this, this->alloc_pack.template local_allocator<char>()});
+        }
 
 
         beast_server& address(string_view_type addr) noexcept {
@@ -328,6 +336,10 @@ namespace webpp::http::beast_proto {
             }
 
             async_accept();
+
+            for (auto& worker : workers) {
+                worker.start();
+            }
 
             this->logger.info(fmt::format("Starting beast server on {}", binded_uri().to_string()));
             for (stl::size_t id = 1; id != pool_count; id++) {
