@@ -42,8 +42,8 @@ namespace webpp::http::beast_proto {
             using buffer_type  = boost::beast::flat_buffer;
             using app_wrapper_ref     = typename server_type::app_wrapper_ref;
             using allocator_pack_type = typename server_type::allocator_pack_type;
-            using allocator_type      = typename allocator_pack_type::template local_allocator_type<char>;
-            using beast_fields_type   = boost::beast::http::basic_fields<allocator_type>;
+            using char_allocator_type = typename allocator_pack_type::template local_allocator_type<char>;
+            using beast_fields_type   = boost::beast::http::basic_fields<char_allocator_type>;
             using beast_body_type     = boost::beast::http::string_body;
             using beast_response_type = boost::beast::http::response<beast_body_type, beast_fields_type>;
             using beast_response_serializer_type =
@@ -94,7 +94,7 @@ namespace webpp::http::beast_proto {
 
 
             // Asynchronously receive a complete request message.
-            void async_read_request() {
+            void async_read_request() noexcept {
                 server.logger.info("Started reading request.");
                 auto self = this->shared_from_this();
                 boost::beast::http::async_read(
@@ -112,7 +112,7 @@ namespace webpp::http::beast_proto {
             }
 
 
-            void async_write_response() {
+            void async_write_response() noexcept {
                 const auto bres = make_beast_response(req.beast_parser().get(), app_ref(req));
                 auto       self = this->shared_from_this();
                 beast_response_serializer_type str_serializer{bres};
@@ -120,11 +120,11 @@ namespace webpp::http::beast_proto {
                   sock,
                   str_serializer,
                   [self](boost::beast::error_code ec, stl::size_t) noexcept {
-                      if (ec) {
+                      if (ec) [[unlikely]] {
                           self->server.logger.warning("Write error on socket.", ec);
                       }
                       self->sock.shutdown(asio::ip::tcp::socket::shutdown_send, ec);
-                      if (ec) {
+                      if (ec) [[unlikely]] {
                           self->server.logger.warning("Error on sending shutdown into socket.", ec);
                       }
                       self->timer.cancel();
@@ -139,7 +139,7 @@ namespace webpp::http::beast_proto {
                     // Close socket to cancel any outstanding operation.
                     boost::beast::error_code ec;
                     sock.close(ec);
-                    if (ec) {
+                    if (ec) [[unlikely]] {
                         server.logger.warning("Error on socket close.", ec);
                     }
 
@@ -148,7 +148,7 @@ namespace webpp::http::beast_proto {
                 }
 
                 timer.async_wait([this](boost::beast::error_code ec) {
-                    if (ec) {
+                    if (ec) [[unlikely]] {
                         server.logger.warning("Error on timer wait.", ec);
                     }
                     check_deadline();
@@ -169,23 +169,27 @@ namespace webpp::http::beast_proto {
      */
     template <Traits TraitsType, typename RootExtensionsT, typename App>
     struct beast_server : public enable_traits<TraitsType> {
-        using traits_type       = TraitsType;
-        using etraits           = enable_traits<TraitsType>;
-        using root_extensions   = RootExtensionsT;
-        using steady_timer      = asio::steady_timer;
-        using duration          = typename steady_timer::duration;
-        using address_type      = asio::ip::address;
-        using string_view_type  = traits::string_view<traits_type>;
-        using port_type         = unsigned short;
-        using thread_pool_type  = asio::thread_pool;
-        using endpoint_type     = asio::ip::tcp::endpoint;
-        using app_wrapper_ref   = stl::add_lvalue_reference_t<App>;
-        using beast_server_type = beast_server;
-        using worker_type       = details::beast_worker<beast_server_type>;
-        using acceptor_type     = asio::ip::tcp::acceptor;
-        using socket_type       = asio::ip::tcp::socket;
-        using allocator_type    = typename etraits::allocator_pack_type::template local_allocator_type<char>;
-        using workers_type      = stl::list<worker_type, allocator_type>;
+        using traits_type         = TraitsType;
+        using etraits             = enable_traits<TraitsType>;
+        using root_extensions     = RootExtensionsT;
+        using steady_timer        = asio::steady_timer;
+        using duration            = typename steady_timer::duration;
+        using address_type        = asio::ip::address;
+        using string_view_type    = traits::string_view<traits_type>;
+        using port_type           = unsigned short;
+        using thread_pool_type    = asio::thread_pool;
+        using endpoint_type       = asio::ip::tcp::endpoint;
+        using app_wrapper_ref     = stl::add_lvalue_reference_t<App>;
+        using beast_server_type   = beast_server;
+        using worker_type         = details::beast_worker<beast_server_type>;
+        using acceptor_type       = asio::ip::tcp::acceptor;
+        using socket_type         = asio::ip::tcp::socket;
+        using allocator_pack_type = typename etraits::allocator_pack_type;
+        using char_allocator_type =
+          typename etraits::allocator_pack_type::template local_allocator_type<char>;
+        using worker_allocator_type =
+          typename allocator_pack_type::template local_allocator_type<worker_type>;
+        using workers_type = stl::list<worker_type, worker_allocator_type>;
 
         // each request should finish before this
         duration timeout{stl::chrono::seconds(3)};
