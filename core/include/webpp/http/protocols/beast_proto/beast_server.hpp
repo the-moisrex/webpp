@@ -61,9 +61,9 @@ namespace webpp::http::beast_proto {
 
 
           public:
-            beast_worker(server_type& serv_ref, socket_type&& in_sock)
+            beast_worker(server_type& serv_ref)
               : server{serv_ref},
-                sock{stl::move(in_sock)},
+                sock{server.io},
                 timer{server.io, server.timeout},
                 req{server},
                 app_ref{server.app_ref} {}
@@ -245,11 +245,12 @@ namespace webpp::http::beast_proto {
             acceptor{io},
             pool{concurrency_hint - 1}, // the main thread is one thread itself
             pool_count{concurrency_hint},
+            workers{this->alloc_pack.template local_allocator<worker_type>()},
             app_ref{the_app_ref} {
 
             // inittialize the workers
             for (stl::size_t index = 0ul; index != pool_count; ++index) {
-                workers.emplace_back(*this, this->alloc_pack.template local_allocator<char>());
+                workers.emplace_back(*this);
             }
         }
 
