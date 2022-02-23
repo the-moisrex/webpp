@@ -157,7 +157,6 @@ namespace webpp::http::beast_proto {
 
 
             void async_accept() noexcept {
-                server.logger.info("Accepting Request");
                 server.acceptor.async_accept(sock, [this](boost::beast::error_code ec) noexcept {
                     if (!ec) [[likely]] {
                         timer.expires_after(server.timeout);
