@@ -31,7 +31,7 @@ namespace webpp::http::beast_proto {
     namespace details {
 
         template <typename ServerT>
-        struct beast_worker : stl::enable_shared_from_this<beast_worker<ServerT>> {
+        struct beast_worker {
             using server_type     = ServerT;
             using traits_type     = typename server_type::traits_type;
             using root_extensions = typename server_type::root_extensions;
@@ -96,17 +96,16 @@ namespace webpp::http::beast_proto {
             // Asynchronously receive a complete request message.
             void async_read_request() noexcept {
                 server.logger.info("Started reading request.");
-                auto self = this->shared_from_this();
                 boost::beast::http::async_read(
                   sock,
                   buf,
                   req.beast_parser(),
-                  [self](boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred) {
+                  [this](boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred) {
                       if (!ec) [[likely]] {
-                          self->server.logger.info("Recieved a request");
-                          self->async_write_response();
+                          server.logger.info("Recieved a request");
+                          async_write_response();
                       } else {
-                          self->server.logger.warning("Connection error.", ec);
+                          server.logger.warning("Connection error.", ec);
                       }
                   });
             }
@@ -114,20 +113,19 @@ namespace webpp::http::beast_proto {
 
             void async_write_response() noexcept {
                 const auto bres = make_beast_response(req.beast_parser().get(), app_ref(req));
-                auto       self = this->shared_from_this();
                 beast_response_serializer_type str_serializer{bres};
                 boost::beast::http::async_write(
                   sock,
                   str_serializer,
-                  [self](boost::beast::error_code ec, stl::size_t) noexcept {
+                  [this](boost::beast::error_code ec, stl::size_t) noexcept {
                       if (ec) [[unlikely]] {
-                          self->server.logger.warning("Write error on socket.", ec);
+                          server.logger.warning("Write error on socket.", ec);
                       }
-                      self->sock.shutdown(asio::ip::tcp::socket::shutdown_send, ec);
+                      sock.shutdown(asio::ip::tcp::socket::shutdown_send, ec);
                       if (ec) [[unlikely]] {
-                          self->server.logger.warning("Error on sending shutdown into socket.", ec);
+                          server.logger.warning("Error on sending shutdown into socket.", ec);
                       }
-                      self->timer.cancel();
+                      timer.cancel();
                   });
             }
 
@@ -154,9 +152,21 @@ namespace webpp::http::beast_proto {
                     check_deadline();
                 });
             }
+
+
+
+            void async_accept() noexcept {
+                server.logger.info("Accepting Request");
+                server.acceptor.async_accept(sock, [this](boost::beast::error_code ec) noexcept {
+                    if (!ec) [[likely]] {
+                        async_read_request();
+                    } else {
+                        server.logger.warning("Accepting error", ec);
+                        this->async_accept();
+                    }
+                });
+            }
         };
-
-
 
 
     } // namespace details
@@ -201,27 +211,11 @@ namespace webpp::http::beast_proto {
         port_type        bind_port = 80;
         asio::io_context io;
         acceptor_type    acceptor;
-        socket_type      temp_sock;
         thread_pool_type pool;
         stl::size_t      pool_count;
         workers_type     workers;
         app_wrapper_ref  app_ref;
 
-        void async_accept() noexcept {
-            this->logger.info("Accepting Request");
-            acceptor.async_accept(temp_sock, [this](boost::beast::error_code ec) noexcept {
-                if (!ec) {
-                    stl::allocate_shared<worker_type>(
-                      this->alloc_pack.template general_allocator<worker_type>(),
-                      *this,
-                      stl::move(temp_sock))
-                      ->start();
-                } else {
-                    this->logger.warning("Accepting error", ec);
-                }
-                this->async_accept();
-            });
-        }
 
         int start_io() noexcept {
             try {
@@ -249,13 +243,13 @@ namespace webpp::http::beast_proto {
           : etraits{stl::forward<ET>(et)},
             io{static_cast<int>(concurrency_hint)},
             acceptor{io},
-            temp_sock{io},
             pool{concurrency_hint - 1}, // the main thread is one thread itself
             pool_count{concurrency_hint},
             app_ref{the_app_ref} {
+
+            // inittialize the workers
             for (stl::size_t index = 0ul; index != pool_count; ++index) {
                 workers.emplace_back(*this, this->alloc_pack.template local_allocator<char>());
-                workers.back().start();
             }
         }
 
@@ -340,8 +334,7 @@ namespace webpp::http::beast_proto {
                 return -1;
             }
 
-            async_accept();
-
+            // start accepting in all workers
             for (auto& worker : workers) {
                 worker.start();
             }
