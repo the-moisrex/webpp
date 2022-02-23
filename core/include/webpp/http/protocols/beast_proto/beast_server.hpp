@@ -66,7 +66,7 @@ namespace webpp::http::beast_proto {
             beast_worker(server_type& serv_ref)
               : server{serv_ref},
                 sock{server.io},
-                timer{server.io, server.timeout},
+                timer{server.io, (stl::chrono::steady_clock::time_point::max)()},
                 req{server},
                 app_ref{server.app_ref} {}
 
@@ -99,14 +99,12 @@ namespace webpp::http::beast_proto {
 
             // Asynchronously receive a complete request message.
             void async_read_request() noexcept {
-                server.logger.info("Started reading request.");
                 boost::beast::http::async_read(
                   sock,
                   buf,
                   req->beast_parser(),
                   [this](boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred) {
                       if (!ec) [[likely]] {
-                          server.logger.info("Recieved a request");
                           async_write_response();
                       } else {
                           server.logger.warning("Connection error.", ec);
@@ -128,7 +126,6 @@ namespace webpp::http::beast_proto {
                       if (ec) [[unlikely]] {
                           server.logger.warning("Error on sending shutdown into socket.", ec);
                       }
-                      timer.cancel();
                       reset();
                       start();
                   });
@@ -150,10 +147,9 @@ namespace webpp::http::beast_proto {
                     timer.expires_at((stl::chrono::steady_clock::time_point::max)());
                 }
 
-                timer.async_wait([this](boost::beast::error_code ec) {
-                    if (ec) [[unlikely]] {
-                        server.logger.warning("Error on timer wait.", ec);
-                    }
+                timer.async_wait([this]([[maybe_unused]] boost::beast::error_code ec) noexcept {
+                    // canceling will cause an error also, and it's okay, so no need to
+                    // log the error code.
                     check_deadline();
                 });
             }
@@ -164,6 +160,7 @@ namespace webpp::http::beast_proto {
                 server.logger.info("Accepting Request");
                 server.acceptor.async_accept(sock, [this](boost::beast::error_code ec) noexcept {
                     if (!ec) [[likely]] {
+                        timer.expires_after(server.timeout);
                         async_read_request();
                     } else {
                         server.logger.warning("Accepting error", ec);
@@ -181,6 +178,13 @@ namespace webpp::http::beast_proto {
 
                 // destroy the request type
                 req.emplace(server);
+
+
+                str_serializer.reset();
+                bres.reset();
+
+                // Sleep indefinitely until we're given a new deadline.
+                timer.expires_at((stl::chrono::steady_clock::time_point::max)());
             }
         };
 
