@@ -52,12 +52,12 @@ namespace webpp::http::beast_proto {
             using socket_type        = asio::ip::tcp::socket;
 
           private:
-            server_type&    server; // fixme: race condition
-            socket_type     sock;
-            steady_timer    timer;
-            request_type    req;
-            app_wrapper_ref app_ref;
-            buffer_type     buf{default_buffer_size}; // fixme: see if this is using our allocator
+            server_type&                server; // fixme: race condition
+            socket_type                 sock;
+            steady_timer                timer;
+            stl::optional<request_type> req;
+            app_wrapper_ref             app_ref;
+            buffer_type                 buf{default_buffer_size}; // fixme: see if this is using our allocator
 
 
           public:
@@ -99,7 +99,7 @@ namespace webpp::http::beast_proto {
                 boost::beast::http::async_read(
                   sock,
                   buf,
-                  req.beast_parser(),
+                  req->beast_parser(),
                   [this](boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred) {
                       if (!ec) [[likely]] {
                           server.logger.info("Recieved a request");
@@ -112,7 +112,7 @@ namespace webpp::http::beast_proto {
 
 
             void async_write_response() noexcept {
-                const auto bres = make_beast_response(req.beast_parser().get(), app_ref(req));
+                const auto bres = make_beast_response(req->beast_parser().get(), app_ref(*req));
                 beast_response_serializer_type str_serializer{bres};
                 boost::beast::http::async_write(
                   sock,
@@ -126,6 +126,8 @@ namespace webpp::http::beast_proto {
                           server.logger.warning("Error on sending shutdown into socket.", ec);
                       }
                       timer.cancel();
+                      reset();
+                      start();
                   });
             }
 
@@ -165,6 +167,17 @@ namespace webpp::http::beast_proto {
                         this->async_accept();
                     }
                 });
+            }
+
+            void reset() noexcept {
+                boost::beast::error_code ec;
+                sock.close(ec);
+                if (ec) [[unlikely]] {
+                    server.logger.warning("Error on connection closing.", ec);
+                }
+
+                // destroy the request type
+                req.emplace(server);
             }
         };
 
