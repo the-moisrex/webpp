@@ -73,7 +73,7 @@ namespace webpp::http::beast_proto {
              * make_shared (or alike) functions work properly.
              */
             void start() {
-                async_read_request();
+                async_accept();
                 check_deadline();
             }
 
