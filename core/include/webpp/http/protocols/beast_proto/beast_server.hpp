@@ -52,12 +52,14 @@ namespace webpp::http::beast_proto {
             using socket_type        = asio::ip::tcp::socket;
 
           private:
-            server_type&                server; // fixme: race condition
-            socket_type                 sock;
-            steady_timer                timer;
-            stl::optional<request_type> req;
-            app_wrapper_ref             app_ref;
-            buffer_type                 buf{default_buffer_size}; // fixme: see if this is using our allocator
+            server_type&                                  server; // fixme: race condition
+            socket_type                                   sock;
+            steady_timer                                  timer;
+            stl::optional<request_type>                   req;
+            stl::optional<beast_response_type>            bres;
+            stl::optional<beast_response_serializer_type> str_serializer;
+            app_wrapper_ref                               app_ref;
+            buffer_type buf{default_buffer_size}; // fixme: see if this is using our allocator
 
 
           public:
@@ -78,17 +80,19 @@ namespace webpp::http::beast_proto {
             }
 
           private:
-            beast_response_type make_beast_response(beast_request_type breq, HTTPResponse auto&& res) const {
+            void make_beast_response() noexcept {
+                const beast_request_type breq = req->beast_parser().get();
+                auto                     res  = app_ref(*req);
+                bres.emplace();
                 res.calculate_default_headers();
-                beast_response_type bres;
-                bres.version(breq.version());
+                bres->version(breq.version());
                 for (auto const& h : res.headers) {
-                    bres.set(h.name, h.value);
+                    bres->set(h.name, h.value);
                 }
-                bres.body() = res.body.str();
+                bres->body() = res.body.str();
                 // bres.content_length(res.body.size());
-                bres.prepare_payload();
-                return bres;
+                bres->prepare_payload();
+                str_serializer.emplace(*bres);
             }
 
 
@@ -112,11 +116,10 @@ namespace webpp::http::beast_proto {
 
 
             void async_write_response() noexcept {
-                const auto bres = make_beast_response(req->beast_parser().get(), app_ref(*req));
-                beast_response_serializer_type str_serializer{bres};
+                make_beast_response();
                 boost::beast::http::async_write(
                   sock,
-                  str_serializer,
+                  *str_serializer,
                   [this](boost::beast::error_code ec, stl::size_t) noexcept {
                       if (ec) [[unlikely]] {
                           server.logger.warning("Write error on socket.", ec);
