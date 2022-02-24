@@ -31,13 +31,15 @@ namespace webpp::http::beast_proto {
     namespace details {
 
         template <typename ServerT>
-        struct beast_worker {
+        struct beast_worker : ServerT::etraits {
             using server_type     = ServerT;
+            using etraits         = typename server_type::etraits;
+            using duration        = typename server_type::duration;
+            using acceptor_type   = typename server_type::acceptor_type;
             using traits_type     = typename server_type::traits_type;
             using root_extensions = typename server_type::root_extensions;
             using endpoint_type   = asio::ip::tcp::endpoint;
             using steady_timer    = asio::steady_timer;
-            using duration        = typename steady_timer::duration;
             using request_type = simple_request<traits_type, root_extensions, beast_request, root_extensions>;
             using buffer_type  = boost::beast::flat_buffer;
             using app_wrapper_ref     = typename server_type::app_wrapper_ref;
@@ -55,8 +57,9 @@ namespace webpp::http::beast_proto {
             static constexpr auto log_cat = "BeastWorker";
 
           private:
-            server_type&                                  server; // fixme: race condition
+            acceptor_type&                                acceptor;
             socket_type                                   sock;
+            duration                                      timeout;
             steady_timer                                  timer;
             stl::optional<request_type>                   req;
             stl::optional<beast_response_type>            bres;
@@ -66,9 +69,11 @@ namespace webpp::http::beast_proto {
 
 
           public:
-            beast_worker(server_type& serv_ref)
-              : server{serv_ref},
+            beast_worker(server_type& server)
+              : etraits{server},
+                acceptor{server.acceptor},
                 sock{server.io},
+                timeout{server.timeout},
                 timer{server.io, (stl::chrono::steady_clock::time_point::max)()},
                 req{server},
                 app_ref{server.app_ref} {}
@@ -77,7 +82,7 @@ namespace webpp::http::beast_proto {
              * Running async_read_request directly in the constructor will not make
              * make_shared (or alike) functions work properly.
              */
-            void start() {
+            void start() noexcept {
                 async_accept();
                 check_deadline();
             }
@@ -110,7 +115,7 @@ namespace webpp::http::beast_proto {
                       if (!ec) [[likely]] {
                           async_write_response();
                       } else {
-                          server.logger.warning(log_cat, "Connection error.", ec);
+                          this->logger.warning(log_cat, "Connection error.", ec);
                       }
                   });
             }
@@ -123,11 +128,11 @@ namespace webpp::http::beast_proto {
                   *str_serializer,
                   [this](boost::beast::error_code ec, stl::size_t) noexcept {
                       if (ec) [[unlikely]] {
-                          server.logger.warning(log_cat, "Write error on socket.", ec);
+                          this->logger.warning(log_cat, "Write error on socket.", ec);
                       }
                       sock.shutdown(asio::ip::tcp::socket::shutdown_send, ec);
                       if (ec) [[unlikely]] {
-                          server.logger.warning(log_cat, "Error on sending shutdown into socket.", ec);
+                          this->logger.warning(log_cat, "Error on sending shutdown into socket.", ec);
                       }
                       reset();
                       start();
@@ -143,7 +148,7 @@ namespace webpp::http::beast_proto {
                     boost::beast::error_code ec;
                     sock.close(ec);
                     if (ec) [[unlikely]] {
-                        server.logger.warning(log_cat, "Error on socket close.", ec);
+                        this->logger.warning(log_cat, "Error on socket close.", ec);
                     }
 
                     // Sleep indefinitely until we're given a new deadline.
@@ -160,12 +165,12 @@ namespace webpp::http::beast_proto {
 
 
             void async_accept() noexcept {
-                server.acceptor.async_accept(sock, [this](boost::beast::error_code ec) noexcept {
+                acceptor.async_accept(sock, [this](boost::beast::error_code ec) noexcept {
                     if (!ec) [[likely]] {
-                        timer.expires_after(server.timeout);
+                        timer.expires_after(timeout);
                         async_read_request();
                     } else {
-                        server.logger.warning(log_cat, "Accepting error", ec);
+                        this->logger.warning(log_cat, "Accepting error", ec);
                         this->async_accept();
                     }
                 });
@@ -175,11 +180,11 @@ namespace webpp::http::beast_proto {
                 boost::beast::error_code ec;
                 sock.close(ec);
                 if (ec) [[unlikely]] {
-                    server.logger.warning(log_cat, "Error on connection closing.", ec);
+                    this->logger.warning(log_cat, "Error on connection closing.", ec);
                 }
 
                 // destroy the request type
-                req.emplace(server);
+                req.emplace(*this);
 
 
                 str_serializer.reset();
