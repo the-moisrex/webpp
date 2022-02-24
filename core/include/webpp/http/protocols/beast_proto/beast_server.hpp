@@ -51,6 +51,9 @@ namespace webpp::http::beast_proto {
             using beast_request_type = typename request_type::beast_request_type;
             using socket_type        = asio::ip::tcp::socket;
 
+
+            static constexpr auto log_cat = "BeastWorker";
+
           private:
             server_type&                                  server; // fixme: race condition
             socket_type                                   sock;
@@ -107,7 +110,7 @@ namespace webpp::http::beast_proto {
                       if (!ec) [[likely]] {
                           async_write_response();
                       } else {
-                          server.logger.warning("Connection error.", ec);
+                          server.logger.warning(log_cat, "Connection error.", ec);
                       }
                   });
             }
@@ -120,11 +123,11 @@ namespace webpp::http::beast_proto {
                   *str_serializer,
                   [this](boost::beast::error_code ec, stl::size_t) noexcept {
                       if (ec) [[unlikely]] {
-                          server.logger.warning("Write error on socket.", ec);
+                          server.logger.warning(log_cat, "Write error on socket.", ec);
                       }
                       sock.shutdown(asio::ip::tcp::socket::shutdown_send, ec);
                       if (ec) [[unlikely]] {
-                          server.logger.warning("Error on sending shutdown into socket.", ec);
+                          server.logger.warning(log_cat, "Error on sending shutdown into socket.", ec);
                       }
                       reset();
                       start();
@@ -140,7 +143,7 @@ namespace webpp::http::beast_proto {
                     boost::beast::error_code ec;
                     sock.close(ec);
                     if (ec) [[unlikely]] {
-                        server.logger.warning("Error on socket close.", ec);
+                        server.logger.warning(log_cat, "Error on socket close.", ec);
                     }
 
                     // Sleep indefinitely until we're given a new deadline.
@@ -162,7 +165,7 @@ namespace webpp::http::beast_proto {
                         timer.expires_after(server.timeout);
                         async_read_request();
                     } else {
-                        server.logger.warning("Accepting error", ec);
+                        server.logger.warning(log_cat, "Accepting error", ec);
                         this->async_accept();
                     }
                 });
@@ -172,7 +175,7 @@ namespace webpp::http::beast_proto {
                 boost::beast::error_code ec;
                 sock.close(ec);
                 if (ec) [[unlikely]] {
-                    server.logger.warning("Error on connection closing.", ec);
+                    server.logger.warning(log_cat, "Error on connection closing.", ec);
                 }
 
                 // destroy the request type
@@ -223,6 +226,9 @@ namespace webpp::http::beast_proto {
         // each request should finish before this
         duration timeout{stl::chrono::seconds(3)};
 
+
+        static constexpr auto log_cat = "Beast";
+
       private:
         friend worker_type;
 
@@ -241,10 +247,10 @@ namespace webpp::http::beast_proto {
                 io.run();
                 return 0;
             } catch (stl::exception const& err) {
-                this->logger.error("Error while starting io server.", err);
+                this->logger.error(log_cat, "Error while starting io server.", err);
             } catch (...) {
                 // todo: possible data race
-                this->logger.error("Unknown server error");
+                this->logger.error(log_cat, "Unknown server error");
             }
             // todo: try running the server again
             return -1;
@@ -278,7 +284,7 @@ namespace webpp::http::beast_proto {
             asio::error_code ec;
             bind_address = asio::ip::make_address(istl::to_std_string_view(addr), ec);
             if (ec) {
-                this->logger.error("Cannot set address", ec);
+                this->logger.error(log_cat, "Cannot set address", ec);
             }
             return *this;
         }
@@ -309,7 +315,7 @@ namespace webpp::http::beast_proto {
                 if (bind_port == 80)
                     bind_port = 443;
             } else {
-                this->logger.warning("Cannot enable SSL");
+                this->logger.warning(log_cat, "Cannot enable SSL");
             }
             return *this;
         }
@@ -340,17 +346,19 @@ namespace webpp::http::beast_proto {
             const endpoint_type      ep{bind_address, bind_port};
             acceptor.open(ep.protocol(), ec);
             if (ec) {
-                this->logger.error(fmt::format("Cannot open protocol for {}", binded_uri().to_string()), ec);
+                this->logger.error(log_cat,
+                                   fmt::format("Cannot open protocol for {}", binded_uri().to_string()),
+                                   ec);
                 return -1;
             }
             acceptor.bind(ep, ec);
             if (ec) {
-                this->logger.error(fmt::format("Cannot bind to {}", binded_uri().to_string()), ec);
+                this->logger.error(log_cat, fmt::format("Cannot bind to {}", binded_uri().to_string()), ec);
                 return -1;
             }
             acceptor.listen(asio::socket_base::max_listen_connections, ec);
             if (ec) {
-                this->logger.error(fmt::format("Cannot listen to {}", binded_uri().to_string()), ec);
+                this->logger.error(log_cat, fmt::format("Cannot listen to {}", binded_uri().to_string()), ec);
                 return -1;
             }
 
@@ -359,7 +367,7 @@ namespace webpp::http::beast_proto {
                 worker.start();
             }
 
-            this->logger.info(fmt::format("Starting beast server on {}", binded_uri().to_string()));
+            this->logger.info(log_cat, fmt::format("Starting beast server on {}", binded_uri().to_string()));
             for (stl::size_t id = 1; id != pool_count; id++) {
                 asio::post(pool, [this] {
                     start_io();
