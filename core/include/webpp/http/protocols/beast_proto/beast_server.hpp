@@ -20,6 +20,7 @@
 #include asio_include(thread_pool)
 #include asio_include(post)
 #include asio_include(ip/tcp)
+#include asio_include(signal_set)
 // clang-format on
 
 #include <boost/beast/core.hpp>
@@ -129,10 +130,12 @@ namespace webpp::http::beast_proto {
                   [this](boost::beast::error_code ec, stl::size_t) noexcept {
                       if (ec) [[unlikely]] {
                           this->logger.warning(log_cat, "Write error on socket.", ec);
-                      }
-                      sock.shutdown(asio::ip::tcp::socket::shutdown_send, ec);
-                      if (ec) [[unlikely]] {
-                          this->logger.warning(log_cat, "Error on sending shutdown into socket.", ec);
+                      } else {
+                          // todo: check if we need the else part of this condition to be an else stmt.
+                          sock.shutdown(asio::ip::tcp::socket::shutdown_send, ec);
+                          if (ec) [[unlikely]] {
+                              this->logger.warning(log_cat, "Error on sending shutdown into socket.", ec);
+                          }
                       }
                       reset();
                       start();
@@ -347,6 +350,18 @@ namespace webpp::http::beast_proto {
 
         // run the server
         [[nodiscard]] int operator()() noexcept {
+
+            // Capture SIGINT and SIGTERM to perform a clean shutdown
+            asio::signal_set signals(io, SIGINT, SIGTERM);
+            signals.async_wait([this](boost::beast::error_code const&, int) {
+                this->logger.info(log_cat, "Stopping the server, got a signal");
+
+                // Stop the `io_context`. This will cause `run()`
+                // to return immediately, eventually destroying the
+                // `io_context` and all of the sockets in it.
+                io.stop();
+            });
+
             boost::beast::error_code ec;
             const endpoint_type      ep{bind_address, bind_port};
             acceptor.open(ep.protocol(), ec);
