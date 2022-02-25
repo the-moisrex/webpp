@@ -15,12 +15,12 @@
 #include <thread>
 
 // clang-format off
-#include asio_include(steady_timer)
 #include asio_include(ip/address)
-#include asio_include(thread_pool)
 #include asio_include(post)
+#include asio_include(thread_pool)
 #include asio_include(ip/tcp)
 #include asio_include(signal_set)
+#include asio_include(strand)
 // clang-format on
 
 #include <boost/beast/core.hpp>
@@ -32,7 +32,7 @@ namespace webpp::http::beast_proto {
     namespace details {
 
         template <typename ServerT>
-        struct beast_worker : ServerT::etraits {
+        struct http_worker : ServerT::etraits {
             using server_type     = ServerT;
             using etraits         = typename server_type::etraits;
             using duration        = typename server_type::duration;
@@ -69,7 +69,7 @@ namespace webpp::http::beast_proto {
 
 
           public:
-            beast_worker(server_type& server)
+            http_worker(server_type& server)
               : etraits{server},
                 timeout{server.timeout},
                 req{server},
@@ -105,7 +105,7 @@ namespace webpp::http::beast_proto {
             void async_read_request() noexcept {
                 stream->expires_after(timeout);
                 boost::beast::http::async_read(
-                  sock,
+                  *stream,
                   buf,
                   req->beast_parser(),
                   [this](boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred) {
@@ -160,6 +160,76 @@ namespace webpp::http::beast_proto {
         };
 
 
+        /**
+         * A single thread worker which will include multiple http workers.
+         * More info:
+         *   https://stackoverflow.com/a/63717201/4987470
+         */
+        template <typename ServerT>
+        struct thread_worker {
+
+            using server_type         = ServerT;
+            using etraits             = typename server_type::etraits;
+            using allocator_pack_type = typename etraits::allocator_pack_type;
+            using http_worker_type    = http_worker<server_type>;
+            using http_worker_allocator_type =
+              typename allocator_pack_type::template local_allocator_type<http_worker_type>;
+            using http_workers_type = stl::list<http_worker_type, http_worker_allocator_type>;
+            using socket_type       = asio::ip::tcp::socket;
+
+            static constexpr auto log_cat = "Beast";
+
+            thread_worker(server_type& server) : server(server) {
+                for (stl::size_t i = 0ul; i != server.http_worker_count; ++i) {
+                    http_workers.emplace_back(server);
+                }
+                next_worker();
+            }
+
+
+            void operator()() noexcept {
+                try {
+                    // run executor in this thread
+                    server.io.run();
+                } catch (stl::exception const& err) {
+                    server.logger.error(log_cat, "Error while starting io server.", err);
+                } catch (...) {
+                    // todo: possible data race
+                    server.logger.error(log_cat, "Unknown server error");
+                }
+                // todo: try running the server again
+            }
+
+            void start_work(socket_type&& sock) noexcept {
+                worker.start(stl::move(sock));
+                next_worker();
+            }
+
+            // get the next available worker
+            void next_worker() noexcept {
+                /*
+                auto w = stl::find_if(http_workers.begin(),
+                                      http_workers.end(),
+                                      [](http_worker_type& worker) noexcept {
+                                          return worker.is_idle;
+                                      });
+                if (w != http_workers.end()) {
+                    return *w;
+                }
+                */
+                // todo: next worker
+                ++worker;
+                if (worker == http_workers.end()) {
+                    worker = http_workers.begin();
+                }
+            }
+
+          private:
+            server_type&                         server;
+            http_workers_type                    http_workers;
+            typename http_workers_type::iterator worker;
+            stl::size_t                          next_worker_index = 0;
+        };
     } // namespace details
 
 
@@ -173,24 +243,23 @@ namespace webpp::http::beast_proto {
         using traits_type         = TraitsType;
         using etraits             = enable_traits<TraitsType>;
         using root_extensions     = RootExtensionsT;
-        using steady_timer        = asio::steady_timer;
-        using duration            = typename steady_timer::duration;
+        using duration            = typename stl::chrono::steady_clock::duration;
         using address_type        = asio::ip::address;
         using string_view_type    = traits::string_view<traits_type>;
         using port_type           = unsigned short;
-        using thread_pool_type    = asio::thread_pool;
         using endpoint_type       = asio::ip::tcp::endpoint;
         using app_wrapper_ref     = stl::add_lvalue_reference_t<App>;
         using beast_server_type   = beast_server;
-        using worker_type         = details::beast_worker<beast_server_type>;
         using acceptor_type       = asio::ip::tcp::acceptor;
         using socket_type         = asio::ip::tcp::socket;
+        using thread_worker_type  = details::thread_worker<beast_server_type>;
+        using http_worker_type    = details::http_worker<beast_server_type>;
         using allocator_pack_type = typename etraits::allocator_pack_type;
         using char_allocator_type =
           typename etraits::allocator_pack_type::template local_allocator_type<char>;
-        using worker_allocator_type =
-          typename allocator_pack_type::template local_allocator_type<worker_type>;
-        using workers_type = stl::list<worker_type, worker_allocator_type>;
+        using thread_worker_allocator_type =
+          typename allocator_pack_type::template local_allocator_type<thread_worker_type>;
+        using thread_pool_type = asio::thread_pool;
 
         // each request should finish before this
         duration timeout{stl::chrono::seconds(3)};
@@ -199,38 +268,24 @@ namespace webpp::http::beast_proto {
         static constexpr auto log_cat = "Beast";
 
       private:
-        friend worker_type;
+        friend http_worker_type;
+        friend thread_worker_type;
 
-        address_type     bind_address;
-        port_type        bind_port = 80;
-        asio::io_context io;
-        acceptor_type    acceptor;
-        thread_pool_type pool;
-        stl::size_t      pool_count;
-        workers_type     workers;
-        app_wrapper_ref  app_ref;
+        address_type       bind_address;
+        port_type          bind_port = 80;
+        asio::io_context   io;
+        acceptor_type      acceptor;
+        stl::size_t        http_worker_count;
+        stl::size_t        thread_worker_count;
+        thread_worker_type thread_workers;
+        app_wrapper_ref    app_ref;
 
-
-        int start_io() noexcept {
-            try {
-                io.run();
-                return 0;
-            } catch (stl::exception const& err) {
-                this->logger.error(log_cat, "Error while starting io server.", err);
-            } catch (...) {
-                // todo: possible data race
-                this->logger.error(log_cat, "Unknown server error");
-            }
-            // todo: try running the server again
-            return -1;
-        }
 
         void async_accept() noexcept {
             acceptor.async_accept(asio::make_strand(io),
                                   [this](boost::beast::error_code ec, socket_type sock) noexcept {
                                       if (!ec) [[likely]] {
-                                          timer.expires_after(timeout);
-                                          async_read_request();
+                                          thread_workers.start_work(stl::move(sock));
                                       } else {
                                           this->logger.warning(log_cat, "Accepting error", ec);
                                           this->async_accept();
@@ -246,20 +301,16 @@ namespace webpp::http::beast_proto {
         requires(EnabledTraits<stl::remove_cvref_t<ET>>)
           beast_server(ET&&            et,
                        app_wrapper_ref the_app_ref,
-                       stl::size_t     concurrency_hint = stl::thread::hardware_concurrency())
+                       stl::size_t     http_worker_count = 10,
+                       stl::size_t     concurrency_hint  = stl::thread::hardware_concurrency())
           : etraits{stl::forward<ET>(et)},
             io{static_cast<int>(concurrency_hint)},
             acceptor{asio::make_strand(io)},
             pool{concurrency_hint - 1}, // the main thread is one thread itself
-            pool_count{concurrency_hint},
-            workers{this->alloc_pack.template local_allocator<worker_type>()},
-            app_ref{the_app_ref} {
-
-            // inittialize the workers
-            for (stl::size_t index = 0ul; index != pool_count; ++index) {
-                workers.emplace_back(*this);
-            }
-        }
+            http_worker_count{http_worker_count},
+            thread_worker_count{concurrency_hint},
+            thread_workers{this->alloc_pack.template local_allocator<worker_type>()},
+            app_ref{the_app_ref} {}
 
 
         beast_server& address(string_view_type addr) noexcept {
@@ -378,19 +429,15 @@ namespace webpp::http::beast_proto {
             asio::dispatch(acceptor.get_executor(),
                            boost::beast::bind_front_handler(&listener::async_accept, this));
 
+            this->logger.info(log_cat, fmt::format("Starting beast server on {}", binded_uri().to_string()));
+
             // start accepting in all workers
-            for (auto& worker : workers) {
-                worker.start();
+            for (stl::size_t i = 0ul; i != thread_worker_count - 1; ++i) {
+                asio::post(pool, thread_worker_type{*this});
             }
 
-            this->logger.info(log_cat, fmt::format("Starting beast server on {}", binded_uri().to_string()));
-            for (stl::size_t id = 1; id != pool_count; id++) {
-                asio::post(pool, [this] {
-                    start_io();
-                });
-            }
-            for (;;)
-                start_io();
+            // thread worker for this thread as well
+            thread_worker_type{*this}();
         }
     };
 
