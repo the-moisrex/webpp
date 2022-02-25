@@ -53,15 +53,14 @@ namespace webpp::http::beast_proto {
               boost::beast::http::response_serializer<beast_body_type, beast_fields_type>;
             using beast_request_type = typename request_type::beast_request_type;
             using socket_type        = asio::ip::tcp::socket;
+            using stream_type        = boost::beast::tcp_stream;
 
 
             static constexpr auto log_cat = "BeastWorker";
 
           private:
-            acceptor_type&                                acceptor;
-            socket_type                                   sock;
+            stl::optional<stream_type>                    stream;
             duration                                      timeout;
-            steady_timer                                  timer;
             stl::optional<request_type>                   req;
             stl::optional<beast_response_type>            bres;
             stl::optional<beast_response_serializer_type> str_serializer;
@@ -72,10 +71,7 @@ namespace webpp::http::beast_proto {
           public:
             beast_worker(server_type& server)
               : etraits{server},
-                acceptor{server.acceptor},
-                sock{server.io},
                 timeout{server.timeout},
-                timer{server.io, (stl::chrono::steady_clock::time_point::max)()},
                 req{server},
                 app_ref{server.app_ref} {}
 
@@ -83,9 +79,9 @@ namespace webpp::http::beast_proto {
              * Running async_read_request directly in the constructor will not make
              * make_shared (or alike) functions work properly.
              */
-            void start() noexcept {
-                async_accept();
-                check_deadline();
+            void start(socket_type&& in_sock) noexcept {
+                stream.emplace(stl::move(in_sock));
+                async_read_request();
             }
 
           private:
@@ -105,9 +101,9 @@ namespace webpp::http::beast_proto {
             }
 
 
-
             // Asynchronously receive a complete request message.
             void async_read_request() noexcept {
+                stream->expires_after(timeout);
                 boost::beast::http::async_read(
                   sock,
                   buf,
@@ -125,14 +121,14 @@ namespace webpp::http::beast_proto {
             void async_write_response() noexcept {
                 make_beast_response();
                 boost::beast::http::async_write(
-                  sock,
+                  *stream,
                   *str_serializer,
                   [this](boost::beast::error_code ec, stl::size_t) noexcept {
                       if (ec) [[unlikely]] {
                           this->logger.warning(log_cat, "Write error on socket.", ec);
                       } else {
                           // todo: check if we need the else part of this condition to be an else stmt.
-                          sock.shutdown(asio::ip::tcp::socket::shutdown_send, ec);
+                          stream->socket().shutdown(asio::ip::tcp::socket::shutdown_send, ec);
                           if (ec) [[unlikely]] {
                               this->logger.warning(log_cat, "Error on sending shutdown into socket.", ec);
                           }
@@ -143,45 +139,9 @@ namespace webpp::http::beast_proto {
             }
 
 
-
-            void check_deadline() noexcept {
-                // The deadline may have moved, so check it has really passed.
-                if (timer.expiry() <= stl::chrono::steady_clock::now()) {
-                    // Close socket to cancel any outstanding operation.
-                    boost::beast::error_code ec;
-                    sock.close(ec);
-                    if (ec) [[unlikely]] {
-                        this->logger.warning(log_cat, "Error on socket close.", ec);
-                    }
-
-                    // Sleep indefinitely until we're given a new deadline.
-                    timer.expires_at((stl::chrono::steady_clock::time_point::max)());
-                }
-
-                timer.async_wait([this]([[maybe_unused]] boost::beast::error_code ec) noexcept {
-                    // canceling will cause an error also, and it's okay, so no need to
-                    // log the error code.
-                    check_deadline();
-                });
-            }
-
-
-
-            void async_accept() noexcept {
-                acceptor.async_accept(sock, [this](boost::beast::error_code ec) noexcept {
-                    if (!ec) [[likely]] {
-                        timer.expires_after(timeout);
-                        async_read_request();
-                    } else {
-                        this->logger.warning(log_cat, "Accepting error", ec);
-                        this->async_accept();
-                    }
-                });
-            }
-
             void reset() noexcept {
                 boost::beast::error_code ec;
-                sock.close(ec);
+                stream->socket().close(ec);
                 if (ec) [[unlikely]] {
                     this->logger.warning(log_cat, "Error on connection closing.", ec);
                 }
@@ -194,7 +154,8 @@ namespace webpp::http::beast_proto {
                 bres.reset();
 
                 // Sleep indefinitely until we're given a new deadline.
-                timer.expires_at((stl::chrono::steady_clock::time_point::max)());
+                stream->expires_never();
+                stream.reset();
             }
         };
 
@@ -264,6 +225,19 @@ namespace webpp::http::beast_proto {
             return -1;
         }
 
+        void async_accept() noexcept {
+            acceptor.async_accept(asio::make_strand(io),
+                                  [this](boost::beast::error_code ec, socket_type sock) noexcept {
+                                      if (!ec) [[likely]] {
+                                          timer.expires_after(timeout);
+                                          async_read_request();
+                                      } else {
+                                          this->logger.warning(log_cat, "Accepting error", ec);
+                                          this->async_accept();
+                                      }
+                                  });
+        }
+
       public:
         beast_server(beast_server const&) = delete;
         beast_server& operator=(beast_server const&) = delete;
@@ -275,7 +249,7 @@ namespace webpp::http::beast_proto {
                        stl::size_t     concurrency_hint = stl::thread::hardware_concurrency())
           : etraits{stl::forward<ET>(et)},
             io{static_cast<int>(concurrency_hint)},
-            acceptor{io},
+            acceptor{asio::make_strand(io)},
             pool{concurrency_hint - 1}, // the main thread is one thread itself
             pool_count{concurrency_hint},
             workers{this->alloc_pack.template local_allocator<worker_type>()},
@@ -364,6 +338,8 @@ namespace webpp::http::beast_proto {
 
             boost::beast::error_code ec;
             const endpoint_type      ep{bind_address, bind_port};
+
+            // open
             acceptor.open(ep.protocol(), ec);
             if (ec) {
                 this->logger.error(log_cat,
@@ -371,16 +347,36 @@ namespace webpp::http::beast_proto {
                                    ec);
                 return -1;
             }
+
+            // Allow address reuse
+            acceptor.set_option(asio::socket_base::reuse_address(true), ec);
+            if (ec) {
+                this->logger.error(log_cat,
+                                   fmt::format("Cannot set reuse option on {}", binded_uri().to_string()),
+                                   ec);
+                return -1;
+            }
+
+            // bind
             acceptor.bind(ep, ec);
             if (ec) {
                 this->logger.error(log_cat, fmt::format("Cannot bind to {}", binded_uri().to_string()), ec);
                 return -1;
             }
+
+            // listen
             acceptor.listen(asio::socket_base::max_listen_connections, ec);
             if (ec) {
                 this->logger.error(log_cat, fmt::format("Cannot listen to {}", binded_uri().to_string()), ec);
                 return -1;
             }
+
+            // We need to be executing within a strand to perform async operations
+            // on the I/O objects in this session. Although not strictly necessary
+            // for single-threaded contexts, this example code is written to be
+            // thread-safe by default.
+            asio::dispatch(acceptor.get_executor(),
+                           boost::beast::bind_front_handler(&listener::async_accept, this));
 
             // start accepting in all workers
             for (auto& worker : workers) {
