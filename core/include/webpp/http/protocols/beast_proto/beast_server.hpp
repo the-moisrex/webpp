@@ -158,7 +158,7 @@ namespace webpp::http::beast_proto {
 
                 // Sleep indefinitely until we're given a new deadline.
                 stream->expires_never();
-                stream.reset();
+                stream.reset(); // go in the idle mode
             }
         };
 
