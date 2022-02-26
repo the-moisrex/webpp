@@ -189,7 +189,7 @@ namespace webpp::http::beast_proto {
                 for (stl::size_t i = 0ul; i != server.http_worker_count; ++i) {
                     http_workers.emplace_back(server);
                 }
-                next_worker();
+                worker = http_workers.begin();
             }
 
 
@@ -274,8 +274,8 @@ namespace webpp::http::beast_proto {
                                           thread_workers.start_work(stl::move(sock));
                                       } else {
                                           this->logger.warning(log_cat, "Accepting error", ec);
-                                          this->async_accept();
                                       }
+                                      this->async_accept();
                                   });
         }
 
@@ -371,6 +371,7 @@ namespace webpp::http::beast_proto {
                 // to return immediately, eventually destroying the
                 // `io_context` and all of the sockets in it.
                 io.stop();
+                pool.stop();
             });
 
             boost::beast::error_code ec;
