@@ -84,6 +84,10 @@ namespace webpp::http::beast_proto {
                 async_read_request();
             }
 
+            bool is_idle() const noexcept {
+                return !stream.has_value();
+            }
+
           private:
             void make_beast_response() noexcept {
                 const beast_request_type breq = req->beast_parser().get();
@@ -134,7 +138,6 @@ namespace webpp::http::beast_proto {
                           }
                       }
                       reset();
-                      start();
                   });
             }
 
@@ -179,6 +182,9 @@ namespace webpp::http::beast_proto {
 
             static constexpr auto log_cat = "Beast";
 
+            thread_worker(thread_worker const&) = delete;
+            thread_worker(thread_worker&&)      = default;
+
             thread_worker(server_type& server) : server(server) {
                 for (stl::size_t i = 0ul; i != server.http_worker_count; ++i) {
                     http_workers.emplace_back(server);
@@ -187,48 +193,27 @@ namespace webpp::http::beast_proto {
             }
 
 
-            void operator()() noexcept {
-                try {
-                    // run executor in this thread
-                    server.io.run();
-                } catch (stl::exception const& err) {
-                    server.logger.error(log_cat, "Error while starting io server.", err);
-                } catch (...) {
-                    // todo: possible data race
-                    server.logger.error(log_cat, "Unknown server error");
-                }
-                // todo: try running the server again
-            }
-
             void start_work(socket_type&& sock) noexcept {
-                worker.start(stl::move(sock));
+                worker->start(stl::move(sock));
                 next_worker();
             }
 
             // get the next available worker
             void next_worker() noexcept {
-                /*
-                auto w = stl::find_if(http_workers.begin(),
-                                      http_workers.end(),
-                                      [](http_worker_type& worker) noexcept {
-                                          return worker.is_idle;
-                                      });
-                if (w != http_workers.end()) {
-                    return *w;
-                }
-                */
-                // todo: next worker
-                ++worker;
-                if (worker == http_workers.end()) {
-                    worker = http_workers.begin();
-                }
+                stl::scoped_lock lock{worker_mutex};
+                do {
+                    ++worker;
+                    if (worker == http_workers.end()) {
+                        worker = http_workers.begin();
+                    }
+                } while (!worker->is_idle());
             }
 
           private:
             server_type&                         server;
             http_workers_type                    http_workers;
             typename http_workers_type::iterator worker;
-            stl::size_t                          next_worker_index = 0;
+            stl::mutex                           worker_mutex;
         };
     } // namespace details
 
@@ -278,6 +263,7 @@ namespace webpp::http::beast_proto {
         stl::size_t        http_worker_count;
         stl::size_t        thread_worker_count;
         thread_worker_type thread_workers;
+        thread_pool_type   pool;
         app_wrapper_ref    app_ref;
 
 
@@ -301,15 +287,15 @@ namespace webpp::http::beast_proto {
         requires(EnabledTraits<stl::remove_cvref_t<ET>>)
           beast_server(ET&&            et,
                        app_wrapper_ref the_app_ref,
-                       stl::size_t     http_worker_count = 10,
+                       stl::size_t     http_worker_count = 20,
                        stl::size_t     concurrency_hint  = stl::thread::hardware_concurrency())
           : etraits{stl::forward<ET>(et)},
             io{static_cast<int>(concurrency_hint)},
             acceptor{asio::make_strand(io)},
-            pool{concurrency_hint - 1}, // the main thread is one thread itself
             http_worker_count{http_worker_count},
             thread_worker_count{concurrency_hint},
-            thread_workers{this->alloc_pack.template local_allocator<worker_type>()},
+            thread_workers{*this},
+            pool{concurrency_hint - 1}, // the main thread is one thread itself
             app_ref{the_app_ref} {}
 
 
@@ -427,17 +413,28 @@ namespace webpp::http::beast_proto {
             // for single-threaded contexts, this example code is written to be
             // thread-safe by default.
             asio::dispatch(acceptor.get_executor(),
-                           boost::beast::bind_front_handler(&listener::async_accept, this));
+                           boost::beast::bind_front_handler(&beast_server_type::async_accept, this));
 
             this->logger.info(log_cat, fmt::format("Starting beast server on {}", binded_uri().to_string()));
 
             // start accepting in all workers
-            for (stl::size_t i = 0ul; i != thread_worker_count - 1; ++i) {
-                asio::post(pool, thread_worker_type{*this});
+            for (stl::size_t i = 0ul; i != thread_worker_count; ++i) {
+                asio::post(pool, [this] noexcept {
+                    try {
+                        // run executor in this thread
+                        io.run();
+                    } catch (stl::exception const& err) {
+                        this->logger.error(log_cat, "Error while starting io server.", err);
+                    } catch (...) {
+                        // todo: possible data race
+                        this->logger.error(log_cat, "Unknown server error");
+                    }
+                    // todo: try running the server again
+                });
             }
 
-            // thread worker for this thread as well
-            thread_worker_type{*this}();
+            pool.attach();
+            return 0;
         }
     };
 
