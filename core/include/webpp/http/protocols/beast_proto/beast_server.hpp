@@ -177,7 +177,8 @@ namespace webpp::http::beast_proto {
             using allocator_pack_type = typename etraits::allocator_pack_type;
             using http_worker_type    = http_worker<server_type>;
             using http_worker_allocator_type =
-              typename allocator_pack_type::template local_allocator_type<http_worker_type>;
+              typename allocator_pack_type::template best_allocator<alloc::sync_pool_features,
+                                                                    http_worker_type>;
             using http_workers_type = stl::list<http_worker_type, http_worker_allocator_type>;
             using socket_type       = asio::ip::tcp::socket;
 
@@ -244,7 +245,8 @@ namespace webpp::http::beast_proto {
         using char_allocator_type =
           typename etraits::allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
         using thread_worker_allocator_type =
-          typename allocator_pack_type::template local_allocator_type<thread_worker_type>;
+          typename allocator_pack_type::template best_allocator<alloc::sync_pool_features,
+                                                                thread_worker_type>;
         using thread_pool_type = asio::thread_pool;
 
         // each request should finish before this
