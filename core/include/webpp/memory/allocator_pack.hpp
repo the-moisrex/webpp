@@ -361,7 +361,8 @@ namespace webpp::alloc {
         using best_allocator_descriptor = typename ranked<FPack>::best_allocator_descriptor;
 
         template <feature_pack FPack, typename T>
-        using best_allocator = typename best_allocator_descriptor<FPack>::template type<T>;
+        using best_allocator =
+          typename descriptors::allocator<best_allocator_descriptor<FPack>>::template type<T>;
 
         template <AllocatorDescriptor AllocDescType>
         static constexpr bool has_allocator_descriptor =

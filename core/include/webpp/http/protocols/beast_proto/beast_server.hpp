@@ -45,7 +45,8 @@ namespace webpp::http::beast_proto {
             using buffer_type  = boost::beast::flat_buffer;
             using app_wrapper_ref     = typename server_type::app_wrapper_ref;
             using allocator_pack_type = typename server_type::allocator_pack_type;
-            using char_allocator_type = typename allocator_pack_type::template local_allocator_type<char>;
+            using char_allocator_type =
+              typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
             using beast_fields_type   = boost::beast::http::basic_fields<char_allocator_type>;
             using beast_body_type     = boost::beast::http::string_body;
             using beast_response_type = boost::beast::http::response<beast_body_type, beast_fields_type>;
@@ -112,7 +113,7 @@ namespace webpp::http::beast_proto {
                   *stream,
                   buf,
                   req->beast_parser(),
-                  [this](boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred) {
+                  [this](boost::beast::error_code const& ec, [[maybe_unused]] std::size_t bytes_transferred) {
                       if (!ec) [[likely]] {
                           async_write_response();
                       } else {
@@ -241,7 +242,7 @@ namespace webpp::http::beast_proto {
         using http_worker_type    = details::http_worker<beast_server_type>;
         using allocator_pack_type = typename etraits::allocator_pack_type;
         using char_allocator_type =
-          typename etraits::allocator_pack_type::template local_allocator_type<char>;
+          typename etraits::allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
         using thread_worker_allocator_type =
           typename allocator_pack_type::template local_allocator_type<thread_worker_type>;
         using thread_pool_type = asio::thread_pool;
