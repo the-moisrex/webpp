@@ -143,6 +143,7 @@ namespace webpp::http::beast_proto {
             }
 
 
+          public:
             void reset() noexcept {
                 boost::beast::error_code ec;
                 stream->socket().close(ec);
@@ -160,6 +161,12 @@ namespace webpp::http::beast_proto {
                 // Sleep indefinitely until we're given a new deadline.
                 stream->expires_never();
                 stream.reset(); // go in the idle mode
+            }
+
+
+            void stop() noexcept {
+                if (stream)
+                    stream->cancel();
             }
         };
 
@@ -209,6 +216,12 @@ namespace webpp::http::beast_proto {
                         worker = http_workers.begin();
                     }
                 } while (!worker->is_idle());
+            }
+
+            void stop() {
+                for (auto& worker : http_workers) {
+                    worker.stop();
+                }
             }
 
           private:
@@ -373,6 +386,7 @@ namespace webpp::http::beast_proto {
                 // Stop the `io_context`. This will cause `run()`
                 // to return immediately, eventually destroying the
                 // `io_context` and all of the sockets in it.
+                thread_workers.stop();
                 io.stop();
                 pool.stop();
             });
