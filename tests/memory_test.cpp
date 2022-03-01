@@ -5,7 +5,10 @@
 #include "../core/include/webpp/memory/object.hpp"
 #include "../core/include/webpp/memory/std_allocator_pack.hpp"
 #include "../core/include/webpp/memory/std_pmr_allocator_pack.hpp"
+#include "../core/include/webpp/std/string.hpp"
 #include "common_pch.hpp"
+
+#include <vector>
 
 
 using namespace webpp;
@@ -25,7 +28,7 @@ TEST(MemoryTest, PMRAllocatorPackTest) {
     ASSERT_EQ(str2, "hello world");
 
     // nested allocator-rebinding: both string and vector should use the specified allocator
-    auto str_vec = make_local<vector<string>>(alloc_pack);
+    auto str_vec    = make_local<vector<string>>(alloc_pack);
     using vec_t     = typename remove_cvref_t<decltype(str_vec)>::object_type;
     using vec_str_t = typename vec_t::value_type;
     static_assert(same_as<vec_str_t, stl::pmr::string>, "Nested allocator-rebinding don't work");
@@ -43,7 +46,7 @@ TEST(MemoryTest, STDAllocatorPackTest) {
     ASSERT_EQ(str2, "hello world");
 
     // nested allocator-rebinding: both string and vector should use the specified allocator
-    auto str_vec = make_local<stl::pmr::vector<stl::pmr::string>>(alloc_pack);
+    auto str_vec    = make_local<stl::pmr::vector<stl::pmr::string>>(alloc_pack);
     using vec_t     = typename remove_cvref_t<decltype(str_vec)>::object_type;
     using vec_str_t = typename vec_t::value_type;
     static_assert(same_as<vec_str_t, string>, "Nested allocator-rebinding don't work");

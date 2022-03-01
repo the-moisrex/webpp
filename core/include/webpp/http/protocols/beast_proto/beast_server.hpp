@@ -219,8 +219,8 @@ namespace webpp::http::beast_proto {
             }
 
             void stop() {
-                for (auto& worker : http_workers) {
-                    worker.stop();
+                for (auto& hworker : http_workers) {
+                    hworker.stop();
                 }
             }
 
