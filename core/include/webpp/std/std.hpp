@@ -13,8 +13,14 @@
 #    include <version>
 #endif
 
+namespace std::pmr {}
+
 namespace webpp::stl {
     using namespace ::std;
-}
+
+    namespace pmr {
+        using namespace ::std::pmr;
+    }
+} // namespace webpp::stl
 
 #endif // WEBPP_STD_STD_H
