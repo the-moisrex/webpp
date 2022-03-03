@@ -247,6 +247,41 @@ namespace webpp::object {
 
 
 
+
+
+    template <typename T, typename StackType, AllocatorDescriptorList AllocDescList>
+    struct local_resource
+      : public details::resource_holder<
+          typename alloc::alloc_finder<T, alloc::local_features, AllocDescList>::resource_type,
+          StackType> {
+      private:
+        using alloc_details = alloc::alloc_finder<T, alloc::local_features, AllocDescList>;
+
+      public:
+        using allocator_type      = typename alloc_details::allocator_type;
+        using resource_type       = typename alloc_details::resource_type;
+        using resource_type_field = typename alloc_details::resource_type_field;
+        using alloc_pack_type     = alloc::allocator_pack<AllocDescList>;
+        using stack_type          = StackType;
+        using res_holder          = details::resource_holder<resource_type, stack_type>;
+        using new_type            = typename alloc_details::new_type; // the type the user needs to use
+
+        static constexpr bool has_resource = !stl::is_void_v<resource_type>;
+        using res_ref =
+          stl::conditional_t<has_resource, stl::add_lvalue_reference_t<resource_type>, istl::nothing_type>;
+
+
+
+        constexpr local_resource(alloc_pack_type& alloc_pack)
+          : res_holder{.resource_holder_data{}, // the stack buffer
+                       .resource_holder_res = resource_type{res_holder::resource_holder_data.data(),
+                                                            res_holder::resource_holder_data.size(),
+                                                            &alloc_pack.general_resource()}} {}
+    };
+
+
+
+
 } // namespace webpp::object
 
 #endif // WEBPP_OBJECT_HPP
