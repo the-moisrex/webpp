@@ -13,6 +13,8 @@
 #endif
 
 namespace webpp {
+    template <auto stream_getter, bool IsDebug = false>
+    struct std_logger;
 
     /**
      * A logger class
