@@ -32,7 +32,7 @@ namespace webpp {
 #endif
         static constexpr auto default_category_name = is_debug ? "Debug" : "Default";
 
-        enum struct logging_type : stl::uint_fast8_t { debug, info, warning, error, critical, unknown };
+        enum struct logging_type : stl::uint_fast8_t { info, warning, error, critical, unknown };
 
         static constexpr auto logging_type_to_string(logging_type lt) noexcept {
             switch (lt) {
@@ -49,9 +49,9 @@ namespace webpp {
             return stl::string_view{logging_type_to_string(lt)}.size();
         }
 
-        void log(logging_type                   lt,
-                 istl::StringViewifiable auto&& category,
-                 istl::StringViewifiable auto&& details) const noexcept {
+        static void log(logging_type                   lt,
+                        istl::StringViewifiable auto&& category,
+                        istl::StringViewifiable auto&& details) noexcept {
             if constexpr (!is_debug) {
 #ifdef WEBPP_FMT_LIB
                 fmt::print(stream_getter(),
@@ -133,9 +133,16 @@ namespace webpp {
         WEBPP_LOGGER_SHORTCUT(critical)
         WEBPP_LOGGER_SHORTCUT(unkown)
 
-#undef WEBPP_LOGGER_SHORTCUT
 
-        [[no_unique_address]] std_logger<stream_getter, true> debug;
+        [[no_unique_address]] struct std_logger_debugger {
+
+            WEBPP_LOGGER_SHORTCUT(info)
+            WEBPP_LOGGER_SHORTCUT(warning)
+            WEBPP_LOGGER_SHORTCUT(error)
+            WEBPP_LOGGER_SHORTCUT(critical)
+            WEBPP_LOGGER_SHORTCUT(unkown)
+        } debug{};
+#undef WEBPP_LOGGER_SHORTCUT
     };
 
     inline auto stderr_functor() noexcept {
