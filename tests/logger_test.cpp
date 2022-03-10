@@ -1,12 +1,30 @@
 // Created by moisrex on 8/16/20.
 
+#include "../core/include/webpp/logs/std_logger.hpp"
 #include "common_pch.hpp"
 
-// clang-format off
-#include webpp_include(logs/std_logger)
-// clang-format on
+#include <cstdio>
 
 using namespace webpp;
 
+std::FILE* output;
 
-TEST(Logger, STDERRLogger) {}
+inline auto* output_getter() {
+    return output;
+}
+
+TEST(Logger, STDLoggerTeat) {
+
+    output = std::tmpfile();
+
+    using ol = std_logger<output_getter>;
+
+    ol logger;
+
+    logger.error("one");
+    logger.warning("one");
+    logger.info("wow", "one");
+    logger.debug.error("debugging");
+
+    std::fclose(output);
+}
