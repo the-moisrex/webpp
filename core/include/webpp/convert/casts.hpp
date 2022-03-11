@@ -114,12 +114,14 @@ namespace webpp {
     //    }
 
     template <typename ValueType, typename... R>
-    constexpr auto append_to(char* ptr, ValueType value, R&&... args) noexcept {
+    constexpr auto append_to(char* ptr, ValueType value, [[maybe_unused]] R&&... args) noexcept {
 #ifdef __cpp_lib_to_chars
         constexpr stl::size_t _size = ascii::digit_count<ValueType>() + 1;
         return stl::to_chars(ptr, ptr + _size, value, stl::forward<R>(args)...);
 #else
-        // todo
+        // todo: use floating point format options feom "args"
+        fmt::format_to(ptr, "{}", value);
+        return true;
 #endif
     }
 
