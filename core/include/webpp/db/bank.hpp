@@ -6,7 +6,7 @@
 namespace webpp::database {
 
     /**
-     * This clasa is designed to be used inside a
+     * This class is designed to be used inside a
      * "protocol" so the final user can configure the
      * databases they want from here.
      */

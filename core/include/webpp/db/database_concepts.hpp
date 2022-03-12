@@ -16,8 +16,8 @@ namespace webpp::database {
      * @code
      *   auto user = db.tables["users"].where("id", 20).first();
      *   user["age"]++;                            // operator is overloaded, sync is the default.
-     *   user.sync["age"] += 20;                   // do it NOW
-     *   user.async["username"] = "hello world";   // wait for it
+     *   user["age"] += 20;                        //
+     *   user["username"] = "hello world";         //
      *   user.commit();                            // run username change NOW
      *
      *   auto usr = user.async;
@@ -42,7 +42,7 @@ namespace webpp::database {
      *                     .and_where("date"_field <= now())
      *                     .get();
      *
-     *   using func = database::default_database::functions;
+     *   using func = database::functions;
      *   posts.each["title"] = func::tolower(post.title);           // tolower is SQL function not C++
      *   posts.update();
      *
