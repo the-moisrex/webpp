@@ -23,7 +23,7 @@ namespace webpp::http {
     concept HTTPRequest = requires(stl::remove_cvref_t<T> req) {
         requires EnabledTraits<stl::remove_cvref_t<T>>;
         requires Traits<typename stl::remove_cvref_t<T>::traits_type>;
-        req.request_uri();
+        req.uri();
 
         // so we can make a copy of it (initial request)
         // requires stl::copy_constructible<stl::remove_cvref_t<T>>;

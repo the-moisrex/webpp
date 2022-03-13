@@ -10,7 +10,7 @@ namespace webpp::http {
 
         template <HTTPRequest ReqT>
         [[nodiscard]] constexpr bool operator()(ReqT const& req) const noexcept {
-            return req.request_method() == *this;
+            return req.method() == *this;
         }
 
         template <istl::String StrT = stl::string>

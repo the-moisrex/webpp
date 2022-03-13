@@ -262,7 +262,7 @@ namespace webpp::http {
                 // fixme: should we decode it? if we decode it we need to care about the UTF-8 stuff as well?
                 // todo: move this parsing into the request so we don't have to do it more than once for one request
                 uri::basic_path<string_type> uri_segments{
-                  req.request_uri(),
+                  req.uri(),
                   ctx.alloc_pack.template general_allocator<typename string_type::value_type>()};
                 uri_segments.fix();
                 using uri_segments_type = decltype(uri_segments);

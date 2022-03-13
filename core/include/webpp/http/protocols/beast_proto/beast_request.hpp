@@ -56,11 +56,11 @@ namespace webpp::http::beast_proto {
             return parser;
         }
 
-        [[nodiscard]] string_view_type request_uri() const {
+        [[nodiscard]] string_view_type uri() const {
             return istl::string_viewify_of<string_view_type>(parser.get().target());
         }
 
-        [[nodiscard]] string_view_type request_method() const {
+        [[nodiscard]] string_view_type method() const {
             return istl::string_viewify_of<string_view_type>(parser.get().method_string());
         }
     };

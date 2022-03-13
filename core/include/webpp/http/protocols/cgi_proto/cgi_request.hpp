@@ -97,7 +97,7 @@ namespace webpp::http {
          * @brief Get the method
          * @details Method with which the request was made. For HTTP, this is Get, Head, Post, and so on.
          */
-        [[nodiscard]] string_view_type request_method() const noexcept {
+        [[nodiscard]] string_view_type method() const noexcept {
             return env("REQUEST_METHOD");
         }
 
@@ -228,7 +228,7 @@ namespace webpp::http {
         /**
          * @brief get the request uri
          */
-        [[nodiscard]] string_view_type request_uri() const noexcept {
+        [[nodiscard]] string_view_type uri() const noexcept {
             return env("REQUEST_URI");
         }
 
