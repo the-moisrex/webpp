@@ -57,11 +57,11 @@
 //
 //  /* read value; gets a reference to actual value in the structure.
 //     if key or section don't exist, a new empty value will be created */
-//  std::string& value = ini["section"]["key"];
+//  stl::string& value = ini["section"]["key"];
 //
 //  /* read value safely; gets a copy of value in the structure.
 //     does not alter the structure */
-//  std::string value = ini.get("section").get("key");
+//  stl::string value = ini.get("section").get("key");
 //
 //  /* set or update values */
 //  ini["section"]["key"] = "value";
@@ -87,35 +87,36 @@
 #ifndef WEBPP_INI_INI_H_
 #define WEBPP_INI_INI_H_
 
+#include "../std/string.hpp"
+
 #include <algorithm>
 #include <cctype>
 #include <fstream>
 #include <memory>
 #include <sstream>
-#include <string>
 #include <sys/stat.h>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
 namespace webpp {
-    namespace INIStringUtil {
+    namespace details {
         const char* const whitespaceDelimiters = " \t\n\r\f\v";
-        inline void       trim(std::string& str) {
+        inline void       trim(stl::string& str) {
             str.erase(str.find_last_not_of(whitespaceDelimiters) + 1);
             str.erase(0, str.find_first_not_of(whitespaceDelimiters));
         }
 #ifndef WEBPP_INI_CASE_SENSITIVE
-        inline void toLower(std::string& str) {
-            std::transform(str.begin(), str.end(), str.begin(), [](const char c) {
-                return static_cast<char>(std::tolower(c));
+        inline void toLower(stl::string& str) {
+            stl::transform(str.begin(), str.end(), str.begin(), [](const char c) {
+                return static_cast<char>(stl::tolower(c));
             });
         }
 #endif
-        inline void replace(std::string& str, std::string const& a, std::string const& b) {
+        inline void replace(stl::string& str, stl::string const& a, stl::string const& b) {
             if (!a.empty()) {
-                std::size_t pos = 0;
-                while ((pos = str.find(a, pos)) != std::string::npos) {
+                stl::size_t pos = 0;
+                while ((pos = str.find(a, pos)) != stl::string::npos) {
                     str.replace(pos, a.size(), b);
                     pos += b.size();
                 }
@@ -126,21 +127,21 @@ namespace webpp {
 #else
         const char* const endl = "\n";
 #endif
-    } // namespace INIStringUtil
+    } // namespace details
 
     template <typename T>
-    class INIMap {
+    class ini_map {
       private:
-        using T_DataIndexMap  = std::unordered_map<std::string, std::size_t>;
-        using T_DataItem      = std::pair<std::string, T>;
-        using T_DataContainer = std::vector<T_DataItem>;
-        using T_MultiArgs     = typename std::vector<std::pair<std::string, T>>;
+        using T_DataIndexMap  = stl::unordered_map<stl::string, stl::size_t>;
+        using T_DataItem      = stl::pair<stl::string, T>;
+        using T_DataContainer = stl::vector<T_DataItem>;
+        using T_MultiArgs     = typename stl::vector<stl::pair<stl::string, T>>;
 
         T_DataIndexMap  dataIndexMap;
         T_DataContainer data;
 
-        inline std::size_t setEmpty(std::string& key) {
-            std::size_t index = data.size();
+        inline stl::size_t setEmpty(stl::string& key) {
+            stl::size_t index = data.size();
             dataIndexMap[key] = index;
             data.emplace_back(key, T());
             return index;
@@ -149,11 +150,11 @@ namespace webpp {
       public:
         using const_iterator = typename T_DataContainer::const_iterator;
 
-        INIMap() {}
+        constexpr ini_map() = default;
 
-        INIMap(INIMap const& other) {
-            std::size_t data_size = other.data.size();
-            for (std::size_t i = 0; i < data_size; ++i) {
+        ini_map(ini_map const& other) {
+            stl::size_t data_size = other.data.size();
+            for (stl::size_t i = 0; i < data_size; ++i) {
                 auto const& key = other.data[i].first;
                 auto const& obj = other.data[i].second;
                 data.emplace_back(key, obj);
@@ -161,20 +162,20 @@ namespace webpp {
             dataIndexMap = T_DataIndexMap(other.dataIndexMap);
         }
 
-        T& operator[](std::string key) {
-            INIStringUtil::trim(key);
+        T& operator[](stl::string key) {
+            details::trim(key);
 #ifndef WEBPP_INI_CASE_SENSITIVE
-            INIStringUtil::toLower(key);
+            details::toLower(key);
 #endif
             auto        it    = dataIndexMap.find(key);
             bool        hasIt = (it != dataIndexMap.end());
-            std::size_t index = (hasIt) ? it->second : setEmpty(key);
+            stl::size_t index = (hasIt) ? it->second : setEmpty(key);
             return data[index].second;
         }
-        T get(std::string key) const {
-            INIStringUtil::trim(key);
+        T get(stl::string key) const {
+            details::trim(key);
 #ifndef WEBPP_INI_CASE_SENSITIVE
-            INIStringUtil::toLower(key);
+            details::toLower(key);
 #endif
             auto it = dataIndexMap.find(key);
             if (it == dataIndexMap.end()) {
@@ -182,17 +183,17 @@ namespace webpp {
             }
             return T(data[it->second].second);
         }
-        bool has(std::string key) const {
-            INIStringUtil::trim(key);
+        bool has(stl::string key) const {
+            details::trim(key);
 #ifndef WEBPP_INI_CASE_SENSITIVE
-            INIStringUtil::toLower(key);
+            details::toLower(key);
 #endif
             return (dataIndexMap.count(key) == 1);
         }
-        void set(std::string key, T obj) {
-            INIStringUtil::trim(key);
+        void set(stl::string key, T obj) {
+            details::trim(key);
 #ifndef WEBPP_INI_CASE_SENSITIVE
-            INIStringUtil::toLower(key);
+            details::toLower(key);
 #endif
             auto it = dataIndexMap.find(key);
             if (it != dataIndexMap.end()) {
@@ -209,14 +210,14 @@ namespace webpp {
                 set(key, obj);
             }
         }
-        bool remove(std::string key) {
-            INIStringUtil::trim(key);
+        bool remove(stl::string key) {
+            details::trim(key);
 #ifndef WEBPP_INI_CASE_SENSITIVE
-            INIStringUtil::toLower(key);
+            details::toLower(key);
 #endif
             auto it = dataIndexMap.find(key);
             if (it != dataIndexMap.end()) {
-                std::size_t index = it->second;
+                stl::size_t index = it->second;
                 data.erase(data.begin() + index);
                 dataIndexMap.erase(it);
                 for (auto& it2 : dataIndexMap) {
@@ -233,7 +234,7 @@ namespace webpp {
             data.clear();
             dataIndexMap.clear();
         }
-        std::size_t size() const {
+        stl::size_t size() const {
             return data.size();
         }
         const_iterator begin() const {
@@ -244,10 +245,10 @@ namespace webpp {
         }
     };
 
-    using INIStructure = INIMap<INIMap<std::string>>;
+    using INIStructure = ini_map<ini_map<stl::string>>;
 
-    namespace INIParser {
-        using T_ParseValues = std::pair<std::string, std::string>;
+    namespace ini_parser {
+        using T_ParseValues = stl::pair<stl::string, stl::string>;
 
         enum class PDataType : char {
             PDATA_NONE,
@@ -257,10 +258,10 @@ namespace webpp {
             PDATA_UNKNOWN
         };
 
-        inline PDataType parseLine(std::string line, T_ParseValues& parseData) {
+        inline PDataType parseLine(stl::string line, T_ParseValues& parseData) {
             parseData.first.clear();
             parseData.second.clear();
-            INIStringUtil::trim(line);
+            details::trim(line);
             if (line.empty()) {
                 return PDataType::PDATA_NONE;
             }
@@ -270,58 +271,58 @@ namespace webpp {
             }
             if (firstCharacter == '[') {
                 auto commentAt = line.find_first_of(';');
-                if (commentAt != std::string::npos) {
+                if (commentAt != stl::string::npos) {
                     line = line.substr(0, commentAt);
                 }
                 auto closingBracketAt = line.find_last_of(']');
-                if (closingBracketAt != std::string::npos) {
+                if (closingBracketAt != stl::string::npos) {
                     auto section = line.substr(1, closingBracketAt - 1);
-                    INIStringUtil::trim(section);
+                    details::trim(section);
                     parseData.first = section;
                     return PDataType::PDATA_SECTION;
                 }
             }
             auto lineNorm = line;
-            INIStringUtil::replace(lineNorm, "\\=", "  ");
+            details::replace(lineNorm, "\\=", "  ");
             auto equalsAt = lineNorm.find_first_of('=');
-            if (equalsAt != std::string::npos) {
+            if (equalsAt != stl::string::npos) {
                 auto key = line.substr(0, equalsAt);
-                INIStringUtil::trim(key);
-                INIStringUtil::replace(key, "\\=", "=");
+                details::trim(key);
+                details::replace(key, "\\=", "=");
                 auto value = line.substr(equalsAt + 1);
-                INIStringUtil::trim(value);
+                details::trim(value);
                 parseData.first  = key;
                 parseData.second = value;
                 return PDataType::PDATA_KEYVALUE;
             }
             return PDataType::PDATA_UNKNOWN;
         }
-    } // namespace INIParser
+    } // namespace ini_parser
 
     class INIReader {
       public:
-        using T_LineData    = std::vector<std::string>;
-        using T_LineDataPtr = std::shared_ptr<T_LineData>;
+        using T_LineData    = stl::vector<stl::string>;
+        using T_LineDataPtr = stl::shared_ptr<T_LineData>;
 
       private:
-        std::ifstream fileReadStream;
+        stl::ifstream fileReadStream;
         T_LineDataPtr lineData;
 
         T_LineData readFile() {
-            std::string fileContents;
-            fileReadStream.seekg(0, std::ios::end);
-            fileContents.resize(static_cast<std::size_t>(fileReadStream.tellg()));
-            fileReadStream.seekg(0, std::ios::beg);
-            std::size_t fileSize = fileContents.size();
+            stl::string fileContents;
+            fileReadStream.seekg(0, stl::ios::end);
+            fileContents.resize(static_cast<stl::size_t>(fileReadStream.tellg()));
+            fileReadStream.seekg(0, stl::ios::beg);
+            stl::size_t fileSize = fileContents.size();
             fileReadStream.read(&fileContents[0], fileSize);
             fileReadStream.close();
             T_LineData output;
             if (fileSize == 0) {
                 return output;
             }
-            std::string buffer;
+            stl::string buffer;
             buffer.reserve(50);
-            for (std::size_t i = 0; i < fileSize; ++i) {
+            for (stl::size_t i = 0; i < fileSize; ++i) {
                 char& c = fileContents[i];
                 if (c == '\n') {
                     output.emplace_back(buffer);
@@ -337,10 +338,10 @@ namespace webpp {
         }
 
       public:
-        INIReader(std::string const& filename, bool keepLineData = false) {
-            fileReadStream.open(filename, std::ios::in | std::ios::binary);
+        INIReader(stl::string const& filename, bool keepLineData = false) {
+            fileReadStream.open(filename, stl::ios::in | stl::ios::binary);
             if (keepLineData) {
-                lineData = std::make_shared<T_LineData>();
+                lineData = stl::make_shared<T_LineData>();
             }
         }
         ~INIReader() {}
@@ -349,22 +350,22 @@ namespace webpp {
             if (!fileReadStream.is_open()) {
                 return false;
             }
-            T_LineData               fileLines = readFile();
-            std::string              section;
-            bool                     inSection = false;
-            INIParser::T_ParseValues parseData;
+            T_LineData                fileLines = readFile();
+            stl::string               section;
+            bool                      inSection = false;
+            ini_parser::T_ParseValues parseData;
             for (auto const& line : fileLines) {
-                auto parseResult = INIParser::parseLine(line, parseData);
-                if (parseResult == INIParser::PDataType::PDATA_SECTION) {
+                auto parseResult = ini_parser::parseLine(line, parseData);
+                if (parseResult == ini_parser::PDataType::PDATA_SECTION) {
                     inSection = true;
                     data[section = parseData.first];
-                } else if (inSection && parseResult == INIParser::PDataType::PDATA_KEYVALUE) {
+                } else if (inSection && parseResult == ini_parser::PDataType::PDATA_KEYVALUE) {
                     auto const& key    = parseData.first;
                     auto const& value  = parseData.second;
                     data[section][key] = value;
                 }
-                if (lineData && parseResult != INIParser::PDataType::PDATA_UNKNOWN) {
-                    if (parseResult == INIParser::PDataType::PDATA_KEYVALUE && !inSection) {
+                if (lineData && parseResult != ini_parser::PDataType::PDATA_UNKNOWN) {
+                    if (parseResult == ini_parser::PDataType::PDATA_KEYVALUE && !inSection) {
                         continue;
                     }
                     lineData->emplace_back(line);
@@ -377,17 +378,17 @@ namespace webpp {
         }
     };
 
-    class INIGenerator {
+    class ini_generator {
       private:
-        std::ofstream fileWriteStream;
+        stl::ofstream fileWriteStream;
 
       public:
         bool prettyPrint = false;
 
-        INIGenerator(std::string const& filename) {
-            fileWriteStream.open(filename, std::ios::out | std::ios::binary);
+        ini_generator(stl::string const& filename) {
+            fileWriteStream.open(filename, stl::ios::out | stl::ios::binary);
         }
-        ~INIGenerator() {}
+        ~ini_generator() {}
 
         bool operator<<(INIStructure const& data) {
             if (!fileWriteStream.is_open()) {
@@ -402,26 +403,26 @@ namespace webpp {
                 auto const& collection = it->second;
                 fileWriteStream << "[" << section << "]";
                 if (collection.size()) {
-                    fileWriteStream << INIStringUtil::endl;
+                    fileWriteStream << details::endl;
                     auto it2 = collection.begin();
                     for (;;) {
                         auto key = it2->first;
-                        INIStringUtil::replace(key, "=", "\\=");
+                        details::replace(key, "=", "\\=");
                         auto value = it2->second;
-                        INIStringUtil::trim(value);
+                        details::trim(value);
                         fileWriteStream << key << ((prettyPrint) ? " = " : "=") << value;
                         if (++it2 == collection.end()) {
                             break;
                         }
-                        fileWriteStream << INIStringUtil::endl;
+                        fileWriteStream << details::endl;
                     }
                 }
                 if (++it == data.end()) {
                     break;
                 }
-                fileWriteStream << INIStringUtil::endl;
+                fileWriteStream << details::endl;
                 if (prettyPrint) {
-                    fileWriteStream << INIStringUtil::endl;
+                    fileWriteStream << details::endl;
                 }
             }
             return true;
@@ -430,24 +431,24 @@ namespace webpp {
 
     class INIWriter {
       private:
-        using T_LineData    = std::vector<std::string>;
-        using T_LineDataPtr = std::shared_ptr<T_LineData>;
+        using T_LineData    = stl::vector<stl::string>;
+        using T_LineDataPtr = stl::shared_ptr<T_LineData>;
 
-        std::string filename;
+        stl::string filename;
 
         T_LineData getLazyOutput(T_LineDataPtr const& lineData, INIStructure& data, INIStructure& original) {
-            T_LineData               output;
-            INIParser::T_ParseValues parseData;
-            std::string              sectionCurrent;
-            bool                     parsingSection        = false;
-            bool                     continueToNextSection = false;
-            bool                     discardNextEmpty      = false;
-            bool                     writeNewKeys          = false;
-            std::size_t              lastKeyLine           = 0;
+            T_LineData                output;
+            ini_parser::T_ParseValues parseData;
+            stl::string               sectionCurrent;
+            bool                      parsingSection        = false;
+            bool                      continueToNextSection = false;
+            bool                      discardNextEmpty      = false;
+            bool                      writeNewKeys          = false;
+            stl::size_t               lastKeyLine           = 0;
             for (auto line = lineData->begin(); line != lineData->end(); ++line) {
                 if (!writeNewKeys) {
-                    auto parseResult = INIParser::parseLine(*line, parseData);
-                    if (parseResult == INIParser::PDataType::PDATA_SECTION) {
+                    auto parseResult = ini_parser::parseLine(*line, parseData);
+                    if (parseResult == ini_parser::PDataType::PDATA_SECTION) {
                         if (parsingSection) {
                             writeNewKeys   = true;
                             parsingSection = false;
@@ -466,7 +467,7 @@ namespace webpp {
                             discardNextEmpty      = true;
                             continue;
                         }
-                    } else if (parseResult == INIParser::PDataType::PDATA_KEYVALUE) {
+                    } else if (parseResult == ini_parser::PDataType::PDATA_KEYVALUE) {
                         if (continueToNextSection) {
                             continue;
                         }
@@ -479,14 +480,13 @@ namespace webpp {
                                 if (value == outputValue) {
                                     output.emplace_back(*line);
                                 } else {
-                                    INIStringUtil::trim(outputValue);
+                                    details::trim(outputValue);
                                     auto lineNorm = *line;
-                                    INIStringUtil::replace(lineNorm, "\\=", "  ");
+                                    details::replace(lineNorm, "\\=", "  ");
                                     auto equalsAt = lineNorm.find_first_of('=');
                                     auto valueAt =
-                                      lineNorm.find_first_not_of(INIStringUtil::whitespaceDelimiters,
-                                                                 equalsAt + 1);
-                                    std::string outputLine = line->substr(0, valueAt);
+                                      lineNorm.find_first_not_of(details::whitespaceDelimiters, equalsAt + 1);
+                                    stl::string outputLine = line->substr(0, valueAt);
                                     if (prettyPrint && equalsAt + 1 == valueAt) {
                                         outputLine += " ";
                                     }
@@ -499,12 +499,12 @@ namespace webpp {
                     } else {
                         if (discardNextEmpty && line->empty()) {
                             discardNextEmpty = false;
-                        } else if (parseResult != INIParser::PDataType::PDATA_UNKNOWN) {
+                        } else if (parseResult != ini_parser::PDataType::PDATA_UNKNOWN) {
                             output.emplace_back(*line);
                         }
                     }
                 }
-                if (writeNewKeys || std::next(line) == lineData->end()) {
+                if (writeNewKeys || stl::next(line) == lineData->end()) {
                     T_LineData linesToAdd;
                     if (data.has(sectionCurrent) && original.has(sectionCurrent)) {
                         auto const& collection         = data[sectionCurrent];
@@ -515,8 +515,8 @@ namespace webpp {
                                 continue;
                             }
                             auto value = it.second;
-                            INIStringUtil::replace(key, "=", "\\=");
-                            INIStringUtil::trim(value);
+                            details::replace(key, "=", "\\=");
+                            details::trim(value);
                             linesToAdd.emplace_back(key + ((prettyPrint) ? " = " : "=") + value);
                         }
                     }
@@ -542,8 +542,8 @@ namespace webpp {
                 for (auto const& it2 : collection) {
                     auto key   = it2.first;
                     auto value = it2.second;
-                    INIStringUtil::replace(key, "=", "\\=");
-                    INIStringUtil::trim(value);
+                    details::replace(key, "=", "\\=");
+                    details::trim(value);
                     output.emplace_back(key + ((prettyPrint) ? " = " : "=") + value);
                 }
             }
@@ -553,14 +553,14 @@ namespace webpp {
       public:
         bool prettyPrint = false;
 
-        INIWriter(std::string const& filename) : filename(filename) {}
+        INIWriter(stl::string const& filename) : filename(filename) {}
         ~INIWriter() {}
 
         bool operator<<(INIStructure& data) {
             struct stat buf;
             bool        fileExists = (stat(filename.c_str(), &buf) == 0);
             if (!fileExists) {
-                INIGenerator generator(filename);
+                ini_generator generator(filename);
                 generator.prettyPrint = prettyPrint;
                 return generator << data;
             }
@@ -577,7 +577,7 @@ namespace webpp {
                 return false;
             }
             T_LineData    output = getLazyOutput(lineData, data, originalData);
-            std::ofstream fileWriteStream(filename, std::ios::out | std::ios::binary);
+            stl::ofstream fileWriteStream(filename, stl::ios::out | stl::ios::binary);
             if (fileWriteStream.is_open()) {
                 if (output.size()) {
                     auto line = output.begin();
@@ -586,7 +586,7 @@ namespace webpp {
                         if (++line == output.end()) {
                             break;
                         }
-                        fileWriteStream << INIStringUtil::endl;
+                        fileWriteStream << details::endl;
                     }
                 }
                 return true;
@@ -597,10 +597,10 @@ namespace webpp {
 
     class INIFile {
       private:
-        std::string filename;
+        stl::string filename;
 
       public:
-        INIFile(std::string const& filename) : filename(filename) {}
+        INIFile(stl::string const& filename) : filename(filename) {}
 
         ~INIFile() {}
 
@@ -618,7 +618,7 @@ namespace webpp {
             if (filename.empty()) {
                 return false;
             }
-            INIGenerator generator(filename);
+            ini_generator generator(filename);
             generator.prettyPrint = pretty;
             return generator << data;
         }
