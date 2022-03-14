@@ -51,7 +51,7 @@
 //  /* BASIC USAGE EXAMPLE: */
 //
 //  /* read from file */
-//  webpp::INIFile file("myfile.ini");
+//  webpp::ini_file file("myfile.ini");
 //  webpp::INIStructure ini;
 //  file.read(ini);
 //
@@ -172,6 +172,7 @@ namespace webpp {
             stl::size_t index = (hasIt) ? it->second : setEmpty(key);
             return data[index].second;
         }
+
         T get(stl::string key) const {
             details::trim(key);
 #ifndef WEBPP_INI_CASE_SENSITIVE
@@ -183,6 +184,7 @@ namespace webpp {
             }
             return T(data[it->second].second);
         }
+
         bool has(stl::string key) const {
             details::trim(key);
 #ifndef WEBPP_INI_CASE_SENSITIVE
@@ -190,6 +192,7 @@ namespace webpp {
 #endif
             return (dataIndexMap.count(key) == 1);
         }
+
         void set(stl::string key, T obj) {
             details::trim(key);
 #ifndef WEBPP_INI_CASE_SENSITIVE
@@ -203,6 +206,7 @@ namespace webpp {
                 data.emplace_back(key, obj);
             }
         }
+
         void set(T_MultiArgs const& multiArgs) {
             for (auto const& it : multiArgs) {
                 auto const& key = it.first;
@@ -210,6 +214,7 @@ namespace webpp {
                 set(key, obj);
             }
         }
+
         bool remove(stl::string key) {
             details::trim(key);
 #ifndef WEBPP_INI_CASE_SENSITIVE
@@ -230,16 +235,20 @@ namespace webpp {
             }
             return false;
         }
+
         void clear() {
             data.clear();
             dataIndexMap.clear();
         }
-        stl::size_t size() const {
+
+        stl::size_t size() const noexcept {
             return data.size();
         }
+
         const_iterator begin() const {
             return data.begin();
         }
+
         const_iterator end() const {
             return data.end();
         }
@@ -299,7 +308,7 @@ namespace webpp {
         }
     } // namespace ini_parser
 
-    class INIReader {
+    class ini_reader {
       public:
         using T_LineData    = stl::vector<stl::string>;
         using T_LineDataPtr = stl::shared_ptr<T_LineData>;
@@ -338,13 +347,12 @@ namespace webpp {
         }
 
       public:
-        INIReader(stl::string const& filename, bool keepLineData = false) {
+        ini_reader(stl::string const& filename, bool keepLineData = false) {
             fileReadStream.open(filename, stl::ios::in | stl::ios::binary);
             if (keepLineData) {
                 lineData = stl::make_shared<T_LineData>();
             }
         }
-        ~INIReader() {}
 
         bool operator>>(INIStructure& data) {
             if (!fileReadStream.is_open()) {
@@ -388,7 +396,6 @@ namespace webpp {
         ini_generator(stl::string const& filename) {
             fileWriteStream.open(filename, stl::ios::out | stl::ios::binary);
         }
-        ~ini_generator() {}
 
         bool operator<<(INIStructure const& data) {
             if (!fileWriteStream.is_open()) {
@@ -429,7 +436,7 @@ namespace webpp {
         }
     };
 
-    class INIWriter {
+    class ini_writer {
       private:
         using T_LineData    = stl::vector<stl::string>;
         using T_LineDataPtr = stl::shared_ptr<T_LineData>;
@@ -553,8 +560,7 @@ namespace webpp {
       public:
         bool prettyPrint = false;
 
-        INIWriter(stl::string const& filename) : filename(filename) {}
-        ~INIWriter() {}
+        ini_writer(stl::string const& filename) : filename(filename) {}
 
         bool operator<<(INIStructure& data) {
             struct stat buf;
@@ -568,7 +574,7 @@ namespace webpp {
             T_LineDataPtr lineData;
             bool          readSuccess = false;
             {
-                INIReader reader(filename, true);
+                ini_reader reader(filename, true);
                 if ((readSuccess = reader >> originalData)) {
                     lineData = reader.getLines();
                 }
@@ -595,14 +601,12 @@ namespace webpp {
         }
     };
 
-    class INIFile {
+    class ini_file {
       private:
         stl::string filename;
 
       public:
-        INIFile(stl::string const& filename) : filename(filename) {}
-
-        ~INIFile() {}
+        ini_file(stl::string const& filename) : filename(filename) {}
 
         bool read(INIStructure& data) const {
             if (data.size()) {
@@ -611,9 +615,10 @@ namespace webpp {
             if (filename.empty()) {
                 return false;
             }
-            INIReader reader(filename);
+            ini_reader reader(filename);
             return reader >> data;
         }
+
         bool generate(INIStructure const& data, bool pretty = false) const {
             if (filename.empty()) {
                 return false;
@@ -622,15 +627,18 @@ namespace webpp {
             generator.prettyPrint = pretty;
             return generator << data;
         }
+
         bool write(INIStructure& data, bool pretty = false) const {
             if (filename.empty()) {
                 return false;
             }
-            INIWriter writer(filename);
+            ini_writer writer(filename);
             writer.prettyPrint = pretty;
             return writer << data;
         }
     };
+
+
 } // namespace webpp
 
 #endif // WEBPP_INI_INI_H_
