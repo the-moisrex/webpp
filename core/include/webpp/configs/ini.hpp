@@ -88,6 +88,8 @@
 #define WEBPP_INI_INI_H_
 
 #include "../std/string.hpp"
+#include "../strings/to_case.hpp"
+#include "../strings/trim.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -101,18 +103,6 @@
 
 namespace webpp {
     namespace details {
-        const char* const whitespaceDelimiters = " \t\n\r\f\v";
-        inline void       trim(stl::string& str) {
-            str.erase(str.find_last_not_of(whitespaceDelimiters) + 1);
-            str.erase(0, str.find_first_not_of(whitespaceDelimiters));
-        }
-#ifndef WEBPP_INI_CASE_SENSITIVE
-        inline void toLower(stl::string& str) {
-            stl::transform(str.begin(), str.end(), str.begin(), [](const char c) {
-                return static_cast<char>(stl::tolower(c));
-            });
-        }
-#endif
         inline void replace(stl::string& str, stl::string const& a, stl::string const& b) {
             if (!a.empty()) {
                 stl::size_t pos = 0;
@@ -163,9 +153,9 @@ namespace webpp {
         }
 
         T& operator[](stl::string key) {
-            details::trim(key);
+            ascii::trim(key);
 #ifndef WEBPP_INI_CASE_SENSITIVE
-            details::toLower(key);
+            ascii::to_lower(key);
 #endif
             auto        it    = dataIndexMap.find(key);
             bool        hasIt = (it != dataIndexMap.end());
@@ -174,9 +164,9 @@ namespace webpp {
         }
 
         T get(stl::string key) const {
-            details::trim(key);
+            ascii::trim(key);
 #ifndef WEBPP_INI_CASE_SENSITIVE
-            details::toLower(key);
+            ascii::to_lower(key);
 #endif
             auto it = dataIndexMap.find(key);
             if (it == dataIndexMap.end()) {
@@ -186,17 +176,17 @@ namespace webpp {
         }
 
         bool has(stl::string key) const {
-            details::trim(key);
+            ascii::trim(key);
 #ifndef WEBPP_INI_CASE_SENSITIVE
-            details::toLower(key);
+            ascii::to_lower(key);
 #endif
             return (dataIndexMap.count(key) == 1);
         }
 
         void set(stl::string key, T obj) {
-            details::trim(key);
+            ascii::trim(key);
 #ifndef WEBPP_INI_CASE_SENSITIVE
-            details::toLower(key);
+            ascii::to_lower(key);
 #endif
             auto it = dataIndexMap.find(key);
             if (it != dataIndexMap.end()) {
@@ -216,9 +206,9 @@ namespace webpp {
         }
 
         bool remove(stl::string key) {
-            details::trim(key);
+            ascii::trim(key);
 #ifndef WEBPP_INI_CASE_SENSITIVE
-            details::toLower(key);
+            ascii::to_lower(key);
 #endif
             auto it = dataIndexMap.find(key);
             if (it != dataIndexMap.end()) {
@@ -270,7 +260,7 @@ namespace webpp {
         inline PDataType parseLine(stl::string line, T_ParseValues& parseData) {
             parseData.first.clear();
             parseData.second.clear();
-            details::trim(line);
+            ascii::trim(line);
             if (line.empty()) {
                 return PDataType::PDATA_NONE;
             }
@@ -286,7 +276,7 @@ namespace webpp {
                 auto closingBracketAt = line.find_last_of(']');
                 if (closingBracketAt != stl::string::npos) {
                     auto section = line.substr(1, closingBracketAt - 1);
-                    details::trim(section);
+                    ascii::trim(section);
                     parseData.first = section;
                     return PDataType::PDATA_SECTION;
                 }
@@ -296,10 +286,10 @@ namespace webpp {
             auto equalsAt = lineNorm.find_first_of('=');
             if (equalsAt != stl::string::npos) {
                 auto key = line.substr(0, equalsAt);
-                details::trim(key);
+                ascii::trim(key);
                 details::replace(key, "\\=", "=");
                 auto value = line.substr(equalsAt + 1);
-                details::trim(value);
+                ascii::trim(value);
                 parseData.first  = key;
                 parseData.second = value;
                 return PDataType::PDATA_KEYVALUE;
@@ -381,6 +371,7 @@ namespace webpp {
             }
             return true;
         }
+
         T_LineDataPtr getLines() {
             return lineData;
         }
@@ -416,7 +407,7 @@ namespace webpp {
                         auto key = it2->first;
                         details::replace(key, "=", "\\=");
                         auto value = it2->second;
-                        details::trim(value);
+                        ascii::trim(value);
                         fileWriteStream << key << ((prettyPrint) ? " = " : "=") << value;
                         if (++it2 == collection.end()) {
                             break;
@@ -487,7 +478,7 @@ namespace webpp {
                                 if (value == outputValue) {
                                     output.emplace_back(*line);
                                 } else {
-                                    details::trim(outputValue);
+                                    ascii::trim(outputValue);
                                     auto lineNorm = *line;
                                     details::replace(lineNorm, "\\=", "  ");
                                     auto equalsAt = lineNorm.find_first_of('=');
@@ -523,7 +514,7 @@ namespace webpp {
                             }
                             auto value = it.second;
                             details::replace(key, "=", "\\=");
-                            details::trim(value);
+                            ascii::trim(value);
                             linesToAdd.emplace_back(key + ((prettyPrint) ? " = " : "=") + value);
                         }
                     }
@@ -550,7 +541,7 @@ namespace webpp {
                     auto key   = it2.first;
                     auto value = it2.second;
                     details::replace(key, "=", "\\=");
-                    details::trim(value);
+                    ascii::trim(value);
                     output.emplace_back(key + ((prettyPrint) ? " = " : "=") + value);
                 }
             }
