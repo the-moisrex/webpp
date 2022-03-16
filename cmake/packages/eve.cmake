@@ -4,9 +4,9 @@ include(CPM)
 # disabling building of the tests bug report: https://github.com/jfalcou/eve/issues/1126
 CPMAddPackage(
         NAME eve
-        # URL https://github.com/jfalcou/eve/archive/refs/tags/v2021.10.0.zip
-        # VERSION 2021.10.0
-        URL https://github.com/jfalcou/eve/archive/refs/heads/develop.zip
+        URL https://github.com/jfalcou/eve/archive/refs/tags/v2022.03.0.zip
+        VERSION 2022.03.0
+        # URL https://github.com/jfalcou/eve/archive/refs/heads/develop.zip
         OPTIONS
                 "EVE_BUILD_TEST OFF"
                 "EVE_BUILD_BENCHMARKS OFF"
