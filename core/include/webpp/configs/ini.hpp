@@ -52,7 +52,7 @@
 //
 //  /* read from file */
 //  webpp::ini_file file("myfile.ini");
-//  webpp::INIStructure ini;
+//  webpp::ini_configs ini;
 //  file.read(ini);
 //
 //  /* read value; gets a reference to actual value in the structure.
@@ -92,6 +92,7 @@
 #include "../std/vector.hpp"
 #include "../strings/to_case.hpp"
 #include "../strings/trim.hpp"
+#include "../traits/default_traits.hpp"
 
 #include <cctype>
 #include <fstream>
@@ -119,8 +120,12 @@ namespace webpp {
 #endif
     } // namespace details
 
-    template <typename T, bool CaseSensitive = true>
-    class ini_map {
+    template <typename T, Traits TraitsType = default_traits, bool CaseSensitive = true>
+    struct ini_map {
+        using traits_type      = TraitsType;
+        using string_type      = traits::general_string<traits_type>; // todo: consider changing to local
+        using string_view_type = traits::string_view<traits_type>;
+
         static constexpr bool is_case_sensitive = CaseSensitive;
 
       private:
@@ -231,16 +236,20 @@ namespace webpp {
             return data.size();
         }
 
-        const_iterator begin() const {
+        const_iterator begin() const noexcept {
             return data.begin();
         }
 
-        const_iterator end() const {
+        const_iterator end() const noexcept {
             return data.end();
         }
     };
 
-    using INIStructure = ini_map<ini_map<stl::string>>;
+
+    template <Traits TraitsType = default_traits, bool CaseSensitive = true>
+    using ini_configs = ini_map<ini_map<traits::general_string<TraitsType>, TraitsType, CaseSensitive>,
+                                TraitsType,
+                                CaseSensitive>;
 
     namespace ini_parser {
         using T_ParseValues = stl::pair<stl::string, stl::string>;
@@ -294,7 +303,12 @@ namespace webpp {
         }
     } // namespace ini_parser
 
-    class ini_reader {
+    template <Traits TraitsType = default_traits>
+    struct ini_reader {
+        using traits_type      = TraitsType;
+        using string_type      = traits::general_string<traits_type>; // todo: consider changing to local
+        using string_view_type = traits::string_view<traits_type>;
+
       public:
         using T_LineData    = stl::vector<stl::string>;
         using T_LineDataPtr = stl::shared_ptr<T_LineData>;
@@ -340,7 +354,7 @@ namespace webpp {
             }
         }
 
-        bool operator>>(INIStructure& data) {
+        bool operator>>(ini_configs& data) {
             if (!fileReadStream.is_open()) {
                 return false;
             }
@@ -373,7 +387,12 @@ namespace webpp {
         }
     };
 
-    class ini_generator {
+    template <Traits TraitsType = default_traits>
+    struct ini_generator {
+        using traits_type      = TraitsType;
+        using string_type      = traits::general_string<traits_type>; // todo: consider changing to local
+        using string_view_type = traits::string_view<traits_type>;
+
       private:
         stl::ofstream fileWriteStream;
 
@@ -384,7 +403,7 @@ namespace webpp {
             fileWriteStream.open(filename, stl::ios::out | stl::ios::binary);
         }
 
-        bool operator<<(INIStructure const& data) {
+        bool operator<<(ini_configs const& data) {
             if (!fileWriteStream.is_open()) {
                 return false;
             }
@@ -423,14 +442,20 @@ namespace webpp {
         }
     };
 
-    class ini_writer {
+    template <Traits TraitsType = default_traits>
+    struct ini_writer {
+        using traits_type      = TraitsType;
+        using string_type      = traits::general_string<traits_type>; // todo: consider changing to local
+        using string_view_type = traits::string_view<traits_type>;
+
+
       private:
         using T_LineData    = stl::vector<stl::string>;
         using T_LineDataPtr = stl::shared_ptr<T_LineData>;
 
-        stl::string filename;
+        string_view_type filename;
 
-        T_LineData getLazyOutput(T_LineDataPtr const& lineData, INIStructure& data, INIStructure& original) {
+        T_LineData getLazyOutput(T_LineDataPtr const& lineData, ini_configs& data, ini_configs& original) {
             T_LineData                output;
             ini_parser::T_ParseValues parseData;
             stl::string               sectionCurrent;
@@ -547,21 +572,21 @@ namespace webpp {
       public:
         bool prettyPrint = false;
 
-        ini_writer(stl::string const& filename) : filename(filename) {}
+        ini_writer(string_view_type filename) : filename(filename) {}
 
-        bool operator<<(INIStructure& data) {
+        bool operator<<(ini_configs& data) {
             struct stat buf;
             bool        fileExists = (stat(filename.c_str(), &buf) == 0);
             if (!fileExists) {
-                ini_generator generator(filename);
+                ini_generator<traits_type> generator(filename);
                 generator.prettyPrint = prettyPrint;
                 return generator << data;
             }
-            INIStructure  originalData;
+            ini_configs   originalData;
             T_LineDataPtr lineData;
             bool          readSuccess = false;
             {
-                ini_reader reader(filename, true);
+                ini_reader<traits_type> reader(filename, true);
                 if ((readSuccess = reader >> originalData)) {
                     lineData = reader.getLines();
                 }
@@ -588,14 +613,19 @@ namespace webpp {
         }
     };
 
-    class ini_file {
+    template <Traits TraitsType = default_traits>
+    struct ini_file {
+        using traits_type      = TraitsType;
+        using string_type      = traits::general_string<traits_type>; // todo: consider changing to local
+        using string_view_type = traits::string_view<traits_type>;
+
       private:
-        stl::string filename;
+        string_type filename;
 
       public:
-        ini_file(stl::string const& filename) : filename(filename) {}
+        ini_file(string_view_type filename) : filename(filename) {}
 
-        bool read(INIStructure& data) const {
+        bool read(ini_configs& data) const {
             if (data.size()) {
                 data.clear();
             }
@@ -606,20 +636,20 @@ namespace webpp {
             return reader >> data;
         }
 
-        bool generate(INIStructure const& data, bool pretty = false) const {
+        bool generate(ini_configs const& data, bool pretty = false) const {
             if (filename.empty()) {
                 return false;
             }
-            ini_generator generator(filename);
+            ini_generator<traits_type> generator(filename);
             generator.prettyPrint = pretty;
             return generator << data;
         }
 
-        bool write(INIStructure& data, bool pretty = false) const {
+        bool write(ini_configs& data, bool pretty = false) const {
             if (filename.empty()) {
                 return false;
             }
-            ini_writer writer(filename);
+            ini_writer<traits_type> writer(filename);
             writer.prettyPrint = pretty;
             return writer << data;
         }
