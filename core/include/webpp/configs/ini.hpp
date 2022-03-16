@@ -84,14 +84,15 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef WEBPP_INI_INI_H_
-#define WEBPP_INI_INI_H_
+#ifndef WEBPP_INI_INI_HPP
+#define WEBPP_INI_INI_HPP
 
+#include "../std/algorithm.hpp"
 #include "../std/string.hpp"
+#include "../std/vector.hpp"
 #include "../strings/to_case.hpp"
 #include "../strings/trim.hpp"
 
-#include <algorithm>
 #include <cctype>
 #include <fstream>
 #include <memory>
@@ -99,7 +100,6 @@
 #include <sys/stat.h>
 #include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace webpp {
     namespace details {
@@ -119,8 +119,10 @@ namespace webpp {
 #endif
     } // namespace details
 
-    template <typename T>
+    template <typename T, bool CaseSensitive = true>
     class ini_map {
+        static constexpr bool is_case_sensitive = CaseSensitive;
+
       private:
         using T_DataIndexMap  = stl::unordered_map<stl::string, stl::size_t>;
         using T_DataItem      = stl::pair<stl::string, T>;
@@ -135,6 +137,15 @@ namespace webpp {
             dataIndexMap[key] = index;
             data.emplace_back(key, T());
             return index;
+        }
+
+        inline auto fix_input(string_view_type str) const noexcept {
+            ascii::trim(str);
+            if constexpr (is_case_sensitive) {
+                return ascii::to_lower_copy(key);
+            } else {
+                return str;
+            }
         }
 
       public:
@@ -152,43 +163,31 @@ namespace webpp {
             dataIndexMap = T_DataIndexMap(other.dataIndexMap);
         }
 
-        T& operator[](stl::string key) {
-            ascii::trim(key);
-#ifndef WEBPP_INI_CASE_SENSITIVE
-            ascii::to_lower(key);
-#endif
+        T& operator[](stl::string _key) {
+            const auto  key   = fix_input(_key);
             auto        it    = dataIndexMap.find(key);
             bool        hasIt = (it != dataIndexMap.end());
             stl::size_t index = (hasIt) ? it->second : setEmpty(key);
             return data[index].second;
         }
 
-        T get(stl::string key) const {
-            ascii::trim(key);
-#ifndef WEBPP_INI_CASE_SENSITIVE
-            ascii::to_lower(key);
-#endif
-            auto it = dataIndexMap.find(key);
+        T get(stl::string _key) const {
+            const auto key = fix_input(_key);
+            auto       it  = dataIndexMap.find(key);
             if (it == dataIndexMap.end()) {
                 return T();
             }
             return T(data[it->second].second);
         }
 
-        bool has(stl::string key) const {
-            ascii::trim(key);
-#ifndef WEBPP_INI_CASE_SENSITIVE
-            ascii::to_lower(key);
-#endif
+        bool has(stl::string _key) const {
+            const auto key = fix_input(_key);
             return (dataIndexMap.count(key) == 1);
         }
 
-        void set(stl::string key, T obj) {
-            ascii::trim(key);
-#ifndef WEBPP_INI_CASE_SENSITIVE
-            ascii::to_lower(key);
-#endif
-            auto it = dataIndexMap.find(key);
+        void set(stl::string _key, T obj) {
+            const auto key = fix_input(_key);
+            auto       it  = dataIndexMap.find(key);
             if (it != dataIndexMap.end()) {
                 data[it->second].second = obj;
             } else {
@@ -205,12 +204,9 @@ namespace webpp {
             }
         }
 
-        bool remove(stl::string key) {
-            ascii::trim(key);
-#ifndef WEBPP_INI_CASE_SENSITIVE
-            ascii::to_lower(key);
-#endif
-            auto it = dataIndexMap.find(key);
+        bool remove(stl::string _key) {
+            const auto key = fix_input(_key);
+            auto       it  = dataIndexMap.find(key);
             if (it != dataIndexMap.end()) {
                 stl::size_t index = it->second;
                 data.erase(data.begin() + index);
@@ -632,4 +628,4 @@ namespace webpp {
 
 } // namespace webpp
 
-#endif // WEBPP_INI_INI_H_
+#endif // WEBPP_INI_INI_HPP
