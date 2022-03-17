@@ -87,6 +87,7 @@
 #ifndef WEBPP_INI_INI_HPP
 #define WEBPP_INI_INI_HPP
 
+#include "../memory/object.hpp"
 #include "../std/algorithm.hpp"
 #include "../std/string.hpp"
 #include "../std/vector.hpp"
@@ -122,9 +123,12 @@ namespace webpp {
 
     template <typename T, Traits TraitsType = default_traits, bool CaseSensitive = true>
     struct ini_map {
-        using traits_type      = TraitsType;
-        using string_type      = traits::general_string<traits_type>; // todo: consider changing to local
-        using string_view_type = traits::string_view<traits_type>;
+        using traits_type           = TraitsType;
+        using string_type           = traits::general_string<traits_type>; // todo: consider changing to local
+        using string_view_type      = traits::string_view<traits_type>;
+        using allocator_descriptors = traits::allocator_descriptors<traits_type>;
+
+        using value_type = typename object::general<T, allocator_descriptors>::new_type;
 
         static constexpr bool is_case_sensitive = CaseSensitive;
 
@@ -134,12 +138,12 @@ namespace webpp {
         using T_DataContainer = stl::vector<T_DataItem>;
         using T_MultiArgs     = typename stl::vector<stl::pair<stl::string, T>>;
 
-        T_DataIndexMap  dataIndexMap;
-        T_DataContainer data;
+        object::general<T_DataIndexMap, allocator_descriptors>  dataIndexMap;
+        object::general<T_DataContainer, allocator_descriptors> data;
 
-        inline stl::size_t setEmpty(stl::string& key) {
-            stl::size_t index = data.size();
-            dataIndexMap[key] = index;
+        inline stl::size_t setEmpty(string_view_type key) {
+            const stl::size_t index = data.size();
+            dataIndexMap[key]       = index;
             data.emplace_back(key, T());
             return index;
         }
@@ -159,40 +163,39 @@ namespace webpp {
         constexpr ini_map() = default;
 
         ini_map(ini_map const& other) {
-            stl::size_t data_size = other.data.size();
-            for (stl::size_t i = 0; i < data_size; ++i) {
-                auto const& key = other.data[i].first;
-                auto const& obj = other.data[i].second;
+            for (auto const& [key, obj] : other.data) {
                 data.emplace_back(key, obj);
             }
-            dataIndexMap = T_DataIndexMap(other.dataIndexMap);
+
+            // fixme: make general needs alloc pack
+            dataIndexMap = object::make_general<T_DataIndexMap>(other.dataIndexMap);
         }
 
-        T& operator[](stl::string _key) {
-            const auto  key   = fix_input(_key);
-            auto        it    = dataIndexMap.find(key);
-            bool        hasIt = (it != dataIndexMap.end());
-            stl::size_t index = (hasIt) ? it->second : setEmpty(key);
+        T& operator[](string_view_type _key) {
+            const auto        key   = fix_input(_key);
+            auto              it    = dataIndexMap.find(key);
+            bool              hasIt = (it != dataIndexMap.end());
+            const stl::size_t index = (hasIt) ? it->second : setEmpty(key);
             return data[index].second;
         }
 
-        T get(stl::string _key) const {
+        T get(string_view_type _key) const {
             const auto key = fix_input(_key);
-            auto       it  = dataIndexMap.find(key);
+            const auto it  = dataIndexMap.find(key);
             if (it == dataIndexMap.end()) {
                 return T();
             }
             return T(data[it->second].second);
         }
 
-        bool has(stl::string _key) const {
+        bool has(string_view_type _key) const {
             const auto key = fix_input(_key);
             return (dataIndexMap.count(key) == 1);
         }
 
-        void set(stl::string _key, T obj) {
+        void set(string_view_type _key, value_type obj) {
             const auto key = fix_input(_key);
-            auto       it  = dataIndexMap.find(key);
+            const auto it  = dataIndexMap.find(key);
             if (it != dataIndexMap.end()) {
                 data[it->second].second = obj;
             } else {
@@ -209,7 +212,7 @@ namespace webpp {
             }
         }
 
-        bool remove(stl::string _key) {
+        bool remove(string_view_type _key) {
             const auto key = fix_input(_key);
             auto       it  = dataIndexMap.find(key);
             if (it != dataIndexMap.end()) {
