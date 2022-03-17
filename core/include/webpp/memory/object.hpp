@@ -20,6 +20,9 @@ namespace webpp::object {
         struct resource_holder<void, Data> {};
     } // namespace details
 
+    /**
+     * An object type which changes the allocator type based on the features you pass to it.
+     */
     template <typename T, alloc::feature_pack FPack, AllocatorDescriptorList AllocDescList>
     struct object : public alloc::alloc_finder<T, FPack, AllocDescList>::new_type {
       protected:
@@ -159,6 +162,9 @@ namespace webpp::object {
                   alloc_pack.template get_allocator<allocator_type, resource_type>(res)} {}
     };
 
+
+    template <typename T, alloc::feature_pack FPack, AllocatorDescriptorList AllocDescList>
+    using general = object<T, alloc::general_features, AllocDescList>;
 
 
     /**
