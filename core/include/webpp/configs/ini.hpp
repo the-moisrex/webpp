@@ -312,7 +312,6 @@ namespace webpp {
         using string_type      = traits::general_string<traits_type>; // todo: consider changing to local
         using string_view_type = traits::string_view<traits_type>;
 
-      public:
         using T_LineData    = stl::vector<stl::string>;
         using T_LineDataPtr = stl::shared_ptr<T_LineData>;
 
@@ -321,7 +320,7 @@ namespace webpp {
         T_LineDataPtr lineData;
 
         T_LineData readFile() {
-            stl::string fileContents;
+            object::local<string_type> fileContents(allocs);
             fileReadStream.seekg(0, stl::ios::end);
             fileContents.resize(static_cast<stl::size_t>(fileReadStream.tellg()));
             fileReadStream.seekg(0, stl::ios::beg);
@@ -332,7 +331,7 @@ namespace webpp {
             if (fileSize == 0) {
                 return output;
             }
-            stl::string buffer;
+            object::local<string_type> buffer(allocs);
             buffer.reserve(50);
             for (stl::size_t i = 0; i < fileSize; ++i) {
                 char& c = fileContents[i];
@@ -350,7 +349,7 @@ namespace webpp {
         }
 
       public:
-        ini_reader(stl::string const& filename, bool keepLineData = false) {
+        ini_reader(string_view_type filename, bool keepLineData = false) {
             fileReadStream.open(filename, stl::ios::in | stl::ios::binary);
             if (keepLineData) {
                 lineData = stl::make_shared<T_LineData>();
@@ -361,10 +360,10 @@ namespace webpp {
             if (!fileReadStream.is_open()) {
                 return false;
             }
-            T_LineData                fileLines = readFile();
-            stl::string               section;
-            bool                      inSection = false;
-            ini_parser::T_ParseValues parseData;
+            T_LineData                 fileLines = readFile();
+            object::local<string_type> section(allocs);
+            bool                       inSection = false;
+            ini_parser::T_ParseValues  parseData;
             for (auto const& line : fileLines) {
                 auto parseResult = ini_parser::parseLine(line, parseData);
                 if (parseResult == ini_parser::PDataType::PDATA_SECTION) {
