@@ -125,7 +125,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/routes/literals.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/routes/path/number.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/http/bodies/file.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/bodies/json.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/bodies/string.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/protocol_concepts.hpp

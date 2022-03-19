@@ -4,6 +4,7 @@
 #define WEBPP_HTTP_BODIES_STRING_H
 
 #include "../../extensions/extension.hpp"
+#include "../../memory/object.hpp"
 #include "../../std/concepts.hpp"
 #include "../../std/string_view.hpp"
 #include "../../traits/traits.hpp"
