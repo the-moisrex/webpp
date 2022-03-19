@@ -1,5 +1,5 @@
 #include <iostream>
-#include <webpp/http/bodies/file.hpp>
+#include <webpp/http/bodies/string.hpp>
 #include <webpp/http/protocols/cgi.hpp>
 #include <webpp/http/routes/methods.hpp>
 #include <webpp/http/routes/path.hpp>
@@ -13,7 +13,7 @@ auto page_one() {
 }
 
 int main() {
-    using extensions = extension_pack<file_response, string_response>;
+    using extensions = extension_pack<string_response>;
     router _router{extensions{},
                    root >>=
                    []() noexcept {
