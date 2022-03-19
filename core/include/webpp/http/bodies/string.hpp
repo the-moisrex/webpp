@@ -43,6 +43,7 @@ namespace webpp::http {
             using string_type      = traits::general_string<traits_type>;
             using allocator_type   = typename string_type::allocator_type;
             using char_type        = traits::char_type<traits_type>;
+            using ifstream_type    = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
 
           protected: // the file extension will use the "content" directly
             using alloc_type    = allocator_type const&;
@@ -155,12 +156,13 @@ namespace webpp::http {
 
         template <Traits TraitsType, Context ContextType>
         struct string_context_extension : public ContextType {
-            using context_type         = ContextType;
-            using traits_type          = TraitsType;
-            using string_response_type = typename context_type::response_type;
-            using body_type            = typename string_response_type::body_type;
-            using char_type            = traits::char_type<traits_type>;
-            using ifstream_type        = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
+            using context_type  = ContextType;
+            using traits_type   = TraitsType;
+            using response_type = typename context_type::response_type;
+            using body_type     = typename response_type::body_type;
+            using char_type     = traits::char_type<traits_type>;
+            using string_type   = typename body_type::string_type;
+            using ifstream_type = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
             // ::template apply_extensions_type<details::string_response_body_extension>;
 
             using context_type::context_type; // inherit the constructors
@@ -170,15 +172,14 @@ namespace webpp::http {
                 // check if there's an allocator in the args:
                 constexpr bool has_allocator = (istl::Allocator<Args> || ...);
                 if constexpr (!has_allocator && requires {
-                                  string_response_type::with_body(
+                                  response_type::with_body(
                                     stl::forward<Args>(args)...,
                                     this->alloc_pack.template general_allocator<char_type>());
                               }) {
-                    return string_response_type::with_body(
-                      stl::forward<Args>(args)...,
-                      this->alloc_pack.template general_allocator<char_type>());
+                    return response_type::with_body(stl::forward<Args>(args)...,
+                                                    this->alloc_pack.template general_allocator<char_type>());
                 } else {
-                    return string_response_type::with_body(stl::forward<Args>(args)...);
+                    return response_type::with_body(stl::forward<Args>(args)...);
                 }
             }
 
@@ -220,7 +221,7 @@ namespace webpp::http {
                     this->logger.error("Response/File",
                                        fmt::format("Cannot load the specified file: {}", filepath.string()));
                     // todo: retry feature
-                    if constexpr (Mother::is_debug()) {
+                    if constexpr (context_type::is_debug()) {
                         return this->error(500u);
                     } else {
                         return this->error(
