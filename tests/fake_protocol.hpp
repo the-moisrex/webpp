@@ -75,7 +75,7 @@ namespace webpp {
         }
 
 
-        [[nodiscard]] string_view request_method() const noexcept {
+        [[nodiscard]] string_view method() const noexcept {
             return get_data("REQUEST_METHOD");
         }
 
@@ -149,7 +149,7 @@ namespace webpp {
         }
 
 
-        [[nodiscard]] string_view request_uri() const noexcept {
+        [[nodiscard]] string_view uri() const noexcept {
             return get_data("REQUEST_URI");
         }
 
