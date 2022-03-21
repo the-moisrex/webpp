@@ -11,8 +11,9 @@
 
 #include <vector>
 
-
 using namespace webpp;
+
+#ifdef webpp_has_memory_resource
 
 TEST(MemoryTest, PMRAllocatorPackTest) {
     static_assert(Allocator<stl::pmr::polymorphic_allocator<char>>);
@@ -51,6 +52,7 @@ TEST(MemoryTest, STDAllocatorPackTest) {
     static_assert(stl::same_as<vec_t, stl::vector<stl::string>>, "Allocator-rebinding don't work");
 }
 
+#endif
 
 TEST(MemoryTest, AvailableMemory) {
     EXPECT_TRUE(available_memory() > 0);
