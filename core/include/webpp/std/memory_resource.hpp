@@ -1,3 +1,6 @@
+#ifndef WEBPP_STD_MEMORY_RESOURCE_HPP
+#define WEBPP_STD_MEMORY_RESOURCE_HPP
+
 #include "std.hpp"
 
 #if __has_include(<memory_resource>)
@@ -19,3 +22,5 @@ namespace std::pmr {}
 namespace webpp::stl::pmr {}
 namespace std::pmr {}
 #endif
+
+#endif // WEBPP_STD_MEMORY_RESOURCE_HPP
