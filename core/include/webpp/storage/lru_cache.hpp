@@ -1,7 +1,6 @@
 #ifndef WEBPP_STORAGE_LRU_CACHE_HPP
 #define WEBPP_STORAGE_LRU_CACHE_HPP
 
-#include "../traits/traits.hpp"
 #include "cache_concepts.hpp"
 
 namespace webpp {
@@ -24,6 +23,14 @@ namespace webpp {
         template <typename K, typename V>
         basic_lru_cache& set(K&& key, V&& value) {
             gate.emplace(stl::forward<K>(key), stl::forward<V>(value));
+        }
+
+
+        template <typename K>
+        stl::optional<value_type> get(K&& key) {
+            if (auto res = gate.find(stl::forward<K>(key)); res != gate.end())
+                return res;
+            return stl::nullopt;
         }
     };
 
