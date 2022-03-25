@@ -15,8 +15,18 @@ namespace webpp {
             using map_allocator_type = traits::general_allocator<traits_type, map_pair_type>;
             using map_type = stl::map<key_type, value_type, stl::less<key_type>, map_allocator_type>;
 
+            template <typename V>
+            stl::optional<value_type> get(V&& value) {
+                if (auto it = map.find(stl::forward<V>(value)); it != map.end()) {
+                    return *it;
+                }
+                return stl::nullopt;
+            }
 
-            void set(key_type const& key, value_type const& value) {}
+            template <typename K, typename V>
+            void set(K&& key, V&& value) {
+                map.emplace(stl::forward<K>(key), stl::forward<V>(value));
+            }
 
             map_type map;
         };
