@@ -9,7 +9,7 @@ namespace webpp {
      * LRU Cache (Least Recently Used Cache)
      */
     template <typename KeyT, typename ValueT, StorageGate SG = memory_gate>
-    struct basic_lru_cache {
+    struct lru_strategy {
         using key_type          = KeyT;
         using value_type        = ValueT;
         using storage_gate_type = typename SG::storage_gate<key_type, value_type>;
@@ -21,17 +21,21 @@ namespace webpp {
 
       public:
         template <typename K, typename V>
-        basic_lru_cache& set(K&& key, V&& value) {
+        requires(stl::convertible_to<K, key_type>&&    // it's a key
+                   stl::convertible_to<V, value_type>) // it's a value
+          void set(K&& key, V&& value) {
             gate.set(stl::forward<K>(key), stl::forward<V>(value));
-            return *this;
         }
 
 
         template <typename K>
-        stl::optional<value_type> get(K&& key) {
+        requires(stl::convertible_to<K, key_type>) // it's a key
+          stl::optional<value_type> get(K&& key) {
             return gate.get(stl::forward<K>(key));
         }
     };
+
+
 
 } // namespace webpp
 
