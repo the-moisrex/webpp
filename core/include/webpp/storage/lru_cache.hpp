@@ -21,24 +21,46 @@ namespace webpp {
 
 
       private:
-        stl::size_t       max_size   = 100;
-        stl::size_t       next_usage = 1;
+        stl::size_t       max_size;
+        stl::size_t       next_usage = 1; // it's essentially a timestamp
         storage_gate_type gate;
 
       public:
+        constexpr lru_strategy(stl::size_t max_size_value = 1024) noexcept : max_size{max_size_value} {}
+
+        void clean_up() {
+            stl::size_t break_index = next_usage - max_size;
+            for (auto it = gate.begin(); it != gate.end(); ++it) {
+                if (it->last_used_index < break_index) {
+                    gate.erase(it);
+                }
+            }
+        }
+
         template <typename K, typename V>
         requires(stl::convertible_to<K, key_type>&&    // it's a key
                    stl::convertible_to<V, value_type>) // it's a value
           void set(K&& key, V&& value) {
             gate.set(stl::forward<K>(key),
                      entry_type{.value = stl::forward<V>(value), .last_used_index = next_usage++});
+            if (next_usage >= max_size) {
+                clean_up();
+            }
         }
 
 
         template <typename K>
         requires(stl::convertible_to<K, key_type>) // it's a key
           stl::optional<value_type> get(K&& key) {
-            return gate.get(stl::forward<K>(key));
+            auto val = gate.get(key);
+            if (!val)
+                return stl::nullopt;
+
+            auto nval            = *val;
+            nval.last_used_index = next_usage++;
+            gate.set(key, stl::move(nval));
+
+            return val->value;
         }
     };
 
