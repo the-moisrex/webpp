@@ -2,9 +2,11 @@
 #define WEBPP_STORAGE_MEMORY_GATE_HPP
 
 #include "../traits/default_traits.hpp"
+#include "null_gate.hpp"
 
 namespace webpp {
 
+    template <StorageGate ParentGate = null_gate>
     struct memory_gate {
         template <typename KeyT, typename ValueT, Traits TraitsType = default_traits>
         struct storage_gate {

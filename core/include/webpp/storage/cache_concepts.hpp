@@ -1,9 +1,17 @@
 #ifndef WEBPP_STORAGE_CACHE_CONCEPTS_HPP
 #define WEBPP_STORAGE_CACHE_CONCEPTS_HPP
 
+#include "../std/type_traits.hpp"
 #include "../traits/default_traits.hpp"
 
 namespace webpp {
+
+
+    template <typename K>
+    concept CacheKey = !stl::is_void_v<K>;
+
+    template <typename K>
+    concept CacheValue = !stl::is_void_v<K>;
 
     namespace details {
         template <typename S>

@@ -6,10 +6,21 @@
 
 namespace webpp {
 
+
     template <typename KeyT, typename ValT, CacheStrategy CS>
-    struct cache {
-        using key_type   = KeyT;
-        using value_type = ValT;
+    struct cache : CS {
+        using key_type          = KeyT;
+        using value_type        = ValT;
+        using strategy_type     = CS;
+        using storage_gate_type = typename strategy_type::storage_gate_type;
+        using traits_type       = typename strategy_type::traits_type;
+
+        struct cache_reault {};
+
+        using CS::CS;
+
+
+        auto operator[](string_view_type str) {}
     };
 
     template <typename CacheSystem>
