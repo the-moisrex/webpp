@@ -28,6 +28,12 @@ namespace webpp {
                 map.emplace(stl::forward<K>(key), stl::forward<V>(value));
             }
 
+
+            template <typename K>
+            void erase(K&& input) {
+                map.erase(stl::forward<K>(input));
+            }
+
             map_type map;
         };
     };
