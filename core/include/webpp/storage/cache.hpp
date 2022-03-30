@@ -21,6 +21,13 @@ namespace webpp {
 
 
         auto operator[](string_view_type str) {}
+
+
+        template <CacheKey K, CacheValue V>
+        requires(stl::is_convertible_to_v<K, key_type>&& stl::is_convertible_to_v<V, value_type>) value_type
+          get(K&& key, V&& default_value) {
+            return storage_gate_type::get(stl::forward<K>(key)).value_or(stl::forward<V>(default_value));
+        }
     };
 
     template <typename CacheSystem>
