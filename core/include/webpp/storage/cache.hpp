@@ -20,7 +20,7 @@ namespace webpp {
         using CS::CS;
 
 
-        auto operator[](string_view_type str) {}
+        auto operator[](key_type key) {}
 
 
         template <CacheKey K, CacheValue V>

@@ -28,6 +28,16 @@ namespace webpp {
         requires details::StorageGateType<typename T::template storage_gate<int, int, default_traits>>;
     };
 
+    template <typename T>
+    concept CacheStrategy = requires {
+        typename T::key_type;
+        typename T::value_type;
+        requires requires(T st, typename T::key_type key, typename T::value_type value) {
+            st.set(key, value);
+            st.set(key);
+        };
+    };
+
 } // namespace webpp
 
 #endif // WEBPP_STORAGE_CACHE_CONCEPTS_HPP
