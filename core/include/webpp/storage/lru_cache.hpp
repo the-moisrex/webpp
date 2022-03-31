@@ -19,7 +19,7 @@ namespace webpp {
                 value_type  value;
                 stl::size_t last_used_index = 0;
             };
-            using storage_gate_type = typename SG::storage_gate<key_type, entry_type>;
+            using storage_gate_type = typename SG::template storage_gate<key_type, entry_type>;
             using traits_type       = typename storage_gate_type::traits_type;
 
 

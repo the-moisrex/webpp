@@ -21,8 +21,7 @@ namespace webpp {
             }
 
             template <CacheKey K, CacheValue V>
-            void set([maybe_unused]] K&& key, [[maybe_unused]] V&& value) {
-            }
+            void set([[maybe_unused]] K&& key, [[maybe_unused]] V&& value) {}
 
 
             template <typename K>
