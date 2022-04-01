@@ -2,18 +2,16 @@
 #define WEBPP_STORAGE_FILE_GATE_HPP
 
 #include "../traits/default_traits.hpp"
-#include "null_gate.hpp"
 
 namespace webpp {
 
-    template <StorageGate ParentGate = null_gate>
     struct file_gate {
+
         template <typename KeyT, typename ValueT, Traits TraitsType = default_traits>
         struct storage_gate {
-            using key_type           = KeyT;
-            using value_type         = ValueT;
-            using traits_type        = TraitsType;
-            using map_allocator_type = traits::general_allocator<traits_type, map_pair_type>;
+            using key_type    = KeyT;
+            using value_type  = ValueT;
+            using traits_type = TraitsType;
 
             template <typename V>
             stl::optional<value_type> get(V&& value) {
