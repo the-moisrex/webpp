@@ -8,7 +8,8 @@ namespace webpp {
 
     template <StorageGate ParentGate = null_gate>
     struct memory_gate {
-        template <typename KeyT, typename ValueT, Traits TraitsType = default_traits>
+
+        template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT>
         struct storage_gate {
             using key_type           = KeyT;
             using value_type         = ValueT;

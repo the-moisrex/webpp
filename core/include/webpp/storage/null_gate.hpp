@@ -3,24 +3,23 @@
 
 #include "../std/optional.hpp"
 #include "../traits/default_traits.hpp"
-#include "cache_concepts.hpp"
 
 namespace webpp {
 
     struct null_gate {
 
-        template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT>
+        template <Traits TraitsType, typename KeyT, typename ValueT, typename>
         struct storage_gate {
             using key_type    = KeyT;
             using value_type  = ValueT;
             using traits_type = TraitsType;
 
-            template <CacheValue V>
+            template <typename V>
             stl::optional<value_type> get([[maybe_unused]] V&& value) {
                 return stl::nullopt;
             }
 
-            template <CacheKey K, CacheValue V>
+            template <typename K, typename V>
             void set([[maybe_unused]] K&& key, [[maybe_unused]] V&& value) {}
 
 

@@ -5,7 +5,7 @@ using namespace webpp;
 
 
 TEST(Cache, LEUCacheTest) {
-    lru_cache c;
+    lru_cache<> c;
     c.set("one", "value");
     EXPECT_EQ("value", c.get("one", ""));
 }

@@ -12,7 +12,7 @@ namespace webpp {
      */
     struct lru_strategy {
 
-        template <typename KeyT, typename ValueT, StorageGate SG>
+        template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT, StorageGate SG>
         struct strategy {
             using key_type   = KeyT;
             using value_type = ValueT;
@@ -21,7 +21,7 @@ namespace webpp {
                 stl::size_t last_used_index = 0;
             };
             using storage_gate_type = typename SG::template storage_gate<key_type, entry_type>;
-            using traits_type       = typename storage_gate_type::traits_type;
+            using traits_type       = TraitsType;
 
 
           private:
@@ -71,16 +71,12 @@ namespace webpp {
 
 
 
-    template <CacheKey    KeyT         = stl::string,
-              CacheValue  ValT         = stl::string,
-              StorageGate StorageGateT = memory_gate<file_gate>>
-    using lru_cache = cache<KeyT, ValT, lru_strategy, StorageGateT>;
 
     template <Traits      TraitsType   = default_traits,
               CacheKey    KeyT         = traits::general_string<TraitsType>,
               CacheValue  ValT         = traits::general_string<TraitsType>,
               StorageGate StorageGateT = memory_gate<file_gate>>
-    using string_lru_cache = cache<KeyT, ValT, lru_strategy, StorageGateT>;
+    using lru_cache = cache<TraitsType, KeyT, ValT, lru_strategy, StorageGateT>;
 
 } // namespace webpp
 

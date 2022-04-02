@@ -7,13 +7,14 @@
 namespace webpp {
 
 
-    template <typename KeyT, typename ValT, CacheStrategy CS>
+    template <Traits TraitsType, CacheKey KeyT, CacheValue ValT, CacheStrategy CS, StorageGate SG>
     struct cache : CS {
         using key_type          = KeyT;
         using value_type        = ValT;
-        using strategy_type     = CS;
-        using storage_gate_type = typename strategy_type::storage_gate_type;
-        using traits_type       = typename strategy_type::traits_type;
+        using traits_type       = TraitsType;
+        using storage_gate_type = typename SG::template storage_gate<traits_type, key_type, value_type>;
+        using strategy_type =
+          typename CS::template strategy<traits_type, key_type, value_type, storage_gate_type>;
 
         struct cache_reault {};
 
@@ -30,13 +31,6 @@ namespace webpp {
         }
     };
 
-    template <typename CacheSystem>
-    auto set(CacheSystem&                       cache_system,
-             typename CacheSystem::key_type&&   key,
-             typename CacheSystem::value_type&& value) {
-        return cache_system.set(std::forward<typename CacheSystem::key_type>(key),
-                                std::forward<typename CacheSystem::value_type>(value));
-    }
 
 } // namespace webpp
 

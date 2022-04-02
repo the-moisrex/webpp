@@ -7,7 +7,7 @@ namespace webpp {
 
     struct file_gate {
 
-        template <typename KeyT, typename ValueT, Traits TraitsType = default_traits>
+        template <Traits TraitsType, typename KeyT, typename ValueT>
         struct storage_gate {
             using key_type    = KeyT;
             using value_type  = ValueT;
