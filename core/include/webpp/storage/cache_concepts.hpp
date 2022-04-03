@@ -11,12 +11,16 @@ namespace webpp {
     template <typename K>
     concept CacheKey = !stl::is_void_v<K>;
 
-    template <typename K>
-    concept CacheValue = !stl::is_void_v<K>;
+    template <typename V>
+    concept CacheValue = !stl::is_void_v<V>;
 
     namespace details {
         template <typename S>
         concept StorageGateType = requires(S g) {
+            typename S::key_type;
+            typename S::value_type;
+            requires CacheKey<typename S::key_type>;
+            requires CacheValue<typename S::value_type>;
             typename S::traits_type;
             requires Traits<typename S::traits_type>;
         };
@@ -26,6 +30,9 @@ namespace webpp {
         concept CacheStrategy = requires {
             typename T::key_type;
             typename T::value_type;
+            requires CacheKey<typename T::key_type>;
+            requires CacheValue<typename T::value_type>;
+            typename T::traits_type;
             requires requires(T st, typename T::key_type key, typename T::value_type value) {
                 st.set(key, value);
                 st.set(key);
@@ -36,14 +43,14 @@ namespace webpp {
 
     template <typename T>
     concept StorageGate = requires {
-        typename T::template storage_gate<default_traits, int, int>;
+        typename T::template storage_gate<default_traits, int, int, null_gate>;
         requires details::StorageGateType<typename T::template storage_gate<default_traits, int, int>>;
     };
 
 
     template <typename T>
     concept CacheStrategy = requires {
-        typename T::strategy<default_traits, int, int, null_gate>;
+        typename T::template strategy<default_traits, int, int, null_gate>;
         requires details::CacheStrategy<typename T::template strategy<default_traits, int, int, null_gate>>;
     };
 } // namespace webpp

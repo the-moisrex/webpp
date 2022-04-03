@@ -21,6 +21,8 @@ namespace webpp {
             template <typename K, typename V>
             void set(K&& key, V&& value) {}
 
+            template <typename K>
+            void set(K&& key) {}
 
             template <typename K>
             void erase(K&& input) {}

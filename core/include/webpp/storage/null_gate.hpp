@@ -22,6 +22,8 @@ namespace webpp {
             template <typename K, typename V>
             void set([[maybe_unused]] K&& key, [[maybe_unused]] V&& value) {}
 
+            template <typename K>
+            void set([[maybe_unused]] K&& key) {}
 
             template <typename K>
             void erase([[maybe_unused]] K&& input) {}
