@@ -43,7 +43,7 @@ namespace webpp {
 
     template <typename T>
     concept StorageGate = requires {
-        typename T::template storage_gate<default_traits, int, int, null_gate>;
+        typename T::template storage_gate<default_traits, int, int>;
         requires details::StorageGateType<typename T::template storage_gate<default_traits, int, int>>;
     };
 
