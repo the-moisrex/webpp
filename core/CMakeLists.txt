@@ -213,7 +213,13 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/db/database_concepts.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/storage/cache.hpp
-        ${LIB_INCLUDE_DIR}/webpp/storage/passive_cache.hpp
+        ${LIB_INCLUDE_DIR}/webpp/storage/cache_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/storage/lru_cache.hpp
+        ${LIB_INCLUDE_DIR}/webpp/storage/null_gate.hpp
+        ${LIB_INCLUDE_DIR}/webpp/storage/file_gate.hpp
+        ${LIB_INCLUDE_DIR}/webpp/storage/memory_gate.hpp
+        ${LIB_INCLUDE_DIR}/webpp/storage/perminant_cache.hpp
+        ${LIB_INCLUDE_DIR}/webpp/storage/unified_caches.hpp
 
         ${LIB_INCLUDE_DIR}/main.hpp
         ${LIB_INCLUDE_DIR}/webpp.hpp

@@ -8,7 +8,7 @@ namespace webpp {
 
     struct null_gate {
 
-        template <Traits TraitsType, typename KeyT, typename ValueT, typename>
+        template <Traits TraitsType, typename KeyT, typename ValueT>
         struct storage_gate {
             using key_type    = KeyT;
             using value_type  = ValueT;
@@ -21,9 +21,6 @@ namespace webpp {
 
             template <typename K, typename V>
             void set([[maybe_unused]] K&& key, [[maybe_unused]] V&& value) {}
-
-            template <typename K>
-            void set([[maybe_unused]] K&& key) {}
 
             template <typename K>
             void erase([[maybe_unused]] K&& input) {}

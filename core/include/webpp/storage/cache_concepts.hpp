@@ -35,7 +35,6 @@ namespace webpp {
             typename T::traits_type;
             requires requires(T st, typename T::key_type key, typename T::value_type value) {
                 st.set(key, value);
-                st.set(key);
             };
         };
 
