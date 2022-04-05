@@ -8,13 +8,12 @@ namespace webpp {
 
 
     template <Traits TraitsType, CacheKey KeyT, CacheValue ValT, CacheStrategy CS, StorageGate SG>
-    struct cache : CS {
+    struct cache : public CS::template strategy<TraitsType, KeyT, ValT, SG> {
         using key_type          = KeyT;
         using value_type        = ValT;
         using traits_type       = TraitsType;
         using storage_gate_type = typename SG::template storage_gate<traits_type, key_type, value_type>;
-        using strategy_type =
-          typename CS::template strategy<traits_type, key_type, value_type, storage_gate_type>;
+        using strategy_type     = typename CS::template strategy<traits_type, key_type, value_type, SG>;
 
         struct cache_reault {};
 
