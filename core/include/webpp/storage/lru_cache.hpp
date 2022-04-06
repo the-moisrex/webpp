@@ -25,12 +25,14 @@ namespace webpp {
 
 
           private:
-            stl::size_t       max_size;
-            stl::size_t       next_usage = 1; // it's essentially a timestamp
-            storage_gate_type gate;
+            stl::size_t        max_size;
+            stl::size_t        next_usage = 1; // it's essentially a timestamp
+            storage_gate_type& gate;
 
           public:
-            constexpr strategy(stl::size_t max_size_value = 1024) noexcept : max_size{max_size_value} {}
+            constexpr strategy(storage_gate_type& input_gate, stl::size_t max_size_value = 1024) noexcept
+              : max_size{max_size_value},
+                gate{input_gate} {}
 
             void clean_up() {
                 stl::size_t break_index = next_usage - max_size;

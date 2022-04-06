@@ -17,7 +17,7 @@ namespace webpp {
 
         struct cache_reault {};
 
-        using CS::CS;
+        using CS::template strategy<traits_type, key_type, value_type, SG>::strategy;
 
 
         auto operator[](key_type key) {}

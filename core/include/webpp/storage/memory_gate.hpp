@@ -21,7 +21,8 @@ namespace webpp {
             using etraits  = enable_traits<TraitsType>;
 
             template <EnabledTraits ET>
-            storage_gate(ET&& et) : etraits{et} {}
+            storage_gate(ET&& et) : etraits{et},
+                                    map{et.alloc_pack.general_allocator()} {}
 
             template <typename V>
             stl::optional<value_type> get(V&& value) {
