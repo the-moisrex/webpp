@@ -43,6 +43,15 @@ namespace webpp {
                 map.erase(stl::forward<K>(input));
             }
 
+            auto begin() const {
+                return map.begin();
+            }
+
+            auto end() const {
+                return map.begin();
+            }
+
+
             map_type map;
         };
     };

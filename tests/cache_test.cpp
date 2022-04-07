@@ -13,7 +13,8 @@ static_assert(StorageGate<file_gate>);
 static_assert(StorageGate<memory_gate<null_gate>>);
 
 TEST(Cache, LEUCacheTest) {
-    lru_cache<> c;
+    enable_owner_traits<default_traits> t;
+    lru_cache<>                         c(t);
     c.set("one", "value");
     EXPECT_EQ("value", c.get("one", ""));
 }
