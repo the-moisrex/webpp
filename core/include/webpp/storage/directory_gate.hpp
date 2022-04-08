@@ -21,8 +21,9 @@ namespace webpp {
         static constexpr stl::string_view DIR_GATE_CAT = "DirGate";
 
         struct options {
-            bool hash_keys      = true;
-            bool encrypt_values = false;
+            stl::filesystem::path::string_type extension      = ".cache";
+            bool                               hash_keys      = true;
+            bool                               encrypt_values = false;
         };
 
         template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT>
@@ -38,6 +39,20 @@ namespace webpp {
             path_type dir;
             options   opts;
 
+            string_type serialize_key(key_type key) {
+                if (opts.hash_keys) {
+                    // todo: hash the keys
+                }
+                return lexical::cast<string_type>(key);
+            }
+
+            key_type deserialize_key(string_type key) {
+                if (opts.hash_keys) {
+                    // todo: hash the keys
+                }
+                return lexical::cast<key_type>(key);
+            }
+
           public:
             template <typename ET>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
@@ -48,10 +63,8 @@ namespace webpp {
 
             path_type key_path(key_type const& key) {
                 path_type file = dir;
-                if (opts.hash_keys) {
-                    // todo: hash the keys
-                }
-                file /= lexical::cast<string_type>(key);
+                file /= serialize_key(key);
+                file += opts.extension;
                 return file;
             }
 
@@ -87,6 +100,10 @@ namespace webpp {
 
                 stl::error_code ec;
                 for (auto const& file : fs::directory_iterator{dir}) {
+                    if (file.path().extension() != opts.extension)
+                        continue;
+                    const key_type   key = deserialize_key(file.path().stem());
+                    const value_type value{}; // todo
                     if (predicate(stl::pair<key_type, value_type>{key, value})) {
                         fs::remove(file.path(), ec);
                         if (ec) {
