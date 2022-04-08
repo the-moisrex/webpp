@@ -31,7 +31,8 @@ namespace webpp {
 
           public:
 
-            template <EnabledTraits ET>
+            template <typename ET>
+            requires(EnabledTraits<ET> && !stl::same_as<ET, strategy const&> && !stl::same_as<ET, strategy &&>)
             constexpr strategy(ET&& et, stl::size_t max_size_value = 1024) noexcept
               : max_size{max_size_value},
                 gate{et} {}
@@ -43,7 +44,7 @@ namespace webpp {
             void clean_up() {
                 stl::size_t break_index = next_usage - max_size;
                 for (auto it = gate.begin(); it != gate.end(); ++it) {
-                    if (it->last_used_index < break_index) {
+                    if (it->second.last_used_index < break_index) {
                         gate.erase(it);
                     }
                 }
