@@ -19,4 +19,16 @@ TEST(Cache, LEUCacheTest) {
     EXPECT_EQ("value", c.get("one", ""));
     c.set("one", "new value");
     EXPECT_EQ("new value", c.get("one", ""));
+    c.set("one", "old value");
+    EXPECT_EQ("old value", c.get("one", ""));
+
+    lru_cache<default_traits, int> c2{t,3};
+    c2.set(1, "hello");
+    c2.set(1, "hello 2");
+    EXPECT_EQ("hello 2", c2.get(1).value());
+    c2.set(2, "two");
+    c2.set(3, "three");
+    c2.set(4, "four");
+    c2.set(5, "five");
+    EXPECT_FALSE(!!c2.get(1));
 }

@@ -163,7 +163,7 @@ namespace webpp::object {
     };
 
 
-    template <typename T, alloc::feature_pack FPack, AllocatorDescriptorList AllocDescList>
+    template <typename T, AllocatorDescriptorList AllocDescList>
     using general = object<T, alloc::general_features, AllocDescList>;
 
 

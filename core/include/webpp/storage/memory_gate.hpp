@@ -1,6 +1,7 @@
 #ifndef WEBPP_STORAGE_MEMORY_GATE_HPP
 #define WEBPP_STORAGE_MEMORY_GATE_HPP
 
+#include "../std/map.hpp"
 #include "../traits/default_traits.hpp"
 #include "../traits/enable_traits.hpp"
 #include "null_gate.hpp"
@@ -12,20 +13,17 @@ namespace webpp {
 
         template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT>
         struct storage_gate : enable_traits<TraitsType> {
-            using key_type           = KeyT;
-            using value_type         = ValueT;
-            using traits_type        = TraitsType;
-            using map_pair_type      = stl::pair<const key_type, value_type>;
-            using map_allocator_type = traits::general_allocator<traits_type, map_pair_type>;
-            using map_type = stl::map<key_type, value_type, stl::less<key_type>, map_allocator_type>;
-            using etraits  = enable_traits<TraitsType>;
+            using traits_type = TraitsType;
+            using map_type    = traits::general_object<traits_type, stl::map<KeyT, ValueT>>;
+            using key_type    = typename map_type::key_type;
+            using value_type  = typename map_type::mapped_type;
+            using etraits     = enable_traits<TraitsType>;
 
             template <typename ET>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
                          !stl::same_as<ET, storage_gate &&>)
-            storage_gate(ET&& et)
-              : etraits{et},
-                map{et.alloc_pack.template general_allocator<map_pair_type>()} {}
+            storage_gate(ET&& et) : etraits{et},
+                                    map(et) {}
 
             template <typename K>
             stl::optional<value_type> get(K&& key) {

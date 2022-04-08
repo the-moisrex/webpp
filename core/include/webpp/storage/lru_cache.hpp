@@ -71,12 +71,6 @@ namespace webpp {
 
                 val->last_used_index = next_usage++;
 
-                // gate.set(key,
-                //         entry_type{
-                //           .value           = val->value,  // value
-                //           .last_used_index = next_usage++ // next index
-                //         });
-
                 return val->value;
             }
         };
