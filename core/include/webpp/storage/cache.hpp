@@ -1,5 +1,5 @@
-#ifndef WEBPP_CACHE_CACHE_H
-#define WEBPP_CACHE_CACHE_H
+#ifndef WEBPP_CACHE_CACHE_HPP
+#define WEBPP_CACHE_CACHE_HPP
 
 #include "cache_concepts.hpp"
 
@@ -17,6 +17,7 @@ namespace webpp {
 
         struct cache_reault {};
 
+        // ctor
         using CS::template strategy<traits_type, key_type, value_type, SG>::strategy;
 
 
@@ -33,4 +34,4 @@ namespace webpp {
 
 } // namespace webpp
 
-#endif
+#endif // WEBPP_CACHE_CACHE_HPP

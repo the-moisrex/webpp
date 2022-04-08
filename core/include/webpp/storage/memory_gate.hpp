@@ -22,7 +22,7 @@ namespace webpp {
 
             template <EnabledTraits ET>
             storage_gate(ET&& et) : etraits{et},
-                                    map{et.alloc_pack.general_allocator()} {}
+                                    map{et.alloc_pack.template general_allocator<map_pair_type>()} {}
 
             template <typename V>
             stl::optional<value_type> get(V&& value) {
