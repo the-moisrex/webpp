@@ -16,13 +16,23 @@ namespace webpp {
 
     namespace details {
         template <typename S>
-        concept StorageGateType = requires(S g) {
+        concept StorageGateType = requires(S gate) {
             typename S::key_type;
             typename S::value_type;
             requires CacheKey<typename S::key_type>;
             requires CacheValue<typename S::value_type>;
             typename S::traits_type;
             requires Traits<typename S::traits_type>;
+
+            requires requires (typename S::key_type key, typename S::value_type value) {
+                     gate.erase(key);
+
+                     // I added the erase_if here and not in the "cache" because it might be faster (I think)
+                     // todo: check if we really need erase_if here
+                     gate.erase_if([](auto&&) -> bool {
+                         return true;
+                     });
+                 };
         };
 
 

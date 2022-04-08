@@ -10,6 +10,7 @@ namespace webpp {
 
     template <StorageGate ParentGate = null_gate>
     struct memory_gate {
+        using parent_gate_type = ParentGate;
 
         template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT>
         struct storage_gate : enable_traits<TraitsType> {
@@ -45,6 +46,11 @@ namespace webpp {
                 map.erase(stl::forward<K>(input));
             }
 
+            template <typename Pred>
+            void erase_if(Pred&& predicate) {
+                stl::erase_if(map, predicate);
+            }
+
             auto begin() const {
                 return map.begin();
             }
@@ -52,6 +58,15 @@ namespace webpp {
             auto end() const {
                 return map.begin();
             }
+
+            auto begin() {
+                return map.begin();
+            }
+
+            auto end() {
+                return map.begin();
+            }
+
 
 
             map_type map;

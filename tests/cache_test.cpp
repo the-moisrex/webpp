@@ -30,5 +30,9 @@ TEST(Cache, LEUCacheTest) {
     c2.set(3, "three");
     c2.set(4, "four");
     c2.set(5, "five");
-    EXPECT_FALSE(!!c2.get(1));
+    EXPECT_TRUE(!c2.get(1));
+    EXPECT_TRUE(!c2.get(2));
+    EXPECT_TRUE(!!c2.get(3));
+    EXPECT_TRUE(!!c2.get(4));
+    EXPECT_TRUE(!!c2.get(5));
 }

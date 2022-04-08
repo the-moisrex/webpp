@@ -32,7 +32,7 @@ namespace webpp {
           public:
             template <typename ET>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, strategy const&> &&
-                         !stl::same_as<ET, strategy&&>)
+                         !stl::same_as<ET, strategy &&>)
             constexpr strategy(ET&& et, stl::size_t max_size_value = 1024) noexcept
               : max_size{max_size_value},
                 gate{et} {}
@@ -42,23 +42,22 @@ namespace webpp {
                 gate{input_gate} {}
 
             void clean_up() {
+                if (next_usage <= max_size)
+                    return;
                 stl::size_t break_index = next_usage - max_size;
-                for (auto it = gate.begin(); it != gate.end(); ++it) {
-                    if (it->second.last_used_index < break_index) {
-                        gate.erase(it);
-                    }
-                }
+                gate.erase_if([break_index](auto const& item) noexcept {
+                    auto const& [_, value] = item;
+                    return value.last_used_index < break_index;
+                });
             }
 
             template <typename K, typename V>
-                requires(stl::convertible_to<K, key_type>&&    // it's a key
-                           stl::convertible_to<V, value_type>) // it's a value
+                requires(stl::convertible_to<K, key_type> && // it's a key
+                         stl::convertible_to<V, value_type>) // it's a value
             void set(K&& key, V&& value) {
                 gate.set(stl::forward<K>(key),
                          entry_type{.value = stl::forward<V>(value), .last_used_index = next_usage++});
-                if (next_usage >= max_size) {
-                    clean_up();
-                }
+                clean_up();
             }
 
 

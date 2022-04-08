@@ -24,6 +24,9 @@ namespace webpp {
 
             template <typename K>
             void erase([[maybe_unused]] K&& input) {}
+
+            template <typename Pred>
+            void erase_if([[maybe_unused]] Pred&& predicate) {}
         };
     };
 

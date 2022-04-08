@@ -23,6 +23,9 @@ namespace webpp {
 
             template <typename K>
             void erase(K&& input) {}
+
+            template <typename Pred>
+            void erase_if(Pred&& predicate) {}
         };
     };
 
