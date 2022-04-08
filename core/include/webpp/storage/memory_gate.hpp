@@ -27,7 +27,7 @@ namespace webpp {
             template <typename V>
             stl::optional<value_type> get(V&& value) {
                 if (auto it = map.find(stl::forward<V>(value)); it != map.end()) {
-                    return *it;
+                    return it->second;
                 }
                 return stl::nullopt;
             }
