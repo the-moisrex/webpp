@@ -27,9 +27,9 @@ namespace webpp {
               : etraits{et},
                 map{et.alloc_pack.template general_allocator<map_pair_type>()} {}
 
-            template <typename V>
-            stl::optional<value_type> get(V&& value) {
-                if (auto it = map.find(stl::forward<V>(value)); it != map.end()) {
+            template <typename K>
+            stl::optional<value_type> get(K&& key) {
+                if (auto it = map.find(stl::forward<K>(key)); it != map.end()) {
                     return it->second;
                 }
                 return stl::nullopt;
@@ -37,7 +37,7 @@ namespace webpp {
 
             template <typename K, typename V>
             void set(K&& key, V&& value) {
-                map.emplace(stl::forward<K>(key), stl::forward<V>(value));
+                map.insert_or_assign(stl::forward<K>(key), stl::forward<V>(value));
             }
 
 

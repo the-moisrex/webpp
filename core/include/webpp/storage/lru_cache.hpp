@@ -25,14 +25,14 @@ namespace webpp {
 
 
           private:
-            stl::size_t        max_size;
-            stl::size_t        next_usage = 1; // it's essentially a timestamp
+            stl::size_t       max_size;
+            stl::size_t       next_usage = 1; // it's essentially a timestamp
             storage_gate_type gate;
 
           public:
-
             template <typename ET>
-            requires(EnabledTraits<ET> && !stl::same_as<ET, strategy const&> && !stl::same_as<ET, strategy &&>)
+                requires(EnabledTraits<ET> && !stl::same_as<ET, strategy const&> &&
+                         !stl::same_as<ET, strategy &&>)
             constexpr strategy(ET&& et, stl::size_t max_size_value = 1024) noexcept
               : max_size{max_size_value},
                 gate{et} {}
@@ -51,9 +51,9 @@ namespace webpp {
             }
 
             template <typename K, typename V>
-            requires(stl::convertible_to<K, key_type>&&    // it's a key
-                       stl::convertible_to<V, value_type>) // it's a value
-              void set(K&& key, V&& value) {
+                requires(stl::convertible_to<K, key_type> && // it's a key
+                         stl::convertible_to<V, value_type>) // it's a value
+            void set(K&& key, V&& value) {
                 gate.set(stl::forward<K>(key),
                          entry_type{.value = stl::forward<V>(value), .last_used_index = next_usage++});
                 if (next_usage >= max_size) {
@@ -63,15 +63,19 @@ namespace webpp {
 
 
             template <typename K>
-            requires(stl::convertible_to<K, key_type>) // it's a key
-              stl::optional<value_type> get(K&& key) {
+                requires(stl::convertible_to<K, key_type>) // it's a key
+            stl::optional<value_type> get(K&& key) {
                 auto val = gate.get(key);
                 if (!val)
                     return stl::nullopt;
 
-                auto nval            = *val;
-                nval.last_used_index = next_usage++;
-                gate.set(key, stl::move(nval));
+                val->last_used_index = next_usage++;
+
+                // gate.set(key,
+                //         entry_type{
+                //           .value           = val->value,  // value
+                //           .last_used_index = next_usage++ // next index
+                //         });
 
                 return val->value;
             }
