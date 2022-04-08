@@ -22,11 +22,11 @@ namespace webpp {
         using string = stl::basic_string<char_type, stl::char_traits<char_type>, AllocT>;
     };
 
-    using std_traits    = basic_std_traits<char>;
-    using std_wtraits   = basic_std_traits<wchar_t>;
-    using std_u8traits  = basic_std_traits<char8_t>;
-    using std_u16traits = basic_std_traits<char16_t>;
-    using std_u32traits = basic_std_traits<char32_t>;
+    struct std_traits : basic_std_traits<char> {};
+    struct std_wtraits : basic_std_traits<wchar_t> {};
+    struct std_u8traits : basic_std_traits<char8_t> {};
+    struct std_u16traits : basic_std_traits<char16_t> {};
+    struct std_u32traits : basic_std_traits<char32_t> {};
 
 } // namespace webpp
 

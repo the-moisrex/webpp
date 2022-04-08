@@ -23,10 +23,8 @@ namespace webpp {
 
       public:
         template <typename T>
-        requires(
-          stl::is_invocable_v<T&, Args...> &&
-          !stl::is_same_v<stl::decay_t<T>, function_ref>) constexpr explicit function_ref(T&& x) noexcept
-          : _ptr{(void*) stl::addressof(x)} {
+            requires(stl::is_invocable_v<T&, Args...> && !stl::is_same_v<stl::decay_t<T>, function_ref>)
+        constexpr explicit function_ref(T&& x) noexcept : _ptr{(void*) stl::addressof(x)} {
             erased_func =
               [](void* ptr, Args... xs) noexcept(noexcept(
                 (*reinterpret_cast<stl::add_pointer_t<T>>(ptr))(stl::forward<Args>(xs)...))) -> Return {
@@ -169,12 +167,12 @@ namespace webpp {
 #define MEMBER_FUNCTION_POINTER_IMPL_no_ref
 #define MEMBER_FUNCTION_POINTER_IMPL_no_move
 #define MEMBER_FUNCTION_POINTER_IMPL_no_volatile
-#define MEMBER_FUNCTION_POINTER_IMPL_noexcept    noexcept
-#define MEMBER_FUNCTION_POINTER_IMPL_const       const
-#define MEMBER_FUNCTION_POINTER_IMPL_ref         &
-#define MEMBER_FUNCTION_POINTER_IMPL_move        &&
-#define MEMBER_FUNCTION_POINTER_IMPL_volatile    volatile
-#define MEMBER_FUNCTION_POINTER_IMPL_OPT(OPTION) MEMBER_FUNCTION_POINTER_IMPL_##OPTION
+#define MEMBER_FUNCTION_POINTER_IMPL_noexcept       noexcept
+#define MEMBER_FUNCTION_POINTER_IMPL_const          const
+#define MEMBER_FUNCTION_POINTER_IMPL_ref            &
+#define MEMBER_FUNCTION_POINTER_IMPL_move           &&
+#define MEMBER_FUNCTION_POINTER_IMPL_volatile       volatile
+#define MEMBER_FUNCTION_POINTER_IMPL_OPT(OPTION)    MEMBER_FUNCTION_POINTER_IMPL_##OPTION
 
 #define MEMBER_FUNCTION_POINTER_IMPL_IF_no_noexcept false
 #define MEMBER_FUNCTION_POINTER_IMPL_IF_no_const    false

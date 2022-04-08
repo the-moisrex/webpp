@@ -1,14 +1,12 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic   ignored "bugprone-macro-parentheses"
 // Created by moisrex on 9/27/20.
 
 #ifndef WEBPP_TYPE_TRAITS_HPP
-#    define WEBPP_TYPE_TRAITS_HPP
+#define WEBPP_TYPE_TRAITS_HPP
 
-#    include "std.hpp"
+#include "std.hpp"
 
-#    include <type_traits>
-#    include <utility> // for move and forward
+#include <type_traits>
+#include <utility> // for move and forward
 
 namespace webpp::istl {
 
@@ -311,50 +309,48 @@ namespace webpp::istl {
         struct parameter_replacer;
 
 
-#    define WEBPP_REMOVE_CVREF(CVREF)                                                                       \
-        template <template <typename...> typename T,                                                        \
-                  template <typename>                                                                       \
-                  typename Replacer,                                                                        \
-                  typename... Heads,                                                                        \
-                  typename This,                                                                            \
-                  typename... Tails>                                                                        \
-        struct parameter_replacer<T, Replacer, fake_tuple<Heads...>, fake_tuple<This CVREF, Tails...>>      \
-          : parameter_replacer<                                                                             \
-              T,                                                                                            \
-              Replacer,                                                                                     \
-              fake_tuple<Heads...,                                                                          \
-                         stl::conditional_t<Replacer<This>::value, typename Replacer<This>::type, This>>    \
-                CVREF,                                                                                      \
-              fake_tuple<Tails...>> {};                                                                     \
+#define WEBPP_REMOVE_CVREF(CVREF)                                                                           \
+    template <template <typename...> typename T,                                                            \
+              template <typename>                                                                           \
+              typename Replacer,                                                                            \
+              typename... Heads,                                                                            \
+              typename This,                                                                                \
+              typename... Tails>                                                                            \
+    struct parameter_replacer<T, Replacer, fake_tuple<Heads...>, fake_tuple<This CVREF, Tails...>>          \
+      : parameter_replacer<                                                                                 \
+          T,                                                                                                \
+          Replacer,                                                                                         \
+          fake_tuple<Heads...,                                                                              \
+                     stl::conditional_t<Replacer<This>::value, typename Replacer<This>::type, This> CVREF>, \
+          fake_tuple<Tails...>> {};                                                                         \
                                                                                                             \
                                                                                                             \
-        template <template <typename...> typename T,                                                        \
-                  template <typename>                                                                       \
-                  typename Replacer,                                                                        \
-                  typename... Heads,                                                                        \
-                  template <typename...>                                                                    \
-                  typename This,                                                                            \
-                  typename... Tails,                                                                        \
-                  typename... ThisArgs>                                                                     \
-        struct parameter_replacer<T,                                                                        \
-                                  Replacer,                                                                 \
-                                  fake_tuple<Heads...>,                                                     \
-                                  fake_tuple<This<ThisArgs...> CVREF, Tails...>>                            \
-          : parameter_replacer<                                                                             \
-              T,                                                                                            \
-              Replacer,                                                                                     \
-              fake_tuple<                                                                                   \
-                Heads...,                                                                                   \
-                stl::conditional_t<                                                                         \
-                  Replacer<                                                                                 \
-                    typename parameter_replacer<This, Replacer, fake_tuple<>, fake_tuple<ThisArgs...>>::    \
-                      type>::value,                                                                         \
-                  typename Replacer<                                                                        \
-                    typename parameter_replacer<This, Replacer, fake_tuple<>, fake_tuple<ThisArgs...>>::    \
-                      type>::type,                                                                          \
-                  typename parameter_replacer<This, Replacer, fake_tuple<>, fake_tuple<ThisArgs...>>::type> \
-                  CVREF>,                                                                                   \
-              fake_tuple<Tails...>> {};
+    template <template <typename...> typename T,                                                            \
+              template <typename>                                                                           \
+              typename Replacer,                                                                            \
+              typename... Heads,                                                                            \
+              template <typename...>                                                                        \
+              typename This,                                                                                \
+              typename... Tails,                                                                            \
+              typename... ThisArgs>                                                                         \
+    struct parameter_replacer<T,                                                                            \
+                              Replacer,                                                                     \
+                              fake_tuple<Heads...>,                                                         \
+                              fake_tuple<This<ThisArgs...> CVREF, Tails...>>                                \
+      : parameter_replacer<                                                                                 \
+          T,                                                                                                \
+          Replacer,                                                                                         \
+          fake_tuple<                                                                                       \
+            Heads...,                                                                                       \
+            stl::conditional_t<                                                                             \
+              Replacer<typename parameter_replacer<This, Replacer, fake_tuple<>, fake_tuple<ThisArgs...>>:: \
+                         type>::value,                                                                      \
+              typename Replacer<                                                                            \
+                typename parameter_replacer<This, Replacer, fake_tuple<>, fake_tuple<ThisArgs...>>::type>:: \
+                type,                                                                                       \
+              typename parameter_replacer<This, Replacer, fake_tuple<>, fake_tuple<ThisArgs...>>::type>     \
+              CVREF>,                                                                                       \
+          fake_tuple<Tails...>> {};
 
 
         WEBPP_REMOVE_CVREF()
@@ -370,7 +366,7 @@ namespace webpp::istl {
         WEBPP_REMOVE_CVREF(const volatile&)
         WEBPP_REMOVE_CVREF(const volatile&&)
 
-#    undef WEBPP_REMOVE_CVREF
+#undef WEBPP_REMOVE_CVREF
 
         template <template <typename...> typename T, template <typename> typename Replacer, typename... Heads>
         struct parameter_replacer<T, Replacer, fake_tuple<Heads...>, fake_tuple<>> {
@@ -532,10 +528,10 @@ namespace webpp::istl {
      *   Replacer<CVREF_T>::type    -> the type that we should replace it with
      */
     template <typename T, template <typename> typename Replacer>
-    requires requires {
-        typename Replacer<void>::type;
-        {Replacer<void>::value};
-    }
+        requires requires {
+            typename Replacer<void>::type;
+            {Replacer<void>::value};
+        }
     using recursive_parameter_replacer = typename details::replace_parameters<T, Replacer>::type;
 
 
@@ -602,7 +598,8 @@ namespace webpp::istl {
     };
 
     template <typename TupleT, typename T, stl::size_t I>
-    requires(parameter_count<TupleT> > 0) struct contains_parameter_type<TupleT, T, I> {
+        requires(parameter_count<TupleT> > 0)
+    struct contains_parameter_type<TupleT, T, I> {
         static constexpr bool value =
           stl::is_same_v<nth_parameter<I, TupleT>, T> || contains_parameter_type<TupleT, T, I - 1>::value;
     };
@@ -659,12 +656,9 @@ namespace webpp::istl {
                   typename... Tails,
                   template <typename...>
                   typename TupleType>
-        requires(Concept<This>::value) struct filter_parameters_impl<Concept,
-                                                                     TupleType<This, Heads...>,
-                                                                     TupleType<Tails...>,
-                                                                     TupleType>
-          : filter_parameters_impl<Concept, TupleType<Heads...>, TupleType<Tails..., This>, TupleType> {
-        };
+            requires(Concept<This>::value)
+        struct filter_parameters_impl<Concept, TupleType<This, Heads...>, TupleType<Tails...>, TupleType>
+          : filter_parameters_impl<Concept, TupleType<Heads...>, TupleType<Tails..., This>, TupleType> {};
 
         // remove the first one
         template <template <typename...> typename Concept,
@@ -673,12 +667,9 @@ namespace webpp::istl {
                   typename... Tails,
                   template <typename...>
                   typename TupleType>
-        requires(!Concept<This>::value) struct filter_parameters_impl<Concept,
-                                                                      TupleType<This, Heads...>,
-                                                                      TupleType<Tails...>,
-                                                                      TupleType>
-          : filter_parameters_impl<Concept, TupleType<Heads...>, TupleType<Tails...>, TupleType> {
-        };
+            requires(!Concept<This>::value)
+        struct filter_parameters_impl<Concept, TupleType<This, Heads...>, TupleType<Tails...>, TupleType>
+          : filter_parameters_impl<Concept, TupleType<Heads...>, TupleType<Tails...>, TupleType> {};
 
         // We're at the end of the line, no Heads left to check
         template <template <typename...> typename Concept,
@@ -844,17 +835,17 @@ namespace webpp::istl {
 
 
     // initially from: http://open-std.org/JTC1/SC22/WG21/docs/papers/2020/p2098r1.pdf
-#    define WEBPP_COMMA           ,
-#    define WEBPP_SINGLE_ARG(...) __VA_ARGS__
-#    define define_is_specialization_of(name, types, types_with_names, names) \
-        template <typename T, template <types> typename Primary>              \
-        struct name : stl::false_type {};                                     \
-                                                                              \
-        template <template <types> typename Primary, types_with_names>        \
-        struct name<Primary<names>, Primary> : stl::true_type {};             \
-                                                                              \
-        template <typename T, template <types> typename Primary>              \
-        inline constexpr bool name##_v = WEBPP_SINGLE_ARG(name)<T, Primary>::value;
+#define WEBPP_COMMA           ,
+#define WEBPP_SINGLE_ARG(...) __VA_ARGS__
+#define define_is_specialization_of(name, types, types_with_names, names) \
+    template <typename T, template <types> typename Primary>              \
+    struct name : stl::false_type {};                                     \
+                                                                          \
+    template <template <types> typename Primary, types_with_names>        \
+    struct name<Primary<names>, Primary> : stl::true_type {};             \
+                                                                          \
+    template <typename T, template <types> typename Primary>              \
+    inline constexpr bool name##_v = WEBPP_SINGLE_ARG(name)<T, Primary>::value;
 
     define_is_specialization_of(is_specialization_of, typename..., typename... Args, Args...)
 
@@ -928,4 +919,3 @@ namespace webpp::istl {
 } // namespace webpp::istl
 
 #endif // WEBPP_TYPE_TRAITS_HPP
-#pragma clang diagnostic pop

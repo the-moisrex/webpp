@@ -26,8 +26,8 @@ namespace webpp::http {
         constexpr version() noexcept = default;
 
         template <typename T>
-        requires(!stl::same_as<stl::remove_cvref_t<T>, version> &&
-                 istl::StringViewifiable<T>) constexpr version(T&& str) noexcept
+            requires(!stl::same_as<stl::remove_cvref_t<T>, version> && istl::StringViewifiable<T>)
+        constexpr version(T&& str) noexcept
           : value(parse_string(istl::string_viewify(stl::forward<decltype(str)>(str)))) {}
 
         constexpr version(version const&) noexcept = default;

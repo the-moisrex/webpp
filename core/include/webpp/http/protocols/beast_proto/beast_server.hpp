@@ -300,11 +300,11 @@ namespace webpp::http::beast_proto {
         beast_server& operator=(beast_server const&) = delete;
 
         template <typename ET>
-        requires(EnabledTraits<stl::remove_cvref_t<ET>>)
-          beast_server(ET&&            et,
-                       app_wrapper_ref the_app_ref,
-                       stl::size_t     http_worker_count = 20,
-                       stl::size_t     concurrency_hint  = stl::thread::hardware_concurrency())
+            requires(EnabledTraits<stl::remove_cvref_t<ET>>)
+        beast_server(ET&&            et,
+                     app_wrapper_ref the_app_ref,
+                     stl::size_t     http_worker_count = 20,
+                     stl::size_t     concurrency_hint  = stl::thread::hardware_concurrency())
           : etraits{stl::forward<ET>(et)},
             io{static_cast<int>(concurrency_hint)},
             acceptor{asio::make_strand(io)},

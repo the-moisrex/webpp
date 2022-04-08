@@ -337,9 +337,8 @@ namespace webpp::uri {
          * Replace the specified part with the specified replacement
          */
         template <typename RT>
-        requires(istl::StringifiableOf<string_type, RT>) void replace_value(stl::size_t start,
-                                                                            stl::size_t len,
-                                                                            RT&& _replacement) noexcept {
+            requires(istl::StringifiableOf<string_type, RT>)
+        void replace_value(stl::size_t start, stl::size_t len, RT&& _replacement) noexcept {
             static_assert(is_mutable(), "You cannot change a const_uri (string_view is not modifiable)");
             auto replacement =
               istl::stringify_of<string_type>(stl::forward<RT>(_replacement), this->get_allocator());
@@ -1342,18 +1341,20 @@ namespace webpp::uri {
          * @brief set path
          */
         template <typename Container>
-        requires(!istl::StringViewifiable<Container> && requires(Container c) {
-            c.begin();
-            c.end();
-        }) auto& path(const Container& m_path) noexcept {
+            requires(!istl::StringViewifiable<Container> && requires(Container c) {
+                c.begin();
+                c.end();
+            })
+        auto& path(const Container& m_path) noexcept {
             return path(m_path.begin(), m_path.end());
         }
 
         template <typename Container>
-        requires(!istl::StringViewifiable<Container> && requires(Container c) {
-            c.begin();
-            c.end();
-        }) auto& path_raw(const Container& m_path) noexcept {
+            requires(!istl::StringViewifiable<Container> && requires(Container c) {
+                c.begin();
+                c.end();
+            })
+        auto& path_raw(const Container& m_path) noexcept {
             return path_raw(m_path.begin(), m_path.end());
         }
 

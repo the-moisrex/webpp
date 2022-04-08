@@ -13,7 +13,8 @@ namespace webpp::flags {
     static constexpr stl::uint8_t none = 0u;
 
     template <typename T>
-    requires(stl::is_unsigned_v<T>) [[nodiscard]] constexpr T item(T index) noexcept {
+        requires(stl::is_unsigned_v<T>)
+    [[nodiscard]] constexpr T item(T index) noexcept {
         return static_cast<T>(0x1u << index);
     }
 
@@ -61,11 +62,13 @@ namespace webpp::flags {
         constexpr manager& operator=(manager&&) noexcept = default;
 
         template <typename... T>
-        requires(stl::is_same_v<stl::remove_cvref_t<T>, base_type>&&...) constexpr manager(T... val) noexcept
+            requires(stl::is_same_v<stl::remove_cvref_t<T>, base_type>&&...)
+        constexpr manager(T... val) noexcept
           : value{static_cast<base_type>((base_type(0) | ... | static_cast<base_type>(val)))} {}
 
         template <typename... T>
-        requires((stl::is_same_v<stl::remove_cvref_t<T>, type> && ...)) constexpr manager(T... val) noexcept
+            requires((stl::is_same_v<stl::remove_cvref_t<T>, type> && ...))
+        constexpr manager(T... val) noexcept
           : value{static_cast<base_type>((base_type(0) | ... | value_of(val)))} {}
 
         operator base_type() const noexcept {

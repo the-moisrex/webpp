@@ -423,14 +423,14 @@ namespace webpp::alloc {
 
 
         template <typename ResourceType>
-            requires(!ResourceDescriptor<ResourceType> && has_resource_object<ResourceType>) [
-              [nodiscard]] constexpr auto& get_resource() noexcept {
+            requires(!ResourceDescriptor<ResourceType> && has_resource_object<ResourceType>)
+        [[nodiscard]] constexpr auto& get_resource() noexcept {
             return stl::get<ResourceType>(resources);
         }
 
         template <ResourceDescriptor ResDescType>
-            requires(has_resource_descriptor_object<ResDescType>) [
-              [nodiscard]] constexpr auto& get_resource() noexcept {
+            requires(has_resource_descriptor_object<ResDescType>)
+        [[nodiscard]] constexpr auto& get_resource() noexcept {
             return get_resource<descriptors::storage<ResDescType>>();
         }
 
@@ -449,16 +449,16 @@ namespace webpp::alloc {
         }
 
         template <Allocator AllocType, typename ResType>
-            requires(has_allocator<AllocType>) [
-              [nodiscard]] constexpr auto get_allocator(ResType& res) noexcept {
+            requires(has_allocator<AllocType>)
+        [[nodiscard]] constexpr auto get_allocator(ResType& res) noexcept {
             using resource_descriptor = resource_descriptor_finder<allocator_descriptors, AllocType, ResType>;
             using value_type          = typename AllocType::value_type;
             return descriptors::construct_allocator<resource_descriptor, value_type>(res);
         }
 
         template <Allocator AllocType, typename ResType>
-            requires(has_allocator<AllocType>) [
-              [nodiscard]] constexpr auto get_allocator() noexcept {
+            requires(has_allocator<AllocType>)
+        [[nodiscard]] constexpr auto get_allocator() noexcept {
             using resource_descriptor = resource_descriptor_finder<allocator_descriptors, AllocType, ResType>;
             using value_type          = typename AllocType::value_type;
             if constexpr (!stl::is_void_v<descriptors::storage<resource_descriptor>>) {
@@ -483,8 +483,8 @@ namespace webpp::alloc {
         }
 
         template <ResourceDescriptor ResDescType, typename T = stl::byte>
-            requires(has_resource_descriptor<ResDescType>) [
-              [nodiscard]] constexpr auto get_allocator() noexcept {
+            requires(has_resource_descriptor<ResDescType>)
+        [[nodiscard]] constexpr auto get_allocator() noexcept {
             using res_type = alloc::descriptors::storage<ResDescType>;
             if constexpr (has_resource<res_type>) {
                 auto& res                = get_resource<res_type>();
@@ -646,11 +646,10 @@ namespace webpp::alloc {
 
 
     template <typename AllocPackType>
-    concept AllocatorPack =
-      requires {
-          typename AllocPackType::allocator_descriptors;
-          requires stl::same_as<AllocPackType, allocator_pack<typename AllocPackType::allocator_descriptors>>;
-      };
+    concept AllocatorPack = requires {
+        typename AllocPackType::allocator_descriptors;
+        requires stl::same_as<AllocPackType, allocator_pack<typename AllocPackType::allocator_descriptors>>;
+    };
 
 
 } // namespace webpp::alloc

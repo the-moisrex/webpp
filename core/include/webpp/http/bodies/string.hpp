@@ -58,10 +58,9 @@ namespace webpp::http {
               : content{str, alloc} {}
 
             template <typename... Args>
-            requires(sizeof...(Args) > 0 &&
-                     requires(Args... args) { string_type{stl::forward<Args>(args)...}; }) // string args
-              constexpr string_response_body_extension(Args&&... args)
-              : content{stl::forward<Args>(args)...} {}
+                requires(sizeof...(Args) > 0 &&
+                         requires(Args... args) { string_type{stl::forward<Args>(args)...}; }) // string args
+            constexpr string_response_body_extension(Args&&... args) : content{stl::forward<Args>(args)...} {}
 
             /**
              * @brief Get a reference to the body's string

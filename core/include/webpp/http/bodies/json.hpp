@@ -36,11 +36,11 @@ namespace webpp::http {
             using BodyType::BodyType;
 
             template <EnabledTraits ET, json::JSONDocument DocT>
-            requires requires(ET et, DocT doc) {
-                super{
-                  et,
-                  doc.template uglified<string_type>(et.alloc_pack.template general_allocator<char_type>())};
-            }
+                requires requires(ET et, DocT doc) {
+                    super{et,
+                          doc.template uglified<string_type>(
+                            et.alloc_pack.template general_allocator<char_type>())};
+                }
             constexpr json_response_body_extension(ET&& et, DocT const& doc)
               : super{et,
                       doc.template uglified<string_type>(
@@ -48,10 +48,10 @@ namespace webpp::http {
 
 
             template <EnabledTraits ET, json::JSONDocument DocT>
-            requires requires(ET et, DocT doc) {
-                super{
-                  doc.template uglified<string_type>(et.alloc_pack.template general_allocator<char_type>())};
-            }
+                requires requires(ET et, DocT doc) {
+                    super{doc.template uglified<string_type>(
+                      et.alloc_pack.template general_allocator<char_type>())};
+                }
             constexpr json_response_body_extension(ET&& et, DocT const& doc)
               : super{doc.template uglified<string_type>(
                   et.alloc_pack.template general_allocator<char_type>())} {}
@@ -115,9 +115,9 @@ namespace webpp::http {
 
             // pass it to the body
             template <EnabledTraits ET, json::JSONDocument DocT>
-            requires requires(ET et, DocT doc) {
-                ResType{et, body_type{et, doc}};
-            }
+                requires requires(ET et, DocT doc) {
+                    ResType{et, body_type{et, doc}};
+                }
             constexpr json_response_extension(ET&& et, DocT const& doc) noexcept
               : ResType{et, body_type{et, doc}} {
                 this->add_headers();
@@ -126,9 +126,9 @@ namespace webpp::http {
 
 
             template <EnabledTraits ET, json::JSONDocument DocT>
-            requires requires(ET et, DocT doc) {
-                ResType{body_type{et, doc}};
-            }
+                requires requires(ET et, DocT doc) {
+                    ResType{body_type{et, doc}};
+                }
             constexpr json_response_extension(ET&& et, DocT const& doc) noexcept
               : ResType{body_type{et, doc}} {
                 this->add_headers();

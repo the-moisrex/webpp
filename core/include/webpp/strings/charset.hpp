@@ -66,9 +66,8 @@ namespace webpp {
           : super{to_array(stl::make_index_sequence<N>(), str)} {}
 
         template <typename... T>
-        requires((stl::same_as<T, value_type> && ...) &&
-                 sizeof...(T) <= N) constexpr charset(T&&... data) noexcept
-          : super{stl::forward<T>(data)...} {}
+            requires((stl::same_as<T, value_type> && ...) && sizeof...(T) <= N)
+        constexpr charset(T&&... data) noexcept : super{stl::forward<T>(data)...} {}
 
         /**
          * This constructs a character set that contains all the
@@ -159,8 +158,8 @@ namespace webpp {
      * Type deduction. I stole this from a type deduction from std::array
      */
     template <typename Tp, typename... Up>
-    requires((stl::same_as<Tp, Up> && ...)) // T and Us should be same
-      charset(Tp, Up...)
+        requires((stl::same_as<Tp, Up> && ...)) // T and Us should be same
+    charset(Tp, Up...)
     ->charset<Tp, (1 + sizeof...(Up))>;
 
     template <istl::CharType CharT = char, stl::size_t N>

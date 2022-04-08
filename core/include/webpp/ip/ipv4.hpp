@@ -216,9 +216,8 @@ namespace webpp {
         constexpr ipv4(ipv4&& ip) = default;
 
         template <typename T>
-        requires(!stl::same_as<stl::remove_cvref_t<T>, ipv4> &&
-                 istl::StringViewifiable<T>) constexpr explicit ipv4(T&& ip) noexcept
-          : _prefix(255) {
+            requires(!stl::same_as<stl::remove_cvref_t<T>, ipv4> && istl::StringViewifiable<T>)
+        constexpr explicit ipv4(T&& ip) noexcept : _prefix(255) {
             parse(stl::forward<decltype(ip)>(ip));
         }
 

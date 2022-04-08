@@ -93,7 +93,8 @@ namespace webpp::is {
      * @return
      */
     template <typename Integer>
-    requires(stl::is_integral_v<Integer>) [[nodiscard]] constexpr bool subnet_octet(Integer o) noexcept {
+        requires(stl::is_integral_v<Integer>)
+    [[nodiscard]] constexpr bool subnet_octet(Integer o) noexcept {
         constexpr auto mask = static_cast<Integer>(1) << ((sizeof(Integer) * 8) - 1);
         while ((o & mask) == mask)
             o <<= 1;

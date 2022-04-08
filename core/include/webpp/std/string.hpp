@@ -82,8 +82,8 @@ namespace webpp::istl {
 
 
     template <typename StrT, typename Strifiable>
-    requires(StringifiableOf<StrT, Strifiable>)
-      [[nodiscard]] constexpr auto stringify_of(Strifiable&& str, auto const& allocator) noexcept {
+        requires(StringifiableOf<StrT, Strifiable>)
+    [[nodiscard]] constexpr auto stringify_of(Strifiable&& str, auto const& allocator) noexcept {
         if constexpr (String<Strifiable> &&
                       (stl::is_same_v<stl::remove_cvref_t<StrT>, stl::remove_cvref_t<Strifiable>> ||
                        stl::is_convertible_v<stl::remove_cvref_t<StrT>, stl::remove_cvref_t<Strifiable>>) ) {
@@ -111,8 +111,8 @@ namespace webpp::istl {
     }
 
     template <template <typename...> typename StrT, typename Strifiable, typename AllocType>
-    requires(StringifiableOfTemplate<StrT, Strifiable>)
-      [[nodiscard]] constexpr auto stringify_of(Strifiable&& str, AllocType const& allocator) noexcept {
+        requires(StringifiableOfTemplate<StrT, Strifiable>)
+    [[nodiscard]] constexpr auto stringify_of(Strifiable&& str, AllocType const& allocator) noexcept {
         using alloc_type   = stl::add_lvalue_reference_t<stl::add_const_t<AllocType>>;
         using deduced_type = details::string::deduced_type<StrT, Strifiable, alloc_type>;
         return stringify_of<deduced_type>(stl::forward<Strifiable>(str), allocator);

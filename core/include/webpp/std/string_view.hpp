@@ -101,8 +101,8 @@ namespace webpp::istl {
      * Convert the string value specified to a "string view" of type StrViewT
      */
     template <typename StrViewT, typename StrT>
-    requires(StringViewifiableOf<StrViewT, StrT>) [[nodiscard]] constexpr StrViewT
-      string_viewify_of(StrT&& str) noexcept {
+        requires(StringViewifiableOf<StrViewT, StrT>)
+    [[nodiscard]] constexpr StrViewT string_viewify_of(StrT&& str) noexcept {
         if constexpr (stl::is_convertible_v<StrT, StrViewT>) {
             return str;
         } else if constexpr (requires { StrViewT{str}; }) {
@@ -135,8 +135,8 @@ namespace webpp::istl {
      * @example string_viewify_of<std::basic_string_view>("convert to string view")
      */
     template <template <typename...> typename StrViewT, typename StrT>
-    requires(StringViewifiableOfTemplate<StrViewT, StrT>)
-      [[nodiscard]] constexpr auto string_viewify_of(StrT&& str) noexcept {
+        requires(StringViewifiableOfTemplate<StrViewT, StrT>)
+    [[nodiscard]] constexpr auto string_viewify_of(StrT&& str) noexcept {
         using deduced_type = details::string_view::deduced_type<StrViewT, StrT>;
         return string_viewify_of<deduced_type, StrT>(stl::forward<StrT>(str));
     }
