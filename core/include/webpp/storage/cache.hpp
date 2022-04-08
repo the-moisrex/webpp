@@ -7,6 +7,12 @@
 namespace webpp {
 
 
+    /**
+     * This class is mother of all caches.
+     *
+     * Cache Strategy: The type of cache; e.g. LRU, Expired LRU, ...
+     * Storage Gate:   How the cache data is stored (and where); e.g. Memory, File, ...
+     */
     template <Traits TraitsType, CacheKey KeyT, CacheValue ValT, CacheStrategy CS, StorageGate SG>
     struct cache : public CS::template strategy<TraitsType, KeyT, ValT, SG> {
         using key_type          = KeyT;
@@ -15,7 +21,7 @@ namespace webpp {
         using storage_gate_type = typename SG::template storage_gate<traits_type, key_type, value_type>;
         using strategy_type     = typename CS::template strategy<traits_type, key_type, value_type, SG>;
 
-        struct cache_reault {};
+        struct cache_result {};
 
         // ctor
         using CS::template strategy<traits_type, key_type, value_type, SG>::strategy;
