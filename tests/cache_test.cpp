@@ -17,4 +17,6 @@ TEST(Cache, LEUCacheTest) {
     lru_cache<>                         c(t);
     c.set("one", "value");
     EXPECT_EQ("value", c.get("one", ""));
+    c.set("one", "new value");
+    EXPECT_EQ("new value", c.get("one", ""));
 }
