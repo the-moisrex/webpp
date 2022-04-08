@@ -20,7 +20,8 @@ namespace webpp {
             using map_type = stl::map<key_type, value_type, stl::less<key_type>, map_allocator_type>;
             using etraits  = enable_traits<TraitsType>;
 
-            template <EnabledTraits ET>
+            template <typename ET>
+            requires(EnabledTraits<ET> && !stl::same_as<ET, strategy const&> && !stl::same_as<ET, strategy &&>)
             storage_gate(ET&& et) : etraits{et},
                                     map{et.alloc_pack.template general_allocator<map_pair_type>()} {}
 
