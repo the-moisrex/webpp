@@ -21,10 +21,10 @@ namespace webpp {
 
             template <typename ET>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
-                         !stl::same_as<ET, storage_gate&&>)
+                         !stl::same_as<ET, storage_gate &&>)
             storage_gate(ET&& et) // NOLINT(cppcoreguidelines-pro-type-member-init)
               : etraits{et},
-                map(et.alloc_pack) {}
+                map(et.alloc_pack, et.alloc_pack.general_resource()) {}
 
             template <typename K>
             stl::optional<value_type> get(K&& key) {
