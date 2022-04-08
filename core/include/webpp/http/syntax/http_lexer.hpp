@@ -93,6 +93,6 @@ namespace webpp::http {
         }
     };
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_HTTP_LEXER_HPP

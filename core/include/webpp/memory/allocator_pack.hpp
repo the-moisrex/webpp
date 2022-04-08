@@ -311,7 +311,7 @@ namespace webpp::alloc {
 
     // specializes the alloc_finder, so it can work with the types that don't support allocators
     template <typename T, feature_pack FPack, AllocatorDescriptorList AllocDescList>
-        requires(!requires { typename T::allocator_type; })
+        requires(!requires { typename T::allocator_type; }) // has allocator_type
     struct alloc_finder<T, FPack, AllocDescList> {
         static constexpr feature_pack features = FPack;
         using ranked                           = ranker<AllocDescList, features>;

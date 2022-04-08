@@ -13,7 +13,8 @@ namespace webpp {
      * Google's Implementation:   https://github.com/google/brotli
      * Wikipedia:                 https://en.wikipedia.org/wiki/Brotli
      *
-     * Possible wrapper for google's implementation: https://github.com/CHN-beta/brotli-cpp/blob/master/brotli-cpp.hpp
+     * Possible wrapper for google's implementation:
+     * https://github.com/CHN-beta/brotli-cpp/blob/master/brotli-cpp.hpp
      */
     struct brotli {
 

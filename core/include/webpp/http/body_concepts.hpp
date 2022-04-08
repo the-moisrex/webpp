@@ -3,8 +3,6 @@
 #ifndef WEBPP_BODY_CONCEPTS_H
 #define WEBPP_BODY_CONCEPTS_H
 
-namespace webpp::http {
-
-}
+namespace webpp::http {}
 
 #endif // WEBPP_BODY_CONCEPTS_H

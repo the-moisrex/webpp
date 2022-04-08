@@ -4,13 +4,9 @@
 #define WEBPP_UTILITY_HPP
 
 #include "std.hpp"
+
 #include <utility>
 
-namespace webpp::istl {
-
-
-
-
-}
+namespace webpp::istl {}
 
 #endif // WEBPP_UTILITY_HPP

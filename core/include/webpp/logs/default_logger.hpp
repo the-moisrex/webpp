@@ -5,7 +5,7 @@
 
 namespace webpp {
 
-  using default_logger = stderr_logger;
+    using default_logger = stderr_logger;
 }
 
 #endif // WEBPP_LOGGER_DEFAULT_HPP

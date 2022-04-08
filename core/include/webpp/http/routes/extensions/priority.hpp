@@ -136,7 +136,7 @@ namespace webpp::http::inline extensions {
         ::std::array<::std::size_t, sizeof...(RouteType)> priorities =
           ([]<::std::size_t... I>(::std::index_sequence<I...>) {
               return ::std::array<::std::size_t, sizeof...(I)>{I...};
-          }) (::std::make_index_sequence<sizeof...(RouteType)>());
+          })(::std::make_index_sequence<sizeof...(RouteType)>());
 
 
         struct iterator {
@@ -215,6 +215,6 @@ namespace webpp::http::inline extensions {
         }
     };
 
-} // namespace webpp::extensions
+} // namespace webpp::http::inline extensions
 
 #endif // WEBPP_EXTENSION_PRIORITY_H

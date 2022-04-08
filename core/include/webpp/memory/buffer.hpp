@@ -4,6 +4,7 @@
 #define WEBPP_BUFFER_HPP
 
 #include "../std/std.hpp"
+
 #include <array>
 
 namespace webpp {
@@ -14,6 +15,6 @@ namespace webpp {
     };
 
 
-}
+} // namespace webpp
 
 #endif // WEBPP_BUFFER_HPP

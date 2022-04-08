@@ -6,10 +6,10 @@
 namespace webpp {
 
     template <typename T>
-    concept View = requires (T view){
+    concept View = requires(T view) {
         view.page("home/page");
     };
 
-}
+} // namespace webpp
 
 #endif // WEBPP_VIEW_CONCEPTS_HPP

@@ -10,10 +10,8 @@ namespace webpp {
     template <Traits TraitsType = default_traits>
     struct configs {
         using traits_type = TraitsType;
-
-
     };
 
-}
+} // namespace webpp
 
 #endif // WEBPP_CONFIGS_CONFIGS_HPP

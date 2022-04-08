@@ -237,7 +237,8 @@ struct third {
     struct type : Mother {};
 };
 
-static_assert(stl::same_as<typename details::dependencies<third>::type, extension_pack<third, second, first>>);
+static_assert(
+  stl::same_as<typename details::dependencies<third>::type, extension_pack<third, second, first>>);
 
 struct third_descriptor {
     template <typename ExtensionType>
@@ -247,5 +248,6 @@ struct third_descriptor {
 struct third_pack {
     using test_extensions = extension_pack<third>;
 };
-using third_extensie = typename extension_pack<third_pack>::template extensie_type<std_traits, third_descriptor>;
+using third_extensie =
+  typename extension_pack<third_pack>::template extensie_type<std_traits, third_descriptor>;
 static_assert(stl::same_as<typename third_extensie::first, int>);

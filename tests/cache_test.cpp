@@ -22,7 +22,7 @@ TEST(Cache, LEUCacheTest) {
     c.set("one", "old value");
     EXPECT_EQ("old value", c.get("one", ""));
 
-    lru_cache<default_traits, int> c2{t,3};
+    lru_cache<default_traits, int> c2{t, 3};
     c2.set(1, "hello");
     c2.set(1, "hello 2");
     EXPECT_EQ("hello 2", c2.get(1).value());

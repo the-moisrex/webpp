@@ -62,6 +62,6 @@ namespace webpp::http::inline extensions {
     template <Traits TraitsType, Interface InterfaceType>
     struct re_reqres : public re_reqres<request_t<TraitsType, InterfaceType>, response_t<TraitsType>> {};
 
-} // namespace webpp::inline extensions
+} // namespace webpp::http::inline extensions
 
 #endif // WEBPP_EXTENSIONS_REQRES_H

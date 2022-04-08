@@ -2408,7 +2408,7 @@ namespace simd_abi {
     using compatible = std::conditional_t<(sizeof(_Tp) < 8), _VecBuiltin<16>, scalar>;
 #        else
     template <typename>
-    using compatible = scalar;
+    using compatible  = scalar;
 #        endif
     template <typename _Tp>
     constexpr auto __determine_native_abi() {
@@ -3245,8 +3245,8 @@ _GLIBCXX_SIMD_ALWAYS_INLINE std::tuple<simd<_Tp, simd_abi::deduce_t<_Tp, _Sizes>
                          __fixed_size_storage_t<_Tp, _Np>::_S_first_size == _N0) {
         static_assert(!__is_fixed_size_abi_v<typename _V::abi_type>,
                       "How can <_Tp, _Np> be __a single _SimdTuple entry but __a "
-                      "fixed_size_simd "
-                      "when deduced?");
+                                                  "fixed_size_simd "
+                                                  "when deduced?");
         return std::tuple_cat(std::make_tuple(_V(__private_init, __data(__x).first)),
                               __split_wrapper(_SL::template _S_pop_front<1>(), __data(__x).second));
     } else if constexpr ((!std::is_same_v<simd_abi::scalar, simd_abi::deduce_t<_Tp, _Sizes>> && ...) &&
@@ -3967,9 +3967,9 @@ class simd : public _SimdIntOperators<
     static constexpr size_t size() {
         return __size_or_zero_v<_Tp, _Abi>;
     }
-    _GLIBCXX_SIMD_CONSTEXPR simd()                = default;
-    _GLIBCXX_SIMD_CONSTEXPR simd(const simd&)     = default;
-    _GLIBCXX_SIMD_CONSTEXPR simd(simd&&) noexcept = default;
+    _GLIBCXX_SIMD_CONSTEXPR       simd()                = default;
+    _GLIBCXX_SIMD_CONSTEXPR       simd(const simd&)     = default;
+    _GLIBCXX_SIMD_CONSTEXPR       simd(simd&&) noexcept = default;
     _GLIBCXX_SIMD_CONSTEXPR simd& operator=(const simd&) = default;
     _GLIBCXX_SIMD_CONSTEXPR simd& operator=(simd&&) noexcept = default;
     template <typename _Up, typename = _ValuePreservingOrInt<_Up, value_type>>
@@ -6919,11 +6919,11 @@ struct simd_abi::_VecBuiltin {
 #        else
     using _CommonImpl = _CommonImplBuiltin;
 #            ifdef __ALTIVEC__
-    using _SimdImpl = _SimdImplPpc<_VecBuiltin<_UsedBytes>>;
+    using _SimdImpl   = _SimdImplPpc<_VecBuiltin<_UsedBytes>>;
 #            else
     using _SimdImpl = _SimdImplBuiltin<_VecBuiltin<_UsedBytes>>;
 #            endif
-    using _MaskImpl = _MaskImplBuiltin<_VecBuiltin<_UsedBytes>>;
+    using _MaskImpl   = _MaskImplBuiltin<_VecBuiltin<_UsedBytes>>;
 #        endif
     template <typename _Tp>
     using _MaskValueType = __int_for_sizeof_t<_Tp>;
@@ -7825,7 +7825,7 @@ struct _SimdImplBuiltin {
         return {};
 #        elif !defined __SUPPORT_SNAN__
         return ~(__x._M_data == __x._M_data);
-#        elif defined __STDC_IEC_559__
+#        elif defined  __STDC_IEC_559__
         using _Ip         = __int_for_sizeof_t<_Tp>;
         const auto __absn = __vector_bitcast<_Ip>(_SuperImpl::_S_abs(__x));
         const auto __infn = __vector_bitcast<_Ip>(__vector_broadcast<_Np>(__infinity_v<_Tp>));
@@ -8384,8 +8384,9 @@ struct _SimdConverter<_From,
                 if constexpr (__converted2 == _Np)
                     return __to_simd_tuple<_To, _Np>(__multiple_return_chunks, __return_chunks2);
                 else {
-                    using _RetRem2 = __remove_cvref_t<decltype(
-                      __simd_tuple_pop_front<__return_chunks2.size() * _RetRem::_S_first_size>(_RetRem()))>;
+                    using _RetRem2 =
+                      __remove_cvref_t<decltype(__simd_tuple_pop_front<__return_chunks2.size() *
+                                                                       _RetRem::_S_first_size>(_RetRem()))>;
                     const auto __return_chunks3 =
                       __convert_all<__vector_type_t<_To, _RetRem2::_S_first_size>, 0, __converted2>(
                         __x.first);
@@ -8396,8 +8397,8 @@ struct _SimdConverter<_From,
                                                          __return_chunks2,
                                                          __return_chunks3);
                     else {
-                        using _RetRem3 = __remove_cvref_t<decltype(
-                          __simd_tuple_pop_front<__return_chunks3.size() * _RetRem2::_S_first_size>(
+                        using _RetRem3 = __remove_cvref_t<
+                          decltype(__simd_tuple_pop_front<__return_chunks3.size() * _RetRem2::_S_first_size>(
                             _RetRem2()))>;
                         const auto __return_chunks4 =
                           __convert_all<__vector_type_t<_To, _RetRem3::_S_first_size>, 0, __converted3>(
@@ -14042,9 +14043,9 @@ struct _MaskImplNeonMixin {
             return _Base::_S_to_bits(__x);
         using _I = __int_for_sizeof_t<_Tp>;
         if constexpr (sizeof(__x) == 16) {
-            auto __asint = __vector_bitcast<_I>(__x);
+            auto                            __asint = __vector_bitcast<_I>(__x);
 #            ifdef __aarch64__
-            [[maybe_unused]] constexpr auto __zero = decltype(__asint)();
+            [[maybe_unused]] constexpr auto __zero  = decltype(__asint)();
 #            else
             [[maybe_unused]] constexpr auto __zero = decltype(__lo64(__asint))();
 #            endif

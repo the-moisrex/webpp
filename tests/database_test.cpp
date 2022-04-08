@@ -10,5 +10,4 @@ using namespace webpp::database;
 
 using qbuilder = query_builder<std_traits>;
 
-TEST(Database, QueryBuilder) {
-}
+TEST(Database, QueryBuilder) {}

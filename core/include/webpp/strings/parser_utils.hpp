@@ -74,7 +74,6 @@ namespace webpp::ascii {
       charset<typename StrViewT::value_type, QEndN>   allowed_end_quotes   = {'"'}) noexcept {
 
         // todo: how to check valid-ness?
-
     }
 
 

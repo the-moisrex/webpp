@@ -1,7 +1,8 @@
 #ifndef WEBPP_SQLITE_HPP
 #define WEBPP_SQLITE_HPP
 
-// some of the source is from: https://raw.githubusercontent.com/sqlitebrowser/sqlitebrowser/master/src/sqlite.h
+// some of the source is from:
+// https://raw.githubusercontent.com/sqlitebrowser/sqlitebrowser/master/src/sqlite.h
 
 // todo: add sqlite encryption support to the API
 #ifdef ENABLE_SQLCIPHER

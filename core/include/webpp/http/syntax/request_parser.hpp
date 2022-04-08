@@ -108,6 +108,6 @@ namespace webpp::http {
         }
     };
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_REQUEST_PARSER_HPP

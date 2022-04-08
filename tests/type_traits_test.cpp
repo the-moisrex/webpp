@@ -1,8 +1,9 @@
 // Created by moisrex on 12/17/20.
 
-#include "../core/include/webpp/std/tuple.hpp"
 #include "../core/include/webpp/std/type_traits.hpp"
+
 #include "../core/include/webpp/std/optional.hpp"
+#include "../core/include/webpp/std/tuple.hpp"
 
 #include <list>
 #include <map>
@@ -70,7 +71,7 @@ static_assert(is_same_v<t9, tuple<pmr::map<pmr::vector<pmr::list<pmr::string>>, 
 template <typename T>
 struct int_replacer {
     static constexpr bool value = is_same_v<T, int>;
-    using type = double;
+    using type                  = double;
 };
 
 using t16 = recursive_parameter_replacer<t1, int_replacer>;
@@ -87,4 +88,3 @@ static_assert(is_same_v<ut, tuple<void, int>>);
 /// Optional ///
 
 static_assert(Optional<optional<int>>, "Optional doesn't work properly");
-

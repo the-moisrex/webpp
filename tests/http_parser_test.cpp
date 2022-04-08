@@ -60,9 +60,9 @@ TEST(HTTPRequestParser, HeaderLexer) {
     vec headers({{"one: string\r\n", arr{"one", "string"}},
                  {"Second-One:    String   \r\n", arr{"Second-One", "String"}}});
 
-    str sample_request = "one: 1\r\n"
-                         "two: 2\r\n"
-                         "The-One:Yes,NoSpaceIsNeeded\r\n";
+    str                                                           sample_request = "one: 1\r\n"
+                                                                                   "two: 2\r\n"
+                                                                                   "The-One:Yes,NoSpaceIsNeeded\r\n";
     http_lexer<str, traits::general_string_allocator<std_traits>> lexer{.raw_view = sample_request};
 
     ASSERT_NO_THROW(lexer.consume_all());

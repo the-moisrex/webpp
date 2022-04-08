@@ -101,7 +101,6 @@ TEST(JSONTest, Create) {
                EXPECT_EQ(doc["info"]["firstname"].as_string(), "Jane");
                EXPECT_EQ(doc["info"]["id"].as_int32(), 313);
 #endif
-
            })(stl::forward<decltype(docs)>(docs)));
       },
       json_impls());

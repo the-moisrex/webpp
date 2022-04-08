@@ -25,4 +25,3 @@ TEST(Casts, ToInt) {
         } catch (std::exception const& err) { EXPECT_TRUE(true); }
     }
 }
-

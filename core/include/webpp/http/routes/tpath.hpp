@@ -238,6 +238,6 @@ namespace webpp::http {
     //        return tpath{std::string_view{str, len}};
     //    }
     //
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_TPATH_H
