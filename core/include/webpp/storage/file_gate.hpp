@@ -3,8 +3,15 @@
 
 #include "../traits/default_traits.hpp"
 
+#include <filesystem>
+
 namespace webpp {
 
+    /**
+     * File Gate stores the cached data in a file
+     *
+     * The file gate doesn't support a parent because why should it?
+     */
     struct file_gate {
 
         template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT>
@@ -12,6 +19,13 @@ namespace webpp {
             using key_type    = KeyT;
             using value_type  = ValueT;
             using traits_type = TraitsType;
+            using path_type   = stl::filesystem::path;
+
+          private:
+            path_type cache_file;
+
+          public:
+            storage_gate(path_type output_file) : cache_file{stl::move(output_file)} {}
 
             template <typename V>
             stl::optional<value_type> get(V&& value) {

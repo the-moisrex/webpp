@@ -29,6 +29,17 @@ namespace webpp {
             stl::size_t       next_usage = 1; // it's essentially a timestamp
             storage_gate_type gate;
 
+            // clean up the old data
+            void clean_up() {
+                if (next_usage <= max_size)
+                    return;
+                stl::size_t break_index = next_usage - max_size;
+                gate.erase_if([break_index](auto const& item) noexcept {
+                  auto const& [_, value] = item;
+                  return value.last_used_index < break_index;
+                });
+            }
+
           public:
             template <typename ET>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, strategy const&> &&
@@ -40,16 +51,6 @@ namespace webpp {
             constexpr strategy(storage_gate_type&& input_gate, stl::size_t max_size_value = 1024) noexcept
               : max_size{max_size_value},
                 gate{input_gate} {}
-
-            void clean_up() {
-                if (next_usage <= max_size)
-                    return;
-                stl::size_t break_index = next_usage - max_size;
-                gate.erase_if([break_index](auto const& item) noexcept {
-                    auto const& [_, value] = item;
-                    return value.last_used_index < break_index;
-                });
-            }
 
             template <typename K, typename V>
                 requires(stl::convertible_to<K, key_type> && // it's a key

@@ -1,15 +1,15 @@
-#ifndef WEBPP_STORAGE_PERMINANT_CACHE_HPP
-#define WEBPP_STORAGE_PERMINANT_CACHE_HPP
+#ifndef WEBPP_STORAGE_PERMANENT_CACHE_HPP
+#define WEBPP_STORAGE_PERMANENT_CACHE_HPP
 
 #include "memory_gate.hpp"
 
 namespace webpp {
 
     /**
-     * Perminant Cache (essentially a std::map)
+     * Permanent Cache
      */
     template <typename KeyT, typename ValueT, StorageGate SG = memory_gate>
-    struct perminant_cache {
+    struct permanent_cache {
         using key_type          = KeyT;
         using value_type        = ValueT;
         using storage_gate_type = typename SG::storage_gate<key_type, value_type>;
@@ -21,7 +21,7 @@ namespace webpp {
 
       public:
         template <typename K, typename V>
-        perminant_cache& set(K&& key, V&& value) {
+        permanent_cache& set(K&& key, V&& value) {
             gate.set(stl::forward<K>(key), stl::forward<V>(value));
             return *this;
         }
@@ -35,4 +35,4 @@ namespace webpp {
 
 } // namespace webpp
 
-#endif // WEBPP_STORAGE_PERMINANT_CACHE_HPP
+#endif // WEBPP_STORAGE_PERMANENT_CACHE_HPP
