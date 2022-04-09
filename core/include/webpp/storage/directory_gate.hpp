@@ -108,30 +108,25 @@ namespace webpp {
                     if (predicate(stl::pair<key_type, value_type>{key, value})) {
                         fs::remove(file.path(), ec);
                         if (ec) {
-                            this->logger.warning(
-                              DIR_GATE_CAT,
-                              fmt::format("Cannot remove cache file {} (key name: {})", key_file, key),
-                              ec);
+                            this->logger.warning(DIR_GATE_CAT,
+                                                 fmt::format("Cannot remove cache file {} (key name: {})",
+                                                             file.path().string(),
+                                                             key),
+                                                 ec);
                         }
                     }
                 }
             }
 
             auto begin() const {
-                return fs::directory_iterator{dir};
+                return stl::filesystem::directory_iterator{dir};
             }
 
-            auto end() const {
-                return map.begin();
-            }
+            auto end() const {}
 
-            auto begin() {
-                return map.begin();
-            }
+            auto begin() {}
 
-            auto end() {
-                return map.begin();
-            }
+            auto end() {}
         };
     };
 

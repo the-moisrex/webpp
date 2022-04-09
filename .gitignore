@@ -22,3 +22,4 @@ webpp.kdev4
 /.cache/
 .theia/
 .gdbinit
+.clangd
