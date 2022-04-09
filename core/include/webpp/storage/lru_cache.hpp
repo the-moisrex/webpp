@@ -38,12 +38,12 @@ namespace webpp {
             }
 
           public:
-            template <typename ET>
+            template <typename ET, typename ...Args>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, strategy const&> &&
                          !stl::same_as<ET, strategy &&>)
-            constexpr strategy(ET&& et, stl::size_t max_size_value = 1024) noexcept
+            constexpr strategy(ET&& et, stl::size_t max_size_value = 1024, Args&& ...args) noexcept
               : max_size{max_size_value},
-                gate{et} {}
+                gate{et, stl::forward<Args>(args)...} {}
 
             constexpr strategy(storage_gate_type&& input_gate, stl::size_t max_size_value = 1024) noexcept
               : max_size{max_size_value},

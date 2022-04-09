@@ -40,8 +40,11 @@ TEST(Cache, LEUCacheTest) {
 
 
 TEST(Cache, DirectoryGateTest) {
-    enable_owner_traits<default_traits>                                 t;
-    lru_cache<default_traits, std::string, std::string, directory_gate> c(t);
+    enable_owner_traits<default_traits> t;
+    auto                                dir = stl::filesystem::temp_directory_path();
+    dir /= "webpp-directory-gate-test";
+    stl::filesystem::create_directory(dir);
+    lru_cache<default_traits, std::string, std::string, directory_gate> c(t, 1024, dir);
     c.set("one", "value");
     EXPECT_EQ("value", c.get("one", ""));
     c.set("one", "new value");
@@ -49,7 +52,7 @@ TEST(Cache, DirectoryGateTest) {
     c.set("one", "old value");
     EXPECT_EQ("old value", c.get("one", ""));
 
-    lru_cache<default_traits, int, std::string, directory_gate> c2{t, 3};
+    lru_cache<default_traits, int, std::string, directory_gate> c2{t, 3, dir};
     c2.set(1, "hello");
     c2.set(1, "hello 2");
     EXPECT_EQ("hello 2", c2.get(1).value());
