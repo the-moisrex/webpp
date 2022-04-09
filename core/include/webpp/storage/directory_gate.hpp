@@ -48,16 +48,17 @@ namespace webpp {
 
         template <Traits TraitsType, CacheFileKey KeyT, CacheFileValue ValueT, CacheFileOptions OptsT>
         struct storage_gate : enable_traits<TraitsType> {
-            using traits_type    = TraitsType;
-            using etraits        = enable_traits<TraitsType>;
-            using path_type      = stl::filesystem::path;
-            using key_type       = traits::generalify_allocators<traits_type, KeyT>;
-            using value_type     = traits::generalify_allocators<traits_type, ValueT>;
-            using options_type   = traits::generalify_allocators<traits_type, OptsT>;
-            using string_type    = typename path_type::string_type;
-            using iterator       = file_iterator<key_type, value_type>;
-            using const_iterator = const iterator;
-            using char_type      = typename string_type::value_type;
+            using traits_type      = TraitsType;
+            using etraits          = enable_traits<TraitsType>;
+            using path_type        = stl::filesystem::path;
+            using key_type         = traits::generalify_allocators<traits_type, KeyT>;
+            using value_type       = traits::generalify_allocators<traits_type, ValueT>;
+            using options_type     = traits::generalify_allocators<traits_type, OptsT>;
+            using string_type      = typename path_type::string_type;
+            using iterator         = file_iterator<key_type, value_type>;
+            using const_iterator   = const iterator;
+            using char_type        = typename string_type::value_type;
+            using string_view_type = traits::string_view<traits_type>;
 
           private:
             path_type    dir;
@@ -89,7 +90,7 @@ namespace webpp {
             }
 
             key_type deserialize_key(string_type const& key) {
-                if (opts.hash_keys) {
+                if (gate_opts.hash_keys) {
                     // todo: hash the keys
                 }
                 return lexical::cast<key_type>(key, this->alloc_pack);
@@ -120,7 +121,7 @@ namespace webpp {
                           lexical::cast<value_type>(
                             string_view_type{data.data() + sep_index + 1, data.data() + data.size()},
                             this->alloc_pack)
-                    }
+                    };
                 } else {
                     this->logger.error(DIR_GATE_CAT, "Cache data is invalid.");
                     return {};
