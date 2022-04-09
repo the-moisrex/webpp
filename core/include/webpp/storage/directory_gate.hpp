@@ -95,6 +95,38 @@ namespace webpp {
                 return lexical::cast<key_type>(key, this->alloc_pack);
             }
 
+            stl::pair<options_type, value_type> deserialize_value(string_type const& data) {
+                const auto sep_index = data.find_first_of('\n');
+                if (sep_index != string_type::npos) {
+
+                    // decoding options
+                    options_type opts;
+                    if (gate_opts.encode_options) {
+                        lexical::cast<options_type>(string_view_type(data.data(), data.data() + sep_index),
+                                                    this->alloc_pack);
+                    } else {
+                        auto opts_str = data.substr(0, sep_index);
+                        base64::decode(opts_str, opts_str);
+                        opts = lexical::cast<options_type>(opts_str, this->alloc_pack);
+                    }
+
+                    // decoding value
+                    if (gate_opts.encrypt_values) {
+                        // todo
+                    }
+
+                    return {
+                        opts, // the options
+                          lexical::cast<value_type>(
+                            string_view_type{data.data() + sep_index + 1, data.data() + data.size()},
+                            this->alloc_pack)
+                    }
+                } else {
+                    this->logger.error(DIR_GATE_CAT, "Cache data is invalid.");
+                    return {};
+                }
+            }
+
           public:
             template <typename ET>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
