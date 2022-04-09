@@ -26,14 +26,33 @@ namespace webpp {
             bool                               encrypt_values = false;
         };
 
+        template <CacheFileKey KeyT, CacheFileValue ValT>
+        struct file_iterator : stl::filesystem::directory_iterator {
+
+            using key_type   = KeyT;
+            using value_type = ValT;
+            using key_ref    = stl::add_lvalue_reference_t<key_type>;
+            using value_ref  = stl::add_lvalue_reference_t<value_type>;
+
+            key_type key() const {
+                return this->path()->stem();
+            }
+
+            value_type value() const {
+                return;
+            }
+        };
+
         template <Traits TraitsType, CacheFileKey KeyT, CacheFileValue ValueT>
         struct storage_gate : enable_traits<TraitsType> {
-            using traits_type = TraitsType;
-            using etraits     = enable_traits<TraitsType>;
-            using path_type   = stl::filesystem::path;
-            using key_type    = traits::generalify_allocators<traits_type, KeyT>;
-            using value_type  = traits::generalify_allocators<traits_type, ValueT>;
-            using string_type = typename path_type::string_type;
+            using traits_type    = TraitsType;
+            using etraits        = enable_traits<TraitsType>;
+            using path_type      = stl::filesystem::path;
+            using key_type       = traits::generalify_allocators<traits_type, KeyT>;
+            using value_type     = traits::generalify_allocators<traits_type, ValueT>;
+            using string_type    = typename path_type::string_type;
+            using iterator       = file_iterator<key_type, value_type>;
+            using const_iterator = const iterator;
 
           private:
             path_type dir;
@@ -100,7 +119,7 @@ namespace webpp {
                 namespace fs = stl::filesystem;
 
                 stl::error_code ec;
-                for (auto const& file : fs::directory_iterator{dir}) {
+                for (auto const& file : *this) {
                     if (file.path().extension() != opts.extension)
                         continue;
                     const key_type   key = deserialize_key(file.path().stem());
@@ -118,15 +137,21 @@ namespace webpp {
                 }
             }
 
-            auto begin() const {
-                return stl::filesystem::directory_iterator{dir};
+            const_iterator begin() const {
+                return {dir};
             }
 
-            auto end() const {}
+            const_iterator end() const {
+                return {};
+            }
 
-            auto begin() {}
+            iterator begin() {
+                return {dir};
+            }
 
-            auto end() {}
+            iterator end() {
+                return {};
+            }
         };
     };
 
