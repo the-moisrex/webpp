@@ -8,11 +8,12 @@ namespace webpp {
 
     struct null_gate {
 
-        template <Traits TraitsType, typename KeyT, typename ValueT>
+        template <Traits TraitsType, typename KeyT, typename ValueT, typename OptsT>
         struct storage_gate {
-            using key_type    = KeyT;
-            using value_type  = ValueT;
-            using traits_type = TraitsType;
+            using key_type     = KeyT;
+            using value_type   = ValueT;
+            using options_type = OptsT;
+            using traits_type  = TraitsType;
 
             template <typename V>
             stl::optional<value_type> get([[maybe_unused]] V&& value) {
@@ -20,7 +21,11 @@ namespace webpp {
             }
 
             template <typename K, typename V>
-            void set([[maybe_unused]] K&& key, [[maybe_unused]] V&& value) {}
+            void set([[maybe_unused]] K&&          key,
+                     [[maybe_unused]] V&&          value,
+                     [[maybe_unused]] options_type opts = {}) {}
+
+            void set_options([[maybe_unused]] key_type const& key, [[maybe_unused]] options_type opts) {}
 
             template <typename K>
             void erase([[maybe_unused]] K&& input) {}

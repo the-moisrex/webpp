@@ -14,14 +14,11 @@ namespace webpp {
 
         template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT, StorageGate SG>
         struct strategy {
-            using key_type   = KeyT;
-            using value_type = ValueT;
-            struct entry_type {
-                value_type  value;
-                stl::size_t last_used_index = 0;
-            };
-            using traits_type       = TraitsType;
-            using storage_gate_type = typename SG::template storage_gate<traits_type, key_type, entry_type>;
+            using key_type    = KeyT;
+            using value_type  = ValueT;
+            using traits_type = TraitsType;
+            using storage_gate_type =
+              typename SG::template storage_gate<traits_type, key_type, value_type, stl::size_t>;
 
 
           private:
@@ -35,8 +32,8 @@ namespace webpp {
                     return;
                 stl::size_t break_index = next_usage - max_size;
                 gate.erase_if([break_index](auto const& item) noexcept {
-                  auto const& [_, value] = item;
-                  return value.last_used_index < break_index;
+                    auto const& [_, value, last_used_index] = item;
+                    return last_used_index < break_index;
                 });
             }
 
@@ -56,8 +53,7 @@ namespace webpp {
                 requires(stl::convertible_to<K, key_type> && // it's a key
                          stl::convertible_to<V, value_type>) // it's a value
             void set(K&& key, V&& value) {
-                gate.set(stl::forward<K>(key),
-                         entry_type{.value = stl::forward<V>(value), .last_used_index = next_usage++});
+                gate.set(stl::forward<K>(key), stl::forward<V>(value), next_usage++);
                 clean_up();
             }
 
@@ -69,9 +65,9 @@ namespace webpp {
                 if (!val)
                     return stl::nullopt;
 
-                val->last_used_index = next_usage++;
+                gate.set_options(key, next_usage++);
 
-                return val->value;
+                return *val;
             }
         };
     };

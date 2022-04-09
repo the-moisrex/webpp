@@ -33,7 +33,7 @@ namespace webpp {
 
     template <typename T>
     concept CacheFileOptions = CacheOptions<T> && requires(T opts) {
-        lexical::cast<stl::string>(stl::get<1>(opts));
+        lexical::cast<stl::string>(opts); // todo: how to support multiple options?
         { lexical::cast<T>("string") } -> stl::same_as<T>;
     };
 
@@ -55,6 +55,7 @@ namespace webpp {
                               typename S::options_type opts) {
                 gate.erase(key);
                 gate.set(key, value, opts);
+                gate.set_options(key, opts);
 
                 // I added the erase_if here and not in the "cache" because it might be faster (I
                 // think) todo: check if we really need erase_if here

@@ -2,6 +2,7 @@
 #define WEBPP_STORAGE_FILE_GATE_HPP
 
 #include "../traits/default_traits.hpp"
+#include "cache_concepts.hpp"
 
 #include <filesystem>
 
@@ -14,12 +15,13 @@ namespace webpp {
      */
     struct file_gate {
 
-        template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT>
+        template <Traits TraitsType, CacheFileKey KeyT, CacheFileValue ValueT, CacheFileOptions OptsT>
         struct storage_gate {
-            using key_type    = KeyT;
-            using value_type  = ValueT;
-            using traits_type = TraitsType;
-            using path_type   = stl::filesystem::path;
+            using key_type     = KeyT;
+            using value_type   = ValueT;
+            using options_type = OptsT;
+            using traits_type  = TraitsType;
+            using path_type    = stl::filesystem::path;
 
           private:
             path_type cache_file;
@@ -33,7 +35,9 @@ namespace webpp {
             }
 
             template <typename K, typename V>
-            void set(K&& key, V&& value) {}
+            void set(K&& key, V&& value, options_type opts = {}) {}
+
+            void set_options(key_type const& key, options_type opts) {}
 
             template <typename K>
             void erase(K&& input) {}
