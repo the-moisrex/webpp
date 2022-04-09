@@ -26,7 +26,7 @@ namespace webpp {
             bool                               encrypt_values = false;
         };
 
-        template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT>
+        template <Traits TraitsType, CacheFileKey KeyT, CacheFileValue ValueT>
         struct storage_gate : enable_traits<TraitsType> {
             using traits_type = TraitsType;
             using etraits     = enable_traits<TraitsType>;

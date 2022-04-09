@@ -1,6 +1,7 @@
 #ifndef WEBPP_STORAGE_CACHE_CONCEPTS_HPP
 #define WEBPP_STORAGE_CACHE_CONCEPTS_HPP
 
+#include "../convert/lexical_cast.hpp"
 #include "../std/type_traits.hpp"
 #include "../traits/default_traits.hpp"
 #include "null_gate.hpp"
@@ -14,6 +15,19 @@ namespace webpp {
     template <typename V>
     concept CacheValue = !stl::is_void_v<V>;
 
+    template <typename K>
+    concept CacheFileKey = CacheKey<K> && requires(K key) {
+        lexical::cast<stl::string>(key);
+        { lexical::cast<K>("string") } -> stl::same_as<K>;
+    };
+
+    template <typename V>
+    concept CacheFileValue = CacheValue<V> && requires(V val) {
+        lexical::cast<stl::string>(val);
+        { lexical::cast<V>("string") } -> stl::same_as<V>;
+    };
+
+
     namespace details {
         template <typename S>
         concept StorageGateType = requires(S gate) {
@@ -24,15 +38,15 @@ namespace webpp {
             typename S::traits_type;
             requires Traits<typename S::traits_type>;
 
-            requires requires (typename S::key_type key, typename S::value_type value) {
-                     gate.erase(key);
+            requires requires(typename S::key_type key, typename S::value_type value) {
+                gate.erase(key);
 
-                     // I added the erase_if here and not in the "cache" because it might be faster (I think)
-                     // todo: check if we really need erase_if here
-                     gate.erase_if([](auto&&) -> bool {
-                         return true;
-                     });
-                 };
+                // I added the erase_if here and not in the "cache" because it might be faster (I
+                // think) todo: check if we really need erase_if here
+                gate.erase_if([](auto&&) -> bool {
+                    return true;
+                });
+            };
         };
 
 
