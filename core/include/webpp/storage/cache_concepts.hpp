@@ -15,6 +15,9 @@ namespace webpp {
     template <typename V>
     concept CacheValue = !stl::is_void_v<V>;
 
+    template <typename T>
+    concept CacheOptions = !stl::is_void_v<T>;
+
     template <typename K>
     concept CacheFileKey = CacheKey<K> && requires(K key) {
         lexical::cast<stl::string>(key);
@@ -28,19 +31,30 @@ namespace webpp {
         { lexical::cast<V>("string") } -> stl::same_as<V>;
     };
 
+    template <typename T>
+    concept CacheFileOptions = CacheOptions<T> && requires(T opts) {
+        lexical::cast<stl::string>(stl::get<1>(opts));
+        { lexical::cast<T>("string") } -> stl::same_as<T>;
+    };
+
 
     namespace details {
         template <typename S>
         concept StorageGateType = requires(S gate) {
             typename S::key_type;
             typename S::value_type;
+            typename S::options_type;
             requires CacheKey<typename S::key_type>;
             requires CacheValue<typename S::value_type>;
+            requires CacheOptions<typename S::options_type>;
             typename S::traits_type;
             requires Traits<typename S::traits_type>;
 
-            requires requires(typename S::key_type key, typename S::value_type value) {
+            requires requires(typename S::key_type     key,
+                              typename S::value_type   value,
+                              typename S::options_type opts) {
                 gate.erase(key);
+                gate.set(key, value, opts);
 
                 // I added the erase_if here and not in the "cache" because it might be faster (I
                 // think) todo: check if we really need erase_if here
@@ -67,8 +81,8 @@ namespace webpp {
 
     template <typename T>
     concept StorageGate = requires {
-        typename T::template storage_gate<default_traits, int, int>;
-        requires details::StorageGateType<typename T::template storage_gate<default_traits, int, int>>;
+        typename T::template storage_gate<default_traits, int, int, int>;
+        requires details::StorageGateType<typename T::template storage_gate<default_traits, int, int, int>>;
     };
 
 

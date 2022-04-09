@@ -12,13 +12,17 @@ namespace webpp {
     struct memory_gate {
         using parent_gate_type = ParentGate;
 
-        template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT>
+        template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT, CacheOptions OptsT>
         struct storage_gate : enable_traits<TraitsType> {
-            using traits_type = TraitsType;
-            using map_type    = traits::general_object<traits_type, stl::map<KeyT, ValueT>>;
-            using key_type    = typename map_type::key_type;
-            using value_type  = typename map_type::mapped_type;
-            using etraits     = enable_traits<TraitsType>;
+            using traits_type     = TraitsType;
+            using value_pack_type = stl::pair<OptsT, ValueT>;
+            using map_type        = traits::general_object<traits_type, stl::map<KeyT, value_pack_type>>;
+            using mapped_type     = typename map_type::mapped_type;
+            using key_type        = typename map_type::key_type;
+            using value_type      = typename map_type::mapped_type::second_type;
+            using options_type    = typename mapped_type::first_type;
+            using etraits         = enable_traits<TraitsType>;
+
 
             template <typename ET>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
@@ -36,8 +40,9 @@ namespace webpp {
             }
 
             template <typename K, typename V>
-            void set(K&& key, V&& value) {
-                map.insert_or_assign(stl::forward<K>(key), stl::forward<V>(value));
+            void set(K&& key, V&& value, options_type opts = {}) {
+                map.insert_or_assign(stl::forward<K>(key),
+                                     mapped_type{stl::forward<V>(value), stl::move(opts)});
             }
 
 
