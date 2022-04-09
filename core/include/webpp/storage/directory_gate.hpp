@@ -39,18 +39,18 @@ namespace webpp {
             path_type dir;
             options   opts;
 
-            string_type serialize_key(key_type key) {
+            string_type serialize_key(key_type const& key) {
                 if (opts.hash_keys) {
-                    // todo: hash the keys
+                    return lexical::cast<string_type>(stl::hash<key_type>{}(key), this->alloc_pack);
                 }
-                return lexical::cast<string_type>(key);
+                return lexical::cast<string_type>(key, this->alloc_pack);
             }
 
-            key_type deserialize_key(string_type key) {
+            key_type deserialize_key(string_type const& key) {
                 if (opts.hash_keys) {
                     // todo: hash the keys
                 }
-                return lexical::cast<key_type>(key);
+                return lexical::cast<key_type>(key, this->alloc_pack);
             }
 
           public:
@@ -86,9 +86,10 @@ namespace webpp {
                 auto const      key_file = key_path(key);
                 stl::filesystem::remove(key_file, ec);
                 if (ec) {
-                    this->logger.warning(DIR_GATE_CAT,
-                                         fmt::format("Cannot remove cache file {}", key_file),
-                                         ec);
+                    this->logger.warning(
+                      DIR_GATE_CAT,
+                      fmt::format("Cannot remove cache file {} (key name: {})", key_file, key),
+                      ec);
                     return false;
                 }
                 return true;
@@ -107,9 +108,10 @@ namespace webpp {
                     if (predicate(stl::pair<key_type, value_type>{key, value})) {
                         fs::remove(file.path(), ec);
                         if (ec) {
-                            this->logger.warning(DIR_GATE_CAT,
-                                                 fmt::format("Cannot remove cache file {}", key_file),
-                                                 ec);
+                            this->logger.warning(
+                              DIR_GATE_CAT,
+                              fmt::format("Cannot remove cache file {} (key name: {})", key_file, key),
+                              ec);
                         }
                     }
                 }

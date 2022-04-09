@@ -19,6 +19,7 @@ namespace webpp {
     concept CacheFileKey = CacheKey<K> && requires(K key) {
         lexical::cast<stl::string>(key);
         { lexical::cast<K>("string") } -> stl::same_as<K>;
+        stl::hash<K>{}(key);
     };
 
     template <typename V>
