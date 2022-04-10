@@ -9,6 +9,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <random>
 
 namespace webpp {
 
@@ -132,14 +133,54 @@ namespace webpp {
                 }
             }
 
+            void set_temp_dir() {
+                stl::error_code ec;
+                dir = stl::filesystem::temp_directory_path(ec);
+                if (ec) {
+                    this->logger.error(
+                      DIR_GATE_CAT,
+                      "Cannot get the OS's temp directory and you're not passing us any directory path to use as the cache directory.");
+                    return;
+                }
+                auto random_str = object::make_local<string_type>(this->alloc_pack,
+                                                                  "0123456789"
+                                                                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                                                  "abcdefghijklmnopqrstuvwxyz");
+                std::shuffle(random_str.begin(), random_str.end(), stl::mt19937{stl::random_device{}()});
+                random_str.resize(32);
+                dir.append(random_str.begin(), random_str.end());
+                if (stl::filesystem::exists(dir)) {
+                    set_temp_dir();
+                } else {
+                    stl::filesystem::create_directory(dir, ec);
+                    if (ec) {
+                        this->logger.error(
+                          DIR_GATE_CAT,
+                          "Cannot create a temp directory for cache files. Pass a good directory as input.");
+                    }
+                }
+            }
+
           public:
             template <typename ET>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
                          !stl::same_as<ET, storage_gate &&>)
             storage_gate(ET&&         et,
+                         path_type    cache_dir  = "", // empty string will create a temp directory
                          gate_options input_opts = {}) // NOLINT(cppcoreguidelines-pro-type-member-init)
               : etraits{et},
-                gate_opts{input_opts} {}
+                dir{stl::move(cache_dir)},
+                gate_opts{input_opts} {
+
+                // create a temp directory and use that if the specified path is empty
+                if (dir.empty()) {
+                    set_temp_dir();
+                }
+            }
+
+            path_type cache_dir() const noexcept {
+                return dir;
+            }
 
             path_type key_path(key_type const& key) {
                 path_type file = dir;
