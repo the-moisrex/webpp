@@ -12,6 +12,10 @@ static_assert(CacheValue<double>);
 static_assert(StorageGate<null_gate>);
 static_assert(StorageGate<file_gate>);
 static_assert(StorageGate<memory_gate<null_gate>>);
+static_assert(!Allocator<int>);
+using replacer = alloc::details::allocator_replacer<std::allocator>::template replacer<int>;
+static_assert(!replacer::value);
+static_assert(stl::is_same_v<int, typename replacer::type>);
 static_assert(stl::is_same_v<traits::generalify_allocators<default_traits, int>, int>);
 
 TEST(Cache, LEUCacheTest) {

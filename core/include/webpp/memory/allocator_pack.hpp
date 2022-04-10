@@ -276,7 +276,7 @@ namespace webpp::alloc {
             template <typename T>
             struct replacer {
                 static constexpr bool value = false;
-                using type                  = void;
+                using type                  = T;
             };
 
             template <Allocator T>
