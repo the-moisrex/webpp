@@ -63,8 +63,8 @@ namespace webpp {
             using data_type        = cache_tuple<key_type, value_type, options_type>;
 
           private:
-            path_type    dir;
-            gate_options gate_opts;
+            path_type    dir{};
+            gate_options gate_opts{};
 
             string_type serialize_key(key_type const& key) {
                 if (gate_opts.hash_keys) {
@@ -187,8 +187,8 @@ namespace webpp {
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
                          !stl::same_as<ET, storage_gate &&>)
             storage_gate(ET&&         et,
-                         path_type    cache_dir  = "", // empty string will create a temp directory
-                         gate_options input_opts = {})
+                         path_type    cache_dir, // empty string will create a temp directory
+                         gate_options input_opts)
               : etraits{et},
                 dir{stl::move(cache_dir)},
                 gate_opts{input_opts} {
@@ -198,6 +198,31 @@ namespace webpp {
                     set_temp_dir();
                 }
             }
+
+
+            template <typename ET>
+                requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
+                         !stl::same_as<ET, storage_gate &&>)
+            storage_gate(ET&&      et,
+                         path_type cache_dir // empty string will create a temp directory
+                         )
+              : etraits{et},
+                dir{stl::move(cache_dir)} {
+
+                // create a temp directory and use that if the specified path is empty
+                if (dir.empty()) {
+                    set_temp_dir();
+                }
+            }
+
+
+            template <typename ET>
+                requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
+                         !stl::same_as<ET, storage_gate &&>)
+            storage_gate(ET&& et) : etraits{et} {
+                set_temp_dir();
+            }
+
 
             path_type cache_dir() const noexcept {
                 return dir;
