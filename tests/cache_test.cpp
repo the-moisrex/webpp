@@ -12,6 +12,7 @@ static_assert(CacheValue<double>);
 static_assert(StorageGate<null_gate>);
 static_assert(StorageGate<file_gate>);
 static_assert(StorageGate<memory_gate<null_gate>>);
+static_assert(stl::is_same_v<traits::generalify_allocators<default_traits, int>, int>);
 
 TEST(Cache, LEUCacheTest) {
     enable_owner_traits<default_traits> t;
@@ -65,4 +66,6 @@ TEST(Cache, DirectoryGateTest) {
     EXPECT_TRUE(!!c2.get(3));
     EXPECT_TRUE(!!c2.get(4));
     EXPECT_TRUE(!!c2.get(5));
+
+    stl::filesystem::remove(dir);
 }
