@@ -70,6 +70,20 @@ namespace webpp {
 
                 return data->value;
             }
+
+
+            auto begin() {
+                return gate.begin();
+            }
+            auto begin() const {
+                return gate.begin();
+            }
+            auto end() {
+                return gate.end();
+            }
+            auto end() const {
+                return gate.end();
+            }
         };
     };
 

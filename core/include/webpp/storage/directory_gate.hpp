@@ -31,8 +31,11 @@ namespace webpp {
         };
 
         template <typename StorageGateType>
-        struct file_iterator : stl::filesystem::directory_iterator {
-            using dir_iter          = stl::filesystem::directory_iterator;
+        struct file_iterator;
+
+        template <typename StorageGateType>
+        struct cache_entry {
+          private:
             using storage_gate_type = StorageGateType;
             using key_type          = typename storage_gate_type::key_type;
             using value_type        = typename storage_gate_type::value_type;
@@ -40,29 +43,31 @@ namespace webpp {
             using data_type         = typename storage_gate_type::data_type;
             using string_view_type  = typename storage_gate_type::string_view_type;
             using path_string_type  = stl::string;
+            using dir_entry         = stl::filesystem::directory_entry;
 
-          private:
+            friend file_iterator<StorageGateType>;
+
+            dir_entry                entry{};
             storage_gate_type&       gate;
-            stl::optional<data_type> data;
+            stl::optional<data_type> data{};
 
           public:
-            file_iterator(path_string_type const& dir, storage_gate_type& the_gate)
-              : dir_iter{dir},
-                gate{the_gate} {}
+            cache_entry(storage_gate_type& the_gate) : gate{the_gate} {}
 
-            file_iterator& operator++() {
-                dir_iter::operator++();
+            cache_entry(dir_entry const& the_dir, storage_gate_type& the_gate)
+              : entry(the_dir),
+                gate{the_gate} {
+                deserialize();
+            }
 
-                if (this->operator->()->path().extension() != gate.gate_opts.extension) {
-                    return operator++();
-                }
-                auto const key_str = this->operator->()->path().stem().string();
-                data = gate.get(gate.deserialize_key(istl::string_viewify_of<string_view_type>(key_str)));
-                if (!data) {
-                    return operator++();
-                }
+            //            cache_entry(cache_entry&& rhs) {
+            //                entry = rhs.entry;
+            //                gate  = rhs.gate;
+            //                data  = rhs.data;
+            //            }
 
-                return *this;
+            bool operator==(cache_entry const& rhs) const {
+                return entry == rhs.entry && gate == rhs.gate;
             }
 
             key_type key() const {
@@ -75,6 +80,98 @@ namespace webpp {
 
             options_type options() const {
                 return data->options;
+            }
+
+            void deserialize() {
+                stl::error_code ec;
+                if (!entry.exists(ec)) {
+                    return;
+                }
+                if (ec) {
+                    gate.logger.error(DIR_GATE_CAT, "Cannot check the existence of a cache file.", ec);
+                    return;
+                }
+                auto const key_str = entry.path().stem().string();
+                data = gate.get(gate.deserialize_key(istl::string_viewify_of<string_view_type>(key_str)));
+            }
+
+            bool is_valid() const {
+                return data.has_value();
+            }
+        };
+
+        template <typename StorageGateType>
+        struct file_iterator {
+            using dir_iter_type     = stl::filesystem::directory_iterator;
+            using storage_gate_type = StorageGateType;
+            using cache_entry_type  = cache_entry<StorageGateType>;
+
+            typedef cache_entry_type        value_type;
+            typedef ptrdiff_t               difference_type;
+            typedef const cache_entry_type* pointer;
+            typedef const cache_entry_type& reference;
+            typedef stl::input_iterator_tag iterator_category;
+
+          private:
+            dir_iter_type            dir_iter{};
+            storage_gate_type&       gate;
+            mutable cache_entry_type entry;
+            stl::error_code          ec;
+
+          public:
+            file_iterator(storage_gate_type& the_gate) : dir_iter{}, gate{the_gate}, entry{gate} {}
+
+            file_iterator(stl::filesystem::path const& dir, storage_gate_type& the_gate)
+              : dir_iter{dir, ec},
+                gate{the_gate},
+                entry{dir_iter.operator*(), gate} {
+                if (ec) {
+                    gate.logger.error(DIR_GATE_CAT, "Cache directory traverse error.", ec);
+                }
+            }
+
+            file_iterator& operator=(const file_iterator&)     = default;
+            file_iterator& operator=(file_iterator&&) noexcept = default;
+
+            bool operator==(const file_iterator& rhs) const {
+                return dir_iter == rhs.dir_iter && gate == rhs.gate && entry == rhs.entry;
+            }
+            bool operator!=(const file_iterator& rhs) const {
+                return !operator==(rhs);
+            }
+
+            const cache_entry_type& operator*() const noexcept {
+                entry.entry = dir_iter.operator*();
+                entry.deserialize();
+                return entry;
+            }
+
+            const cache_entry_type* operator->() const noexcept {
+                entry.entry = dir_iter.operator*();
+                entry.deserialize();
+                return &entry;
+            }
+
+            cache_entry_type operator++(int) const {
+                cache_entry_type e{**this};
+                ++*this;
+                return e;
+            }
+
+            file_iterator& operator++() {
+                dir_iter.increment(ec);
+                if (ec) {
+                    gate.logger.error(DIR_GATE_CAT, "Cannot find the next cache file in the directory.", ec);
+                    return *this;
+                }
+                if (entry.entry.exists() || entry.entry.path().extension() != gate.gate_opts.extension) {
+                    return operator++();
+                }
+                entry.deserialize();
+                if (!entry.is_valid()) {
+                    return operator++();
+                }
+                return *this;
             }
         };
 
@@ -95,6 +192,7 @@ namespace webpp {
 
           private:
             friend iterator;
+            friend cache_entry<storage_gate>;
 
             path_type    dir{};
             gate_options gate_opts{};
@@ -257,6 +355,14 @@ namespace webpp {
             }
 
 
+            bool operator==(storage_gate const& rhs) const {
+                return dir == rhs.dir;
+            }
+
+            bool operator!=(storage_gate const& rhs) const {
+                return dir != rhs.dir;
+            }
+
             path_type cache_dir() const noexcept {
                 return dir;
             }
@@ -340,7 +446,7 @@ namespace webpp {
                 namespace fs = stl::filesystem;
 
                 stl::error_code ec;
-                for (auto const& file : *this) {
+                for (auto const& file : stl::filesystem::directory_iterator(dir)) {
                     if (file.path().extension() != gate_opts.extension)
                         continue;
                     auto const key_str = file.path().stem().string();
@@ -366,7 +472,7 @@ namespace webpp {
             }
 
             const_iterator end() const {
-                return {"", *this};
+                return {*this};
             }
 
             iterator begin() {
@@ -374,7 +480,7 @@ namespace webpp {
             }
 
             iterator end() {
-                return {"", *this};
+                return {*this};
             }
         };
     };
