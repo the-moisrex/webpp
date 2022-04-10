@@ -14,9 +14,9 @@ namespace webpp {
 
         template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT, StorageGate SG>
         struct strategy {
-            using key_type    = KeyT;
-            using value_type  = ValueT;
             using traits_type = TraitsType;
+            using key_type    = traits::generalify_allocators<traits_type, KeyT>;
+            using value_type  = traits::generalify_allocators<traits_type, ValueT>;
             using storage_gate_type =
               typename SG::template storage_gate<traits_type, key_type, value_type, stl::size_t>;
 
@@ -38,10 +38,10 @@ namespace webpp {
             }
 
           public:
-            template <typename ET, typename ...Args>
+            template <typename ET, typename... Args>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, strategy const&> &&
                          !stl::same_as<ET, strategy &&>)
-            constexpr strategy(ET&& et, stl::size_t max_size_value = 1024, Args&& ...args) noexcept
+            constexpr strategy(ET&& et, stl::size_t max_size_value = 1024, Args&&... args) noexcept
               : max_size{max_size_value},
                 gate{et, stl::forward<Args>(args)...} {}
 
@@ -67,7 +67,7 @@ namespace webpp {
 
                 gate.set_options(key, next_usage++);
 
-                return *val;
+                return val;
             }
         };
     };
