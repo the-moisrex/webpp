@@ -16,7 +16,7 @@ namespace webpp {
     concept CacheValue = !stl::is_void_v<V>;
 
     template <typename T>
-    concept CacheOptions = !stl::is_void_v<T>;
+    concept CacheOptions = !stl::is_void_v<T> && stl::is_copy_assignable_v<T>;
 
     template <typename K>
     concept CacheFileKey = CacheKey<K> && requires(K key) {

@@ -130,11 +130,11 @@ namespace webpp {
                 // decoding options
                 options_type opts;
                 if (gate_opts.encode_options) {
-                    lexical::cast<options_type>(data.substr(end_key_index + 1, end_options_index),
-                                                this->alloc_pack);
+                    opts = lexical::cast<options_type>(data.substr(end_key_index + 1, end_options_index),
+                                                       this->alloc_pack);
                 } else {
                     auto        opts_str     = data.substr(end_key_index + 1, end_options_index);
-                    string_type decoded_opts = object::make_general(this->alloc_pack);
+                    string_type decoded_opts = object::make_general<string_type>(this->alloc_pack);
                     if (base64::decode(opts_str, decoded_opts)) {
                         opts = lexical::cast<options_type>(decoded_opts, this->alloc_pack);
                     } else {
@@ -148,10 +148,10 @@ namespace webpp {
                     // todo
                 }
 
-                return {.key = lexical::cast<key_type>(key_str, this->alloc_pack),
-                        .value =
-                          lexical::cast<value_type>(data.substr(end_options_index + 1), this->alloc_pack),
-                        .options = opts};
+                return data_type{
+                  .key     = lexical::cast<key_type>(key_str, this->alloc_pack),
+                  .value   = lexical::cast<value_type>(data.substr(end_options_index + 1), this->alloc_pack),
+                  .options = opts};
             }
 
             void set_temp_dir() {
