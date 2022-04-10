@@ -99,7 +99,7 @@ namespace webpp {
                 return data_str;
             }
 
-            key_type deserialize_key(string_type const& key) {
+            key_type deserialize_key(string_view_type key) {
                 return lexical::cast<key_type>(key, this->alloc_pack);
             }
 
@@ -240,7 +240,7 @@ namespace webpp {
                 path_type file = key_path(key);
                 if (stl::basic_ofstream<char_type> ofs(file); ofs.good()) {
                     // todo: handle errors
-                    auto const data = serialize_file(value, opts);
+                    auto const data = serialize_file({.key = key, .value = value, .options = opts});
                     ofs.write(data.data(), data.size() * sizeof(char_type));
                     ofs.close();
                 } else {
@@ -283,15 +283,18 @@ namespace webpp {
                 for (auto const& file : *this) {
                     if (file.path().extension() != gate_opts.extension)
                         continue;
-                    const key_type   key = deserialize_key(file.path().stem());
-                    const value_type value{}; // todo
-                    if (predicate(stl::pair<key_type, value_type>{key, value})) {
+                    auto const key_str = file.path().stem().string();
+                    auto const data =
+                      get(deserialize_key(istl::string_viewify_of<string_view_type>(key_str)));
+                    if (!data)
+                        continue;
+                    if (predicate(data.value())) {
                         fs::remove(file.path(), ec);
                         if (ec) {
                             this->logger.error(DIR_GATE_CAT,
                                                fmt::format("Cannot remove cache file {} (key name: {})",
                                                            file.path().string(),
-                                                           key),
+                                                           data->key),
                                                ec);
                         }
                     }

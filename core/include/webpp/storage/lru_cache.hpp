@@ -32,7 +32,7 @@ namespace webpp {
                     return;
                 stl::size_t break_index = next_usage - max_size;
                 gate.erase_if([break_index](auto const& item) noexcept {
-                    auto const& [_, value, last_used_index] = item;
+                    const auto last_used_index = item.options;
                     return last_used_index < break_index;
                 });
             }

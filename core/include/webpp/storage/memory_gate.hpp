@@ -35,7 +35,9 @@ namespace webpp {
             template <typename K>
             stl::optional<data_type> get(K&& key) {
                 if (auto it = map.find(stl::forward<K>(key)); it != map.end()) {
-                    return {.key = it->first, .value = it->second.second, .options = it->second.first};
+                    return data_type{.key     = it->first,
+                                     .value   = it->second.second,
+                                     .options = it->second.first};
                 }
                 return stl::nullopt;
             }
@@ -63,7 +65,7 @@ namespace webpp {
                 stl::erase_if(map, [predicate](auto&& item) {
                     auto [key, value_pack] = item;
                     auto [opts, value]     = value_pack;
-                    return predicate(stl::tuple<key_type, value_type, options_type>{key, value, opts});
+                    return predicate(data_type{key, value, opts});
                 });
             }
 
