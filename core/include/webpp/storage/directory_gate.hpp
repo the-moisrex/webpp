@@ -98,6 +98,11 @@ namespace webpp {
             bool is_valid() const {
                 return data.has_value();
             }
+
+            void reset() {
+                entry = {};
+                data  = stl::nullopt;
+            }
         };
 
         template <typename StorageGateType>
@@ -161,7 +166,8 @@ namespace webpp {
             file_iterator& operator++() {
                 dir_iter.increment(ec);
                 if (ec) {
-                    gate.logger.error(DIR_GATE_CAT, "Cannot find the next cache file in the directory.", ec);
+                    // we got to the end
+                    entry.reset();
                     return *this;
                 }
                 if (entry.entry.exists() || entry.entry.path().extension() != gate.gate_opts.extension) {
@@ -407,7 +413,7 @@ namespace webpp {
                 if (stl::basic_ofstream<char_type> ofs(file); ofs.good()) {
                     // todo: handle errors
                     auto const data = serialize_file({.key = key, .value = value, .options = opts});
-                    ofs.write(data.data(), data.size() * sizeof(char_type));
+                    ofs.write(data.data(), static_cast<stl::streamsize>(data.size() * sizeof(char_type)));
                     ofs.close();
                 } else {
                     this->logger.error(DIR_GATE_CAT,
