@@ -111,7 +111,7 @@ namespace webpp {
              */
             stl::optional<data_type> deserialize_file(string_view_type data) {
                 const auto end_key_index = data.find_first_of('\n');
-                if (sep_index == string_type::npos) {
+                if (end_key_index == string_type::npos) {
                     this->logger.error(
                       DIR_GATE_CAT,
                       "Cache data is invalid. Cannot find the key name inside the cache file.");
@@ -119,7 +119,7 @@ namespace webpp {
                 }
 
                 const auto end_options_index = data.find_first_of('\n', end_key_index + 1);
-                if (sep_index == string_type::npos) {
+                if (end_options_index == string_type::npos) {
                     this->logger.error(
                       DIR_GATE_CAT,
                       "Cache data is invalid. Cannot find the options inside the cache file.");
