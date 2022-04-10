@@ -24,10 +24,10 @@ namespace webpp {
         static constexpr stl::string_view DIR_GATE_CAT = "DirGate";
 
         struct gate_options {
-            stl::filesystem::path::string_type extension      = ".cache";
-            bool                               encode_options = true;
-            bool                               hash_keys      = true;
-            bool                               encrypt_values = false;
+            stl::string_view extension      = ".cache"; // todo: add webpp version number here
+            bool             encode_options = true;     // todo: see if you need to remove this
+            bool             hash_keys      = true;
+            bool             encrypt_values = false;
         };
 
         template <CacheFileKey KeyT, CacheFileValue ValT>
@@ -55,11 +55,12 @@ namespace webpp {
             using key_type         = traits::generalify_allocators<traits_type, KeyT>;
             using value_type       = traits::generalify_allocators<traits_type, ValueT>;
             using options_type     = traits::generalify_allocators<traits_type, OptsT>;
-            using string_type      = typename path_type::string_type;
+            using string_type      = traits::general_string<traits_type>;
             using iterator         = file_iterator<key_type, value_type>;
             using const_iterator   = const iterator;
             using char_type        = typename string_type::value_type;
             using string_view_type = traits::string_view<traits_type>;
+            using data_type        = cache_tuple<key_type, value_type, options_type>;
 
           private:
             path_type    dir;
@@ -81,56 +82,76 @@ namespace webpp {
             }
 
 
-            string_type serialize_opts_value(value_type const& val, options_type const& opts) {
-                auto data             = object::make_general<string_type>(this->alloc_pack);
-                using new_string_type = typename stl::remove_cvref_t<decltype(data)>::object_type;
-                auto value_str        = lexical::cast<new_string_type>(val, this->alloc_pack);
-                auto opts_str         = serialize_opts(opts);
+            string_type serialize_file(data_type const& data) {
+                string_type data_str  = object::make_general<string_type>(this->alloc_pack);
+                string_type key_str   = lexical::cast<string_type>(data.key, this->alloc_pack);
+                auto        value_str = lexical::cast<string_type>(data.value, this->alloc_pack);
+                auto        opts_str  = serialize_opts(data.options);
                 if (gate_opts.encrypt_values) {
                     // todo
                 }
-                data.reserve(opts_str.size() + 1 + value_str.size());
-                data.append(opts_str);
-                data.append('\n');
-                data.append(value_str);
-                return data;
+                data_str.reserve(key_str.size() + 1 + opts_str.size() + 1 + value_str.size());
+                data_str.append(key_str);
+                data_str.push_back('\n');
+                data_str.append(opts_str);
+                data_str.push_back('\n');
+                data_str.append(value_str);
+                return data_str;
             }
 
             key_type deserialize_key(string_type const& key) {
-                if (gate_opts.hash_keys) {
-                    // todo: hash the keys
-                }
                 return lexical::cast<key_type>(key, this->alloc_pack);
             }
 
-            stl::pair<options_type, value_type> deserialize_opts_value(string_type const& data) {
+            /**
+             * A cache file's syntax is like this:
+             *   key\n
+             *   options\n
+             *   value
+             */
+            stl::optional<data_type> deserialize_file(string_view_type data) {
                 const auto sep_index = data.find_first_of('\n');
-                if (sep_index != string_type::npos) {
-
-                    // decoding options
-                    options_type opts;
-                    if (gate_opts.encode_options) {
-                        lexical::cast<options_type>(string_view_type(data.data(), data.data() + sep_index),
-                                                    this->alloc_pack);
-                    } else {
-                        auto opts_str = data.substr(0, sep_index);
-                        base64::decode(opts_str, opts_str);
-                        opts = lexical::cast<options_type>(opts_str, this->alloc_pack);
-                    }
-
-                    // decoding value
-                    if (gate_opts.encrypt_values) {
-                        // todo
-                    }
-
-                    return {opts, // the options
-                            lexical::cast<value_type>(
-                              string_view_type{data.data() + sep_index + 1, data.data() + data.size()},
-                              this->alloc_pack)};
-                } else {
-                    this->logger.error(DIR_GATE_CAT, "Cache data is invalid.");
-                    return {};
+                if (sep_index == string_type::npos) {
+                    this->logger.error(
+                      DIR_GATE_CAT,
+                      "Cache data is invalid. Cannot find the key name inside the cache file.");
+                    return stl::nullopt;
                 }
+
+                const auto next_sep_index = data.find_first_of('\n', sep_index);
+                if (sep_index == string_type::npos) {
+                    this->logger.error(
+                      DIR_GATE_CAT,
+                      "Cache data is invalid. Cannot find the options inside the cache file.");
+                    return stl::nullopt;
+                }
+                string_view_type key_str = data.substr(sep_index, next_sep_index);
+
+                // decoding options
+                options_type opts;
+                if (gate_opts.encode_options) {
+                    lexical::cast<options_type>(data.substr(sep_index, next_sep_index), this->alloc_pack);
+                } else {
+                    auto        opts_str     = data.substr(0, sep_index);
+                    string_type decoded_opts = object::make_general(this->alloc_pack);
+                    if (base64::decode(opts_str, decoded_opts)) {
+                        opts = lexical::cast<options_type>(decoded_opts, this->alloc_pack);
+                    } else {
+                        this->logger.error(DIR_GATE_CAT, "Error decoding options.");
+                        return stl::nullopt;
+                    }
+                }
+
+                // decoding value
+                if (gate_opts.encrypt_values) {
+                    // todo
+                }
+
+                return {.key   = lexical::cast<key_type>(key_str, this->alloc_pack),
+                        .value = lexical::cast<value_type>(
+                          string_view_type{data.data() + sep_index + 1, data.data() + data.size()},
+                          this->alloc_pack),
+                        .options = opts};
             }
 
             void set_temp_dir() {
@@ -167,7 +188,7 @@ namespace webpp {
                          !stl::same_as<ET, storage_gate &&>)
             storage_gate(ET&&         et,
                          path_type    cache_dir  = "", // empty string will create a temp directory
-                         gate_options input_opts = {}) // NOLINT(cppcoreguidelines-pro-type-member-init)
+                         gate_options input_opts = {})
               : etraits{et},
                 dir{stl::move(cache_dir)},
                 gate_opts{input_opts} {
@@ -194,7 +215,7 @@ namespace webpp {
                 return stl::filesystem::exists(key_path(key));
             }
 
-            stl::optional<value_type> get(key_type const& key) {
+            stl::optional<data_type> get(key_type const& key) {
                 if (!has(key))
                     return stl::nullopt;
 
@@ -206,8 +227,7 @@ namespace webpp {
                     ifs.seekg(0);
                     ifs.read(result.data(), size);
                     ifs.close();
-                    auto [_, value] = deserialize_opts_value(result);
-                    return stl::move(value);
+                    return deserialize_file(result);
                 } else {
                     this->logger.error(DIR_GATE_CAT,
                                        fmt::format("Cannot read the cache file {}", file.string()));
@@ -220,7 +240,7 @@ namespace webpp {
                 path_type file = key_path(key);
                 if (stl::basic_ofstream<char_type> ofs(file); ofs.good()) {
                     // todo: handle errors
-                    auto const data = serialize_opts_value(value, opts);
+                    auto const data = serialize_file(value, opts);
                     ofs.write(data.data(), data.size() * sizeof(char_type));
                     ofs.close();
                 } else {

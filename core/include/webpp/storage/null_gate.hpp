@@ -15,8 +15,16 @@ namespace webpp {
             using options_type = OptsT;
             using traits_type  = TraitsType;
 
+            // we should be using cache_tuple, but we don't want to create a circular dependency by importing
+            // cache_concepts.hpp file here.
+            struct data_type {
+                key_type     key;
+                value_type   value;
+                options_type options;
+            };
+
             template <typename V>
-            stl::optional<value_type> get([[maybe_unused]] V&& value) {
+            stl::optional<data_type> get([[maybe_unused]] V&& value) {
                 return stl::nullopt;
             }
 

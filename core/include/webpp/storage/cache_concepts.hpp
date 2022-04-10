@@ -92,6 +92,16 @@ namespace webpp {
         typename T::template strategy<default_traits, int, int, null_gate>;
         requires details::CacheStrategy<typename T::template strategy<default_traits, int, int, null_gate>>;
     };
+
+
+
+    template <typename KeyT, typename ValueT, typename OptionsT>
+    struct cache_tuple {
+        KeyT     key;
+        ValueT   value;
+        OptionsT options;
+    };
+
 } // namespace webpp
 
 #endif // WEBPP_STORAGE_CACHE_CONCEPTS_HPP

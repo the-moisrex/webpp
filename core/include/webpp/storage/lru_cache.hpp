@@ -61,13 +61,13 @@ namespace webpp {
             template <typename K>
                 requires(stl::convertible_to<K, key_type>) // it's a key
             stl::optional<value_type> get(K&& key) {
-                auto val = gate.get(key);
-                if (!val)
+                auto data = gate.get(key);
+                if (!data)
                     return stl::nullopt;
 
                 gate.set_options(key, next_usage++);
 
-                return val;
+                return {data.value};
             }
         };
     };

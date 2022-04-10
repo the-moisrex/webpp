@@ -22,6 +22,7 @@ namespace webpp {
             using value_type      = typename map_type::mapped_type::second_type;
             using options_type    = typename mapped_type::first_type;
             using etraits         = enable_traits<TraitsType>;
+            using data_type       = cache_tuple<key_type, value_type, options_type>;
 
 
             template <typename ET>
@@ -32,9 +33,9 @@ namespace webpp {
                 map(et.alloc_pack, et.alloc_pack.general_resource()) {}
 
             template <typename K>
-            stl::optional<value_type> get(K&& key) {
+            stl::optional<data_type> get(K&& key) {
                 if (auto it = map.find(stl::forward<K>(key)); it != map.end()) {
-                    return it->second.second;
+                    return {.key = it->first, .value = it->second.second, .options = it->second.first};
                 }
                 return stl::nullopt;
             }
