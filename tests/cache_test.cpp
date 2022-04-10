@@ -17,6 +17,8 @@ using replacer = alloc::details::allocator_replacer<std::allocator>::template re
 static_assert(!replacer::value);
 static_assert(stl::is_same_v<int, typename replacer::type>);
 static_assert(stl::is_same_v<traits::generalify_allocators<default_traits, int>, int>);
+static_assert(stl::is_same_v<traits::generalify_allocators<default_traits, double>, double>);
+static_assert(stl::is_same_v<traits::generalify_allocators<std_traits, std::string_view>, std::string_view>);
 
 TEST(Cache, LEUCacheTest) {
     enable_owner_traits<default_traits> t;
