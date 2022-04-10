@@ -110,7 +110,7 @@ namespace webpp {
              *   value
              */
             stl::optional<data_type> deserialize_file(string_view_type data) {
-                const auto sep_index = data.find_first_of('\n');
+                const auto end_key_index = data.find_first_of('\n');
                 if (sep_index == string_type::npos) {
                     this->logger.error(
                       DIR_GATE_CAT,
@@ -118,21 +118,22 @@ namespace webpp {
                     return stl::nullopt;
                 }
 
-                const auto next_sep_index = data.find_first_of('\n', sep_index);
+                const auto end_options_index = data.find_first_of('\n', end_key_index + 1);
                 if (sep_index == string_type::npos) {
                     this->logger.error(
                       DIR_GATE_CAT,
                       "Cache data is invalid. Cannot find the options inside the cache file.");
                     return stl::nullopt;
                 }
-                string_view_type key_str = data.substr(sep_index, next_sep_index);
+                string_view_type key_str = data.substr(0, end_key_index);
 
                 // decoding options
                 options_type opts;
                 if (gate_opts.encode_options) {
-                    lexical::cast<options_type>(data.substr(sep_index, next_sep_index), this->alloc_pack);
+                    lexical::cast<options_type>(data.substr(end_key_index + 1, end_options_index),
+                                                this->alloc_pack);
                 } else {
-                    auto        opts_str     = data.substr(0, sep_index);
+                    auto        opts_str     = data.substr(end_key_index + 1, end_options_index);
                     string_type decoded_opts = object::make_general(this->alloc_pack);
                     if (base64::decode(opts_str, decoded_opts)) {
                         opts = lexical::cast<options_type>(decoded_opts, this->alloc_pack);
@@ -147,10 +148,9 @@ namespace webpp {
                     // todo
                 }
 
-                return {.key   = lexical::cast<key_type>(key_str, this->alloc_pack),
-                        .value = lexical::cast<value_type>(
-                          string_view_type{data.data() + sep_index + 1, data.data() + data.size()},
-                          this->alloc_pack),
+                return {.key = lexical::cast<key_type>(key_str, this->alloc_pack),
+                        .value =
+                          lexical::cast<value_type>(data.substr(end_options_index + 1), this->alloc_pack),
                         .options = opts};
             }
 
