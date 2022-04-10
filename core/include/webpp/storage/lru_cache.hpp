@@ -19,6 +19,7 @@ namespace webpp {
             using value_type  = traits::generalify_allocators<traits_type, ValueT>;
             using storage_gate_type =
               typename SG::template storage_gate<traits_type, key_type, value_type, stl::size_t>;
+            using data_type = typename storage_gate_type::data_type;
 
 
           private:
@@ -61,13 +62,13 @@ namespace webpp {
             template <typename K>
                 requires(stl::convertible_to<K, key_type>) // it's a key
             stl::optional<value_type> get(K&& key) {
-                auto data = gate.get(key);
+                stl::optional<data_type> data = gate.get(key);
                 if (!data)
                     return stl::nullopt;
 
                 gate.set_options(key, next_usage++);
 
-                return {data.value};
+                return data->value;
             }
         };
     };

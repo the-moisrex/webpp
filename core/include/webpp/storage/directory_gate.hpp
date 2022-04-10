@@ -279,8 +279,8 @@ namespace webpp {
                 // I'm disabling the encryption for performance gains
                 const gate_options old_gate_opts = gate_opts;
                 gate_opts.encrypt_values         = false;
-                [[maybe_unused]] auto [_, value] = get(key);
-                set(key, std::move(value), opts);
+                auto data                        = get(key).value_or(data_type{key, value_type{}, opts});
+                set(data.key, std::move(data.value), opts);
                 gate_opts = old_gate_opts; // restore the old gate options
             }
 

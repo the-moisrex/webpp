@@ -19,7 +19,7 @@ namespace webpp {
         using key_type    = traits::generalify_allocators<traits_type, KeyT>;
         using value_type  = traits::generalify_allocators<traits_type, ValT>;
         // using storage_gate_type = typename SG::template storage_gate<traits_type, key_type, value_type>;
-        using strategy_type = typename CS::template strategy<traits_type, key_type, value_type, SG>;
+        using strategy_type = typename CS::template strategy<TraitsType, KeyT, ValT, SG>;
 
         struct cache_result {};
 
