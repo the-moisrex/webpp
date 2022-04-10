@@ -30,20 +30,51 @@ namespace webpp {
             bool             encrypt_values = false;
         };
 
-        template <CacheFileKey KeyT, CacheFileValue ValT>
+        template <typename StorageGateType>
         struct file_iterator : stl::filesystem::directory_iterator {
+            using dir_iter          = stl::filesystem::directory_iterator;
+            using storage_gate_type = StorageGateType;
+            using key_type          = typename storage_gate_type::key_type;
+            using value_type        = typename storage_gate_type::value_type;
+            using options_type      = typename storage_gate_type::options_type;
+            using data_type         = typename storage_gate_type::data_type;
+            using string_view_type  = typename storage_gate_type::string_view_type;
+            using path_string_type  = stl::string;
 
-            using key_type   = KeyT;
-            using value_type = ValT;
-            using key_ref    = stl::add_lvalue_reference_t<key_type>;
-            using value_ref  = stl::add_lvalue_reference_t<value_type>;
+          private:
+            storage_gate_type&       gate;
+            stl::optional<data_type> data;
+
+          public:
+            file_iterator(path_string_type const& dir, storage_gate_type& the_gate)
+              : dir_iter{dir},
+                gate{the_gate} {}
+
+            file_iterator& operator++() {
+                dir_iter::operator++();
+
+                if (this->operator->()->path().extension() != gate.gate_opts.extension) {
+                    return operator++();
+                }
+                auto const key_str = this->operator->()->path().stem().string();
+                data = gate.get(gate.deserialize_key(istl::string_viewify_of<string_view_type>(key_str)));
+                if (!data) {
+                    return operator++();
+                }
+
+                return *this;
+            }
 
             key_type key() const {
-                return this->path()->stem();
+                return data->key;
             }
 
             value_type value() const {
-                return;
+                return data->value;
+            }
+
+            options_type options() const {
+                return data->options;
             }
         };
 
@@ -56,13 +87,15 @@ namespace webpp {
             using value_type       = traits::generalify_allocators<traits_type, ValueT>;
             using options_type     = traits::generalify_allocators<traits_type, OptsT>;
             using string_type      = traits::general_string<traits_type>;
-            using iterator         = file_iterator<key_type, value_type>;
-            using const_iterator   = const iterator;
+            using iterator         = file_iterator<storage_gate>;
+            using const_iterator   = iterator;
             using char_type        = typename string_type::value_type;
             using string_view_type = traits::string_view<traits_type>;
             using data_type        = cache_tuple<key_type, value_type, options_type>;
 
           private:
+            friend iterator;
+
             path_type    dir{};
             gate_options gate_opts{};
 
@@ -327,19 +360,19 @@ namespace webpp {
             }
 
             const_iterator begin() const {
-                return {dir};
+                return {dir, *this};
             }
 
             const_iterator end() const {
-                return {};
+                return {"", *this};
             }
 
             iterator begin() {
-                return {dir};
+                return {dir, *this};
             }
 
             iterator end() {
-                return {};
+                return {"", *this};
             }
         };
     };
