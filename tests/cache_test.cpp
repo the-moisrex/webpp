@@ -53,11 +53,11 @@ TEST(Cache, DirectoryGateTest) {
     stl::filesystem::create_directory(dir);
     lru_cache<default_traits, std::string, std::string, directory_gate> c(t, 1024, dir);
     c.set("one", "value");
-    EXPECT_EQ("value", c.get("one", ""));
+    EXPECT_EQ("value", c.get("one", "default"));
     c.set("one", "new value");
-    EXPECT_EQ("new value", c.get("one", ""));
+    EXPECT_EQ("new value", c.get("one", "default"));
     c.set("one", "old value");
-    EXPECT_EQ("old value", c.get("one", ""));
+    EXPECT_EQ("old value", c.get("one", "default"));
 
     lru_cache<default_traits, int, std::string, directory_gate> c2{t, 3, dir};
     c2.set(1, "hello");

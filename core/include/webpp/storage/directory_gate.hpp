@@ -279,9 +279,11 @@ namespace webpp {
 
                 path_type file = key_path(key);
                 if (stl::basic_ifstream<char_type> ifs(file); ifs.is_open()) {
+                    ifs.seekg(0, ifs.end);
                     const auto size   = ifs.tellg();
                     auto       result = object::make_general<string_type>(*this);
-                    result.reserve(static_cast<stl::size_t>(size));
+                    // todo: don't need to zero it out; https://stackoverflow.com/a/29348072
+                    result.resize(static_cast<stl::size_t>(size));
                     ifs.seekg(0);
                     ifs.read(result.data(), size);
                     ifs.close();

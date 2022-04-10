@@ -171,7 +171,8 @@ namespace webpp::http {
             constexpr HTTPResponse auto string(Args&&... args) const {
                 // check if there's an allocator in the args:
                 constexpr bool has_allocator = (istl::Allocator<Args> || ...);
-                if constexpr (!has_allocator && requires {
+                if constexpr (!has_allocator &&
+                              requires {
                                   response_type::with_body(
                                     stl::forward<Args>(args)...,
                                     this->alloc_pack.template general_allocator<char_type>());
@@ -204,12 +205,13 @@ namespace webpp::http {
                     // details on this matter:
                     // https://stackoverflow.com/questions/11563963/writing-a-binary-file-in-c-very-fast/39097696#39097696
                     // stl::unique_ptr<char[]> buffer{new char[buffer_size]};
-                    // in.rdbuf()->pubsetbuf(buffer.get(), buffer_size); // speed boost, I think
-                    const auto size = in.tellg();
                     // stl::unique_ptr<char_type[]> result(static_cast<char_type*>(
                     //  this->alloc_pack.template local_allocator<char_type[]>().allocate(size)));
                     auto result = object::make_general<string_type>(*this);
-                    result.reserve(static_cast<stl::size_t>(size));
+                    in.seekg(0, in.end);
+                    const auto size = in.tellg();
+                    result.resize(static_cast<stl::size_t>(
+                      size)); // todo: don't need to zero it out; https://stackoverflow.com/a/29348072
                     in.seekg(0);
                     in.read(result.data(), size);
                     // todo: cache the results
