@@ -71,14 +71,20 @@ namespace webpp {
                 return lexical::cast<string_type>(key, this->alloc_pack);
             }
 
-            string_type serialize_value(value_type const& val, options_type const& opts) {
-                auto data             = object::make_general<string_type>(this->alloc_pack);
-                using new_string_type = typename stl::remove_cvref_t<decltype(data)>::object_type;
-                auto value_str        = lexical::cast<new_string_type>(val, this->alloc_pack);
-                auto opts_str         = lexical::cast<new_string_type>(opts, this->alloc_pack);
+            string_type serialize_opts(options_type const& opts) {
+                auto opts_str = lexical::cast<traits::general_string<traits_type>>(opts, this->alloc_pack);
                 if (gate_opts.encode_options) {
                     base64::encode(opts_str, opts_str);
                 }
+                return opts_str;
+            }
+
+
+            string_type serialize_opts_value(value_type const& val, options_type const& opts) {
+                auto data             = object::make_general<string_type>(this->alloc_pack);
+                using new_string_type = typename stl::remove_cvref_t<decltype(data)>::object_type;
+                auto value_str        = lexical::cast<new_string_type>(val, this->alloc_pack);
+                auto opts_str         = serialize_opts(opts);
                 if (gate_opts.encrypt_values) {
                     // todo
                 }
@@ -96,7 +102,7 @@ namespace webpp {
                 return lexical::cast<key_type>(key, this->alloc_pack);
             }
 
-            stl::pair<options_type, value_type> deserialize_value(string_type const& data) {
+            stl::pair<options_type, value_type> deserialize_opts_value(string_type const& data) {
                 const auto sep_index = data.find_first_of('\n');
                 if (sep_index != string_type::npos) {
 
@@ -116,12 +122,10 @@ namespace webpp {
                         // todo
                     }
 
-                    return {
-                        opts, // the options
-                          lexical::cast<value_type>(
-                            string_view_type{data.data() + sep_index + 1, data.data() + data.size()},
-                            this->alloc_pack)
-                    };
+                    return {opts, // the options
+                            lexical::cast<value_type>(
+                              string_view_type{data.data() + sep_index + 1, data.data() + data.size()},
+                              this->alloc_pack)};
                 } else {
                     this->logger.error(DIR_GATE_CAT, "Cache data is invalid.");
                     return {};
@@ -161,7 +165,7 @@ namespace webpp {
                     ifs.seekg(0);
                     ifs.read(result.data(), size);
                     ifs.close();
-                    auto [_, value] = deserialize_value(result);
+                    auto [_, value] = deserialize_opts_value(result);
                     return stl::move(value);
                 } else {
                     this->logger.error(DIR_GATE_CAT,
@@ -175,7 +179,7 @@ namespace webpp {
                 path_type file = key_path(key);
                 if (stl::basic_ofstream<char_type> ofs(file); ofs.good()) {
                     // todo: handle errors
-                    auto const data = serialize_value(value, opts);
+                    auto const data = serialize_opts_value(value, opts);
                     ofs.write(data.data(), data.size() * sizeof(char_type));
                     ofs.close();
                 } else {
@@ -183,6 +187,17 @@ namespace webpp {
                                        fmt::format("Cannot write the cache to the file {}", file.string()));
                 }
             }
+
+
+            void set_options(key_type const& key, options_type opts) {
+                // I'm disabling the encryption for performance gains
+                const gate_options old_gate_opts = gate_opts;
+                gate_opts.encrypt_values         = false;
+                [[maybe_unused]] auto [_, value] = get(key);
+                set(key, std::move(value), opts);
+                gate_opts = old_gate_opts; // restore the old gate options
+            }
+
 
 
             bool erase(key_type const& key) noexcept {
