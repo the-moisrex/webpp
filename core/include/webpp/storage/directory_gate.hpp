@@ -64,9 +64,7 @@ namespace webpp {
                     gate.logger.error(DIR_GATE_CAT, "Cannot check the existence of a cache file.", ec);
                     return;
                 }
-                auto const key_str = dir_iter->path().stem().string();
-                auto const real_data =
-                  gate.get(gate.deserialize_key(istl::string_viewify_of<string_view_type>(key_str)));
+                auto const real_data = gate.get_file(dir_iter->path());
                 if (!real_data)
                     data = stl::nullopt;
                 data = value_type{real_data->key, real_data->value};
@@ -123,7 +121,7 @@ namespace webpp {
                     reset();
                     return *this;
                 }
-                if (dir_iter->exists() || dir_iter->path().extension() != gate.gate_opts.extension) {
+                if (!gate.is_our_cache(dir_iter->path())) {
                     return operator++();
                 }
                 deserialize();
@@ -187,10 +185,6 @@ namespace webpp {
                 data_str.push_back('\n');
                 data_str.append(value_str);
                 return data_str;
-            }
-
-            key_type deserialize_key(string_view_type key) {
-                return lexical::cast<key_type>(key, this->alloc_pack);
             }
 
             /**
@@ -360,16 +354,22 @@ namespace webpp {
                 return file;
             }
 
+            [[nodiscard]] bool is_our_cache(path_type const& path) const {
+                // These things are checked:
+                //  - extension
+                //  - hashed name
+                //  - directory cache version
+                return (path.extension() == gate_opts.extension) &&
+                       (path.stem().string().starts_with(hashed_name)) &&
+                       (path.stem().string().ends_with(directory_gate_version));
+            }
+
             // check if the specified key exists
             bool has(key_type const& key) {
                 return stl::filesystem::exists(key_path(key));
             }
 
-            stl::optional<data_type> get(key_type const& key) {
-                if (!has(key))
-                    return stl::nullopt;
-
-                path_type file = key_path(key);
+            stl::optional<data_type> get_file(path_type const& file) {
                 if (stl::basic_ifstream<char_type> ifs(file); ifs.is_open()) {
                     ifs.seekg(0, ifs.end);
                     const auto size   = ifs.tellg();
@@ -385,6 +385,14 @@ namespace webpp {
                                        fmt::format("Cannot read the cache file {}", file.string()));
                     return stl::nullopt;
                 }
+            }
+
+            stl::optional<data_type> get(key_type const& key) {
+                if (!has(key))
+                    return stl::nullopt;
+
+                path_type file = key_path(key);
+                return get_file(file);
             }
 
             template <typename K, typename V>
@@ -430,7 +438,7 @@ namespace webpp {
             void clear() {
                 stl::error_code ec;
                 for (auto const& file : stl::filesystem::directory_iterator(dir, ec)) {
-                    if (file.path().extension() != gate_opts.extension)
+                    if (!is_our_cache(file.path()))
                         continue;
                     stl::filesystem::remove(file, ec);
                     if (ec) {
@@ -449,11 +457,9 @@ namespace webpp {
 
                 stl::error_code ec;
                 for (auto const& file : stl::filesystem::directory_iterator(dir, ec)) {
-                    if (file.path().extension() != gate_opts.extension)
+                    if (!is_our_cache(file.path()))
                         continue;
-                    auto const key_str = file.path().stem().string();
-                    auto const data =
-                      get(deserialize_key(istl::string_viewify_of<string_view_type>(key_str)));
+                    auto const data = get_file(file);
                     if (!data)
                         continue;
                     if (predicate(data.value())) {
