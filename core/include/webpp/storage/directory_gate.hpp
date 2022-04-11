@@ -110,12 +110,6 @@ namespace webpp {
                 return data;
             }
 
-            value_type operator++(int) const {
-                value_type e{**this};
-                ++*this;
-                return e;
-            }
-
             file_iterator& operator++() {
                 dir_iter.increment(ec);
                 if (ec || dir_iter == dir_iter_type{}) {
