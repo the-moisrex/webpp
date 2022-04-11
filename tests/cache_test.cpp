@@ -77,5 +77,5 @@ TEST(Cache, DirectoryGateTest) {
         EXPECT_TRUE(cache.key() < 10);
     }
 
-    stl::filesystem::remove(dir);
+    stl::filesystem::remove_all(dir);
 }

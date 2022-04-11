@@ -266,11 +266,11 @@ namespace webpp {
 
                 // decoding options
                 options_type opts;
-                if (gate_opts.encode_options) {
-                    opts = lexical::cast<options_type>(data.substr(end_key_index + 1, end_options_index),
+                if (!gate_opts.encode_options) {
+                    opts = lexical::cast<options_type>(data.substr(end_key_index + 1, end_options_index - (end_key_index + 1)),
                                                        this->alloc_pack);
                 } else {
-                    auto        opts_str     = data.substr(end_key_index + 1, end_options_index);
+                    auto        opts_str     = data.substr(end_key_index + 1, end_options_index - (end_key_index + 1));
                     string_type decoded_opts = object::make_general<string_type>(this->alloc_pack);
                     if (base64::decode(opts_str, decoded_opts)) {
                         opts = lexical::cast<options_type>(decoded_opts, this->alloc_pack);
