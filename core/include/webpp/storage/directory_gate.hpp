@@ -87,6 +87,8 @@ namespace webpp {
                 gate{the_gate} {
                 if (ec) {
                     gate.logger.error(DIR_GATE_CAT, "Cache directory traverse error.", ec);
+                } else {
+                    deserialize();
                 }
             }
 
@@ -286,7 +288,7 @@ namespace webpp {
               : etraits{et},
                 dir{stl::move(cache_dir)},
                 hashed_name{hash_name(et, stl::forward<NameT>(name))},
-                gate_opts{input_opts} {
+                gate_opts{stl::move(input_opts)} {
 
                 // create a temp directory and use that if the specified path is empty
                 if (dir.empty()) {
@@ -337,10 +339,6 @@ namespace webpp {
 
             bool operator!=(storage_gate const& rhs) const {
                 return dir != rhs.dir;
-            }
-
-            path_type cache_dir() const noexcept {
-                return dir;
             }
 
             path_type key_path(key_type const& key) {
