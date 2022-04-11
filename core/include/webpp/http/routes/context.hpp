@@ -130,9 +130,9 @@ namespace webpp::http {
       public:
         using enable_traits_with<TraitsType, EList>::enable_traits_with; // inherit the ctors from parent
 
-        constexpr basic_context(basic_context&& ctx) noexcept      = default;
-        constexpr basic_context(basic_context const& ctx) noexcept = default;
-        constexpr basic_context& operator=(basic_context const&) = default;
+        constexpr basic_context(basic_context&& ctx) noexcept        = default;
+        constexpr basic_context(basic_context const& ctx) noexcept   = default;
+        constexpr basic_context& operator=(basic_context const&)     = default;
         constexpr basic_context& operator=(basic_context&&) noexcept = default;
 
 
@@ -209,6 +209,14 @@ namespace webpp::http {
             }
         }
 
+        template <istl::StringViewifiable StrT>
+        [[nodiscard]] constexpr HTTPResponse auto view(StrT&& template_file, auto&& data) const noexcept {
+            using data_type = stl::remove_cvref_t<decltype(data)>;
+            auto res        = response<string_response>(data.what());
+
+            return res;
+        }
+
         // todo: add more error handling templates here.
         // todo: let the user customize error templates with extensions
         // todo: add all the features of returning a response each body type should have at least one method here
@@ -253,9 +261,9 @@ namespace webpp::http {
             template extensie_type<traits_type, context_descriptor_type, request_type>;
 
         using final_context_parent::final_context_parent; // inherit parent constructors
-        constexpr final_context(final_context const&) noexcept = default;
-        constexpr final_context(final_context&&) noexcept      = default;
-        constexpr final_context& operator=(final_context const&) = default;
+        constexpr final_context(final_context const&) noexcept       = default;
+        constexpr final_context(final_context&&) noexcept            = default;
+        constexpr final_context& operator=(final_context const&)     = default;
         constexpr final_context& operator=(final_context&&) noexcept = default;
 
         //        final_context() = delete;
@@ -399,9 +407,9 @@ namespace webpp::http {
     template <HTTPRequest ReqType,
               /* fixme: ExtensionList */ typename ExtensionListType = empty_extension_pack>
         requires requires {
-            typename ExtensionListType::
-              template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
-        }
+                     typename ExtensionListType::
+                       template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
+                 }
     using simple_context = typename ExtensionListType::
       template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
 
