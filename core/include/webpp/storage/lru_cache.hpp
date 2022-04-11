@@ -22,10 +22,11 @@ namespace webpp {
             using data_type = typename storage_gate_type::data_type;
 
 
-          private:
-            stl::size_t       max_size;
-            stl::size_t       next_usage = 1; // it's essentially a timestamp
             storage_gate_type gate;
+
+          private:
+            stl::size_t max_size;
+            stl::size_t next_usage = 1; // it's essentially a timestamp
 
             // clean up the old data
             void clean_up() {
@@ -72,18 +73,6 @@ namespace webpp {
             }
 
 
-            auto begin() {
-                return gate.begin();
-            }
-            auto begin() const {
-                return gate.begin();
-            }
-            auto end() {
-                return gate.end();
-            }
-            auto end() const {
-                return gate.end();
-            }
         };
     };
 
