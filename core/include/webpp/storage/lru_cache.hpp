@@ -22,12 +22,14 @@ namespace webpp {
             using data_type = typename storage_gate_type::data_type;
 
 
-            storage_gate_type gate;
 
           private:
             stl::size_t max_size;
             stl::size_t next_usage = 1; // it's essentially a timestamp
+          public:
+            storage_gate_type gate;
 
+          private:
             // clean up the old data
             void clean_up() {
                 if (next_usage <= max_size)
@@ -71,8 +73,6 @@ namespace webpp {
 
                 return data->value;
             }
-
-
         };
     };
 

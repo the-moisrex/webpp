@@ -55,7 +55,7 @@ TEST(Cache, DirectoryGateTest) {
     auto                                dir = stl::filesystem::temp_directory_path();
     dir /= "webpp-directory-gate-test";
     stl::filesystem::create_directory(dir);
-    lru_cache<default_traits, std::string, std::string, directory_gate> c(t, "one", 1024, dir);
+    lru_cache<default_traits, std::string, std::string, directory_gate> c(t, 1024, dir, "one");
     c.set("one", "value");
     EXPECT_EQ("value", c.get("one", "default"));
     c.set("one", "new value");
@@ -63,7 +63,7 @@ TEST(Cache, DirectoryGateTest) {
     c.set("one", "old value");
     EXPECT_EQ("old value", c.get("one", "default"));
 
-    lru_cache<default_traits, int, std::string, directory_gate> c2{t, "two", 3, dir};
+    lru_cache<default_traits, int, std::string, directory_gate> c2{t, 3, dir, "two"};
     c2.set(1, "hello");
     c2.set(1, "hello 2");
     EXPECT_EQ("hello 2", c2.get(1).value());
@@ -80,7 +80,7 @@ TEST(Cache, DirectoryGateTest) {
     for (auto const& [key, value] : c2) {
         try {
             EXPECT_TRUE(key < 10) << key << istl::to_std_string(value);
-        } catch (stl::bad_alloc const & b) {
+        } catch (stl::bad_alloc const& b) {
             EXPECT_NO_THROW(throw b) << key;
         }
     }

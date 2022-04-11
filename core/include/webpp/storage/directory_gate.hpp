@@ -22,10 +22,11 @@ namespace webpp {
      */
     struct directory_gate {
 
-        static constexpr stl::string_view DIR_GATE_CAT = "DirGate";
+        static constexpr stl::string_view DIR_GATE_CAT           = "DirGate";
+        static constexpr stl::string_view directory_gate_version = "1.0.0";
 
         struct gate_options {
-            stl::string extension      = stl::string(".").append(webpp_version).append(".cache");
+            stl::string extension      = ".cache";
             bool        encode_options = true; // todo: see if you need to remove this
             bool        hash_keys      = true;
             bool        encrypt_values = false;
@@ -152,6 +153,7 @@ namespace webpp {
             friend iterator;
 
             path_type    dir{};
+            string_type  hashed_name;
             gate_options gate_opts{};
 
             string_type serialize_key(key_type const& key) {
@@ -271,15 +273,25 @@ namespace webpp {
                 }
             }
 
+            template <typename NameT>
+            string_type hash_name(auto&& et, NameT&& name) const {
+                return lexical::cast<string_type>(
+                  stl::hash<string_type>{}(
+                    lexical::cast<string_type>(stl::forward<NameT>(name), et.alloc_pack)),
+                  et);
+            }
+
           public:
-            template <typename ET>
+            template <typename ET, typename NameT>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
                          !stl::same_as<ET, storage_gate &&>)
             storage_gate(ET&&         et,
                          path_type    cache_dir, // empty string will create a temp directory
+                         NameT&&      name,
                          gate_options input_opts)
               : etraits{et},
                 dir{stl::move(cache_dir)},
+                hashed_name{hash_name(et, stl::forward<NameT>(name))},
                 gate_opts{input_opts} {
 
                 // create a temp directory and use that if the specified path is empty
@@ -289,14 +301,15 @@ namespace webpp {
             }
 
 
-            template <typename ET>
+            template <typename ET, typename NameT>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
                          !stl::same_as<ET, storage_gate &&>)
             storage_gate(ET&&      et,
-                         path_type cache_dir // empty string will create a temp directory
-                         )
+                         path_type cache_dir, // empty string will create a temp directory
+                         NameT&&   name)
               : etraits{et},
-                dir{stl::move(cache_dir)} {
+                dir{stl::move(cache_dir)},
+                hashed_name{hash_name(et, stl::forward<NameT>(name))} {
 
                 // create a temp directory and use that if the specified path is empty
                 if (dir.empty()) {
@@ -308,7 +321,18 @@ namespace webpp {
             template <typename ET>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
                          !stl::same_as<ET, storage_gate &&>)
-            storage_gate(ET&& et) : etraits{et} {
+            storage_gate(ET&& et, path_type cache_dir) : etraits{et},
+                                                         dir{stl::move(cache_dir)} {
+                if (dir.empty()) {
+                    set_temp_dir();
+                }
+            }
+
+            template <typename ET>
+                requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
+                         !stl::same_as<ET, storage_gate &&>)
+            storage_gate(ET&& et) : etraits{et},
+                                    hashed_name{hash_name(et, "default")} {
                 set_temp_dir();
             }
 
@@ -327,7 +351,11 @@ namespace webpp {
 
             path_type key_path(key_type const& key) {
                 path_type file = dir;
-                file /= serialize_key(key);
+                file /= hashed_name;
+                file += "-";
+                file += serialize_key(key);
+                file += ".v";
+                file += directory_gate_version;
                 file += gate_opts.extension;
                 return file;
             }
