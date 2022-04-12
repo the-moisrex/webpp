@@ -369,19 +369,21 @@ namespace webpp::views {
 
     template <Traits TraitsType>
     struct basic_context {
-        using traits_type = TraitsType;
+        using traits_type      = TraitsType;
+        using string_view_type = traits::string_view<traits_type>;
 
         virtual ~basic_context()                               = default;
         virtual void push(const basic_data<traits_type>* data) = 0;
         virtual void pop()                                     = 0;
 
-        virtual const basic_data<traits_type>* get(const string_type& name) const         = 0;
-        virtual const basic_data<traits_type>* get_partial(const string_type& name) const = 0;
+        virtual const basic_data<traits_type>* get(string_view_type name) const         = 0;
+        virtual const basic_data<traits_type>* get_partial(string_view_type name) const = 0;
     };
 
     template <Traits TraitsType>
     struct context : public basic_context<TraitsType> {
-        using traits_type = TraitsType;
+        using traits_type      = TraitsType;
+        using string_view_type = traits::string_view<traits_type>;
 
         context(const basic_data<traits_type>* data) {
             push(data);
@@ -397,12 +399,12 @@ namespace webpp::views {
             items_.erase(items_.begin());
         }
 
-        const basic_data<traits_type>* get(const string_type& name) const override {
+        const basic_data<traits_type>* get(string_view_type name) const override {
             // process {{.}} name
             if (name.size() == 1 && name.at(0) == '.') {
                 return items_.front();
             }
-            if (name.find('.') == string_type::npos) {
+            if (name.find('.') == string_view_type::npos) {
                 // process normal name without having to split which is slower
                 for (const auto& item : items_) {
                     const auto var = item->get(name);
@@ -429,7 +431,7 @@ namespace webpp::views {
             return nullptr;
         }
 
-        const basic_data<traits_type>* get_partial(const string_type& name) const override {
+        const basic_data<traits_type>* get_partial(string_view_type name) const override {
             for (const auto& item : items_) {
                 const auto var = item->get(name);
                 if (var) {
