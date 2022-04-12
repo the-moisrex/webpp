@@ -9,7 +9,7 @@
 
 #include <filesystem>
 
-namespace webpp {
+namespace webpp::views {
 
 
     /**

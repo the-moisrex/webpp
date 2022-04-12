@@ -2,7 +2,9 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp.hpp
         ${LIB_INCLUDE_DIR}/webpp/version.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/view/view_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/views/view_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/views/view.hpp
+        ${LIB_INCLUDE_DIR}/webpp/views/mustache.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/configs/config_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/configs/configs.hpp
