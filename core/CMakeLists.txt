@@ -3,6 +3,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/version.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/views/view_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/views/html.hpp
         ${LIB_INCLUDE_DIR}/webpp/views/view.hpp
         ${LIB_INCLUDE_DIR}/webpp/views/mustache.hpp
 
