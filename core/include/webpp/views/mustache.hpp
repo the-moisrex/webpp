@@ -117,9 +117,9 @@ namespace webpp::views {
     template <typename string_type>
     class basic_data;
     template <typename string_type>
-    using basic_object = stl::unordered_map<string_type, basic_data<string_type>>;
+    using basic_object = stl::unordered_map<string_type, basic_data<traits_type>>;
     template <typename string_type>
-    using basic_list = stl::vector<basic_data<string_type>>;
+    using basic_list = stl::vector<basic_data<traits_type>>;
     template <typename string_type>
     using basic_partial = stl::function<string_type()>;
     template <typename string_type>
@@ -367,27 +367,29 @@ namespace webpp::views {
     template <typename string_type>
     const string_type delimiter_set<string_type>::default_end(2, '}');
 
-    template <typename string_type>
-    class basic_context {
-      public:
+    template <Traits TraitsType>
+    struct basic_context {
+        using traits_type = TraitsType;
+
         virtual ~basic_context()                               = default;
-        virtual void push(const basic_data<string_type>* data) = 0;
+        virtual void push(const basic_data<traits_type>* data) = 0;
         virtual void pop()                                     = 0;
 
-        virtual const basic_data<string_type>* get(const string_type& name) const         = 0;
-        virtual const basic_data<string_type>* get_partial(const string_type& name) const = 0;
+        virtual const basic_data<traits_type>* get(const string_type& name) const         = 0;
+        virtual const basic_data<traits_type>* get_partial(const string_type& name) const = 0;
     };
 
-    template <typename string_type>
-    class context : public basic_context<string_type> {
-      public:
-        context(const basic_data<string_type>* data) {
+    template <Traits TraitsType>
+    struct context : public basic_context<TraitsType> {
+        using traits_type = TraitsType;
+
+        context(const basic_data<traits_type>* data) {
             push(data);
         }
 
         context() = default;
 
-        void push(const basic_data<string_type>* data) override {
+        void push(const basic_data<traits_type>* data) override {
             items_.insert(items_.begin(), data);
         }
 
@@ -395,7 +397,7 @@ namespace webpp::views {
             items_.erase(items_.begin());
         }
 
-        const basic_data<string_type>* get(const string_type& name) const override {
+        const basic_data<traits_type>* get(const string_type& name) const override {
             // process {{.}} name
             if (name.size() == 1 && name.at(0) == '.') {
                 return items_.front();
@@ -427,7 +429,7 @@ namespace webpp::views {
             return nullptr;
         }
 
-        const basic_data<string_type>* get_partial(const string_type& name) const override {
+        const basic_data<traits_type>* get_partial(const string_type& name) const override {
             for (const auto& item : items_) {
                 const auto var = item->get(name);
                 if (var) {
@@ -441,16 +443,18 @@ namespace webpp::views {
         context& operator=(const context&) = delete;
 
       private:
-        stl::vector<const basic_data<string_type>*> items_;
+        stl::vector<const basic_data<traits_type>*> items_;
     };
 
-    template <typename string_type>
-    class line_buffer_state {
-      public:
+    template <Traits TraitsType>
+    struct line_buffer_state {
+        using traits_type = TraitsType;
+        using string_type = traits::general_string<traits_type>;
+
         string_type data;
         bool        contained_section_tag = false;
 
-        [[nodiscard]] bool is_empty_or_contains_only_whitespace() const {
+        [[nodiscard]] constexpr bool is_empty_or_contains_only_whitespace() const noexcept {
             for (const auto ch : data) {
                 // don't look at newlines
                 if (ch != ' ' && ch != '\t') {
@@ -460,20 +464,21 @@ namespace webpp::views {
             return true;
         }
 
-        void clear() {
+        constexpr void clear() {
             data.clear();
             contained_section_tag = false;
         }
     };
 
-    template <typename string_type>
-    class context_internal {
-      public:
-        basic_context<string_type>&    ctx;
-        delimiter_set<string_type>     delim_set;
-        line_buffer_state<string_type> line_buffer;
+    template <Traits TraitsType>
+    struct context_internal {
+        using traits_type = TraitsType;
 
-        context_internal(basic_context<string_type>& a_ctx) : ctx(a_ctx) {}
+        basic_context<traits_type>&    ctx;
+        delimiter_set<traits_type>     delim_set;
+        line_buffer_state<traits_type> line_buffer;
+
+        constexpr context_internal(basic_context<string_type>& a_ctx) : ctx(a_ctx) {}
     };
 
     enum class tag_type {
@@ -503,10 +508,10 @@ namespace webpp::views {
         }
     };
 
-    template <typename string_type>
-    class context_pusher {
-      public:
-        context_pusher(context_internal<string_type>& ctx, const basic_data<string_type>* data) : ctx_(ctx) {
+    template <Traits TraitsType>
+    struct context_pusher {
+        using traits_type = TraitsType;
+        context_pusher(context_internal<traits_type>& ctx, const basic_data<traits_type>* data) : ctx_(ctx) {
             ctx.ctx.push(data);
         }
         ~context_pusher() {
@@ -516,7 +521,7 @@ namespace webpp::views {
         context_pusher& operator=(const context_pusher&) = delete;
 
       private:
-        context_internal<string_type>& ctx_;
+        context_internal<traits_type>& ctx_;
     };
 
     template <Traits TraitsType>
@@ -541,7 +546,9 @@ namespace webpp::views {
 
 
         template <EnabledTraits ET>
-        constexpr component(ET const& et, string_view_type t{}, string_size_type p = string_view_type::npos)
+        constexpr component(ET const&        et,
+                            string_view_type t = "",
+                            string_size_type p = string_view_type::npos)
           : text(t),
             children{et.allocs_pack.template general_allocator<component>()},
             position(p) {}
@@ -624,14 +631,14 @@ namespace webpp::views {
         }
 
         template <typename stream_type>
-        constexpr stream_type& render(const basic_data<string_type>& data, stream_type& stream) {
+        constexpr stream_type& render(const basic_data<traits_type>& data, stream_type& stream) {
             render(data, [&stream](string_view_type str) {
                 stream << str;
             });
             return stream;
         }
 
-        constexpr string_type render(const basic_data<string_type>& data) {
+        constexpr string_type render(const basic_data<traits_type>& data) {
             stl::basic_ostringstream<typename string_type::value_type> ss;
             return render(data, ss).str();
         }
@@ -653,7 +660,7 @@ namespace webpp::views {
         }
 
         using render_handler = stl::function<void(string_view_type)>;
-        constexpr void render(const basic_data<string_type>& data, const render_handler& handler) {
+        constexpr void render(const basic_data<traits_type>& data, const render_handler& handler) {
             if (!is_valid()) {
                 return;
             }
@@ -952,7 +959,7 @@ namespace webpp::views {
             }
 
             const mstch_tag<string_type>&  tag{comp.tag};
-            const basic_data<string_type>* var = nullptr;
+            const basic_data<traits_type>* var = nullptr;
             switch (tag.type) {
                 case tag_type::variable:
                 case tag_type::unescaped_variable:
@@ -1017,7 +1024,7 @@ namespace webpp::views {
         };
 
         constexpr bool render_lambda(const render_handler&          handler,
-                                     const basic_data<string_type>* var,
+                                     const basic_data<traits_type>* var,
                                      context_internal<string_type>& ctx,
                                      render_lambda_escape           escape,
                                      string_view_type               text,
@@ -1066,7 +1073,7 @@ namespace webpp::views {
         }
 
         constexpr bool render_variable(const render_handler&          handler,
-                                       const basic_data<string_type>* var,
+                                       const basic_data<traits_type>* var,
                                        context_internal<string_type>& ctx,
                                        bool                           escaped) {
             if (var->is_string()) {
@@ -1089,7 +1096,7 @@ namespace webpp::views {
         constexpr void render_section(const render_handler&          handler,
                                       context_internal<string_type>& ctx,
                                       component_type&                incomp,
-                                      const basic_data<string_type>* var) {
+                                      const basic_data<traits_type>* var) {
             const auto callback = [&handler, &ctx, this](component_type& comp) -> walk_control_type {
                 return render_component(handler, ctx, comp);
             };
