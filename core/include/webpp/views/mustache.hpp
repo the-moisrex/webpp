@@ -519,41 +519,48 @@ namespace webpp::views {
         context_internal<string_type>& ctx_;
     };
 
-    template <typename string_type>
-    class component {
-      private:
-        using string_size_type = typename string_type::size_type;
+    template <Traits TraitsType>
+    struct component {
+        using traits_type      = TraitsType;
+        using string_type      = traits::general_string<traits_type>;
+        using string_view_type = traits::string_view<traits_type>;
+        using string_size_type = typename string_view_type::size_type;
 
-      public:
-        string_type            text;
+        using children_type = traits::generalify_allocators<traits_type, stl::vector<component>>;
+
+        string_view_type       text;
         mstch_tag<string_type> tag;
-        stl::vector<component> children;
-        string_size_type       position = string_type::npos;
+        children_type          children;
+        string_size_type       position = string_view_type::npos;
 
         enum class walk_control {
             walk, // "continue" is reserved :/
             stop,
             skip,
         };
-        using walk_callback = stl::function<walk_control(component&)>;
 
-        component() = default;
-        component(const string_type& t, string_size_type p) : text(t), position(p) {}
 
-        [[nodiscard]] bool is_text() const {
+        template <EnabledTraits ET>
+        constexpr component(ET const& et, string_view_type t{}, string_size_type p = string_view_type::npos)
+          : text(t),
+            children{et.allocs_pack.template general_allocator<component>()},
+            position(p) {}
+
+        [[nodiscard]] constexpr bool is_text() const noexcept {
             return tag.type == tag_type::text;
         }
 
-        [[nodiscard]] bool is_newline() const {
+        [[nodiscard]] constexpr bool is_newline() const noexcept {
             return is_text() && ((text.size() == 2 && text[0] == '\r' && text[1] == '\n') ||
                                  (text.size() == 1 && (text[0] == '\n' || text[0] == '\r')));
         }
 
-        [[nodiscard]] bool is_non_newline_whitespace() const {
+        [[nodiscard]] constexpr bool is_non_newline_whitespace() const noexcept {
             return is_text() && !is_newline() && text.size() == 1 && (text[0] == ' ' || text[0] == '\t');
         }
 
-        void walk_children(const walk_callback& callback) {
+        template <typename WalkCallback>
+        constexpr void walk_children(WalkCallback& callback) {
             for (auto& child : children) {
                 if (child.walk(callback) != walk_control::walk) {
                     break;
@@ -562,7 +569,8 @@ namespace webpp::views {
         }
 
       private:
-        walk_control walk(const walk_callback& callback) {
+        template <typename WalkCallback>
+        constexpr walk_control walk(WalkCallback&& callback) {
             walk_control control{callback(*this)};
             if (control == walk_control::stop) {
                 return control;
@@ -586,19 +594,21 @@ namespace webpp::views {
         using string_type      = traits::general_string<traits_type>;
         using string_view_type = traits::string_view<traits_type>;
 
-        using string_size_type = typename string_type::size_type;
-        using escape_handler   = stl::function<string_type(string_view_type)>;
+        using string_size_type  = typename string_type::size_type;
+        using escape_handler    = stl::function<string_type(string_view_type)>;
+        using component_type    = component<traits_type>;
+        using walk_control_type = typename component_type::walk_control;
 
       private:
-        string_type            error_message_;
-        component<string_type> root_component_;
-        escape_handler         escape_;
+        string_type    error_message_;
+        component_type root_component_;
+        escape_handler escape_;
 
       public:
         constexpr mustache(string_view_type input) : mustache() {
             context<string_type>          ctx;
             context_internal<string_type> context{ctx};
-            parser(input, context, root_component_, error_message_);
+            parser(input, context);
         }
 
         [[nodiscard]] constexpr bool is_valid() const noexcept {
@@ -656,7 +666,7 @@ namespace webpp::views {
 
       private:
         constexpr mustache(string_view_type input, context_internal<string_type>& ctx) : mustache() {
-            parser(input, ctx, root_component_, error_message_);
+            parser(input, ctx);
         }
 
 
@@ -664,10 +674,7 @@ namespace webpp::views {
         /////// Parser
 
 
-        void parse(string_view_type               input,
-                   context_internal<string_type>& ctx,
-                   component<string_type>&        root_component,
-                   string_type&                   error_message) const {
+        void parse(string_view_type input, context_internal<string_type>& ctx) const {
             using streamstring = stl::basic_ostringstream<typename string_type::value_type>;
 
             const string_view_type brace_delimiter_end_unescaped("}}}");
@@ -675,16 +682,16 @@ namespace webpp::views {
 
             bool current_delimiter_is_brace{ctx.delim_set.is_default()};
 
-            stl::vector<component<string_type>*> sections{&root_component};
-            stl::vector<string_size_type>        section_starts;
-            string_type                          current_text;
-            string_size_type                     current_text_position = string_type::npos;
+            stl::vector<component_type*>  sections{&root_component_};
+            stl::vector<string_size_type> section_starts;
+            string_type                   current_text;
+            string_size_type              current_text_position = string_type::npos;
 
             current_text.reserve(input_size);
 
             const auto process_current_text = [&current_text, &current_text_position, &sections]() {
                 if (!current_text.empty()) {
-                    const component<string_type> comp{current_text, current_text_position};
+                    const component_type comp{current_text, current_text_position};
                     sections.back()->children.push_back(comp);
                     current_text.clear();
                     current_text_position = string_type::npos;
@@ -707,7 +714,7 @@ namespace webpp::views {
                         if (input.compare(input_position, whitespace_text.size(), whitespace_text) == 0) {
                             process_current_text();
 
-                            const component<string_type> comp{whitespace_text, input_position};
+                            const component_type comp{whitespace_text, input_position};
                             sections.back()->children.push_back(comp);
                             input_position += whitespace_text.size();
 
@@ -748,19 +755,19 @@ namespace webpp::views {
                 if (tag_location_end == string_view_type::npos) {
                     streamstring ss;
                     ss << "Unclosed tag at " << tag_location_start;
-                    error_message.assign(ss.str());
+                    error_message_.assign(ss.str());
                     return;
                 }
 
                 // Parse tag
                 const auto tag_contents = ascii::trim_copy(
                   string_view_type{input, tag_contents_location, tag_location_end - tag_contents_location});
-                component<string_type> comp;
+                component_type comp;
                 if (!tag_contents.empty() && tag_contents[0] == '=') {
                     if (!parse_set_delimiter_tag(tag_contents, ctx.delim_set)) {
                         streamstring ss;
                         ss << "Invalid set delimiter tag at " << tag_location_start;
-                        error_message.assign(ss.str());
+                        error_message_.assign(ss.str());
                         return;
                     }
                     current_delimiter_is_brace = ctx.delim_set.is_default();
@@ -784,7 +791,7 @@ namespace webpp::views {
                     if (sections.size() == 1) {
                         streamstring ss;
                         ss << "Unopened section \"" << comp.tag.name << "\" at " << comp.position;
-                        error_message.assign(ss.str());
+                        error_message_.assign(ss.str());
                         return;
                     }
                     sections.back()->tag.section_text.reset(new string_type(
@@ -797,23 +804,21 @@ namespace webpp::views {
             process_current_text();
 
             // Check for sections without an ending tag
-            root_component.walk_children(
-              [&error_message](component<string_type>& comp) ->
-              typename component<string_type>::walk_control {
-                  if (!comp.tag.is_section_begin()) {
-                      return component<string_type>::walk_control::walk;
-                  }
-                  if (comp.children.empty() || !comp.children.back().tag.is_section_end() ||
-                      comp.children.back().tag.name != comp.tag.name) {
-                      streamstring ss;
-                      ss << "Unclosed section \"" << comp.tag.name << "\" at " << comp.position;
-                      error_message.assign(ss.str());
-                      return component<string_type>::walk_control::stop;
-                  }
-                  comp.children.pop_back(); // remove now useless end section component
-                  return component<string_type>::walk_control::walk;
-              });
-            if (!error_message.empty()) {
+            root_component_.walk_children([this](component_type& comp) -> walk_control_type {
+                if (!comp.tag.is_section_begin()) {
+                    return component_type::walk_control::walk;
+                }
+                if (comp.children.empty() || !comp.children.back().tag.is_section_end() ||
+                    comp.children.back().tag.name != comp.tag.name) {
+                    streamstring ss;
+                    ss << "Unclosed section \"" << comp.tag.name << "\" at " << comp.position;
+                    error_message_.assign(ss.str());
+                    return component_type::walk_control::stop;
+                }
+                comp.children.pop_back(); // remove now useless end section component
+                return component_type::walk_control::walk;
+            });
+            if (!error_message_.empty()) {
                 return;
             }
         }
@@ -905,10 +910,9 @@ namespace webpp::views {
 
         constexpr void
         render(const render_handler& handler, context_internal<string_type>& ctx, bool root_renderer = true) {
-            root_component_.walk_children([&handler, &ctx, this](component<string_type>& comp) ->
-                                          typename component<string_type>::walk_control {
-                                              return render_component(handler, ctx, comp);
-                                          });
+            root_component_.walk_children([&handler, &ctx, this](component_type& comp) -> walk_control_type {
+                return render_component(handler, ctx, comp);
+            });
             // process the last line, but only for the top-level renderer
             if (root_renderer) {
                 render_current_line(handler, ctx, nullptr);
@@ -917,7 +921,7 @@ namespace webpp::views {
 
         constexpr void render_current_line(const render_handler&          handler,
                                            context_internal<string_type>& ctx,
-                                           const component<string_type>*  comp) const {
+                                           const component_type*          comp) const {
             // We're at the end of a line, so check the line buffer state to see
             // if the line had tags in it, and also if the line is now empty or
             // contains whitespace only. if this situation is true, skip the line.
@@ -935,17 +939,16 @@ namespace webpp::views {
             ctx.line_buffer.data.append(text);
         }
 
-        constexpr typename component<string_type>::walk_control
-        render_component(const render_handler&          handler,
-                         context_internal<string_type>& ctx,
-                         component<string_type>&        comp) {
+        constexpr walk_control_type render_component(const render_handler&          handler,
+                                                     context_internal<string_type>& ctx,
+                                                     component_type&                comp) {
             if (comp.is_text()) {
                 if (comp.is_newline()) {
                     render_current_line(handler, ctx, &comp);
                 } else {
                     render_result(ctx, comp.text);
                 }
-                return component<string_type>::walk_control::walk;
+                return component_type::walk_control::walk;
             }
 
             const mstch_tag<string_type>&  tag{comp.tag};
@@ -955,7 +958,7 @@ namespace webpp::views {
                 case tag_type::unescaped_variable:
                     if ((var = ctx.ctx.get(tag.name)) != nullptr) {
                         if (!render_variable(handler, var, ctx, tag.type == tag_type::variable)) {
-                            return component<string_type>::walk_control::stop;
+                            return component_type::walk_control::stop;
                         }
                     }
                     break;
@@ -968,18 +971,18 @@ namespace webpp::views {
                                                render_lambda_escape::optional,
                                                *comp.tag.section_text,
                                                true)) {
-                                return component<string_type>::walk_control::stop;
+                                return component_type::walk_control::stop;
                             }
                         } else if (!var->is_false() && !var->is_empty_list()) {
                             render_section(handler, ctx, comp, var);
                         }
                     }
-                    return component<string_type>::walk_control::skip;
+                    return component_type::walk_control::skip;
                 case tag_type::section_begin_inverted:
                     if ((var = ctx.ctx.get(tag.name)) == nullptr || var->is_false() || var->is_empty_list()) {
                         render_section(handler, ctx, comp, var);
                     }
-                    return component<string_type>::walk_control::skip;
+                    return component_type::walk_control::skip;
                 case tag_type::partial:
                     if ((var = ctx.ctx.get_partial(tag.name)) != nullptr &&
                         (var->is_partial() || var->is_string())) {
@@ -996,7 +999,7 @@ namespace webpp::views {
                             }
                         }
                         if (!tmpl.is_valid()) {
-                            return component<string_type>::walk_control::stop;
+                            return component_type::walk_control::stop;
                         }
                     }
                     break;
@@ -1004,7 +1007,7 @@ namespace webpp::views {
                 default: break;
             }
 
-            return component<string_type>::walk_control::walk;
+            return component_type::walk_control::walk;
         }
 
         enum class render_lambda_escape {
@@ -1085,12 +1088,11 @@ namespace webpp::views {
 
         constexpr void render_section(const render_handler&          handler,
                                       context_internal<string_type>& ctx,
-                                      component<string_type>&        incomp,
+                                      component_type&                incomp,
                                       const basic_data<string_type>* var) {
-            const auto callback = [&handler, &ctx, this](component<string_type>& comp) ->
-              typename component<string_type>::walk_control {
-                  return render_component(handler, ctx, comp);
-              };
+            const auto callback = [&handler, &ctx, this](component_type& comp) -> walk_control_type {
+                return render_component(handler, ctx, comp);
+            };
             if (var && var->is_non_empty_list()) {
                 for (const auto& item : var->list_value()) {
                     // account for the section begin tag
