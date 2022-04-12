@@ -35,7 +35,11 @@
 #define WEBPP_MUSTACHE_HPP
 
 
+#include "../strings/trim.hpp"
 #include "../traits/enable_traits.hpp"
+#include "html.hpp"
+
+#include <array>
 
 
 namespace webpp::views {
@@ -43,8 +47,8 @@ namespace webpp::views {
     template <typename string_type>
     class basic_renderer {
       public:
-        using type1 = std::function<string_type(const string_type&)>;
-        using type2 = std::function<string_type(const string_type&, bool escaped)>;
+        using type1 = stl::function<string_type(const string_type&)>;
+        using type2 = stl::function<string_type(const string_type&, bool escaped)>;
 
         string_type operator()(const string_type& text) const {
             return type1_(text);
@@ -67,9 +71,9 @@ namespace webpp::views {
     template <typename string_type>
     class basic_lambda_t {
       public:
-        using type1 = std::function<string_type(const string_type&)>;
+        using type1 = stl::function<string_type(const string_type&)>;
         using type2 =
-          std::function<string_type(const string_type&, const basic_renderer<string_type>& render)>;
+          stl::function<string_type(const string_type&, const basic_renderer<string_type>& render)>;
 
         basic_lambda_t(const type1& t) : type1_(new type1(t)) {}
         basic_lambda_t(const type2& t) : type2_(new type2(t)) {}
@@ -106,18 +110,18 @@ namespace webpp::views {
         }
 
       private:
-        std::unique_ptr<type1> type1_;
-        std::unique_ptr<type2> type2_;
+        stl::unique_ptr<type1> type1_;
+        stl::unique_ptr<type2> type2_;
     };
 
     template <typename string_type>
     class basic_data;
     template <typename string_type>
-    using basic_object = std::unordered_map<string_type, basic_data<string_type>>;
+    using basic_object = stl::unordered_map<string_type, basic_data<string_type>>;
     template <typename string_type>
-    using basic_list = std::vector<basic_data<string_type>>;
+    using basic_list = stl::vector<basic_data<string_type>>;
     template <typename string_type>
-    using basic_partial = std::function<string_type()>;
+    using basic_partial = stl::function<string_type()>;
     template <typename string_type>
     using basic_lambda = typename basic_lambda_t<string_type>::type1;
     template <typename string_type>
@@ -200,15 +204,15 @@ namespace webpp::views {
         // Move
         basic_data(basic_data&& dat) : type_{dat.type_} {
             if (dat.obj_) {
-                obj_ = std::move(dat.obj_);
+                obj_ = stl::move(dat.obj_);
             } else if (dat.str_) {
-                str_ = std::move(dat.str_);
+                str_ = stl::move(dat.str_);
             } else if (dat.list_) {
-                list_ = std::move(dat.list_);
+                list_ = stl::move(dat.list_);
             } else if (dat.partial_) {
-                partial_ = std::move(dat.partial_);
+                partial_ = stl::move(dat.partial_);
             } else if (dat.lambda_) {
-                lambda_ = std::move(dat.lambda_);
+                lambda_ = stl::move(dat.lambda_);
             }
             dat.type_ = type::invalid;
         }
@@ -220,15 +224,15 @@ namespace webpp::views {
                 partial_.reset();
                 lambda_.reset();
                 if (dat.obj_) {
-                    obj_ = std::move(dat.obj_);
+                    obj_ = stl::move(dat.obj_);
                 } else if (dat.str_) {
-                    str_ = std::move(dat.str_);
+                    str_ = stl::move(dat.str_);
                 } else if (dat.list_) {
-                    list_ = std::move(dat.list_);
+                    list_ = stl::move(dat.list_);
                 } else if (dat.partial_) {
-                    partial_ = std::move(dat.partial_);
+                    partial_ = stl::move(dat.partial_);
                 } else if (dat.lambda_) {
-                    lambda_ = std::move(dat.lambda_);
+                    lambda_ = stl::move(dat.lambda_);
                 }
                 type_     = dat.type_;
                 dat.type_ = type::invalid;
@@ -281,7 +285,7 @@ namespace webpp::views {
                 if (it != obj_->end()) {
                     obj_->erase(it);
                 }
-                obj_->insert(std::pair<string_type, basic_data>{name, var});
+                obj_->insert(stl::pair<string_type, basic_data>{name, var});
             }
         }
         const basic_data* get(const string_type& name) const {
@@ -338,11 +342,11 @@ namespace webpp::views {
 
       private:
         type                                         type_;
-        std::unique_ptr<basic_object<string_type>>   obj_;
-        std::unique_ptr<string_type>                 str_;
-        std::unique_ptr<basic_list<string_type>>     list_;
-        std::unique_ptr<basic_partial<string_type>>  partial_;
-        std::unique_ptr<basic_lambda_t<string_type>> lambda_;
+        stl::unique_ptr<basic_object<string_type>>   obj_;
+        stl::unique_ptr<string_type>                 str_;
+        stl::unique_ptr<basic_list<string_type>>     list_;
+        stl::unique_ptr<basic_partial<string_type>>  partial_;
+        stl::unique_ptr<basic_lambda_t<string_type>> lambda_;
     };
 
     template <typename string_type>
@@ -437,7 +441,7 @@ namespace webpp::views {
         context& operator=(const context&) = delete;
 
       private:
-        std::vector<const basic_data<string_type>*> items_;
+        stl::vector<const basic_data<string_type>*> items_;
     };
 
     template <typename string_type>
@@ -489,8 +493,8 @@ namespace webpp::views {
       public:
         string_type                                 name;
         tag_type                                    type = tag_type::text;
-        std::shared_ptr<string_type>                section_text;
-        std::shared_ptr<delimiter_set<string_type>> delim_set;
+        stl::shared_ptr<string_type>                section_text;
+        stl::shared_ptr<delimiter_set<string_type>> delim_set;
         [[nodiscard]] bool                          is_section_begin() const {
                                      return type == tag_type::section_begin || type == tag_type::section_begin_inverted;
         }
@@ -523,7 +527,7 @@ namespace webpp::views {
       public:
         string_type            text;
         mstch_tag<string_type> tag;
-        std::vector<component> children;
+        stl::vector<component> children;
         string_size_type       position = string_type::npos;
 
         enum class walk_control {
@@ -531,7 +535,7 @@ namespace webpp::views {
             stop,
             skip,
         };
-        using walk_callback = std::function<walk_control(component&)>;
+        using walk_callback = stl::function<walk_control(component&)>;
 
         component() = default;
         component(const string_type& t, string_size_type p) : text(t), position(p) {}
@@ -575,31 +579,104 @@ namespace webpp::views {
         }
     };
 
-    template <typename string_type>
-    class parser {
-      public:
-        parser(const string_type&             input,
-               context_internal<string_type>& ctx,
-               component<string_type>&        root_component,
-               string_type&                   error_message) {
-            parse(input, ctx, root_component, error_message);
-        }
+
+    template <Traits TraitsType>
+    struct mustache : enable_traits<TraitsType> {
+        using traits_type      = TraitsType;
+        using string_type      = traits::general_string<traits_type>;
+        using string_view_type = traits::string_view<traits_type>;
+
+        using string_size_type = typename string_type::size_type;
+        using escape_handler   = stl::function<string_type(string_view_type)>;
 
       private:
-        void parse(const string_type&             input,
+        string_type            error_message_;
+        component<string_type> root_component_;
+        escape_handler         escape_;
+
+      public:
+        constexpr mustache(string_view_type input) : mustache() {
+            context<string_type>          ctx;
+            context_internal<string_type> context{ctx};
+            parser(input, context, root_component_, error_message_);
+        }
+
+        [[nodiscard]] constexpr bool is_valid() const noexcept {
+            return error_message_.empty();
+        }
+
+        [[nodiscard]] constexpr string_view_type error_message() const noexcept {
+            return error_message_;
+        }
+
+        constexpr void set_custom_escape(const escape_handler& escape_fn) {
+            escape_ = escape_fn;
+        }
+
+        template <typename stream_type>
+        constexpr stream_type& render(const basic_data<string_type>& data, stream_type& stream) {
+            render(data, [&stream](string_view_type str) {
+                stream << str;
+            });
+            return stream;
+        }
+
+        constexpr string_type render(const basic_data<string_type>& data) {
+            stl::basic_ostringstream<typename string_type::value_type> ss;
+            return render(data, ss).str();
+        }
+
+        template <typename stream_type>
+        constexpr stream_type& render(basic_context<string_type>& ctx, stream_type& stream) {
+            context_internal<string_type> context{ctx};
+            render(
+              [&stream](string_view_type str) {
+                  stream << str;
+              },
+              context);
+            return stream;
+        }
+
+        constexpr string_type render(basic_context<string_type>& ctx) {
+            stl::basic_ostringstream<typename string_type::value_type> ss;
+            return render(ctx, ss).str();
+        }
+
+        using render_handler = stl::function<void(string_view_type)>;
+        constexpr void render(const basic_data<string_type>& data, const render_handler& handler) {
+            if (!is_valid()) {
+                return;
+            }
+            context<string_type>          ctx{&data};
+            context_internal<string_type> context{ctx};
+            render(handler, context);
+        }
+
+        constexpr mustache() : escape_(html_escape<string_type>) {}
+
+      private:
+        constexpr mustache(string_view_type input, context_internal<string_type>& ctx) : mustache() {
+            parser(input, ctx, root_component_, error_message_);
+        }
+
+
+
+        /////// Parser
+
+
+        void parse(string_view_type               input,
                    context_internal<string_type>& ctx,
                    component<string_type>&        root_component,
                    string_type&                   error_message) const {
-            using string_size_type = typename string_type::size_type;
-            using streamstring     = std::basic_ostringstream<typename string_type::value_type>;
+            using streamstring = stl::basic_ostringstream<typename string_type::value_type>;
 
-            const string_type      brace_delimiter_end_unescaped(3, '}');
+            const string_view_type brace_delimiter_end_unescaped("}}}");
             const string_size_type input_size{input.size()};
 
             bool current_delimiter_is_brace{ctx.delim_set.is_default()};
 
-            std::vector<component<string_type>*> sections{&root_component};
-            std::vector<string_size_type>        section_starts;
+            stl::vector<component<string_type>*> sections{&root_component};
+            stl::vector<string_size_type>        section_starts;
             string_type                          current_text;
             string_size_type                     current_text_position = string_type::npos;
 
@@ -614,13 +691,7 @@ namespace webpp::views {
                 }
             };
 
-            const std::vector<string_type> whitespace{
-              string_type(1, '\r') + string_type(1, '\n'),
-              string_type(1, '\n'),
-              string_type(1, '\r'),
-              string_type(1, ' '),
-              string_type(1, '\t'),
-            };
+            constexpr static stl::array<string_view_type, 5> whitespace{{"\r\n", "\n", "\r", " ", "\t"}};
 
             for (string_size_type input_position = 0; input_position != input_size;) {
                 bool parse_tag = false;
@@ -662,11 +733,11 @@ namespace webpp::views {
                 const string_size_type tag_location_start = input_position;
 
                 // Find the next tag end delimiter
-                string_size_type   tag_contents_location{tag_location_start + ctx.delim_set.begin.size()};
-                const bool         tag_is_unescaped_var{current_delimiter_is_brace &&
+                string_size_type       tag_contents_location{tag_location_start + ctx.delim_set.begin.size()};
+                const bool             tag_is_unescaped_var{current_delimiter_is_brace &&
                                                 tag_location_start != (input_size - 2) &&
                                                 input.at(tag_contents_location) == ctx.delim_set.begin.at(0)};
-                const string_type& current_tag_delimiter_end{
+                const string_view_type current_tag_delimiter_end{
                   tag_is_unescaped_var ? brace_delimiter_end_unescaped : ctx.delim_set.end};
                 const auto current_tag_delimiter_end_size = current_tag_delimiter_end.size();
                 if (tag_is_unescaped_var) {
@@ -674,7 +745,7 @@ namespace webpp::views {
                 }
                 const string_size_type tag_location_end{
                   input.find(current_tag_delimiter_end, tag_contents_location)};
-                if (tag_location_end == string_type::npos) {
+                if (tag_location_end == string_view_type::npos) {
                     streamstring ss;
                     ss << "Unclosed tag at " << tag_location_start;
                     error_message.assign(ss.str());
@@ -682,8 +753,8 @@ namespace webpp::views {
                 }
 
                 // Parse tag
-                const string_type tag_contents{
-                  trim(string_type{input, tag_contents_location, tag_location_end - tag_contents_location})};
+                const auto tag_contents = ascii::trim_copy(
+                  string_view_type{input, tag_contents_location, tag_location_end - tag_contents_location});
                 component<string_type> comp;
                 if (!tag_contents.empty() && tag_contents[0] == '=') {
                     if (!parse_set_delimiter_tag(tag_contents, ctx.delim_set)) {
@@ -747,17 +818,18 @@ namespace webpp::views {
             }
         }
 
-        bool is_set_delimiter_valid(const string_type& delimiter) const {
+        bool is_set_delimiter_valid(string_view_type delimiter) const {
             // "Custom delimiters may not contain whitespace or the equals sign."
+            // todo: optimize-able
             for (const auto ch : delimiter) {
-                if (ch == '=' || std::isspace(ch)) {
+                if (ch == '=' || stl::isspace(ch)) {
                     return false;
                 }
             }
             return true;
         }
 
-        bool parse_set_delimiter_tag(const string_type&          contents,
+        bool parse_set_delimiter_tag(string_view_type            contents,
                                      delimiter_set<string_type>& delimiter_set) const {
             // Smallest legal tag is "=X X="
             if (contents.size() < 5) {
@@ -766,15 +838,16 @@ namespace webpp::views {
             if (contents.back() != '=') {
                 return false;
             }
-            const auto contents_substr = trim(contents.substr(1, contents.size() - 2));
-            const auto spacepos        = contents_substr.find(' ');
-            if (spacepos == string_type::npos) {
+            contents = contents.substr(1, contents.size() - 2); // todo: use remove_prefix and remove_suffix
+            ascii::trim(contents);
+            const auto spacepos = contents.find(' ');
+            if (spacepos == string_view_type::npos) {
                 return false;
             }
-            const auto nonspace = contents_substr.find_first_not_of(' ', spacepos + 1);
+            const auto nonspace = contents.find_first_not_of(' ', spacepos + 1);
             assert(nonspace != string_type::npos);
-            const string_type begin = contents_substr.substr(0, spacepos);
-            const string_type end   = contents_substr.substr(nonspace, contents_substr.size() - nonspace);
+            const auto begin = contents.substr(0, spacepos);
+            const auto end   = contents.substr(nonspace, contents.size() - nonspace);
             if (!is_set_delimiter_valid(begin) || !is_set_delimiter_valid(end)) {
                 return false;
             }
@@ -784,7 +857,7 @@ namespace webpp::views {
         }
 
         void parse_tag_contents(bool                    is_unescaped_var,
-                                const string_type&      contents,
+                                string_view_type        contents,
                                 mstch_tag<string_type>& tag) const {
             if (is_unescaped_var) {
                 tag.type = tag_type::unescaped_variable;
@@ -807,93 +880,21 @@ namespace webpp::views {
                 } else {
                     string_type name{contents};
                     name.erase(name.begin());
-                    tag.name = trim(name);
+                    ascii::trim(name);
+                    tag.name = name;
                 }
             }
         }
-    };
 
-    template <Traits TraitsType>
-    struct mustache : enable_traits<TraitsType> {
-        using traits_type      = TraitsType;
-        using string_type      = traits::general_string<traits_type>;
-        using string_view_type = traits::string_view<traits_type>;
 
-        using string_size_type = typename string_type::size_type;
-        using escape_handler   = std::function<string_type(string_view_type)>;
 
-      private:
-        string_type            error_message_;
-        component<string_type> root_component_;
-        escape_handler         escape_;
+        ////// Renderer
 
-      public:
-        constexpr mustache(string_view_type input) : mustache() {
-            context<string_type>          ctx;
-            context_internal<string_type> context{ctx};
-            parser<string_type>           parser{input, context, root_component_, error_message_};
-        }
 
-        [[nodiscard]] constexpr bool is_valid() const noexcept {
-            return error_message_.empty();
-        }
 
-        [[nodiscard]] constexpr string_view_type error_message() const noexcept {
-            return error_message_;
-        }
-
-        constexpr void set_custom_escape(const escape_handler& escape_fn) {
-            escape_ = escape_fn;
-        }
-
-        template <typename stream_type>
-        constexpr stream_type& render(const basic_data<string_type>& data, stream_type& stream) {
-            render(data, [&stream](string_view_type str) {
-                stream << str;
-            });
-            return stream;
-        }
-
-        constexpr string_type render(const basic_data<string_type>& data) {
-            std::basic_ostringstream<typename string_type::value_type> ss;
-            return render(data, ss).str();
-        }
-
-        template <typename stream_type>
-        constexpr stream_type& render(basic_context<string_type>& ctx, stream_type& stream) {
-            context_internal<string_type> context{ctx};
-            render(
-              [&stream](string_view_type str) {
-                  stream << str;
-              },
-              context);
-            return stream;
-        }
-
-        constexpr string_type render(basic_context<string_type>& ctx) {
-            std::basic_ostringstream<typename string_type::value_type> ss;
-            return render(ctx, ss).str();
-        }
-
-        using render_handler = std::function<void(string_view_type)>;
-        constexpr void render(const basic_data<string_type>& data, const render_handler& handler) {
-            if (!is_valid()) {
-                return;
-            }
-            context<string_type>          ctx{&data};
-            context_internal<string_type> context{ctx};
-            render(handler, context);
-        }
-
-        constexpr mustache() : escape_(html_escape<string_type>) {}
-
-      private:
-        constexpr mustache(string_view_type input, context_internal<string_type>& ctx) : mustache() {
-            parser<string_type> parser{input, ctx, root_component_, error_message_};
-        }
 
         constexpr string_type render(context_internal<string_type>& ctx) {
-            std::basic_ostringstream<typename string_type::value_type> ss;
+            stl::basic_ostringstream<typename string_type::value_type> ss;
             render(
               [&ss](string_view_type str) {
                   ss << str;
@@ -920,12 +921,8 @@ namespace webpp::views {
             // We're at the end of a line, so check the line buffer state to see
             // if the line had tags in it, and also if the line is now empty or
             // contains whitespace only. if this situation is true, skip the line.
-            bool output = true;
-            if (ctx.line_buffer.contained_section_tag &&
-                ctx.line_buffer.is_empty_or_contains_only_whitespace()) {
-                output = false;
-            }
-            if (output) {
+            if (!ctx.line_buffer.contained_section_tag ||
+                !ctx.line_buffer.is_empty_or_contains_only_whitespace()) {
                 handler(ctx.line_buffer.data);
                 if (comp) {
                     handler(comp->text);
@@ -1077,7 +1074,7 @@ namespace webpp::views {
                   escaped ? render_lambda_escape::escape : render_lambda_escape::unescape;
                 return render_lambda(handler, var, ctx, escape_opt, {}, false);
             } else if (var->is_lambda2()) {
-                using streamstring = std::basic_ostringstream<typename string_type::value_type>;
+                using streamstring = stl::basic_ostringstream<typename string_type::value_type>;
                 streamstring ss;
                 ss << "Lambda with render argument is not allowed for regular variables";
                 error_message_ = ss.str();
