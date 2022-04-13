@@ -17,6 +17,7 @@ namespace webpp::views {
      *
      * Todo:
      *   - [ ] Extension support
+     *   - [ ] Move this into http directory
      */
     template <Traits TraitsType, typename CtxT>
     struct view {

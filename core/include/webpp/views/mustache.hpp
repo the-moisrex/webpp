@@ -68,298 +68,7 @@ namespace webpp::views {
         friend class mustache;
     };
 
-    template <typename string_type>
-    class basic_lambda_t {
-      public:
-        using type1 = stl::function<string_type(const string_type&)>;
-        using type2 =
-          stl::function<string_type(const string_type&, const basic_renderer<string_type>& render)>;
 
-        basic_lambda_t(const type1& t) : type1_(new type1(t)) {}
-        basic_lambda_t(const type2& t) : type2_(new type2(t)) {}
-
-        [[nodiscard]] bool is_type1() const {
-            return static_cast<bool>(type1_);
-        }
-        [[nodiscard]] bool is_type2() const {
-            return static_cast<bool>(type2_);
-        }
-
-        [[nodiscard]] const type1& type1_value() const {
-            return *type1_;
-        }
-        [[nodiscard]] const type2& type2_value() const {
-            return *type2_;
-        }
-
-        // Copying
-        basic_lambda_t(const basic_lambda_t& l) {
-            if (l.type1_) {
-                type1_.reset(new type1(*l.type1_));
-            } else if (l.type2_) {
-                type2_.reset(new type2(*l.type2_));
-            }
-        }
-
-        string_type operator()(const string_type& text) const {
-            return (*type1_)(text);
-        }
-
-        string_type operator()(const string_type& text, const basic_renderer<string_type>& render) const {
-            return (*type2_)(text, render);
-        }
-
-      private:
-        stl::unique_ptr<type1> type1_;
-        stl::unique_ptr<type2> type2_;
-    };
-
-    template <typename string_type>
-    class basic_data;
-    template <typename string_type>
-    using basic_object = stl::unordered_map<string_type, basic_data<traits_type>>;
-    template <typename string_type>
-    using basic_list = stl::vector<basic_data<traits_type>>;
-    template <typename string_type>
-    using basic_partial = stl::function<string_type()>;
-    template <typename string_type>
-    using basic_lambda = typename basic_lambda_t<string_type>::type1;
-    template <typename string_type>
-    using basic_lambda2 = typename basic_lambda_t<string_type>::type2;
-
-
-    template <Traits TraitsType>
-    using mustache_data = stl::variant<
-      traits::generailify_allocators<TraitsType,
-                                     stl::unordered_map<traits::general_string<TraitsType>, mustache_data>>,
-      traits::string_view<TraitsType>,
-      traits::generalify_allocators<TraitsType, stl::vector<mustache_data>>,
-      bool,
-      function_ref<traits::general_string<TraitsType>>,
-
-      >;
-
-    template <typename string_type>
-    class basic_data {
-      public:
-        enum class type {
-            object,
-            string,
-            list,
-            bool_true,
-            bool_false,
-            partial,
-            lambda,
-            lambda2,
-            invalid,
-        };
-
-        // Construction
-        basic_data() : basic_data(type::object) {}
-        basic_data(const string_type& string) : type_{type::string} {
-            str_.reset(new string_type(string));
-        }
-        basic_data(const typename string_type::value_type* string) : type_{type::string} {
-            str_.reset(new string_type(string));
-        }
-        basic_data(const basic_object<string_type>& obj) : type_{type::object} {
-            obj_.reset(new basic_object<string_type>(obj));
-        }
-        basic_data(const basic_list<string_type>& l) : type_{type::list} {
-            list_.reset(new basic_list<string_type>(l));
-        }
-        basic_data(type t) : type_{t} {
-            switch (type_) {
-                case type::object: obj_.reset(new basic_object<string_type>); break;
-                case type::string: str_.reset(new string_type); break;
-                case type::list: list_.reset(new basic_list<string_type>); break;
-                default: break;
-            }
-        }
-        basic_data(const string_type& name, const basic_data& var) : basic_data{} {
-            set(name, var);
-        }
-        basic_data(const basic_partial<string_type>& p) : type_{type::partial} {
-            partial_.reset(new basic_partial<string_type>(p));
-        }
-        basic_data(const basic_lambda<string_type>& l) : type_{type::lambda} {
-            lambda_.reset(new basic_lambda_t<string_type>(l));
-        }
-        basic_data(const basic_lambda2<string_type>& l) : type_{type::lambda2} {
-            lambda_.reset(new basic_lambda_t<string_type>(l));
-        }
-        basic_data(const basic_lambda_t<string_type>& l) {
-            if (l.is_type1()) {
-                type_ = type::lambda;
-            } else if (l.is_type2()) {
-                type_ = type::lambda2;
-            }
-            lambda_.reset(new basic_lambda_t<string_type>(l));
-        }
-        basic_data(bool b) : type_{b ? type::bool_true : type::bool_false} {}
-
-        // Copying
-        basic_data(const basic_data& dat) : type_(dat.type_) {
-            if (dat.obj_) {
-                obj_.reset(new basic_object<string_type>(*dat.obj_));
-            } else if (dat.str_) {
-                str_.reset(new string_type(*dat.str_));
-            } else if (dat.list_) {
-                list_.reset(new basic_list<string_type>(*dat.list_));
-            } else if (dat.partial_) {
-                partial_.reset(new basic_partial<string_type>(*dat.partial_));
-            } else if (dat.lambda_) {
-                lambda_.reset(new basic_lambda_t<string_type>(*dat.lambda_));
-            }
-        }
-
-        // Move
-        basic_data(basic_data&& dat) : type_{dat.type_} {
-            if (dat.obj_) {
-                obj_ = stl::move(dat.obj_);
-            } else if (dat.str_) {
-                str_ = stl::move(dat.str_);
-            } else if (dat.list_) {
-                list_ = stl::move(dat.list_);
-            } else if (dat.partial_) {
-                partial_ = stl::move(dat.partial_);
-            } else if (dat.lambda_) {
-                lambda_ = stl::move(dat.lambda_);
-            }
-            dat.type_ = type::invalid;
-        }
-        basic_data& operator=(basic_data&& dat) {
-            if (this != &dat) {
-                obj_.reset();
-                str_.reset();
-                list_.reset();
-                partial_.reset();
-                lambda_.reset();
-                if (dat.obj_) {
-                    obj_ = stl::move(dat.obj_);
-                } else if (dat.str_) {
-                    str_ = stl::move(dat.str_);
-                } else if (dat.list_) {
-                    list_ = stl::move(dat.list_);
-                } else if (dat.partial_) {
-                    partial_ = stl::move(dat.partial_);
-                } else if (dat.lambda_) {
-                    lambda_ = stl::move(dat.lambda_);
-                }
-                type_     = dat.type_;
-                dat.type_ = type::invalid;
-            }
-            return *this;
-        }
-
-        // Type info
-        [[nodiscard]] bool is_object() const {
-            return type_ == type::object;
-        }
-        [[nodiscard]] bool is_string() const {
-            return type_ == type::string;
-        }
-        [[nodiscard]] bool is_list() const {
-            return type_ == type::list;
-        }
-        [[nodiscard]] bool is_bool() const {
-            return is_true() || is_false();
-        }
-        [[nodiscard]] bool is_true() const {
-            return type_ == type::bool_true;
-        }
-        [[nodiscard]] bool is_false() const {
-            return type_ == type::bool_false;
-        }
-        [[nodiscard]] bool is_partial() const {
-            return type_ == type::partial;
-        }
-        [[nodiscard]] bool is_lambda() const {
-            return type_ == type::lambda;
-        }
-        [[nodiscard]] bool is_lambda2() const {
-            return type_ == type::lambda2;
-        }
-        [[nodiscard]] bool is_invalid() const {
-            return type_ == type::invalid;
-        }
-
-        // Object data
-        [[nodiscard]] bool is_empty_object() const {
-            return is_object() && obj_->empty();
-        }
-        [[nodiscard]] bool is_non_empty_object() const {
-            return is_object() && !obj_->empty();
-        }
-        void set(const string_type& name, const basic_data& var) {
-            if (is_object()) {
-                auto it = obj_->find(name);
-                if (it != obj_->end()) {
-                    obj_->erase(it);
-                }
-                obj_->insert(stl::pair<string_type, basic_data>{name, var});
-            }
-        }
-        const basic_data* get(const string_type& name) const {
-            if (!is_object()) {
-                return nullptr;
-            }
-            const auto& it = obj_->find(name);
-            if (it == obj_->end()) {
-                return nullptr;
-            }
-            return &it->second;
-        }
-
-        // List data
-        void push_back(const basic_data& var) {
-            if (is_list()) {
-                list_->push_back(var);
-            }
-        }
-        const basic_list<string_type>& list_value() const {
-            return *list_;
-        }
-        [[nodiscard]] bool is_empty_list() const {
-            return is_list() && list_->empty();
-        }
-        [[nodiscard]] bool is_non_empty_list() const {
-            return is_list() && !list_->empty();
-        }
-        basic_data& operator<<(const basic_data& data) {
-            push_back(data);
-            return *this;
-        }
-
-        // String data
-        const string_type& string_value() const {
-            return *str_;
-        }
-
-        basic_data& operator[](const string_type& key) {
-            return (*obj_)[key];
-        }
-
-        const basic_partial<string_type>& partial_value() const {
-            return (*partial_);
-        }
-
-        const basic_lambda<string_type>& lambda_value() const {
-            return lambda_->type1_value();
-        }
-
-        const basic_lambda2<string_type>& lambda2_value() const {
-            return lambda_->type2_value();
-        }
-
-      private:
-        type                                         type_;
-        stl::unique_ptr<basic_object<string_type>>   obj_;
-        stl::unique_ptr<string_type>                 str_;
-        stl::unique_ptr<basic_list<string_type>>     list_;
-        stl::unique_ptr<basic_partial<string_type>>  partial_;
-        stl::unique_ptr<basic_lambda_t<string_type>> lambda_;
-    };
 
     /**
      * A pair of delimiter type; in mustache you can change the delimiter you're using for variables and
@@ -484,8 +193,6 @@ namespace webpp::views {
         context<traits_type>&          ctx;
         delimiter_set<traits_type>     delim_set;
         line_buffer_state<traits_type> line_buffer;
-
-        constexpr context_internal(context<traits_type>& a_ctx) : ctx(a_ctx) {}
     };
 
     enum class tag_type {
@@ -497,7 +204,7 @@ namespace webpp::views {
         section_begin_inverted,
         comment,
         partial,
-        set_delimiter,
+        set_delimiter
     };
 
     template <Traits TraitsType>
@@ -506,10 +213,10 @@ namespace webpp::views {
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
 
-        string_type                                 name;
-        tag_type                                    type = tag_type::text;
-        stl::shared_ptr<string_type>                section_text;
-        stl::shared_ptr<delimiter_set<traits_type>> delim_set;
+        string_view_type                name;
+        tag_type                        type = tag_type::text;
+        stl::optional<string_view_type> section_text;
+        delimiter_set<traits_type>      delim_set;
 
         [[nodiscard]] constexpr bool is_section_begin() const noexcept {
             return type == tag_type::section_begin || type == tag_type::section_begin_inverted;
@@ -624,8 +331,8 @@ namespace webpp::views {
 
       public:
         constexpr mustache(string_view_type input) : mustache() {
-            context<string_type>          ctx;
-            context_internal<string_type> context{ctx};
+            context<traits_type>          ctx;
+            context_internal<traits_type> context{ctx};
             parser(input, context);
         }
 
@@ -656,7 +363,7 @@ namespace webpp::views {
 
         template <typename stream_type>
         constexpr stream_type& render(context<traits_type>& ctx, stream_type& stream) {
-            context_internal<string_type> context{ctx};
+            context_internal<traits_type> context{ctx};
             render(
               [&stream](string_view_type str) {
                   stream << str;
@@ -675,15 +382,15 @@ namespace webpp::views {
             if (!is_valid()) {
                 return;
             }
-            context<string_type>          ctx{&data};
-            context_internal<string_type> context{ctx};
+            context<traits_type>          ctx{&data};
+            context_internal<traits_type> context{ctx};
             render(handler, context);
         }
 
         constexpr mustache() : escape_(html_escape<string_type>) {}
 
       private:
-        constexpr mustache(string_view_type input, context_internal<string_type>& ctx) : mustache() {
+        constexpr mustache(string_view_type input, context_internal<traits_type>& ctx) : mustache() {
             parser(input, ctx);
         }
 
@@ -692,7 +399,7 @@ namespace webpp::views {
         /////// Parser
 
 
-        void parse(string_view_type input, context_internal<string_type>& ctx) const {
+        void parse(string_view_type input, context_internal<traits_type>& ctx) const {
             using streamstring = stl::basic_ostringstream<typename string_type::value_type>;
 
             const string_view_type brace_delimiter_end_unescaped("}}}");
@@ -824,17 +531,17 @@ namespace webpp::views {
             // Check for sections without an ending tag
             root_component_.walk_children([this](component_type& comp) -> walk_control_type {
                 if (!comp.tag.is_section_begin()) {
-                    return component_type::walk_control::walk;
+                    return walk_control_type::walk;
                 }
                 if (comp.children.empty() || !comp.children.back().tag.is_section_end() ||
                     comp.children.back().tag.name != comp.tag.name) {
                     streamstring ss;
                     ss << "Unclosed section \"" << comp.tag.name << "\" at " << comp.position;
                     error_message_.assign(ss.str());
-                    return component_type::walk_control::stop;
+                    return walk_control_type::stop;
                 }
                 comp.children.pop_back(); // remove now useless end section component
-                return component_type::walk_control::walk;
+                return walk_control_type::walk;
             });
             if (!error_message_.empty()) {
                 return;
@@ -916,7 +623,8 @@ namespace webpp::views {
 
 
 
-        constexpr string_type render(context_internal<string_type>& ctx) {
+
+        constexpr string_type render(context_internal<traits_type>& ctx) {
             stl::basic_ostringstream<typename string_type::value_type> ss;
             render(
               [&ss](string_view_type str) {
@@ -927,7 +635,7 @@ namespace webpp::views {
         }
 
         constexpr void
-        render(const render_handler& handler, context_internal<string_type>& ctx, bool root_renderer = true) {
+        render(const render_handler& handler, context_internal<traits_type>& ctx, bool root_renderer = true) {
             root_component_.walk_children([&handler, &ctx, this](component_type& comp) -> walk_control_type {
                 return render_component(handler, ctx, comp);
             });
@@ -938,7 +646,7 @@ namespace webpp::views {
         }
 
         constexpr void render_current_line(const render_handler&          handler,
-                                           context_internal<string_type>& ctx,
+                                           context_internal<traits_type>& ctx,
                                            const component_type*          comp) const {
             // We're at the end of a line, so check the line buffer state to see
             // if the line had tags in it, and also if the line is now empty or
@@ -953,12 +661,12 @@ namespace webpp::views {
             ctx.line_buffer.clear();
         }
 
-        constexpr void render_result(context_internal<string_type>& ctx, string_view_type text) const {
+        constexpr void render_result(context_internal<traits_type>& ctx, string_view_type text) const {
             ctx.line_buffer.data.append(text);
         }
 
         constexpr walk_control_type render_component(const render_handler&          handler,
-                                                     context_internal<string_type>& ctx,
+                                                     context_internal<traits_type>& ctx,
                                                      component_type&                comp) {
             if (comp.is_text()) {
                 if (comp.is_newline()) {
@@ -966,7 +674,7 @@ namespace webpp::views {
                 } else {
                     render_result(ctx, comp.text);
                 }
-                return component_type::walk_control::walk;
+                return walk_control_type::walk;
             }
 
             const mstch_tag<string_type>&  tag{comp.tag};
@@ -976,7 +684,7 @@ namespace webpp::views {
                 case tag_type::unescaped_variable:
                     if ((var = ctx.ctx.get(tag.name)) != nullptr) {
                         if (!render_variable(handler, var, ctx, tag.type == tag_type::variable)) {
-                            return component_type::walk_control::stop;
+                            return walk_control_type::stop;
                         }
                     }
                     break;
@@ -989,18 +697,18 @@ namespace webpp::views {
                                                render_lambda_escape::optional,
                                                *comp.tag.section_text,
                                                true)) {
-                                return component_type::walk_control::stop;
+                                return walk_control_type::stop;
                             }
                         } else if (!var->is_false() && !var->is_empty_list()) {
                             render_section(handler, ctx, comp, var);
                         }
                     }
-                    return component_type::walk_control::skip;
+                    return walk_control_type::skip;
                 case tag_type::section_begin_inverted:
                     if ((var = ctx.ctx.get(tag.name)) == nullptr || var->is_false() || var->is_empty_list()) {
                         render_section(handler, ctx, comp, var);
                     }
-                    return component_type::walk_control::skip;
+                    return walk_control_type::skip;
                 case tag_type::partial:
                     if ((var = ctx.ctx.get_partial(tag.name)) != nullptr &&
                         (var->is_partial() || var->is_string())) {
@@ -1017,7 +725,7 @@ namespace webpp::views {
                             }
                         }
                         if (!tmpl.is_valid()) {
-                            return component_type::walk_control::stop;
+                            return walk_control_type::stop;
                         }
                     }
                     break;
@@ -1025,7 +733,7 @@ namespace webpp::views {
                 default: break;
             }
 
-            return component_type::walk_control::walk;
+            return walk_control_type::walk;
         }
 
         enum class render_lambda_escape {
@@ -1036,7 +744,7 @@ namespace webpp::views {
 
         constexpr bool render_lambda(const render_handler&          handler,
                                      const basic_data<traits_type>* var,
-                                     context_internal<string_type>& ctx,
+                                     context_internal<traits_type>& ctx,
                                      render_lambda_escape           escape,
                                      string_view_type               text,
                                      bool                           parse_with_same_context) {
@@ -1047,7 +755,7 @@ namespace webpp::views {
                           error_message_ = tmpl.error_message();
                           return {};
                       }
-                      context_internal<string_type> render_ctx{ctx.ctx}; // start a new line_buffer
+                      context_internal<traits_type> render_ctx{ctx.ctx}; // start a new line_buffer
                       const auto                    str = tmpl.render(render_ctx);
                       if (!tmpl.is_valid()) {
                           error_message_ = tmpl.error_message();
@@ -1085,7 +793,7 @@ namespace webpp::views {
 
         constexpr bool render_variable(const render_handler&          handler,
                                        const basic_data<traits_type>* var,
-                                       context_internal<string_type>& ctx,
+                                       context_internal<traits_type>& ctx,
                                        bool                           escaped) {
             if (var->is_string()) {
                 const auto& varstr = var->string_value();
@@ -1105,7 +813,7 @@ namespace webpp::views {
         }
 
         constexpr void render_section(const render_handler&          handler,
-                                      context_internal<string_type>& ctx,
+                                      context_internal<traits_type>& ctx,
                                       component_type&                incomp,
                                       const basic_data<traits_type>* var) {
             const auto callback = [&handler, &ctx, this](component_type& comp) -> walk_control_type {

@@ -5,15 +5,10 @@
 
 namespace webpp::views {
 
-    template <typename T>
-    concept ViewData = requires {
-
-                       };
-
     /**
      * Features of a view:
      *
-     *   - [ ] Cache-able. (we don't need the data to be cached, only the rendered scheme
+     *   - [ ] Cache-able. (we don't need the data to be cached, only the rendered scheme)
      */
     template <typename T>
     concept View = requires(T view) {
