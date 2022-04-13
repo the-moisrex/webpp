@@ -1,7 +1,7 @@
 // Created by moisrex on 11/04/22.
 
-#ifndef WEBPP_VIEW_HPP
-#define WEBPP_VIEW_HPP
+#ifndef WEBPP_VIEW_MANAGER_HPP
+#define WEBPP_VIEW_MANAGER_HPP
 
 #include "../std/map.hpp"
 #include "../std/string.hpp"
@@ -15,12 +15,9 @@ namespace webpp::views {
     /**
      * View
      *
-     * Todo:
-     *   - [ ] Extension support
-     *   - [ ] Move this into http directory
      */
     template <Traits TraitsType, typename CtxT>
-    struct view {
+    struct view_manager {
         using traits_type    = TraitsType;
         using context_type   = CtxT;
         using string_type    = traits::general_string<traits_type>;
@@ -36,7 +33,7 @@ namespace webpp::views {
         string_type    file_content;
 
       public:
-        constexpr view(context_type& input_ctx) noexcept : ctx{input_ctx} {}
+        constexpr view_manager(context_type& input_ctx) noexcept : ctx{input_ctx} {}
 
         auto mustache() const {}
 
@@ -72,4 +69,4 @@ namespace webpp::views {
 
 } // namespace webpp
 
-#endif // WEBPP_VIEW_HPP
+#endif // WEBPP_VIEW_MANAGER_HPP
