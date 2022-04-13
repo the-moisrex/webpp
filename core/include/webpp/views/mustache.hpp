@@ -127,6 +127,18 @@ namespace webpp::views {
     template <typename string_type>
     using basic_lambda2 = typename basic_lambda_t<string_type>::type2;
 
+
+    template <Traits TraitsType>
+    using mustache_data = stl::variant<
+      traits::generailify_allocators<TraitsType,
+                                     stl::unordered_map<traits::general_string<TraitsType>, mustache_data>>,
+      traits::string_view<TraitsType>,
+      traits::generalify_allocators<TraitsType, stl::vector<mustache_data>>,
+      bool,
+      function_ref<traits::general_string<TraitsType>>,
+
+      >;
+
     template <typename string_type>
     class basic_data {
       public:
@@ -349,39 +361,29 @@ namespace webpp::views {
         stl::unique_ptr<basic_lambda_t<string_type>> lambda_;
     };
 
-    template <typename string_type>
-    class delimiter_set {
-      public:
-        string_type begin;
-        string_type end;
-        delimiter_set() : begin(default_begin), end(default_end) {}
-        [[nodiscard]] bool is_default() const {
-            return begin == default_begin && end == default_end;
-        }
-        static const string_type default_begin;
-        static const string_type default_end;
-    };
-
-    template <typename string_type>
-    const string_type delimiter_set<string_type>::default_begin(2, '{');
-    template <typename string_type>
-    const string_type delimiter_set<string_type>::default_end(2, '}');
-
+    /**
+     * A pair of delimiter type; in mustache you can change the delimiter you're using for variables and
+     * stuff.
+     */
     template <Traits TraitsType>
-    struct basic_context {
+    struct delimiter_set {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
 
-        virtual ~basic_context()                               = default;
-        virtual void push(const basic_data<traits_type>* data) = 0;
-        virtual void pop()                                     = 0;
+        static constexpr auto default_begin = "{{";
+        static constexpr auto default_end   = "}}";
 
-        virtual const basic_data<traits_type>* get(string_view_type name) const         = 0;
-        virtual const basic_data<traits_type>* get_partial(string_view_type name) const = 0;
+        string_view_type begin = default_begin;
+        string_view_type end   = default_end;
+
+        [[nodiscard]] constexpr bool is_default() const noexcept {
+            return begin == default_begin && end == default_end;
+        }
     };
 
+
     template <Traits TraitsType>
-    struct context : public basic_context<TraitsType> {
+    struct context {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
 
@@ -391,15 +393,15 @@ namespace webpp::views {
 
         context() = default;
 
-        void push(const basic_data<traits_type>* data) override {
+        void push(const basic_data<traits_type>* data) {
             items_.insert(items_.begin(), data);
         }
 
-        void pop() override {
+        void pop() {
             items_.erase(items_.begin());
         }
 
-        const basic_data<traits_type>* get(string_view_type name) const override {
+        const basic_data<traits_type>* get(string_view_type name) const {
             // process {{.}} name
             if (name.size() == 1 && name.at(0) == '.') {
                 return items_.front();
@@ -431,7 +433,7 @@ namespace webpp::views {
             return nullptr;
         }
 
-        const basic_data<traits_type>* get_partial(string_view_type name) const override {
+        const basic_data<traits_type>* get_partial(string_view_type name) const {
             for (const auto& item : items_) {
                 const auto var = item->get(name);
                 if (var) {
@@ -447,6 +449,9 @@ namespace webpp::views {
       private:
         stl::vector<const basic_data<traits_type>*> items_;
     };
+
+
+
 
     template <Traits TraitsType>
     struct line_buffer_state {
@@ -476,11 +481,11 @@ namespace webpp::views {
     struct context_internal {
         using traits_type = TraitsType;
 
-        basic_context<traits_type>&    ctx;
+        context<traits_type>&          ctx;
         delimiter_set<traits_type>     delim_set;
         line_buffer_state<traits_type> line_buffer;
 
-        constexpr context_internal(basic_context<string_type>& a_ctx) : ctx(a_ctx) {}
+        constexpr context_internal(context<traits_type>& a_ctx) : ctx(a_ctx) {}
     };
 
     enum class tag_type {
@@ -495,17 +500,21 @@ namespace webpp::views {
         set_delimiter,
     };
 
-    template <typename string_type>
-    class mstch_tag /* gcc doesn't allow "tag tag;" so rename the class :( */ {
-      public:
+    template <Traits TraitsType>
+    struct mstch_tag /* gcc doesn't allow "tag tag;" so rename the class :( */ {
+        using traits_type      = TraitsType;
+        using string_view_type = traits::string_view<traits_type>;
+        using string_type      = traits::general_string<traits_type>;
+
         string_type                                 name;
         tag_type                                    type = tag_type::text;
         stl::shared_ptr<string_type>                section_text;
-        stl::shared_ptr<delimiter_set<string_type>> delim_set;
-        [[nodiscard]] bool                          is_section_begin() const {
-                                     return type == tag_type::section_begin || type == tag_type::section_begin_inverted;
+        stl::shared_ptr<delimiter_set<traits_type>> delim_set;
+
+        [[nodiscard]] constexpr bool is_section_begin() const noexcept {
+            return type == tag_type::section_begin || type == tag_type::section_begin_inverted;
         }
-        [[nodiscard]] bool is_section_end() const {
+        [[nodiscard]] constexpr bool is_section_end() const noexcept {
             return type == tag_type::section_end;
         }
     };
@@ -646,7 +655,7 @@ namespace webpp::views {
         }
 
         template <typename stream_type>
-        constexpr stream_type& render(basic_context<string_type>& ctx, stream_type& stream) {
+        constexpr stream_type& render(context<traits_type>& ctx, stream_type& stream) {
             context_internal<string_type> context{ctx};
             render(
               [&stream](string_view_type str) {
@@ -656,7 +665,7 @@ namespace webpp::views {
             return stream;
         }
 
-        constexpr string_type render(basic_context<string_type>& ctx) {
+        constexpr string_type render(context<traits_type>& ctx) {
             stl::basic_ostringstream<typename string_type::value_type> ss;
             return render(ctx, ss).str();
         }
@@ -781,7 +790,7 @@ namespace webpp::views {
                     }
                     current_delimiter_is_brace = ctx.delim_set.is_default();
                     comp.tag.type              = tag_type::set_delimiter;
-                    comp.tag.delim_set.reset(new delimiter_set<string_type>(ctx.delim_set));
+                    comp.tag.delim_set.reset(new delimiter_set<traits_type>(ctx.delim_set));
                 }
                 if (comp.tag.type != tag_type::set_delimiter) {
                     parse_tag_contents(tag_is_unescaped_var, tag_contents, comp.tag);
@@ -844,7 +853,7 @@ namespace webpp::views {
         }
 
         bool parse_set_delimiter_tag(string_view_type            contents,
-                                     delimiter_set<string_type>& delimiter_set) const {
+                                     delimiter_set<traits_type>& delimiter_set) const {
             // Smallest legal tag is "=X X="
             if (contents.size() < 5) {
                 return false;
