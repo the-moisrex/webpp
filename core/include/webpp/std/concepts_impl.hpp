@@ -4,6 +4,7 @@
 #include <memory> // for allocators
 
 namespace webpp::stl {
+    using namespace ::std;
 
 
 
@@ -355,52 +356,52 @@ namespace webpp::stl {
 
 
 
-    template <class _Tp>
-    concept __class_or_enum = is_class_v<_Tp> || is_union_v<_Tp> || is_enum_v<_Tp>;
+    template <class Tp>
+    concept __class_or_enum = is_class_v<Tp> || is_union_v<Tp> || is_enum_v<Tp>;
 
 
     // [concept.swappable]
     namespace ranges::__swap {
         // Deleted to inhibit ADL
-        template <class _Tp>
-        void swap(_Tp&, _Tp&) = delete;
+        template <class Tp>
+        void swap(Tp&, Tp&) = delete;
 
 
         // [1]
-        template <class _Tp, class _Up>
+        template <class Tp, class Up>
         concept __unqualified_swappable_with =
-          (__class_or_enum<remove_cvref_t<_Tp>> ||
-           __class_or_enum<remove_cvref_t<_Up>>) &&requires(_Tp && __t, _Up && __u) {
-            swap(_VSTD::forward<_Tp>(__t), _VSTD::forward<_Up>(__u));
+          (__class_or_enum<remove_cvref_t<Tp>> ||
+           __class_or_enum<remove_cvref_t<Up>>) &&requires(Tp && __t, Up && __u) {
+            swap(_VSTD::forward<Tp>(__t), _VSTD::forward<Up>(__u));
         };
 
         struct __fn;
 
-        template <class _Tp, class _Up, size_t _Size>
+        template <class Tp, class Up, size_t _Size>
         concept __swappable_arrays =
-          !__unqualified_swappable_with<_Tp(&)[_Size], _Up(&)[_Size]> && extent_v<_Tp> == extent_v<_Up> &&
-          requires(_Tp(&__t)[_Size], _Up(&__u)[_Size], const __fn& __swap) {
+          !__unqualified_swappable_with<Tp(&)[_Size], Up(&)[_Size]> && extent_v<Tp> == extent_v<Up> &&
+          requires(Tp(&__t)[_Size], Up(&__u)[_Size], const __fn& __swap) {
             __swap(__t[0], __u[0]);
         };
 
-        template <class _Tp>
+        template <class Tp>
         concept __exchangeable =
-          !__unqualified_swappable_with<_Tp&, _Tp&> && move_constructible<_Tp> && assignable_from<_Tp&, _Tp>;
+          !__unqualified_swappable_with<Tp&, Tp&> && move_constructible<Tp> && assignable_from<Tp&, Tp>;
 
         struct __fn {
             // 2.1   `S` is `(void)swap(E1, E2)`* if `E1` or `E2` has class or enumeration type and...
             // *The name `swap` is used here unqualified.
-            template <class _Tp, class _Up>
-                requires __unqualified_swappable_with<_Tp, _Up>
-            constexpr void operator()(_Tp&& __t, _Up&& __u) const
-              noexcept(noexcept(swap(_VSTD::forward<_Tp>(__t), _VSTD::forward<_Up>(__u)))) {
-                swap(_VSTD::forward<_Tp>(__t), _VSTD::forward<_Up>(__u));
+            template <class Tp, class Up>
+                requires __unqualified_swappable_with<Tp, Up>
+            constexpr void operator()(Tp&& __t, Up&& __u) const
+              noexcept(noexcept(swap(_VSTD::forward<Tp>(__t), _VSTD::forward<Up>(__u)))) {
+                swap(_VSTD::forward<Tp>(__t), _VSTD::forward<Up>(__u));
             }
 
             // 2.2   Otherwise, if `E1` and `E2` are lvalues of array types with equal extent and...
-            template <class _Tp, class _Up, size_t _Size>
-                requires __swappable_arrays<_Tp, _Up, _Size>
-            constexpr void operator()(_Tp (&__t)[_Size], _Up (&__u)[_Size]) const
+            template <class Tp, class Up, size_t _Size>
+                requires __swappable_arrays<Tp, Up, _Size>
+            constexpr void operator()(Tp (&__t)[_Size], Up (&__u)[_Size]) const
               noexcept(noexcept((*this)(*__t, *__u))) {
                 // TODO(cjdb): replace with `ranges::swap_ranges`.
                 for (size_t __i = 0; __i < _Size; ++__i) {
@@ -409,9 +410,9 @@ namespace webpp::stl {
             }
 
             // 2.3   Otherwise, if `E1` and `E2` are lvalues of the same type `T` that models...
-            template <__exchangeable _Tp>
-            constexpr void operator()(_Tp& __x, _Tp& __y) const
-              noexcept(is_nothrow_move_constructible_v<_Tp>&& is_nothrow_move_assignable_v<_Tp>) {
+            template <__exchangeable Tp>
+            constexpr void operator()(Tp& __x, Tp& __y) const
+              noexcept(is_nothrow_move_constructible_v<Tp>&& is_nothrow_move_assignable_v<Tp>) {
                 __y = _VSTD::exchange(__x, _VSTD::move(__y));
             }
         };
@@ -421,17 +422,17 @@ namespace webpp::stl {
         inline constexpr auto swap = __swap::__fn{};
     } // namespace ranges::inline __cpo
 
-    template <class _Tp>
-    concept swappable = requires(_Tp& __a, _Tp& __b) {
+    template <class Tp>
+    concept swappable = requires(Tp& __a, Tp& __b) {
         ranges::swap(__a, __b);
     };
 
-    template <class _Tp, class _Up>
-    concept swappable_with = common_reference_with<_Tp, _Up> && requires(_Tp&& __t, _Up&& __u) {
-        ranges::swap(_VSTD::forward<_Tp>(__t), _VSTD::forward<_Tp>(__t));
-        ranges::swap(_VSTD::forward<_Up>(__u), _VSTD::forward<_Up>(__u));
-        ranges::swap(_VSTD::forward<_Tp>(__t), _VSTD::forward<_Up>(__u));
-        ranges::swap(_VSTD::forward<_Up>(__u), _VSTD::forward<_Tp>(__t));
+    template <class Tp, class Up>
+    concept swappable_with = common_reference_with<Tp, Up> && requires(Tp&& __t, Up&& __u) {
+        ranges::swap(_VSTD::forward<Tp>(__t), _VSTD::forward<Tp>(__t));
+        ranges::swap(_VSTD::forward<Up>(__u), _VSTD::forward<Up>(__u));
+        ranges::swap(_VSTD::forward<Tp>(__t), _VSTD::forward<Up>(__u));
+        ranges::swap(_VSTD::forward<Up>(__u), _VSTD::forward<Tp>(__t));
     };
 
 
