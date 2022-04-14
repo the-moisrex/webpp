@@ -39,13 +39,14 @@ namespace webpp::uri {
         template <istl::String StrT      = StringType,
                   typename AllocatorType = typename stl::remove_cvref_t<StrT>::allocator_type>
         [[nodiscard]] static constexpr auto create(AllocatorType const& alloc) {
-            basic_uri<stl::remove_cvref_t<StrT>> u{.scheme{alloc},
-                                                   .user_info{{alloc}, {alloc}},
-                                                   .host{alloc},
-                                                   .port{alloc},
-                                                   .path{alloc},
-                                                   .queries{alloc},
-                                                   .fragment{alloc}};
+            using str_t = stl::remove_cvref_t<StrT>;
+            basic_uri<str_t> u{.scheme{alloc},
+                               .user_info{.username = str_t{alloc}, .password = str_t{alloc}},
+                               .host{alloc},
+                               .port{alloc},
+                               .path{alloc},
+                               .queries{alloc},
+                               .fragment{alloc}};
             return u;
         }
 
