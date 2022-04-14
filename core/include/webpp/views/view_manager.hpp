@@ -3,6 +3,7 @@
 #ifndef WEBPP_VIEW_MANAGER_HPP
 #define WEBPP_VIEW_MANAGER_HPP
 
+#include "../http/response_concepts.hpp"
 #include "../std/format.hpp"
 #include "../std/map.hpp"
 #include "../std/string.hpp"
@@ -53,9 +54,9 @@ namespace webpp::views {
          *   - [ ] file_in_one_of_the_root_dirs.json
          *   - [ ] ./relative/is/possible/too.json
          *   - [ ] layout/header
-         *   - [ ] *header
+         *   - [ ] *header.html
          */
-        stl::optional<path_type> find_file(string_view_type request) const noexcept {
+        stl::optional<path_type> find_file(stl::string_view request) const noexcept {
             namespace fs = stl::filesystem;
 
             stl::error_code ec;
@@ -101,8 +102,8 @@ namespace webpp::views {
                     if (ec) {
                         ctx.logger.error(VIEW_CAT, fmt::format("Cannot read dir {}", dir.string()), ec);
                     }
-                    fs::recursive_directory_iterator it     = fs::begin(iter);
-                    fs::recursive_directory_iterator it_end = fs::end(iter);
+                    fs::recursive_directory_iterator       it     = fs::begin(iter);
+                    const fs::recursive_directory_iterator it_end = fs::end(iter);
                     for (; it != it_end; it.increment(ec)) {
                         if (ec) {
                             ctx.logger.error(VIEW_CAT,
@@ -151,28 +152,15 @@ namespace webpp::views {
         }
 
         template <istl::StringViewifiable StrT>
-        auto render(StrT&& file) const noexcept {
+        constexpr http::HTTPResponse auto render(StrT&& file_request) const noexcept {
             namespace fs = stl::filesystem;
 
-            stl::error_code ec;
-            fs::path        file_path{istl::to_std_string(file)};
-            if (!fs::exists(file_path, ec)) {
-                fs::path mustache_file = file_path;
-                mustache_file += ".mustache";
-                if (fs::exists(mustache_file, ec) && !ec) {
-                    return this->mustache(read_file(mustache_file));
-                } else if (ec) {
-                    ctx.logger.error(VIEW_CAT, "Cannot read the specified view file.", ec);
-                    return ctx.error(500); // todo
-                }
-            } else {
-                auto const extension = file_path.extension();
-                if (".mustache" == extension) {
-                    return this->mustache(this->read_file(file_path));
-                } else {
-                    return ctx.error(500); // todo
-                }
+            auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
+            if (!file) {
+                return ctx.error(404);
             }
+
+            // todo: read the file.
         }
     };
 
