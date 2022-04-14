@@ -62,6 +62,43 @@ namespace webpp::istl {
     template <typename T>
     concept None = !All<T>;
 
+
+
+    namespace details {
+        template <typename T>
+        struct returnable {
+            T operator()();
+        };
+
+        template <auto Constraint>
+        struct requires_arg_op {
+            template <typename T>
+                requires(Constraint.template operator()<T>())
+            operator T();
+        };
+    } // namespace details
+
+    /**
+     * Require an input argument inside concepts
+     *
+     * Possible usage:
+     *
+     *   template <typename T>
+     *   concept fooable =
+     *       requires(T t) {
+     *           t.foo(
+     *               requires_arg(std::integral),
+     *               requires_arg(std::same_as<short>)
+     *           );
+     *       };
+     */
+#define requires_arg(...)                                 \
+    requires_arg_op<[]<typename RequiresT> {              \
+        return (requires {                                \
+            { returnable<RequiresT>()() } -> __VA_ARGS__; \
+        });                                               \
+    }> {}
+
 } // namespace webpp::istl
 
 #endif // WEBPP_STD_CONCEPTS_H

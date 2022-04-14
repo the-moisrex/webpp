@@ -56,7 +56,7 @@ namespace webpp::views {
          *   - [ ] layout/header
          *   - [ ] *header.html
          */
-        stl::optional<path_type> find_file(stl::string_view request) const noexcept {
+        [[nodiscard]] stl::optional<path_type> find_file(stl::string_view request) const noexcept {
             namespace fs = stl::filesystem;
 
             stl::error_code ec;
