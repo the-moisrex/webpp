@@ -7,10 +7,17 @@
 #include "../std/format.hpp"
 #include "../std/map.hpp"
 #include "../std/string.hpp"
+#include "../storage/lru_cache.hpp"
+#include "../storage/memory_gate.hpp"
+#include "../storage/null_gate.hpp"
 #include "../traits/traits.hpp"
+#include "html_view.hpp"
+#include "json_view.hpp"
+#include "mustache_view.hpp"
 
 #include <filesystem>
 #include <system_error>
+#include <variant>
 
 namespace webpp::views {
 
@@ -19,7 +26,7 @@ namespace webpp::views {
      * View
      *
      */
-    template <Traits TraitsType, typename CtxT>
+    template <Traits TraitsType, typename CtxT, json::JSONDocument JsonType = json::document<TraitsType>>
     struct view_manager {
         using traits_type      = TraitsType;
         using context_type     = CtxT;
@@ -31,6 +38,19 @@ namespace webpp::views {
         using path_type        = stl::filesystem::path;
         using view_roots_type  = traits::generalify_allocators<traits_type, stl::vector<path_type>>;
 
+
+        using mustache_type  = mustache<traits_type>;
+        using json_view_type = json_view<traits_type, JsonType>;
+        using html_view_type = html_view<traits_type>;
+        using view_types     = stl::variant<mustache_type, json_view_type, html_view_type>;
+
+        struct cached_view_type {
+            path_type  file;
+            view_types view;
+        };
+
+        using cache_type = lru_cache<traits_type, string_type, cached_view_type, memory_gate<null_gate>>;
+
         static constexpr auto VIEW_CAT = "View";
 
 
@@ -40,6 +60,13 @@ namespace webpp::views {
         context_type&  ctx;
         arguments_type args;
         string_type    file_content;
+        cache_type     cached_views;
+
+
+      public:
+        constexpr view_manager(context_type& input_ctx) noexcept : ctx{input_ctx} {}
+
+        auto mustache() const {}
 
         /**
          * Find the file based on the specified view name.
@@ -142,10 +169,6 @@ namespace webpp::views {
             return stl::nullopt;
         }
 
-      public:
-        constexpr view_manager(context_type& input_ctx) noexcept : ctx{input_ctx} {}
-
-        auto mustache() const {}
 
         string_type read_file(stl::filesystem::path const& file) const {
             return "";

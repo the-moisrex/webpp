@@ -31,8 +31,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef WEBPP_MUSTACHE_HPP
-#define WEBPP_MUSTACHE_HPP
+#ifndef WEBPP_MUSTACHE_VIEW_HPP
+#define WEBPP_MUSTACHE_VIEW_HPP
 
 
 #include "../strings/trim.hpp"
@@ -853,4 +853,4 @@ namespace webpp::views {
 
 } // namespace webpp::views
 
-#endif // WEBPP_MUSTACHE_HPP
+#endif // WEBPP_MUSTACHE_VIEW_HPP

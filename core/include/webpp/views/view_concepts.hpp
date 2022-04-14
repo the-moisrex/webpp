@@ -11,6 +11,11 @@ namespace webpp::views {
     template <typename T>
     concept ViewData = istl::All<T>;
 
+    template <typename T>
+    concept ViewManager = requires (T man) {
+                              man.render();
+                          };
+
     /**
      * Features of a view:
      *
@@ -21,7 +26,9 @@ namespace webpp::views {
         view.scheme(requires_arg(istl::StringViewifiable)); // reparse, and change the scheme
 
         // render with the data passed to it
-        view.render(requires_arg(istl::String), requires_arg(ViewData));
+        view.render(satisfy_arg(istl::String<_> && stl::is_lvalue_reference_v<_>), // string ref
+                    requires_arg(ViewData)                                         // any view data
+        );
     };
 
 } // namespace webpp::views
