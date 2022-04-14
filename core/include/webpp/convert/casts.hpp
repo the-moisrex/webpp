@@ -129,13 +129,14 @@ namespace webpp {
     constexpr bool append_to(istl::String auto& str, ValueType value, R&&... args) noexcept {
         using value_type                 = stl::remove_cvref_t<ValueType>;
         constexpr stl::size_t value_size = sizeof(value_type);
-        using float_type                 = stl::conditional_t<
-          (value_size <= sizeof(float)),
-          float,
-          stl::conditional_t<
-            (value_size == sizeof(double)),
-            double,
-            stl::conditional_t<(value_size >= sizeof(long double)), long double, long double>>>;
+
+        // converting any value type to 3 possible float value types
+        using float_type =
+          stl::conditional_t<(value_size <= sizeof(float)),
+                             float,
+                             stl::conditional_t<(value_size == sizeof(double)), double, long double>>;
+
+
         if constexpr (istl::StringViewifiable<value_type>) {
             str.append(value);
             (append_to(str, stl::forward<R>(args)), ...);
