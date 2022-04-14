@@ -82,7 +82,7 @@ namespace webpp::views {
             }
 
             // traverse the root directories
-            for (path_type const& dir : view_roots) {
+            for (path_type dir : view_roots) {
 
                 fs::file_status status = fs::status(dir, ec);
                 if (ec) {
@@ -126,7 +126,7 @@ namespace webpp::views {
                         }
                     }
                 } else { // non-recursive normal path appending
-                    dir /= request;
+                    dir.append(request.begin(), request.end());
                     status = fs::status(dir, ec);
                     if (ec) {
                         ctx.logger.error(VIEW_CAT,
