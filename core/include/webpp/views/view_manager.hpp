@@ -101,7 +101,15 @@ namespace webpp::views {
                     if (ec) {
                         ctx.logger.error(VIEW_CAT, fmt::format("Cannot read dir {}", dir.string()), ec);
                     }
-                    for (auto const& file : iter) {
+                    fs::recursive_directory_iterator it     = fs::begin(iter);
+                    fs::recursive_directory_iterator it_end = fs::end(iter);
+                    for (; it != it_end; it.increment(ec)) {
+                        if (ec) {
+                            ctx.logger.error(VIEW_CAT,
+                                             fmt::format("Cannot traverse directory {}", dir.string()),
+                                             ec);
+                        }
+                        const path_type file = *it;
                         if (file.stem() != request) {
                             continue;
                         }
