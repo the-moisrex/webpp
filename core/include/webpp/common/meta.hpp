@@ -45,9 +45,9 @@ namespace webpp::details {
 
 #define constexpr_assert(ERR, StrLiteral)               \
     webpp::details::constexpr_assert_type<bool(ERR)>{}( \
-      []<bool errv>() constexpr noexcept { static_assert(errv, StrLiteral); });
+      []<bool errv>() constexpr noexcept { static_assert(errv, StrLiteral); })
 
 #define constexpr_assert_false(ERR, StrLiteral)  constexpr_assert(false, StrLiteral)
-#define static_assert_false(BasedOn, StrLiteral) static_assert(false && !sizeof(BasedOn*), StrLiteral);
+#define static_assert_false(BasedOn, StrLiteral) static_assert(false && !sizeof(BasedOn*), StrLiteral)
 
 #endif // WEBPP_META_H

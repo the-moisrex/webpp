@@ -125,18 +125,29 @@ namespace webpp {
 #endif
     }
 
-    // todo: GCC's to_chars implementation doesn't support floating point numbers
     template <typename ValueType, typename... R>
     constexpr bool append_to(istl::String auto& str, ValueType value, R&&... args) noexcept {
-        if constexpr (istl::StringViewifiable<ValueType>) {
+        using value_type                 = stl::remove_cvref_t<ValueType>;
+        constexpr stl::size_t value_size = sizeof(value_type);
+        using float_type                 = stl::conditional_t<
+          (value_size <= sizeof(float)),
+          float,
+          stl::conditional_t<
+            (value_size == sizeof(double)),
+            double,
+            stl::conditional_t<(value_size >= sizeof(long double)), long double, long double>>>;
+        if constexpr (istl::StringViewifiable<value_type>) {
             str.append(value);
             (append_to(str, stl::forward<R>(args)), ...);
             return true;
         } else {
 #ifdef __cpp_lib_to_chars
-            constexpr stl::size_t   _size = ascii::digit_count<ValueType>() + 1;
+            constexpr stl::size_t   _size = ascii::digit_count<value_type>() + 1;
             stl::array<char, _size> chars;
-            if (auto res = stl::to_chars(chars.data(), chars.data() + _size, value, stl::forward<R>(args)...);
+            if (auto res = stl::to_chars(chars.data(),
+                                         chars.data() + _size,
+                                         static_cast<float_type>(value), // to remove ambiguity
+                                         stl::forward<R>(args)...);
                 res.ec == stl::errc()) {
                 str.append(chars.data(), static_cast<stl::size_t>(res.ptr - chars.data()));
                 return true;

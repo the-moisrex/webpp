@@ -12,6 +12,7 @@
 #include "beast_request.hpp"
 
 #include <list>
+#include <mutex>
 #include <thread>
 
 // clang-format off
@@ -194,7 +195,7 @@ namespace webpp::http::beast_proto {
             thread_worker(thread_worker const&) = delete;
             thread_worker(thread_worker&&)      = default;
 
-            thread_worker(server_type& server) : server(server) {
+            thread_worker(server_type& input_server) : server(input_server) {
                 for (stl::size_t i = 0ul; i != server.http_worker_count; ++i) {
                     http_workers.emplace_back(server);
                 }
@@ -303,12 +304,12 @@ namespace webpp::http::beast_proto {
             requires(EnabledTraits<stl::remove_cvref_t<ET>>)
         beast_server(ET&&            et,
                      app_wrapper_ref the_app_ref,
-                     stl::size_t     http_worker_count = 20,
-                     stl::size_t     concurrency_hint  = stl::thread::hardware_concurrency())
+                     stl::size_t     input_http_worker_count = 20,
+                     stl::size_t     concurrency_hint        = stl::thread::hardware_concurrency())
           : etraits{stl::forward<ET>(et)},
             io{static_cast<int>(concurrency_hint)},
             acceptor{asio::make_strand(io)},
-            http_worker_count{http_worker_count},
+            http_worker_count{input_http_worker_count},
             thread_worker_count{concurrency_hint},
             thread_workers{*this},
             pool{concurrency_hint - 1}, // the main thread is one thread itself
@@ -437,7 +438,7 @@ namespace webpp::http::beast_proto {
 
             // start accepting in all workers
             for (stl::size_t i = 0ul; i != thread_worker_count; ++i) {
-                asio::post(pool, [this] noexcept {
+                asio::post(pool, [this]() noexcept {
                     try {
                         // run executor in this thread
                         io.run();

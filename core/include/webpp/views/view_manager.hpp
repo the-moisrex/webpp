@@ -23,8 +23,7 @@ namespace webpp::views {
 
 
     /**
-     * View
-     *
+     * View Manager
      */
     template <Traits TraitsType, typename CtxT, json::JSONDocument JsonType = json::document<TraitsType>>
     struct view_manager {

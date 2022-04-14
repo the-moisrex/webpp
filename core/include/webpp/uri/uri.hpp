@@ -40,7 +40,7 @@ namespace webpp::uri {
                   typename AllocatorType = typename stl::remove_cvref_t<StrT>::allocator_type>
         [[nodiscard]] static constexpr auto create(AllocatorType const& alloc) {
             basic_uri<stl::remove_cvref_t<StrT>> u{.scheme{alloc},
-                                                   .user_info{.username{alloc}, .password{alloc}},
+                                                   .user_info{{alloc}, {alloc}},
                                                    .host{alloc},
                                                    .port{alloc},
                                                    .path{alloc},
