@@ -21,20 +21,20 @@ namespace webpp {
     template <typename K>
     concept CacheFileKey = CacheKey<K> && requires(K key) {
         lexical::cast<stl::string>(key);
-        { lexical::cast<K>("string") } -> stl::same_as<K>;
+        { lexical::cast<K>(requires_arg(istl::String)) } -> stl::same_as<K>;
         stl::hash<K>{}(key);
     };
 
     template <typename V>
     concept CacheFileValue = CacheValue<V> && requires(V val) {
         lexical::cast<stl::string>(val);
-        { lexical::cast<V>("string") } -> stl::same_as<V>;
+        { lexical::cast<V>(requires_arg(istl::String)) } -> stl::same_as<V>;
     };
 
     template <typename T>
     concept CacheFileOptions = CacheOptions<T> && requires(T opts) {
         lexical::cast<stl::string>(opts); // todo: how to support multiple options?
-        { lexical::cast<T>("string") } -> stl::same_as<T>;
+        { lexical::cast<T>(requires_arg(istl::String)) } -> stl::same_as<T>;
     };
 
 
@@ -58,7 +58,8 @@ namespace webpp {
                 gate.set_options(key, opts);
 
                 // I added the erase_if here and not in the "cache" because it might be faster (I
-                // think) todo: check if we really need erase_if here
+                // think)
+                // todo: check if we really need erase_if here
                 gate.erase_if([](auto&&) -> bool {
                     return true;
                 });

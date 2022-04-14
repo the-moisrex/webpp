@@ -11,7 +11,7 @@
 #include "../storage/memory_gate.hpp"
 #include "../storage/null_gate.hpp"
 #include "../traits/traits.hpp"
-#include "html_view.hpp"
+#include "file_view.hpp"
 #include "json_view.hpp"
 #include "mustache_view.hpp"
 
@@ -39,10 +39,10 @@ namespace webpp::views {
         using view_roots_type  = traits::generalify_allocators<traits_type, stl::vector<path_type>>;
 
 
-        using mustache_type  = mustache<traits_type>;
+        using mustache_view_type  = mustache_view<traits_type>;
         using json_view_type = json_view<traits_type, JsonType>;
-        using html_view_type = html_view<traits_type>;
-        using view_types     = stl::variant<mustache_type, json_view_type, html_view_type>;
+        using file_view_type = file_view<traits_type>;
+        using view_types     = stl::variant<mustache_view_type, json_view_type, file_view_type>;
 
         struct cached_view_type {
             path_type  file;

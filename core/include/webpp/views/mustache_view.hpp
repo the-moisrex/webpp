@@ -314,7 +314,7 @@ namespace webpp::views {
 
 
     template <Traits TraitsType>
-    struct mustache : enable_traits<TraitsType> {
+    struct mustache_view : enable_traits<TraitsType> {
         using traits_type      = TraitsType;
         using string_type      = traits::general_string<traits_type>;
         using string_view_type = traits::string_view<traits_type>;
@@ -330,7 +330,7 @@ namespace webpp::views {
         escape_handler escape_;
 
       public:
-        constexpr mustache(string_view_type input) : mustache() {
+        constexpr mustache_view(string_view_type input) : mustache_view() {
             context<traits_type>          ctx;
             context_internal<traits_type> context{ctx};
             parser(input, context);

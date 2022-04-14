@@ -33,12 +33,12 @@ namespace webpp::istl {
 
 
     template <typename A>
-    concept Allocator =
-      !stl::integral<A> && stl::default_initializable<A> && stl::copy_constructible<A> && requires(A alloc) {
+    concept Allocator = !stl::integral<A> && stl::default_initializable<A> && stl::copy_constructible<A> &&
+                        requires(A alloc, A alloc2) {
         {alloc.allocate(1)};
         {alloc.deallocate(nullptr, 1)};
-        {alloc == alloc};
-        {alloc != alloc};
+        {alloc == alloc2};
+        {alloc != alloc2};
         typename A::value_type;
     };
 

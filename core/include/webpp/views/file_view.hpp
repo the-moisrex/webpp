@@ -8,7 +8,7 @@
 namespace webpp {
 
     template <Traits TraitsType>
-    struct html_view {
+    struct file_view {
         using traits_type = TraitsType;
     };
 

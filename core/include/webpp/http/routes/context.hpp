@@ -365,12 +365,6 @@ namespace webpp::http {
     };
 
 
-    /**
-     * Dynamic context
-     * todo
-     */
-    struct context {};
-
 
     /**
      * This struct helps the extension pack to find the correct type of the

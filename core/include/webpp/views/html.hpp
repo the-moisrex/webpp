@@ -11,7 +11,7 @@ namespace webpp {
     template <istl::String StrT, istl::StringViewifiable StrVT>
     static constexpr StrT html_escape(StrVT&& input, StrT& out) {
         // todo: consider using SIMD if it's not being optimized
-        out.reserve(s.size() * 2);
+        out.reserve(input.size() * 2);
         for (const auto ch : input) {
             switch (ch) {
                 case '&': out.append({'&', 'a', 'm', 'p', ';'}); break;
