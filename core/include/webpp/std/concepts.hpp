@@ -92,11 +92,11 @@ namespace webpp::istl {
      *           );
      *       };
      */
-#define requires_arg(...)                                 \
-    webpp::istl::requires_arg_op<[]<typename RequiresT> { \
-        return (requires {                                \
-            { returnable<RequiresT>()() } -> __VA_ARGS__; \
-        });                                               \
+#define requires_arg(...)                                                       \
+    webpp::istl::details::requires_arg_op<[]<typename RequiresT> {              \
+        return (requires {                                                      \
+            { webpp::istl::details::returnable<RequiresT>()() } -> __VA_ARGS__; \
+        });                                                                     \
     }> {}
 
 } // namespace webpp::istl
