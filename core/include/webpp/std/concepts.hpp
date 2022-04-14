@@ -99,6 +99,25 @@ namespace webpp::istl {
         });                                                                     \
     }> {}
 
+    /**
+     * This is essentially the same thing; but the difference is you can add more custom constraints:
+     *
+     * Possible usage:
+     *
+     *   template <typename T>
+     *   concept fooable =
+     *       requires(T t) {
+     *           t.foo(
+     *               satisfy_arg(std::integral<_> && std::is_lvalue_reference_v<_>),
+     *               satisfy_arg(std::same_as<short, _>)
+     *           );
+     *       };
+     */
+#define satisfy_arg(...)                                   \
+    webpp::istl::details::requires_arg_op<[]<typename _> { \
+        return __VA_ARGS__;                                \
+    }> {}
+
 } // namespace webpp::istl
 
 #endif // WEBPP_STD_CONCEPTS_H
