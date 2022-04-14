@@ -387,10 +387,10 @@ namespace webpp::views {
             render(handler, context);
         }
 
-        constexpr mustache() : escape_(html_escape<string_type>) {}
+        constexpr mustache_view() : escape_(html_escape<string_type>) {}
 
       private:
-        constexpr mustache(string_view_type input, context_internal<traits_type>& ctx) : mustache() {
+        constexpr mustache_view(string_view_type input, context_internal<traits_type>& ctx) : mustache() {
             parser(input, ctx);
         }
 

@@ -25,23 +25,19 @@ namespace webpp::views {
     /**
      * View Manager
      */
-    template <Traits TraitsType, typename CtxT, json::JSONDocument JsonType = json::document<TraitsType>>
-    struct view_manager {
+    template <Traits TraitsType, json::JSONDocument JsonType = json::document<TraitsType>>
+    struct view_manager : enable_traits<TraitsType> {
         using traits_type      = TraitsType;
-        using context_type     = CtxT;
         using string_type      = traits::general_string<traits_type>;
         using string_view_type = traits::string_view<traits_type>;
-        using name_type        = string_type;
-        using value_type       = string_type; // convert to std::variant or something
-        using arguments_type   = traits::generalify_allocators<traits_type, stl::map<name_type, value_type>>;
         using path_type        = stl::filesystem::path;
         using view_roots_type  = traits::generalify_allocators<traits_type, stl::vector<path_type>>;
 
 
-        using mustache_view_type  = mustache_view<traits_type>;
-        using json_view_type = json_view<traits_type, JsonType>;
-        using file_view_type = file_view<traits_type>;
-        using view_types     = stl::variant<mustache_view_type, json_view_type, file_view_type>;
+        using mustache_view_type = mustache_view<traits_type>;
+        using json_view_type     = json_view<traits_type, JsonType>;
+        using file_view_type     = file_view<traits_type>;
+        using view_types         = stl::variant<mustache_view_type, json_view_type, file_view_type>;
 
         struct cached_view_type {
             path_type  file;
@@ -56,14 +52,11 @@ namespace webpp::views {
         view_roots_type view_roots; // the root directories where we can find the views
 
       private:
-        context_type&  ctx;
-        arguments_type args;
-        string_type    file_content;
-        cache_type     cached_views;
+        cache_type cached_views;
 
 
       public:
-        constexpr view_manager(context_type& input_ctx) noexcept : ctx{input_ctx} {}
+        constexpr view_manager() noexcept = default;
 
         auto mustache() const {}
 
@@ -92,9 +85,9 @@ namespace webpp::views {
                 const path_type file{request};
                 if (!fs::is_regular_file(file, ec)) {
                     if (ec) {
-                        ctx.logger.error(VIEW_CAT,
-                                         fmt::format("Cannot check file details for {}", file.string()),
-                                         ec);
+                        this->logger.error(VIEW_CAT,
+                                           fmt::format("Cannot check file details for {}", file.string()),
+                                           ec);
                     }
                     return stl::nullopt;
                 }
@@ -112,9 +105,9 @@ namespace webpp::views {
 
                 fs::file_status status = fs::status(dir, ec);
                 if (ec) {
-                    ctx.logger.error(VIEW_CAT,
-                                     fmt::format("Cannot check directory status of {}", dir.string()),
-                                     ec);
+                    this->logger.error(VIEW_CAT,
+                                       fmt::format("Cannot check directory status of {}", dir.string()),
+                                       ec);
                     continue;
                 }
 
@@ -126,15 +119,15 @@ namespace webpp::views {
                 if (recursive_search) {
                     fs::recursive_directory_iterator iter(dir, ec);
                     if (ec) {
-                        ctx.logger.error(VIEW_CAT, fmt::format("Cannot read dir {}", dir.string()), ec);
+                        this->logger.error(VIEW_CAT, fmt::format("Cannot read dir {}", dir.string()), ec);
                     }
                     fs::recursive_directory_iterator       it     = fs::begin(iter);
                     const fs::recursive_directory_iterator it_end = fs::end(iter);
                     for (; it != it_end; it.increment(ec)) {
                         if (ec) {
-                            ctx.logger.error(VIEW_CAT,
-                                             fmt::format("Cannot traverse directory {}", dir.string()),
-                                             ec);
+                            this->logger.error(VIEW_CAT,
+                                               fmt::format("Cannot traverse directory {}", dir.string()),
+                                               ec);
                         }
                         const path_type file = *it;
                         if (file.stem() != request) {
@@ -143,9 +136,9 @@ namespace webpp::views {
 
                         status = fs::status(file, ec);
                         if (ec) {
-                            ctx.logger.error(VIEW_CAT,
-                                             fmt::format("Cannot check file type of {}", dir.string()),
-                                             ec);
+                            this->logger.error(VIEW_CAT,
+                                               fmt::format("Cannot check file type of {}", dir.string()),
+                                               ec);
                         }
                         if (fs::is_character_file(status)) {
                             return file;
@@ -155,9 +148,9 @@ namespace webpp::views {
                     dir.append(request.begin(), request.end());
                     status = fs::status(dir, ec);
                     if (ec) {
-                        ctx.logger.error(VIEW_CAT,
-                                         fmt::format("Cannot check file type of {}", dir.string()),
-                                         ec);
+                        this->logger.error(VIEW_CAT,
+                                           fmt::format("Cannot check file type of {}", dir.string()),
+                                           ec);
                     }
                     if (fs::exists(status) && fs::is_character_file(status)) {
                         return dir;
@@ -179,7 +172,7 @@ namespace webpp::views {
 
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
             if (!file) {
-                return ctx.error(404);
+                // return this->error(404);
             }
 
             // todo: read the file.
