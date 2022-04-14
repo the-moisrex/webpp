@@ -67,14 +67,14 @@ namespace webpp::istl {
     namespace details {
         template <typename T>
         struct returnable {
-            T operator()();
+            T operator()() {}
         };
 
         template <auto Constraint>
         struct requires_arg_op {
             template <typename T>
                 requires(Constraint.template operator()<T>())
-            operator T();
+            operator T() {}
         };
     } // namespace details
 
