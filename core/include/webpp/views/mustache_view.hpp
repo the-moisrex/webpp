@@ -38,6 +38,7 @@
 #include "../strings/trim.hpp"
 #include "../traits/enable_traits.hpp"
 #include "html.hpp"
+#include "view_concepts.hpp"
 
 #include <array>
 
@@ -65,7 +66,7 @@ namespace webpp::views {
         const type2& type2_;
 
         template <typename StringType>
-        friend class mustache;
+        friend class mustache_view;
     };
 
 
@@ -152,7 +153,7 @@ namespace webpp::views {
             return nullptr;
         }
 
-        context(const context&)            = delete;
+        context(const context&) = delete;
         context& operator=(const context&) = delete;
 
       private:
@@ -235,7 +236,7 @@ namespace webpp::views {
         ~context_pusher() {
             ctx_.ctx.pop();
         }
-        context_pusher(const context_pusher&)            = delete;
+        context_pusher(const context_pusher&) = delete;
         context_pusher& operator=(const context_pusher&) = delete;
 
       private:
@@ -330,10 +331,9 @@ namespace webpp::views {
         escape_handler escape_;
 
       public:
-        constexpr mustache_view(string_view_type input) : mustache_view() {
-            context<traits_type>          ctx;
-            context_internal<traits_type> context{ctx};
-            parser(input, context);
+        constexpr mustache_view(string_view_type input) {
+            delimiter_set<traits_type> delim_set;
+            parse(input, delim_set);
         }
 
         [[nodiscard]] constexpr bool is_valid() const noexcept {
@@ -349,14 +349,14 @@ namespace webpp::views {
         }
 
         template <typename stream_type>
-        constexpr stream_type& render(const basic_data<traits_type>& data, stream_type& stream) {
+        constexpr stream_type& render(ViewData auto const& data, stream_type& stream) {
             render(data, [&stream](string_view_type str) {
                 stream << str;
             });
             return stream;
         }
 
-        constexpr string_type render(const basic_data<traits_type>& data) {
+        constexpr string_type render(ViewData auto const& data) {
             stl::basic_ostringstream<typename string_type::value_type> ss;
             return render(data, ss).str();
         }
@@ -378,7 +378,7 @@ namespace webpp::views {
         }
 
         using render_handler = stl::function<void(string_view_type)>;
-        constexpr void render(const basic_data<traits_type>& data, const render_handler& handler) {
+        constexpr void render(ViewData auto const& data, const render_handler& handler) {
             if (!is_valid()) {
                 return;
             }
@@ -390,7 +390,8 @@ namespace webpp::views {
         constexpr mustache_view() : escape_(html_escape<string_type>) {}
 
       private:
-        constexpr mustache_view(string_view_type input, context_internal<traits_type>& ctx) : mustache() {
+        constexpr mustache_view(string_view_type input, context_internal<traits_type>& ctx)
+          : mustache_view() {
             parser(input, ctx);
         }
 
@@ -399,13 +400,13 @@ namespace webpp::views {
         /////// Parser
 
 
-        void parse(string_view_type input, context_internal<traits_type>& ctx) const {
+        void parse(string_view_type input, delimiter_set<traits_type>& delim_set) const {
             using streamstring = stl::basic_ostringstream<typename string_type::value_type>;
 
             const string_view_type brace_delimiter_end_unescaped("}}}");
             const string_size_type input_size{input.size()};
 
-            bool current_delimiter_is_brace{ctx.delim_set.is_default()};
+            bool current_delimiter_is_brace{delim_set.is_default()};
 
             stl::vector<component_type*>  sections{&root_component_};
             stl::vector<string_size_type> section_starts;
@@ -428,7 +429,7 @@ namespace webpp::views {
             for (string_size_type input_position = 0; input_position != input_size;) {
                 bool parse_tag = false;
 
-                if (input.compare(input_position, ctx.delim_set.begin.size(), ctx.delim_set.begin) == 0) {
+                if (input.compare(input_position, delim_set.begin.size(), delim_set.begin) == 0) {
                     process_current_text();
 
                     // Tag start delimiter
@@ -465,12 +466,12 @@ namespace webpp::views {
                 const string_size_type tag_location_start = input_position;
 
                 // Find the next tag end delimiter
-                string_size_type       tag_contents_location{tag_location_start + ctx.delim_set.begin.size()};
+                string_size_type       tag_contents_location{tag_location_start + delim_set.begin.size()};
                 const bool             tag_is_unescaped_var{current_delimiter_is_brace &&
                                                 tag_location_start != (input_size - 2) &&
-                                                input.at(tag_contents_location) == ctx.delim_set.begin.at(0)};
+                                                input.at(tag_contents_location) == delim_set.begin.at(0)};
                 const string_view_type current_tag_delimiter_end{
-                  tag_is_unescaped_var ? brace_delimiter_end_unescaped : ctx.delim_set.end};
+                  tag_is_unescaped_var ? brace_delimiter_end_unescaped : delim_set.end};
                 const auto current_tag_delimiter_end_size = current_tag_delimiter_end.size();
                 if (tag_is_unescaped_var) {
                     ++tag_contents_location;
@@ -489,15 +490,15 @@ namespace webpp::views {
                   string_view_type{input, tag_contents_location, tag_location_end - tag_contents_location});
                 component_type comp;
                 if (!tag_contents.empty() && tag_contents[0] == '=') {
-                    if (!parse_set_delimiter_tag(tag_contents, ctx.delim_set)) {
+                    if (!parse_set_delimiter_tag(tag_contents, delim_set)) {
                         streamstring ss;
                         ss << "Invalid set delimiter tag at " << tag_location_start;
                         error_message_.assign(ss.str());
                         return;
                     }
-                    current_delimiter_is_brace = ctx.delim_set.is_default();
+                    current_delimiter_is_brace = delim_set.is_default();
                     comp.tag.type              = tag_type::set_delimiter;
-                    comp.tag.delim_set.reset(new delimiter_set<traits_type>(ctx.delim_set));
+                    comp.tag.delim_set.reset(new delimiter_set<traits_type>(delim_set));
                 }
                 if (comp.tag.type != tag_type::set_delimiter) {
                     parse_tag_contents(tag_is_unescaped_var, tag_contents, comp.tag);
@@ -559,8 +560,8 @@ namespace webpp::views {
             return true;
         }
 
-        bool parse_set_delimiter_tag(string_view_type            contents,
-                                     delimiter_set<traits_type>& delimiter_set) const {
+        [[nodiscard]] bool parse_set_delimiter_tag(string_view_type            contents,
+                                                   delimiter_set<traits_type>& delimiter_set) const {
             // Smallest legal tag is "=X X="
             if (contents.size() < 5) {
                 return false;
