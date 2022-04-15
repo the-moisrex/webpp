@@ -3,24 +3,29 @@
 #ifndef WEBPP_VIEW_CONCEPTS_HPP
 #define WEBPP_VIEW_CONCEPTS_HPP
 
+#include "../std/string.hpp"
 #include "../std/string_concepts.hpp"
 #include "../std/string_view.hpp"
 
 namespace webpp::views {
 
     template <typename T>
-    concept ViewData = istl::All<T>;
-
-    template <typename T>
-    concept ViewManager = requires(T man) {
-        man.render(requires_arg(istl::StringViewifiable));
+    concept ViewData = requires(T item) {
+        item.name;
+        item.value;
     };
 
     /**
      * Features of a view:
      *
-     *   - [ ] Cache-able. (we don't need the data to be cached, only the rendered scheme)
+     *   - Cache-able. (we don't need the data to be cached, only the rendered scheme)
+     *   - Cross-Format Transpiler
      */
+    template <typename T>
+    concept ViewManager = requires(T man) {
+        man.render(requires_arg(istl::StringViewifiable));
+    };
+
     template <typename T>
     concept View = requires(T view) {
         view.scheme(requires_arg(istl::StringViewifiable)); // reparse, and change the scheme

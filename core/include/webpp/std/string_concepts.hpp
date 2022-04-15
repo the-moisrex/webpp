@@ -148,17 +148,6 @@ namespace webpp::istl {
                          templated_lazy_type<details::char_extractor, BestGuess>,
                          lazy_type<stl::conditional_t<CharType<BestGuess>, BestGuess, void>>>;
 
-#ifndef NDEBUG
-    static_assert(stl::is_same_v<int, char_type_of<int*>>);
-    static_assert(stl::is_same_v<char, char_type_of<char[]>>);
-    static_assert(stl::is_same_v<char, char_type_of<char[10]>>);
-    static_assert(stl::is_same_v<char, char_type_of<const char[10]>>);
-    static_assert(stl::is_same_v<char, char_type_of<const char (&)[20]>>);
-    static_assert(stl::is_same_v<wchar_t, char_type_of<const wchar_t*>>);
-    static_assert(stl::is_same_v<char, char_type_of<std::string>>);
-    static_assert(stl::is_same_v<int, char_type_of<std::basic_string_view<int>>>);
-#endif
-
     /**
      * Get the underlying allocator_type
      */

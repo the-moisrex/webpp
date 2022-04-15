@@ -1,4 +1,5 @@
 // Created by moisrex on 11/20/20.
+#include "../core/include/webpp/std/string_concepts.hpp"
 #include "../core/include/webpp/strings/iequals.hpp"
 #include "../core/include/webpp/strings/join.hpp"
 #include "../core/include/webpp/strings/splits.hpp"
@@ -6,8 +7,19 @@
 
 
 using namespace webpp;
+using namespace webpp::istl;
 using namespace webpp::strings;
 using namespace webpp::ascii;
+
+static_assert(stl::is_same_v<int, char_type_of<int*>>);
+static_assert(stl::is_same_v<char, char_type_of<char[]>>);
+static_assert(stl::is_same_v<char, char_type_of<char[10]>>);
+static_assert(stl::is_same_v<char, char_type_of<const char[10]>>);
+static_assert(stl::is_same_v<char, char_type_of<const char (&)[20]>>);
+static_assert(stl::is_same_v<wchar_t, char_type_of<const wchar_t*>>);
+static_assert(stl::is_same_v<char, char_type_of<std::string>>);
+static_assert(stl::is_same_v<int, char_type_of<std::basic_string_view<int>>>);
+
 
 TEST(String, iequals) {
     const auto one = "Hello World!";

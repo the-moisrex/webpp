@@ -646,24 +646,19 @@ namespace webpp::views {
             }
         }
 
-        constexpr void render_current_line(const render_handler&          handler,
-                                           context_internal<traits_type>& ctx,
-                                           const component_type*          comp) const {
+        constexpr void render_current_line(const render_handler&           handler,
+                                           line_buffer_state<traits_type>& line_buffer,
+                                           const component_type*           comp) const {
             // We're at the end of a line, so check the line buffer state to see
             // if the line had tags in it, and also if the line is now empty or
             // contains whitespace only. if this situation is true, skip the line.
-            if (!ctx.line_buffer.contained_section_tag ||
-                !ctx.line_buffer.is_empty_or_contains_only_whitespace()) {
-                handler(ctx.line_buffer.data);
+            if (!line_buffer.contained_section_tag || !line_buffer.is_empty_or_contains_only_whitespace()) {
+                handler(line_buffer.data);
                 if (comp) {
                     handler(comp->text);
                 }
             }
-            ctx.line_buffer.clear();
-        }
-
-        constexpr void render_result(context_internal<traits_type>& ctx, string_view_type text) const {
-            ctx.line_buffer.data.append(text);
+            line_buffer.clear();
         }
 
         constexpr walk_control_type render_component(const render_handler&          handler,
@@ -673,7 +668,7 @@ namespace webpp::views {
                 if (comp.is_newline()) {
                     render_current_line(handler, ctx, &comp);
                 } else {
-                    render_result(ctx, comp.text);
+                    line_buffer.data.append( comp.text);
                 }
                 return walk_control_type::walk;
             }
@@ -751,7 +746,7 @@ namespace webpp::views {
                                      bool                           parse_with_same_context) {
             const typename basic_renderer<string_type>::type2 render2 =
               [this, &ctx, parse_with_same_context, escape](string_view_type text, bool escaped) {
-                  const auto process_template = [this, &ctx, escape, escaped](mustache& tmpl) -> string_type {
+                  const auto process_template = [this, &ctx, escape, escaped](mustache_view& tmpl) -> string_type {
                       if (!tmpl.is_valid()) {
                           error_message_ = tmpl.error_message();
                           return {};
@@ -771,11 +766,11 @@ namespace webpp::views {
                       return do_escape ? escape_(str) : str;
                   };
                   if (parse_with_same_context) {
-                      mustache tmpl{text, ctx};
+                      mustache_view tmpl{text, ctx};
                       tmpl.set_custom_escape(escape_);
                       return process_template(tmpl);
                   }
-                  mustache tmpl{text};
+                  mustache_view tmpl{text};
                   tmpl.set_custom_escape(escape_);
                   return process_template(tmpl);
               };
@@ -784,10 +779,10 @@ namespace webpp::views {
             };
             if (var->is_lambda2()) {
                 const basic_renderer<string_type> renderer{render, render2};
-                render_result(ctx, var->lambda2_value()(text, renderer));
+                line_buffer.data.append( var->lambda2_value()(text, renderer));
             } else {
                 render_current_line(handler, ctx, nullptr);
-                render_result(ctx, render(var->lambda_value()(text)));
+                line_buffer.data.append( render(var->lambda_value()(text)));
             }
             return error_message_.empty();
         }
@@ -798,7 +793,7 @@ namespace webpp::views {
                                        bool                           escaped) {
             if (var->is_string()) {
                 const auto& varstr = var->string_value();
-                render_result(ctx, escaped ? escape_(varstr) : varstr);
+                line_buffer.data.append( escaped ? escape_(varstr) : varstr);
             } else if (var->is_lambda()) {
                 const render_lambda_escape escape_opt =
                   escaped ? render_lambda_escape::escape : render_lambda_escape::unescape;
