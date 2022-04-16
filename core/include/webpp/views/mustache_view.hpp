@@ -35,15 +35,81 @@
 #define WEBPP_MUSTACHE_VIEW_HPP
 
 
+#include "../std/collection.hpp"
+#include "../std/type_traits.hpp"
 #include "../strings/trim.hpp"
 #include "../traits/enable_traits.hpp"
+#include "../utils/functional.hpp"
 #include "html.hpp"
 #include "view_concepts.hpp"
 
 #include <array>
+#include <variant>
 
 
 namespace webpp::views {
+
+    // this view holds one data
+    // this struct holds all the data
+    template <Traits TraitsType, typename... ValuesT>
+    struct view_data {
+        using traits_type      = TraitsType;
+        using string_view_type = traits::string_view<traits_type>;
+
+        template <typename ValueT>
+        struct view_component {
+            using value_type = ValueT;
+
+            string_view_type name;
+            value_type       value;
+        };
+
+
+        template <typename V>
+        struct common_value_of {
+
+            static constexpr bool is_string = istl::StringViewifiable<V>;
+            static constexpr bool is_bool   = stl::same_as<V, bool>;
+            static constexpr bool is_lambda = requires(V v) {
+                v(requires_arg(istl::String));
+            }
+            || requires(V v) {
+                v(requires_arg(istl::String), requires_arg(stl::same_as<bool>));
+            };
+            static constexpr bool is_tuple      = istl::Tuple<V>;
+            static constexpr bool is_collection = istl::Collection<V>;
+            static constexpr bool is_list       = is_tuple || is_collection;
+
+            using lambda = stl::variant<function_ref<string_view_type(string_view_type)>,
+                                        function_ref<string_view_type(string_view_type, bool)>>;
+
+
+            static constexpr bool value = true;
+            using fix_tuple             = istl::recursive_parameter_replacer<V, common_value_of>;
+            using as_list               = fix_tuple;
+
+            // clang-format off
+            using type = stl::conditional_t<
+              is_bool,
+              bool,
+              stl::conditional_t<
+                is_lambda,
+                lambda,
+                stl::conditional_t<
+                  is_string,
+                  string_view_type,
+                  stl::conditional_t<
+                    is_list,
+                    as_list,
+                    istl::nothing_type
+                  >
+                >
+              >
+            >;
+            // clang-format on
+        };
+    };
+
 
     template <typename string_type>
     class basic_renderer {
@@ -668,7 +734,7 @@ namespace webpp::views {
                 if (comp.is_newline()) {
                     render_current_line(handler, ctx, &comp);
                 } else {
-                    line_buffer.data.append( comp.text);
+                    line_buffer.data.append(comp.text);
                 }
                 return walk_control_type::walk;
             }
@@ -746,7 +812,8 @@ namespace webpp::views {
                                      bool                           parse_with_same_context) {
             const typename basic_renderer<string_type>::type2 render2 =
               [this, &ctx, parse_with_same_context, escape](string_view_type text, bool escaped) {
-                  const auto process_template = [this, &ctx, escape, escaped](mustache_view& tmpl) -> string_type {
+                  const auto process_template =
+                    [this, &ctx, escape, escaped](mustache_view& tmpl) -> string_type {
                       if (!tmpl.is_valid()) {
                           error_message_ = tmpl.error_message();
                           return {};
@@ -779,10 +846,10 @@ namespace webpp::views {
             };
             if (var->is_lambda2()) {
                 const basic_renderer<string_type> renderer{render, render2};
-                line_buffer.data.append( var->lambda2_value()(text, renderer));
+                line_buffer.data.append(var->lambda2_value()(text, renderer));
             } else {
                 render_current_line(handler, ctx, nullptr);
-                line_buffer.data.append( render(var->lambda_value()(text)));
+                line_buffer.data.append(render(var->lambda_value()(text)));
             }
             return error_message_.empty();
         }
@@ -793,7 +860,7 @@ namespace webpp::views {
                                        bool                           escaped) {
             if (var->is_string()) {
                 const auto& varstr = var->string_value();
-                line_buffer.data.append( escaped ? escape_(varstr) : varstr);
+                line_buffer.data.append(escaped ? escape_(varstr) : varstr);
             } else if (var->is_lambda()) {
                 const render_lambda_escape escape_opt =
                   escaped ? render_lambda_escape::escape : render_lambda_escape::unescape;

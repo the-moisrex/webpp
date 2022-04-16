@@ -421,6 +421,8 @@ namespace webpp::istl {
             using type = typename parameter_replacer<T, Replacer, fake_tuple<>, fake_tuple<Types...>>::type;
         };
 
+        template <typename T, template <typename> typename Replacer>
+        using repalce_parameter_t = typename replace_parameters<T, Replacer>::type;
 
 
         ////////////////////////////// recursively_change_parameter //////////////////////////////
