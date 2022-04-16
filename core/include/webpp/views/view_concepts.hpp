@@ -6,13 +6,21 @@
 #include "../std/string.hpp"
 #include "../std/string_concepts.hpp"
 #include "../std/string_view.hpp"
+#include "../std/tuple.hpp"
 
 namespace webpp::views {
 
     template <typename T>
-    concept ViewData = requires(T item) {
+    concept DataView = requires(T item) {
         item.name;
         item.value;
+    };
+
+    template <typename T>
+    concept DataViewSettings = requires(T dv) {
+        typename T::traits_type;
+        Traits<typename T::traits_type>;
+        dv.acceptable_types;
     };
 
     /**
@@ -33,7 +41,7 @@ namespace webpp::views {
         // render with the data passed to it
         view.render(satisfy_arg(ViewManager<_> && stl::is_lvalue_reference_v<_>),  // view_manager ref
                     satisfy_arg(istl::String<_> && stl::is_lvalue_reference_v<_>), // string ref
-                    requires_arg(ViewData)                                         // any view data
+                    requires_arg(DataView)                                         // any view data
         );
     };
 

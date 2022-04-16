@@ -37,13 +37,28 @@
 
 #include "../strings/trim.hpp"
 #include "../traits/enable_traits.hpp"
+#include "../utils/functional.hpp"
+#include "data_view.hpp"
 #include "html.hpp"
 #include "view_concepts.hpp"
 
 #include <array>
+#include <variant>
 
 
 namespace webpp::views {
+
+    template <Traits TraitsType>
+    struct mustache_data_view_settings {
+        using traits_type = TraitsType;
+        static constexpr view_data_flags acceptable_types{
+          data_views::boolean,
+          data_views::lambda,
+          data_views::string,
+          data_views::list
+        };
+    };
+
     template <typename string_type>
     class basic_renderer {
       public:
@@ -96,13 +111,13 @@ namespace webpp::views {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
 
-        context(const basic_data<traits_type>* data) {
+        context(const data_view_type* data) {
             push(data);
         }
 
         context() = default;
 
-        void push(const basic_data<traits_type>* data) {
+        void push(const data_view_type* data) {
             items_.insert(items_.begin(), data);
         }
 
@@ -110,7 +125,7 @@ namespace webpp::views {
             items_.erase(items_.begin());
         }
 
-        const basic_data<traits_type>* get(string_view_type name) const {
+        const data_view_type* get(string_view_type name) const {
             // process {{.}} name
             if (name.size() == 1 && name.at(0) == '.') {
                 return items_.front();
@@ -142,7 +157,7 @@ namespace webpp::views {
             return nullptr;
         }
 
-        const basic_data<traits_type>* get_partial(string_view_type name) const {
+        const data_view_type* get_partial(string_view_type name) const {
             for (const auto& item : items_) {
                 const auto var = item->get(name);
                 if (var) {
@@ -156,7 +171,7 @@ namespace webpp::views {
         context& operator=(const context&) = delete;
 
       private:
-        stl::vector<const basic_data<traits_type>*> items_;
+        stl::vector<const data_view_type*> items_;
     };
 
 
@@ -229,7 +244,7 @@ namespace webpp::views {
     template <Traits TraitsType>
     struct context_pusher {
         using traits_type = TraitsType;
-        context_pusher(context_internal<traits_type>& ctx, const basic_data<traits_type>* data) : ctx_(ctx) {
+        context_pusher(context_internal<traits_type>& ctx, const data_view_type* data) : ctx_(ctx) {
             ctx.ctx.push(data);
         }
         ~context_pusher() {
@@ -348,14 +363,14 @@ namespace webpp::views {
         }
 
         template <typename stream_type>
-        constexpr stream_type& render(ViewData auto const& data, stream_type& stream) {
+        constexpr stream_type& render(DataView auto const& data, stream_type& stream) {
             render(data, [&stream](string_view_type str) {
                 stream << str;
             });
             return stream;
         }
 
-        constexpr string_type render(ViewData auto const& data) {
+        constexpr string_type render(DataView auto const& data) {
             stl::basic_ostringstream<typename string_type::value_type> ss;
             return render(data, ss).str();
         }
@@ -377,7 +392,7 @@ namespace webpp::views {
         }
 
         using render_handler = stl::function<void(string_view_type)>;
-        constexpr void render(ViewData auto const& data, const render_handler& handler) {
+        constexpr void render(DataView auto const& data, const render_handler& handler) {
             if (!is_valid()) {
                 return;
             }
@@ -672,8 +687,8 @@ namespace webpp::views {
                 return walk_control_type::walk;
             }
 
-            const mstch_tag<string_type>&  tag{comp.tag};
-            const basic_data<traits_type>* var = nullptr;
+            const mstch_tag<string_type>& tag{comp.tag};
+            const data_view_type*         var = nullptr;
             switch (tag.type) {
                 case tag_type::variable:
                 case tag_type::unescaped_variable:
@@ -738,7 +753,7 @@ namespace webpp::views {
         };
 
         constexpr bool render_lambda(const render_handler&          handler,
-                                     const basic_data<traits_type>* var,
+                                     const data_view_type*          var,
                                      context_internal<traits_type>& ctx,
                                      render_lambda_escape           escape,
                                      string_view_type               text,
@@ -788,7 +803,7 @@ namespace webpp::views {
         }
 
         constexpr bool render_variable(const render_handler&          handler,
-                                       const basic_data<traits_type>* var,
+                                       const data_view_type*          var,
                                        context_internal<traits_type>& ctx,
                                        bool                           escaped) {
             if (var->is_string()) {
@@ -811,7 +826,7 @@ namespace webpp::views {
         constexpr void render_section(const render_handler&          handler,
                                       context_internal<traits_type>& ctx,
                                       component_type&                incomp,
-                                      const basic_data<traits_type>* var) {
+                                      const data_view_type*          var) {
             const auto callback = [&handler, &ctx, this](component_type& comp) -> walk_control_type {
                 return render_component(handler, ctx, comp);
             };
