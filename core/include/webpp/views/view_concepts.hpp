@@ -20,7 +20,7 @@ namespace webpp::views {
     concept DataViewSettings = requires(T dv) {
         typename T::traits_type;
         Traits<typename T::traits_type>;
-        dv.acceptable_types;
+        dv.acceptable_types; // of type "view_data_flags"
     };
 
     /**
