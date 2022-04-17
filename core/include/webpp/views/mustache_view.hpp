@@ -51,12 +51,10 @@ namespace webpp::views {
     template <Traits TraitsType>
     struct mustache_data_view_settings {
         using traits_type = TraitsType;
-        static constexpr view_data_flags acceptable_types{
-          data_views::boolean,
-          data_views::lambda,
-          data_views::string,
-          data_views::list
-        };
+        static constexpr view_data_flags acceptable_types{data_views::boolean,
+                                                          data_views::lambda,
+                                                          data_views::string,
+                                                          data_views::list};
     };
 
     template <typename string_type>
@@ -110,6 +108,7 @@ namespace webpp::views {
     struct context {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
+        using data_view_type   = view_data<mustache_data_view_settings<traits_type>>;
 
         context(const data_view_type* data) {
             push(data);
@@ -338,6 +337,7 @@ namespace webpp::views {
         using escape_handler    = stl::function<string_type(string_view_type)>;
         using component_type    = component<traits_type>;
         using walk_control_type = typename component_type::walk_control;
+        using data_view_type    = view_data<mustache_data_view_settings<traits_type>>;
 
       private:
         string_type    error_message_;

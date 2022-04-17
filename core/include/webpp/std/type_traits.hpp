@@ -918,6 +918,37 @@ namespace webpp::istl {
       : stl::integral_constant<stl::size_t, 1 + index_of_item<T, R...>::value> {};
 
 
+
+    /////////////////// Hold template or a type //////////////////
+
+    /**
+     * This struct is designed to hold a template, or a type and make it rebind-able.
+     * Possible usage:
+     *
+     *   template <Triats TraitsType, variant_holder AppType>
+     *   struct app_wrapper {
+     *     using traits_type = TraitsType;
+     *     using app_type = typename decltype(AppType)::template rebind<traits_type>;
+     *   };
+     */
+    template <typename T>
+    struct variant_holder {
+        using type   = T;
+        using params = stl::tuple<>;
+
+        template <typename...>
+        using rebind = T;
+    };
+
+    template <template <typename...> typename T, typename... Params>
+    struct variant_holder<T<Params...>> {
+        using type   = T<Params...>;
+        using params = stl::tuple<Params...>;
+
+        template <typename... NewParams>
+        using rebind = T<NewParams...>;
+    };
+
 } // namespace webpp::istl
 
 #endif // WEBPP_TYPE_TRAITS_HPP
