@@ -925,28 +925,36 @@ namespace webpp::istl {
      * This struct is designed to hold a template, or a type and make it rebind-able.
      * Possible usage:
      *
-     *   template <Triats TraitsType, variant_holder AppType>
-     *   struct app_wrapper {
-     *     using traits_type = TraitsType;
-     *     using app_type = typename decltype(AppType)::template rebind<traits_type>;
-     *   };
      */
-    template <typename T>
+    namespace details {
+        template <template <typename...> typename Validator,
+                  template <typename...>
+                  typename T,
+                  typename... Params>
+        struct variant_holder;
+
+        // T<Params...> exists and
+        // Validator<T>::value is true too
+        template <template <typename...> typename Validator,
+                  template <typename...>
+                  typename T,
+                  typename... Params>
+            requires(requires { typename T<Params...>; } && Validator<T<Params...>>::value)
+        struct variant_holder<Validator, T, Params...> {
+            using type = T<Params...>;
+        };
+
+
+    } // namespace details
+
+    template <template <typename> typename Validator, typename... Params>
+        requires requires {
+            { Validator<void>::value } -> stl::same_as<bool>;
+        }
     struct variant_holder {
-        using type   = T;
-        using params = stl::tuple<>;
 
-        template <typename...>
-        using rebind = T;
-    };
-
-    template <template <typename...> typename T, typename... Params>
-    struct variant_holder<T<Params...>> {
-        using type   = T<Params...>;
-        using params = stl::tuple<Params...>;
-
-        template <typename... NewParams>
-        using rebind = T<NewParams...>;
+        template <template <typename...> typename T>
+        using type = typename details::variant_holder<Validator, T, Params...>::type;
     };
 
 } // namespace webpp::istl
