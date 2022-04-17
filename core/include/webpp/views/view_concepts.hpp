@@ -17,6 +17,9 @@ namespace webpp::views {
     };
 
     template <typename T>
+    concept DataViews = istl::TupleOf<typify(DataView), T>;
+
+    template <typename T>
     concept DataViewSettings = requires(T dv) {
         typename T::traits_type;
         Traits<typename T::traits_type>;
@@ -35,13 +38,19 @@ namespace webpp::views {
     };
 
     template <typename T>
+    concept ViewManagerInput = ViewManager<T> && stl::is_lvalue_reference_v<T>;
+
+    template <typename T>
+    concept ViewOutput = istl::String<T> && stl::is_lvalue_reference_v<T>;
+
+    template <typename T>
     concept View = requires(T view) {
         view.scheme(requires_arg(istl::StringViewifiable)); // reparse, and change the scheme
 
         // render with the data passed to it
-        view.render(satisfy_arg(ViewManager<_> && stl::is_lvalue_reference_v<_>),  // view_manager ref
-                    satisfy_arg(istl::String<_> && stl::is_lvalue_reference_v<_>), // string ref
-                    requires_arg(DataView)                                         // any view data
+        view.render(requires_arg(ViewManagerInput), // view_manager ref
+                    requires_arg(ViewOutput),       // string ref
+                    requires_arg(DataView)          // any view data
         );
     };
 

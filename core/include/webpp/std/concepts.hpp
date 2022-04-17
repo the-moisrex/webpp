@@ -118,6 +118,42 @@ namespace webpp::istl {
         return __VA_ARGS__;                                \
     }> {}
 
+
+
+    namespace details {
+        template <auto Concept>
+        struct typify_type {
+            template <typename T>
+            struct type {
+                static constexpr bool value = Concept.template operator()<T>();
+            };
+        };
+    } // namespace details
+
+    /**
+     * This lets you convert a concept to a type with a "value" of bool type.
+     * It converts this:
+     *
+     *   template <typename T>
+     *   concept test_concept = ...;
+     *
+     * To this:
+     *
+     *   template <typename T>
+     *   struct test {
+     *     static constexpr bool value = test_concept<T>;
+     *   };
+     *
+     * Usage:
+     *
+     *   template <typename T>
+     *   concept tuple_of_tests = istl::TupleOf<typify(test), T>;
+     */
+#define typify(...)                                            \
+    webpp::istl::details::typify_type<[]<typename RequiresT> { \
+        return __VA_ARGS__<RequiresT>;                         \
+    }>::template type
+
 } // namespace webpp::istl
 
 #endif // WEBPP_STD_CONCEPTS_H
