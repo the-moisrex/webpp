@@ -3,11 +3,11 @@
 #ifndef WEBPP_JSON_VIEW_HPP
 #define WEBPP_JSON_VIEW_HPP
 
-#include "../json/defaultjson.hpp"
+#include "../json/json_concepts.hpp"
 
 namespace webpp {
 
-    template <Traits TraitsType, json::JSONDocument JsonDocType = json::document<TraitsType>>
+    template <Traits TraitsType>
     struct json_view {
         using traits_type = TraitsType;
     };

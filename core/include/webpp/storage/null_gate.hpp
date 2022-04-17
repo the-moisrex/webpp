@@ -23,6 +23,8 @@ namespace webpp {
                 options_type options;
             };
 
+            constexpr storage_gate(auto&&...) {};
+
             template <typename V>
             stl::optional<data_type> get([[maybe_unused]] V&& value) {
                 return stl::nullopt;

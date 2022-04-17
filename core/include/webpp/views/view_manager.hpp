@@ -35,7 +35,7 @@ namespace webpp::views {
 
 
         using mustache_view_type = mustache_view<traits_type>;
-        using json_view_type     = json_view<traits_type, JsonType>;
+        using json_view_type     = json_view<traits_type>;
         using file_view_type     = file_view<traits_type>;
         using view_types         = stl::variant<mustache_view_type, json_view_type, file_view_type>;
 
@@ -167,7 +167,7 @@ namespace webpp::views {
         }
 
         template <istl::StringViewifiable StrT>
-        constexpr http::HTTPResponse auto render(StrT&& file_request) const noexcept {
+        constexpr http::HTTPResponse auto view(StrT&& file_request) const noexcept {
             namespace fs = stl::filesystem;
 
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
