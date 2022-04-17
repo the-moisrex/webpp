@@ -147,7 +147,7 @@ namespace webpp::istl {
      * Usage:
      *
      *   template <typename T>
-     *   concept tuple_of_tests = istl::TupleOf<typify(test), T>;
+     *   concept tuple_of_tests = istl::TupleOf<typify(test_concept), T>;
      */
 #define typify(...)                                            \
     webpp::istl::details::typify_type<[]<typename RequiresT> { \
