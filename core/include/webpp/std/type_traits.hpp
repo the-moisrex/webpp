@@ -918,45 +918,6 @@ namespace webpp::istl {
       : stl::integral_constant<stl::size_t, 1 + index_of_item<T, R...>::value> {};
 
 
-
-    /////////////////// Hold template or a type //////////////////
-
-    /**
-     * This struct is designed to hold a template, or a type and make it rebind-able.
-     * Possible usage:
-     *
-     */
-    namespace details {
-        template <template <typename...> typename Validator,
-                  template <typename...>
-                  typename T,
-                  typename... Params>
-        struct variant_holder;
-
-        // T<Params...> exists and
-        // Validator<T>::value is true too
-        template <template <typename...> typename Validator,
-                  template <typename...>
-                  typename T,
-                  typename... Params>
-            requires(requires { typename T<Params...>; } && Validator<T<Params...>>::value)
-        struct variant_holder<Validator, T, Params...> {
-            using type = T<Params...>;
-        };
-
-
-    } // namespace details
-
-    template <template <typename> typename Validator, typename... Params>
-        requires requires {
-            { Validator<void>::value } -> stl::same_as<bool>;
-        }
-    struct variant_holder {
-
-        template <template <typename...> typename T>
-        using type = typename details::variant_holder<Validator, T, Params...>::type;
-    };
-
 } // namespace webpp::istl
 
 #endif // WEBPP_TYPE_TRAITS_HPP
