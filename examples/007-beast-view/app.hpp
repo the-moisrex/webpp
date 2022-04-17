@@ -23,10 +23,7 @@ namespace website {
         }
 
         auto operator()(auto&& req) {
-            using extensions = webpp::extension_pack<json_response>;
-
-            router _router{extensions{},
-                           (get and root) >>=
+            router _router{(get and root) >>=
                            [] {
                                return view_man.view("home");
                            },
