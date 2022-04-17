@@ -8,7 +8,9 @@
 namespace webpp::views {
 
     /**
-     * File view is
+     * File view
+     *
+     * File view does no rendering or parsing. The exact input is outputted.
      */
     template <Traits TraitsType>
     struct file_view {
@@ -24,6 +26,7 @@ namespace webpp::views {
         }
 
         void render(ViewManager auto&, istl::String auto& out, DataViews auto const&) const {
+            // the view manager and the input data are useless.
             out = data;
         }
     };
