@@ -25,7 +25,7 @@ namespace webpp::views {
     /**
      * View Manager
      */
-    template <Traits TraitsType, json::JSONDocument JsonType = json::document<TraitsType>>
+    template <Traits TraitsType>
     struct view_manager : enable_traits<TraitsType> {
         using traits_type      = TraitsType;
         using string_type      = traits::general_string<traits_type>;
