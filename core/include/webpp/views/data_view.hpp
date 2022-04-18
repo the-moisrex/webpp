@@ -188,7 +188,7 @@ namespace webpp::views {
             auto get_value() const noexcept {
                 if constexpr (istl::String<value_type> && !istl::StringView<value_type>) {
                     // convert to string view if it's a normal string
-                    return istl::string_viewify_of<stirng_view_type>(value);
+                    return istl::string_viewify_of<string_view_type>(value);
                 } else {
                     return value;
                 }

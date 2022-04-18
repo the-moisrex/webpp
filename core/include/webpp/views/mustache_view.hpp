@@ -57,6 +57,9 @@ namespace webpp::views {
                                                           data_views::list};
     };
 
+    template <Traits TraitsType>
+    using mustache_data_view = data_view<mustache_data_view_settings<TraitsType>{}>;
+
     template <typename string_type>
     class basic_renderer {
       public:
@@ -108,7 +111,7 @@ namespace webpp::views {
     struct context {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
-        using data_view_type   = view_data<mustache_data_view_settings<traits_type>>;
+        using data_view_type   = mustache_data_view<traits_type>;
 
         context(const data_view_type* data) {
             push(data);
@@ -337,7 +340,7 @@ namespace webpp::views {
         using escape_handler    = stl::function<string_type(string_view_type)>;
         using component_type    = component<traits_type>;
         using walk_control_type = typename component_type::walk_control;
-        using data_view_type    = view_data<mustache_data_view_settings<traits_type>>;
+        using data_view_type    = mustache_data_view<traits_type>;
 
       private:
         string_type    error_message_;
