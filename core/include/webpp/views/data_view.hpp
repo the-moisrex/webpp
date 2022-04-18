@@ -87,7 +87,6 @@ namespace webpp::views {
 
                 template <bool>
                 struct evaluate {
-
                     using type = istl::recursive_parameter_replacer<V, fix_val>;
                 };
             };
@@ -142,16 +141,34 @@ namespace webpp::views {
                 name = istl::string_viewify_of<string_view_type>(stl::forward<StrT>(str));
             }
 
-            template <typename T>
-            void set_value(T&& val) {
-                if constexpr (need_bool && is_bool) {
-                    value = val;
-                } else if constexpr (acceptable_types.is_on(data_views::string) && is_string) {
-                    value = istl::string_viewify_of<string_view_type>(stl::forward<T>(val));
-                } else if constexpr (acceptable_types.is_on(data_views::lambda) && is_lambda) {
-                    value = val;
-                } else if constexpr (acceptable_types.is_on(data_views::string) && is_convertible_to_string) {
+            template <typename T, EnabledTraits ET>
+            static void set_value(T const& val, auto& out, ET&& et) {
+                // I'm passing val as a const& and not a && because this function cannot handle moves since
+                // we might make a string_view of val and then val is going out of scope for the user of this
+                // function and our string view is gone too with it. So no moves :)
+
+                if constexpr ((need_bool && is_bool) || (need_lambda && is_lambda)) {
+                    out = val;
+                } else if constexpr (need_string && is_string) {
+                    out = istl::string_viewify_of<string_view_type>(stl::forward<T>(val));
+                } else if constexpr (need_string && is_convertible_to_string) {
+                    // yes, value_type now should be a string type not a string view type
+                    out = lexical::cast<string_type>(val, et.allocs_pack);
+                } else if constexpr (need_list && is_collection) {
+                    using collection_value_type = typename value_type::value_type;
+                    out                         = object::make_general<value_type>(et.allocs_pack);
+                    out.reserve(val.size());
+                    stl::transform(stl::begin(val), stl::end(val), stl::back_inserter(out), [&](auto&& v) {
+                        collection_value_type nv;
+                        component_view::set_value(v, nv, et);
+                        return nv;
+                    });
                 }
+            }
+
+            template <typename T, EnabledTraits ET>
+            void set_value(T const& val, ET&& et) {
+                component_view::set_value(val, value, et);
             }
         };
 
