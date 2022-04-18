@@ -165,14 +165,11 @@ namespace webpp::istl {
         };
     } // namespace details
 
-    // clang-format off
     template <typename T, typename Default = stl::char_traits<char_type_of<T>>>
-    using char_traits_type_of = lazy_conditional_t<
-        details::has_traits_type<T>,
-        templated_lazy_type<details::traits_extractor,
-        stl::remove_cvref_t<T>>, lazy_type<Default>
-    >;
-    // clang-format on
+    using char_traits_type_of =
+      lazy_conditional_t<details::has_traits_type<T>,
+                         templated_lazy_type<details::traits_extractor, stl::remove_cvref_t<T>>,
+                         lazy_type<Default>>;
 
 } // namespace webpp::istl
 
