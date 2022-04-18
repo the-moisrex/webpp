@@ -160,6 +160,30 @@ namespace webpp::istl {
         for_index<I + 1, FuncT, Tup, Tp...>(index - 1, t, stl::forward<FuncT>(f));
     }
 
+
+    template <stl::size_t From, size_t... indices, typename T1, typename T2, typename Func>
+    void tuple_transform(T1&& s, T2& t, Func f, stl::index_sequence<indices...>) {
+        (void) stl::initializer_list<int>{
+          (stl::get<indices + From>(t) = f(stl::get<indices>(stl::forward<T1>(s))), 0)...};
+    }
+
+
+    template <stl::size_t From, stl::size_t To, typename T1, typename T2, typename Func>
+    void tuple_transform(T1&& s, T2& t, Func f) {
+        tuple_transform<From>(stl::forward<T1>(s), t, f, stl::make_index_sequence<To - From + 1>());
+    }
+
+
+    template <size_t... indices, typename Tup, typename Func>
+    [[nodiscard]] static constexpr auto tuple_transform(Tup&& s, Func f, stl::index_sequence<indices...>) {
+        return stl::tuple{(f(stl::get<indices>(stl::forward<Tup>(s))), ...)};
+    }
+
+
+    template <typename Tup, typename Func>
+    [[nodiscard]] static constexpr auto tuple_transform(Tup&& s, Func f) {
+        return tuple_transform(stl::forward<Tup>(s), f, stl::make_index_sequence<stl::tuple_size_v<Tup>>());
+    }
 } // namespace webpp::istl
 
 #endif // WEBPP_TUPLE_H

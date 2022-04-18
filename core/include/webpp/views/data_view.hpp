@@ -123,7 +123,7 @@ namespace webpp::views {
                             stl::conditional_t<
                                 is_convertible_to_string,
                                 string_type,
-                                void
+                                istl::nothing_type
                             >
                         >
                     >
@@ -165,6 +165,13 @@ namespace webpp::views {
                         component_view::set_value(v, nv, et);
                         return nv;
                     });
+                } else if constexpr (need_list && is_tuple) {
+                    tuple_transform(val, out, [&]<typename OldT>(OldT&& old_val) {
+                        using new_view_type = typename component_view<OldT>::value_type;
+                        auto nv             = object::make_general<new_view_type>(et.allocs_pack);
+                        component_view::set_value(old_val, nv, et);
+                        return nv;
+                    });
                 }
             }
 
@@ -187,32 +194,6 @@ namespace webpp::views {
                 }
             }
         };
-
-
-        //        template <typename V>
-        //        struct common_value_of {
-        //
-        //
-        //            // clang-format off
-        //            using type = stl::conditional_t<
-        //                is_bool,
-        //                bool,
-        //                stl::conditional_t<
-        //                    is_lambda,
-        //                    lambda,
-        //                    stl::conditional_t<
-        //                        is_string,
-        //                        string_view_type,
-        //                        stl::conditional_t<
-        //                            is_list,
-        //                            as_list,
-        //                            istl::nothing_type
-        //                        >
-        //                    >
-        //                >
-        //            >;
-        //            // clang-format on
-        //        };
     };
 
 
