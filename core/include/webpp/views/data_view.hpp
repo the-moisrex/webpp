@@ -31,7 +31,10 @@ namespace webpp::views {
      * and the view data types (view as in mustache and json_view and others).
      *
      * This struct WILL convert the data to make it more interesting for the view.
-     * This struct WILL not hold the actual data, it's just a view of the actual data.
+     * In the beginning, I didn't want this struct to be able to hold a value and just be a view, but
+     * turns out that in order to convert types like "integers" into "strings" I do need to have a way
+     * of storing strings and not just storing a view of the string because it's impossible to store a view
+     * of a string that doesn't exists.
      *
      * Valid views:
      *   - Boolean
@@ -82,7 +85,8 @@ namespace webpp::views {
 
                 template <typename VV>
                 struct fix_val {
-                    using type = typename component_view<VV>::value_type;
+                    static constexpr bool value = true;
+                    using type                  = typename component_view<VV>::value_type;
                 };
 
                 template <bool>
@@ -127,8 +131,6 @@ namespace webpp::views {
             >;
             // clang-format on
 
-            // static constexpr bool value = true;
-            // using fix_tuple             = istl::recursive_parameter_replacer<V, common_value_of>;
 
           private:
             string_view_type name;
@@ -159,7 +161,7 @@ namespace webpp::views {
                     out                         = object::make_general<value_type>(et.allocs_pack);
                     out.reserve(val.size());
                     stl::transform(stl::begin(val), stl::end(val), stl::back_inserter(out), [&](auto&& v) {
-                        collection_value_type nv;
+                        auto nv = object::make_general<collection_value_type>(et.allocs_pack);
                         component_view::set_value(v, nv, et);
                         return nv;
                     });
@@ -169,6 +171,20 @@ namespace webpp::views {
             template <typename T, EnabledTraits ET>
             void set_value(T const& val, ET&& et) {
                 component_view::set_value(val, value, et);
+            }
+
+
+            string_view_type get_name() const noexcept {
+                return name;
+            }
+
+            auto get_value() const noexcept {
+                if constexpr (istl::String<value_type> && !istl::StringView<value_type>) {
+                    // convert to string view if it's a normal string
+                    return istl::string_viewify_of<stirng_view_type>(value);
+                } else {
+                    return value;
+                }
             }
         };
 
