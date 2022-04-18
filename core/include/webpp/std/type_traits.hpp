@@ -10,6 +10,23 @@
 
 namespace webpp::istl {
 
+    /**
+     * This can be used for when you need a quick anonymous struct within an expression.
+     * Example:
+     *
+     *   using test = typename anonymous_struct({
+     *       using one = ...;
+     *       using two = ...;
+     *       using type = ...;
+     *   })::type;
+     */
+#define anonymous_struct(...)    \
+    decltype([] {                \
+        struct __VA_ARGS__ impl; \
+        return impl;             \
+    }())
+
+
     struct nothing_type {};
 
     template <typename T>
