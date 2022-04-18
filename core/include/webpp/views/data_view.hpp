@@ -78,7 +78,25 @@ namespace webpp::views {
                 };
             };
 
+            struct tuple_view_calculator {
+
+                template <typename VV>
+                struct fix_val {
+                    using type = typename component_view<VV>::value_type;
+                };
+
+                template <bool>
+                struct evaluate {
+
+                    using type = istl::recursive_parameter_replacer<V, fix_val>;
+                };
+            };
+
+            // okay debate:
+            // do we need to use a collection
             using collection_view = istl::lazy_conditional_t<is_collection, collection_view_calculator, V>;
+            using tuple_view      = istl::lazy_conditional_t<is_tuple, tuple_view_calculator, V>;
+            using list_view       = stl::conditional_t<is_collection, collection_view, tuple_view>;
 
 
             static constexpr bool need_bool   = acceptable_types.is_on(data_views::boolean);
@@ -98,7 +116,7 @@ namespace webpp::views {
                         lambda,
                         stl::conditional_t<
                             need_list && is_list,
-                            list,
+                            list_view,
                             stl::conditional_t<
                                 is_convertible_to_string,
                                 string_type,
