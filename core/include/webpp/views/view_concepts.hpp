@@ -41,7 +41,7 @@ namespace webpp::views {
      */
     template <typename T>
     concept ViewManager = requires(T man) {
-        man.view(requires_arg(istl::StringViewifiable));
+        { man.view(requires_arg(istl::StringViewifiable)) } -> istl::String;
     };
 
     template <typename T>
@@ -55,9 +55,10 @@ namespace webpp::views {
         view.scheme(requires_arg(istl::StringViewifiable)); // reparse, and change the scheme
 
         // render with the data passed to it
-        view.render(requires_arg(ViewManagerInput), // view_manager ref
-                    requires_arg(ViewOutput),       // string ref
-                    requires_arg(DataViews)         // any view data
+        view.render(
+          // requires_arg(ViewManagerInput), // view_manager ref
+          requires_arg(ViewOutput), // string ref
+          requires_arg(DataViews)   // any view data
         );
     };
 

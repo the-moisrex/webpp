@@ -58,7 +58,7 @@ namespace webpp::views {
     };
 
     template <Traits TraitsType>
-    using mustache_data_view = data_view<mustache_data_view_settings<TraitsType>{}>;
+    using mustache_data_view = typename data_view<mustache_data_view_settings<TraitsType>{}>::type;
 
     template <typename string_type>
     class basic_renderer {
@@ -331,7 +331,6 @@ namespace webpp::views {
         }
     };
 
-
     template <Traits TraitsType>
     struct mustache_view : enable_traits<TraitsType> {
         using etraits          = enable_traits<TraitsType>;
@@ -417,9 +416,7 @@ namespace webpp::views {
 
 
         // this member function will be used by the view manager
-        constexpr void render([[maybe_unused]] ViewManager auto& view_man,
-                              istl::String auto&                 out,
-                              DataViews auto const&              data) {
+        constexpr void render(string_type& out, data_view_type const& data) {
             if (!is_valid()) {
                 return;
             }
@@ -445,7 +442,7 @@ namespace webpp::views {
         /////// Parser
 
 
-        void parse(string_view_type input, delimiter_set<traits_type>& delim_set) const {
+        void parse(string_view_type input, delimiter_set<traits_type>& delim_set) {
             using streamstring = stl::basic_ostringstream<typename string_type::value_type>;
 
             const string_view_type brace_delimiter_end_unescaped("}}}");
@@ -593,6 +590,8 @@ namespace webpp::views {
                 comp.children.pop_back(); // remove now useless end section component
                 return walk_control_type::walk;
             });
+
+            // fixme: what am I looking here?
             if (!error_msg.empty()) {
                 return;
             }

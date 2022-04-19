@@ -13,8 +13,6 @@
 #include "../utils/flags.hpp"
 #include "../utils/functional.hpp"
 #include "view_concepts.hpp"
-#include "../std/type_traits.hpp"
-#include "../traits/traits.hpp"
 
 #include <variant>
 
@@ -51,6 +49,16 @@ namespace webpp::views {
 
         static constexpr view_data_flags acceptable_types = Settings.acceptable_types;
 
+        static constexpr bool need_bool   = acceptable_types.is_on(data_views::boolean);
+        static constexpr bool need_string = acceptable_types.is_on(data_views::string);
+        static constexpr bool need_lambda = acceptable_types.is_on(data_views::lambda);
+        static constexpr bool need_list   = acceptable_types.is_on(data_views::list);
+
+        using lambda = stl::variant<function_ref<string_view_type(string_view_type)>,
+                                    function_ref<string_view_type(string_view_type, bool)>>;
+
+        using list_type = traits::generalify_allocators<traits_type, stl::vector<value_type>>;
+
         template <typename V>
         struct component_view {
             static constexpr bool is_string                = istl::StringViewifiable<V>;
@@ -67,9 +75,6 @@ namespace webpp::views {
             static constexpr bool is_tuple      = istl::Tuple<V>;
             static constexpr bool is_collection = istl::Collection<V>;
             static constexpr bool is_list       = is_tuple || is_collection;
-
-            using lambda = stl::variant<function_ref<string_view_type(string_view_type)>,
-                                        function_ref<string_view_type(string_view_type, bool)>>;
 
             struct collection_view_calculator {
                 template <bool>
@@ -102,10 +107,6 @@ namespace webpp::views {
             using list_view       = stl::conditional_t<is_collection, collection_view, tuple_view>;
 
 
-            static constexpr bool need_bool   = acceptable_types.is_on(data_views::boolean);
-            static constexpr bool need_string = acceptable_types.is_on(data_views::string);
-            static constexpr bool need_lambda = acceptable_types.is_on(data_views::lambda);
-            static constexpr bool need_list   = acceptable_types.is_on(data_views::list);
 
             // clang-format off
             using value_type = stl::conditional_t<
@@ -194,6 +195,15 @@ namespace webpp::views {
                 }
             }
         };
+
+
+        using tuple_of_types = stl::tuple<stl::conditional_t<need_bool, bool, void>,
+                                          stl::conditional_t<need_lambda, lambda, void>,
+                                          stl::conditional_t<need_string, string_view_type, void>,
+                                          stl::conditional_t<need_list, list_type, void>>;
+        using unique_types   = typename istl::unique_parameters<tuple_of_types>::type;
+
+        using type = istl::replace_templated_parameter<unique_types, stl::tuple, stl::variant>;
     };
 
 
