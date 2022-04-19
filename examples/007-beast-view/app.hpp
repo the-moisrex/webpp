@@ -18,15 +18,15 @@ namespace website {
         using etraits     = enable_owner_traits<default_traits>;
         using traits_type = typename etraits::traits_type;
 
-        views::view_manager<traits_type> view_man;
+        views::view_manager<traits_type> view_man{*this};
 
-        app() : view_man{*this} {
+        app() {
             view_man.view_roots.push_back("./public");
         }
 
         auto operator()(auto&& req) {
             router _router{(get and root) >>=
-                           [] {
+                           [this] {
                                return view_man.view("home");
                            },
                            (get and root / "about") >>=

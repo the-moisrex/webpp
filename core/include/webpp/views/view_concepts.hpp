@@ -16,8 +16,15 @@ namespace webpp::views {
         item.value;
     };
 
+    namespace details {
+        template <typename T>
+        struct is_data_view {
+            static constexpr bool value = DataView<T>;
+        };
+    } // namespace details
+
     template <typename T>
-    concept DataViews = istl::TupleOf<typify(DataView), T>;
+    concept DataViews = istl::TupleOf<details::is_data_view, T>;
 
     template <typename T>
     concept DataViewSettings = requires(T dv) {

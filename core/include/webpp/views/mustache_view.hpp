@@ -288,7 +288,7 @@ namespace webpp::views {
                             string_view_type t = "",
                             string_size_type p = string_view_type::npos)
           : text(t),
-            children{et.allocs_pack.template general_allocator<component>()},
+            children{et.alloc_pack.template general_allocator<component>()},
             position(p) {}
 
         [[nodiscard]] constexpr bool is_text() const noexcept {
@@ -347,10 +347,10 @@ namespace webpp::views {
         using data_view_type    = mustache_data_view<traits_type>;
 
       private:
-        string_type    error_message_{this->allocs_pack.template general_allocator<char_type>()};
+        string_type    error_message_{this->alloc_pack.template general_allocator<char_type>()};
         component_type root_component_;
         escape_handler escape_ = [this](auto&& val) {
-            string_type out{this->allocs_pack.template general_allocator<char_type>()};
+            string_type out{this->alloc_pack.template general_allocator<char_type>()};
             html_escape(val, out);
             return out;
         };
@@ -436,10 +436,10 @@ namespace webpp::views {
             using sections_type       = stl::vector<component_type*>;
             using section_starts_type = stl::vector<string_size_type>;
 
-            auto sections       = object::make_local<sections_type>(this->allocs_pack, &root_component_);
+            auto sections       = object::make_local<sections_type>(this->alloc_pack, &root_component_);
             auto section_starts = object::make_local<section_starts_type>(this->alloc_pack);
 
-            auto             current_text          = object::make_local<string_type>(this->allocs_pack);
+            auto             current_text          = object::make_local<string_type>(this->alloc_pack);
             string_size_type current_text_position = string_type::npos;
 
             current_text.reserve(input_size);

@@ -155,20 +155,20 @@ namespace webpp::views {
                     out = istl::string_viewify_of<string_view_type>(stl::forward<T>(val));
                 } else if constexpr (need_string && is_convertible_to_string) {
                     // yes, value_type now should be a string type not a string view type
-                    out = lexical::cast<string_type>(val, et.allocs_pack);
+                    out = lexical::cast<string_type>(val, et.alloc_pack);
                 } else if constexpr (need_list && is_collection) {
                     using collection_value_type = typename value_type::value_type;
-                    out                         = object::make_general<value_type>(et.allocs_pack);
+                    out                         = object::make_general<value_type>(et.alloc_pack);
                     out.reserve(val.size());
                     stl::transform(stl::begin(val), stl::end(val), stl::back_inserter(out), [&](auto&& v) {
-                        auto nv = object::make_general<collection_value_type>(et.allocs_pack);
+                        auto nv = object::make_general<collection_value_type>(et.alloc_pack);
                         component_view::set_value(v, nv, et);
                         return nv;
                     });
                 } else if constexpr (need_list && is_tuple) {
                     tuple_transform(val, out, [&]<typename OldT>(OldT&& old_val) {
                         using new_view_type = typename component_view<OldT>::value_type;
-                        auto nv             = object::make_general<new_view_type>(et.allocs_pack);
+                        auto nv             = object::make_general<new_view_type>(et.alloc_pack);
                         component_view::set_value(old_val, nv, et);
                         return nv;
                     });

@@ -36,6 +36,7 @@ namespace webpp::views {
      */
     template <Traits TraitsType>
     struct view_manager : enable_traits<TraitsType> {
+        using etraits          = enable_traits<TraitsType>;
         using traits_type      = TraitsType;
         using string_type      = traits::general_string<traits_type>;
         using string_view_type = traits::string_view<traits_type>;
@@ -68,6 +69,9 @@ namespace webpp::views {
 
       public:
         constexpr view_manager() noexcept = default;
+
+        template <EnabledTraits ET>
+        constexpr view_manager(ET const& et) noexcept : etraits{et} {}
 
 
         /**
@@ -202,17 +206,20 @@ namespace webpp::views {
             }
         }
 
-        template <istl::StringViewifiable StrT>
-        auto view(StrT&& file_request, DataView auto&& data) const noexcept {
+
+        template <istl::StringViewifiable StrT, DataViews DV = stl::tuple<>>
+        auto view(StrT&& file_request, DV&& data = stl::tuple<>{}) const noexcept {
             namespace fs = stl::filesystem;
 
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
+            auto       out  = object::make_general<string_type>(this->alloc_pack);
             if (!file) {
-                // return this->error(404);
+                this->logger.error(VIEW_CAT,
+                                   fmt::format("We can't find the specified view {}.", file_request));
+                return out;
             }
-            const auto file_content = read_file(file);
-            const auto ext          = file.extension();
-            auto       out          = object::make_general<string_type>(this->allocs_pack);
+            const auto file_content = read_file(file.value());
+            const auto ext          = file->extension().string();
             if (ext.size() >= 1) {
                 switch (ext[1]) {
                     case 'm': {
