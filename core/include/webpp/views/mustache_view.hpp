@@ -347,9 +347,9 @@ namespace webpp::views {
         using data_view_type    = mustache_data_view<traits_type>;
 
       private:
-        string_type    error_message_{this->alloc_pack.template general_allocator<char_type>()};
-        component_type root_component_;
-        escape_handler escape_ = [this](auto&& val) {
+        string_type    error_msg{this->alloc_pack.template general_allocator<char_type>()};
+        component_type root_component;
+        escape_handler escaper = [this](auto&& val) {
             string_type out{this->alloc_pack.template general_allocator<char_type>()};
             html_escape(val, out);
             return out;
@@ -365,15 +365,15 @@ namespace webpp::views {
         }
 
         [[nodiscard]] constexpr bool is_valid() const noexcept {
-            return error_message_.empty();
+            return error_msg.empty();
         }
 
         [[nodiscard]] constexpr string_view_type error_message() const noexcept {
-            return error_message_;
+            return error_msg;
         }
 
         constexpr void set_custom_escape(const escape_handler& escape_fn) {
-            escape_ = escape_fn;
+            escaper = escape_fn;
         }
 
         template <typename stream_type>
@@ -439,7 +439,7 @@ namespace webpp::views {
             using sections_type       = stl::vector<component_type*>;
             using section_starts_type = stl::vector<string_size_type>;
 
-            auto sections       = object::make_local<sections_type>(this->alloc_pack, &root_component_);
+            auto sections       = object::make_local<sections_type>(this->alloc_pack, &root_component);
             auto section_starts = object::make_local<section_starts_type>(this->alloc_pack);
 
             auto             current_text          = object::make_local<string_type>(this->alloc_pack);
@@ -513,7 +513,7 @@ namespace webpp::views {
                 if (tag_location_end == string_view_type::npos) {
                     streamstring ss;
                     ss << "Unclosed tag at " << tag_location_start;
-                    error_message_.assign(ss.str());
+                    error_msg.assign(ss.str());
                     return;
                 }
 
@@ -525,7 +525,7 @@ namespace webpp::views {
                     if (!parse_set_delimiter_tag(tag_contents, delim_set)) {
                         streamstring ss;
                         ss << "Invalid set delimiter tag at " << tag_location_start;
-                        error_message_.assign(ss.str());
+                        error_msg.assign(ss.str());
                         return;
                     }
                     current_delimiter_is_brace = delim_set.is_default();
@@ -549,7 +549,7 @@ namespace webpp::views {
                     if (sections.size() == 1) {
                         streamstring ss;
                         ss << "Unopened section \"" << comp.tag.name << "\" at " << comp.position;
-                        error_message_.assign(ss.str());
+                        error_msg.assign(ss.str());
                         return;
                     }
                     sections.back()->tag.section_text.reset(new string_type(
@@ -562,7 +562,7 @@ namespace webpp::views {
             process_current_text();
 
             // Check for sections without an ending tag
-            root_component_.walk_children([this](component_type& comp) -> walk_control_type {
+            root_component.walk_children([this](component_type& comp) -> walk_control_type {
                 if (!comp.tag.is_section_begin()) {
                     return walk_control_type::walk;
                 }
@@ -570,13 +570,13 @@ namespace webpp::views {
                     comp.children.back().tag.name != comp.tag.name) {
                     streamstring ss;
                     ss << "Unclosed section \"" << comp.tag.name << "\" at " << comp.position;
-                    error_message_.assign(ss.str());
+                    error_msg.assign(ss.str());
                     return walk_control_type::stop;
                 }
                 comp.children.pop_back(); // remove now useless end section component
                 return walk_control_type::walk;
             });
-            if (!error_message_.empty()) {
+            if (!error_msg.empty()) {
                 return;
             }
         }
@@ -669,7 +669,7 @@ namespace webpp::views {
 
         constexpr void
         render(const render_handler& handler, context_internal<traits_type>& ctx, bool root_renderer = true) {
-            root_component_.walk_children([&handler, &ctx, this](component_type& comp) -> walk_control_type {
+            root_component.walk_children([&handler, &ctx, this](component_type& comp) -> walk_control_type {
                 return render_component(handler, ctx, comp);
             });
             // process the last line, but only for the top-level renderer
@@ -743,13 +743,13 @@ namespace webpp::views {
                         const auto& partial_result =
                           var->is_partial() ? var->partial_value()() : var->string_value();
                         mustache_view tmpl{partial_result};
-                        tmpl.set_custom_escape(escape_);
+                        tmpl.set_custom_escape(escaper);
                         if (!tmpl.is_valid()) {
-                            error_message_ = tmpl.error_message();
+                            error_msg = tmpl.error_message();
                         } else {
                             tmpl.render(handler, ctx, false);
                             if (!tmpl.is_valid()) {
-                                error_message_ = tmpl.error_message();
+                                error_msg = tmpl.error_message();
                             }
                         }
                         if (!tmpl.is_valid()) {
@@ -781,13 +781,13 @@ namespace webpp::views {
                   const auto process_template =
                     [this, &ctx, escape, escaped](mustache_view& tmpl) -> string_type {
                       if (!tmpl.is_valid()) {
-                          error_message_ = tmpl.error_message();
+                          error_msg = tmpl.error_message();
                           return {};
                       }
                       context_internal<traits_type> render_ctx{ctx.ctx}; // start a new line_buffer
                       const auto                    str = tmpl.render(render_ctx);
                       if (!tmpl.is_valid()) {
-                          error_message_ = tmpl.error_message();
+                          error_msg = tmpl.error_message();
                           return {};
                       }
                       bool do_escape = false;
@@ -796,15 +796,15 @@ namespace webpp::views {
                           case render_lambda_escape::unescape: do_escape = false; break;
                           case render_lambda_escape::optional: do_escape = escaped; break;
                       }
-                      return do_escape ? escape_(str) : str;
+                      return do_escape ? escaper(str) : str;
                   };
                   if (parse_with_same_context) {
                       mustache_view tmpl{text, ctx};
-                      tmpl.set_custom_escape(escape_);
+                      tmpl.set_custom_escape(escaper);
                       return process_template(tmpl);
                   }
                   mustache_view tmpl{text};
-                  tmpl.set_custom_escape(escape_);
+                  tmpl.set_custom_escape(escaper);
                   return process_template(tmpl);
               };
             const typename basic_renderer<string_type>::type1 render = [&render2](string_view_type text) {
@@ -817,7 +817,7 @@ namespace webpp::views {
                 render_current_line(handler, ctx, nullptr);
                 ctx.line_buffer.data.append(render(var->lambda_value()(text)));
             }
-            return error_message_.empty();
+            return error_msg.empty();
         }
 
         constexpr bool render_variable(const render_handler&          handler,
@@ -826,7 +826,7 @@ namespace webpp::views {
                                        bool                           escaped) {
             if (var->is_string()) {
                 const auto& varstr = var->string_value();
-                ctx.line_buffer.data.append(escaped ? escape_(varstr) : varstr);
+                ctx.line_buffer.data.append(escaped ? escaper(varstr) : varstr);
             } else if (var->is_lambda()) {
                 const render_lambda_escape escape_opt =
                   escaped ? render_lambda_escape::escape : render_lambda_escape::unescape;
@@ -835,7 +835,7 @@ namespace webpp::views {
                 using streamstring = stl::basic_ostringstream<typename string_type::value_type>;
                 streamstring ss;
                 ss << "Lambda with render argument is not allowed for regular variables";
-                error_message_ = ss.str();
+                error_msg = ss.str();
                 return false;
             }
             return true;
