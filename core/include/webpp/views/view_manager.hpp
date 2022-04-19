@@ -16,6 +16,7 @@
 #include "mustache_view.hpp"
 
 #include <filesystem>
+#include <fstream>
 #include <system_error>
 #include <variant>
 
@@ -40,6 +41,8 @@ namespace webpp::views {
         using string_view_type = traits::string_view<traits_type>;
         using path_type        = stl::filesystem::path;
         using view_roots_type  = traits::generalify_allocators<traits_type, stl::vector<path_type>>;
+        using char_type        = traits::char_type<traits_type>;
+        using ifstream_type    = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
 
 
         using mustache_view_type = mustache_view<traits_type>;
@@ -66,7 +69,6 @@ namespace webpp::views {
       public:
         constexpr view_manager() noexcept = default;
 
-        auto mustache() const {}
 
         /**
          * Find the file based on the specified view name.
@@ -170,6 +172,9 @@ namespace webpp::views {
         }
 
 
+        /**
+         * Read the file content
+         */
         string_type read_file(stl::filesystem::path const& file) const {
 #ifdef WEBPP_EMBEDDED_FILES
             if (auto content = ::get_static_file(filepath); !content.empty()) {
@@ -198,7 +203,7 @@ namespace webpp::views {
         }
 
         template <istl::StringViewifiable StrT>
-        constexpr auto view(StrT&& file_request) const noexcept {
+        auto view(StrT&& file_request, DataView auto&& data) const noexcept {
             namespace fs = stl::filesystem;
 
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
@@ -217,12 +222,16 @@ namespace webpp::views {
                         break;
                     }
                     default: {
-                        file_view_type view;
-                        view.schema(file_content);
-                        view.render(*this, data, out);
+                        goto file_view;
                     }
                 }
+                return out;
             }
+        file_view:
+            file_view_type view;
+            view.schema(file_content);
+            view.render(*this, data, out);
+
             return out;
         }
     };
