@@ -406,7 +406,7 @@ namespace webpp::views {
         }
 
         using render_handler = stl::function<void(string_view_type)>;
-        constexpr void render(DataView auto const& data, const render_handler& handler) {
+        constexpr void render(DataViews auto const& data, const render_handler& handler) {
             if (!is_valid()) {
                 return;
             }
@@ -415,11 +415,28 @@ namespace webpp::views {
             render(handler, context);
         }
 
-        constexpr mustache_view() = default;
+
+        // this member function will be used by the view manager
+        constexpr void render([[maybe_unused]] ViewManager auto& view_man,
+                              istl::String auto&                 out,
+                              DataViews auto const&              data) {
+            if (!is_valid()) {
+                return;
+            }
+            context<traits_type>          ctx{&data};
+            context_internal<traits_type> context{ctx};
+            // todo: optimization chance: out::reserve
+            render(
+              [&](auto&& content) {
+                  out += stl::move(content);
+              },
+              context);
+        }
 
       private:
-        constexpr mustache_view(string_view_type input, context_internal<traits_type>& ctx)
-          : mustache_view() {
+        template <EnabledTraits ET>
+        constexpr mustache_view(ET const& et, string_view_type input, context_internal<traits_type>& ctx)
+          : mustache_view(et) {
             parser(input, ctx);
         }
 

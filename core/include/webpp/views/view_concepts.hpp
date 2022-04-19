@@ -57,7 +57,7 @@ namespace webpp::views {
         // render with the data passed to it
         view.render(requires_arg(ViewManagerInput), // view_manager ref
                     requires_arg(ViewOutput),       // string ref
-                    requires_arg(DataView)          // any view data
+                    requires_arg(DataViews)         // any view data
         );
     };
 
