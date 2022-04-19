@@ -427,10 +427,14 @@ namespace webpp::views {
 
             bool current_delimiter_is_brace{delim_set.is_default()};
 
-            stl::vector<component_type*>  sections{&root_component_};
-            stl::vector<string_size_type> section_starts;
-            string_type                   current_text;
-            string_size_type              current_text_position = string_type::npos;
+            using sections_type       = stl::vector<component_type*>;
+            using section_starts_type = stl::vector<string_size_type>;
+
+            auto sections       = object::make_local<sections_type>(this->allocs_pack, &root_component_);
+            auto section_starts = object::make_local<secsion_starts_type>(this->alloc_pack);
+
+            auto             current_text          = object::make_local<string_type>(this->allocs_pack);
+            string_size_type current_text_position = string_type::npos;
 
             current_text.reserve(input_size);
 
