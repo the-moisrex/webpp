@@ -245,7 +245,9 @@ namespace webpp::views {
 
     template <Traits TraitsType>
     struct context_pusher {
-        using traits_type = TraitsType;
+        using traits_type    = TraitsType;
+        using data_view_type = mustache_data_view<traits_type>;
+
         context_pusher(context_internal<traits_type>& ctx, const data_view_type* data) : ctx_(ctx) {
             ctx.ctx.push(data);
         }
@@ -685,7 +687,7 @@ namespace webpp::views {
                 if (comp.is_newline()) {
                     render_current_line(handler, ctx, &comp);
                 } else {
-                    line_buffer.data.append(comp.text);
+                    ctx.line_buffer.data.append(comp.text);
                 }
                 return walk_control_type::walk;
             }
@@ -727,7 +729,7 @@ namespace webpp::views {
                         (var->is_partial() || var->is_string())) {
                         const auto& partial_result =
                           var->is_partial() ? var->partial_value()() : var->string_value();
-                        mustache tmpl{partial_result};
+                        mustache_view tmpl{partial_result};
                         tmpl.set_custom_escape(escape_);
                         if (!tmpl.is_valid()) {
                             error_message_ = tmpl.error_message();
@@ -797,10 +799,10 @@ namespace webpp::views {
             };
             if (var->is_lambda2()) {
                 const basic_renderer<string_type> renderer{render, render2};
-                line_buffer.data.append(var->lambda2_value()(text, renderer));
+                ctx.line_buffer.data.append(var->lambda2_value()(text, renderer));
             } else {
                 render_current_line(handler, ctx, nullptr);
-                line_buffer.data.append(render(var->lambda_value()(text)));
+                ctx.line_buffer.data.append(render(var->lambda_value()(text)));
             }
             return error_message_.empty();
         }
@@ -811,7 +813,7 @@ namespace webpp::views {
                                        bool                           escaped) {
             if (var->is_string()) {
                 const auto& varstr = var->string_value();
-                line_buffer.data.append(escaped ? escape_(varstr) : varstr);
+                ctx.line_buffer.data.append(escaped ? escape_(varstr) : varstr);
             } else if (var->is_lambda()) {
                 const render_lambda_escape escape_opt =
                   escaped ? render_lambda_escape::escape : render_lambda_escape::unescape;
