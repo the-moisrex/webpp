@@ -22,5 +22,6 @@ webpp.kdev4
 .ccls-cache
 /.cache/
 .theia/
+.ccls
 .gdbinit
 .clangd

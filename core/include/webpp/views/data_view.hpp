@@ -13,8 +13,8 @@
 #include "../utils/flags.hpp"
 #include "../utils/functional.hpp"
 #include "view_concepts.hpp"
-#include "webpp/std/type_traits.hpp"
-#include "webpp/traits/traits.hpp"
+#include "../std/type_traits.hpp"
+#include "../traits/traits.hpp"
 
 #include <variant>
 
