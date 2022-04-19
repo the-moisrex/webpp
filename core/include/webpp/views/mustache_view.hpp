@@ -272,7 +272,7 @@ namespace webpp::views {
         using children_type = traits::generalify_allocators<traits_type, stl::vector<component>>;
 
         string_view_type       text;
-        mstch_tag<string_type> tag;
+        mstch_tag<traits_type> tag;
         children_type          children;
         string_size_type       position = string_view_type::npos;
 
@@ -618,7 +618,7 @@ namespace webpp::views {
 
         void parse_tag_contents(bool                    is_unescaped_var,
                                 string_view_type        contents,
-                                mstch_tag<string_type>& tag) const {
+                                mstch_tag<traits_type>& tag) const {
             if (is_unescaped_var) {
                 tag.type = tag_type::unescaped_variable;
                 tag.name = contents;
@@ -702,7 +702,7 @@ namespace webpp::views {
                 return walk_control_type::walk;
             }
 
-            const mstch_tag<string_type>& tag{comp.tag};
+            const mstch_tag<traits_type>& tag{comp.tag};
             const data_view_type*         var = nullptr;
             switch (tag.type) {
                 case tag_type::variable:

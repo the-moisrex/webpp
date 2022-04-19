@@ -19,6 +19,14 @@
 #include <system_error>
 #include <variant>
 
+#ifdef WEBPP_EMBEDDED_FILES
+#    if CONFIG_FILE != ""
+#        include CONFIG_FILE
+#    else
+extern std::string_view get_static_file(std::string_view const&) noexcept;
+#    endif
+#endif
+
 namespace webpp::views {
 
 
@@ -163,19 +171,59 @@ namespace webpp::views {
 
 
         string_type read_file(stl::filesystem::path const& file) const {
-            return "";
+#ifdef WEBPP_EMBEDDED_FILES
+            if (auto content = ::get_static_file(filepath); !content.empty()) {
+                return string_type{this->content, alloc};
+            }
+#endif
+            if (auto in = ifstream_type(file.c_str(), stl::ios::binary | stl::ios::ate); in.is_open()) {
+                // details on this matter:
+                // https://stackoverflow.com/questions/11563963/writing-a-binary-file-in-c-very-fast/39097696#39097696
+                // stl::unique_ptr<char[]> buffer{new char[buffer_size]};
+                // stl::unique_ptr<char_type[]> result(static_cast<char_type*>(
+                //  this->alloc_pack.template local_allocator<char_type[]>().allocate(size)));
+                auto result = object::make_general<string_type>(*this);
+                in.seekg(0, in.end);
+                const auto size = in.tellg();
+                // todo: don't need to zero it out; https://stackoverflow.com/a/29348072
+                result.resize(static_cast<stl::size_t>(size));
+                in.seekg(0);
+                in.read(result.data(), size);
+                return result;
+            } else {
+                this->logger.error("Response/File",
+                                   fmt::format("Cannot load the specified file: {}", file.string()));
+                return "";
+            }
         }
 
         template <istl::StringViewifiable StrT>
-        constexpr http::HTTPResponse auto view(StrT&& file_request) const noexcept {
+        constexpr auto view(StrT&& file_request) const noexcept {
             namespace fs = stl::filesystem;
 
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
             if (!file) {
                 // return this->error(404);
             }
-
-            // todo: read the file.
+            const auto file_content = read_file(file);
+            const auto ext          = file.extension();
+            auto       out          = object::make_general<string_type>(this->allocs_pack);
+            if (ext.size() >= 1) {
+                switch (ext[1]) {
+                    case 'm': {
+                        mustache_view_type view;
+                        view.scheme(file_content);
+                        view.render(*this, data, out);
+                        break;
+                    }
+                    default: {
+                        file_view_type view;
+                        view.schema(file_content);
+                        view.render(*this, data, out);
+                    }
+                }
+            }
+            return out;
         }
     };
 
