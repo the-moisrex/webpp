@@ -349,7 +349,7 @@ namespace webpp::views {
       private:
         string_type    error_message_{this->allocs_pack.template general_allocator<char_type>()};
         component_type root_component_;
-        escape_handler escape_ = [](auto&& val) {
+        escape_handler escape_ = [this](auto&& val) {
             string_type out{this->allocs_pack.template general_allocator<char_type>()};
             html_escape(val, out);
             return out;

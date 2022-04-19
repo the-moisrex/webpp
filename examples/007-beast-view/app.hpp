@@ -4,6 +4,7 @@
 #define WEBPP_EXAMPLE_BEAST_APP_H
 
 #include <webpp/http/http.hpp>
+#include <webpp/traits/default_traits.hpp>
 #include <webpp/traits/enable_traits.hpp>
 #include <webpp/views/view_manager.hpp>
 
@@ -11,12 +12,13 @@
 namespace website {
 
     using namespace webpp::http;
+    using namespace webpp;
 
-    struct app : enable_owner_traits<default_traits> {
+    struct app : public enable_owner_traits<default_traits> {
         using etraits     = enable_owner_traits<default_traits>;
         using traits_type = typename etraits::traits_type;
 
-        view_manager<traits_type> view_man;
+        views::view_manager<traits_type> view_man;
 
         app() : view_man{*this} {
             view_man.view_roots.push_back("./public");
