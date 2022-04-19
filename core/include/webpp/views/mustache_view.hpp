@@ -41,6 +41,7 @@
 #include "data_view.hpp"
 #include "html.hpp"
 #include "view_concepts.hpp"
+#include "webpp/views/html.hpp"
 
 #include <array>
 #include <variant>
@@ -337,6 +338,7 @@ namespace webpp::views {
         using traits_type      = TraitsType;
         using string_type      = traits::general_string<traits_type>;
         using string_view_type = traits::string_view<traits_type>;
+        using char_type        = typename string_type::value_type;
 
         using string_size_type  = typename string_type::size_type;
         using escape_handler    = stl::function<string_type(string_view_type)>;
@@ -345,9 +347,13 @@ namespace webpp::views {
         using data_view_type    = mustache_data_view<traits_type>;
 
       private:
-        string_type    error_message_;
+        string_type    error_message_{this->allocs_pack.template general_allocator<char_type>()};
         component_type root_component_;
-        escape_handler escape_;
+        escape_handler escape_ = [](auto&& val) {
+            string_type out{this->allocs_pack.template general_allocator<char_type>()};
+            html_escape(val, out);
+            return out;
+        };
 
       public:
         constexpr mustache_view(string_view_type input) {
@@ -406,7 +412,7 @@ namespace webpp::views {
             render(handler, context);
         }
 
-        constexpr mustache_view() : escape_(html_escape<string_type>) {}
+        constexpr mustache_view() = default;
 
       private:
         constexpr mustache_view(string_view_type input, context_internal<traits_type>& ctx)
@@ -431,7 +437,7 @@ namespace webpp::views {
             using section_starts_type = stl::vector<string_size_type>;
 
             auto sections       = object::make_local<sections_type>(this->allocs_pack, &root_component_);
-            auto section_starts = object::make_local<secsion_starts_type>(this->alloc_pack);
+            auto section_starts = object::make_local<section_starts_type>(this->alloc_pack);
 
             auto             current_text          = object::make_local<string_type>(this->allocs_pack);
             string_size_type current_text_position = string_type::npos;
