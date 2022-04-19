@@ -41,7 +41,6 @@
 #include "data_view.hpp"
 #include "html.hpp"
 #include "view_concepts.hpp"
-#include "webpp/views/html.hpp"
 
 #include <array>
 #include <variant>
@@ -335,6 +334,7 @@ namespace webpp::views {
 
     template <Traits TraitsType>
     struct mustache_view : enable_traits<TraitsType> {
+        using etraits          = enable_traits<TraitsType>;
         using traits_type      = TraitsType;
         using string_type      = traits::general_string<traits_type>;
         using string_view_type = traits::string_view<traits_type>;
@@ -356,7 +356,10 @@ namespace webpp::views {
         };
 
       public:
-        constexpr mustache_view(string_view_type input) {
+        template <EnabledTraits ET>
+        constexpr mustache_view(ET const& et) noexcept : etraits{et} {}
+
+        constexpr void scheme(string_view_type input) {
             delimiter_set<traits_type> delim_set;
             parse(input, delim_set);
         }

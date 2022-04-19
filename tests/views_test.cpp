@@ -14,6 +14,7 @@ using namespace webpp::views;
 static_assert(View<mustache_view<default_traits>>);
 static_assert(View<file_view<default_traits>>);
 static_assert(View<json_view<default_traits>>);
+static_assert(ViewManager<view_manager<default_traits>>);
 
 TEST(TheViews, MustacheView) {
     using namespace mustache;

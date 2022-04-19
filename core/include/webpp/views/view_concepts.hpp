@@ -41,7 +41,7 @@ namespace webpp::views {
      */
     template <typename T>
     concept ViewManager = requires(T man) {
-        man.render(requires_arg(istl::StringViewifiable));
+        man.view(requires_arg(istl::StringViewifiable));
     };
 
     template <typename T>
