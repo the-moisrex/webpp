@@ -161,7 +161,7 @@ namespace webpp::istl {
     }
 
 
-    template <stl::size_t From, size_t... indices, typename T1, typename T2, typename Func>
+    template <stl::size_t From, stl::size_t... indices, typename T1, typename T2, typename Func>
     void tuple_transform(T1&& s, T2& t, Func f, stl::index_sequence<indices...>) {
         (void) stl::initializer_list<int>{
           (stl::get<indices + From>(t) = f(stl::get<indices>(stl::forward<T1>(s))), 0)...};
@@ -174,7 +174,7 @@ namespace webpp::istl {
     }
 
 
-    template <size_t... indices, typename Tup, typename Func>
+    template <stl::size_t... indices, typename Tup, typename Func>
     [[nodiscard]] static constexpr auto tuple_transform(Tup&& s, Func f, stl::index_sequence<indices...>) {
         return stl::tuple{(f(stl::get<indices>(stl::forward<Tup>(s))), ...)};
     }
