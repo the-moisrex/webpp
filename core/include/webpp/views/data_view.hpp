@@ -201,7 +201,7 @@ namespace webpp::views {
                      stl::conditional_t<need_lambda, component_view<lambda>, void>,
                      stl::conditional_t<need_string, component_view<string_view_type>, void>,
                      stl::conditional_t<need_list, component_view<list_type>, void>>;
-        using unique_types = typename istl::unique_parameters<tuple_of_types>::type;
+        using unique_types = istl::unique_parameters<tuple_of_types>;
 
         using type = istl::replace_templated_parameter<unique_types, stl::tuple, stl::variant>;
     };

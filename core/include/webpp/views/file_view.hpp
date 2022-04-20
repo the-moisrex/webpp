@@ -28,7 +28,7 @@ namespace webpp::views {
       public:
         constexpr file_view() = default;
 
-        template <EnabledType ET>
+        template <EnabledTraits ET>
         constexpr file_view(ET const& et) : data{et.alloc_pack.template get_allocator<char_type>()} {}
 
 

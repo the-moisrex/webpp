@@ -349,12 +349,12 @@ namespace webpp::views {
         using component_type    = component<traits_type>;
         using walk_control_type = typename component_type::walk_control;
 
-        using lambda_type = stl::variant<stl::function<string_type(string_view_type)>,
+        using lambda_type    = stl::variant<stl::function<string_type(string_view_type)>,
                                          stl::function<string_type(string_view_type, bool)>>;
-        using map_type    = traits::generalify_allocators<traits_type, stl::map<string_type, string_type>>;
-        stl::using value_type = stl::variant<bool, string_type, lambda_type, map_type>;
-        using data_type       = traits::generalify_allocators<traits_type, stl::map<string_type, value_type>>;
-        using data_view_type  = mustache_data_view<traits_type>;
+        using map_type       = traits::generalify_allocators<traits_type, stl::map<string_type, string_type>>;
+        using value_type     = stl::variant<bool, string_type, lambda_type, map_type>;
+        using data_type      = traits::generalify_allocators<traits_type, stl::map<string_type, value_type>>;
+        using data_view_type = mustache_data_view<traits_type>;
 
       private:
         string_type    error_msg{this->alloc_pack.template general_allocator<char_type>()};
