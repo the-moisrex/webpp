@@ -8,7 +8,8 @@
 
 namespace webpp {
 
-    template <StorageGate ParentGate = null_gate>
+    // we're using typename instead of StorageGate to fix an IDE error while the compiler is happy
+    template </* StorageGate */ typename ParentGate = null_gate>
     struct memory_gate {
         using parent_gate_type = ParentGate;
 
