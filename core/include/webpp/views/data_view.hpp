@@ -57,8 +57,6 @@ namespace webpp::views {
         using lambda = stl::variant<function_ref<string_view_type(string_view_type)>,
                                     function_ref<string_view_type(string_view_type, bool)>>;
 
-        using list_type = traits::generalify_allocators<traits_type, stl::vector<value_type>>;
-
         template <typename V>
         struct component_view {
             static constexpr bool is_string                = istl::StringViewifiable<V>;
@@ -196,12 +194,14 @@ namespace webpp::views {
             }
         };
 
+        using list_type = traits::generalify_allocators<traits_type, stl::vector<string_view_type>>;
 
-        using tuple_of_types = stl::tuple<stl::conditional_t<need_bool, bool, void>,
-                                          stl::conditional_t<need_lambda, lambda, void>,
-                                          stl::conditional_t<need_string, string_view_type, void>,
-                                          stl::conditional_t<need_list, list_type, void>>;
-        using unique_types   = typename istl::unique_parameters<tuple_of_types>::type;
+        using tuple_of_types =
+          stl::tuple<stl::conditional_t<need_bool, component_view<bool>, void>,
+                     stl::conditional_t<need_lambda, component_view<lambda>, void>,
+                     stl::conditional_t<need_string, component_view<string_view_type>, void>,
+                     stl::conditional_t<need_list, component_view<list_type>, void>>;
+        using unique_types = typename istl::unique_parameters<tuple_of_types>::type;
 
         using type = istl::replace_templated_parameter<unique_types, stl::tuple, stl::variant>;
     };

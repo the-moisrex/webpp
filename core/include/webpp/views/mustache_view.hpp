@@ -41,6 +41,7 @@
 #include "data_view.hpp"
 #include "html.hpp"
 #include "view_concepts.hpp"
+#include "webpp/traits/traits.hpp"
 
 #include <array>
 #include <variant>
@@ -112,29 +113,36 @@ namespace webpp::views {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
         using data_view_type   = mustache_data_view<traits_type>;
+        using items_type = traits::generalify_allocators<traits_type, stl::vector<const data_view_type*>>;
+        using items_value_type = typename items_type::value_type;
 
-        context(const data_view_type* data) {
+      private:
+        items_type items;
+
+      public:
+        template <EnabledTraits ET>
+        context(ET const& et, const data_view_type* data)
+          : items{et.alloc_pack.template general_allocator<items_value_type>()} {
             push(data);
         }
 
-        context() = default;
 
         void push(const data_view_type* data) {
-            items_.insert(items_.begin(), data);
+            items.insert(items.begin(), data);
         }
 
         void pop() {
-            items_.erase(items_.begin());
+            items.erase(items.begin());
         }
 
         const data_view_type* get(string_view_type name) const {
             // process {{.}} name
             if (name.size() == 1 && name.at(0) == '.') {
-                return items_.front();
+                return items.front();
             }
             if (name.find('.') == string_view_type::npos) {
                 // process normal name without having to split which is slower
-                for (const auto& item : items_) {
+                for (const auto& item : items) {
                     const auto var = item->get(name);
                     if (var) {
                         return var;
@@ -144,7 +152,7 @@ namespace webpp::views {
             }
             // process x.y-like name
             const auto names = split(name, '.');
-            for (const auto& item : items_) {
+            for (const auto& item : items) {
                 auto var = item;
                 for (const auto& n : names) {
                     var = var->get(n);
@@ -160,7 +168,7 @@ namespace webpp::views {
         }
 
         const data_view_type* get_partial(string_view_type name) const {
-            for (const auto& item : items_) {
+            for (const auto& item : items) {
                 const auto var = item->get(name);
                 if (var) {
                     return var;
@@ -171,9 +179,6 @@ namespace webpp::views {
 
         context(const context&) = delete;
         context& operator=(const context&) = delete;
-
-      private:
-        stl::vector<const data_view_type*> items_;
     };
 
 
@@ -376,14 +381,14 @@ namespace webpp::views {
         }
 
         template <typename stream_type>
-        constexpr stream_type& render(DataView auto const& data, stream_type& stream) {
+        constexpr stream_type& render(data_view_type const& data, stream_type& stream) {
             render(data, [&stream](string_view_type str) {
                 stream << str;
             });
             return stream;
         }
 
-        constexpr string_type render(DataView auto const& data) {
+        constexpr string_type render(data_view_type const& data) {
             stl::basic_ostringstream<typename string_type::value_type> ss;
             return render(data, ss).str();
         }
@@ -405,7 +410,7 @@ namespace webpp::views {
         }
 
         using render_handler = stl::function<void(string_view_type)>;
-        constexpr void render(DataViews auto const& data, const render_handler& handler) {
+        constexpr void render(data_view_type const& data, const render_handler& handler) {
             if (!is_valid()) {
                 return;
             }
@@ -424,8 +429,8 @@ namespace webpp::views {
             context_internal<traits_type> context{ctx};
             // todo: optimization chance: out::reserve
             render(
-              [&](auto&& content) {
-                  out += stl::move(content);
+              [&]<typename ContentT>(ContentT&& content) {
+                  out += stl::forward<ContentT>(content);
               },
               context);
         }

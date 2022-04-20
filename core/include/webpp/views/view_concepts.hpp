@@ -3,6 +3,8 @@
 #ifndef WEBPP_VIEW_CONCEPTS_HPP
 #define WEBPP_VIEW_CONCEPTS_HPP
 
+#include "../convert/lexical_cast.hpp"
+#include "../std/collection.hpp"
 #include "../std/string.hpp"
 #include "../std/string_concepts.hpp"
 #include "../std/string_view.hpp"
@@ -25,6 +27,10 @@ namespace webpp::views {
 
     template <typename T>
     concept DataViews = istl::TupleOf<details::is_data_view, T>;
+
+    template <typename T>
+    concept PossibleDataViews = DataViews<T> || stl::integral<T> || istl::StringViewifiable<T> ||
+      lexical::CastableTo<T, stl::string_view> || istl::Collection<T>;
 
     template <typename T>
     concept DataViewSettings = requires(T dv) {

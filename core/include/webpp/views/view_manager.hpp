@@ -51,6 +51,10 @@ namespace webpp::views {
         using file_view_type     = file_view<traits_type>;
         using view_types         = stl::variant<mustache_view_type, json_view_type, file_view_type>;
 
+        // using mustache_data_view_type = typename mustache_view_type::data_type;
+        // using json_data_type = typename json_view_type::data_type;
+        // using file_data_type = typename file_view_type::data_type;
+
         struct cached_view_type {
             path_type  file;
             view_types view;
@@ -207,7 +211,7 @@ namespace webpp::views {
         }
 
 
-        template <istl::StringViewifiable StrT, DataViews DV = stl::tuple<>>
+        template <istl::StringViewifiable StrT, PossibleDataViews DV = stl::tuple<>>
         auto view(StrT&& file_request, DV&& data = stl::tuple<>{}) const noexcept {
             namespace fs = stl::filesystem;
 
@@ -223,10 +227,19 @@ namespace webpp::views {
             if (ext.size() >= 1) {
                 switch (ext[1]) {
                     case 'm': {
-                        mustache_view_type view;
-                        view.scheme(file_content);
-                        view.render(*this, data, out);
+                        if (ext == ".mustache") {
+                            mustache_view_type view{*this};
+                            view.scheme(file_content);
+                            view.render(data, out);
+                        }
                         break;
+                    }
+                    case 'j': {
+                        if (ext == ".json") {
+                            json_view_type view{*this};
+                            view.scheme(file_content);
+                            view.render(data, out);
+                        }
                     }
                     default: {
                         goto file_view;

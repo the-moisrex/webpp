@@ -13,6 +13,6 @@ namespace webpp {
     };
 
 
-}
+} // namespace webpp
 
 #endif // WEBPP_JSON_VIEW_HPP

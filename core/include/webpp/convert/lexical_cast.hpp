@@ -7,6 +7,8 @@
 #include "../std/format.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
+#include "../traits/default_traits.hpp"
+#include "../traits/enable_traits.hpp"
 #include "casts.hpp"
 
 namespace webpp::lexical {
@@ -132,6 +134,12 @@ namespace webpp::lexical {
     // todo: implement other integer types than "char" as string's character
     // todo: implement locale-aware casts as well
 
+
+
+    template <typename T, typename To>
+    concept CastableTo = requires(T obj, enable_owner_traits<default_traits> et) {
+        { cast<To>(obj, et) } -> stl::same_as<To>;
+    };
 } // namespace webpp::lexical
 
 #endif // WEBPP_LEXICAL_CAST_HPP
