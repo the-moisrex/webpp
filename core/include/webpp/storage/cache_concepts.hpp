@@ -55,7 +55,7 @@ namespace webpp {
                 // I added the erase_if here and not in the "cache" because it might be faster (I
                 // think)
                 // todo: check if we really need erase_if here
-                gate.erase_if([](auto&&) -> bool {
+                gate.erase_if([](typename S::key_type const&) -> bool {
                     return true;
                 });
             };

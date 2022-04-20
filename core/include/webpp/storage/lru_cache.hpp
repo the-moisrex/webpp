@@ -2,7 +2,7 @@
 #define WEBPP_STORAGE_LRU_CACHE_HPP
 
 #include "cache.hpp"
-#include "file_gate.hpp"
+#include "directory_gate.hpp"
 #include "memory_gate.hpp"
 
 namespace webpp {
@@ -44,7 +44,7 @@ namespace webpp {
           public:
             template <typename ET, typename... Args>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, strategy const&> &&
-                         !stl::same_as<ET, strategy &&>)
+                         !stl::same_as<ET, strategy&&>)
             constexpr strategy(ET&& et, stl::size_t max_size_value = 1024, Args&&... args) noexcept
               : max_size{max_size_value},
                 gate{et, stl::forward<Args>(args)...} {}
@@ -54,8 +54,8 @@ namespace webpp {
                 gate{input_gate} {}
 
             template <typename K, typename V>
-                requires(stl::convertible_to<K, key_type> && // it's a key
-                         stl::convertible_to<V, value_type>) // it's a value
+                requires(stl::convertible_to<K, key_type>&&    // it's a key
+                           stl::convertible_to<V, value_type>) // it's a value
             void set(K&& key, V&& value) {
                 gate.set(stl::forward<K>(key), stl::forward<V>(value), next_usage++);
                 clean_up();
@@ -82,7 +82,7 @@ namespace webpp {
     template <Traits      TraitsType   = default_traits,
               CacheKey    KeyT         = traits::general_string<TraitsType>,
               CacheValue  ValT         = traits::general_string<TraitsType>,
-              StorageGate StorageGateT = memory_gate<file_gate>>
+              StorageGate StorageGateT = memory_gate<directory_gate>>
     using lru_cache = cache<TraitsType, KeyT, ValT, lru_strategy, StorageGateT>;
 
 } // namespace webpp

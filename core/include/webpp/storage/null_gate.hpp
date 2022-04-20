@@ -23,25 +23,26 @@ namespace webpp {
                 options_type options;
             };
 
-            constexpr storage_gate(auto&&...) {};
+            constexpr storage_gate(auto&&...) {}
 
             template <typename V>
-            stl::optional<data_type> get([[maybe_unused]] V&& value) {
+            constexpr stl::optional<data_type> get([[maybe_unused]] V&& value) {
                 return stl::nullopt;
             }
 
             template <typename K, typename V>
-            void set([[maybe_unused]] K&&          key,
-                     [[maybe_unused]] V&&          value,
-                     [[maybe_unused]] options_type opts = {}) {}
+            constexpr void set([[maybe_unused]] K&&          key,
+                               [[maybe_unused]] V&&          value,
+                               [[maybe_unused]] options_type opts = {}) {}
 
-            void set_options([[maybe_unused]] key_type const& key, [[maybe_unused]] options_type opts) {}
+            constexpr void set_options([[maybe_unused]] key_type const& key,
+                                       [[maybe_unused]] options_type    opts) {}
 
             template <typename K>
-            void erase([[maybe_unused]] K&& input) {}
+            constexpr void erase([[maybe_unused]] K&& input) {}
 
             template <typename Pred>
-            void erase_if([[maybe_unused]] Pred&& predicate) {}
+            constexpr void erase_if([[maybe_unused]] Pred&& predicate) {}
         };
     };
 
