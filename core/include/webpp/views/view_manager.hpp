@@ -211,10 +211,39 @@ namespace webpp::views {
         }
 
 
-        template <istl::StringViewifiable StrT, PossibleDataViews DV = stl::tuple<>>
-        auto view(StrT&& file_request, DV&& data = stl::tuple<>{}) const noexcept {
-            namespace fs = stl::filesystem;
+        view_types& get_view(path_type const& file) noexcept {
+            return cached_views.emplace_get(file, *this);
+        }
 
+
+        /**
+         * This is essentially the same as ".view" but it's specialized for a mustache file.
+         */
+        template <istl::StringViewifiable StrT>
+        constexpr auto mustache(StrT&& file_request, mustache_data_type data) noexcept {
+            auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
+            auto       out  = object::make_general<string_type>(this->alloc_pack);
+            if (!file) {
+                this->logger.error(VIEW_CAT,
+                                   fmt::format("We can't find the specified view {}.", file_request));
+                return out;
+            }
+            return read_file(file.value());
+
+            // at this point we don't care about the extension of the file; the user explicitly wants us to
+            // parse it as a mustache file
+            mustache_view_type& view = stl::get<mustache_view_type>(get_view(file));
+            view.scheme(file_content);
+            view.render(data, out);
+            return out;
+        }
+
+
+        /**
+         * Get Render a view
+         */
+        template <istl::StringViewifiable StrT, PossibleDataViews DV = stl::tuple<>>
+        auto view(StrT&& file_request, DV&& data = stl::tuple<>{}) noexcept {
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
             auto       out  = object::make_general<string_type>(this->alloc_pack);
             if (!file) {
@@ -228,7 +257,7 @@ namespace webpp::views {
                 switch (ext[1]) {
                     case 'm': {
                         if (ext == ".mustache") {
-                            mustache_view_type view{*this};
+                            mustache_view_type& view = stl::get<mustache_view_type>(get_view(file));
                             view.scheme(file_content);
                             view.render(data, out);
                         }
@@ -236,9 +265,9 @@ namespace webpp::views {
                     }
                     case 'j': {
                         if (ext == ".json") {
-                            json_view_type view{*this};
-                            view.scheme(file_content);
-                            view.render(data, out);
+                            // json_view_type& view = stl::get<json_view_type>(get_view(file));
+                            // view.scheme(file_content);
+                            // view.render(data, out);
                         }
                     }
                     default: {

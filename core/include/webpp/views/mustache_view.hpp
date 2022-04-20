@@ -425,7 +425,7 @@ namespace webpp::views {
             if (!is_valid()) {
                 return;
             }
-            context<traits_type>          ctx{&data};
+            context<traits_type>          ctx{*this, &data};
             context_internal<traits_type> context{ctx};
             // todo: optimization chance: out::reserve
             render(
@@ -447,7 +447,9 @@ namespace webpp::views {
         /////// Parser
 
 
-        void parse(string_view_type input, delimiter_set<traits_type>& delim_set) {
+        constexpr static stl::array<string_view_type, 5> whitespace{{"\r\n", "\n", "\r", " ", "\t"}};
+
+        constexpr void parse(string_view_type input, delimiter_set<traits_type>& delim_set) {
             using streamstring = stl::basic_ostringstream<typename string_type::value_type>;
 
             const string_view_type brace_delimiter_end_unescaped("}}}");
@@ -475,7 +477,6 @@ namespace webpp::views {
                 }
             };
 
-            constexpr static stl::array<string_view_type, 5> whitespace{{"\r\n", "\n", "\r", " ", "\t"}};
 
             for (string_size_type input_position = 0; input_position != input_size;) {
                 bool parse_tag = false;
@@ -602,7 +603,7 @@ namespace webpp::views {
             }
         }
 
-        bool is_set_delimiter_valid(string_view_type delimiter) const {
+        constexpr bool is_set_delimiter_valid(string_view_type delimiter) const {
             // "Custom delimiters may not contain whitespace or the equals sign."
             // todo: optimize-able
             for (const auto ch : delimiter) {
@@ -613,8 +614,8 @@ namespace webpp::views {
             return true;
         }
 
-        [[nodiscard]] bool parse_set_delimiter_tag(string_view_type            contents,
-                                                   delimiter_set<traits_type>& delimiter_set) const {
+        [[nodiscard]] constexpr bool
+        parse_set_delimiter_tag(string_view_type contents, delimiter_set<traits_type>& delimiter_set) const {
             // Smallest legal tag is "=X X="
             if (contents.size() < 5) {
                 return false;
@@ -640,9 +641,9 @@ namespace webpp::views {
             return true;
         }
 
-        void parse_tag_contents(bool                    is_unescaped_var,
-                                string_view_type        contents,
-                                mstch_tag<traits_type>& tag) const {
+        constexpr void parse_tag_contents(bool                    is_unescaped_var,
+                                          string_view_type        contents,
+                                          mstch_tag<traits_type>& tag) const {
             if (is_unescaped_var) {
                 tag.type = tag_type::unescaped_variable;
                 tag.name = contents;

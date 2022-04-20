@@ -30,7 +30,7 @@ namespace webpp {
 
 
         template <CacheKey K, CacheValue V>
-            requires(stl::is_convertible_v<K, key_type> && stl::is_convertible_v<V, value_type>)
+            requires(stl::is_convertible_v<K, key_type>&& stl::is_convertible_v<V, value_type>)
         value_type get(K&& key, V&& default_value) {
             return strategy_type::get(stl::forward<K>(key)).value_or(stl::forward<V>(default_value));
         }
@@ -40,6 +40,17 @@ namespace webpp {
             requires(stl::is_convertible_v<K, key_type>) // it's convertible to key
         stl::optional<value_type> get(K&& key) {
             return strategy_type::get(stl::forward<K>(key));
+        }
+
+
+        template <CacheKey K, typename... Args>
+            requires(stl::is_convertible_v<K, key_type>) // it's convertible to key
+        value_type emplace_get(K&& key, Args&&... args) {
+            if (auto val = strategy_type::get(key); val) {
+                return *val;
+            }
+            set(stl::forward<K>(key), value_type{stl::forward<Args>(args)...});
+            return strategy_type::get(key).value();
         }
 
         auto begin() {
