@@ -19,23 +19,18 @@ namespace webpp {
     concept CacheOptions = !stl::is_void_v<T> && stl::is_copy_assignable_v<T>;
 
     template <typename K>
-    concept CacheFileKey = CacheKey<K> && requires(K key) {
-        lexical::cast<stl::string>(key);
-        { lexical::cast<K>(requires_arg(istl::String)) } -> stl::same_as<K>;
+    concept CacheFileKey = CacheKey<K> && lexical::CastableTo<K, stl::string> &&
+      lexical::CastableTo<stl::string, K> && requires(K key) {
         stl::hash<K>{}(key);
     };
 
     template <typename V>
-    concept CacheFileValue = CacheValue<V> && requires(V val) {
-        lexical::cast<stl::string>(val);
-        { lexical::cast<V>(requires_arg(istl::String)) } -> stl::same_as<V>;
-    };
+    concept CacheFileValue =
+      CacheValue<V> && lexical::CastableTo<V, stl::string> && lexical::CastableTo<stl::string, V>;
 
     template <typename T>
-    concept CacheFileOptions = CacheOptions<T> && requires(T opts) {
-        lexical::cast<stl::string>(opts); // todo: how to support multiple options?
-        { lexical::cast<T>(requires_arg(istl::String)) } -> stl::same_as<T>;
-    };
+    concept CacheFileOptions =
+      CacheOptions<T> && lexical::CastableTo<T, stl::string> && lexical::CastableTo<stl::string, T>;
 
 
     namespace details {

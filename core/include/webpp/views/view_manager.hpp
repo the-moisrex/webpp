@@ -51,9 +51,13 @@ namespace webpp::views {
         using file_view_type     = file_view<traits_type>;
         using view_types         = stl::variant<mustache_view_type, json_view_type, file_view_type>;
 
-        // using mustache_data_view_type = typename mustache_view_type::data_type;
+        // using mustache_data_type = typename mustache_view_type::data_type;
         // using json_data_type = typename json_view_type::data_type;
         // using file_data_type = typename file_view_type::data_type;
+
+        // using mustache_data_view_type = typename mustache_view_type::data_view_type;
+        // using json_data_view_type = typename json_view_type::data_view_type;
+        // using file_data_view_type = typename file_view_type::data_view_type;
 
         struct cached_view_type {
             path_type  file;
@@ -228,7 +232,7 @@ namespace webpp::views {
                                    fmt::format("We can't find the specified view {}.", file_request));
                 return out;
             }
-            return read_file(file.value());
+            const auto file_content = read_file(file.value());
 
             // at this point we don't care about the extension of the file; the user explicitly wants us to
             // parse it as a mustache file
@@ -257,7 +261,7 @@ namespace webpp::views {
                 switch (ext[1]) {
                     case 'm': {
                         if (ext == ".mustache") {
-                            mustache_view_type& view = stl::get<mustache_view_type>(get_view(file));
+                            mustache_view_type& view = stl::get<mustache_view_type>(get_view(*file));
                             view.scheme(file_content);
                             view.render(data, out);
                         }
@@ -278,8 +282,8 @@ namespace webpp::views {
             }
         file_view:
             file_view_type view;
-            view.schema(file_content);
-            view.render(*this, data, out);
+            view.scheme(file_content);
+            view.render(data, out);
 
             return out;
         }
