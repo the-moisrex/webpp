@@ -51,13 +51,13 @@ namespace webpp::views {
         using file_view_type     = file_view<traits_type>;
         using view_types         = stl::variant<mustache_view_type, json_view_type, file_view_type>;
 
-        // using mustache_data_type = typename mustache_view_type::data_type;
+        using mustache_data_type = typename mustache_view_type::data_type;
         // using json_data_type = typename json_view_type::data_type;
-        // using file_data_type = typename file_view_type::data_type;
+        using file_data_type = typename file_view_type::data_type;
 
-        // using mustache_data_view_type = typename mustache_view_type::data_view_type;
+        using mustache_data_view_type = typename mustache_view_type::data_view_type;
         // using json_data_view_type = typename json_view_type::data_view_type;
-        // using file_data_view_type = typename file_view_type::data_view_type;
+        using file_data_view_type = typename file_view_type::data_view_type;
 
         struct cached_view_type {
             path_type  file;

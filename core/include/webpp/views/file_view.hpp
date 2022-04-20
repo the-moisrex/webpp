@@ -16,16 +16,31 @@ namespace webpp::views {
     struct file_view {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
+        using string_type      = traits::general_string<traits_type>;
+        using char_type        = traits::char_type<traits_type>;
+
+        using data_view_type = string_view_type;
+        using data_type      = string_type;
 
       private:
-        string_view_type data;
+        string_type data;
 
       public:
-        void scheme(istl::StringViewifiable auto&& str) {
-            data = istl::string_viewify_of<string_view_type>(stl::forward<decltype(str)>(str));
+        constexpr file_view() = default;
+
+        template <EnabledType ET>
+        constexpr file_view(ET const& et) : data{et.alloc_pack.template get_allocator<char_type>()} {}
+
+
+        void scheme(string_type&& str) noexcept {
+            data = str;
         }
 
-        void render(ViewManager auto&, istl::String auto& out, DataViews auto const&) const {
+        void scheme(string_type const& str) {
+            data = str;
+        }
+
+        void render(string_type& out, data_view_type const&) const noexcept {
             // the view manager and the input data are useless.
             out = data;
         }
