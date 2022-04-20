@@ -100,9 +100,10 @@ namespace webpp::views {
 
             // okay debate:
             // do we need to use a collection
-            using collection_view = istl::lazy_conditional_t<is_collection, collection_view_calculator, V>;
-            using tuple_view      = istl::lazy_conditional_t<is_tuple, tuple_view_calculator, V>;
-            using list_view       = stl::conditional_t<is_collection, collection_view, tuple_view>;
+            using collection_view =
+              istl::lazy_conditional_t<is_collection, collection_view_calculator, istl::lazy_type<V>>;
+            using tuple_view = istl::lazy_conditional_t<is_tuple, tuple_view_calculator, istl::lazy_type<V>>;
+            using list_view  = stl::conditional_t<is_collection, collection_view, tuple_view>;
 
 
 
