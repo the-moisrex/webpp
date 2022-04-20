@@ -33,15 +33,18 @@ namespace webpp::views {
 
 
         void scheme(string_type&& str) noexcept {
-            data = str;
+            data = stl::move(str);
         }
 
         void scheme(string_type const& str) {
             data = str;
         }
 
-        void render(string_type& out, data_view_type const&) const noexcept {
-            // the view manager and the input data are useless.
+        void render(string_type& out) const noexcept {
+            out = data;
+        }
+
+        void render(string_type& out, data_view_type) const noexcept {
             out = data;
         }
     };

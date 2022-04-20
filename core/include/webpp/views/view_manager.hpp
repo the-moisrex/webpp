@@ -224,7 +224,7 @@ namespace webpp::views {
          * This is essentially the same as ".view" but it's specialized for a mustache file.
          */
         template <istl::StringViewifiable StrT>
-        constexpr auto mustache(StrT&& file_request, mustache_data_type data) noexcept {
+        constexpr auto mustache(StrT&& file_request, mustache_data_type const& data) noexcept {
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
             auto       out  = object::make_general<string_type>(this->alloc_pack);
             if (!file) {
@@ -255,7 +255,7 @@ namespace webpp::views {
                                    fmt::format("We can't find the specified view {}.", file_request));
                 return out;
             }
-            const auto file_content = read_file(file.value());
+            auto       file_content = read_file(file.value());
             const auto ext          = file->extension().string();
             if (ext.size() >= 1) {
                 switch (ext[1]) {
@@ -263,7 +263,7 @@ namespace webpp::views {
                         if (ext == ".mustache") {
                             mustache_view_type& view = stl::get<mustache_view_type>(get_view(*file));
                             view.scheme(file_content);
-                            view.render(data, out);
+                            view.render(out, data);
                         }
                         break;
                     }
@@ -281,9 +281,9 @@ namespace webpp::views {
                 return out;
             }
         file_view:
-            file_view_type view;
-            view.scheme(file_content);
-            view.render(data, out);
+            file_view_type& view = stl::get<file_view_type>(get_view(*file));
+            view.scheme(stl::move(file_content));
+            view.render(out);
 
             return out;
         }

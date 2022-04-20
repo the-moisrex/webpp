@@ -476,7 +476,7 @@ namespace webpp::views {
 
             const auto process_current_text = [&current_text, &current_text_position, &sections]() {
                 if (!current_text.empty()) {
-                    const component_type comp{current_text, current_text_position};
+                    const component_type comp{*this, current_text, current_text_position};
                     sections.back()->children.push_back(comp);
                     current_text.clear();
                     current_text_position = string_type::npos;
@@ -498,7 +498,7 @@ namespace webpp::views {
                         if (input.compare(input_position, whitespace_text.size(), whitespace_text) == 0) {
                             process_current_text();
 
-                            const component_type comp{whitespace_text, input_position};
+                            const component_type comp{*this, whitespace_text, input_position};
                             sections.back()->children.push_back(comp);
                             input_position += whitespace_text.size();
 
@@ -544,8 +544,10 @@ namespace webpp::views {
                 }
 
                 // Parse tag
-                const auto tag_contents = ascii::trim_copy(
-                  string_view_type{input, tag_contents_location, tag_location_end - tag_contents_location});
+                string_view_type tag_contents{input,
+                                              tag_contents_location,
+                                              tag_location_end - tag_contents_location};
+                ascii::trim(tag_contents);
                 component_type comp;
                 if (!tag_contents.empty() && tag_contents[0] == '=') {
                     if (!parse_set_delimiter_tag(tag_contents, delim_set)) {
