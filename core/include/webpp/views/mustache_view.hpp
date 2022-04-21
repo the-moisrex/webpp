@@ -61,25 +61,28 @@ namespace webpp::views {
     template <Traits TraitsType>
     using mustache_data_view = typename data_view<mustache_data_view_settings<TraitsType>{}>::type;
 
-    template <typename string_type>
-    class basic_renderer {
-      public:
-        using type1 = stl::function<string_type(const string_type&)>;
-        using type2 = stl::function<string_type(const string_type&, bool escaped)>;
+    template <typename TraitsType>
+    struct basic_renderer {
+        using traits_type      = TraitsType;
+        using string_view_type = traits::string_view<traits_type>;
+        using string_type      = traits::general_string<traits_type>;
+
+        using type1 = stl::function<string_type(string_view_type)>;
+        using type2 = stl::function<string_type(string_view_type, bool escaped)>;
 
         string_type operator()(const string_type& text) const {
-            return type1_(text);
+            return func1(text);
         }
 
         string_type operator()(const string_type& text, bool escaped) const {
-            return type2_(text, escaped);
+            return func2(text, escaped);
         }
 
       private:
-        basic_renderer(const type1& t1, const type2& t2) : type1_(t1), type2_(t2) {}
+        basic_renderer(const type1& t1, const type2& t2) : func1(t1), func2(t2) {}
 
-        const type1& type1_;
-        const type2& type2_;
+        const type1& func1;
+        const type2& func2;
 
         template <typename StringType>
         friend class mustache_view;
@@ -356,6 +359,8 @@ namespace webpp::views {
         using data_type      = traits::generalify_allocators<traits_type, stl::map<string_type, value_type>>;
         using data_view_type = mustache_data_view<traits_type>;
 
+        static constexpr auto MUSTACHE_CAT = "MustacheView";
+
       private:
         string_type    error_msg{this->alloc_pack.template general_allocator<char_type>()};
         component_type root_component;
@@ -441,6 +446,28 @@ namespace webpp::views {
               context);
         }
 
+
+        template <PossibleDataTypes DT>
+        constexpr data_view_type generate_data_view(DT&& data) const noexcept {
+            data_view_type dv;
+            if constexpr (stl::same_as<DT, data_type> || istl::Collection<DT>) {
+                using data_view_value_type = typename data_view_type::value_type;
+                dv.reserve(data.size());
+                stl::transform(stl::begin(data),
+                               stl::end(data),
+                               stl::back_inserter(dv),
+                               [this](auto&& item) -> data_view_value_type {
+                                   auto const& [key, value] = item;
+                                   return {*this, key, value};
+                               });
+            } else {
+                this->logger->error(
+                  MUSTACHE_CAT,
+                  "We don't understand the data you passed the mustache renderer, we're gonna ignore them.");
+            }
+            return dv;
+        }
+
       private:
         template <EnabledTraits ET>
         constexpr mustache_view(ET const& et, string_view_type input, context_internal<traits_type>& ctx)
@@ -474,7 +501,7 @@ namespace webpp::views {
 
             current_text.reserve(input_size);
 
-            const auto process_current_text = [&current_text, &current_text_position, &sections]() {
+            const auto process_current_text = [this, &current_text, &current_text_position, &sections]() {
                 if (!current_text.empty()) {
                     const component_type comp{*this, current_text, current_text_position};
                     sections.back()->children.push_back(comp);
@@ -806,8 +833,8 @@ namespace webpp::views {
                                      render_lambda_escape           escape,
                                      string_view_type               text,
                                      bool                           parse_with_same_context) {
-            const typename basic_renderer<string_type>::type2 render2 =
-              [this, &ctx, parse_with_same_context, escape](string_view_type text, bool escaped) {
+            const typename basic_renderer<traits_type>::type2 render2 =
+              [this, &ctx, parse_with_same_context, escape](string_view_type txt, bool escaped) {
                   const auto process_template =
                     [this, &ctx, escape, escaped](mustache_view& tmpl) -> string_type {
                       if (!tmpl.is_valid()) {
@@ -829,19 +856,19 @@ namespace webpp::views {
                       return do_escape ? escaper(str) : str;
                   };
                   if (parse_with_same_context) {
-                      mustache_view tmpl{text, ctx};
+                      mustache_view tmpl{txt, ctx};
                       tmpl.set_custom_escape(escaper);
                       return process_template(tmpl);
                   }
-                  mustache_view tmpl{text};
+                  mustache_view tmpl{txt};
                   tmpl.set_custom_escape(escaper);
                   return process_template(tmpl);
               };
-            const typename basic_renderer<string_type>::type1 render = [&render2](string_view_type text) {
-                return render2(text, false);
+            const typename basic_renderer<traits_type>::type1 render = [&render2](string_view_type txt) {
+                return render2(txt, false);
             };
             if (var->is_lambda2()) {
-                const basic_renderer<string_type> renderer{render, render2};
+                const basic_renderer<traits_type> renderer{render, render2};
                 ctx.line_buffer.data.append(var->lambda2_value()(text, renderer));
             } else {
                 render_current_line(handler, ctx, nullptr);

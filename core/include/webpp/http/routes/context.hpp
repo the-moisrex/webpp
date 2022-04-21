@@ -209,14 +209,6 @@ namespace webpp::http {
             }
         }
 
-        template <istl::StringViewifiable StrT>
-        [[nodiscard]] constexpr HTTPResponse auto view(StrT&& template_file, auto&& data) const noexcept {
-            using data_type = stl::remove_cvref_t<decltype(data)>;
-            auto res        = response<string_response>(data.what());
-
-            return res;
-        }
-
         // todo: add more error handling templates here.
         // todo: let the user customize error templates with extensions
         // todo: add all the features of returning a response each body type should have at least one method here

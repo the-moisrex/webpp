@@ -187,7 +187,7 @@ namespace webpp::views {
         /**
          * Read the file content
          */
-        string_type read_file(stl::filesystem::path const& file) const {
+        stl::optional<string_type> read_file(stl::filesystem::path const& file) const {
 #ifdef WEBPP_EMBEDDED_FILES
             if (auto content = ::get_static_file(filepath); !content.empty()) {
                 return string_type{this->content, alloc};
@@ -210,7 +210,7 @@ namespace webpp::views {
             } else {
                 this->logger.error("Response/File",
                                    fmt::format("Cannot load the specified file: {}", file.string()));
-                return "";
+                return stl::nullopt;
             }
         }
 
@@ -233,12 +233,15 @@ namespace webpp::views {
                 return out;
             }
             const auto file_content = read_file(file.value());
+            if (!file_content) {
+                return out; // empty string is returned.
+            }
 
             // at this point we don't care about the extension of the file; the user explicitly wants us to
             // parse it as a mustache file
             mustache_view_type& view = stl::get<mustache_view_type>(get_view(file));
             view.scheme(file_content);
-            view.render(data, out);
+            view.render(out, view.generate_data_view(data));
             return out;
         }
 
@@ -246,7 +249,7 @@ namespace webpp::views {
         /**
          * Get Render a view
          */
-        template <istl::StringViewifiable StrT, PossibleDataViews DV = stl::tuple<>>
+        template <istl::StringViewifiable StrT, PossibleDataTypes DV = stl::tuple<>>
         auto view(StrT&& file_request, DV&& data = stl::tuple<>{}) noexcept {
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
             auto       out  = object::make_general<string_type>(this->alloc_pack);
@@ -255,15 +258,18 @@ namespace webpp::views {
                                    fmt::format("We can't find the specified view {}.", file_request));
                 return out;
             }
-            auto       file_content = read_file(file.value());
-            const auto ext          = file->extension().string();
+            auto file_content = read_file(file.value());
+            if (!file_content) {
+                return out; // empty string is returned.
+            }
+            const auto ext = file->extension().string();
             if (ext.size() >= 1) {
                 switch (ext[1]) {
                     case 'm': {
                         if (ext == ".mustache") {
                             mustache_view_type& view = stl::get<mustache_view_type>(get_view(*file));
-                            view.scheme(file_content);
-                            view.render(out, data);
+                            view.scheme(file_content.value());
+                            view.render(out, view.generate_data_view(data));
                         }
                         break;
                     }
@@ -282,7 +288,7 @@ namespace webpp::views {
             }
         file_view:
             file_view_type& view = stl::get<file_view_type>(get_view(*file));
-            view.scheme(stl::move(file_content));
+            view.scheme(stl::move(file_content.value()));
             view.render(out);
 
             return out;

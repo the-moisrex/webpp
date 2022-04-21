@@ -29,7 +29,7 @@ namespace webpp::views {
     concept DataViews = istl::TupleOf<details::is_data_view, T>;
 
     template <typename T>
-    concept PossibleDataViews = DataViews<T> || stl::integral<T> || istl::StringViewifiable<T> ||
+    concept PossibleDataTypes = DataViews<T> || stl::integral<T> || istl::StringViewifiable<T> ||
       lexical::CastableTo<T, stl::string_view> || istl::Collection<T>;
 
     template <typename T>
@@ -58,14 +58,21 @@ namespace webpp::views {
 
     template <typename T>
     concept View = requires(T view) {
+        typename T::data_view_type;
+        typename T::data_type;
+        requires DataView<typename T::data_view_type>;
+
         view.scheme(requires_arg(istl::StringViewifiable)); // reparse, and change the scheme
+
+        // with the method, you can convert and store the converted data if the view need to, but it's not
+        // recommended to store any data.
+        view.generate_data_view(requires_arg(PossibleDataTypes)); // this data will be passed to the render
 
         // render with the data passed to it
         view.render(
           // requires_arg(ViewManagerInput), // view_manager ref
           requires_arg(ViewOutput), // string ref
-          requires_arg(DataViews)   // any view data
-        );
+          requires_arg(stl::same_as<typename T::data_view_type const&>));
     };
 
 } // namespace webpp::views
