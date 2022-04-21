@@ -360,6 +360,8 @@ namespace webpp::views {
         using data_type      = traits::generalify_allocators<traits_type, stl::map<string_type, value_type>>;
         using data_view_type = mustache_data_view<traits_type>;
 
+        using render_handler = stl::function<void(string_view_type)>;
+
         static constexpr auto MUSTACHE_CAT = "MustacheView";
 
       private:
@@ -391,7 +393,7 @@ namespace webpp::views {
         constexpr void set_custom_escape(const escape_handler& escape_fn) {
             escaper = escape_fn;
         }
-
+/*
         template <typename stream_type>
         constexpr stream_type& render(data_view_type const& data, stream_type& stream) {
             render(data, [&stream](string_view_type str) {
@@ -421,7 +423,6 @@ namespace webpp::views {
             return render(ctx, ss).str();
         }
 
-        using render_handler = stl::function<void(string_view_type)>;
         constexpr void render(data_view_type const& data, const render_handler& handler) {
             if (!is_valid()) {
                 return;
@@ -430,7 +431,7 @@ namespace webpp::views {
             context_internal<traits_type> context{ctx};
             render(handler, context);
         }
-
+*/
 
         // this member function will be used by the view manager
         constexpr void render(string_type& out, data_view_type const& data) {

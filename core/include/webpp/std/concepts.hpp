@@ -70,11 +70,24 @@ namespace webpp::istl {
             T operator()() {}
         };
 
+
         template <auto Constraint>
         struct requires_arg_op {
             template <typename T>
                 requires(Constraint.template operator()<T>())
             operator T() {}
+        };
+
+
+        template <auto Constraint>
+        struct requires_arg_op_cvref {
+            template <typename T>
+                requires(Constraint.template operator()<T>())
+            operator T() {}
+
+            template <typename T>
+                requires(Constraint.template operator()<T&>())
+            operator T&() {}
         };
     } // namespace details
 
@@ -102,11 +115,15 @@ namespace webpp::istl {
     /**
      * Use std::remove_cvref_t to clean up the type first and then run it through the "requires_arg"
      */
-#define requires_arg_cvref(...)                                                                      \
-    webpp::istl::details::requires_arg_op<[]<typename RequiresT> {                                   \
-        return (requires {                                                                           \
-            { webpp::istl::details::returnable<stl::remove_cvref_t<RequiresT>>()() } -> __VA_ARGS__; \
-        });                                                                                          \
+#define requires_arg_cvref(...)                                                                        \
+    webpp::istl::details::requires_arg_op_cvref<[]<typename RequiresT> {                               \
+        return (                                                                                       \
+          requires {                                                                                   \
+              { webpp::istl::details::returnable<RequiresT>()() } -> __VA_ARGS__;                      \
+          } ||                                                                                         \
+          requires {                                                                                   \
+              { webpp::istl::details::returnable<stl::remove_cvref_t<RequiresT>>()() } -> __VA_ARGS__; \
+          });                                                                                          \
     }> {}
 
     /**

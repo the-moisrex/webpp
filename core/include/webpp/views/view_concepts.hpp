@@ -57,9 +57,6 @@ namespace webpp::views {
     concept ViewManagerInput = ViewManager<T> && stl::is_lvalue_reference_v<T>;
 
     template <typename T>
-    concept ViewOutput = istl::String<T> && stl::is_lvalue_reference_v<T>;
-
-    template <typename T>
     concept View = requires(T view) {
         typename T::data_view_type;
         typename T::data_type;
@@ -73,10 +70,8 @@ namespace webpp::views {
           requires_arg_cvref(PossibleDataTypes)); // this data will be passed to the render
 
         // render with the data passed to it
-        view.render(
-          // requires_arg(ViewManagerInput), // view_manager ref
-          requires_arg(ViewOutput), // string ref
-          requires_arg_cvref(stl::same_as<typename T::data_view_type const&>));
+        view.render(requires_arg_cvref(istl::String), // string ref
+                    requires_arg_cvref(stl::same_as<typename T::data_view_type>));
     };
 
 } // namespace webpp::views
