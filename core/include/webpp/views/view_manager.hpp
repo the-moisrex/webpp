@@ -245,12 +245,16 @@ namespace webpp::views {
             return out;
         }
 
+        template <istl::StringViewifiable StrT = string_view_type>
+        auto view(StrT&& file_request) noexcept {
+            return view(stl::forward<StrT>(file_request), istl::nothing_type{});
+        }
 
         /**
          * Get Render a view
          */
-        template <istl::StringViewifiable StrT, PossibleDataTypes DV = stl::tuple<>>
-        auto view(StrT&& file_request, DV&& data = stl::tuple<>{}) noexcept {
+        template <istl::StringViewifiable StrT, PossibleDataTypes DV>
+        auto view(StrT&& file_request, DV&& data) noexcept {
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
             auto       out  = object::make_general<string_type>(this->alloc_pack);
             if (!file) {

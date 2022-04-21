@@ -13,13 +13,11 @@ using namespace webpp::views;
 
 static_assert(View<mustache_view<default_traits>>);
 static_assert(View<file_view<default_traits>>);
-static_assert(View<json_view<default_traits>>);
+// static_assert(View<json_view<default_traits>>);
 static_assert(ViewManager<view_manager<default_traits>>);
 
 TEST(TheViews, MustacheView) {
-    using namespace mustache;
-
-    enable_owner_traits et;
+    enable_owner_traits<default_traits> et;
 
     mustache_view<default_traits> v{et};
     v.scheme("My name is {{name}}");
@@ -31,7 +29,7 @@ TEST(TheViews, MustacheView) {
 
 TEST(TheViews, ViewManagerTest) {
 
-    enable_owner_traits et;
+    enable_owner_traits<default_traits> et;
 
     view_manager<default_traits> man{et};
 
