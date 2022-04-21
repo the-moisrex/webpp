@@ -133,16 +133,25 @@ namespace webpp::views {
 
 
           private:
-            string_view_type name;
+            string_view_type key;
             value_type       value;
 
           public:
-            template <typename StrT>
+            template <EnabledTraits ET, typename StrT, typename T>
                 requires(istl::StringViewifiableOf<string_view_type, StrT>)
-            void set_name(StrT&& str) noexcept {
-                name = istl::string_viewify_of<string_view_type>(stl::forward<StrT>(str));
+            constexpr component_view(ET const& et, StrT&& input_key, T&& input_value) {
+                set_key(stl::forward<StrT>(input_key));
+                set_value(stl::forward<T>(input_value), et);
             }
 
+            // set the key
+            template <typename StrT>
+                requires(istl::StringViewifiableOf<string_view_type, StrT>)
+            void set_key(StrT&& str) noexcept {
+                key = istl::string_viewify_of<string_view_type>(stl::forward<StrT>(str));
+            }
+
+            // set the input "val"ue into the "out"put value.
             template <typename T, EnabledTraits ET>
             static void set_value(T const& val, auto& out, ET&& et) {
                 // I'm passing val as a const& and not a && because this function cannot handle moves since
@@ -175,14 +184,15 @@ namespace webpp::views {
                 }
             }
 
+            // set a new value for
             template <typename T, EnabledTraits ET>
             void set_value(T const& val, ET&& et) {
                 component_view::set_value(val, value, et);
             }
 
 
-            string_view_type get_name() const noexcept {
-                return name;
+            string_view_type get_key() const noexcept {
+                return key;
             }
 
             auto get_value() const noexcept {
