@@ -49,6 +49,17 @@ TEST(Cache, LEUCacheTest) {
     }
 }
 
+TEST(Cache, CacheResultTest) {
+    enable_owner_traits<default_traits>         t;
+    lru_cache<default_traits, stl::string, int> c(t);
+    c["one"] = 1;
+    c["two"] = 2;
+
+    EXPECT_EQ(c["one"].value(), 1);
+    EXPECT_EQ(c["two"].value(), 2);
+    EXPECT_EQ(c["one"].key(), "one");
+}
+
 
 TEST(Cache, DirectoryGateTest) {
     enable_owner_traits<default_traits> t;
