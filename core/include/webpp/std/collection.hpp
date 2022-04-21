@@ -33,6 +33,12 @@ namespace webpp::istl {
     template <typename T>
     concept Collection = AppendableCollection<T>;
 
+    template <typename T>
+    concept ReadOnlyCollection = requires(T obj) {
+        obj.begin();
+        obj.end();
+    };
+
     namespace collection {
 
         template <Collection T, typename... Args>

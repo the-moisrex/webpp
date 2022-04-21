@@ -100,6 +100,16 @@ namespace webpp::istl {
     }> {}
 
     /**
+     * Use std::remove_cvref_t to clean up the type first and then run it through the "requires_arg"
+     */
+#define requires_arg_cvref(...)                                                                      \
+    webpp::istl::details::requires_arg_op<[]<typename RequiresT> {                                   \
+        return (requires {                                                                           \
+            { webpp::istl::details::returnable<stl::remove_cvref_t<RequiresT>>()() } -> __VA_ARGS__; \
+        });                                                                                          \
+    }> {}
+
+    /**
      * This is essentially the same thing; but the difference is you can add more custom constraints:
      *
      * Possible usage:

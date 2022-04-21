@@ -7,19 +7,20 @@
 #include "../std/collection.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
-#include "../std/tuple.hpp"
 #include "../std/type_traits.hpp"
 #include "../traits/traits.hpp"
 #include "../utils/flags.hpp"
 #include "../utils/functional.hpp"
 #include "view_concepts.hpp"
+#include "webpp/traits/traits.hpp"
 
+#include <span>
 #include <variant>
 
 namespace webpp::views {
 
 
-    enum struct data_views { boolean, lambda, string, list };
+    enum struct data_views { boolean, lambda, string, list, variant };
 
     using view_data_flags = flags::manager<data_views>;
 
@@ -49,10 +50,11 @@ namespace webpp::views {
 
         static constexpr view_data_flags acceptable_types = Settings.acceptable_types;
 
-        static constexpr bool need_bool   = acceptable_types.is_on(data_views::boolean);
-        static constexpr bool need_string = acceptable_types.is_on(data_views::string);
-        static constexpr bool need_lambda = acceptable_types.is_on(data_views::lambda);
-        static constexpr bool need_list   = acceptable_types.is_on(data_views::list);
+        static constexpr bool need_bool    = acceptable_types.is_on(data_views::boolean);
+        static constexpr bool need_string  = acceptable_types.is_on(data_views::string);
+        static constexpr bool need_lambda  = acceptable_types.is_on(data_views::lambda);
+        static constexpr bool need_list    = acceptable_types.is_on(data_views::list);
+        static constexpr bool need_variant = acceptable_types.is_on(data_views::variant);
 
         using lambda = stl::variant<function_ref<string_view_type(string_view_type)>,
                                     function_ref<string_view_type(string_view_type, bool)>>;
@@ -65,14 +67,15 @@ namespace webpp::views {
             };
             static constexpr bool is_bool   = stl::same_as<V, bool>;
             static constexpr bool is_lambda = requires(V v) {
-                v(requires_arg(istl::String));
+                v(requires_arg_cvref(istl::String));
             }
             || requires(V v) {
-                v(requires_arg(istl::String), requires_arg(stl::same_as<bool>));
+                v(requires_arg_cvref(istl::String), requires_arg_cvref(stl::same_as<bool>));
             };
-            static constexpr bool is_tuple      = istl::Tuple<V>;
-            static constexpr bool is_collection = istl::Collection<V>;
-            static constexpr bool is_list       = is_tuple || is_collection;
+
+
+            static constexpr bool is_list    = istl::ReadOnlyCollection<V>;
+            static constexpr bool is_variant = istl::is_specialization_of_v<V, stl::variant>;
 
             struct collection_view_calculator {
                 template <bool>
@@ -84,26 +87,27 @@ namespace webpp::views {
                 };
             };
 
-            struct tuple_view_calculator {
+            struct variant_view_calculator {
 
-                template <typename VV>
-                struct fix_val {
-                    static constexpr bool value = true;
-                    using type                  = typename component_view<VV>::value_type;
+                template <typename T>
+                struct transformer {
+                    using type = typename component_view<T>::value_type;
                 };
 
                 template <bool>
                 struct evaluate {
-                    using type = istl::recursive_parameter_replacer<V, fix_val>;
+                    using type = istl::transform_parameters<V, transformer>;
                 };
             };
 
+
             // okay debate:
             // do we need to use a collection
-            using collection_view =
-              istl::lazy_conditional_t<is_collection, collection_view_calculator, istl::lazy_type<V>>;
-            using tuple_view = istl::lazy_conditional_t<is_tuple, tuple_view_calculator, istl::lazy_type<V>>;
-            using list_view  = stl::conditional_t<is_collection, collection_view, tuple_view>;
+            using list_view =
+              istl::lazy_conditional_t<is_list, collection_view_calculator, istl::lazy_type<V>>;
+
+            using variant_view =
+              istl::lazy_conditional_t<is_variant, variant_view_calculator, istl::lazy_type<V>>;
 
 
 
@@ -123,7 +127,11 @@ namespace webpp::views {
                             stl::conditional_t<
                                 is_convertible_to_string,
                                 string_type,
-                                istl::nothing_type
+                                stl::conditional_t<
+                                    need_variant && is_variant,
+                                    variant_view,
+                                    istl::nothing_type
+                                >
                             >
                         >
                     >
@@ -133,27 +141,27 @@ namespace webpp::views {
 
 
           private:
-            string_view_type key;
-            value_type       value;
+            string_view_type key_view;
+            value_type       value_view;
 
           public:
             template <EnabledTraits ET, typename StrT, typename T>
                 requires(istl::StringViewifiableOf<string_view_type, StrT>)
             constexpr component_view(ET const& et, StrT&& input_key, T&& input_value) {
-                set_key(stl::forward<StrT>(input_key));
-                set_value(stl::forward<T>(input_value), et);
+                key(stl::forward<StrT>(input_key));
+                value(stl::forward<T>(input_value), et);
             }
 
             // set the key
             template <typename StrT>
                 requires(istl::StringViewifiableOf<string_view_type, StrT>)
-            void set_key(StrT&& str) noexcept {
-                key = istl::string_viewify_of<string_view_type>(stl::forward<StrT>(str));
+            void key(StrT&& str) noexcept {
+                key_view = istl::string_viewify_of<string_view_type>(stl::forward<StrT>(str));
             }
 
             // set the input "val"ue into the "out"put value.
             template <typename T, EnabledTraits ET>
-            static void set_value(T const& val, auto& out, ET&& et) {
+            static void value(T const& val, auto& out, ET&& et) {
                 // I'm passing val as a const& and not a && because this function cannot handle moves since
                 // we might make a string_view of val and then val is going out of scope for the user of this
                 // function and our string view is gone too with it. So no moves :)
@@ -165,20 +173,13 @@ namespace webpp::views {
                 } else if constexpr (need_string && is_convertible_to_string) {
                     // yes, value_type now should be a string type not a string view type
                     out = lexical::cast<string_type>(val, et.alloc_pack);
-                } else if constexpr (need_list && is_collection) {
+                } else if constexpr (need_list && is_list) {
                     using collection_value_type = typename value_type::value_type;
                     out                         = object::make_general<value_type>(et.alloc_pack);
                     out.reserve(val.size());
                     stl::transform(stl::begin(val), stl::end(val), stl::back_inserter(out), [&](auto&& v) {
                         auto nv = object::make_general<collection_value_type>(et.alloc_pack);
-                        component_view::set_value(v, nv, et);
-                        return nv;
-                    });
-                } else if constexpr (need_list && is_tuple) {
-                    tuple_transform(val, out, [&]<typename OldT>(OldT&& old_val) {
-                        using new_view_type = typename component_view<OldT>::value_type;
-                        auto nv             = object::make_general<new_view_type>(et.alloc_pack);
-                        component_view::set_value(old_val, nv, et);
+                        component_view::value(v, nv, et);
                         return nv;
                     });
                 }
@@ -186,35 +187,35 @@ namespace webpp::views {
 
             // set a new value for
             template <typename T, EnabledTraits ET>
-            void set_value(T const& val, ET&& et) {
-                component_view::set_value(val, value, et);
+            void value(T const& val, ET&& et) {
+                component_view::value(val, value_view, et);
             }
 
 
-            string_view_type get_key() const noexcept {
-                return key;
+            string_view_type key() const noexcept {
+                return key_view;
             }
 
-            auto get_value() const noexcept {
+            auto value() const noexcept {
                 if constexpr (istl::String<value_type> && !istl::StringView<value_type>) {
                     // convert to string view if it's a normal string
-                    return istl::string_viewify_of<string_view_type>(value);
+                    return istl::string_viewify_of<string_view_type>(value_view);
                 } else {
-                    return value;
+                    return value_view;
                 }
             }
         };
 
         using list_type = traits::generalify_allocators<traits_type, stl::vector<string_view_type>>;
 
-        using tuple_of_types =
-          stl::tuple<stl::conditional_t<need_bool, component_view<bool>, void>,
-                     stl::conditional_t<need_lambda, component_view<lambda>, void>,
-                     stl::conditional_t<need_string, component_view<string_view_type>, void>,
-                     stl::conditional_t<need_list, component_view<list_type>, void>>;
-        using unique_types = istl::unique_parameters<tuple_of_types>;
+        using tuple_of_types = stl::variant<stl::conditional_t<need_bool, bool, void>,
+                                            stl::conditional_t<need_lambda, lambda, void>,
+                                            stl::conditional_t<need_string, string_view_type, void>,
+                                            stl::conditional_t<need_list, list_type, void>>;
+        using unique_types   = component_view<istl::unique_parameters<tuple_of_types>>;
 
-        using type = istl::replace_templated_parameter<unique_types, stl::tuple, stl::variant>;
+        // Data View (qualifies DataView) type:
+        using type = traits::generalify_allocators<traits_type, stl::span<unique_types>>;
     };
 
 

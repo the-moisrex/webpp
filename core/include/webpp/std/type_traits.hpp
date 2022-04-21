@@ -218,8 +218,26 @@ namespace webpp::istl {
         using type = NewType<Args...>;
     };
 
+    /**
+     * Replace T's template typename with the NewTempl.
+     * For example replace std::tuple<...> with std::variant<...>
+     */
     template <typename T, template <typename...> typename NewType>
     using template_swap = typename template_swap_type<T, NewType>::type;
+
+
+    template <typename T, template <typename> typename Transformer>
+    struct transform_parameters_type;
+
+    template <template <typename...> typename T, template <typename> typename Transformer, typename... Args>
+    struct transform_parameters_type<T<Args...>, Transformer> {
+        using type = T<Transformer<Args>...>;
+    };
+
+
+    template <typename T, template <typename> typename Transformer>
+    using transform_parameters = typename transform_parameters_type<T, Transformer>::type;
+
 
     namespace details {
 
@@ -539,6 +557,7 @@ namespace webpp::istl {
     template <typename T, template <typename...> typename OldType, template <typename...> typename NewType>
     using recursively_replace_templated_parameter =
       typename details::recursively_change_templated_parameter<T, OldType, NewType>::type;
+
 
 
     /**

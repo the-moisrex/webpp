@@ -55,7 +55,8 @@ namespace webpp::views {
         static constexpr view_data_flags acceptable_types{data_views::boolean,
                                                           data_views::lambda,
                                                           data_views::string,
-                                                          data_views::list};
+                                                          data_views::list,
+                                                          data_views::variant};
     };
 
     template <Traits TraitsType>
@@ -180,7 +181,7 @@ namespace webpp::views {
             return nullptr;
         }
 
-        context(const context&) = delete;
+        context(const context&)            = delete;
         context& operator=(const context&) = delete;
     };
 
@@ -262,7 +263,7 @@ namespace webpp::views {
         ~context_pusher() {
             ctx_.ctx.pop();
         }
-        context_pusher(const context_pusher&) = delete;
+        context_pusher(const context_pusher&)            = delete;
         context_pusher& operator=(const context_pusher&) = delete;
 
       private:
