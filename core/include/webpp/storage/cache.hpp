@@ -26,16 +26,17 @@ namespace webpp {
             cache&   c;
             key_type the_key;
 
+          public:
             constexpr cache_result(cache& input_cache, key_type key, optional_value_type&& val) noexcept
               : optional_value_type{stl::move(val)},
                 c{input_cache},
                 the_key{stl::move(key)} {}
 
-          public:
             template <CacheValue V>
                 requires(stl::is_convertible_v<V, value_type>)
             constexpr cache_result& operator=(V&& new_val) {
                 c.set(the_key, stl::forward<V>(new_val));
+                return *this;
             }
 
 

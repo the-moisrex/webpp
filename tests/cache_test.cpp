@@ -1,6 +1,7 @@
 #include "../core/include/webpp/storage/cache.hpp"
 
 #include "../core/include/webpp/storage/directory_gate.hpp"
+#include "../core/include/webpp/storage/file_gate.hpp"
 #include "../core/include/webpp/storage/lru_cache.hpp"
 #include "common_pch.hpp"
 
@@ -10,6 +11,7 @@ static_assert(CacheKey<int>);
 static_assert(!CacheKey<void>);
 static_assert(CacheValue<double>);
 static_assert(StorageGate<null_gate>);
+static_assert(StorageGate<directory_gate>);
 static_assert(StorageGate<file_gate>);
 static_assert(StorageGate<memory_gate<null_gate>>);
 static_assert(!Allocator<int>);
