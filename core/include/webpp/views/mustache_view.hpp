@@ -181,7 +181,7 @@ namespace webpp::views {
             return nullptr;
         }
 
-        context(const context&)            = delete;
+        context(const context&) = delete;
         context& operator=(const context&) = delete;
     };
 
@@ -263,7 +263,7 @@ namespace webpp::views {
         ~context_pusher() {
             ctx_.ctx.pop();
         }
-        context_pusher(const context_pusher&)            = delete;
+        context_pusher(const context_pusher&) = delete;
         context_pusher& operator=(const context_pusher&) = delete;
 
       private:
@@ -393,7 +393,7 @@ namespace webpp::views {
         constexpr void set_custom_escape(const escape_handler& escape_fn) {
             escaper = escape_fn;
         }
-/*
+
         template <typename stream_type>
         constexpr stream_type& render(data_view_type const& data, stream_type& stream) {
             render(data, [&stream](string_view_type str) {
@@ -431,7 +431,7 @@ namespace webpp::views {
             context_internal<traits_type> context{ctx};
             render(handler, context);
         }
-*/
+
 
         // this member function will be used by the view manager
         constexpr void render(string_type& out, data_view_type const& data) {

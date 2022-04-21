@@ -26,7 +26,7 @@ namespace webpp::views {
     } // namespace details
 
     template <typename T>
-    concept DataViews = istl::ReadOnlyCollection<T> && requires {
+    concept DataViews = stl::same_as<T, istl::nothing_type> || istl::ReadOnlyCollection<T> && requires {
         typename T::value_type;
         requires DataView<typename T::value_type>;
     };

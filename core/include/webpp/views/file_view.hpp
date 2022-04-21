@@ -19,8 +19,8 @@ namespace webpp::views {
         using string_type      = traits::general_string<traits_type>;
         using char_type        = traits::char_type<traits_type>;
 
-        using data_view_type = string_view_type;
-        using data_type      = string_type;
+        using data_view_type = istl::nothing_type;
+        using data_type      = istl::nothing_type;
 
       private:
         string_type data;
@@ -30,6 +30,11 @@ namespace webpp::views {
 
         template <EnabledTraits ET>
         constexpr file_view(ET const& et) : data{et.alloc_pack.template get_allocator<char_type>()} {}
+
+
+        constexpr data_view_type generate_data_view(auto&&) const noexcept {
+            return {};
+        }
 
 
         void scheme(string_type&& str) noexcept {
@@ -44,7 +49,7 @@ namespace webpp::views {
             out = data;
         }
 
-        void render(string_type& out, data_view_type) const noexcept {
+        void render(string_type& out, data_view_type const&) const noexcept {
             out = data;
         }
     };
