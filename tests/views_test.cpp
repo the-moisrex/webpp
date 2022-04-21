@@ -19,11 +19,22 @@ static_assert(ViewManager<view_manager<default_traits>>);
 TEST(TheViews, MustacheView) {
     using namespace mustache;
 
-    mustache_view<default_traits> v;
+    enable_owner_traits et;
+
+    mustache_view<default_traits> v{et};
     v.scheme("My name is {{name}}");
-    auto res = v.render({"name", "moisrex"});
+    stl::string str;
+    v.render(str, v.generate_data_view({{"name", "moisrex"}}));
     EXPECT_EQ("My name is moisrex", res);
 }
 
 
-TEST(TheViews, ViewManagerTest) {}
+TEST(TheViews, ViewManagerTest) {
+
+    enable_owner_traits et;
+
+    view_manager<default_traits> man{et};
+
+    const auto res = et.mustache("assets/hello-world", {{"name", "moisrex"}});
+    EXPECT_EQ(res, "Hello, moisrex");
+}
