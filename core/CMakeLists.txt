@@ -225,7 +225,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/storage/file_gate.hpp
         ${LIB_INCLUDE_DIR}/webpp/storage/directory_gate.hpp
         ${LIB_INCLUDE_DIR}/webpp/storage/memory_gate.hpp
-        ${LIB_INCLUDE_DIR}/webpp/storage/permanent_cache.hpp
+        ${LIB_INCLUDE_DIR}/webpp/storage/non_evicting_cache.hpp
         ${LIB_INCLUDE_DIR}/webpp/storage/unified_caches.hpp
 
         ${LIB_INCLUDE_DIR}/main.hpp
