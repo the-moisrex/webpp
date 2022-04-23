@@ -125,7 +125,7 @@ namespace webpp::views {
 
       public:
         template <EnabledTraits ET>
-        context(ET const& et, const data_view_type* data)
+        context(ET&& et, const data_view_type* data)
           : items{et.alloc_pack.template general_allocator<items_value_type>()} {
             push(data);
         }
@@ -292,9 +292,7 @@ namespace webpp::views {
 
 
         template <EnabledTraits ET>
-        constexpr component(ET const&        et,
-                            string_view_type t = "",
-                            string_size_type p = string_view_type::npos)
+        constexpr component(ET&& et, string_view_type t = "", string_size_type p = string_view_type::npos)
           : text(t),
             children{et.alloc_pack.template general_allocator<component>()},
             position(p) {}
@@ -375,7 +373,8 @@ namespace webpp::views {
 
       public:
         template <EnabledTraits ET>
-        constexpr mustache_view(ET const& et) noexcept : etraits{et} {}
+        constexpr mustache_view(ET&& et) noexcept : etraits{et},
+                                                    root_component{et} {}
 
         constexpr void scheme(string_view_type input) {
             delimiter_set<traits_type> delim_set;
@@ -472,7 +471,7 @@ namespace webpp::views {
 
       private:
         template <EnabledTraits ET>
-        constexpr mustache_view(ET const& et, string_view_type input, context_internal<traits_type>& ctx)
+        constexpr mustache_view(ET&& et, string_view_type input, context_internal<traits_type>& ctx)
           : mustache_view(et) {
             parser(input, ctx);
         }

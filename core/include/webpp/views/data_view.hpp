@@ -147,7 +147,7 @@ namespace webpp::views {
           public:
             template <EnabledTraits ET, typename StrT, typename T>
                 requires(istl::StringViewifiableOf<string_view_type, StrT>)
-            constexpr component_view(ET const& et, StrT&& input_key, T&& input_value) {
+            constexpr component_view(ET&& et, StrT&& input_key, T&& input_value) {
                 key(stl::forward<StrT>(input_key));
                 value(stl::forward<T>(input_value), et);
             }

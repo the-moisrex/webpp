@@ -79,7 +79,7 @@ namespace webpp::views {
         constexpr view_manager() noexcept = default;
 
         template <EnabledTraits ET>
-        constexpr view_manager(ET const& et) noexcept : etraits{et} {}
+        constexpr view_manager(ET&& et) noexcept : etraits{et} {}
 
 
         /**
