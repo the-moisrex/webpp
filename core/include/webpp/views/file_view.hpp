@@ -29,7 +29,7 @@ namespace webpp::views {
         constexpr file_view() = default;
 
         template <EnabledTraits ET>
-        constexpr file_view(ET&& et) : data{et.alloc_pack.template get_allocator<char_type>()} {}
+        constexpr file_view(ET&& et) : data{et.alloc_pack.template general_allocator<char_type>()} {}
 
 
         constexpr data_view_type generate_data_view(auto&&) const noexcept {

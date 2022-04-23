@@ -311,7 +311,7 @@ namespace webpp::views {
         }
 
         template <typename WalkCallback>
-        constexpr void walk_children(WalkCallback& callback) {
+        constexpr void walk_children(WalkCallback&& callback) {
             for (auto& child : children) {
                 if (child.walk(callback) != walk_control::walk) {
                     break;
@@ -568,11 +568,10 @@ namespace webpp::views {
                 }
 
                 // Parse tag
-                string_view_type tag_contents{input,
-                                              tag_contents_location,
-                                              tag_location_end - tag_contents_location};
+                string_view_type tag_contents =
+                  input.substr(tag_contents_location, tag_location_end - tag_contents_location);
                 ascii::trim(tag_contents);
-                component_type comp;
+                component_type comp{*this};
                 if (!tag_contents.empty() && tag_contents[0] == '=') {
                     if (!parse_set_delimiter_tag(tag_contents, delim_set)) {
                         streamstring ss;
@@ -582,7 +581,7 @@ namespace webpp::views {
                     }
                     current_delimiter_is_brace = delim_set.is_default();
                     comp.tag.type              = tag_type::set_delimiter;
-                    comp.tag.delim_set.reset(new delimiter_set<traits_type>(delim_set));
+                    comp.tag.delim_set         = delim_set;
                 }
                 if (comp.tag.type != tag_type::set_delimiter) {
                     parse_tag_contents(tag_is_unescaped_var, tag_contents, comp.tag);
@@ -604,8 +603,8 @@ namespace webpp::views {
                         error_msg.assign(ss.str());
                         return;
                     }
-                    sections.back()->tag.section_text.reset(new string_type(
-                      input.substr(section_starts.back(), tag_location_start - section_starts.back())));
+                    sections.back()->tag.section_text =
+                      input.substr(section_starts.back(), tag_location_start - section_starts.back());
                     sections.pop_back();
                     section_starts.pop_back();
                 }
@@ -681,7 +680,7 @@ namespace webpp::views {
                 tag.name = contents;
             } else if (contents.empty()) {
                 tag.type = tag_type::variable;
-                tag.name.clear();
+                tag.name = {};
             } else {
                 switch (contents.at(0)) {
                     case '#': tag.type = tag_type::section_begin; break;
