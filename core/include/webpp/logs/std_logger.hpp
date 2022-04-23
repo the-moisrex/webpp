@@ -21,8 +21,8 @@ namespace webpp {
     template <auto stream_getter, bool IsDebug = false>
     struct std_logger {
         using logger_type = std_logger;
-        using logger_ref  = logger_type const; // copy the logger, there's nothing to copy
-        using logger_ptr  = logger_type*;      // there's a syntax difference, so we can't copy
+        using logger_ref  = logger_type;  // copy the logger, there's nothing to copy
+        using logger_ptr  = logger_type*; // there's a syntax difference, so we can't copy
 
         static constexpr bool enabled = true; // todo: make this configurable by the user
 #if defined(DEBUG) && DEBUG

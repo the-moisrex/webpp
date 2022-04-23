@@ -71,8 +71,16 @@ namespace webpp {
 
         constexpr explicit enable_traits(enable_traits const&) noexcept = default;
         constexpr explicit enable_traits(enable_traits&&) noexcept      = default;
-        constexpr enable_traits& operator=(enable_traits const&) noexcept = default;
-        constexpr enable_traits& operator=(enable_traits&&) noexcept = default;
+
+        constexpr enable_traits& operator=(enable_traits const& rhs) {
+            logger     = rhs.logger;
+            alloc_pack = rhs.alloc_pack;
+        }
+
+        constexpr enable_traits& operator=(enable_traits&& rhs) noexcept {
+            logger     = stl::move(rhs.logger);
+            alloc_pack = rhs.alloc_pack;
+        }
 
         constexpr void swap(EnabledTraits auto& other) noexcept {
             using stl::swap;

@@ -379,8 +379,14 @@ namespace webpp::views {
 
       public:
         template <EnabledTraits ET>
-        constexpr mustache_view(ET&& et) noexcept : etraits{et},
-                                                    root_component{et} {}
+            requires(!stl::same_as<stl::remove_cvref_t<ET>, mustache_view>)
+        constexpr mustache_view(ET&& et) noexcept : etraits{et}, root_component{et} {}
+
+        constexpr mustache_view(mustache_view const&)     = default;
+        constexpr mustache_view(mustache_view&&) noexcept = default;
+
+        constexpr mustache_view& operator=(mustache_view const&) = default;
+        constexpr mustache_view& operator=(mustache_view&&) noexcept = default;
 
         constexpr void scheme(string_view_type input) {
             delimiter_set<traits_type> delim_set;
@@ -777,7 +783,7 @@ namespace webpp::views {
                     break;
                 case tag_type::section_begin:
                     if ((var = ctx.ctx.get(tag.name)) != nullptr) {
-                        if (var->is_lambda() || var->is_lambda2()) {
+                        if (stl::holds_alternative<lambda_view_type>(var)) {
                             if (!render_lambda(handler,
                                                var,
                                                ctx,

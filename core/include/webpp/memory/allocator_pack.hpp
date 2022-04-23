@@ -409,7 +409,7 @@ namespace webpp::alloc {
 
       public:
         constexpr allocator_pack(allocator_pack&&) noexcept = default;
-        constexpr allocator_pack(allocator_pack const&) = delete; // some resources are not copy-able; so ...
+        constexpr allocator_pack(allocator_pack const&) = default; // some resources are not copy-able; so ...
 
         constexpr allocator_pack(filtered_resources_type const& res) noexcept : resources{res} {};
         constexpr allocator_pack(filtered_resources_type&& res) noexcept : resources{stl::move(res)} {};

@@ -151,6 +151,12 @@ namespace webpp::views {
                 value(stl::forward<T>(input_value), et);
             }
 
+            constexpr component_view(component_view const&)     = default;
+            constexpr component_view(component_view&&) noexcept = default;
+
+            constexpr component_view& operator=(component_view const&) = default;
+            constexpr component_view& operator=(component_view&&) noexcept = default;
+
             // set the key
             template <typename StrT>
                 requires(istl::StringViewifiableOf<string_view_type, StrT>)

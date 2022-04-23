@@ -14,6 +14,8 @@ namespace webpp::views {
 
     template <typename T>
     concept DataView = requires(T item) {
+        requires stl::copyable<T>;
+        requires stl::movable<T>;
         item.key();
         item.value();
     };
@@ -83,6 +85,9 @@ namespace webpp::views {
         typename T::traits_type;
         requires Traits<typename T::traits_type>;
         requires DataViews<typename T::data_view_type>;
+
+        requires stl::movable<T>;
+        requires stl::copyable<T>;
 
 
         // render with the data passed to it

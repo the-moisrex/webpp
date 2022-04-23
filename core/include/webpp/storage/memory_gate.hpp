@@ -28,13 +28,13 @@ namespace webpp {
 
             template <typename ET>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
-                         !stl::same_as<ET, storage_gate &&>)
-            storage_gate(ET&& et) // NOLINT(cppcoreguidelines-pro-type-member-init)
+                         !stl::same_as<ET, storage_gate&&>)
+            constexpr storage_gate(ET&& et) // NOLINT(cppcoreguidelines-pro-type-member-init)
               : etraits{et},
                 map(et.alloc_pack, et.alloc_pack.general_resource()) {}
 
             template <typename K>
-            stl::optional<data_type> get(K&& key) {
+            constexpr stl::optional<data_type> get(K&& key) {
                 if (auto it = map.find(stl::forward<K>(key)); it != map.end()) {
                     return data_type{.key     = it->first,
                                      .value   = it->second.second,
@@ -44,12 +44,12 @@ namespace webpp {
             }
 
             template <typename K, typename V>
-            void set(K&& key, V&& value, options_type opts = {}) {
+            constexpr void set(K&& key, V&& value, options_type opts = {}) {
                 map.insert_or_assign(stl::forward<K>(key),
                                      mapped_type{stl::move(opts), stl::forward<V>(value)});
             }
 
-            void set_options(key_type const& key, options_type const& opts) {
+            constexpr void set_options(key_type const& key, options_type const& opts) {
                 if (auto it = map.find(key); it != map.end()) {
                     it->second.first = opts;
                 }
@@ -57,12 +57,12 @@ namespace webpp {
 
 
             template <typename K>
-            void erase(K&& input) {
+            constexpr void erase(K&& input) {
                 map.erase(stl::forward<K>(input));
             }
 
             template <typename Pred>
-            void erase_if(Pred&& predicate) {
+            constexpr void erase_if(Pred&& predicate) {
                 stl::erase_if(map, [predicate](auto&& item) {
                     auto [key, value_pack] = item;
                     auto [opts, value]     = value_pack;
@@ -70,19 +70,19 @@ namespace webpp {
                 });
             }
 
-            auto begin() const {
+            constexpr auto begin() const {
                 return map.begin();
             }
 
-            auto end() const {
+            constexpr auto end() const {
                 return map.begin();
             }
 
-            auto begin() {
+            constexpr auto begin() {
                 return map.begin();
             }
 
-            auto end() {
+            constexpr auto end() {
                 return map.begin();
             }
 

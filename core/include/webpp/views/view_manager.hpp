@@ -49,7 +49,7 @@ namespace webpp::views {
         using mustache_view_type = mustache_view<traits_type>;
         using json_view_type     = json_view<traits_type>;
         using file_view_type     = file_view<traits_type>;
-        using view_types         = stl::variant<mustache_view_type, json_view_type, file_view_type>;
+        using view_types         = stl::variant<mustache_view_type, /*json_view_type,*/ file_view_type>;
 
         using mustache_data_type = typename mustache_view_type::data_type;
         // using json_data_type = typename json_view_type::data_type;
@@ -241,7 +241,7 @@ namespace webpp::views {
             mustache_view_type view = get_view<mustache_view_type>(*file);
             view.scheme(stl::move(file_content.value()));
             view.render(out, data);
-            cached_views.set(*file, stl::move(view));
+            cached_views.set(*file, view_types{stl::in_place_type<mustache_view_type>, stl::move(view)});
             return out;
         }
 
@@ -274,7 +274,9 @@ namespace webpp::views {
                             mustache_view_type view = get_view<mustache_view_type>(*file);
                             view.scheme(file_content.value());
                             view.render(out, data);
-                            cached_views.set(*file, stl::move(view));
+                            cached_views.set(
+                              *file,
+                              view_types{stl::in_place_type<mustache_view_type>, stl::move(view)});
                         }
                         break;
                     }
@@ -295,7 +297,7 @@ namespace webpp::views {
             file_view_type view = get_view<file_view_type>(*file);
             view.scheme(stl::move(file_content.value()));
             view.render(out);
-            cached_views.set(*file, stl::move(view));
+            cached_views.set(*file, view_types{stl::in_place_type<file_view_type>, stl::move(view)});
 
             return out;
         }
