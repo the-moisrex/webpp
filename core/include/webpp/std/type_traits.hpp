@@ -231,7 +231,7 @@ namespace webpp::istl {
 
     template <template <typename...> typename T, template <typename> typename Transformer, typename... Args>
     struct transform_parameters_type<T<Args...>, Transformer> {
-        using type = T<Transformer<Args>...>;
+        using type = T<typename Transformer<Args>::type...>;
     };
 
 

@@ -120,6 +120,7 @@ namespace webpp::views {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
         using data_view_type   = mustache_data_view<traits_type>;
+        using data_value_type  = typename data_view_type::value_type;
         using items_type = traits::generalify_allocators<traits_type, stl::vector<const data_view_type*>>;
         using items_value_type = typename items_type::value_type;
 
@@ -142,7 +143,7 @@ namespace webpp::views {
             items.erase(items.begin());
         }
 
-        const data_view_type* get(string_view_type name) const {
+        const data_value_type* get(string_view_type name) const {
             // process {{.}} name
             if (name.size() == 1 && name.at(0) == '.') {
                 return items.front();
@@ -174,7 +175,7 @@ namespace webpp::views {
             return nullptr;
         }
 
-        const data_view_type* get_partial(string_view_type name) const {
+        const data_value_type* get_partial(string_view_type name) const {
             for (const auto& item : items) {
                 const auto var = item->get(name);
                 if (var) {
@@ -361,6 +362,9 @@ namespace webpp::views {
         using data_type   = traits::generalify_allocators<traits_type, stl::map<string_type, value_type>>;
         using data_view_types = mustache_data_view_types<traits_type>;
         using data_view_type  = mustache_data_view<traits_type>;
+        using data_value_type = typename data_view_type::value_type;
+
+        static_assert(DataView<data_value_type>, "data_view_type should be a span<data_value>");
 
         using lambda_view_type = typename data_view_types::lambda;
 
@@ -771,7 +775,7 @@ namespace webpp::views {
             }
 
             const mstch_tag<traits_type>& tag{comp.tag};
-            const data_view_type*         var = nullptr;
+            const data_value_type*        var = nullptr;
             switch (tag.type) {
                 case tag_type::variable:
                 case tag_type::unescaped_variable:
@@ -783,7 +787,7 @@ namespace webpp::views {
                     break;
                 case tag_type::section_begin:
                     if ((var = ctx.ctx.get(tag.name)) != nullptr) {
-                        if (stl::holds_alternative<lambda_view_type>(var)) {
+                        if (stl::holds_alternative<lambda_view_type>(var->value_ptr())) {
                             if (!render_lambda(handler,
                                                var,
                                                ctx,
@@ -886,12 +890,12 @@ namespace webpp::views {
         }
 
         constexpr bool render_variable(const render_handler&          handler,
-                                       const data_view_type*          var,
+                                       const data_value_type*         var,
                                        context_internal<traits_type>& ctx,
                                        bool                           escaped) {
-            if (auto val_str = stl::get_if<string_view_type>(var)) {
+            if (auto val_str = stl::get_if<string_view_type>(var->value_ptr())) {
                 ctx.line_buffer.data.append(escaped ? escaper(val_str) : val_str);
-            } else if (auto val_lambda = stl::get_if<lambda_view_type>(var)) {
+            } else if (auto val_lambda = stl::get_if<lambda_view_type>(var->value_ptr())) {
                 const render_lambda_escape escape_opt =
                   escaped ? render_lambda_escape::escape : render_lambda_escape::unescape;
                 return render_lambda(handler, val_lambda, ctx, escape_opt, {}, false);

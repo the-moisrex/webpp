@@ -115,8 +115,8 @@ namespace webpp::views {
                 need_bool && is_bool,
                 bool,
                 stl::conditional_t<
-                    need_string && is_string,
-                    string_view_type,
+                    need_variant && is_variant,
+                    variant_view,
                     stl::conditional_t<
                         need_lambda && is_lambda,
                         lambda,
@@ -124,11 +124,11 @@ namespace webpp::views {
                             need_list && is_list,
                             list_view,
                             stl::conditional_t<
-                                is_convertible_to_string,
-                                string_type,
+                                need_string && is_string,
+                                string_view_type,
                                 stl::conditional_t<
-                                    need_variant && is_variant,
-                                    variant_view,
+                                    is_convertible_to_string,
+                                    string_type,
                                     istl::nothing_type
                                 >
                             >
@@ -208,6 +208,10 @@ namespace webpp::views {
                 } else {
                     return value_view;
                 }
+            }
+
+            const value_type* value_ptr() const noexcept {
+                return &value_view;
             }
         };
 
