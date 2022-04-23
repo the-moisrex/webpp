@@ -41,7 +41,7 @@ namespace webpp::views {
             data = stl::move(str);
         }
 
-        void scheme(string_type const& str) {
+        void scheme(string_view_type str) {
             data = str;
         }
 

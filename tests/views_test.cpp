@@ -18,12 +18,13 @@ static_assert(ViewManager<view_manager<default_traits>>);
 
 TEST(TheViews, MustacheView) {
     enable_owner_traits<default_traits> et;
+    using string_type = traits::general_string<default_traits>;
 
     mustache_view<default_traits> v{et};
     v.scheme("My name is {{name}}");
-    stl::string str;
+    string_type str;
     v.render(str, {{"name", "moisrex"}});
-    EXPECT_EQ("My name is moisrex", res);
+    EXPECT_EQ("My name is moisrex", str);
 }
 
 
