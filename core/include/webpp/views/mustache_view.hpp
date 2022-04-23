@@ -60,7 +60,10 @@ namespace webpp::views {
     };
 
     template <Traits TraitsType>
-    using mustache_data_view = typename data_view<mustache_data_view_settings<TraitsType>{}>::type;
+    using mustache_data_view_types = data_view<mustache_data_view_settings<TraitsType>{}>;
+
+    template <Traits TraitsType>
+    using mustache_data_view = typename mustache_data_view_types<TraitsType>::type;
 
     template <typename TraitsType>
     struct basic_renderer {
@@ -217,8 +220,8 @@ namespace webpp::views {
         using traits_type = TraitsType;
 
         context<traits_type>&          ctx;
-        delimiter_set<traits_type>     delim_set;
-        line_buffer_state<traits_type> line_buffer;
+        delimiter_set<traits_type>     delim_set{};
+        line_buffer_state<traits_type> line_buffer{};
     };
 
     enum class tag_type {
@@ -351,12 +354,15 @@ namespace webpp::views {
         using component_type    = component<traits_type>;
         using walk_control_type = typename component_type::walk_control;
 
-        using lambda_type    = stl::variant<stl::function<string_type(string_view_type)>,
+        using lambda_type = stl::variant<stl::function<string_type(string_view_type)>,
                                          stl::function<string_type(string_view_type, bool)>>;
-        using map_type       = traits::generalify_allocators<traits_type, stl::map<string_type, string_type>>;
-        using value_type     = stl::variant<bool, string_type, lambda_type, map_type>;
-        using data_type      = traits::generalify_allocators<traits_type, stl::map<string_type, value_type>>;
-        using data_view_type = mustache_data_view<traits_type>;
+        using map_type    = traits::generalify_allocators<traits_type, stl::map<string_type, string_type>>;
+        using value_type  = stl::variant<bool, string_type, lambda_type, map_type>;
+        using data_type   = traits::generalify_allocators<traits_type, stl::map<string_type, value_type>>;
+        using data_view_types = mustache_data_view_types<traits_type>;
+        using data_view_type  = mustache_data_view<traits_type>;
+
+        using lambda_view_type = typename data_view_types::lambda;
 
         using render_handler = stl::function<void(string_view_type)>;
 
@@ -439,7 +445,7 @@ namespace webpp::views {
             }
             if constexpr (stl::same_as<stl::remove_cvref_t<DT>, data_view_type>) {
                 context<traits_type>          ctx{*this, &data};
-                context_internal<traits_type> context{ctx};
+                context_internal<traits_type> context{.ctx = ctx};
                 // todo: optimization chance: out::reserve
                 render(
                   [&]<typename ContentT>(ContentT&& content) {
@@ -727,7 +733,7 @@ namespace webpp::views {
             });
             // process the last line, but only for the top-level renderer
             if (root_renderer) {
-                render_current_line(handler, ctx, nullptr);
+                render_current_line(handler, ctx.line_buffer, nullptr);
             }
         }
 
@@ -751,7 +757,7 @@ namespace webpp::views {
                                                      component_type&                comp) {
             if (comp.is_text()) {
                 if (comp.is_newline()) {
-                    render_current_line(handler, ctx, &comp);
+                    render_current_line(handler, ctx.line_buffer, &comp);
                 } else {
                     ctx.line_buffer.data.append(comp.text);
                 }
@@ -877,19 +883,19 @@ namespace webpp::views {
                                        const data_view_type*          var,
                                        context_internal<traits_type>& ctx,
                                        bool                           escaped) {
-            if (var->is_string()) {
-                const auto& varstr = var->string_value();
-                ctx.line_buffer.data.append(escaped ? escaper(varstr) : varstr);
-            } else if (var->is_lambda()) {
+            if (auto val_str = stl::get_if<string_view_type>(var)) {
+                ctx.line_buffer.data.append(escaped ? escaper(val_str) : val_str);
+            } else if (auto val_lambda = stl::get_if<lambda_view_type>(var)) {
                 const render_lambda_escape escape_opt =
                   escaped ? render_lambda_escape::escape : render_lambda_escape::unescape;
-                return render_lambda(handler, var, ctx, escape_opt, {}, false);
-            } else if (var->is_lambda2()) {
-                using streamstring = stl::basic_ostringstream<typename string_type::value_type>;
-                streamstring ss;
-                ss << "Lambda with render argument is not allowed for regular variables";
-                error_msg = ss.str();
-                return false;
+                return render_lambda(handler, val_lambda, ctx, escape_opt, {}, false);
+                {
+                    using streamstring = stl::basic_ostringstream<typename string_type::value_type>;
+                    streamstring ss;
+                    ss << "Lambda with render argument is not allowed for regular variables";
+                    error_msg = ss.str();
+                    return false;
+                }
             }
             return true;
         }

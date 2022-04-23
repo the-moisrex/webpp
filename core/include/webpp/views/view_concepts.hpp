@@ -55,8 +55,15 @@ namespace webpp::views {
      *   - Cross-Format Transpiler
      */
     template <typename T>
-    concept ViewManager = requires(T man, stl::string_view str) {
-        { man.view(str) } -> istl::String;
+    concept ViewManager = requires(T man) {
+        typename T::traits_type;
+        typename T::string_type;
+        typename T::string_view_type;
+
+        requires Traits<typename T::traits_type>;
+        requires requires(typename T::string_view_type str) {
+            { man.view(str) } -> istl::String;
+        };
     };
 
     template <typename T>
