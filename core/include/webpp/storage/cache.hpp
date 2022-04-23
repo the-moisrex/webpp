@@ -73,6 +73,14 @@ namespace webpp {
             return cache_result{*this, key, get(key)};
         }
 
+        template <CacheKey K, CacheValue V>
+            requires(stl::convertible_to<stl::remove_cvref_t<K>, key_type>&&    // it's a key
+                       stl::convertible_to<stl::remove_cvref_t<V>, value_type>) // it's a value
+        cache& set(K&& key, V&& value) {
+            strategy_type::set(stl::forward<K>(key), stl::forward<V>(value));
+            return *this;
+        }
+
 
         template <CacheKey K, CacheValue V>
             requires(stl::is_convertible_v<K, key_type>&& stl::is_convertible_v<V, value_type>)

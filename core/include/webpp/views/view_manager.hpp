@@ -59,12 +59,8 @@ namespace webpp::views {
         // using json_data_view_type = typename json_view_type::data_view_type;
         using file_data_view_type = typename file_view_type::data_view_type;
 
-        struct cached_view_type {
-            path_type  file;
-            view_types view;
-        };
 
-        using cache_type = lru_cache<traits_type, string_type, cached_view_type, memory_gate<null_gate>>;
+        using cache_type = lru_cache<traits_type, path_type, view_types, memory_gate<null_gate>>;
 
         static constexpr auto VIEW_CAT = "View";
 
@@ -217,8 +213,9 @@ namespace webpp::views {
         }
 
 
-        view_types& get_view(path_type const& file) noexcept {
-            return cached_views.emplace_get(file, *this);
+        template <typename VT>
+        VT get_view(path_type const& file) noexcept {
+            return stl::get<VT>(cached_views.emplace_get(file, VT{*this}));
         }
 
 
@@ -241,9 +238,10 @@ namespace webpp::views {
 
             // at this point we don't care about the extension of the file; the user explicitly wants us to
             // parse it as a mustache file
-            mustache_view_type& view = stl::get<mustache_view_type>(get_view(file.value()));
+            mustache_view_type view = get_view<mustache_view_type>(*file);
             view.scheme(stl::move(file_content.value()));
             view.render(out, data);
+            cached_views.set(*file, stl::move(view));
             return out;
         }
 
@@ -273,15 +271,16 @@ namespace webpp::views {
                 switch (ext[1]) {
                     case 'm': {
                         if (ext == ".mustache") {
-                            mustache_view_type& view = stl::get<mustache_view_type>(get_view(*file));
+                            mustache_view_type view = get_view<mustache_view_type>(*file);
                             view.scheme(file_content.value());
                             view.render(out, data);
+                            cached_views.set(*file, stl::move(view));
                         }
                         break;
                     }
                     case 'j': {
                         if (ext == ".json") {
-                            // json_view_type& view = stl::get<json_view_type>(get_view(file));
+                            // json_view_type& view = get_view<json_view_type>(file);
                             // view.scheme(file_content);
                             // view.render(out, data);
                         }
@@ -293,9 +292,10 @@ namespace webpp::views {
                 return out;
             }
         file_view:
-            file_view_type& view = stl::get<file_view_type>(get_view(*file));
+            file_view_type view = get_view<file_view_type>(*file);
             view.scheme(stl::move(file_content.value()));
             view.render(out);
+            cached_views.set(*file, stl::move(view));
 
             return out;
         }
