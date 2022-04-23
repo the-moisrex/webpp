@@ -232,15 +232,15 @@ namespace webpp::views {
                                    fmt::format("We can't find the specified view {}.", file_request));
                 return out;
             }
-            const auto file_content = read_file(file.value());
+            auto file_content = read_file(file.value());
             if (!file_content) {
                 return out; // empty string is returned.
             }
 
             // at this point we don't care about the extension of the file; the user explicitly wants us to
             // parse it as a mustache file
-            mustache_view_type& view = stl::get<mustache_view_type>(get_view(file));
-            view.scheme(file_content);
+            mustache_view_type& view = stl::get<mustache_view_type>(get_view(file.value()));
+            view.scheme(stl::move(file_content.value()));
             view.render(out, data);
             return out;
         }

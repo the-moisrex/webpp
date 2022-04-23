@@ -437,7 +437,7 @@ namespace webpp::views {
             if (!is_valid()) {
                 return;
             }
-            if constexpr (stl::same_as<DT, data_view_type>) {
+            if constexpr (stl::same_as<stl::remove_cvref_t<DT>, data_view_type>) {
                 context<traits_type>          ctx{*this, &data};
                 context_internal<traits_type> context{ctx};
                 // todo: optimization chance: out::reserve
@@ -448,18 +448,18 @@ namespace webpp::views {
                   context);
             } else if constexpr (stl::same_as<DT, data_type> || istl::Collection<DT>) {
                 using data_view_value_type = typename data_view_type::value_type;
-                data_view_type dv;
-                dv.reserve(data.size());
+                auto data_vec = object::make_general<stl::vector<data_view_value_type>>(this->alloc_pack);
+                data_vec.reserve(data.size());
                 stl::transform(stl::begin(data),
                                stl::end(data),
-                               stl::back_inserter(dv),
+                               stl::back_inserter(data_vec),
                                [this](auto&& item) -> data_view_value_type {
                                    auto const& [key, value] = item;
                                    return {*this, key, value};
                                });
-                render<string_view_type>(out, dv);
+                render<data_view_type>(out, data_view_type{data_vec.begin(), data_vec.end()});
             } else {
-                this->logger->error(
+                this->logger.error(
                   MUSTACHE_CAT,
                   "We don't understand the data you passed the mustache renderer, we're gonna ignore them.");
             }

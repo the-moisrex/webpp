@@ -34,6 +34,6 @@ TEST(TheViews, ViewManagerTest) {
 
     view_manager<default_traits> man{et};
 
-    const auto res = et.mustache("assets/hello-world", {{"name", "moisrex"}});
+    const auto res = man.mustache("assets/hello-world", {{"name", "moisrex"}});
     EXPECT_EQ(res, "Hello, moisrex");
 }
