@@ -79,7 +79,9 @@ namespace webpp::views {
         constexpr view_manager() noexcept = default;
 
         template <EnabledTraits ET>
-        constexpr view_manager(ET&& et) noexcept : etraits{et} {}
+        constexpr view_manager(ET&& et, stl::size_t cache_limit = 100) noexcept
+          : etraits{et},
+            cached_views{et, cache_limit} {}
 
 
         /**
