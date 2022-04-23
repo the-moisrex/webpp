@@ -35,6 +35,7 @@ namespace webpp::istl {
 
     template <typename T>
     concept ReadOnlyCollection = requires(T obj) {
+        typename T::value_type;
         obj.begin();
         obj.end();
     };

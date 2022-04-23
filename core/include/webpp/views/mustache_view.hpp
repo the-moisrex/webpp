@@ -894,11 +894,11 @@ namespace webpp::views {
                                        context_internal<traits_type>& ctx,
                                        bool                           escaped) {
             if (auto val_str = stl::get_if<string_view_type>(var->value_ptr())) {
-                ctx.line_buffer.data.append(escaped ? escaper(val_str) : val_str);
+                ctx.line_buffer.data.append(escaped ? escaper(*val_str) : *val_str);
             } else if (auto val_lambda = stl::get_if<lambda_view_type>(var->value_ptr())) {
                 const render_lambda_escape escape_opt =
                   escaped ? render_lambda_escape::escape : render_lambda_escape::unescape;
-                return render_lambda(handler, val_lambda, ctx, escape_opt, {}, false);
+                return render_lambda(handler, *val_lambda, ctx, escape_opt, {}, false);
                 {
                     using streamstring = stl::basic_ostringstream<typename string_type::value_type>;
                     streamstring ss;

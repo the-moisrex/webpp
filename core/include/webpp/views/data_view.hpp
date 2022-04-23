@@ -73,7 +73,7 @@ namespace webpp::views {
             };
 
 
-            static constexpr bool is_list    = istl::ReadOnlyCollection<V>;
+            static constexpr bool is_list    = istl::ReadOnlyCollection<V> && !is_string;
             static constexpr bool is_variant = istl::is_specialization_of_v<V, stl::variant>;
 
             struct collection_view_calculator {
@@ -95,7 +95,9 @@ namespace webpp::views {
 
                 template <bool>
                 struct evaluate {
-                    using type = istl::transform_parameters<V, transformer>;
+                    static constexpr bool value = true;
+                    using type                  = istl::transform_parameters<V, transformer>;
+                    static_assert(istl::is_specialization_of_v<type, stl::variant>, "It should be variant");
                 };
             };
 
