@@ -241,7 +241,7 @@ namespace webpp::views {
             // parse it as a mustache file
             mustache_view_type& view = stl::get<mustache_view_type>(get_view(file));
             view.scheme(file_content);
-            view.render(out, view.generate_data_view(data));
+            view.render(out, data);
             return out;
         }
 
@@ -273,7 +273,7 @@ namespace webpp::views {
                         if (ext == ".mustache") {
                             mustache_view_type& view = stl::get<mustache_view_type>(get_view(*file));
                             view.scheme(file_content.value());
-                            view.render(out, view.generate_data_view(data));
+                            view.render(out, data);
                         }
                         break;
                     }
@@ -281,7 +281,7 @@ namespace webpp::views {
                         if (ext == ".json") {
                             // json_view_type& view = stl::get<json_view_type>(get_view(file));
                             // view.scheme(file_content);
-                            // view.render(data, out);
+                            // view.render(out, data);
                         }
                     }
                     default: {

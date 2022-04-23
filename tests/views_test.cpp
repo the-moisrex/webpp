@@ -22,7 +22,7 @@ TEST(TheViews, MustacheView) {
     mustache_view<default_traits> v{et};
     v.scheme("My name is {{name}}");
     stl::string str;
-    v.render(str, v.generate_data_view({{"name", "moisrex"}}));
+    v.render(str, {{"name", "moisrex"}});
     EXPECT_EQ("My name is moisrex", res);
 }
 

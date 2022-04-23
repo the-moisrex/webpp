@@ -26,14 +26,20 @@ namespace webpp::views {
     } // namespace details
 
     template <typename T>
-    concept DataViews = stl::same_as<T, istl::nothing_type> || istl::ReadOnlyCollection<T> && requires {
+    concept DataViews = stl::same_as<T, istl::nothing_type> ||(istl::ReadOnlyCollection<T>&& requires {
         typename T::value_type;
         requires DataView<typename T::value_type>;
-    };
+    });
 
     template <typename T>
-    concept PossibleDataTypes = DataViews<T> || stl::integral<T> || istl::StringViewifiable<T> ||
-      lexical::CastableTo<T, stl::string_view> || istl::Collection<T>;
+    concept PossibleDataTypes = DataViews<stl::remove_cvref_t<T>> ||
+      (istl::ReadOnlyCollection<stl::remove_cvref_t<T>>&& requires {
+          typename stl::remove_cvref_t<T>::value_type;
+          requires requires(typename stl::remove_cvref_t<T>::value_type obj) {
+              obj.first;
+              obj.second;
+          };
+      });
 
     template <typename T>
     concept DataViewSettings = requires(T dv) {
@@ -56,22 +62,31 @@ namespace webpp::views {
     template <typename T>
     concept ViewManagerInput = ViewManager<T> && stl::is_lvalue_reference_v<T>;
 
+    template <typename V, typename T>
+    concept ViewDataInput =
+      PossibleDataTypes<T> || stl::same_as<typename V::data_view_type, stl::remove_cvref_t<T>> ||
+      stl::same_as<typename V::data_type, stl::remove_cvref_t<T>>;
+
     template <typename T>
     concept View = requires(T view) {
         typename T::data_view_type;
         typename T::data_type;
+        typename T::string_type;
+        typename T::string_view_type;
+        typename T::traits_type;
+        requires Traits<typename T::traits_type>;
         requires DataViews<typename T::data_view_type>;
 
-        view.scheme(requires_arg(istl::StringViewifiable)); // reparse, and change the scheme
-
-        // with the method, you can convert and store the converted data if the view need to, but it's not
-        // recommended to store any data.
-        view.generate_data_view(
-          requires_arg_cvref(PossibleDataTypes)); // this data will be passed to the render
 
         // render with the data passed to it
-        view.render(requires_arg_cvref(istl::String), // string ref
-                    requires_arg_cvref(stl::same_as<typename T::data_view_type>));
+        requires requires(typename T::string_type & out,
+                          typename T::string_view_type sv,
+                          typename T::data_view_type   dv,
+                          typename T::data_type        dt) {
+            view.scheme(sv); // reparse, and change the scheme
+            view.render(out, dt);
+            view.render(out, dv);
+        };
     };
 
 } // namespace webpp::views

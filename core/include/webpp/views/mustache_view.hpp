@@ -432,27 +432,23 @@ namespace webpp::views {
         }
 
 
-        // this member function will be used by the view manager
-        constexpr void render(string_type& out, data_view_type const& data) {
+        template <PossibleDataTypes DT = data_type>
+        constexpr void render(string_type& out, DT&& data) {
             if (!is_valid()) {
                 return;
             }
-            context<traits_type>          ctx{*this, &data};
-            context_internal<traits_type> context{ctx};
-            // todo: optimization chance: out::reserve
-            render(
-              [&]<typename ContentT>(ContentT&& content) {
-                  out += stl::forward<ContentT>(content);
-              },
-              context);
-        }
-
-
-        template <PossibleDataTypes DT>
-        constexpr data_view_type generate_data_view(DT&& data) const noexcept {
-            data_view_type dv;
-            if constexpr (stl::same_as<DT, data_type> || istl::Collection<DT>) {
+            if constexpr (stl::same_as<DT, data_view_type>) {
+                context<traits_type>          ctx{*this, &data};
+                context_internal<traits_type> context{ctx};
+                // todo: optimization chance: out::reserve
+                render(
+                  [&]<typename ContentT>(ContentT&& content) {
+                      out += stl::forward<ContentT>(content);
+                  },
+                  context);
+            } else if constexpr (stl::same_as<DT, data_type> || istl::Collection<DT>) {
                 using data_view_value_type = typename data_view_type::value_type;
+                data_view_type dv;
                 dv.reserve(data.size());
                 stl::transform(stl::begin(data),
                                stl::end(data),
@@ -461,12 +457,12 @@ namespace webpp::views {
                                    auto const& [key, value] = item;
                                    return {*this, key, value};
                                });
+                render<string_view_type>(out, dv);
             } else {
                 this->logger->error(
                   MUSTACHE_CAT,
                   "We don't understand the data you passed the mustache renderer, we're gonna ignore them.");
             }
-            return dv;
         }
 
       private:
