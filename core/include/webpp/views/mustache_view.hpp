@@ -44,6 +44,7 @@
 #include "webpp/traits/traits.hpp"
 
 #include <array>
+#include <map>
 #include <variant>
 
 
@@ -88,7 +89,7 @@ namespace webpp::views {
         const type1& func1;
         const type2& func2;
 
-        template <typename StringType>
+        template <Traits>
         friend class mustache_view;
     };
 
@@ -485,7 +486,7 @@ namespace webpp::views {
         template <EnabledTraits ET>
         constexpr mustache_view(ET&& et, string_view_type input, context_internal<traits_type>& ctx)
           : mustache_view(et) {
-            parser(input, ctx);
+            parse(input, ctx.delim_set);
         }
 
 
@@ -787,9 +788,9 @@ namespace webpp::views {
                     break;
                 case tag_type::section_begin:
                     if ((var = ctx.ctx.get(tag.name)) != nullptr) {
-                        if (stl::holds_alternative<lambda_view_type>(var->value_ptr())) {
+                        if (auto lambda_var = stl::get_if<lambda_view_type>(var->value_ptr())) {
                             if (!render_lambda(handler,
-                                               var,
+                                               *lambda_var,
                                                ctx,
                                                render_lambda_escape::optional,
                                                *comp.tag.section_text,
@@ -840,7 +841,7 @@ namespace webpp::views {
         };
 
         constexpr bool render_lambda(const render_handler&          handler,
-                                     const data_view_type*          var,
+                                     const lambda_view_type&        var,
                                      context_internal<traits_type>& ctx,
                                      render_lambda_escape           escape,
                                      string_view_type               text,
@@ -868,11 +869,11 @@ namespace webpp::views {
                       return do_escape ? escaper(str) : str;
                   };
                   if (parse_with_same_context) {
-                      mustache_view tmpl{txt, ctx};
+                      mustache_view tmpl{*this, txt, ctx};
                       tmpl.set_custom_escape(escaper);
                       return process_template(tmpl);
                   }
-                  mustache_view tmpl{txt};
+                  mustache_view tmpl{*this, txt};
                   tmpl.set_custom_escape(escaper);
                   return process_template(tmpl);
               };
