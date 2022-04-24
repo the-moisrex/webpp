@@ -50,9 +50,94 @@
 
 namespace webpp::views {
 
+    /**
+     * This struct is passwd to "lambda" that the user passes along with a text string.
+     * The user (inside the lambda that they passed us) will call the opereator()s in this renderer.
+     */
+    template <typename TraitsType>
+    struct basic_renderer {
+        using traits_type      = TraitsType;
+        using string_view_type = traits::string_view<traits_type>;
+        using string_type      = traits::general_string<traits_type>;
+
+        using type = function_ref<string_type(string_view_type, bool escaped)>;
+
+        constexpr string_type operator()(string_view_type text, bool escaped = false) const {
+            return func2(text, escaped);
+        }
+
+      private:
+        constexpr basic_renderer(type t) noexcept : func{t} {}
+
+        type func;
+
+        template <Traits>
+        friend class mustache_view;
+    };
+
     template <Traits TraitsType>
     struct mustache_data_view_settings {
-        using traits_type = TraitsType;
+        using traits_type      = TraitsType;
+        using string_type      = traits::general_string<traits_type>;
+        using string_view_type = traits::string_view<traits_type>;
+        using renderer_type    = basic_renderer<traits_type>;
+        using lambda_view_type = stl::function<string_type(string_view_type, renderer_type const&)>;
+
+        template <typename V>
+        static constexpr bool is_lambda = (
+          requires(V v) { v(requires_arg_cvref(istl::StringView)); } ||
+          requires(V v, renderer_type renderer) { v(requires_arg_cvref(istl::StringView), renderer); });
+
+        template <typename Func>
+        struct lambda_fixer : Func {
+            using char_type             = traits::char_type<traits_type>;
+            using string_allocator_type = typename string_type::allocator_type;
+
+            static constexpr bool requires_renderer =
+              requires(Func func, string_view_type text, renderer_type const& renderer) {
+                { func(text, renderer) } -> istl::StringViewifiableOf<string_type>;
+            };
+
+            string_allocator_type string_allocator;
+
+            template <typename ET>
+            constexpr lambda_fixer(ET&& et, Func&& func) noexcept
+              : Func{stl::forward<Func>(func)},
+                string_allocator{et.alloc_pack.template general_allocator<char_type>()} {}
+
+            constexpr string_type operator()(string_view_type text, renderer_type const& renderer) {
+                if constexpr (requires_renderer) {
+                    return istl::stringify_of<string_type>(func(text, renderer), string_allocator);
+                } else if constexpr (requires(Func func) {
+                                         { func(text) } -> istl::StringViewifiableOf<string_type>;
+                                     }) {
+                    return istl::stringify_of<string_type>(func(text), string_allocator);
+                } else {
+                    static_assert_false(
+                      Func,
+                      "We don't know how to call or handle the return type of the specified mustache lambda.");
+                }
+            }
+        };
+
+
+        template <typename ComponentT>
+        struct component_wrapper : ComponentT {
+            using component = ComponentT;
+
+            using ComponentT::ComponentT;
+
+            constexpr bool is_false() const noexcept {
+                if constexpr (component::is_bool) {
+                    return this->value();
+                } else if constexpr (component::is_list) {
+                    return this->value().size() == 0;
+                } else {
+                    return true;
+                }
+            }
+        };
+
         static constexpr view_data_flags acceptable_types{data_views::boolean,
                                                           data_views::lambda,
                                                           data_views::string,
@@ -65,33 +150,6 @@ namespace webpp::views {
 
     template <Traits TraitsType>
     using mustache_data_view = typename mustache_data_view_types<TraitsType>::type;
-
-    template <typename TraitsType>
-    struct basic_renderer {
-        using traits_type      = TraitsType;
-        using string_view_type = traits::string_view<traits_type>;
-        using string_type      = traits::general_string<traits_type>;
-
-        using type1 = stl::function<string_type(string_view_type)>;
-        using type2 = stl::function<string_type(string_view_type, bool escaped)>;
-
-        string_type operator()(const string_type& text) const {
-            return func1(text);
-        }
-
-        string_type operator()(const string_type& text, bool escaped) const {
-            return func2(text, escaped);
-        }
-
-      private:
-        basic_renderer(const type1& t1, const type2& t2) : func1(t1), func2(t2) {}
-
-        const type1& func1;
-        const type2& func2;
-
-        template <Traits>
-        friend class mustache_view;
-    };
 
 
 
@@ -367,9 +425,10 @@ namespace webpp::views {
 
         static_assert(DataView<data_value_type>, "data_view_type should be a span<data_value>");
 
-        using lambda_view_type = typename data_view_types::lambda;
+        using lambda_view_type = typename data_view_types::lambda_view_type;
 
-        using render_handler = stl::function<void(string_view_type)>;
+        using render_handler = stl::function<void(string_view_type)>; // todo: see if we need this handler
+        using renderer_type  = basic_renderer<traits_type>;
 
         static constexpr auto MUSTACHE_CAT = "MustacheView";
 
@@ -489,6 +548,11 @@ namespace webpp::views {
             parse(input, ctx.delim_set);
         }
 
+        template <EnabledTraits ET>
+        constexpr mustache_view(ET&& et, string_view_type input) : mustache_view(et) {
+            delimiter_set<traits_type> delim_set;
+            parse(input, delim_set);
+        }
 
 
         /////// Parser
@@ -797,13 +861,13 @@ namespace webpp::views {
                                                true)) {
                                 return walk_control_type::stop;
                             }
-                        } else if (!var->is_false() && !var->is_empty_list()) {
+                        } else if (!var->is_false()) {
                             render_section(handler, ctx, comp, var);
                         }
                     }
                     return walk_control_type::skip;
                 case tag_type::section_begin_inverted:
-                    if ((var = ctx.ctx.get(tag.name)) == nullptr || var->is_false() || var->is_empty_list()) {
+                    if ((var = ctx.ctx.get(tag.name)) == nullptr || var->is_false()) {
                         render_section(handler, ctx, comp, var);
                     }
                     return walk_control_type::skip;
@@ -846,47 +910,43 @@ namespace webpp::views {
                                      render_lambda_escape           escape,
                                      string_view_type               text,
                                      bool                           parse_with_same_context) {
-            const typename basic_renderer<traits_type>::type2 render2 =
-              [this, &ctx, parse_with_same_context, escape](string_view_type txt, bool escaped) {
-                  const auto process_template =
-                    [this, &ctx, escape, escaped](mustache_view& tmpl) -> string_type {
-                      if (!tmpl.is_valid()) {
-                          error_msg = tmpl.error_message();
-                          return {};
-                      }
-                      context_internal<traits_type> render_ctx{ctx.ctx}; // start a new line_buffer
-                      const auto                    str = tmpl.render(render_ctx);
-                      if (!tmpl.is_valid()) {
-                          error_msg = tmpl.error_message();
-                          return {};
-                      }
-                      bool do_escape = false;
-                      switch (escape) {
-                          case render_lambda_escape::escape: do_escape = true; break;
-                          case render_lambda_escape::unescape: do_escape = false; break;
-                          case render_lambda_escape::optional: do_escape = escaped; break;
-                      }
-                      return do_escape ? escaper(str) : str;
-                  };
-                  if (parse_with_same_context) {
-                      mustache_view tmpl{*this, txt, ctx};
-                      tmpl.set_custom_escape(escaper);
-                      return process_template(tmpl);
-                  }
-                  mustache_view tmpl{*this, txt};
-                  tmpl.set_custom_escape(escaper);
-                  return process_template(tmpl);
-              };
-            const typename basic_renderer<traits_type>::type1 render = [&render2](string_view_type txt) {
-                return render2(txt, false);
+
+
+            auto render = [this, &ctx, parse_with_same_context, escape](string_view_type txt,
+                                                                        bool escaped) -> string_type {
+                const auto process_template =
+                  [this, &ctx, escape, escaped](mustache_view& tmpl) -> string_type {
+                    if (!tmpl.is_valid()) {
+                        error_msg = tmpl.error_message();
+                        return {};
+                    }
+                    context_internal<traits_type> render_ctx{ctx.ctx}; // start a new line_buffer
+                    const auto                    str = tmpl.render(render_ctx);
+                    if (!tmpl.is_valid()) {
+                        error_msg = tmpl.error_message();
+                        return {};
+                    }
+                    bool do_escape = false;
+                    switch (escape) {
+                        case render_lambda_escape::escape: do_escape = true; break;
+                        case render_lambda_escape::unescape: do_escape = false; break;
+                        case render_lambda_escape::optional: do_escape = escaped; break;
+                    }
+                    return do_escape ? escaper(str) : str;
+                };
+                if (parse_with_same_context) {
+                    mustache_view tmpl{*this, txt, ctx};
+                    tmpl.set_custom_escape(escaper);
+                    return process_template(tmpl);
+                }
+                mustache_view tmpl{*this, txt};
+                tmpl.set_custom_escape(escaper);
+                return process_template(tmpl);
             };
-            if (var->is_lambda2()) {
-                const basic_renderer<traits_type> renderer{render, render2};
-                ctx.line_buffer.data.append(var->lambda2_value()(text, renderer));
-            } else {
-                render_current_line(handler, ctx, nullptr);
-                ctx.line_buffer.data.append(render(var->lambda_value()(text)));
-            }
+            const renderer_type renderer{typename renderer_type::type{render}};
+            // todo: in original source, the next line wouldn't run if the user is getting a renderer as input
+            render_current_line(handler, ctx.line_buffer, nullptr);
+            ctx.line_buffer.data.append(var(text, renderer));
             return error_msg.empty();
         }
 

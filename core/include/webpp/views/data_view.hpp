@@ -55,8 +55,7 @@ namespace webpp::views {
         static constexpr bool need_list    = acceptable_types.is_on(data_views::list);
         static constexpr bool need_variant = acceptable_types.is_on(data_views::variant);
 
-        using lambda = stl::variant<function_ref<string_view_type(string_view_type)>,
-                                    function_ref<string_view_type(string_view_type, bool)>>;
+        using lambda_view_type = typename settings::lambda_view_type;
 
         template <typename V>
         struct component_view {
@@ -65,16 +64,12 @@ namespace webpp::views {
                 lexical::cast<string_view_type>(val);
             };
             static constexpr bool is_bool   = stl::same_as<V, bool>;
-            static constexpr bool is_lambda = requires(V v) {
-                v(requires_arg_cvref(istl::String));
-            }
-            || requires(V v) {
-                v(requires_arg_cvref(istl::String), requires_arg_cvref(stl::same_as<bool>));
-            };
-
+            static constexpr bool is_lambda = settings::template is_lambda<V>;
 
             static constexpr bool is_list    = istl::ReadOnlyCollection<V> && !is_string;
             static constexpr bool is_variant = istl::is_specialization_of_v<V, stl::variant>;
+
+            using lambda_fixer = typename settings::template lambda_fixer<V>;
 
             struct collection_view_calculator {
                 template <bool>
@@ -110,18 +105,20 @@ namespace webpp::views {
             using variant_view =
               istl::lazy_conditional_t<is_variant, variant_view_calculator, istl::lazy_type<V>>;
 
+            using bool_view_type = component_view<bool>;
+
 
 
             // clang-format off
             using value_type = stl::conditional_t<
                 need_bool && is_bool,
-                bool,
+                bool_view_type,
                 stl::conditional_t<
                     need_variant && is_variant,
                     variant_view,
                     stl::conditional_t<
                         need_lambda && is_lambda,
-                        lambda,
+                        lambda_view_type,
                         stl::conditional_t<
                             need_list && is_list,
                             list_view,
@@ -162,13 +159,13 @@ namespace webpp::views {
             // set the key
             template <typename StrT>
                 requires(istl::StringViewifiableOf<string_view_type, StrT>)
-            void key(StrT&& str) noexcept {
+            constexpr void key(StrT&& str) noexcept {
                 key_view = istl::string_viewify_of<string_view_type>(stl::forward<StrT>(str));
             }
 
             // set the input "val"ue into the "out"put value.
             template <typename T, EnabledTraits ET>
-            static void value(T const& val, auto& out, ET&& et) {
+            static constexpr void value(T const& val, auto& out, ET&& et) {
                 // I'm passing val as a const& and not a && because this function cannot handle moves since
                 // we might make a string_view of val and then val is going out of scope for the user of this
                 // function and our string view is gone too with it. So no moves :)
@@ -180,6 +177,9 @@ namespace webpp::views {
                 } else if constexpr (need_string && is_convertible_to_string) {
                     // yes, value_type now should be a string type not a string view type
                     out = lexical::cast<string_type>(val, et.alloc_pack);
+                } else if constexpr (need_lambda && is_lambda) {
+                    // lambda fixer will make sure the user is not restricted.
+                    out = lambda_fixer{et, val};
                 } else if constexpr (need_list && is_list) {
                     using collection_value_type = typename value_type::value_type;
                     out                         = object::make_general<value_type>(et.alloc_pack);
@@ -194,16 +194,16 @@ namespace webpp::views {
 
             // set a new value for
             template <typename T, EnabledTraits ET>
-            void value(T const& val, ET&& et) {
+            constexpr void value(T const& val, ET&& et) {
                 component_view::value(val, value_view, et);
             }
 
 
-            string_view_type key() const noexcept {
+            constexpr string_view_type key() const noexcept {
                 return key_view;
             }
 
-            auto value() const noexcept {
+            constexpr auto value() const noexcept {
                 if constexpr (istl::String<value_type> && !istl::StringView<value_type>) {
                     // convert to string view if it's a normal string
                     return istl::string_viewify_of<string_view_type>(value_view);
@@ -212,7 +212,7 @@ namespace webpp::views {
                 }
             }
 
-            const value_type* value_ptr() const noexcept {
+            constexpr const value_type* value_ptr() const noexcept {
                 return &value_view;
             }
         };
@@ -220,10 +220,11 @@ namespace webpp::views {
         using list_type = traits::generalify_allocators<traits_type, stl::vector<string_view_type>>;
 
         using tuple_of_types = stl::variant<stl::conditional_t<need_bool, bool, void>,
-                                            stl::conditional_t<need_lambda, lambda, void>,
+                                            stl::conditional_t<need_lambda, lambda_view_type, void>,
                                             stl::conditional_t<need_string, string_view_type, void>,
                                             stl::conditional_t<need_list, list_type, void>>;
-        using unique_types   = component_view<istl::unique_parameters<tuple_of_types>>;
+        using unique_types   = typename settings::template component_wrapper<
+          component_view<istl::unique_parameters<tuple_of_types>>>;
 
         // Data View (qualifies DataView) type:
         using type = traits::generalify_allocators<traits_type, stl::span<unique_types>>;
