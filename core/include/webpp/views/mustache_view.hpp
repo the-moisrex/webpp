@@ -60,10 +60,11 @@ namespace webpp::views {
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
 
-        using type = function_ref<string_type(string_view_type, bool escaped)>;
+        // todo: custom allocator support for std::allocator (https://github.com/the-moisrex/webpp/issues/115)
+        using type = stl::function<string_type(string_view_type, bool escaped)>;
 
         constexpr string_type operator()(string_view_type text, bool escaped = false) const {
-            return func2(text, escaped);
+            return func(text, escaped);
         }
 
       private:
@@ -84,7 +85,7 @@ namespace webpp::views {
             using char_type        = traits::char_type<traits_type>;
             using string_view_type = traits::string_view<traits_type>;
             using renderer_type    = basic_renderer<traits_type>;
-            using lambda_view_type = stl::function<string_type(string_view_type, renderer_type const&)>;
+            using lambda_view_type = function_ref<string_type(string_view_type, renderer_type const&)>;
 
             template <typename V>
             static constexpr bool is_lambda = (
@@ -158,7 +159,7 @@ namespace webpp::views {
 
 
             // Data View (qualifies DataView) type:
-            using type = traits::generalify_allocators<traits_type, stl::span<component_view>>;
+            using type = stl::span<component_view>;
         };
 
     } // namespace details
@@ -189,9 +190,9 @@ namespace webpp::views {
     struct context {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
-        using data_view_type   = mustache_data_view<traits_type>;
-        using data_value_type  = typename data_view_type::value_type;
-        using items_type = traits::generalify_allocators<traits_type, stl::vector<const data_view_type*>>;
+        using data_type        = typename details::mustache_data_view_settings<traits_type>::type;
+        using data_value_type  = typename data_type::value_type;
+        using items_type       = traits::generalify_allocators<traits_type, stl::vector<const data_type*>>;
         using items_value_type = typename items_type::value_type;
 
       private:
@@ -199,13 +200,13 @@ namespace webpp::views {
 
       public:
         template <EnabledTraits ET>
-        context(ET&& et, const data_view_type* data)
+        context(ET&& et, const data_type* data)
           : items{et.alloc_pack.template general_allocator<items_value_type>()} {
             push(data);
         }
 
 
-        void push(const data_view_type* data) {
+        void push(const data_type* data) {
             items.insert(items.begin(), data);
         }
 
@@ -328,10 +329,10 @@ namespace webpp::views {
 
     template <Traits TraitsType>
     struct context_pusher {
-        using traits_type    = TraitsType;
-        using data_view_type = mustache_data_view<traits_type>;
+        using traits_type = TraitsType;
+        using data_type   = mustache_data_view<traits_type>;
 
-        context_pusher(context_internal<traits_type>& ctx, const data_view_type* data) : ctx_(ctx) {
+        context_pusher(context_internal<traits_type>& ctx, const data_type* data) : ctx_(ctx) {
             ctx.ctx.push(data);
         }
         ~context_pusher() {
@@ -425,18 +426,11 @@ namespace webpp::views {
         using component_type    = component<traits_type>;
         using walk_control_type = typename component_type::walk_control;
 
-        using lambda_type = stl::variant<stl::function<string_type(string_view_type)>,
-                                         stl::function<string_type(string_view_type, bool)>>;
-        using map_type    = traits::generalify_allocators<traits_type, stl::map<string_type, string_type>>;
-        using value_type  = stl::variant<bool, string_type, lambda_type, map_type>;
-        using data_type   = traits::generalify_allocators<traits_type, stl::map<string_type, value_type>>;
-        using data_view_types = mustache_data_view_types<traits_type>;
-        using data_view_type  = mustache_data_view<traits_type>;
-        using data_value_type = typename data_view_type::value_type;
+        using data_type       = typename details::mustache_data_view_settings<traits_type>::type;
+        using data_value_type = typename data_type::value_type;
 
-        static_assert(DataView<data_value_type>, "data_view_type should be a span<data_value>");
+        static_assert(DataView<data_value_type>, "data_type should be a span<data_value>");
 
-        using lambda_view_type = typename data_view_types::lambda_view_type;
 
         using render_handler = stl::function<void(string_view_type)>; // todo: see if we need this handler
         using renderer_type  = basic_renderer<traits_type>;
@@ -481,14 +475,14 @@ namespace webpp::views {
         }
 
         template <typename stream_type>
-        constexpr stream_type& render(data_view_type const& data, stream_type& stream) {
+        constexpr stream_type& render(data_type const& data, stream_type& stream) {
             render(data, [&stream](string_view_type str) {
                 stream << str;
             });
             return stream;
         }
 
-        constexpr string_type render(data_view_type const& data) {
+        constexpr string_type render(data_type const& data) {
             stl::basic_ostringstream<typename string_type::value_type> ss;
             return render(data, ss).str();
         }
@@ -509,7 +503,7 @@ namespace webpp::views {
             return render(ctx, ss).str();
         }
 
-        constexpr void render(data_view_type const& data, const render_handler& handler) {
+        constexpr void render(data_type const& data, const render_handler& handler) {
             if (!is_valid()) {
                 return;
             }
@@ -524,7 +518,7 @@ namespace webpp::views {
             if (!is_valid()) {
                 return;
             }
-            if constexpr (stl::same_as<stl::remove_cvref_t<DT>, data_view_type>) {
+            if constexpr (stl::same_as<stl::remove_cvref_t<DT>, data_type>) {
                 context<traits_type>          ctx{*this, &data};
                 context_internal<traits_type> context{.ctx = ctx};
                 // todo: optimization chance: out::reserve
@@ -534,7 +528,7 @@ namespace webpp::views {
                   },
                   context);
             } else if constexpr (stl::same_as<DT, data_type> || istl::Collection<DT>) {
-                using data_view_value_type = typename data_view_type::value_type;
+                using data_view_value_type = typename data_type::value_type;
                 auto data_vec = object::make_general<stl::vector<data_view_value_type>>(this->alloc_pack);
                 data_vec.reserve(data.size());
                 stl::transform(stl::begin(data),
@@ -544,7 +538,7 @@ namespace webpp::views {
                                    auto const& [key, value] = item;
                                    return {*this, key, value};
                                });
-                render<data_view_type>(out, data_view_type{data_vec.begin(), data_vec.end()});
+                render<data_type>(out, data_type{data_vec.begin(), data_vec.end()});
             } else {
                 this->logger.error(
                   MUSTACHE_CAT,
@@ -985,7 +979,7 @@ namespace webpp::views {
         constexpr void render_section(const render_handler&          handler,
                                       context_internal<traits_type>& ctx,
                                       component_type&                incomp,
-                                      const data_view_type*          var) {
+                                      const data_type*               var) {
             const auto callback = [&handler, &ctx, this](component_type& comp) -> walk_control_type {
                 return render_component(handler, ctx, comp);
             };
