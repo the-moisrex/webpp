@@ -38,14 +38,14 @@
 #include "../strings/trim.hpp"
 #include "../traits/enable_traits.hpp"
 #include "../utils/functional.hpp"
-#include "data_view.hpp"
 #include "html.hpp"
 #include "view_concepts.hpp"
-#include "webpp/traits/traits.hpp"
 
 #include <array>
 #include <map>
+#include <span>
 #include <variant>
+#include <vector>
 
 
 namespace webpp::views {
@@ -75,82 +75,93 @@ namespace webpp::views {
         friend class mustache_view;
     };
 
-    template <Traits TraitsType>
-    struct mustache_data_view_settings {
-        using traits_type      = TraitsType;
-        using string_type      = traits::general_string<traits_type>;
-        using string_view_type = traits::string_view<traits_type>;
-        using renderer_type    = basic_renderer<traits_type>;
-        using lambda_view_type = stl::function<string_type(string_view_type, renderer_type const&)>;
 
-        template <typename V>
-        static constexpr bool is_lambda = (
-          requires(V v) { v(requires_arg_cvref(istl::StringView)); } ||
-          requires(V v, renderer_type renderer) { v(requires_arg_cvref(istl::StringView), renderer); });
+    namespace details {
+        template <Traits TraitsType>
+        struct mustache_data_view_settings {
+            using traits_type      = TraitsType;
+            using string_type      = traits::general_string<traits_type>;
+            using char_type        = traits::char_type<traits_type>;
+            using string_view_type = traits::string_view<traits_type>;
+            using renderer_type    = basic_renderer<traits_type>;
+            using lambda_view_type = stl::function<string_type(string_view_type, renderer_type const&)>;
 
-        template <typename Func>
-        struct lambda_fixer : Func {
-            using char_type             = traits::char_type<traits_type>;
-            using string_allocator_type = typename string_type::allocator_type;
+            template <typename V>
+            static constexpr bool is_lambda = (
+              requires(V v) { v(requires_arg_cvref(istl::StringView)); } ||
+              requires(V v, renderer_type renderer) { v(requires_arg_cvref(istl::StringView), renderer); });
 
-            static constexpr bool requires_renderer =
-              requires(Func func, string_view_type text, renderer_type const& renderer) {
-                { func(text, renderer) } -> istl::StringViewifiableOf<string_type>;
+            template <typename Func>
+            struct lambda_fixer : Func {
+                using string_allocator_type = typename string_type::allocator_type;
+
+                static constexpr bool requires_renderer =
+                  requires(Func func, string_view_type text, renderer_type const& renderer) {
+                    { func(text, renderer) } -> istl::StringViewifiableOf<string_type>;
+                };
+
+                string_allocator_type string_allocator;
+
+                template <typename ET>
+                constexpr lambda_fixer(ET&& et, Func&& func) noexcept
+                  : Func{stl::forward<Func>(func)},
+                    string_allocator{et.alloc_pack.template general_allocator<char_type>()} {}
+
+                constexpr string_type operator()(string_view_type text, renderer_type const& renderer) {
+                    if constexpr (requires_renderer) {
+                        return istl::stringify_of<string_type>(func(text, renderer), string_allocator);
+                    } else if constexpr (requires(Func func) {
+                                             { func(text) } -> istl::StringViewifiableOf<string_type>;
+                                         }) {
+                        return istl::stringify_of<string_type>(func(text), string_allocator);
+                    } else {
+                        static_assert_false(
+                          Func,
+                          "We don't know how to call or handle the return type of the specified mustache lambda.");
+                    }
+                }
             };
 
-            string_allocator_type string_allocator;
+            struct component_view;
 
-            template <typename ET>
-            constexpr lambda_fixer(ET&& et, Func&& func) noexcept
-              : Func{stl::forward<Func>(func)},
-                string_allocator{et.alloc_pack.template general_allocator<char_type>()} {}
+            using list_type = traits::generalify_allocators<traits_type, stl::vector<component_view>>;
 
-            constexpr string_type operator()(string_view_type text, renderer_type const& renderer) {
-                if constexpr (requires_renderer) {
-                    return istl::stringify_of<string_type>(func(text, renderer), string_allocator);
-                } else if constexpr (requires(Func func) {
-                                         { func(text) } -> istl::StringViewifiableOf<string_type>;
-                                     }) {
-                    return istl::stringify_of<string_type>(func(text), string_allocator);
-                } else {
-                    static_assert_false(
-                      Func,
-                      "We don't know how to call or handle the return type of the specified mustache lambda.");
+            using variant_type = stl::variant<bool, lambda_view_type, string_view_type, list_type>;
+
+            struct component_view : variant_type {
+              private:
+                string_view_type key_view;
+
+              public:
+                template <EnabledTraits ET, typename StrT, typename T>
+                    requires(istl::StringViewifiableOf<string_view_type, StrT>)
+                constexpr component_view(ET&& et, StrT&& input_key, T&& input_value) {
+                    key(stl::forward<StrT>(input_key));
+                    value(stl::forward<T>(input_value), et);
                 }
-            }
+
+
+                [[nodiscard]] constexpr string_view_type key() const noexcept {
+                    return key_view;
+                }
+
+                [[nodiscard]] constexpr bool is_false() const noexcept {
+                    if constexpr (stl::holds_alternative<bool>(*this)) {
+                        return this->value();
+                    } else if constexpr (stl::holds_alternative<list_type>(*this)) {
+                        return this->value().size() == 0;
+                    } else {
+                        return true;
+                    }
+                }
+            };
+
+
+            // Data View (qualifies DataView) type:
+            using type = traits::generalify_allocators<traits_type, stl::span<component_view>>;
         };
 
-
-        template <typename ComponentT>
-        struct component_wrapper : ComponentT {
-            using component = ComponentT;
-
-            using ComponentT::ComponentT;
-
-            constexpr bool is_false() const noexcept {
-                if constexpr (component::is_bool) {
-                    return this->value();
-                } else if constexpr (component::is_list) {
-                    return this->value().size() == 0;
-                } else {
-                    return true;
-                }
-            }
-        };
-
-        static constexpr view_data_flags acceptable_types{data_views::boolean,
-                                                          data_views::lambda,
-                                                          data_views::string,
-                                                          data_views::list,
-                                                          data_views::variant};
-    };
-
-    template <Traits TraitsType>
-    using mustache_data_view_types = data_view<mustache_data_view_settings<TraitsType>{}>;
-
-    template <Traits TraitsType>
-    using mustache_data_view = typename mustache_data_view_types<TraitsType>::type;
-
+    } // namespace details
 
 
     /**
