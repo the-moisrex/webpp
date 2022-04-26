@@ -1,4 +1,4 @@
-
+include(CPM)
 CPMAddPackage(
         NAME ctre
         URL https://github.com/hanickadot/compile-time-regular-expressions/archive/refs/tags/v3.4.1.tar.gz

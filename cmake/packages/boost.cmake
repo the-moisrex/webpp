@@ -4,6 +4,7 @@ find_package(Boost REQUIRED COMPONENTS container)
 if (Boost_FOUND)
     add_library(Boost::asio ALIAS Boost::boost)
 else()
+    include(CPM)
 
 
     # Get the download links from here: https://www.boost.org/users/download/
