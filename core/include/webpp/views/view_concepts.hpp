@@ -12,14 +12,15 @@
 
 namespace webpp::views {
 
-    template <typename T>
-    concept PossibleDataTypes = (istl::ReadOnlyCollection<stl::remove_cvref_t<T>> && requires {
-        typename stl::remove_cvref_t<T>::value_type;
-        requires requires(typename stl::remove_cvref_t<T>::value_type obj) {
-            obj.first;
-            obj.second;
-        };
-    });
+    template <typename ViewType, typename T>
+    concept PossibleDataTypes = stl::same_as<typename ViewType::data_type, T> ||
+      stl::same_as<T, istl::nothing_type> ||(istl::ReadOnlyCollection<stl::remove_cvref_t<T>>&& requires {
+          typename stl::remove_cvref_t<T>::value_type;
+          requires requires(typename stl::remove_cvref_t<T>::value_type obj) {
+              obj.first;
+              obj.second;
+          };
+      });
 
     /**
      * Features of a view:
@@ -42,9 +43,6 @@ namespace webpp::views {
     template <typename T>
     concept ViewManagerInput = ViewManager<T> && stl::is_lvalue_reference_v<T>;
 
-    template <typename V, typename T>
-    concept ViewDataInput =
-      PossibleDataTypes<T> || stl::same_as<typename V::data_type, stl::remove_cvref_t<T>>;
 
     template <typename T>
     concept View = requires(T view) {

@@ -193,7 +193,7 @@ namespace webpp::views {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
         using data_type        = typename details::mustache_data_view_settings<traits_type>::type;
-        using data_value_type  = typename data_type::value_type;
+        using variable_type    = typename data_type::value_type;
         using items_type       = traits::generalify_allocators<traits_type, stl::vector<const data_type*>>;
         using items_value_type = typename items_type::value_type;
 
@@ -216,7 +216,7 @@ namespace webpp::views {
             items.erase(items.begin());
         }
 
-        const data_value_type* get(string_view_type name) const {
+        const variable_type* get(string_view_type name) const {
             // process {{.}} name
             if (name.size() == 1 && name.at(0) == '.') {
                 return items.front();
@@ -248,7 +248,7 @@ namespace webpp::views {
             return nullptr;
         }
 
-        const data_value_type* get_partial(string_view_type name) const {
+        const variable_type* get_partial(string_view_type name) const {
             for (const auto& item : items) {
                 const auto var = item->get(name);
                 if (var) {
@@ -428,10 +428,10 @@ namespace webpp::views {
         using component_type    = component<traits_type>;
         using walk_control_type = typename component_type::walk_control;
 
-        using settings        = details::mustache_data_view_settings<traits_type>;
-        using data_type       = typename settings::type;
-        using lambda_type     = typename settings::lambda_type;
-        using data_value_type = typename data_type::value_type;
+        using settings      = details::mustache_data_view_settings<traits_type>;
+        using data_type     = typename settings::type;
+        using variable_type = typename settings::variable;
+        using lambda_type   = typename settings::lambda_type;
 
 
         using render_handler = stl::function<void(string_view_type)>; // todo: see if we need this handler
@@ -515,7 +515,8 @@ namespace webpp::views {
         }
 
 
-        template <PossibleDataTypes DT = data_type>
+        template <typename DT = data_type>
+            requires(PossibleDataTypes<mustache_view, stl::remove_cvref_t<DT>>)
         constexpr void render(string_type& out, DT&& data) {
             if (!is_valid()) {
                 return;
@@ -530,17 +531,16 @@ namespace webpp::views {
                   },
                   context);
             } else if constexpr (stl::same_as<DT, data_type> || istl::Collection<DT>) {
-                using data_view_value_type = typename data_type::value_type;
-                auto data_vec = object::make_general<stl::vector<data_view_value_type>>(this->alloc_pack);
+                auto data_vec = object::make_general<data_type>(this->alloc_pack);
                 data_vec.reserve(data.size());
                 stl::transform(stl::begin(data),
                                stl::end(data),
                                stl::back_inserter(data_vec),
-                               [this](auto&& item) -> data_view_value_type {
+                               [this](auto&& item) -> variable_type {
                                    auto const& [key, value] = item;
                                    return {*this, key, value};
                                });
-                render<data_type>(out, data_type{data_vec.begin(), data_vec.end()});
+                render<data_type>(out, data_vec);
             } else {
                 this->logger.error(
                   MUSTACHE_CAT,
@@ -847,7 +847,7 @@ namespace webpp::views {
             }
 
             const mstch_tag<traits_type>& tag{comp.tag};
-            const data_value_type*        var = nullptr;
+            const variable_type*          var = nullptr;
             switch (tag.type) {
                 case tag_type::variable:
                 case tag_type::unescaped_variable:
@@ -958,7 +958,7 @@ namespace webpp::views {
         }
 
         constexpr bool render_variable(const render_handler&          handler,
-                                       const data_value_type*         var,
+                                       const variable_type*           var,
                                        context_internal<traits_type>& ctx,
                                        bool                           escaped) {
             if (auto val_str = stl::get_if<string_view_type>(var->value_ptr())) {

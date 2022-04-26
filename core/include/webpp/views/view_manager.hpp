@@ -18,6 +18,7 @@
 #include <filesystem>
 #include <fstream>
 #include <system_error>
+#include <type_traits>
 #include <variant>
 
 #ifdef WEBPP_EMBEDDED_FILES
@@ -54,10 +55,6 @@ namespace webpp::views {
         using mustache_data_type = typename mustache_view_type::data_type;
         // using json_data_type = typename json_view_type::data_type;
         using file_data_type = typename file_view_type::data_type;
-
-        using mustache_data_view_type = typename mustache_view_type::data_view_type;
-        // using json_data_view_type = typename json_view_type::data_view_type;
-        using file_data_view_type = typename file_view_type::data_view_type;
 
 
         using cache_type = lru_cache<traits_type, path_type, view_types, memory_gate<null_gate>>;
@@ -253,8 +250,10 @@ namespace webpp::views {
         /**
          * Get Render a view
          */
-        template <istl::StringViewifiable StrT, PossibleDataTypes DV>
-        auto view(StrT&& file_request, DV&& data) noexcept {
+        template <istl::StringViewifiable StrT, typename DT>
+            requires(PossibleDataTypes<mustache_view_type, stl::remove_cvref_t<DT>> ||
+                     PossibleDataTypes<file_view_type, stl::remove_cvref_t<DT>>)
+        auto view(StrT&& file_request, DT&& data) noexcept {
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
             auto       out  = object::make_general<string_type>(this->alloc_pack);
             if (!file) {
