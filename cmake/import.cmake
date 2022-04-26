@@ -58,6 +58,7 @@ message(STATUS "CPM path added to CMAKE_MODULE_PATH: ${WEBPP_CPM_MODULE_PATH}")
 # import CPM module
 set(CPM_DIRECTORY "")
 include(CPM)
+message(STATUS "Using CPM version: ${CURRENT_CPM_VERSION}")
 
 
 # import all packages
