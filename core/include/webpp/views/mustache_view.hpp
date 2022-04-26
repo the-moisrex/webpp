@@ -160,8 +160,8 @@ namespace webpp::views {
             };
 
 
-            // Data View (qualifies DataView) type:
-            using type = traits::generalify_allocators<traits_type, stl::vector<variable>>;
+            // data type
+            using type = stl::vector<variable, traits::general_allocator<traits_type, variable>>;
         };
 
     } // namespace details
@@ -432,8 +432,6 @@ namespace webpp::views {
         using data_type       = typename settings::type;
         using lambda_type     = typename settings::lambda_type;
         using data_value_type = typename data_type::value_type;
-
-        static_assert(DataView<data_value_type>, "data_type should be a span<data_value>");
 
 
         using render_handler = stl::function<void(string_view_type)>; // todo: see if we need this handler
