@@ -123,13 +123,15 @@ namespace webpp::views {
                 }
             };
 
-            struct variable;
 
-            using list_type = traits::generalify_allocators<traits_type, stl::vector<variable>>;
 
-            using variant_type = stl::variant<bool, lambda_type, string_view_type, list_type>;
+            template <typename VarType>
+            using list_type = traits::generalify_allocators<traits_type, stl::vector<VarType>>;
 
-            struct variable : variant_type {
+            template <typename VarType>
+            using variant_type = stl::variant<bool, lambda_type, string_view_type, list_type<VarType>>;
+
+            struct variable : variant_type<variable> {
               private:
                 string_view_type key_view;
 
