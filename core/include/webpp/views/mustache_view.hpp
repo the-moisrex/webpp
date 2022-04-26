@@ -124,14 +124,14 @@ namespace webpp::views {
             };
 
 
+            struct variable
+              : stl::variant<bool,
+                             lambda_type,
+                             string_view_type,
+                             stl::vector<variable, traits::general_allocator<traits_type, variable>>> {
 
-            template <typename VarType>
-            using list_type = traits::generalify_allocators<traits_type, stl::vector<VarType>>;
+                using list_type = stl::vector<variable, traits::general_allocator<traits_type, variable>>;
 
-            template <typename VarType>
-            using variant_type = stl::variant<bool, lambda_type, string_view_type, list_type<VarType>>;
-
-            struct variable : variant_type<variable> {
               private:
                 string_view_type key_view;
 
@@ -161,7 +161,7 @@ namespace webpp::views {
 
 
             // Data View (qualifies DataView) type:
-            using type = stl::span<variable>;
+            using type = traits::generalify_allocators<traits_type, stl::vector<variable>>;
         };
 
     } // namespace details
@@ -428,8 +428,9 @@ namespace webpp::views {
         using component_type    = component<traits_type>;
         using walk_control_type = typename component_type::walk_control;
 
-        using data_type       = typename details::mustache_data_view_settings<traits_type>::type;
-        using lambda_type     = typename data_type::lambda_type;
+        using settings        = details::mustache_data_view_settings<traits_type>;
+        using data_type       = typename settings::type;
+        using lambda_type     = typename settings::lambda_type;
         using data_value_type = typename data_type::value_type;
 
         static_assert(DataView<data_value_type>, "data_type should be a span<data_value>");
