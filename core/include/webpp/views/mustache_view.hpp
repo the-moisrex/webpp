@@ -156,13 +156,25 @@ namespace webpp::views {
                 }
 
                 [[nodiscard]] constexpr bool is_false() const noexcept {
-                    if constexpr (stl::holds_alternative<bool>(*this)) {
-                        return this->value();
-                    } else if constexpr (stl::holds_alternative<list_type>(*this)) {
-                        return this->value().size() == 0;
+                    if (stl::holds_alternative<bool>(*this)) {
+                        return stl::get<bool>(*this);
+                    } else if (stl::holds_alternative<list_type>(*this)) {
+                        return stl::get<list_type>(*this).size() == 0;
                     } else {
                         return true;
                     }
+                }
+
+                [[nodiscard]] constexpr string_type* get_if_string() const {
+                    return stl::get_if<string_type>(*this);
+                }
+
+                [[nodiscard]] constexpr lambda_type* get_if_lambda() const {
+                    return stl::get_if<lambda_type>(*this);
+                }
+
+                [[nodiscard]] constexpr bool* get_if_bool() const {
+                    return stl::get_if<bool>(*this);
                 }
             };
 
@@ -866,7 +878,7 @@ namespace webpp::views {
                     break;
                 case tag_type::section_begin:
                     if ((var = ctx.ctx.get(tag.name)) != nullptr) {
-                        if (auto lambda_var = stl::get_if<lambda_type>(var->value_ptr())) {
+                        if (auto lambda_var = var->get_if_lambda()) {
                             if (!render_lambda(handler,
                                                *lambda_var,
                                                ctx,
@@ -968,9 +980,9 @@ namespace webpp::views {
                                        const variable_type*           var,
                                        context_internal<traits_type>& ctx,
                                        bool                           escaped) {
-            if (auto val_str = stl::get_if<string_view_type>(var->value_ptr())) {
+            if (auto val_str = var->get_if_string()) {
                 ctx.line_buffer.data.append(escaped ? escaper(*val_str) : *val_str);
-            } else if (auto val_lambda = stl::get_if<lambda_type>(var->value_ptr())) {
+            } else if (auto val_lambda = var->get_if_lambda()) {
                 const render_lambda_escape escape_opt =
                   escaped ? render_lambda_escape::escape : render_lambda_escape::unescape;
                 return render_lambda(handler, *val_lambda, ctx, escape_opt, {}, false);
