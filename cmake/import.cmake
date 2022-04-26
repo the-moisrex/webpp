@@ -37,19 +37,24 @@ else ()
         set(CPM_DOWNLOAD_PATH "${CMAKE_BINARY_DIR}/cmake")
     endif ()
 
-    if (NOT (EXISTS ${CPM_DOWNLOAD_LOCATION}))
+    if (NOT (EXISTS "${CPM_DOWNLOAD_LOCATION}"))
         message(STATUS "Downloading CPM.cmake to ${CPM_DOWNLOAD_LOCATION}")
         # Download from master branch
         file(
                 DOWNLOAD
-                https://raw.githubusercontent.com/cpm-cmake/CPM.cmake/master/cmake/CPM.cmake
-                ${CPM_DOWNLOAD_VERSION}
+                "https://raw.githubusercontent.com/cpm-cmake/CPM.cmake/master/cmake/CPM.cmake"
+                "${CPM_DOWNLOAD_VERSION}"
+                LOG DOWNLOAD_LOG
         )
         # file(
         #         DOWNLOAD
         #         https://github.com/cpm-cmake/CPM.cmake/releases/download/v${CPM_DOWNLOAD_VERSION}/CPM.cmake
         #         ${CPM_DOWNLOAD_LOCATION}
         # )
+        if (NOT (EXISTS "${CPM_DOWNLOAD_LOCATION}"))
+            message(FATAL_ERROR "Could not download CPM; log:\n${DOWNLOAD_LOG}")
+            return()
+        endif ()
     endif ()
 
     message(STATUS "Using CPM file from: ${CPM_DOWNLOAD_LOCATION}")
