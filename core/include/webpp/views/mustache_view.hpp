@@ -85,7 +85,7 @@ namespace webpp::views {
             using char_type        = traits::char_type<traits_type>;
             using string_view_type = traits::string_view<traits_type>;
             using renderer_type    = basic_renderer<traits_type>;
-            using lambda_view_type = function_ref<string_type(string_view_type, renderer_type const&)>;
+            using lambda_type      = function_ref<string_type(string_view_type, renderer_type const&)>;
 
             template <typename V>
             static constexpr bool is_lambda = (
@@ -127,7 +127,7 @@ namespace webpp::views {
 
             using list_type = traits::generalify_allocators<traits_type, stl::vector<component_view>>;
 
-            using variant_type = stl::variant<bool, lambda_view_type, string_view_type, list_type>;
+            using variant_type = stl::variant<bool, lambda_type, string_view_type, list_type>;
 
             struct component_view : variant_type {
               private:
@@ -330,7 +330,7 @@ namespace webpp::views {
     template <Traits TraitsType>
     struct context_pusher {
         using traits_type = TraitsType;
-        using data_type   = mustache_data_view<traits_type>;
+        using data_type   = typename details::mustache_data_view_settings<traits_type>::type;
 
         context_pusher(context_internal<traits_type>& ctx, const data_type* data) : ctx_(ctx) {
             ctx.ctx.push(data);
@@ -857,7 +857,7 @@ namespace webpp::views {
                     break;
                 case tag_type::section_begin:
                     if ((var = ctx.ctx.get(tag.name)) != nullptr) {
-                        if (auto lambda_var = stl::get_if<lambda_view_type>(var->value_ptr())) {
+                        if (auto lambda_var = stl::get_if<lambda_type>(var->value_ptr())) {
                             if (!render_lambda(handler,
                                                *lambda_var,
                                                ctx,
@@ -910,7 +910,7 @@ namespace webpp::views {
         };
 
         constexpr bool render_lambda(const render_handler&          handler,
-                                     const lambda_view_type&        var,
+                                     const lambda_type&             var,
                                      context_internal<traits_type>& ctx,
                                      render_lambda_escape           escape,
                                      string_view_type               text,
@@ -961,7 +961,7 @@ namespace webpp::views {
                                        bool                           escaped) {
             if (auto val_str = stl::get_if<string_view_type>(var->value_ptr())) {
                 ctx.line_buffer.data.append(escaped ? escaper(*val_str) : *val_str);
-            } else if (auto val_lambda = stl::get_if<lambda_view_type>(var->value_ptr())) {
+            } else if (auto val_lambda = stl::get_if<lambda_type>(var->value_ptr())) {
                 const render_lambda_escape escape_opt =
                   escaped ? render_lambda_escape::escape : render_lambda_escape::unescape;
                 return render_lambda(handler, *val_lambda, ctx, escape_opt, {}, false);

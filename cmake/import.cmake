@@ -41,7 +41,7 @@ else ()
         message(STATUS "Downloading CPM.cmake to ${CPM_DOWNLOAD_LOCATION}")
         # Download from master branch
         file(
-                download
+                DOWNLOAD
                 https://raw.githubusercontent.com/cpm-cmake/CPM.cmake/master/cmake/CPM.cmake
                 ${CPM_DOWNLOAD_VERSION}
         )
