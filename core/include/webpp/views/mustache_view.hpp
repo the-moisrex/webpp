@@ -123,20 +123,20 @@ namespace webpp::views {
                 }
             };
 
-            struct component_view;
+            struct variable;
 
-            using list_type = traits::generalify_allocators<traits_type, stl::vector<component_view>>;
+            using list_type = traits::generalify_allocators<traits_type, stl::vector<variable>>;
 
             using variant_type = stl::variant<bool, lambda_type, string_view_type, list_type>;
 
-            struct component_view : variant_type {
+            struct variable : variant_type {
               private:
                 string_view_type key_view;
 
               public:
                 template <EnabledTraits ET, typename StrT, typename T>
                     requires(istl::StringViewifiableOf<string_view_type, StrT>)
-                constexpr component_view(ET&& et, StrT&& input_key, T&& input_value) {
+                constexpr variable(ET&& et, StrT&& input_key, T&& input_value) {
                     key(stl::forward<StrT>(input_key));
                     value(stl::forward<T>(input_value), et);
                 }
@@ -159,7 +159,7 @@ namespace webpp::views {
 
 
             // Data View (qualifies DataView) type:
-            using type = stl::span<component_view>;
+            using type = stl::span<variable>;
         };
 
     } // namespace details
@@ -427,6 +427,7 @@ namespace webpp::views {
         using walk_control_type = typename component_type::walk_control;
 
         using data_type       = typename details::mustache_data_view_settings<traits_type>::type;
+        using lambda_type     = typename data_type::lambda_type;
         using data_value_type = typename data_type::value_type;
 
         static_assert(DataView<data_value_type>, "data_type should be a span<data_value>");
