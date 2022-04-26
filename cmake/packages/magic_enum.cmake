@@ -1,6 +1,4 @@
-
 include(CPM)
-
 CPMAddPackage(
         NAME magic_enum
         URL https://github.com/Neargye/magic_enum/archive/refs/tags/v0.7.3.tar.gz
