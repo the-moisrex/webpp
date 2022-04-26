@@ -43,12 +43,12 @@ else ()
         file(
                 download
                 https://raw.githubusercontent.com/cpm-cmake/CPM.cmake/master/cmake/CPM.cmake
-                ${cpm_download_location}
+                ${CPM_DOWNLOAD_VERSION}
         )
         # file(
-        #         download
-        #         https://github.com/cpm-cmake/cpm.cmake/releases/download/v${cpm_download_version}/cpm.cmake
-        #         ${cpm_download_location}
+        #         DOWNLOAD
+        #         https://github.com/cpm-cmake/CPM.cmake/releases/download/v${CPM_DOWNLOAD_VERSION}/CPM.cmake
+        #         ${CPM_DOWNLOAD_LOCATION}
         # )
     endif ()
 
@@ -62,9 +62,8 @@ list(APPEND CMAKE_MODULE_PATH ${WEBPP_CPM_MODULE_PATH})
 message(STATUS "CPM path added to CMAKE_MODULE_PATH: ${WEBPP_CPM_MODULE_PATH}")
 
 # import CPM module
-# set(CPM_DIRECTORY "")
+set(CPM_DIRECTORY "")
 include(CPM)
-message(STATUS "Using CPM version: ${CURRENT_CPM_VERSION}")
 
 
 # import all packages
