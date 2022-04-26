@@ -130,22 +130,29 @@ namespace webpp::views {
                              string_view_type,
                              stl::vector<variable, traits::general_allocator<traits_type, variable>>> {
 
+                using variant_type =
+                  stl::variant<bool,
+                               lambda_type,
+                               string_view_type,
+                               stl::vector<variable, traits::general_allocator<traits_type, variable>>>;
+
                 using list_type = stl::vector<variable, traits::general_allocator<traits_type, variable>>;
 
               private:
-                string_view_type key_view;
+                string_type key_value;
 
               public:
                 template <EnabledTraits ET, typename StrT, typename T>
-                    requires(istl::StringViewifiableOf<string_view_type, StrT>)
-                constexpr variable(ET&& et, StrT&& input_key, T&& input_value) {
-                    key(stl::forward<StrT>(input_key));
-                    value(stl::forward<T>(input_value), et);
-                }
+                    requires(istl::StringifiableOf<string_type, StrT>)
+                constexpr variable(ET&& et, StrT&& input_key, T&& input_value)
+                  : variant_type{stl::forward<T>(input_value)},
+                    key_value{istl::stringify_of<string_type>(
+                      stl::forward<StrT>(input_key),
+                      et.alloc_pack.template general_allocator<char_type>())} {}
 
 
                 [[nodiscard]] constexpr string_view_type key() const noexcept {
-                    return key_view;
+                    return key_value;
                 }
 
                 [[nodiscard]] constexpr bool is_false() const noexcept {

@@ -16,14 +16,21 @@ static_assert(View<file_view<default_traits>>);
 // static_assert(View<json_view<default_traits>>);
 static_assert(ViewManager<view_manager<default_traits>>);
 
+
+using string_type        = traits::general_string<default_traits>;
+using mustache_view_type = mustache_view<default_traits>;
+using data_type          = typename mustache_view_type::data_type;
+using variable_type      = typename data_type::value_type;
+
 TEST(TheViews, MustacheView) {
     enable_owner_traits<default_traits> et;
-    using string_type = traits::general_string<default_traits>;
 
-    mustache_view<default_traits> v{et};
+    mustache_view_type v{et};
     v.scheme("My name is {{name}}");
     string_type str;
-    v.render(str, {{"name", "moisrex"}});
+    auto        data = object::make_general<data_type>(et);
+    data.push_back(variable_type{et, "name", "moisrex"});
+    v.render(str, data);
     EXPECT_EQ("My name is moisrex", str);
 }
 
@@ -34,6 +41,8 @@ TEST(TheViews, ViewManagerTest) {
 
     view_manager<default_traits> man{et};
 
-    const auto res = man.mustache("assets/hello-world", {{"name", "moisrex"}});
+    auto data = object::make_general<data_type>(et);
+    data.push_back(variable_type{et, "name", "moisrex"});
+    const auto res = man.mustache("assets/hello-world", data);
     EXPECT_EQ(res, "Hello, moisrex");
 }
