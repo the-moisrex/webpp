@@ -167,7 +167,7 @@ namespace webpp::views {
                     if (const auto* v = get_if_bool()) {
                         return *v;
                     } else if (const auto* vlist = get_if_list()) {
-                        return vlist->size() == 0;
+                        return vlist->empty();
                     } else {
                         return true;
                     }
@@ -229,12 +229,23 @@ namespace webpp::views {
                 }
 
 
-                [[nodiscard]] constexpr partial_type& partial_value() const noexcept {
+                [[nodiscard]] constexpr partial_type const& partial_value() const noexcept {
                     return stl::get<partial_type>(*as_variant());
                 }
 
-                [[nodiscard]] constexpr string_type& string_value() const noexcept {
+                [[nodiscard]] constexpr string_type const& string_value() const noexcept {
                     return stl::get<string_type>(*as_variant());
+                }
+
+                [[nodiscard]] constexpr list_type const& list_value() const noexcept {
+                    return stl::get<list_type>(*as_variant());
+                }
+
+                [[nodiscard]] constexpr bool is_non_empty_list() const noexcept {
+                    if (auto const* list = get_if_list()) {
+                        return list->empty();
+                    }
+                    return false;
                 }
             };
 
@@ -894,13 +905,14 @@ namespace webpp::views {
 
 
         constexpr string_type render(context_internal<traits_type>& ctx) {
-            stl::basic_ostringstream<typename string_type::value_type> ss;
+            auto out = object::make_general<string_type>(*this);
+            // todo: optimization chance: out::reserve
             render(
-              [&ss](string_view_type str) {
-                  ss << str;
+              [&]<typename ContentT>(ContentT&& content) {
+                  out += stl::forward<ContentT>(content);
               },
               ctx);
-            return ss.str();
+            return out;
         }
 
         constexpr void
