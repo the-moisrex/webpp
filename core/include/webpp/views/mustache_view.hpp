@@ -35,11 +35,13 @@
 #define WEBPP_MUSTACHE_VIEW_HPP
 
 
+#include "../strings/splits.hpp"
 #include "../strings/trim.hpp"
 #include "../traits/enable_traits.hpp"
 #include "../utils/functional.hpp"
 #include "html.hpp"
 #include "view_concepts.hpp"
+#include "webpp/traits/traits.hpp"
 
 #include <array>
 #include <map>
@@ -84,8 +86,11 @@ namespace webpp::views {
             using string_type      = traits::general_string<traits_type>;
             using char_type        = traits::char_type<traits_type>;
             using string_view_type = traits::string_view<traits_type>;
-            using renderer_type    = basic_renderer<traits_type>;
-            using lambda_type      = function_ref<string_type(string_view_type, renderer_type const&)>;
+
+            using renderer_type = basic_renderer<traits_type>;
+            using lambda_type   = function_ref<string_type(string_view_type, renderer_type const&)>;
+            using partial_type  = function_ref<string_type()>;
+
 
             template <typename V>
             static constexpr bool is_lambda = (
@@ -127,13 +132,15 @@ namespace webpp::views {
             struct variable
               : stl::variant<bool,
                              lambda_type,
-                             string_view_type,
+                             partial_type,
+                             string_type,
                              stl::vector<variable, traits::general_allocator<traits_type, variable>>> {
 
                 using variant_type =
                   stl::variant<bool,
                                lambda_type,
-                               string_view_type,
+                               partial_type,
+                               string_type,
                                stl::vector<variable, traits::general_allocator<traits_type, variable>>>;
 
                 using list_type = stl::vector<variable, traits::general_allocator<traits_type, variable>>;
@@ -165,6 +172,21 @@ namespace webpp::views {
                     }
                 }
 
+                // search the tree for a key and get a variable*
+                // nullptr is returned if we couldn't find the key
+                [[nodiscard]] constexpr variable const* get(string_view_type input_key) const noexcept {
+                    if (key_value == input_key)
+                        return this;
+                    if (auto list = get_if_list()) {
+                        for (auto& item : *list) {
+                            if (auto* var = item.get(input_key); var) {
+                                return var;
+                            }
+                        }
+                    }
+                    return nullptr;
+                }
+
                 [[nodiscard]] constexpr string_type* get_if_string() const {
                     return stl::get_if<string_type>(*this);
                 }
@@ -173,8 +195,41 @@ namespace webpp::views {
                     return stl::get_if<lambda_type>(*this);
                 }
 
+                [[nodiscard]] constexpr list_type* get_if_list() const {
+                    return stl::get_if<list_type>(*this);
+                }
+
                 [[nodiscard]] constexpr bool* get_if_bool() const {
                     return stl::get_if<bool>(*this);
+                }
+
+                [[nodiscard]] constexpr partial_type* get_if_partial() const {
+                    return stl::get_if<partial_type>(*this);
+                }
+
+                [[nodiscard]] constexpr bool is_string() const noexcept {
+                    return stl::holds_alternative<string_type>(*this);
+                }
+
+                [[nodiscard]] constexpr bool is_partial() const noexcept {
+                    return stl::holds_alternative<partial_type>(*this);
+                }
+
+                [[nodiscard]] constexpr bool is_lambda() const noexcept {
+                    return stl::holds_alternative<lambda_type>(*this);
+                }
+
+                [[nodiscard]] constexpr bool is_bool() const noexcept {
+                    return stl::holds_alternative<bool>(*this);
+                }
+
+
+                [[nodiscard]] constexpr partial_type& partial_value() const noexcept {
+                    return stl::get<partial_type>(*this);
+                }
+
+                [[nodiscard]] constexpr string_type& string_value() const noexcept {
+                    return stl::get<string_type>(*this);
                 }
             };
 
@@ -208,26 +263,41 @@ namespace webpp::views {
 
 
     template <Traits TraitsType>
-    struct context {
+    struct context : enable_traits<TraitsType> {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
+        using char_type        = traits::char_type<traits_type>;
         using data_type        = typename details::mustache_data_view_settings<traits_type>::type;
         using variable_type    = typename data_type::value_type;
-        using items_type       = traits::generalify_allocators<traits_type, stl::vector<const data_type*>>;
+        using items_type = traits::generalify_allocators<traits_type, stl::vector<const variable_type*>>;
         using items_value_type = typename items_type::value_type;
+        using etraits          = enable_traits<traits_type>;
 
       private:
         items_type items;
 
       public:
         template <EnabledTraits ET>
-        context(ET&& et, const data_type* data)
-          : items{et.alloc_pack.template general_allocator<items_value_type>()} {
+        context(ET&& et, const variable_type* data)
+          : etraits{et},
+            items{et.alloc_pack.template general_allocator<items_value_type>()} {
             push(data);
         }
 
+        template <EnabledTraits ET>
+        context(ET&& et, const data_type* data)
+          : etraits{et},
+            items{et.alloc_pack.template general_allocator<items_value_type>()} {
+            items.reserve(data->size());
+            stl::transform(
+              stl::begin(*data),
+              stl::end(*data),
+              stl::back_inserter(items),
+              [](auto const& item) constexpr noexcept { return &item; });
+        }
 
-        void push(const data_type* data) {
+
+        void push(const variable_type* data) {
             items.insert(items.begin(), data);
         }
 
@@ -251,9 +321,10 @@ namespace webpp::views {
                 return nullptr;
             }
             // process x.y-like name
-            const auto names = split(name, '.');
-            for (const auto& item : items) {
-                auto var = item;
+            auto names = object::make_local<stl::vector<string_view_type>>(*this);
+            strings::basic_splitter<string_view_type, char_type>(name, char_type{'.'}).split(names);
+            for (const auto* item : items) {
+                auto* var = item;
                 for (const auto& n : names) {
                     var = var->get(n);
                     if (!var) {
@@ -902,7 +973,7 @@ namespace webpp::views {
                         (var->is_partial() || var->is_string())) {
                         const auto& partial_result =
                           var->is_partial() ? var->partial_value()() : var->string_value();
-                        mustache_view tmpl{partial_result};
+                        mustache_view tmpl{*this, partial_result};
                         tmpl.set_custom_escape(escaper);
                         if (!tmpl.is_valid()) {
                             error_msg = tmpl.error_message();
@@ -917,7 +988,7 @@ namespace webpp::views {
                         }
                     }
                     break;
-                case tag_type::set_delimiter: ctx.delim_set = *comp.tag.delim_set; break;
+                case tag_type::set_delimiter: ctx.delim_set = comp.tag.delim_set; break;
                 default: break;
             }
 
@@ -1000,7 +1071,7 @@ namespace webpp::views {
         constexpr void render_section(const render_handler&          handler,
                                       context_internal<traits_type>& ctx,
                                       component_type&                incomp,
-                                      const data_type*               var) {
+                                      const variable_type*           var) {
             const auto callback = [&handler, &ctx, this](component_type& comp) -> walk_control_type {
                 return render_component(handler, ctx, comp);
             };
@@ -1009,7 +1080,7 @@ namespace webpp::views {
                     // account for the section begin tag
                     ctx.line_buffer.contained_section_tag = true;
 
-                    const context_pusher<string_type> ctxpusher{ctx, &item};
+                    const context_pusher<traits_type> ctxpusher{ctx, &item};
                     incomp.walk_children(callback);
 
                     // ctx may have been cleared. account for the section end tag
@@ -1019,7 +1090,7 @@ namespace webpp::views {
                 // account for the section begin tag
                 ctx.line_buffer.contained_section_tag = true;
 
-                const context_pusher<string_type> ctxpusher{ctx, var};
+                const context_pusher<traits_type> ctxpusher{ctx, var};
                 incomp.walk_children(callback);
 
                 // ctx may have been cleared. account for the section end tag

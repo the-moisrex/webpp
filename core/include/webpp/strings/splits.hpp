@@ -160,7 +160,7 @@ namespace webpp::strings {
          * Split the strings and get a vector
          */
         template <typename Vec = default_collection_type, typename... Args>
-        Vec split(Args&&... args) const {
+        [[nodiscard]] Vec split(Args&&... args) const {
             Vec vec{stl::forward<Args>(args)...};
             vec.reserve(delim_count + 1ul); // we're gambling here
             split<Vec>(vec);
