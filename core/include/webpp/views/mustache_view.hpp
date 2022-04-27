@@ -41,6 +41,7 @@
 #include "../utils/functional.hpp"
 #include "html.hpp"
 #include "view_concepts.hpp"
+#include "webpp/std/string_view.hpp"
 #include "webpp/traits/traits.hpp"
 
 #include <array>
@@ -159,14 +160,14 @@ namespace webpp::views {
 
 
                 [[nodiscard]] constexpr string_view_type key() const noexcept {
-                    return key_value;
+                    return istl::string_viewify_of<string_view_type>(key_value);
                 }
 
                 [[nodiscard]] constexpr bool is_false() const noexcept {
-                    if (stl::holds_alternative<bool>(as_variant())) {
-                        return stl::get<bool>(*this);
-                    } else if (stl::holds_alternative<list_type>(as_variant())) {
-                        return stl::get<list_type>(*this).size() == 0;
+                    if (const auto* v = get_if_bool()) {
+                        return *v;
+                    } else if (const auto* vlist = get_if_list()) {
+                        return vlist->size() == 0;
                     } else {
                         return true;
                     }
@@ -187,53 +188,53 @@ namespace webpp::views {
                     return nullptr;
                 }
 
-                [[nodiscard]] constexpr variant_type const& as_variant() const noexcept {
-                    return *static_cast<variant_type const*>(this);
+                [[nodiscard]] constexpr variant_type const* as_variant() const noexcept {
+                    return static_cast<variant_type const*>(this);
                 }
 
-                [[nodiscard]] constexpr string_type* get_if_string() const {
+                [[nodiscard]] constexpr string_type const* get_if_string() const {
                     return stl::get_if<string_type>(as_variant());
                 }
 
-                [[nodiscard]] constexpr lambda_type* get_if_lambda() const {
+                [[nodiscard]] constexpr lambda_type const* get_if_lambda() const {
                     return stl::get_if<lambda_type>(as_variant());
                 }
 
-                [[nodiscard]] constexpr list_type* get_if_list() const {
+                [[nodiscard]] constexpr list_type const* get_if_list() const {
                     return stl::get_if<list_type>(as_variant());
                 }
 
-                [[nodiscard]] constexpr bool* get_if_bool() const {
+                [[nodiscard]] constexpr bool const* get_if_bool() const {
                     return stl::get_if<bool>(as_variant());
                 }
 
-                [[nodiscard]] constexpr partial_type* get_if_partial() const {
+                [[nodiscard]] constexpr partial_type const* get_if_partial() const {
                     return stl::get_if<partial_type>(as_variant());
                 }
 
                 [[nodiscard]] constexpr bool is_string() const noexcept {
-                    return stl::holds_alternative<string_type>(as_variant());
+                    return stl::holds_alternative<string_type>(*as_variant());
                 }
 
                 [[nodiscard]] constexpr bool is_partial() const noexcept {
-                    return stl::holds_alternative<partial_type>(as_variant());
+                    return stl::holds_alternative<partial_type>(*as_variant());
                 }
 
                 [[nodiscard]] constexpr bool is_lambda() const noexcept {
-                    return stl::holds_alternative<lambda_type>(as_variant());
+                    return stl::holds_alternative<lambda_type>(*as_variant());
                 }
 
                 [[nodiscard]] constexpr bool is_bool() const noexcept {
-                    return stl::holds_alternative<bool>(as_variant());
+                    return stl::holds_alternative<bool>(*as_variant());
                 }
 
 
                 [[nodiscard]] constexpr partial_type& partial_value() const noexcept {
-                    return stl::get<partial_type>(as_variant());
+                    return stl::get<partial_type>(*as_variant());
                 }
 
                 [[nodiscard]] constexpr string_type& string_value() const noexcept {
-                    return stl::get<string_type>(as_variant());
+                    return stl::get<string_type>(*as_variant());
                 }
             };
 
