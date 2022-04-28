@@ -80,6 +80,7 @@ namespace webpp {
         constexpr enable_traits& operator=(enable_traits&& rhs) noexcept {
             logger     = stl::move(rhs.logger);
             alloc_pack = rhs.alloc_pack;
+            return *this;
         }
 
         constexpr void swap(EnabledTraits auto& other) noexcept {
