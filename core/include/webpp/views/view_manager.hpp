@@ -61,6 +61,8 @@ namespace webpp::views {
 
         static constexpr auto VIEW_CAT = "View";
 
+        static constexpr stl::array<string_view_type, 1> valid_extensions{".mustache"};
+
 
         view_roots_type view_roots; // the root directories where we can find the views
 
@@ -69,11 +71,10 @@ namespace webpp::views {
 
 
       public:
-        constexpr view_manager() noexcept = default;
-
         template <EnabledTraits ET>
         constexpr view_manager(ET&& et, stl::size_t cache_limit = 100) noexcept
           : etraits{et},
+            view_roots{this->alloc_pack.template general_allocator<path_type>()},
             cached_views{et, cache_limit} {}
 
 
@@ -121,7 +122,7 @@ namespace webpp::views {
             for (path_type dir : view_roots) {
 
                 fs::file_status status = fs::status(dir, ec);
-                if (ec) {
+                if (ec && !fs::status_known(status)) {
                     this->logger.error(VIEW_CAT,
                                        fmt::format("Cannot check directory status of {}", dir.string()),
                                        ec);
@@ -146,31 +147,58 @@ namespace webpp::views {
                                                fmt::format("Cannot traverse directory {}", dir.string()),
                                                ec);
                         }
-                        const path_type file = *it;
-                        if (file.stem() != request) {
-                            continue;
+                        const path_type file      = *it;
+                        const auto      file_stem = file.stem();
+                        if (file_stem == request) {
+                            goto found_it;
+                        }
+                        // The user may have omitted the extension, we are searching for them
+                        for (string_view_type ext : valid_extensions) {
+                            auto new_file = file;
+                            new_file.concat(ext.begin(), ext.end()); // append the extension
+
+                            if (file_stem == new_file) {
+                                goto found_it;
+                            }
                         }
 
+                        // did not find it
+                        continue;
+                    found_it:
                         status = fs::status(file, ec);
-                        if (ec) {
+                        if (fs::is_regular_file(status)) {
+                            return file;
+                        } else if (ec && !fs::status_known(status)) {
                             this->logger.error(VIEW_CAT,
                                                fmt::format("Cannot check file type of {}", dir.string()),
                                                ec);
-                        }
-                        if (fs::is_character_file(status)) {
-                            return file;
                         }
                     }
                 } else { // non-recursive normal path appending
                     dir.append(request.begin(), request.end());
                     status = fs::status(dir, ec);
-                    if (ec) {
+                    if (fs::exists(status)) {
+                        return dir;
+                    } else if (ec && !fs::status_known(status)) {
                         this->logger.error(VIEW_CAT,
                                            fmt::format("Cannot check file type of {}", dir.string()),
                                            ec);
                     }
-                    if (fs::exists(status) && fs::is_character_file(status)) {
-                        return dir;
+
+
+                    // The user may have omitted the extension, we are searching for them
+                    for (string_view_type ext : valid_extensions) {
+                        auto file = dir;
+                        file.concat(ext.begin(), ext.end()); // append the extension
+
+                        status = fs::status(file, ec);
+                        if (fs::exists(status)) {
+                            return file;
+                        } else if (ec && !fs::status_known(status)) {
+                            this->logger.error(VIEW_CAT,
+                                               fmt::format("Cannot check file type of {}", dir.string()),
+                                               ec);
+                        }
                     }
                 }
             }
