@@ -422,7 +422,10 @@ namespace webpp::alloc {
 
         constexpr allocator_pack() noexcept = default;
 
-        constexpr allocator_pack& operator=(const allocator_pack&) = default;
+        constexpr allocator_pack& operator=(const allocator_pack&) noexcept {
+            // do nothing; really
+            return *this;
+        }
         constexpr allocator_pack& operator=(allocator_pack&&) noexcept = default;
 
 
