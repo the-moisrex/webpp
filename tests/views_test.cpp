@@ -31,7 +31,12 @@ TEST(TheViews, MustacheView) {
     auto        data = object::make_general<data_type>(et);
     data.push_back(variable_type{et, "name", "moisrex"});
     v.render(str, data);
-    EXPECT_EQ("My name is moisrex", str);
+    EXPECT_EQ(str, "My name is moisrex");
+    data.clear();
+    str.clear();
+    data.push_back(variable_type{et, "name", "The Moisrex"});
+    v.render(str, data);
+    EXPECT_EQ(str, "My name is The Moisrex");
 }
 
 

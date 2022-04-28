@@ -155,8 +155,9 @@ namespace webpp::modp_b64 {
      * }
      * \endcode
      *
+     * todo: this function can be "constexpr"
      */
-    [[nodiscard]] static std::size_t encode(char* dest, const char* str, std::size_t len) noexcept {
+    [[nodiscard]] static inline std::size_t encode(char* dest, const char* str, std::size_t len) noexcept {
         std::size_t i = 0;
         auto*       p = reinterpret_cast<std::uint8_t*>(dest);
 
@@ -219,7 +220,7 @@ namespace webpp::modp_b64 {
      * if (len == -1) { error }
      * \endcode
      */
-    [[nodiscard]] static std::size_t decode(char* dest, const char* src, std::size_t len) noexcept {
+    [[nodiscard]] static constexpr std::size_t decode(char* dest, const char* src, std::size_t len) noexcept {
         if (len == 0)
             return 0;
 

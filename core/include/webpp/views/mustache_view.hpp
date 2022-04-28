@@ -437,8 +437,8 @@ namespace webpp::views {
 
     template <Traits TraitsType>
     struct context_pusher {
-        using traits_type = TraitsType;
-        using data_type   = typename details::mustache_data_view_settings<traits_type>::type;
+        using traits_type   = TraitsType;
+        using data_type     = typename details::mustache_data_view_settings<traits_type>::type;
         using variable_type = typename data_type::value_type;
 
         constexpr context_pusher(context_internal<traits_type>& ctx, const variable_type* var) : ctx_(ctx) {
@@ -463,7 +463,9 @@ namespace webpp::views {
 
         using children_type = traits::generalify_allocators<traits_type, stl::vector<component>>;
 
-        string_view_type       text;
+        // the reason why this can't be a string view is because of whitespaces that get ignored during the
+        // parsing
+        string_type            text;
         mstch_tag<traits_type> tag;
         children_type          children;
         string_size_type       position = string_view_type::npos;
