@@ -439,9 +439,10 @@ namespace webpp::views {
     struct context_pusher {
         using traits_type = TraitsType;
         using data_type   = typename details::mustache_data_view_settings<traits_type>::type;
+        using variable_type = typename data_type::value_type;
 
-        context_pusher(context_internal<traits_type>& ctx, const data_type* data) : ctx_(ctx) {
-            ctx.ctx.push(data);
+        constexpr context_pusher(context_internal<traits_type>& ctx, const variable_type* var) : ctx_(ctx) {
+            ctx.ctx.push(var);
         }
         ~context_pusher() {
             ctx_.ctx.pop();
