@@ -244,6 +244,30 @@ namespace webpp::views {
         }
 
 
+        template <istl::StringViewifiable StrT>
+        constexpr auto file(StrT&& file_request) noexcept {
+            auto const the_file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
+            auto       out      = object::make_general<string_type>(this->alloc_pack);
+            if (!the_file) {
+                this->logger.error(VIEW_CAT,
+                                   fmt::format("We can't find the specified view {}.", file_request));
+                return out;
+            }
+            auto file_content = read_file(the_file.value());
+            if (!file_content) {
+                return out; // empty string is returned.
+            }
+
+            // at this point we don't care about the extension of the file; the user explicitly wants us to
+            // parse it as a mustache file
+            file_view_type view = get_view<file_view_type>(*the_file);
+            view.scheme(stl::move(file_content.value()));
+            view.render(out);
+            cached_views.set(*the_file, view_types{stl::in_place_type<file_view_type>, stl::move(view)});
+            return out;
+        }
+
+
         /**
          * This is essentially the same as ".view" but it's specialized for a mustache file.
          */

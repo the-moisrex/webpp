@@ -60,3 +60,25 @@ TEST(TheViews, ViewManagerTest) {
     const auto res = man.mustache("assets/hello-world", data);
     EXPECT_EQ(res, "Hello, moisrex") << "Check out the logs, it shouldn't be empty if the file was found.\n" << roots;
 }
+
+
+
+TEST(TheViews, FileView) {
+    enable_owner_traits<default_traits> et;
+
+    view_manager<default_traits> man{et};
+    man.view_roots.push_back("../tests/assets");
+    man.view_roots.push_back("../tests");
+    man.view_roots.push_back("./tests");
+    man.view_roots.push_back("./tests/assets");
+
+    std::string roots;
+    for (auto const& root : man.view_roots) {
+        roots += std::filesystem::absolute(root).lexically_normal().string() + ", ";
+    }
+
+    const auto res = man.file("assets/hello-world.mustache");
+    EXPECT_EQ(res, "Hello, {{name}}") << "Check out the logs, it shouldn't be empty if the file was found.\n" << roots;
+}
+
+
