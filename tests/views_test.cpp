@@ -77,7 +77,7 @@ TEST(TheViews, ViewManagerSubFiles) {
     auto data = object::make_general<data_type>(et);
     data.push_back(variable_type{et, "name", "moisrex"});
     data.push_back(variable_type{et, "hello-world", partial_type([]() -> string_type {
-                                     return "Hello {{name}}";
+                                     return "Hello, {{name}}";
                                  })});
     const auto res = man.mustache("assets/hello-bob", data);
     EXPECT_EQ(res, "Bob says: Hello, moisrex\n");

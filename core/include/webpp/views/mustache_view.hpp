@@ -570,6 +570,10 @@ namespace webpp::views {
         constexpr mustache_view& operator=(mustache_view const&) = default;
         constexpr mustache_view& operator=(mustache_view&&) noexcept = default;
 
+        constexpr etraits const& get_traits() const noexcept {
+            return static_cast<etraits const&>(*this);
+        }
+
         constexpr void scheme(string_view_type input) {
             delimiter_set<traits_type> delim_set;
             parse(input, delim_set);
@@ -660,19 +664,6 @@ namespace webpp::views {
         }
 
       private:
-        template <EnabledTraits ET>
-        constexpr mustache_view(ET&& et, string_view_type input, context_internal<traits_type>& ctx)
-          : mustache_view(et) {
-            parse(input, ctx.delim_set);
-        }
-
-        template <EnabledTraits ET>
-        constexpr mustache_view(ET&& et, string_view_type input) : mustache_view(et) {
-            delimiter_set<traits_type> delim_set;
-            parse(input, delim_set);
-        }
-
-
         /////// Parser
 
 
@@ -936,7 +927,7 @@ namespace webpp::views {
             // We're at the end of a line, so check the line buffer state to see
             // if the line had tags in it, and also if the line is now empty or
             // contains whitespace only. if this situation is true, skip the line.
-            if (!line_buffer.contained_section_tag || !line_buffer.is_empty_or_contains_only_whitespace()) {
+            if (!line_buffer.contained_section_tag && !line_buffer.is_empty_or_contains_only_whitespace()) {
                 handler(line_buffer.data);
                 if (comp) {
                     handler(comp->text);
@@ -994,7 +985,8 @@ namespace webpp::views {
                         (var->is_partial() || var->is_string())) {
                         const auto& partial_result =
                           var->is_partial() ? var->partial_value()() : var->string_value();
-                        mustache_view tmpl{*this, partial_result};
+                        mustache_view tmpl{get_traits()};
+                        tmpl.scheme(partial_result);
                         tmpl.set_custom_escape(escaper);
                         if (!tmpl.is_valid()) {
                             error_msg = tmpl.error_message();
@@ -1062,11 +1054,13 @@ namespace webpp::views {
                     return do_escape ? escaper(str) : str;
                 };
                 if (parse_with_same_context) {
-                    mustache_view tmpl{*this, txt, ctx};
+                    mustache_view tmpl{get_traits()};
+                    tmpl.parse(txt, ctx.delim_set);
                     tmpl.set_custom_escape(escaper);
                     return process_template(tmpl);
                 }
-                mustache_view tmpl{*this, txt};
+                mustache_view tmpl{get_traits()};
+                tmpl.scheme(txt);
                 tmpl.set_custom_escape(escaper);
                 return process_template(tmpl);
             };
