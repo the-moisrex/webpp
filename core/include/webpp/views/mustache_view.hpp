@@ -542,6 +542,7 @@ namespace webpp::views {
         using data_type     = typename settings::type;
         using variable_type = typename settings::variable;
         using lambda_type   = typename settings::lambda_type;
+        using partial_type  = typename settings::partial_type;
 
 
         using render_handler = stl::function<void(string_view_type)>; // todo: see if we need this handler

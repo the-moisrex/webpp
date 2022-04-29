@@ -21,6 +21,8 @@ using string_type        = traits::general_string<default_traits>;
 using mustache_view_type = mustache_view<default_traits>;
 using data_type          = typename mustache_view_type::data_type;
 using variable_type      = typename data_type::value_type;
+using partial_type       = typename variable_type::partial_type;
+
 
 TEST(TheViews, MustacheView) {
     enable_owner_traits<default_traits> et;
@@ -74,6 +76,9 @@ TEST(TheViews, ViewManagerSubFiles) {
 
     auto data = object::make_general<data_type>(et);
     data.push_back(variable_type{et, "name", "moisrex"});
+    data.push_back(variable_type{et, "hello-world", partial_type([]() -> string_type {
+                                     return "Hello {{name}}";
+                                 })});
     const auto res = man.mustache("assets/hello-bob", data);
     EXPECT_EQ(res, "Bob says: Hello, moisrex\n");
 }
