@@ -422,6 +422,7 @@ namespace webpp::views {
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
 
+        // the name cannot be a string view
         string_view_type                name;
         tag_type                        type = tag_type::text;
         stl::optional<string_view_type> section_text;
@@ -891,10 +892,9 @@ namespace webpp::views {
                 if (tag.type == tag_type::variable) {
                     tag.name = contents;
                 } else {
-                    string_type name{contents};
-                    name.erase(name.begin());
-                    ascii::trim(name);
-                    tag.name = name;
+                    tag.name = contents;
+                    tag.name.remove_prefix(1);
+                    ascii::trim(tag.name);
                 }
             }
         }
@@ -1006,6 +1006,15 @@ namespace webpp::views {
                         if (!tmpl.is_valid()) {
                             return walk_control_type::stop;
                         }
+                    } else {
+                        // todo: add more debugging information here, including:
+                        //  - Partial name
+                        //  - File
+                        //  - Line
+                        //  - Column
+                        this->logger.error(
+                          MUSTACHE_CAT,
+                          "The mustache template requested a partial which we're not able to find; it's getting ignored.");
                     }
                     break;
                 case tag_type::set_delimiter: ctx.delim_set = comp.tag.delim_set; break;
