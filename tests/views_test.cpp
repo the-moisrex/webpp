@@ -21,7 +21,7 @@ using string_type        = traits::general_string<default_traits>;
 using mustache_view_type = mustache_view<default_traits>;
 using data_type          = typename mustache_view_type::data_type;
 using variable_type      = typename data_type::value_type;
-using partial_type       = typename variable_type::partial_type;
+using partial_type       = typename mustache_view_type::partial_type;
 
 
 TEST(TheViews, MustacheView) {
