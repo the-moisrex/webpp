@@ -58,9 +58,25 @@ TEST(TheViews, ViewManagerTest) {
     auto data = object::make_general<data_type>(et);
     data.push_back(variable_type{et, "name", "moisrex"});
     const auto res = man.mustache("assets/hello-world", data);
-    EXPECT_EQ(res, "Hello, moisrex") << "Check out the logs, it shouldn't be empty if the file was found.\n" << roots;
+    EXPECT_EQ(res, "Hello, moisrex") << "Check out the logs, it shouldn't be empty if the file was found.\n"
+                                     << roots;
 }
 
+TEST(TheViews, ViewManagerSubFiles) {
+
+    enable_owner_traits<default_traits> et;
+
+    view_manager<default_traits> man{et};
+    man.view_roots.push_back("../tests/assets");
+    man.view_roots.push_back("../tests");
+    man.view_roots.push_back("./tests");
+    man.view_roots.push_back("./tests/assets");
+
+    auto data = object::make_general<data_type>(et);
+    data.push_back(variable_type{et, "name", "moisrex"});
+    const auto res = man.mustache("assets/hello-bob", data);
+    EXPECT_EQ(res, "Bob says: Hello, moisrex\n");
+}
 
 
 TEST(TheViews, FileView) {
@@ -78,7 +94,6 @@ TEST(TheViews, FileView) {
     }
 
     const auto res = man.file("assets/hello-world.mustache");
-    EXPECT_EQ(res, "Hello, {{name}}") << "Check out the logs, it shouldn't be empty if the file was found.\n" << roots;
+    EXPECT_EQ(res, "Hello, {{name}}") << "Check out the logs, it shouldn't be empty if the file was found.\n"
+                                      << roots;
 }
-
-
