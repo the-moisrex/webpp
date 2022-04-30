@@ -64,7 +64,7 @@ TEST(TheViews, ViewManagerTest) {
                                      << roots;
 }
 
-TEST(TheViews, ViewManagerSubFiles) {
+TEST(TheViews, MustacheViewPartials) {
 
     enable_owner_traits<default_traits> et;
 
