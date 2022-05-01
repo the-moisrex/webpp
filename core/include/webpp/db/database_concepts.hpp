@@ -5,87 +5,50 @@
 
 #include "../std/concepts.hpp"
 
-/**
- * This file is the place to print all the database related C++20 concepts
- */
-namespace webpp::database {
-
-    /**
-     * Example usages that I hope to implement:
-     *
-     * @code
-     *   auto user = db.tables["users"].where("id", 20).first();
-     *   user["age"]++;                            // operator is overloaded, sync is the default.
-     *   user["age"] += 20;                        //
-     *   user["username"] = "hello world";         //
-     *   user.commit();                            // run username change NOW
-     *
-     *   auto usr = user.async;
-     *   // we should be able to use this instead of keep getting the .async version
-     *
-     *   auto posts = db.tables["posts"].where(field("id") > 10);                  // haven't fetched them yet
-     *   auto names = db.tables["names"].where("date"_field > (now() - 100_days));
-     *   auto pics = db.tables["pictures"]
-     *                  .select("src")
-     *                  .where(
-     *                      func::tolower("title"_field) == "cute" ||
-     *                      "id"_field == 200
-     *                  );
-     *   auto authors = db.tables["authors"]
-     *                     .select(
-     *                          "username",
-     *                          "firstname",
-     *                          "lastname",
-     *                          field(func::concat("firstname", "lastname")).as("name")
-     *                     )
-     *                     .where("date"_field > now() - 10_days)
-     *                     .and_where("date"_field <= now())
-     *                     .get();
-     *
-     *   using func = database::functions;
-     *   posts.each["title"] = func::tolower(post.title);           // tolower is SQL function not C++
-     *   posts.update();
-     *
-     *   db.transaction([&]() {
-     *      // ...
-     *   });
-     * @endcode
-     *
-     *
-     * Examples of the user configuring the database:
-     * @code
-     *   int main() {
-     *     database::mysql localhost;
-     *     application app;
-     *     app.databases.push_back(std::move(localhost));
-     *     return app();
-     *   }
-     * @endcode
-     */
-
+namespace webpp::sql {
 
     template <typename T>
     concept Connection = requires(T db) {
-        db.execute("");
+        requires stl::default_initializable<T>;
+
         { db.open() } -> stl::same_as<bool>;
+        { db.is_open() } -> stl::same_as<bool>;
         { db.close() } -> stl::same_as<bool>;
-        // todo
+
+        // Other specialized configuration for each database type is goes here as well.
+        // For example the SQLite will require a file path
+        // And MySQL will require connection settings.
     };
 
     template <typename T>
-    concept Handler = requires(T handler) {
-        handler.transaction([]() {});
-        handler.transaction.start();
-        handler.transaction.end();
-        handler.transaction.get(); // [[nodiscard]] requires the user to give it a name
-        handler.execute("");
+    concept QueryLanguage = requires {
+        //
     };
 
 
+    /**
+     * This type holds the main object of a SQL Database.
+     * A database is bigger than SQL Database, which may even include services that
+     * can store files; because I'm planning on making this project work with other
+     * services as well (like for example GraphQL and even Cypher language), I separate
+     * the Database and SQLDatabase concepts.
+     *
+     * A SQL Database may hold:
+     *   - Connection
+     *   - Query Language
+     *
+     * A Connection is how the system works, and
+     * a Query Language is what the system does.
+     */
     template <typename T>
-    concept DatabaseTraits = requires {
-        typename T::query_builder_helper;
+    concept SQLDatabase = Connection<T> && requires {
+        requires stl::default_initializable<T>;
+
+        typename T::query_language_type;
+        requires QueryLanguage<typename T::query_language_type>;
     };
-} // namespace webpp::database
+
+
+} // namespace webpp::sql
 
 #endif // WEBPP_DATABASE_CONCEPTS_HPP
