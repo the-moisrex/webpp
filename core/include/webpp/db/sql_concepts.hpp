@@ -9,6 +9,21 @@
 
 namespace webpp::sql {
 
+
+    /**
+     * This concept shows what a SQL Statement is and it's used for preparing a query
+     * This statement is what a connection is going to use internally; what the user should be exposed to,
+     * is the statement wrapper and not this statement. All the cool and common features should be implemented
+     * in the wrapper statement.
+     */
+    template <typename T>
+    concept SQLStatement = requires(T stmt) {
+        stmt.bind(1, ""); // index based set string type
+        stmt.bind(1, 1);  // index based set integer type
+        stmt.execute();
+    };
+
+
     /**
      * This concept represents a Connection to a SQL based Database.
      * I specificly chose SQLConnection because a connection to a database could be
@@ -18,7 +33,7 @@ namespace webpp::sql {
     template <typename T>
     concept SQLConnection = requires(T db) {
         typename T::statement_type;
-        typename T::result_type; // result of a "query"
+        requires SQLStatement<typename T::statement_type>;
 
         requires stl::default_initializable<T>;
 
