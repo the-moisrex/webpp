@@ -46,7 +46,7 @@ namespace webpp::sql {
     };
 
     template <typename T>
-    concept SQLGrammer = requires {
+    concept SQLGrammar = requires {
         T::insert("", {});
     };
 
@@ -69,8 +69,8 @@ namespace webpp::sql {
     concept SQLDatabase = SQLConnection<T> && requires {
         requires stl::default_initializable<T>;
 
-        typename T::grammer_type;
-        requires SQLGrammer<typename T::grammer_type>;
+        typename T::grammar_type;
+        requires SQLGrammar<typename T::grammar_type>;
     };
 
 
