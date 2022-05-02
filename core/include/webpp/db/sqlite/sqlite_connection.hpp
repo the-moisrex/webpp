@@ -3,9 +3,17 @@
 
 #include "../../libs/sqlite.hpp"
 
+#include <cstdint>
+#include <string>
 #include <string_view>
 
 
+// sorry that we're using std::string and other features that have nothing to do with the traits system that
+// I'v built, the sqlite doesn't support those and it's pretty much useless to have them here so this way, we
+// at least will gain some compile-time performance. Connection to the database should be performed when the
+// applicaiton is started and will not affect the long running application's performane even though it might
+// affect the performance of the protocols like CGI that the whole application is re-started for each request,
+// but openning a connection is slow enough that a few allocations are dissmissable.
 namespace webpp::sql {
 
     struct sqlite_config {
@@ -35,7 +43,7 @@ namespace webpp::sql {
 
             // todo: SQLCipher sqlite3_key password (https://github.com/rbock/sqlpp11/blob/1e7f4b98c727643513eb94100133c009906809d9/include/sqlpp11/sqlite3/connection.h#L95)
 
-            errmsg.clear();
+            errmsg.clear(); // no errors
         }
 
         bool close() noexcept {
@@ -56,6 +64,11 @@ namespace webpp::sql {
 
         ::sqlite3* native_handle() noexcept {
             return handle;
+        }
+
+
+        std::uint64_t last_insert_id() noexcept {
+            return static_cast<std::uint64_t>(sqlite3_last_insert_rowid(handle));
         }
 
         // source: https://raw.githubusercontent.com/sqlitebrowser/sqlitebrowser/master/src/sqlitedb.cpp
