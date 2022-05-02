@@ -14,6 +14,8 @@
 // applicaiton is started and will not affect the long running application's performane even though it might
 // affect the performance of the protocols like CGI that the whole application is re-started for each request,
 // but openning a connection is slow enough that a few allocations are dissmissable.
+//
+// todo: Should we use a template instead of std::string directly (only for error handlings)
 namespace webpp::sql {
 
     struct sqlite_config {
@@ -54,6 +56,15 @@ namespace webpp::sql {
                 return false;
             } else {
                 return true;
+            }
+        }
+
+        void execute(std::string_view sql, std::string& errmsg) noexcept {
+            char*     err;
+            const int rc = sqlite3_exec(handle, sql.data(), 0, 0, &err);
+            if (rc != SQLITE_OK) {
+                errmsg = err;
+                sqlite3_free(err); // we have copied it
             }
         }
 
