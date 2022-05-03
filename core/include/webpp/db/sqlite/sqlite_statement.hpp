@@ -4,6 +4,7 @@
 #include "../../common/meta.hpp"
 #include "../../libs/sqlite.hpp"
 #include "../../std/concepts.hpp"
+#include "../../std/span.hpp"
 #include "../../std/string.hpp"
 #include "../../std/string_view.hpp"
 
@@ -39,17 +40,34 @@ namespace webpp::sql {
          *   - blob
          */
         template <typename T>
-        void bind(int index, T&& val, istl::String auto& err_msg) noexcept {
-            if constexpr (stl::is_floating_point_v<T>) {
+        void bind(int index, T&& val, istl::String auto& err_msg) {
+            using type = stl::remove_cvref_t<T>;
+            if constexpr (istl::Span<type>) {
+                if (val.size() > stl::numeric_limits<int>::max()) {
+                    check_bind_result(sqlite3_bind_blob64(stmt,
+                                                          index,
+                                                          static_cast<void const*>(val.data()),
+                                                          static_cast<sqlite3_int64>(val.size()),
+                                                          SQLITE_STATIC),
+                                      err_msg);
+                } else {
+                    check_bind_result(sqlite3_bind_blob(stmt,
+                                                        index,
+                                                        static_cast<void const*>(val.data()),
+                                                        static_cast<int>(val.size()),
+                                                        SQLITE_STATIC),
+                                      err_msg);
+                }
+            } else if constexpr (stl::is_floating_point_v<type>) {
                 check_bind_result(sqlite3_bind_double(stmt, index, static_cast<double>(val)), err_msg);
-            } else if constexpr (stl::integral<T>) {
-                if constexpr (sizeof(T) >= 64) {
+            } else if constexpr (stl::integral<type>) {
+                if constexpr (sizeof(type) >= 64) {
                     check_bind_result(sqlite3_bind_int64(stmt, index, static_cast<sqlite3_int64>(val)),
                                       err_msg);
                 } else {
                     check_bind_result(sqlite3_bind_int(stmt, index, static_cast<int>(val)), err_msg);
                 }
-            } else if constexpr (istl::StringView<T>) {
+            } else if constexpr (istl::StringView<type>) {
                 // sql_statement functions will take care of strings and conversions to string,
                 // this function will only recieve string views.
                 using value_type                        = typename T::value_type;
@@ -67,7 +85,7 @@ namespace webpp::sql {
                     check_bind_result(sqlite3_bind_text(stmt, index, val.data(), val.size(), SQLITE_STATIC),
                                       err_msg);
                 }
-            } else if constexpr (stl::is_null_pointer_v<T>) { // null
+            } else if constexpr (stl::is_null_pointer_v<type>) { // null
                 check_bind_result(sqlite3_bind_null(stmt, index), err_msg);
                 if (err_msg.empty()) {
                     err_msg = "bind value set to null because you passed an unknown type.";
