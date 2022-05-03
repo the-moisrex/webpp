@@ -42,12 +42,19 @@ namespace webpp::sql {
                 if constexpr (value_size >= 64) { // 64bit string
                     // todo: it's possible for this string type to be utf-16 as well, write tests for this
                     check_bind_result(
-                      sqlite3_bind_text64(stmt, index, val.data(), val.size(), SQLITE_STATIC, SQLITE_UTF8));
+                      sqlite3_bind_text64(stmt, index, val.data(), val.size(), SQLITE_STATIC, SQLITE_UTF8),
+                      err_msg);
                 } else if constexpr (value_size == 16) { // utf-16
-                    check_bind_result(
-                      sqlite3_bind_text16(stmt, index, val.data(), val.size(), SQLITE_STATIC));
+                    check_bind_result(sqlite3_bind_text16(stmt, index, val.data(), val.size(), SQLITE_STATIC),
+                                      err_msg);
                 } else { // normal string
-                    check_bind_result(sqlite3_bind_text(stmt, index, val.data(), val.size(), SQLITE_STATIC));
+                    check_bind_result(sqlite3_bind_text(stmt, index, val.data(), val.size(), SQLITE_STATIC),
+                                      err_msg);
+                }
+            } else {
+                check_bind_result(sqlite3_bind_null(stmt, index), err_msg);
+                if (err_msg.empty()) {
+                    err_msg = "bind value set to null because you passed an unknown type.";
                 }
             }
         }
