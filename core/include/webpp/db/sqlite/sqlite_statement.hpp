@@ -1,6 +1,7 @@
 #ifndef WEBPP_DATABASE_SQLITE_STATEMENT_HPP
 #define WEBPP_DATABASE_SQLITE_STATEMENT_HPP
 
+#include "../../common/meta.hpp"
 #include "../../libs/sqlite.hpp"
 #include "../../std/concepts.hpp"
 #include "../../std/string.hpp"
@@ -29,10 +30,25 @@ namespace webpp::sql {
         }
 
       public:
+        /**
+         * Possilbe values:
+         *   - nullptr_t
+         *   - std::basic_string_view<...>
+         *   - int/short/long/...
+         *   - double/float/...
+         *   - blob
+         */
         template <typename T>
         void bind(int index, T&& val, istl::String auto& err_msg) noexcept {
-            if constexpr (stl::integral<T>) {
-                check_bind_result(sqlite3_bind_int(stmt, index, static_cast<int>(val)), err_msg);
+            if constexpr (stl::is_floating_point_v<T>) {
+                check_bind_result(sqlite3_bind_double(stmt, index, static_cast<double>(val)), err_msg);
+            } else if constexpr (stl::integral<T>) {
+                if constexpr (sizeof(T) >= 64) {
+                    check_bind_result(sqlite3_bind_int64(stmt, index, static_cast<sqlite3_int64>(val)),
+                                      err_msg);
+                } else {
+                    check_bind_result(sqlite3_bind_int(stmt, index, static_cast<int>(val)), err_msg);
+                }
             } else if constexpr (istl::StringView<T>) {
                 // sql_statement functions will take care of strings and conversions to string,
                 // this function will only recieve string views.
@@ -51,11 +67,13 @@ namespace webpp::sql {
                     check_bind_result(sqlite3_bind_text(stmt, index, val.data(), val.size(), SQLITE_STATIC),
                                       err_msg);
                 }
-            } else {
+            } else if constexpr (stl::is_null_pointer_v<T>) { // null
                 check_bind_result(sqlite3_bind_null(stmt, index), err_msg);
                 if (err_msg.empty()) {
                     err_msg = "bind value set to null because you passed an unknown type.";
                 }
+            } else {
+                static_assert_false(T, "SQLite cannot handle the specified type.");
             }
         }
 
