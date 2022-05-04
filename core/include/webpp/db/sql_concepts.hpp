@@ -83,6 +83,7 @@ namespace webpp::sql {
     template <typename T>
     concept SQLDatabase = SQLConnection<T> && requires {
         requires stl::default_initializable<T>;
+        { T::template supports_string_view<std::string_view> } -> stl::same_as<bool>;
 
         typename T::grammar_type;
         requires SQLGrammar<typename T::grammar_type>;

@@ -18,6 +18,11 @@ namespace webpp {
         [[no_unique_address]] logger_type         logger{};
 
 
+        // when this object is a mother of another class, this method can help get the tratis object.
+        constexpr enable_owner_traits& get_traits() noexcept {
+            return *this;
+        }
+
         // template <typename... ResType>
         // requires((allocator_pack_type::template has_resource_object<ResType> &&
         //           ...)) // check if the allocator pack has the resources
@@ -87,6 +92,11 @@ namespace webpp {
             using stl::swap;
             swap(alloc_pack, other.alloc_pack);
             swap(logger, other.logger);
+        }
+
+        // when this object is a mother of another class, this method can help get the tratis object.
+        constexpr enable_traits& get_traits() noexcept {
+            return *this;
         }
     };
 
