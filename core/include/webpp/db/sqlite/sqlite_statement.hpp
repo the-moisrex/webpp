@@ -110,7 +110,23 @@ namespace webpp::sql {
             }
         }
 
-        void execute() noexcept {}
+        void execute(std::string& errmsg) {
+            const int rc = sqlite3_step(stmt);
+            switch (rc) {
+                // this is an embaracing situation for clang-format
+                // clang-format off
+                [[likely]]
+                case SQLITE_OK:
+                case SQLITE_ROW: // might occur if execute is called withe a select
+                case SQLITE_DONE:
+                    return;
+                // clang-format on
+                default: {
+                    errmsg = "SQLite3 error, could not execute prepared statement: ";
+                    errmsg += sqlite3_errmsg(sqlite3_db_handle(stmt));
+                }
+            }
+        }
     };
 
 } // namespace webpp::sql
