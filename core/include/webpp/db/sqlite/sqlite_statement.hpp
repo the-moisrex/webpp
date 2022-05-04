@@ -113,7 +113,7 @@ namespace webpp::sql {
         void execute(std::string& errmsg) {
             const int rc = sqlite3_step(stmt);
             switch (rc) {
-                // this is an embaracing situation for clang-format
+                // this is an embarrassing situation for clang-format
                 // clang-format off
                 [[likely]]
                 case SQLITE_OK:
