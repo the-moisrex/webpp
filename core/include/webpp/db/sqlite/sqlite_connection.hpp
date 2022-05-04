@@ -2,6 +2,7 @@
 #define WEBPP_DATABASE_SQLITE_CONNECTION_HPP
 
 #include "../../libs/sqlite.hpp"
+#include "sqlite_statement.hpp"
 
 #include <cstdint>
 #include <string>
@@ -66,6 +67,25 @@ namespace webpp::sql {
                 errmsg = err;
                 sqlite3_free(err); // we have copied it
             }
+        }
+
+        // prepare an statment for the parent sql connection to wrap it
+        sqlite_statement prepare(std::string_view stmt_str, std::string& errmsg) noexcept {
+            ::sqlite3_stmt* stmt;
+            const int       rc =
+              sqlite3_prepare_v2(handle, stmt_str.data(), static_cast<int>(stmt_str.size()), &stmt, nullptr);
+            if (rc != SQLITE_OK) [[unlikely]] {
+                errmsg = "SQLite3 error, could not prepare statement: ";
+                errmsg += sqlite3_errmsg(handle);
+                errmsg += "; for statement: ";
+                if (rc != SQLITE_TOOBIG) {
+                    errmsg += stmt_str;
+                } else {
+                    errmsg += stmt_str.substr(0, 128);
+                    errmsg += "...";
+                }
+            }
+            return {stmt};
         }
 
         ~sqlite_connection() noexcept {
