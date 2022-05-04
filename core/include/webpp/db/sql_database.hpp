@@ -8,7 +8,7 @@
 #include "sql_concepts.hpp"
 #include "sql_statement.hpp"
 
-namespace webpp {
+namespace webpp::sql {
 
     /**
      * The name SQL Database and not Database is used because database can mean more and this struct will only
@@ -17,7 +17,7 @@ namespace webpp {
      * This struct will either be used by the user directly or it'll be used by the high level utilities. So
      * this struct needs to be user friendly.
      */
-    template <SQLDatabase SQLDBType, typename TraitsEnabler>
+    template <SQLDriver SQLDBType, typename TraitsEnabler>
     struct basic_sql_database : TraitsEnabler, SQLDBType {
         using driver_type           = SQLDBType;
         using etraits               = TraitsEnabler;
@@ -25,9 +25,10 @@ namespace webpp {
         using driver_statement_type = typename driver_type::statement_type;
         using statement_type        = sql_statement<driver_statement_type>;
         using string_view_type      = traits::string_view<traits_type>;
+        using string_type           = traits::general_string<traits_type>;
 
         template <typename T>
-        static constexpr bool supports_string_view = typename database::supports_string_view<T>;
+        static constexpr bool supports_string_view = typename driver_type::supports_string_view<T>;
 
         /**
          * This method converts the input into string view. String view type is chosen with this priority:
@@ -91,9 +92,9 @@ namespace webpp {
     };
 
 
-    template <SQLDatabase SQLDBType, Traits TraitsType = default_traits>
+    template <SQLDriver SQLDBType, Traits TraitsType = default_traits>
     using sql_database = basic_sql_database<SQLDBType, enable_owner_traits<TraitsType>>;
 
-} // namespace webpp
+} // namespace webpp::sql
 
 #endif // WEBPP_DATABASE_SQL_DATABASE_HPP

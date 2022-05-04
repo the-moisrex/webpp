@@ -71,7 +71,7 @@ namespace webpp::sql {
      * A database is bigger than SQL Database, which may even include services that
      * can store files; because I'm planning on making this project work with other
      * services as well (like for example GraphQL and even Cypher language), I separate
-     * the Database and SQLDatabase concepts.
+     * the Database and SQLDriver concepts.
      *
      * A SQL Database may hold:
      *   - SQLConnection
@@ -81,7 +81,7 @@ namespace webpp::sql {
      * a Query Language is what the system does.
      */
     template <typename T>
-    concept SQLDatabase = SQLConnection<T> && requires {
+    concept SQLDriver = SQLConnection<T> && requires {
         requires stl::default_initializable<T>;
         { T::template supports_string_view<std::string_view> } -> stl::same_as<bool>;
 
