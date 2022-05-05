@@ -8,7 +8,64 @@
 #include "sql_concepts.hpp"
 #include "sql_statement.hpp"
 
+#include <compare>
+
 namespace webpp::sql {
+
+
+    template <SQLStatement StmtType>
+    struct sql_iterator {
+        using statement_type    = StmtType;
+        using value_type        = statement_type;
+        using difference_type   = stl::ptrdiff_t;
+        using reference         = stl::add_lvalue_reference_t<value_type>;
+        using pointer           = typename stl::iterator_traits<value_type>::pointer;
+        using iterator_category = stl::forward_iterator_tag;
+        using iterator_concept  = stl::forward_iterator_tag;
+
+      private:
+        statement_type* stmt = nullptr;
+
+      public:
+        constexpr sql_iterator() noexcept = default;
+        constexpr sql_iterator(statement_type* stmt_ptr) noexcept : stmt{stmt_ptr} {}
+        constexpr sql_iterator(sql_iterator const&)     = default;
+        constexpr sql_iterator(sql_iterator&&) noexcept = default;
+        constexpr sql_iterator& operator=(sql_iterator const&) = default;
+        constexpr sql_iterator& operator=(sql_iterator&&) noexcept = default;
+
+
+        constexpr auto operator<=>(const sql_iterator& rhs) noexcept {
+            return base() <=> rhs.base();
+        }
+
+        // Forward iterator requirements
+        constexpr reference operator*() const noexcept {
+            return *stmt;
+        }
+
+        constexpr pointer operator->() const noexcept {
+            return stmt;
+        }
+
+        constexpr sql_iterator& operator++() noexcept {
+            const bool has_next = stmt->step();
+            if (!has_next) {
+                stmt = nullptr;
+            }
+            return *this;
+        }
+
+        constexpr sql_iterator operator++(int) const noexcept {
+            return sql_iterator{stmt}.operator++();
+        }
+
+
+        constexpr const pointer& base() const noexcept {
+            return stmt;
+        }
+    };
+
 
     /**
      * The name SQL Database and not Database is used because database can mean more and this struct will only
@@ -26,6 +83,7 @@ namespace webpp::sql {
         using statement_type        = sql_statement<driver_statement_type>;
         using string_view_type      = traits::string_view<traits_type>;
         using string_type           = traits::general_string<traits_type>;
+        using iterator              = sql_iterator<statement_type>;
 
         template <typename T>
         static constexpr bool supports_string_view = typename driver_type::supports_string_view<T>;
@@ -82,6 +140,14 @@ namespace webpp::sql {
             log(errmsg);
         }
 
+
+        iterator begin() {
+            return {this};
+        }
+
+        iterator end() {
+            return {};
+        }
 
       private:
         inline void log(string_type& errmsg) noexcept {
