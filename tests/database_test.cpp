@@ -32,6 +32,8 @@ TEST(Database, SQLiteWrapper) {
     }
 
     stmt = db.prepare("select * from settings;");
+
+    // todo: #128;  wait, how am I supposed to implement this?
     for (auto [id, name, value] : stmt) {
         EXPECT_EQ(name, "username");
         EXPECT_EQ(value, "moisrex");
