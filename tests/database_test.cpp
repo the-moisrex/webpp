@@ -1,4 +1,5 @@
 #include "../core/include/webpp/db/query.hpp"
+#include "../core/include/webpp/db/sql_database.hpp"
 #include "../core/include/webpp/traits/std_traits.hpp"
 #include "common_pch.hpp"
 
@@ -8,7 +9,7 @@ using namespace webpp::sql;
 
 
 TEST(Database, SQLiteWrapper) {
-    database<sqlite> db; // in memory database
+    sql_database<sqlite> db; // in memory database
     db.execute(R"sql(create table settings(
         id integer primary key,
         name text,
@@ -36,4 +37,3 @@ TEST(Database, SQLiteWrapper) {
         EXPECT_EQ(value, "moisrex");
     }
 }
-

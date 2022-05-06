@@ -34,6 +34,9 @@ namespace webpp::sql {
         constexpr sql_iterator& operator=(sql_iterator const&) = default;
         constexpr sql_iterator& operator=(sql_iterator&&) noexcept = default;
 
+        constexpr auto operator==(const sql_iterator& rhs) noexcept {
+            return base() == rhs.base();
+        }
 
         constexpr auto operator<=>(const sql_iterator& rhs) noexcept {
             return base() <=> rhs.base();
