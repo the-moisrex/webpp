@@ -26,6 +26,23 @@ namespace webpp::sql {
             stmt.bind(index, stl::forward<T>(value));
             return *this;
         }
+
+        constexpr auto value() noexcept(noexcept(stmt->column(index))) {
+            return stmt->column(index);
+        }
+
+        template <typename T>
+        constexpr auto as() noexcept(noexcept(as<type>(value()))) {
+            return as<type>(value());
+        }
+
+#define define_op(type)                                               \
+    constexpr operator type() noexcept(noexcept(as<type>(value()))) { \
+        return this->template as<type>();                                     \
+    }
+        define_op(int)
+
+#undef define_op
     };
 
     template <SQLStatement StmtType>
