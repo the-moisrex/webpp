@@ -171,6 +171,17 @@ namespace webpp::istl {
                          templated_lazy_type<details::traits_extractor, stl::remove_cvref_t<T>>,
                          lazy_type<Default>>;
 
+
+
+    template <typename T>
+    concept UTF8 = sizeof(char_type_of<T>) == sizeof(char8_t);
+
+    template <typename T>
+    concept UTF16 = sizeof(char_type_of<T>) == sizeof(char16_t);
+
+    template <typename T>
+    concept UTF32 = sizeof(char_type_of<T>) == sizeof(char32_t);
+
 } // namespace webpp::istl
 
 namespace webpp {
