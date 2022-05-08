@@ -6,6 +6,7 @@
 #include "../../std/concepts.hpp"
 #include "../../std/span.hpp"
 #include "../../std/string.hpp"
+#include "../../std/string_concepts.hpp"
 #include "../../std/string_view.hpp"
 
 namespace webpp::sql {
@@ -36,7 +37,7 @@ namespace webpp::sql {
         constexpr sqlite_statement(sqlite_statement const&)     = default;
         constexpr sqlite_statement(sqlite_statement&&) noexcept = default;
 
-        sqlite_statement& operator=(const sqlite_statement&) = default;
+        sqlite_statement& operator=(const sqlite_statement&)     = default;
         sqlite_statement& operator=(sqlite_statement&&) noexcept = default;
 
 
@@ -127,6 +128,37 @@ namespace webpp::sql {
                 }
             }
         }
+
+        /**
+         * Get the column name based on its index
+         */
+        template <istl::String StrT>
+        void column_name(int index, StrT& name_ref) const {
+            using str_value_type = typename StrT::value_type;
+            if constexpr (istl::UTF16<StrT>) {
+                const void* name = sqlite3_column_name16(stmt, index);
+                if (!name) [[unlikely]] {
+                    // memory error happened
+                    // todo: error handling
+                    return;
+                }
+                name_ref = reintepret_cast<str_value_type const*>(name);
+            } else {
+                const char* name = sqlite3_column_name(stmt, index);
+                if (!name) [[unlikely]] {
+                    // memory error happened
+                    // todo: error handling
+                    return;
+                }
+                if constexpr (stl::same_as<str_value_type, char>) {
+                    name_ref = name;
+                } else {
+                    name_ref = reintepret_cast<str_value_type const*>(name);
+                }
+            }
+        }
+
+        sql_result column(int index) {}
     };
 
 } // namespace webpp::sql
