@@ -158,6 +158,11 @@ namespace webpp::sql {
             }
         }
 
+        // how many columns do we have
+        int column_count() const noexcept {
+            return sqlite3_column_count(stmt);
+        }
+
         sql_result column(int index) {}
     };
 

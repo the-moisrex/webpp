@@ -20,6 +20,9 @@ namespace webpp::sql {
     concept SQLStatement = requires(T stmt) {
         stmt.bind(1, ""); // index based set string type
         stmt.bind(1, 1);  // index based set integer type
+        stmt.column_name(1, requires_arg_cvref(istl::String));
+        stmt.column(1);
+        { stmt.column_count() } -> stl::integral;
         stmt.execute();
     };
 
