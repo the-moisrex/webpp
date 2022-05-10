@@ -38,7 +38,7 @@ namespace webpp::sql {
 
 #define define_op(type)                                               \
     constexpr operator type() noexcept(noexcept(as<type>(value()))) { \
-        return this->template as<type>();                                     \
+        return this->template as<type>();                             \
     }
         define_op(int)
 
@@ -58,6 +58,11 @@ namespace webpp::sql {
         sql_statement& bind(int index, T&& val) noexcept {
 
             return *this;
+        }
+
+        template <typename T>
+        constexpr T column() const {
+            //
         }
     };
 
