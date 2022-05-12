@@ -14,6 +14,7 @@ namespace webpp::sql {
         using statement_type     = SQLStmtType;
         using cell_type          = sql_cell<statement_type>;
         using cell_iterator_type = cell_iterator<statement_type>;
+        using size_type          = typename statement_type::size_type;
 
       private:
         statement_type stmt;
@@ -31,6 +32,10 @@ namespace webpp::sql {
 
         [[nodiscard]] inline cell_iterator_type end() const noexcept {
             return {};
+        }
+
+        [[nodiscard]] inline size_type size() const noexcept {
+            return stmt.column_count();
         }
     };
 

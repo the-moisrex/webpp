@@ -18,6 +18,9 @@ namespace webpp::sql {
      */
     template <typename T>
     concept SQLStatement = requires(T stmt) {
+        typename T::size_type;
+        stl::integral<typename T::size_type>;
+
         stmt.bind(1, ""); // index based set string type
         stmt.bind(1, 1);  // index based set integer type
         stmt.column_name(1, requires_arg_cvref(istl::String));

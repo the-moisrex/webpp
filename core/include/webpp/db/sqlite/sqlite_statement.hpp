@@ -13,6 +13,8 @@ namespace webpp::sql {
 
 
     struct sqlite_statement {
+        using size_type = int;
+
       private:
         ::sqlite3_stmt* stmt = nullptr;
 
@@ -159,7 +161,7 @@ namespace webpp::sql {
         }
 
         // how many columns do we have
-        int column_count() const noexcept {
+        [[nodiscard]] inline int column_count() const noexcept {
             return sqlite3_column_count(stmt);
         }
 
