@@ -14,6 +14,13 @@ namespace webpp::sql {
 
     struct sqlite_statement {
         using size_type = int;
+        enum struct supported_column_types {
+            integer_col = SQLITE_INTEGER,
+            float_col   = SQLITE_FLOAT,
+            text_col    = SQLITE_TEXT,
+            blob_col    = SQLITE_BLOB,
+            null_col    = SQLITE_NULL
+        };
 
       private:
         ::sqlite3_stmt* stmt = nullptr;
@@ -48,7 +55,12 @@ namespace webpp::sql {
             return *this;
         }
 
+
         ~sqlite_statement() noexcept {
+            destroy();
+        }
+
+        inline void destroy() noexcept {
             if (stmt) {
                 (void) sqlite3_finalize(stmt);
             }
@@ -171,7 +183,9 @@ namespace webpp::sql {
             return sqlite3_column_count(stmt);
         }
 
-        sql_result column(int index) {}
+        inline supported_column_types column_type(int index) {
+            return static_cast<supported_column_types>(sqlite3_column_type(stmt, index));
+        }
     };
 
 } // namespace webpp::sql
