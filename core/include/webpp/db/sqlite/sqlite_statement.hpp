@@ -48,6 +48,12 @@ namespace webpp::sql {
             return *this;
         }
 
+        ~sqlite_statement() noexcept {
+            if (stmt) {
+                (void) sqlite3_finalize(stmt);
+            }
+        }
+
 
         /**
          * Possilbe values:
@@ -113,7 +119,7 @@ namespace webpp::sql {
             }
         }
 
-        void execute(std::string& errmsg) {
+        void step(std::string& errmsg) {
             const int rc = sqlite3_step(stmt);
             switch (rc) {
                 // this is an embarrassing situation for clang-format
