@@ -1,6 +1,7 @@
 #ifndef WEBPP_DATABASE_SQL_STATEMENT_HPP
 #define WEBPP_DATABASE_SQL_STATEMENT_HPP
 
+#include "sql_cell.hpp"
 #include "sql_concepts.hpp"
 
 namespace webpp::sql {
@@ -45,8 +46,16 @@ namespace webpp::sql {
 #undef define_op
     };
 
+
+    /**
+     * A wrapper for the driver's statement type. This is what the user uses directly.
+     */
     template <SQLStatement StmtType>
     struct sql_statement : StmtType {
+        using driver_stmt_type = StmtType;
+        using size_type        = typename driver_stmt_type::size_type;
+        using cell_type        = sql_cell<driver_stmt_type>;
+
 
 
         /**
@@ -61,7 +70,11 @@ namespace webpp::sql {
         }
 
         template <typename T>
-        constexpr T column() const {
+        constexpr T cell() const {
+            //
+        }
+
+        inline cell_type operator[](size_type index) const noexcept {
             //
         }
     };
