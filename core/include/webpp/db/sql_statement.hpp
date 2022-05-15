@@ -5,8 +5,13 @@
 #include "../memory/object.hpp"
 #include "../traits/enable_traits.hpp"
 #include "sql_concepts.hpp"
+#include "sql_row.hpp"
 
 namespace webpp::sql {
+
+    /**
+     * This class is the thing that gets returned by the statement's [] operator.
+     */
     template <typename StmtType>
     struct sql_statement_binder {
         using statement_type = StmtType;
@@ -47,6 +52,7 @@ namespace webpp::sql {
         using size_type        = typename driver_stmt_type::size_type;
         using binder_type      = sql_statement_binder<sql_statement>;
         using string_type      = traits::general_string<traits_type>;
+        using rows_type        = sql_rows<driver_statement_type>;
 
 
         /**
@@ -79,6 +85,14 @@ namespace webpp::sql {
         [[nodiscard]] inline binder_type operator<<(T&& val) noexcept {
             bind(0, stl::forward<T>(val));
             return binder_type{*this, 1};
+        }
+
+        [[nodiscard]] inline rows_type rows() const noexcept {
+            return {driver()};
+        }
+
+        [[nodiscard]] inline driver_stmt_type driver() noexcept {
+            return *static_cast<driver_stmt_type*>(this);
         }
     };
 
