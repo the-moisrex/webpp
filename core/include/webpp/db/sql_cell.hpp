@@ -11,11 +11,14 @@ namespace webpp::sql {
         using statement_type = SQLStmtType;
 
       private:
-        statement_type* stmt;
+        statement_type& stmt;
 
       public:
+        sql_cell(statement_type& stmt_ref) noexcept : stmt(stmt_ref) {}
+
+
         template <istl::String StrT = stl::string>
-        constexpr auto as_string() const {
+        [[nodiscard]] inline auto as_string() const {
             auto str = object::make_general<StrT>(*this);
             stmt.as_string(str);
             return str;
@@ -23,14 +26,14 @@ namespace webpp::sql {
 
 
         template <istl::String T>
-        constexpr operator T() const {
+        operator T() const {
             return as_string<T>();
         }
 
 
 
         template <stl::integral T>
-        constexpr operator T() const {
+        operator T() const {
             return static_cast<T>(as_number());
         }
     };
