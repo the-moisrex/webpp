@@ -1,6 +1,7 @@
 #ifndef WEBPP_DATABASE_SQL_CELL_HPP
 #define WEBPP_DATABASE_SQL_CELL_HPP
 
+#include "../common/meta.hpp"
 #include "../std/string.hpp"
 #include "sql_concepts.hpp"
 
@@ -25,16 +26,15 @@ namespace webpp::sql {
         }
 
 
-        template <istl::String T>
+        template <typename T>
         operator T() const {
-            return as_string<T>();
-        }
-
-
-
-        template <stl::integral T>
-        operator T() const {
-            return static_cast<T>(as_number());
+            if constexpr (istl::String<T>) {
+                return as_string<T>();
+            } else if constexpr (stl::integral<T>) {
+                return static_cast<T>(stmt.as_number());
+            } else {
+                static_assert_false(T, "Cannot handle this data type");
+            }
         }
     };
 } // namespace webpp::sql
