@@ -36,6 +36,19 @@ namespace webpp::sql {
                 static_assert_false(T, "Cannot handle this data type");
             }
         }
+
+
+        // check if the column type is of type string (or varchar, char, text, or any other similar names)
+        [[nodiscard]] inline bool is_string() const noexcept {
+            if constexpr (requires {
+                              { stmt.is_string() } -> stl::same_as<bool>;
+                          }) {
+                return stmt.is_string();
+            } else {
+                // todo: use .type to figure this out
+                return false;
+            }
+        }
     };
 } // namespace webpp::sql
 
