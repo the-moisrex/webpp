@@ -11,9 +11,11 @@ namespace webpp::sql {
     template <SQLStatement SQLStmtType>
     struct sql_cell {
         using statement_type = SQLStmtType;
+        using size_type      = typename statement_type::size_type;
 
       private:
         statement_type& stmt;
+        size_type       index;
 
       public:
         sql_cell(statement_type& stmt_ref) noexcept : stmt(stmt_ref) {}
@@ -41,9 +43,9 @@ namespace webpp::sql {
         // get the category type
         [[nodiscard]] inline column_category category() const noexcept {
             if constexpr (requires {
-                              { stmt.column_category() } -> stl::same_as<column_category>;
+                              { stmt.column_category(index) } -> stl::same_as<column_category>;
                           }) {
-                return stmt.column_category();
+                return stmt.column_category(index);
             } else {
                 return column_category::unknown;
             }

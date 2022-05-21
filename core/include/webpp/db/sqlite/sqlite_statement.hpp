@@ -183,8 +183,14 @@ namespace webpp::sql {
             return sqlite3_column_count(stmt);
         }
 
-        inline supported_column_types column_type(int index) {
+        [[nodiscard]] inline supported_column_types column_type(int index) const noexcept {
             return static_cast<supported_column_types>(sqlite3_column_type(stmt, index));
+        }
+
+        [[nodiscard]] inline column_category column_category(int index) const noexcept {
+            switch (sqlite3_column_type(stmt, index)) {
+                default: return column_category::unknown;
+            }
         }
     };
 
