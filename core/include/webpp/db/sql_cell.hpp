@@ -3,6 +3,7 @@
 
 #include "../common/meta.hpp"
 #include "../std/string.hpp"
+#include "sql_column.hpp"
 #include "sql_concepts.hpp"
 
 namespace webpp::sql {
@@ -37,6 +38,16 @@ namespace webpp::sql {
             }
         }
 
+        // get the category type
+        [[nodiscard]] inline column_category category() const noexcept {
+            if constexpr (requires {
+                              { stmt.column_category() } -> stl::same_as<column_category>;
+                          }) {
+                return stmt.column_category();
+            } else {
+                return column_category::unknown;
+            }
+        }
 
         // check if the column type is of type string (or varchar, char, text, or any other similar names)
         [[nodiscard]] inline bool is_string() const noexcept {
@@ -45,8 +56,7 @@ namespace webpp::sql {
                           }) {
                 return stmt.is_string();
             } else {
-                // todo: use .type to figure this out
-                return false;
+                return category() == column_category::string;
             }
         }
     };
