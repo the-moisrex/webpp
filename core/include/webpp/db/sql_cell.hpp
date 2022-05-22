@@ -61,6 +61,20 @@ namespace webpp::sql {
                 return category() == column_category::string;
             }
         }
+
+
+
+        // check if the column type is of type number (or float, tinyint, integer, double, or any other
+        // similar names)
+        [[nodiscard]] inline bool is_number() const noexcept {
+            if constexpr (requires {
+                              { stmt.is_number() } -> stl::same_as<bool>;
+                          }) {
+                return stmt.is_number();
+            } else {
+                return category() == column_category::number;
+            }
+        }
     };
 } // namespace webpp::sql
 
