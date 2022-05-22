@@ -192,6 +192,11 @@ namespace webpp::sql {
                 default: return column_category::unknown;
             }
         }
+
+
+        [[nodiscard]] inline bool is_column_null(int index) const noexcept {
+            return sqlite3_column_type(stmt, index) == SQLITE_NULL;
+        }
     };
 
 } // namespace webpp::sql

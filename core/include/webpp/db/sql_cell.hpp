@@ -75,6 +75,16 @@ namespace webpp::sql {
                 return category() == column_category::number;
             }
         }
+
+
+        [[nodiscard]] inline bool is_primary_key() const noexcept {
+            return stmt.is_primary_key();
+        }
+
+        // check if the value is null
+        [[nodiscard]] inline bool is_null() const noexcept {
+            return stmt.is_column_null(index);
+        }
     };
 } // namespace webpp::sql
 

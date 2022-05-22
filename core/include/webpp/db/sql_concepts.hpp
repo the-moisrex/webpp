@@ -26,7 +26,8 @@ namespace webpp::sql {
         stmt.column_name(1, requires_arg_cvref(istl::String));
         stmt.column(1);
         { stmt.column_count() } -> stl::integral;
-        stmt.execute();
+        stmt.step();
+        stmt.is_column_null(1);
     };
 
 
