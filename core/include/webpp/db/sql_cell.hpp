@@ -2,7 +2,9 @@
 #define WEBPP_DATABASE_SQL_CELL_HPP
 
 #include "../common/meta.hpp"
+#include "../convert/casts.hpp"
 #include "../convert/lexical_cast.hpp"
+#include "../std/compare.hpp"
 #include "../std/string.hpp"
 #include "sql_column.hpp"
 #include "sql_concepts.hpp"
@@ -22,24 +24,26 @@ namespace webpp::sql {
         sql_cell(statement_type& stmt_ref) noexcept : stmt(stmt_ref) {}
 
         template <typename T>
-        inline bool operator==(T&& val) const {
+        inline stl::strong_ordering operator<=>(T&& val) const {
             switch (category()) {
                 case column_category::string: {
                     auto str = object::make_local<StrT>(stmt);
                     stmt.as_string(str);
-                    return str == lexical::cast<local_string_type>(
-                                    val,
-                                    stmt.alloc_pack.template local_allocator<char_type>());
+                    return str <=> lexical::cast<local_string_type>(
+                                     val,
+                                     stmt.alloc_pack.template local_allocator<char_type>());
                 }
                 case column_category::number: {
                     if constexpr (stl::integral<T>) {
-                        return val == as_number<T>();
+                        return val <=> as_number<T>();
                     } else {
                         // todo: add debug info
-                        return to<double>(val) == as_number<double>();
+                        // todo: should we use long double?
+                        return to<double>(val) <=> as_number<double>();
                     }
                 }
                 case column_category::blob: {
+                    // todo
                 }
             }
             return false;
