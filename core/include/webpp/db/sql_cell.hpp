@@ -32,6 +32,12 @@ namespace webpp::sql {
                                     stmt.alloc_pack.template local_allocator<char_type>());
                 }
                 case column_category::number: {
+                    if constexpr (stl::integral<T>) {
+                        return val == as_number<T>();
+                    } else {
+                        // todo: add debug info
+                        return to<double>(val) == as_number<double>();
+                    }
                 }
                 case column_category::blob: {
                 }
