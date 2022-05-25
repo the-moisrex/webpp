@@ -9,22 +9,22 @@ namespace webpp::sql {
     struct cell_iterator {};
 
 
-    template <SQLStatement SQLStmtType>
+    template <typename SQLStmtType>
     struct sql_row {
-        using driver_stmt_type   = SQLStmtType;
+        using statement_type     = SQLStmtType;
         using cell_type          = sql_cell<driver_stmt_type>;
         using cell_iterator_type = cell_iterator<driver_stmt_type>;
         using size_type          = typename driver_stmt_type::size_type;
 
       private:
-        driver_stmt_type& stmt;
+        statement_type& stmt;
 
       public:
-        sql_row(driver_stmt_type& stmt_ref) noexcept : stmt{stmt_ref} {}
+        sql_row(statement_type& stmt_ref) noexcept : stmt{stmt_ref} {}
 
 
-        cell_type operator[]() {
-            //
+        cell_type operator[](size_type index) const noexcept {
+            return {stmt, index};
         }
 
 

@@ -21,7 +21,9 @@ namespace webpp::sql {
         size_type       index;
 
       public:
-        sql_cell(statement_type& stmt_ref) noexcept : stmt(stmt_ref) {}
+        sql_cell(statement_type& stmt_ref, size_type cell_index = 0) noexcept
+          : stmt(stmt_ref),
+            index(cell_index) {}
 
         template <typename T>
         inline stl::strong_ordering operator<=>(T&& val) const {
