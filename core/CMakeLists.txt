@@ -215,7 +215,16 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/json/rapidjson.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/db/query.hpp
-        ${LIB_INCLUDE_DIR}/webpp/db/database_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/db/sql_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/db/sql_statement.hpp
+        ${LIB_INCLUDE_DIR}/webpp/db/sql_row.hpp
+        ${LIB_INCLUDE_DIR}/webpp/db/sql_cell.hpp
+        ${LIB_INCLUDE_DIR}/webpp/db/sql_column.hpp
+        ${LIB_INCLUDE_DIR}/webpp/db/query.hpp
+        ${LIB_INCLUDE_DIR}/webpp/db/query_builder.hpp
+        ${LIB_INCLUDE_DIR}/webpp/db/sqlite/sqlite_connection.hpp
+        ${LIB_INCLUDE_DIR}/webpp/db/sqlite/sqlite_statement.hpp
+        ${LIB_INCLUDE_DIR}/webpp/db/sqlite/sqlite_grammar.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/storage/cache.hpp
         ${LIB_INCLUDE_DIR}/webpp/storage/cache_concepts.hpp
