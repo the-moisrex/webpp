@@ -29,9 +29,9 @@ namespace webpp::sql {
       public:
         constexpr sql_iterator() noexcept = default;
         constexpr sql_iterator(statement_type* stmt_ptr) noexcept : stmt{stmt_ptr} {}
-        constexpr sql_iterator(sql_iterator const&)     = default;
-        constexpr sql_iterator(sql_iterator&&) noexcept = default;
-        constexpr sql_iterator& operator=(sql_iterator const&) = default;
+        constexpr sql_iterator(sql_iterator const&)                = default;
+        constexpr sql_iterator(sql_iterator&&) noexcept            = default;
+        constexpr sql_iterator& operator=(sql_iterator const&)     = default;
         constexpr sql_iterator& operator=(sql_iterator&&) noexcept = default;
 
         constexpr auto operator==(const sql_iterator& rhs) noexcept {
@@ -89,7 +89,7 @@ namespace webpp::sql {
         using iterator              = sql_iterator<statement_type>;
 
         template <typename T>
-        static constexpr bool supports_string_view = typename driver_type::supports_string_view<T>;
+        static constexpr bool supports_string_view = typename driver_type::template supports_string_view<T>;
 
         /**
          * This method converts the input into string view. String view type is chosen with this priority:

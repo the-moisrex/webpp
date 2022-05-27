@@ -12,9 +12,9 @@ namespace webpp::sql {
     template <typename SQLStmtType>
     struct sql_row {
         using statement_type     = SQLStmtType;
-        using cell_type          = sql_cell<driver_stmt_type>;
-        using cell_iterator_type = cell_iterator<driver_stmt_type>;
-        using size_type          = typename driver_stmt_type::size_type;
+        using cell_type          = sql_cell<statement_type>;
+        using cell_iterator_type = cell_iterator<statement_type>;
+        using size_type          = typename statement_type::size_type;
 
       private:
         statement_type& stmt;

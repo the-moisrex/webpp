@@ -14,8 +14,10 @@ namespace webpp::sql {
 
     template <SQLStatement SQLStmtType>
     struct sql_cell {
-        using statement_type = SQLStmtType;
-        using size_type      = typename statement_type::size_type;
+        using statement_type    = SQLStmtType;
+        using size_type         = typename statement_type::size_type;
+        using local_string_type = typename statement_type::local_string_type;
+        using char_type         = typename statement_type::char_type;
 
       private:
         statement_type& stmt;
@@ -27,10 +29,10 @@ namespace webpp::sql {
             index(cell_index) {}
 
         template <typename T>
-        inline stl::strong_ordering operator<=>(T&& val) const {
+        inline stl::partial_ordering operator<=>(T&& val) const {
             switch (category()) {
                 case column_category::string: {
-                    auto str = object::make_local<StrT>(stmt);
+                    auto str = object::make_local<T>(stmt);
                     stmt.as_string(str);
                     return str <=> lexical::cast<local_string_type>(
                                      val,
@@ -49,7 +51,7 @@ namespace webpp::sql {
                     // todo
                 }
             }
-            return false;
+            return stl::partial_ordering::unordered;
         }
 
         template <istl::String StrT = stl::string>

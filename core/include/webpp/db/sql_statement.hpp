@@ -47,12 +47,14 @@ namespace webpp::sql {
      */
     template <Traits TraitsType, SQLStatement StmtType>
     struct sql_statement : StmtType, enable_traits<TraitsType> {
-        using traits_type      = TraitsType;
-        using driver_stmt_type = StmtType;
-        using size_type        = typename driver_stmt_type::size_type;
-        using binder_type      = sql_statement_binder<sql_statement>;
-        using string_type      = traits::general_string<traits_type>;
-        using rows_type        = sql_rows<driver_statement_type>;
+        using traits_type       = TraitsType;
+        using driver_stmt_type  = StmtType;
+        using size_type         = typename driver_stmt_type::size_type;
+        using binder_type       = sql_statement_binder<sql_statement>;
+        using string_type       = traits::general_string<traits_type>;
+        using rows_type         = sql_row<sql_statement>;
+        using local_string_type = traits::local_string<traits_type>;
+        using char_type         = traits::char_type<traits_type>;
 
 
         /**
