@@ -4,10 +4,11 @@
 #include "../common/meta.hpp"
 #include "../convert/casts.hpp"
 #include "../convert/lexical_cast.hpp"
-#include "../std/compare.hpp"
 #include "../std/string.hpp"
 #include "sql_column.hpp"
 #include "sql_concepts.hpp"
+
+#include <compare>
 
 namespace webpp::sql {
 
