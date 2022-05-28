@@ -181,6 +181,11 @@ namespace webpp::istl {
         return __VA_ARGS__<RequiresT>;                         \
     }>::template type
 
+
+
+    template <typename T>
+    concept arithmetic = stl::is_arithmetic_v<T>;
+
 } // namespace webpp::istl
 
 #endif // WEBPP_STD_CONCEPTS_H

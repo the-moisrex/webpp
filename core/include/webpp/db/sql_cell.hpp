@@ -61,6 +61,42 @@ namespace webpp::sql {
             return str;
         }
 
+        template <istl::arithmetic T = size_type>
+        [[nodiscard]] inline T as_number() const {
+            static constexpr auto t_size = sizeof(T);
+            if constexpr (stl::is_floating_point_v<T>) {
+                // todo: add long double support
+                if constexpr (t_size >= sizeof(double) && requires { stmt.as_double(); }) {
+                    return stmt.as_double(index);
+                } else if constexpr (t_size == sizeof(float) && requires { stmt.as_float(); }) {
+                    return stmt.as_float(index);
+                } else if constexpr (t_size >= sizeof(double)) {
+                    return static_cast<T>(stmt.as_double(index));
+                } else if constexpr (t_size <= sizeof(float)) {
+                    return static_cast<T>(stmt.as_float(index));
+                } else {
+                    static_assert_false(T, "statement type doesn't support specified floating type.");
+                }
+            } else if constexpr (stl::integral<T>) {
+                // todo: add 128 bit support
+                // todo: add bool support
+                // todo: add short support
+                // todo: add unsigned support
+                if constexpr (t_size >= sizeof(stl::int64_t) && requires { stmt.as_int64(); }) {
+                    return stmt.as_int64(index);
+                } else if constexpr (t_size == sizeof(int) && requires { stmt.as_int(); }) {
+                    return stmt.as_int(index);
+                } else if constexpr (t_size >= sizeof(stl::int64_t)) {
+                    return static_cast<T>(stmt.as_int64(index));
+                } else if constexpr (t_size <= sizeof(int)) {
+                    return static_cast<T>(stmt.as_int(index));
+                } else {
+                    static_assert_false(T, "statement type doesn't support specified integral type.");
+                }
+            } else {
+                static_assert_false(T, "statement type doesn't support specified type.");
+            }
+        }
 
         template <typename T>
         operator T() const {
