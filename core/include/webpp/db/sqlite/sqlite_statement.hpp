@@ -197,6 +197,19 @@ namespace webpp::sql {
         [[nodiscard]] inline bool is_column_null(int index) const noexcept {
             return sqlite3_column_type(stmt, index) == SQLITE_NULL;
         }
+
+
+        [[nodiscard]] inline int as_int(int index) const noexcept {
+            return sqlite3_column_int(stmt, index);
+        }
+
+        [[nodiscard]] inline stl::int64_t as_int64(int index) const noexcept {
+            return static_cast<stl::int64_t>(sqlite3_column_int64(stmt, index));
+        }
+
+        [[nodiscard]] inline double as_double(int index) const noexcept {
+            return sqlite3_column_double(stmt, index);
+        }
     };
 
 } // namespace webpp::sql
