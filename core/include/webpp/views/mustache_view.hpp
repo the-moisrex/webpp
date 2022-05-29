@@ -35,14 +35,14 @@
 #define WEBPP_MUSTACHE_VIEW_HPP
 
 
+#include "../std/string_view.hpp"
 #include "../strings/splits.hpp"
 #include "../strings/trim.hpp"
 #include "../traits/enable_traits.hpp"
+#include "../traits/traits.hpp"
 #include "../utils/functional.hpp"
 #include "html.hpp"
 #include "view_concepts.hpp"
-#include "webpp/std/string_view.hpp"
-#include "webpp/traits/traits.hpp"
 
 #include <array>
 #include <map>
@@ -364,7 +364,7 @@ namespace webpp::views {
             return nullptr;
         }
 
-        context(const context&) = delete;
+        context(const context&)            = delete;
         context& operator=(const context&) = delete;
     };
 
@@ -448,7 +448,7 @@ namespace webpp::views {
         ~context_pusher() {
             ctx_.ctx.pop();
         }
-        context_pusher(const context_pusher&) = delete;
+        context_pusher(const context_pusher&)            = delete;
         context_pusher& operator=(const context_pusher&) = delete;
 
       private:
@@ -567,7 +567,7 @@ namespace webpp::views {
         constexpr mustache_view(mustache_view const&)     = default;
         constexpr mustache_view(mustache_view&&) noexcept = default;
 
-        constexpr mustache_view& operator=(mustache_view const&) = default;
+        constexpr mustache_view& operator=(mustache_view const&)     = default;
         constexpr mustache_view& operator=(mustache_view&&) noexcept = default;
 
         constexpr etraits const& get_traits() const noexcept {
