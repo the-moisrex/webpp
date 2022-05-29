@@ -77,13 +77,13 @@ namespace webpp::sql {
      * This struct will either be used by the user directly or it'll be used by the high level utilities. So
      * this struct needs to be user friendly.
      */
-    template <SQLDriver SQLDBType, typename TraitsEnabler>
+    template <SQLDriver SQLDBType, typename TraitsEnabler = enable_traits<default_traits>>
     struct basic_sql_database : TraitsEnabler, SQLDBType {
         using driver_type           = SQLDBType;
         using etraits               = TraitsEnabler;
         using traits_type           = typename etraits::traits_type;
         using driver_statement_type = typename driver_type::statement_type;
-        using statement_type        = sql_statement<driver_statement_type>;
+        using statement_type        = sql_statement<traits_type, driver_statement_type>;
         using string_view_type      = traits::string_view<traits_type>;
         using string_type           = traits::general_string<traits_type>;
         using iterator              = sql_iterator<statement_type>;
