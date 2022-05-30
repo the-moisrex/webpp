@@ -103,11 +103,11 @@ namespace webpp::sql {
         static constexpr decltype(auto) string_viewify(T&& str) noexcept {
             using type = stl::remove_cvref_t<T>;
             if constexpr (istl::StringViewifiableOf<string_view_type, type> &&
-                          supports_string_view<delctype(
-                            istl::string_viewify_of<string_view_type>(stl::forward<T>(str)))>) {
+                          supports_string_view<decltype(istl::string_viewify_of<string_view_type>(
+                            stl::forward<T>(str)))>) {
                 return istl::string_viewify_of<string_view_type>(stl::forward<T>(str));
             } else if constexpr (istl::StringViewifiable<type> &&
-                                 supports_string_view<delctype(istl::string_viewify(stl::forward<T>(str)))>) {
+                                 supports_string_view<decltype(istl::string_viewify(stl::forward<T>(str)))>) {
                 return istl::string_viewify(stl::forward<T>(str));
             } else {
                 static_assert_false(T, "We're not able to convert the specified sql query to string view");
