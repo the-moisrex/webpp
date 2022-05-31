@@ -89,7 +89,9 @@ namespace webpp::sql {
         using iterator              = sql_iterator<statement_type>;
 
         template <typename T>
-        static constexpr bool supports_string_view = typename driver_type::template supports_string_view<T>;
+        static constexpr bool supports_string_view = requires {
+            typename driver_type::template supports_string_view<T>;
+        };
 
         /**
          * This method converts the input into string view. String view type is chosen with this priority:
