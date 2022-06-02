@@ -222,6 +222,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/db/sql_column.hpp
         ${LIB_INCLUDE_DIR}/webpp/db/query.hpp
         ${LIB_INCLUDE_DIR}/webpp/db/query_builder.hpp
+        ${LIB_INCLUDE_DIR}/webpp/db/sqlite/sqlite.hpp
         ${LIB_INCLUDE_DIR}/webpp/db/sqlite/sqlite_connection.hpp
         ${LIB_INCLUDE_DIR}/webpp/db/sqlite/sqlite_statement.hpp
         ${LIB_INCLUDE_DIR}/webpp/db/sqlite/sqlite_grammar.hpp
