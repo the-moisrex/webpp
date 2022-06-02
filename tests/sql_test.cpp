@@ -1,5 +1,6 @@
 #include "../core/include/webpp/db/query.hpp"
 #include "../core/include/webpp/db/sql_database.hpp"
+#include "../core/include/webpp/db/sqlite/sqlite.hpp"
 #include "../core/include/webpp/traits/std_traits.hpp"
 #include "common_pch.hpp"
 
