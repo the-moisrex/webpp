@@ -55,6 +55,7 @@ namespace webpp::sql {
         using rows_type         = sql_row<sql_statement>;
         using local_string_type = traits::local_string<traits_type>;
         using char_type         = traits::char_type<traits_type>;
+        using string_view_type  = traits::string_view<traits_type>;
 
 
         /**
@@ -68,7 +69,7 @@ namespace webpp::sql {
             if constexpr (requires { this->bind(index, stl::forward<T>(val), errmsg); }) {
                 this->bind(index, stl::forward<T>(val), errmsg);
             } else if constexpr (istl::StringViewifiable<T>) {
-                //
+                this->bind(index, istl::string_viewify_of<string_view_type>(stl::forward<T>(val)), errmsg);
             } else {
                 static_assert_false(T, "Don't know how to bind the value, unknown type specified.");
             }
