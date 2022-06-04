@@ -28,6 +28,8 @@ namespace webpp::sql {
 
 
     struct sqlite_connection {
+        using statement_type = sqlite_statement;
+
       private:
         ::sqlite3* handle{nullptr};
 
@@ -70,7 +72,7 @@ namespace webpp::sql {
         }
 
         // prepare an statment for the parent sql connection to wrap it
-        sqlite_statement prepare(std::string_view stmt_str, std::string& errmsg) noexcept {
+        statement_type prepare(std::string_view stmt_str, std::string& errmsg) noexcept {
             ::sqlite3_stmt* stmt;
             const int       rc =
               sqlite3_prepare_v2(handle, stmt_str.data(), static_cast<int>(stmt_str.size()), &stmt, nullptr);
