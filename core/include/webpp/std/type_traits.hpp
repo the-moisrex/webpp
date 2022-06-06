@@ -680,7 +680,7 @@ namespace webpp::istl {
 
     // details for filter_parameters
     namespace details {
-        template <template <typename...> typename Concept,
+        template <template <typename> typename Concept,
                   typename Head,
                   typename Tail,
                   template <typename...>
@@ -688,7 +688,7 @@ namespace webpp::istl {
         struct filter_parameters_impl;
 
         // moving This from Heads to the Tails list
-        template <template <typename...> typename Concept,
+        template <template <typename> typename Concept,
                   typename... Heads,
                   typename This,
                   typename... Tails,
@@ -699,7 +699,7 @@ namespace webpp::istl {
           : filter_parameters_impl<Concept, TupleType<Heads...>, TupleType<Tails..., This>, TupleType> {};
 
         // remove the first one
-        template <template <typename...> typename Concept,
+        template <template <typename> typename Concept,
                   typename... Heads,
                   typename This,
                   typename... Tails,
@@ -710,7 +710,7 @@ namespace webpp::istl {
           : filter_parameters_impl<Concept, TupleType<Heads...>, TupleType<Tails...>, TupleType> {};
 
         // We're at the end of the line, no Heads left to check
-        template <template <typename...> typename Concept,
+        template <template <typename> typename Concept,
                   typename... Tails,
                   template <typename...>
                   typename TupleType>
@@ -730,10 +730,10 @@ namespace webpp::istl {
      *   };
      * @endcode
      */
-    template <template <typename...> typename Concept, typename Tup>
+    template <template <typename> typename Concept, typename Tup>
     struct filter_parameters;
 
-    template <template <typename...> typename Concept,
+    template <template <typename> typename Concept,
               typename... Types,
               template <typename...>
               typename TupleType>
@@ -741,7 +741,7 @@ namespace webpp::istl {
       : public details::filter_parameters_impl<Concept, TupleType<Types...>, TupleType<>, TupleType> {};
 
 
-    template <template <typename...> typename Concept, typename Tup>
+    template <template <typename> typename Concept, typename Tup>
     using filter_parameters_t = typename filter_parameters<Concept, Tup>::type;
 
 
