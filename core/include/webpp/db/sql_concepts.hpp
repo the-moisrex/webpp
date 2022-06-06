@@ -17,13 +17,13 @@ namespace webpp::sql {
      * in the wrapper statement.
      */
     template <typename T>
-    concept SQLStatement = requires(T stmt, stl::string& errmsg) {
+    concept SQLStatement = requires(T stmt, stl::string& errmsg, stl::string& name) {
         typename T::size_type;
         stl::integral<typename T::size_type>;
 
         stmt.bind(1, stl::string_view{}, errmsg); // index based set string type
         stmt.bind(1, 1, errmag);                  // index based set integer type
-        stmt.column_name(1, requires_arg_cvref(istl::String));
+        stmt.column_name(1, name);
         stmt.column(1);
         { stmt.column_count() } -> stl::integral;
         stmt.step();
