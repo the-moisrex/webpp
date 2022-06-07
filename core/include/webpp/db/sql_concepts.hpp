@@ -24,10 +24,9 @@ namespace webpp::sql {
         stmt.bind(1, stl::string_view{}, errmsg); // index based set string type
         stmt.bind(1, 1, errmsg);                  // index based set integer type
         stmt.column_name(1, name);
-        stmt.column(1);
         { stmt.column_count() } -> stl::integral;
-        stmt.step();
-        stmt.is_column_null(1);
+        stmt.step(errmsg);
+        { stmt.is_column_null(1) } -> stl::same_as<bool>;
     };
 
 
@@ -44,7 +43,7 @@ namespace webpp::sql {
 
         requires stl::default_initializable<T>;
 
-        { db.open() } -> stl::same_as<bool>;
+        &T::open; // the last arg is errmsg, the rest is driver dependent.
         { db.is_open() } -> stl::same_as<bool>;
         { db.close() } -> stl::same_as<bool>;
         { db.version() } -> istl::String; // todo: change this to have a "version" struct
