@@ -22,7 +22,7 @@ namespace webpp::sql {
         stl::integral<typename T::size_type>;
 
         stmt.bind(1, stl::string_view{}, errmsg); // index based set string type
-        stmt.bind(1, 1, errmag);                  // index based set integer type
+        stmt.bind(1, 1, errmsg);                  // index based set integer type
         stmt.column_name(1, name);
         stmt.column(1);
         { stmt.column_count() } -> stl::integral;
