@@ -51,9 +51,14 @@ namespace webpp::sql {
             errmsg.clear(); // no errors
         }
 
+        bool is_open() const noexcept {
+            return handle != nullptr;
+        }
+
         bool close() noexcept {
             if (handle) {
                 if (int res = sqlite3_close_v2(handle); res == SQLITE_OK) {
+                    handle = nullptr;
                     return true;
                 }
                 return false;

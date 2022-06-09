@@ -45,7 +45,7 @@ namespace webpp::sql {
 
         &T::open; // the last arg is errmsg, the rest is driver dependent.
         { db.is_open() } -> stl::same_as<bool>;
-        { db.close() } -> stl::same_as<bool>;
+        db.close();
         { db.version() } -> istl::String; // todo: change this to have a "version" struct
         db.exec("");
         db.beign_transaction();
