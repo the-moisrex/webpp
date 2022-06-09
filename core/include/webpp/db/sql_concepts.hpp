@@ -37,7 +37,7 @@ namespace webpp::sql {
      * databases and not other types of databases like NoSQL or Graph based databases.
      */
     template <typename T>
-    concept SQLConnection = requires(T db) {
+    concept SQLConnection = requires(T db, stl::string& str_ref) {
         typename T::statement_type;
         requires SQLStatement<typename T::statement_type>;
 
@@ -46,8 +46,8 @@ namespace webpp::sql {
         &T::open; // the last arg is errmsg, the rest is driver dependent.
         { db.is_open() } -> stl::same_as<bool>;
         db.close();
-        { db.version() } -> istl::String; // todo: change this to have a "version" struct
-        db.exec("");
+        db.version(str_ref);
+        db.execute("");
         db.beign_transaction();
         db.rollback(); // rollback a database transaction
         db.commit();   // commit changes
