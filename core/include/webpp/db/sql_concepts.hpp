@@ -47,7 +47,7 @@ namespace webpp::sql {
         { db.is_open() } -> stl::same_as<bool>;
         db.close();
         db.version(str_ref);
-        db.execute("");
+        db.execute("", str_ref);
         db.beign_transaction();
         db.rollback(); // rollback a database transaction
         db.commit();   // commit changes
