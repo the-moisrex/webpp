@@ -96,7 +96,7 @@ namespace webpp::sql {
         }
 
         ~sqlite_connection() noexcept {
-            close();
+            static_cast<void>(close());
         }
 
 

@@ -48,17 +48,14 @@ namespace webpp::sql {
         db.close();
         db.version(str_ref);
         db.execute("", str_ref);
-        db.beign_transaction();
-        db.rollback(); // rollback a database transaction
-        db.commit();   // commit changes
-        {
-            db.prepare(requires_arg_cvref(istl::StringViewifiable))
-            } -> stl::same_as<typename T::statement_type>;
-        { db.query(requires_arg_cvref(istl::StringViewifiable)) } -> stl::same_as<typename T::result_type>;
+        // db.beign_transaction();
+        // db.rollback(); // rollback a database transaction
+        // db.commit();   // commit changes
+        { db.prepare(str_ref, str_ref) } -> stl::same_as<typename T::statement_type>;
+        // { db.query(str_ref, str_ref) } -> stl::same_as<typename T::result_type>;
 
         // todo: return result is not checked here:
-        db.last_insert_id();
-        db.last_insert_id(requires_arg_cvref(istl::StringViewifiable));
+        { db.last_insert_id() } -> stl::same_as<stl::uint64_t>;
 
 
         // Other specialized configuration for each database type is goes here as well.
