@@ -128,6 +128,7 @@ namespace webpp::sql {
             if (sqlite3_open(":memory:", &dummy) == SQLITE_OK) {
                 sqlite3_stmt* stmt;
                 if (sqlite3_prepare_v2(dummy, "PRAGMA cipher_version", -1, &stmt, nullptr) == SQLITE_OK) {
+                    // fixme: QByteArray? really?
                     if (sqlite3_step(stmt) == SQLITE_ROW)
                         sqlcipher += QByteArray(static_cast<const char*>(sqlite3_column_blob(stmt, 0)),
                                                 sqlite3_column_bytes(stmt, 0));
