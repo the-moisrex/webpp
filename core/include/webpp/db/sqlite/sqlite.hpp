@@ -16,7 +16,8 @@ namespace webpp::sql {
         using grammar_type = sqlite_grammar;
 
         template <typename T>
-        using supports_string_view = istl::StringView<T>&& stl::same_as<istl::CharType<T>, char>;
+        static constexpr bool   supports_string_view =
+          istl::StringView<T>&& stl::same_as<istl::char_type_of<T>, char>;
 
         using sqlite_connection::sqlite_connection;
     };
