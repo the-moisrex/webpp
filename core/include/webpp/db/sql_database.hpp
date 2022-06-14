@@ -13,7 +13,7 @@
 namespace webpp::sql {
 
 
-    template <SQLStatement StmtType>
+    template <typename StmtType>
     struct sql_iterator {
         using statement_type    = StmtType;
         using value_type        = statement_type;

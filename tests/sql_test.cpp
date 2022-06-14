@@ -8,6 +8,8 @@
 using namespace webpp;
 using namespace webpp::sql;
 
+static_assert(SQLStatement<sqlite_statement>, "sqlite statement is not a statement.");
+
 
 TEST(Database, SQLiteWrapper) {
     sql_database<sqlite> db; // in memory database

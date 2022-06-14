@@ -65,7 +65,8 @@ namespace webpp::sql {
 
     template <typename T>
     concept SQLGrammar = requires {
-        T::insert("", {});
+        // T::insert("", {});
+        T{}; // placeholder
     };
 
 
