@@ -79,6 +79,16 @@ namespace webpp::sql {
             return *this;
         }
 
+        inline bool step() noexcept {
+            auto       errmsg          = object::make_general<string_type>(*this);
+            const bool continue_or_not = this->step(errmsg);
+            if (!errmsg.empty()) {
+                this->logger.error("SQLStmt", errmsg);
+                return false;
+            }
+            return continue_or_not;
+        }
+
 
         [[nodiscard]] inline binder_type operator[](size_type index) noexcept {
             return {*this, index};

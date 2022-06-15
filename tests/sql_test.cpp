@@ -22,7 +22,7 @@ TEST(Database, SQLiteWrapper) {
     auto stmt = db.prepare("insert into settings (name, value) values (?, ?)");
     stmt.bind(0, "username");
     stmt.bind(1, "moisrex");
-    stmt.execute();
+    stmt.step();
 
 
     stmt = db.prepare("select * from settings;");

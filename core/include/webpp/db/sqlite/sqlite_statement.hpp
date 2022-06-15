@@ -131,20 +131,21 @@ namespace webpp::sql {
             }
         }
 
-        void step(std::string& errmsg) {
+        bool step(std::string& errmsg) {
             const int rc = sqlite3_step(stmt);
             switch (rc) {
                 // this is an embarrassing situation for clang-format
                 // clang-format off
                 [[likely]]
-                case SQLITE_OK:
-                case SQLITE_ROW: // might occur if execute is called withe a select
+                case SQLITE_OK: return false;
+                case SQLITE_ROW: return true; // might occur if execute is called with a select
                 case SQLITE_DONE:
-                    return;
+                    return false;
                 // clang-format on
                 default: {
                     errmsg = "SQLite3 error, could not execute prepared statement: ";
                     errmsg += sqlite3_errmsg(sqlite3_db_handle(stmt));
+                    return false;
                 }
             }
         }
