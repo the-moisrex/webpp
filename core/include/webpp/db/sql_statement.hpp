@@ -16,6 +16,7 @@ namespace webpp::sql {
     struct sql_statement_binder {
         using statement_type = StmtType;
         using size_type      = typename statement_type::size_type;
+        using string_type    = typename statement_type::string_type;
 
       private:
         statement_type& stmt;
@@ -38,6 +39,42 @@ namespace webpp::sql {
         [[nodiscard]] inline sql_statement_binder& operator<<(T&& val) noexcept {
             stmt.bind(index++, stl::forward<T>(val));
             return *this;
+        }
+
+
+        template <typename T>
+        [[nodiscard]] inline auto as() {
+            auto                  errmsg       = object::make_general<string_type>(stmt);
+            static constexpr auto t_size       = sizeof(T);
+            static constexpr bool supports_int = requires {
+                stmt.as_int(index, errmsg);
+            };
+            static constexpr bool supports_int64 = requires {
+                stmt.as_int64(index, errmsg);
+            };
+            if constexpr (stl::is_arithmetic_v<T>) {
+                if constexpr (stl::integral<T>) {
+                    if constexpr (supports_int64 && t_size >= 64) {
+                        return stmt.as_int64();
+                    } else if constexpr (supports_int) {
+                        return stmt.as_int();
+                    } else {
+                        static_assert_false(T, "The specified type is unknown to the database's driver.");
+                    }
+                } else if constexpr (stl::is_floating_point_v<T>) {
+                    // todo
+                } else {
+                    static_assert_false(T,
+                                        "How can a type be arithmetic but not integral nor floating point?");
+                }
+            } else {
+                // todo
+            }
+        }
+
+        template <typename T>
+        [[nodiscard]] inline operator T() {
+            return as<T>();
         }
     };
 
@@ -87,6 +124,10 @@ namespace webpp::sql {
                 return false;
             }
             return continue_or_not;
+        }
+
+        inline binder_type column(size_type index) noexcept {
+            return {*this, index};
         }
 
 
