@@ -199,6 +199,13 @@ namespace webpp::sql {
             return sqlite3_column_type(stmt, index) == SQLITE_NULL;
         }
 
+        [[nodiscard]] inline bool is_column_float(int index) const noexcept {
+            return sqlite3_column_type(stmt, index) == SQLITE_FLOAT;
+        }
+
+        [[nodiscard]] inline bool is_column_integer(int index) const noexcept {
+            return sqlite3_column_type(stmt, index) == SQLITE_INTEGER;
+        }
 
         [[nodiscard]] inline int as_int(int index) const noexcept {
             return sqlite3_column_int(stmt, index);

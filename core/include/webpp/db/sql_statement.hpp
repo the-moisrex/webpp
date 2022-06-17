@@ -76,6 +76,10 @@ namespace webpp::sql {
         [[nodiscard]] inline operator T() {
             return as<T>();
         }
+
+        [[nodiscard]] inline bool is_number() const noexcept {
+            return stmt.is_column_integer(index) || stmt.is_column_float(index);
+        }
     };
 
 
