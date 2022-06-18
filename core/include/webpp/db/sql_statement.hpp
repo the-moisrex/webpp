@@ -77,6 +77,14 @@ namespace webpp::sql {
             return as<T>();
         }
 
+        [[nodiscard]] inline bool is_integer() const noexcept {
+            return stmt.is_column_integer(index);
+        }
+
+        [[nodiscard]] inline bool is_float() const noexcept {
+            return stmt.is_column_float(index);
+        }
+
         [[nodiscard]] inline bool is_number() const noexcept {
             return stmt.is_column_integer(index) || stmt.is_column_float(index);
         }
