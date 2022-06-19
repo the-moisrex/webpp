@@ -67,6 +67,10 @@ namespace webpp::sql {
                     static_assert_false(T,
                                         "How can a type be arithmetic but not integral nor floating point?");
                 }
+            } else if constexpr (istl::String<T>) {
+                auto str = object::make_general<T>(stmt);
+                stmt.as_string(index, str);
+                return str;
             } else {
                 // todo
             }

@@ -218,6 +218,14 @@ namespace webpp::sql {
         [[nodiscard]] inline double as_double(int index) const noexcept {
             return sqlite3_column_double(stmt, index);
         }
+
+        template <istl::String StrT = stl::string>
+        void as_string(int index, StrT& out) const noexcept {
+            // todo: handle text16
+            const auto* str     = sqlite3_column_text(stmt, index);
+            const int   str_len = sqlite3_column_bytes(stmt, index);
+            out.append(str, str_len);
+        }
     };
 
 } // namespace webpp::sql
