@@ -903,12 +903,7 @@ namespace webpp::istl {
     namespace details {
 
         template <typename FirstType, typename TheType, stl::size_t N>
-        struct repeat_type {
-            using type = append_parameter<append_parameter<FirstType, TheType>,
-                                          typename repeat_type<FirstType, TheType, N - 1>::type>;
-        };
-
-
+        struct repeat_type : repeat_type<append_parameter<FirstType, TheType>, TheType, N - 1> {};
 
         template <typename FirstType, typename TheType>
         struct repeat_type<FirstType, TheType, 0> {
