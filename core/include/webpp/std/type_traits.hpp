@@ -913,18 +913,18 @@ namespace webpp::istl {
 
     // Repeat Template Type
     template <stl::size_t N,
+              typename TheType,
               template <typename...>
               typename TemplateType,
-              typename TheType,
               typename... FirstTypes>
     using repeat_type = details::repeat_type<TemplateType<FirstTypes...>, TheType, N>;
 
     template <stl::size_t N,
+              typename TheType,
               template <typename...>
               typename TemplateType,
-              typename TheType,
               typename... FirstTypes>
-    using repeat_type_t = typename repeat_type<N, TemplateType, TheType, FirstTypes...>::type;
+    using repeat_type_t = typename repeat_type<N, TheType, TemplateType, FirstTypes...>::type;
 
 
 
