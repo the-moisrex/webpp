@@ -766,13 +766,44 @@ namespace webpp::istl {
     using first_type_t = typename first_type<T...>::type;
 
 
+    /**
+     * Get the last parameter type from a tuple-like type
+     */
     template <typename... T>
     struct last_type {
-        template <typename TagT>
+        template <typename... FT>
+        struct fake_tup {
+            template <typename L>
+            using append = fake_tup<FT..., L>;
+
+
+            template <template <typename...> typename Tt, typename... Additionals>
+            using replace = Tt<FT..., Additionals...>;
+        };
+
+        template <typename TagT, typename Tup = fake_tup<>>
         struct tag {
             using type = TagT;
+
+            using tup = typename Tup::template append<TagT>;
+
+            template <typename Tag>
+            tag<Tag, typename Tag::tup> operator+(Tag&&) const noexcept {
+                return {};
+            }
         };
+
+        // last type
         using type = typename decltype((tag<T>{}, ...))::type;
+
+        // all except last type
+        template <template <typename...> typename Tt>
+        using except = typename decltype((tag<T>{} + ...))::tup::template replace<Tt>;
+
+
+        // replace last type
+        template <template <typename...> typename Tt, typename... Replacements>
+        using replace = typename decltype((tag<T>{} + ...))::tup::template replace<Tt, Replacements...>;
     };
 
     template <typename... T>
