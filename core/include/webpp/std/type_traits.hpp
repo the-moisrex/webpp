@@ -788,7 +788,7 @@ namespace webpp::istl {
             using tup = typename Tup::template append<TagT>;
 
             template <typename Tag>
-            tag<Tag, typename Tag::tup> operator+(Tag&&) const noexcept {
+            tag<typename Tag::type, tup> operator+(Tag&&) const noexcept {
                 return {};
             }
         };
@@ -799,6 +799,9 @@ namespace webpp::istl {
         // all except last type
         template <template <typename...> typename Tt>
         using except = typename decltype((tag<T>{} + ...))::tup::template replace<Tt>;
+
+        // todo: except_if
+        // todo: replace_if
 
 
         // replace last type
