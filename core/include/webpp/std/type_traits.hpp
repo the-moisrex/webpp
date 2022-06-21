@@ -766,6 +766,18 @@ namespace webpp::istl {
     using first_type_t = typename first_type<T...>::type;
 
 
+    template <typename... T>
+    struct last_type {
+        template <typename TagT>
+        struct tag {
+            using type = TagT;
+        };
+        using type = typename decltype((tag<T>{}, ...))::type;
+    };
+
+    template <typename... T>
+    using last_type_t = typename last_type<T...>::type;
+
 
 
     /**
