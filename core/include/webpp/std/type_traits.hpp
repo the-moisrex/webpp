@@ -785,10 +785,11 @@ namespace webpp::istl {
         struct tag {
             using type = TagT;
 
-            using tup = typename Tup::template append<TagT>;
+            using tup = Tup;
 
+            // use TagT as the last type
             template <typename Tag>
-            tag<typename Tag::type, tup> operator+(Tag&&) const noexcept {
+            tag<typename Tag::type, typename Tup::template append<TagT>> operator+(Tag&&) const noexcept {
                 return {};
             }
         };
@@ -800,13 +801,31 @@ namespace webpp::istl {
         template <template <typename...> typename Tt>
         using except = typename decltype((tag<T>{} + ...))::tup::template replace<Tt>;
 
-        // todo: except_if
-        // todo: replace_if
-
+        // except_if
+        template <template <typename...> typename Tt, template <typename> typename Condition>
+        using except_if = stl::conditional_t<Condition<type>::value,
+                                             typename decltype((tag<T>{} + ...))::tup::template replace<Tt>,
+                                             Tt<T...>>;
 
         // replace last type
         template <template <typename...> typename Tt, typename... Replacements>
         using replace = typename decltype((tag<T>{} + ...))::tup::template replace<Tt, Replacements...>;
+
+        // replace_if
+        template <template <typename...> typename Tt,
+                  template <typename>
+                  typename Condition,
+                  typename... Replacements>
+        using replace_if = stl::conditional_t<Condition<type>::value, replace<Tt, Replacements...>, Tt<T...>>;
+
+
+        // replace if exists, add if it doesnt
+        template <template <typename...> typename Tt,
+                  template <typename>
+                  typename Condition,
+                  typename... Replacements>
+        using put_if =
+          stl::conditional_t<Condition<type>::value, replace<Tt, Replacements...>, Tt<T..., Replacements...>>;
     };
 
     template <typename... T>
