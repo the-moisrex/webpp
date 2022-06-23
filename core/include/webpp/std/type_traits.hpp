@@ -773,43 +773,50 @@ namespace webpp::istl {
     struct last_type {
         template <typename... FT>
         struct fake_tup {
-            template <typename L>
-            using append = fake_tup<FT..., L>;
+            template <typename... L>
+            using append = fake_tup<FT..., L...>;
 
 
             template <template <typename...> typename Tt, typename... Additionals>
-            using replace = Tt<FT..., Additionals...>;
+            using replace_template = Tt<FT..., Additionals...>;
         };
 
         template <typename TagT, typename Tup = fake_tup<>>
         struct tag {
-            using type = TagT;
+            // last type
+            using last = TagT;
 
-            using tup = Tup;
+            // the rest of the types
+            using rest = Tup;
+
+            // all of them
+            using all = typename rest::template append<last>;
 
             // use TagT as the last type
             template <typename Tag>
-            tag<typename Tag::type, typename Tup::template append<TagT>> operator+(Tag&&) const noexcept {
+            tag<typename Tag::last, all> operator+(Tag&&) const noexcept {
                 return {};
             }
         };
 
         // last type
-        using type = typename decltype((tag<T>{}, ...))::type;
+        using type = typename decltype((tag<T>{}, ...))::last;
 
         // all except last type (remove the last type)
         template <template <typename...> typename Tt>
-        using remove = typename decltype((tag<T>{} + ...))::tup::template replace<Tt>;
+        using remove = typename decltype((tag<T>{} + ...))::rest::template replace_template<Tt>;
 
         // remove the last tyoe if
         template <template <typename...> typename Tt, template <typename> typename Condition>
-        using remove_if = stl::conditional_t<Condition<type>::value,
-                                             typename decltype((tag<T>{} + ...))::tup::template replace<Tt>,
-                                             Tt<T...>>;
+        using remove_if =
+          stl::conditional_t<Condition<type>::value,
+                             typename decltype((tag<T>{} + ...))::rest::template replace_template<Tt>,
+                             Tt<T...>>;
 
         // replace last type
         template <template <typename...> typename Tt, typename... Replacements>
-        using replace = typename decltype((tag<T>{} + ...))::tup::template replace<Tt, Replacements...>;
+        using replace =
+          typename decltype((tag<T>{} + ...))::rest::template replace_template<Tt, Replacements...>;
 
         // replace last type if
         template <template <typename...> typename Tt,
