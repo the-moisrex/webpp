@@ -794,7 +794,7 @@ namespace webpp::istl {
 
             // use TagT as the last type
             template <typename Tag>
-            tag<typename Tag::last, all> operator+(Tag&&) const noexcept {
+            constexpr tag<typename Tag::last, all> operator|(Tag&&) const noexcept {
                 return {};
             }
         };
@@ -804,19 +804,19 @@ namespace webpp::istl {
 
         // all except last type (remove the last type)
         template <template <typename...> typename Tt>
-        using remove = typename decltype((tag<T>{} + ...))::rest::template replace_template<Tt>;
+        using remove = typename decltype((tag<T>{} | ...))::rest::template replace_template<Tt>;
 
         // remove the last tyoe if
         template <template <typename...> typename Tt, template <typename> typename Condition>
         using remove_if =
           stl::conditional_t<Condition<type>::value,
-                             typename decltype((tag<T>{} + ...))::rest::template replace_template<Tt>,
+                             typename decltype((tag<T>{} | ...))::rest::template replace_template<Tt>,
                              Tt<T...>>;
 
         // replace last type
         template <template <typename...> typename Tt, typename... Replacements>
         using replace =
-          typename decltype((tag<T>{} + ...))::rest::template replace_template<Tt, Replacements...>;
+          typename decltype((tag<T>{} | ...))::rest::template replace_template<Tt, Replacements...>;
 
         // replace last type if
         template <template <typename...> typename Tt,
