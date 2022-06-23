@@ -7,8 +7,11 @@
 
 #include <list>
 #include <map>
-#include <memory_resource>
 #include <string>
+
+#if __cpp_lib_memory_resource
+#    include <memory_resource>
+#endif
 
 using namespace std;
 using namespace webpp::istl;
@@ -18,7 +21,7 @@ using namespace webpp::istl;
 ///////////////////////////////////////////
 // changing std::string's allocator ///////
 ///////////////////////////////////////////
-
+#if __cpp_lib_memory_resource
 using new_str_t = replace_parameter<string, std::allocator<char>, pmr::polymorphic_allocator<char>>;
 
 static_assert(std::is_same_v<new_str_t, pmr::string>);
@@ -28,6 +31,7 @@ using should_be_void = replace_parameter<string, std::allocator<int>, pmr::polym
 
 // static_assert(is_void_v<should_be_void>);
 
+#endif
 
 
 ///////////////////// Tuple ///////////////////
@@ -41,6 +45,8 @@ static_assert(is_same_v<filter_parameters_t<is_void, fake_tuple<int, void, int, 
                         fake_tuple<void, void, void>>);
 
 
+
+#if __cpp_lib_memory_resource
 using t1  = tuple<int, string, vector<int>, int>;
 using t2  = replace_parameter<t1, int, double>;
 using t3  = recursively_replace_parameter<t1, int, double>;
@@ -84,7 +90,15 @@ using ut = unique_parameters<tuple<void, void, int, int, int>>;
 static_assert(is_same_v<ut, tuple<void, int>>);
 
 
+#endif
 
 /// Optional ///
 
 static_assert(Optional<optional<int>>, "Optional doesn't work properly");
+
+
+
+/// Last Type ///
+
+using only_int = typename last_type<int, double>::template except<tuple>;
+static_assert(is_same_v<only_int, tuple<int>>, "except bug");
