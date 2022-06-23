@@ -100,5 +100,11 @@ static_assert(Optional<optional<int>>, "Optional doesn't work properly");
 
 /// Last Type ///
 
-using only_int = typename last_type<int, double>::template except<tuple>;
+template <typename T>
+using is_not_integral = negation<is_integral<T>>;
+
+using only_int  = typename last_type<int, double>::template remove<tuple>;
+using only_ints = typename last_type<int, short, string>::template remove_if<tuple, is_not_integral>;
+
 static_assert(is_same_v<only_int, tuple<int>>, "except bug");
+static_assert(is_same_v<only_ints, tuple<int, short>>, "except if bug");
