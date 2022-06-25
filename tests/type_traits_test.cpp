@@ -4,6 +4,7 @@
 
 #include "../core/include/webpp/std/optional.hpp"
 #include "../core/include/webpp/std/tuple.hpp"
+#include "common_pch.hpp"
 
 #include <list>
 #include <map>
@@ -116,3 +117,28 @@ static_assert(is_same_v<only_arith_long,
                         tuple<int, unsigned, unsigned short, long, long long, unsigned long, double, short>>,
               "remove bug");
 static_assert(is_same_v<only_ints, tuple<int, short>>, "remove if bug");
+
+
+
+/// ituple
+
+
+TEST(TypeTraits, ITupleTest) {
+
+    // 1.3 should be converted to 1 because it's int
+    auto const tup  = ituple<int, double>{1.3, 1.1};
+    auto const tup3 = tup.structured<3>();
+
+    auto const [mi_int, mi_double, mi_nothing] = tup3;
+
+    static_assert(is_same_v<int, remove_cvref_t<decltype(mi_int)>>, "it should be int");
+    static_assert(is_same_v<double, remove_cvref_t<decltype(mi_double)>>, "it should be double");
+    static_assert(is_same_v<nothing_type, remove_cvref_t<decltype(mi_nothing)>>, "it should be nothing");
+
+    EXPECT_EQ(1, get<0>(tup));
+    EXPECT_EQ(1.1, get<1>(tup));
+    EXPECT_EQ(1, get<0>(tup3));
+    EXPECT_EQ(1.1, get<1>(tup3));
+    EXPECT_EQ(1, mi_int);
+    EXPECT_EQ(1.1, mi_double);
+}
