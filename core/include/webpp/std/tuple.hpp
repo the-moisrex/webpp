@@ -184,6 +184,90 @@ namespace webpp::istl {
     [[nodiscard]] static constexpr auto tuple_transform(Tup&& s, Func f) {
         return tuple_transform(stl::forward<Tup>(s), f, stl::make_index_sequence<stl::tuple_size_v<Tup>>());
     }
+
+
+
+
+
+    ////////////////////////////// ituple //////////////////////////////
+
+    namespace details {
+        template <stl::size_t N>
+        struct size_holder : stl::integral_constant<stl::size_t, N> {};
+
+        template <typename T>
+        struct is_size_holder : stl::false_type {
+            static constexpr stl::size_t size = 0;
+        };
+
+        template <stl::size_t N>
+        struct is_size_holder<size_holder<N>> : stl::true_type {
+            static constexpr stl::size_t size = N;
+        };
+    } // namespace details
+
+    template <typename... T>
+    struct ituple : last_type<T...>::template remove_if<stl::tuple, details::is_size_holder> {
+        using last       = last_type<T...>;
+        using this_tuple = typename last_type<T...>::template remove_if<stl::tuple, details::is_size_holder>;
+        static constexpr stl::size_t native_tuple_size = stl::tuple_size_v<this_tuple>;
+        static constexpr stl::size_t tuple_size =
+          native_tuple_size + details::is_size_holder<typename last::type>::size;
+
+        // using typename last_type<T...>::template remove<tuple>::tuple;
+
+        template <typename... Args>
+        constexpr ituple(Args&&... args) : this_tuple{stl::forward<Args>(args)...} {}
+
+        constexpr this_tuple as_tuple() const noexcept {
+            return *static_cast<this_tuple const*>(this);
+        }
+
+        template <stl::size_t NewSize>
+        [[nodiscard]] auto structured() const noexcept {
+            if constexpr (NewSize > native_tuple_size) {
+                return typename last_type<T...>::template put_if<
+                  ituple,
+                  details::is_size_holder,
+                  details::size_holder<NewSize - native_tuple_size>>{as_tuple()};
+            } else if constexpr (NewSize < native_tuple_size) {
+                // todo
+            } else {
+                return *this;
+            }
+        }
+
+        template <stl::size_t I>
+        auto get() const noexcept {
+            if constexpr (I >= native_tuple_size) {
+                return nothing_type{};
+            } else {
+                return stl::get<I>(as_tuple());
+            }
+        }
+    };
+
+
 } // namespace webpp::istl
+
+namespace std {
+
+    ////////////////////////////// ituple //////////////////////////////
+
+    template <size_t I, class... T>
+        requires(I < webpp::istl::ituple<T...>::native_tuple_size)
+    struct tuple_element<I, webpp::istl::ituple<T...>>
+      : tuple_element<I, typename webpp::istl::ituple<T...>::this_tuple> {};
+
+    template <size_t I, class... T>
+        requires(I >= webpp::istl::ituple<T...>::native_tuple_size)
+    struct tuple_element<I, webpp::istl::ituple<T...>> {
+        using type = webpp::istl::nothing_type;
+    };
+
+    template <class... T>
+    struct tuple_size<webpp::istl::ituple<T...>>
+      : integral_constant<size_t, webpp::istl::ituple<T...>::tuple_size> {};
+} // namespace std
 
 #endif // WEBPP_TUPLE_H
