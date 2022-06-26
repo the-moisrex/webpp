@@ -219,6 +219,17 @@ namespace webpp::istl {
         template <typename... Args>
         constexpr ituple(Args&&... args) : this_tuple{stl::forward<Args>(args)...} {}
 
+        template <typename... TupT>
+        constexpr ituple(stl::tuple<T..., TupT...>&& tup) : this_tuple{} {
+            ([this, &tup]<stl::size_t... I>(stl::index_sequence<I...>) constexpr noexcept {
+                ((stl::get<I>(as_tuple()) = stl::get<I>(tup)), ...);
+            })(stl::make_index_sequence<native_tuple_size>{});
+        }
+
+        constexpr this_tuple& as_tuple() noexcept {
+            return *static_cast<this_tuple*>(this);
+        }
+
         constexpr this_tuple as_tuple() const noexcept {
             return *static_cast<this_tuple const*>(this);
         }
@@ -231,7 +242,7 @@ namespace webpp::istl {
                   details::is_size_holder,
                   details::size_holder<NewSize - native_tuple_size>>{as_tuple()};
             } else if constexpr (NewSize < native_tuple_size) {
-                // todo
+                return typename last_type<T...>::template remove_limit<ituple, NewSize>{as_tuple()};
             } else {
                 return *this;
             }
@@ -244,6 +255,19 @@ namespace webpp::istl {
             } else {
                 return stl::get<I>(as_tuple());
             }
+        }
+
+
+        template <stl::size_t I>
+            requires(I < native_tuple_size)
+        auto& get() noexcept {
+            return stl::get<I>(as_tuple());
+        }
+
+
+        template <stl::size_t I>
+        nothing_type get() noexcept {
+            return {};
         }
     };
 

@@ -779,9 +779,11 @@ namespace webpp::istl {
 
             template <template <typename...> typename Tt, typename... Additionals>
             using replace_template = Tt<FT..., Additionals...>;
+
+            static constexpr stl::size_t size = sizeof...(FT);
         };
 
-        template <typename TagT, typename Tup = fake_tup<>>
+        template <typename TagT, typename Tup = fake_tup<>, stl::size_t Limit = static_cast<stl::size_t>(-1)>
         struct tag {
             // last type
             using last = TagT;
@@ -792,9 +794,17 @@ namespace webpp::istl {
             // all of them
             using all = typename rest::template append<last>;
 
+            static constexpr stl::size_t all_size = all::size;
+
             // use TagT as the last type
             template <typename Tag>
+                requires(all_size < Limit)
             constexpr tag<typename Tag::last, all> operator|(Tag&&) const noexcept {
+                return {};
+            }
+
+            template <typename Tag>
+            constexpr tag operator|(Tag&&) const noexcept {
                 return {};
             }
         };
@@ -805,6 +815,11 @@ namespace webpp::istl {
         // all except last type (remove the last type)
         template <template <typename...> typename Tt>
         using remove = typename decltype((... | tag<T>{}))::rest::template replace_template<Tt>;
+
+        // remove the last types ao there's only N types in the tuple
+        template <template <typename...> typename Tt, stl::size_t N>
+        using remove_limit =
+          typename decltype((... | tag<T, fake_tup<>, N>{}))::all::template replace_template<Tt>;
 
         // remove the last tyoe if
         template <template <typename...> typename Tt, template <typename> typename Condition>

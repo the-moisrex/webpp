@@ -118,6 +118,9 @@ static_assert(is_same_v<only_arith_long,
               "remove bug");
 static_assert(is_same_v<only_ints, tuple<int, short>>, "remove if bug");
 
+using one_int = typename last_type<int, double, int, string>::template remove_limit<tuple, 1>;
+static_assert(is_same_v<one_int, tuple<int>>, "remove limit bug");
+
 
 
 /// ituple
@@ -131,7 +134,7 @@ TEST(TypeTraits, ITupleTest) {
     auto const tup1 = tup.structured<1>();
 
     auto const [mi_int, mi_double, mi_nothing] = tup3;
-    auto const [mi_int1] = tup1;
+    auto const [mi_int1]                       = tup1;
 
     static_assert(is_same_v<int, remove_cvref_t<decltype(mi_int)>>, "it should be int");
     static_assert(is_same_v<double, remove_cvref_t<decltype(mi_double)>>, "it should be double");
