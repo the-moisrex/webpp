@@ -133,6 +133,7 @@ TEST(TypeTraits, ITupleTest) {
     auto const tup3 = tup.structured<3>();
     auto const tup1 = tup.structured<1>();
 
+    // structured binding works both ways
     auto const [mi_int, mi_double, mi_nothing] = tup3;
     auto const [mi_int1]                       = tup1;
 
