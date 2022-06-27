@@ -214,6 +214,9 @@ namespace webpp::istl {
         static constexpr stl::size_t tuple_size =
           native_tuple_size + details::is_size_holder<typename last::type>::size;
 
+        template <stl::size_t NewSize>
+        using restructured_type = decltype(stl::declval<ituple>.template structured<NewSize>());
+
         // using typename last_type<T...>::template remove<tuple>::tuple;
 
         template <typename... Args>
@@ -272,8 +275,31 @@ namespace webpp::istl {
     };
 
 
+    /**
+     * This is a wrapper for any type of iterator that holds an ituple
+     */
+    template <typename Iter, stl::size_t TupleSize = stl::tuple_size_v<typename Iter::value_type>>
+    struct ituple_iterator : Iter {
+
+        // value type is an ituple
+        using value_type = typename Iter::value_type::template restructured_type<TupleSize>;
+
+        static constexpr bool is_nothing = stl::is_same_v<value_type, nothing_type>;
+
+        [[nodiscard]] constexpr auto operator*() noexcept {
+            return this->operator*().template structured<TupleSize>();
+        }
+
+
+        [[nodiscard]] constexpr auto operator*() const noexcept {
+            return this->operator*().template structured<TupleSize>();
+        }
+    };
+
 
     /**
+     * This struct will change the iterator and provides restructuring features for the user to use
+     * "structured bindings" in for loops.
      */
     template <typename IterableT,
               stl::size_t TupleSize = stl::tuple_size_v<typename IterableT::iterator::value_type>>
@@ -281,7 +307,7 @@ namespace webpp::istl {
 
         // wrap the iterator type of the iterable:
         using native_iterator = typename IterableT::iterator;
-        using iterator        = ituple_iterator<native_iterator>;
+        using iterator        = ituple_iterator<native_iterator, TupleSize>;
 
         using IterableT::IterableT;
 
@@ -317,7 +343,6 @@ namespace webpp::istl {
         [[nodiscard]] iterator begin() noexcept {
             return native_iterator().begin();
         }
-
 
         [[nodiscard]] iterator begin() const noexcept {
             return native_iterator().begin();
