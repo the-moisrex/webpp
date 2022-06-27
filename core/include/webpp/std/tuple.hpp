@@ -249,7 +249,7 @@ namespace webpp::istl {
         }
 
         template <stl::size_t I>
-        auto get() const noexcept {
+        [[nodiscard]] constexpr auto get() const noexcept {
             if constexpr (I >= native_tuple_size) {
                 return nothing_type{};
             } else {
@@ -260,17 +260,77 @@ namespace webpp::istl {
 
         template <stl::size_t I>
             requires(I < native_tuple_size)
-        auto& get() noexcept {
+        [[nodiscard]] constexpr auto& get() noexcept {
             return stl::get<I>(as_tuple());
         }
 
 
         template <stl::size_t I>
-        nothing_type get() noexcept {
+        [[nodiscard]] constexpr nothing_type get() noexcept {
             return {};
         }
     };
 
+
+
+    /**
+     */
+    template <typename IterableT,
+              stl::size_t TupleSize = stl::tuple_size_v<typename IterableT::iterator::value_type>>
+    struct ituple_iterable : IterableT {
+
+        // wrap the iterator type of the iterable:
+        using native_iterator = typename IterableT::iterator;
+        using iterator        = ituple_iterator<native_iterator>;
+
+        using IterableT::IterableT;
+
+
+        // move ctor
+        template <stl::size_t NewSize>
+        constexpr ituple_iterable(ituple_iterable<IterableT, NewSize>&& iterable) noexcept
+          : IterableT{stl::move(iterable.native_iterable())} {}
+
+        template <stl::size_t NewSize>
+        constexpr ituple_iterable(ituple_iterable<IterableT, NewSize> const& iterable) noexcept
+          : IterableT{iterable.native_iterable()} {}
+
+        template <stl::size_t NewSize>
+        [[nodiscard]] constexpr ituple_iterable<IterableT, NewSize> structured() noexcept {
+            return {stl::move(*this)}; // move ctor
+        }
+
+        template <stl::size_t NewSize>
+        [[nodiscard]] constexpr ituple_iterable<IterableT, NewSize> structured() const noexcept {
+            return {*this}; // copy ctor
+        }
+
+        [[nodiscard]] constexpr IterableT& native_iterable() noexcept {
+            return *static_cast<IterableT*>(this);
+        }
+
+        [[nodiscard]] constexpr IterableT const& native_iterable() const noexcept {
+            return *static_cast<IterableT const*>(this);
+        }
+
+
+        [[nodiscard]] iterator begin() noexcept {
+            return native_iterator().begin();
+        }
+
+
+        [[nodiscard]] iterator begin() const noexcept {
+            return native_iterator().begin();
+        }
+
+        [[nodiscard]] iterator end() noexcept {
+            return native_iterator().end();
+        }
+
+        [[nodiscard]] iterator end() const noexcept {
+            return native_iterator().end();
+        }
+    };
 
 } // namespace webpp::istl
 
