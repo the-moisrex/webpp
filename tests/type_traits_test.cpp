@@ -161,9 +161,9 @@ struct iterable_type {
     vec data;
 
     iterable_type() {
-        data.insert(tuple{1, 1.1});
-        data.insert(tuple{2, 1.2});
-        data.insert(tuple{3, 1.3});
+        data.push_back(tuple{1, 1.1});
+        data.push_back(tuple{2, 1.2});
+        data.push_back(tuple{3, 1.3});
     }
 
     iterator begin() {

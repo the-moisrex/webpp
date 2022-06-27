@@ -215,7 +215,16 @@ namespace webpp::istl {
           native_tuple_size + details::is_size_holder<typename last::type>::size;
 
         template <stl::size_t NewSize>
-        using restructured_type = decltype(stl::declval<ituple>.template structured<NewSize>());
+        using restructured_type = stl::conditional_t<
+          (NewSize > native_tuple_size),
+          typename last_type<T...>::template put_if<ituple,
+                                                    details::is_size_holder,
+                                                    details::size_holder<NewSize - native_tuple_size>>,
+          stl::conditional_t<(NewSize < native_tuple_size),
+                             typename last_type<T...>::template remove_limit<ituple, NewSize>,
+                             ituple>>;
+
+
 
         // using typename last_type<T...>::template remove<tuple>::tuple;
 
