@@ -214,6 +214,18 @@ namespace webpp::istl {
         static constexpr stl::size_t tuple_size =
           native_tuple_size + details::is_size_holder<typename last::type>::size;
 
+        template <stl::size_t NewSize>
+        using restructured_type = stl::conditional_t<
+          (NewSize > native_tuple_size),
+          typename last_type<T...>::template put_if<ituple,
+                                                    details::is_size_holder,
+                                                    details::size_holder<NewSize - native_tuple_size>>,
+          stl::conditional_t<(NewSize < native_tuple_size),
+                             typename last_type<T...>::template remove_limit<ituple, NewSize>,
+                             ituple>>;
+
+
+
         // using typename last_type<T...>::template remove<tuple>::tuple;
 
         template <typename... Args>
@@ -249,7 +261,7 @@ namespace webpp::istl {
         }
 
         template <stl::size_t I>
-        auto get() const noexcept {
+        [[nodiscard]] constexpr auto get() const noexcept {
             if constexpr (I >= native_tuple_size) {
                 return nothing_type{};
             } else {
@@ -260,17 +272,129 @@ namespace webpp::istl {
 
         template <stl::size_t I>
             requires(I < native_tuple_size)
-        auto& get() noexcept {
+        [[nodiscard]] constexpr auto& get() noexcept {
             return stl::get<I>(as_tuple());
         }
 
 
         template <stl::size_t I>
-        nothing_type get() noexcept {
+        [[nodiscard]] constexpr nothing_type get() noexcept {
             return {};
         }
     };
 
+    template <typename... T>
+    ituple(T&&...) -> ituple<T...>;
+
+    template <template <typename...> typename Tup, typename... T>
+    ituple(Tup<T...>&&) -> ituple<T...>;
+
+    template <typename... T>
+    struct ituplify {
+        using type = ituple<T...>;
+    };
+
+    template <template <typename...> typename Tt, typename... T>
+    struct ituplify<Tt<T...>> {
+        using type = ituple<T...>;
+    };
+
+
+    /**
+     * This is a wrapper for any type of iterator that holds an ituple
+     */
+    template <typename Iter, stl::size_t TupleSize = stl::tuple_size_v<typename Iter::value_type>>
+    struct ituple_iterator : Iter {
+        using Iter::Iter;
+
+        constexpr ituple_iterator(Iter const& iter) : Iter{iter} {}
+        constexpr ituple_iterator(Iter&& iter) : Iter{stl::move(iter)} {}
+
+        // value type is an ituple
+        using value_type =
+          typename ituplify<typename Iter::value_type>::type::template restructured_type<TupleSize>;
+        using reference = value_type&;
+        using pointer   = value_type*;
+
+        static constexpr bool is_nothing = stl::is_same_v<value_type, nothing_type>;
+
+        [[nodiscard]] constexpr Iter& native_iterator() noexcept {
+            return *static_cast<Iter*>(this);
+        }
+
+        [[nodiscard]] constexpr Iter const& native_iterator() const noexcept {
+            return *static_cast<Iter const*>(this);
+        }
+
+        [[nodiscard]] constexpr auto operator*() noexcept {
+            return ituple{native_iterator().operator*()}.template structured<TupleSize>();
+        }
+
+        [[nodiscard]] constexpr auto operator*() const noexcept {
+            return ituple{native_iterator().operator*()}.template structured<TupleSize>();
+        }
+    };
+
+
+    /**
+     * This struct will change the iterator and provides restructuring features for the user to use
+     * "structured bindings" in for loops.
+     */
+    template <typename IterableT,
+              stl::size_t TupleSize = stl::tuple_size_v<typename IterableT::iterator::value_type>>
+    struct ituple_iterable : IterableT {
+
+        // wrap the iterator type of the iterable:
+        using native_iterator = typename IterableT::iterator;
+        using iterator        = ituple_iterator<native_iterator, TupleSize>;
+
+        using IterableT::IterableT;
+
+
+        // move ctor
+        template <stl::size_t NewSize>
+        constexpr ituple_iterable(ituple_iterable<IterableT, NewSize>&& iterable) noexcept
+          : IterableT{stl::move(iterable.native_iterable())} {}
+
+        template <stl::size_t NewSize>
+        constexpr ituple_iterable(ituple_iterable<IterableT, NewSize> const& iterable) noexcept
+          : IterableT{iterable.native_iterable()} {}
+
+        template <stl::size_t NewSize>
+        [[nodiscard]] constexpr ituple_iterable<IterableT, NewSize> structured() noexcept {
+            return {stl::move(*this)}; // move ctor
+        }
+
+        template <stl::size_t NewSize>
+        [[nodiscard]] constexpr ituple_iterable<IterableT, NewSize> structured() const noexcept {
+            return {*this}; // copy ctor
+        }
+
+        [[nodiscard]] constexpr IterableT& native_iterable() noexcept {
+            return *static_cast<IterableT*>(this);
+        }
+
+        [[nodiscard]] constexpr IterableT const& native_iterable() const noexcept {
+            return *static_cast<IterableT const*>(this);
+        }
+
+
+        [[nodiscard]] iterator begin() noexcept {
+            return native_iterator().begin();
+        }
+
+        [[nodiscard]] iterator begin() const noexcept {
+            return native_iterator().begin();
+        }
+
+        [[nodiscard]] iterator end() noexcept {
+            return native_iterator().end();
+        }
+
+        [[nodiscard]] iterator end() const noexcept {
+            return native_iterator().end();
+        }
+    };
 
 } // namespace webpp::istl
 

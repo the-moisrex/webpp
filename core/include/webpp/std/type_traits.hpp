@@ -771,6 +771,9 @@ namespace webpp::istl {
      */
     template <typename... T>
     struct last_type {
+
+        static_assert(sizeof...(T) > 0, "last_type won't work with empty type lists.");
+
         template <typename... FT>
         struct fake_tup {
             template <typename... L>

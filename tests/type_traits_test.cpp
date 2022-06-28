@@ -151,3 +151,36 @@ TEST(TypeTraits, ITupleTest) {
     EXPECT_EQ(1, mi_int1);
     EXPECT_EQ(1, tuple_size_v<decltype(tup1)>);
 }
+
+
+struct iterable_type {
+    using vec      = list<ituple<int, double>>;
+    using vec_iter = typename vec::iterator;
+    using iterator = ituple_iterator<vec_iter>;
+
+    vec data;
+
+    iterable_type() {
+        data.push_back(ituple{1, 1.1});
+        data.push_back(ituple{2, 1.2});
+        data.push_back(ituple{3, 1.3});
+    }
+
+    iterator begin() {
+        return data.begin();
+    }
+    iterator end() {
+        return data.end();
+    }
+};
+
+TEST(TypeTraits, ITupleIteratorTest) {
+    iterable_type vecs;
+
+    int    i = 0;
+    double d = 1.0;
+    for (auto [int_val, double_val] : vecs) {
+        EXPECT_EQ(int_val, ++i);
+        EXPECT_EQ(double_val, d += 0.1);
+    }
+}
