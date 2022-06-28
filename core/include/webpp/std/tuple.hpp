@@ -287,7 +287,7 @@ namespace webpp::istl {
     ituple(T&&...) -> ituple<T...>;
 
     template <template <typename...> typename Tup, typename... T>
-    ituple(Tup<T>&&...) -> ituple<T...>;
+    ituple(Tup<T...>&&) -> ituple<T...>;
 
     template <typename... T>
     struct ituplify {
@@ -313,6 +313,8 @@ namespace webpp::istl {
         // value type is an ituple
         using value_type =
           typename ituplify<typename Iter::value_type>::type::template restructured_type<TupleSize>;
+        using reference = value_type&;
+        using pointer   = value_type*;
 
         static constexpr bool is_nothing = stl::is_same_v<value_type, nothing_type>;
 

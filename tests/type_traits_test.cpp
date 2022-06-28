@@ -179,7 +179,7 @@ TEST(TypeTraits, ITupleIteratorTest) {
 
     int    i = 0;
     double d = 1.0;
-    for (auto const [int_val, double_val] : vecs) {
+    for (auto const& [int_val, double_val] : vecs) {
         EXPECT_EQ(int_val, ++i);
         EXPECT_EQ(double_val, d += 0.1);
     }
