@@ -283,6 +283,16 @@ namespace webpp::istl {
         }
     };
 
+    template <typename... T>
+    struct ituplify {
+        using type = ituple<T...>;
+    };
+
+    template <template <typename...> typename Tt, typename... T>
+    struct ituplify<Tt<T...>> {
+        using type = ituple<T...>;
+    };
+
 
     /**
      * This is a wrapper for any type of iterator that holds an ituple
@@ -291,7 +301,8 @@ namespace webpp::istl {
     struct ituple_iterator : Iter {
 
         // value type is an ituple
-        using value_type = typename Iter::value_type::template restructured_type<TupleSize>;
+        using value_type =
+          typename ituplify<typename Iter::value_type>::type::template restructured_type<TupleSize>;
 
         static constexpr bool is_nothing = stl::is_same_v<value_type, nothing_type>;
 
