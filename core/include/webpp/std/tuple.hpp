@@ -310,13 +310,21 @@ namespace webpp::istl {
 
         static constexpr bool is_nothing = stl::is_same_v<value_type, nothing_type>;
 
+        [[nodiscard]] constexpr Iter& native_iterator() noexcept {
+            return *static_cast<Iter*>(this);
+        }
+
+        [[nodiscard]] constexpr Iter const& native_iterator() const noexcept {
+            return *static_cast<Iter const*>(this);
+        }
+
         [[nodiscard]] constexpr auto operator*() noexcept {
-            return this->operator*().template structured<TupleSize>();
+            return ituple{native_iterator().operator*()}.template structured<TupleSize>();
         }
 
 
         [[nodiscard]] constexpr auto operator*() const noexcept {
-            return this->operator*().template structured<TupleSize>();
+            return ituple{native_iterator().operator*()}.template structured<TupleSize>();
         }
     };
 
