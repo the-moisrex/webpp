@@ -299,6 +299,10 @@ namespace webpp::istl {
      */
     template <typename Iter, stl::size_t TupleSize = stl::tuple_size_v<typename Iter::value_type>>
     struct ituple_iterator : Iter {
+        using Iter::Iter;
+
+        constexpr ituple_iterator(Iter const& iter) : Iter{iter} {}
+        constexpr ituple_iterator(Iter&& iter) : Iter{stl::move(iter)} {}
 
         // value type is an ituple
         using value_type =
