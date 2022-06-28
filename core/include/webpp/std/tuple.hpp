@@ -284,6 +284,12 @@ namespace webpp::istl {
     };
 
     template <typename... T>
+    ituple(T&&...) -> ituple<T...>;
+
+    template <template <typename...> typename Tup, typename... T>
+    ituple(Tup<T>&&...) -> ituple<T...>;
+
+    template <typename... T>
     struct ituplify {
         using type = ituple<T...>;
     };
@@ -321,7 +327,6 @@ namespace webpp::istl {
         [[nodiscard]] constexpr auto operator*() noexcept {
             return ituple{native_iterator().operator*()}.template structured<TupleSize>();
         }
-
 
         [[nodiscard]] constexpr auto operator*() const noexcept {
             return ituple{native_iterator().operator*()}.template structured<TupleSize>();
