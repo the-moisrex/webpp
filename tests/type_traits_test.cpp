@@ -180,7 +180,12 @@ TEST(TypeTraits, ITupleIteratorTest) {
     int    i = 0;
     double d = 1.0;
     for (auto [int_val, double_val] : vecs) {
-        EXPECT_EQ(int_val, ++i);
-        EXPECT_EQ(double_val, d += 0.1);
+        d += 0.1;
+        ++i;
+        static_assert(is_same_v<remove_cvref_t<decltype(int_val)>, int>, "it should be int");
+        static_assert(is_same_v<remove_cvref_t<decltype(double_val)>, double>, "it should be double");
+        EXPECT_EQ(int_val, i);
+        double zero = fabs(double_val - d);
+        EXPECT_LE(zero, numeric_limits<double>::epsilon());
     }
 }
