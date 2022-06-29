@@ -3,6 +3,7 @@
 
 #include "../common/meta.hpp"
 #include "../memory/object.hpp"
+#include "../std/tuple.hpp"
 #include "../traits/enable_traits.hpp"
 #include "sql_concepts.hpp"
 #include "sql_row.hpp"
@@ -163,6 +164,24 @@ namespace webpp::sql {
 
         [[nodiscard]] inline driver_stmt_type driver() noexcept {
             return *static_cast<driver_stmt_type*>(this);
+        }
+
+
+        template <stl::size_t N>
+        [[nodiscard]] inline auto structured() noexcept {
+            return istl::ituple_iterable<sql_statement>{*this};
+        }
+
+
+        template <stl::size_t N>
+        [[nodiscard]] inline auto structured() const noexcept {
+            return istl::ituple_iterable<sql_statement>{*this};
+        }
+
+
+        template <stl::size_t N>
+        [[nodiscard]] inline auto&& structured() const&& noexcept {
+            return istl::ituple_iterable<sql_statement>{stl::move(*this)};
         }
     };
 
