@@ -63,7 +63,14 @@ namespace webpp::sql {
 
         template <istl::arithmetic T = size_type>
         [[nodiscard]] inline T as_number() const {
-            static constexpr auto t_size = sizeof(T);
+            static constexpr auto t_size       = sizeof(T);
+            static constexpr bool supports_int = requires {
+                stmt.as_int(index, errmsg);
+            };
+            static constexpr bool supports_int64 = requires {
+                stmt.as_int64(index, errmsg);
+            };
+
             if constexpr (stl::is_floating_point_v<T>) {
                 // todo: add long double support
                 if constexpr (t_size >= sizeof(double) && requires { stmt.as_double(); }) {
@@ -98,16 +105,6 @@ namespace webpp::sql {
             }
         }
 
-        template <typename T>
-        operator T() const {
-            if constexpr (istl::String<T>) {
-                return as_string<T>();
-            } else if constexpr (stl::integral<T>) {
-                return static_cast<T>(stmt.as_number());
-            } else {
-                static_assert_false(T, "Cannot handle this data type");
-            }
-        }
 
         // get the category type
         [[nodiscard]] inline column_category category() const noexcept {
@@ -153,6 +150,54 @@ namespace webpp::sql {
         // check if the value is null
         [[nodiscard]] inline bool is_null() const noexcept {
             return stmt.is_column_null(index);
+        }
+
+
+        // support for stmt[index] = value;
+        // calls stmt.bind
+        template <typename T>
+        constexpr sql_cell& operator=(T&& value) {
+            stmt.bind(index, stl::forward<T>(value));
+            return *this;
+        }
+
+
+        template <typename T>
+        [[nodiscard]] inline sql_cell& operator<<(T&& val) noexcept {
+            stmt.bind(index++, stl::forward<T>(val));
+            return *this;
+        }
+
+
+        template <typename T>
+        [[nodiscard]] inline auto as() {
+            auto                  errmsg = object::make_general<string_type>(stmt);
+            static constexpr auto t_size = sizeof(T);
+            if constexpr (stl::is_arithmetic_v<T>) {
+                return as_number<T>();
+            } else if constexpr (istl::String<T>) {
+                return as_string<T>();
+            } else {
+                static_assert_false(T, "Cannot handle this data type");
+                // todo
+            }
+        }
+
+        template <typename T>
+        [[nodiscard]] inline operator T() {
+            return as<T>();
+        }
+
+        [[nodiscard]] inline bool is_integer() const noexcept {
+            return stmt.is_column_integer(index);
+        }
+
+        [[nodiscard]] inline bool is_float() const noexcept {
+            return stmt.is_column_float(index);
+        }
+
+        [[nodiscard]] inline bool is_number() const noexcept {
+            return stmt.is_column_integer(index) || stmt.is_column_float(index);
         }
     };
 } // namespace webpp::sql
