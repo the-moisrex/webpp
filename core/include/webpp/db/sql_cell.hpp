@@ -200,6 +200,12 @@ namespace webpp::sql {
             return stmt.is_column_integer(index) || stmt.is_column_float(index);
         }
     };
+
+
+
+    template <SQLStatement SQLStmtType>
+    struct cell_iterator {};
+
 } // namespace webpp::sql
 
 #endif // WEBPP_DATABASE_SQL_CELL_HPP
