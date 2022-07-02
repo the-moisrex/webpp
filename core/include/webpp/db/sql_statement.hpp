@@ -26,6 +26,7 @@ namespace webpp::sql {
         using local_string_type = traits::local_string<traits_type>;
         using char_type         = traits::char_type<traits_type>;
         using string_view_type  = traits::string_view<traits_type>;
+        using iterator          = row_iterator<sql_statement>;
 
 
         /**
@@ -98,6 +99,15 @@ namespace webpp::sql {
         template <stl::size_t N>
         [[nodiscard]] inline auto&& structured() const&& noexcept {
             return istl::ituple_iterable<sql_statement>{stl::move(*this)};
+        }
+
+
+        iterator begin() {
+            return {this};
+        }
+
+        iterator end() {
+            return {};
         }
     };
 

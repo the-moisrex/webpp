@@ -29,7 +29,6 @@ namespace webpp::sql {
         using statement_type        = sql_statement<traits_type, driver_statement_type>;
         using string_view_type      = traits::string_view<traits_type>;
         using string_type           = traits::general_string<traits_type>;
-        using iterator              = row_iterator<statement_type>;
 
         template <typename T>
         static constexpr bool supports_string_view = requires {
@@ -88,14 +87,6 @@ namespace webpp::sql {
             log(errmsg);
         }
 
-
-        iterator begin() {
-            return {this};
-        }
-
-        iterator end() {
-            return {};
-        }
 
       private:
         inline void log(string_type& errmsg) noexcept {
