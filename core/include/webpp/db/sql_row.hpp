@@ -25,8 +25,17 @@ namespace webpp::sql {
         }
 
 
-        [[nodiscard]] inline cell_iterator_type begin() const noexcept {
+        [[nodiscard]] inline cell_iterator_type begin() noexcept {
+            return {{stmt}};
+        }
+
+
+        [[nodiscard]] inline cell_iterator_type end() noexcept {
             return {};
+        }
+
+        [[nodiscard]] inline cell_iterator_type begin() const noexcept {
+            return {{stmt}};
         }
 
 

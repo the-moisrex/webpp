@@ -199,12 +199,87 @@ namespace webpp::sql {
         [[nodiscard]] inline bool is_number() const noexcept {
             return stmt.is_column_integer(index) || stmt.is_column_float(index);
         }
+
+        sql_cell& next_column(size_type val = 1) noexcept {
+            index += val;
+            return *this;
+        }
+
+        sql_cell& prev_column(size_type val = 1) noexcept {
+            index -= val;
+            return *this;
+        }
     };
 
 
 
-    template <SQLStatement SQLStmtType>
-    struct cell_iterator {};
+    template <typename StmtType>
+    struct cell_iterator {
+        using statement_type    = StmtType;
+        using value_type        = typename statement_type::cell_type;
+        using difference_type   = typename value_type::size_type;
+        using reference         = stl::add_lvalue_reference_t<value_type>;
+        using pointer           = typename stl::iterator_traits<value_type>::pointer;
+        using iterator_category = stl::bidirectional_iterator;
+        using iterator_concept  = stl::bidirectional_iterator;
+        // todo: convert cell iterator into a random access iterator
+
+      private:
+        cell_type cell; // cell is not a pointer or ref
+
+      public:
+        constexpr cell_iterator() noexcept = default;
+        constexpr cell_iterator(cell_type initial_cell) noexcept : cell{initial_cell} {}
+        constexpr cell_iterator(cell_iterator const&)                = default;
+        constexpr cell_iterator(cell_iterator&&) noexcept            = default;
+        constexpr cell_iterator& operator=(cell_iterator const&)     = default;
+        constexpr cell_iterator& operator=(cell_iterator&&) noexcept = default;
+
+        constexpr auto operator==(const cell_iterator& rhs) noexcept {
+            return cell == rhs.cell;
+        }
+
+        constexpr auto operator<=>(const cell_iterator& rhs) noexcept {
+            return cell <=> rhs.cell;
+        }
+
+        // Forward iterator requirements
+        constexpr reference operator*() const noexcept {
+            return cell;
+        }
+
+        constexpr pointer operator->() const noexcept {
+            return &cell;
+        }
+
+        constexpr cell_iterator& operator+=(difference_type val) noexcept {
+            cell.next_column(val);
+            return *this;
+        }
+
+        constexpr cell_iterator& operator-=(difference_type val) noexcept {
+            cell.prev_column(val);
+            return *this;
+        }
+
+        constexpr cell_iterator& operator++() noexcept {
+            cell.next_column();
+            return *this;
+        }
+
+        constexpr cell_iterator& operator--() noexcept {
+            cell.prev_column();
+            return *this;
+        }
+
+        constexpr cell_iterator operator++(int) const noexcept {
+            return cell_iterator{*this}.operator++();
+        }
+
+        constexpr cell_iterator operator--(int) const noexcept {
+            return cell_iterator{*this}.operator--();
+        }
+    };
 
 } // namespace webpp::sql
 
