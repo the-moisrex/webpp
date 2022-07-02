@@ -20,27 +20,27 @@ namespace webpp::sql {
         sql_row(statement_type& stmt_ref) noexcept : stmt{stmt_ref} {}
 
 
-        cell_type operator[](size_type index) const noexcept {
+        [[nodiscard]] inline cell_type operator[](size_type index) const noexcept {
             return {stmt, index};
         }
 
 
         [[nodiscard]] inline cell_iterator_type begin() noexcept {
-            return {{stmt}};
+            return {{stmt, 0}};
         }
 
 
         [[nodiscard]] inline cell_iterator_type end() noexcept {
-            return {};
+            return {{stmt, stmt.column_count()}};
         }
 
         [[nodiscard]] inline cell_iterator_type begin() const noexcept {
-            return {{stmt}};
+            return {{stmt, 0}};
         }
 
 
         [[nodiscard]] inline cell_iterator_type end() const noexcept {
-            return {};
+            return {{stmt, stmt.column_count()}};
         }
 
         [[nodiscard]] inline size_type size() const noexcept {
