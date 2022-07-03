@@ -137,6 +137,12 @@ namespace webpp::sql {
                               { stmt.is_number() } -> stl::same_as<bool>;
                           }) {
                 return stmt.is_number();
+            } else if constexpr (requires {
+                                     { stmt.is_column_integer(index) } -> stl::same_as<bool>;
+                                     { stmt.is_column_float(index) } -> stl::same_as<bool>;
+                                 }) {
+                // todo: do we need this implemwntation or should we re-order it and use category way first and use this way as fallback?
+                return stmt.is_column_integer(index) || stmt.is_column_float(index);
             } else {
                 return category() == column_category::number;
             }
@@ -189,15 +195,13 @@ namespace webpp::sql {
         }
 
         [[nodiscard]] inline bool is_integer() const noexcept {
+            // todo: use category and other stuff here too
             return stmt.is_column_integer(index);
         }
 
         [[nodiscard]] inline bool is_float() const noexcept {
+            // todo: use category and other stuff here too
             return stmt.is_column_float(index);
-        }
-
-        [[nodiscard]] inline bool is_number() const noexcept {
-            return stmt.is_column_integer(index) || stmt.is_column_float(index);
         }
 
         sql_cell& next_column(size_type val = 1) noexcept {
