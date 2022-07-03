@@ -18,11 +18,11 @@ namespace webpp::sql {
     template <Traits TraitsType, SQLStatement StmtType>
     struct sql_statement : StmtType, enable_traits<TraitsType> {
         using traits_type       = TraitsType;
-        using driver_stmt_type  = StmtType;
-        using size_type         = typename driver_stmt_type::size_type;
+        using driver_type       = StmtType;
+        using size_type         = typename driver_type::size_type;
         using string_type       = traits::general_string<traits_type>;
         using rows_type         = sql_row<sql_statement>;
-        using cell_type         = sql_cell<sql_statement>;
+        using cell_type         = sql_cell<driver_type>;
         using local_string_type = traits::local_string<traits_type>;
         using char_type         = traits::char_type<traits_type>;
         using string_view_type  = traits::string_view<traits_type>;
@@ -79,8 +79,8 @@ namespace webpp::sql {
             return {driver()};
         }
 
-        [[nodiscard]] inline driver_stmt_type driver() noexcept {
-            return *static_cast<driver_stmt_type*>(this);
+        [[nodiscard]] inline driver_type driver() noexcept {
+            return *static_cast<driver_type*>(this);
         }
 
 

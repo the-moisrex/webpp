@@ -234,13 +234,15 @@ namespace webpp::sql {
 
     template <typename StmtType>
     struct cell_iterator {
-        using statement_type    = StmtType;
-        using value_type        = typename statement_type::cell_type;
-        using difference_type   = typename value_type::size_type;
-        using reference         = stl::add_lvalue_reference_t<value_type>;
-        using pointer           = typename stl::iterator_traits<value_type>::pointer;
-        using iterator_category = stl::bidirectional_iterator;
-        using iterator_concept  = stl::bidirectional_iterator;
+        using statement_type        = StmtType;
+        using value_type            = typename statement_type::cell_type;
+        using difference_type       = typename value_type::size_type;
+        using reference             = stl::add_lvalue_reference_t<value_type>;
+        using pointer               = typename stl::iterator_traits<value_type>::pointer;
+        using iterator_category     = stl::bidirectional_iterator_tag;
+        using iterator_concept      = stl::bidirectional_iterator_tag;
+        using statement_driver_type = typename statement_type::driver_type;
+        using cell_type             = sql_cell<statement_driver_type>;
         // todo: convert cell iterator into a random access iterator
 
       private:
