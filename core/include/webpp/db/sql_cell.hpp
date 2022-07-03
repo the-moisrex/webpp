@@ -18,6 +18,9 @@ namespace webpp::sql {
         using size_type         = typename statement_type::size_type;
         using local_string_type = typename statement_type::local_string_type;
         using char_type         = typename statement_type::char_type;
+        using string_type       = typename statement_type::string_type;
+
+        static constexpr auto CELL_CAT = "SqlCell";
 
       private:
         statement_type& stmt;
@@ -56,13 +59,18 @@ namespace webpp::sql {
 
         template <istl::String StrT = stl::string>
         [[nodiscard]] inline auto as_string() const {
-            auto str = object::make_general<StrT>(stmt);
-            stmt.as_string(str);
+            auto errmsg = object::make_general<string_type>(stmt);
+            auto str    = object::make_general<StrT>(stmt);
+            stmt.as_string(str, errmsg);
+            if (!errmsg.empty()) {
+                stmt.logger.error(CELL_CAT, errmsg);
+            }
             return str;
         }
 
         template <istl::arithmetic T = size_type>
         [[nodiscard]] inline T as_number() const {
+            auto                  errmsg       = object::make_general<string_type>(stmt);
             static constexpr auto t_size       = sizeof(T);
             static constexpr bool supports_int = requires {
                 stmt.as_int(index, errmsg);
@@ -70,17 +78,18 @@ namespace webpp::sql {
             static constexpr bool supports_int64 = requires {
                 stmt.as_int64(index, errmsg);
             };
+            T res;
 
             if constexpr (stl::is_floating_point_v<T>) {
                 // todo: add long double support
                 if constexpr (t_size >= sizeof(double) && requires { stmt.as_double(); }) {
-                    return stmt.as_double(index);
+                    res = stmt.as_double(index, errmsg);
                 } else if constexpr (t_size == sizeof(float) && requires { stmt.as_float(); }) {
-                    return stmt.as_float(index);
+                    res = stmt.as_float(index, errmsg);
                 } else if constexpr (t_size >= sizeof(double)) {
-                    return static_cast<T>(stmt.as_double(index));
+                    res = static_cast<T>(stmt.as_double(index, errmsg));
                 } else if constexpr (t_size <= sizeof(float)) {
-                    return static_cast<T>(stmt.as_float(index));
+                    res = static_cast<T>(stmt.as_float(index, errmsg));
                 } else {
                     static_assert_false(T, "statement type doesn't support specified floating type.");
                 }
@@ -90,19 +99,25 @@ namespace webpp::sql {
                 // todo: add short support
                 // todo: add unsigned support
                 if constexpr (t_size >= sizeof(stl::int64_t) && requires { stmt.as_int64(); }) {
-                    return stmt.as_int64(index);
+                    res = stmt.as_int64(index, errmsg);
                 } else if constexpr (t_size == sizeof(int) && requires { stmt.as_int(); }) {
-                    return stmt.as_int(index);
+                    res = stmt.as_int(index, errmsg);
                 } else if constexpr (t_size >= sizeof(stl::int64_t)) {
-                    return static_cast<T>(stmt.as_int64(index));
+                    res = static_cast<T>(stmt.as_int64(index, errmsg));
                 } else if constexpr (t_size <= sizeof(int)) {
-                    return static_cast<T>(stmt.as_int(index));
+                    res = static_cast<T>(stmt.as_int(index, errmsg));
                 } else {
                     static_assert_false(T, "statement type doesn't support specified integral type.");
                 }
             } else {
                 static_assert_false(T, "statement type doesn't support specified type.");
             }
+
+            // log the error message
+            if (!errmsg.empty()) {
+                stmt.logger.error(CELL_CAT, errmsg);
+            }
+            return res;
         }
 
 
