@@ -22,7 +22,7 @@ namespace webpp::sql {
         using size_type         = typename driver_type::size_type;
         using string_type       = traits::general_string<traits_type>;
         using rows_type         = sql_row<sql_statement>;
-        using cell_type         = sql_cell<driver_type>;
+        using cell_type         = sql_cell<sql_statement>;
         using local_string_type = traits::local_string<traits_type>;
         using char_type         = traits::char_type<traits_type>;
         using string_view_type  = traits::string_view<traits_type>;

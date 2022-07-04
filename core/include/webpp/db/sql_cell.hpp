@@ -12,7 +12,7 @@
 
 namespace webpp::sql {
 
-    template <SQLStatement SQLStmtType>
+    template <typename SQLStmtType>
     struct sql_cell {
         using statement_type    = SQLStmtType;
         using size_type         = typename statement_type::size_type;
@@ -242,7 +242,7 @@ namespace webpp::sql {
         using iterator_category     = stl::bidirectional_iterator_tag;
         using iterator_concept      = stl::bidirectional_iterator_tag;
         using statement_driver_type = typename statement_type::driver_type;
-        using cell_type             = sql_cell<statement_driver_type>;
+        using cell_type             = sql_cell<statement_type>;
         // todo: convert cell iterator into a random access iterator
 
       private:
