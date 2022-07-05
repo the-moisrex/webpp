@@ -52,9 +52,10 @@ namespace webpp::sql {
     struct row_iterator {
         using statement_type    = StmtType;
         using value_type        = statement_type;
-        using difference_type   = stl::ptrdiff_t;
+        using size_type         = typename statement_type::size_type;
+        using difference_type   = size_type;
         using reference         = stl::add_lvalue_reference_t<value_type>;
-        using pointer           = typename stl::iterator_traits<value_type>::pointer;
+        using pointer           = stl::add_pointer_t<value_type>;
         using iterator_category = stl::forward_iterator_tag;
         using iterator_concept  = stl::forward_iterator_tag;
 
