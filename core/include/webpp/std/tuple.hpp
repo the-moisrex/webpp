@@ -195,31 +195,53 @@ namespace webpp::istl {
         template <stl::size_t N>
         struct size_holder : stl::integral_constant<stl::size_t, N> {};
 
-        template <typename T>
-        struct is_size_holder : stl::false_type {
-            static constexpr stl::size_t size = 0;
-        };
-
-        template <stl::size_t N>
-        struct is_size_holder<size_holder<N>> : stl::true_type {
-            static constexpr stl::size_t size = N;
-        };
     } // namespace details
 
+    template <typename T>
+    concept ItupleOptions = requires(T o) {
+        typename T::default_type;
+        T::size;
+        typename T::template resize<2>;
+    };
+
+    template <typename T>
+    struct is_ituple_options {
+        static constexpr bool        value = false;
+        static constexpr stl::size_t size  = 0;
+    };
+
+    template <typename T>
+        requires(ItupleOptions<T>)
+    struct is_ituple_options<T> {
+        static constexpr bool        value = true;
+        static constexpr stl::size_t size  = T::size;
+    };
+
+    template <stl::size_t N = 0>
+    struct default_ituple_options {
+        using default_type                = istl::nothing_type;
+        static constexpr stl::size_t size = N;
+
+        template <stl::size_t NewN>
+        using resize = default_ituple_options<NewN>;
+    };
+
     template <typename... T>
-    struct ituple : last_type<T...>::template remove_if<stl::tuple, details::is_size_holder> {
+    struct ituple : last_type<T...>::template remove_if<stl::tuple, is_ituple_options> {
         using last       = last_type<T...>;
-        using this_tuple = typename last_type<T...>::template remove_if<stl::tuple, details::is_size_holder>;
+        using options    = stl::conditional_t<is_ituple_options<typename last::type>::value,
+                                           typename last::type,
+                                           default_ituple_options<>>;
+        using this_tuple = typename last_type<T...>::template remove_if<stl::tuple, is_ituple_options>;
         static constexpr stl::size_t native_tuple_size = stl::tuple_size_v<this_tuple>;
         static constexpr stl::size_t tuple_size =
-          native_tuple_size + details::is_size_holder<typename last::type>::size;
+          native_tuple_size + is_ituple_options<typename last::type>::size;
 
         template <stl::size_t NewSize>
         using restructured_type = stl::conditional_t<
           (NewSize > native_tuple_size),
-          typename last_type<T...>::template put_if<ituple,
-                                                    details::is_size_holder,
-                                                    details::size_holder<NewSize - native_tuple_size>>,
+          typename last_type<T...>::
+            template put_if<ituple, is_ituple_options, details::size_holder<NewSize - native_tuple_size>>,
           stl::conditional_t<(NewSize < native_tuple_size),
                              typename last_type<T...>::template remove_limit<ituple, NewSize>,
                              ituple>>;
@@ -251,8 +273,8 @@ namespace webpp::istl {
             if constexpr (NewSize > native_tuple_size) {
                 return typename last_type<T...>::template put_if<
                   ituple,
-                  details::is_size_holder,
-                  details::size_holder<NewSize - native_tuple_size>>{as_tuple()};
+                  is_ituple_options,
+                  typename options::template resize<NewSize - native_tuple_size>>{as_tuple()};
             } else if constexpr (NewSize < native_tuple_size) {
                 return typename last_type<T...>::template remove_limit<ituple, NewSize>{as_tuple()};
             } else {
@@ -347,6 +369,7 @@ namespace webpp::istl {
         // wrap the iterator type of the iterable:
         using native_iterator = typename IterableT::iterator;
         using iterator        = ituple_iterator<native_iterator, TupleSize>;
+        using const_iterator  = ituple_iterator<const native_iterator, TupleSize>;
 
         using IterableT::IterableT;
 
@@ -383,7 +406,7 @@ namespace webpp::istl {
             return native_iterator().begin();
         }
 
-        [[nodiscard]] iterator begin() const noexcept {
+        [[nodiscard]] const_iterator begin() const noexcept {
             return native_iterator().begin();
         }
 
@@ -391,7 +414,7 @@ namespace webpp::istl {
             return native_iterator().end();
         }
 
-        [[nodiscard]] iterator end() const noexcept {
+        [[nodiscard]] const_iterator end() const noexcept {
             return native_iterator().end();
         }
     };
