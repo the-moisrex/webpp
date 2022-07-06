@@ -153,17 +153,18 @@ TEST(TypeTraits, ITupleTest) {
 }
 
 
+template <typename Tup = ituple>
 struct iterable_type {
-    using vec      = list<ituple<int, double>>;
+    using vec      = list<Tup<int, double>>;
     using vec_iter = typename vec::iterator;
     using iterator = ituple_iterator<vec_iter>;
 
     vec data;
 
     iterable_type() {
-        data.push_back(ituple{1, 1.1});
-        data.push_back(ituple{2, 1.2});
-        data.push_back(ituple{3, 1.3});
+        data.push_back(Tup{1, 1.1});
+        data.push_back(Tup{2, 1.2});
+        data.push_back(Tup{3, 1.3});
     }
 
     iterator begin() {
@@ -175,7 +176,24 @@ struct iterable_type {
 };
 
 TEST(TypeTraits, ITupleIteratorTest) {
-    iterable_type vecs;
+    iterable_type<ituple> vecs;
+
+    int    i = 0;
+    double d = 1.0;
+    for (auto [int_val, double_val] : vecs) {
+        d += 0.1;
+        ++i;
+        static_assert(is_same_v<remove_cvref_t<decltype(int_val)>, int>, "it should be int");
+        static_assert(is_same_v<remove_cvref_t<decltype(double_val)>, double>, "it should be double");
+        EXPECT_EQ(int_val, i);
+        double zero = fabs(double_val - d);
+        EXPECT_LE(zero, numeric_limits<double>::epsilon());
+    }
+}
+
+
+TEST(TypeTraits, ITupleIteratorTestWithTuple) {
+    iterable_type<tuple> vecs;
 
     int    i = 0;
     double d = 1.0;
