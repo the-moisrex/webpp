@@ -191,11 +191,6 @@ namespace webpp::istl {
 
     ////////////////////////////// ituple //////////////////////////////
 
-    namespace details {
-        template <stl::size_t N>
-        struct size_holder : stl::integral_constant<stl::size_t, N> {};
-
-    } // namespace details
 
     template <typename T>
     concept ItupleOptions = requires(T o) {
@@ -240,8 +235,10 @@ namespace webpp::istl {
         template <stl::size_t NewSize>
         using restructured_type = stl::conditional_t<
           (NewSize > native_tuple_size),
-          typename last_type<T...>::
-            template put_if<ituple, is_ituple_options, details::size_holder<NewSize - native_tuple_size>>,
+          typename last_type<T...>::template put_if<
+            ituple,
+            is_ituple_options,
+            typename options::template resize<NewSize - native_tuple_size>>,
           stl::conditional_t<(NewSize < native_tuple_size),
                              typename last_type<T...>::template remove_limit<ituple, NewSize>,
                              ituple>>;
