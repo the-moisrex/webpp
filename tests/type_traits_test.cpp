@@ -153,7 +153,7 @@ TEST(TypeTraits, ITupleTest) {
 }
 
 
-template <typename Tup = ituple>
+template <template <typename...> typename Tup = ituple>
 struct iterable_type {
     using vec      = list<Tup<int, double>>;
     using vec_iter = typename vec::iterator;
