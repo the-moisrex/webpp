@@ -18,16 +18,39 @@ namespace webpp::sql {
     template <Traits TraitsType, SQLStatement StmtType>
     struct sql_statement : StmtType, enable_traits<TraitsType> {
         using traits_type       = TraitsType;
+        using etraits           = enable_traits<TraitsType>;
         using driver_type       = StmtType;
         using size_type         = typename driver_type::size_type;
         using string_type       = traits::general_string<traits_type>;
-        using rows_type         = sql_row<sql_statement>;
+        using row_type          = sql_row<sql_statement>;
         using cell_type         = sql_cell<sql_statement>;
         using local_string_type = traits::local_string<traits_type>;
         using char_type         = traits::char_type<traits_type>;
         using string_view_type  = traits::string_view<traits_type>;
         using iterator          = row_iterator<sql_statement>;
 
+        // should satisfy ItupleOptions
+        template <stl::size_t N = 0>
+        struct iterator_options {
+            using default_type                = row_type;
+            static constexpr stl::size_t size = N;
+
+            template <stl::size_t NewN = 0>
+            using resize = iterator_options<NewN>;
+        };
+
+
+
+        template <EnabledTraits ET>
+        sql_statement(driver_type&& driver, ET&& et) noexcept
+          : driver_type{driver},
+            etraits{stl::forward<ET>(et)} {}
+        sql_statement(sql_statement&&) noexcept = default;
+        sql_statement(sql_statement const&)     = default;
+
+
+        sql_statement& operator=(sql_statement&&) noexcept = default;
+        sql_statement& operator=(sql_statement const&)     = default;
 
         /**
          * Possible values that get passed down:
@@ -75,7 +98,7 @@ namespace webpp::sql {
             return cell_type{*this, 1};
         }
 
-        [[nodiscard]] inline rows_type rows() const noexcept {
+        [[nodiscard]] inline row_type rows() const noexcept {
             return {driver()};
         }
 
@@ -86,19 +109,19 @@ namespace webpp::sql {
 
         template <stl::size_t N>
         [[nodiscard]] inline auto structured() noexcept {
-            return istl::ituple_iterable<sql_statement>{*this};
+            return istl::ituple_iterable<sql_statement, iterator_options<N>>{*this};
         }
 
 
         template <stl::size_t N>
         [[nodiscard]] inline auto structured() const noexcept {
-            return istl::ituple_iterable<sql_statement>{*this};
+            return istl::ituple_iterable<sql_statement, iterator_options<N>>{*this};
         }
 
 
         template <stl::size_t N>
         [[nodiscard]] inline auto&& structured() const&& noexcept {
-            return istl::ituple_iterable<sql_statement>{stl::move(*this)};
+            return istl::ituple_iterable<sql_statement, iterator_options<N>>{stl::move(*this)};
         }
 
 
@@ -112,5 +135,17 @@ namespace webpp::sql {
     };
 
 } // namespace webpp::sql
+
+namespace std {
+
+    template <size_t I, class... T>
+    struct tuple_element<I, webpp::sql::sql_statement<T...>> {
+        using type = typename webpp::sql::sql_statement<T...>::row_type;
+    };
+
+    template <class... T>
+    struct tuple_size<webpp::sql::sql_statement<T...>> : integral_constant<size_t, 0> {};
+
+} // namespace std
 
 #endif // WEBPP_DATABASE_SQL_STATEMENT_HPP
