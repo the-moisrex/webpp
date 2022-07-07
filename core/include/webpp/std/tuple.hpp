@@ -223,11 +223,12 @@ namespace webpp::istl {
 
     template <typename... T>
     struct ituple : last_type<T...>::template remove_if<stl::tuple, is_ituple_options> {
-        using last       = last_type<T...>;
-        using options    = stl::conditional_t<is_ituple_options<typename last::type>::value,
+        using last         = last_type<T...>;
+        using options      = stl::conditional_t<is_ituple_options<typename last::type>::value,
                                            typename last::type,
                                            default_ituple_options<>>;
-        using this_tuple = typename last_type<T...>::template remove_if<stl::tuple, is_ituple_options>;
+        using this_tuple   = typename last_type<T...>::template remove_if<stl::tuple, is_ituple_options>;
+        using default_type = typename options::default_type;
         static constexpr stl::size_t native_tuple_size = stl::tuple_size_v<this_tuple>;
         static constexpr stl::size_t tuple_size =
           native_tuple_size + is_ituple_options<typename last::type>::size;
@@ -282,7 +283,7 @@ namespace webpp::istl {
         template <stl::size_t I>
         [[nodiscard]] constexpr auto get() const noexcept {
             if constexpr (I >= native_tuple_size) {
-                return nothing_type{};
+                return default_type{};
             } else {
                 return stl::get<I>(as_tuple());
             }
@@ -297,7 +298,7 @@ namespace webpp::istl {
 
 
         template <stl::size_t I>
-        [[nodiscard]] constexpr nothing_type get() noexcept {
+        [[nodiscard]] constexpr default_type get() noexcept {
             return {};
         }
     };
@@ -322,7 +323,8 @@ namespace webpp::istl {
     /**
      * This is a wrapper for any type of iterator that holds an ituple
      */
-    template <typename Iter, stl::size_t TupleSize = stl::tuple_size_v<typename Iter::value_type>>
+    template <typename Iter,
+              ItupleOptions OptsT = default_ituple_options<stl::tuple_size_v<typename Iter::value_type>>>
     struct ituple_iterator : Iter {
         using Iter::Iter;
 
@@ -331,11 +333,11 @@ namespace webpp::istl {
 
         // value type is an ituple
         using value_type =
-          typename ituplify<typename Iter::value_type>::type::template restructured_type<TupleSize>;
+          typename ituplify<typename Iter::value_type>::type::template restructured_type<OptsT::size>;
         using reference = value_type&;
         using pointer   = value_type*;
 
-        static constexpr bool is_nothing = stl::is_same_v<value_type, nothing_type>;
+        static constexpr bool is_nothing = stl::is_same_v<value_type, typename OptsT::default_type>;
 
         [[nodiscard]] constexpr Iter& native_iterator() noexcept {
             return *static_cast<Iter*>(this);
@@ -346,11 +348,11 @@ namespace webpp::istl {
         }
 
         [[nodiscard]] constexpr auto operator*() noexcept {
-            return ituple{native_iterator().operator*()}.template structured<TupleSize>();
+            return ituple{native_iterator().operator*()}.template structured<OptsT::size>();
         }
 
         [[nodiscard]] constexpr auto operator*() const noexcept {
-            return ituple{native_iterator().operator*()}.template structured<TupleSize>();
+            return ituple{native_iterator().operator*()}.template structured<OptsT::size>();
         }
     };
 
@@ -360,33 +362,38 @@ namespace webpp::istl {
      * "structured bindings" in for loops.
      */
     template <typename IterableT,
-              stl::size_t TupleSize = stl::tuple_size_v<typename IterableT::iterator::value_type>>
+              ItupleOptions OptsT =
+                default_ituple_options<stl::tuple_size_v<typename IterableT::iterator::value_type>>>
     struct ituple_iterable : IterableT {
 
         // wrap the iterator type of the iterable:
         using native_iterator = typename IterableT::iterator;
-        using iterator        = ituple_iterator<native_iterator, TupleSize>;
-        using const_iterator  = ituple_iterator<const native_iterator, TupleSize>;
+        using iterator        = ituple_iterator<native_iterator, OptsT>;
+        using const_iterator  = ituple_iterator<const native_iterator, OptsT>;
 
         using IterableT::IterableT;
 
 
         // move ctor
         template <stl::size_t NewSize>
-        constexpr ituple_iterable(ituple_iterable<IterableT, NewSize>&& iterable) noexcept
+        constexpr ituple_iterable(
+          ituple_iterable<IterableT, typename OptsT::template resize<NewSize>>&& iterable) noexcept
           : IterableT{stl::move(iterable.native_iterable())} {}
 
         template <stl::size_t NewSize>
-        constexpr ituple_iterable(ituple_iterable<IterableT, NewSize> const& iterable) noexcept
+        constexpr ituple_iterable(
+          ituple_iterable<IterableT, typename OptsT::template resize<NewSize>> const& iterable) noexcept
           : IterableT{iterable.native_iterable()} {}
 
         template <stl::size_t NewSize>
-        [[nodiscard]] constexpr ituple_iterable<IterableT, NewSize> structured() noexcept {
+        [[nodiscard]] constexpr ituple_iterable<IterableT, typename OptsT::template resize<NewSize>>
+        structured() noexcept {
             return {stl::move(*this)}; // move ctor
         }
 
         template <stl::size_t NewSize>
-        [[nodiscard]] constexpr ituple_iterable<IterableT, NewSize> structured() const noexcept {
+        [[nodiscard]] constexpr ituple_iterable<IterableT, typename OptsT::template resize<NewSize>>
+        structured() const noexcept {
             return {*this}; // copy ctor
         }
 
@@ -430,7 +437,7 @@ namespace std {
     template <size_t I, class... T>
         requires(I >= webpp::istl::ituple<T...>::native_tuple_size)
     struct tuple_element<I, webpp::istl::ituple<T...>> {
-        using type = webpp::istl::nothing_type;
+        using type = typename webpp::istl::ituple<T...>::default_type;
     };
 
     template <class... T>
