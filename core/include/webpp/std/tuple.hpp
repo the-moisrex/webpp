@@ -364,62 +364,51 @@ namespace webpp::istl {
     template <typename IterableT,
               ItupleOptions OptsT =
                 default_ituple_options<stl::tuple_size_v<typename IterableT::iterator::value_type>>>
-    struct ituple_iterable : IterableT {
+    struct ituple_iterable {
 
         // wrap the iterator type of the iterable:
-        using native_iterator = typename IterableT::iterator;
+        using iterable        = stl::remove_cvref_t<IterableT>;
+        using native_iterator = typename iterable::iterator;
         using iterator        = ituple_iterator<native_iterator, OptsT>;
         using const_iterator  = ituple_iterator<const native_iterator, OptsT>;
+        using iterable_ref    = stl::add_lvalue_reference_t<iterable>;
 
-        using IterableT::IterableT;
+        iterable_ref object;
+
+
+        constexpr ituple_iterable(iterable_ref obj) noexcept : object{obj} {}
+
+        constexpr ituple_iterable(ituple_iterable const&) = default;
+        constexpr ituple_iterable(ituple_iterable&&)      = default;
 
 
         // move ctor
         template <stl::size_t NewSize>
         constexpr ituple_iterable(
-          ituple_iterable<IterableT, typename OptsT::template resize<NewSize>>&& iterable) noexcept
-          : IterableT{stl::move(iterable.native_iterable())} {}
-
-        template <stl::size_t NewSize>
-        constexpr ituple_iterable(
-          ituple_iterable<IterableT, typename OptsT::template resize<NewSize>> const& iterable) noexcept
-          : IterableT{iterable.native_iterable()} {}
+          ituple_iterable<IterableT, typename OptsT::template resize<NewSize>>& iterable) noexcept
+          : object{iterable.object} {}
 
         template <stl::size_t NewSize>
         [[nodiscard]] constexpr ituple_iterable<IterableT, typename OptsT::template resize<NewSize>>
         structured() noexcept {
-            return {stl::move(*this)}; // move ctor
-        }
-
-        template <stl::size_t NewSize>
-        [[nodiscard]] constexpr ituple_iterable<IterableT, typename OptsT::template resize<NewSize>>
-        structured() const noexcept {
-            return {*this}; // copy ctor
-        }
-
-        [[nodiscard]] constexpr IterableT& native_iterable() noexcept {
-            return *static_cast<IterableT*>(this);
-        }
-
-        [[nodiscard]] constexpr IterableT const& native_iterable() const noexcept {
-            return *static_cast<IterableT const*>(this);
+            return {*this};
         }
 
 
         [[nodiscard]] iterator begin() noexcept {
-            return native_iterator().begin();
+            return object.begin();
         }
 
         [[nodiscard]] const_iterator begin() const noexcept {
-            return native_iterator().begin();
+            return object.begin();
         }
 
         [[nodiscard]] iterator end() noexcept {
-            return native_iterator().end();
+            return object.end();
         }
 
         [[nodiscard]] const_iterator end() const noexcept {
-            return native_iterator().end();
+            return object.end();
         }
     };
 

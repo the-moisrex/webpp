@@ -45,8 +45,8 @@ namespace webpp::sql {
         sql_statement(driver_type&& driver, ET&& et) noexcept
           : driver_type{driver},
             etraits{stl::forward<ET>(et)} {}
-        sql_statement(sql_statement&&) noexcept = default;
-        sql_statement(sql_statement const&)     = default;
+        sql_statement(sql_statement&& stmt) noexcept : sql_statement{stl::move(stmt.driver()), stmt} {}
+        sql_statement(sql_statement const&) = default;
 
 
         sql_statement& operator=(sql_statement&&) noexcept = default;
