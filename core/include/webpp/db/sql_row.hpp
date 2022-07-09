@@ -70,11 +70,15 @@ namespace webpp::sql {
         constexpr row_iterator& operator=(row_iterator const&)     = default;
         constexpr row_iterator& operator=(row_iterator&&) noexcept = default;
 
-        constexpr auto operator==(const row_iterator& rhs) noexcept {
+        constexpr bool operator==(const row_iterator& rhs) const noexcept {
             return base() == rhs.base();
         }
 
-        constexpr auto operator<=>(const row_iterator& rhs) noexcept {
+        constexpr bool operator!=(const row_iterator& rhs) const noexcept {
+            return base() != rhs.base();
+        }
+
+        constexpr auto operator<=>(const row_iterator& rhs) const noexcept {
             return base() <=> rhs.base();
         }
 
