@@ -31,9 +31,8 @@ namespace webpp::sql {
         using string_type           = traits::general_string<traits_type>;
 
         template <typename T>
-        static constexpr bool supports_string_view = requires {
-            typename driver_type::template supports_string_view<T>;
-        };
+        static constexpr bool supports_string_view =
+          driver_type::template supports_string_view<stl::remove_cvref_t<T>>;
 
         /**
          * This method converts the input into string view. String view type is chosen with this priority:
@@ -46,12 +45,23 @@ namespace webpp::sql {
         template <typename T>
         static constexpr decltype(auto) string_viewify(T&& str) noexcept {
             using type = stl::remove_cvref_t<T>;
-            if constexpr (istl::StringViewifiableOf<string_view_type, type> &&
-                          supports_string_view<decltype(istl::string_viewify_of<string_view_type>(
-                            stl::forward<T>(str)))>) {
+
+            constexpr bool supports_our_sview =
+              supports_string_view<decltype(istl::string_viewify_of<string_view_type>(stl::forward<T>(str)))>;
+
+            constexpr bool supports_std_sview =
+              supports_string_view<decltype(istl::string_viewify(stl::forward<T>(str)))>;
+
+            constexpr bool is_our_sview = istl::StringViewifiableOf<string_view_type, type>;
+            constexpr bool is_std_sview = istl::StringViewifiable<type>;
+
+            if constexpr (!supports_our_sview && !supports_std_sview) {
+                static_assert_false(T, "Thw driver doesn't support natural string views.");
+            }
+
+            if constexpr (is_our_sview && supports_our_sview) {
                 return istl::string_viewify_of<string_view_type>(stl::forward<T>(str));
-            } else if constexpr (istl::StringViewifiable<type> &&
-                                 supports_string_view<decltype(istl::string_viewify(stl::forward<T>(str)))>) {
+            } else if constexpr (is_std_sview && supports_std_sview) {
                 return istl::string_viewify(stl::forward<T>(str));
             } else {
                 static_assert_false(T, "We're not able to convert the specified sql query to string view");

@@ -19,6 +19,8 @@ namespace webpp::sql {
         static constexpr bool   supports_string_view =
           istl::StringView<T>&& stl::same_as<istl::char_type_of<T>, char>;
 
+        static_assert(supports_string_view<stl::string_view>, "It should support standard string views");
+
         using sqlite_connection::sqlite_connection;
     };
 
