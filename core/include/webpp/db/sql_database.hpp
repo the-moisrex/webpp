@@ -79,7 +79,7 @@ namespace webpp::sql {
             // the driver's prepare function will throw "driver_statement_type",
             // and the "statement_type" will accept a "driver_statement_type" as its ctor argument.
 
-            string_type    errmsg;
+            auto           errmsg = object::make_general<string_type>(*this);
             statement_type stmt{this->prepare(string_viewify(stl::forward<StrT>(sql_str)), errmsg),
                                 this->get_traits()};
             log(errmsg);
@@ -88,13 +88,20 @@ namespace webpp::sql {
 
 
         template <istl::StringViewifiable StrT>
-        inline basic_sql_database& execute(StrT sql_str) noexcept {
-            // should we use local string for this? because the chance of an error message is slim and we
-            // don't like to pay for more than needed and having a stack seems more work than needed.
-            // todo: the above idea needs benchmarking
-            string_type errmsg;
-            this->execute(string_viewify(stl::forward<StrT>(sql_str)), errmsg);
+        inline bool execute(StrT sql_str) noexcept {
+            auto errmsg = object::make_general<string_type>(*this);
+            bool res;
+            if constexpr (requires(driver_statement_type stmt) {
+                              stmt.execute(string_viewify(stl::forward<StrT>(sql_str)), errmsg);
+                          }) {
+                this->execute(string_viewify(stl::forward<StrT>(sql_str)), errmsg);
+                res = errmsg.empty();
+            } else {
+                auto stmt = this->prepare(string_viewify(stl::forward<StrT>(sql_str)));
+                res       = stmt.step(errmsg);
+            }
             log(errmsg);
+            return res;
         }
 
 

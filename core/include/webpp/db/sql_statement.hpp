@@ -16,7 +16,7 @@ namespace webpp::sql {
      * A wrapper for the driver's statement type. This is what the user uses directly.
      */
     template <Traits TraitsType, SQLStatement StmtType>
-    struct sql_statement : StmtType, enable_traits<TraitsType> {
+    struct sql_statement : public StmtType, public enable_traits<TraitsType> {
         using traits_type       = TraitsType;
         using etraits           = enable_traits<TraitsType>;
         using driver_type       = StmtType;
