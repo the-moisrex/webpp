@@ -34,6 +34,14 @@ namespace webpp::sql {
         static constexpr bool supports_string_view =
           driver_type::template supports_string_view<stl::remove_cvref_t<T>>;
 
+        inline driver_type& driver() noexcept {
+            return *static_cast<driver_type*>(this);
+        }
+
+        inline driver_type const& driver() const noexcept {
+            return *static_cast<driver_type const*>(this);
+        }
+
         /**
          * This method converts the input into string view. String view type is chosen with this priority:
          *  1. Matches the string view type specified by the traits type, if not then
@@ -80,8 +88,8 @@ namespace webpp::sql {
             // and the "statement_type" will accept a "driver_statement_type" as its ctor argument.
 
             auto           errmsg = object::make_general<string_type>(*this);
-            statement_type stmt{this->prepare(string_viewify(stl::forward<StrT>(sql_str)), errmsg),
-                                this->get_traits()};
+            statement_type stmt{driver().prepare(string_viewify(stl::forward<StrT>(sql_str)), errmsg),
+                                driver().get_traits()};
             log(errmsg);
             return stmt;
         }
@@ -89,19 +97,17 @@ namespace webpp::sql {
 
         template <istl::StringViewifiable StrT>
         inline bool execute(StrT sql_str) noexcept {
-            auto errmsg = object::make_general<string_type>(*this);
-            bool res;
-            if constexpr (requires(driver_statement_type stmt) {
+            if constexpr (requires(driver_statement_type stmt, string_type errmsg) {
                               stmt.execute(string_viewify(stl::forward<StrT>(sql_str)), errmsg);
                           }) {
-                this->execute(string_viewify(stl::forward<StrT>(sql_str)), errmsg);
-                res = errmsg.empty();
+                auto errmsg = object::make_general<string_type>(*this);
+                driver().execute(string_viewify(stl::forward<StrT>(sql_str)), errmsg);
+                log(errmsg);
+                return errmsg.empty();
             } else {
                 auto stmt = this->prepare(string_viewify(stl::forward<StrT>(sql_str)));
-                res       = stmt.step(errmsg);
+                return stmt.step();
             }
-            log(errmsg);
-            return res;
         }
 
 
