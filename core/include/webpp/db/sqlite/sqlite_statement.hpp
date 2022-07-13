@@ -131,7 +131,7 @@ namespace webpp::sql {
             }
         }
 
-        bool step(std::string& errmsg) {
+        bool step(istl::String auto& errmsg) {
             const int rc = sqlite3_step(stmt);
             switch (rc) {
                 // this is an embarrassing situation for clang-format

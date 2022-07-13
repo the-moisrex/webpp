@@ -35,7 +35,7 @@ namespace webpp::sql {
 
 
       public:
-        void open(sqlite_config conf, std::string& errmsg) noexcept {
+        void open(sqlite_config conf, istl::String auto& errmsg) noexcept {
             const int rc = sqlite3_open_v2(conf.filename.data(),
                                            &handle,
                                            conf.flags,
@@ -67,7 +67,7 @@ namespace webpp::sql {
             }
         }
 
-        void execute(std::string_view sql, std::string& errmsg) noexcept {
+        void execute(std::string_view sql, istl::String auto& errmsg) noexcept {
             char*     err;
             const int rc = sqlite3_exec(handle, sql.data(), 0, 0, &err);
             if (rc != SQLITE_OK) {
@@ -77,7 +77,7 @@ namespace webpp::sql {
         }
 
         // prepare an statment for the parent sql connection to wrap it
-        statement_type prepare(std::string_view stmt_str, std::string& errmsg) noexcept {
+        statement_type prepare(std::string_view stmt_str, istl::String auto& errmsg) noexcept {
             ::sqlite3_stmt* stmt;
             const int       rc =
               sqlite3_prepare_v2(handle, stmt_str.data(), static_cast<int>(stmt_str.size()), &stmt, nullptr);
