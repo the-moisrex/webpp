@@ -111,15 +111,24 @@ namespace webpp::sql {
 
                 if constexpr (value_size >= 64) { // 64bit string
                     // todo: it's possible for this string type to be utf-16 as well, write tests for this
-                    check_bind_result(
-                      sqlite3_bind_text64(stmt, index, val.data(), val.size(), SQLITE_STATIC, SQLITE_UTF8),
-                      err_msg);
+                    check_bind_result(sqlite3_bind_text64(stmt,
+                                                          index,
+                                                          val.data(),
+                                                          static_cast<int>(val.size()),
+                                                          SQLITE_STATIC,
+                                                          SQLITE_UTF8),
+                                      err_msg);
                 } else if constexpr (value_size == 16) { // utf-16
-                    check_bind_result(sqlite3_bind_text16(stmt, index, val.data(), val.size(), SQLITE_STATIC),
+                    check_bind_result(sqlite3_bind_text16(stmt,
+                                                          index,
+                                                          static_cast<int>(val.size()),
+                                                          val.size(),
+                                                          SQLITE_STATIC),
                                       err_msg);
                 } else { // normal string
-                    check_bind_result(sqlite3_bind_text(stmt, index, val.data(), val.size(), SQLITE_STATIC),
-                                      err_msg);
+                    check_bind_result(
+                      sqlite3_bind_text(stmt, index, val.data(), static_cast<int>(val.size()), SQLITE_STATIC),
+                      err_msg);
                 }
             } else if constexpr (stl::is_null_pointer_v<type>) { // null
                 check_bind_result(sqlite3_bind_null(stmt, index), err_msg);

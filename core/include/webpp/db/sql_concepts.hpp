@@ -43,7 +43,7 @@ namespace webpp::sql {
 
         requires stl::default_initializable<T>;
 
-        &T::open; // the last arg is errmsg, the rest is driver dependent.
+        // &T::open; // the last arg is errmsg, the rest is driver dependent.
         { db.is_open() } -> stl::same_as<bool>;
         db.close();
         db.version(str_ref);

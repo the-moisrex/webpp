@@ -61,9 +61,9 @@ namespace webpp::sql {
         sql_statement& bind(size_type index, T&& val) noexcept {
             auto errmsg = object::make_general<string_type>(*this);
             if constexpr (requires { this->bind(index, stl::forward<T>(val), errmsg); }) {
-                this->bind(index, stl::forward<T>(val), errmsg);
+                driver().bind(index, stl::forward<T>(val), errmsg);
             } else if constexpr (istl::StringViewifiable<T>) {
-                this->bind(index, istl::string_viewify_of<string_view_type>(stl::forward<T>(val)), errmsg);
+                driver().bind(index, istl::string_viewify_of<string_view_type>(stl::forward<T>(val)), errmsg);
             } else {
                 static_assert_false(T, "Don't know how to bind the value, unknown type specified.");
             }
@@ -75,7 +75,7 @@ namespace webpp::sql {
 
         inline bool step() noexcept {
             auto       errmsg          = object::make_general<string_type>(*this);
-            const bool continue_or_not = this->step(errmsg);
+            const bool continue_or_not = driver().step(errmsg);
             if (!errmsg.empty()) {
                 this->logger.error("SQLStmt", errmsg);
                 return false;

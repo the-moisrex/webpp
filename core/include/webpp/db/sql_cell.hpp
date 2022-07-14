@@ -59,12 +59,8 @@ namespace webpp::sql {
 
         template <istl::String StrT = stl::string>
         [[nodiscard]] inline auto as_string() const {
-            auto errmsg = object::make_general<string_type>(stmt);
-            auto str    = object::make_general<StrT>(stmt);
-            stmt.as_string(str, errmsg);
-            if (!errmsg.empty()) {
-                stmt.logger.error(CELL_CAT, errmsg);
-            }
+            auto str = object::make_general<StrT>(stmt);
+            stmt.as_string(index, str);
             return str;
         }
 

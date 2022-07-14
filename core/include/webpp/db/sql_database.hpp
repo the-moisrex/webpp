@@ -89,7 +89,7 @@ namespace webpp::sql {
 
             auto           errmsg = object::make_general<string_type>(*this);
             statement_type stmt{driver().prepare(string_viewify(stl::forward<StrT>(sql_str)), errmsg),
-                                driver().get_traits()};
+                                this->get_traits()};
             log(errmsg);
             return stmt;
         }
