@@ -70,7 +70,7 @@ namespace webpp::object {
             super{stl::forward<Args>(args)...};
         };
 
-      public :
+      public:
         // let the user know what's missing with a better error message.
         template <typename... Args>
         constexpr object(alloc_pack_type&, Args&&...) {
@@ -252,7 +252,29 @@ namespace webpp::object {
     }
 
 
+    // This won't change the allocator type
+    template <typename T, AllocatorDescriptorList AllocDescType, typename... Args>
+    static constexpr T make(alloc::allocator_pack<AllocDescType>& alloc_pack, Args&&... args) {
+        using alloc_pack_type = alloc::allocator_pack<AllocDescType>;
+        if constexpr (requires { typename T::allocator_type; }) {
+            using allocator_type = typename T::allocator_type;
+            if constexpr (alloc_pack_type::template has_allocator<allocator_type>) {
+                return alloc_pack.template make<T, Args...>(stl::forward<Args>(args)...);
+            } else {
+                return {stl::forward<T>(args)...};
+            }
+        } else {
+            return {stl::forward<T>(args)...};
+        }
+    }
 
+    // This won't change the allocator type
+    template <typename T, typename AllocHolderType, typename... Args>
+    static constexpr T make(AllocHolderType&& holder, Args&&... args) {
+        using alloc_pack_type = typename stl::remove_cvref_t<AllocHolderType>::allocator_pack_type;
+        using alloc_desc_type = typename alloc_pack_type::allocator_descriptors;
+        return make<T, alloc_desc_type, Args...>(holder.alloc_pack, stl::forward<Args>(args)...);
+    }
 } // namespace webpp::object
 
 #endif // WEBPP_OBJECT_HPP

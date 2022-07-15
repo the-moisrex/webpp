@@ -608,18 +608,28 @@ namespace webpp::alloc {
                 stl::forward<Args>(args)...);
         }
 
+        // This one doesn't change the allocator type you passed to it, because you didn't give it your
+        // prefered allocator type
+        template <typename T, typename... Args>
+            requires requires {
+                typename T::allocator_type;
+            }
+        constexpr T make(Args&&... args) {
+            using old_allocator_type = typename T::allocator_type;
+            if constexpr (allocator_pack::template has_allocator<old_allocator_type>) {
+                return this->make<T, old_allocator_type, Args...>(stl::forward<Args>(args)...);
+            } else {
+                static_assert(false && sizeof(allocator_pack),
+                              "We don't have an allocator for this type, and you didn't specify "
+                              "the features you'd like your allocator to have so we don't know "
+                              "which allocator to choose.");
+            }
+        }
+
         template <typename T, feature_pack FPack, typename... Args>
         constexpr auto make(Args&&... args) {
             if constexpr (FPack.empty()) {
-                using old_allocator_type = typename T::allocator_type;
-                if constexpr (allocator_pack::template has_allocator<old_allocator_type>) {
-                    return this->make<T, old_allocator_type, Args...>(stl::forward<Args>(args)...);
-                } else {
-                    static_assert(false && sizeof(allocator_pack),
-                                  "We don't have an allocator for this type, and you didn't specify "
-                                  "the features you'd like your allocator to have so we don't know "
-                                  "which allocator to choose.");
-                }
+                return this->make<T, Args...>(stl::forward<Args>(args)...);
             } else {
                 using best_choice        = ranked<FPack>;
                 using best_resource_desc = typename best_choice::best_resource_descriptor;

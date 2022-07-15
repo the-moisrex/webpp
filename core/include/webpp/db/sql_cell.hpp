@@ -58,8 +58,8 @@ namespace webpp::sql {
         }
 
         template <istl::String StrT = stl::string>
-        [[nodiscard]] inline auto as_string() const {
-            auto str = object::make_general<StrT>(stmt);
+        [[nodiscard]] inline StrT as_string() const {
+            auto str = object::make<StrT>(stmt);
             stmt.as_string(index, str);
             return str;
         }
