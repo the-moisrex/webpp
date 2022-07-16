@@ -231,8 +231,8 @@ namespace webpp::sql {
         template <istl::String StrT = stl::string>
         void as_string(int index, StrT& out) const noexcept {
             // todo: handle text16
-            const auto* str     = sqlite3_column_text(stmt, index);
-            const int   str_len = sqlite3_column_bytes(stmt, index);
+            const char*       str     = reinterpret_cast<const char*>(sqlite3_column_text(stmt, index));
+            const stl::size_t str_len = static_cast<stl::size_t>(sqlite3_column_bytes(stmt, index));
             out.append(str, str_len);
         }
     };
