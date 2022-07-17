@@ -348,11 +348,15 @@ namespace webpp::istl {
         }
 
         [[nodiscard]] constexpr auto operator*() noexcept {
-            return ituple{native_iterator().operator*()}.template structured<OptsT::size>();
+            using native_value_type = decltype(native_iterator().operator*());
+            return ituple<native_value_type, OptsT>{native_iterator().operator*()}
+              .template structured<OptsT::size>();
         }
 
         [[nodiscard]] constexpr auto operator*() const noexcept {
-            return ituple{native_iterator().operator*()}.template structured<OptsT::size>();
+            using native_value_type = decltype(native_iterator().operator*());
+            return ituple<native_value_type, OptsT>{native_iterator().operator*()}
+              .template structured<OptsT::size>();
         }
     };
 

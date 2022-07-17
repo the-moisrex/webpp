@@ -28,17 +28,27 @@ namespace webpp::sql {
         using char_type         = traits::char_type<traits_type>;
         using string_view_type  = traits::string_view<traits_type>;
         using iterator          = row_iterator<sql_statement>;
+        using const_iterator    = row_iterator<const sql_statement>;
 
         // should satisfy ItupleOptions
+        // These are ituple options which make all elements of ituple a "row".
         template <stl::size_t N = 0>
         struct iterator_options {
-            using default_type                = row_type;
+            using default_type                = typename iterator::reference;
             static constexpr stl::size_t size = N;
 
             template <stl::size_t NewN = 0>
             using resize = iterator_options<NewN>;
         };
 
+        template <stl::size_t N = 0>
+        struct const_iterator_options {
+            using default_type                = typename const_iterator::reference;
+            static constexpr stl::size_t size = N;
+
+            template <stl::size_t NewN = 0>
+            using resize = iterator_options<NewN>;
+        };
 
 
         template <EnabledTraits ET>
@@ -115,12 +125,12 @@ namespace webpp::sql {
 
         template <stl::size_t N>
         [[nodiscard]] inline auto structured() const noexcept {
-            return istl::ituple_iterable<sql_statement, iterator_options<N>>{*this};
+            return istl::ituple_iterable<sql_statement, const_iterator_options<N>>{*this};
         }
 
 
         template <stl::size_t N>
-        [[nodiscard]] inline auto&& structured() const&& noexcept {
+        [[nodiscard]] inline auto&& structured() && noexcept {
             return istl::ituple_iterable<sql_statement, iterator_options<N>>{stl::move(*this)};
         }
 
