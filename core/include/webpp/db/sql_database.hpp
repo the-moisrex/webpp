@@ -8,8 +8,6 @@
 #include "sql_concepts.hpp"
 #include "sql_statement.hpp"
 
-#include <compare>
-
 namespace webpp::sql {
 
 
