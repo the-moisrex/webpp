@@ -283,7 +283,7 @@ namespace webpp::istl {
         template <stl::size_t I>
         [[nodiscard]] constexpr auto get() const noexcept {
             if constexpr (I >= native_tuple_size) {
-                return default_type{};
+                return get_default<I>();
             } else {
                 return stl::get<I>(as_tuple());
             }
@@ -299,7 +299,18 @@ namespace webpp::istl {
 
         template <stl::size_t I>
         [[nodiscard]] constexpr default_type get() noexcept {
-            return {};
+            return get_default<I>();
+        }
+
+        template <stl::size_t I = 0>
+        [[nodiscard]] constexpr default_type get_default() const noexcept {
+            if constexpr (requires { options::template get_default<I>(*this); }) {
+                return options::template get_default<I>(*this);
+            } else if constexpr (requires { options::template get_default<I>(); }) {
+                return options::template get_default<I>();
+            } else {
+                return {};
+            }
         }
     };
 

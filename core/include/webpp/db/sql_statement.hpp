@@ -39,6 +39,11 @@ namespace webpp::sql {
 
             template <stl::size_t NewN = 0>
             using resize = iterator_options<NewN>;
+
+            template <stl::size_t>
+            static constexpr default_type get_default(auto& itup) noexcept {
+                return stl::get<0>(itup);
+            }
         };
 
         template <stl::size_t N = 0>
@@ -47,7 +52,12 @@ namespace webpp::sql {
             static constexpr stl::size_t size = N;
 
             template <stl::size_t NewN = 0>
-            using resize = iterator_options<NewN>;
+            using resize = const_iterator_options<NewN>;
+
+            template <stl::size_t>
+            static constexpr default_type get_default(auto& itup) noexcept {
+                return stl::get<0>(itup);
+            }
         };
 
 
