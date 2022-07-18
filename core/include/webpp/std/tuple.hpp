@@ -371,11 +371,12 @@ namespace webpp::istl {
     struct ituple_iterable {
 
         // wrap the iterator type of the iterable:
-        using iterable        = stl::remove_cvref_t<IterableT>;
-        using native_iterator = typename iterable::iterator;
-        using iterator        = ituple_iterator<native_iterator, OptsT>;
-        using const_iterator  = ituple_iterator<const native_iterator, OptsT>;
-        using iterable_ref    = stl::add_lvalue_reference_t<iterable>;
+        using iterable              = stl::remove_cvref_t<IterableT>;
+        using native_iterator       = typename iterable::iterator;
+        using const_native_iterator = typename iterable::const_iterator;
+        using iterator              = ituple_iterator<native_iterator, OptsT>;
+        using const_iterator        = ituple_iterator<const_native_iterator, OptsT>;
+        using iterable_ref          = stl::add_lvalue_reference_t<iterable>;
 
         iterable_ref object;
 
