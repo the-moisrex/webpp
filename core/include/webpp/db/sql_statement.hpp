@@ -34,25 +34,11 @@ namespace webpp::sql {
         // These are ituple options which make all elements of ituple a "row".
         template <stl::size_t N = 0>
         struct iterator_options {
-            using default_type                = typename iterator::reference;
+            using default_type                = cell_type;
             static constexpr stl::size_t size = N;
 
             template <stl::size_t NewN = 0>
             using resize = iterator_options<NewN>;
-
-            template <stl::size_t>
-            static constexpr default_type get_default(auto& itup) noexcept {
-                return stl::get<0>(itup);
-            }
-        };
-
-        template <stl::size_t N = 0>
-        struct const_iterator_options {
-            using default_type                = typename const_iterator::reference;
-            static constexpr stl::size_t size = N;
-
-            template <stl::size_t NewN = 0>
-            using resize = const_iterator_options<NewN>;
 
             template <stl::size_t>
             static constexpr default_type get_default(auto& itup) noexcept {
@@ -135,7 +121,7 @@ namespace webpp::sql {
 
         template <stl::size_t N>
         [[nodiscard]] inline auto structured() const noexcept {
-            return istl::ituple_iterable<sql_statement, const_iterator_options<N>>{*this};
+            return istl::ituple_iterable<sql_statement, iterator_options<N>>{*this};
         }
 
 
@@ -145,11 +131,24 @@ namespace webpp::sql {
         }
 
 
-        iterator begin() {
+        // row iterator
+        [[nodiscard]] iterator begin() noexcept {
             return {this};
         }
 
-        iterator end() {
+        // end of row iterator
+        [[nodiscard]] iterator end() noexcept {
+            return {};
+        }
+
+
+        // row iterator
+        [[nodiscard]] const_iterator begin() const noexcept {
+            return {this};
+        }
+
+        // end of row iterator
+        [[nodiscard]] const_iterator end() const noexcept {
             return {};
         }
     };

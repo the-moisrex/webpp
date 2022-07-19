@@ -50,62 +50,62 @@ namespace webpp::sql {
 
     template <typename StmtType>
     struct row_iterator {
-        using statement_type    = StmtType;
-        using value_type        = statement_type;
-        using size_type         = typename statement_type::size_type;
-        using difference_type   = size_type;
-        using reference         = stl::add_lvalue_reference_t<value_type>;
-        using pointer           = stl::add_pointer_t<value_type>;
+        using statement_type           = stl::remove_cvref_t<StmtType>;
+        using value_type               = sql_row<statement_type>;
+        static constexpr bool is_const = stl::is_same_v<statement_type, StmtType>;
+        using size_type                = typename statement_type::size_type;
+        using difference_type          = size_type;
+        using raw_reference =
+          stl::add_lvalue_reference_t<value_type>;          // ref type without enforcing the constness
+        using raw_pointer = stl::add_pointer_t<value_type>; // pointer type without the constness
+        using reference   = stl::conditional_t<is_const, stl::add_const_t<raw_reference>, raw_reference>;
+        using pointer     = stl::conditional_t<is_const, stl::add_const_t<raw_pointer>, raw_pointer>;
         using iterator_category = stl::forward_iterator_tag;
         using iterator_concept  = stl::forward_iterator_tag;
 
       private:
-        statement_type* stmt = nullptr;
+        stl::optional<value_type> row{};
 
       public:
         constexpr row_iterator() noexcept = default;
-        constexpr row_iterator(statement_type* stmt_ptr) noexcept : stmt{stmt_ptr} {}
+        constexpr row_iterator(statement_type* stmt_ptr) noexcept : row{*stmt_ptr} {}
         constexpr row_iterator(row_iterator const&)                = default;
         constexpr row_iterator(row_iterator&&) noexcept            = default;
         constexpr row_iterator& operator=(row_iterator const&)     = default;
         constexpr row_iterator& operator=(row_iterator&&) noexcept = default;
 
         constexpr bool operator==(const row_iterator& rhs) const noexcept {
-            return base() == rhs.base();
+            return row == rhs.row;
         }
 
         constexpr bool operator!=(const row_iterator& rhs) const noexcept {
-            return base() != rhs.base();
+            return row != rhs.row;
         }
 
         constexpr auto operator<=>(const row_iterator& rhs) const noexcept {
-            return base() <=> rhs.base();
+            return row <=> rhs.row;
         }
 
         // Forward iterator requirements
         constexpr reference operator*() const noexcept {
-            return *stmt;
+            return *row;
         }
 
         constexpr pointer operator->() const noexcept {
-            return stmt;
+            return &*row;
         }
 
         constexpr row_iterator& operator++() noexcept {
-            const bool has_next = stmt->step();
+            assert(row);
+            const bool has_next = row->step();
             if (!has_next) {
-                stmt = nullptr;
+                row.reset();
             }
             return *this;
         }
 
         constexpr row_iterator operator++(int) const noexcept {
-            return row_iterator{stmt}.operator++();
-        }
-
-
-        constexpr const pointer& base() const noexcept {
-            return stmt;
+            return row_iterator{*row}.operator++();
         }
     };
 
