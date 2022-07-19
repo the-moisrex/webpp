@@ -19,6 +19,14 @@ namespace webpp::sql {
       public:
         sql_row(statement_type& stmt_ref) noexcept : stmt{stmt_ref} {}
 
+        bool operator==(sql_row const& rhs) const noexcept {
+            return stmt == rhs.stmt;
+        }
+
+        auto operator<=>(sql_row const& rhs) const noexcept {
+            return stmt <=> rhs.stmt;
+        }
+
 
         [[nodiscard]] inline cell_type operator[](size_type index) const noexcept {
             return {stmt, index};
@@ -46,6 +54,10 @@ namespace webpp::sql {
         [[nodiscard]] inline size_type size() const noexcept {
             return stmt.column_count();
         }
+
+        statement_type& statement() noexcept {
+            return stmt;
+        }
     };
 
     template <typename StmtType>
@@ -56,10 +68,12 @@ namespace webpp::sql {
         using size_type                = typename statement_type::size_type;
         using difference_type          = size_type;
         using raw_reference =
-          stl::add_lvalue_reference_t<value_type>;          // ref type without enforcing the constness
-        using raw_pointer = stl::add_pointer_t<value_type>; // pointer type without the constness
-        using reference   = stl::conditional_t<is_const, stl::add_const_t<raw_reference>, raw_reference>;
-        using pointer     = stl::conditional_t<is_const, stl::add_const_t<raw_pointer>, raw_pointer>;
+          stl::add_lvalue_reference_t<value_type>;                // ref type without enforcing the constness
+        using raw_pointer       = stl::add_pointer_t<value_type>; // pointer type without the constness
+        using const_reference   = stl::add_const_t<raw_reference>;
+        using const_pointer     = stl::add_const_t<raw_pointer>;
+        using reference         = stl::conditional_t<is_const, const_reference, raw_reference>;
+        using pointer           = stl::conditional_t<is_const, const_pointer, raw_pointer>;
         using iterator_category = stl::forward_iterator_tag;
         using iterator_concept  = stl::forward_iterator_tag;
 
@@ -87,17 +101,25 @@ namespace webpp::sql {
         }
 
         // Forward iterator requirements
-        constexpr reference operator*() const noexcept {
+        constexpr const_reference operator*() const noexcept {
             return *row;
         }
 
-        constexpr pointer operator->() const noexcept {
+        constexpr reference operator*() noexcept {
+            return *row;
+        }
+
+        constexpr const_pointer operator->() const noexcept {
+            return &*row;
+        }
+
+        constexpr pointer operator->() noexcept {
             return &*row;
         }
 
         constexpr row_iterator& operator++() noexcept {
             assert(row);
-            const bool has_next = row->step();
+            const bool has_next = row->statement().step();
             if (!has_next) {
                 row.reset();
             }
