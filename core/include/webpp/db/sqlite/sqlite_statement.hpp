@@ -55,6 +55,13 @@ namespace webpp::sql {
             return *this;
         }
 
+        bool operator==(sqlite_statement rhs) const noexcept {
+            return stmt == rhs.stmt;
+        }
+
+        auto operator<=>(sqlite_statement rhs) const noexcept {
+            return stmt <=> rhs.stmt;
+        }
 
         ~sqlite_statement() noexcept {
             destroy();
