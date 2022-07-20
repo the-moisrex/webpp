@@ -58,6 +58,15 @@ namespace webpp::sql {
         statement_type& statement() noexcept {
             return stmt;
         }
+
+        // return a tuple of N length containing cells
+        template <stl::size_t N, template <typename...> typename TupleType = stl::tuple>
+        [[nodiscard]] inline auto as_tuple() const noexcept {
+            using tuple = istl::repeat_type_t<N, cell_type, TupleType>;
+            return ([this]<stl::size_t... I>(stl::index_sequence<I...>) constexpr noexcept {
+                return tuple{cell_type{I, stmt}...};
+            })(stl::make_index_sequence<N>{});
+        }
     };
 
     template <typename StmtType>
@@ -132,5 +141,17 @@ namespace webpp::sql {
     };
 
 } // namespace webpp::sql
+
+namespace std {
+
+    template <size_t I, class... T>
+    struct tuple_element<I, webpp::sql::sql_row<T...>> {
+        using type = typename webpp::sql::sql_row<T...>::cell_type;
+    };
+
+    template <class... T>
+    struct tuple_size<webpp::sql::sql_row<T...>> : integral_constant<size_t, 0> {};
+
+} // namespace std
 
 #endif // WEBPP_DATABASE_SQL_ROW_HPP

@@ -37,11 +37,11 @@ TEST(Database, SQLiteWrapper) {
 
     stmt = db.prepare("select * from settings;");
 
-    for (auto nstmt : stmt.structured<3>()) {
-        using nstmt_type = stl::remove_cvref_t<decltype(nstmt)>;
-        // EXPECT_EQ(nstmt.size(), 3);
-        EXPECT_EQ(stl::tuple_size_v<nstmt_type>, 3);
-        auto [id, name, value] = nstmt;
+    for (auto row : stmt.structured<3>()) {
+        using row_type = stl::remove_cvref_t<decltype(row)>;
+        // EXPECT_EQ(row.size(), 3);
+        EXPECT_EQ(stl::tuple_size_v<row_type>, 3);
+        auto [id, name, value] = row;
         EXPECT_TRUE(name.is_number());
         EXPECT_TRUE(name.is_string());
         EXPECT_TRUE(value.is_string());
