@@ -64,7 +64,7 @@ namespace webpp::sql {
         [[nodiscard]] inline auto as_tuple() const noexcept {
             using tuple = istl::repeat_type_t<N, cell_type, TupleType>;
             return ([this]<stl::size_t... I>(stl::index_sequence<I...>) constexpr noexcept {
-                return tuple{cell_type{I, stmt}...};
+                return tuple{cell_type{stmt, I}...};
             })(stl::make_index_sequence<N>{});
         }
     };

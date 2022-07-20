@@ -337,6 +337,8 @@ namespace webpp::istl {
     template <typename Iter,
               ItupleOptions OptsT = default_ituple_options<stl::tuple_size_v<typename Iter::value_type>>>
     struct ituple_iterator : Iter {
+        using options = OptsT;
+
         using Iter::Iter;
 
         constexpr ituple_iterator(Iter const& iter) : Iter{iter} {}
@@ -359,15 +361,23 @@ namespace webpp::istl {
         }
 
         [[nodiscard]] constexpr auto operator*() noexcept {
-            using native_value_type = decltype(native_iterator().operator*());
-            return ituple<native_value_type, OptsT>{native_iterator().operator*()}
-              .template structured<OptsT::size>();
+            if constexpr (requires { options::ituplify(native_iterator().operator*()); }) {
+                return options::ituplify(native_iterator().operator*());
+            } else {
+                using native_value_type = decltype(native_iterator().operator*());
+                return ituple<native_value_type, OptsT>{native_iterator().operator*()}
+                  .template structured<OptsT::size>();
+            }
         }
 
         [[nodiscard]] constexpr auto operator*() const noexcept {
-            using native_value_type = decltype(native_iterator().operator*());
-            return ituple<native_value_type, OptsT>{native_iterator().operator*()}
-              .template structured<OptsT::size>();
+            if constexpr (requires { options::ituplify(native_iterator().operator*()); }) {
+                return options::ituplify(native_iterator().operator*());
+            } else {
+                using native_value_type = decltype(native_iterator().operator*());
+                return ituple<native_value_type, OptsT>{native_iterator().operator*()}
+                  .template structured<OptsT::size>();
+            }
         }
     };
 

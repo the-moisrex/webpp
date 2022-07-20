@@ -40,9 +40,16 @@ namespace webpp::sql {
             template <stl::size_t NewN = 0>
             using resize = iterator_options<NewN>;
 
-            template <stl::size_t>
+            // get the cell type based on the index
+            template <stl::size_t I>
             static constexpr default_type get_default(auto& itup) noexcept {
-                return stl::get<0>(itup);
+                // get the stmt from the first tuple element
+                auto stmt = stl::get<0>(itup).statement();
+                return {I, stmt};
+            }
+
+            static constexpr auto ituplify(row_type const& row) noexcept {
+                return row.template as_tuple<N, istl::ituple>();
             }
         };
 
