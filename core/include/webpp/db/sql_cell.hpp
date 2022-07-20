@@ -31,12 +31,17 @@ namespace webpp::sql {
           : stmt(stmt_ref),
             index(cell_index) {}
 
+
+        template <typename T>
+        inline bool operator==(T&& val) const {
+            return stl::is_eq(this->template operator<=><T>(stl::forward<T>(val)));
+        }
+
         template <typename T>
         inline stl::partial_ordering operator<=>(T&& val) const {
             switch (category()) {
                 case column_category::string: {
-                    auto str = object::make_local<T>(stmt);
-                    stmt.as_string(str);
+                    auto const str = as_string<local_string_type>();
                     return str <=> lexical::cast<local_string_type>(
                                      val,
                                      stmt.alloc_pack.template local_allocator<char_type>());
