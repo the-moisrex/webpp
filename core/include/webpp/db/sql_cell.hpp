@@ -38,7 +38,7 @@ namespace webpp::sql {
         }
 
         template <typename T>
-        inline stl::partial_ordering operator<=>(T&& val) const {
+        inline auto operator<=>(T&& val) const {
             switch (category()) {
                 case column_category::string: {
                     auto const str = as_string<local_string_type>();
@@ -52,7 +52,7 @@ namespace webpp::sql {
                     } else {
                         // todo: add debug info
                         // todo: should we use long double?
-                        return to<double>(val) <=> as_number<double>();
+                        return lexical::cast<double>(val) <=> as_number<double>();
                     }
                 }
                 case column_category::blob: {
