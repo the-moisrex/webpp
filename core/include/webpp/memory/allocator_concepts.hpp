@@ -71,6 +71,8 @@ namespace webpp {
         typename D::template allocator<char>; // get the allocator itself
         typename D::resources;                // resource types (a list of MemoryResource)
         {D::allocator_features};              // parent features of type alloc::feature_pack
+        typename D::default_resource;
+        requires ResourceDescriptor<typename D::default_resource>;
     };
 
     // these are that help other TMPs to extract information out of the two descriptor types.
@@ -96,7 +98,7 @@ namespace webpp {
 
 
         template <ResourceDescriptor RD, typename T>
-        static inline auto construct_allocator(storage<RD> & res) noexcept {
+        static inline auto construct_allocator(storage<RD>& res) noexcept {
             return RD::template construct_allocator<T>(res);
         }
 

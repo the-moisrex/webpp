@@ -22,7 +22,9 @@ namespace webpp {
                     }
                 };
 
-                using resources = type_list<default_resource_descriptor>;
+                using resources        = type_list<default_resource_descriptor>;
+                using default_resource = default_resource_descriptor;
+
                 static constexpr alloc::feature_pack allocator_features{alloc::stateless,
                                                                         alloc::sync,
                                                                         alloc::low_locality};

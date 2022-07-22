@@ -576,54 +576,65 @@ namespace webpp::alloc {
                 using selected_allocator = AllocType<value_type>;
                 using new_type =
                   replace_allocators<T, stl::allocator_traits<selected_allocator>::template rebind_alloc>;
-                auto the_alloc = this->get_allocator<ResDescType, value_type>();
-                if constexpr (requires { new_type::create(the_alloc, stl::forward<Args>(args)...); }) {
-                    return new_type::create(the_alloc, stl::forward<Args>(args)...);
-                } else if constexpr (requires { new_type::create(stl::forward<Args>(args)..., the_alloc); }) {
-                    return new_type::create(stl::forward<Args>(args)..., the_alloc);
-                } else if constexpr (istl::contains_parameter<type_list<Args...>, placeholder>) {
-                    return new_type{
-                      istl::replace_object<placeholder, selected_allocator, Args>(stl::forward<Args>(args),
-                                                                                  the_alloc)...};
-                } else if constexpr (requires {
-                                         new_type{stl::allocator_arg, the_alloc, stl::forward<Args>(args)...};
-                                     }) {
-                    // as the first and second argument
-                    return new_type{stl::allocator_arg, the_alloc, stl::forward<Args>(args)...};
-                } else if constexpr (requires { new_type{stl::forward<Args>(args)..., the_alloc}; }) {
-                    // as the last argument
-                    return new_type{stl::forward<Args>(args)..., the_alloc};
-                } else {
-                    static_assert(false && sizeof(new_type),
-                                  "We don't know how to pass the allocator to the specified type.");
-                    return new_type{stl::forward<Args>(args)...};
-                }
+                return this->make<new_type, ResDescType, Args...>(stl::forward<Args>(args)...);
             }
         }
 
-        template <typename T, Allocator AllocType, ResourceDescriptor ResDescType, typename... Args>
+        // construct T with resource descriptor and allocator of T
+        template <typename T, ResourceDescriptor ResDescType, typename... Args>
+            requires requires {
+                typename T::allocator_type;
+            }
         constexpr auto make(Args&&... args) {
-            return this
-              ->make<T, stl::allocator_traits<AllocType>::template rebind_alloc, ResDescType, Args...>(
-                stl::forward<Args>(args)...);
+            using alloc_type = typename T::allocator_type;
+            using value_type = typename alloc_type::value_type;
+            auto the_alloc   = this->get_allocator<ResDescType, value_type>();
+            if constexpr (requires { T::create(the_alloc, stl::forward<Args>(args)...); }) {
+                return T::create(the_alloc, stl::forward<Args>(args)...);
+            } else if constexpr (requires { T::create(stl::forward<Args>(args)..., the_alloc); }) {
+                return T::create(stl::forward<Args>(args)..., the_alloc);
+            } else if constexpr (istl::contains_parameter<type_list<Args...>, placeholder>) {
+                return T{istl::replace_object<placeholder, alloc_type, Args>(stl::forward<Args>(args),
+                                                                             the_alloc)...};
+            } else if constexpr (requires {
+                                     T{stl::allocator_arg, the_alloc, stl::forward<Args>(args)...};
+                                 }) {
+                // as the first and second argument
+                return T{stl::allocator_arg, the_alloc, stl::forward<Args>(args)...};
+            } else if constexpr (requires { T{stl::forward<Args>(args)..., the_alloc}; }) {
+                // as the last argument
+                return T{stl::forward<Args>(args)..., the_alloc};
+            } else {
+                static_assert(false && sizeof(T),
+                              "We don't know how to pass the allocator to the specified type.");
+                return T{stl::forward<Args>(args)...};
+            }
         }
 
         // This one doesn't change the allocator type you passed to it, because you didn't give it your
         // prefered allocator type
+        // We will use the default resource
         template <typename T, typename... Args>
             requires requires {
                 typename T::allocator_type;
             }
         constexpr T make(Args&&... args) {
-            using old_allocator_type = typename T::allocator_type;
-            if constexpr (allocator_pack::template has_allocator<old_allocator_type>) {
-                return this->make<T, old_allocator_type, Args...>(stl::forward<Args>(args)...);
-            } else {
-                static_assert(false && sizeof(allocator_pack),
-                              "We don't have an allocator for this type, and you didn't specify "
-                              "the features you'd like your allocator to have so we don't know "
-                              "which allocator to choose.");
-            }
+            using alloc_type   = typename T::allocator_type;
+            using alloc_traits = stl::allocator_traits<alloc_type>;
+            using alloc_desc =
+              allocator_descriptor_finder<allocator_descriptors, alloc_traits::template rebind_alloc>;
+
+            static_assert(AllocatorDescriptor<alloc_desc>,
+                          "We can't find the allocator descriptor for the specified allocator type.");
+
+            static_assert(allocator_pack::template has_allocator<alloc_type>,
+                          "We don't have an allocator for this type, and you didn't specify "
+                          "the features you'd like your allocator to have so we don't know "
+                          "which allocator to choose.");
+
+            // using the default resource
+            using resource_desc = typename alloc_desc::default_resource;
+            return this->make<T, resource_desc, Args...>(stl::forward<Args>(args)...);
         }
 
         template <typename T, feature_pack FPack, typename... Args>

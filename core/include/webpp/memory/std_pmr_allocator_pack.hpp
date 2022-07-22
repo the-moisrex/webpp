@@ -99,6 +99,8 @@ namespace webpp {
                                             monotonic_buffer_resource_descriptor,
                                             synchronized_pool_resource_descriptor,
                                             unsynchronized_pool_resource_descriptor>;
+
+                using default_resource = default_resource_descriptor;
             };
 
         } // namespace details

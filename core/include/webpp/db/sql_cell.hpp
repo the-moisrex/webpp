@@ -71,26 +71,25 @@ namespace webpp::sql {
 
         template <istl::arithmetic T = size_type>
         [[nodiscard]] inline T as_number() const {
-            auto                  errmsg       = object::make_general<string_type>(stmt);
             static constexpr auto t_size       = sizeof(T);
             static constexpr bool supports_int = requires {
-                stmt.as_int(index, errmsg);
+                stmt.as_int(index);
             };
             static constexpr bool supports_int64 = requires {
-                stmt.as_int64(index, errmsg);
+                stmt.as_int64(index);
             };
             T res;
 
             if constexpr (stl::is_floating_point_v<T>) {
                 // todo: add long double support
                 if constexpr (t_size >= sizeof(double) && requires { stmt.as_double(); }) {
-                    res = stmt.as_double(index, errmsg);
+                    res = stmt.as_double(index);
                 } else if constexpr (t_size == sizeof(float) && requires { stmt.as_float(); }) {
-                    res = stmt.as_float(index, errmsg);
+                    res = stmt.as_float(index);
                 } else if constexpr (t_size >= sizeof(double)) {
-                    res = static_cast<T>(stmt.as_double(index, errmsg));
+                    res = static_cast<T>(stmt.as_double(index));
                 } else if constexpr (t_size <= sizeof(float)) {
-                    res = static_cast<T>(stmt.as_float(index, errmsg));
+                    res = static_cast<T>(stmt.as_float(index));
                 } else {
                     static_assert_false(T, "statement type doesn't support specified floating type.");
                 }
@@ -100,23 +99,18 @@ namespace webpp::sql {
                 // todo: add short support
                 // todo: add unsigned support
                 if constexpr (t_size >= sizeof(stl::int64_t) && requires { stmt.as_int64(); }) {
-                    res = stmt.as_int64(index, errmsg);
+                    res = stmt.as_int64(index);
                 } else if constexpr (t_size == sizeof(int) && requires { stmt.as_int(); }) {
-                    res = stmt.as_int(index, errmsg);
+                    res = stmt.as_int(index);
                 } else if constexpr (t_size >= sizeof(stl::int64_t)) {
-                    res = static_cast<T>(stmt.as_int64(index, errmsg));
+                    res = static_cast<T>(stmt.as_int64(index));
                 } else if constexpr (t_size <= sizeof(int)) {
-                    res = static_cast<T>(stmt.as_int(index, errmsg));
+                    res = static_cast<T>(stmt.as_int(index));
                 } else {
                     static_assert_false(T, "statement type doesn't support specified integral type.");
                 }
             } else {
                 static_assert_false(T, "statement type doesn't support specified type.");
-            }
-
-            // log the error message
-            if (!errmsg.empty()) {
-                stmt.logger.error(CELL_CAT, errmsg);
             }
             return res;
         }
