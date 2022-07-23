@@ -32,38 +32,47 @@ namespace webpp::sql {
             index(cell_index) {}
 
 
-        template <typename T>
-        inline bool operator==(T&& val) const {
-            return stl::is_eq(this->template operator<=><T>(stl::forward<T>(val)));
-        }
+        // define operators
+        // todo: replace this with spaceship op, it's not implemented as of this time.
+#define def_op(op)                                                                                         \
+    template <typename T>                                                                                  \
+    inline bool operator op(T&& val) const {                                                               \
+        switch (category()) {                                                                              \
+            case column_category::string: {                                                                \
+                auto const str = as_string<local_string_type>();                                           \
+                auto const val_str =                                                                       \
+                  lexical::cast<local_string_type>(val,                                                    \
+                                                   stmt.alloc_pack.template local_allocator<char_type>()); \
+                                                                                                           \
+                return str op val_str;                                                                     \
+            }                                                                                              \
+            case column_category::number: {                                                                \
+                if constexpr (stl::integral<T>) {                                                          \
+                    return val op as_number<T>();                                                          \
+                } else {                                                                                   \
+                    /* todo: add debug info                                                                \
+                     * todo: should we use long double?                                                    \
+                     */                                                                                    \
+                    return lexical::cast<double>(val) op as_number<double>();                              \
+                }                                                                                          \
+            }                                                                                              \
+            case column_category::blob:                                                                    \
+            case column_category::unknown:                                                                 \
+            default: return false;                                                                         \
+        }                                                                                                  \
+    }
 
-        template <typename T>
-        inline auto operator<=>(T&& val) const {
-            switch (category()) {
-                case column_category::string: {
-                    auto const str = as_string<local_string_type>();
-                    return str <=> lexical::cast<local_string_type>(
-                                     val,
-                                     stmt.alloc_pack.template local_allocator<char_type>());
-                }
-                case column_category::number: {
-                    if constexpr (stl::integral<T>) {
-                        return val <=> as_number<T>();
-                    } else {
-                        // todo: add debug info
-                        // todo: should we use long double?
-                        return lexical::cast<double>(val) <=> as_number<double>();
-                    }
-                }
-                case column_category::blob: {
-                    // todo
-                }
-            }
-            return stl::partial_ordering::unordered;
-        }
+        def_op(>)    //
+          def_op(<)  //
+          def_op(==) //
+          def_op(!=) //
+          def_op(>=) //
+          def_op(<=) //
 
-        template <istl::String StrT = stl::string>
-        [[nodiscard]] inline StrT as_string() const {
+#undef def_op
+
+          template <istl::String StrT = stl::string>
+          [[nodiscard]] inline StrT as_string() const {
             auto str = object::make<StrT>(stmt);
             stmt.as_string(index, str);
             return str;
