@@ -63,6 +63,12 @@ if (TRUE)
     endif ()
     add_test(${name} ${name})
 
+    if ("${identifier}" STREQUAL "sql")
+            target_link_libraries(${name}
+                    PRIVATE sqlite3
+                    )
+    endif ()
+
     target_precompile_headers(${name} PUBLIC common_pch.hpp)
 
 
