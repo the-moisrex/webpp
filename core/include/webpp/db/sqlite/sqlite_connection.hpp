@@ -35,6 +35,11 @@ namespace webpp::sql {
 
 
       public:
+        // in memory
+        void open(istl::String auto& errmsg) noexcept {
+            open(sqlite_config{}, errmsg);
+        }
+
         void open(sqlite_config conf, istl::String auto& errmsg) noexcept {
             const int rc = sqlite3_open_v2(conf.filename.data(),
                                            &handle,

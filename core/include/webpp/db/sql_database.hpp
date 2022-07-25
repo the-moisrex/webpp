@@ -77,6 +77,12 @@ namespace webpp::sql {
         // ctor
         using TraitsEnabler::TraitsEnabler;
 
+        constexpr basic_sql_database() {
+            auto errmsg = object::make_general<string_type>(*this);
+            driver().open(errmsg);
+            log(errmsg);
+        }
+
         /**
          * Prepare a SQL query and return a statement object.
          */
