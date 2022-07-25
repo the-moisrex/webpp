@@ -21,7 +21,7 @@ namespace webpp::sql {
 
     struct sqlite_config {
         std::string_view filename = ":memory:";
-        int              flags    = 0;
+        int              flags    = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
         std::string_view password{};
         std::string_view vfs{};
     };
@@ -46,14 +46,12 @@ namespace webpp::sql {
                                            conf.flags,
                                            conf.vfs.empty() ? nullptr : conf.vfs.data());
             if (rc != SQLITE_OK) {
-                errmsg = sqlite3_errmsg(handle);
+                errmsg += sqlite3_errmsg(handle);
                 (void) sqlite3_close_v2(handle);
                 return;
             }
 
             // todo: SQLCipher sqlite3_key password (https://github.com/rbock/sqlpp11/blob/1e7f4b98c727643513eb94100133c009906809d9/include/sqlpp11/sqlite3/connection.h#L95)
-
-            errmsg.clear(); // no errors
         }
 
         bool is_open() const noexcept {
@@ -76,7 +74,7 @@ namespace webpp::sql {
             char*     err;
             const int rc = sqlite3_exec(handle, sql.data(), 0, 0, &err);
             if (rc != SQLITE_OK) {
-                errmsg = err;
+                errmsg += err;
                 sqlite3_free(err); // we have copied it
             }
         }
@@ -87,7 +85,7 @@ namespace webpp::sql {
             const int       rc =
               sqlite3_prepare_v2(handle, stmt_str.data(), static_cast<int>(stmt_str.size()), &stmt, nullptr);
             if (rc != SQLITE_OK) [[unlikely]] {
-                errmsg = "SQLite3 error, could not prepare statement: ";
+                errmsg += "SQLite3 error, could not prepare statement: ";
                 errmsg += sqlite3_errmsg(handle);
                 errmsg += "; for statement: ";
                 if (rc != SQLITE_TOOBIG) {

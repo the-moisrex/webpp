@@ -13,6 +13,7 @@ static_assert(SQLStatement<sqlite_statement>, "sqlite statement is not a stateme
 
 TEST(Database, SQLiteWrapper) {
     sql_database<sqlite> db; // in memory database
+    ASSERT_TRUE(db.is_open());
     ASSERT_TRUE(db.execute(R"sql(create table settings(
         id integer primary key,
         name text,
