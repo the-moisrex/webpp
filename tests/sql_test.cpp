@@ -18,7 +18,7 @@ TEST(Database, SQLiteWrapper) {
         id integer primary key,
         name text,
         value text
-    ))sql"));
+    );)sql"));
 
     auto stmt = db.prepare("insert into settings (name, value) values (?, ?)");
     stmt.bind(0, "username");

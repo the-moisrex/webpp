@@ -32,7 +32,7 @@ namespace webpp::sql {
                 case SQLITE_NOMEM: err_msg = "bind value out of memory"; break;
                 case SQLITE_TOOBIG: err_msg = "bind value is too big"; break;
                 default:
-                    err_msg = "bind value returned unexpected value: ";
+                    err_msg += "bind value returned unexpected value: ";
                     err_msg += stl::to_string(result); // todo: use our own version of this function call
                     err_msg +=
                       "; check https://www.sqlite.org/c3ref/bind_blob.html for more info about this error.";
@@ -140,7 +140,7 @@ namespace webpp::sql {
             } else if constexpr (stl::is_null_pointer_v<type>) { // null
                 check_bind_result(sqlite3_bind_null(stmt, index), err_msg);
                 if (err_msg.empty()) {
-                    err_msg = "bind value set to null because you passed an unknown type.";
+                    err_msg += "bind value set to null because you passed an unknown type.";
                 }
             } else {
                 static_assert_false(T, "SQLite cannot handle the specified type.");
@@ -159,7 +159,7 @@ namespace webpp::sql {
                     return false;
                 // clang-format on
                 default: {
-                    errmsg = "SQLite3 error, could not execute prepared statement: ";
+                    errmsg += "SQLite3 error, could not execute prepared statement: ";
                     errmsg += sqlite3_errmsg(sqlite3_db_handle(stmt));
                     return false;
                 }

@@ -23,7 +23,11 @@ namespace webpp::sql {
         std::string_view filename = ":memory:";
         int              flags    = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
         std::string_view password{};
-        std::string_view vfs{};
+#ifdef __WIN32__
+        std::string_view vfs = "win32";
+#else
+        std::string_view vfs = "unix";
+#endif
     };
 
 
@@ -35,6 +39,9 @@ namespace webpp::sql {
 
 
       public:
+        // todo: add support for vfs
+
+
         // in memory
         void open(istl::String auto& errmsg) noexcept {
             open(sqlite_config{}, errmsg);
