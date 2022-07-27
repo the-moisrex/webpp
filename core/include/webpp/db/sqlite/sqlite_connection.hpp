@@ -57,6 +57,7 @@ namespace webpp::sql {
                 (void) sqlite3_close_v2(handle);
                 return;
             }
+            assert(handle != nullptr);
 
             // todo: SQLCipher sqlite3_key password (https://github.com/rbock/sqlpp11/blob/1e7f4b98c727643513eb94100133c009906809d9/include/sqlpp11/sqlite3/connection.h#L95)
         }
@@ -89,7 +90,10 @@ namespace webpp::sql {
         // prepare an statment for the parent sql connection to wrap it
         statement_type prepare(std::string_view stmt_str, istl::String auto& errmsg) noexcept {
             ::sqlite3_stmt* stmt;
-            const int       rc =
+
+            // todo: there's a performance gain if you know the string is null terminated. (more: https://www.sqlite.org/c3ref/prepare.html)
+
+            const int rc =
               sqlite3_prepare_v2(handle, stmt_str.data(), static_cast<int>(stmt_str.size()), &stmt, nullptr);
             if (rc != SQLITE_OK) [[unlikely]] {
                 errmsg += "SQLite3 error, could not prepare statement: ";

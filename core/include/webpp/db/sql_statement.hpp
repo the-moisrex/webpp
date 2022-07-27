@@ -56,7 +56,7 @@ namespace webpp::sql {
 
         template <EnabledTraits ET>
         sql_statement(driver_type&& driver, ET&& et) noexcept
-          : driver_type{driver},
+          : driver_type{stl::move(driver)},
             etraits{stl::forward<ET>(et)} {}
         sql_statement(sql_statement&&) noexcept = default;
         sql_statement(sql_statement const&)     = default;

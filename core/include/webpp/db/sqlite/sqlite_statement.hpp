@@ -148,6 +148,7 @@ namespace webpp::sql {
         }
 
         bool step(istl::String auto& errmsg) {
+            assert(stmt != nullptr);
             const int rc = sqlite3_step(stmt);
             switch (rc) {
                 // this is an embarrassing situation for clang-format
@@ -159,8 +160,9 @@ namespace webpp::sql {
                     return false;
                 // clang-format on
                 default: {
+                    ::sqlite3* handle = sqlite3_db_handle(stmt);
                     errmsg += "SQLite3 error, could not execute prepared statement: ";
-                    errmsg += sqlite3_errmsg(sqlite3_db_handle(stmt));
+                    errmsg += sqlite3_errmsg(handle);
                     return false;
                 }
             }
