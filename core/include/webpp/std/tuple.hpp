@@ -351,9 +351,7 @@ namespace webpp::istl {
     /**
      * This is a wrapper for any type of iterator that holds an ituple
      */
-    template <typename Iter,
-              ItupleOptions OptsT =
-                default_ituple_options<ituplify<typename Iter::value_type>::type::tuple_size>>
+    template <typename Iter, ItupleOptions OptsT = default_ituple_options<0>>
     struct ituple_iterator : Iter {
         using options = OptsT;
 
@@ -383,8 +381,8 @@ namespace webpp::istl {
             if constexpr (requires { options::ituplify(native_iterator().operator*()); }) {
                 return options::ituplify(native_iterator().operator*());
             } else {
-                using ituple_type = typename ituplify<native_reference, OptsT>::type;
-                return ituple_type{native_iterator().operator*()}.template structured<OptsT::size>();
+                using ituple_type = typename ituplify<native_reference, options>::type;
+                return ituple_type{native_iterator().operator*()};
             }
         }
 
@@ -392,8 +390,8 @@ namespace webpp::istl {
             if constexpr (requires { options::ituplify(native_iterator().operator*()); }) {
                 return options::ituplify(native_iterator().operator*());
             } else {
-                using ituple_type = typename ituplify<native_reference, OptsT>::type;
-                return ituple_type{native_iterator().operator*()}.template structured<OptsT::size>();
+                using ituple_type = typename ituplify<native_reference, options>::type;
+                return ituple_type{native_iterator().operator*()};
             }
         }
     };
@@ -403,9 +401,7 @@ namespace webpp::istl {
      * This struct will change the iterator and provides restructuring features for the user to use
      * "structured bindings" in for loops.
      */
-    template <typename IterableT,
-              ItupleOptions OptsT =
-                default_ituple_options<stl::tuple_size_v<typename IterableT::iterator::value_type>>>
+    template <typename IterableT, ItupleOptions OptsT = default_ituple_options<0>>
     struct ituple_iterable {
 
         // wrap the iterator type of the iterable:
