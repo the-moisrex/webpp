@@ -331,22 +331,22 @@ namespace webpp::istl {
         using type = ituple<T...>;
     };
 
-    template <typename Opts, typename... T>
-    struct ituplify<ituple<T...>, Opts> {
+    template <template <typename...> typename Tt, typename Opts, typename... T>
+    struct ituplify<Tt<T...>, Opts> {
         using type = typename ituple<T...>::template replace_options<Opts>;
     };
 
-    template <typename Opts, typename... T>
-    struct ituplify<ituple<T...> const&, Opts> : ituplify<ituple<T...>, Opts> {};
+    template <template <typename...> typename Tt, typename Opts, typename... T>
+    struct ituplify<Tt<T...> const&, Opts> : ituplify<ituple<T...>, Opts> {};
 
-    template <typename Opts, typename... T>
-    struct ituplify<ituple<T...>&&, Opts> : ituplify<ituple<T...>, Opts> {};
+    template <template <typename...> typename Tt, typename Opts, typename... T>
+    struct ituplify<Tt<T...>&&, Opts> : ituplify<ituple<T...>, Opts> {};
 
-    template <typename Opts, typename... T>
-    struct ituplify<ituple<T...> const, Opts> : ituplify<ituple<T...>, Opts> {};
+    template <template <typename...> typename Tt, typename Opts, typename... T>
+    struct ituplify<Tt<T...> const, Opts> : ituplify<ituple<T...>, Opts> {};
 
-    template <typename Opts, typename... T>
-    struct ituplify<ituple<T...>&, Opts> : ituplify<ituple<T...>, Opts> {};
+    template <template <typename...> typename Tt, typename Opts, typename... T>
+    struct ituplify<Tt<T...>&, Opts> : ituplify<ituple<T...>, Opts> {};
 
     /**
      * This is a wrapper for any type of iterator that holds an ituple
