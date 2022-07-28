@@ -178,6 +178,9 @@ struct iterable_type {
 TEST(TypeTraits, ITupleIteratorTest) {
     iterable_type<ituple> vecs;
 
+    static_assert(is_same_v<remove_cvref_t<decltype(*vecs.begin())>, ituple<int, double>>,
+                  "should return ituple no matter what");
+
     int    i = 0;
     double d = 1.0;
     for (auto [int_val, double_val] : vecs) {

@@ -233,13 +233,13 @@ namespace webpp::istl {
         static constexpr stl::size_t tuple_size =
           native_tuple_size + is_ituple_options<typename last::type>::size;
 
+        template <typename NewOpts>
+        using replace_options = typename last_type<T...>::template put_if<ituple, is_ituple_options, NewOpts>;
+
         template <stl::size_t NewSize>
         using restructured_type = stl::conditional_t<
           (NewSize > native_tuple_size),
-          typename last_type<T...>::template put_if<
-            ituple,
-            is_ituple_options,
-            typename options::template resize<NewSize - native_tuple_size>>,
+          replace_options<typename options::template resize<NewSize - native_tuple_size>>,
           stl::conditional_t<(NewSize < native_tuple_size),
                              typename last_type<T...>::template remove_limit<ituple, NewSize>,
                              ituple>>;
@@ -250,6 +250,9 @@ namespace webpp::istl {
 
         template <typename... Args>
         constexpr ituple(Args&&... args) : this_tuple{stl::forward<Args>(args)...} {}
+
+        template <template <typename...> typename Tup, typename... Args>
+        constexpr ituple(ituple<Args...>&& tup) : this_tuple{stl::forward<Args>(stl::get<Args>(tup))...} {}
 
         template <typename... TupT>
         constexpr ituple(stl::tuple<T..., TupT...>&& tup) : this_tuple{} {
@@ -269,10 +272,8 @@ namespace webpp::istl {
         template <stl::size_t NewSize>
         [[nodiscard]] auto structured() const noexcept {
             if constexpr (NewSize > native_tuple_size) {
-                return typename last_type<T...>::template put_if<
-                  ituple,
-                  is_ituple_options,
-                  typename options::template resize<NewSize - native_tuple_size>>{as_tuple()};
+                return replace_options<typename options::template resize<NewSize - native_tuple_size>>{
+                  as_tuple()};
             } else if constexpr (NewSize < native_tuple_size) {
                 return typename last_type<T...>::template remove_limit<ituple, NewSize>{as_tuple()};
             } else {
@@ -330,12 +331,29 @@ namespace webpp::istl {
         using type = ituple<T...>;
     };
 
+    template <typename Opts, typename... T>
+    struct ituplify<ituple<T...>, Opts> {
+        using type = typename ituple<T...>::template replace_options<Opts>;
+    };
+
+    template <typename Opts, typename... T>
+    struct ituplify<ituple<T...> const&, Opts> : ituplify<ituple<T...>, Opts> {};
+
+    template <typename Opts, typename... T>
+    struct ituplify<ituple<T...>&&, Opts> : ituplify<ituple<T...>, Opts> {};
+
+    template <typename Opts, typename... T>
+    struct ituplify<ituple<T...> const, Opts> : ituplify<ituple<T...>, Opts> {};
+
+    template <typename Opts, typename... T>
+    struct ituplify<ituple<T...>&, Opts> : ituplify<ituple<T...>, Opts> {};
 
     /**
      * This is a wrapper for any type of iterator that holds an ituple
      */
     template <typename Iter,
-              ItupleOptions OptsT = default_ituple_options<stl::tuple_size_v<typename Iter::value_type>>>
+              ItupleOptions OptsT =
+                default_ituple_options<ituplify<typename Iter::value_type>::type::tuple_size>>
     struct ituple_iterator : Iter {
         using options = OptsT;
 
@@ -347,8 +365,9 @@ namespace webpp::istl {
         // value type is an ituple
         using value_type =
           typename ituplify<typename Iter::value_type>::type::template restructured_type<OptsT::size>;
-        using reference = value_type&;
-        using pointer   = value_type*;
+        using reference        = value_type&;
+        using pointer          = value_type*;
+        using native_reference = typename Iter::reference;
 
         static constexpr bool is_nothing = stl::is_same_v<value_type, typename OptsT::default_type>;
 
@@ -364,9 +383,8 @@ namespace webpp::istl {
             if constexpr (requires { options::ituplify(native_iterator().operator*()); }) {
                 return options::ituplify(native_iterator().operator*());
             } else {
-                using native_value_type = decltype(native_iterator().operator*());
-                return ituple<native_value_type, OptsT>{native_iterator().operator*()}
-                  .template structured<OptsT::size>();
+                using ituple_type = typename ituplify<native_reference, OptsT>::type;
+                return ituple_type{native_iterator().operator*()}.template structured<OptsT::size>();
             }
         }
 
@@ -374,9 +392,8 @@ namespace webpp::istl {
             if constexpr (requires { options::ituplify(native_iterator().operator*()); }) {
                 return options::ituplify(native_iterator().operator*());
             } else {
-                using native_value_type = decltype(native_iterator().operator*());
-                return ituple<native_value_type, OptsT>{native_iterator().operator*()}
-                  .template structured<OptsT::size>();
+                using ituple_type = typename ituplify<native_reference, OptsT>::type;
+                return ituple_type{native_iterator().operator*()}.template structured<OptsT::size>();
             }
         }
     };
