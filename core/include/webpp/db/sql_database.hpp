@@ -110,7 +110,7 @@ namespace webpp::sql {
                 return errmsg.empty();
             } else {
                 auto stmt = this->prepare(string_viewify(stl::forward<StrT>(sql_str)));
-                return stmt.step();
+                return !stmt.step();
             }
         }
 
