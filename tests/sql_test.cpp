@@ -21,16 +21,16 @@ TEST(Database, SQLiteWrapper) {
     );)sql"));
 
     auto stmt = db.prepare("insert into settings (name, value) values (?, ?)");
-    stmt.bind(0, "username");
-    stmt.bind(1, "moisrex");
+    stmt.bind(1, "username");
+    stmt.bind(2, "moisrex");
     stmt.step();
 
 
     stmt = db.prepare("select * from settings;");
     while (stmt.step()) {
-        auto        id    = stmt.column(0);
-        stl::string name  = stmt.column(1);
-        stl::string value = stmt.column(2);
+        auto        id    = stmt.column(1);
+        stl::string name  = stmt.column(2);
+        stl::string value = stmt.column(3);
         EXPECT_TRUE(id.is_number());
         EXPECT_EQ(name, "username");
         EXPECT_EQ(value, "moisrex");
