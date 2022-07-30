@@ -87,14 +87,24 @@ namespace webpp::sql {
             }
         }
 
-        // prepare an statment for the parent sql connection to wrap it
-        statement_type prepare(std::string_view stmt_str, istl::String auto& errmsg) noexcept {
-            ::sqlite3_stmt* stmt;
+        template <istl::String StrT>
+        statement_type prepare(std::string_view stmt_str, StrT& errmsg) noexcept {
+            statement_type stmt;
+            prepare(stmt_str, stmt, stl::forward<StrT>(errmsg));
+            return stmt;
+        }
 
+
+        // prepare an statment for the parent sql connection to wrap it
+        statement_type
+        prepare(std::string_view stmt_str, statement_type& stmt, istl::String auto& errmsg) noexcept {
             // todo: there's a performance gain if you know the string is null terminated. (more: https://www.sqlite.org/c3ref/prepare.html)
 
-            const int rc =
-              sqlite3_prepare_v2(handle, stmt_str.data(), static_cast<int>(stmt_str.size()), &stmt, nullptr);
+            const int rc = sqlite3_prepare_v2(handle,
+                                              stmt_str.data(),
+                                              static_cast<int>(stmt_str.size()),
+                                              &stmt.sqlite3_stmt(),
+                                              nullptr);
             if (rc != SQLITE_OK) [[unlikely]] {
                 errmsg += "SQLite3 error, could not prepare statement: ";
                 errmsg += sqlite3_errmsg(handle);
@@ -106,7 +116,6 @@ namespace webpp::sql {
                     errmsg += "...";
                 }
             }
-            return {stmt};
         }
 
         ~sqlite_connection() noexcept {

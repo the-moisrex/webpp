@@ -92,8 +92,8 @@ namespace webpp::sql {
             // and the "statement_type" will accept a "driver_statement_type" as its ctor argument.
 
             auto           errmsg = object::make_general<string_type>(*this);
-            statement_type stmt{driver().prepare(string_viewify(stl::forward<StrT>(sql_str)), errmsg),
-                                this->get_traits()};
+            statement_type stmt{this->get_traits()};
+            driver().prepare(string_viewify(stl::forward<StrT>(sql_str)), stmt, errmsg);
             log(errmsg);
             return stmt;
         }

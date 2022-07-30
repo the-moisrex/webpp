@@ -80,6 +80,9 @@ namespace webpp::sql {
             }
         }
 
+        inline ::sqlite3_stmt*& sqlite3_stmt() noexcept {
+            return stmt;
+        }
 
         /**
          * Possilbe values:
