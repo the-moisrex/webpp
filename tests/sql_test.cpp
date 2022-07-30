@@ -43,7 +43,7 @@ TEST(Database, SQLiteWrapper) {
         // EXPECT_EQ(row.size(), 3);
         EXPECT_EQ(stl::tuple_size_v<row_type>, 3);
         auto [id, name, value] = row;
-        EXPECT_TRUE(name.is_number());
+        EXPECT_TRUE(id.is_number());
         EXPECT_TRUE(name.is_string());
         EXPECT_TRUE(value.is_string());
         EXPECT_EQ(name, "username");
