@@ -90,14 +90,13 @@ namespace webpp::sql {
         template <istl::String StrT>
         statement_type prepare(std::string_view stmt_str, StrT& errmsg) noexcept {
             statement_type stmt;
-            prepare(stmt_str, stmt, stl::forward<StrT>(errmsg));
+            prepare(stmt_str, stmt, errmsg);
             return stmt;
         }
 
 
         // prepare an statment for the parent sql connection to wrap it
-        statement_type
-        prepare(std::string_view stmt_str, statement_type& stmt, istl::String auto& errmsg) noexcept {
+        void prepare(std::string_view stmt_str, statement_type& stmt, istl::String auto& errmsg) noexcept {
             // todo: there's a performance gain if you know the string is null terminated. (more: https://www.sqlite.org/c3ref/prepare.html)
 
             const int rc = sqlite3_prepare_v2(handle,
