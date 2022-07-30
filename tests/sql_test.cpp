@@ -28,9 +28,9 @@ TEST(Database, SQLiteWrapper) {
 
     stmt = db.prepare("select * from settings;");
     while (stmt.step()) {
-        auto        id    = stmt.column(1);
-        stl::string name  = stmt.column(2);
-        stl::string value = stmt.column(3);
+        auto        id    = stmt.column(0);
+        stl::string name  = stmt.column(1);
+        stl::string value = stmt.column(2);
         EXPECT_TRUE(id.is_number());
         EXPECT_EQ(name, "username");
         EXPECT_EQ(value, "moisrex");

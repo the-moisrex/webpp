@@ -118,7 +118,7 @@ namespace webpp::sql {
             return {driver()};
         }
 
-        [[nodiscard]] inline driver_type driver() noexcept {
+        [[nodiscard]] inline driver_type& driver() noexcept {
             return *static_cast<driver_type*>(this);
         }
 
