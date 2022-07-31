@@ -99,6 +99,11 @@ namespace webpp::sql {
             return continue_or_not;
         }
 
+        inline sql_statement& execute() noexcept {
+            (void) step();
+            return *this;
+        }
+
         inline cell_type column(size_type index) noexcept {
             return {*this, index};
         }
@@ -143,6 +148,7 @@ namespace webpp::sql {
 
         // row iterator
         [[nodiscard]] iterator begin() noexcept {
+            execute();
             return {this};
         }
 
@@ -151,11 +157,6 @@ namespace webpp::sql {
             return {};
         }
 
-
-        // row iterator
-        [[nodiscard]] const_iterator begin() const noexcept {
-            return {this};
-        }
 
         // end of row iterator
         [[nodiscard]] const_iterator end() const noexcept {

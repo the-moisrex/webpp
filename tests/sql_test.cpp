@@ -23,7 +23,7 @@ TEST(Database, SQLiteWrapper) {
     auto stmt = db.prepare("insert into settings (name, value) values (?, ?)");
     stmt.bind(1, "username");
     stmt.bind(2, "moisrex");
-    stmt.step();
+    stmt.execute();
 
 
     stmt = db.prepare("select * from settings;");
@@ -38,15 +38,18 @@ TEST(Database, SQLiteWrapper) {
 
     stmt = db.prepare("select * from settings;");
 
+    int index = 0;
     for (auto row : stmt.structured<3>()) {
         using row_type = stl::remove_cvref_t<decltype(row)>;
-        // EXPECT_EQ(row.size(), 3);
+        EXPECT_EQ(row.size(), 3);
         EXPECT_EQ(stl::tuple_size_v<row_type>, 3);
         auto [id, name, value] = row;
-        EXPECT_TRUE(id.is_number());
-        EXPECT_TRUE(name.is_string());
-        EXPECT_TRUE(value.is_string());
-        EXPECT_EQ(name, "username");
-        EXPECT_EQ(value, "moisrex");
+        EXPECT_TRUE(id.is_number()) << "row: " << index;
+        EXPECT_TRUE(name.is_string()) << "row: " << index;
+        EXPECT_TRUE(value.is_string()) << "row: " << index;
+        EXPECT_EQ(name, "username") << "row: " << index;
+        EXPECT_EQ(value, "moisrex") << "row: " << index;
+
+        index++;
     }
 }
