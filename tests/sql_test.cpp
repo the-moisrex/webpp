@@ -68,7 +68,7 @@ TEST(Database, SQLiteWrapper) {
 
 
     stmt             = db.prepare("select value from settings where name = ?;");
-    stmt[0]          = "password";
+    stmt[1]          = "password";
     std::string pass = stmt.first()[0];
     EXPECT_EQ(pass, "123");
 }
