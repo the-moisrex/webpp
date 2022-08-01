@@ -52,4 +52,23 @@ TEST(Database, SQLiteWrapper) {
 
         index++;
     }
+
+
+    stmt = db.prepare("insert into settings (name, value) values (?, ?)");
+    stmt.bind(1, "password");
+    stmt.bind(2, "123");
+    stmt.execute();
+    stmt.bind(1, "email");
+    stmt.bind(2, "example@example.com");
+    stmt.execute();
+
+    stmt      = db.prepare("select count(*) from settings;");
+    int count = stmt.first()[0];
+    EXPECT_EQ(count, 3);
+
+
+    stmt             = db.prepare("select value from settings where name = ?;");
+    stmt[0]          = "password";
+    std::string pass = stmt.first()[0];
+    EXPECT_EQ(pass, "123");
 }

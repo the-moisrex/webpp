@@ -119,10 +119,6 @@ namespace webpp::sql {
             return cell_type{*this, 1};
         }
 
-        [[nodiscard]] inline row_type rows() const noexcept {
-            return {driver()};
-        }
-
         [[nodiscard]] inline driver_type& driver() noexcept {
             return *static_cast<driver_type*>(this);
         }
@@ -161,6 +157,12 @@ namespace webpp::sql {
         // end of row iterator
         [[nodiscard]] const_iterator end() const noexcept {
             return {};
+        }
+
+
+        [[nodiscard]] row_type first() noexcept {
+            execute();
+            return {*this};
         }
     };
 
