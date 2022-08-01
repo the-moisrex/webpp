@@ -218,6 +218,10 @@ namespace webpp::sql {
 
         [[nodiscard]] inline column_category column_category(int index) const noexcept {
             switch (sqlite3_column_type(stmt, index)) {
+                case SQLITE_FLOAT: [[fallthrough]];
+                case SQLITE_INTEGER: return column_category::number;
+                case SQLITE_TEXT: return column_category::string;
+                case SQLITE_BLOB: return column_category::blob;
                 default: return column_category::unknown;
             }
         }
