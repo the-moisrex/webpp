@@ -31,6 +31,7 @@ namespace webpp::sql {
                 case SQLITE_RANGE: err_msg = "bind value out of range"; break;
                 case SQLITE_NOMEM: err_msg = "bind value out of memory"; break;
                 case SQLITE_TOOBIG: err_msg = "bind value is too big"; break;
+                case SQLITE_MISUSE: err_msg = "sqlite misuse"; break;
                 default:
                     err_msg += "bind value returned unexpected value: ";
                     err_msg += stl::to_string(result); // todo: use our own version of this function call
@@ -43,30 +44,23 @@ namespace webpp::sql {
       public:
         constexpr sqlite_statement() noexcept = default;
         constexpr sqlite_statement(::sqlite3_stmt* in_stmt) noexcept : stmt{in_stmt} {}
-        constexpr sqlite_statement(sqlite_statement const&) = default;
-        constexpr sqlite_statement(sqlite_statement&& in_stmt) noexcept {
-            stmt         = in_stmt.stmt;
-            in_stmt.stmt = nullptr;
-        }
+        constexpr sqlite_statement(sqlite_statement const&)     = delete;
+        constexpr sqlite_statement(sqlite_statement&&) noexcept = default;
 
-        sqlite_statement& operator=(const sqlite_statement&) = default;
-        sqlite_statement& operator=(sqlite_statement&& in_stmt) noexcept {
-            stmt         = in_stmt.stmt;
-            in_stmt.stmt = nullptr;
-            return *this;
-        }
-
+        sqlite_statement& operator=(const sqlite_statement&)     = delete;
+        sqlite_statement& operator=(sqlite_statement&&) noexcept = default;
 
         sqlite_statement& operator=(::sqlite3_stmt* in_stmt) noexcept {
+            destroy();
             stmt = in_stmt;
             return *this;
         }
 
-        bool operator==(sqlite_statement rhs) const noexcept {
+        bool operator==(sqlite_statement const& rhs) const noexcept {
             return stmt == rhs.stmt;
         }
 
-        auto operator<=>(sqlite_statement rhs) const noexcept {
+        auto operator<=>(sqlite_statement const& rhs) const noexcept {
             return stmt <=> rhs.stmt;
         }
 

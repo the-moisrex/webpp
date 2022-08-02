@@ -62,11 +62,16 @@ namespace webpp::sql {
           : driver_type{stl::move(driver)},
             etraits{stl::forward<ET>(et)} {}
         sql_statement(sql_statement&&) noexcept = default;
-        sql_statement(sql_statement const&)     = default;
+        sql_statement(sql_statement const&)     = delete;
 
 
         sql_statement& operator=(sql_statement&&) noexcept = default;
-        sql_statement& operator=(sql_statement const&)     = default;
+        sql_statement& operator=(sql_statement const&)     = delete;
+
+        sql_statement& operator=(driver_type&& new_driver) noexcept {
+            driver() = new_driver;
+            return *this;
+        }
 
         /**
          * Possible values that get passed down:
