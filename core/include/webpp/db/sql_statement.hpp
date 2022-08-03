@@ -30,6 +30,8 @@ namespace webpp::sql {
         using iterator          = row_iterator<sql_statement>;
         using const_iterator    = row_iterator<const sql_statement>;
 
+        static constexpr auto LOG_CAT = "SQLStmt";
+
         // should satisfy ItupleOptions
         // These are ituple options which make all elements of ituple a "row".
         template <stl::size_t N = 0>
@@ -88,9 +90,7 @@ namespace webpp::sql {
             } else {
                 static_assert_false(T, "Don't know how to bind the value, unknown type specified.");
             }
-            if (!errmsg.empty()) {
-                this->logger.error("SQLStmt", errmsg);
-            }
+            log(errmsg);
             return *this;
         }
 
@@ -98,7 +98,7 @@ namespace webpp::sql {
             auto       errmsg          = object::make_general<string_type>(*this);
             const bool continue_or_not = driver().step(errmsg);
             if (!errmsg.empty()) {
-                this->logger.error("SQLStmt", errmsg);
+                this->logger.error(LOG_CAT, errmsg);
                 return false;
             }
             return continue_or_not;
@@ -106,6 +106,14 @@ namespace webpp::sql {
 
         inline sql_statement& execute() noexcept {
             (void) step();
+            return *this;
+        }
+
+
+        inline sql_statement& reset() noexcept {
+            auto errmsg = object::make_general<string_type>(*this);
+            driver().reset(errmsg);
+            log(errmsg);
             return *this;
         }
 
@@ -168,6 +176,12 @@ namespace webpp::sql {
         [[nodiscard]] row_type first() noexcept {
             execute();
             return {*this};
+        }
+
+        inline void log(istl::String auto const& errmsg) noexcept {
+            if (!errmsg.empty()) {
+                this->logger.error(LOG_CAT, errmsg);
+            }
         }
     };
 

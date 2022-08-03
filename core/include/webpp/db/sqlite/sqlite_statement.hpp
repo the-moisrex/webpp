@@ -74,6 +74,15 @@ namespace webpp::sql {
             }
         }
 
+        inline void reset(istl::String auto& errmsg) noexcept {
+            int rc = sqlite3_reset(stmt);
+            if (rc != SQLITE_OK) {
+                errmsg += "Sqlite reset error with code: ";
+                errmsg += stl::to_string(rc);
+                // todo: a better error please that supports other string types as well.
+            }
+        }
+
         inline ::sqlite3_stmt*& sqlite3_stmt() noexcept {
             return stmt;
         }

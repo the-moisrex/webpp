@@ -36,10 +36,9 @@ TEST(Database, SQLiteWrapper) {
         EXPECT_EQ(value, "moisrex");
     }
 
-    stmt = db.prepare("select * from settings;");
 
     int index = 0;
-    for (auto row : stmt.structured<3>()) {
+    for (auto row : stmt.reset().structured<3>()) {
         using row_type = stl::remove_cvref_t<decltype(row)>;
         // EXPECT_EQ(row.size(), 3);
         EXPECT_EQ(stl::tuple_size_v<row_type>, 3);
