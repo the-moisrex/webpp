@@ -57,6 +57,7 @@ TEST(Database, SQLiteWrapper) {
     stmt.bind(1, "password");
     stmt.bind(2, "123");
     stmt.execute();
+    stmt.reset();
     stmt.bind(1, "email");
     stmt.bind(2, "example@example.com");
     stmt.execute();
