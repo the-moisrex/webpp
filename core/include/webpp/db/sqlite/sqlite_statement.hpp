@@ -44,11 +44,22 @@ namespace webpp::sql {
       public:
         constexpr sqlite_statement() noexcept = default;
         constexpr sqlite_statement(::sqlite3_stmt* in_stmt) noexcept : stmt{in_stmt} {}
-        constexpr sqlite_statement(sqlite_statement const&)     = delete;
-        constexpr sqlite_statement(sqlite_statement&&) noexcept = default;
+        constexpr sqlite_statement(sqlite_statement const&) = delete;
+        constexpr sqlite_statement(sqlite_statement&& in_stmt) noexcept {
+            stmt         = in_stmt.stmt;
+            in_stmt.stmt = nullptr; // stop the pointer from becoming "destroy"ed.
+        }
 
-        sqlite_statement& operator=(const sqlite_statement&)     = delete;
-        sqlite_statement& operator=(sqlite_statement&&) noexcept = default;
+        sqlite_statement& operator=(const sqlite_statement&) = delete;
+        sqlite_statement& operator=(sqlite_statement&& in_stmt) noexcept {
+            if (stmt == in_stmt.stmt)
+                return *this;
+
+            destroy();
+            stmt         = in_stmt.stmt;
+            in_stmt.stmt = nullptr; // stop the pointer from becoming "destroy"ed.
+            return *this;
+        }
 
         sqlite_statement& operator=(::sqlite3_stmt* in_stmt) noexcept {
             destroy();
