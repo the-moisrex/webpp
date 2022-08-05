@@ -24,6 +24,7 @@ namespace webpp::sql {
 
       private:
         database_ref      db;
+        string_type       table_name;
         vector_of_strings columns;
 
         template <typename T>
@@ -50,6 +51,13 @@ namespace webpp::sql {
                 columns.push_back(stringify(stl::forward<T>(columns)));
             } else if constexpr (istl::ReadOnlyCollection<T>) {
             }
+            return *this;
+        }
+
+
+        template <istl::StringViewifiable StrvT>
+        constexpr query_builder& table(StrvT&& in_table_name) noexcept {
+            table_name = istl::stringify_of<string_type>(stl::forward<StrvT>(in_table_name), db.alloc_pack);
             return *this;
         }
     };

@@ -84,7 +84,7 @@ TEST(Database, QueryBuilderTest) {
         value text
     );)sql"));
 
-    auto inserter     = db.table["settings"];
+    auto inserter     = db.table("settings");
     inserter["name"]  = "username";
     inserter["value"] = "moisrex";
     inserter.insert();
