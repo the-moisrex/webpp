@@ -72,3 +72,28 @@ TEST(Database, SQLiteWrapper) {
     std::string pass = stmt.first()[0];
     EXPECT_EQ(pass, "123");
 }
+
+
+TEST(Database, QueryBuilderTest) {
+    sql_database<sqlite> db; // in memory database
+
+    // query builder is different than schema builder
+    ASSERT_TRUE(db.execute(R"sql(create table settings(
+        id integer primary key,
+        name text,
+        value text
+    );)sql"));
+
+    auto inserter     = db.table["settings"];
+    inserter["name"]  = "username";
+    inserter["value"] = "moisrex";
+    inserter.insert();
+    inserter.insert({
+      {"name", "password"}, // col 2
+      {"value", 123}        // col 3
+    });
+
+
+    auto query = db.table["settings"].select("value").where("name"_field == "username");
+    EXPECT_EQ("select value from settings where name = ?", query.prepared_query());
+}
