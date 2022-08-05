@@ -9,19 +9,21 @@
 
 namespace webpp::sql {
 
-    template <Traits TraitsType, SQLDatabase DBType>
+    template <typename DBType>
     struct query_builder {
-        using traits_type       = TraitsType;
+        using database_type     = DBType;
+        using traits_type       = typename database_type::traits_type;
         using string_type       = traits::general_string<traits_type>;
         using local_string_type = traits::local_string<traits_type>;
         using vector_of_strings = traits::localify_allocator<traits_type, stl::vector<local_string_type>>;
+        using database_ref      = stl::add_lvalue_reference_t<database_type>;
 
-        using database_type = DBType;
-        using grammar_type  = typename database_type::grammar_type;
+        using grammar_type = typename database_type::grammar_type;
         using connection_type typename database_type::connection_type;
 
 
       private:
+        database_ref      db;
         vector_of_strings columns;
 
         template <typename T>
@@ -47,7 +49,6 @@ namespace webpp::sql {
             if constexpr (istl::Stringifiable<T>) {
                 columns.push_back(stringify(stl::forward<T>(columns)));
             } else if constexpr (istl::ReadOnlyCollection<T>) {
-
             }
             return *this;
         }
