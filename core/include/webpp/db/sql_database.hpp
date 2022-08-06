@@ -29,6 +29,8 @@ namespace webpp::sql {
         using string_view_type      = traits::string_view<traits_type>;
         using string_type           = traits::general_string<traits_type>;
         using query_builder_type    = query_builder<basic_sql_database>;
+        using connection_type       = typename driver_type::connection_type;
+        using grammar_type          = typename driver_type::grammar_type;
 
         template <typename T>
         static constexpr bool supports_string_view =

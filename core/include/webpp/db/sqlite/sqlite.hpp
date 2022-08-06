@@ -12,8 +12,9 @@ namespace webpp::sql {
 
     template <Traits TraitsType>
     struct basic_sqlite : public sqlite_connection {
-        using traits_type  = TraitsType;
-        using grammar_type = sqlite_grammar;
+        using traits_type     = TraitsType;
+        using grammar_type    = sqlite_grammar;
+        using connection_type = sqlite_connection;
 
         template <typename T>
         static constexpr bool   supports_string_view =

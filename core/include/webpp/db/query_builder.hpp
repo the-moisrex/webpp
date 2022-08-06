@@ -15,11 +15,12 @@ namespace webpp::sql {
         using traits_type       = typename database_type::traits_type;
         using string_type       = traits::general_string<traits_type>;
         using local_string_type = traits::local_string<traits_type>;
-        using vector_of_strings = traits::localify_allocator<traits_type, stl::vector<local_string_type>>;
+        using vector_of_strings = traits::localify_allocators<traits_type, stl::vector<local_string_type>>;
         using database_ref      = stl::add_lvalue_reference_t<database_type>;
 
-        using grammar_type = typename database_type::grammar_type;
-        using connection_type typename database_type::connection_type;
+        using driver_type     = typename database_type::driver_type;
+        using grammar_type    = typename database_type::grammar_type;
+        using connection_type = typename database_type::connection_type;
 
 
       private:
@@ -28,7 +29,7 @@ namespace webpp::sql {
         vector_of_strings columns;
 
         template <typename T>
-        static constexpr bool is_stringify = istl::StringifiableOf<local_stirng_type, T>;
+        static constexpr bool is_stringify = istl::StringifiableOf<local_string_type, T>;
 
         // helper to convert the input to acceptable string type
         template <typename T>
