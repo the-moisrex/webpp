@@ -94,6 +94,8 @@ TEST(Database, QueryBuilderTest) {
     });
 
 
-    auto query = db.table["settings"].select("value").where("name"_field == "username");
+    auto query = db.table("settings") //
+                   .select("value")
+                   .where("name"_field == "username");
     EXPECT_EQ("select value from settings where name = ?", query.prepared_query());
 }
