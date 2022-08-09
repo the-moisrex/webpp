@@ -9,8 +9,43 @@
 
 namespace webpp::sql {
 
+    namespace details {
+        template <typename T>
+        struct query_builder_subclasses {
+            using string_type = typename T::string_type;
+
+            [[no_unique_address]] struct table_type {
+
+                // get query_builder reference
+                constexpr inline T& enclosing() noexcept {
+                    return *reinterpret_cast<T*>(reinterpret_cast<char*>(this) -
+                                                 offsetof(query_builder_subclasses, table));
+                }
+
+                template <istl::StringViewifiable StrvT>
+                constexpr T& name(StrvT&& in_table_name) noexcept {
+                    enclosing().table_name =
+                      istl::stringify_of<string_type>(stl::forward<StrvT>(in_table_name),
+                                                      enclosing().db.alloc_pack);
+                    return enclosing();
+                }
+
+                template <istl::StringViewifiable StrvT>
+                constexpr T& operator()(StrvT&& in_table_name) noexcept {
+                    return name(stl::forward<StrvT>(in_table_name));
+                }
+
+                template <istl::StringViewifiable StrvT>
+                constexpr T& operator=(StrvT&& in_table_name) noexcept {
+                    return name(stl::forward<StrvT>(in_table_name));
+                }
+
+            } table;
+        };
+    } // namespace details
+
     template <typename DBType>
-    struct query_builder {
+    struct query_builder : public details::query_builder_subclasses<query_builder<DBType>> {
         using database_type     = DBType;
         using traits_type       = typename database_type::traits_type;
         using string_type       = traits::general_string<traits_type>;
@@ -52,13 +87,6 @@ namespace webpp::sql {
                 columns.push_back(stringify(stl::forward<T>(columns)));
             } else if constexpr (istl::ReadOnlyCollection<T>) {
             }
-            return *this;
-        }
-
-
-        template <istl::StringViewifiable StrvT>
-        constexpr query_builder& table(StrvT&& in_table_name) noexcept {
-            table_name = istl::stringify_of<string_type>(stl::forward<StrvT>(in_table_name), db.alloc_pack);
             return *this;
         }
     };
