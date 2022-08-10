@@ -14,16 +14,19 @@ namespace webpp::sql {
         struct query_builder_subclasses {
             using string_type = typename T::string_type;
 
+            // get query_builder reference
+#define define_enclosing(obj)                                                  \
+    constexpr inline T& enclosing() noexcept {                                 \
+        return *reinterpret_cast<T*>(reinterpret_cast<char*>(this) -           \
+                                     offsetof(query_builder_subclasses, obj)); \
+    }
+
             [[no_unique_address]] struct table_type {
 
-                // get query_builder reference
-                constexpr inline T& enclosing() noexcept {
-                    return *reinterpret_cast<T*>(reinterpret_cast<char*>(this) -
-                                                 offsetof(query_builder_subclasses, table));
-                }
+                define_enclosing(table)
 
-                template <istl::StringViewifiable StrvT>
-                constexpr T& name(StrvT&& in_table_name) noexcept {
+                  template <istl::StringViewifiable StrvT>
+                  constexpr T& name(StrvT&& in_table_name) noexcept {
                     enclosing().table_name =
                       istl::stringify_of<string_type>(stl::forward<StrvT>(in_table_name),
                                                       enclosing().db.alloc_pack);
