@@ -15,10 +15,11 @@ namespace webpp::sql {
         using traits_type     = TraitsType;
         using grammar_type    = sqlite_grammar;
         using connection_type = sqlite_connection;
+        using size_type       = int;
 
         template <typename T>
-        static constexpr bool   supports_string_view =
-          istl::StringView<T>&& stl::same_as<istl::char_type_of<T>, char>;
+        static constexpr bool supports_string_view =
+          istl::StringView<T> && stl::same_as<istl::char_type_of<T>, char>;
 
         static_assert(supports_string_view<stl::string_view>, "It should support standard string views");
 

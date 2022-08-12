@@ -119,7 +119,7 @@ namespace webpp::istl {
             // It's in order, so there's no need of re-ordering
             return TupleT{stl::forward<T>(args)...};
         } else {
-            // re-order, and default-construct those that don't exists in the args
+            // re-order, and default-construct those that don't exist in the args
             return (
               []<stl::size_t... ints>(stl::index_sequence<ints...>, T && ... sub_args) constexpr noexcept {
                   no_order_tuple bad_tuple{stl::forward<T>(sub_args)...};
@@ -417,8 +417,8 @@ namespace webpp::istl {
 
         constexpr ituple_iterable(iterable_ref obj) noexcept : object{obj} {}
 
-        constexpr ituple_iterable(ituple_iterable const&) = default;
-        constexpr ituple_iterable(ituple_iterable&&)      = default;
+        constexpr ituple_iterable(ituple_iterable const&)     = default;
+        constexpr ituple_iterable(ituple_iterable&&) noexcept = default;
 
 
         // move ctor

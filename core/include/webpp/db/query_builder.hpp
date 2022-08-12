@@ -16,10 +16,10 @@ namespace webpp::sql {
     namespace details {
         template <typename DBType>
         struct query_builder_subclasses {
-            using driver_type        = DBType;
-            using traits_type        = typename driver_type::traits_type;
+            using database_type      = DBType;
+            using traits_type        = typename database_type::traits_type;
             using string_type        = traits::general_string<traits_type>;
-            using query_builder_type = query_builder<driver_type>;
+            using query_builder_type = query_builder<database_type>;
 
             // get query_builder reference
 #define define_enclosing(obj)                                                                   \
@@ -55,14 +55,53 @@ namespace webpp::sql {
         };
     } // namespace details
 
+
+    /**
+     * This class is used in query builder class in order to let the users do this:
+     * @code
+     *   builder["col_name"] = "value";
+     *   builder["col_int"]  = 313;
+     *   builder[1]          = 5.2; // bind with index
+     * @endcode
+     * @tparam DBType
+     */
+    template <typename DBType>
+    struct column_builder {
+        using database_type = DBType;
+        using database_ref  = stl::add_lvalue_reference_t<database_type>;
+        using size_type     = typename database_type::size_type;
+
+      private:
+        database_ref db;
+        size_type    index;
+
+      public:
+        constexpr column_builder(database_ref input_db, size_type input_index = 0) noexcept
+          : db{input_db},
+            index{input_index} {}
+
+        // set the value for the specified column
+        template <typename T>
+        constexpr column_builder& operator=(T&& value) noexcept {
+            db.bind(index, stl::forward<T>(value));
+            return *this;
+        }
+    };
+
+    /**
+     * This is a query builder class
+     * @tparam DBType
+     */
     template <typename DBType>
     struct query_builder : public details::query_builder_subclasses<DBType> {
-        using database_type     = DBType;
-        using traits_type       = typename database_type::traits_type;
-        using string_type       = traits::general_string<traits_type>;
-        using local_string_type = traits::local_string<traits_type>;
-        using vector_of_strings = traits::localify_allocators<traits_type, stl::vector<local_string_type>>;
-        using database_ref      = stl::add_lvalue_reference_t<database_type>;
+        using database_type       = DBType;
+        using traits_type         = typename database_type::traits_type;
+        using string_type         = traits::general_string<traits_type>;
+        using local_string_type   = traits::local_string<traits_type>;
+        using vector_of_strings   = traits::localify_allocators<traits_type, stl::vector<local_string_type>>;
+        using database_ref        = stl::add_lvalue_reference_t<database_type>;
+        using column_builder_type = column_builder<database_type>;
+        using size_type           = typename database_type::size_type;
 
         using driver_type     = typename database_type::driver_type;
         using grammar_type    = typename database_type::grammar_type;
@@ -99,6 +138,16 @@ namespace webpp::sql {
             } else if constexpr (istl::ReadOnlyCollection<T>) {
             }
             return *this;
+        }
+
+
+        template <istl::StringViewifiable StrvT>
+        constexpr column_builder_type operator[](StrvT&& col_name) const noexcept {
+            return {db, db.column_index(stl::forward<StrvT>(col_name))};
+        }
+
+        constexpr column_builder_type operator[](size_type col_index) const noexcept {
+            return {db, col_index};
         }
     };
 
