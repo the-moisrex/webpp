@@ -230,7 +230,7 @@ namespace webpp::sql {
             return static_cast<supported_column_types>(sqlite3_column_type(stmt, index));
         }
 
-        [[nodiscard]] inline column_category column_category(int index) const noexcept {
+        [[nodiscard]] inline column_category column_cat(int index) const noexcept {
             switch (sqlite3_column_type(stmt, index)) {
                 case SQLITE_FLOAT: [[fallthrough]];
                 case SQLITE_INTEGER: return column_category::number;

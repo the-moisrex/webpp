@@ -9,24 +9,32 @@
 
 namespace webpp::sql {
 
+    template <typename DBType>
+    struct query_builder;
+
+
     namespace details {
-        template <typename T>
+        template <typename DBType>
         struct query_builder_subclasses {
-            using string_type = typename T::string_type;
+            using driver_type        = DBType;
+            using traits_type        = typename driver_type::traits_type;
+            using string_type        = traits::general_string<traits_type>;
+            using query_builder_type = query_builder<driver_type>;
 
             // get query_builder reference
-#define define_enclosing(obj)                                                  \
-    constexpr inline T& enclosing() noexcept {                                 \
-        return *reinterpret_cast<T*>(reinterpret_cast<char*>(this) -           \
-                                     offsetof(query_builder_subclasses, obj)); \
+#define define_enclosing(obj)                                                                   \
+    constexpr inline query_builder_type& enclosing() noexcept {                                 \
+        return *reinterpret_cast<query_builder_type*>(reinterpret_cast<char*>(this) -           \
+                                                      offsetof(query_builder_subclasses, obj)); \
     }
 
             [[no_unique_address]] struct table_type {
 
-                define_enclosing(table)
+                define_enclosing(table);
 
-                  template <istl::StringViewifiable StrvT>
-                  constexpr T& name(StrvT&& in_table_name) noexcept {
+                // set the name
+                template <istl::StringViewifiable StrvT>
+                constexpr query_builder_type& name(StrvT&& in_table_name) noexcept {
                     enclosing().table_name =
                       istl::stringify_of<string_type>(stl::forward<StrvT>(in_table_name),
                                                       enclosing().db.alloc_pack);
@@ -34,12 +42,12 @@ namespace webpp::sql {
                 }
 
                 template <istl::StringViewifiable StrvT>
-                constexpr T& operator()(StrvT&& in_table_name) noexcept {
+                constexpr query_builder_type& operator()(StrvT&& in_table_name) noexcept {
                     return name(stl::forward<StrvT>(in_table_name));
                 }
 
                 template <istl::StringViewifiable StrvT>
-                constexpr T& operator=(StrvT&& in_table_name) noexcept {
+                constexpr query_builder_type& operator=(StrvT&& in_table_name) noexcept {
                     return name(stl::forward<StrvT>(in_table_name));
                 }
 
@@ -48,7 +56,7 @@ namespace webpp::sql {
     } // namespace details
 
     template <typename DBType>
-    struct query_builder : public details::query_builder_subclasses<query_builder<DBType>> {
+    struct query_builder : public details::query_builder_subclasses<DBType> {
         using database_type     = DBType;
         using traits_type       = typename database_type::traits_type;
         using string_type       = traits::general_string<traits_type>;
