@@ -194,10 +194,10 @@ namespace webpp::istl {
 
     template <typename T>
     concept ItupleOptions = requires(T o) {
-        typename T::default_type;
-        T::size;
-        typename T::template resize<2>;
-    };
+                                typename T::default_type;
+                                T::size;
+                                typename T::template resize<2>;
+                            };
 
     template <typename T>
     struct is_ituple_options {
@@ -424,8 +424,8 @@ namespace webpp::istl {
         // move ctor
         template <stl::size_t NewSize>
         constexpr ituple_iterable(
-          ituple_iterable<IterableT, typename OptsT::template resize<NewSize>>& iterable) noexcept
-          : object{iterable.object} {}
+          ituple_iterable<IterableT, typename OptsT::template resize<NewSize>>& in_iterable) noexcept
+          : object{in_iterable.object} {}
 
         template <stl::size_t NewSize>
         [[nodiscard]] constexpr ituple_iterable<IterableT, typename OptsT::template resize<NewSize>>

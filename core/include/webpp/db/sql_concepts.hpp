@@ -19,7 +19,7 @@ namespace webpp::sql {
     template <typename T>
     concept SQLStatement = requires(T stmt, stl::string& errmsg, stl::string& name) {
         typename T::size_type;
-        stl::integral<typename T::size_type>;
+        requires stl::integral<typename T::size_type>;
 
         stmt.bind(1, stl::string_view{}, errmsg); // index based set string type
         stmt.bind(1, 1, errmsg);                  // index based set integer type

@@ -93,9 +93,9 @@ namespace webpp::sql {
          * Set columns to be selected in the sql query.
          */
         template <typename T>
-        constexpr query_builder& select(T&& columns) noexcept {
+        constexpr query_builder& select(T&& col) noexcept {
             if constexpr (istl::Stringifiable<T>) {
-                columns.push_back(stringify(stl::forward<T>(columns)));
+                col.push_back(stringify(stl::forward<T>(col)));
             } else if constexpr (istl::ReadOnlyCollection<T>) {
             }
             return *this;
