@@ -1,13 +1,45 @@
-#ifndef WEBPP_DDATABASE_SQL_QUERY_BUILDER_HPP
-#define WEBPP_DDATABASE_SQL_QUERY_BUILDER_HPP
+#ifndef WEBPP_DATABASE_SQL_QUERY_BUILDER_HPP
+#define WEBPP_DATABASE_SQL_QUERY_BUILDER_HPP
 
 #include "../std/collection.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
+#include "../strings/join.hpp"
 #include "../traits/traits.hpp"
 #include "sql_concepts.hpp"
 
 namespace webpp::sql {
+
+    template <typename CharT = char>
+    struct sql_lowercase_keywords {
+        static constexpr const CharT* select      = "select";
+        static constexpr const CharT* update      = "update";
+        static constexpr const CharT* delete_word = "delete";
+        static constexpr const CharT* values      = "values";
+        static constexpr const CharT* from        = "from";
+        static constexpr const CharT* where       = "where";
+        static constexpr const CharT* in          = "in";
+        static constexpr const CharT* null        = "null";
+        static constexpr const CharT* not_word    = "not";
+        static constexpr const CharT* and_word    = "and";
+        static constexpr const CharT* or_word     = "or";
+    };
+
+    template <typename CharT = char>
+    struct sql_uppercase_keywords {
+        static constexpr const CharT* select      = "SELECT";
+        static constexpr const CharT* update      = "UPDATE";
+        static constexpr const CharT* delete_word = "DELETE";
+        static constexpr const CharT* values      = "VALUES";
+        static constexpr const CharT* from        = "FROM";
+        static constexpr const CharT* where       = "WHERE";
+        static constexpr const CharT* in          = "IN";
+        static constexpr const CharT* null        = "NULL";
+        static constexpr const CharT* not_word    = "NOT";
+        static constexpr const CharT* and_word    = "AND";
+        static constexpr const CharT* or_word     = "OR";
+    };
+
 
     template <typename DBType>
     struct query_builder;
@@ -53,6 +85,8 @@ namespace webpp::sql {
 
             } table;
         };
+
+#undef define_enclosing
     } // namespace details
 
 
@@ -67,30 +101,32 @@ namespace webpp::sql {
      */
     template <typename DBType>
     struct column_builder {
-        using database_type = DBType;
-        using database_ref  = stl::add_lvalue_reference_t<database_type>;
-        using size_type     = typename database_type::size_type;
+        using database_type      = DBType;
+        using query_builder_type = query_builder<database_type>;
+        using query_builder_ref  = stl::add_lvalue_reference_t<query_builder_type>;
+        using size_type          = typename database_type::size_type;
+
 
       private:
-        database_ref db;
-        size_type    index;
+        query_builder_ref builder;
+        size_type         index;
 
       public:
-        constexpr column_builder(database_ref input_db, size_type input_index = 0) noexcept
-          : db{input_db},
+        constexpr column_builder(query_builder_ref input_builder, size_type input_index = 0) noexcept
+          : builder{input_builder},
             index{input_index} {}
 
         // set the value for the specified column
         template <typename T>
         constexpr column_builder& operator=(T&& value) noexcept {
-            db.bind(index, stl::forward<T>(value));
+            // builder.columns.push_back(value);
             return *this;
         }
     };
 
     /**
      * This is a query builder class
-     * @tparam DBType
+     * @tparam DBType Database type
      */
     template <typename DBType>
     struct query_builder : public details::query_builder_subclasses<DBType> {
@@ -98,7 +134,6 @@ namespace webpp::sql {
         using traits_type         = typename database_type::traits_type;
         using string_type         = traits::general_string<traits_type>;
         using local_string_type   = traits::local_string<traits_type>;
-        using vector_of_strings   = traits::localify_allocators<traits_type, stl::vector<local_string_type>>;
         using database_ref        = stl::add_lvalue_reference_t<database_type>;
         using column_builder_type = column_builder<database_type>;
         using size_type           = typename database_type::size_type;
@@ -107,11 +142,36 @@ namespace webpp::sql {
         using grammar_type    = typename database_type::grammar_type;
         using connection_type = typename database_type::connection_type;
 
+        friend column_builder_type;
 
       private:
+        // WHERE Clause type
+        struct where_type {
+            enum where_op {
+                NONE, // where
+                AND,  // and_where
+                OR,   // or_where
+                IN    // where_in
+            };
+
+            where_op op = NONE;
+
+            // we can use the local_string_type here because we know it's already localified
+            local_string_type value;
+        };
+
+        using vector_of_strings = traits::localify_allocators<traits_type, stl::vector<local_string_type>>;
+        using vector_of_wheres  = traits::localify_allocators<traits_type, stl::vector<where_type>>;
+
+        // create query is not included in the query builder class
+        enum struct query_method { select, update, remove, none };
+
         database_ref      db;
+        query_method      method = query_method::none;
         string_type       table_name;
         vector_of_strings columns;
+        vector_of_wheres  where_clauses;
+
 
         template <typename T>
         static constexpr bool is_stringify = istl::StringifiableOf<local_string_type, T>;
@@ -125,8 +185,12 @@ namespace webpp::sql {
 
       public:
         template <EnabledTraits ET>
-        constexpr query_builder(ET&& et) noexcept
-          : columns{et.alloc_pack.template local_allocator<local_string_type>()} {}
+            requires(!stl::same_as<ET, query_builder>)
+        constexpr query_builder(ET&& et, database_ref input_db) noexcept
+          : db{input_db},
+            table_name{alloc::allocator_for<string_type>(et)},
+            columns{alloc::local_allocator<local_string_type>(et)},
+            where_clauses{alloc::local_allocator<where_type>(et)} {}
 
         /**
          * Set columns to be selected in the sql query.
@@ -149,6 +213,82 @@ namespace webpp::sql {
         constexpr column_builder_type operator[](size_type col_index) const noexcept {
             return {db, col_index};
         }
+
+        // todo: where, where_not, where_in, and_where, and_where_not_null, or_where, or_where_not_null
+
+        /**
+         * Build the query and get a string for the query
+         *
+         * @tparam StrT String type
+         * @tparam words Whether or not sql keywords are in lowercase or uppercase
+         * @param out output
+         */
+        template <typename StrT     = string_type,
+                  SQLKeywords words = sql_lowercase_keywords<istl::char_type_of<StrT>>>
+        constexpr void to_string(StrT& out) const noexcept {
+            switch (method) {
+                case query_method::select: {
+                    out.append(words::select);
+                    out.append(' ');
+                    stringify_select(out);
+                    out.append(' ');
+                    out.append(words::from);
+                    out.append(' ');
+                    out.append(table_name);
+                    stringify_where<words>(out);
+                    break;
+                }
+                case query_method::none: {
+                    // the query is empty.
+                }
+            }
+        }
+
+        template <typename StrT     = string_type,
+                  SQLKeywords words = sql_lowercase_keywords<istl::char_type_of<StrT>>>
+        constexpr StrT to_string() const noexcept {
+            auto out = object::make<StrT>(db);
+            to_string<StrT, words>(out);
+            return out;
+        }
+
+      private:
+        // select [... this method ...] from table;
+        constexpr void stringify_select(auto& out) const noexcept {
+            strings::join_with(out, columns, ',');
+        }
+
+        template <SQLKeywords words>
+        constexpr void stringify_where(auto& out) const noexcept {
+            if (where_clauses.empty()) {
+                return; // we don't have any "WHERE clauses"
+            }
+            out.append(' ');
+            out.append(words::where);
+            for (where_type& clause : where_clauses) {
+                out.append(' ');
+                switch (clause.op) {
+                    case where_type::NONE: break;
+                    case where_type::AND:
+                        out.append(' ');
+                        out.append(words::and_word);
+                        out.append(' ');
+                        break;
+                    case where_type::OR:
+                        out.append(' ');
+                        out.append(words::or_word);
+                        out.append(' ');
+                        break;
+                    case where_type::IN:
+                        out.append(' ');
+                        out.append(words::in);
+                        out.append(' ');
+                        // todo
+                        continue;
+                }
+                out.append(clause.value);
+            }
+        }
     };
 
 
@@ -156,4 +296,4 @@ namespace webpp::sql {
 } // namespace webpp::sql
 
 
-#endif // WEBPP_DDATABASE_SQL_QUERY_BUILDER_HPP
+#endif // WEBPP_DATABASE_SQL_QUERY_BUILDER_HPP

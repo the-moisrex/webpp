@@ -32,7 +32,7 @@ namespace webpp::sql {
 
     /**
      * This concept represents a Connection to a SQL based Database.
-     * I specificly chose SQLConnection because a connection to a database could be
+     * I specifically chose SQLConnection because a connection to a database could be
      * anything. Some of the features for a SQL Connection is only valid for SQL based
      * databases and not other types of databases like NoSQL or Graph based databases.
      */
@@ -48,7 +48,7 @@ namespace webpp::sql {
         db.close();
         db.version(str_ref);
         db.execute("", str_ref);
-        // db.beign_transaction();
+        // db.begin_transaction();
         // db.rollback(); // rollback a database transaction
         // db.commit();   // commit changes
         { db.prepare(str_ref, str_ref) } -> stl::same_as<typename T::statement_type>;
@@ -93,6 +93,22 @@ namespace webpp::sql {
         requires SQLGrammar<typename T::grammar_type>;
     };
 
+
+
+    template <typename T>
+    concept SQLKeywords = requires {
+                              T::select;
+                              T::delete_word; // delete
+                              T::update;
+                              T::values;
+                              T::from;
+                              T::where;
+                              T::in;
+                              T::null;
+                              T::not_word; // not
+                              T::and_word; // and
+                              T::or_word; // or
+                          };
 
 } // namespace webpp::sql
 
