@@ -243,6 +243,61 @@ namespace webpp::sql {
             return *this;
         }
 
+        constexpr query_builder& insert() noexcept {
+            method = query_method::insert;
+            return *this;
+        }
+
+        // insert a single row
+        template <istl::ReadOnlyCollection VecOfColVal>
+        constexpr query_builder& insert(VecOfColVal&& input_cols_vals) noexcept {
+            method = query_method::insert;
+            // Steps:
+            //   1. merge columns (we might have a new column in the cols_vals that we didn't know before)
+            //   2. re-adjust the sizes of the values to match to the new column size; insert null values
+            //   3. sort the values based on the columns
+
+            stl::span cols_vals{input_cols_vals.begin(), input_cols_vals.end()};
+
+            auto        values_last = stl::prev(values.end());
+            stl::size_t values_size = values.size();
+
+            // 1. finding if we have a new column:
+            // 3. sorting cols_vals based on the columns
+            auto col_it = columns.begin();
+            for (auto it = cols_vals.begin();;) {
+                auto const& [col, val] = *it;
+                if (col != *col_it) {
+                    auto next_it = stl::next(it);
+                    if (next_it != cols_vals.end()) {
+                        stl::iter_swap(it, next_it);
+                    } else {
+                        // found a new column
+                        stl::size_t col_size = columns.size();
+                        columns.push_back(col);
+
+                        // 2. Adding new and null variables into the values to adjust the values matrix
+                        for (auto val_it = values.begin() + col_size; val_it != values_last;
+                             val_it += col_size) {
+                            values.emplace(val_it); // insert a null variable at that position
+                        }
+                    }
+                } else {
+                    // found the column
+                    // now "it" and "col_it" are in the right order
+                    values.push_back(variablify(val));
+                    ++col_it;
+                    ++it;
+                    if (it == cols_vals.end()) {
+                        break;
+                    }
+                }
+            }
+
+            return *this;
+        }
+
+
         /**
          * Build the query and get a string for the query
          *
@@ -275,13 +330,23 @@ namespace webpp::sql {
                     const auto        it_end   = values.end();
                     const stl::size_t col_size = columns.size();
                     out.append(" (");
-                    strings::join_with(out, stl::span{it, col_size}, ", ");
+                    strings::join_with(out,
+                                       stl::span{it, col_size} |
+                                         stl::views::transform([this](auto& val) constexpr noexcept {
+                                             return stringify_value<words>(val);
+                                         }),
+                                       ", ");
                     out.append(')');
 
                     // values and columns should be aligned so don't worry
                     for (; it != it_end; it += col_size) {
                         out.append(", (");
-                        strings::join_with(out, stl::span{it, col_size}, ", ");
+                        strings::join_with(out,
+                                           stl::span{it, col_size} |
+                                             stl::views::transform([this](auto& val) constexpr noexcept {
+                                                 return stringify_value<words>(val);
+                                             }),
+                                           ", ");
                         out.append(')');
                     }
                     break;
@@ -322,6 +387,17 @@ namespace webpp::sql {
         }
 
       private:
+        template <typename V>
+        static constexpr variable_type variablify(V&& val) noexcept {
+            if constexpr (stl::is_same_v<V, db_float_type> || stl::is_same_v<V, db_integer_type> ||
+                          stl::is_same_v<V, db_string_type> || stl::is_same_v<V, db_blob_type>) {
+                return stl::forward<V>(val);
+            } else {
+                // todo
+            }
+        }
+
+        template <SQLKeywords words>
         constexpr void stringify_value(auto& out, variable_type const& var) const noexcept {
             if (db_float_type f = stl::get_if<db_float_type>(var)) {
                 out.append(lexical::cast<string_type>(f, db));
@@ -329,8 +405,11 @@ namespace webpp::sql {
                 out.append(lexical::cast<string_type>(i, db));
             } else if (db_string_type s = stl::get_if<db_string_type>(var)) {
                 out.append(s);
-            } else {
+            } else if (db_blob_type b = stl::get_if<db_blob_type>(var)) {
                 // todo: append blob
+            } else {
+                // it's null
+                out.append(words::null);
             }
         }
 

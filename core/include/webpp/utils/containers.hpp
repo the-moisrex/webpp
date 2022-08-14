@@ -31,6 +31,9 @@ namespace webpp {
     template <typename T>
     constexpr bool is_container_v = is_container<T>::value;
 
+    template <typename T>
+    concept Container = is_container_v<T>;
+
 } // namespace webpp
 
 #endif // WEBPP_CONTAINERS_H
