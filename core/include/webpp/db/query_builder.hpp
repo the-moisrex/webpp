@@ -271,14 +271,17 @@ namespace webpp::sql {
 
                     // join
                     // example: (1, 2, 3), (1, 2, 3), ...
-                    auto       it     = values.begin();
-                    const auto it_end = values.end();
+                    auto              it       = values.begin();
+                    const auto        it_end   = values.end();
+                    const stl::size_t col_size = columns.size();
                     out.append(" (");
-                    out.append(*it);
+                    strings::join_with(out, stl::span{it, col_size}, ", ");
                     out.append(')');
-                    for (; it != it_end; ++it) {
+
+                    // values and columns should be aligned so don't worry
+                    for (; it != it_end; it += col_size) {
                         out.append(", (");
-                        out.append(*it);
+                        strings::join_with(out, stl::span{it, col_size}, ", ");
                         out.append(')');
                     }
                     break;
@@ -319,6 +322,19 @@ namespace webpp::sql {
         }
 
       private:
+        constexpr void stringify_value(auto& out, variable_type const& var) const noexcept {
+            if (db_float_type f = stl::get_if<db_float_type>(var)) {
+                out.append(lexical::cast<string_type>(f, db));
+            } else if (db_integer_type i = stl::get_if<db_integer_type>(var)) {
+                out.append(lexical::cast<string_type>(i, db));
+            } else if (db_string_type s = stl::get_if<db_string_type>(var)) {
+                out.append(s);
+            } else {
+                // todo: append blob
+            }
+        }
+
+
         constexpr void stringify_table_name(auto& out) const noexcept {
             // todo: MS SQL Server adds brackets
             out.append(table_name);
