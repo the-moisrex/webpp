@@ -23,6 +23,7 @@ namespace webpp::sql {
         static constexpr const CharT* not_word    = "not";
         static constexpr const CharT* and_word    = "and";
         static constexpr const CharT* or_word     = "or";
+        static constexpr const CharT* insert_into = "insert into";
     };
 
     template <typename CharT = char>
@@ -38,6 +39,7 @@ namespace webpp::sql {
         static constexpr const CharT* not_word    = "NOT";
         static constexpr const CharT* and_word    = "AND";
         static constexpr const CharT* or_word     = "OR";
+        static constexpr const CharT* insert_into = "INSERT INTO";
     };
 
 
@@ -137,6 +139,10 @@ namespace webpp::sql {
         using database_ref        = stl::add_lvalue_reference_t<database_type>;
         using column_builder_type = column_builder<database_type>;
         using size_type           = typename database_type::size_type;
+        using db_float_type       = typename database_type::float_type;
+        using db_integer_type     = typename database_type::integer_type;
+        using db_string_type      = typename database_type::string_type;
+        using db_blob_type        = typename database_type::blob_type;
 
         using driver_type     = typename database_type::driver_type;
         using grammar_type    = typename database_type::grammar_type;
@@ -160,17 +166,23 @@ namespace webpp::sql {
             local_string_type value;
         };
 
-        using vector_of_strings = traits::localify_allocators<traits_type, stl::vector<local_string_type>>;
-        using vector_of_wheres  = traits::localify_allocators<traits_type, stl::vector<where_type>>;
+        using variable_type = stl::variant<db_float_type, db_integer_type, db_string_type, db_blob_type>;
+        using vector_of_variables = traits::localify_allocators<traits_type, stl::vector<variable_type>>;
+        using vector_of_strings   = traits::localify_allocators<traits_type, stl::vector<local_string_type>>;
+        using vector_of_wheres    = traits::localify_allocators<traits_type, stl::vector<where_type>>;
 
         // create query is not included in the query builder class
-        enum struct query_method { select, update, remove, none };
+        enum struct query_method { select, insert, update, remove, none };
+        enum struct order_by_type { asc, desc };
 
-        database_ref      db;
-        query_method      method = query_method::none;
-        string_type       table_name;
-        vector_of_strings columns;
-        vector_of_wheres  where_clauses;
+
+        database_ref        db;
+        query_method        method = query_method::none;
+        string_type         table_name;
+        vector_of_strings   columns; // insert: col names, update: col names, select: cols, delete: unused
+        vector_of_variables values;  // insert: values, update: values, select: unused, delete: unused
+        vector_of_wheres    where_clauses;
+        order_by_type       order_by_value;
 
 
         template <typename T>
@@ -227,6 +239,25 @@ namespace webpp::sql {
                   SQLKeywords words = sql_lowercase_keywords<istl::char_type_of<StrT>>>
         constexpr void to_string(StrT& out) const noexcept {
             switch (method) {
+                case query_method::insert: {
+                    if (values.empty()) {
+                        break;
+                    }
+                    out.append(words::insert_into);
+                    out.append(' ');
+                    stringify_table_name(out);
+                    out.append(' ');
+                    if (!columns.empty()) {
+                        out.append('(');
+                        strings::join(out, columns, ", "); // todo: column names are not escaped
+                        out.append(')');
+                    }
+                    out.append(words::values);
+                    out.append(" (");
+                    strings::join(out, values, ", ");
+                    out.append(')');
+                    break;
+                }
                 case query_method::select: {
                     out.append(words::select);
                     out.append(' ');
@@ -234,7 +265,7 @@ namespace webpp::sql {
                     out.append(' ');
                     out.append(words::from);
                     out.append(' ');
-                    out.append(table_name);
+                    stringify_table_name(out);
                     stringify_where<words>(out);
                     break;
                 }
@@ -253,6 +284,11 @@ namespace webpp::sql {
         }
 
       private:
+        constexpr void stringify_table_name(auto& out) const noexcept {
+            // todo: MS SQL Server adds brackets
+            out.append(table_name);
+        }
+
         // select [... this method ...] from table;
         constexpr void stringify_select(auto& out) const noexcept {
             strings::join_with(out, columns, ',');

@@ -7,6 +7,8 @@
 #include "sqlite_connection.hpp"
 #include "sqlite_grammar.hpp"
 
+#include <vector>
+
 namespace webpp::sql {
 
 
@@ -16,6 +18,10 @@ namespace webpp::sql {
         using grammar_type    = sqlite_grammar;
         using connection_type = sqlite_connection;
         using size_type       = int;
+        using float_type      = double;
+        using integer_type    = int;
+        using string_type     = stl::string;
+        using blob_type       = stl::vector<char>;
 
         template <typename T>
         static constexpr bool supports_string_view =

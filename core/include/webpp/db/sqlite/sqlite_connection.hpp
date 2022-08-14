@@ -12,11 +12,11 @@
 // sorry that we're using std::string and other features that have nothing to do with the traits system that
 // I'v built, the sqlite doesn't support those and it's pretty much useless to have them here so this way, we
 // at least will gain some compile-time performance. Connection to the database should be performed when the
-// applicaiton is started and will not affect the long running application's performane even though it might
+// application is started and will not affect the long running application's performance even though it might
 // affect the performance of the protocols like CGI that the whole application is re-started for each request,
-// but openning a connection is slow enough that a few allocations are dissmissable.
+// but opening a connection is slow enough that a few allocations are dismissible.
 //
-// todo: Should we use a template instead of std::string directly (only for error handlings)
+// todo: Should we use a template instead of std::string directly (only for error handling)
 namespace webpp::sql {
 
     struct sqlite_config {
@@ -62,7 +62,7 @@ namespace webpp::sql {
             // todo: SQLCipher sqlite3_key password (https://github.com/rbock/sqlpp11/blob/1e7f4b98c727643513eb94100133c009906809d9/include/sqlpp11/sqlite3/connection.h#L95)
         }
 
-        bool is_open() const noexcept {
+        [[nodiscard]] bool is_open() const noexcept {
             return handle != nullptr;
         }
 
@@ -95,7 +95,7 @@ namespace webpp::sql {
         }
 
 
-        // prepare an statment for the parent sql connection to wrap it
+        // prepare a statement for the parent sql connection to wrap it
         void prepare(std::string_view stmt_str, statement_type& stmt, istl::String auto& errmsg) noexcept {
             // todo: there's a performance gain if you know the string is null terminated. (more: https://www.sqlite.org/c3ref/prepare.html)
 

@@ -108,6 +108,7 @@ namespace webpp::sql {
                               T::not_word; // not
                               T::and_word; // and
                               T::or_word; // or
+                              T::insert_into;
                           };
 
 } // namespace webpp::sql
