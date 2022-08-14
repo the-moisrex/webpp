@@ -101,27 +101,34 @@ namespace webpp::sql {
      * @endcode
      * @tparam DBType
      */
-    template <typename DBType>
+    template <typename DBType, typename KeyType>
     struct column_builder {
         using database_type      = DBType;
         using query_builder_type = query_builder<database_type>;
         using query_builder_ref  = stl::add_lvalue_reference_t<query_builder_type>;
-        using size_type          = typename database_type::size_type;
-
+        using key_type           = KeyType;
+        using string_type        = typename query_builder_type::string_type;
 
       private:
         query_builder_ref builder;
-        size_type         index;
+        key_type          key;
+
 
       public:
-        constexpr column_builder(query_builder_ref input_builder, size_type input_index = 0) noexcept
+        constexpr column_builder(query_builder_ref input_builder, key_type&& input_key) noexcept
           : builder{input_builder},
-            index{input_index} {}
+            key{stl::move(input_key)} {}
 
         // set the value for the specified column
         template <typename T>
         constexpr column_builder& operator=(T&& value) noexcept {
-            // builder.columns.push_back(value);
+            if constexpr (stl::integral<key_type>) {
+                // key is index
+                builder.values[key] = value;
+            } else {
+                builder.columns.push_back(key);
+                builder.values.push_back(key);
+            }
             return *this;
         }
     };
@@ -132,23 +139,23 @@ namespace webpp::sql {
      */
     template <typename DBType>
     struct query_builder : public details::query_builder_subclasses<DBType> {
-        using database_type       = DBType;
-        using traits_type         = typename database_type::traits_type;
-        using string_type         = traits::general_string<traits_type>;
-        using local_string_type   = traits::local_string<traits_type>;
-        using database_ref        = stl::add_lvalue_reference_t<database_type>;
-        using column_builder_type = column_builder<database_type>;
-        using size_type           = typename database_type::size_type;
-        using db_float_type       = typename database_type::float_type;
-        using db_integer_type     = typename database_type::integer_type;
-        using db_string_type      = typename database_type::string_type;
-        using db_blob_type        = typename database_type::blob_type;
+        using database_type     = DBType;
+        using traits_type       = typename database_type::traits_type;
+        using string_type       = traits::general_string<traits_type>;
+        using local_string_type = traits::local_string<traits_type>;
+        using database_ref      = stl::add_lvalue_reference_t<database_type>;
+        using size_type         = typename database_type::size_type;
+        using db_float_type     = typename database_type::float_type;
+        using db_integer_type   = typename database_type::integer_type;
+        using db_string_type    = typename database_type::string_type;
+        using db_blob_type      = typename database_type::blob_type;
 
         using driver_type     = typename database_type::driver_type;
         using grammar_type    = typename database_type::grammar_type;
         using connection_type = typename database_type::connection_type;
 
-        friend column_builder_type;
+        template <typename, typename>
+        friend struct column_builder;
 
       private:
         // WHERE Clause type
@@ -172,7 +179,7 @@ namespace webpp::sql {
         using vector_of_wheres    = traits::localify_allocators<traits_type, stl::vector<where_type>>;
 
         // create query is not included in the query builder class
-        enum struct query_method { select, insert, update, remove, none };
+        enum struct query_method { select, insert, insert_default, update, remove, none };
         enum struct order_by_type { asc, desc };
 
 
@@ -216,17 +223,24 @@ namespace webpp::sql {
             return *this;
         }
 
-
         template <istl::StringViewifiable StrvT>
-        constexpr column_builder_type operator[](StrvT&& col_name) const noexcept {
-            return {db, db.column_index(stl::forward<StrvT>(col_name))};
+        constexpr column_builder<database_type, StrvT> operator[](StrvT&& col_name) const noexcept {
+            return {db, stl::forward<StrvT>(col_name)};
         }
 
-        constexpr column_builder_type operator[](size_type col_index) const noexcept {
+        constexpr column_builder<database_type, stl::size_t>
+        operator[](stl::size_t col_index) const noexcept {
             return {db, col_index};
         }
 
         // todo: where, where_not, where_in, and_where, and_where_not_null, or_where, or_where_not_null
+
+
+        // insert into Col default values;
+        constexpr query_builder& insert_default() noexcept {
+            method = query_method::insert_default;
+            return *this;
+        }
 
         /**
          * Build the query and get a string for the query
@@ -267,6 +281,16 @@ namespace webpp::sql {
                     out.append(' ');
                     stringify_table_name(out);
                     stringify_where<words>(out);
+                    break;
+                }
+                case query_method::insert_default: {
+                    out.append(words::insert_into);
+                    out.append(' ');
+                    stringify_table_name(out);
+                    out.append(' ');
+                    out.append(words::default_word);
+                    out.append(' ');
+                    out.append(words::values);
                     break;
                 }
                 case query_method::none: {
