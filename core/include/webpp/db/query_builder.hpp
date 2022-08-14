@@ -2,6 +2,7 @@
 #define WEBPP_DATABASE_SQL_QUERY_BUILDER_HPP
 
 #include "../std/collection.hpp"
+#include "../std/ranges.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/join.hpp"
@@ -263,13 +264,23 @@ namespace webpp::sql {
                     out.append(' ');
                     if (!columns.empty()) {
                         out.append('(');
-                        strings::join(out, columns, ", "); // todo: column names are not escaped
+                        strings::join_with(out, columns, ", "); // todo: column names are not escaped
                         out.append(')');
                     }
                     out.append(words::values);
+
+                    // join
+                    // example: (1, 2, 3), (1, 2, 3), ...
+                    auto       it     = values.begin();
+                    const auto it_end = values.end();
                     out.append(" (");
-                    strings::join(out, values, ", ");
+                    out.append(*it);
                     out.append(')');
+                    for (; it != it_end; ++it) {
+                        out.append(", (");
+                        out.append(*it);
+                        out.append(')');
+                    }
                     break;
                 }
                 case query_method::select: {
