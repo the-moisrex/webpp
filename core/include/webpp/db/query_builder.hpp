@@ -259,8 +259,8 @@ namespace webpp::sql {
 
             stl::span cols_vals{input_cols_vals.begin(), input_cols_vals.end()};
 
-            auto        values_last = stl::prev(values.end());
-            stl::size_t values_size = values.size();
+            const auto        values_last = stl::prev(values.end());
+            const stl::size_t values_size = values.size();
 
             // 1. finding if we have a new column:
             // 3. sorting cols_vals based on the columns
@@ -273,7 +273,7 @@ namespace webpp::sql {
                         stl::iter_swap(it, next_it);
                     } else {
                         // found a new column
-                        stl::size_t col_size = columns.size();
+                        const stl::size_t col_size = columns.size();
                         columns.push_back(col);
 
                         // 2. Adding new and null variables into the values to adjust the values matrix
