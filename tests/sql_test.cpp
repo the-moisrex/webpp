@@ -96,7 +96,7 @@ TEST(Database, QueryBuilderTest) {
 
     auto query = db.table("settings") //
                    .select("value")
-                   .where("name"_field == "username");
+                   .where("name", "username");
     EXPECT_EQ("select value from settings where name = ?", query.prepared_query());
 }
 

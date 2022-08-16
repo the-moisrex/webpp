@@ -169,14 +169,7 @@ namespace webpp::sql {
       private:
         // WHERE Clause type
         struct where_type {
-            enum where_op {
-                NONE, // where
-                AND,  // and_where
-                OR,   // or_where
-                IN    // where_in
-            };
-
-            where_op op = NONE;
+            local_string_type op; // the operator string
 
             // we can use the local_string_type here because we know it's already localified
             local_string_type value;
@@ -245,6 +238,22 @@ namespace webpp::sql {
 
         // todo: where, where_not, where_in, and_where, and_where_not_null, or_where, or_where_not_null
 
+
+        template <istl::Stringifiable StrT>
+        constexpr query_builder& where(StrT&& condition) noexcept {
+            where_clauses.emplace("", condition);
+            return *this;
+        }
+
+        template <istl::Stringifiable StrT1, istl::Stringifiable StrT2>
+        constexpr query_builder& where(StrT1&& col, StrT2&& value) noexcept {
+            auto clause = stringify(stl::forward<StrT1>(col));
+            clause.reserve(clause.size() + stl::size(value) + 3 + 2 + 1);
+            clause.append(" = ");
+            clause.append(stringify_value(stl::forward<StrT2>(value)));
+            where_clauses.emplace("", stl::move(clause));
+            return *this;
+        }
 
         // insert into Col default values;
         constexpr query_builder& insert_default() noexcept {
