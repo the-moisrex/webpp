@@ -251,6 +251,8 @@ namespace webpp::sql {
             clause.reserve(clause.size() + stl::size(value) + 3 + 2 + 1);
             clause.append(" = ");
             clause.append(stringify_value(stl::forward<StrT2>(value)));
+
+            // we add empty string as condition but to_string can identify if it needs to add "and" or ""
             where_clauses.emplace("", stl::move(clause));
             return *this;
         }
@@ -455,28 +457,31 @@ namespace webpp::sql {
             }
             out.append(' ');
             out.append(words::where);
-            for (where_type& clause : where_clauses) {
-                out.append(' ');
-                switch (clause.op) {
-                    case where_type::NONE: break;
-                    case where_type::AND:
-                        out.append(' ');
-                        out.append(words::and_word);
-                        out.append(' ');
-                        break;
-                    case where_type::OR:
-                        out.append(' ');
-                        out.append(words::or_word);
-                        out.append(' ');
-                        break;
-                    case where_type::IN:
-                        out.append(' ');
-                        out.append(words::in);
-                        out.append(' ');
-                        // todo
-                        continue;
+
+            auto       it        = where_clauses.begin();
+            auto const where_end = where_clauses.end();
+
+            // specializing the first one for performance reasons
+            {
+                auto const& [op, value] = *it;
+                // the first one can't include "or" and "and"
+                if (op != words::and_word && op != words::or_word) {
+                    out.append(' ');
+                    out.append(op);
                 }
-                out.append(clause.value);
+                out.append(' ');
+                out.append(value);
+            }
+            for (; it != where_end; ++it) {
+                auto const& [op, value] = *it;
+                out.append(' ');
+                if (op.empty()) {
+                    out.append(words::and_word);
+                } else {
+                    out.append(op);
+                }
+                out.append(' ');
+                out.append(value);
             }
         }
     };
