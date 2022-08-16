@@ -70,9 +70,9 @@ namespace webpp::sql {
                 // set the name
                 template <istl::StringViewifiable StrvT>
                 constexpr query_builder_type& name(StrvT&& in_table_name) noexcept {
-                    enclosing().table_name =
-                      istl::stringify_of<string_type>(stl::forward<StrvT>(in_table_name),
-                                                      enclosing().db.alloc_pack);
+                    enclosing().table_name = istl::stringify_of<string_type>(
+                      stl::forward<StrvT>(in_table_name),
+                      alloc::allocator_for<string_type>(enclosing().db.alloc_pack));
                     return enclosing();
                 }
 
@@ -162,6 +162,9 @@ namespace webpp::sql {
 
         template <typename, typename>
         friend struct column_builder;
+
+        template <typename ADBType>
+        friend struct details::query_builder_subclasses;
 
       private:
         // WHERE Clause type
@@ -254,7 +257,7 @@ namespace webpp::sql {
         }
 
         // insert a single row
-        template <istl::ReadOnlyCollection VecOfColVal>
+        template <istl::ReadOnlyCollection VecOfColVal = vector_of_variables>
         constexpr query_builder& insert(VecOfColVal&& input_cols_vals) noexcept {
             method = query_method::insert;
             // Steps:
