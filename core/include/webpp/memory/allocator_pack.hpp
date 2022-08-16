@@ -708,11 +708,14 @@ namespace webpp::alloc {
     // todo: local_allocator_for_container(alloc_pack, obj) -> finds the containers' value types
 
 
+    // Check if the specified type is an allocator_pack
     template <typename AllocPackType>
     concept AllocatorPack =
       requires {
-          typename AllocPackType::allocator_descriptors;
-          requires stl::same_as<AllocPackType, allocator_pack<typename AllocPackType::allocator_descriptors>>;
+          typename stl::remove_cvref_t<AllocPackType>::allocator_descriptors;
+          requires stl::same_as<
+            stl::remove_cvref_t<AllocPackType>,
+            allocator_pack<typename stl::remove_cvref_t<AllocPackType>::allocator_descriptors>>;
       };
 
 

@@ -64,7 +64,8 @@ namespace webpp {
                          requires stl::same_as<typename stl::remove_cvref_t<T>::allocator_pack_type,
                                                allocator_pack_type>;
                      })
-        constexpr enable_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack}, logger{obj.logger} {}
+        constexpr enable_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack},
+                                                    logger{obj.logger} {}
 
         constexpr enable_traits(alloc_pack_ref alloc_pack_obj, logger_ref logger_obj = {}) noexcept
           : alloc_pack{alloc_pack_obj},
@@ -111,6 +112,40 @@ namespace webpp {
     struct enable_traits_with<TraitsType, T> : public T {
         using T::T;
     };
+
+
+
+    // I added these here because they are traits' related and also allocator pack related, but their intent
+    // is to simplify the users of the traits not allocator packs directly
+    namespace alloc {
+
+        /**
+         * Check if the specified type T holds an allocator
+         */
+        template <typename T>
+        concept AllocatorHolder = requires(T holder) {
+                                      typename T::allocator_pack_type;
+                                      requires AllocatorPack<typename T::allocator_pack_type>;
+                                      { holder.alloc_pack } -> AllocatorPack;
+                                  };
+
+        template <typename T, AllocatorHolder AllocHolder>
+        static constexpr auto local_allocator(AllocHolder& holder) noexcept {
+            return holder.alloc_pack.template local_allocator<T>();
+        }
+
+        template <typename T, AllocatorHolder AllocHolder>
+        static constexpr auto general_allocator(AllocHolder& holder) noexcept {
+            return holder.alloc_pack.template general_allocator<T>();
+        }
+
+        template <typename T, AllocatorHolder AllocHolder>
+        static constexpr auto allocator_for(AllocHolder& holder) noexcept {
+            return holder.alloc_pack.template get_allocator_for<T>();
+        }
+
+    } // namespace alloc
+
 
 } // namespace webpp
 

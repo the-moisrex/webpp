@@ -68,25 +68,25 @@ namespace webpp::sql {
                 define_enclosing(table);
 
                 // set the name
-                template <istl::StringViewifiable StrvT>
+                template <istl::Stringifiable StrvT>
                 constexpr query_builder_type& name(StrvT&& in_table_name) noexcept {
-                    enclosing().table_name = istl::stringify_of<string_type>(
-                      stl::forward<StrvT>(in_table_name),
-                      alloc::allocator_for<string_type>(enclosing().db.alloc_pack));
+                    enclosing().table_name =
+                      istl::stringify_of<string_type>(stl::forward<StrvT>(in_table_name),
+                                                      alloc::allocator_for<string_type>(enclosing().db));
                     return enclosing();
                 }
 
-                template <istl::StringViewifiable StrvT>
+                template <istl::Stringifiable StrvT>
                 constexpr query_builder_type& operator()(StrvT&& in_table_name) noexcept {
                     return name(stl::forward<StrvT>(in_table_name));
                 }
 
-                template <istl::StringViewifiable StrvT>
+                template <istl::Stringifiable StrvT>
                 constexpr query_builder_type& operator[](StrvT&& in_table_name) noexcept {
                     return name(stl::forward<StrvT>(in_table_name));
                 }
 
-                template <istl::StringViewifiable StrvT>
+                template <istl::Stringifiable StrvT>
                 constexpr query_builder_type& operator=(StrvT&& in_table_name) noexcept {
                     return name(stl::forward<StrvT>(in_table_name));
                 }
