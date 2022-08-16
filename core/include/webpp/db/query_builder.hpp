@@ -217,12 +217,11 @@ namespace webpp::sql {
         /**
          * Set columns to be selected in the sql query.
          */
-        template <typename T>
-        constexpr query_builder& select(T&& col) noexcept {
-            if constexpr (istl::Stringifiable<T>) {
-                col.push_back(stringify(stl::forward<T>(col)));
-            } else if constexpr (istl::ReadOnlyCollection<T>) {
-            }
+        template <typename... T>
+            requires(istl::StringifiableOf<T, string_type>&&...)
+        constexpr query_builder& select(T&&... cols) noexcept {
+            columns.reserve(columns.size() + sizeof...(T));
+            (columns.push_back(stringify(stl::forward<T>(cols))), ...);
             return *this;
         }
 
@@ -245,12 +244,14 @@ namespace webpp::sql {
             return *this;
         }
 
-        template <istl::Stringifiable StrT1, istl::Stringifiable StrT2>
-        constexpr query_builder& where(StrT1&& col, StrT2&& value) noexcept {
+        template <istl::Stringifiable StrT1, typename T>
+        constexpr query_builder& where(StrT1&& col, T&& value) noexcept {
             auto clause = stringify(stl::forward<StrT1>(col));
-            clause.reserve(clause.size() + stl::size(value) + 3 + 2 + 1);
+            if constexpr (requires { stl::size(value); }) {
+                clause.reserve(clause.size() + stl::size(value) + 3 + 2 + 1);
+            }
             clause.append(" = ");
-            clause.append(stringify_value(stl::forward<StrT2>(value)));
+            clause.append(stringify_value(stl::forward<T>(value)));
 
             // we add empty string as condition but to_string can identify if it needs to add "and" or ""
             where_clauses.emplace("", stl::move(clause));

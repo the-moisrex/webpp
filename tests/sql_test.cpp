@@ -97,7 +97,7 @@ TEST(Database, QueryBuilderTest) {
     auto query = db.table("settings") //
                    .select("value")
                    .where("name", "username");
-    EXPECT_EQ("select value from settings where name = ?", query.prepared_query());
+    EXPECT_EQ("select value from settings where name = username", query.to_string());
 }
 
 
@@ -106,8 +106,9 @@ TEST(Database, InsertSelectQuery) {
 
     sql_database<sqlite> db;
 
-    auto query = db.table["employees"].insert(
-      db.table["users"].where("employed", true).select("firstname", "lastname as last_name"));
+    auto query =
+      db.table("employees")
+        .insert(db.table("users").where("employed", true).select("firstname", "lastname as last_name"));
 
     // the alias is automatically gets added for firstname, but it doesn't get added for lastname because it
     // already has an alias
