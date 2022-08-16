@@ -162,6 +162,9 @@ namespace webpp::sql {
         using grammar_type    = typename database_type::grammar_type;
         using connection_type = typename database_type::connection_type;
 
+
+        static constexpr auto LOG_CAT = "SQLBuilder";
+
         template <typename, typename>
         friend struct column_builder;
 
@@ -274,8 +277,10 @@ namespace webpp::sql {
 
 
         constexpr query_builder& insert(query_builder const& new_builder) noexcept {
-            // only select queries are allowed.
-            assert(new_builder.method == query_method::select);
+            if (new_builder.method != query_method::select) {
+                this->logger.error(LOG_CAT, "Only select queries are allowed");
+                return *this;
+            }
 
             method = query_method::insert;
             values.push_back(new_builder);
@@ -284,8 +289,10 @@ namespace webpp::sql {
 
 
         constexpr query_builder& insert(query_builder&& new_builder) noexcept {
-            // only select queries are allowed.
-            assert(new_builder.method == query_method::select);
+            if (new_builder.method != query_method::select) {
+                this->logger.error(LOG_CAT, "Only select queries are allowed");
+                return *this;
+            }
 
             method = query_method::insert;
             values.push_back(stl::move(new_builder));
@@ -311,8 +318,7 @@ namespace webpp::sql {
 
             stl::span cols_vals{input_cols_vals.begin(), input_cols_vals.end()};
 
-            const auto        values_last = stl::prev(values.end());
-            const stl::size_t values_size = values.size();
+            const auto values_last = stl::prev(values.end());
 
             // 1. finding if we have a new column:
             // 3. sorting cols_vals based on the columns
@@ -406,7 +412,7 @@ namespace webpp::sql {
                 case query_method::select: {
                     out.append(words::select);
                     out.append(' ');
-                    stringify_select(out);
+                    stringify_select_columns(out);
                     out.append(' ');
                     out.append(words::from);
                     out.append(' ');
@@ -449,14 +455,22 @@ namespace webpp::sql {
             }
         }
 
-        template <SQLKeywords words>
-        constexpr void stringify_value(auto& out, variable_type const& var) const noexcept {
+        /**
+         * This function will stringify the values, if you're looking for the function that handles the
+         * prepare statements, this is not going to be used there.
+         */
+        template <typename StrT, SQLKeywords words>
+        constexpr void stringify_value(StrT& out, variable_type const& var) const noexcept {
             if (db_float_type f = stl::get_if<db_float_type>(var)) {
                 out.append(lexical::cast<string_type>(f, db));
             } else if (db_integer_type i = stl::get_if<db_integer_type>(var)) {
                 out.append(lexical::cast<string_type>(i, db));
             } else if (db_string_type s = stl::get_if<db_string_type>(var)) {
                 out.append(s);
+            } else if (db_string_type qb = stl::get_if<query_builder>(var)) {
+                // good, we don't need to worry about the prepared query builder
+                // todo: Fix user's mistakes and tune the select columns to match the insert columns
+                qb.template to_string<StrT, words>(out);
             } else if (db_blob_type b = stl::get_if<db_blob_type>(var)) {
                 // todo: append blob
             } else {
@@ -472,7 +486,7 @@ namespace webpp::sql {
         }
 
         // select [... this method ...] from table;
-        constexpr void stringify_select(auto& out) const noexcept {
+        constexpr void stringify_select_columns(auto& out) const noexcept {
             strings::join_with(out, columns, ',');
         }
 
