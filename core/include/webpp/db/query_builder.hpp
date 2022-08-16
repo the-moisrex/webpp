@@ -183,9 +183,10 @@ namespace webpp::sql {
         };
 
         using variable_type = stl::variant<db_float_type, db_integer_type, db_string_type, db_blob_type>;
-        using vector_of_variables = traits::localify_allocators<traits_type, stl::vector<variable_type>>;
-        using vector_of_strings   = traits::localify_allocators<traits_type, stl::vector<local_string_type>>;
-        using vector_of_wheres    = traits::localify_allocators<traits_type, stl::vector<where_type>>;
+        using column_variable_pair = stl::pair<string_type, variable_type>;
+        using vector_of_variables  = traits::localify_allocators<traits_type, stl::vector<variable_type>>;
+        using vector_of_strings    = traits::localify_allocators<traits_type, stl::vector<local_string_type>>;
+        using vector_of_wheres     = traits::localify_allocators<traits_type, stl::vector<where_type>>;
 
         // create query is not included in the query builder class
         enum struct query_method { select, insert, insert_default, update, remove, none };
@@ -256,8 +257,14 @@ namespace webpp::sql {
             return *this;
         }
 
+        constexpr query_builder&
+        insert(stl::initializer_list<column_variable_pair> const& input_cols_vals) noexcept {
+            return insert<stl::initializer_list<column_variable_pair>>(input_cols_vals);
+        }
+
+
         // insert a single row
-        template <istl::ReadOnlyCollection VecOfColVal = vector_of_variables>
+        template <istl::ReadOnlyCollection VecOfColVal = stl::initializer_list<column_variable_pair>>
         constexpr query_builder& insert(VecOfColVal&& input_cols_vals) noexcept {
             method = query_method::insert;
             // Steps:
