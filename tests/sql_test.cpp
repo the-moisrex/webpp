@@ -100,7 +100,10 @@ TEST(Database, QueryBuilderTest) {
     EXPECT_EQ("select value from settings where name = ?", query.prepared_query());
 }
 
+
 TEST(Database, InsertSelectQuery) {
+    // A test for https://github.com/the-moisrex/webpp/issues/146
+
     sql_database<sqlite> db;
 
     auto query = db.table["employees"].insert(

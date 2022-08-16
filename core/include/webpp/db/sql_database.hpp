@@ -118,9 +118,13 @@ namespace webpp::sql {
             }
         }
 
+        inline query_builder_type sql_builder() noexcept {
+            return query_builder_type{*this};
+        }
+
         template <istl::StringViewifiable StrvT>
         inline query_builder_type table(StrvT&& table_name) noexcept {
-            return query_builder_type{*this}.table(stl::forward<StrvT>(table_name));
+            return sql_builder().table(stl::forward<StrvT>(table_name));
         }
 
       private:

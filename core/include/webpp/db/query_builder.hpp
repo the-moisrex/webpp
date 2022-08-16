@@ -82,6 +82,11 @@ namespace webpp::sql {
                 }
 
                 template <istl::StringViewifiable StrvT>
+                constexpr query_builder_type& operator[](StrvT&& in_table_name) noexcept {
+                    return name(stl::forward<StrvT>(in_table_name));
+                }
+
+                template <istl::StringViewifiable StrvT>
                 constexpr query_builder_type& operator=(StrvT&& in_table_name) noexcept {
                     return name(stl::forward<StrvT>(in_table_name));
                 }
