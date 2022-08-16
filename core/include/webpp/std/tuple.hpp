@@ -223,6 +223,13 @@ namespace webpp::istl {
 
     template <typename... T>
     struct ituple : last_type<T...>::template remove_if<stl::tuple, is_ituple_options> {
+
+        // we're separating the ituple_type and ituple_template to fix gcc's confusion
+        using ituple_type = ituple;
+
+        template <typename... TT>
+        using ituple_template = ituple<TT...>;
+
         using last         = last_type<T...>;
         using options      = stl::conditional_t<is_ituple_options<typename last::type>::value,
                                            typename last::type,
@@ -234,15 +241,16 @@ namespace webpp::istl {
           native_tuple_size + is_ituple_options<typename last::type>::size;
 
         template <typename NewOpts>
-        using replace_options = typename last_type<T...>::template put_if<ituple, is_ituple_options, NewOpts>;
+        using replace_options =
+          typename last_type<T...>::template put_if<ituple_template, is_ituple_options, NewOpts>;
 
         template <stl::size_t NewSize>
         using restructured_type = stl::conditional_t<
           (NewSize > native_tuple_size),
           replace_options<typename options::template resize<NewSize - native_tuple_size>>,
           stl::conditional_t<(NewSize < native_tuple_size),
-                             typename last_type<T...>::template remove_limit<ituple, NewSize>,
-                             ituple>>;
+                             typename last_type<T...>::template remove_limit<ituple_template, NewSize>,
+                             ituple_type>>;
 
 
 
