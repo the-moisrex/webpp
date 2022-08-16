@@ -9,6 +9,8 @@
 #include "../traits/traits.hpp"
 #include "sql_concepts.hpp"
 
+#include <variant>
+
 namespace webpp::sql {
 
     template <typename CharT = char>
@@ -175,7 +177,8 @@ namespace webpp::sql {
             local_string_type value;
         };
 
-        using variable_type = stl::variant<db_float_type, db_integer_type, db_string_type, db_blob_type>;
+        using variable_type =
+          stl::variant<db_float_type, db_integer_type, db_string_type, db_blob_type, query_builder>;
         using column_variable_pair = stl::pair<string_type, variable_type>;
         using vector_of_variables  = traits::localify_allocators<traits_type, stl::vector<variable_type>>;
         using vector_of_strings    = traits::localify_allocators<traits_type, stl::vector<local_string_type>>;
@@ -218,7 +221,7 @@ namespace webpp::sql {
          * Set columns to be selected in the sql query.
          */
         template <typename... T>
-            requires(istl::StringifiableOf<T, string_type>&&...)
+            requires((istl::StringifiableOf<string_type, T> && ...))
         constexpr query_builder& select(T&&... cols) noexcept {
             columns.reserve(columns.size() + sizeof...(T));
             (columns.push_back(stringify(stl::forward<T>(cols))), ...);
@@ -268,6 +271,28 @@ namespace webpp::sql {
             method = query_method::insert;
             return *this;
         }
+
+
+        constexpr query_builder& insert(query_builder const& new_builder) noexcept {
+            // only select queries are allowed.
+            assert(new_builder.method == query_method::select);
+
+            method = query_method::insert;
+            values.push_back(new_builder);
+            return *this;
+        }
+
+
+        constexpr query_builder& insert(query_builder&& new_builder) noexcept {
+            // only select queries are allowed.
+            assert(new_builder.method == query_method::select);
+
+            method = query_method::insert;
+            values.push_back(stl::move(new_builder));
+            return *this;
+        }
+
+
 
         constexpr query_builder&
         insert(stl::initializer_list<column_variable_pair> const& input_cols_vals) noexcept {
