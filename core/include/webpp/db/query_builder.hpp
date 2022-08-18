@@ -147,16 +147,17 @@ namespace webpp::sql {
      */
     template <typename DBType>
     struct query_builder : public details::query_builder_subclasses<DBType> {
-        using database_type     = DBType;
-        using traits_type       = typename database_type::traits_type;
-        using string_type       = traits::general_string<traits_type>;
-        using local_string_type = traits::local_string<traits_type>;
-        using database_ref      = stl::add_lvalue_reference_t<database_type>;
-        using size_type         = typename database_type::size_type;
-        using db_float_type     = typename database_type::float_type;
-        using db_integer_type   = typename database_type::integer_type;
-        using db_string_type    = typename database_type::string_type;
-        using db_blob_type      = typename database_type::blob_type;
+        using database_type       = DBType;
+        using traits_type         = typename database_type::traits_type;
+        using allocator_pack_type = traits::allocator_pack_type<traits_type>;
+        using string_type         = traits::general_string<traits_type>;
+        using local_string_type   = traits::local_string<traits_type>;
+        using database_ref        = stl::add_lvalue_reference_t<database_type>;
+        using size_type           = typename database_type::size_type;
+        using db_float_type       = typename database_type::float_type;
+        using db_integer_type     = typename database_type::integer_type;
+        using db_string_type      = typename database_type::string_type;
+        using db_blob_type        = typename database_type::blob_type;
 
         using driver_type     = typename database_type::driver_type;
         using grammar_type    = typename database_type::grammar_type;
@@ -172,6 +173,9 @@ namespace webpp::sql {
         friend struct details::query_builder_subclasses;
 
       private:
+        // todo: check if it's a good idea to use local allocator here or not.
+        using data_ptr = typename allocator_pack_type::template general_unique_ptr<query_builder>;
+
         // WHERE Clause type
         struct where_type {
             local_string_type op; // the operator string
@@ -181,7 +185,7 @@ namespace webpp::sql {
         };
 
         using variable_type =
-          stl::variant<db_float_type, db_integer_type, db_string_type, db_blob_type, query_builder>;
+          stl::variant<db_float_type, db_integer_type, db_string_type, db_blob_type, data_ptr>;
         using column_variable_pair = stl::pair<string_type, variable_type>;
         using vector_of_variables  = traits::localify_allocators<traits_type, stl::vector<variable_type>>;
         using vector_of_strings    = traits::localify_allocators<traits_type, stl::vector<local_string_type>>;
@@ -210,6 +214,7 @@ namespace webpp::sql {
         constexpr auto stringify(T&& str) const noexcept {
             return istl::stringify_of<local_string_type>(stl::forward<T>(str));
         }
+
 
       public:
         template <EnabledTraits ET>
@@ -295,7 +300,7 @@ namespace webpp::sql {
             }
 
             method = query_method::insert;
-            values.push_back(stl::move(new_builder));
+            values.push_back(alloc::allocate_unique_general(db, stl::move(new_builder)));
             return *this;
         }
 
@@ -377,7 +382,8 @@ namespace webpp::sql {
                     out.append(' ');
                     if (!columns.empty()) {
                         out.append('(');
-                        strings::join_with(out, columns, ", "); // todo: column names are not escaped
+                        strings::join_with(out, columns,
+                                           ", "); // todo: column names are not escaped
                         out.append(')');
                     }
                     out.append(words::values);
@@ -467,10 +473,21 @@ namespace webpp::sql {
                 out.append(lexical::cast<string_type>(i, db));
             } else if (db_string_type s = stl::get_if<db_string_type>(var)) {
                 out.append(s);
-            } else if (db_string_type qb = stl::get_if<query_builder>(var)) {
+            } else if (data_ptr qb = stl::get_if<data_ptr>(var)) {
                 // good, we don't need to worry about the prepared query builder
                 // todo: Fix user's mistakes and tune the select columns to match the insert columns
-                qb.template to_string<StrT, words>(out);
+
+                // I'm going to modify the query builder in order to tune it to the insert sql query
+                //   1. N insert cols == N select cols
+                //     1.1. remove the useless select cols
+                //     1.2. copy insert cols into the missing select cols
+                //   2. Same column names in both cols
+                //     2.1. ignore if they're the same
+                //     2.2. check if it has an alias
+                //     2.3. if it has, and it's the same as the insert col, then ignore
+                //     2.4. if it doesn't have, then add an alias that is the same as the insert col
+
+                qb->template to_string<StrT, words>(out);
             } else if (db_blob_type b = stl::get_if<db_blob_type>(var)) {
                 // todo: append blob
             } else {
@@ -478,7 +495,6 @@ namespace webpp::sql {
                 out.append(words::null);
             }
         }
-
 
         constexpr void stringify_table_name(auto& out) const noexcept {
             // todo: MS SQL Server adds brackets
