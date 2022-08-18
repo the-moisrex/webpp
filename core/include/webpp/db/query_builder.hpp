@@ -127,6 +127,10 @@ namespace webpp::sql {
           : builder{input_builder},
             key{stl::move(input_key)} {}
 
+        constexpr column_builder(query_builder_ref input_builder, key_type const& input_key) noexcept
+          : builder{input_builder},
+            key{input_key} {}
+
         // set the value for the specified column
         template <typename T>
         constexpr column_builder& operator=(T&& value) noexcept {
@@ -174,7 +178,7 @@ namespace webpp::sql {
 
       private:
         // todo: check if it's a good idea to use local allocator here or not.
-        using data_ptr = typename allocator_pack_type::template general_unique_ptr<query_builder>;
+        using query_builder_ptr = typename allocator_pack_type::template general_unique_ptr<query_builder>;
 
         // WHERE Clause type
         struct where_type {
@@ -185,7 +189,7 @@ namespace webpp::sql {
         };
 
         using variable_type =
-          stl::variant<db_float_type, db_integer_type, db_string_type, db_blob_type, data_ptr>;
+          stl::variant<db_float_type, db_integer_type, db_string_type, db_blob_type, query_builder_ptr>;
         using column_variable_pair = stl::pair<string_type, variable_type>;
         using vector_of_variables  = traits::localify_allocators<traits_type, stl::vector<variable_type>>;
         using vector_of_strings    = traits::localify_allocators<traits_type, stl::vector<local_string_type>>;
@@ -217,13 +221,11 @@ namespace webpp::sql {
 
 
       public:
-        template <EnabledTraits ET>
-            requires(!stl::same_as<ET, query_builder>)
-        constexpr query_builder(ET&& et, database_ref input_db) noexcept
+        constexpr query_builder(database_ref input_db) noexcept
           : db{input_db},
-            table_name{alloc::allocator_for<string_type>(et)},
-            columns{alloc::local_allocator<local_string_type>(et)},
-            where_clauses{alloc::local_allocator<where_type>(et)} {}
+            table_name{alloc::allocator_for<string_type>(db)},
+            columns{alloc::local_allocator<local_string_type>(db)},
+            where_clauses{alloc::local_allocator<where_type>(db)} {}
 
         /**
          * Set columns to be selected in the sql query.
@@ -237,7 +239,8 @@ namespace webpp::sql {
         }
 
         template <istl::StringViewifiable StrvT>
-        constexpr column_builder<database_type, StrvT> operator[](StrvT&& col_name) const noexcept {
+        constexpr column_builder<database_type, stl::remove_cvref_t<StrvT>>
+        operator[](StrvT&& col_name) const noexcept {
             return {db, stl::forward<StrvT>(col_name)};
         }
 
@@ -262,7 +265,7 @@ namespace webpp::sql {
                 clause.reserve(clause.size() + stl::size(value) + 3 + 2 + 1);
             }
             clause.append(" = ");
-            clause.append(stringify_value(stl::forward<T>(value)));
+            stringify_value(clause, stl::forward<T>(value));
 
             // we add empty string as condition but to_string can identify if it needs to add "and" or ""
             where_clauses.emplace("", stl::move(clause));
@@ -283,19 +286,19 @@ namespace webpp::sql {
 
         constexpr query_builder& insert(query_builder const& new_builder) noexcept {
             if (new_builder.method != query_method::select) {
-                this->logger.error(LOG_CAT, "Only select queries are allowed");
+                db.logger.error(LOG_CAT, "Only select queries are allowed");
                 return *this;
             }
 
             method = query_method::insert;
-            values.push_back(new_builder);
+            values.push_back(alloc::allocate_unique_general(db, new_builder));
             return *this;
         }
 
 
         constexpr query_builder& insert(query_builder&& new_builder) noexcept {
             if (new_builder.method != query_method::select) {
-                this->logger.error(LOG_CAT, "Only select queries are allowed");
+                db.logger.error(LOG_CAT, "Only select queries are allowed");
                 return *this;
             }
 
@@ -377,14 +380,14 @@ namespace webpp::sql {
                         break;
                     }
                     out.append(words::insert_into);
-                    out.append(' ');
+                    out.append(" ");
                     stringify_table_name(out);
-                    out.append(' ');
+                    out.append(" ");
                     if (!columns.empty()) {
-                        out.append('(');
+                        out.append("(");
                         strings::join_with(out, columns,
                                            ", "); // todo: column names are not escaped
-                        out.append(')');
+                        out.append(")");
                     }
                     out.append(words::values);
 
@@ -400,7 +403,7 @@ namespace webpp::sql {
                                              return stringify_value<words>(val);
                                          }),
                                        ", ");
-                    out.append(')');
+                    out.append(")");
 
                     // values and columns should be aligned so don't worry
                     for (; it != it_end; it += col_size) {
@@ -411,28 +414,28 @@ namespace webpp::sql {
                                                  return stringify_value<words>(val);
                                              }),
                                            ", ");
-                        out.append(')');
+                        out.append(")");
                     }
                     break;
                 }
                 case query_method::select: {
                     out.append(words::select);
-                    out.append(' ');
+                    out.append(" ");
                     stringify_select_columns(out);
-                    out.append(' ');
+                    out.append(" ");
                     out.append(words::from);
-                    out.append(' ');
+                    out.append(" ");
                     stringify_table_name(out);
                     stringify_where<words>(out);
                     break;
                 }
                 case query_method::insert_default: {
                     out.append(words::insert_into);
-                    out.append(' ');
+                    out.append(" ");
                     stringify_table_name(out);
-                    out.append(' ');
+                    out.append(" ");
                     out.append(words::default_word);
-                    out.append(' ');
+                    out.append(" ");
                     out.append(words::values);
                     break;
                 }
@@ -454,7 +457,8 @@ namespace webpp::sql {
         template <typename V>
         static constexpr variable_type variablify(V&& val) noexcept {
             if constexpr (stl::is_same_v<V, db_float_type> || stl::is_same_v<V, db_integer_type> ||
-                          stl::is_same_v<V, db_string_type> || stl::is_same_v<V, db_blob_type>) {
+                          stl::is_same_v<V, db_string_type> || stl::is_same_v<V, db_blob_type> ||
+                          stl::is_same_v<V, query_builder_ptr>) {
                 return stl::forward<V>(val);
             } else {
                 // todo
@@ -473,7 +477,7 @@ namespace webpp::sql {
                 out.append(lexical::cast<string_type>(i, db));
             } else if (db_string_type s = stl::get_if<db_string_type>(var)) {
                 out.append(s);
-            } else if (data_ptr qb = stl::get_if<data_ptr>(var)) {
+            } else if (query_builder_ptr qb = stl::get_if<query_builder_ptr>(var)) {
                 // good, we don't need to worry about the prepared query builder
                 // todo: Fix user's mistakes and tune the select columns to match the insert columns
 
@@ -511,7 +515,7 @@ namespace webpp::sql {
             if (where_clauses.empty()) {
                 return; // we don't have any "WHERE clauses"
             }
-            out.append(' ');
+            out.append(" ");
             out.append(words::where);
 
             auto       it        = where_clauses.begin();
@@ -522,21 +526,21 @@ namespace webpp::sql {
                 auto const& [op, value] = *it;
                 // the first one can't include "or" and "and"
                 if (op != words::and_word && op != words::or_word) {
-                    out.append(' ');
+                    out.append(" ");
                     out.append(op);
                 }
-                out.append(' ');
+                out.append(" ");
                 out.append(value);
             }
             for (; it != where_end; ++it) {
                 auto const& [op, value] = *it;
-                out.append(' ');
+                out.append(" ");
                 if (op.empty()) {
                     out.append(words::and_word);
                 } else {
                     out.append(op);
                 }
-                out.append(' ');
+                out.append(" ");
                 out.append(value);
             }
         }
