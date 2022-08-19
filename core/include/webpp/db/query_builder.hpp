@@ -178,7 +178,7 @@ namespace webpp::sql {
 
       private:
         // todo: check if it's a good idea to use local allocator here or not.
-        using query_builder_ptr = typename allocator_pack_type::template general_unique_ptr<query_builder>;
+        using query_builder_ptr = typename allocator_pack_type::template local_unique_ptr<query_builder>;
 
         // WHERE Clause type
         struct where_type {
@@ -191,9 +191,11 @@ namespace webpp::sql {
         using variable_type =
           stl::variant<db_float_type, db_integer_type, db_string_type, db_blob_type, query_builder_ptr>;
         using column_variable_pair = stl::pair<string_type, variable_type>;
-        using vector_of_variables  = traits::localify_allocators<traits_type, stl::vector<variable_type>>;
-        using vector_of_strings    = traits::localify_allocators<traits_type, stl::vector<local_string_type>>;
-        using vector_of_wheres     = traits::localify_allocators<traits_type, stl::vector<where_type>>;
+        using vector_of_variables =
+          stl::vector<variable_type, traits::local_allocator<traits_type, variable_type>>;
+        using vector_of_strings =
+          stl::vector<local_string_type, traits::local_allocator<traits_type, local_string_type>>;
+        using vector_of_wheres = stl::vector<where_type, traits::local_allocator<traits_type, where_type>>;
 
         // create query is not included in the query builder class
         enum struct query_method { select, insert, insert_default, update, remove, none };
@@ -226,6 +228,7 @@ namespace webpp::sql {
           : db{input_db},
             table_name{alloc::allocator_for<string_type>(db)},
             columns{alloc::local_allocator<local_string_type>(db)},
+            values{alloc::local_allocator<variable_type>(db)},
             where_clauses{alloc::local_allocator<where_type>(db)} {}
 
         /**
@@ -271,7 +274,7 @@ namespace webpp::sql {
             stringify_value<words>(clause, variablify(stl::forward<T>(value)));
 
             // we add empty string as condition but to_string can identify if it needs to add "and" or ""
-            where_clauses.emplace("", stl::move(clause));
+            where_clauses.push_back(where_type{.op = "", .value = stl::move(clause)});
             return *this;
         }
 
@@ -294,7 +297,7 @@ namespace webpp::sql {
             }
 
             method = query_method::insert;
-            values.push_back(alloc::allocate_unique_general(db, new_builder));
+            values.emplace_back(alloc::allocate_unique_local<variable_type>(db, new_builder));
             return *this;
         }
 
@@ -306,7 +309,7 @@ namespace webpp::sql {
             }
 
             method = query_method::insert;
-            values.push_back(alloc::allocate_unique_general(db, stl::move(new_builder)));
+            values.emplace_back(alloc::allocate_unique_local<variable_type>(db, stl::move(new_builder)));
             return *this;
         }
 
