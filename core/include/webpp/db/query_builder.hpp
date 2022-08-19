@@ -216,7 +216,8 @@ namespace webpp::sql {
         template <typename T>
             requires(is_stringify<T>)
         constexpr auto stringify(T&& str) const noexcept {
-            return istl::stringify_of<local_string_type>(stl::forward<T>(str));
+            return istl::stringify_of<local_string_type>(stl::forward<T>(str),
+                                                         alloc::allocator_for<local_string_type>(db));
         }
 
 
@@ -238,10 +239,10 @@ namespace webpp::sql {
             return *this;
         }
 
-        template <istl::StringViewifiable StrvT>
-        constexpr column_builder<database_type, stl::remove_cvref_t<StrvT>>
-        operator[](StrvT&& col_name) const noexcept {
-            return {db, stl::forward<StrvT>(col_name)};
+        template <typename StrT>
+            requires(istl::StringifiableOf<string_type, StrT>)
+        constexpr column_builder<database_type, string_type> operator[](StrT&& col_name) const noexcept {
+            return {db, stringify(stl::forward<StrT>(col_name))};
         }
 
         constexpr column_builder<database_type, stl::size_t>
@@ -331,7 +332,8 @@ namespace webpp::sql {
             // 1. finding if we have a new column:
             // 3. sorting cols_vals based on the columns
             auto col_it = columns.begin();
-            for (auto it = cols_vals.begin();;) {
+            auto it     = cols_vals.begin();
+            for (;;) {
                 auto const& [col, val] = *it;
                 if (col != *col_it) {
                     auto next_it = stl::next(it);
