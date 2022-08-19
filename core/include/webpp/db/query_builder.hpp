@@ -475,13 +475,22 @@ namespace webpp::sql {
 
       private:
         template <typename V>
-        static constexpr variable_type variablify(V&& val) noexcept {
+        constexpr decltype(auto) variablify(V&& val) const noexcept {
             if constexpr (stl::is_same_v<V, db_float_type> || stl::is_same_v<V, db_integer_type> ||
                           stl::is_same_v<V, db_string_type> || stl::is_same_v<V, db_blob_type> ||
                           stl::is_same_v<V, query_builder_ptr>) {
+                return variable_type{stl::forward<V>(val)};
+            } else if constexpr (istl::Stringifiable<V>) {
+                return variable_type{stringify<V>(stl::forward<V>(val))};
+            } else if constexpr (stl::floating_point<V>) {
+                return variable_type{static_cast<db_float_type>(val)};
+            } else if constexpr (stl::integral<V>) {
+                return variable_type{static_cast<db_integer_type>(val)};
+            } else if constexpr (stl::same_as<stl::remove_cvref_t<V>, variable_type>) {
                 return stl::forward<V>(val);
             } else {
                 // todo
+                static_assert_false(V, "The specified type is not a valid SQL Value.");
             }
         }
 

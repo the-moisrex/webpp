@@ -109,6 +109,7 @@ namespace webpp::sql {
                               T::and_word; // and
                               T::or_word; // or
                               T::insert_into;
+                              T::default_word;
                           };
 
 } // namespace webpp::sql
