@@ -382,14 +382,14 @@ namespace webpp::sql {
                         break;
                     }
                     out.append(words::insert_into);
-                    out.append(" ");
+                    out.push_back(' ');
                     stringify_table_name(out);
-                    out.append(" ");
+                    out.push_back(' ');
                     if (!columns.empty()) {
-                        out.append("(");
+                        out.push_back('(');
                         strings::join_with(out, columns,
                                            ", "); // todo: column names are not escaped
-                        out.append(")");
+                        out.push_back(')');
                     }
                     out.append(words::values);
 
@@ -405,7 +405,7 @@ namespace webpp::sql {
                                              return stringify_value<words>(val);
                                          }),
                                        ", ");
-                    out.append(")");
+                    out.push_back(')');
 
                     // values and columns should be aligned so don't worry
                     for (; it != it_end; it += col_size) {
@@ -416,28 +416,28 @@ namespace webpp::sql {
                                                  return stringify_value<words>(val);
                                              }),
                                            ", ");
-                        out.append(")");
+                        out.push_back(')');
                     }
                     break;
                 }
                 case query_method::select: {
                     out.append(words::select);
-                    out.append(" ");
+                    out.push_back(' ');
                     stringify_select_columns(out);
-                    out.append(" ");
+                    out.push_back(' ');
                     out.append(words::from);
-                    out.append(" ");
+                    out.push_back(' ');
                     stringify_table_name(out);
                     stringify_where<words>(out);
                     break;
                 }
                 case query_method::insert_default: {
                     out.append(words::insert_into);
-                    out.append(" ");
+                    out.push_back(' ');
                     stringify_table_name(out);
-                    out.append(" ");
+                    out.push_back(' ');
                     out.append(words::default_word);
-                    out.append(" ");
+                    out.push_back(' ');
                     out.append(words::values);
                     break;
                 }
@@ -517,7 +517,7 @@ namespace webpp::sql {
             if (where_clauses.empty()) {
                 return; // we don't have any "WHERE clauses"
             }
-            out.append(" ");
+            out.push_back(' ');
             out.append(words::where);
 
             auto       it        = where_clauses.begin();
@@ -528,21 +528,21 @@ namespace webpp::sql {
                 auto const& [op, value] = *it;
                 // the first one can't include "or" and "and"
                 if (op != words::and_word && op != words::or_word) {
-                    out.append(" ");
+                    out.push_back(' ');
                     out.append(op);
                 }
-                out.append(" ");
+                out.push_back(' ');
                 out.append(value);
             }
             for (; it != where_end; ++it) {
                 auto const& [op, value] = *it;
-                out.append(" ");
+                out.push_back(' ');
                 if (op.empty()) {
                     out.append(words::and_word);
                 } else {
                     out.append(op);
                 }
-                out.append(" ");
+                out.push_back(' ');
                 out.append(value);
             }
         }
