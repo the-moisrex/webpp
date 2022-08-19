@@ -259,14 +259,16 @@ namespace webpp::sql {
             return *this;
         }
 
-        template <istl::Stringifiable StrT1, typename T>
+        template <istl::Stringifiable StrT1,
+                  typename T,
+                  SQLKeywords words = sql_lowercase_keywords<istl::char_type_of<StrT1>>>
         constexpr query_builder& where(StrT1&& col, T&& value) noexcept {
             auto clause = stringify(stl::forward<StrT1>(col));
             if constexpr (requires { stl::size(value); }) {
                 clause.reserve(clause.size() + stl::size(value) + 3 + 2 + 1);
             }
             clause.append(" = ");
-            stringify_value(clause, stl::forward<T>(value));
+            stringify_value<words>(clause, variablify(stl::forward<T>(value)));
 
             // we add empty string as condition but to_string can identify if it needs to add "and" or ""
             where_clauses.emplace("", stl::move(clause));
@@ -471,7 +473,7 @@ namespace webpp::sql {
          * This function will stringify the values, if you're looking for the function that handles the
          * prepare statements, this is not going to be used there.
          */
-        template <typename StrT, SQLKeywords words>
+        template <SQLKeywords words, typename StrT>
         constexpr void stringify_value(StrT& out, variable_type const& var) const noexcept {
             if (db_float_type f = stl::get_if<db_float_type>(var)) {
                 out.append(lexical::cast<string_type>(f, db));
