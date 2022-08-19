@@ -15,34 +15,36 @@ namespace webpp::sql {
 
     template <typename CharT = char>
     struct sql_lowercase_keywords {
-        static constexpr const CharT* select      = "select";
-        static constexpr const CharT* update      = "update";
-        static constexpr const CharT* delete_word = "delete";
-        static constexpr const CharT* values      = "values";
-        static constexpr const CharT* from        = "from";
-        static constexpr const CharT* where       = "where";
-        static constexpr const CharT* in          = "in";
-        static constexpr const CharT* null        = "null";
-        static constexpr const CharT* not_word    = "not";
-        static constexpr const CharT* and_word    = "and";
-        static constexpr const CharT* or_word     = "or";
-        static constexpr const CharT* insert_into = "insert into";
+        static constexpr const CharT* select       = "select";
+        static constexpr const CharT* update       = "update";
+        static constexpr const CharT* delete_word  = "delete";
+        static constexpr const CharT* values       = "values";
+        static constexpr const CharT* from         = "from";
+        static constexpr const CharT* where        = "where";
+        static constexpr const CharT* in           = "in";
+        static constexpr const CharT* null         = "null";
+        static constexpr const CharT* not_word     = "not";
+        static constexpr const CharT* and_word     = "and";
+        static constexpr const CharT* or_word      = "or";
+        static constexpr const CharT* insert_into  = "insert into";
+        static constexpr const CharT* default_word = "default";
     };
 
     template <typename CharT = char>
     struct sql_uppercase_keywords {
-        static constexpr const CharT* select      = "SELECT";
-        static constexpr const CharT* update      = "UPDATE";
-        static constexpr const CharT* delete_word = "DELETE";
-        static constexpr const CharT* values      = "VALUES";
-        static constexpr const CharT* from        = "FROM";
-        static constexpr const CharT* where       = "WHERE";
-        static constexpr const CharT* in          = "IN";
-        static constexpr const CharT* null        = "NULL";
-        static constexpr const CharT* not_word    = "NOT";
-        static constexpr const CharT* and_word    = "AND";
-        static constexpr const CharT* or_word     = "OR";
-        static constexpr const CharT* insert_into = "INSERT INTO";
+        static constexpr const CharT* select       = "SELECT";
+        static constexpr const CharT* update       = "UPDATE";
+        static constexpr const CharT* delete_word  = "DELETE";
+        static constexpr const CharT* values       = "VALUES";
+        static constexpr const CharT* from         = "FROM";
+        static constexpr const CharT* where        = "WHERE";
+        static constexpr const CharT* in           = "IN";
+        static constexpr const CharT* null         = "NULL";
+        static constexpr const CharT* not_word     = "NOT";
+        static constexpr const CharT* and_word     = "AND";
+        static constexpr const CharT* or_word      = "OR";
+        static constexpr const CharT* insert_into  = "INSERT INTO";
+        static constexpr const CharT* default_word = "DEFAULT";
     };
 
 
@@ -244,13 +246,12 @@ namespace webpp::sql {
 
         template <typename StrT>
             requires(istl::StringifiableOf<string_type, StrT>)
-        constexpr column_builder<database_type, string_type> operator[](StrT&& col_name) const noexcept {
-            return {db, stringify(stl::forward<StrT>(col_name))};
+        constexpr column_builder<database_type, string_type> operator[](StrT&& col_name) noexcept {
+            return {*this, stringify(stl::forward<StrT>(col_name))};
         }
 
-        constexpr column_builder<database_type, stl::size_t>
-        operator[](stl::size_t col_index) const noexcept {
-            return {db, col_index};
+        constexpr column_builder<database_type, stl::size_t> operator[](stl::size_t col_index) noexcept {
+            return {*this, col_index};
         }
 
         // todo: where, where_not, where_in, and_where, and_where_not_null, or_where, or_where_not_null
@@ -343,7 +344,7 @@ namespace webpp::sql {
                 if (col != *col_it) {
                     auto next_it = stl::next(it);
                     if (next_it != cols_vals.end()) {
-                        stl::iter_swap(it, next_it);
+                        stl::swap(it, next_it);
                     } else {
                         // found a new column
                         const stl::size_t col_size = columns.size();
@@ -404,23 +405,35 @@ namespace webpp::sql {
                     const auto        it_end   = values.end();
                     const stl::size_t col_size = columns.size();
                     out.append(" (");
-                    strings::join_with(out,
-                                       stl::span{it, col_size} |
-                                         stl::views::transform([this](auto& val) constexpr noexcept {
-                                             return stringify_value<words>(val);
-                                         }),
-                                       ", ");
+
+                    // manual join (code duplication)
+                    {
+                        auto const it_step_first = it + col_size - 1;
+                        for (; it != it_step_first; ++it) {
+                            stringify_value<words>(out, *it);
+                            out.append(", ");
+                        }
+                        stringify_value<words>(out, *it);
+                        ++it;
+                    }
+
                     out.push_back(')');
 
                     // values and columns should be aligned so don't worry
-                    for (; it != it_end; it += col_size) {
+                    for (; it != it_end;) {
                         out.append(", (");
-                        strings::join_with(out,
-                                           stl::span{it, col_size} |
-                                             stl::views::transform([this](auto& val) constexpr noexcept {
-                                                 return stringify_value<words>(val);
-                                             }),
-                                           ", ");
+
+                        // manual join
+                        {
+                            auto const it_step = it + col_size - 1;
+                            for (; it != it_step; ++it) {
+                                stringify_value<words>(out, *it);
+                                out.append(", ");
+                            }
+                            stringify_value<words>(out, *it);
+                            ++it;
+                        }
+
                         out.push_back(')');
                     }
                     break;
@@ -478,13 +491,13 @@ namespace webpp::sql {
          */
         template <SQLKeywords words, typename StrT>
         constexpr void stringify_value(StrT& out, variable_type const& var) const noexcept {
-            if (db_float_type f = stl::get_if<db_float_type>(var)) {
-                out.append(lexical::cast<string_type>(f, db));
-            } else if (db_integer_type i = stl::get_if<db_integer_type>(var)) {
-                out.append(lexical::cast<string_type>(i, db));
-            } else if (db_string_type s = stl::get_if<db_string_type>(var)) {
-                out.append(s);
-            } else if (query_builder_ptr qb = stl::get_if<query_builder_ptr>(var)) {
+            if (auto* f = stl::get_if<db_float_type>(&var)) {
+                out.append(lexical::cast<string_type>(*f, db));
+            } else if (auto* i = stl::get_if<db_integer_type>(&var)) {
+                out.append(lexical::cast<string_type>(*i, db));
+            } else if (auto* s = stl::get_if<db_string_type>(&var)) {
+                out.append(*s);
+            } else if (auto* qb = stl::get_if<query_builder_ptr>(&var)) {
                 // good, we don't need to worry about the prepared query builder
                 // todo: Fix user's mistakes and tune the select columns to match the insert columns
 
@@ -498,8 +511,8 @@ namespace webpp::sql {
                 //     2.3. if it has, and it's the same as the insert col, then ignore
                 //     2.4. if it doesn't have, then add an alias that is the same as the insert col
 
-                qb->template to_string<StrT, words>(out);
-            } else if (db_blob_type b = stl::get_if<db_blob_type>(var)) {
+                (*qb)->template to_string<StrT, words>(out);
+            } else if (auto* b = stl::get_if<db_blob_type>(&var)) {
                 // todo: append blob
             } else {
                 // it's null
