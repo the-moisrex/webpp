@@ -4,6 +4,7 @@ project(webpp
         VERSION 1.0.0
         LANGUAGES CXX
         )
+enable_language(CXX)
 set(LIB_NAME ${PROJECT_NAME})
 set(LIB_SOVERSION 1)
 set(BIN_SOVERSION 1)

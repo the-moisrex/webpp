@@ -235,11 +235,13 @@ namespace webpp::strings {
     }
 
     template <istl::String StringType = stl::string, typename C, typename... SeparatorTypes>
+        requires((!istl::Tuple<SeparatorTypes> && ...))
     constexpr auto join_with(C const& vec, SeparatorTypes&&... separators) {
         return join_with<StringType, C>(vec, stl::make_tuple(stl::forward<SeparatorTypes>(separators)...));
     }
 
     template <istl::String StringType = stl::string, typename C, typename... SeparatorTypes>
+        requires((!istl::Tuple<SeparatorTypes> && ...))
     constexpr auto join_with(StringType& output, C const& vec, SeparatorTypes&&... separators) {
         return join_with<StringType, C>(output,
                                         vec,

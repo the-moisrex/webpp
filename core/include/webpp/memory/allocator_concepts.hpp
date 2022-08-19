@@ -223,7 +223,7 @@ namespace webpp {
         template <typename ResourceList, typename ResType>
         struct resource_descriptor_finder {
             template <typename T>
-            using condition = stl::is_same<alloc::descriptors::storage<T>, ResType>;
+            using condition = stl::is_same<T, ResType>;
 
             using type = istl::first_parameter<istl::filter_parameters_t<condition, ResourceList>>;
         };
