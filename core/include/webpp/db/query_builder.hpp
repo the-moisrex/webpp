@@ -313,7 +313,7 @@ namespace webpp::sql {
             }
 
             method = query_method::insert;
-            values.emplace_back(alloc::allocator_for<query_builder_ptr>(db), new_builder);
+            values.emplace_back(query_builder_ptr{alloc::local_allocator<query_builder>(db), new_builder});
             return *this;
         }
 
@@ -325,7 +325,8 @@ namespace webpp::sql {
             }
 
             method = query_method::insert;
-            values.emplace_back(alloc::allocator_for<query_builder_ptr>(db), stl::move(new_builder));
+            values.emplace_back(
+              query_builder_ptr{alloc::local_allocator<query_builder>(db), stl::move(new_builder)});
             return *this;
         }
 
@@ -362,7 +363,8 @@ namespace webpp::sql {
                         stl::swap(it, next_it);
                     } else {
                         // found a new column
-                        const stl::size_t col_size = columns.size();
+                        using diff_type     = typename vector_of_strings::iterator::difference_type;
+                        const auto col_size = static_cast<diff_type>(columns.size());
                         columns.push_back(col);
 
                         // 2. Adding new and null variables into the values to adjust the values matrix
@@ -540,11 +542,7 @@ namespace webpp::sql {
                 //     2.2. check if it has an alias
                 //     2.3. if it has, and it's the same as the insert col, then ignore
                 //     2.4. if it doesn't have, then add an alias that is the same as the insert col
-                if (!*qb) {
-                    out.append(words::null);
-                } else {
-                    (*qb)->template to_string<StrT, words>(out);
-                }
+                (*qb)->template to_string<StrT, words>(out);
             } else if (auto* b = stl::get_if<db_blob_type>(&var)) {
                 // todo: append blob
             } else {

@@ -80,13 +80,9 @@ namespace webpp::sql {
 
         template <istl::arithmetic T = size_type>
         [[nodiscard]] inline T as_number() const {
-            static constexpr auto t_size       = sizeof(T);
-            static constexpr bool supports_int = requires {
-                stmt.as_int(index);
-            };
-            static constexpr bool supports_int64 = requires {
-                stmt.as_int64(index);
-            };
+            static constexpr auto t_size = sizeof(T);
+            // static constexpr bool supports_int   = requires { stmt.as_int(index); };
+            // static constexpr bool supports_int64 = requires { stmt.as_int64(index); };
             T res;
 
             if constexpr (stl::is_floating_point_v<T>) {
@@ -196,8 +192,7 @@ namespace webpp::sql {
 
         template <typename T>
         [[nodiscard]] inline auto as() {
-            auto                  errmsg = object::make_general<string_type>(stmt);
-            static constexpr auto t_size = sizeof(T);
+            auto errmsg = object::make_general<string_type>(stmt);
             if constexpr (stl::is_arithmetic_v<T>) {
                 return as_number<T>();
             } else if constexpr (istl::String<T>) {

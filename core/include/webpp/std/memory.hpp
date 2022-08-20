@@ -18,10 +18,11 @@ namespace webpp::istl {
         // one of this classes' use cases. so you're not to change this class in a way that'll throw an error
         // for an incomplete type.
         using value_type       = stl::remove_pointer_t<stl::remove_reference_t<T>>;
-        using pointer          = stl::add_pointer_t<value_type>;
-        using allocator_type   = stl::remove_reference_t<Allocator>;
-        using allocator_traits = stl::allocator_traits<allocator_type>;
-        using size_type        = typename allocator_traits::size_type;
+        using allocator_traits = typename stl::allocator_traits<
+          stl::remove_reference_t<Allocator>>::template rebind_traits<value_type>;
+        using allocator_type = typename allocator_traits::allocator_type;
+        using size_type      = typename allocator_traits::size_type;
+        using pointer        = typename allocator_traits::pointer;
 
         // using required size like this because using sizeof requires the type to be a complete type
 #define webpp_required_size (sizeof(value_type) / sizeof(typename allocator_traits::value_type))
@@ -29,7 +30,7 @@ namespace webpp::istl {
       private:
         // alloc needs to be before the ptr because it is required for constructing the ptr
         [[no_unique_address]] allocator_type alloc;
-        pointer                              ptr;
+        pointer                              ptr{nullptr};
 
 
       public:
@@ -38,33 +39,34 @@ namespace webpp::istl {
         // You don't have to pass the allocator if the allocator is default constructible.
         // This will allocate the space, but only constructs the object if it's default constructible
         constexpr dynamic() noexcept
-            requires(istl::is_complete_v<value_type> && stl::is_default_constructible_v<allocator_type>)
+            requires(stl::is_default_constructible_v<allocator_type>)
         : alloc{},
-          ptr(reinterpret_cast<pointer>(allocator_traits::allocate(alloc, webpp_required_size))) {
+          ptr{allocator_traits::allocate(alloc, webpp_required_size)} {
             if constexpr (stl::is_default_constructible_v<value_type>) {
                 allocator_traits::construct(alloc, ptr); // default construct
             }
         }
 
         template <typename... Args>
-            requires(istl::is_complete_v<value_type> && stl::is_constructible_v<value_type, Args...>)
+        // requires(stl::is_constructible_v<value_type, Args...>)
         constexpr dynamic(allocator_type const& input_alloc, Args&&... args)
           : alloc{input_alloc},
-            ptr(reinterpret_cast<pointer>(allocator_traits::allocate(alloc, webpp_required_size))) {
+            ptr{allocator_traits::allocate(alloc, webpp_required_size)} {
             allocator_traits::construct(alloc, ptr, stl::forward<Args>(args)...);
         }
 
         template <typename... Args>
-            requires(istl::is_complete_v<value_type> && stl::is_default_constructible_v<allocator_type> &&
+            requires(stl::is_default_constructible_v<allocator_type> &&
                      stl::is_constructible_v<value_type, Args...>)
-        constexpr dynamic(Args&&... args) : alloc{},
-                                            ptr(allocator_traits::allocate(alloc, 1)) {
+        constexpr dynamic(Args&&... args)
+          : alloc{},
+            ptr{allocator_traits::allocate(alloc, webpp_required_size)} {
             allocator_traits::construct(alloc, ptr, stl::forward<Args>(args)...);
         }
 
         constexpr dynamic(dynamic const& other)
           : alloc(other.alloc),
-            ptr{allocator_traits::allocate(alloc, 1)} {
+            ptr{allocator_traits::allocate(alloc, webpp_required_size)} {
             allocator_traits::construct(alloc, ptr, *other.ptr);
         }
 
@@ -161,9 +163,7 @@ namespace webpp::istl {
         constexpr inline void destroy() {
             if (ptr) {
                 allocator_traits::destroy(alloc, ptr);
-                allocator_traits::deallocate(alloc,
-                                             reinterpret_cast<typename allocator_traits::pointer>(ptr),
-                                             webpp_required_size);
+                allocator_traits::deallocate(alloc, ptr, webpp_required_size);
             }
         }
 
