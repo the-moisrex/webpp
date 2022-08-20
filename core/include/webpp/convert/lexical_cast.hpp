@@ -77,6 +77,20 @@ namespace webpp::lexical {
                 // todo: add more else ifs
                 return to<Target>(stl::forward<Source>(source));
             }
+        } else if constexpr (stl::is_floating_point_v<target_t>) {
+            // Target == integer
+            if constexpr (stl::is_integral_v<src_t>) {
+                // Source == integer as well
+                return static_cast<Target>(stl::forward<Source>(source));
+            } else if constexpr (istl::StringViewifiable<src_t>) {
+                target_t    target;
+                auto* const data      = istl::string_data(source);
+                const auto  data_size = stl::size(source);
+                std::from_chars(data, data + data_size, target);
+                return target;
+            } else {
+                static_assert_false(src_t, "We don't know how to convert this type to floating type.");
+            }
         } else if constexpr (requires {
                                  Target{stl::forward<Source>(source), stl::forward<AllocList>(allocs)...};
                              }) {
@@ -90,6 +104,8 @@ namespace webpp::lexical {
                           extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
         } else if constexpr (requires { Target{stl::forward<Source>(source)}; }) {
             return Target{stl::forward<Source>(source)};
+        } else {
+            static_assert_false(src_t, "We don't know how to convert this type");
         }
     }
 
@@ -104,7 +120,8 @@ namespace webpp::lexical {
         if constexpr (istl::StringViewifiableOfTemplate<Target, src_t> &&
                       requires { istl::string_viewify_of<Target>(stl::forward<Source>(source)); }) {
             return istl::string_viewify_of<Target>(stl::forward<Source>(source));
-        } else if constexpr (istl::StringifiableOfTemplate<Target, src_t> && requires {
+        } else if constexpr (istl::StringifiableOfTemplate<Target, src_t> &&
+                             requires {
                                  istl::stringify_of<Target>(stl::forward<Source>(source),
                                                             extract_allocator_or_default(allocs..., source));
                              }) {
@@ -138,8 +155,8 @@ namespace webpp::lexical {
 
     template <typename T, typename To>
     concept CastableTo = requires(T obj, enable_owner_traits<default_traits> et) {
-        { cast<To>(obj, et) } -> stl::same_as<To>;
-    };
+                             { cast<To>(obj, et) } -> stl::same_as<To>;
+                         };
 } // namespace webpp::lexical
 
 #endif // WEBPP_LEXICAL_CAST_HPP
