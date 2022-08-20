@@ -190,8 +190,13 @@ namespace webpp::sql {
             local_string_type value;
         };
 
-        using variable_type =
-          stl::variant<db_float_type, db_integer_type, db_string_type, db_blob_type, query_builder_ptr>;
+        // nothing_type is null
+        using variable_type        = stl::variant<db_float_type,
+                                           db_integer_type,
+                                           db_string_type,
+                                           db_blob_type,
+                                           query_builder_ptr,
+                                           istl::nothing_type>;
         using column_variable_pair = stl::pair<string_type, variable_type>;
         using vector_of_variables =
           stl::vector<variable_type, traits::local_allocator<traits_type, variable_type>>;
@@ -353,7 +358,8 @@ namespace webpp::sql {
                         // 2. Adding new and null variables into the values to adjust the values matrix
                         for (auto val_it = values.begin() + col_size; val_it != values_last;
                              val_it += col_size) {
-                            values.emplace(val_it); // insert a null variable at that position
+                            // insert a null variable at that position
+                            values.insert(val_it, variablify(nullptr));
                         }
                     }
                 } else {
@@ -488,6 +494,8 @@ namespace webpp::sql {
                 return variable_type{static_cast<db_integer_type>(val)};
             } else if constexpr (stl::same_as<stl::remove_cvref_t<V>, variable_type>) {
                 return stl::forward<V>(val);
+            } else if constexpr (stl::same_as<stl::remove_cvref_t<V>, stl::nullptr_t>) {
+                return variable_type{istl::nothing_type{}};
             } else {
                 // todo
                 static_assert_false(V, "The specified type is not a valid SQL Value.");
@@ -519,8 +527,11 @@ namespace webpp::sql {
                 //     2.2. check if it has an alias
                 //     2.3. if it has, and it's the same as the insert col, then ignore
                 //     2.4. if it doesn't have, then add an alias that is the same as the insert col
-
-                (*qb)->template to_string<StrT, words>(out);
+                if (!*qb) {
+                    out.append(words::null);
+                } else {
+                    (*qb)->template to_string<StrT, words>(out);
+                }
             } else if (auto* b = stl::get_if<db_blob_type>(&var)) {
                 // todo: append blob
             } else {
