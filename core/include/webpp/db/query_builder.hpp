@@ -190,13 +190,12 @@ namespace webpp::sql {
             local_string_type value;
         };
 
-        // nothing_type is null
-        using variable_type        = stl::variant<db_float_type,
+        using variable_type        = stl::variant<stl::monostate,
+                                           db_float_type,
                                            db_integer_type,
                                            db_string_type,
                                            db_blob_type,
-                                           query_builder_ptr,
-                                           istl::nothing_type>;
+                                           query_builder_ptr>;
         using column_variable_pair = stl::pair<string_type, variable_type>;
         using vector_of_variables =
           stl::vector<variable_type, traits::local_allocator<traits_type, variable_type>>;
@@ -494,8 +493,9 @@ namespace webpp::sql {
                 return variable_type{static_cast<db_integer_type>(val)};
             } else if constexpr (stl::same_as<stl::remove_cvref_t<V>, variable_type>) {
                 return stl::forward<V>(val);
-            } else if constexpr (stl::same_as<stl::remove_cvref_t<V>, stl::nullptr_t>) {
-                return variable_type{istl::nothing_type{}};
+            } else if constexpr (stl::same_as<stl::remove_cvref_t<V>, std::nullptr_t> ||
+                                 stl::same_as<stl::remove_cvref_t<V>, stl::monostate>) {
+                return variable_type{stl::monostate{}};
             } else {
                 // todo
                 static_assert_false(V, "The specified type is not a valid SQL Value.");
