@@ -24,8 +24,6 @@ namespace webpp::istl {
         using size_type      = typename allocator_traits::size_type;
         using pointer        = typename allocator_traits::pointer;
 
-        // using required size like this because using sizeof requires the type to be a complete type
-#define webpp_required_size (sizeof(value_type) / sizeof(typename allocator_traits::value_type))
 
       private:
         // alloc needs to be before the ptr because it is required for constructing the ptr
@@ -41,32 +39,31 @@ namespace webpp::istl {
         constexpr dynamic() noexcept
             requires(stl::is_default_constructible_v<allocator_type>)
         : alloc{},
-          ptr{allocator_traits::allocate(alloc, webpp_required_size)} {
+          ptr{allocator_traits::allocate(alloc, 1)} {
             if constexpr (stl::is_default_constructible_v<value_type>) {
                 allocator_traits::construct(alloc, ptr); // default construct
             }
         }
 
         template <typename... Args>
-        // requires(stl::is_constructible_v<value_type, Args...>)
+            requires(stl::is_constructible_v<value_type, Args...>)
         constexpr dynamic(allocator_type const& input_alloc, Args&&... args)
           : alloc{input_alloc},
-            ptr{allocator_traits::allocate(alloc, webpp_required_size)} {
+            ptr{allocator_traits::allocate(alloc, 1)} {
             allocator_traits::construct(alloc, ptr, stl::forward<Args>(args)...);
         }
 
         template <typename... Args>
             requires(stl::is_default_constructible_v<allocator_type> &&
                      stl::is_constructible_v<value_type, Args...>)
-        constexpr dynamic(Args&&... args)
-          : alloc{},
-            ptr{allocator_traits::allocate(alloc, webpp_required_size)} {
+        constexpr dynamic(Args&&... args) : alloc{},
+                                            ptr{allocator_traits::allocate(alloc, 1)} {
             allocator_traits::construct(alloc, ptr, stl::forward<Args>(args)...);
         }
 
         constexpr dynamic(dynamic const& other)
           : alloc(other.alloc),
-            ptr{allocator_traits::allocate(alloc, webpp_required_size)} {
+            ptr{allocator_traits::allocate(alloc, 1)} {
             allocator_traits::construct(alloc, ptr, *other.ptr);
         }
 
@@ -163,11 +160,9 @@ namespace webpp::istl {
         constexpr inline void destroy() {
             if (ptr) {
                 allocator_traits::destroy(alloc, ptr);
-                allocator_traits::deallocate(alloc, ptr, webpp_required_size);
+                allocator_traits::deallocate(alloc, ptr, 1);
             }
         }
-
-#undef webpp_required_size
     };
 
 
