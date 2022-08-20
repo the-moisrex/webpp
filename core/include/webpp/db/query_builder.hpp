@@ -180,7 +180,9 @@ namespace webpp::sql {
 
       private:
         // todo: check if it's a good idea to use local allocator here or not.
-        using query_builder_ptr = typename allocator_pack_type::template local_unique_ptr<query_builder>;
+        // using query_builder_ptr = typename allocator_pack_type::template local_unique_ptr<query_builder>;
+        using query_builder_ptr =
+          istl::dynamic<query_builder, traits::local_allocator<traits_type, query_builder>>;
 
         // WHERE Clause type
         struct where_type {
@@ -202,6 +204,9 @@ namespace webpp::sql {
         using vector_of_strings =
           stl::vector<local_string_type, traits::local_allocator<traits_type, local_string_type>>;
         using vector_of_wheres = stl::vector<where_type, traits::local_allocator<traits_type, where_type>>;
+
+        static_assert(stl::is_move_assignable_v<query_builder_ptr>, "Variable must be movable.");
+        static_assert(stl::is_move_assignable_v<variable_type>, "Variable must be movable.");
 
         // create query is not included in the query builder class
         enum struct query_method { select, insert, insert_default, update, remove, none };
@@ -236,6 +241,12 @@ namespace webpp::sql {
             columns{alloc::local_allocator<local_string_type>(db)},
             values{alloc::local_allocator<variable_type>(db)},
             where_clauses{alloc::local_allocator<where_type>(db)} {}
+
+        constexpr query_builder(query_builder&&) noexcept      = default;
+        constexpr query_builder(query_builder const&) noexcept = default;
+
+        constexpr query_builder& operator=(query_builder&&) noexcept      = default;
+        constexpr query_builder& operator=(query_builder const&) noexcept = default;
 
         /**
          * Set columns to be selected in the sql query.
@@ -302,7 +313,7 @@ namespace webpp::sql {
             }
 
             method = query_method::insert;
-            values.emplace_back(alloc::allocate_unique_local<variable_type>(db, new_builder));
+            values.emplace_back(alloc::allocator_for<query_builder_ptr>(db), new_builder);
             return *this;
         }
 
@@ -314,7 +325,7 @@ namespace webpp::sql {
             }
 
             method = query_method::insert;
-            values.emplace_back(alloc::allocate_unique_local<variable_type>(db, stl::move(new_builder)));
+            values.emplace_back(alloc::allocator_for<query_builder_ptr>(db), stl::move(new_builder));
             return *this;
         }
 
@@ -358,7 +369,7 @@ namespace webpp::sql {
                         for (auto val_it = values.begin() + col_size; val_it != values_last;
                              val_it += col_size) {
                             // insert a null variable at that position
-                            values.insert(val_it, variablify(nullptr));
+                            values.emplace(val_it, stl::monostate{});
                         }
                     }
                 } else {
@@ -406,9 +417,11 @@ namespace webpp::sql {
 
                     // join
                     // example: (1, 2, 3), (1, 2, 3), ...
-                    auto              it       = values.begin();
-                    const auto        it_end   = values.end();
-                    const stl::size_t col_size = columns.size();
+                    auto       it     = values.begin();
+                    const auto it_end = values.end();
+
+                    using diff_type     = typename vector_of_variables::iterator::difference_type;
+                    const auto col_size = static_cast<diff_type>(columns.size());
                     out.append(" (");
 
                     // manual join (code duplication)

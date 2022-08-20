@@ -17,7 +17,7 @@ using namespace webpp;
 
 TEST(MemoryTest, PMRAllocatorPackTest) {
     static_assert(Allocator<stl::pmr::polymorphic_allocator<char>>);
-    alloc::allocator_pack<stl::allocator_descriptors> alloc_pack;
+    alloc::allocator_pack<stl::pmr::allocator_descriptors> alloc_pack;
     auto str    = alloc::make<stl::string, alloc::local_features>(alloc_pack, "hello world");
     using str_t = stl::remove_cvref_t<decltype(str)>;
     static_assert(stl::same_as<str_t, stl::pmr::string>);
@@ -30,8 +30,8 @@ TEST(MemoryTest, PMRAllocatorPackTest) {
     auto str_vec    = object::make_local<stl::vector<stl::string>>(alloc_pack);
     using vec_t     = typename stl::remove_cvref_t<decltype(str_vec)>::object_type;
     using vec_str_t = typename vec_t::value_type;
-    static_assert(same_as<vec_str_t, stl::pmr::string>, "Nested allocator-rebinding don't work");
-    static_assert(same_as<vec_t, stl::pmr::vector<stl::pmr::string>>, "Allocator-rebinding don't work");
+    static_assert(stl::same_as<vec_str_t, stl::pmr::string>, "Nested allocator-rebinding don't work");
+    static_assert(stl::same_as<vec_t, stl::pmr::vector<stl::pmr::string>>, "Allocator-rebinding don't work");
 }
 
 TEST(MemoryTest, STDAllocatorPackTest) {
@@ -56,4 +56,47 @@ TEST(MemoryTest, STDAllocatorPackTest) {
 
 TEST(MemoryTest, AvailableMemory) {
     EXPECT_TRUE(available_memory() > 0);
+}
+
+TEST(MemoryTest, DynamicType) {
+    using webpp::istl::dynamic;
+    EXPECT_TRUE((stl::is_default_constructible_v<dynamic<bool>>) );
+    EXPECT_TRUE((stl::is_default_constructible_v<dynamic<int>>) );
+    EXPECT_TRUE((stl::is_move_assignable_v<dynamic<int>>) );
+    EXPECT_TRUE((stl::is_assignable_v<dynamic<int>, int>) );
+    EXPECT_TRUE((stl::is_copy_constructible_v<dynamic<int>>) );
+    EXPECT_TRUE((stl::is_move_constructible_v<dynamic<int>>) );
+
+    EXPECT_TRUE((stl::is_default_constructible_v<istl::pmr::dynamic<bool>>) );
+    EXPECT_TRUE((stl::is_default_constructible_v<istl::pmr::dynamic<int>>) );
+    EXPECT_TRUE((stl::is_move_assignable_v<istl::pmr::dynamic<int>>) );
+    EXPECT_TRUE((stl::is_assignable_v<istl::pmr::dynamic<int>, int>) );
+    EXPECT_TRUE((stl::is_copy_constructible_v<istl::pmr::dynamic<int>>) );
+    EXPECT_TRUE((stl::is_move_constructible_v<istl::pmr::dynamic<int>>) );
+
+    EXPECT_TRUE((stl::is_default_constructible_v<dynamic<stl::string>>) );
+    EXPECT_TRUE((stl::is_move_assignable_v<dynamic<stl::string>>) );
+    EXPECT_TRUE((stl::is_assignable_v<dynamic<stl::string>, stl::string>) );
+    EXPECT_TRUE((stl::is_copy_constructible_v<dynamic<stl::string>>) );
+    EXPECT_TRUE((stl::is_move_constructible_v<dynamic<stl::string>>) );
+
+
+    EXPECT_TRUE((stl::is_default_constructible_v<dynamic<stl::pmr::string>>) );
+    EXPECT_TRUE((stl::is_move_assignable_v<dynamic<stl::pmr::string>>) );
+    EXPECT_TRUE((stl::is_assignable_v<dynamic<stl::pmr::string>, stl::pmr::string>) );
+    EXPECT_TRUE((stl::is_copy_constructible_v<dynamic<stl::pmr::string>>) );
+    EXPECT_TRUE((stl::is_move_constructible_v<dynamic<stl::pmr::string>>) );
+    
+    
+    dynamic<int> d1;
+    EXPECT_FALSE(static_cast<bool>(d1));
+    d1 = 20;
+    EXPECT_EQ(*d1, 20);
+    d1 = 23;
+    EXPECT_EQ(*d1, 23);
+    *d1 = 25;
+    EXPECT_EQ(*d1, 25);
+    EXPECT_TRUE(static_cast<bool>(d1));
+
+    istl::pmr::dynamic<stl::pmr::string> d2;
 }
