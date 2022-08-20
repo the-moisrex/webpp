@@ -86,17 +86,35 @@ TEST(MemoryTest, DynamicType) {
     EXPECT_TRUE((stl::is_assignable_v<dynamic<stl::pmr::string>, stl::pmr::string>) );
     EXPECT_TRUE((stl::is_copy_constructible_v<dynamic<stl::pmr::string>>) );
     EXPECT_TRUE((stl::is_move_constructible_v<dynamic<stl::pmr::string>>) );
-    
-    
+
+
     dynamic<int> d1;
-    EXPECT_FALSE(static_cast<bool>(d1));
     d1 = 20;
     EXPECT_EQ(*d1, 20);
     d1 = 23;
     EXPECT_EQ(*d1, 23);
     *d1 = 25;
     EXPECT_EQ(*d1, 25);
-    EXPECT_TRUE(static_cast<bool>(d1));
 
     istl::pmr::dynamic<stl::pmr::string> d2;
+    *d2 = "hello world";
+    EXPECT_EQ(*d2, "hello world");
+
+
+    struct incomplete_type;
+
+    struct complete_type {
+        dynamic<incomplete_type> baby;
+        int                      val = 23;
+    };
+
+    struct incomplete_type {
+        int val = 23;
+    };
+
+    complete_type daddy;
+    EXPECT_EQ(daddy.baby->val, 23);
+    daddy.baby = incomplete_type{.val = 24}; // this constructs the object with the allocator in the type
+    EXPECT_EQ(daddy.val, 23);
+    EXPECT_EQ(daddy.baby->val, 24);
 }
