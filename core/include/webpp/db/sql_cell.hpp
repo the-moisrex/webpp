@@ -124,9 +124,9 @@ namespace webpp::sql {
         // get the category type
         [[nodiscard]] inline column_category category() const noexcept {
             if constexpr (requires {
-                              { stmt.column_category(index) } -> stl::same_as<column_category>;
+                              { stmt.column_cat(index) } -> stl::same_as<column_category>;
                           }) {
-                return stmt.column_category(index);
+                return stmt.column_cat(index);
             } else {
                 return column_category::unknown;
             }
