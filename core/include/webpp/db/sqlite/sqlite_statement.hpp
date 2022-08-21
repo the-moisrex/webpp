@@ -99,7 +99,7 @@ namespace webpp::sql {
         }
 
         /**
-         * Possilbe values:
+         * Possible values:
          *   - nullptr_t
          *   - std::basic_string_view<...>
          *   - int/short/long/...
@@ -136,7 +136,7 @@ namespace webpp::sql {
                 }
             } else if constexpr (istl::StringView<type>) {
                 // sql_statement functions will take care of strings and conversions to string,
-                // this function will only recieve string views.
+                // this function will only receive string views.
                 using value_type                        = typename T::value_type;
                 static constexpr stl::size_t value_size = sizeof(value_type);
 
@@ -230,7 +230,7 @@ namespace webpp::sql {
             return static_cast<supported_column_types>(sqlite3_column_type(stmt, index));
         }
 
-        [[nodiscard]] inline column_category column_category(int index) const noexcept {
+        [[nodiscard]] inline column_category column_cat(int index) const noexcept {
             switch (sqlite3_column_type(stmt, index)) {
                 case SQLITE_FLOAT: [[fallthrough]];
                 case SQLITE_INTEGER: return column_category::number;

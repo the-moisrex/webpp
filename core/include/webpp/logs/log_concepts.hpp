@@ -20,7 +20,8 @@ namespace webpp {
             typename stl::remove_cvref_t<T>::logger_ptr;
             typename stl::remove_cvref_t<T>::logger_type;
 
-            stl::same_as<stl::remove_cvref_t<decltype(logger.enabled)>, bool>;
+            requires stl::same_as < stl::remove_cvref_t<decltype(logger.enabled)>,
+            bool > ;
 
 #define WEBPP_LOGGER_CONCEPT(logger_name)            \
     logger.logger_name("log something");             \

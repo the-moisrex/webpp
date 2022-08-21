@@ -38,8 +38,6 @@ namespace webpp {
                 template <typename T = byte>
                 using allocator = polymorphic_allocator<T>;
 
-                using allocator_type = allocator<>;
-
                 // the resources will inherit these features
                 static constexpr alloc::feature_pack allocator_features{alloc::stateful};
 
@@ -49,7 +47,7 @@ namespace webpp {
 
                     // construct the allocator based on the resource
                     template <typename T>
-                    static inline allocator_type construct_allocator() noexcept {
+                    static inline allocator<T> construct_allocator() noexcept {
                         return {};
                     }
                 };
@@ -61,7 +59,7 @@ namespace webpp {
 
                     // construct the allocator based on the resource
                     template <typename T>
-                    static inline allocator_type construct_allocator(storage_type& res) noexcept {
+                    static inline allocator<T> construct_allocator(storage_type& res) noexcept {
                         return {&res};
                     }
                 };
@@ -72,7 +70,7 @@ namespace webpp {
 
                     // construct the allocator based on the resource
                     template <typename T>
-                    static inline allocator_type construct_allocator(storage_type& res) noexcept {
+                    static inline allocator<T> construct_allocator(storage_type& res) noexcept {
                         return {&res};
                     }
                 };
@@ -83,7 +81,7 @@ namespace webpp {
 
                     // construct the allocator based on the resource
                     template <typename T>
-                    static inline allocator_type construct_allocator(storage_type& res) noexcept {
+                    static inline allocator<T> construct_allocator(storage_type& res) noexcept {
                         return {&res};
                     }
                 };

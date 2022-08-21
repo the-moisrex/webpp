@@ -567,9 +567,9 @@ namespace webpp::istl {
      */
     template <typename T, template <typename> typename Replacer>
         requires requires {
-            typename Replacer<void>::type;
-            {Replacer<void>::value};
-        }
+                     typename Replacer<void>::type;
+                     { Replacer<void>::value };
+                 }
     using recursive_parameter_replacer = typename details::replace_parameters<T, Replacer>::type;
 
 
@@ -1043,6 +1043,26 @@ namespace webpp::istl {
     template <auto T, auto F, auto... R>
     struct index_of_item<T, F, R...>
       : stl::integral_constant<stl::size_t, 1 + index_of_item<T, R...>::value> {};
+
+
+
+    namespace details {
+        template <typename T, std::size_t = sizeof(T)>
+        stl::true_type is_complete_impl(T*);
+
+        stl::false_type is_complete_impl(...);
+    } // namespace details
+
+    /**
+     * Check if the type is complete or not
+     * Attention: the completeness of a type most-likely will be decided the first time you use it.
+     * https://twitter.com/the_moisrex/status/1561091267592949763?s=20&t=G5IX6SAPkOoBY1pwQmVRLA
+     */
+    template <typename T>
+    using is_complete = decltype(details::is_complete_impl(stl::declval<T*>()));
+
+    template <typename T>
+    static constexpr bool is_complete_v = is_complete<T>::value;
 
 
 } // namespace webpp::istl

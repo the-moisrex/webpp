@@ -5,6 +5,7 @@
 #include "../std/string_view.hpp"
 #include "../traits/default_traits.hpp"
 #include "../traits/enable_traits.hpp"
+#include "query_builder.hpp"
 #include "sql_concepts.hpp"
 #include "sql_statement.hpp"
 
@@ -27,6 +28,9 @@ namespace webpp::sql {
         using statement_type        = sql_statement<traits_type, driver_statement_type>;
         using string_view_type      = traits::string_view<traits_type>;
         using string_type           = traits::general_string<traits_type>;
+        using query_builder_type    = query_builder<basic_sql_database>;
+        using connection_type       = typename driver_type::connection_type;
+        using grammar_type          = typename driver_type::grammar_type;
 
         template <typename T>
         static constexpr bool supports_string_view =
@@ -114,6 +118,14 @@ namespace webpp::sql {
             }
         }
 
+        inline query_builder_type sql_builder() noexcept {
+            return query_builder_type{*this};
+        }
+
+        template <istl::StringViewifiable StrvT>
+        inline query_builder_type table(StrvT&& table_name) noexcept {
+            return sql_builder().table(stl::forward<StrvT>(table_name));
+        }
 
       private:
         inline void log(string_type& errmsg) noexcept {

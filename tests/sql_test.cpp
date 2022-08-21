@@ -72,3 +72,49 @@ TEST(Database, SQLiteWrapper) {
     std::string pass = stmt.first()[0];
     EXPECT_EQ(pass, "123");
 }
+
+
+TEST(Database, QueryBuilderTest) {
+    sql_database<sqlite> db; // in memory database
+
+    // query builder is different than schema builder
+    ASSERT_TRUE(db.execute(R"sql(create table settings(
+        id integer primary key,
+        name text,
+        value text
+    );)sql"));
+
+    auto inserter     = db.table("settings");
+    inserter["name"]  = "username";
+    inserter["value"] = "moisrex";
+    inserter.insert();
+    inserter.insert({
+      {"name", "password"}, // col 2
+      {"value", 123}        // col 3
+    });
+
+
+    auto query = db.table("settings") //
+                   .select("value")
+                   .where("name", "username");
+    EXPECT_EQ("select value from settings where name = username", query.to_string());
+}
+
+
+TEST(Database, InsertSelectQuery) {
+    // A test for https://github.com/the-moisrex/webpp/issues/146
+
+    sql_database<sqlite> db;
+
+    auto query = db.table("employees")
+                   .insert(db.table("users")
+                             .where("employed", true)
+                             .select("firstname as first_name", "lastname as last_name"));
+
+    // the alias is automatically gets added for firstname, but it doesn't get added for lastname because it
+    // already has an alias
+    EXPECT_EQ(query.to_string(),
+              "insert into employees "
+              "select firstname as first_name, lastname as last_name from users where employed = 1")
+      << query.to_string();
+}
