@@ -132,6 +132,23 @@ namespace webpp::sql {
         }
 
 
+        // escape string
+        constexpr void escape(auto&& input, istl::String auto& output) const noexcept {
+            // todo: optimize this using SIMD if the compiler doesn't already do it
+            for (const auto c : input) {
+                if (c == '\'')
+                    output.push_back(c);
+                output.push_back(c);
+            }
+        }
+
+        constexpr void quoted_escape(auto&& input, istl::String auto& output) const noexcept {
+            output.reserve(output.size() + input.size() + 2);
+            output.push_back('\'');
+            escape(input, output);
+            output.push_back('\'');
+        }
+
 
         template <istl::String StrT>
         void version(StrT& sqlite) const {

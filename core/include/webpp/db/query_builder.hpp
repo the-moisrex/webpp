@@ -536,7 +536,7 @@ namespace webpp::sql {
             } else if (auto* i = stl::get_if<db_integer_type>(&var)) {
                 out.append(lexical::cast<string_type>(*i, db));
             } else if (auto* s = stl::get_if<db_string_type>(&var)) {
-                out.append(*s);
+                db.quoted_escape(*s, out);
             } else if (auto* qb = stl::get_if<query_builder_ptr>(&var)) {
                 // good, we don't need to worry about the prepared query builder
                 // todo: Fix user's mistakes and tune the select columns to match the insert columns
@@ -553,6 +553,7 @@ namespace webpp::sql {
                 (*qb)->template to_string<StrT, words>(out);
             } else if (auto* b = stl::get_if<db_blob_type>(&var)) {
                 // todo: append blob
+                out.append("Blob support is a todo");
             } else {
                 // it's null
                 out.append(words::null);

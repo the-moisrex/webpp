@@ -61,6 +61,9 @@ namespace webpp::sql {
         // Other specialized configuration for each database type is goes here as well.
         // For example the SQLite will require a file path
         // And MySQL will require connection settings.
+
+        db.escape("", str_ref); // escape strings
+        db.quoted_escape("", str_ref); // escape strings and add quotes
     };
 
     template <typename T>

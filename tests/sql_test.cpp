@@ -97,7 +97,7 @@ TEST(Database, QueryBuilderTest) {
     auto query = db.table("settings") //
                    .select("value")
                    .where("name", "username");
-    EXPECT_EQ("select value from settings where name = username", query.to_string());
+    EXPECT_EQ("select value from settings where name = 'username'", query.to_string());
 }
 
 
@@ -117,4 +117,14 @@ TEST(Database, InsertSelectQuery) {
               "insert into employees "
               "select firstname as first_name, lastname as last_name from users where employed = 1")
       << query.to_string();
+}
+
+TEST(Database, SimpleSelectQueries) {
+    sql_database<sqlite> db;
+
+    auto q1 = db.table("test")
+            .select("one", "two", "three")
+            .where("four", "question");
+
+    EXPECT_EQ(q1.to_string(), "select one, two, three from test where four = 'question'") << q1.to_string();
 }
