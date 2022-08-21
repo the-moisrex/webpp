@@ -106,13 +106,15 @@ TEST(Database, InsertSelectQuery) {
 
     sql_database<sqlite> db;
 
-    auto query =
-      db.table("employees")
-        .insert(db.table("users").where("employed", true).select("firstname", "lastname as last_name"));
+    auto query = db.table("employees")
+                   .insert(db.table("users")
+                             .where("employed", true)
+                             .select("firstname as first_name", "lastname as last_name"));
 
     // the alias is automatically gets added for firstname, but it doesn't get added for lastname because it
     // already has an alias
     EXPECT_EQ(query.to_string(),
-              "insert into employees (first_name, last_name) "
-              "select firstname as first_name, lastname as last_name where employed = 1");
+              "insert into employees "
+              "select firstname as first_name, lastname as last_name from users where employed = 1")
+      << query.to_string();
 }

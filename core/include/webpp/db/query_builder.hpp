@@ -254,6 +254,7 @@ namespace webpp::sql {
         template <typename... T>
             requires((istl::StringifiableOf<string_type, T> && ...))
         constexpr query_builder& select(T&&... cols) noexcept {
+            method = query_method::select;
             columns.reserve(columns.size() + sizeof...(T));
             (columns.push_back(stringify(stl::forward<T>(cols))), ...);
             return *this;
@@ -415,7 +416,6 @@ namespace webpp::sql {
                                            ", "); // todo: column names are not escaped
                         out.push_back(')');
                     }
-                    out.append(words::values);
 
                     // join
                     // example: (1, 2, 3), (1, 2, 3), ...
@@ -424,29 +424,19 @@ namespace webpp::sql {
 
                     using diff_type     = typename vector_of_variables::iterator::difference_type;
                     const auto col_size = static_cast<diff_type>(columns.size());
-                    out.append(" (");
 
-                    // manual join (code duplication)
-                    {
-                        auto const it_step_first = it + col_size - 1;
-                        for (; it != it_step_first; ++it) {
-                            stringify_value<words>(out, *it);
-                            out.append(", ");
-                        }
+                    if (values.size() == 1 && stl::holds_alternative<query_builder_ptr>(*it)) {
+                        // insert ... select
+                        // manual join (code duplication)
                         stringify_value<words>(out, *it);
-                        ++it;
-                    }
+                    } else {
+                        out.append(words::values);
+                        out.append(" (");
 
-                    out.push_back(')');
-
-                    // values and columns should be aligned so don't worry
-                    for (; it != it_end;) {
-                        out.append(", (");
-
-                        // manual join
+                        // manual join (code duplication)
                         {
-                            auto const it_step = it + col_size - 1;
-                            for (; it != it_step; ++it) {
+                            auto const it_step_first = it + col_size - 1;
+                            for (; it != it_step_first; ++it) {
                                 stringify_value<words>(out, *it);
                                 out.append(", ");
                             }
@@ -455,6 +445,24 @@ namespace webpp::sql {
                         }
 
                         out.push_back(')');
+
+                        // values and columns should be aligned so don't worry
+                        for (; it != it_end;) {
+                            out.append(", (");
+
+                            // manual join
+                            {
+                                auto const it_step = it + col_size - 1;
+                                for (; it != it_step; ++it) {
+                                    stringify_value<words>(out, *it);
+                                    out.append(", ");
+                                }
+                                stringify_value<words>(out, *it);
+                                ++it;
+                            }
+
+                            out.push_back(')');
+                        }
                     }
                     break;
                 }
@@ -558,7 +566,7 @@ namespace webpp::sql {
 
         // select [... this method ...] from table;
         constexpr void stringify_select_columns(auto& out) const noexcept {
-            strings::join_with(out, columns, ',');
+            strings::join_with(out, columns, ", ");
         }
 
         template <SQLKeywords words>
@@ -576,12 +584,13 @@ namespace webpp::sql {
             {
                 auto const& [op, value] = *it;
                 // the first one can't include "or" and "and"
-                if (op != words::and_word && op != words::or_word) {
+                if (!op.empty() && op != words::and_word && op != words::or_word) {
                     out.push_back(' ');
                     out.append(op);
                 }
                 out.push_back(' ');
                 out.append(value);
+                ++it;
             }
             for (; it != where_end; ++it) {
                 auto const& [op, value] = *it;
