@@ -113,6 +113,8 @@ namespace webpp::sql {
                               T::or_word; // or
                               T::insert_into;
                               T::default_word;
+                              T::like;
+                              T::exists;
                           };
 
 } // namespace webpp::sql
