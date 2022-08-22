@@ -577,7 +577,7 @@ namespace webpp::sql {
                     }
                     out.append(words::insert_into);
                     out.push_back(' ');
-                    serialize_from(out);
+                    serialize_single_from(out);
                     out.push_back(' ');
                     if (!columns.empty()) {
                         out.push_back('(');
@@ -732,12 +732,32 @@ namespace webpp::sql {
         constexpr void serialize_from(auto& out) const noexcept {
             auto       it       = from_cols.begin();
             const auto from_end = from_cols.end();
+            if (it == from_end) {
+                db.logger.error(
+                  LOG_CAT,
+                  "You requested a sql query but you didn't provide which table we should put into the sql query; did you miss the table name?");
+                ;
+                return;
+            }
             db.quoted_escape(*it, out);
             ++it;
             while (it != from_end) {
                 out.append(", ");
                 db.quoted_escape(*it, out);
             }
+        }
+
+        constexpr void serialize_single_from(auto& out) const noexcept {
+            auto       it       = from_cols.begin();
+            const auto from_end = from_cols.end();
+            if (it == from_end) {
+                db.logger.error(
+                  LOG_CAT,
+                  "You requested a sql query but you didn't provide which table we should put into the sql query; did you miss the table name?");
+                ;
+                return;
+            }
+            db.quoted_escape(*it, out);
         }
 
         // select [... this method ...] from table;
