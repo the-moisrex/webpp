@@ -32,20 +32,18 @@ namespace webpp::istl {
 
 
       public:
-        explicit constexpr dynamic(allocator_type const& input_alloc) noexcept
-          : alloc{input_alloc},
-            ptr{allocator_traits::allocate(alloc, 1)} {}
+        explicit constexpr dynamic(allocator_type const& input_alloc) noexcept : alloc{input_alloc} {}
 
         // You don't have to pass the allocator if the allocator is default constructible.
         // This will allocate the space, but only constructs the object if it's default constructible
-        constexpr dynamic() noexcept
-            requires(stl::is_default_constructible_v<allocator_type>)
-        : alloc{},
-          ptr{allocator_traits::allocate(alloc, 1)} {
-            if constexpr (stl::is_default_constructible_v<value_type>) {
-                allocator_traits::construct(alloc, ptr); // default construct
-            }
-        }
+        // constexpr dynamic() noexcept
+        //     requires(stl::is_default_constructible_v<allocator_type>)
+        // : alloc{},
+        //   ptr{allocator_traits::allocate(alloc, 1)} {
+        //     if constexpr (stl::is_default_constructible_v<value_type>) {
+        //         allocator_traits::construct(alloc, ptr); // default construct
+        //     }
+        // }
 
         template <typename... Args>
         // requires(stl::is_constructible_v<value_type, Args...>)
