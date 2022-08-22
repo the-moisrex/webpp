@@ -97,7 +97,7 @@ TEST(Database, QueryBuilderTest) {
     auto query = db.table("settings") //
                    .select("value")
                    .where("name", "username");
-    EXPECT_EQ("select value from settings where 'name' = 'username'", query.to_string());
+    EXPECT_EQ("select value from 'settings' where 'name' = 'username'", query.to_string());
 }
 
 
@@ -114,8 +114,8 @@ TEST(Database, InsertSelectQuery) {
     // the alias is automatically gets added for firstname, but it doesn't get added for lastname because it
     // already has an alias
     EXPECT_EQ(query.to_string(),
-              "insert into employees "
-              "select firstname as first_name, lastname as last_name from users where 'employed' = 1")
+              "insert into 'employees' "
+              "select firstname as first_name, lastname as last_name from 'users' where 'employed' = 1")
       << query.to_string();
 }
 
@@ -126,26 +126,26 @@ TEST(Database, WhereClause) {
             .select("one", "two", "three")
             .where("four", "question");
 
-    EXPECT_EQ(q1.to_string(), "select one, two, three from test where 'four' = 'question'") << q1.to_string();
+    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'four' = 'question'") << q1.to_string();
 
 
     q1.where_in("four", 1, 2, 3, 4, 5, 6, 7, 8);
-    EXPECT_EQ(q1.to_string(), "select one, two, three from test where 'four' in (1, 2, 3, 4, 5, 6, 7, 8)") << q1.to_string();
+    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'four' in (1, 2, 3, 4, 5, 6, 7, 8)") << q1.to_string();
 
 
     q1.where_in("four", 1, 2, 3, 4, "five", 6, 7, 8);
-    EXPECT_EQ(q1.to_string(), "select one, two, three from test where 'four' in (1, 2, 3, 4, 'five', 6, 7, 8)") << q1.to_string();
+    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'four' in (1, 2, 3, 4, 'five', 6, 7, 8)") << q1.to_string();
 
     q1.where_not_in("four", 1, 2, 3, 4, "five", 6, 7, 8);
-    EXPECT_EQ(q1.to_string(), "select one, two, three from test where not 'four' in (1, 2, 3, 4, 'five', 6, 7, 8)") << q1.to_string();
+    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where not 'four' in (1, 2, 3, 4, 'five', 6, 7, 8)") << q1.to_string();
 
 
     q1.and_where_not_in("six", 1, 2, 3);
-    EXPECT_EQ(q1.to_string(), "select one, two, three from test where not 'four' in (1, 2, 3, 4, 'five', 6, 7, 8) and not 'six' in (1, 2, 3)") << q1.to_string();
+    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where not 'four' in (1, 2, 3, 4, 'five', 6, 7, 8) and not 'six' in (1, 2, 3)") << q1.to_string();
 
     q1.where_in("six", 1, 2, 3);
-    EXPECT_EQ(q1.to_string(), "select one, two, three from test where 'six' in (1, 2, 3)") << q1.to_string();
+    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'six' in (1, 2, 3)") << q1.to_string();
 
     q1.or_where_in("seven", 1, 2, 3);
-    EXPECT_EQ(q1.to_string(), "select one, two, three from test where 'six' in (1, 2, 3) or 'seven' in (1, 2, 3)") << q1.to_string();
+    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'six' in (1, 2, 3) or 'seven' in (1, 2, 3)") << q1.to_string();
 }
