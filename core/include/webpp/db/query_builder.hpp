@@ -284,11 +284,6 @@ namespace webpp::sql {
         // todo: where, where_not, where_in, and_where, and_where_not_null, or_where, or_where_not_null
 
 
-        template <istl::Stringifiable StrT>
-        constexpr query_builder& where(StrT&& condition) noexcept {
-            where_clauses.emplace("", condition);
-            return *this;
-        }
 
         /**
          * SQL Example:
@@ -306,11 +301,69 @@ namespace webpp::sql {
                 db.logger.error(LOG_CAT, "Only select queries are allowed inside where_in");
                 return *this;
             }
+            where_clauses.clear();
             where_clauses.push_back(where_type{.jt    = where_type::join_type::none,
                                                .op    = where_type::op_type::in,
                                                .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
                                                .expr2 = expressionify(select_query),
                                                .exprs{alloc::local_allocator<expression>(db)}});
+            return *this;
+        }
+
+        template <typename Expr1>
+        constexpr query_builder& where_not_in(Expr1&& expr1, query_builder const& select_query) noexcept {
+            if (select_query.method != query_method::select) {
+                db.logger.error(LOG_CAT, "Only select queries are allowed inside where_in");
+                return *this;
+            }
+            where_clauses.clear();
+            where_clauses.push_back(where_type{.jt    = where_type::join_type::not_jt,
+              .op    = where_type::op_type::in,
+              .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+              .expr2 = expressionify(select_query),
+              .exprs{alloc::local_allocator<expression>(db)}});
+            return *this;
+        }
+
+        template <typename Expr1>
+        constexpr query_builder& and_where_not_in(Expr1&& expr1, query_builder const& select_query) noexcept {
+            if (select_query.method != query_method::select) {
+                db.logger.error(LOG_CAT, "Only select queries are allowed inside where_in");
+                return *this;
+            }
+            where_clauses.push_back(where_type{.jt    = where_type::join_type::and_not_jt,
+              .op    = where_type::op_type::in,
+              .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+              .expr2 = expressionify(select_query),
+              .exprs{alloc::local_allocator<expression>(db)}});
+            return *this;
+        }
+
+        template <typename Expr1>
+        constexpr query_builder& or_where_in(Expr1&& expr1, query_builder const& select_query) noexcept {
+            if (select_query.method != query_method::select) {
+                db.logger.error(LOG_CAT, "Only select queries are allowed inside where_in");
+                return *this;
+            }
+            where_clauses.push_back(where_type{.jt    = where_type::join_type::or_jt,
+              .op    = where_type::op_type::in,
+              .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+              .expr2 = expressionify(select_query),
+              .exprs{alloc::local_allocator<expression>(db)}});
+            return *this;
+        }
+
+        template <typename Expr1>
+        constexpr query_builder& or_where_not_in(Expr1&& expr1, query_builder const& select_query) noexcept {
+            if (select_query.method != query_method::select) {
+                db.logger.error(LOG_CAT, "Only select queries are allowed inside where_in");
+                return *this;
+            }
+            where_clauses.push_back(where_type{.jt    = where_type::join_type::or_not_jt,
+              .op    = where_type::op_type::in,
+              .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+              .expr2 = expressionify(select_query),
+              .exprs{alloc::local_allocator<expression>(db)}});
             return *this;
         }
 
@@ -320,6 +373,7 @@ namespace webpp::sql {
          */
         template <typename Expr1, typename Expr2, typename... Exprs>
         constexpr query_builder& where_in(Expr1&& expr1, Expr2&& expr2, Exprs&&... exprs) noexcept {
+            where_clauses.clear();
             where_type clause{.jt    = where_type::join_type::none,
                               .op    = where_type::op_type::in,
                               .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
@@ -331,10 +385,76 @@ namespace webpp::sql {
             return *this;
         }
 
+        template <typename Expr1, typename Expr2, typename... Exprs>
+        constexpr query_builder& where_not_in(Expr1&& expr1, Expr2&& expr2, Exprs&&... exprs) noexcept {
+            where_clauses.clear();
+            where_type clause{.jt    = where_type::join_type::not_jt,
+              .op    = where_type::op_type::in,
+              .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+              .expr2 = expressionify<Expr2>(stl::forward<Expr2>(expr2)),
+              .exprs{alloc::local_allocator<expression>(db)}};
+            clause.exprs.reserve(sizeof...(exprs));
+            (clause.exprs.push_back(expressionify<Exprs>(stl::forward<Exprs>(exprs))), ...);
+            where_clauses.push_back(clause);
+            return *this;
+        }
+
+        template <typename Expr1, typename Expr2, typename... Exprs>
+        constexpr query_builder& and_where_in(Expr1&& expr1, Expr2&& expr2, Exprs&&... exprs) noexcept {
+            where_type clause{.jt    = where_type::join_type::and_jt,
+              .op    = where_type::op_type::in,
+              .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+              .expr2 = expressionify<Expr2>(stl::forward<Expr2>(expr2)),
+              .exprs{alloc::local_allocator<expression>(db)}};
+            clause.exprs.reserve(sizeof...(exprs));
+            (clause.exprs.push_back(expressionify<Exprs>(stl::forward<Exprs>(exprs))), ...);
+            where_clauses.push_back(clause);
+            return *this;
+        }
+
+        template <typename Expr1, typename Expr2, typename... Exprs>
+        constexpr query_builder& or_where_in(Expr1&& expr1, Expr2&& expr2, Exprs&&... exprs) noexcept {
+            where_type clause{.jt    = where_type::join_type::or_jt,
+              .op    = where_type::op_type::in,
+              .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+              .expr2 = expressionify<Expr2>(stl::forward<Expr2>(expr2)),
+              .exprs{alloc::local_allocator<expression>(db)}};
+            clause.exprs.reserve(sizeof...(exprs));
+            (clause.exprs.push_back(expressionify<Exprs>(stl::forward<Exprs>(exprs))), ...);
+            where_clauses.push_back(clause);
+            return *this;
+        }
+
+        template <typename Expr1, typename Expr2, typename... Exprs>
+        constexpr query_builder& or_where_not_in(Expr1&& expr1, Expr2&& expr2, Exprs&&... exprs) noexcept {
+            where_type clause{.jt    = where_type::join_type::or_not_jt,
+              .op    = where_type::op_type::in,
+              .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+              .expr2 = expressionify<Expr2>(stl::forward<Expr2>(expr2)),
+              .exprs{alloc::local_allocator<expression>(db)}};
+            clause.exprs.reserve(sizeof...(exprs));
+            (clause.exprs.push_back(expressionify<Exprs>(stl::forward<Exprs>(exprs))), ...);
+            where_clauses.push_back(clause);
+            return *this;
+        }
+
+        template <typename Expr1, typename Expr2, typename... Exprs>
+        constexpr query_builder& and_where_not_in(Expr1&& expr1, Expr2&& expr2, Exprs&&... exprs) noexcept {
+            where_type clause{.jt    = where_type::join_type::and_not_jt,
+              .op    = where_type::op_type::in,
+              .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+              .expr2 = expressionify<Expr2>(stl::forward<Expr2>(expr2)),
+              .exprs{alloc::local_allocator<expression>(db)}};
+            clause.exprs.reserve(sizeof...(exprs));
+            (clause.exprs.push_back(expressionify<Exprs>(stl::forward<Exprs>(exprs))), ...);
+            where_clauses.push_back(clause);
+            return *this;
+        }
+
 
         template <typename Expr1, typename Expr2>
         constexpr query_builder& where(Expr1&& expr1, Expr2&& expr2) noexcept {
-            // todo: see if it's a good idea to clear where_clauses first
+            where_clauses.clear();
             where_clauses.push_back(where_type{.jt    = where_type::join_type::none,
                                                .op    = where_type::op_type::eq,
                                                .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
@@ -630,34 +750,39 @@ namespace webpp::sql {
 
             // specializing the first one for performance reasons
             for (;;) {
+                out.push_back(' ');
                 switch (it->jt) {
                     case where_type::join_type::none: break;
                     case where_type::join_type::not_jt: {
                         out.append(words::not_word);
+                        out.push_back(' ');
                         break;
                     }
                     case where_type::join_type::and_jt: {
                         out.append(words::and_word);
+                        out.push_back(' ');
                         break;
                     }
                     case where_type::join_type::or_jt: {
                         out.append(words::or_word);
+                        out.push_back(' ');
                         break;
                     }
                     case where_type::join_type::and_not_jt: {
                         out.append(words::and_word);
                         out.push_back(' ');
                         out.append(words::not_word);
+                        out.push_back(' ');
                         break;
                     }
                     case where_type::join_type::or_not_jt: {
                         out.append(words::and_word);
                         out.push_back(' ');
                         out.append(words::not_word);
+                        out.push_back(' ');
                         break;
                     }
                 }
-                out.push_back(' ');
 
                 switch (it->op) {
                     case where_type::op_type::eq: {
@@ -703,6 +828,10 @@ namespace webpp::sql {
                         out.push_back(' ');
                         out.push_back('(');
                         serialize_expression<words>(out, it->expr2);
+                        for (auto const& expr : it->exprs) {
+                            out.append(", ");
+                            serialize_expression<words>(out, expr);
+                        }
                         out.push_back(')');
                         break;
                     }
@@ -718,13 +847,10 @@ namespace webpp::sql {
                     }
                 }
 
-                // a trick to not print the last comma
                 ++it;
                 if (it == where_end) {
                     break;
                 }
-                out.push_back(' ');
-                out.push_back(',');
             }
         }
     };
