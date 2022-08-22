@@ -720,7 +720,7 @@ namespace webpp::sql {
 
                 // a trick to not print the last comma
                 ++it;
-                if (it != where_end) {
+                if (it == where_end) {
                     break;
                 }
                 out.push_back(' ');
