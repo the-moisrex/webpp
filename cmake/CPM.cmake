@@ -30,8 +30,9 @@ cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 
 set(CURRENT_CPM_VERSION 1.0.0-development-version)
 
+get_filename_component(CPM_CURRENT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" REALPATH)
 if(CPM_DIRECTORY)
-  if(NOT CPM_DIRECTORY STREQUAL CMAKE_CURRENT_LIST_DIR)
+  if(NOT CPM_DIRECTORY STREQUAL CPM_CURRENT_DIRECTORY)
     if(CPM_VERSION VERSION_LESS CURRENT_CPM_VERSION)
       message(
         AUTHOR_WARNING
@@ -66,6 +67,26 @@ endif()
 
 set_property(GLOBAL PROPERTY CPM_INITIALIZED true)
 
+macro(cpm_set_policies)
+  # the policy allows us to change options without caching
+  cmake_policy(SET CMP0077 NEW)
+  set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+
+  # the policy allows us to change set(CACHE) without caching
+  if(POLICY CMP0126)
+    cmake_policy(SET CMP0126 NEW)
+    set(CMAKE_POLICY_DEFAULT_CMP0126 NEW)
+  endif()
+
+  # The policy uses the download time for timestamp, instead of the timestamp in the archive. This
+  # allows for proper rebuilds when a projects url changes
+  if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+    set(CMAKE_POLICY_DEFAULT_CMP0135 NEW)
+  endif()
+endmacro()
+cpm_set_policies()
+
 option(CPM_USE_LOCAL_PACKAGES "Always try to use `find_package` to get dependencies"
        $ENV{CPM_USE_LOCAL_PACKAGES}
 )
@@ -93,7 +114,7 @@ set(CPM_VERSION
     CACHE INTERNAL ""
 )
 set(CPM_DIRECTORY
-    ${CMAKE_CURRENT_LIST_DIR}
+    ${CPM_CURRENT_DIRECTORY}
     CACHE INTERNAL ""
 )
 set(CPM_FILE
@@ -433,8 +454,51 @@ function(cpm_check_git_working_dir_is_clean repoPath gitTag isClean)
 
 endfunction()
 
+# method to overwrite internal FetchContent properties, to allow using CPM.cmake to overload
+# FetchContent calls. As these are internal cmake properties, this method should be used carefully
+# and may need modification in future CMake versions. Source:
+# https://github.com/Kitware/CMake/blob/dc3d0b5a0a7d26d43d6cfeb511e224533b5d188f/Modules/FetchContent.cmake#L1152
+function(cpm_override_fetchcontent contentName)
+  cmake_parse_arguments(PARSE_ARGV 1 arg "" "SOURCE_DIR;BINARY_DIR" "")
+  if(NOT "${arg_UNPARSED_ARGUMENTS}" STREQUAL "")
+    message(FATAL_ERROR "Unsupported arguments: ${arg_UNPARSED_ARGUMENTS}")
+  endif()
+
+  string(TOLOWER ${contentName} contentNameLower)
+  set(prefix "_FetchContent_${contentNameLower}")
+
+  set(propertyName "${prefix}_sourceDir")
+  define_property(
+    GLOBAL
+    PROPERTY ${propertyName}
+    BRIEF_DOCS "Internal implementation detail of FetchContent_Populate()"
+    FULL_DOCS "Details used by FetchContent_Populate() for ${contentName}"
+  )
+  set_property(GLOBAL PROPERTY ${propertyName} "${arg_SOURCE_DIR}")
+
+  set(propertyName "${prefix}_binaryDir")
+  define_property(
+    GLOBAL
+    PROPERTY ${propertyName}
+    BRIEF_DOCS "Internal implementation detail of FetchContent_Populate()"
+    FULL_DOCS "Details used by FetchContent_Populate() for ${contentName}"
+  )
+  set_property(GLOBAL PROPERTY ${propertyName} "${arg_BINARY_DIR}")
+
+  set(propertyName "${prefix}_populated")
+  define_property(
+    GLOBAL
+    PROPERTY ${propertyName}
+    BRIEF_DOCS "Internal implementation detail of FetchContent_Populate()"
+    FULL_DOCS "Details used by FetchContent_Populate() for ${contentName}"
+  )
+  set_property(GLOBAL PROPERTY ${propertyName} TRUE)
+endfunction()
+
 # Download and add a package from source
 function(CPMAddPackage)
+  cpm_set_policies()
+
   list(LENGTH ARGN argnLength)
   if(argnLength EQUAL 1)
     cpm_parse_add_package_single_arg("${ARGN}" ARGN)
@@ -609,6 +673,20 @@ function(CPMAddPackage)
     list(APPEND CPM_ARGS_UNPARSED_ARGUMENTS DOWNLOAD_COMMAND ${CPM_ARGS_DOWNLOAD_COMMAND})
   elseif(DEFINED CPM_ARGS_SOURCE_DIR)
     list(APPEND CPM_ARGS_UNPARSED_ARGUMENTS SOURCE_DIR ${CPM_ARGS_SOURCE_DIR})
+    if(NOT IS_ABSOLUTE ${CPM_ARGS_SOURCE_DIR})
+      # Expand `CPM_ARGS_SOURCE_DIR` relative path. This is important because EXISTS doesn't work
+      # for relative paths.
+      get_filename_component(
+        source_directory ${CPM_ARGS_SOURCE_DIR} REALPATH BASE_DIR ${CMAKE_CURRENT_BINARY_DIR}
+      )
+    else()
+      set(source_directory ${CPM_ARGS_SOURCE_DIR})
+    endif()
+    if(NOT EXISTS ${source_directory})
+      string(TOLOWER ${CPM_ARGS_NAME} lower_case_name)
+      # remove timestamps so CMake will re-download the dependency
+      file(REMOVE_RECURSE "${CPM_FETCHCONTENT_BASE_DIR}/${lower_case_name}-subbuild")
+    endif()
   elseif(CPM_SOURCE_CACHE AND NOT CPM_ARGS_NO_CACHE)
     string(TOLOWER ${CPM_ARGS_NAME} lower_case_name)
     set(origin_parameters ${CPM_ARGS_UNPARSED_ARGUMENTS})
@@ -644,8 +722,15 @@ function(CPMAddPackage)
         "${${CPM_ARGS_NAME}_SOURCE_DIR}/${CPM_ARGS_SOURCE_SUBDIR}" "${${CPM_ARGS_NAME}_BINARY_DIR}"
         "${CPM_ARGS_EXCLUDE_FROM_ALL}" "${CPM_ARGS_OPTIONS}"
       )
-      set(CPM_SKIP_FETCH TRUE)
       set(PACKAGE_INFO "${PACKAGE_INFO} at ${download_directory}")
+
+      # As the source dir is already cached/populated, we override the call to FetchContent.
+      set(CPM_SKIP_FETCH TRUE)
+      cpm_override_fetchcontent(
+        "${lower_case_name}" SOURCE_DIR "${${CPM_ARGS_NAME}_SOURCE_DIR}/${CPM_ARGS_SOURCE_SUBDIR}"
+        BINARY_DIR "${${CPM_ARGS_NAME}_BINARY_DIR}"
+      )
+
     else()
       # Enable shallow clone when GIT_TAG is not a commit hash. Our guess may not be accurate, but
       # it should guarantee no commit hash get mis-detected.
@@ -843,16 +928,6 @@ function(
       set(addSubdirectoryExtraArgs "")
     endif()
     if(OPTIONS)
-      # the policy allows us to change options without caching
-      cmake_policy(SET CMP0077 NEW)
-      set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
-
-      # the policy allows us to change set(CACHE) without caching
-      if(POLICY CMP0126)
-        cmake_policy(SET CMP0126 NEW)
-        set(CMAKE_POLICY_DEFAULT_CMP0126 NEW)
-      endif()
-
       foreach(OPTION ${OPTIONS})
         cpm_parse_option("${OPTION}")
         set(${OPTION_KEY} "${OPTION_VALUE}")
