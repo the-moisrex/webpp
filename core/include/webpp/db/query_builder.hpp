@@ -304,11 +304,12 @@ namespace webpp::sql {
                 return *this;
             }
             where_clauses.clear();
-            where_clauses.push_back(where_type{.jt    = where_type::join_type::none,
-                                               .op    = where_type::op_type::in,
-                                               .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-                                               .expr2 = expressionify(select_query),
-                                               .exprs{alloc::local_allocator<expression>(db)}});
+            where_clauses.push_back(
+              where_type{.jt    = where_type::join_type::none,
+                         .op    = where_type::op_type::in,
+                         .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+                         .expr2 = expressionify(select_query),
+                         .exprs = expression_vec{alloc::local_allocator<expression>(db)}});
             return *this;
         }
 
@@ -319,11 +320,12 @@ namespace webpp::sql {
                 return *this;
             }
             where_clauses.clear();
-            where_clauses.push_back(where_type{.jt    = where_type::join_type::not_jt,
-                                               .op    = where_type::op_type::in,
-                                               .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-                                               .expr2 = expressionify(select_query),
-                                               .exprs{alloc::local_allocator<expression>(db)}});
+            where_clauses.push_back(
+              where_type{.jt    = where_type::join_type::not_jt,
+                         .op    = where_type::op_type::in,
+                         .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+                         .expr2 = expressionify(select_query),
+                         .exprs = expression_vec{alloc::local_allocator<expression>(db)}});
             return *this;
         }
 
@@ -333,11 +335,12 @@ namespace webpp::sql {
                 db.logger.error(LOG_CAT, "Only select queries are allowed inside where_in");
                 return *this;
             }
-            where_clauses.push_back(where_type{.jt    = where_type::join_type::and_not_jt,
-                                               .op    = where_type::op_type::in,
-                                               .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-                                               .expr2 = expressionify(select_query),
-                                               .exprs{alloc::local_allocator<expression>(db)}});
+            where_clauses.push_back(
+              where_type{.jt    = where_type::join_type::and_not_jt,
+                         .op    = where_type::op_type::in,
+                         .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+                         .expr2 = expressionify(select_query),
+                         .exprs = expression_vec{alloc::local_allocator<expression>(db)}});
             return *this;
         }
 
@@ -347,11 +350,12 @@ namespace webpp::sql {
                 db.logger.error(LOG_CAT, "Only select queries are allowed inside where_in");
                 return *this;
             }
-            where_clauses.push_back(where_type{.jt    = where_type::join_type::or_jt,
-                                               .op    = where_type::op_type::in,
-                                               .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-                                               .expr2 = expressionify(select_query),
-                                               .exprs{alloc::local_allocator<expression>(db)}});
+            where_clauses.push_back(
+              where_type{.jt    = where_type::join_type::or_jt,
+                         .op    = where_type::op_type::in,
+                         .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+                         .expr2 = expressionify(select_query),
+                         .exprs = expression_vec{alloc::local_allocator<expression>(db)}});
             return *this;
         }
 
@@ -361,11 +365,12 @@ namespace webpp::sql {
                 db.logger.error(LOG_CAT, "Only select queries are allowed inside where_in");
                 return *this;
             }
-            where_clauses.push_back(where_type{.jt    = where_type::join_type::or_not_jt,
-                                               .op    = where_type::op_type::in,
-                                               .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-                                               .expr2 = expressionify(select_query),
-                                               .exprs{alloc::local_allocator<expression>(db)}});
+            where_clauses.push_back(
+              where_type{.jt    = where_type::join_type::or_not_jt,
+                         .op    = where_type::op_type::in,
+                         .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+                         .expr2 = expressionify(select_query),
+                         .exprs = expression_vec{alloc::local_allocator<expression>(db)}});
             return *this;
         }
 
@@ -380,7 +385,7 @@ namespace webpp::sql {
                               .op    = where_type::op_type::in,
                               .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
                               .expr2 = expressionify<Expr2>(stl::forward<Expr2>(expr2)),
-                              .exprs{alloc::local_allocator<expression>(db)}};
+                              .exprs = expression_vec{alloc::local_allocator<expression>(db)}};
             clause.exprs.reserve(sizeof...(exprs));
             (clause.exprs.push_back(expressionify<Exprs>(stl::forward<Exprs>(exprs))), ...);
             where_clauses.push_back(clause);
@@ -394,7 +399,7 @@ namespace webpp::sql {
                               .op    = where_type::op_type::in,
                               .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
                               .expr2 = expressionify<Expr2>(stl::forward<Expr2>(expr2)),
-                              .exprs{alloc::local_allocator<expression>(db)}};
+                              .exprs = expression_vec{alloc::local_allocator<expression>(db)}};
             clause.exprs.reserve(sizeof...(exprs));
             (clause.exprs.push_back(expressionify<Exprs>(stl::forward<Exprs>(exprs))), ...);
             where_clauses.push_back(clause);
@@ -407,7 +412,7 @@ namespace webpp::sql {
                               .op    = where_type::op_type::in,
                               .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
                               .expr2 = expressionify<Expr2>(stl::forward<Expr2>(expr2)),
-                              .exprs{alloc::local_allocator<expression>(db)}};
+                              .exprs = expression_vec{alloc::local_allocator<expression>(db)}};
             clause.exprs.reserve(sizeof...(exprs));
             (clause.exprs.push_back(expressionify<Exprs>(stl::forward<Exprs>(exprs))), ...);
             where_clauses.push_back(clause);
@@ -420,7 +425,7 @@ namespace webpp::sql {
                               .op    = where_type::op_type::in,
                               .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
                               .expr2 = expressionify<Expr2>(stl::forward<Expr2>(expr2)),
-                              .exprs{alloc::local_allocator<expression>(db)}};
+                              .exprs = expression_vec{alloc::local_allocator<expression>(db)}};
             clause.exprs.reserve(sizeof...(exprs));
             (clause.exprs.push_back(expressionify<Exprs>(stl::forward<Exprs>(exprs))), ...);
             where_clauses.push_back(clause);
@@ -433,7 +438,7 @@ namespace webpp::sql {
                               .op    = where_type::op_type::in,
                               .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
                               .expr2 = expressionify<Expr2>(stl::forward<Expr2>(expr2)),
-                              .exprs{alloc::local_allocator<expression>(db)}};
+                              .exprs = expression_vec{alloc::local_allocator<expression>(db)}};
             clause.exprs.reserve(sizeof...(exprs));
             (clause.exprs.push_back(expressionify<Exprs>(stl::forward<Exprs>(exprs))), ...);
             where_clauses.push_back(clause);
@@ -446,7 +451,7 @@ namespace webpp::sql {
                               .op    = where_type::op_type::in,
                               .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
                               .expr2 = expressionify<Expr2>(stl::forward<Expr2>(expr2)),
-                              .exprs{alloc::local_allocator<expression>(db)}};
+                              .exprs = expression_vec{alloc::local_allocator<expression>(db)}};
             clause.exprs.reserve(sizeof...(exprs));
             (clause.exprs.push_back(expressionify<Exprs>(stl::forward<Exprs>(exprs))), ...);
             where_clauses.push_back(clause);
@@ -457,11 +462,12 @@ namespace webpp::sql {
         template <typename Expr1, typename Expr2>
         constexpr query_builder& where(Expr1&& expr1, Expr2&& expr2) noexcept {
             where_clauses.clear();
-            where_clauses.push_back(where_type{.jt    = where_type::join_type::none,
-                                               .op    = where_type::op_type::eq,
-                                               .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-                                               .expr2 = expressionify<Expr2>(stl::forward<Expr2>(expr2)),
-                                               .exprs{alloc::local_allocator<expression>(db)}});
+            where_clauses.push_back(
+              where_type{.jt    = where_type::join_type::none,
+                         .op    = where_type::op_type::eq,
+                         .expr1 = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+                         .expr2 = expressionify<Expr2>(stl::forward<Expr2>(expr2)),
+                         .exprs = expression_vec{alloc::local_allocator<expression>(db)}});
             return *this;
         }
 
