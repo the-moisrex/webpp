@@ -30,6 +30,7 @@ namespace webpp::sql {
         static constexpr const CharT* default_word = "default";
         static constexpr const CharT* like         = "like";
         static constexpr const CharT* exists       = "exists";
+        static constexpr const CharT* set          = "set";
     };
 
     template <typename CharT = char>
@@ -49,6 +50,7 @@ namespace webpp::sql {
         static constexpr const CharT* default_word = "DEFAULT";
         static constexpr const CharT* like         = "LIKE";
         static constexpr const CharT* exists       = "EXISTS";
+        static constexpr const CharT* set          = "SET";
     };
 
 
@@ -142,13 +144,15 @@ namespace webpp::sql {
         // set the value for the specified column
         template <typename T>
         constexpr column_builder& operator=(T&& value) noexcept {
-            if constexpr (stl::integral<key_type>) {
-                // key is index
-                builder.values[key] = value;
-            } else {
-                builder.columns.push_back(key);
-                builder.values.push_back(key);
-            }
+            builder.columns.push_back(key);
+            builder.values.emplace_back(builder.expressionify(stl::forward<T>(value)));
+            return *this;
+        }
+
+        constexpr column_builder& operator++() noexcept {
+            builder.columns.push_back(key);
+            // todo
+            // builder.values.push_back();
             return *this;
         }
     };
@@ -567,6 +571,15 @@ namespace webpp::sql {
 
 
         /**
+         * Set the query type as an update query
+         */
+        constexpr query_builder& update() noexcept {
+            method = query_method::update;
+            return *this;
+        }
+
+
+        /**
          * Build the query and get a string for the query
          *
          * @tparam StrT String type
@@ -578,67 +591,7 @@ namespace webpp::sql {
         constexpr void to_string(StrT& out) const noexcept {
             switch (method) {
                 case query_method::insert: {
-                    if (values.empty()) {
-                        break;
-                    }
-                    out.append(words::insert_into);
-                    out.push_back(' ');
-                    serialize_single_from(out);
-                    out.push_back(' ');
-                    if (!columns.empty()) {
-                        out.push_back('(');
-                        strings::join_with(out, columns,
-                                           ", "); // todo: column names are not escaped
-                        out.push_back(')');
-                    }
-
-                    // join
-                    // example: (1, 2, 3), (1, 2, 3), ...
-                    auto       it     = values.begin();
-                    const auto it_end = values.end();
-
-                    using diff_type     = typename expression_vec::iterator::difference_type;
-                    const auto col_size = static_cast<diff_type>(columns.size());
-
-                    if (values.size() == 1 && stl::holds_alternative<subquery>(*it)) {
-                        // insert ... select
-                        // manual join (code duplication)
-                        serialize_expression<words>(out, *it);
-                    } else {
-                        out.append(words::values);
-                        out.append(" (");
-
-                        // manual join (code duplication)
-                        {
-                            auto const it_step_first = it + col_size - 1;
-                            for (; it != it_step_first; ++it) {
-                                serialize_expression<words>(out, *it);
-                                out.append(", ");
-                            }
-                            serialize_expression<words>(out, *it);
-                            ++it;
-                        }
-
-                        out.push_back(')');
-
-                        // values and columns should be aligned so don't worry
-                        for (; it != it_end;) {
-                            out.append(", (");
-
-                            // manual join
-                            {
-                                auto const it_step = it + col_size - 1;
-                                for (; it != it_step; ++it) {
-                                    serialize_expression<words>(out, *it);
-                                    out.append(", ");
-                                }
-                                serialize_expression<words>(out, *it);
-                                ++it;
-                            }
-
-                            out.push_back(')');
-                        }
-                    }
+                    serialize_insert<words>(out);
                     break;
                 }
                 case query_method::select: {
@@ -660,6 +613,10 @@ namespace webpp::sql {
                     out.append(words::default_word);
                     out.push_back(' ');
                     out.append(words::values);
+                    break;
+                }
+                case query_method::update: {
+                    serialize_update<words>(out);
                     break;
                 }
                 case query_method::none: {
@@ -879,11 +836,117 @@ namespace webpp::sql {
                         out.push_back(')');
                         break;
                     }
+                    case where_type::op_type::between: {
+                        // todo
+                        break;
+                    }
+                    case where_type::op_type::like: {
+                        // todo
+                        break;
+                    }
+                    case where_type::op_type::none: break;
+                    default: break;
                 }
 
                 ++it;
                 if (it == where_end) {
                     break;
+                }
+            }
+        }
+
+        template <SQLKeywords words>
+        constexpr void serialize_update(auto& out) const noexcept {
+            if (values.empty()) {
+                return;
+            }
+            assert(values.size() == columns.size());
+
+            out.append(words::update);
+            out.push_back(' ');
+            serialize_single_from(out);
+            out.push_back(' ');
+            out.append(words::set);
+            out.push_back(' ');
+            auto       it     = values.begin();
+            auto const it_end = values.end();
+            auto       cit    = columns.begin();
+            for (;;) {
+                db.quoted_escape(*cit, out);
+                out.append(" = ");
+                serialize_expression<words>(out, *it);
+                if (it == it_end) {
+                    break;
+                }
+                out.append(", ");
+                ++it;
+                ++cit;
+            }
+            out.push_back(' ');
+            serialize_where<words>(out);
+        }
+
+        template <SQLKeywords words>
+        constexpr void serialize_insert(auto& out) const noexcept {
+            if (values.empty()) {
+                return;
+            }
+            out.append(words::insert_into);
+            out.push_back(' ');
+            serialize_single_from(out);
+            out.push_back(' ');
+            if (!columns.empty()) {
+                out.push_back('(');
+                strings::join_with(out, columns,
+                                   ", "); // todo: column names are not escaped
+                out.push_back(')');
+            }
+
+            // join
+            // example: (1, 2, 3), (1, 2, 3), ...
+            auto       it     = values.begin();
+            const auto it_end = values.end();
+
+            using diff_type     = typename expression_vec::iterator::difference_type;
+            const auto col_size = static_cast<diff_type>(columns.size());
+
+            if (values.size() == 1 && stl::holds_alternative<subquery>(*it)) {
+                // insert ... select
+                // manual join (code duplication)
+                serialize_expression<words>(out, *it);
+            } else {
+                out.append(words::values);
+                out.append(" (");
+
+                // manual join (code duplication)
+                {
+                    auto const it_step_first = it + col_size - 1;
+                    for (; it != it_step_first; ++it) {
+                        serialize_expression<words>(out, *it);
+                        out.append(", ");
+                    }
+                    serialize_expression<words>(out, *it);
+                    ++it;
+                }
+
+                out.push_back(')');
+
+                // values and columns should be aligned so don't worry
+                for (; it != it_end;) {
+                    out.append(", (");
+
+                    // manual join
+                    {
+                        auto const it_step = it + col_size - 1;
+                        for (; it != it_step; ++it) {
+                            serialize_expression<words>(out, *it);
+                            out.append(", ");
+                        }
+                        serialize_expression<words>(out, *it);
+                        ++it;
+                    }
+
+                    out.push_back(')');
                 }
             }
         }

@@ -115,6 +115,7 @@ namespace webpp::sql {
                               T::default_word;
                               T::like;
                               T::exists;
+                              T::set;
                           };
 
 } // namespace webpp::sql

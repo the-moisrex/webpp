@@ -122,30 +122,53 @@ TEST(Database, InsertSelectQuery) {
 TEST(Database, WhereClause) {
     sql_database<sqlite> db;
 
-    auto q1 = db.table("test")
-            .select("one", "two", "three")
-            .where("four", "question");
+    auto q1 = db.table("test").select("one", "two", "three").where("four", "question");
 
-    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'four' = 'question'") << q1.to_string();
+    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'four' = 'question'")
+      << q1.to_string();
 
 
     q1.where_in("four", 1, 2, 3, 4, 5, 6, 7, 8);
-    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'four' in (1, 2, 3, 4, 5, 6, 7, 8)") << q1.to_string();
+    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'four' in (1, 2, 3, 4, 5, 6, 7, 8)")
+      << q1.to_string();
 
 
     q1.where_in("four", 1, 2, 3, 4, "five", 6, 7, 8);
-    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'four' in (1, 2, 3, 4, 'five', 6, 7, 8)") << q1.to_string();
+    EXPECT_EQ(q1.to_string(),
+              "select one, two, three from 'test' where 'four' in (1, 2, 3, 4, 'five', 6, 7, 8)")
+      << q1.to_string();
 
     q1.where_not_in("four", 1, 2, 3, 4, "five", 6, 7, 8);
-    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where not 'four' in (1, 2, 3, 4, 'five', 6, 7, 8)") << q1.to_string();
+    EXPECT_EQ(q1.to_string(),
+              "select one, two, three from 'test' where not 'four' in (1, 2, 3, 4, 'five', 6, 7, 8)")
+      << q1.to_string();
 
 
     q1.and_where_not_in("six", 1, 2, 3);
-    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where not 'four' in (1, 2, 3, 4, 'five', 6, 7, 8) and not 'six' in (1, 2, 3)") << q1.to_string();
+    EXPECT_EQ(
+      q1.to_string(),
+      "select one, two, three from 'test' where not 'four' in (1, 2, 3, 4, 'five', 6, 7, 8) and not 'six' in (1, 2, 3)")
+      << q1.to_string();
 
     q1.where_in("six", 1, 2, 3);
-    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'six' in (1, 2, 3)") << q1.to_string();
+    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'six' in (1, 2, 3)")
+      << q1.to_string();
 
     q1.or_where_in("seven", 1, 2, 3);
-    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'six' in (1, 2, 3) or 'seven' in (1, 2, 3)") << q1.to_string();
+    EXPECT_EQ(q1.to_string(),
+              "select one, two, three from 'test' where 'six' in (1, 2, 3) or 'seven' in (1, 2, 3)")
+      << q1.to_string();
+}
+
+
+TEST(Database, UpdateQuery) {
+    sql_database<sqlite> db;
+
+    auto q        = db.table("test").where("user_id", 12);
+    q["username"] = "moisrex";
+    q["password"] = "moisrex loves coding";
+    q.update();
+    EXPECT_EQ(
+      q.to_string(),
+      "update test set 'username' = 'moisrex', password = 'moisrex loves coding' where user_id = 12");
 }
