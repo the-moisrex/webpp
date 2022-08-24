@@ -727,16 +727,14 @@ namespace webpp::sql {
         }
 
         constexpr void serialize_single_from(auto& out) const noexcept {
-            auto       it       = from_cols.begin();
-            const auto from_end = from_cols.end();
-            if (it == from_end) {
+            if (from_cols.empty()) {
                 db.logger.error(
                   LOG_CAT,
                   "You requested a sql query but you didn't provide which table we should put into the sql query; did you miss the table name?");
                 ;
                 return;
             }
-            db.quoted_escape(*it, out);
+            db.quoted_escape(from_cols.front(), out);
         }
 
         // select [... this method ...] from table;
@@ -891,14 +889,13 @@ namespace webpp::sql {
                 db.quoted_escape(*cit, out);
                 out.append(" = ");
                 serialize_expression<words>(out, *it);
+                ++it;
+                ++cit;
                 if (it == it_end) {
                     break;
                 }
                 out.append(", ");
-                ++it;
-                ++cit;
             }
-            out.push_back(' ');
             serialize_where<words>(out);
         }
 
@@ -970,15 +967,15 @@ namespace webpp::sql {
 
         template <SQLKeywords words>
         constexpr void serialize_remove(auto& out) const noexcept {
-            if (values.empty()) {
+            if (from_cols.empty()) {
+                db.logger.error(LOG_CAT, "Calling to_string on delete sql query requies you to specify the table name.");
                 return;
             }
             out.append(words::delete_word);
             out.push_back(' ');
             out.append(words::from);
             out.push_back(' ');
-            serialize_single_from(out);
-            out.push_back(' ');
+            db.quoted_escape(from_cols.front(), out);
             serialize_where<words>(out);
         }
     };

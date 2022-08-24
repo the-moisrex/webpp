@@ -1,4 +1,3 @@
-#include "../core/include/webpp/db/query.hpp"
 #include "../core/include/webpp/db/sql_database.hpp"
 #include "../core/include/webpp/db/sqlite/sqlite.hpp"
 #include "../core/include/webpp/traits/std_traits.hpp"
@@ -170,15 +169,14 @@ TEST(Database, UpdateQuery) {
     q.update();
     EXPECT_EQ(
       q.to_string(),
-      "update test set 'username' = 'moisrex', password = 'moisrex loves coding' where user_id = 12");
+      "update 'test' set 'username' = 'moisrex', 'password' = 'moisrex loves coding' where 'user_id' = 12")
+      << q.to_string();
 }
 
 TEST(Database, DeleteQuery) {
     sql_database<sqlite> db;
 
-    auto q        = db.table("test").where("user_id", 12);
+    auto q = db.table("test").where("user_id", 12);
     q.remove();
-    EXPECT_EQ(
-      q.to_string(),
-      "delete from test where user_id = 12");
+    EXPECT_EQ(q.to_string(), "delete from 'test' where 'user_id' = 12") << q.to_string();
 }
