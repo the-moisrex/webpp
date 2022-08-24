@@ -578,6 +578,15 @@ namespace webpp::sql {
             return *this;
         }
 
+        /**
+         * Set the query type as delete query
+         * The name "remove" has been chosen because "delete" is a reserved keyword.
+         */
+        constexpr query_builder& remove() noexcept {
+            method = query_method::remove;
+            return *this;
+        }
+
 
         /**
          * Build the query and get a string for the query
@@ -619,8 +628,15 @@ namespace webpp::sql {
                     serialize_update<words>(out);
                     break;
                 }
+                case query_method::remove: {
+                    serialize_remove<words>(out);
+                    break;
+                }
                 case query_method::none: {
                     // the query is empty.
+                    db.logger.warning(
+                      LOG_CAT,
+                      "Calling to_string on a query builder while you haven't defined the query type has no effect. Did you forget calling one of 'remove', 'update', or 'select' member functions?");
                 }
             }
         }
@@ -949,6 +965,21 @@ namespace webpp::sql {
                     out.push_back(')');
                 }
             }
+        }
+
+
+        template <SQLKeywords words>
+        constexpr void serialize_remove(auto& out) const noexcept {
+            if (values.empty()) {
+                return;
+            }
+            out.append(words::delete_word);
+            out.push_back(' ');
+            out.append(words::from);
+            out.push_back(' ');
+            serialize_single_from(out);
+            out.push_back(' ');
+            serialize_where<words>(out);
         }
     };
 
