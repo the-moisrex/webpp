@@ -179,4 +179,7 @@ TEST(Database, DeleteQuery) {
     auto q = db.table("test").where("user_id", 12);
     q.remove();
     EXPECT_EQ(q.to_string(), "delete from 'test' where 'user_id' = 12") << q.to_string();
+
+    auto q2 = db.table("test").remove();
+    EXPECT_EQ(q2.to_string(), "delete from 'test'");
 }

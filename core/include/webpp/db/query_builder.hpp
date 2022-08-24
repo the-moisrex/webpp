@@ -287,8 +287,6 @@ namespace webpp::sql {
             return {*this, col_index};
         }
 
-        // todo: where, where_not, where_in, and_where, and_where_not_null, or_where, or_where_not_null
-
 
 
         /**
@@ -910,8 +908,16 @@ namespace webpp::sql {
             out.push_back(' ');
             if (!columns.empty()) {
                 out.push_back('(');
-                strings::join_with(out, columns,
-                                   ", "); // todo: column names are not escaped
+                auto const it_end = columns.end();
+                auto       it     = columns.begin();
+                for (;;) {
+                    db.quoted_escape(*it, out);
+                    ++it;
+                    if (it == it_end) {
+                        break;
+                    }
+                    out.append(", ");
+                }
                 out.push_back(')');
             }
 
@@ -968,7 +974,9 @@ namespace webpp::sql {
         template <SQLKeywords words>
         constexpr void serialize_remove(auto& out) const noexcept {
             if (from_cols.empty()) {
-                db.logger.error(LOG_CAT, "Calling to_string on delete sql query requies you to specify the table name.");
+                db.logger.error(
+                  LOG_CAT,
+                  "Calling to_string on delete sql query requies you to specify the table name.");
                 return;
             }
             out.append(words::delete_word);
