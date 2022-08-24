@@ -976,7 +976,7 @@ namespace webpp::sql {
             if (from_cols.empty()) {
                 db.logger.error(
                   LOG_CAT,
-                  "Calling to_string on delete sql query requies you to specify the table name.");
+                  "Calling to_string on delete sql query requires you to specify the table name.");
                 return;
             }
             out.append(words::delete_word);
