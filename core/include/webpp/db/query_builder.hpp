@@ -528,6 +528,28 @@ namespace webpp::sql {
             return *this;
         }
 
+        template <typename ColT, typename Expr>
+            requires(istl::StringifiableOf<string_type, ColT>)
+        constexpr query_builder& right_join_using(ColT&& col_string, Expr&& using_expr) noexcept {
+            joins.push_back(join_type{
+              .cat   = join_type::join_cat::right,
+              .cond  = join_type::cond_type::using_cond,
+              .table = istl::stringify_of<local_string_type>(stl::forward<ColT>(col_string),
+                                                             alloc::allocator_for<local_string_type>(db)),
+              .expr1 = expressionify(stl::forward<Expr>(using_expr))});
+            return *this;
+        }
+
+        template <typename Expr>
+        constexpr query_builder& right_join_using(query_builder const& sub_query,
+                                                  Expr&&               using_expr) noexcept {
+            joins.push_back(join_type{.cat   = join_type::join_cat::right,
+                                      .cond  = join_type::cond_type::using_cond,
+                                      .table = sub_query,
+                                      .expr1 = expressionify(stl::forward<Expr>(using_expr))});
+            return *this;
+        }
+
         // insert into Col default values;
         constexpr query_builder& insert_default() noexcept {
             method = query_method::insert_default;
@@ -1139,9 +1161,6 @@ namespace webpp::sql {
         }
     };
 
-
-
 } // namespace webpp::sql
-
 
 #endif // WEBPP_DATABASE_SQL_QUERY_BUILDER_HPP

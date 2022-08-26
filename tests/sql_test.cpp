@@ -189,4 +189,8 @@ TEST(Database, Joins) {
 
     auto q = db.table("test").left_join_using("table", "using_condition").where("user_id", 12).select();
     EXPECT_EQ(q.to_string(), "select * from 'test' left join 'table' using ('using_condition') where 'user_id' = 12") << q.to_string();
+
+
+    auto q2 = db.table("test").right_join_using("table", "using_condition").where("user_id", 12).select();
+    EXPECT_EQ(q2.to_string(), "select * from 'test' right join 'table' using ('using_condition') where 'user_id' = 12") << q2.to_string();
 }
