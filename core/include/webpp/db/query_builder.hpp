@@ -31,6 +31,14 @@ namespace webpp::sql {
         static constexpr const CharT* like         = "like";
         static constexpr const CharT* exists       = "exists";
         static constexpr const CharT* set          = "set";
+        static constexpr const CharT* inner        = "inner";
+        static constexpr const CharT* left         = "left";
+        static constexpr const CharT* right        = "right";
+        static constexpr const CharT* join         = "join";
+        static constexpr const CharT* cross        = "cross";
+        static constexpr const CharT* full         = "full";
+        static constexpr const CharT* using_word   = "using";
+        static constexpr const CharT* on_word      = "on";
     };
 
     template <typename CharT = char>
@@ -51,6 +59,14 @@ namespace webpp::sql {
         static constexpr const CharT* like         = "LIKE";
         static constexpr const CharT* exists       = "EXISTS";
         static constexpr const CharT* set          = "SET";
+        static constexpr const CharT* inner        = "INNER";
+        static constexpr const CharT* left         = "LEFT";
+        static constexpr const CharT* right        = "RIGHT";
+        static constexpr const CharT* join         = "JOIN";
+        static constexpr const CharT* cross        = "CROSS";
+        static constexpr const CharT* full         = "FULL";
+        static constexpr const CharT* using_word   = "USING";
+        static constexpr const CharT* on_word      = "ON";
     };
 
 
@@ -167,6 +183,7 @@ namespace webpp::sql {
         using traits_type         = typename database_type::traits_type;
         using allocator_pack_type = traits::allocator_pack_type<traits_type>;
         using string_type         = traits::general_string<traits_type>;
+        using string_view_type    = traits::string_view<traits_type>;
         using local_string_type   = traits::local_string<traits_type>;
         using database_ref        = stl::add_lvalue_reference_t<database_type>;
         using size_type           = typename database_type::size_type;
@@ -230,13 +247,29 @@ namespace webpp::sql {
         enum struct order_by_type { asc, desc };
 
 
+        struct join_type {
+            enum struct join_cat : stl::uint_fast8_t { inner = 0, left = 1, right = 2, full = 3, cross = 4 };
+            enum struct cond_type : stl::uint_fast8_t { using_cond, on_cond, none };
+
+            join_cat  cat;
+            cond_type cond = cond_type::none;
+
+            // https://www.sqlite.org/syntax/join-clause.html
+            // https://www.sqlite.org/syntax/table-or-subquery.html
+            stl::variant<local_string_type, subquery> table; // table or sub-query
+            expression                                expr1, expr2{};
+        };
+        using join_vec = stl::vector<join_type, traits::local_allocator<traits_type, join_type>>;
+
         database_ref   db;
         query_method   method = query_method::none;
         string_vec     from_cols;
         string_vec     columns; // insert: col names, update: col names, select: cols, delete: unused
         expression_vec values;  // insert: values, update: values, select: unused, delete: unused
         where_vec      where_clauses;
+        join_vec       joins;
         order_by_type  order_by_value;
+
 
 
         template <typename T>
@@ -473,6 +506,28 @@ namespace webpp::sql {
             return *this;
         }
 
+
+        template <typename ColT, typename Expr>
+            requires(istl::StringifiableOf<string_type, ColT>)
+        constexpr query_builder& left_join_using(ColT&& col_string, Expr&& using_expr) noexcept {
+            joins.push_back(join_type{
+              .cat   = join_type::join_cat::left,
+              .cond  = join_type::cond_type::using_cond,
+              .table = istl::stringify_of<local_string_type>(stl::forward<ColT>(col_string),
+                                                             alloc::allocator_for<local_string_type>(db)),
+              .expr1 = expressionify(stl::forward<Expr>(using_expr))});
+            return *this;
+        }
+
+        template <typename Expr>
+        constexpr query_builder& left_join_using(query_builder const& sub_query, Expr&& using_expr) noexcept {
+            joins.push_back(join_type{.cat   = join_type::join_cat::left,
+                                      .cond  = join_type::cond_type::using_cond,
+                                      .table = sub_query,
+                                      .expr1 = expressionify(stl::forward<Expr>(using_expr))});
+            return *this;
+        }
+
         // insert into Col default values;
         constexpr query_builder& insert_default() noexcept {
             method = query_method::insert_default;
@@ -609,6 +664,7 @@ namespace webpp::sql {
                     out.append(words::from);
                     out.push_back(' ');
                     serialize_from(out);
+                    serialize_joins<words>(out);
                     serialize_where<words>(out);
                     break;
                 }
@@ -674,6 +730,8 @@ namespace webpp::sql {
         /**
          * This function will stringify the values, if you're looking for the function that handles the
          * prepare statements, this is not going to be used there.
+         *
+         * https://www.sqlite.org/syntax/expr.html
          */
         template <SQLKeywords words, typename StrT>
         constexpr void serialize_expression(StrT& out, expression const& var) const noexcept {
@@ -737,6 +795,11 @@ namespace webpp::sql {
 
         // select [... this method ...] from table;
         constexpr void serialize_select_columns(auto& out) const noexcept {
+            if (columns.empty()) {
+                out.push_back('*');
+                return;
+            }
+            // todo: Watch out for SQL Injection here
             strings::join_with(out, columns, ", ");
         }
 
@@ -754,6 +817,7 @@ namespace webpp::sql {
             // specializing the first one for performance reasons
             for (;;) {
                 out.push_back(' ');
+                // todo: optimize this using jump tables
                 switch (it->jt) {
                     case where_type::join_type::none: break;
                     case where_type::join_type::not_jt: {
@@ -985,6 +1049,93 @@ namespace webpp::sql {
             out.push_back(' ');
             db.quoted_escape(from_cols.front(), out);
             serialize_where<words>(out);
+        }
+
+
+
+      private:
+        // template <SQLKeywords words>
+        // static constexpr string_view_type join_strings[]{{
+        //   " "+ words::left + " " + words::join + " ",  // 1
+        //   " "+ words::right + " " + words::join + " ", // 2
+        //   " "+ words::full + " " + words::join + " ",  // 3
+        //   " "+ words::cross + " " + words::join + " "  // 4
+        // }};
+
+        // template <SQLKeywords words>
+        // static constexpr string_view_type cond_strings[]{{
+        //   string_view_type{" "} + words::using_word + " (", // 0
+        //   string_view_type{" "} + words::on_word + " "      // 1
+        // }};
+
+      public:
+        template <SQLKeywords words, typename StrT>
+        constexpr void serialize_joins(StrT& out) const noexcept {
+
+            // todo: this is branch-less-able :)
+            for (auto const& join : joins) {
+                out.push_back(' ');
+                switch (join.cat) {
+                    case join_type::join_cat::inner: {
+                        out.append(words::inner); // todo: do we need this?
+                        out.push_back(' ');
+                        out.append(words::join);
+                        break;
+                    }
+                    case join_type::join_cat::left: {
+                        out.append(words::left);
+                        out.push_back(' ');
+                        out.append(words::join);
+                        break;
+                    }
+                    case join_type::join_cat::right: {
+                        out.append(words::right);
+                        out.push_back(' ');
+                        out.append(words::join);
+                        break;
+                    }
+                    case join_type::join_cat::full: {
+                        out.append(words::full);
+                        out.push_back(' ');
+                        out.append(words::join);
+                        break;
+                    }
+                    case join_type::join_cat::cross: {
+                        out.append(words::cross);
+                        out.push_back(' ');
+                        out.append(words::join);
+                        break;
+                    }
+                }
+                out.push_back(' ');
+                if (auto* table_name = stl::get_if<local_string_type>(&join.table)) {
+                    db.quoted_escape(*table_name, out);
+                } else {
+                    auto query = stl::get<subquery>(join.table);
+                    query->template to_string<StrT, words>(out);
+                }
+                out.push_back(' ');
+                switch (join.cond) {
+                    case join_type::cond_type::none: {
+                        break;
+                    }
+                    case join_type::cond_type::on_cond: {
+                        out.append(words::on_word);
+                        out.push_back(' ');
+                        serialize_expression<words>(out, join.expr1);
+                        out.append(" = ");
+                        serialize_expression<words>(out, join.expr2);
+                        break;
+                    }
+                    case join_type::cond_type::using_cond: {
+                        out.append(words::using_word);
+                        out.append(" (");
+                        serialize_expression<words>(out, join.expr1);
+                        out.push_back(')');
+                        break;
+                    }
+                }
+            }
         }
     };
 

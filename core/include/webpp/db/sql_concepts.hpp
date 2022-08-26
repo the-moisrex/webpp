@@ -116,6 +116,14 @@ namespace webpp::sql {
                               T::like;
                               T::exists;
                               T::set;
+                              T::join;
+                              T::inner;
+                              T::left;
+                              T::right;
+                              T::cross;
+                              T::full;
+                              T::using_word;
+                              T::on_word;
                           };
 
 } // namespace webpp::sql

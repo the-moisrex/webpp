@@ -183,3 +183,10 @@ TEST(Database, DeleteQuery) {
     auto q2 = db.table("test").remove();
     EXPECT_EQ(q2.to_string(), "delete from 'test'");
 }
+
+TEST(Database, Joins) {
+    sql_database<sqlite> db;
+
+    auto q = db.table("test").left_join_using("table", "using_condition").where("user_id", 12).select();
+    EXPECT_EQ(q.to_string(), "select * from 'test' left join 'table' using ('using_condition') where 'user_id' = 12") << q.to_string();
+}
