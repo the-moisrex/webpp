@@ -130,12 +130,12 @@ TEST(MemoryTest, PolymorphicTestForDynamicType) {
     };
 
     struct son : mother {
-        virtual stl::string to_string() {
+        stl::string to_string() override {
             return "son";
         }
     };
     struct daughter : mother {
-        virtual stl::string to_string() {
+        stl::string to_string() override {
             return "daughter";
         }
     };
@@ -143,6 +143,6 @@ TEST(MemoryTest, PolymorphicTestForDynamicType) {
     dynamic<mother> family_member{stl::allocator<mother>()};
     family_member.template emplace<son>(); // replace a son
     EXPECT_EQ(family_member->to_string(), "son");
-    family_member.template emplace<daughter>(); // replace a daughter
+    family_member = daughter{}; // replace a daughter, using move
     EXPECT_EQ(family_member->to_string(), "daughter");
 }
