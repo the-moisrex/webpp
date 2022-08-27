@@ -60,35 +60,38 @@ TEST(MemoryTest, AvailableMemory) {
 
 TEST(MemoryTest, DynamicType) {
     using webpp::istl::dynamic;
-    EXPECT_TRUE((stl::is_default_constructible_v<dynamic<bool>>) );
-    EXPECT_TRUE((stl::is_default_constructible_v<dynamic<int>>) );
+
+    // I disabled the default ctor.
+
+    // EXPECT_TRUE((stl::is_default_constructible_v<dynamic<bool>>) );
+    // EXPECT_TRUE((stl::is_default_constructible_v<dynamic<int>>) );
     EXPECT_TRUE((stl::is_move_assignable_v<dynamic<int>>) );
     EXPECT_TRUE((stl::is_assignable_v<dynamic<int>, int>) );
     EXPECT_TRUE((stl::is_copy_constructible_v<dynamic<int>>) );
     EXPECT_TRUE((stl::is_move_constructible_v<dynamic<int>>) );
 
-    EXPECT_TRUE((stl::is_default_constructible_v<istl::pmr::dynamic<bool>>) );
-    EXPECT_TRUE((stl::is_default_constructible_v<istl::pmr::dynamic<int>>) );
+    // EXPECT_TRUE((stl::is_default_constructible_v<istl::pmr::dynamic<bool>>) );
+    // EXPECT_TRUE((stl::is_default_constructible_v<istl::pmr::dynamic<int>>) );
     EXPECT_TRUE((stl::is_move_assignable_v<istl::pmr::dynamic<int>>) );
     EXPECT_TRUE((stl::is_assignable_v<istl::pmr::dynamic<int>, int>) );
     EXPECT_TRUE((stl::is_copy_constructible_v<istl::pmr::dynamic<int>>) );
     EXPECT_TRUE((stl::is_move_constructible_v<istl::pmr::dynamic<int>>) );
 
-    EXPECT_TRUE((stl::is_default_constructible_v<dynamic<stl::string>>) );
+    // EXPECT_TRUE((stl::is_default_constructible_v<dynamic<stl::string>>) );
     EXPECT_TRUE((stl::is_move_assignable_v<dynamic<stl::string>>) );
     EXPECT_TRUE((stl::is_assignable_v<dynamic<stl::string>, stl::string>) );
     EXPECT_TRUE((stl::is_copy_constructible_v<dynamic<stl::string>>) );
     EXPECT_TRUE((stl::is_move_constructible_v<dynamic<stl::string>>) );
 
 
-    EXPECT_TRUE((stl::is_default_constructible_v<dynamic<stl::pmr::string>>) );
+    // EXPECT_TRUE((stl::is_default_constructible_v<dynamic<stl::pmr::string>>) );
     EXPECT_TRUE((stl::is_move_assignable_v<dynamic<stl::pmr::string>>) );
     EXPECT_TRUE((stl::is_assignable_v<dynamic<stl::pmr::string>, stl::pmr::string>) );
     EXPECT_TRUE((stl::is_copy_constructible_v<dynamic<stl::pmr::string>>) );
     EXPECT_TRUE((stl::is_move_constructible_v<dynamic<stl::pmr::string>>) );
 
 
-    dynamic<int> d1;
+    dynamic<int> d1{stl::allocator<int>()};
     d1 = 20;
     EXPECT_EQ(*d1, 20);
     d1 = 23;
@@ -96,8 +99,8 @@ TEST(MemoryTest, DynamicType) {
     *d1 = 25;
     EXPECT_EQ(*d1, 25);
 
-    istl::pmr::dynamic<stl::pmr::string> d2;
-    *d2 = "hello world";
+    istl::pmr::dynamic<stl::pmr::string> d2{stl::pmr::get_default_resource()};
+    d2 = "hello world";
     EXPECT_EQ(*d2, "hello world");
 
 
@@ -112,9 +115,34 @@ TEST(MemoryTest, DynamicType) {
         int val = 23;
     };
 
-    complete_type daddy;
+    complete_type daddy{.baby = stl::allocator<incomplete_type>()};
     EXPECT_EQ(daddy.baby->val, 23);
     daddy.baby = incomplete_type{.val = 24}; // this constructs the object with the allocator in the type
     EXPECT_EQ(daddy.val, 23);
     EXPECT_EQ(daddy.baby->val, 24);
+}
+
+TEST(MemoryTest, PolymorphicTestForDynamicType) {
+    using webpp::istl::dynamic;
+
+    struct mother {
+        virtual stl::string to_string() = 0;
+    };
+
+    struct son : mother {
+        virtual stl::string to_string() {
+            return "son";
+        }
+    };
+    struct daughter : mother {
+        virtual stl::string to_string() {
+            return "daughter";
+        }
+    };
+
+    dynamic<mother> family_member{stl::allocator<mother>()};
+    family_member.template emplace<son>(); // replace a son
+    EXPECT_EQ(family_member->to_string(), "son");
+    family_member.template emplace<daughter>(); // replace a daughter
+    EXPECT_EQ(family_member->to_string(), "daughter");
 }

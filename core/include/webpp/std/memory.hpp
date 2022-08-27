@@ -75,6 +75,8 @@ namespace webpp::istl {
         constexpr dynamic& operator=(value_type const& val) noexcept {
             if (ptr) {
                 allocator_traits::destroy(alloc, ptr);
+            } else {
+                ptr = allocator_traits::allocate(alloc, 1);
             }
             allocator_traits::construct(alloc, ptr, val);
             return *this;
@@ -155,6 +157,34 @@ namespace webpp::istl {
         // void reset() noexcept { destroy(); release(); }
         // pointer release() noexcept {  }
 
+
+        template <typename C, typename... Args>
+            requires(stl::is_base_of_v<T, C>)
+        constexpr dynamic& emplace(Args&&... args) {
+            using new_allocator_traits          = typename allocator_traits::template rebind_traits<C>;
+            using new_allocator_type            = typename new_allocator_traits::allocator_type;
+            using new_pointer                   = typename new_allocator_traits::pointer;
+
+            // we will be using the old allocated area if the new type can be constructed inside that size
+            constexpr bool should_resize = sizeof(C) > sizeof(T);
+
+            if (ptr) {
+                allocator_traits::destroy(alloc, ptr);
+                if constexpr (should_resize) {
+                    allocator_traits::deallocate(alloc, ptr, 1);
+                }
+            }
+            new_allocator_type new_alloc{alloc};
+            new_pointer        new_ptr;
+            if constexpr (should_resize) {
+                new_allocator_traits::allocate(alloc, new_ptr, 1);
+            } else {
+                new_ptr = static_cast<new_pointer>(ptr);
+            }
+            new_allocator_traits::construct(new_alloc, new_ptr, stl::forward<Args>(args)...);
+            ptr = static_cast<pointer>(new_ptr);
+            return *this;
+        }
 
       private:
         constexpr inline void destroy() {
