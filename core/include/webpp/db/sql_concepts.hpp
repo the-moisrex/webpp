@@ -124,6 +124,8 @@ namespace webpp::sql {
                               T::full;
                               T::using_word;
                               T::on_word;
+                              T::is;
+                              T::distinct;
                           };
 
 } // namespace webpp::sql

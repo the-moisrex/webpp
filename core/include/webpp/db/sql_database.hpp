@@ -37,6 +37,8 @@ namespace webpp::sql {
         static constexpr const CharT* full         = "full";
         static constexpr const CharT* using_word   = "using";
         static constexpr const CharT* on_word      = "on";
+        static constexpr const CharT* is           = "is";
+        static constexpr const CharT* distinct     = "distinct";
     };
 
     template <typename CharT = char>
@@ -65,6 +67,8 @@ namespace webpp::sql {
         static constexpr const CharT* full         = "FULL";
         static constexpr const CharT* using_word   = "USING";
         static constexpr const CharT* on_word      = "ON";
+        static constexpr const CharT* is           = "IS";
+        static constexpr const CharT* distinct     = "DISTINCT";
     };
 
 
