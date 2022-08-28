@@ -28,35 +28,37 @@ namespace webpp::sql {
     };
 
     namespace details {
-#define define_expression(name, ...)                                                                                   \
-    template <typename DBType>                                                                                         \
-    struct name : expression_interface<DBType> {                                                                       \
-        using database_type       = DBType;                                                                            \
-        using traits_type         = typename database_type::traits_type;                                               \
-        using allocator_pack_type = traits::allocator_pack_type<traits_type>;                                          \
-        using string_type         = traits::general_string<traits_type>;                                               \
-        using string_view_type    = traits::string_view<traits_type>;                                                  \
-        using local_string_type   = traits::local_string<traits_type>;                                                 \
-        using database_ref        = stl::add_lvalue_reference_t<database_type>;                                        \
-        using size_type           = typename database_type::size_type;                                                 \
-        using db_float_type       = typename database_type::float_type;                                                \
-        using db_integer_type     = typename database_type::integer_type;                                              \
-        using db_string_type      = typename database_type::string_type;                                               \
-        using db_blob_type        = typename database_type::blob_type;                                                 \
-        using keywords            = typename database_type::keywords;                                                  \
-        using expr_type           = istl::dynamic<expression_interface<DBType>,                                        \
-                                        traits::local_allocator<traits_type, expression_interface<DBType>>>; \
-                                                                                                                       \
-        using driver_type     = typename database_type::driver_type;                                                   \
-        using grammar_type    = typename database_type::grammar_type;                                                  \
-        using connection_type = typename database_type::connection_type;                                               \
-                                                                                                                       \
-        __VA_ARGS__                                                                                                    \
-                                                                                                                       \
-        constexpr void to_string(local_string_type& out, database_ref db) const noexcept override;                     \
-    };                                                                                                                 \
-    template <typename DBType>                                                                                         \
-    constexpr void name<DBType>::to_string(typename name<DBType>::local_string_type& out,                              \
+#define define_expression(name, ...)                                                               \
+    template <typename DBType>                                                                     \
+    struct name : expression_interface<DBType> {                                                   \
+        using database_type        = DBType;                                                       \
+        using traits_type          = typename database_type::traits_type;                          \
+        using allocator_pack_type  = traits::allocator_pack_type<traits_type>;                     \
+        using string_type          = traits::general_string<traits_type>;                          \
+        using string_view_type     = traits::string_view<traits_type>;                             \
+        using local_string_type    = traits::local_string<traits_type>;                            \
+        using database_ref         = stl::add_lvalue_reference_t<database_type>;                   \
+        using size_type            = typename database_type::size_type;                            \
+        using db_float_type        = typename database_type::float_type;                           \
+        using db_integer_type      = typename database_type::integer_type;                         \
+        using db_string_type       = typename database_type::string_type;                          \
+        using db_blob_type         = typename database_type::blob_type;                            \
+        using keywords             = typename database_type::keywords;                             \
+        using expression           = expression_interface<DBType>;                                 \
+        using expression_allocator = traits::local_allocator<traits_type, expression>;             \
+        using expr_type            = istl::dynamic<expression, expression_allocator>;              \
+        using expr_vec             = stl::vector<expression, expression_allocator>;                \
+                                                                                                   \
+        using driver_type     = typename database_type::driver_type;                               \
+        using grammar_type    = typename database_type::grammar_type;                              \
+        using connection_type = typename database_type::connection_type;                           \
+                                                                                                   \
+        __VA_ARGS__                                                                                \
+                                                                                                   \
+        constexpr void to_string(local_string_type& out, database_ref db) const noexcept override; \
+    };                                                                                             \
+    template <typename DBType>                                                                     \
+    constexpr void name<DBType>::to_string(typename name<DBType>::local_string_type& out,          \
                                            typename name<DBType>::database_ref       db) const noexcept
 
 
@@ -83,6 +85,7 @@ namespace webpp::sql {
             db.quoted_escape(column_name, out);
         }
 
+        // op expr
         define_expression(unary_op_expr, enum struct unaries
                           : stl::uint_fast8_t{plus, minus, incr, decr, negate} op;
                           expr_type expr;) {
@@ -91,6 +94,7 @@ namespace webpp::sql {
             expr.to_string(out, db);
         }
 
+        // expr op expr
         define_expression(binary_op_expr, enum struct binaries
                           : stl::uint_fast8_t{add, sub, mul, div} op;
                           expr_type left_operand, right_operand;) {
@@ -98,6 +102,22 @@ namespace webpp::sql {
             left_operand.to_string(out, db);
             out.append(op_strs[static_cast<stl::uint_fast8_t>(op)]);
             right_operand.to_string(out, db);
+        }
+
+        // ( expr, expr, expr, ... )
+        define_expression(expr_list, expr_vec exprs;) {
+            out.push_back('(');
+            auto       it     = exprs.begin();
+            auto const it_end = exprs.end();
+            for (;;) {
+                it->to_string(out, db);
+                ++it;
+                if (it == it_end) {
+                    break;
+                }
+                out.append(", ");
+            }
+            out.push_back(')');
         }
 
 #undef define_expression
