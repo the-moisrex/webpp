@@ -13,66 +13,95 @@
 
 namespace webpp::sql {
 
-    template <typename CharT = char>
-    struct sql_lowercase_keywords {
-        static constexpr const CharT* select       = "select";
-        static constexpr const CharT* update       = "update";
-        static constexpr const CharT* delete_word  = "delete";
-        static constexpr const CharT* values       = "values";
-        static constexpr const CharT* from         = "from";
-        static constexpr const CharT* where        = "where";
-        static constexpr const CharT* in           = "in";
-        static constexpr const CharT* null         = "null";
-        static constexpr const CharT* not_word     = "not";
-        static constexpr const CharT* and_word     = "and";
-        static constexpr const CharT* or_word      = "or";
-        static constexpr const CharT* insert_into  = "insert into";
-        static constexpr const CharT* default_word = "default";
-        static constexpr const CharT* like         = "like";
-        static constexpr const CharT* exists       = "exists";
-        static constexpr const CharT* set          = "set";
-        static constexpr const CharT* inner        = "inner";
-        static constexpr const CharT* left         = "left";
-        static constexpr const CharT* right        = "right";
-        static constexpr const CharT* join         = "join";
-        static constexpr const CharT* cross        = "cross";
-        static constexpr const CharT* full         = "full";
-        static constexpr const CharT* using_word   = "using";
-        static constexpr const CharT* on_word      = "on";
-    };
-
-    template <typename CharT = char>
-    struct sql_uppercase_keywords {
-        static constexpr const CharT* select       = "SELECT";
-        static constexpr const CharT* update       = "UPDATE";
-        static constexpr const CharT* delete_word  = "DELETE";
-        static constexpr const CharT* values       = "VALUES";
-        static constexpr const CharT* from         = "FROM";
-        static constexpr const CharT* where        = "WHERE";
-        static constexpr const CharT* in           = "IN";
-        static constexpr const CharT* null         = "NULL";
-        static constexpr const CharT* not_word     = "NOT";
-        static constexpr const CharT* and_word     = "AND";
-        static constexpr const CharT* or_word      = "OR";
-        static constexpr const CharT* insert_into  = "INSERT INTO";
-        static constexpr const CharT* default_word = "DEFAULT";
-        static constexpr const CharT* like         = "LIKE";
-        static constexpr const CharT* exists       = "EXISTS";
-        static constexpr const CharT* set          = "SET";
-        static constexpr const CharT* inner        = "INNER";
-        static constexpr const CharT* left         = "LEFT";
-        static constexpr const CharT* right        = "RIGHT";
-        static constexpr const CharT* join         = "JOIN";
-        static constexpr const CharT* cross        = "CROSS";
-        static constexpr const CharT* full         = "FULL";
-        static constexpr const CharT* using_word   = "USING";
-        static constexpr const CharT* on_word      = "ON";
-    };
-
 
     template <typename DBType>
     struct query_builder;
 
+    template <typename DBType>
+    struct expression_interface {
+        using database_type     = DBType;
+        using traits_type       = typename database_type::traits_type;
+        using local_string_type = traits::local_string<traits_type>;
+
+        constexpr virtual void to_string(local_string_type& out) const noexcept = 0;
+        constexpr virtual ~expression_interface()                               = default;
+    };
+
+    namespace details {
+#define define_expression(name, ...)                                                                                   \
+    template <typename DBType>                                                                                         \
+    struct name : expression_interface<DBType> {                                                                       \
+        using database_type       = DBType;                                                                            \
+        using traits_type         = typename database_type::traits_type;                                               \
+        using allocator_pack_type = traits::allocator_pack_type<traits_type>;                                          \
+        using string_type         = traits::general_string<traits_type>;                                               \
+        using string_view_type    = traits::string_view<traits_type>;                                                  \
+        using local_string_type   = traits::local_string<traits_type>;                                                 \
+        using database_ref        = stl::add_lvalue_reference_t<database_type>;                                        \
+        using size_type           = typename database_type::size_type;                                                 \
+        using db_float_type       = typename database_type::float_type;                                                \
+        using db_integer_type     = typename database_type::integer_type;                                              \
+        using db_string_type      = typename database_type::string_type;                                               \
+        using db_blob_type        = typename database_type::blob_type;                                                 \
+        using keywords            = typename database_type::keywords;                                                  \
+        using expr_type           = istl::dynamic<expression_interface<DBType>,                                        \
+                                        traits::local_allocator<traits_type, expression_interface<DBType>>>; \
+                                                                                                                       \
+        using driver_type     = typename database_type::driver_type;                                                   \
+        using grammar_type    = typename database_type::grammar_type;                                                  \
+        using connection_type = typename database_type::connection_type;                                               \
+                                                                                                                       \
+        __VA_ARGS__                                                                                                    \
+                                                                                                                       \
+        constexpr void to_string(local_string_type& out, database_ref db) const noexcept override;                     \
+    };                                                                                                                 \
+    template <typename DBType>                                                                                         \
+    constexpr void name<DBType>::to_string(typename name<DBType>::local_string_type& out,                              \
+                                           typename name<DBType>::database_ref       db) const noexcept
+
+
+        // literal value
+        define_expression(floating_expr, db_float_type val;) {
+            out.append(lexical::cast<local_string_type>(val, db));
+        }
+
+        define_expression(integer_expr, db_integer_type val;) {
+            out.append(lexical::cast<local_string_type>(val, db));
+        }
+
+        define_expression(bool_expr, bool val;) {
+            out.append(val ? keywords::true_word : keywords::false_word);
+        }
+
+        define_expression(null_expr) {
+            out.append(keywords::null);
+        }
+
+        define_expression(col_name_expr, local_string_type schema_name{}, table_name{}, column_name;) {
+            db.quoted_escape(schema_name, out);
+            db.quoted_escape(table_name, out);
+            db.quoted_escape(column_name, out);
+        }
+
+        define_expression(unary_op_expr, enum struct unaries
+                          : stl::uint_fast8_t{plus, minus, incr, decr, negate} op;
+                          expr_type expr;) {
+            constexpr stl::string_view op_strs[]{" + ", " - ", " ++", " --", " !"};
+            out.append(op_strs[static_cast<stl::uint_fast8_t>(op)]);
+            expr.to_string(out, db);
+        }
+
+        define_expression(binary_op_expr, enum struct binaries
+                          : stl::uint_fast8_t{add, sub, mul, div} op;
+                          expr_type left_operand, right_operand;) {
+            constexpr stl::string_view op_strs[]{" + ", " - ", " *  ", " / "};
+            left_operand.to_string(out, db);
+            out.append(op_strs[static_cast<stl::uint_fast8_t>(op)]);
+            right_operand.to_string(out, db);
+        }
+
+#undef define_expression
+    } // namespace details
 
     namespace details {
         template <typename DBType>
@@ -206,40 +235,17 @@ namespace webpp::sql {
         friend struct details::query_builder_subclasses;
 
       private:
-        // todo: check if it's a good idea to use local allocator here or not.
-        // using subquery = typename allocator_pack_type::template local_unique_ptr<query_builder>;
         using subquery = istl::dynamic<query_builder, traits::local_allocator<traits_type, query_builder>>;
 
-        // todo: for simplicity, merge float and integer types into numbers
-        // todo: add functions as well
-        using expression = stl::
-          variant<stl::monostate, db_float_type, db_integer_type, db_string_type, db_blob_type, subquery>;
-
-        using col_expr_pair  = stl::pair<string_type, expression>;
+        using expression = expression_interface<database_type>;
+        using col_expr_pair =
+          stl::pair<string_type, expression>; // todo: anywhere that this being used should be re-checked
         using expression_vec = stl::vector<expression, traits::local_allocator<traits_type, expression>>;
         using string_vec =
           stl::vector<local_string_type, traits::local_allocator<traits_type, local_string_type>>;
 
-        // WHERE Clause syntax:
-        //    { expression { = | < > | ! = | > | > = | < | < = } expression
-        //    | string_expression [ NOT ] LIKE string_expression
-        //    | expression [ NOT ] BETWEEN expression AND expression
-        //    | expression IS [ NOT ] NULL
-        //    | expression [ NOT ] IN (subquery | expression [ ,...n ] )
-        //    | expression [ NOT ] EXISTS (subquery)
-        struct where_type {
-            enum struct join_type { none, and_jt, or_jt, not_jt, and_not_jt, or_not_jt };
-            enum struct op_type { none, in, between, exists, like, eq, noteq, gt, ge, lt, le };
-
-            join_type jt;
-            op_type   op;
-
-            // I excluded the first 2 expressions because sql where clauses will have at least 2 expressions
-            expression     expr1, expr2;
-            expression_vec exprs;
-        };
-
-        using where_vec = stl::vector<where_type, traits::local_allocator<traits_type, where_type>>;
+        // https://www.sqlite.org/syntax/table-or-subquery.html
+        using table_or_subquery_type = stl::variant<local_string_type, subquery>;
 
 
         // create query is not included in the query builder class
@@ -256,8 +262,9 @@ namespace webpp::sql {
 
             // https://www.sqlite.org/syntax/join-clause.html
             // https://www.sqlite.org/syntax/table-or-subquery.html
-            stl::variant<local_string_type, subquery> table; // table or sub-query
-            expression                                expr1, expr2{};
+            table_or_subquery_type table;     // table or sub-query
+            expression             expr;      // for "on"
+            string_vec             col_names; // for using
         };
         using join_vec = stl::vector<join_type, traits::local_allocator<traits_type, join_type>>;
 
@@ -266,7 +273,7 @@ namespace webpp::sql {
         string_vec     from_cols;
         string_vec     columns; // insert: col names, update: col names, select: cols, delete: unused
         expression_vec values;  // insert: values, update: values, select: unused, delete: unused
-        where_vec      where_clauses;
+        expression     where_clauses;
         join_vec       joins;
         order_by_type  order_by_value;
 

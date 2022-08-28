@@ -11,6 +11,62 @@
 
 namespace webpp::sql {
 
+    template <typename CharT = char>
+    struct sql_lowercase_keywords {
+        static constexpr const CharT* select       = "select";
+        static constexpr const CharT* update       = "update";
+        static constexpr const CharT* delete_word  = "delete";
+        static constexpr const CharT* values       = "values";
+        static constexpr const CharT* from         = "from";
+        static constexpr const CharT* where        = "where";
+        static constexpr const CharT* in           = "in";
+        static constexpr const CharT* null         = "null";
+        static constexpr const CharT* not_word     = "not";
+        static constexpr const CharT* and_word     = "and";
+        static constexpr const CharT* or_word      = "or";
+        static constexpr const CharT* insert_into  = "insert into";
+        static constexpr const CharT* default_word = "default";
+        static constexpr const CharT* like         = "like";
+        static constexpr const CharT* exists       = "exists";
+        static constexpr const CharT* set          = "set";
+        static constexpr const CharT* inner        = "inner";
+        static constexpr const CharT* left         = "left";
+        static constexpr const CharT* right        = "right";
+        static constexpr const CharT* join         = "join";
+        static constexpr const CharT* cross        = "cross";
+        static constexpr const CharT* full         = "full";
+        static constexpr const CharT* using_word   = "using";
+        static constexpr const CharT* on_word      = "on";
+    };
+
+    template <typename CharT = char>
+    struct sql_uppercase_keywords {
+        static constexpr const CharT* select       = "SELECT";
+        static constexpr const CharT* update       = "UPDATE";
+        static constexpr const CharT* delete_word  = "DELETE";
+        static constexpr const CharT* values       = "VALUES";
+        static constexpr const CharT* from         = "FROM";
+        static constexpr const CharT* where        = "WHERE";
+        static constexpr const CharT* in           = "IN";
+        static constexpr const CharT* null         = "NULL";
+        static constexpr const CharT* not_word     = "NOT";
+        static constexpr const CharT* and_word     = "AND";
+        static constexpr const CharT* or_word      = "OR";
+        static constexpr const CharT* insert_into  = "INSERT INTO";
+        static constexpr const CharT* default_word = "DEFAULT";
+        static constexpr const CharT* like         = "LIKE";
+        static constexpr const CharT* exists       = "EXISTS";
+        static constexpr const CharT* set          = "SET";
+        static constexpr const CharT* inner        = "INNER";
+        static constexpr const CharT* left         = "LEFT";
+        static constexpr const CharT* right        = "RIGHT";
+        static constexpr const CharT* join         = "JOIN";
+        static constexpr const CharT* cross        = "CROSS";
+        static constexpr const CharT* full         = "FULL";
+        static constexpr const CharT* using_word   = "USING";
+        static constexpr const CharT* on_word      = "ON";
+    };
+
 
     /**
      * The name SQL Database and not Database is used because database can mean more and this struct will only
@@ -28,9 +84,12 @@ namespace webpp::sql {
         using statement_type        = sql_statement<traits_type, driver_statement_type>;
         using string_view_type      = traits::string_view<traits_type>;
         using string_type           = traits::general_string<traits_type>;
+        using char_type             = traits::char_type<traits_type>;
+        using local_string_type     = traits::local_string<traits_type>;
         using query_builder_type    = query_builder<basic_sql_database>;
         using connection_type       = typename driver_type::connection_type;
         using grammar_type          = typename driver_type::grammar_type;
+        using keywords              = sql_lowercase_keywords<char_type>;
 
         template <typename T>
         static constexpr bool supports_string_view =
