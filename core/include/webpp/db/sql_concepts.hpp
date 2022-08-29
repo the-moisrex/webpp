@@ -111,7 +111,8 @@ namespace webpp::sql {
                               T::not_word; // not
                               T::and_word; // and
                               T::or_word; // or
-                              T::insert_into;
+                              T::insert;
+                              T::into;
                               T::default_word;
                               T::like;
                               T::exists;
@@ -126,6 +127,8 @@ namespace webpp::sql {
                               T::on_word;
                               T::is;
                               T::distinct;
+                              T::true_word;
+                              T::false_word;
                           };
 
 } // namespace webpp::sql

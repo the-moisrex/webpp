@@ -54,17 +54,9 @@ namespace webpp::istl {
         }
 
         template <typename C, typename... Args>
-        constexpr dynamic(
-          stl::type_identity<C>,
-          typename allocator_traits::template rebind_traits<C>::allocator_type const& input_alloc,
-          Args&&... args)
-          : alloc{input_alloc},
-            ptr{static_cast<typename allocator_traits::template rebind_traits<C>::pointer>(
-              allocator_traits::template rebind_traits<C>::allocate(alloc, 1))} {
-            using new_allocator_traits = typename allocator_traits::template rebind_traits<C>;
-            new_allocator_traits::construct(alloc,
-                                            static_cast<typename new_allocator_traits::pointer>(ptr),
-                                            stl::forward<Args>(args)...);
+        constexpr dynamic(stl::type_identity<C>, allocator_type const& input_alloc, Args&&... args)
+          : alloc{input_alloc} {
+            emplace<C, Args...>(stl::forward<Args>(args)...);
         }
 
         // template <typename... Args>
@@ -181,6 +173,12 @@ namespace webpp::istl {
 
         [[nodiscard]] constexpr bool valid() const noexcept {
             return ptr != nullptr;
+        }
+
+        template <typename C>
+            requires(stl::is_base_of_v<T, C>)
+        constexpr C& as() noexcept {
+            return *static_cast<C*>(ptr);
         }
 
 

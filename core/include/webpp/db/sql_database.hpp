@@ -24,7 +24,8 @@ namespace webpp::sql {
         static constexpr const CharT* not_word     = "not";
         static constexpr const CharT* and_word     = "and";
         static constexpr const CharT* or_word      = "or";
-        static constexpr const CharT* insert_into  = "insert into";
+        static constexpr const CharT* insert       = "insert";
+        static constexpr const CharT* into         = "into";
         static constexpr const CharT* default_word = "default";
         static constexpr const CharT* like         = "like";
         static constexpr const CharT* exists       = "exists";
@@ -39,6 +40,8 @@ namespace webpp::sql {
         static constexpr const CharT* on_word      = "on";
         static constexpr const CharT* is           = "is";
         static constexpr const CharT* distinct     = "distinct";
+        static constexpr const CharT* true_word    = "true";
+        static constexpr const CharT* false_word   = "false";
     };
 
     template <typename CharT = char>
@@ -54,7 +57,8 @@ namespace webpp::sql {
         static constexpr const CharT* not_word     = "NOT";
         static constexpr const CharT* and_word     = "AND";
         static constexpr const CharT* or_word      = "OR";
-        static constexpr const CharT* insert_into  = "INSERT INTO";
+        static constexpr const CharT* insert       = "INSERT";
+        static constexpr const CharT* into         = "INTO";
         static constexpr const CharT* default_word = "DEFAULT";
         static constexpr const CharT* like         = "LIKE";
         static constexpr const CharT* exists       = "EXISTS";
@@ -69,6 +73,8 @@ namespace webpp::sql {
         static constexpr const CharT* on_word      = "ON";
         static constexpr const CharT* is           = "IS";
         static constexpr const CharT* distinct     = "DISTINCT";
+        static constexpr const CharT* true_word    = "TRUE";
+        static constexpr const CharT* false_word   = "FALSE";
     };
 
 
