@@ -175,6 +175,11 @@ namespace webpp::istl {
             return ptr != nullptr;
         }
 
+        void reset() {
+            destroy();
+            ptr = nullptr;
+        }
+
         template <typename C>
             requires(stl::is_base_of_v<T, C>)
         constexpr C& as() noexcept {
