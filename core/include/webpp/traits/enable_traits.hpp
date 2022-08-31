@@ -144,6 +144,11 @@ namespace webpp {
             return holder.alloc_pack.template get_allocator_for<T>();
         }
 
+        template <typename T, AllocatorHolder AllocHolder>
+        static constexpr auto local_alloc_for(AllocHolder& holder) noexcept {
+            return holder.alloc_pack.template local_alloc_for<T>();
+        }
+
         template <typename T, AllocatorHolder AllocHolder, typename... Args>
         static constexpr auto allocate_unique_general(AllocHolder& holder, Args&&... args) noexcept {
             return holder.alloc_pack.template allocate_unique_general<T>(stl::forward<Args>(args)...);

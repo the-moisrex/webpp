@@ -581,6 +581,20 @@ namespace webpp::alloc {
         }
 
         template <typename T>
+            requires(requires { typename T::allocator_type; })
+        [[nodiscard]] auto local_alloc_for() noexcept {
+            using type_allocator = typename T::allocator_type;
+            if constexpr (has_allocator<type_allocator>) {
+                return get_allocator<local_features, type_allocator>();
+            } else {
+                static_assert(false && sizeof(T),
+                              "This allocator pack doesn't support the specified "
+                              "allocator, you have to change the allocator; "
+                              "use make utility.");
+            }
+        }
+
+        template <typename T>
         [[nodiscard]] constexpr auto local_allocator() noexcept {
             return get_allocator<local_features, T>();
         }
@@ -736,6 +750,11 @@ namespace webpp::alloc {
     template <typename T, AllocatorDescriptorList AllocDescType>
     static constexpr auto allocator_for(allocator_pack<AllocDescType>& alloc_pack) noexcept {
         return alloc_pack.template get_allocator_for<T>();
+    }
+
+    template <typename T, AllocatorDescriptorList AllocDescType>
+    static constexpr auto local_alloc_for(allocator_pack<AllocDescType>& alloc_pack) noexcept {
+        return alloc_pack.template local_alloc_for<T>();
     }
 
     template <typename T, AllocatorDescriptorList AllocDescType, typename... Args>

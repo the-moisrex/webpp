@@ -50,10 +50,13 @@ namespace webpp::istl {
         constexpr dynamic(allocator_type const& input_alloc, Args&&... args)
           : alloc{input_alloc},
             ptr{allocator_traits::allocate(alloc, 1)} {
+            static_assert(stl::is_constructible_v<T, Args...>,
+                          "The specified type is cannot be initialized with the specified arguments.");
             allocator_traits::construct(alloc, ptr, stl::forward<Args>(args)...);
         }
 
         template <typename C, typename... Args>
+            requires(stl::is_constructible_v<C, Args...>)
         constexpr dynamic(stl::type_identity<C>, allocator_type const& input_alloc, Args&&... args)
           : alloc{input_alloc} {
             emplace<C, Args...>(stl::forward<Args>(args)...);
@@ -67,15 +70,19 @@ namespace webpp::istl {
         //     allocator_traits::construct(alloc, ptr, stl::forward<Args>(args)...);
         // }
 
-        constexpr dynamic(dynamic const& other)
-          : alloc(other.alloc),
-            ptr{allocator_traits::allocate(alloc, 1)} {
-            allocator_traits::construct(alloc, ptr, *other.ptr);
+        constexpr dynamic(dynamic const& other) : alloc(other.alloc), ptr{nullptr} {
+            static_assert(stl::is_copy_constructible_v<T>, "The specified type is not copy constructible.");
+            if (other.ptr) {
+                ptr = allocator_traits::allocate(alloc, 1);
+                allocator_traits::construct(alloc, ptr, *other.ptr);
+            }
         }
 
         constexpr dynamic(dynamic&& other) noexcept
           : alloc{other.alloc},
-            ptr{stl::exchange(other.ptr, nullptr)} {}
+            ptr{stl::exchange(other.ptr, nullptr)} {
+            // static_assert(stl::is_move_constructible_v<T>, "The specified type is not move constructible.");
+        }
 
 
         constexpr dynamic& operator=(value_type const& val) noexcept {
@@ -188,7 +195,7 @@ namespace webpp::istl {
 
 
         template <typename C, typename... Args>
-            requires(stl::is_base_of_v<T, C>)
+            requires(stl::is_base_of_v<T, C> && stl::is_constructible_v<C, Args...>)
         constexpr dynamic& emplace(Args&&... args) {
             using new_allocator_traits = typename allocator_traits::template rebind_traits<C>;
             using new_allocator_type   = typename new_allocator_traits::allocator_type;
