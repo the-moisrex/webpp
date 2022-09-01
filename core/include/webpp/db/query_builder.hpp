@@ -267,6 +267,7 @@ namespace webpp::sql {
             out.push_back(')');
         }
 
+
 #undef define_expression
     } // namespace details
 

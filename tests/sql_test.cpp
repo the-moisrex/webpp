@@ -7,8 +7,10 @@
 using namespace webpp;
 using namespace webpp::sql;
 
-static_assert(SQLStatement<sqlite_statement>, "sqlite statement is not a statement.");
+using sql_db = sql_database<sqlite>;
 
+static_assert(SQLStatement<sqlite_statement>, "sqlite statement is not a statement.");
+static_assert(stl::is_copy_constructible_v<expression_interface<sql_db>>, "expr_ptr");
 
 TEST(Database, SQLiteWrapper) {
     sql_database<sqlite> db; // in memory database
@@ -188,9 +190,13 @@ TEST(Database, Joins) {
     sql_database<sqlite> db;
 
     auto q = db.table("test").left_join_using("table", "using_condition").where("user_id", 12).select();
-    EXPECT_EQ(q.to_string(), "select * from 'test' left join 'table' using ('using_condition') where 'user_id' = 12") << q.to_string();
+    EXPECT_EQ(q.to_string(),
+              "select * from 'test' left join 'table' using ('using_condition') where 'user_id' = 12")
+      << q.to_string();
 
 
     auto q2 = db.table("test").right_join_using("table", "using_condition").where("user_id", 12).select();
-    EXPECT_EQ(q2.to_string(), "select * from 'test' right join 'table' using ('using_condition') where 'user_id' = 12") << q2.to_string();
+    EXPECT_EQ(q2.to_string(),
+              "select * from 'test' right join 'table' using ('using_condition') where 'user_id' = 12")
+      << q2.to_string();
 }

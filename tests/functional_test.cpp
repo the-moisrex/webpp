@@ -1,6 +1,7 @@
 // Created by moisrex on 12/10/19.
 
 #include "../core/include/webpp/utils/functional.hpp"
+#include "../core/include/webpp/std/functional.hpp"
 
 #include "../core/include/webpp/utils/debounce.hpp"
 #include "common_pch.hpp"
@@ -74,3 +75,14 @@ TEST(FunctionalTests, TrailingMode) {
 
     });
 }
+
+
+
+
+
+TEST(FunctionalTests, FunctionWithAllocators) {
+    istl::function<int()> func;
+    func = [] { return 2;};
+    EXPECT_EQ(2, func());
+}
+

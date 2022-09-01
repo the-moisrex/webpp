@@ -71,9 +71,10 @@ namespace webpp::istl {
         // }
 
         constexpr dynamic(dynamic const& other) : alloc(other.alloc), ptr{nullptr} {
-            static_assert(stl::is_copy_constructible_v<T>, "The specified type is not copy constructible.");
             if (other.ptr) {
                 ptr = allocator_traits::allocate(alloc, 1);
+                // todo: if T is a virtual type, then this will call a copy constructor on a virtual type:
+                // https://isocpp.org/wiki/faq/virtual-functions#virtual-ctors
                 allocator_traits::construct(alloc, ptr, *other.ptr);
             }
         }
