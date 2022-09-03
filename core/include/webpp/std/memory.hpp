@@ -17,12 +17,12 @@ namespace webpp::istl {
         // attention: value_type might be an incomplete type at the type of constructing dynamic because it's
         // one of this classes' use cases. so you're not to change this class in a way that'll throw an error
         // for an incomplete type.
-        using value_type       = stl::remove_pointer_t<stl::remove_reference_t<T>>;
-        using allocator_traits = typename stl::allocator_traits<
+        using value_type   = stl::remove_pointer_t<stl::remove_reference_t<T>>;
+        using alloc_traits = typename stl::allocator_traits<
           stl::remove_reference_t<Allocator>>::template rebind_traits<value_type>;
-        using allocator_type = typename allocator_traits::allocator_type;
-        using size_type      = typename allocator_traits::size_type;
-        using pointer        = typename allocator_traits::pointer;
+        using allocator_type = typename alloc_traits::allocator_type;
+        using size_type      = typename alloc_traits::size_type;
+        using pointer        = typename alloc_traits::pointer;
 
 
       private:
@@ -49,10 +49,10 @@ namespace webpp::istl {
         // requires(stl::is_constructible_v<value_type, Args...>)
         constexpr dynamic(allocator_type const& input_alloc, Args&&... args)
           : alloc{input_alloc},
-            ptr{allocator_traits::allocate(alloc, 1)} {
+            ptr{alloc_traits::allocate(alloc, 1)} {
             static_assert(stl::is_constructible_v<T, Args...>,
                           "The specified type is cannot be initialized with the specified arguments.");
-            allocator_traits::construct(alloc, ptr, stl::forward<Args>(args)...);
+            alloc_traits::construct(alloc, ptr, stl::forward<Args>(args)...);
         }
 
         template <typename C, typename... Args>
@@ -72,27 +72,28 @@ namespace webpp::istl {
 
         constexpr dynamic(dynamic const& other) : alloc(other.alloc), ptr{nullptr} {
             if (other.ptr) {
-                ptr = allocator_traits::allocate(alloc, 1);
+                ptr = alloc_traits::allocate(alloc, 1);
                 // todo: if T is a virtual type, then this will call a copy constructor on a virtual type:
                 // https://isocpp.org/wiki/faq/virtual-functions#virtual-ctors
-                allocator_traits::construct(alloc, ptr, *other.ptr);
+                alloc_traits::construct(alloc, ptr, *other.ptr);
             }
         }
 
         constexpr dynamic(dynamic&& other) noexcept
           : alloc{other.alloc},
             ptr{stl::exchange(other.ptr, nullptr)} {
-            // static_assert(stl::is_move_constructible_v<T>, "The specified type is not move constructible.");
+            // static_assert(stl::is_move_constructible_v<T>, "The specified type is not move
+            // constructible.");
         }
 
 
         constexpr dynamic& operator=(value_type const& val) noexcept {
             if (ptr) {
-                allocator_traits::destroy(alloc, ptr);
+                alloc_traits::destroy(alloc, ptr);
             } else {
-                ptr = allocator_traits::allocate(alloc, 1);
+                ptr = alloc_traits::allocate(alloc, 1);
             }
-            allocator_traits::construct(alloc, ptr, val);
+            alloc_traits::construct(alloc, ptr, val);
             return *this;
         }
 
@@ -198,7 +199,7 @@ namespace webpp::istl {
         template <typename C, typename... Args>
             requires(stl::is_base_of_v<T, C> && stl::is_constructible_v<C, Args...>)
         constexpr dynamic& emplace(Args&&... args) {
-            using new_allocator_traits = typename allocator_traits::template rebind_traits<C>;
+            using new_allocator_traits = typename alloc_traits::template rebind_traits<C>;
             using new_allocator_type   = typename new_allocator_traits::allocator_type;
             using new_pointer          = typename new_allocator_traits::pointer;
 
@@ -209,9 +210,9 @@ namespace webpp::istl {
             new_pointer        new_ptr;
 
             if (ptr) {
-                allocator_traits::destroy(alloc, ptr);
+                alloc_traits::destroy(alloc, ptr);
                 if constexpr (should_resize) {
-                    allocator_traits::deallocate(alloc, ptr, 1);
+                    alloc_traits::deallocate(alloc, ptr, 1);
                     new_ptr = new_allocator_traits::allocate(new_alloc, 1);
                 } else {
                     new_ptr = static_cast<new_pointer>(ptr);
@@ -227,8 +228,8 @@ namespace webpp::istl {
       private:
         constexpr inline void destroy() {
             if (ptr) {
-                allocator_traits::destroy(alloc, ptr);
-                allocator_traits::deallocate(alloc, ptr, 1);
+                alloc_traits::destroy(alloc, ptr);
+                alloc_traits::deallocate(alloc, ptr, 1);
             }
         }
     };

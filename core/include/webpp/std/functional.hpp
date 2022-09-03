@@ -15,7 +15,7 @@ namespace webpp::istl {
     namespace details {
 
         template <typename Callable, bool Const>
-        auto& get_object(void* const data) noexcept {
+        constexpr inline auto& get_object(void* const data) noexcept {
             using callable_decay = stl::decay_t<Callable>;
             using cast_to        = stl::conditional_t<Const, const callable_decay, callable_decay>;
 
@@ -24,21 +24,23 @@ namespace webpp::istl {
 
         template <typename Callable, bool Const, bool IsNoexcept, typename R, typename... Args>
             requires(stl::is_invocable_r_v<R, Callable, Args...>)
-        R call_stub(void* const data, Args... args) noexcept(IsNoexcept) {
-            if constexpr (stl::is_void_v<R>)
+        constexpr inline R call_stub(void* const data, Args... args) noexcept(IsNoexcept) {
+            if constexpr (stl::is_void_v<R>) {
                 get_object<Callable, Const>(data)(static_cast<Args&&>(args)...);
-            else
+            } else {
                 return get_object<Callable, Const>(data)(static_cast<Args&&>(args)...);
+            }
         }
 
         template <typename Callable>
-        void move_delete_stub(void* const from, void* const to) noexcept {
+        constexpr void move_delete_stub(void* const from, void* const to) noexcept {
             using callable_decay_t = stl::decay_t<Callable>;
 
-            if (to != nullptr)
+            if (to != nullptr) {
                 ::new (to) callable_decay_t{stl::move(get_object<Callable, false>(from))};
-            else
+            } else {
                 get_object<Callable, false>(from).~callable_decay_t();
+            }
         }
 
         template <typename, bool>
@@ -61,13 +63,15 @@ namespace webpp::istl {
             }
 
             void move(void* const from, void* const to) const noexcept {
-                if (m_move_delete != nullptr)
+                if (m_move_delete != nullptr) {
                     m_move_delete(from, to);
+                }
             }
 
             void destroy(void* const data) const noexcept {
-                if (m_move_delete != nullptr)
+                if (m_move_delete != nullptr) {
                     m_move_delete(data, nullptr);
+                }
             }
 
             [[nodiscard]] bool empty() const noexcept {
@@ -87,13 +91,22 @@ namespace webpp::istl {
             }
 
           private:
-            using call_t        = R(void*, Args...) noexcept(IsNoexcept);
-            using move_delete_t = void(void*, void*) noexcept;
-
-            call_t*        m_call;
-            move_delete_t* m_move_delete;
         };
 
+
+        // this is the type that gets stored in the allocated places with the allocator
+        template <typename CallableObject, typename R, bool IsNoexcept, typename... Args>
+        struct functor_object {
+            using call_type        = R(void*, Args...) noexcept(IsNoexcept);
+            using call_ptr         = stl::add_pointer_t<call_type>;
+            using move_delete_type = void(void*, void*) noexcept;
+            using move_delete_ptr  = stl::add_pointer_t<move_delete_type>;
+            using object_type      = CallableObject;
+
+            call_ptr        m_call;
+            move_delete_ptr m_move_delete;
+            object_type     obj;
+        };
 
 
 
@@ -258,7 +271,7 @@ namespace webpp::istl {
             // Pre-condition: A call is stored in this object.
             R operator()(Args... args) noexcept(IsNoexcept) {
                 auto& obj = *static_cast<Function*>(this);
-                return obj.m_delegate.call(obj.data_addr(), static_cast<Args&&>(args)...);
+                return (*obj.caller())(obj.data_addr(), static_cast<Args&&>(args)...);
             }
 
 
@@ -266,8 +279,19 @@ namespace webpp::istl {
             using delegate_type   = delegate_t<R(Args...), IsNoexcept>;
             using const_signature = R(Args...) const noexcept(IsNoexcept);
             using mut_signature   = R(Args...) noexcept(IsNoexcept);
+            using call_type       = R(void*, Args...) noexcept(IsNoexcept);
+            using call_ptr        = stl::add_pointer_t<call_type>;
+            using return_type     = R;
 
-            static constexpr bool is_const = false;
+            template <typename Callable>
+            using functor_object_type = details::functor_object<Callable, R, IsNoexcept, Args...>;
+
+            static constexpr bool is_const    = false;
+            static constexpr bool is_noexcept = IsNoexcept;
+
+            template <typename Callable>
+            static constexpr call_ptr call_stub =
+              details::call_stub<Callable, is_const, is_noexcept, return_type, Args...>;
 
             template <typename Callable>
             static constexpr bool is_convertible_v =
@@ -283,6 +307,8 @@ namespace webpp::istl {
         // todo: IsNoexcept can be combined with R(Args...), right?
         template <typename Function, bool IsNoexcept, typename R, typename... Args>
         struct base<Function, R(Args...) const noexcept(IsNoexcept)> {
+
+
             // Pre-condition: A call is stored in this object.
             R operator()(Args... args) const noexcept(IsNoexcept) {
                 auto& obj = *static_cast<const Function*>(this);
@@ -293,8 +319,19 @@ namespace webpp::istl {
             using delegate_type   = delegate_t<R(Args...), IsNoexcept>;
             using const_signature = R(Args...) const noexcept(IsNoexcept);
             using mut_signature   = R(Args...) noexcept(IsNoexcept);
+            using call_type       = R(void*, Args...) noexcept(IsNoexcept);
+            using call_ptr        = stl::add_pointer_t<call_type>;
+            using return_type     = R;
 
-            static constexpr bool is_const = true;
+            template <typename Callable>
+            using functor_object_type = details::functor_object<Callable, R, IsNoexcept, Args...>;
+
+            static constexpr bool is_const    = true;
+            static constexpr bool is_noexcept = IsNoexcept;
+
+            template <typename Callable>
+            static constexpr call_ptr call_stub =
+              details::call_stub<Callable, is_const, is_noexcept, return_type, Args...>;
 
             template <typename Callable>
             static constexpr bool is_convertible_v =
@@ -336,40 +373,53 @@ namespace webpp::istl {
           stl::is_same_v<Sig, Signature> || stl::is_same_v<Sig, typename base::const_signature>;
 
       public:
-        using allocator_type = Alloc;
+        using value_type     = stl::byte; // fixme
+        using alloc_traits   = typename stl::allocator_traits<Alloc>::template rebind_traits<value_type>;
+        using allocator_type = typename alloc_traits::allocator_type;
+        using size_type      = typename alloc_traits::size_type;
+        using pointer        = typename alloc_traits::pointer;
+        using const_pointer  = typename alloc_traits::const_pointer;
 
 
-        function(const Alloc& alloc = {}) noexcept : m_storage{alloc} {
+
+        constexpr function(const Alloc& input_alloc = {}) noexcept : alloc{input_alloc} {
             m_delegate.reset();
         }
 
-        function(stl::nullptr_t, const Alloc& alloc = Alloc{}) noexcept : function{alloc} {}
+        constexpr function(stl::nullptr_t, const Alloc& alloc = Alloc{}) noexcept : function{alloc} {}
 
         template <typename Callable>
             requires(!is_function_v<Callable> && base::template is_convertible_v<Callable>)
-        function(Callable call, const Alloc& alloc = Alloc{}) noexcept(
+        constexpr function(Callable call, const Alloc& alloc = Alloc{}) noexcept(
           stl::is_nothrow_constructible_v<decltype(this->m_storage), size_t, size_t, const Alloc&>)
           : function{stl::move(call), alloc, conv_tag_t{}} {}
 
         template <typename Member, typename Object>
             requires requires(Member Object::*const ptr) { function{stl::mem_fn(ptr)}; }
-        function(Member Object::*const ptr, const Alloc& alloc = Alloc{}) noexcept : function{alloc} {
+        constexpr function(Member Object::*const ptr, const Alloc& alloc = Alloc{}) noexcept
+          : function{alloc} {
             if (ptr) {
                 *this = stl::mem_fn(ptr);
             }
         }
 
+        // todo: see if we can make it copyable
         function(const function&)            = delete;
         function& operator=(const function&) = delete;
 
+        // move ctor
         template <typename Signature2 = Signature>
             requires(is_movable_v<Signature2>)
-        function(function<Signature2, Alloc>&& other) noexcept
-          : m_storage{stl::move(other.m_storage)},
-            m_delegate{other.m_delegate} {
-            if (other.m_storage.allocated())
+        constexpr function(function<Signature2, Alloc>&& other) noexcept
+          : alloc{other.alloc},
+            m_delegate{other.m_delegate},
+            data_ptr{alloc_traits::allocate(alloc, data_size)},
+            data_size{other.data_size} {
+            alloc_traits::construct(alloc, data_ptr, stl::move(*other.data_ptr));
+
+            if (other.m_storage.allocated()) {
                 m_storage.move_allocated(other.m_storage);
-            else {
+            } else {
                 other.m_delegate.move(other.data_addr(), data_addr());
                 other.m_delegate.destroy(other.data_addr());
             }
@@ -378,16 +428,15 @@ namespace webpp::istl {
 
         template <typename Signature2 = Signature, typename Alloc2 = Alloc>
             requires(!is_movable_v<Signature2> && base::template is_convertible_v<function<Signature2>>)
-        function(function<Signature2, Alloc2>&& other, const Alloc& alloc = Alloc{}) noexcept(
+        constexpr function(function<Signature2, Alloc2>&& other, const Alloc& alloc = Alloc{}) noexcept(
           stl::is_nothrow_constructible_v<function, decltype(other), const Alloc&, conv_tag_t>)
           : function{stl::move(other), alloc, conv_tag_t{}} {}
 
         template <typename Signature2 = Signature>
             requires(is_movable_v<Signature2>)
-        function& operator=(function<Signature2, Alloc>&& other) noexcept(
-          stl::allocator_traits<Alloc>::propagate_on_container_move_assignment::value ||
-          stl::allocator_traits<Alloc>::is_always_equal::value || noexcept(this->m_storage.resize(0, 0))) {
-            using alloc_traits = stl::allocator_traits<Alloc>;
+        constexpr function& operator=(function<Signature2, Alloc>&& other) noexcept(
+          alloc_traits::propagate_on_container_move_assignment::value ||
+          alloc_traits::is_always_equal::value || noexcept(this->m_storage.resize(0, 0))) {
 
             m_delegate.destroy(data_addr());
             m_delegate = other.m_delegate;
@@ -420,20 +469,19 @@ namespace webpp::istl {
 
         template <typename Signature2 = Signature, typename Alloc2 = Alloc>
             requires(!is_movable_v<Signature2> && base::template is_convertible_v<function<Signature2>>)
-        function&
+        constexpr function&
         operator=(function<Signature2, Alloc2>&& other) noexcept(noexcept(this->assign(stl::move(other)))) {
             assign(stl::move(other));
             return *this;
         }
 
-        ~function() {
+        constexpr ~function() {
             m_delegate.destroy(data_addr());
         }
 
         // Undefined behavior if stl::allocator_traits<Alloc>::propagate_on_container_swap == false
         // and both allocators do not compare equal.
-        void swap(function& other) noexcept(noexcept(swap_helper(*this, other))) {
-            using alloc_traits = stl::allocator_traits<Alloc>;
+        constexpr void swap(function& other) noexcept(noexcept(swap_helper(*this, other))) {
 
             stl::swap(m_delegate, other.m_delegate);
             alignas(stl::max_align_t) stl::byte temp[decltype(m_storage)::max_inline_size()];
@@ -442,13 +490,14 @@ namespace webpp::istl {
                     if constexpr (alloc_traits::propagate_on_container_swap::value) {
                         m_storage.swap_allocator(other.m_storage);
                         m_storage.swap_allocated(other.m_storage);
-                    } else if constexpr (alloc_traits::is_always_equal::value)
+                    } else if constexpr (alloc_traits::is_always_equal::value) {
                         m_storage.swap_allocated(other.m_storage);
-                    else {
-                        if (m_storage.get_allocator() == other.m_storage.get_allocator())
+                    } else {
+                        if (m_storage.get_allocator() == other.m_storage.get_allocator()) {
                             m_storage.swap_allocated(other.m_storage);
-                        else
+                        } else {
                             assert(false);
+                        }
                     }
                 } else {
                     other.m_delegate.move(data_addr(), temp);
@@ -457,15 +506,16 @@ namespace webpp::istl {
                 }
             } else {
                 m_delegate.move(other.data_addr(), temp);
-                if (m_storage.allocated())
+                if (m_storage.allocated()) {
                     swap_helper(other, *this);
-                else
+                } else {
                     other.m_delegate.move(data_addr(), other.data_addr());
+                }
                 m_delegate.move(temp, data_addr());
             }
         }
 
-        function& operator=(stl::nullptr_t) noexcept {
+        constexpr function& operator=(stl::nullptr_t) noexcept {
             m_delegate.destroy(data_addr());
             m_delegate.reset();
             return *this;
@@ -473,83 +523,145 @@ namespace webpp::istl {
 
         template <typename Callable>
             requires(!is_function_v<Callable> && base::template is_convertible_v<Callable>)
-        function& operator=(Callable call) noexcept(noexcept(this->assign(stl::move(call)))) {
+        constexpr function& operator=(Callable call) noexcept(noexcept(this->assign(stl::move(call)))) {
             assign(stl::move(call));
             return *this;
         }
 
         template <typename Member, typename Object>
             requires requires(Member Object::*const ptr) { function{stl::mem_fn(ptr)}; }
-        function& operator=(Member Object::*const ptr) noexcept {
+        constexpr function& operator=(Member Object::*const ptr) noexcept {
             *this = ptr ? stl::mem_fn(ptr) : nullptr;
             return *this;
         }
 
-        explicit operator bool() const noexcept {
+        constexpr explicit operator bool() const noexcept {
             return !m_delegate.empty();
         }
 
         // Deallocates storage if there is no callable object stored.
-        void shrink_to_fit() noexcept {
-            if (!*this)
+        constexpr void shrink_to_fit() noexcept {
+            if (!*this) {
                 m_storage.deallocate();
+            }
         }
 
       private:
-        using delegate_type = typename base::delegate_type;
+        using call_type        = typename base::call_type;
+        using return_type      = typename base::return_type;
+        using call_ptr         = stl::add_pointer_t<call_type>;
+        using move_delete_type = void(void*, void*) noexcept;
+        using move_delete_ptr  = stl::add_pointer_t<move_delete_type>;
+
+        template <typename Callable>
+        using functor_object_type = typename base::template functor_object_type<Callable>;
+
+        template <typename Callable>
+        using functor_object_ptr = stl::add_pointer_t<functor_object_type<Callable>>;
+
+
+        [[no_unique_address]] allocator_type alloc;
+        void*                                ptr;
+
+        template <typename Callable = stl::byte>
+        constexpr functor_object_ptr<Callable> functor_ptr() const noexcept {
+            return reinterpret_cast<functor_object_ptr<Callable>>(ptr);
+        }
+
+        [[nodiscard]] constexpr move_delete_ptr move_delete() const noexcept {
+            return functor_ptr()->m_move_delete;
+        }
+
+        [[nodiscard]] constexpr call_ptr caller() const noexcept {
+            return functor_ptr()->m_call;
+        }
+
+        template <typename Callable>
+        constexpr void set_callers() noexcept {
+            caller() = base::template call_stub<Callable>;
+            move_delete() = details::move_delete_stub<Callable>;
+        }
+
+        constexpr void reset_callers() noexcept {
+            caller() = nullptr;
+            move_delete() = nullptr;
+        }
+
+
+        [[nodiscard]] constexpr void* callable_ptr() const noexcept {
+            return static_cast<void*>(&functor_ptr().obj);
+        }
+
+        template <typename Callable>
+        constexpr void* allocate() {
+            using object_type      = functor_object_type<Callable>;
+            using new_alloc_traits = typename alloc_traits::template rebind_traits<object_type>;
+            using new_alloc_type   = typename new_alloc_traits::allocator_type;
+            const new_alloc_type new_alloc{alloc};
+            return new_alloc_traits::allocate(new_alloc, 1, ptr); // todo: should we pass hint?
+        }
+
+        template <typename Callable, typename... Args>
+        constexpr void construct(Args&&... args) {
+            using object_type      = functor_object_type<Callable>;
+            using new_alloc_traits = typename alloc_traits::template rebind_traits<object_type>;
+            using new_alloc_type   = typename new_alloc_traits::allocator_type;
+            const new_alloc_type new_alloc{alloc};
+            return new_alloc_traits::construct(new_alloc,
+                                              functor_ptr<Callable>(),
+                                              stl::forward<Args>(args)...);
+        }
+
+
+        template <typename Callable, typename... Args>
+        constexpr return_type call(Args&&... args) const noexcept(base::is_noexcept) {
+            return (*caller())(callable_ptr(), stl::forward<Args>(args)...);
+        }
+
 
         friend base;
         friend class function<typename base::mut_signature, Alloc>;
 
-        friend bool operator==(const function& f, stl::nullptr_t) noexcept {
+        constexpr friend bool operator==(const function& f, stl::nullptr_t) noexcept {
             return !f;
         }
 
-        friend bool operator==(stl::nullptr_t, const function& f) noexcept {
+        constexpr friend bool operator==(stl::nullptr_t, const function& f) noexcept {
             return !f;
         }
 
-        friend bool operator!=(const function& f, stl::nullptr_t) noexcept {
+        constexpr friend bool operator!=(const function& f, stl::nullptr_t) noexcept {
             return static_cast<bool>(f);
         }
 
-        friend bool operator!=(stl::nullptr_t, const function& f) noexcept {
+        constexpr friend bool operator!=(stl::nullptr_t, const function& f) noexcept {
             return static_cast<bool>(f);
         }
-
-        // todo: what is this 80 here?
-        details::storage<80 - 1 - sizeof(delegate_type), alignof(stl::max_align_t), Alloc> m_storage;
-        delegate_type                                                                      m_delegate;
 
         template <typename Callable>
-        function(Callable&& call, const Alloc& alloc, conv_tag_t) noexcept(
+        constexpr function(Callable&& call, const Alloc& input_alloc, conv_tag_t) noexcept(
           stl::is_nothrow_constructible_v<decltype(this->m_storage), size_t, size_t, const Alloc&>)
-          : m_storage{sizeof(stl::decay_t<Callable>), alignof(stl::decay_t<Callable>), alloc} {
-            m_delegate.template set<Callable, base::is_const>();
-            ::new (data_addr()) stl::decay_t<Callable>{stl::forward<Callable>(call)};
+          : alloc{input_alloc},
+            ptr{allocate<stl::decay_t<Callable>>()} {
+            set_callers<Callable>();
+            construct<Callable>(stl::forward<Callable>(call));
         }
 
         template <typename Callable>
-        void assign(Callable&& call) noexcept(noexcept(m_storage.resize(sizeof(stl::decay_t<Callable>),
-                                                                        alignof(stl::decay_t<Callable>)))) {
+        constexpr void assign(Callable&& call) noexcept(
+          noexcept(m_storage.resize(sizeof(stl::decay_t<Callable>), alignof(stl::decay_t<Callable>)))) {
             m_delegate.destroy(data_addr());
-            m_delegate.template set<Callable, base::is_const>();
+            set_callers<Callable>();
             m_storage.resize(sizeof(stl::decay_t<Callable>), alignof(stl::decay_t<Callable>));
-            ::new (data_addr()) stl::decay_t<Callable>{stl::forward<Callable>(call)};
+
+            construct<Callable>(stl::forward<Callable>(call));
         }
 
-        [[nodiscard]] const void* data_addr() const noexcept {
-            return m_storage.data();
-        }
 
-        [[nodiscard]] void* data_addr() noexcept {
-            return m_storage.data();
-        }
-
-        static void swap_helper(function& lhs, function& rhs) noexcept(
-          stl::allocator_traits<Alloc>::propagate_on_container_swap::value ||
-          stl::allocator_traits<Alloc>::is_always_equal::value || noexcept(lhs.m_storage.resize(0, 0))) {
-            using alloc_traits = stl::allocator_traits<Alloc>;
+        static constexpr void
+        swap_helper(function& lhs, function& rhs) noexcept(alloc_traits::propagate_on_container_swap::value ||
+                                                           alloc_traits::is_always_equal::value ||
+                                                           noexcept(lhs.m_storage.resize(0, 0))) {
 
             if constexpr (alloc_traits::propagate_on_container_move_assignment::value) {
                 lhs.m_storage.move_allocator(rhs.m_storage);
@@ -557,9 +669,9 @@ namespace webpp::istl {
             } else if constexpr (alloc_traits::is_always_equal::value)
                 lhs.m_storage.move_allocated(rhs.m_storage);
             else {
-                if (lhs.m_storage.get_allocator() == rhs.m_storage.get_allocator())
+                if (lhs.m_storage.get_allocator() == rhs.m_storage.get_allocator()) {
                     lhs.m_storage.move_allocated(rhs.m_storage);
-                else {
+                } else {
                     lhs.m_storage.resize(rhs.m_storage.allocated_size(), rhs.m_storage.allocated_alignment());
                     lhs.m_delegate.move(rhs.data_addr(), lhs.data_addr());
                 }
