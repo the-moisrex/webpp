@@ -10,6 +10,11 @@
 #include <functional>
 
 namespace webpp::istl {
+
+    template <typename, typename>
+    struct function;
+
+
     namespace details {
 
 
@@ -26,7 +31,7 @@ namespace webpp::istl {
             using function_ref       = stl::add_lvalue_reference_t<function_type>;
             using call_type          = R(void*, Args...) noexcept(IsNoexcept);
             using call_ptr           = stl::add_pointer_t<call_type>;
-            using action_runner_type = void(function_ref, void*, void*, action_list) noexcept;
+            using action_runner_type = void(function_ref, void*, void*, action_list);
             using action_runner_ptr  = stl::add_pointer_t<action_runner_type>;
             using object_type        = CallableObject;
 
@@ -39,30 +44,32 @@ namespace webpp::istl {
         template <typename FunctionType, typename Callable>
         constexpr void
         run_action(FunctionType& func, void* const from, void* const to, details::action_list action) {
-            using function_type       = FunctionType;
-            using callable            = Callable;
-            using functor_object_type = typename function_type::template functor_object_type<callable>;
-            using functor_object_ptr  = typename function_type::template functor_object_ptr<callable>;
-            using callable_decay_t    = stl::decay_t<callable>;
-            using new_alloc_traits    = stl::allocator_traits<functor_object_type>;
+            using function_type         = FunctionType;
+            using callable              = Callable;
+            using functor_object_type   = typename function_type::template functor_object_type<callable>;
+            using functor_object_ptr    = typename function_type::template functor_object_ptr<callable>;
+            using function_alloc_traits = typename function_type::alloc_traits;
+            using new_alloc_traits =
+              typename function_alloc_traits::template rebind_traits<functor_object_type>;
+            using pointer_type = typename new_alloc_traits::pointer;
 
             switch (action) {
                 case details::action_list::deallocate: {
                     auto* functor_ptr = reinterpret_cast<functor_object_ptr>(from);
-                    new_alloc_traits::deallocate(func.template get_allocator_for<callable>(), from, 1);
+                    auto  alloc       = func.template get_allocator_for<callable>();
+                    new_alloc_traits::deallocate(alloc, static_cast<pointer_type>(from), 1);
                     break;
                 }
                 case details::action_list::destroy: {
                     auto* functor_ptr = reinterpret_cast<functor_object_ptr>(from);
-                    new_alloc_traits::destroy(func.template get_allocator_for<callable>(), from);
+                    auto  alloc       = func.template get_allocator_for<callable>();
+                    new_alloc_traits::destroy(alloc, from);
                     break;
                 }
             }
 
             // todo
-            if (to != nullptr) {
-                ::new (to) callable_decay_t{stl::move(get_object<Callable, false>(from))};
-            }
+            // ::new (to) callable_decay_t{stl::move(get_object<Callable, false>(from))};
         }
 
 
@@ -102,10 +109,12 @@ namespace webpp::istl {
 
 
           protected:
-            using call_type     = R(void*, Args...) noexcept(IsNoexcept);
-            using call_ptr      = stl::add_pointer_t<call_type>;
-            using return_type   = R;
-            using function_type = Function;
+            using const_signature = R(Args...) const noexcept(IsNoexcept);
+            using mut_signature   = R(Args...) noexcept(IsNoexcept);
+            using call_type       = R(void*, Args...) noexcept(IsNoexcept);
+            using call_ptr        = stl::add_pointer_t<call_type>;
+            using return_type     = R;
+            using function_type   = Function;
 
             template <typename Callable>
             using functor_object_type =
@@ -141,10 +150,12 @@ namespace webpp::istl {
             }
 
           protected:
-            using call_type     = R(void*, Args...) noexcept(IsNoexcept);
-            using call_ptr      = stl::add_pointer_t<call_type>;
-            using return_type   = R;
-            using function_type = Function;
+            using const_signature = R(Args...) const noexcept(IsNoexcept);
+            using mut_signature   = R(Args...) noexcept(IsNoexcept);
+            using call_type       = R(void*, Args...) noexcept(IsNoexcept);
+            using call_ptr        = stl::add_pointer_t<call_type>;
+            using return_type     = R;
+            using function_type   = Function;
 
             template <typename Callable>
             using functor_object_type =
@@ -171,9 +182,6 @@ namespace webpp::istl {
     } // namespace details
 
 
-
-    template <typename, typename>
-    struct function;
 
     template <typename>
     struct is_function : stl::false_type {};
@@ -208,20 +216,21 @@ namespace webpp::istl {
 
         constexpr function(const Alloc& input_alloc = {}) noexcept : alloc{input_alloc} {}
 
-        constexpr function(stl::nullptr_t, const Alloc& alloc = Alloc{}) noexcept : function{alloc} {}
+        constexpr function(stl::nullptr_t, const Alloc& input_alloc = Alloc{}) noexcept
+          : function{input_alloc} {}
 
         template <typename Callable>
             requires(!is_function_v<Callable> && base::template is_convertible_v<Callable>)
-        constexpr function(Callable call, const Alloc& alloc = Alloc{}) noexcept(
+        constexpr function(Callable call, const Alloc& input_alloc = Alloc{}) noexcept(
           stl::is_nothrow_constructible_v<decltype(this->m_storage), size_t, size_t, const Alloc&>)
-          : function{stl::move(call), alloc, conv_tag_t{}} {}
+          : function{stl::move(call), input_alloc, conv_tag_t{}} {}
 
         template <typename Member, typename Object>
-            requires requires(Member Object::*const ptr) { function{stl::mem_fn(ptr)}; }
-        constexpr function(Member Object::*const ptr, const Alloc& alloc = Alloc{}) noexcept
-          : function{alloc} {
-            if (ptr) {
-                *this = stl::mem_fn(ptr);
+            requires requires(Member Object::*const mem_ptr) { function{stl::mem_fn(mem_ptr)}; }
+        constexpr function(Member Object::*const mem_ptr, const Alloc& input_alloc = Alloc{}) noexcept
+          : function{input_alloc} {
+            if (mem_ptr) {
+                *this = stl::mem_fn(mem_ptr);
             }
         }
 
@@ -240,9 +249,9 @@ namespace webpp::istl {
 
         template <typename Signature2 = Signature, typename Alloc2 = Alloc>
             requires(!is_movable_v<Signature2> && base::template is_convertible_v<function<Signature2>>)
-        constexpr function(function<Signature2, Alloc2>&& other, const Alloc& alloc = Alloc{}) noexcept(
+        constexpr function(function<Signature2, Alloc2>&& other, const Alloc& input_alloc = Alloc{}) noexcept(
           stl::is_nothrow_constructible_v<function, decltype(other), const Alloc&, conv_tag_t>)
-          : function{stl::move(other), alloc, conv_tag_t{}} {}
+          : function{stl::move(other), input_alloc, conv_tag_t{}} {}
 
         constexpr function& operator=(function&& other) noexcept = default;
 
@@ -339,14 +348,6 @@ namespace webpp::istl {
         }
 
 
-        template <typename Callable>
-        constexpr auto get_allocator_for() noexcept {
-            using object_type      = functor_object_type<Callable>;
-            using new_alloc_traits = typename alloc_traits::template rebind_traits<object_type>;
-            using new_alloc_type   = typename new_alloc_traits::allocator_type;
-            return new_alloc_type{alloc};
-        }
-
 
       private:
         using call_type          = typename base::call_type;
@@ -354,7 +355,7 @@ namespace webpp::istl {
         using call_ptr           = stl::add_pointer_t<call_type>;
         using function_type      = typename base::function_type;
         using function_ref       = stl::add_lvalue_reference_t<function_type>;
-        using action_runner_type = void(function_ref, void*, void*, details::action_list) noexcept;
+        using action_runner_type = void(function_ref, void*, void*, details::action_list);
         using action_runner_ptr  = stl::add_pointer_t<action_runner_type>;
 
         template <typename Callable>
@@ -371,12 +372,21 @@ namespace webpp::istl {
         void*                                ptr{nullptr};
 
         template <typename Callable = stl::byte>
+        constexpr functor_object_ptr<Callable> functor_ptr() noexcept {
+            return reinterpret_cast<functor_object_ptr<Callable>>(ptr);
+        }
+
+        template <typename Callable = stl::byte>
         constexpr functor_object_ptr<Callable> functor_ptr() const noexcept {
             return reinterpret_cast<functor_object_ptr<Callable>>(ptr);
         }
 
-        [[nodiscard]] constexpr action_runner_ptr action_runner() const noexcept {
+        [[nodiscard]] constexpr action_runner_ptr& action_runner() noexcept {
             return functor_ptr()->action_runner;
+        }
+
+        [[nodiscard]] constexpr call_ptr& caller() noexcept {
+            return functor_ptr()->caller;
         }
 
         [[nodiscard]] constexpr call_ptr caller() const noexcept {
@@ -391,16 +401,28 @@ namespace webpp::istl {
 
 
         [[nodiscard]] constexpr void* callable_ptr() const noexcept {
-            return static_cast<void*>(&functor_ptr().obj);
+            return static_cast<void*>(&functor_ptr()->obj);
         }
 
         template <typename Callable>
-        constexpr void* allocate() {
+        constexpr auto get_allocator_for() noexcept {
             using object_type      = functor_object_type<Callable>;
             using new_alloc_traits = typename alloc_traits::template rebind_traits<object_type>;
             using new_alloc_type   = typename new_alloc_traits::allocator_type;
-            const new_alloc_type new_alloc{alloc};
-            return new_alloc_traits::allocate(new_alloc, 1, ptr); // todo: should we pass hint?
+            return new_alloc_type{alloc};
+        }
+
+        template <typename Callable>
+        [[nodiscard("You're not supposed to discard a pointer")]] constexpr void* allocate() {
+            using object_type        = functor_object_type<Callable>;
+            using new_alloc_traits   = typename alloc_traits::template rebind_traits<object_type>;
+            using new_alloc_type     = typename new_alloc_traits::allocator_type;
+            using const_void_pointer = typename new_alloc_traits::const_void_pointer;
+            new_alloc_type new_alloc{alloc};
+            return new_alloc_traits::allocate(
+              new_alloc,
+              1,
+              static_cast<const_void_pointer>(ptr)); // todo: should we pass hint?
         }
 
         template <typename Callable, typename... Args>
@@ -408,7 +430,7 @@ namespace webpp::istl {
             using object_type      = functor_object_type<Callable>;
             using new_alloc_traits = typename alloc_traits::template rebind_traits<object_type>;
             using new_alloc_type   = typename new_alloc_traits::allocator_type;
-            const new_alloc_type new_alloc{alloc};
+            new_alloc_type new_alloc{alloc};
             return new_alloc_traits::construct(new_alloc,
                                                functor_ptr<Callable>(),
                                                stl::forward<Args>(args)...);
@@ -417,7 +439,7 @@ namespace webpp::istl {
         template <typename Callable>
         constexpr void resize() {
             deallocate();
-            allocate<Callable>();
+            ptr = allocate<Callable>();
         }
 
         constexpr void destroy() {
@@ -434,12 +456,16 @@ namespace webpp::istl {
 
         template <typename... Args>
         constexpr return_type call(Args&&... args) const noexcept(base::is_noexcept) {
-            return (*caller())(callable_ptr(), stl::forward<Args>(args)...);
+            return (caller())(callable_ptr(), stl::forward<Args>(args)...);
         }
 
 
         friend base;
         friend class function<typename base::mut_signature, Alloc>;
+
+        template <typename FunctionType, typename Callable>
+        friend constexpr void
+        details::run_action(FunctionType&, void* const, void* const, details::action_list);
 
         constexpr friend bool operator==(const function& f, stl::nullptr_t) noexcept {
             return !f;
