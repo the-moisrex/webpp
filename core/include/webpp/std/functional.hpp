@@ -4,11 +4,9 @@
 #define WEBPP_STD_FUNCTIONAL_HPP
 
 #include "./type_traits.hpp"
-#include "memory.hpp"
 #include "std.hpp"
 
 #include <cassert>
-#include <cstring>
 #include <functional>
 
 namespace webpp::istl {
@@ -88,58 +86,6 @@ namespace webpp::istl {
                 return get_object<Callable, Const>(data)(static_cast<Args&&>(args)...);
             }
         }
-
-
-        template <typename, bool>
-        class delegate_t;
-
-        template <bool IsNoexcept, typename R, typename... Args>
-        class delegate_t<R(Args...), IsNoexcept> {
-          public:
-            delegate_t() = default;
-
-            template <typename Callable, bool Const>
-            void set() noexcept {
-                m_call        = call_stub<Callable, Const, IsNoexcept, R, Args...>;
-                m_move_delete = move_delete_stub<Callable>;
-            }
-
-            void reset() noexcept {
-                m_call        = nullptr;
-                m_move_delete = nullptr;
-            }
-
-            void move(void* const from, void* const to) const noexcept {
-                if (m_move_delete != nullptr) {
-                    m_move_delete(from, to);
-                }
-            }
-
-            void destroy(void* const data) const noexcept {
-                if (m_move_delete != nullptr) {
-                    m_move_delete(data, nullptr);
-                }
-            }
-
-            [[nodiscard]] bool empty() const noexcept {
-                return m_call == nullptr;
-            }
-
-            R call(const void* const data, Args... args) const noexcept(IsNoexcept) {
-                assert(!empty());
-
-                return m_call(const_cast<void*>(data), static_cast<Args&&>(args)...);
-            }
-
-            R call(void* data, Args... args) const noexcept(IsNoexcept) {
-                assert(!empty());
-
-                return m_call(data, static_cast<Args&&>(args)...);
-            }
-
-          private:
-        };
-
 
 
         template <size_t Size, size_t Align, typename Alloc>
@@ -307,7 +253,6 @@ namespace webpp::istl {
 
 
           protected:
-            using delegate_type   = delegate_t<R(Args...), IsNoexcept>;
             using const_signature = R(Args...) const noexcept(IsNoexcept);
             using mut_signature   = R(Args...) noexcept(IsNoexcept);
             using call_type       = R(void*, Args...) noexcept(IsNoexcept);
@@ -349,7 +294,6 @@ namespace webpp::istl {
             }
 
           protected:
-            using delegate_type   = delegate_t<R(Args...), IsNoexcept>;
             using const_signature = R(Args...) const noexcept(IsNoexcept);
             using mut_signature   = R(Args...) noexcept(IsNoexcept);
             using call_type       = R(void*, Args...) noexcept(IsNoexcept);
@@ -445,18 +389,8 @@ namespace webpp::istl {
             requires(is_movable_v<Signature2>)
         constexpr function(function<Signature2, Alloc>&& other) noexcept
           : alloc{other.alloc},
-            m_delegate{other.m_delegate},
-            data_ptr{alloc_traits::allocate(alloc, data_size)},
-            data_size{other.data_size} {
-            alloc_traits::construct(alloc, data_ptr, stl::move(*other.data_ptr));
-
-            if (other.m_storage.allocated()) {
-                m_storage.move_allocated(other.m_storage);
-            } else {
-                other.m_delegate.move(other.data_addr(), data_addr());
-                other.m_delegate.destroy(other.data_addr());
-            }
-            other.m_delegate.reset();
+            ptr{other.ptr} {
+            other.ptr = nullptr;
         }
 
         template <typename Signature2 = Signature, typename Alloc2 = Alloc>
@@ -465,38 +399,37 @@ namespace webpp::istl {
           stl::is_nothrow_constructible_v<function, decltype(other), const Alloc&, conv_tag_t>)
           : function{stl::move(other), alloc, conv_tag_t{}} {}
 
+        constexpr function& operator=(function&& other) noexcept = default;
+
         template <typename Signature2 = Signature>
             requires(is_movable_v<Signature2>)
-        constexpr function& operator=(function<Signature2, Alloc>&& other) noexcept(
-          alloc_traits::propagate_on_container_move_assignment::value ||
-          alloc_traits::is_always_equal::value || noexcept(this->m_storage.resize(0, 0))) {
+        constexpr function& operator=(function<Signature2, Alloc>&& other) {
 
-            destroy();
-            m_delegate = other.m_delegate;
-            if (other.m_storage.allocated()) {
-                if constexpr (alloc_traits::propagate_on_container_move_assignment::value) {
-                    deallocate();
-                    m_storage.move_allocator(other.m_storage);
-                    m_storage.move_allocated(other.m_storage);
-                } else if constexpr (alloc_traits::is_always_equal::value) {
-                    deallocate();
-                    m_storage.move_allocated(other.m_storage);
-                } else {
-                    if (m_storage.get_allocator() == other.m_storage.get_allocator()) {
-                        deallocate();
-                        m_storage.move_allocated(other.m_storage);
-                    } else {
-                        m_storage.resize(other.m_storage.allocated_size(),
-                                         other.m_storage.allocated_alignment());
-                        other.m_delegate.move(other.data_addr(), data_addr());
-                        other.m_delegate.destroy(other.data_addr());
-                    }
-                }
-            } else {
-                other.m_delegate.move(other.data_addr(), data_addr());
-                other.m_delegate.destroy(other.data_addr());
+            if (ptr == other.ptr) {
+                return *this;
             }
-            other.reset_callers();
+            if constexpr (alloc_traits::propagate_on_container_move_assignment::value) {
+                alloc = stl::move(other.alloc);
+                ~function();
+                ptr = other.ptr;
+            } else if constexpr (alloc_traits::is_always_equal::value) {
+                // no need to move the allocator
+                ~function();
+                ptr = other.ptr;
+            } else {
+                if (alloc == other.alloc) {
+                    ~function();
+                    ptr = other.ptr;
+                } else {
+                    // copy the other instead of move
+                    // todo: move not copy
+                    *this = other; // use copy assignment op
+
+                    // and make the other one go away
+                    other.~function();
+                }
+            }
+            other.ptr = nullptr;
             return *this;
         }
 
@@ -506,46 +439,6 @@ namespace webpp::istl {
         operator=(function<Signature2, Alloc2>&& other) noexcept(noexcept(this->assign(stl::move(other)))) {
             assign(stl::move(other));
             return *this;
-        }
-
-        constexpr ~function() {
-            destroy();
-        }
-
-        // Undefined behavior if stl::allocator_traits<Alloc>::propagate_on_container_swap == false
-        // and both allocators do not compare equal.
-        constexpr void swap(function& other) noexcept(noexcept(swap_helper(*this, other))) {
-
-            stl::swap(m_delegate, other.m_delegate);
-            alignas(stl::max_align_t) stl::byte temp[decltype(m_storage)::max_inline_size()];
-            if (other.m_storage.allocated()) {
-                if (m_storage.allocated()) {
-                    if constexpr (alloc_traits::propagate_on_container_swap::value) {
-                        m_storage.swap_allocator(other.m_storage);
-                        m_storage.swap_allocated(other.m_storage);
-                    } else if constexpr (alloc_traits::is_always_equal::value) {
-                        m_storage.swap_allocated(other.m_storage);
-                    } else {
-                        if (m_storage.get_allocator() == other.m_storage.get_allocator()) {
-                            m_storage.swap_allocated(other.m_storage);
-                        } else {
-                            assert(false);
-                        }
-                    }
-                } else {
-                    other.m_delegate.move(data_addr(), temp);
-                    swap_helper(*this, other);
-                    other.m_delegate.move(temp, other.data_addr());
-                }
-            } else {
-                m_delegate.move(other.data_addr(), temp);
-                if (m_storage.allocated()) {
-                    swap_helper(other, *this);
-                } else {
-                    other.m_delegate.move(data_addr(), other.data_addr());
-                }
-                m_delegate.move(temp, data_addr());
-            }
         }
 
         constexpr function& operator=(stl::nullptr_t) noexcept {
@@ -565,6 +458,29 @@ namespace webpp::istl {
         constexpr function& operator=(Member Object::*const mem_ptr) noexcept {
             *this = mem_ptr ? stl::mem_fn(mem_ptr) : nullptr;
             return *this;
+        }
+
+
+        constexpr ~function() {
+            if (ptr) {
+                destroy();
+                deallocate();
+            }
+        }
+
+        // Undefined behavior if stl::allocator_traits<Alloc>::propagate_on_container_swap == false
+        // and both allocators do not compare equal.
+        constexpr void swap(function& other) noexcept {
+            using stl::swap;
+
+            if constexpr (alloc_traits::propagate_on_container_swap::value) {
+                swap(alloc, other.alloc);
+            } else if constexpr (alloc_traits::is_always_equal::value) {
+                // nothing
+            } else {
+                assert(alloc == other.alloc);
+            }
+            swap(ptr, other.ptr);
         }
 
         constexpr explicit operator bool() const noexcept {
@@ -598,7 +514,7 @@ namespace webpp::istl {
 
 
         [[no_unique_address]] allocator_type alloc;
-        void*                                ptr;
+        void*                                ptr{nullptr};
 
         template <typename Callable = stl::byte>
         constexpr functor_object_ptr<Callable> functor_ptr() const noexcept {
@@ -712,32 +628,11 @@ namespace webpp::istl {
         template <typename Callable>
         constexpr void assign(Callable&& call) noexcept(
           noexcept(m_storage.resize(sizeof(stl::decay_t<Callable>), alignof(stl::decay_t<Callable>)))) {
-            m_delegate.destroy(data_addr());
+            destroy();
             set_callers<Callable>();
             m_storage.resize(sizeof(stl::decay_t<Callable>), alignof(stl::decay_t<Callable>));
 
             construct<Callable>(stl::forward<Callable>(call));
-        }
-
-
-        static constexpr void
-        swap_helper(function& lhs, function& rhs) noexcept(alloc_traits::propagate_on_container_swap::value ||
-                                                           alloc_traits::is_always_equal::value ||
-                                                           noexcept(lhs.m_storage.resize(0, 0))) {
-
-            if constexpr (alloc_traits::propagate_on_container_move_assignment::value) {
-                lhs.m_storage.move_allocator(rhs.m_storage);
-                lhs.m_storage.move_allocated(rhs.m_storage);
-            } else if constexpr (alloc_traits::is_always_equal::value)
-                lhs.m_storage.move_allocated(rhs.m_storage);
-            else {
-                if (lhs.m_storage.get_allocator() == rhs.m_storage.get_allocator()) {
-                    lhs.m_storage.move_allocated(rhs.m_storage);
-                } else {
-                    lhs.m_storage.resize(rhs.m_storage.allocated_size(), rhs.m_storage.allocated_alignment());
-                    lhs.m_delegate.move(rhs.data_addr(), lhs.data_addr());
-                }
-            }
         }
     };
 
