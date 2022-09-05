@@ -37,10 +37,8 @@ namespace webpp::istl {
 
 
         template <typename FunctionType, typename Callable>
-        constexpr void run_action(FunctionType&        func,
-                                  void* const          from,
-                                  void* const          to,
-                                  details::action_list action) noexcept {
+        constexpr void
+        run_action(FunctionType& func, void* const from, void* const to, details::action_list action) {
             using function_type       = FunctionType;
             using callable            = Callable;
             using functor_object_type = typename function_type::template functor_object_type<callable>;
@@ -51,12 +49,12 @@ namespace webpp::istl {
             switch (action) {
                 case details::action_list::deallocate: {
                     auto* functor_ptr = reinterpret_cast<functor_object_ptr>(from);
-                    new_alloc_traits::deallocate(func.template get_allocator<callable>(), from, 1);
+                    new_alloc_traits::deallocate(func.template get_allocator_for<callable>(), from, 1);
                     break;
                 }
                 case details::action_list::destroy: {
                     auto* functor_ptr = reinterpret_cast<functor_object_ptr>(from);
-                    new_alloc_traits::destroy(func.template get_allocator<callable>(), from);
+                    new_alloc_traits::destroy(func.template get_allocator_for<callable>(), from);
                     break;
                 }
             }
@@ -88,155 +86,6 @@ namespace webpp::istl {
         }
 
 
-        template <size_t Size, size_t Align, typename Alloc>
-        class storage : private Alloc {
-            struct alloc_details {
-                void*  data;
-                size_t size;
-                size_t alignment;
-            };
-
-          public:
-            using allocator_type = Alloc;
-            using size_type      = size_t;
-            using const_pointer  = const void*;
-            using pointer        = void*;
-
-            explicit storage(const Alloc& alloc) noexcept : Alloc{alloc} {}
-
-            storage(const size_type size, // NOLINT(readability-avoid-const-params-in-decls)
-                    size_type       alignment,
-                    const Alloc&    alloc = Alloc{}) noexcept(noexcept(this->allocate(size, alignment)))
-              : Alloc{alloc} {
-                if (size > Size || alignment > Align) {
-                    alignment      = stl::max(Align, alignment);
-                    const auto buf = allocate(size, alignment);
-                    init_alloc_details(buf, size, alignment);
-                }
-            }
-
-            storage(storage&& other) noexcept : Alloc{stl::move(other.get_allocator())}, m_storage{} {}
-
-            ~storage() {
-                deallocate();
-            }
-
-            void move_allocator(storage& other) {
-                get_allocator() = stl::move(other.get_allocator());
-            }
-
-            void move_allocated(storage& other) {
-                ::new (&as_alloc_details()) alloc_details{other.as_alloc_details()};
-                m_storage.allocated = true;
-                other.as_alloc_details().~alloc_details();
-                other.m_storage.allocated = false;
-            }
-
-            void swap_allocator(storage& other) noexcept {
-                swap(get_allocator(), other.get_allocator());
-            }
-
-            void swap_allocated(storage& other) {
-                stl::swap(as_alloc_details(), other.as_alloc_details());
-            }
-
-            // Discards the stored data if new_size results in allocation.
-            void resize(const size_type size,
-                        size_t          alignment) noexcept(noexcept(this->allocate(size, alignment))) {
-                if (allocated()) {
-                    if (size > allocated_size() || alignment > allocated_alignment()) {
-                        alignment      = stl::max(Align, alignment);
-                        const auto buf = allocate(size, alignment);
-                        unchecked_deallocate();
-                        as_alloc_details() = {buf, size, alignment};
-                    }
-                } else {
-                    if (size > Size || alignment > Align) {
-                        alignment      = stl::max(Align, alignment);
-                        const auto buf = allocate(size, alignment);
-                        init_alloc_details(buf, size, alignment);
-                    }
-                }
-            }
-
-            void deallocate() noexcept {
-                if (allocated())
-                    unchecked_deallocate();
-            }
-
-            [[nodiscard]] allocator_type get_allocator() const noexcept {
-                return *this;
-            }
-
-            [[nodiscard]] bool allocated() const noexcept {
-                return m_storage.allocated;
-            }
-
-            [[nodiscard]] const_pointer data() const noexcept {
-                return allocated() ? allocated_data() : m_storage.data;
-            }
-
-            [[nodiscard]] pointer data() noexcept {
-                return allocated() ? allocated_data() : m_storage.data;
-            }
-
-            [[nodiscard]] size_type allocated_size() const noexcept {
-                return as_alloc_details().size;
-            }
-
-            [[nodiscard]] static constexpr size_t max_inline_size() noexcept {
-                return Size;
-            }
-
-            [[nodiscard]] size_type allocated_alignment() const noexcept {
-                return as_alloc_details().alignment;
-            }
-
-          private:
-            static_assert(Size >= sizeof(alloc_details),
-                          "Inline storage size of this object must be bigger than or equal to "
-                          "size of the dynamic allocation book keeping bits.");
-
-            struct alignas(Align) {
-                stl::byte data[Size];
-                bool      allocated = false;
-            } m_storage;
-
-            [[nodiscard]] const alloc_details& as_alloc_details() const noexcept {
-                return *reinterpret_cast<const alloc_details*>(&m_storage.data);
-            }
-
-            [[nodiscard]] alloc_details& as_alloc_details() noexcept {
-                return *reinterpret_cast<alloc_details*>(&m_storage.data);
-            }
-
-            [[nodiscard]] const_pointer allocated_data() const noexcept {
-                return as_alloc_details().data;
-            }
-
-            [[nodiscard]] pointer allocated_data() noexcept {
-                return as_alloc_details().data;
-            }
-
-            void init_alloc_details(const pointer data, const size_t size, const size_t alignment) noexcept {
-                ::new (&as_alloc_details()) alloc_details{data, size, alignment};
-                m_storage.allocated = true;
-            }
-
-            [[nodiscard]] auto allocate(const size_t size, const size_t alignment) noexcept(
-              noexcept(get_allocator().allocate_bytes(size, alignment))) {
-                return get_allocator().allocate_bytes(size, alignment);
-            }
-
-            void unchecked_deallocate() noexcept {
-                get_allocator().deallocate_bytes(allocated_data(), allocated_size(), allocated_alignment());
-            }
-        };
-
-
-
-
-
         template <typename From, typename To>
         inline constexpr bool is_safely_convertible_v = !stl::is_reference_v<To> || stl::is_reference_v<From>;
 
@@ -248,17 +97,15 @@ namespace webpp::istl {
             // Pre-condition: A call is stored in this object.
             R operator()(Args... args) noexcept(IsNoexcept) {
                 auto& obj = *static_cast<Function*>(this);
-                return (*obj.caller())(obj.data_addr(), static_cast<Args&&>(args)...);
+                return obj.call(static_cast<Args&&>(args)...);
             }
 
 
           protected:
-            using const_signature = R(Args...) const noexcept(IsNoexcept);
-            using mut_signature   = R(Args...) noexcept(IsNoexcept);
-            using call_type       = R(void*, Args...) noexcept(IsNoexcept);
-            using call_ptr        = stl::add_pointer_t<call_type>;
-            using return_type     = R;
-            using function_type   = Function;
+            using call_type     = R(void*, Args...) noexcept(IsNoexcept);
+            using call_ptr      = stl::add_pointer_t<call_type>;
+            using return_type   = R;
+            using function_type = Function;
 
             template <typename Callable>
             using functor_object_type =
@@ -290,16 +137,14 @@ namespace webpp::istl {
             // Pre-condition: A call is stored in this object.
             R operator()(Args... args) const noexcept(IsNoexcept) {
                 auto& obj = *static_cast<const Function*>(this);
-                return obj.m_delegate.call(obj.data_addr(), static_cast<Args&&>(args)...);
+                return obj.call(static_cast<Args&&>(args)...);
             }
 
           protected:
-            using const_signature = R(Args...) const noexcept(IsNoexcept);
-            using mut_signature   = R(Args...) noexcept(IsNoexcept);
-            using call_type       = R(void*, Args...) noexcept(IsNoexcept);
-            using call_ptr        = stl::add_pointer_t<call_type>;
-            using return_type     = R;
-            using function_type   = Function;
+            using call_type     = R(void*, Args...) noexcept(IsNoexcept);
+            using call_ptr      = stl::add_pointer_t<call_type>;
+            using return_type   = R;
+            using function_type = Function;
 
             template <typename Callable>
             using functor_object_type =
@@ -435,8 +280,7 @@ namespace webpp::istl {
 
         template <typename Signature2 = Signature, typename Alloc2 = Alloc>
             requires(!is_movable_v<Signature2> && base::template is_convertible_v<function<Signature2>>)
-        constexpr function&
-        operator=(function<Signature2, Alloc2>&& other) noexcept(noexcept(this->assign(stl::move(other)))) {
+        constexpr function& operator=(function<Signature2, Alloc2>&& other) {
             assign(stl::move(other));
             return *this;
         }
@@ -448,7 +292,7 @@ namespace webpp::istl {
 
         template <typename Callable>
             requires(!is_function_v<Callable> && base::template is_convertible_v<Callable>)
-        constexpr function& operator=(Callable call) noexcept(noexcept(this->assign(stl::move(call)))) {
+        constexpr function& operator=(Callable call) {
             assign(stl::move(call));
             return *this;
         }
@@ -494,6 +338,16 @@ namespace webpp::istl {
             }
         }
 
+
+        template <typename Callable>
+        constexpr auto get_allocator_for() noexcept {
+            using object_type      = functor_object_type<Callable>;
+            using new_alloc_traits = typename alloc_traits::template rebind_traits<object_type>;
+            using new_alloc_type   = typename new_alloc_traits::allocator_type;
+            return new_alloc_type{alloc};
+        }
+
+
       private:
         using call_type          = typename base::call_type;
         using return_type        = typename base::return_type;
@@ -535,22 +389,9 @@ namespace webpp::istl {
             action_runner() = details::run_action<function_type, Callable>;
         }
 
-        constexpr void reset_callers() noexcept {
-            caller()        = nullptr;
-            action_runner() = nullptr;
-        }
-
 
         [[nodiscard]] constexpr void* callable_ptr() const noexcept {
             return static_cast<void*>(&functor_ptr().obj);
-        }
-
-        template <typename Callable>
-        constexpr auto get_allocator() noexcept {
-            using object_type      = functor_object_type<Callable>;
-            using new_alloc_traits = typename alloc_traits::template rebind_traits<object_type>;
-            using new_alloc_type   = typename new_alloc_traits::allocator_type;
-            return new_alloc_type{alloc};
         }
 
         template <typename Callable>
@@ -573,6 +414,12 @@ namespace webpp::istl {
                                                stl::forward<Args>(args)...);
         }
 
+        template <typename Callable>
+        constexpr void resize() {
+            deallocate();
+            allocate<Callable>();
+        }
+
         constexpr void destroy() {
             (*action_runner())(*this, ptr, nullptr, details::action_list::destroy);
         }
@@ -585,7 +432,7 @@ namespace webpp::istl {
         }
 
 
-        template <typename Callable, typename... Args>
+        template <typename... Args>
         constexpr return_type call(Args&&... args) const noexcept(base::is_noexcept) {
             return (*caller())(callable_ptr(), stl::forward<Args>(args)...);
         }
@@ -593,12 +440,6 @@ namespace webpp::istl {
 
         friend base;
         friend class function<typename base::mut_signature, Alloc>;
-
-        template <typename FunctionType, typename Callable>
-        friend constexpr void run_action(FunctionType&        func,
-                                         void* const          from,
-                                         void* const          to,
-                                         details::action_list action) noexcept;
 
         constexpr friend bool operator==(const function& f, stl::nullptr_t) noexcept {
             return !f;
@@ -626,12 +467,10 @@ namespace webpp::istl {
         }
 
         template <typename Callable>
-        constexpr void assign(Callable&& call) noexcept(
-          noexcept(m_storage.resize(sizeof(stl::decay_t<Callable>), alignof(stl::decay_t<Callable>)))) {
+        constexpr void assign(Callable&& call) {
             destroy();
+            resize<Callable>();
             set_callers<Callable>();
-            m_storage.resize(sizeof(stl::decay_t<Callable>), alignof(stl::decay_t<Callable>));
-
             construct<Callable>(stl::forward<Callable>(call));
         }
     };
