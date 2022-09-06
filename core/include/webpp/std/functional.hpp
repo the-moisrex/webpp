@@ -35,15 +35,17 @@ namespace webpp::istl {
             using action_runner_ptr  = stl::add_pointer_t<action_runner_type>;
             using object_type        = CallableObject;
 
-            call_ptr          caller;
-            action_runner_ptr action_runner;
+            call_ptr          caller        = nullptr;
+            action_runner_ptr action_runner = nullptr;
             object_type       obj;
+
+            template <typename... OArgs>
+            constexpr functor_object(OArgs&&... args) : obj{stl::forward<OArgs>(args)...} {}
         };
 
 
         template <typename FunctionType, typename Callable>
-        constexpr void
-        run_action(FunctionType& func, void* const from, void* const to, details::action_list action) {
+        constexpr void run_action(FunctionType& func, void* from, void* to, details::action_list action) {
             using function_type         = FunctionType;
             using callable              = Callable;
             using functor_object_type   = typename function_type::template functor_object_type<callable>;
@@ -55,15 +57,14 @@ namespace webpp::istl {
 
             switch (action) {
                 case details::action_list::deallocate: {
-                    auto* functor_ptr = reinterpret_cast<functor_object_ptr>(from);
-                    auto  alloc       = func.template get_allocator_for<callable>();
+                    auto alloc = func.template get_allocator_for<callable>();
                     new_alloc_traits::deallocate(alloc, static_cast<pointer_type>(from), 1);
                     break;
                 }
                 case details::action_list::destroy: {
-                    auto* functor_ptr = reinterpret_cast<functor_object_ptr>(from);
-                    auto  alloc       = func.template get_allocator_for<callable>();
-                    new_alloc_traits::destroy(alloc, from);
+                    // auto* functor_ptr = reinterpret_cast<functor_object_ptr>(from);
+                    auto alloc = func.template get_allocator_for<callable>();
+                    new_alloc_traits::destroy(alloc, static_cast<pointer_type>(from));
                     break;
                 }
             }
@@ -464,8 +465,7 @@ namespace webpp::istl {
         friend class function<typename base::mut_signature, Alloc>;
 
         template <typename FunctionType, typename Callable>
-        friend constexpr void
-        details::run_action(FunctionType&, void* const, void* const, details::action_list);
+        friend constexpr void details::run_action(FunctionType&, void*, void*, details::action_list);
 
         constexpr friend bool operator==(const function& f, stl::nullptr_t) noexcept {
             return !f;
@@ -496,8 +496,8 @@ namespace webpp::istl {
         constexpr void assign(Callable&& call) {
             destroy();
             resize<Callable>();
-            set_callers<Callable>();
             construct<Callable>(stl::forward<Callable>(call));
+            set_callers<Callable>();
         }
     };
 
