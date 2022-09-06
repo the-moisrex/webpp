@@ -1,8 +1,8 @@
 // Created by moisrex on 12/10/19.
 
 #include "../core/include/webpp/utils/functional.hpp"
-#include "../core/include/webpp/std/functional.hpp"
 
+#include "../core/include/webpp/std/functional.hpp"
 #include "../core/include/webpp/utils/debounce.hpp"
 #include "common_pch.hpp"
 
@@ -81,8 +81,25 @@ TEST(FunctionalTests, TrailingMode) {
 
 
 TEST(FunctionalTests, FunctionWithAllocators) {
-    istl::function<int()> func;
-    func = [] { return 2;};
+    istl::function<int()> func = [i = 0]() mutable {
+        return ++i;
+    };
+    EXPECT_EQ(1, func());
     EXPECT_EQ(2, func());
+    EXPECT_EQ(3, func());
+    func = [] {
+        return 2;
+    };
+    EXPECT_EQ(2, func());
+    EXPECT_EQ(2, func());
+    func = [i = 0]() mutable {
+        return ++i;
+    };
+    EXPECT_EQ(1, func());
+    EXPECT_EQ(2, func());
+    EXPECT_EQ(3, func());
+    func = +[] {
+        return -369;
+    };
+    EXPECT_EQ(-369, func());
 }
-

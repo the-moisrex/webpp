@@ -222,8 +222,7 @@ namespace webpp::istl {
 
         template <typename Callable>
             requires(!is_function_v<Callable> && base::template is_convertible_v<Callable>)
-        constexpr function(Callable call, const Alloc& input_alloc = Alloc{}) noexcept(
-          stl::is_nothrow_constructible_v<decltype(this->m_storage), size_t, size_t, const Alloc&>)
+        constexpr function(Callable call, const Alloc& input_alloc = Alloc{})
           : function{stl::move(call), input_alloc, conv_tag_t{}} {}
 
         template <typename Member, typename Object>
@@ -486,12 +485,11 @@ namespace webpp::istl {
         }
 
         template <typename Callable>
-        constexpr function(Callable&& call, const Alloc& input_alloc, conv_tag_t) noexcept(
-          stl::is_nothrow_constructible_v<decltype(this->m_storage), size_t, size_t, const Alloc&>)
+        constexpr function(Callable&& call, const Alloc& input_alloc, conv_tag_t)
           : alloc{input_alloc},
             ptr{allocate<stl::decay_t<Callable>>()} {
-            set_callers<Callable>();
             construct<Callable>(stl::forward<Callable>(call));
+            set_callers<Callable>();
         }
 
         template <typename Callable>
