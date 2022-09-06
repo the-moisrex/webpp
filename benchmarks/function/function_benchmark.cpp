@@ -160,3 +160,71 @@ static void ISTLFunctionAssignBigCall(benchmark::State& state) {
     }
 }
 BENCHMARK(ISTLFunctionAssignBigCall);
+
+
+///////////////////////////////////////////////////////
+
+
+static void STDFunctionCopyAssignment(benchmark::State& state) {
+    stl::size_t                  c = 0;
+    stl::function<stl::size_t()> func, copy;
+    func = [i = ++c, big = stl::array<stl::size_t, 100>{}]() mutable {
+        big[i % 30] = i;
+        return big[i % 30];
+    };
+
+    for (auto _ : state) {
+        copy = func;
+        benchmark::DoNotOptimize(copy());
+    }
+}
+BENCHMARK(STDFunctionCopyAssignment);
+
+static void ISTLFunctionCopyAssignment(benchmark::State& state) {
+    stl::size_t                   c = 0;
+    istl::function<stl::size_t()> func, copy;
+    func = [i = ++c, big = stl::array<stl::size_t, 100>{}]() mutable {
+        big[i % 30] = i;
+        return big[i % 30];
+    };
+
+    for (auto _ : state) {
+        copy = func;
+        benchmark::DoNotOptimize(copy());
+    }
+}
+BENCHMARK(ISTLFunctionCopyAssignment);
+
+
+///////////////////////////////////////////////////////
+
+
+static void STDFunctionCopyCtor(benchmark::State& state) {
+    stl::size_t                  c = 0;
+    stl::function<stl::size_t()> func;
+    func = [i = ++c, big = stl::array<stl::size_t, 100>{}]() mutable {
+        big[i % 30] = i;
+        return big[i % 30];
+    };
+
+    for (auto _ : state) {
+        stl::function<stl::size_t()> copy{func};
+        benchmark::DoNotOptimize(copy());
+    }
+}
+BENCHMARK(STDFunctionCopyCtor);
+
+static void ISTLFunctionCopyCtor(benchmark::State& state) {
+    stl::size_t                   c = 0;
+    istl::function<stl::size_t()> func;
+    func = [i = ++c, big = stl::array<stl::size_t, 100>{}]() mutable {
+        big[i % 30] = i;
+        return big[i % 30];
+    };
+
+    for (auto _ : state) {
+        istl::function<stl::size_t()> copy{func};
+        benchmark::DoNotOptimize(copy());
+    }
+}
+BENCHMARK(ISTLFunctionCopyCtor);
