@@ -444,7 +444,9 @@ namespace webpp::istl {
         }
 
         constexpr void destroy() {
-            (*action_runner())(*this, ptr, nullptr, details::action_list::destroy);
+            if (ptr) {
+                (*action_runner())(*this, ptr, nullptr, details::action_list::destroy);
+            }
         }
 
         constexpr void deallocate() {
