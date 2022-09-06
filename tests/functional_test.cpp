@@ -105,4 +105,8 @@ TEST(FunctionalTests, FunctionWithAllocators) {
     istl::function<int()> func_clone;
     func_clone = func_copy;
     EXPECT_EQ(func_clone(), -369);
+    func_copy = nullptr;
+    EXPECT_FALSE(bool(func_copy));
+    func_copy = stl::move(func_clone);
+    EXPECT_EQ(func_copy(), -369);
 }
