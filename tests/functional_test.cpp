@@ -77,9 +77,6 @@ TEST(FunctionalTests, TrailingMode) {
 }
 
 
-
-
-
 TEST(FunctionalTests, FunctionWithAllocators) {
     istl::function<int()> func = [i = 0]() mutable {
         return ++i;

@@ -215,19 +215,21 @@ namespace webpp::istl {
 
 
 
-        constexpr function(const Alloc& input_alloc = {}) noexcept : alloc{input_alloc} {}
+        constexpr function(const allocator_type& input_alloc = {}) noexcept : alloc{input_alloc} {}
 
-        constexpr function(stl::nullptr_t, const Alloc& input_alloc = Alloc{}) noexcept
+        constexpr function(stl::nullptr_t, const allocator_type& input_alloc = allocator_type{}) noexcept
           : function{input_alloc} {}
 
         template <typename Callable>
-            requires(!is_function_v<Callable> && base::template is_convertible_v<Callable>)
-        constexpr function(Callable call, const Alloc& input_alloc = Alloc{})
+            requires(!stl::same_as<stl::decay_t<Callable>, allocator_type> && !is_function_v<Callable> &&
+                     base::template is_convertible_v<Callable>)
+        constexpr function(Callable call, const allocator_type& input_alloc = allocator_type{})
           : function{stl::move(call), input_alloc, conv_tag_t{}} {}
 
         template <typename Member, typename Object>
             requires requires(Member Object::*const mem_ptr) { function{stl::mem_fn(mem_ptr)}; }
-        constexpr function(Member Object::*const mem_ptr, const Alloc& input_alloc = Alloc{}) noexcept
+        constexpr function(Member Object::*const mem_ptr,
+                           const allocator_type& input_alloc = allocator_type{}) noexcept
           : function{input_alloc} {
             if (mem_ptr) {
                 *this = stl::mem_fn(mem_ptr);
@@ -247,10 +249,15 @@ namespace webpp::istl {
             other.ptr = nullptr;
         }
 
-        template <typename Signature2 = Signature, typename Alloc2 = Alloc>
-            requires(!is_movable_v<Signature2> && base::template is_convertible_v<function<Signature2>>)
-        constexpr function(function<Signature2, Alloc2>&& other, const Alloc& input_alloc = Alloc{}) noexcept(
-          stl::is_nothrow_constructible_v<function, decltype(other), const Alloc&, conv_tag_t>)
+        template <typename Signature2 = Signature, typename Alloc2 = allocator_type>
+            requires(!stl::same_as<stl::decay_t<Signature2>, allocator_type> && !is_movable_v<Signature2> &&
+                     base::template is_convertible_v<function<Signature2>>)
+        constexpr function(function<Signature2, Alloc2>&& other,
+                           const allocator_type&          input_alloc =
+                             allocator_type{}) noexcept(stl::is_nothrow_constructible_v<function,
+                                                                                        decltype(other),
+                                                                                        const allocator_type&,
+                                                                                        conv_tag_t>)
           : function{stl::move(other), input_alloc, conv_tag_t{}} {}
 
         constexpr function& operator=(function&& other) noexcept = default;
@@ -287,7 +294,7 @@ namespace webpp::istl {
             return *this;
         }
 
-        template <typename Signature2 = Signature, typename Alloc2 = Alloc>
+        template <typename Signature2 = Signature, typename Alloc2 = allocator_type>
             requires(!is_movable_v<Signature2> && base::template is_convertible_v<function<Signature2>>)
         constexpr function& operator=(function<Signature2, Alloc2>&& other) {
             assign(stl::move(other));
@@ -463,7 +470,7 @@ namespace webpp::istl {
 
 
         friend base;
-        friend class function<typename base::mut_signature, Alloc>;
+        // friend struct function<typename base::mut_signature, Alloc>;
 
         template <typename FunctionType, typename Callable>
         friend constexpr void details::run_action(FunctionType&, void*, void*, details::action_list);
@@ -485,7 +492,7 @@ namespace webpp::istl {
         }
 
         template <typename Callable>
-        constexpr function(Callable&& call, const Alloc& input_alloc, conv_tag_t)
+        constexpr function(Callable&& call, const allocator_type& input_alloc, conv_tag_t)
           : alloc{input_alloc},
             ptr{allocate<stl::decay_t<Callable>>()} {
             construct<Callable>(stl::forward<Callable>(call));

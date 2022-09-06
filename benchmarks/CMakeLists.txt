@@ -6,16 +6,17 @@ if (IS_GCC OR IS_CLANG)
     set(OPTIMIZATION_FLAGS "-s" "-Ofast" "-flto" "-DNDEBUG" "-Qy" "-ffunction-sections" "-fdata-sections" "-Wl,--gc-sections")
     if (NATIVE_ARCH AND IS_GCC)
         set(OPTIMIZATION_FLAGS "${OPTIMIZATION_FLAGS}" "-march=native" "-mtune=native")
-    endif()
-else()
+    endif ()
+else ()
     message(ERROR "We don't know how to optimize benchmarks for your compiler, please helps us do it.")
-endif()
+endif ()
 
 
 set(FILE_SOURCES
         str_find/str_find_benchmark.cpp
         equals/equals_benchmark.cpp
         iequals/iequals_benchmark.cpp
+        function/function_benchmark.cpp
         tolower/tolower_benchmark.cpp
         islower/islower_benchmark.cpp
         ip/ipv4_benchmark.cpp
@@ -94,9 +95,9 @@ target_compile_features(${exec_name} PUBLIC
 
 
 # optimize the file size
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(${exec_name} PUBLIC ${OPTIMIZATION_FLAGS})
-endif()
+endif ()
 
 target_precompile_headers(${exec_name} PUBLIC ${FILE_PCH})
 
