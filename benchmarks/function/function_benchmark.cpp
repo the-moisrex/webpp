@@ -106,13 +106,25 @@ static void ISTLFunctionAssignCallPMR(benchmark::State& state) {
 }
 BENCHMARK(ISTLFunctionAssignCallPMR);
 
+static void ISTLFunctionAssignCall(benchmark::State& state) {
+    int                   c = 0;
+    istl::function<int()> func;
+    for (auto _ : state) {
+        func = [i = ++c]() mutable {
+            return ++i;
+        };
+        benchmark::DoNotOptimize(func());
+    }
+}
+BENCHMARK(ISTLFunctionAssignCall);
+
 ///////////////////////////////////////////////////////////
 
 static void STLFunctionAssignBigCall(benchmark::State& state) {
     stl::size_t                  c = 0;
     std::function<stl::size_t()> func;
     for (auto _ : state) {
-        func = [i = ++c, big = stl::array<stl::size_t, 30>{}]() mutable {
+        func = [i = ++c, big = stl::array<stl::size_t, 100>{}]() mutable {
             big[i % 30] = i;
             return big[i % 30];
         };
@@ -122,14 +134,12 @@ static void STLFunctionAssignBigCall(benchmark::State& state) {
 BENCHMARK(STLFunctionAssignBigCall);
 
 static void ISTLFunctionAssignBigCallPMR(benchmark::State& state) {
-    stl::size_t                         c = 0;
-    stl::array<stl::byte, 100>          buff{};
-    stl::pmr::monotonic_buffer_resource res{buff.begin(), buff.size()};
-    stl::pmr::polymorphic_allocator     alloc{&res};
+    stl::size_t                     c = 0;
+    stl::pmr::polymorphic_allocator alloc;
 
     istl::pmr::function<stl::size_t()> func{alloc};
     for (auto _ : state) {
-        func = [i = ++c, big = stl::array<stl::size_t, 30>{}]() mutable {
+        func = [i = ++c, big = stl::array<stl::size_t, 100>{}]() mutable {
             big[i % 30] = i;
             return big[i % 30];
         };
@@ -137,3 +147,16 @@ static void ISTLFunctionAssignBigCallPMR(benchmark::State& state) {
     }
 }
 BENCHMARK(ISTLFunctionAssignBigCallPMR);
+
+static void ISTLFunctionAssignBigCall(benchmark::State& state) {
+    stl::size_t                   c = 0;
+    istl::function<stl::size_t()> func;
+    for (auto _ : state) {
+        func = [i = ++c, big = stl::array<stl::size_t, 100>{}]() mutable {
+            big[i % 30] = i;
+            return big[i % 30];
+        };
+        benchmark::DoNotOptimize(func());
+    }
+}
+BENCHMARK(ISTLFunctionAssignBigCall);

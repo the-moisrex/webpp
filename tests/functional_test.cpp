@@ -99,4 +99,10 @@ TEST(FunctionalTests, FunctionWithAllocators) {
         return -369;
     };
     EXPECT_EQ(-369, func());
+
+    istl::function<int()> func_copy = func;
+    EXPECT_EQ(func_copy(), -369);
+    istl::function<int()> func_clone;
+    func_clone = func_copy;
+    EXPECT_EQ(func_clone(), -369);
 }

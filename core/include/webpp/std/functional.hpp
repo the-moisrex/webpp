@@ -18,7 +18,7 @@ namespace webpp::istl {
     namespace details {
 
 
-        enum struct action_list { deallocate, destroy };
+        enum struct action_list { deallocate, destroy, copy };
 
         // this is the type that gets stored in the allocated places with the allocator
         template <typename FunctionType,
@@ -28,10 +28,9 @@ namespace webpp::istl {
                   typename... Args>
         struct functor_object {
             using function_type      = FunctionType;
-            using function_ref       = stl::add_lvalue_reference_t<function_type>;
             using call_type          = R(void*, Args...) noexcept(IsNoexcept);
             using call_ptr           = stl::add_pointer_t<call_type>;
-            using action_runner_type = void(function_ref, void*, void*, action_list);
+            using action_runner_type = void(function_type const&, void*, void*, action_list);
             using action_runner_ptr  = stl::add_pointer_t<action_runner_type>;
             using object_type        = CallableObject;
 
@@ -39,32 +38,47 @@ namespace webpp::istl {
             action_runner_ptr action_runner = nullptr;
             object_type       obj;
 
+            constexpr functor_object(functor_object const&)     = default;
+            constexpr functor_object(functor_object&&) noexcept = default;
+
             template <typename... OArgs>
+                requires((!stl::same_as<stl::decay_t<OArgs>, functor_object> && ...) &&
+                         stl::is_constructible_v<object_type, OArgs...>)
             constexpr functor_object(OArgs&&... args) : obj{stl::forward<OArgs>(args)...} {}
         };
 
 
         template <typename FunctionType, typename Callable>
-        constexpr void run_action(FunctionType& func, void* from, void* to, details::action_list action) {
+        constexpr void
+        run_action(FunctionType const& func, void* from, void* to, details::action_list action) {
             using function_type         = FunctionType;
+            using function_ptr          = stl::add_pointer_t<function_type>;
             using callable              = Callable;
             using functor_object_type   = typename function_type::template functor_object_type<callable>;
-            using functor_object_ptr    = typename function_type::template functor_object_ptr<callable>;
             using function_alloc_traits = typename function_type::alloc_traits;
             using new_alloc_traits =
               typename function_alloc_traits::template rebind_traits<functor_object_type>;
             using pointer_type = typename new_alloc_traits::pointer;
+            using alloc_type   = typename new_alloc_traits::allocator_type;
 
             switch (action) {
                 case details::action_list::deallocate: {
-                    auto alloc = func.template get_allocator_for<callable>();
+                    alloc_type alloc = func.template get_allocator_for<callable>();
                     new_alloc_traits::deallocate(alloc, static_cast<pointer_type>(from), 1);
                     break;
                 }
                 case details::action_list::destroy: {
                     // auto* functor_ptr = reinterpret_cast<functor_object_ptr>(from);
-                    auto alloc = func.template get_allocator_for<callable>();
+                    alloc_type alloc = func.template get_allocator_for<callable>();
                     new_alloc_traits::destroy(alloc, static_cast<pointer_type>(from));
+                    break;
+                }
+                case details::action_list::copy: {
+                    auto* to_ptr     = static_cast<function_ptr>(to);
+                    auto  alloc      = to_ptr->template get_allocator_for<callable>();
+                    to_ptr->ptr      = new_alloc_traits::allocate(alloc, 1);
+                    auto* source_ptr = func.template functor_ptr<callable>();
+                    new_alloc_traits::construct(alloc, static_cast<pointer_type>(to_ptr->ptr), *source_ptr);
                     break;
                 }
             }
@@ -236,9 +250,16 @@ namespace webpp::istl {
             }
         }
 
-        // todo: see if we can make it copyable
-        function(const function&)            = delete;
-        function& operator=(const function&) = delete;
+        constexpr function(const function& other) : alloc{other.alloc} {
+            if (other.ptr) {
+                other.clone_to(this);
+            }
+        }
+
+        constexpr function& operator=(const function& other) {
+            function(other).swap(*this);
+            return *this;
+        }
 
         // move ctor
         template <typename Signature2 = Signature>
@@ -308,8 +329,8 @@ namespace webpp::istl {
 
         template <typename Callable>
             requires(!is_function_v<Callable> && base::template is_convertible_v<Callable>)
-        constexpr function& operator=(Callable call) {
-            assign(stl::move(call));
+        constexpr function& operator=(Callable callee) {
+            assign(stl::move(callee));
             return *this;
         }
 
@@ -361,8 +382,7 @@ namespace webpp::istl {
         using return_type        = typename base::return_type;
         using call_ptr           = stl::add_pointer_t<call_type>;
         using function_type      = typename base::function_type;
-        using function_ref       = stl::add_lvalue_reference_t<function_type>;
-        using action_runner_type = void(function_ref, void*, void*, details::action_list);
+        using action_runner_type = void(function_type const&, void*, void*, details::action_list);
         using action_runner_ptr  = stl::add_pointer_t<action_runner_type>;
 
         template <typename Callable>
@@ -392,6 +412,10 @@ namespace webpp::istl {
             return functor_ptr()->action_runner;
         }
 
+        [[nodiscard]] constexpr action_runner_ptr& action_runner() const noexcept {
+            return functor_ptr()->action_runner;
+        }
+
         [[nodiscard]] constexpr call_ptr& caller() noexcept {
             return functor_ptr()->caller;
         }
@@ -412,7 +436,7 @@ namespace webpp::istl {
         }
 
         template <typename Callable>
-        constexpr auto get_allocator_for() noexcept {
+        constexpr auto get_allocator_for() const noexcept {
             using object_type      = functor_object_type<Callable>;
             using new_alloc_traits = typename alloc_traits::template rebind_traits<object_type>;
             using new_alloc_type   = typename new_alloc_traits::allocator_type;
@@ -455,6 +479,11 @@ namespace webpp::istl {
             }
         }
 
+        template <typename FuncType>
+        constexpr void clone_to(FuncType* to) const {
+            (*action_runner())(*this, nullptr, static_cast<void*>(to), details::action_list::copy);
+        }
+
         constexpr void deallocate() {
             if (bool(*this)) {
                 (*action_runner())(*this, ptr, nullptr, details::action_list::destroy); // todo
@@ -473,7 +502,7 @@ namespace webpp::istl {
         // friend struct function<typename base::mut_signature, Alloc>;
 
         template <typename FunctionType, typename Callable>
-        friend constexpr void details::run_action(FunctionType&, void*, void*, details::action_list);
+        friend constexpr void details::run_action(FunctionType const&, void*, void*, details::action_list);
 
         constexpr friend bool operator==(const function& f, stl::nullptr_t) noexcept {
             return !f;
