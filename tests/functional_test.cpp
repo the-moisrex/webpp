@@ -109,4 +109,14 @@ TEST(FunctionalTests, FunctionWithAllocators) {
     EXPECT_FALSE(bool(func_copy));
     func_copy = stl::move(func_clone);
     EXPECT_EQ(func_copy(), -369);
+
+    istl::function<int()> func2 = [i = 10ul, big = stl::array<stl::size_t, 100>{}]() mutable {
+        ++i;
+        big[i % 30] = i;
+        return big[i % 30];
+    };
+    func = func2;
+    EXPECT_EQ(1, func());
+    EXPECT_EQ(2, func());
+    EXPECT_EQ(3, func());
 }
