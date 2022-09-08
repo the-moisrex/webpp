@@ -115,8 +115,9 @@ TEST(FunctionalTests, FunctionWithAllocators) {
         big[i % 30] = i;
         return big[i % 30];
     };
+    EXPECT_EQ(11, func2());
     func = func2;
-    EXPECT_EQ(1, func());
-    EXPECT_EQ(2, func());
-    EXPECT_EQ(3, func());
+    EXPECT_EQ(12, func());
+    EXPECT_EQ(13, func());
+    EXPECT_EQ(14, func());
 }
