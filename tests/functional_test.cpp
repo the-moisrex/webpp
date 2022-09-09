@@ -101,6 +101,7 @@ TEST(FunctionalTests, FunctionWithAllocators) {
     EXPECT_EQ(-369, func());
 
     istl::function<int()> func_copy = func;
+    EXPECT_EQ(-369, func());
     EXPECT_EQ(func_copy(), -369);
     istl::function<int()> func_clone;
     func_clone = func_copy;
@@ -116,8 +117,9 @@ TEST(FunctionalTests, FunctionWithAllocators) {
         return big[i % 30];
     };
     EXPECT_EQ(11, func2());
+    EXPECT_EQ(-369, func());
     func = func2;
+    EXPECT_EQ(12, func2());
     EXPECT_EQ(12, func());
     EXPECT_EQ(13, func());
-    EXPECT_EQ(14, func());
 }

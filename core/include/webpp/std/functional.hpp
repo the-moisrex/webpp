@@ -35,7 +35,7 @@ namespace webpp::istl {
             using call_ptr           = stl::add_pointer_t<call_type>;
             using action_runner_type = void(function_type const&, void*, action_list);
             using action_runner_ptr  = stl::add_pointer_t<action_runner_type>;
-            using object_type        = CallableObject;
+            using object_type        = stl::decay_t<CallableObject>;
 
             call_ptr          caller        = FunctionType::template call_stub<CallableObject>;
             action_runner_ptr action_runner = run_action<FunctionType, CallableObject>;
@@ -58,13 +58,12 @@ namespace webpp::istl {
         constexpr void run_action(FunctionType const& func, void* other, details::action_list action) {
             using function_type         = FunctionType;
             using function_ptr          = stl::add_pointer_t<function_type>;
-            using callable              = Callable;
+            using callable              = stl::decay_t<Callable>;
             using functor_object_type   = typename function_type::template functor_object_type<callable>;
             using function_alloc_traits = typename function_type::alloc_traits;
             using new_alloc_traits =
               typename function_alloc_traits::template rebind_traits<functor_object_type>;
-            using pointer_type = typename new_alloc_traits::pointer;
-            using alloc_type   = typename new_alloc_traits::allocator_type;
+            using alloc_type = typename new_alloc_traits::allocator_type;
 
             switch (action) {
                 case details::action_list::deallocate: {
@@ -79,28 +78,25 @@ namespace webpp::istl {
                     break;
                 }
                 case details::action_list::get_size: {
-                    *static_cast<stl::size_t*>(other) = sizeof(func);
+                    *static_cast<stl::size_t*>(other) = sizeof(functor_object_type);
                     break;
                 }
                 case details::action_list::copy: {
                     auto* to_ptr = static_cast<function_ptr>(other);
-                    auto  alloc  = to_ptr->template get_allocator_for<callable>();
                     if (to_ptr->ptr) {
                         stl::size_t const to_size = to_ptr->functor_size();
-                        if (to_size != sizeof(func)) {
-                            to_ptr->destroy();
+                        to_ptr->destroy();
+                        if (to_size != sizeof(functor_object_type)) {
                             to_ptr->deallocate();
-                            to_ptr->ptr = new_alloc_traits::allocate(alloc, 1);
-                        } else {
-                            to_ptr->destroy();
+                            to_ptr->ptr = to_ptr->template allocate<callable>();
                         }
                     } else {
-                        to_ptr->ptr = new_alloc_traits::allocate(alloc, 1);
+                        to_ptr->ptr = to_ptr->template allocate<callable>();
                     }
-                    auto* source_ptr = func.template functor_ptr<callable>();
+                    const auto* source_ptr = func.template functor_ptr<callable>();
 
                     // copy constructing
-                    new_alloc_traits::construct(alloc, static_cast<pointer_type>(to_ptr->ptr), *source_ptr);
+                    to_ptr->template construct<callable>(*source_ptr);
                     break;
                 }
             }
@@ -251,7 +247,7 @@ namespace webpp::istl {
 
 
         // nullptr state
-        constexpr function(const allocator_type& input_alloc = {}) noexcept : alloc{input_alloc} {}
+        constexpr function(const allocator_type& input_alloc = {}) noexcept : alloc{input_alloc}, ptr{nullptr} {}
 
         // nullptr state
         constexpr function(stl::nullptr_t, const allocator_type& input_alloc = allocator_type{}) noexcept
@@ -259,9 +255,7 @@ namespace webpp::istl {
 
         // member function
         template <typename Member, typename Object>
-            requires requires(Member Object::*const mem_ptr) {
-                function{stl::mem_fn(mem_ptr)};
-            }
+            requires requires(Member Object::*const mem_ptr) { function{stl::mem_fn(mem_ptr)}; }
         constexpr function(Member Object::*const mem_ptr,
                            const allocator_type& input_alloc = allocator_type{}) noexcept
           : function{input_alloc} {
@@ -271,11 +265,9 @@ namespace webpp::istl {
         }
 
         // copy constructor
-        constexpr function(const function& other) : alloc{other.alloc} {
+        constexpr function(const function& other) : alloc{other.alloc}, ptr{nullptr} {
             if (other.ptr) {
                 other.clone_to(this);
-            } else {
-                ptr = nullptr;
             }
         }
 
@@ -395,9 +387,7 @@ namespace webpp::istl {
         }
 
         template <typename Member, typename Object>
-            requires requires(Member Object::*const mem_ptr) {
-                function{stl::mem_fn(mem_ptr)};
-            }
+            requires requires(Member Object::*const mem_ptr) { function{stl::mem_fn(mem_ptr)}; }
         constexpr function& operator=(Member Object::*const mem_ptr) noexcept {
             *this = mem_ptr ? stl::mem_fn(mem_ptr) : nullptr;
             return *this;
@@ -507,9 +497,7 @@ namespace webpp::istl {
             using new_alloc_traits = typename alloc_traits::template rebind_traits<object_type>;
             using new_alloc_type   = typename new_alloc_traits::allocator_type;
             new_alloc_type new_alloc{alloc};
-            return new_alloc_traits::construct(new_alloc,
-                                               functor_ptr<Callable>(),
-                                               stl::forward<Args>(args)...);
+            new_alloc_traits::construct(new_alloc, functor_ptr<Callable>(), stl::forward<Args>(args)...);
         }
 
         constexpr inline void destroy() {
@@ -600,7 +588,7 @@ namespace webpp::istl {
         };
 
         template <typename R, typename T, bool IsNoexcept, typename... Args>
-        struct guide_helper<R (T::*)(Args...)& noexcept(IsNoexcept)> {
+        struct guide_helper<R (T::*)(Args...) & noexcept(IsNoexcept)> {
             using type = R(Args...) noexcept(IsNoexcept);
         };
 
@@ -610,7 +598,7 @@ namespace webpp::istl {
         };
 
         template <typename R, typename T, bool IsNoexcept, typename... Args>
-        struct guide_helper<R (T::*)(Args...) const& noexcept(IsNoexcept)> {
+        struct guide_helper<R (T::*)(Args...) const & noexcept(IsNoexcept)> {
             using type = R(Args...) const noexcept(IsNoexcept);
         };
 
