@@ -51,6 +51,11 @@ namespace webpp::istl {
               : caller{FunctionType::template call_stub<CallableObject>},
                 action_runner{run_action<FunctionType, CallableObject>},
                 obj{stl::forward<OArgs>(args)...} {}
+
+
+            constexpr inline R operator()(Args... args) noexcept(IsNoexcept) {
+                return (*caller)(static_cast<void*>(&obj), std::forward<Args>(args)...);
+            }
         };
 
 
@@ -105,7 +110,7 @@ namespace webpp::istl {
 
         template <typename Callable, bool Const, bool IsNoexcept, typename R, typename... Args>
             requires(stl::is_invocable_r_v<R, Callable, Args...>)
-        constexpr inline R call_stub(void* const data, Args... args) noexcept(IsNoexcept) {
+        constexpr inline R call_stub(void* data, Args... args) noexcept(IsNoexcept) {
             using callable_decay = stl::decay_t<Callable>;
             using cast_to        = stl::conditional_t<Const, const callable_decay, callable_decay>;
             if constexpr (stl::is_void_v<R>) {
@@ -124,12 +129,6 @@ namespace webpp::istl {
 
         template <typename Function, bool IsNoexcept, typename R, typename... Args>
         struct base<Function, R(Args...) noexcept(IsNoexcept)> {
-            // Pre-condition: A call is stored in this object.
-            R operator()(Args... args) noexcept(IsNoexcept) {
-                auto& obj = *static_cast<Function*>(this);
-                return obj.call(static_cast<Args&&>(args)...);
-            }
-
 
           protected:
             using const_signature = R(Args...) const noexcept(IsNoexcept);
@@ -164,16 +163,9 @@ namespace webpp::istl {
                                                           R>);
         };
 
-        // todo: IsNoexcept can be combined with R(Args...), right?
         template <typename Function, bool IsNoexcept, typename R, typename... Args>
         struct base<Function, R(Args...) const noexcept(IsNoexcept)> {
 
-
-            // Pre-condition: A call is stored in this object.
-            R operator()(Args... args) const noexcept(IsNoexcept) {
-                auto& obj = *static_cast<const Function*>(this);
-                return obj.call(static_cast<Args&&>(args)...);
-            }
 
           protected:
             using const_signature = R(Args...) const noexcept(IsNoexcept);
@@ -426,6 +418,11 @@ namespace webpp::istl {
         }
 
 
+        template <typename... Args>
+        constexpr inline typename base::return_type operator()(Args&&... args) noexcept(base::is_noexcept) {
+            return call(stl::forward<Args>(args)...);
+        }
+
 
       private:
         using call_type          = typename base::call_type;
@@ -450,12 +447,12 @@ namespace webpp::istl {
 
         template <typename Callable = stl::byte>
         constexpr inline functor_object_ptr<Callable> functor_ptr() noexcept {
-            return reinterpret_cast<functor_object_ptr<Callable>>(ptr);
+            return static_cast<functor_object_ptr<Callable>>(ptr);
         }
 
         template <typename Callable = stl::byte>
         constexpr inline functor_object_ptr<Callable> functor_ptr() const noexcept {
-            return reinterpret_cast<functor_object_ptr<Callable>>(ptr);
+            return static_cast<functor_object_ptr<Callable>>(ptr);
         }
 
         [[nodiscard]] constexpr inline action_runner_ptr& action_runner() noexcept {
@@ -539,7 +536,7 @@ namespace webpp::istl {
 
         template <typename... Args>
         constexpr inline return_type call(Args&&... args) const noexcept(base::is_noexcept) {
-            return (caller())(callable_ptr(), stl::forward<Args>(args)...);
+            return (*functor_ptr())(stl::forward<Args>(args)...);
         }
 
 
