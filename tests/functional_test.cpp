@@ -3,6 +3,7 @@
 #include "../core/include/webpp/utils/functional.hpp"
 
 #include "../core/include/webpp/std/functional.hpp"
+#include "../core/include/webpp/std/memory_resource.hpp"
 #include "../core/include/webpp/utils/debounce.hpp"
 #include "common_pch.hpp"
 
@@ -77,7 +78,7 @@ TEST(FunctionalTests, TrailingMode) {
 }
 
 
-TEST(FunctionalTests, FunctionWithAllocators) {
+TEST(FunctionalTests, FunctionWithSTDAllocators) {
     istl::function<int()> func = [i = 0]() mutable {
         return ++i;
     };
@@ -118,7 +119,65 @@ TEST(FunctionalTests, FunctionWithAllocators) {
     };
     EXPECT_EQ(11, func2());
     EXPECT_EQ(-369, func());
+    // EXPECT_NE(func, func2);
     func = func2;
+    // EXPECT_EQ(func, func2);
+    EXPECT_EQ(12, func2());
+    EXPECT_EQ(12, func());
+    EXPECT_EQ(13, func());
+}
+
+
+TEST(FunctionalTests, FunctionWithPMRAllocators) {
+    stl::array<stl::byte, 500>          buff{};
+    stl::pmr::monotonic_buffer_resource res{buff.begin(), buff.size()};
+    stl::pmr::polymorphic_allocator     alloc{&res};
+
+    istl::pmr::function<int()> func{[i = 0]() mutable {
+                                        return ++i;
+                                    },
+                                    alloc};
+    EXPECT_EQ(1, func());
+    EXPECT_EQ(2, func());
+    EXPECT_EQ(3, func());
+    func = [] {
+        return 2;
+    };
+    EXPECT_EQ(2, func());
+    EXPECT_EQ(2, func());
+    func = [i = 0]() mutable {
+        return ++i;
+    };
+    EXPECT_EQ(1, func());
+    EXPECT_EQ(2, func());
+    EXPECT_EQ(3, func());
+    func = +[] {
+        return -369;
+    };
+    EXPECT_EQ(-369, func());
+
+    istl::pmr::function<int()> func_copy = func;
+    EXPECT_EQ(-369, func());
+    EXPECT_EQ(func_copy(), -369);
+    istl::pmr::function<int()> func_clone;
+    func_clone = func_copy;
+    EXPECT_EQ(func_clone(), -369);
+    func_copy = nullptr;
+    EXPECT_FALSE(bool(func_copy));
+    func_copy = stl::move(func_clone);
+    EXPECT_EQ(func_copy(), -369);
+
+    istl::pmr::function<int()> func2{[i = 10ul, big = stl::array<stl::size_t, 100>{}]() mutable {
+                                         ++i;
+                                         big[i % 30] = i;
+                                         return big[i % 30];
+                                     },
+                                     alloc};
+    EXPECT_EQ(11, func2());
+    EXPECT_EQ(-369, func());
+    // EXPECT_NE(func, func2);
+    func = func2;
+    // EXPECT_EQ(func, func2);
     EXPECT_EQ(12, func2());
     EXPECT_EQ(12, func());
     EXPECT_EQ(13, func());

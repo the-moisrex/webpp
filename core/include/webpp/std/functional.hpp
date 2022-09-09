@@ -247,7 +247,9 @@ namespace webpp::istl {
 
 
         // nullptr state
-        constexpr function(const allocator_type& input_alloc = {}) noexcept : alloc{input_alloc}, ptr{nullptr} {}
+        constexpr function(const allocator_type& input_alloc = {}) noexcept
+          : alloc{input_alloc},
+            ptr{nullptr} {}
 
         // nullptr state
         constexpr function(stl::nullptr_t, const allocator_type& input_alloc = allocator_type{}) noexcept
@@ -315,11 +317,13 @@ namespace webpp::istl {
             if (stl::addressof(other) == this) {
                 return *this;
             }
-            if constexpr (!alloc_traits::is_always_equal::value) {
-                if constexpr (alloc_traits::propagate_on_container_copy_assignment::value) {
-                    alloc = other.alloc;
-                } else if (alloc != other.alloc) {
-                    alloc = other.alloc;
+            if constexpr (stl::is_copy_assignable_v<allocator_type>) {
+                if constexpr (!alloc_traits::is_always_equal::value) {
+                    if constexpr (alloc_traits::propagate_on_container_copy_assignment::value) {
+                        alloc = other.alloc;
+                    } else if (alloc != other.alloc) {
+                        alloc = other.alloc;
+                    }
                 }
             }
             if (other.ptr) {
@@ -338,11 +342,15 @@ namespace webpp::istl {
                 return *this;
             }
             blowup();
-            if constexpr (!alloc_traits::is_always_equal::value) {
-                if constexpr (alloc_traits::propagate_on_container_move_assignment::value) {
-                    alloc = stl::move(other.alloc);
-                } else if (alloc != other.alloc) {
-                    alloc = stl::move(other.alloc);
+            if constexpr (stl::is_move_assignable_v<allocator_type>) {
+                if constexpr (!alloc_traits::is_always_equal::value) {
+                    if constexpr (alloc_traits::propagate_on_container_move_assignment::value) {
+                        alloc = stl::move(other.alloc);
+                    } else {
+                        if (alloc != other.alloc) {
+                            alloc = stl::move(other.alloc);
+                        }
+                    }
                 }
             }
             ptr       = other.ptr;
