@@ -36,7 +36,7 @@ namespace webpp::sql {
         using db_blob_type         = typename database_type::blob_type;                                       \
         using keywords             = typename database_type::keywords;                                        \
         using expression_sig       = void(local_string_type&, database_ref) const noexcept;                   \
-        using expression_allocator = traits::local_allocator<traits_type, name>;                              \
+        using expression_allocator = traits::local_allocator<traits_type, stl::byte>;                         \
         using expr_func            = istl::function<expression_sig, expression_allocator>;                    \
         using expr_vec             = stl::vector<expr_func, traits::local_allocator<traits_type, expr_func>>; \
         using subquery_type        = query_builder<DBType>;                                                   \
@@ -383,7 +383,7 @@ namespace webpp::sql {
 
 
         template <typename T>
-        static constexpr bool is_expression_v = istl::is_function_of_v<expression_sig, T>;
+        static constexpr bool is_expression_v = stl::is_invocable_v<T, local_string_type&, database_ref>;
 
         static constexpr auto LOG_CAT = "SQLBuilder";
 
@@ -732,11 +732,12 @@ namespace webpp::sql {
         template <typename Expr1, typename Expr2>
         constexpr query_builder& where(Expr1&& expr1, Expr2&& expr2) noexcept {
             using expr_type = details::expr_op_expr<database_type>;
+            using expr_data = typename expr_type::expr_data;
             where_clauses.clear();
-            where_clauses.push_back(
-              expressionify(expr_type{{.op         = expr_type::expr_data::operation::eq,
-                                       .left_expr  = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-                                       .right_expr = expressionify<Expr2>(stl::forward<Expr2>(expr2))}}));
+            where_clauses.push_back(expressionify(
+              expr_type{expr_data{.op         = expr_type::expr_data::operation::eq,
+                                  .left_expr  = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+                                  .right_expr = expressionify<Expr2>(stl::forward<Expr2>(expr2))}}));
             return *this;
         }
 
@@ -988,47 +989,34 @@ namespace webpp::sql {
             } else if constexpr (same_as<vtype, expr_func>) {
                 return forward<V>(val);
             } else if constexpr (is_expression_v<vtype>) {
-                return {stl::type_identity<vtype>{}, alloc::local_alloc_for<expr_func>(db), forward<V>(val)};
+                return {forward<V>(val), alloc::local_alloc_for<expr_func>(db)};
             } else if constexpr (same_as<vtype, db_float_type>) {
                 using expr_type = floating_expr<database_type>;
-                return {stl::type_identity<expr_type>{},
-                        alloc::local_alloc_for<expr_func>(db),
-                        expr_type{{.val = forward<V>(val)}}};
+                return {expr_type{{.val = forward<V>(val)}}, alloc::local_alloc_for<expr_func>(db)};
             } else if constexpr (same_as<vtype, db_integer_type>) {
                 using expr_type = integer_expr<database_type>;
-                return {stl::type_identity<expr_type>{},
-                        alloc::local_alloc_for<expr_func>(db),
-                        expr_type{{.val = forward<V>(val)}}};
+                return {expr_type{{.val = forward<V>(val)}}, alloc::local_alloc_for<expr_func>(db)};
             } else if constexpr (same_as<vtype, local_string_type>) {
                 using expr_type = string_expr<database_type>;
-                return {stl::type_identity<expr_type>{},
-                        alloc::local_alloc_for<expr_func>(db),
-                        expr_type{{.val = forward<V>(val)}}};
+                return {expr_type{{.val = forward<V>(val)}}, alloc::local_alloc_for<expr_func>(db)};
             } else if constexpr (same_as<vtype, bool>) {
                 using expr_type = bool_expr<database_type>;
-                return {stl::type_identity<expr_type>{},
-                        alloc::local_alloc_for<expr_func>(db),
-                        expr_type{{.val = val}}};
+                return {expr_type{{.val = val}}, alloc::local_alloc_for<expr_func>(db)};
             } else if constexpr (same_as<vtype, stl::nullptr_t>) {
                 using expr_type = null_expr<database_type>;
-                return {stl::type_identity<expr_type>{},
-                        alloc::local_alloc_for<expr_func>(db),
-                        expr_type{typename expr_type::expr_data{}}};
+                return {expr_type{typename expr_type::expr_data{}}, alloc::local_alloc_for<expr_func>(db)};
             } else if constexpr (stl::floating_point<vtype>) {
                 using expr_type = floating_expr<database_type>;
-                return {stl::type_identity<expr_type>{},
-                        alloc::local_alloc_for<expr_func>(db),
-                        expr_type{{.val = static_cast<db_float_type>(val)}}};
+                return {expr_type{{.val = static_cast<db_float_type>(val)}},
+                        alloc::local_alloc_for<expr_func>(db)};
             } else if constexpr (stl::integral<vtype>) {
                 using expr_type = integer_expr<database_type>;
-                return {stl::type_identity<expr_type>{},
-                        alloc::local_alloc_for<expr_func>(db),
-                        expr_type{{.val = static_cast<db_integer_type>(val)}}};
+                return {expr_type{{.val = static_cast<db_integer_type>(val)}},
+                        alloc::local_alloc_for<expr_func>(db)};
             } else if constexpr (istl::StringifiableOf<local_string_type, V>) {
                 using expr_type = string_expr<database_type>;
-                return {stl::type_identity<expr_type>{},
-                        alloc::local_alloc_for<expr_func>(db),
-                        expr_type{{.val = stringify(forward<V>(val))}}};
+                return {expr_type{{.val = stringify(forward<V>(val))}},
+                        alloc::local_alloc_for<expr_func>(db)};
             } else {
                 static_assert_false(V, "The specified type is not a valid SQL expression.");
             }

@@ -10,7 +10,6 @@ using namespace webpp::sql;
 using sql_db = sql_database<sqlite>;
 
 static_assert(SQLStatement<sqlite_statement>, "sqlite statement is not a statement.");
-static_assert(stl::is_copy_constructible_v<expression_interface<sql_db>>, "expr_ptr");
 
 TEST(Database, SQLiteWrapper) {
     sql_database<sqlite> db; // in memory database
