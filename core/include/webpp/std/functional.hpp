@@ -130,6 +130,10 @@ namespace webpp::istl {
         template <typename Function, bool IsNoexcept, typename R, typename... Args>
         struct base<Function, R(Args...) noexcept(IsNoexcept)> {
 
+            constexpr inline R operator()(Args... args) noexcept(IsNoexcept) {
+                return static_cast<Function*>(this)->call(stl::forward<Args>(args)...);
+            }
+
           protected:
             using const_signature = R(Args...) const noexcept(IsNoexcept);
             using mut_signature   = R(Args...) noexcept(IsNoexcept);
@@ -165,6 +169,10 @@ namespace webpp::istl {
 
         template <typename Function, bool IsNoexcept, typename R, typename... Args>
         struct base<Function, R(Args...) const noexcept(IsNoexcept)> {
+
+            constexpr inline R operator()(Args... args) noexcept(IsNoexcept) {
+                return static_cast<Function*>(this)->call(stl::forward<Args>(args)...);
+            }
 
 
           protected:
@@ -212,6 +220,60 @@ namespace webpp::istl {
 
     template <typename T>
     inline constexpr bool is_function_v = is_function<T>::value;
+
+    template <typename>
+    struct is_function_of : stl::false_type {
+        using return_type    = void;
+        using is_const       = stl::false_type;
+        using is_noexcept    = stl::false_type;
+        using allocator_type = void;
+        using input_args     = stl::tuple<>;
+        using signature      = void();
+    };
+
+    template <typename R, typename Alloc, typename... Args>
+    struct is_function_of<function<R(Args...) noexcept, Alloc>> : stl::true_type {
+        using return_type    = R;
+        using is_const       = stl::false_type;
+        using is_noexcept    = stl::true_type;
+        using allocator_type = Alloc;
+        using input_args     = stl::tuple<Args...>;
+        using signature      = R(Args...) noexcept;
+    };
+
+    template <typename R, typename Alloc, typename... Args>
+    struct is_function_of<function<R(Args...) const noexcept, Alloc>> : stl::true_type {
+        using return_type    = R;
+        using is_const       = stl::true_type;
+        using is_noexcept    = stl::true_type;
+        using allocator_type = Alloc;
+        using input_args     = stl::tuple<Args...>;
+        using signature      = R(Args...) const noexcept;
+    };
+
+    template <typename R, typename Alloc, typename... Args>
+    struct is_function_of<function<R(Args...) const, Alloc>> : stl::true_type {
+        using return_type    = R;
+        using is_const       = stl::true_type;
+        using is_noexcept    = stl::false_type;
+        using allocator_type = Alloc;
+        using input_args     = stl::tuple<Args...>;
+        using signature      = R(Args...) const;
+    };
+
+    template <typename R, typename Alloc, typename... Args>
+    struct is_function_of<function<R(Args...), Alloc>> : stl::true_type {
+        using return_type    = R;
+        using is_const       = stl::false_type;
+        using is_noexcept    = stl::false_type;
+        using allocator_type = Alloc;
+        using input_args     = stl::tuple<Args...>;
+        using signature      = R(Args...);
+    };
+
+    template <typename Signature, typename T>
+    inline constexpr bool is_function_of_v = stl::is_same_v<typename is_function_of<T>::signature, Signature>;
+
 
     // Move-only polymorphic function wrapper.
     template <typename Signature, typename Alloc = stl::allocator<stl::byte>>
@@ -417,11 +479,6 @@ namespace webpp::istl {
             return ptr != nullptr;
         }
 
-
-        template <typename... Args>
-        constexpr inline typename base::return_type operator()(Args&&... args) noexcept(base::is_noexcept) {
-            return call(stl::forward<Args>(args)...);
-        }
 
 
       private:
