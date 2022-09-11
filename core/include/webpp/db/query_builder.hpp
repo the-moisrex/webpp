@@ -732,12 +732,11 @@ namespace webpp::sql {
         template <typename Expr1, typename Expr2>
         constexpr query_builder& where(Expr1&& expr1, Expr2&& expr2) noexcept {
             using expr_type = details::expr_op_expr<database_type>;
-            using expr_data = typename expr_type::expr_data;
             where_clauses.clear();
-            where_clauses.push_back(expressionify(
-              expr_type{expr_data{.op         = expr_type::expr_data::operation::eq,
-                                  .left_expr  = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-                                  .right_expr = expressionify<Expr2>(stl::forward<Expr2>(expr2))}}));
+            where_clauses.push_back(
+              expressionify(expr_type{{.op         = expr_type::expr_data::operation::eq,
+                                       .left_expr  = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+                                       .right_expr = expressionify<Expr2>(stl::forward<Expr2>(expr2))}}));
             return *this;
         }
 
