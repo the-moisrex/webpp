@@ -177,6 +177,8 @@ namespace webpp::sql {
 
                 sqlite3_close(dummy);
             }
+#else
+            sqlcipher = "Unknown";
 #endif
         }
     };
