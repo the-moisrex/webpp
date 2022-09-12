@@ -94,10 +94,11 @@ TEST(Database, QueryBuilderTest) {
     });
 
 
-    auto query = db.table("settings") //
-                   .select("value")
-                   .where("name", "username");
-    EXPECT_EQ("select value from 'settings' where 'name' = 'username'", query.to_string());
+    auto query = db.table("settings");
+    query.select("value");
+    query.where("name", "username");
+    EXPECT_EQ("select value from 'settings' where 'name' = 'username'", query.to_string())
+      << query.to_string();
 }
 
 

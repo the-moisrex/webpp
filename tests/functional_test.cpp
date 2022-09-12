@@ -182,3 +182,55 @@ TEST(FunctionalTests, FunctionWithPMRAllocators) {
     EXPECT_EQ(12, func());
     EXPECT_EQ(13, func());
 }
+
+TEST(FunctionalTests, DoubleFreeFunction) {
+    stl::function<int()> func = [] {
+        return 100;
+    };
+
+    func.~function();
+    func.~function();
+    func.~function();
+    func.~function();
+
+    istl::function<int()> ifunc = [] {
+        return 100;
+    };
+
+    stl::array<stl::byte, 1000> buf{};
+    stl::pmr::monotonic_buffer_resource res{buf.begin(), buf.size()};
+    stl::pmr::polymorphic_allocator alloc{&res};
+    istl::pmr::function<int()> ifunc2 {stl::allocator_arg_t{}, alloc, [i = 9] () mutable{
+      return ++i;
+    }};
+    EXPECT_EQ(10, ifunc2());
+    EXPECT_EQ(11, ifunc2());
+    ifunc2 = ifunc;
+    EXPECT_EQ(100, ifunc2());
+    ifunc2.~function();
+    ifunc2.~function();
+    ifunc2.~function();
+
+    ifunc.~function();
+    ifunc.~function();
+    ifunc.~function();
+    ifunc.~function();
+
+    stl::pmr::vector<istl::pmr::function<int()>> vec;
+    vec.emplace_back([i = 0]() mutable {
+        return ++i;
+    });
+    struct item_type {
+        istl::pmr::function<int()> caller = [] {
+            return 20;
+        };
+        int operator()() {
+            return caller();
+        }
+    };
+    item_type item;
+    item.caller = item_type{};
+    EXPECT_EQ(20, item());
+    vec.emplace_back(istl::pmr::function<long()>(item));
+    EXPECT_EQ(vec.back()(), 20);
+}

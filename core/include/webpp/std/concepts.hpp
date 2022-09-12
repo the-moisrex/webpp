@@ -32,16 +32,6 @@ namespace webpp::istl {
     concept DefaultConstructible = stl::is_default_constructible_v<T>;
 
 
-    template <typename A>
-    concept Allocator = !stl::integral<A> && stl::default_initializable<A> && stl::copy_constructible<A> &&
-                        requires(A alloc, A alloc2) {
-        {alloc.allocate(1)};
-        {alloc.deallocate(nullptr, 1)};
-        {alloc == alloc2};
-        {alloc != alloc2};
-        typename A::value_type;
-    };
-
     /**
      * This concept always returns true. Use it for:
      *   - for explicitly saying that it does capture all

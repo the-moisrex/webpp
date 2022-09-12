@@ -75,7 +75,7 @@ namespace webpp::sql {
         }
 
         define_expression(string_expr, local_string_type val;) {
-            out.append(data.val);
+            db.quoted_escape(data.val, out);
         }
 
         define_expression(blob_expr, db_blob_type val;) {
@@ -97,11 +97,11 @@ namespace webpp::sql {
         }
 
         // op expr
+        constexpr inline stl::string_view unary_op_expr_op_strs[]{" + ", " - ", " ++", " --", " !"};
         define_expression(
           unary_op_expr, enum struct operation
           : stl::uint_fast8_t{plus, minus, incr, decr, negate, and_op, or_op, and_not, or_not} op;
           expr_func expr;) {
-            constexpr string_view_type op_strs[]{" + ", " - ", " ++", " --", " !"};
             switch (data.op) {
                 case expr_data::operation::and_op: {
                     out.append(keywords::and_word);
@@ -128,20 +128,29 @@ namespace webpp::sql {
                     break;
                 }
                 default: {
-                    out.append(op_strs[static_cast<stl::uint_fast8_t>(data.op)]);
+                    out.append(unary_op_expr_op_strs[static_cast<stl::uint_fast8_t>(data.op)]);
                 }
             }
             data.expr(out, db);
         }
 
         // expr op expr
+        constexpr inline stl::string_view expr_op_expr_op_strs[]{" + ",
+                                                                 " - ",
+                                                                 " * ",
+                                                                 " / ",
+                                                                 " % ",
+                                                                 " = ",
+                                                                 " != ",
+                                                                 " > ",
+                                                                 " < ",
+                                                                 " >= ",
+                                                                 " <= "};
         define_expression(expr_op_expr, enum struct operation
                           : stl::uint_fast8_t{add, sub, mul, div, modulo, eq, neq, gt, lt, ge, le} op;
                           expr_func left_expr, right_expr;) {
-            constexpr string_view_type
-              op_strs[]{" + ", " - ", " * ", " / ", " % ", " = ", " != ", " > ", " < ", " >= ", " <= "};
             data.left_expr(out, db);
-            out.append(op_strs[static_cast<stl::uint_fast8_t>(data.op)]);
+            out.append(expr_op_expr_op_strs[static_cast<stl::uint_fast8_t>(data.op)]);
             data.right_expr(out, db);
         }
 
