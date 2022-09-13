@@ -12,7 +12,7 @@ namespace webpp {
 
     // Name requirement: https://en.cppreference.com/w/cpp/named_req/Allocator
     template <typename A>
-    concept Allocator =
+    concept AllocatorType =
       requires {
           typename A::value_type;
           typename stl::allocator_traits<A>::pointer;
@@ -46,6 +46,9 @@ namespace webpp {
                        // {A a(stl::move(b))};
                    };
       };
+
+    template <typename A>
+    concept Allocator = AllocatorType<stl::remove_cvref_t<A>>;
 
     template <typename T, typename Alloc>
     concept AllocatorOf = Allocator<Alloc> && stl::is_same_v<typename Alloc::value_type, T>;

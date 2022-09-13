@@ -390,10 +390,9 @@ namespace webpp::istl {
         }
 
         // almost move ctor with a different allocator
-        // todo
-        template <typename Signature2, Allocator Alloc2>
+        template <typename Signature2, Allocator Alloc2, Allocator Alloc3>
             requires(!is_movable_v<Signature2> && is_convertible_v<function<Signature2>>)
-        constexpr explicit function(function<Signature2, Alloc2>&& other, const allocator_type& input_alloc)
+        constexpr explicit function(function<Signature2, Alloc2>&& other, const Alloc3& input_alloc)
           : alloc{input_alloc},
             ptr{other.ptr} {
             if (alloc != other.alloc) {
@@ -403,16 +402,18 @@ namespace webpp::istl {
             other.ptr = nullptr;
         }
 
-        template <typename Signature2 = Signature,
-                  Allocator Alloc2    = allocator_type,
-                  typename Alloc3     = allocator_type>
-            requires(not_alloc_v<Signature2> && !is_movable_v<stl::decay_t<Signature2>> &&
-                     is_convertible_v<function<Signature2>>)
+        // almost move ctor with a different allocator
+        template <typename Signature2, Allocator Alloc2, Allocator Alloc3>
+            requires(!is_movable_v<Signature2> && is_convertible_v<function<Signature2>>)
         constexpr function(stl::allocator_arg_t,
                            Alloc3 const&                  input_alloc,
                            function<Signature2, Alloc2>&& other)
           : alloc{input_alloc},
             ptr{other.ptr} {
+            if (alloc != other.alloc) {
+                ptr = nullptr;
+                other.move_to(this);
+            }
             other.ptr = nullptr;
         }
 
@@ -426,7 +427,7 @@ namespace webpp::istl {
             construct<Callable>(stl::forward<Callable>(call));
         }
 
-        template <typename Callable, Allocator Alloc2 = allocator_type>
+        template <typename Callable, Allocator Alloc2>
             requires(!stl::is_null_pointer_v<Callable> && not_alloc_v<Callable> && !is_function_v<Callable> &&
                      is_convertible_v<Callable>)
         constexpr function(stl::allocator_arg_t, Alloc2 const& input_alloc, Callable&& call)
@@ -439,8 +440,9 @@ namespace webpp::istl {
         template <typename Callable>
             requires(!stl::is_null_pointer_v<Callable> && not_alloc_v<Callable> && !is_function_v<Callable> &&
                      is_convertible_v<Callable> && stl::is_default_constructible_v<allocator_type>)
-        constexpr function(Callable&& call) : alloc{},
-                                              ptr{allocate<stl::decay_t<Callable>>()} {
+        constexpr function(Callable&& call) // NOLINT(bugprone-forwarding-reference-overload)
+          : alloc{},
+            ptr{allocate<stl::decay_t<Callable>>()} {
             construct<Callable>(stl::forward<Callable>(call));
         }
 
@@ -449,44 +451,44 @@ namespace webpp::istl {
             if (stl::addressof(other) == this) {
                 return *this;
             }
-            if constexpr (stl::is_copy_assignable_v<allocator_type>) {
-                if constexpr (!alloc_traits::is_always_equal::value) {
-                    if constexpr (alloc_traits::propagate_on_container_copy_assignment::value) {
-                        alloc = other.alloc;
-                    } else if (alloc != other.alloc) {
-                        alloc = other.alloc;
-                    }
-                }
-            }
-            if (other.ptr) {
-                other.clone_to(this);
-            } else {
-                blowup();
-            }
+            assign_alloc(other.alloc);
+            other.clone_to(this);
             return *this;
         }
 
         // move assignment operator
         template <typename Signature2 = Signature>
             requires(is_movable_v<Signature2>)
-        constexpr function& operator=(function<Signature2, Alloc>&& other) {
+        constexpr function& operator=(function<Signature2, Alloc>&& other) noexcept(
+          alloc_traits::propagate_on_container_move_assignment::value&&
+            stl::is_nothrow_move_assignable_v<allocator_type>) {
             if (addressof(other) == this) {
                 return *this;
             }
             blowup();
-            if constexpr (stl::is_move_assignable_v<allocator_type>) {
-                if constexpr (!alloc_traits::is_always_equal::value) {
-                    if constexpr (alloc_traits::propagate_on_container_move_assignment::value) {
-                        alloc = stl::move(other.alloc);
-                    } else {
-                        if (alloc != other.alloc) {
-                            alloc = stl::move(other.alloc);
-                        }
-                    }
+            if constexpr (alloc_traits::propagate_on_container_move_assignment::value) {
+                alloc = stl::move(other.alloc);
+                other.move_to(this);
+            } else if constexpr (alloc_traits::is_always_equal::value) {
+                ptr       = other.ptr;
+                other.ptr = nullptr;
+            } else {
+                if (alloc == other.alloc) {
+                    ptr       = other.ptr;
+                    other.ptr = nullptr;
+                } else {
+                    other.move_to(this);
                 }
             }
-            ptr       = other.ptr;
-            other.ptr = nullptr;
+            return *this;
+        }
+
+        // kinda copy assignment operator
+        // this doesn't use the other's allocator
+        template <typename Signature2 = Signature, Allocator Alloc2 = allocator_type>
+            requires(!stl::same_as<Alloc2, Alloc> && is_convertible_v<function<Signature2, Alloc2>>)
+        constexpr function& operator=(function<Signature2, Alloc2>&& other) {
+            other.move_to(this);
             return *this;
         }
 
@@ -495,10 +497,7 @@ namespace webpp::istl {
         template <typename Signature2 = Signature, Allocator Alloc2 = allocator_type>
             requires(!stl::same_as<Alloc2, Alloc> && is_convertible_v<function<Signature2, Alloc2>>)
         constexpr function& operator=(function<Signature2, Alloc2> const& other) {
-            // todo: this will make a function that points to another function, copy if possible
-            assign(other);
-            std::string str, str2;
-            str = str2;
+            other.clone_to(this);
             return *this;
         }
 
@@ -689,6 +688,11 @@ namespace webpp::istl {
                     to->ptr = to->allocate_size(from_size);
                 }
                 (*action_runner())(*this, static_cast<void*>(to), details::action_list::copy);
+            } else {
+                if (to->ptr) {
+                    to->destroy();
+                    to->deallocate();
+                }
             }
         }
 
@@ -712,6 +716,11 @@ namespace webpp::istl {
                 }
                 (*action_runner())(*this, static_cast<void*>(to), details::action_list::move);
                 ptr = nullptr;
+            } else {
+                if (to->ptr) {
+                    to->destroy();
+                    to->deallocate();
+                }
             }
         }
 
@@ -767,24 +776,21 @@ namespace webpp::istl {
         }
 
         template <Allocator Alloc2>
-        constexpr void assign_alloc(Alloc2&& alloc2) {
+        constexpr inline void assign_alloc(Alloc2&& alloc2) {
             if constexpr (stl::convertible_to<Alloc2, Alloc>) {
                 if constexpr ((stl::is_const_v<Alloc2> &&
-                               alloc_traits::propagate_on_container_copy_assignment) ||
+                               alloc_traits::propagate_on_container_copy_assignment::value) ||
                               (stl::is_rvalue_reference_v<Alloc2> &&
-                               alloc_traits::propagate_on_container_copy_assignment)) {
-                    if constexpr (!alloc_traits::is_always_equal) {
+                               alloc_traits::propagate_on_container_copy_assignment::value)) {
+                    if constexpr (!alloc_traits::is_always_equal::value) {
                         if (alloc != alloc2) {
                             // Propagating allocator cannot free existing storage so must
                             // deallocate it before replacing current allocator.
 
-                            // If this allocation throws there are no effects:
-                            auto* new_ptr = alloc_traits::allocate(alloc2, 1);
                             if (ptr) {
                                 destroy();
                                 deallocate();
                             }
-                            ptr = new_ptr;
                         }
                     }
                     alloc = stl::forward<Alloc2>(alloc2);
