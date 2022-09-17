@@ -1023,8 +1023,8 @@ namespace webpp::sql {
                         alloc::local_alloc_for<expr_func>(db)};
             } else if constexpr (istl::StringifiableOf<local_string_type, V>) {
                 using expr_type = string_expr<database_type>;
-                return {expr_type{{.val = stringify(forward<V>(val))}},
-                        alloc::local_alloc_for<expr_func>(db)};
+                return expr_func(expr_type{{.val = stringify(forward<V>(val))}},
+                                 alloc::local_alloc_for<expr_func>(db));
             } else {
                 static_assert_false(V, "The specified type is not a valid SQL expression.");
             }
@@ -1149,9 +1149,6 @@ namespace webpp::sql {
         }
 
         constexpr void serialize_insert(auto& out) const noexcept {
-            if (values.empty()) {
-                return;
-            }
             // todo: replace into
             // todo: insert or fail, or ignore, or replace, ... into
             out.append(keywords::insert);
@@ -1175,19 +1172,20 @@ namespace webpp::sql {
                 out.push_back(')');
             }
 
-            // join
-            // example: (1, 2, 3), (1, 2, 3), ...
-            auto       it     = values.begin();
-            const auto it_end = values.end();
-
-            using diff_type     = typename expr_vec::iterator::difference_type;
-            const auto col_size = static_cast<diff_type>(columns.size());
 
             if (select_stmt.valid()) {
                 // insert ... select
                 // manual join (code duplication)
                 select_stmt->to_string(out);
             } else {
+                // join
+                // example: (1, 2, 3), (1, 2, 3), ...
+                auto       it     = values.begin();
+                const auto it_end = values.end();
+
+                using diff_type     = typename expr_vec::iterator::difference_type;
+                const auto col_size = static_cast<diff_type>(columns.size());
+
                 out.append(keywords::values);
                 out.append(" (");
 

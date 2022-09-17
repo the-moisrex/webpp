@@ -343,21 +343,21 @@ namespace webpp::istl {
           : function{stl::allocator_arg_t{}, input_alloc, stl::mem_fn(mem_ptr)} {}
 
         // copy constructor
-        constexpr function(const function& other)
+        constexpr explicit function(const function& other)
           : alloc{alloc_traits::select_on_container_copy_construction(other.alloc)} {
             this->clone_from(&other);
         }
 
         // kinda copy constructor but with an allocator specified
         template <Allocator Alloc2 = allocator_type>
-        constexpr function(stl::allocator_arg_t, Alloc2 const& alloc2, const function& other)
+        constexpr explicit function(stl::allocator_arg_t, Alloc2 const& alloc2, const function& other)
           : alloc{alloc2} {
             this->clone_from(&other);
         }
 
         // kinda copy constructor but with an allocator specified
         template <Allocator Alloc2 = allocator_type>
-        constexpr function(const function& other, Alloc2 const& alloc2) : alloc{alloc2} {
+        constexpr explicit function(const function& other, Alloc2 const& alloc2) : alloc{alloc2} {
             this->clone_from(&other);
         }
 
@@ -431,8 +431,8 @@ namespace webpp::istl {
 
         // callable object constructor
         template <typename Callable>
-            requires(!stl::is_null_pointer_v<Callable> && not_alloc_v<Callable> && !is_function_v<Callable> &&
-                     is_convertible_v<Callable>)
+            requires(!stl::is_null_pointer_v<Callable> && not_alloc_v<Callable> &&
+                     !is_compatible_function_v<Callable> && is_convertible_v<Callable>)
         constexpr function(Callable&& call, const allocator_type& input_alloc)
           : alloc{input_alloc},
             ptr{allocate<stl::decay_t<Callable>>()} {
@@ -440,8 +440,8 @@ namespace webpp::istl {
         }
 
         template <typename Callable, Allocator Alloc2>
-            requires(!stl::is_null_pointer_v<Callable> && not_alloc_v<Callable> && !is_function_v<Callable> &&
-                     is_convertible_v<Callable>)
+            requires(!stl::is_null_pointer_v<Callable> && not_alloc_v<Callable> &&
+                     !is_compatible_function_v<Callable> && is_convertible_v<Callable>)
         constexpr function(stl::allocator_arg_t, Alloc2 const& input_alloc, Callable&& call)
           : alloc{input_alloc},
             ptr{allocate<stl::decay_t<Callable>>()} {
@@ -450,9 +450,10 @@ namespace webpp::istl {
 
         // callable object constructor
         template <typename Callable>
-            requires(!stl::is_null_pointer_v<Callable> && not_alloc_v<Callable> && !is_function_v<Callable> &&
-                     is_convertible_v<Callable> && stl::is_default_constructible_v<allocator_type>)
-        constexpr function(Callable&& call) // NOLINT(bugprone-forwarding-reference-overload)
+            requires(!stl::is_null_pointer_v<Callable> && not_alloc_v<Callable> &&
+                     !is_compatible_function_v<Callable> && is_convertible_v<Callable> &&
+                     stl::is_default_constructible_v<allocator_type>)
+        constexpr explicit function(Callable&& call) // NOLINT(bugprone-forwarding-reference-overload)
           : alloc{},
             ptr{allocate<stl::decay_t<Callable>>()} {
             construct<Callable>(stl::forward<Callable>(call));
