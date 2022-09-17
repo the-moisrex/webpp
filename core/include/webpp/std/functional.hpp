@@ -25,6 +25,8 @@ namespace webpp::istl {
         template <typename FunctionType, typename Callable>
         constexpr void run_action(FunctionType const& func, void* other, details::action_list action);
 
+        struct allocate_caller {};
+
         // this is the type that gets stored in the allocated places with the allocator
         template <typename FunctionType,
                   typename CallableObject,
@@ -39,21 +41,29 @@ namespace webpp::istl {
             using action_runner_ptr  = stl::add_pointer_t<action_runner_type>;
             using object_type        = stl::decay_t<CallableObject>;
 
-            call_ptr          caller        = FunctionType::template call_stub<CallableObject>;
-            action_runner_ptr action_runner = run_action<FunctionType, CallableObject>;
-            object_type       obj;
+            call_ptr                          caller = FunctionType::template call_stub<CallableObject>;
+            action_runner_ptr                 action_runner = run_action<FunctionType, CallableObject>;
+            [[no_unique_address]] object_type obj;
 
-            constexpr functor_object(functor_object const&)     = default;
-            constexpr functor_object(functor_object&&) noexcept = default;
+            constexpr explicit functor_object(functor_object const&)     = default;
+            constexpr explicit functor_object(functor_object&&) noexcept = default;
+            constexpr explicit functor_object(allocate_caller, object_type const& input_obj)
+              : caller{FunctionType::template call_stub<CallableObject>},
+                action_runner{run_action<FunctionType, CallableObject>},
+                obj{input_obj} {}
+            constexpr explicit functor_object(allocate_caller, object_type&& input_obj)
+              : caller{FunctionType::template call_stub<CallableObject>},
+                action_runner{run_action<FunctionType, CallableObject>},
+                obj{stl::move(input_obj)} {}
 
             template <typename... OArgs>
                 requires((!stl::same_as<stl::decay_t<OArgs>, functor_object> && ...) &&
+                         (!stl::same_as<stl::decay_t<OArgs>, allocate_caller> && ...) &&
                          stl::is_constructible_v<object_type, OArgs...>)
             constexpr functor_object(OArgs&&... args)
               : caller{FunctionType::template call_stub<CallableObject>},
                 action_runner{run_action<FunctionType, CallableObject>},
                 obj{stl::forward<OArgs>(args)...} {}
-
 
             constexpr inline R operator()(Args... args) noexcept(IsNoexcept) {
                 return (*caller)(static_cast<void*>(&obj), std::forward<Args>(args)...);
@@ -88,19 +98,15 @@ namespace webpp::istl {
                     break;
                 }
                 case details::action_list::copy: {
+                    const auto* source_ptr = func.template callable_ptr<callable>();
                     auto*       to_ptr     = static_cast<function_ptr>(other);
-                    const auto* source_ptr = func.template functor_ptr<callable>();
-
-                    // copying
-                    to_ptr->template construct<callable>(*source_ptr);
+                    to_ptr->template construct<callable>(allocate_caller{}, *source_ptr);
                     break;
                 }
                 case details::action_list::move: {
+                    auto* source_ptr = func.template callable_ptr<callable>();
                     auto* to_ptr     = static_cast<function_ptr>(other);
-                    auto* source_ptr = func.template functor_ptr<callable>();
-
-                    // moving
-                    to_ptr->template construct<callable>(stl::move(*source_ptr));
+                    to_ptr->template construct<callable>(allocate_caller{}, stl::move(*source_ptr));
                     break;
                 }
             }
@@ -267,6 +273,13 @@ namespace webpp::istl {
     // Move-only polymorphic function wrapper.
     template <typename Signature, Allocator Alloc = stl::allocator<stl::byte>>
     struct function : public details::base<function<Signature, Alloc>, Signature> {
+        using value_type     = stl::byte; // Doesn't really matter
+        using alloc_traits   = typename stl::allocator_traits<Alloc>::template rebind_traits<value_type>;
+        using allocator_type = typename alloc_traits::allocator_type;
+        using size_type      = typename alloc_traits::size_type;
+        using pointer        = typename alloc_traits::pointer;
+        using const_pointer  = typename alloc_traits::const_pointer;
+
       private:
         using base = details::base<function, Signature>;
 
@@ -284,16 +297,15 @@ namespace webpp::istl {
         template <typename Alloc2>
         static constexpr bool not_alloc_v = !stl::is_same_v<stl::decay_t<Alloc>, stl::decay_t<Alloc2>>;
 
+        template <typename Func>
+        static constexpr bool is_compatible_function_v =
+          stl::is_function_v<Func> &&
+          requires {
+              typename Func::allocator_type;
+              requires stl::same_as<typename Func::allocator_type, allocator_type>;
+          };
+
       public:
-        using value_type     = stl::byte; // Doesn't really matter
-        using alloc_traits   = typename stl::allocator_traits<Alloc>::template rebind_traits<value_type>;
-        using allocator_type = typename alloc_traits::allocator_type;
-        using size_type      = typename alloc_traits::size_type;
-        using pointer        = typename alloc_traits::pointer;
-        using const_pointer  = typename alloc_traits::const_pointer;
-
-
-
         // nullptr state
         constexpr function() noexcept(stl::is_nothrow_default_constructible_v<allocator_type>) {
             static_assert(stl::is_default_constructible_v<allocator_type>,
@@ -333,20 +345,20 @@ namespace webpp::istl {
         // copy constructor
         constexpr function(const function& other)
           : alloc{alloc_traits::select_on_container_copy_construction(other.alloc)} {
-            other.clone_to(this);
+            this->clone_from(&other);
         }
 
         // kinda copy constructor but with an allocator specified
         template <Allocator Alloc2 = allocator_type>
         constexpr function(stl::allocator_arg_t, Alloc2 const& alloc2, const function& other)
           : alloc{alloc2} {
-            other.clone_to(this);
+            this->clone_from(&other);
         }
 
         // kinda copy constructor but with an allocator specified
         template <Allocator Alloc2 = allocator_type>
         constexpr function(const function& other, Alloc2 const& alloc2) : alloc{alloc2} {
-            other.clone_to(this);
+            this->clone_from(&other);
         }
 
         // move ctor
@@ -367,7 +379,7 @@ namespace webpp::istl {
                 // "other"'s allocator, cannot be deallocated with the new allocator
 
                 ptr = nullptr;
-                other.move_to(this);
+                this->move_from(&other);
             }
             other.ptr = nullptr;
         }
@@ -397,7 +409,7 @@ namespace webpp::istl {
             ptr{other.ptr} {
             if (alloc != other.alloc) {
                 ptr = nullptr;
-                other.move_to(this);
+                this->move_from(&other);
             }
             other.ptr = nullptr;
         }
@@ -412,7 +424,7 @@ namespace webpp::istl {
             ptr{other.ptr} {
             if (alloc != other.alloc) {
                 ptr = nullptr;
-                other.move_to(this);
+                this->move_from(&other);
             }
             other.ptr = nullptr;
         }
@@ -452,7 +464,7 @@ namespace webpp::istl {
                 return *this;
             }
             assign_alloc(other.alloc);
-            other.clone_to(this);
+            this->clone_from(&other);
             return *this;
         }
 
@@ -468,7 +480,7 @@ namespace webpp::istl {
             blowup();
             if constexpr (alloc_traits::propagate_on_container_move_assignment::value) {
                 alloc = stl::move(other.alloc);
-                other.move_to(this);
+                this->move_from(&other);
             } else if constexpr (alloc_traits::is_always_equal::value) {
                 ptr       = other.ptr;
                 other.ptr = nullptr;
@@ -477,7 +489,7 @@ namespace webpp::istl {
                     ptr       = other.ptr;
                     other.ptr = nullptr;
                 } else {
-                    other.move_to(this);
+                    this->move_from(&other);
                 }
             }
             return *this;
@@ -485,10 +497,11 @@ namespace webpp::istl {
 
         // kinda copy assignment operator
         // this doesn't use the other's allocator
+        /*
         template <typename Signature2 = Signature, Allocator Alloc2 = allocator_type>
             requires(!stl::same_as<Alloc2, Alloc> && is_convertible_v<function<Signature2, Alloc2>>)
         constexpr function& operator=(function<Signature2, Alloc2>&& other) {
-            other.move_to(this);
+            this->move_from(&other);
             return *this;
         }
 
@@ -497,31 +510,30 @@ namespace webpp::istl {
         template <typename Signature2 = Signature, Allocator Alloc2 = allocator_type>
             requires(!stl::same_as<Alloc2, Alloc> && is_convertible_v<function<Signature2, Alloc2>>)
         constexpr function& operator=(function<Signature2, Alloc2> const& other) {
-            other.clone_to(this);
+            this->clone_from(&other);
             return *this;
         }
 
-        /*
-                template <typename Signature2, Allocator Alloc2>
-                    requires(!stl::same_as<Alloc2, Alloc> && !is_movable_v<Signature2> &&
-                             is_convertible_v<function<Signature2>>)
-                constexpr function& operator=(function<Signature2, Alloc2>&& other) {
-                    if (stl::addressof(other) == this) {
-                        return *this;
-                    }
-                    if constexpr (alloc_traits::propagate_on_container_move_assignment::value) {
-                        alloc = stl::move(other.alloc);
-                    } else if constexpr (alloc_traits::is_always_equal::value) {
-                        // no need to move the allocator
-                    } else if (alloc == other.alloc) {
-                        // they're already equal
-                    } else {
-                        assign(stl::move(other));
-                    }
-                    assign(stl::move(other));
-                    return *this;
-                }
-                */
+        template <typename Signature2, Allocator Alloc2>
+            requires(!stl::same_as<Alloc2, Alloc> && !is_movable_v<Signature2> &&
+                     is_convertible_v<function<Signature2>>)
+        constexpr function& operator=(function<Signature2, Alloc2>&& other) {
+            if (stl::addressof(other) == this) {
+                return *this;
+            }
+            if constexpr (alloc_traits::propagate_on_container_move_assignment::value) {
+                alloc = stl::move(other.alloc);
+            } else if constexpr (alloc_traits::is_always_equal::value) {
+                // no need to move the allocator
+            } else if (alloc == other.alloc) {
+                // they're already equal
+            } else {
+                assign(stl::move(other));
+            }
+            assign(stl::move(other));
+            return *this;
+        }
+        */
 
         constexpr function& operator=(stl::nullptr_t) noexcept {
             blowup();
@@ -530,7 +542,7 @@ namespace webpp::istl {
         }
 
         template <typename Callable>
-            requires(!stl::is_null_pointer_v<Callable> && !is_function_v<Callable> &&
+            requires(!stl::is_null_pointer_v<Callable> && !is_compatible_function_v<Callable> &&
                      is_convertible_v<Callable>)
         constexpr function& operator=(Callable&& callee) {
             assign(stl::forward<Callable>(callee));
@@ -627,8 +639,9 @@ namespace webpp::istl {
             return functor_ptr()->caller;
         }
 
-        [[nodiscard]] constexpr inline void* callable_ptr() const noexcept {
-            return static_cast<void*>(&functor_ptr()->obj);
+        template <typename Callable = stl::byte>
+        [[nodiscard]] constexpr inline auto* callable_ptr() const noexcept {
+            return &(functor_ptr<Callable>()->obj);
         }
 
         template <typename Callable>
@@ -674,24 +687,24 @@ namespace webpp::istl {
         }
 
         template <typename FuncType>
-        constexpr inline void clone_to(FuncType* to) const {
-            if (ptr) {
+        constexpr inline void clone_from(FuncType const* from) {
+            if (from->ptr) {
                 stl::size_t const from_size = functor_size();
-                if (to->ptr) {
-                    stl::size_t const to_size = to->functor_size();
-                    to->destroy();
+                if (ptr) {
+                    stl::size_t const to_size = functor_size();
+                    destroy();
                     if (from_size != to_size) {
-                        to->deallocate();
-                        to->ptr = to->allocate_size(from_size);
+                        deallocate();
+                        ptr = allocate_size(from_size);
                     }
                 } else {
-                    to->ptr = to->allocate_size(from_size);
+                    ptr = allocate_size(from_size);
                 }
-                (*action_runner())(*this, static_cast<void*>(to), details::action_list::copy);
+                (*(from->action_runner()))(*from, static_cast<void*>(this->ptr), details::action_list::copy);
             } else {
-                if (to->ptr) {
-                    to->destroy();
-                    to->deallocate();
+                if (ptr) {
+                    destroy();
+                    deallocate();
                 }
             }
         }
@@ -701,28 +714,29 @@ namespace webpp::istl {
          * so we have to move the objects instead of moving the pointers
          */
         template <typename FuncType>
-        constexpr inline void move_to(FuncType* to) {
-            if (ptr) {
+        constexpr inline void move_from(FuncType* from) {
+            if (from->ptr) {
                 stl::size_t const from_size = functor_size();
-                if (to->ptr) {
-                    stl::size_t const to_size = to->functor_size();
-                    to->destroy();
+                if (ptr) {
+                    stl::size_t const to_size = functor_size();
+                    destroy();
                     if (from_size != to_size) {
-                        to->deallocate();
-                        to->ptr = to->allocate_size(from_size);
+                        deallocate();
+                        ptr = allocate_size(from_size);
                     }
                 } else {
-                    to->ptr = to->allocate_size(from_size);
+                    ptr = allocate_size(from_size);
                 }
-                (*action_runner())(*this, static_cast<void*>(to), details::action_list::move);
-                ptr = nullptr;
+                (*(from->action_runner()))(*from, static_cast<void*>(this->ptr), details::action_list::move);
+                from->ptr = nullptr;
             } else {
-                if (to->ptr) {
-                    to->destroy();
-                    to->deallocate();
+                if (ptr) {
+                    destroy();
+                    deallocate();
                 }
             }
         }
+
 
         constexpr inline void deallocate() {
             (*action_runner())(*this, nullptr, details::action_list::deallocate);
