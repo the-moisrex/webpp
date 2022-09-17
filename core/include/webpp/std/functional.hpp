@@ -689,7 +689,7 @@ namespace webpp::istl {
         template <typename FuncType>
         constexpr inline void clone_from(FuncType const* from) {
             if (from->ptr) {
-                stl::size_t const from_size = functor_size();
+                stl::size_t const from_size = from->functor_size();
                 if (ptr) {
                     stl::size_t const to_size = functor_size();
                     destroy();
@@ -700,7 +700,7 @@ namespace webpp::istl {
                 } else {
                     ptr = allocate_size(from_size);
                 }
-                (*(from->action_runner()))(*from, static_cast<void*>(this->ptr), details::action_list::copy);
+                (*(from->action_runner()))(*from, static_cast<void*>(this), details::action_list::copy);
             } else {
                 if (ptr) {
                     destroy();
@@ -716,7 +716,7 @@ namespace webpp::istl {
         template <typename FuncType>
         constexpr inline void move_from(FuncType* from) {
             if (from->ptr) {
-                stl::size_t const from_size = functor_size();
+                stl::size_t const from_size = from->functor_size();
                 if (ptr) {
                     stl::size_t const to_size = functor_size();
                     destroy();
@@ -727,7 +727,7 @@ namespace webpp::istl {
                 } else {
                     ptr = allocate_size(from_size);
                 }
-                (*(from->action_runner()))(*from, static_cast<void*>(this->ptr), details::action_list::move);
+                (*(from->action_runner()))(*from, static_cast<void*>(this), details::action_list::move);
                 from->ptr = nullptr;
             } else {
                 if (ptr) {
