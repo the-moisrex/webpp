@@ -754,48 +754,63 @@ namespace webpp::sql {
         }
 
 
-        template <typename ColT, typename Expr>
-            requires(istl::StringifiableOf<string_type, ColT>)
-        constexpr query_builder& left_join_using(ColT&& col_string, Expr&& using_expr) noexcept {
-            joins.push_back(join_type{
-              .cat       = join_type::join_cat::left,
-              .cond      = join_type::cond_type::using_cond,
-              .table     = istl::stringify_of<local_string_type>(stl::forward<ColT>(col_string),
-                                                             alloc::local_alloc_for<local_string_type>(db)),
-              .expr      = expressionify(stl::forward<Expr>(using_expr)),
-              .col_names = string_vec{alloc::local_allocator<local_string_type>(db)}});
+        template <typename ColT, typename... StrT>
+            requires(istl::StringifiableOf<local_string_type, ColT> &&
+                     (istl::StringifiableOf<local_string_type, StrT> && ...))
+        constexpr query_builder& left_join_using(ColT&& col_string, StrT&&... col_names) noexcept {
+            joins.push_back(
+              join_type{.cat       = join_type::join_cat::left,
+                        .cond      = join_type::cond_type::using_cond,
+                        .table     = stringify(stl::forward<ColT>(col_string)),
+                        .expr      = expressionify(nullptr),
+                        .col_names = string_vec{alloc::local_allocator<local_string_type>(db)}});
+            auto& back = joins.back();
+            (back.col_names.emplace_back(stringify(stl::forward<StrT>(col_names))), ...);
             return *this;
         }
 
-        template <typename Expr>
-        constexpr query_builder& left_join_using(query_builder const& sub_query, Expr&& using_expr) noexcept {
-            joins.push_back(join_type{.cat   = join_type::join_cat::left,
-                                      .cond  = join_type::cond_type::using_cond,
-                                      .table = sub_query,
-                                      .expr  = expressionify(stl::forward<Expr>(using_expr))});
+        template <typename... StrT>
+            requires(istl::StringifiableOf<local_string_type, StrT> && ...)
+        constexpr query_builder& left_join_using(query_builder const& sub_query,
+                                                 StrT&&... col_names) noexcept {
+            joins.push_back(
+              join_type{.cat       = join_type::join_cat::left,
+                        .cond      = join_type::cond_type::using_cond,
+                        .table     = sub_query,
+                        .expr      = expressionify(nullptr),
+                        .col_names = string_vec{alloc::local_allocator<local_string_type>(db)}});
+            auto& back = joins.back();
+            (back.col_names.emplace_back(stringify(stl::forward<StrT>(col_names))), ...);
             return *this;
         }
 
-        template <typename ColT, typename Expr>
-            requires(istl::StringifiableOf<string_type, ColT>)
-        constexpr query_builder& right_join_using(ColT&& col_string, Expr&& using_expr) noexcept {
-            joins.push_back(join_type{
-              .cat       = join_type::join_cat::right,
-              .cond      = join_type::cond_type::using_cond,
-              .table     = istl::stringify_of<local_string_type>(stl::forward<ColT>(col_string),
-                                                             alloc::local_alloc_for<local_string_type>(db)),
-              .expr      = expressionify(stl::forward<Expr>(using_expr)),
-              .col_names = string_vec{alloc::local_allocator<local_string_type>(db)}});
+        template <typename ColT, typename... StrT>
+            requires(istl::StringifiableOf<local_string_type, ColT> &&
+                     (istl::StringifiableOf<local_string_type, StrT> && ...))
+        constexpr query_builder& right_join_using(ColT&& col_string, StrT&&... col_names) noexcept {
+            joins.push_back(
+              join_type{.cat       = join_type::join_cat::right,
+                        .cond      = join_type::cond_type::using_cond,
+                        .table     = stringify(stl::forward<ColT>(col_string)),
+                        .expr      = expressionify(nullptr),
+                        .col_names = string_vec{alloc::local_allocator<local_string_type>(db)}});
+            auto& back = joins.back();
+            (back.col_names.emplace_back(stringify(stl::forward<StrT>(col_names))), ...);
             return *this;
         }
 
-        template <typename Expr>
+        template <typename... StrT>
+            requires(istl::StringifiableOf<local_string_type, StrT> && ...)
         constexpr query_builder& right_join_using(query_builder const& sub_query,
-                                                  Expr&&               using_expr) noexcept {
-            joins.push_back(join_type{.cat   = join_type::join_cat::right,
-                                      .cond  = join_type::cond_type::using_cond,
-                                      .table = sub_query,
-                                      .expr  = expressionify(stl::forward<Expr>(using_expr))});
+                                                  StrT&&... col_names) noexcept {
+            joins.push_back(
+              join_type{.cat       = join_type::join_cat::right,
+                        .cond      = join_type::cond_type::using_cond,
+                        .table     = sub_query,
+                        .expr      = expressionify(nullptr),
+                        .col_names = string_vec{alloc::local_allocator<local_string_type>(db)}});
+            auto& back = joins.back();
+            (back.col_names.emplace_back(stringify(stl::forward<StrT>(col_names))), ...);
             return *this;
         }
 
@@ -1317,13 +1332,15 @@ namespace webpp::sql {
                         break;
                     }
                     case join_type::cond_type::using_cond: {
+                        // don't need to check the size, if something happened here, the problem is inside the
+                        // left/right_join_using functions.
                         out.append(keywords::using_word);
                         out.append(" (");
                         // don't need to check if col_names are empty or not, they should be non-empty
                         auto       it     = join.col_names.begin();
                         auto const it_end = join.col_names.end();
                         for (;;) {
-                            out.append(*it);
+                            db.quoted_escape(*it, out);
                             ++it;
                             if (it == it_end) {
                                 break;

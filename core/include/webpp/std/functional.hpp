@@ -320,6 +320,11 @@ namespace webpp::istl {
                           "The specified allocator is not default constructible.");
         }
 
+        constexpr function(stl::nullptr_t) noexcept(stl::is_nothrow_default_constructible_v<allocator_type>) {
+            static_assert(stl::is_default_constructible_v<allocator_type>,
+                          "The specified allocator is not default constructible.");
+        }
+
         // nullptr state
         template <typename Alloc2 = allocator_type>
             requires(compatible_allocator_v<Alloc2>)
