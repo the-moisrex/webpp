@@ -279,6 +279,7 @@ namespace webpp::istl {
         using size_type      = typename alloc_traits::size_type;
         using pointer        = typename alloc_traits::pointer;
         using const_pointer  = typename alloc_traits::const_pointer;
+        using function_type  = function<Signature, Alloc>;
 
       private:
         using base = details::base<function, Signature>;
@@ -299,11 +300,18 @@ namespace webpp::istl {
 
         template <typename Func>
         static constexpr bool is_compatible_function_v =
-          stl::is_function_v<Func> &&
+          is_function_v<Func> &&
           requires {
-              typename Func::allocator_type;
-              requires stl::same_as<typename Func::allocator_type, allocator_type>;
+              typename stl::remove_cvref_t<Func>::allocator_type;
+              requires stl::same_as<typename stl::remove_cvref_t<Func>::allocator_type, allocator_type>;
+              typename stl::remove_cvref_t<Func>::signature;
+              requires is_convertible_v<typename stl::remove_cvref_t<Func>::signature>;
           };
+
+        template <typename T>
+        static constexpr bool compatible_allocator_v =
+          stl::constructible_from<allocator_type, T> ||
+          stl::constructible_from<allocator_type, stl::add_cv_t<T>>;
 
       public:
         // nullptr state
@@ -313,26 +321,31 @@ namespace webpp::istl {
         }
 
         // nullptr state
-        template <Allocator Alloc2 = allocator_type>
-        constexpr explicit function(Alloc2 const& input_alloc) noexcept(
-          stl::is_nothrow_constructible_v<allocator_type, Alloc2>)
+        template <typename Alloc2 = allocator_type>
+            requires(compatible_allocator_v<Alloc2>)
+        constexpr explicit(!stl::same_as<Alloc2, allocator_type>) function(
+          Alloc2 const& input_alloc) noexcept(stl::is_nothrow_constructible_v<allocator_type, Alloc2>)
           : alloc{input_alloc} {}
 
         // nullptr state
-        template <Allocator Alloc2 = allocator_type>
+        template <typename Alloc2 = allocator_type>
+            requires(compatible_allocator_v<Alloc2>)
         constexpr function(stl::allocator_arg_t, const Alloc2& input_alloc) noexcept(
           stl::is_nothrow_constructible_v<allocator_type, Alloc2>)
           : alloc{input_alloc} {}
 
         // nullptr state
-        template <Allocator Alloc2 = allocator_type>
-        constexpr explicit function(stl::allocator_arg_t, const Alloc2& input_alloc, stl::nullptr_t) noexcept(
-          stl::is_nothrow_constructible_v<allocator_type, Alloc2>)
+        template <typename Alloc2 = allocator_type>
+            requires(compatible_allocator_v<Alloc2>)
+        constexpr function(stl::allocator_arg_t,
+                           const Alloc2& input_alloc,
+                           stl::nullptr_t) noexcept(stl::is_nothrow_constructible_v<allocator_type, Alloc2>)
           : alloc{input_alloc} {}
 
         // member function
-        template <typename Member, typename Object, Allocator Alloc2 = allocator_type>
-            requires requires(Member Object::*const mem_ptr) { function{stl::mem_fn(mem_ptr)}; }
+        template <typename Member, typename Object, typename Alloc2 = allocator_type>
+            requires(compatible_allocator_v<Alloc2> &&
+                     requires(Member Object::*const mem_ptr) { function{stl::mem_fn(mem_ptr)}; })
         constexpr function(stl::allocator_arg_t,
                            const Alloc2& input_alloc,
                            Member Object::*const mem_ptr) //
@@ -343,35 +356,42 @@ namespace webpp::istl {
           : function{stl::allocator_arg_t{}, input_alloc, stl::mem_fn(mem_ptr)} {}
 
         // copy constructor
-        constexpr explicit function(const function& other)
+        constexpr function(const function& other)
+          : alloc{alloc_traits::select_on_container_copy_construction(other.alloc)} {
+            this->clone_from(&other);
+        }
+
+        constexpr function(function& other)
           : alloc{alloc_traits::select_on_container_copy_construction(other.alloc)} {
             this->clone_from(&other);
         }
 
         // kinda copy constructor but with an allocator specified
-        template <Allocator Alloc2 = allocator_type>
-        constexpr explicit function(stl::allocator_arg_t, Alloc2 const& alloc2, const function& other)
+        template <typename Alloc2 = allocator_type>
+            requires(compatible_allocator_v<Alloc2>)
+        constexpr function(stl::allocator_arg_t, Alloc2 const& alloc2, const function& other)
           : alloc{alloc2} {
             this->clone_from(&other);
         }
 
         // kinda copy constructor but with an allocator specified
-        template <Allocator Alloc2 = allocator_type>
-        constexpr explicit function(const function& other, Alloc2 const& alloc2) : alloc{alloc2} {
+        template <typename Alloc2 = allocator_type>
+            requires(compatible_allocator_v<Alloc2>)
+        constexpr explicit function(Alloc2 const& alloc2, const function& other) : alloc{alloc2} {
             this->clone_from(&other);
         }
 
         // move ctor
-        constexpr explicit function(function&& other) noexcept(
-          stl::is_nothrow_move_constructible_v<allocator_type>)
+        constexpr function(function&& other) noexcept(stl::is_nothrow_move_constructible_v<allocator_type>)
           : alloc{stl::move(other.alloc)},
             ptr{other.ptr} {
             other.ptr = nullptr;
         }
 
         // kinda move constructor but with an allocator specified
-        template <Allocator Alloc2 = allocator_type>
-        constexpr explicit function(stl::allocator_arg_t, Alloc2 const& alloc2, function&& other)
+        template <typename Alloc2 = allocator_type>
+            requires(compatible_allocator_v<Alloc2>)
+        constexpr function(stl::allocator_arg_t, Alloc2 const& alloc2, function&& other)
           : alloc{alloc2},
             ptr{other.ptr} {
             if (alloc != other.alloc) {
@@ -385,8 +405,9 @@ namespace webpp::istl {
         }
 
         // (same as above) kinda move constructor but with an allocator specified
-        template <Allocator Alloc2 = allocator_type>
-        constexpr explicit function(function&& other, Alloc2 const& alloc2)
+        template <typename Alloc2 = allocator_type>
+            requires(compatible_allocator_v<Alloc2>)
+        constexpr explicit function(Alloc2 const& alloc2, function&& other)
           : function{stl::allocator_arg_t{}, alloc2, stl::move(other)} {}
 
 
@@ -403,10 +424,12 @@ namespace webpp::istl {
 
         // almost move ctor with a different allocator
         template <typename Signature2, Allocator Alloc2, Allocator Alloc3>
-            requires(!is_movable_v<Signature2> && is_convertible_v<function<Signature2>>)
-        constexpr explicit function(function<Signature2, Alloc2>&& other, const Alloc3& input_alloc)
+            requires(!is_movable_v<Signature2> && is_convertible_v<function<Signature2>> &&
+                     compatible_allocator_v<Alloc3>)
+        constexpr explicit function(const Alloc3& input_alloc, function<Signature2, Alloc2>&& other)
           : alloc{input_alloc},
             ptr{other.ptr} {
+            // todo: test this, I think we need to disable this constructor
             if (alloc != other.alloc) {
                 ptr = nullptr;
                 this->move_from(&other);
@@ -422,6 +445,7 @@ namespace webpp::istl {
                            function<Signature2, Alloc2>&& other)
           : alloc{input_alloc},
             ptr{other.ptr} {
+            // todo: I think we need to disable this constructor
             if (alloc != other.alloc) {
                 ptr = nullptr;
                 this->move_from(&other);
@@ -439,9 +463,10 @@ namespace webpp::istl {
             construct<Callable>(stl::forward<Callable>(call));
         }
 
-        template <typename Callable, Allocator Alloc2>
+        template <typename Callable, typename Alloc2>
             requires(!stl::is_null_pointer_v<Callable> && not_alloc_v<Callable> &&
-                     !is_compatible_function_v<Callable> && is_convertible_v<Callable>)
+                     !is_compatible_function_v<Callable> && is_convertible_v<Callable> &&
+                     compatible_allocator_v<Alloc2>)
         constexpr function(stl::allocator_arg_t, Alloc2 const& input_alloc, Callable&& call)
           : alloc{input_alloc},
             ptr{allocate<stl::decay_t<Callable>>()} {
@@ -453,7 +478,7 @@ namespace webpp::istl {
             requires(!stl::is_null_pointer_v<Callable> && not_alloc_v<Callable> &&
                      !is_compatible_function_v<Callable> && is_convertible_v<Callable> &&
                      stl::is_default_constructible_v<allocator_type>)
-        constexpr explicit function(Callable&& call) // NOLINT(bugprone-forwarding-reference-overload)
+        constexpr function(Callable&& call) // NOLINT(bugprone-forwarding-reference-overload)
           : alloc{},
             ptr{allocate<stl::decay_t<Callable>>()} {
             construct<Callable>(stl::forward<Callable>(call));
@@ -597,7 +622,6 @@ namespace webpp::istl {
         using call_type          = typename base::call_type;
         using return_type        = typename base::return_type;
         using call_ptr           = stl::add_pointer_t<call_type>;
-        using function_type      = typename base::function_type;
         using action_runner_type = void(function_type const&, void*, details::action_list);
         using action_runner_ptr  = stl::add_pointer_t<action_runner_type>;
 

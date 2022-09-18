@@ -104,16 +104,19 @@ namespace webpp::sql {
           expr_func expr;) {
             switch (data.op) {
                 case expr_data::operation::and_op: {
+                    out.push_back(' ');
                     out.append(keywords::and_word);
                     out.push_back(' ');
                     break;
                 }
                 case expr_data::operation::or_op: {
+                    out.push_back(' ');
                     out.append(keywords::or_word);
                     out.push_back(' ');
                     break;
                 }
                 case expr_data::operation::and_not: {
+                    out.push_back(' ');
                     out.append(keywords::and_word);
                     out.push_back(' ');
                     out.append(keywords::not_word);
@@ -121,6 +124,7 @@ namespace webpp::sql {
                     break;
                 }
                 case expr_data::operation::or_not: {
+                    out.push_back(' ');
                     out.append(keywords::or_word);
                     out.push_back(' ');
                     out.append(keywords::not_word);

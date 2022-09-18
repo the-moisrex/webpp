@@ -116,7 +116,7 @@ TEST(Database, InsertSelectQuery) {
     // already has an alias
     EXPECT_EQ(query.to_string(),
               "insert into 'employees' "
-              "select firstname as first_name, lastname as last_name from 'users' where 'employed' = 1")
+              "select firstname as first_name, lastname as last_name from 'users' where 'employed' = true")
       << query.to_string();
 }
 
@@ -148,7 +148,7 @@ TEST(Database, WhereClause) {
     q1.and_where_not_in("six", 1, 2, 3);
     EXPECT_EQ(
       q1.to_string(),
-      "select one, two, three from 'test' where 'four' not in (1, 2, 3, 4, 'five', 6, 7, 8) and not 'six' in (1, 2, 3)")
+      "select one, two, three from 'test' where 'four' not in (1, 2, 3, 4, 'five', 6, 7, 8) and 'six' not in (1, 2, 3)")
       << q1.to_string();
 
     q1.where_in("six", 1, 2, 3);
