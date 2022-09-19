@@ -61,11 +61,11 @@ namespace webpp::http::beast_proto {
             static constexpr auto log_cat = "BeastWorker";
 
           private:
-            stl::optional<stream_type>                    stream;
+            stl::optional<stream_type>                    stream{stl::nullopt};
             duration                                      timeout;
-            stl::optional<request_type>                   req;
-            stl::optional<beast_response_type>            bres;
-            stl::optional<beast_response_serializer_type> str_serializer;
+            stl::optional<request_type>                   req{stl::nullopt};
+            stl::optional<beast_response_type>            bres{stl::nullopt};
+            stl::optional<beast_response_serializer_type> str_serializer{stl::nullopt};
             app_wrapper_ref                               app_ref;
             buffer_type buf{default_buffer_size}; // fixme: see if this is using our allocator
 
@@ -86,7 +86,7 @@ namespace webpp::http::beast_proto {
                 async_read_request();
             }
 
-            bool is_idle() const noexcept {
+            [[nodiscard]] bool is_idle() const noexcept {
                 return !stream.has_value();
             }
 
@@ -297,7 +297,7 @@ namespace webpp::http::beast_proto {
         }
 
       public:
-        beast_server(beast_server const&) = delete;
+        beast_server(beast_server const&)            = delete;
         beast_server& operator=(beast_server const&) = delete;
 
         template <typename ET>
@@ -367,7 +367,7 @@ namespace webpp::http::beast_proto {
             return *this;
         }
 
-        auto binded_uri() const {
+        [[nodiscard]] auto binded_uri() const {
             auto u   = object::make_general<uri::uri>(*this);
             u.scheme = is_ssl_active() ? "https" : "http";
             u.host   = bind_address.to_string();
@@ -386,9 +386,9 @@ namespace webpp::http::beast_proto {
 
                 // Stop the `io_context`. This will cause `run()`
                 // to return immediately, eventually destroying the
-                // `io_context` and all of the sockets in it.
-                thread_workers.stop();
+                // `io_context` and all the sockets in it.
                 io.stop();
+                thread_workers.stop();
                 pool.stop();
             });
 
@@ -438,21 +438,34 @@ namespace webpp::http::beast_proto {
 
             // start accepting in all workers
             for (stl::size_t i = 0ul; i != thread_worker_count; ++i) {
-                asio::post(pool, [this]() noexcept {
-                    try {
-                        // run executor in this thread
-                        io.run();
-                    } catch (stl::exception const& err) {
-                        this->logger.error(log_cat, "Error while starting io server.", err);
-                    } catch (...) {
-                        // todo: possible data race
-                        this->logger.error(log_cat, "Unknown server error");
+                asio::post(pool, [this, io_index = i, tries = 0ul]() mutable noexcept {
+                    for (; !io.stopped(); ++tries) {
+                        try {
+                            // run executor in this thread
+                            io.run();
+                        } catch (stl::exception const& err) {
+                            this->logger.error(
+                              log_cat,
+                              fmt::format(
+                                "Error while starting io server; restarting io runner; io runner id: {}; tries: {}",
+                                io_index,
+                                tries),
+                              err);
+                        } catch (...) {
+                            // todo: possible data race
+                            this->logger.error(
+                              log_cat,
+                              fmt::format(
+                                "Unknown server error; restarting io runner; io runner id: {}; tries: {}",
+                                io_index,
+                                tries));
+                        }
                     }
-                    // todo: try running the server again
                 });
             }
 
             pool.attach();
+            this->logger.info(log_cat, "Server is down.");
             return 0;
         }
     };
