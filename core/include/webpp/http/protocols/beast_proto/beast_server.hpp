@@ -114,11 +114,19 @@ namespace webpp::http::beast_proto {
                   *stream,
                   buf,
                   req->beast_parser(),
-                  [this](boost::beast::error_code const& ec, [[maybe_unused]] std::size_t bytes_transferred) {
+                  [this](boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred) {
                       if (!ec) [[likely]] {
                           async_write_response();
-                      } else {
+                      } else [[unlikely]] {
                           this->logger.warning(log_cat, "Connection error.", ec);
+                          // todo: there's a connection error, we don't need to send shutdown for all types of connection errors
+                          // try sending shutdown signal
+                          stream->socket().shutdown(asio::ip::tcp::socket::shutdown_send, ec);
+                          // don't need to log if it fails
+
+                          // if we don't reset here, the connection will hang if there are too many concurrent
+                          // connections for some reason.
+                          reset();
                       }
                   });
             }
@@ -192,8 +200,8 @@ namespace webpp::http::beast_proto {
 
             static constexpr auto log_cat = "Beast";
 
-            thread_worker(thread_worker const&) = delete;
-            thread_worker(thread_worker&&)      = default;
+            thread_worker(thread_worker const&)     = delete;
+            thread_worker(thread_worker&&) noexcept = default;
 
             thread_worker(server_type& input_server) : server(input_server) {
                 for (stl::size_t i = 0ul; i != server.http_worker_count; ++i) {
@@ -289,7 +297,7 @@ namespace webpp::http::beast_proto {
                                   [this](boost::beast::error_code ec, socket_type sock) noexcept {
                                       if (!ec) [[likely]] {
                                           thread_workers.start_work(stl::move(sock));
-                                      } else {
+                                      } else [[unlikely]] {
                                           this->logger.warning(log_cat, "Accepting error", ec);
                                       }
                                       this->async_accept();
@@ -348,8 +356,12 @@ namespace webpp::http::beast_proto {
                 if (!is_ssl_active()) {
                     // todo
                 }
-                if (bind_port == 80)
+
+                // port mapping
+                if (bind_port == 80) {
                     bind_port = 443;
+                }
+
             } else {
                 this->logger.warning(log_cat, "Cannot enable SSL");
             }
@@ -361,8 +373,11 @@ namespace webpp::http::beast_proto {
                 if (is_ssl_active()) {
                     // todo
                 }
-                if (bind_port == 443)
+
+                // port mapping
+                if (bind_port == 443) {
                     bind_port = 80;
+                }
             }
             return *this;
         }
@@ -434,7 +449,10 @@ namespace webpp::http::beast_proto {
             asio::dispatch(acceptor.get_executor(),
                            boost::beast::bind_front_handler(&beast_server_type::async_accept, this));
 
-            this->logger.info(log_cat, fmt::format("Starting beast server on {}", binded_uri().to_string()));
+            this->logger.info(log_cat,
+                              fmt::format("Starting beast server on {} with {} thread workers.",
+                                          binded_uri().to_string(),
+                                          thread_worker_count));
 
             // start accepting in all workers
             for (stl::size_t i = 0ul; i != thread_worker_count; ++i) {
@@ -443,6 +461,8 @@ namespace webpp::http::beast_proto {
                         try {
                             // run executor in this thread
                             io.run();
+                            this->logger.info(log_cat,
+                                              fmt::format("Thread {} went down peacefully.", io_index));
                         } catch (stl::exception const& err) {
                             this->logger.error(
                               log_cat,
