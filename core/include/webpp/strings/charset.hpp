@@ -128,7 +128,7 @@ namespace webpp {
     concept CharSet = requires(T cs) {
         typename stl::remove_cvref_t<T>::value_type;
         stl::remove_cvref_t<T>::array_size;
-        stl::same_as<
+        requires stl::same_as<
           stl::remove_cvref_t<T>,
           charset<typename stl::remove_cvref_t<T>::value_type, stl::remove_cvref_t<T>::array_size>>;
     };

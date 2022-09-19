@@ -1058,33 +1058,6 @@ namespace webpp::sql {
         template <typename StrT>
         constexpr void serialize_expression(StrT& out, expr_func const& expr) const noexcept {
             expr(out, db);
-            //            if (auto* f = stl::get_if<db_float_type>(&var)) {
-            //                out.append(lexical::cast<string_type>(*f, db));
-            //            } else if (auto* i = stl::get_if<db_integer_type>(&var)) {
-            //                out.append(lexical::cast<string_type>(*i, db));
-            //            } else if (auto* s = stl::get_if<db_string_type>(&var)) {
-            //                db.quoted_escape(*s, out);
-            //            } else if (auto* qb = stl::get_if<subquery>(&var)) {
-            //                // good, we don't need to worry about the prepared query builder
-            //                // todo: Fix user's mistakes and tune the select columns to match the insert columns
-            //
-            //                // I'm going to modify the query builder in order to tune it to the insert sql query
-            //                //   1. N insert cols == N select cols
-            //                //     1.1. remove the useless select cols
-            //                //     1.2. copy insert cols into the missing select cols
-            //                //   2. Same column names in both cols
-            //                //     2.1. ignore if they're the same
-            //                //     2.2. check if it has an alias
-            //                //     2.3. if it has, and it's the same as the insert col, then ignore
-            //                //     2.4. if it doesn't have, then add an alias that is the same as the insert col
-            //                (*qb)->template to_string<StrT>(out);
-            //            } else if (auto* b = stl::get_if<db_blob_type>(&var)) {
-            //                // todo: append blob
-            //                out.append("Blob support is a todo");
-            //            } else {
-            //                // it's null
-            //                out.append(keywords::null);
-            //            }
         }
 
         constexpr void serialize_from(auto& out) const noexcept {

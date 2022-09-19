@@ -170,7 +170,7 @@ namespace webpp::http {
             template <typename... Args>
             constexpr HTTPResponse auto string(Args&&... args) const {
                 // check if there's an allocator in the args:
-                constexpr bool has_allocator = (istl::Allocator<Args> || ...);
+                constexpr bool has_allocator = (Allocator<Args> || ...);
                 if constexpr (!has_allocator &&
                               requires {
                                   response_type::with_body(

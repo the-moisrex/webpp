@@ -118,7 +118,7 @@ namespace webpp {
         // privately:
         //   ses.app
         //   ses.req
-        Connection<T>;
+        requires Connection<T>;
     };
 
 
