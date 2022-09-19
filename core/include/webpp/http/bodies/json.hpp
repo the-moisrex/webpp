@@ -84,7 +84,7 @@ namespace webpp::http {
             template <typename... Args>
             constexpr HTTPResponse auto json(Args&&... args) const noexcept {
                 // check if there's an allocator in the args:
-                constexpr bool has_allocator = (istl::Allocator<Args> || ...);
+                constexpr bool has_allocator = (Allocator<Args> || ...);
                 using value_type             = traits::char_type<traits_type>;
                 if constexpr (!has_allocator && requires {
                                   json_response_type::with_body(

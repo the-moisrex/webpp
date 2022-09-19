@@ -12,15 +12,13 @@
 namespace webpp::http {
 
     template <typename T>
-    concept PathContext = Context<T> && requires(T ctx) {
-        ctx.path;
-    };
+    concept PathContext = Context<T> && requires(T ctx) { ctx.path; };
 
 
     template <typename T>
     concept has_variable_name = requires(T seg) {
-        { seg.variable_name } -> stl::convertible_to<stl::string_view>;
-    };
+                                    { seg.variable_name } -> stl::convertible_to<stl::string_view>;
+                                };
 
     /**
      * Check if the specified segment can parse a uri segment into the
@@ -30,13 +28,11 @@ namespace webpp::http {
      */
     template <typename ContextType, typename SegType, typename T>
     concept can_parse_to = requires(SegType seg, ContextType ctx) {
-        { seg.template parse<T>(ctx) } -> stl::same_as<stl::optional<T>>;
-    };
+                               { seg.template parse<T>(ctx) } -> stl::same_as<stl::optional<T>>;
+                           };
 
     template <typename CtxT>
-    concept HasPathExtension = Context<CtxT> && requires(CtxT ctx) {
-        ctx.path;
-    };
+    concept HasPathExtension = Context<CtxT> && requires(CtxT ctx) { ctx.path; };
 
 
     /**
@@ -107,9 +103,13 @@ namespace webpp::http {
             NextSegType segment;
 
             [[nodiscard]] constexpr bool operator()(PathContext auto const& ctx) const noexcept {
-                if constexpr (requires { {segment == ""}; }) {
+                if constexpr (requires {
+                                  { segment == "" };
+                              }) {
                     return segment == *ctx.path.current_segment;
-                } else if constexpr (requires { {"" == segment}; }) {
+                } else if constexpr (requires {
+                                         { "" == segment };
+                                     }) {
                     return *ctx.path.current_segment == segment;
                 } else {
                     return false; // should not happen
@@ -157,15 +157,14 @@ namespace webpp::http {
                 return operator/<basic_string_view<char_type>>(forward<NewSegType>(next_segment));
             } else if constexpr (is_integral_v<seg_type>) {
                 // integral types
-                return operator/([=](PathContext auto const& ctx) constexpr noexcept->bool {
-                    return to<seg_type>(ctx.path.current_segment) == next_segment;
-                });
+                return operator/([=](PathContext auto const& ctx) constexpr noexcept
+                                 -> bool { return to<seg_type>(ctx.path.current_segment) == next_segment; });
             } else if constexpr (istl::ComparableToString<seg_type> && is_class_v<seg_type>) {
 
                 // Convert those segments that can be compared with a string, to a normal segment
                 // type that have an operator(context)
-                return operator/
-                  (details::make_a_path<seg_type>{.segment = forward<NewSegType>(next_segment)});
+                return operator/(
+                  details::make_a_path<seg_type>{.segment = forward<NewSegType>(next_segment)});
             } else {
                 // segment
                 using new_path_type  = path<Segments..., NewSegType>;
@@ -261,9 +260,7 @@ namespace webpp::http {
                 // todo: we can optimize this, right? it parses the whole uri, do we need the whole uri? I think yes
                 // fixme: should we decode it? if we decode it we need to care about the UTF-8 stuff as well?
                 // todo: move this parsing into the request so we don't have to do it more than once for one request
-                uri::basic_path<string_type> uri_segments{
-                  req.uri(),
-                  ctx.alloc_pack.template general_allocator<typename string_type::value_type>()};
+                uri::basic_path<string_type> uri_segments{req.uri(), alloc::allocator_for<string_type>(ctx)};
                 uri_segments.fix();
                 using uri_segments_type = decltype(uri_segments);
 
