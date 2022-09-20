@@ -42,7 +42,7 @@ namespace webpp::views {
         using string_type      = traits::general_string<traits_type>;
         using string_view_type = traits::string_view<traits_type>;
         using path_type        = stl::filesystem::path;
-        using view_roots_type  = traits::generalify_allocators<traits_type, stl::vector<path_type>>;
+        using view_roots_type  = stl::vector<path_type, traits::general_allocator<traits_type, path_type>>;
         using char_type        = traits::char_type<traits_type>;
         using ifstream_type    = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
 
@@ -72,9 +72,12 @@ namespace webpp::views {
 
       public:
         template <EnabledTraits ET>
-        constexpr view_manager(ET&& et, stl::size_t cache_limit = 100) noexcept
+            requires(!stl::same_as<stl::remove_cvref_t<ET>, view_manager>)
+        constexpr view_manager( // NOLINT(bugprone-forwarding-reference-overload)
+          ET&&        et,
+          stl::size_t cache_limit = 100) noexcept
           : etraits{et},
-            view_roots{this->alloc_pack.template general_allocator<path_type>()},
+            view_roots{alloc::allocator_for<view_roots_type>(*this)},
             cached_views{et, cache_limit} {}
 
 
@@ -210,7 +213,7 @@ namespace webpp::views {
         /**
          * Read the file content
          */
-        stl::optional<string_type> read_file(stl::filesystem::path const& file) const {
+        [[nodiscard]] stl::optional<string_type> read_file(stl::filesystem::path const& file) const {
 #ifdef WEBPP_EMBEDDED_FILES
             if (auto content = ::get_static_file(filepath); !content.empty()) {
                 return string_type{this->content, alloc};
@@ -239,13 +242,13 @@ namespace webpp::views {
 
 
         template <typename VT>
-        VT get_view(path_type const& file) noexcept {
+        [[nodiscard]] VT get_view(path_type const& file) noexcept {
             return stl::get<VT>(cached_views.emplace_get(file, VT{*this}));
         }
 
 
         template <istl::StringViewifiable StrT>
-        constexpr auto file(StrT&& file_request) noexcept {
+        [[nodiscard]] constexpr auto file(StrT&& file_request) noexcept {
             auto const the_file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
             auto       out      = object::make_general<string_type>(this->alloc_pack);
             if (!the_file) {
@@ -272,7 +275,7 @@ namespace webpp::views {
          * This is essentially the same as ".view" but it's specialized for a mustache file.
          */
         template <istl::StringViewifiable StrT>
-        constexpr auto mustache(StrT&& file_request, mustache_data_type const& data) noexcept {
+        [[nodiscard]] constexpr auto mustache(StrT&& file_request, mustache_data_type const& data) noexcept {
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
             auto       out  = object::make_general<string_type>(this->alloc_pack);
             if (!file) {
@@ -295,7 +298,7 @@ namespace webpp::views {
         }
 
         template <istl::StringViewifiable StrT = string_view_type>
-        auto view(StrT&& file_request) noexcept {
+        [[nodiscard]] auto view(StrT&& file_request) noexcept {
             return view(stl::forward<StrT>(file_request), istl::nothing_type{});
         }
 
@@ -305,7 +308,7 @@ namespace webpp::views {
         template <istl::StringViewifiable StrT, typename DT>
             requires(PossibleDataTypes<mustache_view_type, stl::remove_cvref_t<DT>> ||
                      PossibleDataTypes<file_view_type, stl::remove_cvref_t<DT>>)
-        auto view(StrT&& file_request, DT&& data) noexcept {
+        [[nodiscard]] auto view(StrT&& file_request, DT&& data) noexcept {
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
             auto       out  = object::make_general<string_type>(this->alloc_pack);
             if (!file) {

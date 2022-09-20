@@ -454,9 +454,8 @@ namespace webpp::http::beast_proto {
                                           binded_uri().to_string(),
                                           thread_worker_count));
 
-            // start accepting in all workers
-            for (stl::size_t i = 0ul; i != thread_worker_count; ++i) {
-                asio::post(pool, [this, io_index = i, tries = 0ul]() mutable noexcept {
+            auto get_thread = [this](stl::size_t i) noexcept {
+                return [this, io_index = i, tries = 0ul]() mutable noexcept {
                     for (; !io.stopped(); ++tries) {
                         try {
                             // run executor in this thread
@@ -481,8 +480,17 @@ namespace webpp::http::beast_proto {
                                 tries));
                         }
                     }
-                });
+                };
+            };
+
+            assert(stl::addressof(app_ref) != nullptr);
+
+            // start accepting in all workers
+            for (stl::size_t i = 1ul; i != thread_worker_count - 1; ++i) {
+                asio::post(pool, get_thread(i));
             }
+
+            get_thread(0)();
 
             pool.attach();
             this->logger.info(log_cat, "Server is down.");

@@ -18,7 +18,7 @@ namespace webpp {
         [[no_unique_address]] logger_type         logger{};
 
 
-        // when this object is a mother of another class, this method can help get the tratis object.
+        // when this object is a mother of another class, this method can help get the traits' object.
         constexpr enable_owner_traits& get_traits() noexcept {
             return *this;
         }

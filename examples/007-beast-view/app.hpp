@@ -20,17 +20,20 @@ namespace website {
 
         views::view_manager<traits_type> view_man{*this};
 
-        app() {
+        app() : etraits{} {
             view_man.view_roots.push_back("./public");
         }
 
         auto operator()(auto&& req) {
-            router _router{(get and root) >>=
+            using extensions = extension_pack<string_response>;
+            router _router{extensions{},
+                           *this,
+                           (get and root) >>=
                            [this] {
                                return view_man.view("home");
                            },
                            (get and root / "about") >>=
-                           [this](auto&& ctx) {
+                           [this]() {
                                return view_man.view("about");
                            }};
 
