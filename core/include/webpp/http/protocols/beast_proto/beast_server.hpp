@@ -1,6 +1,7 @@
 #ifndef WEBPP_HTTP_PROTO_BEAST_SERVER_HPP
 #define WEBPP_HTTP_PROTO_BEAST_SERVER_HPP
 
+#include "../../../application/request.hpp"
 #include "../../../configs/constants.hpp"
 #include "../../../libs/asio.hpp"
 #include "../../../memory/object.hpp"
@@ -56,6 +57,7 @@ namespace webpp::http::beast_proto {
             using beast_request_type = typename request_type::beast_request_type;
             using socket_type        = asio::ip::tcp::socket;
             using stream_type        = boost::beast::tcp_stream;
+            using app_ptr            = stl::add_pointer_t<typename server_type::application_type>;
 
 
             static constexpr auto log_cat = "BeastWorker";
@@ -66,23 +68,28 @@ namespace webpp::http::beast_proto {
             stl::optional<request_type>                   req{stl::nullopt};
             stl::optional<beast_response_type>            bres{stl::nullopt};
             stl::optional<beast_response_serializer_type> str_serializer{stl::nullopt};
-            app_wrapper_ref                               app_ref;
+            app_ptr                                       app;
             buffer_type buf{default_buffer_size}; // fixme: see if this is using our allocator
 
 
           public:
+            http_worker(http_worker const&) = delete;
+
             http_worker(server_type& server)
               : etraits{server},
                 timeout{server.timeout},
                 req{server},
-                app_ref{server.app_ref} {}
+                app{&server.app_ref} {}
 
             /**
              * Running async_read_request directly in the constructor will not make
              * make_shared (or alike) functions work properly.
              */
-            void start(socket_type&& in_sock) noexcept {
+            void set_socket(socket_type&& in_sock) noexcept {
                 stream.emplace(stl::move(in_sock));
+            }
+
+            void start() noexcept {
                 async_read_request();
             }
 
@@ -93,7 +100,8 @@ namespace webpp::http::beast_proto {
           private:
             void make_beast_response() noexcept {
                 const beast_request_type breq = req->beast_parser().get();
-                auto                     res  = app_ref(*req);
+                // todo: auto syncing the calls to application can be done here:
+                auto res = stl::invoke(*app, *req);
                 bres.emplace();
                 res.calculate_default_headers();
                 bres->version(breq.version());
@@ -157,7 +165,7 @@ namespace webpp::http::beast_proto {
                 boost::beast::error_code ec;
                 stream->socket().close(ec);
                 if (ec) [[unlikely]] {
-                    this->logger.warning(log_cat, "Error on connection closing.", ec);
+                    this->logger.warning(log_cat, "Error on closing the connection.", ec);
                 }
 
                 // destroy the request type
@@ -174,8 +182,9 @@ namespace webpp::http::beast_proto {
 
 
             void stop() noexcept {
-                if (stream)
+                if (stream) {
                     stream->cancel();
+                }
             }
         };
 
@@ -188,13 +197,13 @@ namespace webpp::http::beast_proto {
         template <typename ServerT>
         struct thread_worker {
 
-            using server_type         = ServerT;
-            using etraits             = typename server_type::etraits;
-            using allocator_pack_type = typename etraits::allocator_pack_type;
-            using http_worker_type    = http_worker<server_type>;
+            using server_type                           = ServerT;
+            using etraits                               = typename server_type::etraits;
+            using allocator_pack_type                   = typename etraits::allocator_pack_type;
+            using http_worker_type                      = http_worker<server_type>;
+            static constexpr auto worker_alloc_features = alloc::feature_pack{alloc::sync};
             using http_worker_allocator_type =
-              typename allocator_pack_type::template best_allocator<alloc::sync_pool_features,
-                                                                    http_worker_type>;
+              typename allocator_pack_type::template best_allocator<worker_alloc_features, http_worker_type>;
             using http_workers_type = stl::list<http_worker_type, http_worker_allocator_type>;
             using socket_type       = asio::ip::tcp::socket;
 
@@ -203,7 +212,10 @@ namespace webpp::http::beast_proto {
             thread_worker(thread_worker const&)     = delete;
             thread_worker(thread_worker&&) noexcept = default;
 
-            thread_worker(server_type& input_server) : server(input_server) {
+            thread_worker(server_type& input_server)
+              : server(input_server),
+                http_workers{
+                  alloc::featured_alloc_for<worker_alloc_features, http_workers_type>(input_server)} {
                 for (stl::size_t i = 0ul; i != server.http_worker_count; ++i) {
                     http_workers.emplace_back(server);
                 }
@@ -212,13 +224,19 @@ namespace webpp::http::beast_proto {
 
 
             void start_work(socket_type&& sock) noexcept {
-                worker->start(stl::move(sock));
-                next_worker();
+                http_worker_type* worker_ptr;
+                {
+                    stl::scoped_lock    lock{worker_mutex};
+                    worker_ptr = worker.operator->();
+                    worker_ptr->set_socket(stl::move(sock));
+                    next_worker();
+                }
+                worker_ptr->start();
             }
 
             // get the next available worker
             void next_worker() noexcept {
-                stl::scoped_lock lock{worker_mutex};
+                // todo: a cooler algorithm can be used here, right? You can even give the user a choice
                 do {
                     ++worker;
                     if (worker == http_workers.end()) {
@@ -257,7 +275,8 @@ namespace webpp::http::beast_proto {
         using string_view_type    = traits::string_view<traits_type>;
         using port_type           = unsigned short;
         using endpoint_type       = asio::ip::tcp::endpoint;
-        using app_wrapper_ref     = stl::add_lvalue_reference_t<App>;
+        using application_type    = stl::remove_cvref_t<App>;
+        using app_wrapper_ref     = stl::add_lvalue_reference_t<application_type>;
         using beast_server_type   = beast_server;
         using acceptor_type       = asio::ip::tcp::acceptor;
         using socket_type         = asio::ip::tcp::socket;
@@ -287,9 +306,9 @@ namespace webpp::http::beast_proto {
         acceptor_type      acceptor;
         stl::size_t        http_worker_count;
         stl::size_t        thread_worker_count;
-        thread_worker_type thread_workers;
         thread_pool_type   pool;
         app_wrapper_ref    app_ref;
+        thread_worker_type thread_workers;
 
 
         void async_accept() noexcept {
@@ -319,9 +338,9 @@ namespace webpp::http::beast_proto {
             acceptor{asio::make_strand(io)},
             http_worker_count{input_http_worker_count},
             thread_worker_count{concurrency_hint},
-            thread_workers{*this},
             pool{concurrency_hint - 1}, // the main thread is one thread itself
-            app_ref{the_app_ref} {}
+            app_ref{the_app_ref},
+            thread_workers{*this} {}
 
 
         beast_server& address(string_view_type addr) noexcept {
@@ -483,7 +502,6 @@ namespace webpp::http::beast_proto {
                 };
             };
 
-            assert(stl::addressof(app_ref) != nullptr);
 
             // start accepting in all workers
             for (stl::size_t i = 1ul; i != thread_worker_count - 1; ++i) {

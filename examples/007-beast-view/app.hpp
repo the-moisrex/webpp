@@ -22,6 +22,10 @@ namespace website {
 
         app() : etraits{} {
             view_man.view_roots.push_back("./public");
+            view_man.view_roots.push_back("./examples/007-beast-view/public");
+            view_man.view_roots.push_back("../examples/007-beast-view/public");
+            view_man.view_roots.push_back("../../examples/007-beast-view/public");
+            view_man.view_roots.push_back("../../../examples/007-beast-view/public");
         }
 
         auto operator()(auto&& req) {

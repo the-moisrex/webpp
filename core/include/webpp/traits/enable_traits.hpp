@@ -64,8 +64,7 @@ namespace webpp {
                          requires stl::same_as<typename stl::remove_cvref_t<T>::allocator_pack_type,
                                                allocator_pack_type>;
                      })
-        constexpr enable_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack},
-                                                    logger{obj.logger} {}
+        constexpr enable_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack}, logger{obj.logger} {}
 
         constexpr enable_traits(alloc_pack_ref alloc_pack_obj, logger_ref logger_obj = {}) noexcept
           : alloc_pack{alloc_pack_obj},
@@ -124,10 +123,10 @@ namespace webpp {
          */
         template <typename T>
         concept AllocatorHolder = requires(T holder) {
-                                      typename T::allocator_pack_type;
-                                      requires AllocatorPack<typename T::allocator_pack_type>;
-                                      { holder.alloc_pack } -> AllocatorPack;
-                                  };
+            typename T::allocator_pack_type;
+            requires AllocatorPack<typename T::allocator_pack_type>;
+            { holder.alloc_pack } -> AllocatorPack;
+        };
 
         template <typename T, AllocatorHolder AllocHolder>
         static constexpr auto local_allocator(AllocHolder& holder) noexcept {
@@ -142,6 +141,16 @@ namespace webpp {
         template <typename T, AllocatorHolder AllocHolder>
         static constexpr auto allocator_for(AllocHolder& holder) noexcept {
             return holder.alloc_pack.template get_allocator_for<T>();
+        }
+
+        template <feature_pack FPack, typename T, AllocatorHolder AllocHolder>
+        static constexpr auto featured_alloc_for(AllocHolder& holder) noexcept {
+            return holder.alloc_pack.template featured_alloc_for<FPack, T>();
+        }
+
+        template <feature_pack FPack, typename T, AllocatorHolder AllocHolder>
+        static constexpr auto featured_alloc(AllocHolder& holder) noexcept {
+            return holder.alloc_pack.template get_allocator<FPack, T>();
         }
 
         template <typename T, AllocatorHolder AllocHolder>
