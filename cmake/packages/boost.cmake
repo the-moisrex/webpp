@@ -25,7 +25,7 @@ else()
     #    )
     #endif ()
 
-    set(boost_version 1.77.0)
+    set(boost_version 1.88.0)
     set(boost_components "asio")
 
     ## In order to calculate the dependencies:

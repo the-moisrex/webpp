@@ -4,7 +4,7 @@ if (NOT ZLIB_FOUND)
     include(CPM)
     CPMAddPackage(
             NAME zlib
-            URL "https://github.com/madler/zlib/archive/refs/tags/v1.2.11.zip"
+            URL "https://github.com/madler/zlib/archive/refs/tags/v1.2.12.zip"
     )
 endif ()
 
