@@ -34,11 +34,11 @@ namespace website {
                            *this,
                            (get and root) >>=
                            [this] {
-                               return view_man.view("home");
+                               return view_man.view("home.html");
                            },
                            (get and root / "about") >>=
                            [this]() {
-                               return view_man.view("about");
+                               return view_man.view("about.html");
                            }};
 
             return _router(req);
