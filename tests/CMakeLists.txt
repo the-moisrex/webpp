@@ -1,4 +1,3 @@
-
 enable_testing()
 
 file(GLOB TEST_SOURCES *_test.cpp)

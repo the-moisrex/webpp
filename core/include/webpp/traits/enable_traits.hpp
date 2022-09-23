@@ -14,6 +14,8 @@ namespace webpp {
         using logger_type         = traits::logger<traits_type>;
         using allocator_pack_type = traits::allocator_pack_type<traits_type>;
 
+        static constexpr bool is_owner = true;
+
         [[no_unique_address]] allocator_pack_type alloc_pack{};
         [[no_unique_address]] logger_type         logger{};
 
@@ -50,6 +52,8 @@ namespace webpp {
                                stl::is_trivially_copy_constructible_v<allocator_pack_type>,
                              allocator_pack_type,
                              allocator_pack_type&>;
+
+        static constexpr bool is_owner = false;
 
         [[no_unique_address]] alloc_pack_ref alloc_pack;
         [[no_unique_address]] logger_ref     logger;
