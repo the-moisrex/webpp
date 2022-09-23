@@ -9,4 +9,5 @@ using namespace std;
 
 TEST(DynamicRouter, Init) {
     dynamic_router router;
+    router.set_route();
 }
