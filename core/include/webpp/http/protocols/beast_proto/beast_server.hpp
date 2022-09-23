@@ -57,29 +57,25 @@ namespace webpp::http::beast_proto {
             using beast_request_type = typename request_type::beast_request_type;
             using socket_type        = asio::ip::tcp::socket;
             using stream_type        = boost::beast::tcp_stream;
-            using app_ptr            = stl::add_pointer_t<typename server_type::application_type>;
+            using app_ref            = typename server_type::app_wrapper_ref;
+            using server_ref         = stl::add_lvalue_reference_t<server_type>;
 
 
             static constexpr auto log_cat = "BeastWorker";
 
           private:
             stl::optional<stream_type>                    stream{stl::nullopt};
-            duration                                      timeout;
             stl::optional<request_type>                   req{stl::nullopt};
             stl::optional<beast_response_type>            bres{stl::nullopt};
             stl::optional<beast_response_serializer_type> str_serializer{stl::nullopt};
-            app_ptr                                       app;
+            server_ref                                    server;
             buffer_type buf{default_buffer_size}; // fixme: see if this is using our allocator
 
 
           public:
             http_worker(http_worker const&) = delete;
 
-            http_worker(server_type& server)
-              : etraits{server},
-                timeout{server.timeout},
-                req{server},
-                app{&server.app_ref} {}
+            http_worker(server_ref in_server) : etraits{in_server}, req{in_server}, server{in_server} {}
 
             /**
              * Running async_read_request directly in the constructor will not make
@@ -100,8 +96,7 @@ namespace webpp::http::beast_proto {
           private:
             void make_beast_response() noexcept {
                 const beast_request_type breq = req->beast_parser().get();
-                // todo: auto syncing the calls to application can be done here:
-                auto res = stl::invoke(*app, *req);
+                auto                     res  = server.call_app(*req);
                 bres.emplace();
                 res.calculate_default_headers();
                 bres->version(breq.version());
@@ -117,7 +112,7 @@ namespace webpp::http::beast_proto {
 
             // Asynchronously receive a complete request message.
             void async_read_request() noexcept {
-                stream->expires_after(timeout);
+                stream->expires_after(server.timeout);
                 boost::beast::http::async_read(
                   *stream,
                   buf,
@@ -289,6 +284,7 @@ namespace webpp::http::beast_proto {
           typename allocator_pack_type::template best_allocator<alloc::sync_pool_features,
                                                                 thread_worker_type>;
         using thread_pool_type = asio::thread_pool;
+        using request_type     = simple_request<traits_type, root_extensions, beast_request, root_extensions>;
 
         // each request should finish before this
         duration timeout{stl::chrono::seconds(3)};
@@ -309,6 +305,9 @@ namespace webpp::http::beast_proto {
         thread_pool_type   pool;
         app_wrapper_ref    app_ref;
         thread_worker_type thread_workers;
+        stl::mutex         app_call_mutex;
+        bool               synced = false;
+
 
 
         void async_accept() noexcept {
@@ -322,6 +321,20 @@ namespace webpp::http::beast_proto {
                                       this->async_accept();
                                   });
         }
+
+        // call the app
+        auto call_app(request_type& req) noexcept {
+            if (synced) {
+                stl::scoped_lock lock{app_call_mutex};
+                return stl::invoke(app_ref, req);
+            } else {
+                return stl::invoke(app_ref, req);
+            }
+        }
+
+        template <typename ServerT>
+        friend struct http_worker;
+
 
       public:
         beast_server(beast_server const&)            = delete;
@@ -401,6 +414,16 @@ namespace webpp::http::beast_proto {
             return *this;
         }
 
+        beast_server& enable_sync() noexcept {
+            synced = true;
+            return *this;
+        }
+
+        beast_server& disable_sync() noexcept {
+            synced = false;
+            return *this;
+        }
+
         [[nodiscard]] auto binded_uri() const {
             auto u   = object::make_general<uri::uri>(*this);
             u.scheme = is_ssl_active() ? "https" : "http";
@@ -462,9 +485,7 @@ namespace webpp::http::beast_proto {
             }
 
             // We need to be executing within a strand to perform async operations
-            // on the I/O objects in this session. Although not strictly necessary
-            // for single-threaded contexts, this example code is written to be
-            // thread-safe by default.
+            // on the I/O objects in this session.
             asio::dispatch(acceptor.get_executor(),
                            boost::beast::bind_front_handler(&beast_server_type::async_accept, this));
 
