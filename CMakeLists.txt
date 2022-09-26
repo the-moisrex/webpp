@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7...3.22)
+cmake_minimum_required(VERSION 3.7...3.24.2)
 
 project(webpp
         VERSION 1.0.0
@@ -117,8 +117,8 @@ add_subdirectory(${LIB_DIR})
 add_subdirectory(${SDK_DIR})
 
 if (IS_DEBUG)
-    add_subdirectory(${TESTS_DIR})
-    add_subdirectory(${BENCHMARKS_DIR})
-    add_subdirectory(${EXAMPLES_DIR})
+    add_subdirectory(${TESTS_DIR} EXCLUDE_FROM_ALL)
+    add_subdirectory(${BENCHMARKS_DIR} EXCLUDE_FROM_ALL)
+    add_subdirectory(${EXAMPLES_DIR} EXCLUDE_FROM_ALL)
 endif ()
 
