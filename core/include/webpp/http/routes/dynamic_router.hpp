@@ -5,6 +5,9 @@
 #include "../../std/vector.hpp"
 #include "../../traits/default_traits.hpp"
 #include "../../traits/enable_traits.hpp"
+#include "../../utils/functional.hpp"
+
+#include <any>
 
 namespace webpp {
 
@@ -28,12 +31,18 @@ namespace webpp {
         using vector_allocator   = traits::general_allocator<traits_type, dynamic_route_type>;
         using context_type       = basic_dynamic_context<traits_type>;
 
+        static constexpr auto log_cat = "DRouter";
+
       private:
         // todo: implement a function_vector that'll require only one allocator not one for each
         stl::vector<dynamic_route_type, vector_allocator> routes;
         bool                                              is_synced = false;
 
       public:
+        // These are the callable types
+        stl::vector<stl::any, traits::general_allocator<traits_type, stl::any>> objects;
+
+
         constexpr basic_dynamic_router() noexcept
             requires(etraits::is_resource_owner)
           : etraits{} {}
@@ -58,6 +67,66 @@ namespace webpp {
 
         template <typename T>
         constexpr basic_dynamic_router& set_route(T&& callable) noexcept {}
+
+        /**
+         * @brief Register a member function as a route to call
+         * You will only need to pass the member function and not the object itself; for this function to
+         * work, you have to either:
+         *   - make sure object type is default constructible, or
+         *   - make sure you have already passed the object of type T to the "objects".
+         * If you haven't added the object to the "objects" list, then it tries to default-construct it.
+         */
+        template <typename T>
+            requires(stl::is_member_function_pointer_v<T>)
+        constexpr basic_dynamic_router& set_route(T&& method) noexcept {
+            using method_type = member_function_pointer<stl::remove_cvref_t<T>>;
+            using type        = typename method_type::type;
+            using return_type = typename method_type::return_type;
+            for (auto& obj : objects) {
+                if (obj.type() == typeid(type)) {
+                    set_route(
+                      [callable = stl::any_cast<type>(obj),
+                       method]<typename... Args> requires(method_type::
+                                                            template is_same_args_v<Args...>)(
+                        Args && ... args) constexpr noexcept(method_type::is_noexcept) {
+                                                     return stl::invoke_result_t<return_type, Args...>(
+                                                       method,
+                                                       callable,
+                                                       stl::forward<Args>(args)...);
+                                                 });
+                    return *this;
+                }
+            }
+
+            // default constructing it if it's possible and use that object
+            if constexpr (stl::is_default_constructible_v<type>) {
+                objects.emplace_back(type{});
+                set_route([callable = stl::any_cast<type>(objects.back()),
+                           method]<typename... Args> requires(method_type::
+                                                                template is_same_args_v<Args...>)(
+                  Args && ... args) constexpr noexcept(method_type::is_noexcept) {
+                                                         return stl::invoke_result_t<return_type, Args...>(
+                                                           method,
+                                                           callable,
+                                                           stl::forward<Args>(args)...);
+                                                     });
+            } else {
+                this->logger.error(
+                  log_cat,
+                  fmt::format(
+                    "You have not specified an object with typeid of {}, but you've tried to set a route on it.",
+                    typeid(type).name()));
+            }
+            return *this;
+        }
+
+
+        // Append a migration
+        template <typename C>
+        constexpr basic_dynamic_router& operator+=(C&& callable) {
+            // todo
+            return *this;
+        }
 
 
         template <typename ReqType>

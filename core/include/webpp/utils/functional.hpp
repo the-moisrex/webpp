@@ -200,6 +200,12 @@ namespace webpp {
         static constexpr bool returns_reference = MEMBER_FUNCTION_POINTER_IMPL_IF_OPT(IS_REFERENCE);         \
         static constexpr bool returns_move      = MEMBER_FUNCTION_POINTER_IMPL_IF_OPT(IS_MOVE);              \
         static constexpr bool is_noexcept       = MEMBER_FUNCTION_POINTER_IMPL_IF_OPT(IS_NOEXCEPT);          \
+                                                                                                             \
+        template <typename... NArgs>                                                                         \
+        using is_same_args = stl::is_same<args, stl::tuple<NArgs>>;                                          \
+                                                                                                             \
+        template <typename... NArgs>                                                                         \
+        static constexpr bool is_same_args_v = stl::is_same_v<args, stl::tuple<NArgs>>;                      \
     }
 
     MEMBER_FUNCTION_POINTER_IMPL(no_const, no_volatile, no_ref, no_move, no_noexcept);

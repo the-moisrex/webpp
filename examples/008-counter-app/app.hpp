@@ -20,11 +20,11 @@ namespace website {
         stl::string                    ip;
 
         counter_model() {
-            auto counter = db.create.if_not_exists().table("counter");
+            auto counter = db.create_query().table("counter");
             counter["id"].primary().number().not_null();
             counter["ip"].string().unique().not_null();
             counter["val"].number().not_null().default_value(0);
-            counter.commit();
+            counter.create_if_not_exists();
         };
 
         bool increment() {
@@ -68,7 +68,7 @@ namespace website {
         }
 
         void setup_routes() {
-            router.callables.push_back(*this);
+            router.objects.emplace_back(*this);
 
             // setup migrations
             router += &app::increment; // migration
