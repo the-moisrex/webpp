@@ -1,8 +1,9 @@
 // Created by moisrex on 5/5/20.
 
-#ifndef WEBPP_EXAMPLE_BEAST_APP_H
-#define WEBPP_EXAMPLE_BEAST_APP_H
+#ifndef WEBPP_EXAMPLE_COUNTER_APP_HPP
+#define WEBPP_EXAMPLE_COUNTER_APP_HPP
 
+#include <webpp/db/sql_database.hpp>
 #include <webpp/db/sqlite/sqlite.hpp>
 #include <webpp/http/http.hpp>
 #include <webpp/http/routes/dynamic_router.hpp>
@@ -53,13 +54,17 @@ namespace website {
             view_man.view_roots.push_back("../examples/007-beast-view/public");
             view_man.view_roots.push_back("../../examples/007-beast-view/public");
             view_man.view_roots.push_back("../../../examples/007-beast-view/public");
+
+            router.synced(true);
             setup_routes();
         }
 
-        void increment() {
+        void increment(context const& ctx) {
             stl::string_view ip = ctx.client_ip();
             counter.ip          = ip;
-            counter.increment();
+            if (!counter.increment()) {
+                this->logger.error("We're not able to increment for some reason.");
+            }
         }
 
         void setup_routes() {
@@ -96,4 +101,4 @@ namespace website {
 } // namespace website
 
 
-#endif // WEBPP_EXAMPLE_BEAST_APP_H
+#endif
