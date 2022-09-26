@@ -71,8 +71,9 @@ namespace webpp::views {
 
 
       public:
-        template <EnabledTraits ET>
-            requires(!stl::same_as<stl::remove_cvref_t<ET>, view_manager>)
+        template <typename ET>
+            requires(EnabledTraits<stl::remove_cvref_t<ET>> &&
+                     !stl::same_as<stl::remove_cvref_t<ET>, view_manager>)
         constexpr view_manager( // NOLINT(bugprone-forwarding-reference-overload)
           ET&&        et,
           stl::size_t cache_limit = 100) noexcept

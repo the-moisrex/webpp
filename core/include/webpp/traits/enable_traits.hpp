@@ -14,7 +14,7 @@ namespace webpp {
         using logger_type         = traits::logger<traits_type>;
         using allocator_pack_type = traits::allocator_pack_type<traits_type>;
 
-        static constexpr bool is_owner = true;
+        static constexpr bool is_resource_owner = true;
 
         [[no_unique_address]] allocator_pack_type alloc_pack{};
         [[no_unique_address]] logger_type         logger{};
@@ -53,7 +53,7 @@ namespace webpp {
                              allocator_pack_type,
                              allocator_pack_type&>;
 
-        static constexpr bool is_owner = false;
+        static constexpr bool is_resource_owner = false;
 
         [[no_unique_address]] alloc_pack_ref alloc_pack;
         [[no_unique_address]] logger_ref     logger;
@@ -68,7 +68,8 @@ namespace webpp {
                          requires stl::same_as<typename stl::remove_cvref_t<T>::allocator_pack_type,
                                                allocator_pack_type>;
                      })
-        constexpr enable_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack}, logger{obj.logger} {}
+        constexpr enable_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack},
+                                                    logger{obj.logger} {}
 
         constexpr enable_traits(alloc_pack_ref alloc_pack_obj, logger_ref logger_obj = {}) noexcept
           : alloc_pack{alloc_pack_obj},
@@ -127,10 +128,10 @@ namespace webpp {
          */
         template <typename T>
         concept AllocatorHolder = requires(T holder) {
-            typename T::allocator_pack_type;
-            requires AllocatorPack<typename T::allocator_pack_type>;
-            { holder.alloc_pack } -> AllocatorPack;
-        };
+                                      typename T::allocator_pack_type;
+                                      requires AllocatorPack<typename T::allocator_pack_type>;
+                                      { holder.alloc_pack } -> AllocatorPack;
+                                  };
 
         template <typename T, AllocatorHolder AllocHolder>
         static constexpr auto local_allocator(AllocHolder& holder) noexcept {

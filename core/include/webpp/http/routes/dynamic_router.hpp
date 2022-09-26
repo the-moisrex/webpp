@@ -34,7 +34,9 @@ namespace webpp {
         bool                                              is_synced = false;
 
       public:
-        constexpr basic_dynamic_router() noexcept requires(etraits::is_owner) : etraits{} {}
+        constexpr basic_dynamic_router() noexcept
+            requires(etraits::is_resource_owner)
+          : etraits{} {}
 
         template <typename ET>
             requires(EnabledTraits<stl::remove_cvref_t<ET>> &&
@@ -43,14 +45,14 @@ namespace webpp {
 
 
         /**
-         * @brief By enabling it, call to routes are synced and it becomed thread-safe
+         * @brief By enabling it, call to routes are synced and it becomes thread-safe
          * @details Attention: if you've enabled synced inside the server (in beast-server for example), or
-         * the protocol that you're using is inheritly synced (CGI for example), then enabling this is
-         * esstentially a useless thing and it'll just slow the process down (not significant enough for apps
+         * the protocol that you're using is inherently synced (CGI for example), then enabling this is
+         * essentially a useless thing and it'll just slow the process down (not significant enough for apps
          * with low use)
          */
-        constexpr basic_dynamic_router& synced(bool enable_syned = true) noexcept {
-            is_synced = enable_syned;
+        constexpr basic_dynamic_router& synced(bool enable_synced = true) noexcept {
+            is_synced = enable_synced;
             return *this;
         }
 
