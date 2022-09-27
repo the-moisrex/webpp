@@ -69,6 +69,30 @@ namespace webpp {
         constexpr basic_dynamic_router& set_route(T&& callable) noexcept {}
 
         /**
+         * @brief Register a member function and it's object; It's the same as using std::mem_fn.
+         */
+        template <typename T, typename U>
+            requires(stl::is_member_function_pointer_v<T>)
+        constexpr basic_dynamic_router& set_route(T&& method, U&& obj) noexcept {
+            using method_type = member_function_pointer<stl::remove_cvref_t<T>>;
+            using type        = typename method_type::type;
+            using return_type = typename method_type::return_type;
+            static_assert(stl::same_as<type, stl::remove_cvref_t<U>>,
+                          "The specified member function is not from the specified object.");
+
+            return set_route(
+              [callable = obj, method]<typename... Args> requires(
+                method_type::template is_same_args_v<Args...>)(
+                Args && ... args) constexpr noexcept(method_type::is_noexcept) {
+                                                             return stl::invoke_result_t<return_type,
+                                                                                         Args...>(
+                                                               method,
+                                                               callable,
+                                                               stl::forward<Args>(args)...);
+                                                         });
+        }
+
+        /**
          * @brief Register a member function as a route to call
          * You will only need to pass the member function and not the object itself; for this function to
          * work, you have to either:
@@ -81,41 +105,22 @@ namespace webpp {
         constexpr basic_dynamic_router& set_route(T&& method) noexcept {
             using method_type = member_function_pointer<stl::remove_cvref_t<T>>;
             using type        = typename method_type::type;
-            using return_type = typename method_type::return_type;
             for (auto& obj : objects) {
                 if (obj.type() == typeid(type)) {
-                    set_route(
-                      [callable = stl::any_cast<type>(obj),
-                       method]<typename... Args> requires(method_type::
-                                                            template is_same_args_v<Args...>)(
-                        Args && ... args) constexpr noexcept(method_type::is_noexcept) {
-                                                     return stl::invoke_result_t<return_type, Args...>(
-                                                       method,
-                                                       callable,
-                                                       stl::forward<Args>(args)...);
-                                                 });
-                    return *this;
+                    return set_route(method, stl::any_cast<type>(obj));
                 }
             }
 
             // default constructing it if it's possible and use that object
             if constexpr (stl::is_default_constructible_v<type>) {
                 objects.emplace_back(type{});
-                set_route([callable = stl::any_cast<type>(objects.back()),
-                           method]<typename... Args> requires(method_type::
-                                                                template is_same_args_v<Args...>)(
-                  Args && ... args) constexpr noexcept(method_type::is_noexcept) {
-                                                         return stl::invoke_result_t<return_type, Args...>(
-                                                           method,
-                                                           callable,
-                                                           stl::forward<Args>(args)...);
-                                                     });
+                return set_route(method, stl::any_cast<type>(objects.back()));
             } else {
                 this->logger.error(
                   log_cat,
-                  fmt::format(
-                    "You have not specified an object with typeid of {}, but you've tried to set a route on it.",
-                    typeid(type).name()));
+                  fmt::format("You have not specified an object with typeid of '{}' in your dynamic router,"
+                              " but you've tried to register a member function of unknown type for router.",
+                              typeid(type).name()));
             }
             return *this;
         }
