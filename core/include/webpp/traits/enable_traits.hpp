@@ -9,11 +9,23 @@
 namespace webpp {
 
     template <Traits TraitsType>
+    struct enable_traits;
+
+    template <Traits TraitsType>
     struct enable_owner_traits {
         using traits_type         = TraitsType;
+        using non_owner_type      = enable_traits<traits_type>;
         using logger_type         = traits::logger<traits_type>;
+        using logger_ref          = typename logger_type::logger_ref;
+        using string_view_type    = traits::string_view<traits_type>;
+        using char_type           = istl::char_type_of<string_view_type>;
+        using string_type         = traits::general_string<traits_type>;
         using allocator_pack_type = traits::allocator_pack_type<traits_type>;
-
+        using alloc_pack_ref =
+          stl::conditional_t<sizeof(allocator_pack_type) <= sizeof(allocator_pack_type*) &&
+                               stl::is_trivially_copy_constructible_v<allocator_pack_type>,
+                             allocator_pack_type,
+                             allocator_pack_type&>;
         static constexpr bool is_resource_owner = true;
 
         [[no_unique_address]] allocator_pack_type alloc_pack{};
@@ -41,6 +53,7 @@ namespace webpp {
     template <Traits TraitsType>
     struct enable_traits {
         using traits_type         = TraitsType;
+        using non_owner_type      = enable_traits<traits_type>;
         using logger_type         = traits::logger<traits_type>;
         using logger_ref          = typename logger_type::logger_ref;
         using string_view_type    = traits::string_view<traits_type>;
@@ -99,7 +112,7 @@ namespace webpp {
             swap(logger, other.logger);
         }
 
-        // when this object is a mother of another class, this method can help get the tratis object.
+        // when this object is a mother of another class, this method can help get the traits object.
         constexpr enable_traits& get_traits() noexcept {
             return *this;
         }

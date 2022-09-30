@@ -6,13 +6,45 @@
 #include "../../traits/default_traits.hpp"
 #include "../../traits/enable_traits.hpp"
 #include "../../utils/functional.hpp"
+#include "../request_concepts.hpp"
+#include "../response_concepts.hpp"
 
 #include <any>
 
-namespace webpp {
+namespace webpp::http {
 
     template <Traits TraitsType = default_traits>
     struct basic_dynamic_context {};
+
+    /**
+     * @brief Common response type class for our dynamic router.
+     * Even though the user can, but it's not recommended for the developers to use this class directly as a response type of their routes.
+     */
+    template <EnabledTraits TraitsEnabler = enable_owner_traits<default_traits>>
+    struct basic_dynamic_response : TraitsEnabler {
+        using etraits     = TraitsEnabler;
+        using traits_type = typename etraits::traits_type;
+        using string_type = traits::general_string<traits_type>;
+
+      private:
+        string_type data;
+
+      public:
+        // empty response
+        constexpr basic_dynamic_response()
+            requires(etraits::is_resource_owner)
+        = default;
+
+
+        template <typename ET>
+            requires(EnabledTraits<ET> && !stl::same_as<basic_dynamic_response, stl::remove_cvref_t<ET>>)
+        constexpr basic_dynamic_response(ET&& et) : etraits{stl::forward<ET>(et)} {}
+
+        constexpr string_type const& str() const {
+            return data;
+        }
+    };
+
 
     /**
      * @brief A Router that's is fully customizable at runtime
@@ -24,7 +56,8 @@ namespace webpp {
     struct basic_dynamic_router : TraitsEnabler {
         using etraits            = TraitsEnabler;
         using traits_type        = typename etraits::traits_type;
-        using response_type      = std::string;
+        using non_owner_etraits  = typename etraits::non_owner_type;
+        using response_type      = basic_dynamic_response<non_owner_etraits>;
         using caller_type        = response_type();
         using route_allocator    = traits::general_allocator<traits_type, stl::byte>;
         using dynamic_route_type = istl::function<caller_type, route_allocator>;
@@ -134,7 +167,7 @@ namespace webpp {
         }
 
 
-        template <typename ReqType>
+        template <HTTPRequest ReqType>
         constexpr response_type operator()(ReqType&& req) noexcept {
             // todo
             return {};
@@ -151,10 +184,10 @@ namespace webpp {
 
 
     namespace pmr {
-        using dynamic_context = webpp::dynamic_context<std_pmr_traits>;
-        using dynamic_router  = webpp::dynamic_router<std_pmr_traits>;
+        using dynamic_context = webpp::http::dynamic_context<std_pmr_traits>;
+        using dynamic_router  = webpp::http::dynamic_router<std_pmr_traits>;
     } // namespace pmr
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_DYNAMIC_ROUTER_HPP
