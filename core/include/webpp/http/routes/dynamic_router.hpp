@@ -2,6 +2,7 @@
 #define WEBPP_DYNAMIC_ROUTER_HPP
 
 #include "../../std/functional.hpp"
+#include "../../std/string.hpp"
 #include "../../std/vector.hpp"
 #include "../../traits/default_traits.hpp"
 #include "../../traits/enable_traits.hpp"
@@ -18,7 +19,8 @@ namespace webpp::http {
 
     /**
      * @brief Common response type class for our dynamic router.
-     * Even though the user can, but it's not recommended for the developers to use this class directly as a response type of their routes.
+     * Even though the user can, but it's not recommended for the developers to use this class directly as a
+     * response type of their routes.
      */
     template <EnabledTraits TraitsEnabler = enable_owner_traits<default_traits>>
     struct basic_dynamic_response : TraitsEnabler {
@@ -39,6 +41,16 @@ namespace webpp::http {
         template <typename ET>
             requires(EnabledTraits<ET> && !stl::same_as<basic_dynamic_response, stl::remove_cvref_t<ET>>)
         constexpr basic_dynamic_response(ET&& et) : etraits{stl::forward<ET>(et)} {}
+
+
+        // string
+        template <typename StrT>
+            requires (istl::StringifiableOf<string_type, StrT>)
+        constexpr basic_dynamic_response& operator=(StrT&& val) {
+            data = istl::stringify_of<string_type>(stl::forward<StrT>(val),
+                                                   alloc::allocator_for<string_type>(this->alloc_pack));
+            return *this;
+        }
 
         constexpr string_type const& str() const {
             return data;

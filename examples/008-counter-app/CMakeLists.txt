@@ -1,6 +1,6 @@
 
 set(EXEC_NAME counter-app)
-file(GLOB BIN_SOURCES main.cpp app.hpp)
+file(GLOB BIN_SOURCES main.cpp app.cpp)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
