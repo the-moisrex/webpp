@@ -3,6 +3,8 @@
 #ifndef WEBPP_EXAMPLE_COUNTER_APP_HPP
 #define WEBPP_EXAMPLE_COUNTER_APP_HPP
 
+#include "configs.hpp"
+
 #include <webpp/http/routes/dynamic_router.hpp>
 #include <webpp/std/utility.hpp>
 
@@ -15,8 +17,7 @@ namespace website {
 
     struct app_impl;
 
-    struct app : stl::enable_traits<default_traits> {
-        using traits_type = default_traits;
+    struct app : stl::enable_traits<traits_type> {
         using etraits     = stl::enable_traits<traits_type>;
         stl::unique_ptr<app_impl> the_app;
 

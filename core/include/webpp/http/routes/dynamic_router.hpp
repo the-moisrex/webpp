@@ -45,7 +45,7 @@ namespace webpp::http {
 
         // string
         template <typename StrT>
-            requires (istl::StringifiableOf<string_type, StrT>)
+            requires(istl::StringifiableOf<string_type, StrT>)
         constexpr basic_dynamic_response& operator=(StrT&& val) {
             data = istl::stringify_of<string_type>(stl::forward<StrT>(val),
                                                    alloc::allocator_for<string_type>(this->alloc_pack));
@@ -187,17 +187,15 @@ namespace webpp::http {
     };
 
 
-    template <Traits TraitsType = default_traits>
-    using dynamic_router = basic_dynamic_router<enable_owner_traits<TraitsType>>;
-
-
-    template <Traits TraitsType = default_traits>
-    using dynamic_context = basic_dynamic_context<TraitsType>;
+    using dynamic_response = basic_dynamic_router<enable_owner_traits<default_traits>>;
+    using dynamic_router   = basic_dynamic_router<enable_owner_traits<default_traits>>;
+    using dynamic_context  = basic_dynamic_context<default_traits>;
 
 
     namespace pmr {
-        using dynamic_context = webpp::http::dynamic_context<std_pmr_traits>;
-        using dynamic_router  = webpp::http::dynamic_router<std_pmr_traits>;
+        using dynamic_response = webpp::http::basic_dynamic_response<enable_owner_traits<std_pmr_traits>>;
+        using dynamic_context  = webpp::http::basic_dynamic_context<std_pmr_traits>;
+        using dynamic_router   = webpp::http::basic_dynamic_router<enable_owner_traits<std_pmr_traits>>;
     } // namespace pmr
 
 } // namespace webpp::http

@@ -11,8 +11,6 @@ using namespace website;
 using namespace webpp;
 using namespace webpp::http;
 
-using traits_type = app::traits_type;
-
 // This is the controller
 struct app_impl : public enable_traits<traits_type> {
     using etraits = enable_traits<traits_type>;

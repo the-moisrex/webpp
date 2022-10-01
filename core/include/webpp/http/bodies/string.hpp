@@ -46,7 +46,7 @@ namespace webpp::http {
             using char_type        = traits::char_type<traits_type>;
             using ifstream_type    = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
 
-          protected: // the file extension will use the "content" directly
+          protected: // the file extension will use the "content"'s allocator directly
             using alloc_type    = allocator_type const&;
             string_type content = "";
 

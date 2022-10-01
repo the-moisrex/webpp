@@ -163,6 +163,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/mime_types.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/status_code.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/version.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/verbs.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/application/request.hpp
         ${LIB_INCLUDE_DIR}/webpp/application/application_concepts.hpp
