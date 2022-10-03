@@ -21,11 +21,19 @@ namespace webpp::http {
 
     using method = route<method_route_condition>;
 
-    constexpr auto get  = method("GET");
-    constexpr auto post = method("POST");
-    constexpr auto head = method("HEAD");
-    constexpr auto put  = method("PUT");
-    // TODO: add more methods
+    constexpr auto get     = method("GET");
+    constexpr auto post    = method("POST");
+    constexpr auto head    = method("HEAD");
+    constexpr auto put     = method("PUT");
+    constexpr auto patch   = method("PATCH");
+    constexpr auto del     = method("DELETE");
+    constexpr auto options = method("OPTIONS");
+
+    inline namespace literals {
+        constexpr auto operator""_method(const char* str, std::size_t len) noexcept {
+            return method(str, len);
+        }
+    } // namespace literals
 
 } // namespace webpp::http
 
