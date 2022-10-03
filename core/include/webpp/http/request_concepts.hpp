@@ -26,12 +26,8 @@ namespace webpp::http {
         req.uri();
 
         // so we can make a copy of it (initial request)
-        // requires stl::copy_constructible<stl::remove_cvref_t<T>>;
+        requires stl::copy_constructible<stl::remove_cvref_t<T>>;
 
-        // todo: should we uncomment this?
-        // requires requires {
-        //    stl::remove_cvref_t<T>{req};
-        // };
 
         // requires Protocol<typename stl::remove_cvref_t<T>::protocol_type>
     };

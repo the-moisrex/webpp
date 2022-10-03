@@ -157,8 +157,9 @@ namespace webpp::http {
                 return operator/<basic_string_view<char_type>>(forward<NewSegType>(next_segment));
             } else if constexpr (is_integral_v<seg_type>) {
                 // integral types
-                return operator/([=](PathContext auto const& ctx) constexpr noexcept
-                                 -> bool { return to<seg_type>(ctx.path.current_segment) == next_segment; });
+                return operator/([=](PathContext auto const& ctx) constexpr noexcept -> bool {
+                    return to<seg_type>(ctx.path.current_segment) == next_segment;
+                });
             } else if constexpr (istl::ComparableToString<seg_type> && is_class_v<seg_type>) {
 
                 // Convert those segments that can be compared with a string, to a normal segment
@@ -341,6 +342,15 @@ namespace webpp::http {
 
     // relative path
     constexpr path relative{};
+
+
+
+    inline namespace literals {
+        constexpr auto operator""_path(const char* str, std::size_t len) noexcept {
+            return path{} / stl::string_view{str, len};
+        }
+    } // namespace literals
+
 
 } // namespace webpp::http
 

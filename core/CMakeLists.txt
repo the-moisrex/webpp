@@ -127,7 +127,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/routes/path.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/routes/tpath.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/routes/context.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/routes/literals.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/routes/path/number.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/http/bodies/json.hpp

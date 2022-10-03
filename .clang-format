@@ -29,7 +29,7 @@ BreakConstructorInitializers: BeforeColon
 BreakInheritanceList: BeforeColon
 BreakStringLiterals: false
 ColumnLimit: 110
-CommentPragmas: '((^\s*(todo|TODO|fixme|FIXME):.*)|^\s*\/\/)'
+CommentPragmas: '((^\s*(todo|TODO|fixme|FIXME|NOLINT):.*)|^\s*\/\/)'
 CompactNamespaces: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ConstructorInitializerIndentWidth: 2

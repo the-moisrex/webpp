@@ -1,6 +1,7 @@
 #ifndef WEBPP_DYNAMIC_ROUTER_HPP
 #define WEBPP_DYNAMIC_ROUTER_HPP
 
+#include "../../extensions/extension.hpp"
 #include "../../std/functional.hpp"
 #include "../../std/string.hpp"
 #include "../../std/vector.hpp"
@@ -9,6 +10,7 @@
 #include "../../utils/functional.hpp"
 #include "../request_concepts.hpp"
 #include "../response_concepts.hpp"
+#include "../status_code.hpp"
 
 #include <any>
 
@@ -58,13 +60,34 @@ namespace webpp::http {
     };
 
 
+    template <Traits TraitsType>
+    struct subrouter {
+        using traits_type = TraitsType;
+        using string_type = traits::general_string<traits_type>;
+
+        constexpr subrouter& operator/(auto) noexcept {
+            return *this;
+        }
+
+        /**
+         * Pattern matching rout
+         * todo
+         */
+        template <typename StrT>
+            requires(istl::StringifiableOf<string_type, StrT>)
+        constexpr subrouter& operator[](StrT&& pattern) noexcept {
+            return *this;
+        }
+    };
+
     /**
      * @brief A Router that's is fully customizable at runtime
      *
      * This class will be used directly by the developers using this whole library. So be nice and careful and
      * user friendly.
      */
-    template <EnabledTraits TraitsEnabler = enable_owner_traits<default_traits>>
+    template <ExtensionList ExtensionListType = empty_extension_pack,
+              EnabledTraits TraitsEnabler     = enable_owner_traits<default_traits>>
     struct basic_dynamic_router : TraitsEnabler {
         using etraits            = TraitsEnabler;
         using traits_type        = typename etraits::traits_type;
@@ -74,14 +97,23 @@ namespace webpp::http {
         using route_allocator    = traits::general_allocator<traits_type, stl::byte>;
         using dynamic_route_type = istl::function<caller_type, route_allocator>;
         using vector_allocator   = traits::general_allocator<traits_type, dynamic_route_type>;
-        using context_type       = basic_dynamic_context<traits_type>;
+        using map_allocator =
+          traits::general_allocator<traits_type, stl::pair<status_code const, dynamic_route_type>>;
+        using context_type     = basic_dynamic_context<traits_type>;
+        using string_type      = traits::general_string<traits_type>;
+        using string_view_type = traits::string_view<traits_type>;
+        using subrouter_type   = subrouter<traits_type>;
 
         static constexpr auto log_cat = "DRouter";
 
+        static_assert(HTTPResponse<response_type>,
+                      "For some reason the response type is not a valid match for HTTPResponse concept.");
+
       private:
         // todo: implement a function_vector that'll require only one allocator not one for each
-        stl::vector<dynamic_route_type, vector_allocator> routes;
-        bool                                              is_synced = false;
+        stl::vector<dynamic_route_type, vector_allocator>              routes;
+        stl::map<http::status_code, dynamic_route_type, map_allocator> status_templates;
+        bool                                                           is_synced = false;
 
       public:
         // These are the callable types
@@ -111,21 +143,21 @@ namespace webpp::http {
         }
 
         template <typename T>
-        constexpr basic_dynamic_router& set_route(T&& callable) noexcept {}
+        constexpr auto routify(T&& callable) noexcept {}
 
         /**
          * @brief Register a member function and it's object; It's the same as using std::mem_fn.
          */
         template <typename T, typename U>
             requires(stl::is_member_function_pointer_v<T>)
-        constexpr basic_dynamic_router& set_route(T&& method, U&& obj) noexcept {
+        constexpr auto routify(T&& method, U&& obj) noexcept {
             using method_type = member_function_pointer<stl::remove_cvref_t<T>>;
             using type        = typename method_type::type;
             using return_type = typename method_type::return_type;
             static_assert(stl::same_as<type, stl::remove_cvref_t<U>>,
                           "The specified member function is not from the specified object.");
 
-            return set_route(
+            return routify(
               [callable = obj, method]<typename... Args> requires(
                 method_type::template is_same_args_v<Args...>)(
                 Args && ... args) constexpr noexcept(method_type::is_noexcept) {
@@ -147,55 +179,110 @@ namespace webpp::http {
          */
         template <typename T>
             requires(stl::is_member_function_pointer_v<T>)
-        constexpr basic_dynamic_router& set_route(T&& method) noexcept {
+        constexpr dynamic_route_type routify(T&& method) noexcept {
             using method_type = member_function_pointer<stl::remove_cvref_t<T>>;
             using type        = typename method_type::type;
             for (auto& obj : objects) {
                 if (obj.type() == typeid(type)) {
-                    return set_route(method, stl::any_cast<type>(obj));
+                    return routify(method, stl::any_cast<type>(obj));
                 }
             }
 
             // default constructing it if it's possible and use that object
             if constexpr (stl::is_default_constructible_v<type>) {
                 objects.emplace_back(type{});
-                return set_route(method, stl::any_cast<type>(objects.back()));
+                return routify(method, stl::any_cast<type>(objects.back()));
             } else {
                 this->logger.error(
                   log_cat,
                   fmt::format("You have not specified an object with typeid of '{}' in your dynamic router,"
                               " but you've tried to register a member function of unknown type for router.",
                               typeid(type).name()));
+                return invalid_route(
+                  "Unknown member function registered as a route; see the logs for more detail.");
+            }
+        }
+
+        constexpr dynamic_route_type invalid_route([[maybe_unused]] string_type const& str) {
+            return error(status_code::insufficient_storage, str);
+        }
+
+        /**
+         * Response with the specified status code.
+         */
+        constexpr response_type error(status_code code) const noexcept {
+            return response(code);
+        }
+
+        template <typename StrT>
+            requires(istl::StringifiableOf<string_type, StrT>)
+        constexpr response_type error(status_code code, StrT&& reason) const noexcept {
+            if (auto const it = status_templates.find(code); it != status_templates.end()) {
+                return it; // response type will call this
+            }
+            auto res = error(code);
+            res.body; // todo
+            return res;
+        }
+
+        constexpr response_type response(status_code code) const noexcept {
+            return {this->get_traits(), code};
+        }
+
+
+        template <typename T>
+        constexpr basic_dynamic_router& on(status_code code, T&& route) {
+            status_templates.emplace(code, route);
+            return *this;
+        }
+
+        template <typename C>
+        constexpr basic_dynamic_router& register_subroutes(C&& callable) {
+            if constexpr (stl::is_invocable_v<C, subrouter_type&>) {
+                auto router = subrouter();
+                callable(router);
+                apply_subrouter(router);
+            } else if constexpr (stl::is_invocable_r_v<subrouter_type, C>) {
+                apply_subrouter(callable());
+            } else {
+                static_assert_false(C, "Unknown type is specified for registering subroutes.");
             }
             return *this;
+        }
+
+        /**
+         * Get an empty sub-router
+         */
+        constexpr subrouter_type subrouter() const noexcept {
+            return {};
         }
 
 
         // Append a migration
         template <typename C>
         constexpr basic_dynamic_router& operator+=(C&& callable) {
-            // todo
-            return *this;
+            return on<C>(stl::forward<C>(callable));
         }
 
 
         template <HTTPRequest ReqType>
-        constexpr response_type operator()(ReqType&& req) noexcept {
+        constexpr response_type const& operator()(ReqType&& in_req) noexcept {
             // todo
-            return {};
+            return res;
         }
     };
 
 
-    using dynamic_response = basic_dynamic_router<enable_owner_traits<default_traits>>;
-    using dynamic_router   = basic_dynamic_router<enable_owner_traits<default_traits>>;
+    using dynamic_response = basic_dynamic_response<enable_owner_traits<default_traits>>;
+    using dynamic_router   = basic_dynamic_router<empty_extension_pack, enable_owner_traits<default_traits>>;
     using dynamic_context  = basic_dynamic_context<default_traits>;
 
 
     namespace pmr {
         using dynamic_response = webpp::http::basic_dynamic_response<enable_owner_traits<std_pmr_traits>>;
         using dynamic_context  = webpp::http::basic_dynamic_context<std_pmr_traits>;
-        using dynamic_router   = webpp::http::basic_dynamic_router<enable_owner_traits<std_pmr_traits>>;
+        using dynamic_router =
+          webpp::http::basic_dynamic_router<empty_extension_pack, enable_owner_traits<std_pmr_traits>>;
     } // namespace pmr
 
 } // namespace webpp::http

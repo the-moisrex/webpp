@@ -18,11 +18,12 @@
 #define mem_call(member_name)                                                                               \
     (                                                                                                       \
       [this]<typename... Args> requires requires(stl::remove_cvref_t<decltype(*this)> that, Args... args) { \
-          that.member_name(::webpp::stl::forward<Args>(args)...);                                           \
-      }(Args &&                                                                                             \
+                                            that.member_name(::webpp::stl::forward<Args>(args)...);         \
+                                        }(                                                                  \
+        Args &&                                                                                             \
         ... args) constexpr noexcept(noexcept(this->member_name(::webpp::stl::forward<Args>(args)...))) {   \
-          return this->member_name(::webpp::stl::forward<Args>(args)...);                                   \
-      })
+                                            return this->member_name(::webpp::stl::forward<Args>(args)...); \
+                                        })
 
 namespace webpp::http {
 
@@ -65,7 +66,7 @@ namespace webpp::http {
     namespace details {
 
         template <typename CallableT, Context CtxT, typename... Args>
-        constexpr auto run_and_catch(CallableT && callable, CtxT & ctx, Args && ... args) noexcept {
+        constexpr auto run_and_catch(CallableT&& callable, CtxT& ctx, Args&&... args) noexcept {
             using namespace stl;
 
             using return_type = invoke_result_t<CallableT, Args...>;
@@ -83,7 +84,9 @@ namespace webpp::http {
                 } else if constexpr (same_as<return_type, bool>) {
                     try {
                         return callable(forward<Args>(args)...);
-                    } catch (...) { return false; }
+                    } catch (...) {
+                        return false;
+                    }
                 } else if constexpr (istl::Optional<return_type>) {
                     try {
                         return callable(forward<Args>(args)...);
@@ -96,7 +99,9 @@ namespace webpp::http {
                     using optional_type = decltype(make_optional(callable(forward<Args>(args)...)));
                     try {
                         return make_optional(callable(forward<Args>(args)...));
-                    } catch (...) { return optional_type{nullopt}; }
+                    } catch (...) {
+                        return optional_type{nullopt};
+                    }
                 }
 
             } else {
@@ -404,16 +409,19 @@ namespace webpp::http {
             }
         }
 
-        [[nodiscard]] constexpr auto operator=(void (*func)()) const noexcept {
+        [[nodiscard]] constexpr auto
+        operator=(void (*func)()) const noexcept { // NOLINT(cppcoreguidelines-c-copy-assignment-signature)
             return operator>>=(func);
         }
 
         template <typename ReturnType>
-        [[nodiscard]] constexpr auto operator=(ReturnType (*func)()) const noexcept {
+        [[nodiscard]] constexpr auto operator=(
+          ReturnType (*func)()) const noexcept { // NOLINT(cppcoreguidelines-c-copy-assignment-signature)
             return operator>>=<ReturnType>(func);
         }
 
-        [[nodiscard]] constexpr auto operator=(auto&& new_route) const noexcept {
+        [[nodiscard]] constexpr auto
+        operator=(auto&& new_route) const noexcept { // NOLINT(cppcoreguidelines-c-copy-assignment-signature)
             return operator>>=(stl::forward<decltype(new_route)>(new_route));
         }
 

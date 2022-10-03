@@ -28,6 +28,12 @@ namespace webpp {
                              allocator_pack_type&>;
         static constexpr bool is_resource_owner = true;
 
+#ifdef DEBUG
+        static constexpr bool debug = true;
+#else
+        static constexpr bool debug = false;
+#endif
+
         [[no_unique_address]] allocator_pack_type alloc_pack{};
         [[no_unique_address]] logger_type         logger{};
 
@@ -67,6 +73,12 @@ namespace webpp {
                              allocator_pack_type&>;
 
         static constexpr bool is_resource_owner = false;
+
+#ifdef DEBUG
+        static constexpr bool debug = true;
+#else
+        static constexpr bool debug = false;
+#endif
 
         [[no_unique_address]] alloc_pack_ref alloc_pack;
         [[no_unique_address]] logger_ref     logger;
