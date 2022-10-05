@@ -409,19 +409,16 @@ namespace webpp::http {
             }
         }
 
-        [[nodiscard]] constexpr auto
-        operator=(void (*func)()) const noexcept { // NOLINT(cppcoreguidelines-c-copy-assignment-signature)
+        [[nodiscard]] constexpr auto operator=(void (*func)()) const noexcept { // NOLINT
             return operator>>=(func);
         }
 
         template <typename ReturnType>
-        [[nodiscard]] constexpr auto operator=(
-          ReturnType (*func)()) const noexcept { // NOLINT(cppcoreguidelines-c-copy-assignment-signature)
+        [[nodiscard]] constexpr auto operator=(ReturnType (*func)()) const noexcept { // NOLINT
             return operator>>=<ReturnType>(func);
         }
 
-        [[nodiscard]] constexpr auto
-        operator=(auto&& new_route) const noexcept { // NOLINT(cppcoreguidelines-c-copy-assignment-signature)
+        [[nodiscard]] constexpr auto operator=(auto&& new_route) const noexcept { // NOLINT
             return operator>>=(stl::forward<decltype(new_route)>(new_route));
         }
 

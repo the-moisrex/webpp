@@ -1,4 +1,3 @@
-#include <iostream>
 #include <webpp/http/bodies/string.hpp>
 #include <webpp/http/protocols/cgi.hpp>
 #include <webpp/http/routes/methods.hpp>

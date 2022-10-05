@@ -632,9 +632,7 @@ namespace webpp::alloc {
 
         // construct T with resource descriptor and allocator of T
         template <typename T, ResourceDescriptor ResDescType, typename... Args>
-            requires requires {
-                typename T::allocator_type;
-            }
+            requires requires { typename T::allocator_type; }
         constexpr auto make(Args&&... args) {
             using alloc_type = typename T::allocator_type;
             using value_type = typename alloc_type::value_type;
@@ -665,9 +663,7 @@ namespace webpp::alloc {
         // preferred allocator type
         // We will use the default resource
         template <typename T, typename... Args>
-            requires requires {
-                typename T::allocator_type;
-            }
+            requires requires { typename T::allocator_type; }
         constexpr T make(Args&&... args) {
             using alloc_type   = typename T::allocator_type;
             using alloc_traits = stl::allocator_traits<alloc_type>;
@@ -763,7 +759,7 @@ namespace webpp::alloc {
 
     template <feature_pack FPack, typename T, AllocatorDescriptorList AllocDescType>
     static constexpr auto featured_alloc_for(allocator_pack<AllocDescType>& alloc_pack) noexcept {
-        return alloc_pack.template featured_allo_for<FPack, T>();
+        return alloc_pack.template featured_alloc_for<FPack, T>();
     }
 
     template <feature_pack FPack, typename T, AllocatorDescriptorList AllocDescType>
@@ -774,6 +770,11 @@ namespace webpp::alloc {
     template <typename T, AllocatorDescriptorList AllocDescType>
     static constexpr auto local_alloc_for(allocator_pack<AllocDescType>& alloc_pack) noexcept {
         return alloc_pack.template local_alloc_for<T>();
+    }
+
+    template <typename T, AllocatorDescriptorList AllocDescType>
+    static constexpr auto general_alloc_for(allocator_pack<AllocDescType>& alloc_pack) noexcept {
+        return alloc_pack.template featured_alloc_for<general_features, T>();
     }
 
     template <typename T, AllocatorDescriptorList AllocDescType, typename... Args>
@@ -793,12 +794,13 @@ namespace webpp::alloc {
 
     // Check if the specified type is an allocator_pack
     template <typename AllocPackType>
-    concept AllocatorPack = requires {
-        typename stl::remove_cvref_t<AllocPackType>::allocator_descriptors;
-        requires stl::same_as<
-          stl::remove_cvref_t<AllocPackType>,
-          allocator_pack<typename stl::remove_cvref_t<AllocPackType>::allocator_descriptors>>;
-    };
+    concept AllocatorPack =
+      requires {
+          typename stl::remove_cvref_t<AllocPackType>::allocator_descriptors;
+          requires stl::same_as<
+            stl::remove_cvref_t<AllocPackType>,
+            allocator_pack<typename stl::remove_cvref_t<AllocPackType>::allocator_descriptors>>;
+      };
 
 
 } // namespace webpp::alloc
