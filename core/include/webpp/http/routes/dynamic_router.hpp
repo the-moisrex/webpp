@@ -77,47 +77,37 @@ namespace webpp::http {
         using router_type       = basic_dynamic_router<ExtensionListType, TraitsEnabler>;
         using router_ref        = stl::add_lvalue_reference_t<router_type>;
 
-        router_ref router;
+        enum operator_type{
+            none,
+            and_op,
+            or_op,
+            xor_op
+        };
 
       private:
         route_type route;
+        operator_type op = none;
 
         template <typename R>
         constexpr dynamic_route(router_ref inp_router, R&& inp_route) noexcept
-          : router{inp_router},
-            route{stl::allocator_arg,
-                  alloc::general_alloc_for<route_type>(router.get_traits().alloc_pack),
+            :route{stl::allocator_arg,
+                  alloc::general_alloc_for<route_type>(inp_router.get_traits().alloc_pack),
                   stl::forward<R>(inp_route)} {}
 
       public:
         constexpr dynamic_route(router_ref inp_router) noexcept
-          : router{inp_router},
-            route{alloc::general_alloc_for<route_type>(router.get_traits().alloc_pack)} {}
+            :route{alloc::general_alloc_for<route_type>(inp_router.get_traits().alloc_pack)} {}
 
 
-        // Get a new sub-router
-        template <typename C>
-        constexpr dynamic_route operator/(C&& path) noexcept {
-            return {router, [route = this->route, path]<typename... Args>(Args&&... args) constexpr {
-                        return stl::invoke(path, stl::forward<Args>(args)...);
-                    }};
-        }
-
-        /**
-         * Pattern matching rout
-         * todo
-         */
-        template <typename StrT>
-            requires(istl::StringifiableOf<string_type, StrT>)
-        constexpr dynamic_route& operator[](StrT&& pattern) noexcept {
-            return *this;
-        }
-
-        template <typename C>
-        constexpr dynamic_route operator&&(C&& caller);
 
         template <Context CtxT, HTTPRequest ReqT>
         constexpr auto operator()(CtxT&& ctx, ReqT&& req) const noexcept {
+            switch (op) {
+                case none:
+                    break;
+                case and_op:
+
+            }
             return http::call_route(route, stl::forward<CtxT>(ctx), stl::forward<ReqT>(req));
         }
     };

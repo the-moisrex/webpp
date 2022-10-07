@@ -41,18 +41,20 @@ struct app_impl : public enable_traits<traits_type> {
     }
 
     void setup_routes() {
+        using super = stl::remove_cvref_t<decltype(*this)>;
+
         router.objects.emplace_back(*this);
 
         // setup migrations
-        router += &app::increment; // migration
+        router += &app_impl::increment; // migration
 
         // setup routes
-        router[get and root]           = &app::home;
-        router[get and root / "about"] = &app::about;
+        router[get and root]           = &super::home;
+        router[get and root / "about"] = &super::about;
     }
 
     // home page
-    response home(context const& ctx) noexcept {
+    auto home(context const& ctx) noexcept {
         return view_man.mustache("home",
                                  {
                                    {"count", counter.current()},   // visited times
@@ -61,7 +63,7 @@ struct app_impl : public enable_traits<traits_type> {
     }
 
     // about page
-    response about(context const& ctx) noexcept {
+    auto about(context const& ctx) noexcept {
         return view_man.mustache("about");
     }
 
