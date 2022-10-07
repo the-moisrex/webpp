@@ -96,7 +96,7 @@ namespace webpp::http::beast_proto {
           private:
             void make_beast_response() noexcept {
                 const beast_request_type breq = req->beast_parser().get();
-                auto                     res  = server.call_app(*req);
+                HTTPResponse auto        res  = server.call_app(*req);
                 bres.emplace();
                 res.calculate_default_headers();
                 bres->version(breq.version());
@@ -323,7 +323,7 @@ namespace webpp::http::beast_proto {
         }
 
         // call the app
-        auto call_app(request_type& req) noexcept {
+        HTTPResponse auto call_app(request_type& req) noexcept {
             if (synced) {
                 stl::scoped_lock lock{app_call_mutex};
                 return stl::invoke(app_ref, req);

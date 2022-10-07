@@ -7,7 +7,6 @@
 #include "../extensions/extension.hpp"
 #include "../std/optional.hpp"
 #include "../traits/std_traits.hpp"
-#include "body_concepts.hpp"
 #include "header_concepts.hpp"
 #include "request_concepts.hpp"
 
@@ -17,9 +16,8 @@ namespace webpp::http {
 
         template <typename ResType>
         concept HTTPResponse = requires(ResType res) {
-            //            requires ResponseBody<typename ResType::body_type>;
-            //            requires ResponseHeader<typename ResType::headers_type>;
-            requires Traits<typename ResType::traits_type>;
+            requires HTTPResponseBody<typename ResType::body_type>;
+            requires HTTPHeader<typename ResType::headers_type>;
             {res.body};
             {res.headers};
         };

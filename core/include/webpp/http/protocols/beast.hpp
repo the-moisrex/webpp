@@ -29,8 +29,8 @@ namespace webpp::http {
         beast(Args&&... args) : super{stl::forward<Args>(args)...},
                                 server{*this, this->app} {}
 
-        [[nodiscard]] static constexpr bool is_ssl_available() noexcept {
-            return false; // todo: change this
+        [[nodiscard]] bool is_ssl_available() noexcept {
+            return server.is_ssl_available();
         }
 
         int operator()() noexcept {

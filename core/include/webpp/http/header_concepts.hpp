@@ -9,9 +9,11 @@
 
 namespace webpp::http {
 
+    /**
+     * This concept is what the underlying Protocols expect to see in a response's header from apps.
+     */
     template <typename T>
     concept HTTPHeader = requires(T h) {
-        requires Traits<typename T::traits_type>;
         { h.str() } -> istl::StringViewifiable;
     };
 
