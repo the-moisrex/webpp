@@ -38,6 +38,11 @@ namespace webpp::http::beast_proto {
 
         beast_request_parser_type parser;
 
+        template <typename StrT>
+        constexpr string_view_type string_viewify(StrT&& str) const noexcept {
+            return istl::string_viewify_of<string_view_type>(stl::forward<StrT>(str));
+        }
+
       public:
         template <typename... Args>
         beast_request(Args&&... args) noexcept
@@ -46,7 +51,7 @@ namespace webpp::http::beast_proto {
               stl::piecewise_construct,
               stl::make_tuple(), // body args
               stl::make_tuple(
-                this->alloc_pack.template get_allocator<alloc::sync_pool_features, char>()) // fields args
+                alloc::featured_alloc_for<alloc::sync_pool_features, char>(*this)) // fields args
             } {}
 
         beast_request(beast_request const&)     = delete; // no copying for now
@@ -57,11 +62,11 @@ namespace webpp::http::beast_proto {
         }
 
         [[nodiscard]] string_view_type uri() const {
-            return istl::string_viewify_of<string_view_type>(parser.get().target());
+            return string_viewify(parser.get().target());
         }
 
         [[nodiscard]] string_view_type method() const {
-            return istl::string_viewify_of<string_view_type>(parser.get().method_string());
+            return string_viewify(parser.get().method_string());
         }
     };
 

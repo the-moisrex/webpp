@@ -8,6 +8,7 @@
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
 #include "../traits/traits.hpp"
+#include "./headers/accept_encoding.hpp"
 #include "headers.hpp"
 
 namespace webpp::http {
@@ -34,6 +35,7 @@ namespace webpp::http {
 
       public:
         using field_type = HeaderFieldType;
+        using name_type  = typename field_type::string_type;
 
         using super::super;
 
@@ -42,6 +44,25 @@ namespace webpp::http {
           : super{stl::forward<decltype(args)>(args)...},
             elist_type{} {
             parse_header_string(istl::string_viewify(stl::forward<decltype(header_string)>(header_string)));
+        }
+
+
+        // todo: add all the features in the "http/headers" directory here
+        /*
+        template <Traits TraitsType = default_traits>
+        constexpr accept_encoding<TraitsType> accept_encoding() const noexcept {
+            if (auto header = get("Accept-Encoding"); header != this->end()) {
+                return {header.name, alloc::general_alloc_for<accept_encoding_type>(*this)};
+            }
+            return {};
+        }
+        */
+
+
+        constexpr auto get(name_type name) const noexcept {
+            return stl::find_if(this->begin(), this->end(), [name](field_type const& field) noexcept {
+                return field.name == name;
+            });
         }
     };
 
