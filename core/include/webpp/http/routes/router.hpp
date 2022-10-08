@@ -18,17 +18,9 @@ namespace webpp::http {
     /**
      * Const router is a router that satisfies that "Router" concept.
      */
-    template <ExtensionList ExtensionListType = empty_extension_pack,
-              typename AppType                = void,
-              typename... RouteType>
+    template <ExtensionList ExtensionListType = empty_extension_pack, typename... RouteType>
     struct router {
-        using extension_list_type         = stl::remove_cvref_t<ExtensionListType>;
-        using app_type                    = stl::remove_cvref_t<AppType>;
-        static constexpr bool has_app_ref = !stl::is_void_v<app_type>;
-        using app_ref =
-          stl::conditional_t<has_app_ref, stl::add_lvalue_reference_t<app_type>, istl::nothing_type>;
-
-        [[no_unique_address]] const app_ref app{};
+        using extension_list_type = stl::remove_cvref_t<ExtensionListType>;
 
 
         // todo: extract additional routes from extensions
@@ -38,14 +30,13 @@ namespace webpp::http {
         constexpr router(ExtensionListType&&, RouteType&&... _route) noexcept
           : routes(stl::forward<RouteType>(_route)...) {}
 
-        constexpr router(ExtensionListType&&, app_ref app_ref_obj, RouteType&&... _route) noexcept
-          : app{app_ref_obj},
-            routes(stl::forward<RouteType>(_route)...) {}
-
         constexpr router(RouteType&&... _route) noexcept : routes(stl::forward<RouteType>(_route)...) {}
 
         constexpr router(router const&) noexcept = default;
         constexpr router(router&&) noexcept      = default;
+
+        constexpr router& operator=(router&&) noexcept = delete;
+        constexpr router& operator=(router const&)     = delete;
 
         /**
          * @return how many routes are in this router
@@ -68,7 +59,8 @@ namespace webpp::http {
             if constexpr (N + 1 < route_count()) {
                 return operator[]<N + 1>(i);
             }
-            throw stl::invalid_argument("The specified index is not valid");
+            // The specified index is not valid
+            stl::terminate();
         }
 
       private:
@@ -170,11 +162,11 @@ namespace webpp::http {
                 if (res) {
                     return operator()<next_route_index>(ctx, req);
                 } else {
-                    return ctx.error(404u);
+                    return ctx.error(status_code::not_found);
                 }
             } else {
                 ctx.logger.error("Router", "unknown response type");
-                return ctx.error(500u, "Unknown response type.");
+                return ctx.error(status_code::internal_server_error, "Unknown response type.");
             }
         }
 
@@ -207,7 +199,7 @@ namespace webpp::http {
 
             if constexpr (no_routes || passed_last_route) {
                 // this is adds a 404 error response to the end of the routes essentially
-                return ctx.error(404u);
+                return ctx.error(status_code::not_found);
             } else {
 
                 // handling root-level route calls:
@@ -222,7 +214,7 @@ namespace webpp::http {
                 if constexpr (stl::is_void_v<res_t>) {
                     // because "handle_route_results" can't handle void inputs, here's how we deal with it
                     call_route(route, ctx, req);
-                    return ctx.error(404u);
+                    return ctx.error(status_code::not_found);
                 } else {
                     return next_route<Index>(handle_primary_results(call_route(route, ctx, req), ctx, req),
                                              ctx,
@@ -260,16 +252,12 @@ namespace webpp::http {
     };
 
     template <typename ExtensionListType, typename... RouteType>
-    router(ExtensionListType&&, RouteType&&...) -> router<ExtensionListType, void, RouteType...>;
-
-    template <typename ExtensionListType, Application AppType, typename... RouteType>
-    router(ExtensionListType&&, AppType&, RouteType&&...) -> router<ExtensionListType, AppType, RouteType...>;
+    router(ExtensionListType&&, RouteType&&...) -> router<ExtensionListType, RouteType...>;
 
     template <typename... RouteType>
         requires(sizeof...(RouteType) > 0 &&
                  !istl::is_specialization_of_v<istl::first_type_t<RouteType...>, extension_pack>)
-    router(RouteType&&...)
-    ->router<empty_extension_pack, void, RouteType...>;
+    router(RouteType&&...) -> router<empty_extension_pack, RouteType...>;
 
 
 } // namespace webpp::http
