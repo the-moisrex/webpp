@@ -29,15 +29,17 @@
 namespace webpp::http {
 
 
-    template <Traits TraitsType, HTTPRequestExtensionParent REL, RootExtensionList RootExtensions>
+    template <Traits TraitsType, HTTPRequestExtensionParent REL, typename ServerType>
     struct common_http_request : public enable_traits<TraitsType>, public REL {
-        using root_extensions            = RootExtensions;
+        using server_type                = ServerType;
+        using server_ref                 = stl::add_lvalue_reference_t<server_type>;
+        using root_extensions            = typename server_type::root_extensions;
         using traits_type                = TraitsType;
         using request_extension_list     = REL;
         using etraits                    = enable_traits<traits_type>;
-        using string_type                = traits::local_string_allocator<traits_type>;
+        using string_type                = traits::general_string<traits_type>;
         using string_view_type           = traits::string_view<traits_type>;
-        using char_type                  = typename string_type::value_type;
+        using char_type                  = traits::char_type<traits_type>;
         using allocator_descriptors_type = traits::allocator_descriptors<traits_type>;
         using local_allocator_type       = traits::local_allocator<traits_type, char_type>;
         using general_allocator_type     = traits::general_allocator<traits_type, char_type>;
@@ -55,16 +57,14 @@ namespace webpp::http {
         [[no_unique_address]] general_resource_type alloc_resource{};
         headers_object_type                         headers;
         [[no_unique_address]] body_object_type      body;
+        server_ref                                  server;
 
-        template <typename AP>
-            requires(!stl::same_as<stl::remove_cvref_t<AP>,
-                                   common_http_request> &&          // not if it's copy/move ctor
-                     alloc::AllocatorPack<stl::remove_cvref_t<AP>>) // it's allocator_pack
-        constexpr common_http_request(AP&& ap) noexcept
-          : etraits{ap},
+        constexpr common_http_request(server_ref inp_server) noexcept
+          : etraits{inp_server},
             REL{},
-            headers{ap, alloc_resource},
-            body{ap, alloc_resource} {}
+            headers{inp_server.alloc_pack, alloc_resource},
+            body{inp_server.alloc_pack, alloc_resource},
+            server{inp_server} {}
 
 
         template <typename ET>
@@ -107,7 +107,7 @@ namespace webpp::http {
         constexpr final_request& operator=(final_request&&) noexcept = default;
     };
 
-    template <template <typename...> typename MidLevelRequestType>
+    template <template <typename...> typename MidLevelRequestType, typename ServerType>
     struct request_descriptor {
         template <typename ExtensionType>
         using extractor_type = typename ExtensionType::request_extensions;
@@ -117,7 +117,7 @@ namespace webpp::http {
                   typename RequestEList,
                   typename... extra>
         using mid_level_extensie_type =
-          MidLevelRequestType<TraitsType, common_http_request<TraitsType, RequestEList, RootExtensions>>;
+          MidLevelRequestType<TraitsType, common_http_request<TraitsType, RequestEList, ServerType>>;
 
         // empty final extensie
         template <RootExtensionList RootExtensions,
@@ -128,12 +128,10 @@ namespace webpp::http {
     };
 
 
-    template <Traits        TraitsType,
-              ExtensionList RootExtensions,
-              template <typename...>
-              typename MidLevelRequestType>
-    using simple_request =
-      typename RootExtensions::template extensie_type<TraitsType, request_descriptor<MidLevelRequestType>>;
+    template <typename ServerType, template <typename...> typename MidLevelRequestType>
+    using simple_request = typename ServerType::root_extensions::template extensie_type<
+      typename ServerType::traits_type,
+      request_descriptor<MidLevelRequestType, ServerType>>;
 
 
 } // namespace webpp::http

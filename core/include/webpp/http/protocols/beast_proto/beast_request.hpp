@@ -21,7 +21,6 @@ namespace webpp::http::beast_proto {
     struct beast_request : public CommonHTTPRequest {
         using common_http_request_type = CommonHTTPRequest;
         using traits_type              = stl::remove_cvref_t<TraitsType>;
-        using request_extension_list   = REL;
         using string_type              = traits::general_string<traits_type>;
         using string_view_type         = traits::string_view<traits_type>;
         using allocator_pack_type      = typename common_http_request_type::allocator_pack_type;
@@ -33,7 +32,7 @@ namespace webpp::http::beast_proto {
         using beast_request_parser_type = boost::beast::http::request_parser<beast_body_type, allocator_type>;
 
       private:
-        using super = common_http_request<TraitsType, REL, RootExtensions>;
+        using super = common_http_request_type;
 
         beast_request_parser_type parser;
 

@@ -3,11 +3,11 @@
 
 #include "../../convert/casts.hpp"
 #include "../../memory/object.hpp"
-#include "../../request.hpp"
 #include "../../std/string_view.hpp"
 #include "../../strings/to_case.hpp"
 #include "../../traits/default_traits.hpp"
 #include "../app_wrapper.hpp"
+#include "../request.hpp"
 #include "../request_body.hpp"
 #include "../response.hpp"
 #include "cgi_proto/cgi_request.hpp"
@@ -86,8 +86,10 @@ namespace webpp::http {
         /**
          * Get the environment value safely
          */
-        [[nodiscard]] static stl::string_view env(char const* key) noexcept {
-            return request_type::env(key);
+        [[nodiscard]] static inline stl::string_view env(char const* key) noexcept {
+            if (const auto value = getenv(key))
+                return value;
+            return {};
         }
 
 

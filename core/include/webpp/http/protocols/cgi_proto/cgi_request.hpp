@@ -9,7 +9,7 @@
 #include "../protocol_concepts.hpp"
 
 // TODO: use GetEnvironmentVariableA for Windows operating system
-#include <iostream> // for acceas to cin and cout
+#include <iostream> // for access to cin and cout
 #include <unistd.h> // for environ
 
 namespace webpp::http {
@@ -36,10 +36,8 @@ namespace webpp::http {
         /**
          * Get the environment value safely
          */
-        [[nodiscard]] static string_view_type env(char const* key) noexcept {
-            if (const auto value = getenv(key))
-                return value;
-            return {};
+        [[nodiscard]] inline string_view_type env(char const* key) noexcept {
+            this->server.env(key);
         }
 
 
