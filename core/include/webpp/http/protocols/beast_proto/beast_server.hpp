@@ -1,7 +1,6 @@
 #ifndef WEBPP_HTTP_PROTO_BEAST_SERVER_HPP
 #define WEBPP_HTTP_PROTO_BEAST_SERVER_HPP
 
-#include "../../../application/request.hpp"
 #include "../../../configs/constants.hpp"
 #include "../../../libs/asio.hpp"
 #include "../../../memory/object.hpp"
@@ -9,6 +8,7 @@
 #include "../../../std/string_view.hpp"
 #include "../../../traits/enable_traits.hpp"
 #include "../../../uri/uri.hpp"
+#include "../../request.hpp"
 #include "../../response_concepts.hpp"
 #include "beast_request.hpp"
 
@@ -35,16 +35,16 @@ namespace webpp::http::beast_proto {
 
         template <typename ServerT>
         struct http_worker : ServerT::etraits {
-            using server_type     = ServerT;
-            using etraits         = typename server_type::etraits;
-            using duration        = typename server_type::duration;
-            using acceptor_type   = typename server_type::acceptor_type;
-            using traits_type     = typename server_type::traits_type;
-            using root_extensions = typename server_type::root_extensions;
-            using endpoint_type   = asio::ip::tcp::endpoint;
-            using steady_timer    = asio::steady_timer;
-            using request_type = simple_request<traits_type, root_extensions, beast_request, root_extensions>;
-            using buffer_type  = boost::beast::flat_buffer;
+            using server_type         = ServerT;
+            using etraits             = typename server_type::etraits;
+            using duration            = typename server_type::duration;
+            using acceptor_type       = typename server_type::acceptor_type;
+            using traits_type         = typename server_type::traits_type;
+            using root_extensions     = typename server_type::root_extensions;
+            using endpoint_type       = asio::ip::tcp::endpoint;
+            using steady_timer        = asio::steady_timer;
+            using request_type        = simple_request<traits_type, root_extensions, beast_request>;
+            using buffer_type         = boost::beast::flat_buffer;
             using app_wrapper_ref     = typename server_type::app_wrapper_ref;
             using allocator_pack_type = typename server_type::allocator_pack_type;
             using char_allocator_type =
@@ -284,7 +284,7 @@ namespace webpp::http::beast_proto {
           typename allocator_pack_type::template best_allocator<alloc::sync_pool_features,
                                                                 thread_worker_type>;
         using thread_pool_type = asio::thread_pool;
-        using request_type     = simple_request<traits_type, root_extensions, beast_request, root_extensions>;
+        using request_type     = simple_request<traits_type, root_extensions, beast_request>;
 
         // each request should finish before this
         duration timeout{stl::chrono::seconds(3)};

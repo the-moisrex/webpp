@@ -6,7 +6,6 @@
 #include "../../../std/string_view.hpp"
 #include "../../../traits/traits.hpp"
 #include "../../request_headers.hpp"
-#include "../common/common_http_request.hpp"
 #include "../protocol_concepts.hpp"
 
 // TODO: use GetEnvironmentVariableA for Windows operating system
@@ -15,12 +14,12 @@
 
 namespace webpp::http {
 
-    template <Traits TraitsType, HTTPRequestExtensionParent REL, RootExtensionList RootExtensions>
-    struct cgi_request : public common_http_request<TraitsType, REL, RootExtensions> {
+    template <Traits TraitsType, typename CommonHTTPRequest>
+    struct cgi_request : public CommonHTTPRequest {
         using traits_type = TraitsType;
 
       private:
-        using super = common_http_request<TraitsType, REL, RootExtensions>;
+        using super = CommonHTTPRequest;
 
       public:
         using string_view_type = typename super::string_view_type;
@@ -29,9 +28,9 @@ namespace webpp::http {
 
         using super::common_http_request;
 
-        constexpr cgi_request(cgi_request const&)     = default;
-        constexpr cgi_request(cgi_request&&) noexcept = default;
-        constexpr cgi_request& operator=(cgi_request const&) = default;
+        constexpr cgi_request(cgi_request const&)                = default;
+        constexpr cgi_request(cgi_request&&) noexcept            = default;
+        constexpr cgi_request& operator=(cgi_request const&)     = default;
         constexpr cgi_request& operator=(cgi_request&&) noexcept = default;
 
         /**

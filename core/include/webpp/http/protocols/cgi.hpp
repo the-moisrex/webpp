@@ -1,9 +1,9 @@
 #ifndef WEBPP_CGI_H
 #define WEBPP_CGI_H
 
-#include "../../application/request.hpp"
 #include "../../convert/casts.hpp"
 #include "../../memory/object.hpp"
+#include "../../request.hpp"
 #include "../../std/string_view.hpp"
 #include "../../strings/to_case.hpp"
 #include "../../traits/default_traits.hpp"
@@ -32,7 +32,7 @@ namespace webpp::http {
         using common_protocol_type   = common_http_protocol<TraitsType, App, REList>;
         using app_wrapper_type       = typename common_protocol_type::app_wrapper_type;
         using root_extensions        = stl::remove_cvref_t<REList>;
-        using request_type = simple_request<traits_type, root_extensions, cgi_request, root_extensions>;
+        using request_type           = simple_request<traits_type, root_extensions, cgi_request>;
 
         static_assert(HTTPRequest<request_type>,
                       "Web++ Internal Bug: request_type is not a match for Request concept.");

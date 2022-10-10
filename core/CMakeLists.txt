@@ -145,7 +145,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/beast.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/beast_proto/beast_request.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/beast_proto/beast_server.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/protocols/common/common_http_request.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/common/common_http_protocol.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/http/response_body.hpp
@@ -163,8 +162,8 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/status_code.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/version.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/verbs.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/request.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/application/request.hpp
         ${LIB_INCLUDE_DIR}/webpp/application/application_concepts.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/http/syntax/common.hpp

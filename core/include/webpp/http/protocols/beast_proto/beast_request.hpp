@@ -17,10 +17,9 @@ namespace webpp::http::beast_proto {
 
 
     // template <Traits TraitsType, typename REL, typename BodyType, typename FieldType = beast::http::fields>
-    template <Traits TraitsType, HTTPRequestExtensionParent REL, RootExtensionList RootExtensions>
-    struct beast_request : public common_http_request<TraitsType, REL, RootExtensions> {
-
-        using common_http_request_type = common_http_request<TraitsType, REL, RootExtensions>;
+    template <Traits TraitsType, typename CommonHTTPRequest>
+    struct beast_request : public CommonHTTPRequest {
+        using common_http_request_type = CommonHTTPRequest;
         using traits_type              = stl::remove_cvref_t<TraitsType>;
         using request_extension_list   = REL;
         using string_type              = traits::general_string<traits_type>;
