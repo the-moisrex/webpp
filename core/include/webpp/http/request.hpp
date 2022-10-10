@@ -54,10 +54,11 @@ namespace webpp::http {
           object::object<body_type, alloc::general_features, allocator_descriptors_type>;
         using general_resource_type = typename headers_object_type::resource_type_field;
 
-        [[no_unique_address]] general_resource_type alloc_resource{};
-        headers_object_type                         headers;
-        [[no_unique_address]] body_object_type      body;
-        server_ref                                  server;
+        [[no_unique_address]] general_resource_type
+                            alloc_resource{};          // NOLINT(misc-non-private-member-variables-in-classes)
+        headers_object_type headers;                   // NOLINT(misc-non-private-member-variables-in-classes)
+        [[no_unique_address]] body_object_type body;   // NOLINT(misc-non-private-member-variables-in-classes)
+        server_ref                             server; // NOLINT(misc-non-private-member-variables-in-classes)
 
         constexpr common_http_request(server_ref inp_server) noexcept
           : etraits{inp_server},

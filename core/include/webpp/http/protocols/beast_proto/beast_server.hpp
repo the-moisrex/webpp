@@ -43,7 +43,7 @@ namespace webpp::http::beast_proto {
             using root_extensions     = typename server_type::root_extensions;
             using endpoint_type       = asio::ip::tcp::endpoint;
             using steady_timer        = asio::steady_timer;
-            using request_type        = simple_request<traits_type, root_extensions, beast_request>;
+            using request_type        = simple_request<server_type, beast_request>;
             using buffer_type         = boost::beast::flat_buffer;
             using app_wrapper_ref     = typename server_type::app_wrapper_ref;
             using allocator_pack_type = typename server_type::allocator_pack_type;
@@ -284,7 +284,7 @@ namespace webpp::http::beast_proto {
           typename allocator_pack_type::template best_allocator<alloc::sync_pool_features,
                                                                 thread_worker_type>;
         using thread_pool_type = asio::thread_pool;
-        using request_type     = simple_request<traits_type, root_extensions, beast_request>;
+        using request_type     = simple_request<beast_server_type, beast_request>;
 
         // each request should finish before this
         duration timeout{stl::chrono::seconds(3)};

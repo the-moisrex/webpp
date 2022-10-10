@@ -264,7 +264,7 @@ namespace webpp::http {
 
         /**
          * @brief get the server admin environment value
-         * @return probabely the administrator's email address
+         * @return probably the administrator's email address
          */
         [[nodiscard]] string_view_type server_admin() const noexcept {
             return env("SERVER_ADMIN");
@@ -298,7 +298,7 @@ namespace webpp::http {
         /**
          * Get a specific header by it's name
          */
-        [[nodiscard]] static string_view_type get_header(stl::string name) noexcept {
+        [[nodiscard]] string_view_type get_header(stl::string name) noexcept {
             // fixme: check if this is all we have to do or we have to do more too:
             stl::transform(name.begin(), name.end(), name.begin(), [](auto const& c) {
                 if (c == '-')
@@ -317,7 +317,7 @@ namespace webpp::http {
          * CGI server; and we have to recreate it based on the environment
          * variables.
          */
-        [[nodiscard]] static string_view_type get_headers() noexcept {
+        [[nodiscard]] string_view_type get_headers() noexcept {
             // we can do this only in CGI, we have to come up with new ways for long-running protocols:
             static string_type headers_cache;
             if (headers_cache.empty()) {
