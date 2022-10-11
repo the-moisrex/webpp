@@ -1,12 +1,13 @@
 // Created by moisrex on 4/29/20.
 
-#ifndef WEBPP_PATH_H
-#define WEBPP_PATH_H
+#ifndef WEBPP_HTTP_ROUTE_PATH_HPP
+#define WEBPP_HTTP_ROUTE_PATH_HPP
 
 #include "../../std/optional.hpp"
 #include "../../std/tuple.hpp"
 #include "../../strings/fixed_string.hpp"
 #include "../../uri/path.hpp"
+#include "./route.hpp"
 
 namespace webpp::http {
 
@@ -353,4 +354,4 @@ namespace webpp::http {
 
 } // namespace webpp::http
 
-#endif // WEBPP_PATH_H
+#endif // WEBPP_HTTP_ROUTE_PATH_HPP

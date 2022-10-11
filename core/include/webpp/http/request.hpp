@@ -2,17 +2,12 @@
 #define WEBPP_REQUEST_H
 
 #include "../memory/object.hpp"
-#include "../std/format.hpp"
-#include "../traits/enable_traits.hpp"
 #include "../version.hpp"
 #include "./headers.hpp"
-#include "./protocols/common/common_http_request.hpp"
 #include "./protocols/protocol_concepts.hpp"
 #include "./request_body.hpp"
 #include "./request_concepts.hpp"
 #include "./request_headers.hpp"
-#include "./response_body.hpp"
-#include "./version.hpp"
 
 /**
  * Only the protocol should be instantiating this class. There should be no

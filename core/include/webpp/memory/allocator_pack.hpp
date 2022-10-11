@@ -568,7 +568,7 @@ namespace webpp::alloc {
 
         template <typename T>
             requires(requires { typename T::allocator_type; })
-        [[nodiscard]] auto get_allocator_for() noexcept {
+        [[nodiscard]] constexpr auto get_allocator_for() noexcept {
             using type_allocator = typename T::allocator_type;
             if constexpr (has_allocator<type_allocator>) {
                 return get_allocator<type_allocator>();
@@ -582,7 +582,7 @@ namespace webpp::alloc {
 
         template <feature_pack FPack, typename T>
             requires(requires { typename T::allocator_type; })
-        [[nodiscard]] auto featured_alloc_for() noexcept {
+        [[nodiscard]] constexpr auto featured_alloc_for() noexcept {
             using type_allocator = typename T::allocator_type;
             if constexpr (has_allocator<type_allocator>) {
                 return get_allocator<FPack, type_allocator>();
@@ -595,8 +595,8 @@ namespace webpp::alloc {
         }
 
         template <typename T>
-        [[nodiscard]] auto local_alloc_for() noexcept {
-            return featured_alloc_for<local_features, T>;
+        [[nodiscard]] constexpr auto local_alloc_for() noexcept {
+            return featured_alloc_for<local_features, T>();
         }
 
         template <typename T>
@@ -616,7 +616,7 @@ namespace webpp::alloc {
               has_templated_allocator<AllocType> &&
               (ResourceDescriptor<ResDescType> ||
                stl::is_void_v<ResDescType>) ) // the resource might be void if the allocator is resource-less
-        constexpr auto make(Args&&... args) {
+        [[nodiscard]] constexpr auto make(Args&&... args) {
             if constexpr (!requires { typename T::allocator_type; }) {
                 // doesn't have an allocator, so construct a normal object
                 return T{stl::forward<Args>(args)...};
@@ -633,7 +633,7 @@ namespace webpp::alloc {
         // construct T with resource descriptor and allocator of T
         template <typename T, ResourceDescriptor ResDescType, typename... Args>
             requires requires { typename T::allocator_type; }
-        constexpr auto make(Args&&... args) {
+        [[nodiscard]] constexpr auto make(Args&&... args) {
             using alloc_type = typename T::allocator_type;
             using value_type = typename alloc_type::value_type;
             auto the_alloc   = this->get_allocator<ResDescType, value_type>();
@@ -664,7 +664,7 @@ namespace webpp::alloc {
         // We will use the default resource
         template <typename T, typename... Args>
             requires requires { typename T::allocator_type; }
-        constexpr T make(Args&&... args) {
+        [[nodiscard]] constexpr T make(Args&&... args) {
             using alloc_type   = typename T::allocator_type;
             using alloc_traits = stl::allocator_traits<alloc_type>;
             using alloc_desc =
@@ -684,7 +684,7 @@ namespace webpp::alloc {
         }
 
         template <typename T, feature_pack FPack, typename... Args>
-        constexpr auto make(Args&&... args) {
+        [[nodiscard]] constexpr auto make(Args&&... args) {
             if constexpr (FPack.empty()) {
                 return this->make<T, Args...>(stl::forward<Args>(args)...);
             } else {
@@ -701,35 +701,35 @@ namespace webpp::alloc {
 
         // this function will return a std::unique_ptr<T, ...> that's allocated on the specified allocator
         template <typename T, feature_pack FPack, typename... Args>
-        constexpr auto allocate_unique(Args&&... args) {
+        [[nodiscard]] constexpr auto allocate_unique(Args&&... args) {
             static_assert(!FPack.empty(), "What does it mean?");
             return boost::allocate_unique<T>(get_allocator<FPack, T>(), stl::forward<Args>(args)...);
         }
 
         // this function will return a std::unique_ptr<T, ...> that's allocated on the specified allocator
         template <typename T, Allocator AllocType, typename... Args>
-        constexpr auto allocate_unique(Args&&... args) {
+        [[nodiscard]] constexpr auto allocate_unique(Args&&... args) {
             return boost::allocate_unique<T>(get_allocator<AllocType>(), stl::forward<Args>(args)...);
         }
 
         template <typename T, typename... Args>
-        constexpr auto allocate_unique_local(Args&&... args) {
+        [[nodiscard]] constexpr auto allocate_unique_local(Args&&... args) {
             return this->template allocate_unique<T, local_features, Args...>(stl::forward<Args>(args)...);
         }
 
         template <typename T, typename... Args>
-        constexpr auto allocate_unique_general(Args&&... args) {
+        [[nodiscard]] constexpr auto allocate_unique_general(Args&&... args) {
             return this->template allocate_unique<T, general_features, Args...>(stl::forward<Args>(args)...);
         }
 
 
         template <typename T, typename... Args>
-        constexpr auto local(Args&&... args) {
+        [[nodiscard]] constexpr auto local(Args&&... args) {
             return this->make<T, local_features, Args...>(stl::forward<Args>(args)...);
         }
 
         template <typename T, typename... Args>
-        constexpr auto general(Args&&... args) {
+        [[nodiscard]] constexpr auto general(Args&&... args) {
             return this->make<T, general_features, Args...>(stl::forward<Args>(args)...);
         }
     };

@@ -4,15 +4,14 @@
 #define WEBPP_FCGI_REQUEST_HPP
 
 #include "../../../std/map.hpp"
-#include "../common/common_http_request.hpp"
 
 namespace webpp::http::inline fastcgi {
 
 
-    template <Traits TraitsType, typename /* fixme: RequestExtensionList */ REL, Protocol ProtoType>
-    struct fcgi_request : public common_request<TraitsType, REL> {
-        using traits_type   = TraitsType;
-        using protocol_type = ProtoType;
+    template <Traits TraitsType, typename CommonHTTPRequest>
+    struct fcgi_request : public CommonHTTPRequest {
+        using common_http_request = CommonHTTPRequest;
+        using traits_type         = TraitsType;
 
         istl::map<traits_type, string_type, string_type> data;
     };

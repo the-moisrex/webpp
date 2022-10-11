@@ -9,6 +9,7 @@
 #include "../traits/std_traits.hpp"
 #include "header_concepts.hpp"
 #include "request_concepts.hpp"
+#include "response_body.hpp"
 
 namespace webpp::http {
 

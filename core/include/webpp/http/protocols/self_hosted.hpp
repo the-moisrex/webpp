@@ -3,11 +3,11 @@
 #ifndef WEBPP_SELF_HOSTED_HPP
 #define WEBPP_SELF_HOSTED_HPP
 
-#include "../../application/request.hpp"
 #include "../../server/default_server_traits.hpp"
 #include "../../server/server_concepts.hpp"
 #include "../../std/string_view.hpp"
 #include "../app_wrapper.hpp"
+#include "../request.hpp"
 #include "../response.hpp"
 #include "common/common_http_protocol.hpp"
 #include "shosted/self_hosted_request.hpp"

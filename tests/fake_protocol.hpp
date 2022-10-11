@@ -1,11 +1,10 @@
 #ifndef WEBPP_FAKE_INTERFACE_H
 #define WEBPP_FAKE_INTERFACE_H
 
-#include "../core/include/webpp/application/request.hpp"
 #include "../core/include/webpp/convert/casts.hpp"
 #include "../core/include/webpp/http/app_wrapper.hpp"
 #include "../core/include/webpp/http/protocols/common/common_http_protocol.hpp"
-#include "../core/include/webpp/http/protocols/common/common_http_request.hpp"
+#include "../core/include/webpp/http/request.hpp"
 #include "../core/include/webpp/http/response.hpp"
 #include "../core/include/webpp/http/routes/router.hpp"
 #include "../core/include/webpp/std/string_view.hpp"
@@ -21,9 +20,9 @@ namespace webpp {
 
 
     // I'm not using "Protocol" here because it's most likely a non-complete-type when it's passed
-    template <Traits TraitsType, HTTPRequestExtensionParent REL, RootExtensionList RootExtensions>
-    struct fake_proto_request : public common_http_request<TraitsType, REL, RootExtensions> {
-        using super       = common_http_request<TraitsType, REL, RootExtensions>;
+    template <Traits TraitsType, typename CommonHTTPRequest>
+    struct fake_proto_request : public CommonHTTPRequest {
+        using super       = CommonHTTPRequest;
         using traits_type = TraitsType;
         using string_type = traits::general_string<traits_type>;
         using string_view = traits::string_view<traits_type>;
@@ -33,6 +32,7 @@ namespace webpp {
         template <typename... Args>
         fake_proto_request(Args&&... args) noexcept : super{stl::forward<Args>(args)...} {}
         fake_proto_request(fake_proto_request const&)     = default;
+        fake_proto_request(fake_proto_request&)           = default;
         fake_proto_request(fake_proto_request&&) noexcept = default;
 
 
@@ -207,9 +207,10 @@ namespace webpp {
 
     template <Traits TraitsType, Application App, RootExtensionList EList = empty_root_extension_lists>
     struct fake_proto : public common_http_protocol<TraitsType, App, EList> {
-        using super        = common_http_protocol<TraitsType, App, EList>;
-        using traits_type  = TraitsType;
-        using request_type = simple_request<traits_type, EList, fake_proto_request, EList>;
+        using super           = common_http_protocol<TraitsType, App, EList>;
+        using traits_type     = TraitsType;
+        using root_extensions = EList;
+        using request_type    = simple_request<fake_proto, fake_proto_request>;
 
         static_assert(HTTPRequest<request_type>, "request type is not request; why?");
 

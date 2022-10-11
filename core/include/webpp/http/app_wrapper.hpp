@@ -136,7 +136,7 @@ namespace webpp::http {
                                    "    <h1>{0} - {1}</h1>\n"
                                    "  </body>\n"
                                    "</html>\n",
-                                   err,
+                                   static_cast<status_code_type>(err),
                                    http::status_code_reason_phrase(err));
             }
         }

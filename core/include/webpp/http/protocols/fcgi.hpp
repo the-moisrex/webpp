@@ -1,13 +1,13 @@
 #ifndef WEBPP_INTERFACE_FCGI
 #define WEBPP_INTERFACE_FCGI
 
-#include "../../application/request.hpp"
 #include "../../server/default_server_traits.hpp"
 #include "../../server/server_concepts.hpp"
 #include "../../std/internet.hpp"
 #include "../../std/set.hpp"
 #include "../../traits/enable_traits.hpp"
 #include "../app_wrapper.hpp"
+#include "../request.hpp"
 #include "fastcgi/fcgi_manager.hpp"
 #include "fastcgi/fcgi_request.hpp"
 
