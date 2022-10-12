@@ -16,11 +16,10 @@
 namespace webpp::http::beast_proto {
 
 
-    // template <Traits TraitsType, typename REL, typename BodyType, typename FieldType = beast::http::fields>
-    template <Traits TraitsType, typename CommonHTTPRequest>
+    template <typename CommonHTTPRequest>
     struct beast_request : public CommonHTTPRequest {
         using common_http_request_type = CommonHTTPRequest;
-        using traits_type              = stl::remove_cvref_t<TraitsType>;
+        using traits_type              = typename common_http_request_type::traits_type;
         using string_type              = traits::general_string<traits_type>;
         using string_view_type         = traits::string_view<traits_type>;
 

@@ -14,9 +14,10 @@
 
 namespace webpp::http {
 
-    template <Traits TraitsType, typename CommonHTTPRequest>
+    template <typename CommonHTTPRequest>
     struct cgi_request : public CommonHTTPRequest {
-        using traits_type = TraitsType;
+        using common_http_request_type = CommonHTTPRequest;
+        using traits_type              = typename common_http_request_type::traits_type;
 
       private:
         using super = CommonHTTPRequest;

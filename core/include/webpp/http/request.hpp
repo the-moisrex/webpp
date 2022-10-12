@@ -24,12 +24,12 @@
 namespace webpp::http {
 
 
-    template <Traits TraitsType, HTTPRequestExtensionParent REL, typename ServerType>
-    struct common_http_request : public enable_traits<TraitsType>, public REL {
+    template <HTTPRequestExtensionParent REL, typename ServerType>
+    struct common_http_request : public enable_traits<typename ServerType::traits_type>, public REL {
         using server_type                = ServerType;
         using server_ref                 = stl::add_lvalue_reference_t<server_type>;
         using root_extensions            = typename server_type::root_extensions;
-        using traits_type                = TraitsType;
+        using traits_type                = typename server_type::traits_type;
         using request_extension_list     = REL;
         using etraits                    = enable_traits<traits_type>;
         using string_type                = traits::general_string<traits_type>;
@@ -94,9 +94,9 @@ namespace webpp::http {
     /**
      * If you want to add features to all of the request types, you can use this type
      */
-    template <Traits TraitsType, typename ReqType>
+    template <typename ReqType>
     struct final_request final : public ReqType {
-        using traits_type      = TraitsType;
+        using traits_type      = typename ReqType::traits_type;
         using string_view_type = traits::string_view<traits_type>;
 
         using ReqType::ReqType;
@@ -116,8 +116,7 @@ namespace webpp::http {
                   Traits            TraitsType,
                   typename RequestEList,
                   typename... extra>
-        using mid_level_extensie_type =
-          MidLevelRequestType<TraitsType, common_http_request<TraitsType, RequestEList, ServerType>>;
+        using mid_level_extensie_type = MidLevelRequestType<common_http_request<RequestEList, ServerType>>;
 
         // empty final extensie
         // template <RootExtensionList RootExtensions,

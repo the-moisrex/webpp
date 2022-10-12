@@ -20,10 +20,10 @@ namespace webpp {
 
 
     // I'm not using "Protocol" here because it's most likely a non-complete-type when it's passed
-    template <Traits TraitsType, typename CommonHTTPRequest>
+    template <typename CommonHTTPRequest>
     struct fake_proto_request : public CommonHTTPRequest {
         using super       = CommonHTTPRequest;
-        using traits_type = TraitsType;
+        using traits_type = typename super::traits_type;
         using string_type = traits::general_string<traits_type>;
         using string_view = traits::string_view<traits_type>;
 
