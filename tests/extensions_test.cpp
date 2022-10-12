@@ -251,3 +251,28 @@ struct third_pack {
 using third_extensie =
   typename extension_pack<third_pack>::template extensie_type<std_traits, third_descriptor>;
 static_assert(stl::same_as<typename third_extensie::first, int>);
+
+
+
+
+
+struct fake_descriptor_no_final {
+    template <typename ExtensionType>
+    using extractor_type = typename ExtensionType::willnotexist;
+
+    template <typename RootExtensions, typename TraitsType, typename EList>
+    struct mid_level_extensie_type : public EList {
+        static constexpr bool mid_level = true;
+
+        template <typename... Args>
+        mid_level_extensie_type(Args&&... args) noexcept : EList{std::forward<Args>(args)...} {}
+    };
+
+    // mno
+};
+
+TEST(ExtensionsTests, EmptyExtesnsionTest) {
+    // check if an empty extension will cause the mid-level-extensie to be omitted or not
+    using etype = typename empty_extension_pack::template extensie_type<std_traits, fake_descriptor_no_final>;
+    EXPECT_TRUE(etype{}.mid_level);
+}

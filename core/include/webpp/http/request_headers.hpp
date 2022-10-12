@@ -73,7 +73,7 @@ namespace webpp::http {
         template <typename ExtensionType>
         using extractor_type = typename ExtensionType::request_header_field_extensions;
 
-        template <typename ExtensionListType, typename TraitsType, typename EList>
+        template <typename RootExtensions, typename TraitsType, typename EList>
         using mid_level_extensie_type = header_field_view<TraitsType, EList>;
     };
 
@@ -84,17 +84,17 @@ namespace webpp::http {
         template <typename ExtensionType>
         using extractor_type = typename ExtensionType::request_headers_extensions;
 
-        template <typename ExtensionListType, typename TraitsType, typename EList>
+        template <typename RootExtensions, typename TraitsType, typename EList>
         using mid_level_extensie_type = request_headers<
           EList,
-          typename ExtensionListType::template extensie_type<TraitsType, request_header_field_descriptor>,
+          typename RootExtensions::template extensie_type<TraitsType, request_header_field_descriptor>,
           AllocType>;
     };
 
 
-    template <Traits TraitsType, typename EList, Allocator AllocType>
+    template <Traits TraitsType, typename RootExtensions, Allocator AllocType>
     using simple_request_headers =
-      typename EList::template extensie_type<TraitsType, request_headers_descriptor<AllocType>>;
+      typename RootExtensions::template extensie_type<TraitsType, request_headers_descriptor<AllocType>>;
 
 } // namespace webpp::http
 

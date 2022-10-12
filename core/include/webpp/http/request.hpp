@@ -30,14 +30,12 @@ namespace webpp::http {
         using server_ref                 = stl::add_lvalue_reference_t<server_type>;
         using root_extensions            = typename server_type::root_extensions;
         using traits_type                = typename server_type::traits_type;
-        using request_extension_list     = REL;
         using etraits                    = enable_traits<traits_type>;
         using string_type                = traits::general_string<traits_type>;
         using string_view_type           = traits::string_view<traits_type>;
         using char_type                  = traits::char_type<traits_type>;
         using allocator_descriptors_type = traits::allocator_descriptors<traits_type>;
         using local_allocator_type       = traits::local_allocator<traits_type, char_type>;
-        using general_allocator_type     = traits::general_allocator<traits_type, char_type>;
         using request_extensions         = REL;
         using headers_type = simple_request_headers<traits_type, root_extensions, local_allocator_type>;
         using body_type    = simple_request_body<traits_type, root_extensions>;
@@ -114,8 +112,7 @@ namespace webpp::http {
 
         template <RootExtensionList RootExtensions,
                   Traits            TraitsType,
-                  typename RequestEList,
-                  typename... extra>
+                  typename RequestEList>
         using mid_level_extensie_type = MidLevelRequestType<common_http_request<RequestEList, ServerType>>;
 
         // empty final extensie

@@ -5,13 +5,14 @@
 
 #include "../core/include/webpp/http/bodies/string.hpp"
 #include "../core/include/webpp/http/response_body.hpp"
+#include "common_pch.hpp"
 
 
 using namespace webpp;
 using namespace webpp::http;
 
 
-TEST(HTTPResponse, Type) {
+TEST(HTTPResponseTest, Type) {
     using res_t                    = simple_response<std_traits, string_response>;
     constexpr auto return_callback = [] {
         return res_t::with_body("Hello");
