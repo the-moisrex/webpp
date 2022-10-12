@@ -43,7 +43,7 @@ namespace webpp::istl {
     namespace collection {
 
         template <Collection T, typename... Args>
-        void emplace(T & vec, Args && ... args) {
+        void emplace(T& vec, Args&&... args) {
             if constexpr (details::supports_emplace_back<T>) {
                 (vec.emplace_back(stl::forward<Args>(args)), ...);
             } else if constexpr (details::supports_emplace<T>) {

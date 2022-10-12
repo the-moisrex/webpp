@@ -8,8 +8,9 @@
 #include "../../../std/string_view.hpp"
 #include "../../../traits/enable_traits.hpp"
 #include "../../../uri/uri.hpp"
+#include "../../http_concepts.hpp"
 #include "../../request.hpp"
-#include "../../response_concepts.hpp"
+#include "../../version.hpp"
 #include "beast_request.hpp"
 
 #include <list>
@@ -44,37 +45,56 @@ namespace webpp::http::beast_proto {
         using steady_timer        = asio::steady_timer;
         using request_type        = simple_request<server_type, beast_request>;
         using buffer_type         = boost::beast::flat_buffer;
-        using app_wrapper_ref     = typename server_type::app_wrapper_ref;
         using allocator_pack_type = typename server_type::allocator_pack_type;
+        using request_header_type = typename request_type::headers_type;
+        using request_body_type   = typename request_type::body_type;
         using char_allocator_type =
           typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
-        using beast_fields_type   = boost::beast::http::basic_fields<char_allocator_type>;
+        using beast_fields_type = request_header_type; // we're going to use our own header type
+        static_assert(HTTPRequestHeaders<request_header_type>,
+                      "Mistakes has been made in request headers type.");
         using beast_body_type     = boost::beast::http::string_body;
         using beast_response_type = boost::beast::http::response<beast_body_type, beast_fields_type>;
         using beast_response_serializer_type =
           boost::beast::http::response_serializer<beast_body_type, beast_fields_type>;
-        using beast_request_type = typename request_type::beast_request_type;
-        using socket_type        = asio::ip::tcp::socket;
-        using stream_type        = boost::beast::tcp_stream;
-        using app_ref            = typename server_type::app_wrapper_ref;
-        using server_ref         = stl::add_lvalue_reference_t<server_type>;
+        using socket_type      = asio::ip::tcp::socket;
+        using stream_type      = boost::beast::tcp_stream;
+        using server_ref       = stl::add_lvalue_reference_t<server_type>;
+        using string_view_type = traits::string_view<traits_type>;
 
+        using beast_request_type = boost::beast::http::request<beast_body_type, beast_fields_type>;
+        using beast_request_parser_type =
+          boost::beast::http::request_parser<beast_body_type, char_allocator_type>;
 
         static constexpr auto log_cat = "BeastWorker";
 
       private:
         stl::optional<stream_type>                    stream{stl::nullopt};
+        stl::optional<beast_request_parser_type>      parser{stl::nullopt};
         stl::optional<request_type>                   req{stl::nullopt};
         stl::optional<beast_response_type>            bres{stl::nullopt};
         stl::optional<beast_response_serializer_type> str_serializer{stl::nullopt};
         server_ref                                    server;
         buffer_type buf{default_buffer_size}; // fixme: see if this is using our allocator
 
+        template <typename StrT>
+        constexpr string_view_type string_viewify(StrT&& str) const noexcept {
+            return istl::string_viewify_of<string_view_type>(stl::forward<StrT>(str));
+        }
+
 
       public:
         http_worker(http_worker const&) = delete;
 
-        http_worker(server_ref in_server) : etraits{in_server}, req{in_server}, server{in_server} {}
+        http_worker(server_ref in_server)
+          : etraits{in_server},
+            req{in_server},
+            server{in_server},
+            parser{
+              stl::piecewise_construct,
+              stl::make_tuple(),                                                  // body args
+              stl::make_tuple(alloc::general_alloc_for<beast_fields_type>(*this)) // fields args
+            } {}
 
         /**
          * Running async_read_request directly in the constructor will not make
@@ -93,13 +113,23 @@ namespace webpp::http::beast_proto {
         }
 
       private:
-        void make_request() noexcept {
-            req.emplace(server);
-        }
-
         void make_beast_response() noexcept {
-            const beast_request_type breq = req->beast_parser().get();
-            HTTPResponse auto        res  = server.call_app(*req);
+            const beast_request_type& breq = parser->get();
+
+
+            // setting the version
+            const stl::uint16_t major = breq.version() / 10;
+            const stl::uint16_t minor = breq.version() % 10;
+            req->version(http::version{major, minor});
+
+            // setting uri and method
+            req->uri(string_viewify(breq.target()));
+            req->method(string_viewify(breq.method_string()));
+
+            // setting the headers
+            // setting the body
+
+            HTTPResponse auto res = server.call_app(*req);
             bres.emplace();
             res.calculate_default_headers();
             bres->version(breq.version());
@@ -119,7 +149,7 @@ namespace webpp::http::beast_proto {
             boost::beast::http::async_read(
               *stream,
               buf,
-              req->beast_parser(),
+              *parser,
               [this](boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred) {
                   if (!ec) [[likely]] {
                       async_write_response();
@@ -166,8 +196,13 @@ namespace webpp::http::beast_proto {
                 this->logger.warning(log_cat, "Error on closing the connection.", ec);
             }
 
-            // destroy the request type
-            req.reset();
+            // destroy the request type + be ready for the next request
+            req.emplace(server);
+            parser.emplace(stl::piecewise_construct,
+                           stl::make_tuple(),                                                  // body args
+                           stl::make_tuple(alloc::general_alloc_for<beast_fields_type>(*this)) // fields args
+            );
+
 
 
             str_serializer.reset();

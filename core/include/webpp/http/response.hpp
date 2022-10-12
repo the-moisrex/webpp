@@ -4,8 +4,8 @@
 #include "../convert/casts.hpp"
 #include "../traits/traits.hpp"
 #include "headers.hpp"
+#include "http_concepts.hpp"
 #include "response_body.hpp"
-#include "response_concepts.hpp"
 #include "response_headers.hpp"
 
 namespace webpp::http {
@@ -49,7 +49,7 @@ namespace webpp::http {
         constexpr explicit basic_response(headers_type&& e) noexcept : elist_type{}, headers(stl::move(e)) {}
         constexpr explicit basic_response(headers_type const& e) noexcept : elist_type{}, headers(e) {}
 
-        constexpr basic_response& operator=(basic_response const&) = default;
+        constexpr basic_response& operator=(basic_response const&)         = default;
         constexpr basic_response& operator=(basic_response&& res) noexcept = default;
 
         [[nodiscard]] bool operator==(basic_response const& res) const noexcept {
@@ -109,7 +109,7 @@ namespace webpp::http {
         using headers_type  = typename response_type::headers_type;
 
         static_assert(HTTPResponseBody<body_type>, "Body is not a valid body type.");
-        static_assert(HTTPHeader<headers_type>, "Header is not a valid header.");
+        static_assert(HTTPResponseHeaders<headers_type>, "Header is not a valid header.");
 
         using EList::EList;
 

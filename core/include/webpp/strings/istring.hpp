@@ -53,7 +53,7 @@ namespace webpp {
             str.clear();
         };
 
-      private :
+      private:
         // this will get you the allocator inside the StrT which should be the above "string_type"
         // this is aimed to find the allocator_type inside the string but make sure not to raise any errors,
         // when there's no allocator_type

@@ -132,7 +132,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/bodies/json.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/bodies/string.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/http/protocols/protocol_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/cgi.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/fcgi.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/self_hosted.hpp
@@ -152,10 +151,8 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/headers.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/request_headers.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/response_headers.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/header_concepts.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/request_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/http_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/response.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/response_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/app_wrapper.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/http.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/mime_types.hpp

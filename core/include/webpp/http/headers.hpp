@@ -50,9 +50,9 @@ namespace webpp::http {
             name(_name),
             value(stl::move(_value)) {}
 
-        constexpr basic_header_field(basic_header_field&&) noexcept      = default;
-        constexpr basic_header_field(basic_header_field const&) noexcept = default;
-        basic_header_field& operator=(basic_header_field&&) noexcept = default;
+        constexpr basic_header_field(basic_header_field&&) noexcept       = default;
+        constexpr basic_header_field(basic_header_field const&) noexcept  = default;
+        basic_header_field& operator=(basic_header_field&&) noexcept      = default;
         basic_header_field& operator=(basic_header_field const&) noexcept = default;
 
 
@@ -101,14 +101,14 @@ namespace webpp::http {
         using field_type = FieldType;
 
         template <class T>
-        void hash_combine(stl::size_t& seed, const T& v) noexcept {
+        constexpr void hash_combine(stl::size_t& seed, const T& v) noexcept {
             stl::hash<T> hasher;
             seed ^= hasher(v) + 0x9e3779b9 + (seed << 6u) + (seed >> 2u);
         }
 
         using result_type = stl::size_t;
 
-        result_type operator()(field_type const& c) const noexcept {
+        constexpr result_type operator()(field_type const& c) const noexcept {
             // change the "same_as" method too if you ever touch this function
             result_type seed = 0;
             hash_combine(seed, c.name);

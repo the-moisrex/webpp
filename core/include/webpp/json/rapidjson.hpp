@@ -147,7 +147,7 @@ namespace webpp::json::rapidjson {
         constexpr key_value_pair(key_type& k, value_type const& v) : key{k}, value{v} {}
         constexpr key_value_pair(key_type&& k, value_type const& v) : key{stl::move(k)}, value{v} {}
 
-        key_value_pair& operator=(key_value_pair const&) = default;
+        key_value_pair& operator=(key_value_pair const&)     = default;
         key_value_pair& operator=(key_value_pair&&) noexcept = default;
 
         auto operator<=>(key_value_pair const&) const = default;
@@ -232,7 +232,7 @@ namespace webpp::json::rapidjson {
             generic_member_iterator(generic_member_iterator const& iter)     = default;
             generic_member_iterator(generic_member_iterator&& iter) noexcept = default;
 
-            iterator& operator=(iterator&& iter) noexcept = default;
+            iterator& operator=(iterator&& iter) noexcept      = default;
             iterator& operator=(iterator const& iter) noexcept = default;
 
             //            iterator& operator=(const iterator& iter) {
@@ -398,7 +398,7 @@ namespace webpp::json::rapidjson {
             constexpr json_common(json_common&&) noexcept = default;
 
             json_common& operator=(json_common&&) noexcept = default;
-            json_common& operator=(json_common const&) = default;
+            json_common& operator=(json_common const&)     = default;
 
 
             template <typename ValT>

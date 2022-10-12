@@ -4,9 +4,8 @@
 #define WEBPP_EXTENSIONS_REQRES_H
 
 #include "../../../traits/traits.hpp"
+#include "../../http_concepts.hpp"
 #include "../../interfaces/interface_concepts.hpp"
-#include "../../request_concepts.hpp"
-#include "../../response_concepts.hpp"
 
 namespace webpp::http::inline extensions {
 

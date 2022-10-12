@@ -274,7 +274,7 @@ namespace webpp {
           public:
             template <typename ET, typename NameT>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
-                         !stl::same_as<ET, storage_gate &&>)
+                         !stl::same_as<ET, storage_gate&&>)
             storage_gate(ET&&         et,
                          path_type    cache_dir, // empty string will create a temp directory
                          NameT&&      name,
@@ -293,7 +293,7 @@ namespace webpp {
 
             template <typename ET, typename NameT>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
-                         !stl::same_as<ET, storage_gate &&>)
+                         !stl::same_as<ET, storage_gate&&>)
             storage_gate(ET&&      et,
                          path_type cache_dir, // empty string will create a temp directory
                          NameT&&   name)
@@ -310,9 +310,8 @@ namespace webpp {
 
             template <typename ET>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
-                         !stl::same_as<ET, storage_gate &&>)
-            storage_gate(ET&& et, path_type cache_dir) : etraits{et},
-                                                         dir{stl::move(cache_dir)} {
+                         !stl::same_as<ET, storage_gate&&>)
+            storage_gate(ET&& et, path_type cache_dir) : etraits{et}, dir{stl::move(cache_dir)} {
                 if (dir.empty()) {
                     set_temp_dir();
                 }
@@ -320,9 +319,8 @@ namespace webpp {
 
             template <typename ET>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
-                         !stl::same_as<ET, storage_gate &&>)
-            storage_gate(ET&& et) : etraits{et},
-                                    hashed_name{hash_name(et, "default")} {
+                         !stl::same_as<ET, storage_gate&&>)
+            storage_gate(ET&& et) : etraits{et}, hashed_name{hash_name(et, "default")} {
                 set_temp_dir();
             }
 

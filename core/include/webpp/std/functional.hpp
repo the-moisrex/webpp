@@ -164,15 +164,13 @@ namespace webpp::istl {
             friend struct functor_object;
 
             template <typename Callable>
-            static constexpr bool is_convertible_v =
-              (IsNoexcept ? stl::is_nothrow_invocable_v<stl::decay_t<Callable>&, Args...>
-                          : stl::is_invocable_v<
-                              stl::decay_t<Callable>&,
-                              Args...>) and requires {
-                                                requires is_safely_convertible_v<
-                                                  stl::invoke_result_t<stl::decay_t<Callable>&, Args...>,
-                                                  R>;
-                                            };
+            static constexpr bool
+              is_convertible_v = (IsNoexcept
+                                    ? stl::is_nothrow_invocable_v<stl::decay_t<Callable>&, Args...>
+                                    : stl::is_invocable_v<stl::decay_t<Callable>&, Args...>) and requires {
+                requires is_safely_convertible_v < stl::invoke_result_t < stl::decay_t<Callable>
+                &, Args... >, R > ;
+            };
         };
 
         template <typename Function, bool IsNoexcept, typename R, typename... Args>
@@ -207,15 +205,11 @@ namespace webpp::istl {
 
             template <typename Callable>
             static constexpr bool is_convertible_v =
-              (IsNoexcept
-                 ? stl::is_nothrow_invocable_v<const stl::decay_t<Callable>&, Args...>
-                 : stl::is_invocable_v<
-                     const stl::decay_t<Callable>&,
-                     Args...>) and requires {
-                                       requires is_safely_convertible_v<
-                                         stl::invoke_result_t<const stl::decay_t<Callable>&, Args...>,
-                                         R>;
-                                   };
+              (IsNoexcept ? stl::is_nothrow_invocable_v<const stl::decay_t<Callable>&, Args...>
+                          : stl::is_invocable_v<const stl::decay_t<Callable>&, Args...>) and requires {
+                requires is_safely_convertible_v < stl::invoke_result_t < const stl::decay_t<Callable>
+                &, Args... >, R > ;
+            };
         };
 
     } // namespace details
@@ -299,14 +293,12 @@ namespace webpp::istl {
         static constexpr bool not_alloc_v = !stl::is_same_v<stl::decay_t<Alloc>, stl::decay_t<Alloc2>>;
 
         template <typename Func>
-        static constexpr bool is_compatible_function_v =
-          is_function_v<Func> &&
-          requires {
-              typename stl::remove_cvref_t<Func>::allocator_type;
-              requires stl::same_as<typename stl::remove_cvref_t<Func>::allocator_type, allocator_type>;
-              typename stl::remove_cvref_t<Func>::signature;
-              requires is_convertible_v<typename stl::remove_cvref_t<Func>::signature>;
-          };
+        static constexpr bool is_compatible_function_v = is_function_v<Func>&& requires {
+            typename stl::remove_cvref_t<Func>::allocator_type;
+            requires stl::same_as<typename stl::remove_cvref_t<Func>::allocator_type, allocator_type>;
+            typename stl::remove_cvref_t<Func>::signature;
+            requires is_convertible_v<typename stl::remove_cvref_t<Func>::signature>;
+        };
 
         template <typename T>
         static constexpr bool compatible_allocator_v =
@@ -349,8 +341,9 @@ namespace webpp::istl {
 
         // member function
         template <typename Member, typename Object, typename Alloc2 = allocator_type>
-            requires(compatible_allocator_v<Alloc2> &&
-                     requires(Member Object::*const mem_ptr) { function{stl::mem_fn(mem_ptr)}; })
+            requires(compatible_allocator_v<Alloc2>&& requires(Member Object::*const mem_ptr) {
+                function{stl::mem_fn(mem_ptr)};
+            })
         constexpr function(stl::allocator_arg_t,
                            const Alloc2& input_alloc,
                            Member Object::*const mem_ptr) //
@@ -581,7 +574,9 @@ namespace webpp::istl {
         }
 
         template <typename Member, typename Object>
-            requires requires(Member Object::*const mem_ptr) { function{stl::mem_fn(mem_ptr)}; }
+            requires requires(Member Object::*const mem_ptr) {
+                function{stl::mem_fn(mem_ptr)};
+            }
         constexpr function& operator=(Member Object::*const mem_ptr) noexcept {
             *this = mem_ptr ? stl::mem_fn(mem_ptr) : nullptr;
             return *this;
@@ -874,7 +869,7 @@ namespace webpp::istl {
         };
 
         template <typename R, typename T, bool IsNoexcept, typename... Args>
-        struct guide_helper<R (T::*)(Args...) & noexcept(IsNoexcept)> {
+        struct guide_helper<R (T::*)(Args...)& noexcept(IsNoexcept)> {
             using type = R(Args...) noexcept(IsNoexcept);
         };
 
@@ -884,7 +879,7 @@ namespace webpp::istl {
         };
 
         template <typename R, typename T, bool IsNoexcept, typename... Args>
-        struct guide_helper<R (T::*)(Args...) const & noexcept(IsNoexcept)> {
+        struct guide_helper<R (T::*)(Args...) const& noexcept(IsNoexcept)> {
             using type = R(Args...) const noexcept(IsNoexcept);
         };
 

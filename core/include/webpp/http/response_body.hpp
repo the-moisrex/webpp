@@ -5,11 +5,6 @@
 
 namespace webpp::http {
 
-    template <typename T>
-    concept HTTPResponseBody = requires(T res) {
-        { res.str() } -> istl::StringViewifiable;
-    };
-
     /**
      * There are two types of bodies:
      *   - The request body

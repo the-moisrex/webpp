@@ -276,7 +276,7 @@ namespace webpp {
             return integer();
         }
 
-        ipv4& operator=(ipv4 const& ip) = default;
+        ipv4& operator=(ipv4 const& ip)     = default;
         ipv4& operator=(ipv4&& ip) noexcept = default;
 
         ipv4& operator=(istl::StringViewifiable auto&& ip) noexcept {

@@ -83,6 +83,110 @@ namespace webpp::http {
     concept RouterExtensionList = ExtensionListOf<T, is_router_extension>;
 
 
+
+
+    ////////////////////////////// Context Concepts //////////////////////////////
+
+
+
+    enum struct extension_method {
+        pre_subroute,
+        post_subroute,
+        pre_entryroute,
+        post_entryroute,
+        pre_firstroute,
+        post_lastroute
+    };
+
+    namespace details {
+        template <typename A, extension_method em, typename ContextArgType>
+        static constexpr bool has_method() noexcept {
+            switch (em) {
+                case extension_method::pre_subroute:
+                    return requires(A obj, ContextArgType & ctx) {
+                        obj.pre_subroute(ctx);
+                    };
+                case extension_method::post_subroute:
+                    return requires(A obj, ContextArgType & ctx) {
+                        obj.post_subroute(ctx);
+                    };
+                case extension_method::pre_entryroute:
+                    return requires(A obj, ContextArgType & ctx) {
+                        obj.pre_entryroute(ctx);
+                    };
+                case extension_method::post_entryroute:
+                    return requires(A obj, ContextArgType & ctx) {
+                        obj.post_entryroute(ctx);
+                    };
+                case extension_method::pre_firstroute:
+                    return requires(A obj, ContextArgType & ctx) {
+                        obj.pre_firstroute(ctx);
+                    };
+                case extension_method::post_lastroute:
+                    return requires(A obj, ContextArgType & ctx) {
+                        obj.post_lastroute(ctx);
+                    };
+                default: return false;
+            }
+        }
+    } // namespace details
+
+    template <typename A, extension_method em, typename ContextArgType>
+    concept has_context_extension_method = details::has_method<A, em, ContextArgType>();
+
+
+    template <typename T>
+    concept ContextExtension = Extension<T>;
+
+    template <typename T>
+    concept Context = requires(stl::remove_cvref_t<T> c) {
+        requires EnabledTraits<typename stl::remove_cvref_t<T>>;
+        requires HTTPRequest<typename stl::remove_cvref_t<T>::request_type>;
+        requires HTTPResponse<typename stl::remove_cvref_t<T>::response_type>;
+        // {c.request};
+    };
+
+
+
+    ////////////////////////////// Route Concepts //////////////////////////////
+
+
+
+    template <typename T>
+    concept RouteResponse =
+      HTTPResponse<T> || ConvertibleToResponse<T> || Context<T> || stl::same_as<T, bool>;
+
+    // C = Context
+    template <typename T, typename C>
+    concept CallableWithContext = /*requires (T c) {
+                                    c.template operator()<C>;
+                                  } || (stl::is_class_v<stl::remove_cvref_t<T>> &&
+                                   stl::is_member_function_pointer_v<&T::template operator()<C>>) ||*/
+      (stl::is_invocable_v<T, stl::add_lvalue_reference_t<C>>&&
+         RouteResponse<stl::invoke_result_t<T, stl::add_lvalue_reference_t<C>>>);
+
+    template <typename T, typename C>
+    concept PotentialRoute = requires(T route, C& ctx, typename C::request_type const& req) {
+        requires requires {
+            {route()};
+        } || requires {
+            {route(ctx)};
+        } || requires {
+            {route(req)};
+        } || requires {
+            {route(ctx, req)};
+        } || requires {
+            {route(req, ctx)};
+        };
+    };
+
+    template <typename T, typename C>
+    concept Route = requires(T obj) {
+        requires CallableWithContext<T, typename T::template switched_context_type<C>>;
+        typename T::template switched_context_type<C>;
+    };
+
+
 } // namespace webpp::http
 
 #endif // WEBPP_ROUTER_CONCEPTS_H

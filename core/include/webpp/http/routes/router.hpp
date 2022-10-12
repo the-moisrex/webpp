@@ -6,10 +6,8 @@
 #include "../../std/tuple.hpp"
 #include "../../std/vector.hpp"
 #include "../bodies/string.hpp"
-#include "../request_concepts.hpp"
-#include "../response_concepts.hpp"
+#include "../http_concepts.hpp"
 #include "context.hpp"
-#include "route_concepts.hpp"
 #include "router_concepts.hpp"
 
 namespace webpp::http {
@@ -257,7 +255,8 @@ namespace webpp::http {
     template <typename... RouteType>
         requires(sizeof...(RouteType) > 0 &&
                  !istl::is_specialization_of_v<istl::first_type_t<RouteType...>, extension_pack>)
-    router(RouteType&&...) -> router<empty_extension_pack, RouteType...>;
+    router(RouteType&&...)
+    ->router<empty_extension_pack, RouteType...>;
 
 
 } // namespace webpp::http

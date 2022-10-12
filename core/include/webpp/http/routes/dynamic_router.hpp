@@ -9,8 +9,7 @@
 #include "../../traits/default_traits.hpp"
 #include "../../traits/enable_traits.hpp"
 #include "../../utils/functional.hpp"
-#include "../request_concepts.hpp"
-#include "../response_concepts.hpp"
+#include "../http_concepts.hpp"
 #include "../status_code.hpp"
 #include "route.hpp"
 
@@ -79,12 +78,12 @@ namespace webpp::http {
         using vector_allocator  = traits::general_allocator<traits_type, route_type>;
         using map_allocator =
           traits::general_allocator<traits_type, stl::pair<status_code const, route_type>>;
-        using string_type         = traits::general_string<traits_type>;
-        using string_view_type    = traits::string_view<traits_type>;
-        using objects_type        = stl::vector<stl::any, traits::general_allocator<traits_type, stl::any>>;
-        using routes_type         = stl::vector<route_type, vector_allocator>;
-        using context_type        = simple_context<request_type, extension_list>;
-        using response_type       = simple_response_pack<traits_type, extension_list>;
+        using string_type      = traits::general_string<traits_type>;
+        using string_view_type = traits::string_view<traits_type>;
+        using objects_type     = stl::vector<stl::any, traits::general_allocator<traits_type, stl::any>>;
+        using routes_type      = stl::vector<route_type, vector_allocator>;
+        using context_type     = simple_context<request_type, extension_list>;
+        using response_type    = simple_response_pack<traits_type, extension_list>;
 
         static constexpr auto log_cat = "DRouter";
 
@@ -105,8 +104,7 @@ namespace webpp::http {
         // take advantage of parallelism
 
 
-        constexpr basic_dynamic_router() noexcept
-            requires(etraits::is_resource_owner)
+        constexpr basic_dynamic_router() noexcept requires(etraits::is_resource_owner)
           : etraits{},
             objects{alloc::general_alloc_for<objects_type>(*this)} {}
 
@@ -145,16 +143,13 @@ namespace webpp::http {
             static_assert(stl::same_as<type, stl::remove_cvref_t<U>>,
                           "The specified member function is not from the specified object.");
 
-            return routify(
-              [callable = obj, method]<typename... Args> requires(
-                method_type::template is_same_args_v<Args...>)(
-                Args && ... args) constexpr noexcept(method_type::is_noexcept) {
-                                                             return stl::invoke_result_t<return_type,
-                                                                                         Args...>(
-                                                               method,
-                                                               callable,
-                                                               stl::forward<Args>(args)...);
-                                                         });
+            return routify([callable = obj, method]<typename... Args> requires(
+              method_type::template is_same_args_v<Args...>)(
+              Args && ... args) constexpr noexcept(method_type::is_noexcept) {
+                return stl::invoke_result_t<return_type, Args...>(method,
+                                                                  callable,
+                                                                  stl::forward<Args>(args)...);
+            });
         }
 
         /**

@@ -194,10 +194,10 @@ namespace webpp::istl {
 
     template <typename T>
     concept ItupleOptions = requires(T o) {
-                                typename T::default_type;
-                                T::size;
-                                typename T::template resize<2>;
-                            };
+        typename T::default_type;
+        T::size;
+        typename T::template resize<2>;
+    };
 
     template <typename T>
     struct is_ituple_options {

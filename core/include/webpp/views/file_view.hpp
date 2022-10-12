@@ -35,7 +35,7 @@ namespace webpp::views {
         constexpr file_view(file_view const&)     = default;
         constexpr file_view(file_view&&) noexcept = default;
 
-        constexpr file_view& operator=(file_view const&) = default;
+        constexpr file_view& operator=(file_view const&)     = default;
         constexpr file_view& operator=(file_view&&) noexcept = default;
 
 

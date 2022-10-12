@@ -5,8 +5,8 @@
 
 #include "../../../std/string_view.hpp"
 #include "../../../traits/traits.hpp"
+#include "../../http_concepts.hpp"
 #include "../../request_headers.hpp"
-#include "../protocol_concepts.hpp"
 
 // TODO: use GetEnvironmentVariableA for Windows operating system
 #include <iostream> // for access to cin and cout

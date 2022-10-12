@@ -21,6 +21,7 @@ namespace webpp::http {
      *   In the header:  "Subject: =?iso-8859-1?Q?=A1Hola,_se=F1or!?="
      *   Interpreted as: "Subject: ¡Hola, señor!"
      *
+     * Boost/Beast is using std::multiset-like system; should we do the same thing instead of vector-like?
      */
     template <typename HeaderEList, HTTPHeaderField HeaderFieldType, Allocator AllocType>
     class request_headers

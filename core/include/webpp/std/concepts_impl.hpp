@@ -315,14 +315,14 @@ namespace webpp::stl {
         concept boolean_testable_impl = convertible_to<B, bool>;
 
         template <class B>
-        concept boolean_testable = boolean_testable_impl<B> && requires(B && b) {
+        concept boolean_testable = boolean_testable_impl<B> && requires(B&& b) {
             { !forward<B>(b) } -> boolean_testable_impl;
         };
 
 
         template <class T, class U>
-        concept WeaklyEqualityComparableWith =
-          requires(const remove_reference_t<T>& t, const remove_reference_t<U>& u) {
+        concept WeaklyEqualityComparableWith = requires(const remove_reference_t<T>& t,
+                                                        const remove_reference_t<U>& u) {
             { t == u } -> boolean_testable;
             { t != u } -> boolean_testable;
             { u == t } -> boolean_testable;
@@ -369,9 +369,9 @@ namespace webpp::stl {
 
         // [1]
         template <class Tp, class Up>
-        concept __unqualified_swappable_with =
-          (__class_or_enum<remove_cvref_t<Tp>> ||
-           __class_or_enum<remove_cvref_t<Up>>) &&requires(Tp && __t, Up && __u) {
+        concept __unqualified_swappable_with = (__class_or_enum<remove_cvref_t<Tp>> ||
+                                                __class_or_enum<remove_cvref_t<Up>>) &&requires(Tp&& __t,
+                                                                                                Up&& __u) {
             swap(_VSTD::forward<Tp>(__t), _VSTD::forward<Up>(__u));
         };
 
@@ -379,8 +379,8 @@ namespace webpp::stl {
 
         template <class Tp, class Up, size_t _Size>
         concept __swappable_arrays =
-          !__unqualified_swappable_with<Tp(&)[_Size], Up(&)[_Size]> && extent_v<Tp> == extent_v<Up> &&
-          requires(Tp(&__t)[_Size], Up(&__u)[_Size], const __fn& __swap) {
+          !__unqualified_swappable_with<Tp (&)[_Size], Up (&)[_Size]> && extent_v<Tp> == extent_v<Up> &&
+          requires(Tp(&__t)[_Size], Up (&__u)[_Size], const __fn& __swap) {
             __swap(__t[0], __u[0]);
         };
 

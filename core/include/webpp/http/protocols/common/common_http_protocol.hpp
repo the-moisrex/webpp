@@ -7,7 +7,7 @@
 #include "../../../server/server_concepts.hpp"
 #include "../../../traits/enable_traits.hpp"
 #include "../../app_wrapper.hpp"
-#include "../protocol_concepts.hpp"
+#include "../../http_concepts.hpp"
 
 namespace webpp::http {
 

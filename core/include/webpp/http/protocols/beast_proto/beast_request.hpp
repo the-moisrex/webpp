@@ -5,7 +5,8 @@
 
 #include "../../../std/string_view.hpp"
 #include "../../../traits/traits.hpp"
-#include "../protocol_concepts.hpp"
+#include "../../http_concepts.hpp"
+#include "../../version.hpp"
 
 #include <boost/beast/http/fields.hpp>
 #include <boost/beast/http/message.hpp>
@@ -22,18 +23,13 @@ namespace webpp::http::beast_proto {
         using traits_type              = stl::remove_cvref_t<TraitsType>;
         using string_type              = traits::general_string<traits_type>;
         using string_view_type         = traits::string_view<traits_type>;
-        using allocator_pack_type      = typename common_http_request_type::allocator_pack_type;
-        using allocator_type =
-          typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
-        using beast_body_type           = boost::beast::http::string_body;
-        using beast_field_type          = boost::beast::http::basic_fields<allocator_type>;
-        using beast_request_type        = boost::beast::http::request<beast_body_type, beast_field_type>;
-        using beast_request_parser_type = boost::beast::http::request_parser<beast_body_type, allocator_type>;
 
       private:
         using super = common_http_request_type;
 
-        beast_request_parser_type parser;
+        string_view_type uri_str;
+        string_view_type method_str;
+        http::version    http_ver;
 
         template <typename StrT>
         constexpr string_view_type string_viewify(StrT&& str) const noexcept {
@@ -42,28 +38,35 @@ namespace webpp::http::beast_proto {
 
       public:
         template <typename... Args>
-        beast_request(Args&&... args) noexcept
-          : super(stl::forward<Args>(args)...),
-            parser{
-              stl::piecewise_construct,
-              stl::make_tuple(), // body args
-              stl::make_tuple(
-                alloc::featured_alloc_for<alloc::sync_pool_features, char>(*this)) // fields args
-            } {}
+        beast_request(Args&&... args) noexcept : super(stl::forward<Args>(args)...) {}
 
         beast_request(beast_request const&)     = delete; // no copying for now
         beast_request(beast_request&&) noexcept = default;
 
-        beast_request_parser_type& beast_parser() noexcept {
-            return parser;
+        [[nodiscard]] string_view_type uri() const noexcept {
+            return string_viewify(uri_str);
         }
 
-        [[nodiscard]] string_view_type uri() const {
-            return string_viewify(parser.get().target());
+        [[nodiscard]] string_view_type method() const noexcept {
+            return string_viewify(method_str);
         }
 
-        [[nodiscard]] string_view_type method() const {
-            return string_viewify(parser.get().method_string());
+        [[nodiscard]] http::version version() const noexcept {
+            return http_ver;
+        }
+
+        //////////////////////////////////////////
+
+        void uri(string_view_type str) noexcept {
+            uri_str = str;
+        }
+
+        void method(string_view_type str) noexcept {
+            method_str = str;
+        }
+
+        void version(http::version ver) const noexcept {
+            http_ver = ver;
         }
     };
 

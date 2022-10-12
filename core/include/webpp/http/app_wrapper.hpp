@@ -5,9 +5,8 @@
 
 #include "../application/application_concepts.hpp"
 #include "../std/type_traits.hpp"
-#include "request_concepts.hpp"
-#include "response_concepts.hpp"
-#include "routes/context_concepts.hpp"
+#include "http_concepts.hpp"
+#include "routes/router_concepts.hpp"
 #include "status_code.hpp"
 
 #include <cstdint>

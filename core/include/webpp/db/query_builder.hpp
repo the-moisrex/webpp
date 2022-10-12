@@ -770,7 +770,7 @@ namespace webpp::sql {
         }
 
         template <typename... StrT>
-            requires(istl::StringifiableOf<local_string_type, StrT> && ...)
+            requires(istl::StringifiableOf<local_string_type, StrT>&&...)
         constexpr query_builder& left_join_using(query_builder const& sub_query,
                                                  StrT&&... col_names) noexcept {
             joins.push_back(
@@ -800,7 +800,7 @@ namespace webpp::sql {
         }
 
         template <typename... StrT>
-            requires(istl::StringifiableOf<local_string_type, StrT> && ...)
+            requires(istl::StringifiableOf<local_string_type, StrT>&&...)
         constexpr query_builder& right_join_using(query_builder const& sub_query,
                                                   StrT&&... col_names) noexcept {
             joins.push_back(

@@ -52,7 +52,7 @@ namespace webpp::json {
             // this is tuple_cat, but using tuple_cat with non-tuple types is undefined behaviour (even though
             // they could've easily generalized it)
             // more info: https://en.cppreference.com/w/cpp/utility/tuple/tuple_cat
-            return this->apply([&]<typename... OT>(OT & ... fields) {
+            return this->apply([&]<typename... OT>(OT&... fields) {
                 return field_pack<T..., NewT>{fields..., input_field};
             });
         }
@@ -72,7 +72,7 @@ namespace webpp::json {
          */
         template <JSONObject ObjectType>
         field_pack& operator=(ObjectType&& obj) {
-            this->apply([&obj]<typename... ValueType>(field<ValueType> & ... fields) {
+            this->apply([&obj]<typename... ValueType>(field<ValueType>&... fields) {
                 // it's the same as this simple if statement:
                 // if (obj.contains(field.key) field = obj.as<value_type>();
                 (void(obj.contains(fields.key) && ((fields = obj[fields.key].template as<ValueType>()))),

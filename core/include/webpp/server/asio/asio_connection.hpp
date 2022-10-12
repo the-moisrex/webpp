@@ -114,10 +114,10 @@ namespace webpp {
         }
 
         // move-able, non-copy-able
-        asio_connection(asio_connection&&) noexcept = default;
-        asio_connection(asio_connection const&)     = delete;
+        asio_connection(asio_connection&&) noexcept        = default;
+        asio_connection(asio_connection const&)            = delete;
         asio_connection& operator=(asio_connection const&) = delete;
-        asio_connection& operator=(asio_connection&&) = delete;
+        asio_connection& operator=(asio_connection&&)      = delete;
     };
 
 } // namespace webpp

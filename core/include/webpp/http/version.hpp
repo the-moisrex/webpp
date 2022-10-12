@@ -1,7 +1,7 @@
 // Created by moisrex on 10/29/20.
 
-#ifndef WEBPP_VERSION_HPP
-#define WEBPP_VERSION_HPP
+#ifndef WEBPP_HTTP_VERSION_HPP
+#define WEBPP_HTTP_VERSION_HPP
 
 #include "../convert/casts.hpp"
 #include "../std/string_view.hpp"
@@ -30,23 +30,25 @@ namespace webpp::http {
         constexpr version(T&& str) noexcept
           : value(parse_string(istl::string_viewify(stl::forward<decltype(str)>(str)))) {}
 
-        constexpr version(version const&) noexcept = default;
-        constexpr version(version&&) noexcept      = default;
-        version& operator=(version const&) noexcept = default;
-        version& operator=(version&&) noexcept = default;
+        constexpr version(version const&) noexcept            = default;
+        constexpr version(version&&) noexcept                 = default;
+        constexpr version& operator=(version const&) noexcept = default;
+        constexpr version& operator=(version&&) noexcept      = default;
+
+        constexpr ~version() = default;
 
         // Build from unsigned major/minor pair.
-        constexpr version(uint16_t major, uint16_t minor) noexcept
+        constexpr version(stl::uint16_t major, stl::uint16_t minor) noexcept
           : value(static_cast<stl::uint32_t>(major << 16u | minor)) {}
 
         // Major version number.
-        [[nodiscard]] constexpr uint16_t major_value() const noexcept {
-            return value >> 16u;
+        [[nodiscard]] constexpr stl::uint16_t major_value() const noexcept {
+            return static_cast<stl::uint16_t>(value >> 16u);
         }
 
         // Minor version number.
-        [[nodiscard]] constexpr uint16_t minor_value() const noexcept {
-            return value & 0xffffu;
+        [[nodiscard]] constexpr stl::uint16_t minor_value() const noexcept {
+            return static_cast<stl::uint16_t>(value & 0xffffu);
         }
 
         // Overloaded operators:
@@ -96,13 +98,13 @@ namespace webpp::http {
     static constexpr version http_1_0{"1.0"};
     static constexpr version http_1_1{"1.1"};
     static constexpr version http_2_0{"2.0"};
-    // todo: add version 3
+    static constexpr version http_3_0{"3.0"};
 
-    static constexpr version_list<4> all_http_versions{http_0_9, http_1_0, http_1_1, http_2_0};
+    static constexpr version_list<5> all_http_versions{http_0_9, http_1_0, http_1_1, http_2_0, http_3_0};
 
     // todo: create a supported version list (exclude http/0.9 since no one is using it anymore)
 
 } // namespace webpp::http
 
 
-#endif // WEBPP_VERSION_HPP
+#endif // WEBPP_HTTP_VERSION_HPP

@@ -58,7 +58,7 @@ namespace webpp::flags {
         constexpr manager(manager const&)     = default;
         constexpr manager(manager&&) noexcept = default;
 
-        constexpr manager& operator=(manager const&) = default;
+        constexpr manager& operator=(manager const&)     = default;
         constexpr manager& operator=(manager&&) noexcept = default;
 
         template <typename... T>

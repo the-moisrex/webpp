@@ -62,7 +62,7 @@ namespace webpp::sql {
         // For example the SQLite will require a file path
         // And MySQL will require connection settings.
 
-        db.escape("", str_ref); // escape strings
+        db.escape("", str_ref);        // escape strings
         db.quoted_escape("", str_ref); // escape strings and add quotes
     };
 
@@ -100,36 +100,36 @@ namespace webpp::sql {
 
     template <typename T>
     concept SQLKeywords = requires {
-                              T::select;
-                              T::delete_word; // delete
-                              T::update;
-                              T::values;
-                              T::from;
-                              T::where;
-                              T::in;
-                              T::null;
-                              T::not_word; // not
-                              T::and_word; // and
-                              T::or_word; // or
-                              T::insert;
-                              T::into;
-                              T::default_word;
-                              T::like;
-                              T::exists;
-                              T::set;
-                              T::join;
-                              T::inner;
-                              T::left;
-                              T::right;
-                              T::cross;
-                              T::full;
-                              T::using_word;
-                              T::on_word;
-                              T::is;
-                              T::distinct;
-                              T::true_word;
-                              T::false_word;
-                          };
+        T::select;
+        T::delete_word; // delete
+        T::update;
+        T::values;
+        T::from;
+        T::where;
+        T::in;
+        T::null;
+        T::not_word; // not
+        T::and_word; // and
+        T::or_word;  // or
+        T::insert;
+        T::into;
+        T::default_word;
+        T::like;
+        T::exists;
+        T::set;
+        T::join;
+        T::inner;
+        T::left;
+        T::right;
+        T::cross;
+        T::full;
+        T::using_word;
+        T::on_word;
+        T::is;
+        T::distinct;
+        T::true_word;
+        T::false_word;
+    };
 
 } // namespace webpp::sql
 

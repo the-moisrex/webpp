@@ -71,10 +71,10 @@ namespace webpp::posix {
         }
 
         // move-able, non-copy-able
-        posix_connection(posix_connection&&) noexcept = default;
-        posix_connection(posix_connection const&)     = delete;
+        posix_connection(posix_connection&&) noexcept        = default;
+        posix_connection(posix_connection const&)            = delete;
         posix_connection& operator=(posix_connection const&) = delete;
-        posix_connection& operator=(posix_connection&&) = delete;
+        posix_connection& operator=(posix_connection&&)      = delete;
 
         void swap(posix_connection& con) noexcept {
             using stl::swap;

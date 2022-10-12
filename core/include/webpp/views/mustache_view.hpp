@@ -105,8 +105,8 @@ namespace webpp::views {
 
                 static constexpr bool requires_renderer =
                   requires(Func func, string_view_type text, renderer_type const& renderer) {
-                      { func(text, renderer) } -> istl::StringViewifiableOf<string_type>;
-                  };
+                    { func(text, renderer) } -> istl::StringViewifiableOf<string_type>;
+                };
 
                 string_allocator_type string_allocator;
 
@@ -563,8 +563,7 @@ namespace webpp::views {
       public:
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, mustache_view>)
-        constexpr mustache_view(ET&& et) noexcept : etraits{et},
-                                                    root_component{et} {}
+        constexpr mustache_view(ET&& et) noexcept : etraits{et}, root_component{et} {}
 
         constexpr mustache_view(mustache_view const&)     = default;
         constexpr mustache_view(mustache_view&&) noexcept = default;

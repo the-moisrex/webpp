@@ -50,8 +50,8 @@ namespace webpp {
                              charset<value_type, NN> const&... c_sets) noexcept {
             super data;
             auto  write = [&, i = 0ul](auto const& set) constexpr mutable noexcept {
-                stl::copy(set.begin(), set.end(), data.begin() + i);
-                i += set.size();
+                 stl::copy(set.begin(), set.end(), data.begin() + i);
+                 i += set.size();
             };
             write(set1);
             write(set2);

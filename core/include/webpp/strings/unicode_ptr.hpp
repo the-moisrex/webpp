@@ -221,10 +221,10 @@ namespace webpp::unicode {
         constexpr explicit(false) storage_unit(C c) noexcept : value(static_cast<char_type>(c)) {}
 
         constexpr explicit(false) storage_unit(char_type val) noexcept : value(val) {}
-        constexpr storage_unit() noexcept               = default;
-        constexpr storage_unit(storage_unit const&)     = default;
-        constexpr storage_unit(storage_unit&&) noexcept = default;
-        storage_unit& operator=(storage_unit const& val) = default;
+        constexpr storage_unit() noexcept                    = default;
+        constexpr storage_unit(storage_unit const&)          = default;
+        constexpr storage_unit(storage_unit&&) noexcept      = default;
+        storage_unit& operator=(storage_unit const& val)     = default;
         storage_unit& operator=(storage_unit&& val) noexcept = default;
 
         template <typename C>

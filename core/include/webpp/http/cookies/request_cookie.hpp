@@ -39,7 +39,7 @@ namespace webpp::http {
           : _name(ascii::trim_copy(i_name)),
             _value(ascii::trim_copy(i_value)) {}
 
-        request_cookie& operator=(const request_cookie& c) = default;
+        request_cookie& operator=(const request_cookie& c)     = default;
         request_cookie& operator=(request_cookie&& c) noexcept = default;
 
         explicit operator bool() {

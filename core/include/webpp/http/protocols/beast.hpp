@@ -176,7 +176,7 @@ namespace webpp::http {
             return *this;
         }
 
-        [[nodiscard]] auto bound_uri() const {
+        [[nodiscard]] auto bound_uri() {
             auto u   = object::make_general<uri::uri>(*this);
             u.scheme = is_ssl_active() ? "https" : "http";
             u.host   = bind_address.to_string();

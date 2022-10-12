@@ -2,11 +2,11 @@
 #define WEBPP_REQUEST_H
 
 #include "../memory/object.hpp"
+#include "../traits/enable_traits.hpp"
 #include "../version.hpp"
 #include "./headers.hpp"
-#include "./protocols/protocol_concepts.hpp"
+#include "./http_concepts.hpp"
 #include "./request_body.hpp"
-#include "./request_concepts.hpp"
 #include "./request_headers.hpp"
 
 /**
@@ -41,6 +41,10 @@ namespace webpp::http {
         using request_extensions         = REL;
         using headers_type = simple_request_headers<traits_type, root_extensions, local_allocator_type>;
         using body_type    = simple_request_body<traits_type, root_extensions>;
+
+        static_assert(HTTPRequestHeaders<headers_type>,
+                      "Something is wrong with the request's headers type.");
+        static_assert(HTTPRequestBody<body_type>, "Something is wrong with the request's body type.");
 
         // todo: are we using the right object here?
         using headers_object_type =
@@ -116,11 +120,11 @@ namespace webpp::http {
           MidLevelRequestType<TraitsType, common_http_request<TraitsType, RequestEList, ServerType>>;
 
         // empty final extensie
-        template <RootExtensionList RootExtensions,
-                  Traits            TraitsType,
-                  typename MidLevelRequestWithExtensions,
-                  typename... extra>
-        using final_extensie_type = final_request<TraitsType, MidLevelRequestWithExtensions>;
+        // template <RootExtensionList RootExtensions,
+        //           Traits            TraitsType,
+        //           typename MidLevelRequestWithExtensions,
+        //           typename... extra>
+        // using final_extensie_type = final_request<TraitsType, MidLevelRequestWithExtensions>;
     };
 
 
