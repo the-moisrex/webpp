@@ -10,6 +10,8 @@
 
 namespace webpp::http {
 
+    struct response_descriptor;
+
     template <typename T, typename... E>
     concept one_of = (stl::same_as<stl::remove_cvref_t<T>, E> || ...);
 
@@ -20,11 +22,11 @@ namespace webpp::http {
     struct basic_response : public EList {
 
         // we're not going to use trait's string type here.
-        using body_type     = BodyType;
-        using headers_type  = ResponseHeaderType;
-        using elist_type    = EList;
-        using response_type = basic_response<EList, ResponseHeaderType, BodyType>;
-        using traits_type   = typename body_type::traits_type;
+        using body_type           = BodyType;
+        using headers_type        = ResponseHeaderType;
+        using elist_type          = EList;
+        using basic_response_type = basic_response<EList, ResponseHeaderType, BodyType>;
+        using traits_type         = typename body_type::traits_type;
 
         body_type    body{};
         headers_type headers{};
@@ -71,6 +73,8 @@ namespace webpp::http {
 
             bool has_content_type   = false;
             bool has_content_length = false;
+
+            // todo: use headers facilities and if there aren't any, make them
             for (const auto& header : headers) {
                 if (ascii::iequals<ascii::char_case_side::second_lowered>(header.name, "content-type"))
                     has_content_type = true;
@@ -98,15 +102,14 @@ namespace webpp::http {
 
 
 
-    template <Traits TraitsType, typename DescriptorType, typename OriginalExtensionList, typename EList>
+    template <Traits TraitsType, typename RootExtensions, typename EList>
     struct final_response final : public EList {
-        using traits_type                  = TraitsType;
-        using elist_type                   = EList;
-        using response_descriptor_type     = DescriptorType;
-        using original_extension_pack_type = OriginalExtensionList;
-        using response_type = final_response<TraitsType, DescriptorType, OriginalExtensionList, EList>;
-        using body_type     = typename response_type::body_type;
-        using headers_type  = typename response_type::headers_type;
+        using traits_type         = TraitsType;
+        using response_extensions = EList;
+        using root_extensions     = RootExtensions;
+        using response_type       = final_response<TraitsType, RootExtensions, EList>;
+        using body_type           = typename response_type::body_type;
+        using headers_type        = typename response_type::headers_type;
 
         static_assert(HTTPResponseBody<body_type>, "Body is not a valid body type.");
         static_assert(HTTPResponseHeaders<headers_type>, "Header is not a valid header.");
@@ -162,33 +165,32 @@ namespace webpp::http {
          */
         template <Extension... E>
         using apply_extensions_type =
-          typename istl::unique_parameters<typename original_extension_pack_type::template appended<
-            stl::remove_cvref_t<E>...>>::template extensie_type<traits_type, response_descriptor_type>;
+          typename istl::unique_parameters<typename root_extensions::template appended<
+            stl::remove_cvref_t<E>...>>::template extensie_type<traits_type, response_descriptor>;
     };
 
 
 
-    struct basic_response_descriptor {
+    struct response_descriptor {
 
         template <typename ExtensionType>
         using extractor_type = typename ExtensionType::response_extensions;
 
-        template <typename OrigExtensions, Traits TraitsType, typename EList>
+        template <typename RootExtensions, typename TraitsType, typename EList>
         using mid_level_extensie_type = basic_response<
           EList,
-          typename OrigExtensions::template extensie_type<TraitsType, response_headers_descriptor>,
-          typename OrigExtensions::template extensie_type<TraitsType, response_body_descriptor>>;
+          typename RootExtensions::template extensie_type<TraitsType, response_headers_descriptor>,
+          typename RootExtensions::template extensie_type<TraitsType, response_body_descriptor>>;
 
         // empty final extensie
-        template <typename OrigExtensions, Traits TraitsType, typename EList>
-        using final_extensie_type =
-          final_response<TraitsType, basic_response_descriptor, OrigExtensions, EList>;
+        template <typename RootExtensions, typename TraitsType, typename EList>
+        using final_extensie_type = final_response<TraitsType, RootExtensions, EList>;
     };
 
 
-    template <Traits TraitsType, typename ExtensionListType>
+    template <Traits TraitsType, typename RootExtensions>
     using simple_response_pack =
-      typename ExtensionListType::template extensie_type<TraitsType, basic_response_descriptor>;
+      typename RootExtensions::template extensie_type<TraitsType, response_descriptor>;
 
     template <Traits TraitsType, Extension... E>
     using simple_response = simple_response_pack<TraitsType, extension_pack<E...>>;

@@ -600,6 +600,11 @@ namespace webpp::alloc {
         }
 
         template <typename T>
+        [[nodiscard]] constexpr auto general_alloc_for() noexcept {
+            return featured_alloc_for<general_features, T>();
+        }
+
+        template <typename T>
         [[nodiscard]] constexpr auto local_allocator() noexcept {
             return get_allocator<local_features, T>();
         }

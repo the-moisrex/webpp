@@ -50,7 +50,8 @@ namespace webpp::http::beast_proto {
         using request_body_type   = typename request_type::body_type;
         using char_allocator_type =
           typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
-        using beast_fields_type = request_header_type; // we're going to use our own header type
+        using allocator_type    = typename allocator_pack_type::template general_allocator_type<char>;
+        using beast_fields_type = boost::beast::http::basic_fields<allocator_type>;
         static_assert(HTTPRequestHeaders<request_header_type>,
                       "Mistakes has been made in request headers type.");
         using beast_body_type     = boost::beast::http::string_body;
