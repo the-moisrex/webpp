@@ -70,7 +70,7 @@ namespace webpp::http {
 
         constexpr value_type operator[](name_type name) const noexcept {
             if (auto res = get(name); res != this->end()) {
-              return res;
+                return res;
             }
             return {}; // empty string if not found
         }

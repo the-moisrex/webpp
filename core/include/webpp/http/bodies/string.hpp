@@ -10,6 +10,7 @@
 #include "../../traits/traits.hpp"
 #include "../http_concepts.hpp"
 #include "../routes/router_concepts.hpp"
+#include "../status_code.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -38,7 +39,7 @@ namespace webpp::http {
 
 
         template <Traits TraitsType>
-        struct string_response_body_extension {
+        struct string_body_extension {
             using traits_type      = TraitsType;
             using string_view_type = traits::string_view<traits_type>;
             using string_type      = traits::general_string<traits_type>;
@@ -46,21 +47,20 @@ namespace webpp::http {
             using char_type        = traits::char_type<traits_type>;
             using ifstream_type    = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
 
-          protected: // the file extension will use the "content"'s allocator directly
+          private: // the file extension will use the "content"'s allocator directly
             using alloc_type    = allocator_type const&;
             string_type content = "";
 
           public:
-            constexpr string_response_body_extension() = default;
+            constexpr string_body_extension() = default;
 
-            constexpr string_response_body_extension(string_view_type str,
-                                                     alloc_type       alloc = allocator_type{})
+            constexpr string_body_extension(string_view_type str, alloc_type alloc = allocator_type{})
               : content{str, alloc} {}
 
             template <typename... Args>
                 requires(sizeof...(Args) > 0 &&
                          requires(Args... args) { string_type{stl::forward<Args>(args)...}; }) // string args
-            constexpr string_response_body_extension(Args&&... args) : content{stl::forward<Args>(args)...} {}
+            constexpr string_body_extension(Args&&... args) : content{stl::forward<Args>(args)...} {}
 
             /**
              * @brief Get a reference to the body's string
@@ -117,11 +117,11 @@ namespace webpp::http {
                     // https://stackoverflow.com/questions/11563963/writing-a-binary-file-in-c-very-fast/39097696#39097696
                     // stl::unique_ptr<char[]> buffer{new char[buffer_size]};
                     // in.rdbuf()->pubsetbuf(buffer.get(), buffer_size); // speed boost, I think
-                    const auto        size          = in.tellg();
-                    const stl::size_t reserved_size = static_cast<stl::size_t>(size);
-                    auto              result        = object::make_general<string_type>(*this);
+                    const auto size          = in.tellg();
+                    const auto reserved_size = static_cast<stl::size_t>(size);
+                    auto       result        = object::make_general<string_type>(*this);
                     result.resize(reserved_size);
-                    in.seekg(0l);
+                    in.seekg(0L);
                     in.read(result.data(), size);
                     // todo: cache the results
                     *this = result;
@@ -133,14 +133,14 @@ namespace webpp::http {
         };
 
         template <Traits TraitsType>
-        [[nodiscard]] bool operator==(typename TraitsType::string_view_type             str,
-                                      string_response_body_extension<TraitsType> const& strbody) noexcept {
+        [[nodiscard]] bool operator==(typename TraitsType::string_view_type    str,
+                                      string_body_extension<TraitsType> const& strbody) noexcept {
             return strbody.str() == str;
         }
 
         template <Traits TraitsType>
-        [[nodiscard]] bool operator!=(typename TraitsType::string_view_type             str,
-                                      string_response_body_extension<TraitsType> const& strbody) noexcept {
+        [[nodiscard]] bool operator!=(typename TraitsType::string_view_type    str,
+                                      string_body_extension<TraitsType> const& strbody) noexcept {
             return strbody.str() != str;
         }
 
@@ -211,7 +211,7 @@ namespace webpp::http {
                     const auto size = in.tellg();
                     result.resize(static_cast<stl::size_t>(
                       size)); // todo: don't need to zero it out; https://stackoverflow.com/a/29348072
-                    in.seekg(0);
+                    in.seekg(0L);
                     in.read(result.data(), size);
                     // todo: cache the results
                     return response_type{body_type{result}};
@@ -223,10 +223,10 @@ namespace webpp::http {
                                        fmt::format("Cannot load the specified file: {}", filepath.string()));
                     // todo: retry feature
                     if constexpr (context_type::is_debug()) {
-                        return this->error(500u);
+                        return this->error(http::status_code::internal_server_error);
                     } else {
                         return this->error(
-                          500u,
+                          http::status_code::internal_server_error,
                           fmt::format("We're not able to load the specified file: {}", filepath.string()));
                     }
                 }
@@ -245,9 +245,9 @@ namespace webpp::http {
      *   - context          : 1 extension (adds .string(...))
      */
     struct string_response {
-        using response_body_extensions =
-          extension_pack<as_extension<details::string_response_body_extension>>;
-        using context_extensions = extension_pack<as_extension<details::string_context_extension>>;
+        using request_body_extensions  = extension_pack<as_extension<details::string_body_extension>>;
+        using response_body_extensions = extension_pack<as_extension<details::string_body_extension>>;
+        using context_extensions       = extension_pack<as_extension<details::string_context_extension>>;
     };
 
 

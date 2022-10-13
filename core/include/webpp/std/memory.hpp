@@ -69,7 +69,7 @@ namespace webpp::istl {
         struct sp_alloc_ptr {
             using element_type = T;
 
-            constexpr sp_alloc_ptr() noexcept {};
+            constexpr sp_alloc_ptr() noexcept = default;
 
             constexpr sp_alloc_ptr(stl::size_t, P inp_p) noexcept : p(inp_p) {}
 
@@ -108,7 +108,7 @@ namespace webpp::istl {
           public:
             typedef T element_type;
 
-            constexpr sp_alloc_ptr() noexcept {};
+            constexpr sp_alloc_ptr() noexcept = default;
 
             constexpr sp_alloc_ptr(stl::size_t inp_n, P inp_p) noexcept : p(inp_p), n(inp_n) {}
 
@@ -144,7 +144,7 @@ namespace webpp::istl {
           public:
             typedef T element_type;
 
-            constexpr sp_alloc_ptr() noexcept {};
+            constexpr sp_alloc_ptr() noexcept = default;
 
             constexpr sp_alloc_ptr(stl::size_t, P inp_p) noexcept : p(inp_p) {}
 
@@ -515,7 +515,7 @@ namespace webpp::istl {
 
 
         template <typename C, typename... Args>
-            requires(stl::is_base_of_v<T, C> && stl::is_constructible_v<C, Args...>)
+            requires(stl::is_base_of_v<T, C>&& stl::is_constructible_v<C, Args...>)
         constexpr dynamic& emplace(Args&&... args) {
             using new_allocator_traits = typename alloc_traits::template rebind_traits<C>;
             using new_allocator_type   = typename new_allocator_traits::allocator_type;

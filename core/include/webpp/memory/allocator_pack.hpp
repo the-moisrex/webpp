@@ -632,7 +632,9 @@ namespace webpp::alloc {
 
         // construct T with resource descriptor and allocator of T
         template <typename T, ResourceDescriptor ResDescType, typename... Args>
-            requires requires { typename T::allocator_type; }
+            requires requires {
+                typename T::allocator_type;
+            }
         [[nodiscard]] constexpr auto make(Args&&... args) {
             using alloc_type = typename T::allocator_type;
             using value_type = typename alloc_type::value_type;
@@ -663,7 +665,9 @@ namespace webpp::alloc {
         // preferred allocator type
         // We will use the default resource
         template <typename T, typename... Args>
-            requires requires { typename T::allocator_type; }
+            requires requires {
+                typename T::allocator_type;
+            }
         [[nodiscard]] constexpr T make(Args&&... args) {
             using alloc_type   = typename T::allocator_type;
             using alloc_traits = stl::allocator_traits<alloc_type>;
@@ -794,13 +798,12 @@ namespace webpp::alloc {
 
     // Check if the specified type is an allocator_pack
     template <typename AllocPackType>
-    concept AllocatorPack =
-      requires {
-          typename stl::remove_cvref_t<AllocPackType>::allocator_descriptors;
-          requires stl::same_as<
-            stl::remove_cvref_t<AllocPackType>,
-            allocator_pack<typename stl::remove_cvref_t<AllocPackType>::allocator_descriptors>>;
-      };
+    concept AllocatorPack = requires {
+        typename stl::remove_cvref_t<AllocPackType>::allocator_descriptors;
+        requires stl::same_as<
+          stl::remove_cvref_t<AllocPackType>,
+          allocator_pack<typename stl::remove_cvref_t<AllocPackType>::allocator_descriptors>>;
+    };
 
 
 } // namespace webpp::alloc

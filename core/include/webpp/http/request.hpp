@@ -24,7 +24,7 @@
 namespace webpp::http {
 
 
-    template <HTTPRequestExtensionParent REL, typename ServerType>
+    template <typename REL, typename ServerType>
     struct common_http_request : public enable_traits<typename ServerType::traits_type>, public REL {
         using server_type                = ServerType;
         using server_ref                 = stl::add_lvalue_reference_t<server_type>;
@@ -110,9 +110,7 @@ namespace webpp::http {
         template <typename ExtensionType>
         using extractor_type = typename ExtensionType::request_extensions;
 
-        template <RootExtensionList RootExtensions,
-                  Traits            TraitsType,
-                  typename RequestEList>
+        template <typename RootExtensions, typename TraitsType, typename RequestEList>
         using mid_level_extensie_type = MidLevelRequestType<common_http_request<RequestEList, ServerType>>;
 
         // empty final extensie

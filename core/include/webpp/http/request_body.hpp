@@ -28,7 +28,7 @@ namespace webpp::http {
      *       - [ ] format 2 TODO
      *
      */
-    template <Traits TraitsType, HTTPRequestBodyExtensionList EList>
+    template <typename TraitsType, typename EList>
     struct request_body : public EList {
         using traits_type                 = TraitsType;
         using request_body_extension_list = EList;
@@ -43,8 +43,8 @@ namespace webpp::http {
         template <typename ExtensionType>
         using extractor_type = typename ExtensionType::request_body_extensions;
 
-        template <RootExtensionList RootExtensions, Traits TraitsType, HTTPRequestBodyExtensionList BEList>
-        using mid_level_extensie_type = request_body<TraitsType, BEList>;
+        // template <typename RootExtensions, typename TraitsType, typename BEList>
+        // using mid_level_extensie_type = request_body<TraitsType, BEList>;
     };
 
     template <Traits TraitsType, RootExtensionList RootExtensions>

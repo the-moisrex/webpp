@@ -22,6 +22,8 @@ TEST(Casts, ToInt) {
         try {
             to<int, true, true>(c);
             EXPECT_TRUE(false) << c;
-        } catch (std::exception const& err) { EXPECT_TRUE(true); }
+        } catch (std::exception const& err) {
+            EXPECT_TRUE(true);
+        }
     }
 }

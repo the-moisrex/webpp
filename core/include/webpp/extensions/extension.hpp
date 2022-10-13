@@ -1,7 +1,7 @@
 // Created by moisrex on 5/15/20.
 
-#ifndef WEBPP_EXTENSION_H
-#define WEBPP_EXTENSION_H
+#ifndef WEBPP_EXTENSION_HPP
+#define WEBPP_EXTENSION_HPP
 
 #include "../std/std.hpp"
 #include "../std/tuple.hpp"
@@ -478,16 +478,16 @@ namespace webpp {
      * This struct will help the user to create an extension from
      * a templated type and package it in a simple type.
      */
-    template <template <typename...> typename E>
+    template <template <typename...> typename TemplatedExtension>
     struct as_extension {
         template <typename... T>
             requires requires {
-                typename E<T...>;
+                typename TemplatedExtension<T...>;
             }
-        using type = E<T...>;
+        using type = TemplatedExtension<T...>;
     };
 
 
 } // namespace webpp
 
-#endif // WEBPP_EXTENSION_H
+#endif // WEBPP_EXTENSION_HPP

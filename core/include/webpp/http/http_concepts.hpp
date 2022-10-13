@@ -52,7 +52,8 @@ namespace webpp::http {
     template <typename T>
     concept HTTPRequestBody = requires(stl::remove_cvref_t<T> body) {
         { body.str() } -> istl::StringViewifiable;
-    };
+    }
+    || stl::same_as<T, istl::nothing_type>;
 
 
     /**
@@ -78,30 +79,6 @@ namespace webpp::http {
 
         // requires Protocol<typename stl::remove_cvref_t<T>::protocol_type>
     };
-
-
-    template <typename T>
-    concept HTTPRequestExtension = Extension<T>;
-
-    namespace details {
-        template <typename E>
-        struct is_request_extension_pack {
-            static constexpr bool value = HTTPRequestExtension<E>;
-        };
-    } // namespace details
-
-    template <typename T>
-    concept HTTPRequestExtensionList = ExtensionListOf<T, details::is_request_extension_pack>;
-
-    template <typename T>
-    concept HTTPRequestExtensionParent = HTTPRequestExtension<T>;
-
-
-    // todo: complete this
-    template <typename T>
-    concept HTTPRequestBodyExtensionList = ExtensionList<T>;
-
-
 
 
 
@@ -161,17 +138,6 @@ namespace webpp::http {
 
     template <typename ResponseBodyType, typename T>
     concept ConstructibleWithResponseBody = stl::is_constructible_v<ResponseBodyType, T>;
-
-    template <typename T>
-    concept HTTPResponseExtension = Extension<T>;
-
-    template <typename E>
-    struct is_response_extension_list {
-        static constexpr bool value = HTTPResponseExtension<E>;
-    };
-
-    template <typename T>
-    concept HTTPResponseExtensionList = ExtensionListOf<T, is_response_extension_list>;
 
 
 

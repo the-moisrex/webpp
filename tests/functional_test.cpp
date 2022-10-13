@@ -197,12 +197,13 @@ TEST(FunctionalTests, DoubleFreeFunction) {
         return 100;
     };
 
-    stl::array<stl::byte, 1000> buf{};
+    stl::array<stl::byte, 1000>         buf{};
     stl::pmr::monotonic_buffer_resource res{buf.begin(), buf.size()};
-    stl::pmr::polymorphic_allocator alloc{&res};
-    istl::pmr::function<int()> ifunc2 {stl::allocator_arg_t{}, alloc, [i = 9] () mutable{
-      return ++i;
-    }};
+    stl::pmr::polymorphic_allocator     alloc{&res};
+
+    istl::pmr::function<int()> ifunc2{stl::allocator_arg_t{}, alloc, [i = 9]() mutable {
+                                          return ++i;
+                                      }};
     EXPECT_EQ(10, ifunc2());
     EXPECT_EQ(11, ifunc2());
     ifunc2 = ifunc;

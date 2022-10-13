@@ -3,6 +3,7 @@
 #ifndef WEBPP_LEXICAL_CAST_HPP
 #define WEBPP_LEXICAL_CAST_HPP
 
+#include "../common/meta.hpp"
 #include "../memory/allocators.hpp"
 #include "../std/format.hpp"
 #include "../std/string.hpp"
