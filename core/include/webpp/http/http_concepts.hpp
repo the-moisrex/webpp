@@ -35,9 +35,8 @@ namespace webpp::http {
 
     template <typename T>
     concept HTTPHeaderField = requires(T f) {
-        requires Traits<typename T::traits_type>;
-        requires requires(traits::string_view<typename T::traits_type> str_view) {
-            { f.is_name(str_view) } -> stl::same_as<bool>;
+        requires requires(typename T::string_type str) {
+            { f.is_name(str) } -> stl::same_as<bool>;
         };
         { f.name } -> istl::StringViewifiable;
         { f.value } -> istl::StringViewifiable;

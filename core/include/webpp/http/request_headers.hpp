@@ -74,7 +74,7 @@ namespace webpp::http {
         using extractor_type = typename ExtensionType::request_header_field_extensions;
 
         template <typename RootExtensions, typename TraitsType, typename EList>
-        using mid_level_extensie_type = header_field_view<TraitsType, EList>;
+        using mid_level_extensie_type = header_field_view<traits::string_view<TraitsType>, EList>;
     };
 
 
