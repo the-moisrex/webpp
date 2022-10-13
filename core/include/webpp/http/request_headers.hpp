@@ -37,6 +37,7 @@ namespace webpp::http {
       public:
         using field_type = HeaderFieldType;
         using name_type  = typename field_type::string_type;
+        using value_type = typename field_type::string_type;
 
         using super::super;
 
@@ -64,6 +65,14 @@ namespace webpp::http {
             return stl::find_if(this->begin(), this->end(), [name](field_type const& field) noexcept {
                 return field.name == name;
             });
+        }
+
+
+        constexpr value_type operator[](name_type name) const noexcept {
+            if (auto res = get(name); res != this->end()) {
+              return res;
+            }
+            return {}; // empty string if not found
         }
     };
 
