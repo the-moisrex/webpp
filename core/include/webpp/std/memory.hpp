@@ -3,12 +3,330 @@
 
 #include "./type_traits.hpp"
 
-#include <boost/smart_ptr/allocate_unique.hpp>
 #include <memory>
 #include <utility>
 
 
 namespace webpp::istl {
+
+    namespace detail {
+
+        template <class T>
+        struct make_scalar {
+            using type = T;
+        };
+
+        template <class T, std::size_t N>
+        struct make_scalar<T[N]> {
+            using type = typename make_scalar<T>::type;
+        };
+
+    } // namespace detail
+
+    template <class T>
+    constexpr inline T* first_scalar(T* p) noexcept {
+        return p;
+    }
+
+    template <class T, std::size_t N>
+    constexpr inline typename detail::make_scalar<T>::type* first_scalar(T (*p)[N]) noexcept {
+        return first_scalar(&(*p)[0]);
+    }
+
+    namespace details {
+
+        template <class T>
+        struct sp_alloc_size {
+            static constexpr stl::size_t value = 1;
+        };
+
+        template <class T>
+        struct sp_alloc_size<T[]> {
+            static constexpr stl::size_t value = sp_alloc_size<T>::value;
+        };
+
+        template <class T, stl::size_t N>
+        struct sp_alloc_size<T[N]> {
+            static constexpr stl::size_t value = N * sp_alloc_size<T>::value;
+        };
+
+        template <class T>
+        struct sp_alloc_result {
+            typedef T type;
+        };
+
+        template <class T, stl::size_t N>
+        struct sp_alloc_result<T[N]> {
+            using type = T[];
+        };
+
+        template <class T>
+        struct sp_alloc_value {
+            using type = typename stl::remove_cv_t<stl::remove_extent_t<T>>;
+        };
+
+        template <class T, class P>
+        struct sp_alloc_ptr {
+            using element_type = T;
+
+            constexpr sp_alloc_ptr() noexcept {};
+
+            constexpr sp_alloc_ptr(stl::size_t, P inp_p) noexcept : p(inp_p) {}
+
+            constexpr sp_alloc_ptr(stl::nullptr_t) noexcept {};
+
+            constexpr T& operator*() const {
+                return *p;
+            }
+
+            constexpr T* operator->() const noexcept {
+                return stl::to_address(p);
+            }
+
+            constexpr explicit operator bool() const noexcept {
+                return !!p;
+            }
+
+            constexpr bool operator!() const noexcept {
+                return !p;
+            }
+
+            constexpr P ptr() const noexcept {
+                return p;
+            }
+
+            static constexpr stl::size_t size() noexcept {
+                return 1;
+            }
+
+          private:
+            P p{};
+        };
+
+        template <class T, class P>
+        class sp_alloc_ptr<T[], P> {
+          public:
+            typedef T element_type;
+
+            constexpr sp_alloc_ptr() noexcept {};
+
+            constexpr sp_alloc_ptr(stl::size_t inp_n, P inp_p) noexcept : p(inp_p), n(inp_n) {}
+
+            constexpr sp_alloc_ptr(stl::nullptr_t) noexcept {};
+
+            constexpr T& operator[](stl::size_t i) const {
+                return p[i];
+            }
+
+            constexpr explicit operator bool() const noexcept {
+                return !!p;
+            }
+
+            constexpr bool operator!() const noexcept {
+                return !p;
+            }
+
+            constexpr P ptr() const noexcept {
+                return p;
+            }
+
+            [[nodiscard]] constexpr stl::size_t size() const noexcept {
+                return n;
+            }
+
+          private:
+            P           p{};
+            stl::size_t n{};
+        };
+
+        template <class T, stl::size_t N, class P>
+        class sp_alloc_ptr<T[N], P> {
+          public:
+            typedef T element_type;
+
+            constexpr sp_alloc_ptr() noexcept {};
+
+            constexpr sp_alloc_ptr(stl::size_t, P inp_p) noexcept : p(inp_p) {}
+
+            constexpr sp_alloc_ptr(stl::nullptr_t) noexcept {};
+
+            constexpr T& operator[](stl::size_t i) const {
+                return p[i];
+            }
+
+            constexpr explicit operator bool() const noexcept {
+                return !!p;
+            }
+
+            constexpr bool operator!() const noexcept {
+                return !p;
+            }
+
+            constexpr P ptr() const noexcept {
+                return p;
+            }
+
+            static constexpr stl::size_t size() noexcept {
+                return N;
+            }
+
+
+          private:
+            P p{};
+        };
+
+        template <class T, class P>
+        constexpr bool operator==(const sp_alloc_ptr<T, P>& lhs, const sp_alloc_ptr<T, P>& rhs) {
+            return lhs.ptr() == rhs.ptr();
+        }
+
+        template <class T, class P>
+        constexpr bool operator!=(const sp_alloc_ptr<T, P>& lhs, const sp_alloc_ptr<T, P>& rhs) {
+            return !(lhs == rhs);
+        }
+
+        template <class T, class P>
+        constexpr bool operator==(const sp_alloc_ptr<T, P>& lhs, stl::nullptr_t) noexcept {
+            return !lhs.ptr();
+        }
+
+        template <class T, class P>
+        constexpr bool operator==(stl::nullptr_t, const sp_alloc_ptr<T, P>& rhs) noexcept {
+            return !rhs.ptr();
+        }
+
+        template <class T, class P>
+        constexpr bool operator!=(const sp_alloc_ptr<T, P>& lhs, stl::nullptr_t) noexcept {
+            return !!lhs.ptr();
+        }
+
+        template <class T, class P>
+        constexpr bool operator!=(stl::nullptr_t, const sp_alloc_ptr<T, P>& rhs) noexcept {
+            return !!rhs.ptr();
+        }
+
+        template <class A>
+        constexpr void
+        sp_alloc_clear(A& a, typename stl::allocator_traits<A>::pointer p, stl::size_t, stl::false_type) {
+            stl::destroy(a, stl::to_address(p));
+        }
+
+    } // namespace details
+
+    template <class T, class A>
+    class alloc_deleter {
+        using allocator =
+          typename stl::allocator_traits<A>::template rebind<typename details::sp_alloc_value<T>::type>;
+
+        [[no_unique_address]] allocator alloc;
+
+      public:
+        using pointer = details::sp_alloc_ptr<T, typename stl::allocator_traits<allocator>::pointer>;
+
+        constexpr explicit alloc_deleter(const allocator& a) noexcept : alloc{a} {}
+
+        constexpr void operator()(pointer p) {
+            details::sp_alloc_clear(alloc, p.ptr(), p.size(), stl::is_array<T>());
+            alloc.deallocate(p.ptr(), p.size());
+        }
+    };
+
+
+    namespace details {
+        template <class T, class A>
+        struct sp_alloc_make {
+            using allocator =
+              typename stl::allocator_traits<A>::template rebind<typename sp_alloc_value<T>::type>::type;
+
+          private:
+            using deleter = alloc_deleter<T, A>;
+            using pointer = typename stl::allocator_traits<allocator>::pointer;
+
+          public:
+            using type       = stl::unique_ptr<typename sp_alloc_result<T>::type, deleter>;
+            using value_type = typename allocator::value_type;
+
+            constexpr sp_alloc_make(const A& a, stl::size_t inp_n)
+              : alloc(a),
+                n(inp_n),
+                ptr(stl::allocator_traits<A>::allocate(alloc, n)) {}
+
+            constexpr ~sp_alloc_make() {
+                if (ptr) {
+                    alloc.deallocate(ptr, n);
+                }
+            }
+
+            constexpr value_type* get() const noexcept {
+                return stl::to_address(ptr);
+            }
+
+            constexpr allocator& state() noexcept {
+                return alloc;
+            }
+
+            constexpr type release() noexcept {
+                pointer p = ptr;
+                ptr       = pointer();
+                return type(typename deleter::pointer(n, p), deleter(alloc));
+            }
+
+          private:
+            allocator   alloc;
+            stl::size_t n;
+            pointer     ptr;
+        };
+
+    } // namespace details
+
+    template <class T, class A>
+        requires(!stl::is_array_v<T>)
+    constexpr stl::unique_ptr<T, alloc_deleter<T, A>> allocate_unique(const A& alloc) {
+        details::sp_alloc_make<T, A> c(alloc, 1);
+        stl::allocator_traits<A>::construct(c.state(), c.get());
+        return c.release();
+    }
+
+    template <class T, class A, class... Args>
+        requires(!stl::is_array_v<T>)
+    constexpr stl::unique_ptr<T, alloc_deleter<T, A>> allocate_unique(const A& alloc, Args&&... args) {
+        details::sp_alloc_make<T, A> c(alloc, 1);
+        stl::allocator_traits<A>::construct(c.state(), c.get(), stl::forward<Args>(args)...);
+        return c.release();
+    }
+
+    template <class T, class A>
+        requires(!stl::is_array_v<T>)
+    constexpr stl::unique_ptr<T, alloc_deleter<T, A>>
+    allocate_unique(const A& alloc, typename stl::type_identity<T>::type&& value) {
+        details::sp_alloc_make<T, A> c(alloc, 1);
+        stl::allocator_traits<A>::construct(c.state(), c.get(), stl::move(value));
+        return c.release();
+    }
+
+    template <class T, class A>
+        requires(stl::is_unbounded_array_v<T>)
+    constexpr stl::unique_ptr<T, alloc_deleter<T, A>> allocate_unique(const A& alloc, stl::size_t size) {
+        details::sp_alloc_make<T, A> c(alloc, size);
+        stl::allocator_traits<A>::construct_n(c.state(),
+                                              first_scalar(c.get()),
+                                              size * details::sp_alloc_size<T>::value);
+        return c.release();
+    }
+
+    template <class T, class A>
+        requires(stl::is_unbounded_array_v<T>)
+    constexpr stl::unique_ptr<typename details::sp_alloc_result<T>::type, alloc_deleter<T, A>>
+    allocate_unique(const A& alloc) {
+        details::sp_alloc_make<T, A> c(alloc, stl::extent<T>::value);
+        stl::allocator_traits<A>::construct_n(c.state(),
+                                              first_scalar(c.get()),
+                                              details::sp_alloc_size<T>::value);
+        return c.release();
+    }
+
+
+
 
 
     // doesn't support copy/move of T with other types of Allocator...
@@ -197,7 +515,7 @@ namespace webpp::istl {
 
 
         template <typename C, typename... Args>
-            requires(stl::is_base_of_v<T, C>&& stl::is_constructible_v<C, Args...>)
+            requires(stl::is_base_of_v<T, C> && stl::is_constructible_v<C, Args...>)
         constexpr dynamic& emplace(Args&&... args) {
             using new_allocator_traits = typename alloc_traits::template rebind_traits<C>;
             using new_allocator_type   = typename new_allocator_traits::allocator_type;
