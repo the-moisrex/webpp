@@ -196,8 +196,5 @@ namespace webpp::http {
     using simple_response = simple_response_pack<TraitsType, extension_pack<E...>>;
 
 
-
-    // using fake_response_type = simple_response<fake_traits_type>;
-
 } // namespace webpp::http
 #endif // WEBPP_HTTP_RESPONSE_H

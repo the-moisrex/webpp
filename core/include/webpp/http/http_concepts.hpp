@@ -20,7 +20,7 @@ namespace webpp::http {
      */
     template <typename T>
     concept HTTPHeaders = requires(stl::remove_cvref_t<T> h) {
-        h["content-length"];
+        typename stl::remove_cvref_t<T>::field_type;
     };
 
     template <typename T>
@@ -97,6 +97,7 @@ namespace webpp::http {
             requires HTTPHeaders<typename ResType::headers_type>;
             {res.body};
             {res.headers};
+            res.calculate_default_headers();
         };
 
         template <typename T>
