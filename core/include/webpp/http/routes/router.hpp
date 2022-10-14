@@ -201,7 +201,7 @@ namespace webpp::http {
             } else {
 
                 // handling root-level route calls:
-                auto route = stl::get<Index>(routes);
+                decltype(auto) route = stl::get<Index>(routes);
 
                 // todo
                 // ctx.call_pre_entryroute_methods();
@@ -255,8 +255,7 @@ namespace webpp::http {
     template <typename... RouteType>
         requires(sizeof...(RouteType) > 0 &&
                  !istl::is_specialization_of_v<istl::first_type_t<RouteType...>, extension_pack>)
-    router(RouteType&&...)
-    ->router<empty_extension_pack, RouteType...>;
+    router(RouteType&&...) -> router<empty_extension_pack, RouteType...>;
 
 
 } // namespace webpp::http

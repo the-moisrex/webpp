@@ -369,34 +369,34 @@ namespace webpp::http {
         using extractor_type = typename ExtensionType::context_extensions;
 
 
-        template <ExtensionList ExtensionListType,
-                  Traits        TraitsType,
+        template <ExtensionList RootExtensions,
+                  typename        TraitsType,
                   typename EList, // extension_pack
                   typename ReqType>
         using mid_level_extensie_type = basic_context<TraitsType,
                                                       EList,
                                                       ReqType,
                                                       // getting the extensie_type of the basic_response
-                                                      simple_response_pack<TraitsType, ExtensionListType>>;
+                                                      simple_response_pack<TraitsType, RootExtensions>>;
 
 
-        template <ExtensionList OriginalExtensionListType,
-                  Traits        TraitsType,
+        template <ExtensionList RootExtensions,
+                  typename        TraitsType,
                   typename EList,
-                  HTTPRequest ReqType>
+                  typename ReqType>
         using final_extensie_type =
-          final_context<TraitsType, context_descriptor, OriginalExtensionListType, EList, ReqType>;
+          final_context<TraitsType, context_descriptor, RootExtensions, EList, ReqType>;
     };
 
 
 
     template <HTTPRequest ReqType,
-              /* fixme: ExtensionList */ typename ExtensionListType = empty_extension_pack>
+              /* fixme: ExtensionList */ typename RootExtensions = empty_extension_pack>
         requires requires {
-            typename ExtensionListType::
+            typename RootExtensions::
               template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
         }
-    using simple_context = typename ExtensionListType::
+    using simple_context = typename RootExtensions::
       template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
 
 

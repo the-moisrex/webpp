@@ -1,5 +1,5 @@
-#ifndef EMAIL_H
-#define EMAIL_H
+#ifndef WEBPP_VALIDATION_EMAIL_HPP
+#define WEBPP_VALIDATION_EMAIL_HPP
 
 #include <regex>
 #include <string>
@@ -56,4 +56,4 @@ namespace webpp {
 
 } // namespace webpp
 
-#endif // EMAIL_H
+#endif

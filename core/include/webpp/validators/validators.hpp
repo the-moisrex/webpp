@@ -279,7 +279,7 @@ namespace webpp::is {
             stl::size_t index = static_cast<stl::size_t>(stl::distance(stl::begin(str), found.base())) - 1ul;
             if (auto prefix = str.substr(index + 1); ascii::is::digit(prefix)) {
                 unsigned _prefix = to_uint(prefix);
-                if (!(_prefix >= 0u && _prefix <= 128u))
+                if (!(_prefix <= 128u))
                     return false;
             } else {
                 return false;

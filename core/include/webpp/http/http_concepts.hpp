@@ -65,12 +65,13 @@ namespace webpp::http {
      */
     template <typename T>
     concept HTTPRequest = requires(stl::remove_cvref_t<T> req) {
+        requires EnabledTraits<stl::remove_cvref_t<T>>;
         typename stl::remove_cvref_t<T>::headers_type;
         typename stl::remove_cvref_t<T>::body_type;
+        requires HTTPRequestHeaders<typename stl::remove_cvref_t<T>::headers_type>;
+        requires HTTPRequestBody<typename stl::remove_cvref_t<T>::body_type>;
         req.headers;
         req.body;
-        requires EnabledTraits<stl::remove_cvref_t<T>>;
-        requires Traits<typename stl::remove_cvref_t<T>::traits_type>;
         req.uri();
 
         // so we can make a copy of it (initial request)

@@ -92,7 +92,7 @@ namespace webpp::http {
                     } catch (...) {
                         // return 500 error on failure hoping the response type supports it
                         // todo: add more error handling stuff here to the result
-                        return typename return_type::value_type{500u};
+                        return typename return_type::value_type{http::status_code::internal_server_error};
                     }
                 } else {
                     using optional_type = decltype(make_optional(callable(forward<Args>(args)...)));
@@ -105,7 +105,7 @@ namespace webpp::http {
 
             } else {
                 return ctx.error(
-                  500u,
+                  http::status_code::internal_server_error,
                   invalid_argument("The specified route is not valid. We're not able to call it."));
             }
         }
