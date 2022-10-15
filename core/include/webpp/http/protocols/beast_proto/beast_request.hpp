@@ -64,7 +64,7 @@ namespace webpp::http::beast_proto {
             method_str = str;
         }
 
-        void version(http::version ver) const noexcept {
+        void version(http::version ver) noexcept {
             http_ver = ver;
         }
     };

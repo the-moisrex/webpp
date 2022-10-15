@@ -18,11 +18,12 @@
 #define mem_call(member_name)                                                                               \
     (                                                                                                       \
       [this]<typename... Args> requires requires(stl::remove_cvref_t<decltype(*this)> that, Args... args) { \
-          that.member_name(::webpp::stl::forward<Args>(args)...);                                           \
-      }(Args &&                                                                                             \
+                                            that.member_name(::webpp::stl::forward<Args>(args)...);         \
+                                        }(                                                                  \
+        Args &&                                                                                             \
         ... args) constexpr noexcept(noexcept(this->member_name(::webpp::stl::forward<Args>(args)...))) {   \
-          return this->member_name(::webpp::stl::forward<Args>(args)...);                                   \
-      })
+                                            return this->member_name(::webpp::stl::forward<Args>(args)...); \
+                                        })
 
 namespace webpp::http {
 
@@ -51,9 +52,15 @@ namespace webpp::http {
      */
 
     template <typename Route, typename... Args>
-    concept is_callable_route =
-      stl::is_invocable_v<Route, stl::remove_cvref_t<Args>...> || stl::is_invocable_v<Route, Args...> ||
-      stl::is_invocable_v<Route, stl::add_lvalue_reference_t<stl::remove_cvref_t<Args>>...>;
+    concept is_callable_route = requires (stl::remove_cvref_t<Route> route) {
+                                    requires requires (Args...args) {
+                                        route(args...);
+                                    } || requires (stl::add_lvalue_reference_t<Args>...args) {
+                                        route(args...);
+                                    } || requires (stl::remove_cvref_t<Args>...args) {
+                                        route(args...);
+                                    };
+                                };
 
     template <typename Route, typename... Args>
     concept is_nothrow_callable_route =
@@ -65,7 +72,7 @@ namespace webpp::http {
     namespace details {
 
         template <typename CallableT, Context CtxT, typename... Args>
-        constexpr auto run_and_catch(CallableT&& callable, CtxT& ctx, Args&&... args) noexcept {
+        constexpr decltype(auto) run_and_catch(CallableT&& callable, CtxT& ctx, Args&&... args) noexcept {
             using namespace stl;
 
             using return_type = invoke_result_t<CallableT, Args...>;
@@ -113,50 +120,29 @@ namespace webpp::http {
     } // namespace details
 
 
-    constexpr auto call_route(auto&& _route, Context auto&& ctx, HTTPRequest auto&& req) noexcept {
+    template <typename RouteT, Context CtxT, HTTPRequest ReqT>
+    constexpr decltype(auto) call_route(RouteT&& _route, CtxT&& ctx, ReqT&& req) noexcept {
         using namespace details;
-        using namespace stl;
 
-        using route_type   = stl::remove_cvref_t<decltype(_route)>;
-        using request_type = stl::remove_cvref_t<decltype(req)>;
-        using ctx_type     = stl::remove_cvref_t<decltype(ctx)>;
-        using context_type = stl::add_lvalue_reference_t<ctx_type>;
+        using route_type   = RouteT;
+        using request_type = ReqT;
+        using context_type = CtxT;
 
         if constexpr (is_callable_route<route_type, context_type, request_type>) {
             // requires a context and a request
-            if constexpr (!is_void_v<invoke_result_t<route_type, context_type, request_type>>) {
-                return run_and_catch(_route, ctx, ctx, req);
-            } else {
-                run_and_catch(_route, ctx, ctx, req);
-            }
+            return run_and_catch(_route, ctx, ctx, req);
         } else if constexpr (is_callable_route<route_type, request_type, context_type>) {
             // requires a request and a context
-            if constexpr (!is_void_v<invoke_result_t<route_type, request_type, context_type>>) {
-                return run_and_catch(_route, ctx, req, ctx);
-            } else {
-                run_and_catch(_route, ctx, req, ctx);
-            }
+            return run_and_catch(_route, ctx, req, ctx);
         } else if constexpr (is_callable_route<route_type, context_type>) {
             // gets a context
-            if constexpr (!is_void_v<invoke_result_t<route_type, context_type>>) {
-                return run_and_catch(_route, ctx, ctx);
-            } else {
-                run_and_catch(_route, ctx, ctx);
-            }
+            return run_and_catch(_route, ctx, ctx);
         } else if constexpr (is_callable_route<route_type, request_type>) {
             // requires a request
-            if constexpr (!is_void_v<invoke_result_t<route_type, request_type>>) {
-                return run_and_catch(_route, ctx, req);
-            } else {
-                run_and_catch(_route, ctx, req);
-            }
+            return run_and_catch(_route, ctx, req);
         } else if constexpr (is_callable_route<route_type>) {
             // requires nothing
-            if constexpr (!is_void_v<invoke_result_t<route_type>>) {
-                return run_and_catch(_route, ctx);
-            } else {
-                run_and_catch(_route, ctx);
-            }
+            return run_and_catch(_route, ctx);
         } else {
             static_assert_false(route_type,
                                 "We don't know how to call your entry route. Change your route's signature.");
@@ -175,10 +161,10 @@ namespace webpp::http {
         constexpr static logical_operators op = Op;
         next_route_type                    next;
 
-        //            constexpr basic_route(super_t&&       super = super_t{},
-        //                                  next_route_type&& _next = next_route_type{}) noexcept
-        //              : super_t(stl::forward<RouteType>(super)),
-        //                next(stl::forward<next_route_type>(_next)) {}
+        // constexpr basic_route(super_t&&       super = super_t{},
+        //                       next_route_type&& _next = next_route_type{}) noexcept
+        //   : super_t(stl::forward<RouteType>(super)),
+        //     next(stl::forward<next_route_type>(_next)) {}
 
         constexpr basic_route(auto&& super, auto&& _next = next_route_type{}) noexcept
           : super_t(stl::forward<decltype(super)>(super)),

@@ -34,9 +34,9 @@ namespace webpp::http::beast_proto {
 
 
     template <typename ServerT>
-    struct http_worker : ServerT::etraits {
+    struct http_worker : enable_traits<typename ServerT::etraits> {
         using server_type         = ServerT;
-        using etraits             = typename server_type::etraits;
+        using etraits             = enable_traits<typename server_type::etraits>;
         using duration            = typename server_type::duration;
         using acceptor_type       = typename server_type::acceptor_type;
         using traits_type         = typename server_type::traits_type;
@@ -50,12 +50,10 @@ namespace webpp::http::beast_proto {
         using request_body_type   = typename request_type::body_type;
         using char_allocator_type =
           typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
-        using allocator_type    = typename allocator_pack_type::template general_allocator_type<char>;
-        using beast_fields_type = boost::beast::http::basic_fields<allocator_type>;
-        static_assert(HTTPRequestHeaders<request_header_type>,
-                      "Mistakes has been made in request headers type.");
-        using beast_body_type     = boost::beast::http::string_body;
-        using beast_response_type = boost::beast::http::response<beast_body_type, beast_fields_type>;
+        using fields_allocator_type = typename allocator_pack_type::template general_allocator_type<char>;
+        using beast_fields_type     = boost::beast::http::basic_fields<fields_allocator_type>;
+        using beast_body_type       = boost::beast::http::string_body;
+        using beast_response_type   = boost::beast::http::response<beast_body_type, beast_fields_type>;
         using beast_response_serializer_type =
           boost::beast::http::response_serializer<beast_body_type, beast_fields_type>;
         using socket_type      = asio::ip::tcp::socket;
@@ -69,13 +67,20 @@ namespace webpp::http::beast_proto {
 
         static constexpr auto log_cat = "BeastWorker";
 
+
+        static_assert(HTTPRequestHeaders<request_header_type>,
+                      "Mistakes has been made in request headers type.");
+        static_assert(HTTPRequest<request_type>, "Request type should match HTTPRequest concept.");
+
+
+
       private:
         stl::optional<stream_type>                    stream{stl::nullopt};
-        stl::optional<beast_request_parser_type>      parser{stl::nullopt};
-        stl::optional<request_type>                   req{stl::nullopt};
         stl::optional<beast_response_type>            bres{stl::nullopt};
         stl::optional<beast_response_serializer_type> str_serializer{stl::nullopt};
         server_ref                                    server;
+        stl::optional<request_type>                   req{stl::nullopt};
+        stl::optional<beast_request_parser_type>      parser{stl::nullopt};
         buffer_type buf{default_buffer_size}; // fixme: see if this is using our allocator
 
         template <typename StrT>
@@ -89,9 +94,10 @@ namespace webpp::http::beast_proto {
 
         http_worker(server_ref in_server)
           : etraits{in_server},
-            req{in_server},
             server{in_server},
+            req{server},
             parser{
+              stl::in_place,
               stl::piecewise_construct,
               stl::make_tuple(),                                                  // body args
               stl::make_tuple(alloc::general_alloc_for<beast_fields_type>(*this)) // fields args
@@ -101,7 +107,7 @@ namespace webpp::http::beast_proto {
          * Running async_read_request directly in the constructor will not make
          * make_shared (or alike) functions work properly.
          */
-        void set_socket(socket_type&& in_sock) noexcept {
+        void set_socket(socket_type&& in_sock) {
             stream.emplace(stl::move(in_sock));
         }
 
@@ -119,8 +125,8 @@ namespace webpp::http::beast_proto {
 
 
             // setting the version
-            const stl::uint16_t major = breq.version() / 10;
-            const stl::uint16_t minor = breq.version() % 10;
+            const auto major = static_cast<stl::uint16_t>(breq.version() / 10);
+            const auto minor = static_cast<stl::uint16_t>(breq.version() % 10);
             req->version(http::version{major, minor});
 
             // setting uri and method
@@ -256,8 +262,8 @@ namespace webpp::http::beast_proto {
         }
 
 
-        void start_work(socket_type&& sock) noexcept {
-            http_worker_type* worker_ptr;
+        void start_work(socket_type&& sock) {
+            http_worker_type* worker_ptr = nullptr;
             {
                 stl::scoped_lock    lock{worker_mutex};
                 worker_ptr = worker.operator->();

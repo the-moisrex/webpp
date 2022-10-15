@@ -66,8 +66,9 @@ namespace webpp::http {
 
         void async_accept() noexcept {
             acceptor.async_accept(asio::make_strand(io),
-                                  [this](boost::beast::error_code ec, socket_type sock) noexcept {
+                                  [this](boost::beast::error_code ec, socket_type sock) {
                                       if (!ec) [[likely]] {
+                                          // todo: start_work may throw errors, deal with them
                                           thread_workers.start_work(stl::move(sock));
                                       } else [[unlikely]] {
                                           this->logger.warning(log_cat, "Accepting error", ec);

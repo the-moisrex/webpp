@@ -166,11 +166,21 @@ namespace webpp::http {
 #endif
         }
 
+        [[nodiscard]] constexpr HTTPResponse auto error(http::status_code error_code) const noexcept {
+            return error(static_cast<http::status_code_type>(error_code));
+        }
+
+        template <typename DataType>
+        [[nodiscard]] constexpr HTTPResponse auto error(http::status_code error_code,
+                                                        DataType&&        data) const noexcept {
+            return error(static_cast<http::status_code_type>(error_code), stl::forward<DataType>(data));
+        }
+
         [[nodiscard]] constexpr HTTPResponse auto error(http::status_code_type error_code) const noexcept {
             using str_t = traits::general_string<traits_type>;
             auto msg    = object::make_general<str_t>(this->alloc_pack);
             fmt::format_to(stl::back_inserter(msg),
-                           R"(<!DOCTYPE html>
+                           R"(<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
@@ -258,13 +268,13 @@ namespace webpp::http {
         constexpr final_context& operator=(final_context const&)     = default;
         constexpr final_context& operator=(final_context&&) noexcept = default;
 
-        //        final_context() = delete;
+        // final_context() = delete;
         //
-        //        template <EnabledTraits ET>
-        //        requires(
-        //          !stl::same_as<ET, final_context>) // forward-referencing first arg will confuse move and
-        //          copy ctors constexpr final_context(ET&& et_obj) noexcept : final_context_parent(et_obj) {}
-        //
+        // template <EnabledTraits ET>
+        // requires(
+        //   !stl::same_as<ET, final_context> // forward-referencing first arg will confuse move and copy
+        // )
+        // constexpr final_context(ET&& et_obj) noexcept : final_context_parent(et_obj) {}
 
         /**
          * Clone this context and append the new extensions along the way.
@@ -370,7 +380,7 @@ namespace webpp::http {
 
 
         template <ExtensionList RootExtensions,
-                  typename        TraitsType,
+                  typename TraitsType,
                   typename EList, // extension_pack
                   typename ReqType>
         using mid_level_extensie_type = basic_context<TraitsType,
@@ -380,10 +390,7 @@ namespace webpp::http {
                                                       simple_response_pack<TraitsType, RootExtensions>>;
 
 
-        template <ExtensionList RootExtensions,
-                  typename        TraitsType,
-                  typename EList,
-                  typename ReqType>
+        template <ExtensionList RootExtensions, typename TraitsType, typename EList, typename ReqType>
         using final_extensie_type =
           final_context<TraitsType, context_descriptor, RootExtensions, EList, ReqType>;
     };
@@ -393,9 +400,9 @@ namespace webpp::http {
     template <HTTPRequest ReqType,
               /* fixme: ExtensionList */ typename RootExtensions = empty_extension_pack>
         requires requires {
-            typename RootExtensions::
-              template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
-        }
+                     typename RootExtensions::
+                       template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
+                 }
     using simple_context = typename RootExtensions::
       template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
 

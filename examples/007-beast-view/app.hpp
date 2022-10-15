@@ -21,17 +21,16 @@ namespace website {
         views::view_manager<traits_type> view_man;
 
         app() : etraits{}, view_man{*this} {
-            view_man.view_roots.push_back("./public");
-            view_man.view_roots.push_back("./examples/007-beast-view/public");
-            view_man.view_roots.push_back("../examples/007-beast-view/public");
-            view_man.view_roots.push_back("../../examples/007-beast-view/public");
-            view_man.view_roots.push_back("../../../examples/007-beast-view/public");
+            view_man.view_roots.emplace_back("./public");
+            view_man.view_roots.emplace_back("./examples/007-beast-view/public");
+            view_man.view_roots.emplace_back("../examples/007-beast-view/public");
+            view_man.view_roots.emplace_back("../../examples/007-beast-view/public");
+            view_man.view_roots.emplace_back("../../../examples/007-beast-view/public");
         }
 
-        auto operator()(auto&& req) {
+        HTTPResponse auto operator()(HTTPRequest auto&& req) noexcept {
             using extensions = extension_pack<string_response>;
             router _router{extensions{},
-                           *this,
                            (get and root) >>=
                            [this] {
                                return view_man.view("home.html");

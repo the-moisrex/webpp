@@ -8,7 +8,7 @@
 
 namespace webpp {
 
-    template <Traits TraitsType>
+    template <typename TraitsType>
     struct enable_traits;
 
     template <Traits TraitsType>
@@ -56,7 +56,7 @@ namespace webpp {
     /**
      * By inheriting from this you'll make your type "TraitsEnabled".
      */
-    template <Traits TraitsType>
+    template <typename TraitsType>
     struct enable_traits {
         using traits_type         = TraitsType;
         using non_owner_type      = enable_traits<traits_type>;
@@ -71,6 +71,8 @@ namespace webpp {
                                stl::is_trivially_copy_constructible_v<allocator_pack_type>,
                              allocator_pack_type,
                              allocator_pack_type&>;
+
+        static_assert(Traits<traits_type>, "The specified TraitsType is not of a valid Traits.");
 
         static constexpr bool is_resource_owner = false;
 
@@ -93,7 +95,8 @@ namespace webpp {
                          requires stl::same_as<typename stl::remove_cvref_t<T>::allocator_pack_type,
                                                allocator_pack_type>;
                      })
-        constexpr enable_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack}, logger{obj.logger} {}
+        constexpr enable_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack},
+                                                    logger{obj.logger} {}
 
         constexpr enable_traits(alloc_pack_ref alloc_pack_obj, logger_ref logger_obj = {}) noexcept
           : alloc_pack{alloc_pack_obj},
@@ -130,6 +133,21 @@ namespace webpp {
     };
 
 
+    /**
+     * If the passed type is already a enable_owner_traits or enable_traits,
+     * then we can just omit using them and convert them into non-owner enable traits.
+     */
+    template <Traits TraitsType>
+    struct enable_traits<enable_owner_traits<TraitsType>> : enable_traits<TraitsType> {
+        using enable_traits<TraitsType>::enable_traits;
+    };
+
+    template <Traits TraitsType>
+    struct enable_traits<enable_traits<TraitsType>> : enable_traits<TraitsType> {
+        using enable_traits<TraitsType>::enable_traits;
+    };
+
+
 
     template <Traits TraitsType, typename T>
     struct enable_traits_with : public T, public enable_traits<TraitsType> {
@@ -152,10 +170,10 @@ namespace webpp {
          */
         template <typename T>
         concept AllocatorHolder = requires(T holder) {
-            typename T::allocator_pack_type;
-            requires AllocatorPack<typename T::allocator_pack_type>;
-            { holder.alloc_pack } -> AllocatorPack;
-        };
+                                      typename T::allocator_pack_type;
+                                      requires AllocatorPack<typename T::allocator_pack_type>;
+                                      { holder.alloc_pack } -> AllocatorPack;
+                                  };
 
         template <typename T, AllocatorHolder AllocHolder>
         static constexpr auto local_allocator(AllocHolder& holder) noexcept {

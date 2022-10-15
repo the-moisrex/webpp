@@ -201,7 +201,7 @@ namespace webpp::http {
             } else {
 
                 // handling root-level route calls:
-                decltype(auto) route = stl::get<Index>(routes);
+                auto route = stl::get<Index>(routes);
 
                 // todo
                 // ctx.call_pre_entryroute_methods();
