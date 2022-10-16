@@ -50,10 +50,11 @@ namespace webpp::http::beast_proto {
         using request_body_type   = typename request_type::body_type;
         using char_allocator_type =
           typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
-        using fields_allocator_type = typename allocator_pack_type::template general_allocator_type<char>;
-        using beast_fields_type     = boost::beast::http::basic_fields<fields_allocator_type>;
-        using beast_body_type       = boost::beast::http::string_body;
-        using beast_response_type   = boost::beast::http::response<beast_body_type, beast_fields_type>;
+        using fields_allocator_type =
+          typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
+        using beast_fields_type   = boost::beast::http::basic_fields<fields_allocator_type>;
+        using beast_body_type     = boost::beast::http::string_body;
+        using beast_response_type = boost::beast::http::response<beast_body_type, beast_fields_type>;
         using beast_response_serializer_type =
           boost::beast::http::response_serializer<beast_body_type, beast_fields_type>;
         using socket_type      = asio::ip::tcp::socket;
@@ -90,7 +91,10 @@ namespace webpp::http::beast_proto {
 
 
       public:
-        http_worker(http_worker const&) = delete;
+        http_worker(http_worker const&)                = delete;
+        http_worker(http_worker&&) noexcept            = delete;
+        http_worker& operator=(http_worker const&)     = delete;
+        http_worker& operator=(http_worker&&) noexcept = delete;
 
         http_worker(server_ref in_server)
           : etraits{in_server},
@@ -99,8 +103,9 @@ namespace webpp::http::beast_proto {
             parser{
               stl::in_place,
               stl::piecewise_construct,
-              stl::make_tuple(),                                                  // body args
-              stl::make_tuple(alloc::general_alloc_for<beast_fields_type>(*this)) // fields args
+              stl::make_tuple(), // body args
+              stl::make_tuple(
+                alloc::featured_alloc_for<alloc::sync_pool_features, beast_fields_type>(*this)) // fields args
             } {}
 
         /**
@@ -197,6 +202,7 @@ namespace webpp::http::beast_proto {
 
       public:
         void reset() noexcept {
+            // todo: half of these things can be yanked out with the help of allocators
             boost::beast::error_code ec;
             stream->socket().close(ec);
             if (ec) [[unlikely]] {
@@ -205,9 +211,11 @@ namespace webpp::http::beast_proto {
 
             // destroy the request type + be ready for the next request
             req.emplace(server);
-            parser.emplace(stl::piecewise_construct,
-                           stl::make_tuple(),                                                  // body args
-                           stl::make_tuple(alloc::general_alloc_for<beast_fields_type>(*this)) // fields args
+            parser.emplace(
+              stl::piecewise_construct,
+              stl::make_tuple(), // body args
+              stl::make_tuple(
+                alloc::featured_alloc_for<alloc::sync_pool_features, beast_fields_type>(*this)) // fields args
             );
 
 
@@ -249,8 +257,10 @@ namespace webpp::http::beast_proto {
 
         static constexpr auto log_cat = "Beast";
 
-        thread_worker(thread_worker const&)     = delete;
-        thread_worker(thread_worker&&) noexcept = default;
+        thread_worker(thread_worker const&)                = delete;
+        thread_worker(thread_worker&&) noexcept            = delete;
+        thread_worker& operator=(thread_worker const&)     = delete;
+        thread_worker& operator=(thread_worker&&) noexcept = delete;
 
         thread_worker(server_type& input_server)
           : server(input_server),
@@ -273,6 +283,13 @@ namespace webpp::http::beast_proto {
             worker_ptr->start();
         }
 
+        void stop() {
+            for (auto& hworker : http_workers) {
+                hworker.stop();
+            }
+        }
+
+      private:
         // get the next available worker
         void next_worker() noexcept {
             // todo: a cooler algorithm can be used here, right? You can even give the user a choice
@@ -284,13 +301,6 @@ namespace webpp::http::beast_proto {
             } while (!worker->is_idle());
         }
 
-        void stop() {
-            for (auto& hworker : http_workers) {
-                hworker.stop();
-            }
-        }
-
-      private:
         server_type&                         server;
         http_workers_type                    http_workers;
         typename http_workers_type::iterator worker;
