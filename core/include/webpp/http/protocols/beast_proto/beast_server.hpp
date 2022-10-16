@@ -139,6 +139,7 @@ namespace webpp::http::beast_proto {
             req->method(string_viewify(breq.method_string()));
 
             // setting the headers
+            req->headers = breq;
             // setting the body
 
             HTTPResponse auto res = server.call_app(*req);
@@ -174,6 +175,7 @@ namespace webpp::http::beast_proto {
 
                       // if we don't reset here, the connection will hang if there are too many concurrent
                       // connections for some reason.
+                      // fixme: are we hard-closing the connection without letting the shutdown signal to be sent?
                       reset();
                   }
               });

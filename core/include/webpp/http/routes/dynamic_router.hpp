@@ -20,6 +20,15 @@ namespace webpp::http {
     struct basic_dynamic_router;
 
 
+    template <typename REL, typename ServerType>
+    struct dynamic_request_midlevel_extensie : public REL {
+        using REL::REL;
+
+        using server_type = ServerType;
+        using traits_type = typename server_type::traits_type;
+
+    };
+
     template <ExtensionList ExtensionListType, EnabledTraits TraitsEnabler>
     struct dynamic_route {
         using etraits           = TraitsEnabler;
@@ -68,9 +77,9 @@ namespace webpp::http {
      * This class will be used directly by the developers using this whole library. So be nice and careful and
      * user friendly.
      */
-    template <ExtensionList ExtensionListType, EnabledTraits TraitsEnabler>
+    template <ExtensionList RootExtensions, EnabledTraits TraitsEnabler>
     struct basic_dynamic_router : TraitsEnabler {
-        using extension_list    = ExtensionListType;
+        using extension_list    = RootExtensions;
         using etraits           = TraitsEnabler;
         using traits_type       = typename etraits::traits_type;
         using non_owner_etraits = typename etraits::non_owner_type;
@@ -82,6 +91,7 @@ namespace webpp::http {
         using string_view_type = traits::string_view<traits_type>;
         using objects_type     = stl::vector<stl::any, traits::general_allocator<traits_type, stl::any>>;
         using routes_type      = stl::vector<route_type, vector_allocator>;
+        using request_type  = simple_request<basic_dynamic_router, dynamic_request_midlevel_extensie>;
         using context_type     = simple_context<request_type, extension_list>;
         using response_type    = simple_response_pack<traits_type, extension_list>;
 
