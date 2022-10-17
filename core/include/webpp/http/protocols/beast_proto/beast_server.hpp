@@ -12,6 +12,7 @@
 #include "../../request.hpp"
 #include "../../version.hpp"
 #include "beast_request.hpp"
+#include "beast_string_body.hpp"
 
 #include <list>
 #include <mutex>
@@ -53,7 +54,8 @@ namespace webpp::http::beast_proto {
         using fields_allocator_type =
           typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
         using beast_fields_type   = boost::beast::http::basic_fields<fields_allocator_type>;
-        using beast_body_type     = boost::beast::http::string_body;
+        using string_type         = traits::general_string<traits_type>;
+        using beast_body_type     = string_body_of<string_type>;
         using beast_response_type = boost::beast::http::response<beast_body_type, beast_fields_type>;
         using beast_response_serializer_type =
           boost::beast::http::response_serializer<beast_body_type, beast_fields_type>;
@@ -128,7 +130,6 @@ namespace webpp::http::beast_proto {
         void make_beast_response() noexcept {
             const beast_request_type& breq = parser->get();
 
-
             // setting the version
             const auto major = static_cast<stl::uint16_t>(breq.version() / 10);
             const auto minor = static_cast<stl::uint16_t>(breq.version() % 10);
@@ -138,9 +139,7 @@ namespace webpp::http::beast_proto {
             req->uri(string_viewify(breq.target()));
             req->method(string_viewify(breq.method_string()));
 
-            // setting the headers
-            req->headers = breq;
-            // setting the body
+            // setting the headers and body
 
             HTTPResponse auto res = server.call_app(*req);
             bres.emplace();

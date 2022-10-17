@@ -298,6 +298,15 @@ namespace webpp::views {
             return out;
         }
 
+
+        template <istl::StringViewifiable StrT, typename... DataType>
+            requires((!stl::same_as<stl::remove_cvref_t<DataType>, mustache_data_type> && ...))
+        [[nodiscard]] constexpr auto mustache(StrT&& file_request, DataType&&... data) noexcept {
+            auto m_data = object::make_general<mustache_data_type>(*this);
+            (m_data.emplace_back(*this, stl::forward<DataType>(data)), ...);
+            return mustache<StrT>(stl::forward<StrT>(file_request), m_data);
+        }
+
         template <istl::StringViewifiable StrT = string_view_type>
         [[nodiscard]] auto view(StrT&& file_request) noexcept {
             return view(stl::forward<StrT>(file_request), istl::nothing_type{});

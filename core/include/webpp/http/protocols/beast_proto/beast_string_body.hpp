@@ -3,8 +3,12 @@
 #ifndef WEBPP_BEAST_STRING_BODY_HPP
 #define WEBPP_BEAST_STRING_BODY_HPP
 
+#include "../../../libs/asio.hpp"
 #include "../../../std/string.hpp"
 
+// clang-format off
+#include asio_include(buffer)
+// clang-format on
 #include <boost/beast/core/buffers_range.hpp>
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/message.hpp>
@@ -68,7 +72,7 @@ namespace webpp::http::beast_proto {
 
             template <class ConstBufferSequence>
             std::size_t put(ConstBufferSequence const& buffers, boost::beast::error_code& ec) {
-                auto const extra = buffer_bytes(buffers);
+                auto const extra = boost::beast::buffer_bytes(buffers);
                 auto const size  = body_.size();
                 if (extra > body_.max_size() - size) {
                     ec = boost::beast::http::error::buffer_overflow;

@@ -105,8 +105,8 @@ namespace webpp::views {
 
                 static constexpr bool requires_renderer =
                   requires(Func func, string_view_type text, renderer_type const& renderer) {
-                    { func(text, renderer) } -> istl::StringViewifiableOf<string_type>;
-                };
+                      { func(text, renderer) } -> istl::StringViewifiableOf<string_type>;
+                  };
 
                 string_allocator_type string_allocator;
 
@@ -157,6 +157,13 @@ namespace webpp::views {
                   : variant_type{stl::forward<T>(input_value)},
                     key_value{istl::stringify_of<string_type>(
                       stl::forward<StrT>(input_key),
+                      et.alloc_pack.template general_allocator<char_type>())} {}
+
+                template <EnabledTraits ET, typename StrT, typename T>
+                constexpr variable(ET&& et, stl::pair<StrT, T>&& input)
+                  : variant_type{input.second},
+                    key_value{istl::stringify_of<string_type>(
+                      input.first,
                       et.alloc_pack.template general_allocator<char_type>())} {}
 
 
@@ -306,11 +313,12 @@ namespace webpp::views {
           : etraits{et},
             items{et.alloc_pack.template general_allocator<items_value_type>()} {
             items.reserve(data->size());
-            stl::transform(
-              stl::begin(*data),
-              stl::end(*data),
-              stl::back_inserter(items),
-              [](auto const& item) constexpr noexcept { return &item; });
+            stl::transform(stl::begin(*data),
+                           stl::end(*data),
+                           stl::back_inserter(items),
+                           [](auto const& item) constexpr noexcept {
+                               return &item;
+                           });
         }
 
 
@@ -563,7 +571,8 @@ namespace webpp::views {
       public:
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, mustache_view>)
-        constexpr mustache_view(ET&& et) noexcept : etraits{et}, root_component{et} {}
+        constexpr mustache_view(ET&& et) noexcept : etraits{et},
+                                                    root_component{et} {}
 
         constexpr mustache_view(mustache_view const&)     = default;
         constexpr mustache_view(mustache_view&&) noexcept = default;

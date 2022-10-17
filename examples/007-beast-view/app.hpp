@@ -35,6 +35,10 @@ namespace website {
                            [this] {
                                return view_man.view("home.html");
                            },
+                           (post and root) >>=
+                           [this] {
+                               return view_man.mustache("home-post", stl::pair{"request_body_size", "20"});
+                           },
                            (get and root / "about") >>=
                            [this]() {
                                return view_man.view("about.html");
