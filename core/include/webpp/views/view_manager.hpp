@@ -50,27 +50,40 @@ namespace webpp::views {
         using mustache_view_type = mustache_view<traits_type>;
         using json_view_type     = json_view<traits_type>;
         using file_view_type     = file_view<traits_type>;
-        using view_types         = stl::variant<mustache_view_type, /*json_view_type,*/ file_view_type>;
+
+      private:
+        // fixme: variant is not the best strategy, a file doesn't require as much storage as a mustache view
+        using view_types = stl::variant<mustache_view_type, /*json_view_type,*/ file_view_type>;
+
+
+        /**
+         * This is what gets stored as a value
+         */
+        struct cache_value_type {
+            view_types  view;         // the view, the view should not own the data
+            string_type file_content; // content file; the view is a span/view/string_view... of the data
+        };
 
         using mustache_data_type = typename mustache_view_type::data_type;
         // using json_data_type = typename json_view_type::data_type;
         using file_data_type = typename file_view_type::data_type;
 
 
-        using cache_type = lru_cache<traits_type, path_type, view_types, memory_gate<null_gate>>;
+        using cache_type = lru_cache<traits_type, path_type, cache_value_type, memory_gate<null_gate>>;
 
         static constexpr auto VIEW_CAT = "View";
 
         static constexpr stl::array<string_view_type, 1> valid_extensions{".mustache"};
 
 
-        view_roots_type view_roots; // the root directories where we can find the views
 
-      private:
         cache_type cached_views;
 
 
       public:
+        view_roots_type view_roots; // the root directories where we can find the views
+
+
         template <typename ET>
             requires(EnabledTraits<stl::remove_cvref_t<ET>> &&
                      !stl::same_as<stl::remove_cvref_t<ET>, view_manager>)
@@ -82,6 +95,7 @@ namespace webpp::views {
             cached_views{et, cache_limit} {}
 
 
+      private:
         /**
          * Find the file based on the specified view name.
          *
@@ -139,7 +153,7 @@ namespace webpp::views {
                 }
 
                 if (recursive_search) {
-                    fs::recursive_directory_iterator iter(dir, ec);
+                    fs::recursive_directory_iterator const iter(dir, ec);
                     if (ec) {
                         this->logger.error(VIEW_CAT, fmt::format("Cannot read dir {}", dir.string()), ec);
                     }
@@ -214,97 +228,103 @@ namespace webpp::views {
         /**
          * Read the file content
          */
-        [[nodiscard]] stl::optional<string_type> read_file(stl::filesystem::path const& file) const {
+        [[nodiscard]] string_type read_file(stl::filesystem::path const& file) const {
 #ifdef WEBPP_EMBEDDED_FILES
             if (auto content = ::get_static_file(filepath); !content.empty()) {
                 return string_type{this->content, alloc};
             }
 #endif
+            auto result = object::make_general<string_type>(*this);
             if (auto in = ifstream_type(file.c_str(), stl::ios::binary | stl::ios::ate); in.is_open()) {
                 // details on this matter:
                 // https://stackoverflow.com/questions/11563963/writing-a-binary-file-in-c-very-fast/39097696#39097696
                 // stl::unique_ptr<char[]> buffer{new char[buffer_size]};
                 // stl::unique_ptr<char_type[]> result(static_cast<char_type*>(
                 //  this->alloc_pack.template local_allocator<char_type[]>().allocate(size)));
-                auto result = object::make_general<string_type>(*this);
                 in.seekg(0, in.end);
                 const auto size = in.tellg();
                 // todo: don't need to zero it out; https://stackoverflow.com/a/29348072
                 result.resize(static_cast<stl::size_t>(size));
                 in.seekg(0);
                 in.read(result.data(), size);
-                return result;
             } else {
                 this->logger.error("Response/File",
                                    fmt::format("Cannot load the specified file: {}", file.string()));
-                return stl::nullopt;
+                // return empty string
             }
+            return result;
         }
 
 
         template <typename VT>
-        [[nodiscard]] VT get_view(path_type const& file) noexcept {
-            return stl::get<VT>(cached_views.emplace_get(file, VT{*this}));
+        [[nodiscard]] cache_value_type& get_view(path_type const& file) noexcept {
+            if (auto val = cached_views.get(file); val) {
+                return *val;
+            }
+            cached_views.set(file,
+                             cache_value_type{.view         = view_types{stl::in_place_type<VT>, *this},
+                                              .file_content = alloc::general_alloc_for<string_type>(*this)});
+            return *cached_views.get(file);
         }
 
 
-        template <istl::StringViewifiable StrT>
-        [[nodiscard]] constexpr auto file(StrT&& file_request) noexcept {
-            auto const the_file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
-            auto       out      = object::make_general<string_type>(this->alloc_pack);
-            if (!the_file) {
-                this->logger.error(VIEW_CAT,
-                                   fmt::format("We can't find the specified view {}.", file_request));
-                return out;
-            }
-            auto file_content = read_file(the_file.value());
-            if (!file_content) {
-                return out; // empty string is returned.
+        template <typename ViewType, typename OutT, typename... DataType>
+        constexpr void view_to(OutT& out, path_type const& file, DataType&&... data) noexcept {
+            using view_type          = ViewType;
+            cache_value_type& cached = get_view<view_type>(file);
+            if (cached.file_content.empty()) {
+
+                // get and set the code:
+                cached.file_content = read_file(file);
+                if (cached.file_content.empty()) {
+                    return; // empty string is returned.
+                }
+                stl::get<view_type>(cached.view).scheme(cached.file_content);
             }
 
             // at this point we don't care about the extension of the file; the user explicitly wants us to
             // parse it as a mustache file
-            file_view_type view = get_view<file_view_type>(*the_file);
-            view.scheme(stl::move(file_content.value()));
-            view.render(out);
-            cached_views.set(*the_file, view_types{stl::in_place_type<file_view_type>, stl::move(view)});
-            return out;
+            stl::get<view_type>(cached.view).render(out, stl::forward<DataType>(data)...);
         }
 
 
+        template <typename ViewType, istl::StringViewifiable StrT, typename OutT, typename... DataType>
+        constexpr void view_to(OutT& out, StrT&& file_request, DataType&&... data) noexcept {
+            auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
+            if (!file) {
+                this->logger.error(VIEW_CAT,
+                                   fmt::format("We can't find the specified view {}.", file_request));
+                return;
+            }
+            view_to<ViewType>(out, file.value(), stl::forward<DataType>(data)...);
+        }
+
+
+      public:
         /**
          * This is essentially the same as ".view" but it's specialized for a mustache file.
          */
         template <istl::StringViewifiable StrT>
         [[nodiscard]] constexpr auto mustache(StrT&& file_request, mustache_data_type const& data) noexcept {
-            auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
-            auto       out  = object::make_general<string_type>(this->alloc_pack);
-            if (!file) {
-                this->logger.error(VIEW_CAT,
-                                   fmt::format("We can't find the specified view {}.", file_request));
-                return out;
-            }
-            auto file_content = read_file(file.value());
-            if (!file_content) {
-                return out; // empty string is returned.
-            }
-
-            // at this point we don't care about the extension of the file; the user explicitly wants us to
-            // parse it as a mustache file
-            mustache_view_type view = get_view<mustache_view_type>(*file);
-            view.scheme(stl::move(file_content.value()));
-            view.render(out, data);
-            cached_views.set(*file, view_types{stl::in_place_type<mustache_view_type>, stl::move(view)});
+            auto out = object::make_general<string_type>(this->alloc_pack);
+            view_to<mustache_view_type>(out, stl::forward<StrT>(file_request), data);
             return out;
         }
 
 
-        template <istl::StringViewifiable StrT, typename... DataType>
-            requires((!stl::same_as<stl::remove_cvref_t<DataType>, mustache_data_type> && ...))
-        [[nodiscard]] constexpr auto mustache(StrT&& file_request, DataType&&... data) noexcept {
+        template <istl::StringViewifiable StrT, typename... StrT2, typename... DataType>
+        [[nodiscard]] constexpr auto mustache(StrT&& file_request,
+                                              stl::pair<StrT2, DataType>... data) noexcept {
             auto m_data = object::make_general<mustache_data_type>(*this);
-            (m_data.emplace_back(*this, stl::forward<DataType>(data)), ...);
+            (m_data.emplace_back(*this, stl::move(data)), ...);
             return mustache<StrT>(stl::forward<StrT>(file_request), m_data);
+        }
+
+        template <istl::StringViewifiable StrT>
+        [[nodiscard]] constexpr string_view_type file(StrT&& file_request) noexcept {
+            string_view_type out;
+            view_to<file_view_type>(out, stl::forward<StrT>(file_request));
+            return out;
         }
 
         template <istl::StringViewifiable StrT = string_view_type>
@@ -326,27 +346,18 @@ namespace webpp::views {
                                    fmt::format("We can't find the specified view {}.", file_request));
                 return out;
             }
-            auto file_content = read_file(file.value());
-            if (!file_content) {
-                return out; // empty string is returned.
-            }
             const auto ext = file->extension().string();
             if (ext.size() >= 1) {
                 switch (ext[1]) {
                     case 'm': {
                         if (ext == ".mustache") {
-                            mustache_view_type view = get_view<mustache_view_type>(*file);
-                            view.scheme(file_content.value());
-                            view.render(out, data);
-                            cached_views.set(
-                              *file,
-                              view_types{stl::in_place_type<mustache_view_type>, stl::move(view)});
+                            view_to<mustache_view_type>(out, file.value(), data);
                         }
                         break;
                     }
                     case 'j': {
                         if (ext == ".json") {
-                            // json_view_type& view = get_view<json_view_type>(file);
+                            // json_view_type& view = get_view<json_view_type>(file).view;
                             // view.scheme(file_content);
                             // view.render(out, data);
                         }
@@ -358,10 +369,8 @@ namespace webpp::views {
                 return out;
             }
         file_view:
-            file_view_type view = get_view<file_view_type>(*file);
-            view.scheme(stl::move(file_content.value()));
-            view.render(out);
-            cached_views.set(*file, view_types{stl::in_place_type<file_view_type>, stl::move(view)});
+            view_to<file_view_type>(out, file.value());
+            // cached_views.set(*file, view_types{stl::in_place_type<file_view_type>, stl::move(view)});
 
             return out;
         }

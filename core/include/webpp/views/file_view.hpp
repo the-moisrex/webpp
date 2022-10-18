@@ -16,14 +16,13 @@ namespace webpp::views {
     struct file_view {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
-        using string_type      = traits::general_string<traits_type>;
         using char_type        = traits::char_type<traits_type>;
 
         using data_view_type = istl::nothing_type;
         using data_type      = istl::nothing_type;
 
       private:
-        string_type data;
+        string_view_type data;
 
       public:
         constexpr file_view() = default;
@@ -44,19 +43,12 @@ namespace webpp::views {
         }
 
 
-        void scheme(string_type&& str) noexcept {
-            data = stl::move(str);
-        }
-
         void scheme(string_view_type str) {
             data = str;
         }
 
-        void render(string_type& out) const noexcept {
-            out = data;
-        }
-
-        void render(string_type& out, data_view_type const&) const noexcept {
+        template <typename StrT>
+        void render(StrT& out) const noexcept {
             out = data;
         }
     };

@@ -14,7 +14,7 @@ namespace webpp {
         using parent_gate_type = ParentGate;
 
         template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT, CacheOptions OptsT>
-        struct storage_gate : enable_traits<TraitsType> {
+        struct storage_gate {
             using traits_type     = TraitsType;
             using value_pack_type = stl::pair<OptsT, ValueT>;
             using map_type        = traits::general_object<traits_type, stl::map<KeyT, value_pack_type>>;
@@ -22,16 +22,14 @@ namespace webpp {
             using key_type        = typename map_type::key_type;
             using value_type      = typename map_type::mapped_type::second_type;
             using options_type    = typename mapped_type::first_type;
-            using etraits         = enable_traits<TraitsType>;
             using data_type       = cache_tuple<key_type, value_type, options_type>;
 
 
             template <typename ET>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
-                         !stl::same_as<ET, storage_gate&&>)
+                         !stl::same_as<ET, storage_gate &&>)
             constexpr storage_gate(ET&& et) // NOLINT(cppcoreguidelines-pro-type-member-init)
-              : etraits{et},
-                map(et.alloc_pack, et.alloc_pack.general_resource()) {}
+              : map(et.alloc_pack, et.alloc_pack.general_resource()) {}
 
             template <typename K>
             constexpr stl::optional<data_type> get(K&& key) {
@@ -87,7 +85,7 @@ namespace webpp {
             }
 
 
-
+          private:
             map_type map;
         };
     };

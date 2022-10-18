@@ -159,11 +159,12 @@ namespace webpp::views {
                       stl::forward<StrT>(input_key),
                       et.alloc_pack.template general_allocator<char_type>())} {}
 
+
                 template <EnabledTraits ET, typename StrT, typename T>
-                constexpr variable(ET&& et, stl::pair<StrT, T>&& input)
-                  : variant_type{input.second},
+                constexpr variable(ET&& et, stl::pair<StrT, T> input)
+                  : variant_type{stl::move(input.second)},
                     key_value{istl::stringify_of<string_type>(
-                      input.first,
+                      stl::move(input.first),
                       et.alloc_pack.template general_allocator<char_type>())} {}
 
 
@@ -587,6 +588,11 @@ namespace webpp::views {
         constexpr void scheme(string_view_type input) {
             delimiter_set<traits_type> delim_set;
             parse(input, delim_set);
+        }
+
+        // check if we have previously parsed the scheme, and it's ready for multiple render calls
+        [[nodiscard]] constexpr bool has_scheme() const noexcept {
+            return root_component.children.size() > 0;
         }
 
         [[nodiscard]] constexpr bool is_valid() const noexcept {
