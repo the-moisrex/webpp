@@ -23,14 +23,14 @@ namespace webpp {
 
       public:
         template <typename K, typename V>
-        non_evicting_cache& set(K&& key, V&& value) {
+        constexpr non_evicting_cache& set(K&& key, V&& value) {
             gate.set(stl::forward<K>(key), stl::forward<V>(value));
             return *this;
         }
 
 
         template <typename K>
-        stl::optional<value_type> get(K&& key) {
+        constexpr stl::optional<value_type> get(K&& key) {
             return gate.get(stl::forward<K>(key));
         }
     };
